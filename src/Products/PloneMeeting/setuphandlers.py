@@ -16,6 +16,7 @@ from eea.facetednavigation.interfaces import ICriteria
 from imio.dashboard.setuphandlers import add_orgs_searches
 from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
+from imio.helpers.emailer import get_mail_host
 from plone import api
 from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import WorkflowPolicyConfig_id
 from Products.CMFPlone.utils import base_hasattr
@@ -63,7 +64,6 @@ indexInfos = {
     'getTakenOverBy': ('FieldIndex', {}),
     'indexAdvisers': ('KeywordIndex', {}),
     'meeting_uid': ('FieldIndex', {}),
-    'meeting_date': ('DateIndex', {}),
     'previous_review_state': ('FieldIndex', {}),
     'reviewProcessInfo': ('FieldIndex', {}),
     'send_to_authority': ('FieldIndex', {}),
@@ -115,7 +115,7 @@ def setupHideToolsFromNavigation(context):
         for toolname in toolnames:
             try:
                 site[toolname].unindexObject()
-            except:
+            except Exception:
                 pass
             current = list(navtreeProperties.getProperty('idsNotToList') or [])
             if toolname not in current:
@@ -306,6 +306,15 @@ def postInstall(context):
     set_column_modifier('disabled')
     set_raiseOnError_for_non_managers(True)
     set_use_stream(False)
+
+    # configure MailHost
+    mail_host = get_mail_host()
+    mail_host.force_tls = True
+    mail_host.smtp_queue = True
+    mail_host.smtp_queue_directory = "tmp"
+    # (re)start the mail queue
+    mail_host._stopQueueProcessorThread()
+    mail_host._startQueueProcessorThread()
 
     # create contacts directory and plonegroup-organization
     if not base_hasattr(site, 'contacts'):

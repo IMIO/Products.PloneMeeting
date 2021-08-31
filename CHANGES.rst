@@ -86,6 +86,8 @@ Changelog
   [gbastien]
 - Set `collective.documentgenerator` `column_modifier` parameter to `disabled` by default.
   [gbastien]
+- Configure `MailHost` by default to use TLS and queuing.
+  [gbastien]
 
 4.2b13 (2021-07-16)
 -------------------
