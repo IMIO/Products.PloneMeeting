@@ -132,7 +132,10 @@ class testMeetingCategory(PloneMeetingTestCase):
         vocab_factory = get_vocab(
             None, u"Products.PloneMeeting.content.category."
             "category_mapping_when_cloning_to_other_mc_vocabulary", only_factory=True)
-        self.assertEqual(len(vocab_factory(aCatInMC)), 6)
+        self.assertEqual(len(vocab_factory(aCatInMC)), 8)
+        # disabled categories are also returned
+        self.assertFalse(cfg2.categories.marketing.enabled)
+        self.assertTrue("{0}.marketing".format(cfg2.getId()) in vocab_factory(aCatInMC))
         # only terms of cfg2
         self.assertFalse([term for term in vocab_factory(aCatInMC) if cfg2.getId() not in term.token])
         # but as meetingConfig does not use categories, a category of meetingConfig2 will not see it
@@ -172,7 +175,8 @@ class testMeetingCategory(PloneMeetingTestCase):
         error_msg = translate('error_can_not_select_several_cat_for_same_mc',
                               domain='PloneMeeting',
                               context=self.request)
-        data = DummyData(aCatInMC, category_mapping_when_cloning_to_other_mc=[values[0], values[1]])
+        data = DummyData(aCatInMC,
+                         category_mapping_when_cloning_to_other_mc=[values[0], values[1]])
         with self.assertRaises(Invalid) as cm:
             invariant(data)
         self.assertEqual(cm.exception.message, error_msg)
@@ -181,7 +185,8 @@ class testMeetingCategory(PloneMeetingTestCase):
         # one of unexisting meetingConfig3, the validate is ok...
         data = DummyData(
             aCatInMC,
-            category_mapping_when_cloning_to_other_mc=[values[0], 'meeting-config-dummy.category_name'])
+            category_mapping_when_cloning_to_other_mc=[
+                values[0], 'meeting-config-dummy.category_name'])
         self.assertIsNone(invariant(data))
 
     def test_pm_CategoryContainerModifiedOnAnyAction(self):

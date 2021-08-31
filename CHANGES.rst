@@ -84,6 +84,9 @@ Changelog
   a given context. It is possible to get every labels, normal labels only or
   personal labels only.
   [gbastien]
+- For field `MeetingCategory.category_mapping_when_cloning_to_other_mc`, display
+  also disabled categories in vocabulary so it is visible on category view.
+  [gbastien]
 
 4.2b13 (2021-07-16)
 -------------------

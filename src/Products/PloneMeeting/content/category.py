@@ -196,8 +196,14 @@ class CategoriesOfOtherMCsVocabulary(object):
                 continue
             otherMCId = otherMCObj.getId()
             otherMCTitle = otherMCObj.Title()
-            for category in otherMCObj.getCategories(catType=catType):
+            for category in otherMCObj.getCategories(catType=catType, onlySelectable=False):
                 cat_id = '%s.%s' % (otherMCId, category.getId())
                 cat_title = '%s -> %s' % (otherMCTitle, category.Title())
+                if not category.enabled:
+                    cat_title = translate(
+                        '${element_title} (Inactive)',
+                        domain='PloneMeeting',
+                        mapping={'element_title': cat_title},
+                        context=context.REQUEST)
                 terms.append(SimpleTerm(cat_id, cat_id, cat_title))
         return SimpleVocabulary(terms)
