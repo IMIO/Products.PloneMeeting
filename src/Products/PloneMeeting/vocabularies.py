@@ -2444,6 +2444,13 @@ class PMPositionTypesVocabulary(PositionTypesVocabulary):
         # editing a held_position
         elif context.portal_type == 'held_position':
             person = context.get_person()
+        else:
+            # used in attendees management forms
+            person_uid = context.REQUEST.get('person_uid', None)
+            if person_uid:
+                catalog = api.portal.get_tool('portal_catalog')
+                hp = catalog(UID=person_uid)[0].getObject()
+                person = hp.get_person()
         return person
 
     def _get_base_terms(self, context):
@@ -2468,18 +2475,6 @@ PMPositionTypesVocabularyFactory = PMPositionTypesVocabulary()
 
 
 class PMAttendeeRedefinePositionTypesVocabulary(PMPositionTypesVocabulary):
-
-    def _get_person(self, context):
-        """ """
-        person_uid = context.REQUEST.get('person_uid', None)
-        if person_uid:
-            catalog = api.portal.get_tool('portal_catalog')
-            hp = catalog(UID=person_uid)[0].getObject()
-            person = hp.get_person()
-        else:
-            person = super(PMAttendeeRedefinePositionTypesVocabulary, self). \
-                _get_person(context)
-        return person
 
     def _get_base_terms(self, context):
         res = super(PMAttendeeRedefinePositionTypesVocabulary, self). \

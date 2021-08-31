@@ -75,7 +75,11 @@ Changelog
   `back` and that format of identifier columns (`state`, `leading_transition`,
   `back_transition` must be only alphanumeric) is correct.
   [gbastien]
-
+- Simplified `PMAttendeeRedefinePositionTypesVocabulary`, removed override of `_get_person`,
+  parent `PMPositionTypesVocabulary` now manages also when `person_uid` found in `REQUEST`.
+  This makes the list of positions on the `RedefineSignatoryForm` display the positions
+  correctly (not the four valeus separated by pipe).
+  [gbastien]
 
 4.2b13 (2021-07-16)
 -------------------
