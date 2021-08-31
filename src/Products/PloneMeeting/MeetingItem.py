@@ -4726,14 +4726,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             wf_action_to_find = cfg.getItemWFValidationLevels(state=old_review_state)[
                 "back_transition"]
             wf_action = getLastWFAction(self, wf_action_to_find)
-            notified_user_ids = [wf_action["actor"]]
+            if wf_action:  # In case WF definition has changed in the meantime
+                notified_user_ids = [wf_action["actor"]]
         elif wf_direction == "down":
             # We are going down so we will notify the user that made the precedent 'leading_transition'
             # to the 'old_review_state'
             wf_action_to_find = cfg.getItemWFValidationLevels(state=old_review_state)[
                 "leading_transition"]
             wf_action = getLastWFAction(self, wf_action_to_find)
-            notified_user_ids = [wf_action["actor"]]
+            if wf_action:  # In case WF definition has changed in the meantime
+                notified_user_ids = [wf_action["actor"]]
         else:
             # We can't predict who will take care of the item after the transition so we notify
             # the proposing group

@@ -5409,9 +5409,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res.append((t.id, name))
         return res
 
-    security.declarePrivate('list_item_validation_transitions')
+    security.declarePrivate('get_item_validation_transitions')
 
-    def list_item_validation_transitions(self):
+    def get_item_validation_transitions(self):
         '''Lists the possible transitions as defined in itemWFValidationLevels.'''
         item_wf_validation_transitions = []
         for validation_level in self.getItemWFValidationLevels(only_enabled=True,
@@ -5421,11 +5421,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     validation_level['leading_transition'],
                     validation_level['leading_transition_title']
                 ))
-            if validation_level['back_transition'] != "-":
-                item_wf_validation_transitions.append((
-                    validation_level['back_transition'],
-                    validation_level['back_transition_title'],
-                ))
+            item_wf_validation_transitions.append((
+                validation_level['back_transition'],
+                validation_level['back_transition_title'],
+            ))
         return item_wf_validation_transitions
 
     security.declarePrivate('listActiveOrgsForPowerAdvisers')
@@ -6711,7 +6710,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = DisplayList(tuple(res)) + DisplayList(res_transitions).sortedByValue()
 
         # itemWFValidationLevels based notifications
-        item_wf_validation_transitions = self.list_item_validation_transitions()
+        item_wf_validation_transitions = self.get_item_validation_transitions()
 
         res_transitions = []
         for item_transition_id, item_transition_name in item_wf_validation_transitions:
