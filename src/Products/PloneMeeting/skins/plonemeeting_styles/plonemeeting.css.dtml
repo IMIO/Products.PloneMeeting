@@ -1578,6 +1578,11 @@ div#viewlet-above-content-body {
    padding-top: 1em;
 }
 
+/* docgen icons when display in overlay, like advice preview */
+div.pb-ajax div#doc-generation-view {
+   padding-top: 2em;
+}
+
 /* remove margin for fields itemWorkflow and meetingWorkflow on the meetingconfig_view
  * so really used workflow is displayed just under selected workflow */
 body.template-base_view.portaltype-meetingconfig div[id^="archetypes-fieldname-itemWorkflow"],
