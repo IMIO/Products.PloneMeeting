@@ -260,6 +260,12 @@ div.viewlet_workflowstate {
     float: right;
 }
 
+/* make descripiton display correctly as document byline is floating */
+div#content .documentDescription, #content #description {
+    padding-bottom: 0em;
+    padding-top: 1em;
+}
+
 /* Colors on states */
 body:not([class*='section-contacts']) .state-active,
 .label-state-active {
@@ -1574,13 +1580,17 @@ body.template-meetingitem_view div#doc-generation-view {
    float: right;
    padding-top: 0.5em;
 }
+/* padding under viewlet included when displayed in overlay in dashboard */
+/* necessary for dcocgen icons displayed on advice overlay in dashboard */
 div#viewlet-above-content-body {
    padding-top: 1em;
 }
-
-/* docgen icons when display in overlay, like advice preview */
-div.pb-ajax div#doc-generation-view {
-   padding-top: 2em;
+body.template-facetednavigation_view div.pb-ajax div#viewlet-above-content-body {
+   padding-top: 1.5em;
+}
+/* reduce padding in dashboard */
+body.template-facetednavigation_view div#viewlet-above-content-body {
+   padding-top: 0em;
 }
 
 /* remove margin for fields itemWorkflow and meetingWorkflow on the meetingconfig_view
@@ -2445,9 +2455,6 @@ body.template-meeting_available_items_view div#content-core #faceted-form .facet
 
 body.template-meeting_available_items_view div#content-core #faceted-form div#faceted-top-column {
     padding-top: 20px;
-}
-body.template-facetednavigation_view div#viewlet-above-content-body {
-   padding-top: 0em;
 }
 
 /* </dtml-with> */
