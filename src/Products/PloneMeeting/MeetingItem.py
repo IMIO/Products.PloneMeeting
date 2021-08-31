@@ -24,6 +24,7 @@ from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.security import fplog
 from imio.history.utils import get_all_history_attr
+from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
 from natsort import humansorted
 from OFS.ObjectManager import BeforeDeleteException
@@ -4548,10 +4549,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''
         raise NotImplementedError
 
-    def sendStateDependingMailIfRelevant(self, old_review_state, new_review_state):
+    def sendStateDependingMailIfRelevant(self, old_review_state, transition_id, new_review_state):
         """Send notifications that depends on old/new review_state."""
         self._sendAdviceToGiveMailIfRelevant(old_review_state, new_review_state)
         self._sendCopyGroupsMailIfRelevant(old_review_state, new_review_state)
+        self._send_proposing_group_suffix_if_relevant(old_review_state,transition_id, new_review_state)
+        self._send_history_aware_mail_if_relevant(old_review_state, transition_id, new_review_state)
 
     def _sendAdviceToGiveMailIfRelevant(self,
                                         old_review_state,
@@ -4648,6 +4651,99 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def _sendCopyGroupsToGroup(self, groupId):
         """See docstring in interfaces.py"""
         return True
+
+    def _get_proposing_group_suffix_notified_user_ids_for_review_state(
+            self,
+            review_state,
+            excepted_manager=True
+    ):
+        """
+        Get all notified members ids of the proposing group suffix for a given 'review_state'
+        If 'excepted_manager' is True we omit the manager(s).
+        """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        suffix_notified = cfg.getItemWFValidationLevels(state=review_state)["suffix"]
+        plone_group_id_notified = get_plone_group_id(self.getProposingGroup(), suffix_notified)
+        plone_group_notified = api.group.get(plone_group_id_notified)
+
+        notified_user_ids = []
+        if not excepted_manager:
+            notified_user_ids = plone_group_notified.getMemberIds()
+        else:
+            for member in plone_group_notified.getGroupMembers():
+                user_roles = member.getRolesInContext(self)
+                if 'MeetingManager' not in user_roles:
+                    notified_user_ids.append(member.getId())
+        return notified_user_ids
+
+    def _send_proposing_group_suffix_if_relevant(self, old_review_state, transition_id,
+                                            new_review_state):
+        """
+        Notify by mail the proposing group suffix that will take care of this item in 'new_review_state'
+        """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+
+        mail_event_id = "item_state_changed_{}__proposing_group_suffix".format(transition_id)
+        is_notify_pg_suffix = mail_event_id in cfg.getMailItemEvents()
+        mail_event_id_except_manager = mail_event_id + "_except_manager"
+        is_notify_pg_suffix_excepted_manager = mail_event_id_except_manager in cfg.getMailItemEvents()
+
+        if not is_notify_pg_suffix and not is_notify_pg_suffix_excepted_manager:
+            return
+
+        notified_user_ids = self._get_proposing_group_suffix_notified_user_ids_for_review_state(
+            new_review_state,
+            is_notify_pg_suffix_excepted_manager
+        )
+        if is_notify_pg_suffix:
+            return sendMailIfRelevant(self, mail_event_id, notified_user_ids, isUserIds=True)
+        else:
+            return sendMailIfRelevant(self, mail_event_id_except_manager, notified_user_ids, isUserIds=True)
+
+    def _send_history_aware_mail_if_relevant(self, old_review_state, transition_id, new_review_state):
+        """
+        Notify by mail one specific user (if possible) based on the item history.
+        For "up" transition, we will notify the user that made the precedent 'back_transition'
+        to 'old_review_state'.
+        If it is the first time the item goes to 'new_review_state',
+        we notify the proposing group suffix (except manager) because we can't predict the future.
+        For "down" transition, we will notify the user that made the precedent 'leading_transition'
+        to 'old_review_state'.
+        """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        mail_event_id = "item_state_changed_{}__history_aware".format(transition_id)
+        if mail_event_id not in cfg.getMailItemEvents():
+            return
+
+        wf_direction = down_or_up_wf(self)
+        notified_user_ids = []
+        if wf_direction == "up":
+            # We are going up (again) so we will notify the user that made any transition
+            # after the last p_transition_id
+            wf_action_to_find = cfg.getItemWFValidationLevels(state=old_review_state)[
+                "back_transition"]
+            wf_action = getLastWFAction(self, wf_action_to_find)
+            if wf_action:  # In case WF definition has changed in the meantime
+                notified_user_ids = [wf_action["actor"]]
+        elif wf_direction == "down":
+            # We are going down so we will notify the user that made the precedent 'leading_transition'
+            # to the 'old_review_state'
+            wf_action_to_find = cfg.getItemWFValidationLevels(state=old_review_state)[
+                "leading_transition"]
+            wf_action = getLastWFAction(self, wf_action_to_find)
+            if wf_action:  # In case WF definition has changed in the meantime
+                notified_user_ids = [wf_action["actor"]]
+        else:
+            # We can't predict who will take care of the item after the transition so we notify
+            # the proposing group
+            notified_user_ids = self._get_proposing_group_suffix_notified_user_ids_for_review_state(
+                new_review_state
+            )
+
+        return sendMailIfRelevant(self, mail_event_id, notified_user_ids, isUserIds=True)
 
     security.declarePublic('sendAdviceDelayWarningMailIfRelevant')
 

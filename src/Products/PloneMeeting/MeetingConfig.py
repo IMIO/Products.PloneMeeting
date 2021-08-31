@@ -5447,6 +5447,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res.append((t.id, name))
         return res
 
+    security.declarePrivate('get_item_validation_transitions')
+
+    def get_item_validation_transitions(self):
+        '''Lists the possible transitions as defined in itemWFValidationLevels.'''
+        item_wf_validation_transitions = []
+        for validation_level in self.getItemWFValidationLevels(only_enabled=True,
+                                                               translated_itemWFValidationLevels=True):
+            if validation_level['leading_transition'] != "-":
+                item_wf_validation_transitions.append((
+                    validation_level['leading_transition'],
+                    validation_level['leading_transition_title']
+                ))
+            item_wf_validation_transitions.append((
+                validation_level['back_transition'],
+                validation_level['back_transition_title'],
+            ))
+        return item_wf_validation_transitions
+
     security.declarePrivate('listActiveOrgsForPowerAdvisers')
 
     def listActiveOrgsForPowerAdvisers(self):
@@ -6728,8 +6746,42 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                        mapping={'state_info': item_transition_name},
                                        context=self.REQUEST)
             res_transitions.append(("item_state_changed_%s" % item_transition_id, translated_msg))
+        res = DisplayList(tuple(res)) + DisplayList(res_transitions).sortedByValue()
 
-        return DisplayList(tuple(res)) + DisplayList(res_transitions).sortedByValue()
+        # itemWFValidationLevels based notifications
+        item_wf_validation_transitions = self.get_item_validation_transitions()
+
+        res_transitions = []
+        for item_transition_id, item_transition_name in item_wf_validation_transitions:
+            id = "item_state_changed_%s__history_aware" % item_transition_id
+            translated_msg = translate('transition_event_history_aware',
+                                       domain="PloneMeeting",
+                                       mapping={'state_info': item_transition_name},
+                                       context=self.REQUEST)
+            res_transitions.append((id, translated_msg))
+        res = res + DisplayList(res_transitions).sortedByValue()
+
+        res_transitions = []
+        for item_transition_id, item_transition_name in item_wf_validation_transitions:
+            id = "item_state_changed_%s__proposing_group_suffix" % item_transition_id
+            translated_msg = translate('transition_event_proposing_group_suffix',
+                                       domain="PloneMeeting",
+                                       mapping={'state_info': item_transition_name},
+                                       context=self.REQUEST)
+            res_transitions.append((id, translated_msg))
+        res = res + DisplayList(res_transitions).sortedByValue()
+
+        res_transitions = []
+        for item_transition_id, item_transition_name in item_wf_validation_transitions:
+            id = "item_state_changed_%s__proposing_group_suffix_except_manager" % item_transition_id
+            translated_msg = translate('transition_event_proposing_group_except_manager',
+                                       domain="PloneMeeting",
+                                       mapping={'state_info': item_transition_name},
+                                       context=self.REQUEST)
+            res_transitions.append((id, translated_msg))
+        res = res + DisplayList(res_transitions).sortedByValue()
+
+        return res
 
     security.declarePublic('listMeetingEvents')
 

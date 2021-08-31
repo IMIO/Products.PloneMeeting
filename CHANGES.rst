@@ -48,19 +48,34 @@ Changelog
   [gbastien]
 - Fixed display of `Application parameters` fieldset when adding a new organization
   in an overlay when on `Own organization`, CSS was hidding it wrongly.
-  refreshed and the screen scrolls to the modified item.
   [gbastien]
 - When going back to meeting from item, go to the correct faceted page and
   scroll to item position. Same scrolling mechanism is now used when an item is
   decided on a meeting, instead just refreshing the faceted, the faceted is
   refreshed and the screen scrolls to the modified item.
   [gbastien]
+- Added 3 new types of events related to items that will trigger a mail being sent:
+
+  - Item state changed, history aware : Notify by mail one specific user (if possible)
+    based on the item history.
+    For "up" transition, if the item has already been there we notify the user
+    that made the next transition at the time.
+    If it is the first time the item goes to 'new_review_state',
+    we notify the proposing group suffix (except manager) because we can't predict the future.
+    For "down" transition, we will notify the user that made the precedent 'leading_transition'
+    to 'old_review_state'.
+  - Item state changed, notify proposing group suffix : notify by mail the proposing group suffix
+    that will take care of this item in the new review state
+  - Item state changed, notify proposing group suffix except manager : Same as above except we don't
+    notify manager(s)
+  [aduchene]
 - Completed `MeetingConfig.validate_itemWFValidationLevels` to check that the
   `itemcreated` state always exists as first element (even if may be disabled),
   check also that every `back_transition` back transition identifier starts with
   `back` and that format of identifier columns (`state`, `leading_transition`,
   `back_transition` must be only alphanumeric) is correct.
   [gbastien]
+
 
 4.2b13 (2021-07-16)
 -------------------
