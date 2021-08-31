@@ -84,6 +84,10 @@ Changelog
   a given context. It is possible to get every labels, normal labels only or
   personal labels only.
   [gbastien]
+- Set `collective.documentgenerator` `column_modifier` parameter to `disabled` by default.
+  [gbastien]
+- Configure `MailHost` by default to use TLS and queuing.
+  [gbastien]
 - For field `MeetingCategory.category_mapping_when_cloning_to_other_mc`, display
   also disabled categories in vocabulary so it is visible on category view.
   [gbastien]
