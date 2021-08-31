@@ -80,6 +80,10 @@ Changelog
   This makes the list of positions on the `RedefineSignatoryForm` display the positions
   correctly (not the four valeus separated by pipe).
   [gbastien]
+- Added method `ToolPloneMeeting.get_labels` to be able to get `ftw.labels` of
+  a given context. It is possible to get every labels, normal labels only or
+  personal labels only.
+  [gbastien]
 
 4.2b13 (2021-07-16)
 -------------------

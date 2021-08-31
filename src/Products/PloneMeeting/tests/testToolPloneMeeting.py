@@ -16,6 +16,7 @@ from datetime import date
 from datetime import datetime
 from datetime import timedelta
 from DateTime import DateTime
+from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import cleanRamCacheFor
 from persistent.mapping import PersistentMapping
 from plone import api
@@ -1228,6 +1229,19 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # omitted_suffixes
         self.assertFalse(self.tool.user_is_in_org(self.developers.id, omitted_suffixes=["creators"]))
         self.assertTrue(self.tool.user_is_in_org(self.developers.id, omitted_suffixes=["observers"]))
+
+    def test_pm_get_labels(self):
+        """Test the ToolPloneMeeting.get_labels method
+           that will return ftw.labels active_labels."""
+        self.changeUser("pmCreator1")
+        item = self.create("MeetingItem")
+        self.assertEqual(self.tool.get_labels(item), {})
+        labeling = ILabeling(item)
+        labeling.update(['label'])
+        labeling.pers_update(['suivi'], True)
+        self.assertEqual(self.tool.get_labels(item), {'label': 'Label', 'suivi': 'Suivi'})
+        self.assertEqual(self.tool.get_labels(item, False), {'label': 'Label'})
+        self.assertEqual(self.tool.get_labels(item, "only"), {'suivi': 'Suivi'})
 
 
 def test_suite():

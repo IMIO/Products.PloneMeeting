@@ -25,6 +25,7 @@ from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from datetime import datetime
 from DateTime import DateTime
+from ftw.labels.interfaces import ILabeling
 from ftw.labels.labeling import ANNOTATION_KEY as FTW_LABELS_ANNOTATION_KEY
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import cleanRamCache
@@ -1592,6 +1593,22 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = True
         if not check_zope_admin():
             res = False
+        return res
+
+    def get_labels(self, obj, include_personal_labels=True):
+        """Return active labels for p_obj.
+           p_include_personal_labels may be:
+           - True: returns every labels, personal or not;
+           - False: personal labels not returned;
+           - "only": only personal labels returned."""
+        res = {}
+        labeling = ILabeling(obj)
+        labels = labeling.active_labels()
+        for label in labels:
+            if (include_personal_labels == "only" and not label['by_user']) or \
+               (include_personal_labels is False and label['by_user']):
+                continue
+            res[label['label_id']] = label['title']
         return res
 
 
