@@ -1,10 +1,14 @@
 <h1 class="documentFirstHeading" i18n:domain="PloneMeeting">
     <span tal:content="structure context/getPrettyLink">Pretty title</span>
-    <tal:itemRef define="itemNumber python: context.getItemNumber(relativeTo='meeting', for_display=True)"
+    <tal:itemRef define="itemNumber python: context.getItemNumber(relativeTo='meeting', for_display=True);
+                         itemReference python: context.getItemReference();"
                  condition="python: context.adapted().mustShowItemReference()">
         <br />
-        <span class="discreet" tal:condition="python: itemNumber != None"
-                               tal:content="python: str(itemNumber) + '.'"></span>
-        <span class="discreet" tal:content="context/getItemReference"></span>
+        <span class="discreet"
+              tal:condition="nocall:itemNumber"
+              tal:content="python: str(itemNumber) + '.'"></span>
+        <span class="discreet"
+              tal:condition="nocall:itemReference"
+              tal:content="python:itemReference"></span>
     </tal:itemRef>
 </h1>

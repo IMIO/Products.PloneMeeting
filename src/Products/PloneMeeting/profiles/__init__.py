@@ -527,6 +527,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.itemReferenceFormat = "python: 'Ref. ' + (here.hasMeeting() and " \
             "here.restrictedTraverse('@@pm_unrestricted_methods').getLinkedMeetingDate().strftime('%Y%m%d') or '') " \
             "+ '/' + str(here.getItemNumber(relativeTo='meeting', for_display=True))"
+        self.computeItemReferenceForItemsOutOfMeeting = False
         self.enableLabels = False
         # labels are like :
         # {'read': {'color': 'blue', 'label_id': 'read', 'by_user': True, 'title': 'Read'},

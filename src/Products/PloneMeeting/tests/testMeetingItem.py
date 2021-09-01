@@ -7002,6 +7002,44 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(len(brains_item4_ref), 1)
         self.assertEqual(brains_item4_ref[0].UID, item4.UID())
 
+    def test_pm_ItemReferenceOfItemsOutsideMeeting(self):
+        """Item reference is also computed on items outside meeting
+           if MeetingConfig.computeItemReferenceForItemsOutOfMeeting=True."""
+
+        cfg = self.meetingConfig
+        if not self._check_wfa_available(['accepted_out_of_meeting']):
+            return
+        self._activate_wfas(['accepted_out_of_meeting'])
+
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        # by default no reference for items out of meeting
+        self.assertFalse(cfg.getComputeItemReferenceForItemsOutOfMeeting())
+        item.setIsAcceptableOutOfMeeting(True)
+        self.validateItem(item)
+        self.do(item, "accept_out_of_meeting")
+        self.assertFalse(item._may_update_item_reference())
+        cfg.setComputeItemReferenceForItemsOutOfMeeting(True)
+        # set a referenceFormat expecting a meeting
+        cfg.setItemReferenceFormat(
+            "python: item.getMeeting().getLinkedMeetingDate().strftime('%Y%m%d') + '/1'")
+        item.update_item_reference()
+        self.assertEqual(item.getItemReference(), '')
+        # set a referenceFormat compatible with no meeting
+        cfg.setItemReferenceFormat(
+            "python: item.hasMeeting() and "
+            "item.getMeeting().getLinkedMeetingDate().strftime('%Y%m%d') + '/1' "
+            "or 'Ref/1'")
+        item.update_item_reference()
+        self.assertEqual(item.getItemReference(), 'Ref/1')
+        # back to validated and accept out of meeting again, reference is correct
+        self.do(item, "backToValidatedFromAcceptedOutOfMeeting")
+        self.assertEqual(item.getItemReference(), '')
+        self.do(item, "accept_out_of_meeting")
+        self.assertEqual(item.getItemReference(), 'Ref/1')
+        # reference viewable on item view
+        self.assertTrue(item.getItemReference() in item())
+
     def test_pm_ItemNotDeletableWhenContainingGivenAdvices(self):
         """If MeetingConfig.itemWithGivenAdviceIsNotDeletable is True,
            an item containing given advices will not be deletable."""
