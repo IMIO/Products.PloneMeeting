@@ -394,6 +394,14 @@ class IEncodeSecretVotes(Interface):
         meeting = context.getMeeting()
         votes = [vote for vote in data.votes if isinstance(vote, dict)]
         data.votes = votes
+        # when used in an overlay, PMNumberWidget number browser validation
+        # is not done, so we do it here... wrong values are received as None
+        none_values = [v for v in votes if v["vote_count"] is None]
+        if none_values:
+            msg = translate(u'error_some_values_are_not_integers',
+                            domain="PloneMeeting",
+                            context=context.REQUEST)
+            raise Invalid(msg)
         # check if max voters of every linked secret votes is not exceeded
         linked_vote_numbers = _get_linked_item_vote_numbers(context, meeting, data.vote_number)
         max_voters = len(context.get_item_voters())

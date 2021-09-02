@@ -563,6 +563,20 @@ class testVotes(PloneMeetingTestCase):
             invariant(data)
         self.assertEqual(cm.exception.message, error_msg)
 
+        # when used in an overlay, the PMNumberWidget number brower validation
+        # is not correctly done, we could get values other than integers...
+        error_msg = translate('error_some_values_are_not_integers',
+                              domain='PloneMeeting',
+                              context=self.request)
+        votes = [
+            {'vote_value': 'yes', 'vote_count': None, 'vote_value_id': 'yes'},
+            {'vote_value': 'no', 'vote_count': 2, 'vote_value_id': 'no'},
+            {'vote_value': 'abstain', 'vote_count': 2, 'vote_value_id': 'abstain'}]
+        data = DummyData(secret_item, votes)
+        with self.assertRaises(Invalid) as cm:
+            invariant(data)
+        self.assertEqual(cm.exception.message, error_msg)
+
     def test_pm_ItemVotesWhenItemRemovedFromMeeting(self):
         """Ensure Meeting.item_votes correctly wiped out when item removed from meeting."""
         self.changeUser('pmManager')
