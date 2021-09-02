@@ -1778,16 +1778,14 @@ class testMeetingType(PloneMeetingTestCase):
         lateItem = self.create('MeetingItem')
         lateItem.setPreferredMeeting(meeting.UID())
 
-        # presenting an item in a before late state (before frozen) will insert it as normal
-        late_state = meeting.adapted().get_late_state()
-        before_late_states = get_states_before(meeting, late_state)
-        self.assertTrue(meeting.query_state() in before_late_states)
+        # presenting an item in a not late meeting will insert it as normal
+        self.assertFalse(meeting.is_late())
         self.presentItem(normalItem)
         self.assertEqual(normalItem.getListType(), 'normal')
 
         # freeze the meeting and insert the late item
         self.freezeMeeting(meeting)
-        self.assertFalse(meeting.query_state() in before_late_states)
+        self.assertTrue(meeting.is_late())
         self.presentItem(lateItem)
         self.assertEqual(lateItem.getListType(), 'late')
 
@@ -1795,7 +1793,7 @@ class testMeetingType(PloneMeetingTestCase):
         # and insert it again, it will be inserted as a normal item
         self.backToState(meeting, 'created')
         self.backToState(lateItem, 'validated')
-        self.assertTrue(meeting.query_state() in before_late_states)
+        self.assertFalse(meeting.is_late())
         self.presentItem(lateItem)
         self.assertEqual(lateItem.getListType(), 'normal')
 
@@ -2360,16 +2358,15 @@ class testMeetingType(PloneMeetingTestCase):
         item.REQUEST['PUBLISHED'] = item
 
         # for now, the next meeting is used
-        late_state = meeting1.adapted().get_late_state()
-        self.assertTrue(meeting1.query_state() in get_states_before(meeting1, late_state))
-        self.assertTrue(meeting2.query_state() in get_states_before(meeting2, late_state))
+        self.assertFalse(meeting1.is_late())
+        self.assertFalse(meeting2.is_late())
         self.assertTrue(meeting1.date < meeting2.date)
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting1)
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         # freeze meeting1, meeting2 is used
         self.freezeMeeting(meeting1)
-        self.assertFalse(meeting1.query_state() in get_states_before(meeting1, late_state))
+        self.assertTrue(meeting1.is_late())
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting2)
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')

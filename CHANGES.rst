@@ -96,6 +96,8 @@ Changelog
   Now item reference is updated when item inserted/removed from a meeting but also
   when back to validated and for transitions deciding out of meeting.
   [gbastien]
+- Added helper method `Meeting.is_late` and use it everywhere necessary.
+  [gbastien]
 
 4.2b13 (2021-07-16)
 -------------------

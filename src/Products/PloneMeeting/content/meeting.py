@@ -1086,7 +1086,8 @@ class Meeting(Container):
         return self.get_items(ordered=ordered, **kwargs)
 
     def is_late(self):
-        ''' '''
+        '''Is meeting considered late?
+           It is the case if the review_state is after the late state.'''
         meeting_state = self.query_state()
         late_state = self.adapted().get_late_state()
         return meeting_state not in get_states_before(self, late_state)

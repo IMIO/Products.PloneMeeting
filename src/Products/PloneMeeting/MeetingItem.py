@@ -560,11 +560,10 @@ class MeetingItemWorkflowConditions(object):
         '''See doc in interfaces.py.'''
         if meeting:
             preferred_meeting = self.context.getPreferredMeeting(theObject=True)
-            if preferred_meeting:
-                late_state = meeting.adapted().get_late_state()
-                if (meeting.query_state() not in get_states_before(meeting, late_state)) and \
-                   (meeting.date >= preferred_meeting.date):
-                    return True
+            if preferred_meeting and \
+               meeting.is_late() and \
+               meeting.date >= preferred_meeting.date:
+                return True
         return False
 
     def _hasAdvicesToGive(self, destination_state):
@@ -746,9 +745,7 @@ class MeetingItemWorkflowActions(object):
         meeting.insert_item(self.context, force_normal=self._forceInsertNormal())
         # If the meeting is already in a late state and this item is a "late" item,
         # I must set automatically the item to the first "late state" (itemfrozen by default).
-        late_state = meeting.adapted().get_late_state()
-        before_late_states = get_states_before(meeting, late_state)
-        if before_late_states and meeting.query_state() not in before_late_states:
+        if meeting.is_late():
             self._latePresentedItem()
 
     def _latePresentedItem(self):
@@ -3095,10 +3092,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # in case meeting is frozen, make sure current item isLateFor(meeting)
             # also in case no meetingStates, a closed meeting could be returned, check
             # that current user may edit returned meeting
-            late_state = meeting.adapted().get_late_state()
-            if meeting.wfConditions().may_accept_items() and (
-                    meeting.query_state() in get_states_before(meeting, late_state) or
-                    self.wfConditions().isLateFor(meeting)):
+            if meeting.wfConditions().may_accept_items() and \
+               (not meeting.is_late() or self.wfConditions().isLateFor(meeting)):
                 return meeting
         return None
 
@@ -3730,10 +3725,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         may_update = False
         item = self.getSelf()
         meeting = item.getMeeting()
-        late_state = None
         if meeting:
-            late_state = meeting.adapted().get_late_state()
-            may_update = meeting.query_state() not in get_states_before(meeting, late_state)
+            may_update = meeting.is_late()
         else:
             # manage reference for items decided out of meeting
             tool = api.portal.get_tool("portal_plonemeeting")
