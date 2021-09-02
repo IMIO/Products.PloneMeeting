@@ -91,6 +91,8 @@ Changelog
 - For field `MeetingCategory.category_mapping_when_cloning_to_other_mc`, display
   also disabled categories in vocabulary so it is visible on category view.
   [gbastien]
+- Completed `IEncodeSecretVotes.validate_votes` to ensure values are integers.
+  [gbastien]
 - Added parameter `MeetingConfig.computeItemReferenceForItemsOutOfMeeting` to
   enable computation of item reference for items decided out of meeting.
   Now item reference is updated when item inserted/removed from a meeting but also
