@@ -1090,7 +1090,7 @@ class Meeting(Container):
            It is the case if the review_state is after the late state.'''
         meeting_state = self.query_state()
         late_state = self.adapted().get_late_state()
-        return meeting_state not in get_states_before(self, late_state)
+        return late_state and meeting_state not in get_states_before(self, late_state)
 
     def _available_items_query(self):
         '''Check docstring in IMeeting.'''
