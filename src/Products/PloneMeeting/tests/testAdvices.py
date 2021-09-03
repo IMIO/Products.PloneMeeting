@@ -2113,6 +2113,12 @@ class testAdvices(PloneMeetingTestCase):
         advice_view = developers_advice.restrictedTraverse('@@view')
         self.assertRaises(Unauthorized, advice_view)
 
+        # if the adviser is also powerobserver, he may access the advice nevertheless
+        self._addPrincipalToGroup('pmAdviser1', '%s_powerobservers' % cfg.getId())
+        self.changeUser('pmAdviser1')
+        advice_view = developers_advice.restrictedTraverse('@@view')
+        self.assertTrue(advice_view())
+
         # a MeetingManager may toggle advice confidentiality
         # a MeetingManager would be able to change advice confidentiality
         self.changeUser('pmManager')

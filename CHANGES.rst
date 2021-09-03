@@ -100,6 +100,10 @@ Changelog
   [gbastien]
 - Added helper method `Meeting.is_late` and use it everywhere necessary.
   [gbastien]
+- Fixed `MeetingItem._adviceIsViewableForCurrentUser` when a confidential advice
+  is not shown to powerobservers, the advisers of the advice have access to the
+  advice even if they are also powerobservers.
+  [gbastien]
 
 4.2b13 (2021-07-16)
 -------------------

@@ -5133,10 +5133,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
           Returns True if current user may view the advice.
         '''
         # if confidentiality is used and advice is marked as confidential,
+        # and current user is not members of the _advisers that gave advice
         # advices could be hidden to power observers and/or restricted power observers
-        if cfg.getEnableAdviceConfidentiality() and adviceInfo['isConfidential'] and \
-           set(user_power_observer_types).intersection(set(cfg.getAdviceConfidentialFor())):
-            return False
+        if cfg.getEnableAdviceConfidentiality() and adviceInfo['isConfidential']:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            advisers_group_id = get_plone_group_id(adviceInfo['id'], 'advisers')
+            if advisers_group_id not in tool.get_plone_groups_for_user() and \
+               set(user_power_observer_types).intersection(set(cfg.getAdviceConfidentialFor())):
+                return False
         return True
 
     def _shownAdviceTypeFor(self, adviceInfo):
