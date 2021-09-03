@@ -1085,6 +1085,13 @@ class Meeting(Container):
         kwargs["additional_catalog_query"] = additional_catalog_query
         return self.get_items(ordered=ordered, **kwargs)
 
+    def is_late(self):
+        '''Is meeting considered late?
+           It is the case if the review_state is after the late state.'''
+        meeting_state = self.query_state()
+        late_state = self.adapted().get_late_state()
+        return late_state and meeting_state not in get_states_before(self, late_state)
+
     def _available_items_query(self):
         '''Check docstring in IMeeting.'''
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -1104,8 +1111,7 @@ class Meeting(Container):
                ]
 
         # before late state, accept items having any preferred meeting
-        late_state = self.adapted().get_late_state()
-        if meeting_state in get_states_before(self, late_state):
+        if not self.is_late():
             # get items for which the preferred_meeting_date is lower or
             # equal to the date of this meeting (self)
             # a no preferred meeting item preferred_meeting_date is 1950/01/01

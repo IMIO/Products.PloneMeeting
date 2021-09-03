@@ -633,6 +633,20 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
+        name='computeItemReferenceForItemsOutOfMeeting',
+        default=defValues.computeItemReferenceForItemsOutOfMeeting,
+        widget=BooleanField._properties['widget'](
+            description="ComputeItemReferenceForItemsOutOfMeeting",
+            description_msgid="compute_item_reference_for_items_out_of_meeting_descr",
+            label='Computeitemreferenceforitemsoutofmeeting',
+            label_msgid='PloneMeeting_label_computeItemReferenceForItemsOutOfMeeting',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+        write_permission="PloneMeeting: Write risky config",
+    ),
+
+    BooleanField(
         name='enableLabels',
         default=defValues.enableLabels,
         widget=BooleanField._properties['widget'](

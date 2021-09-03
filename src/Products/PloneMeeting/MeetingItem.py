@@ -560,11 +560,10 @@ class MeetingItemWorkflowConditions(object):
         '''See doc in interfaces.py.'''
         if meeting:
             preferred_meeting = self.context.getPreferredMeeting(theObject=True)
-            if preferred_meeting:
-                late_state = meeting.adapted().get_late_state()
-                if (meeting.query_state() not in get_states_before(meeting, late_state)) and \
-                   (meeting.date >= preferred_meeting.date):
-                    return True
+            if preferred_meeting and \
+               meeting.is_late() and \
+               meeting.date >= preferred_meeting.date:
+                return True
         return False
 
     def _hasAdvicesToGive(self, destination_state):
@@ -746,9 +745,7 @@ class MeetingItemWorkflowActions(object):
         meeting.insert_item(self.context, force_normal=self._forceInsertNormal())
         # If the meeting is already in a late state and this item is a "late" item,
         # I must set automatically the item to the first "late state" (itemfrozen by default).
-        late_state = meeting.adapted().get_late_state()
-        before_late_states = get_states_before(meeting, late_state)
-        if before_late_states and meeting.query_state() not in before_late_states:
+        if meeting.is_late():
             self._latePresentedItem()
 
     def _latePresentedItem(self):
@@ -780,6 +777,7 @@ class MeetingItemWorkflowActions(object):
            'accepted_out_of_meeting_and_duplicated' is used."""
         if 'accepted_out_of_meeting_and_duplicated' in self.cfg.getWorkflowAdaptations():
             self._duplicateAndValidate(cloneEventAction='create_from_accepted_out_of_meeting')
+        self.context.update_item_reference()
 
     security.declarePrivate('doAccept_out_of_meeting_emergency')
 
@@ -788,6 +786,7 @@ class MeetingItemWorkflowActions(object):
            'accepted_out_of_meeting_and_duplicated' is used."""
         if 'accepted_out_of_meeting_emergency_and_duplicated' in self.cfg.getWorkflowAdaptations():
             self._duplicateAndValidate(cloneEventAction='create_from_accepted_out_of_meeting_emergency')
+        self.context.update_item_reference()
 
     security.declarePrivate('doAccept')
 
@@ -880,14 +879,18 @@ class MeetingItemWorkflowActions(object):
           Most of times we do nothing, but in some case, we check the old/new state and
           do some specific treatment.
         """
-        # Remove item from meeting if necessary when going to a state where item is not linked to a meeting
-        if self.context.hasMeeting() and \
-           stateChange.new_state.id in self._get_item_states_removed_from_meeting():
+        meeting = self.context.getMeeting()
+        # Remove item from meeting if necessary when going to a state
+        # where item is not linked to a meeting
+        if meeting and stateChange.new_state.id in self._get_item_states_removed_from_meeting():
             # We may have to send a mail
             sendMailIfRelevant(self.context, 'itemUnpresented', 'creators', isSuffix=True)
             sendMailIfRelevant(self.context, 'itemUnpresentedOwner', 'Owner', isRole=True)
             # remove the item from the meeting
             self.context.getMeeting().remove_item(self.context)
+        # back to validated from "accepted_out_of_meeting"
+        if stateChange.new_state.id == "validated" and self.context.getItemReference():
+            self.context.update_item_reference()
         # if an item was returned to proposing group for corrections and that
         # this proposing group sends the item back to the meeting managers, we
         # send an email to warn the MeetingManagers if relevant
@@ -3089,10 +3092,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # in case meeting is frozen, make sure current item isLateFor(meeting)
             # also in case no meetingStates, a closed meeting could be returned, check
             # that current user may edit returned meeting
-            late_state = meeting.adapted().get_late_state()
-            if meeting.wfConditions().may_accept_items() and (
-                    meeting.query_state() in get_states_before(meeting, late_state) or
-                    self.wfConditions().isLateFor(meeting)):
+            if meeting.wfConditions().may_accept_items() and \
+               (not meeting.is_late() or self.wfConditions().isLateFor(meeting)):
                 return meeting
         return None
 
@@ -3721,13 +3722,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _may_update_item_reference(self):
         '''See docstring in interfaces.py.'''
+        may_update = False
         item = self.getSelf()
         meeting = item.getMeeting()
-        late_state = None
         if meeting:
-            late_state = meeting.adapted().get_late_state()
-        return bool(
-            meeting and meeting.query_state() not in get_states_before(meeting, late_state))
+            may_update = meeting.is_late()
+        else:
+            # manage reference for items decided out of meeting
+            tool = api.portal.get_tool("portal_plonemeeting")
+            cfg = tool.getMeetingConfig(item)
+            may_update = cfg.getComputeItemReferenceForItemsOutOfMeeting() and \
+                item.query_state() in cfg.getItemDecidedStates()
+        return may_update
 
     security.declarePublic('update_item_reference')
 
@@ -3742,6 +3748,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             extra_expr_ctx = _base_extra_expr_ctx(item)
             extra_expr_ctx.update({'item': item, 'meeting': meeting})
             cfg = extra_expr_ctx['cfg']
+            # default raise_on_error=False so if the expression
+            # raise an error, we will get '' for reference and a message in the log
             res = _evaluateExpression(item,
                                       expression=cfg.getItemReferenceFormat().strip(),
                                       roles_bypassing_expression=[],
@@ -4269,9 +4277,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def mustShowItemReference(self):
         '''See doc in interfaces.py'''
+        res = False
         item = self.getSelf()
-        if item.hasMeeting() and (item.getMeeting().query_state() != 'created'):
-            return True
+        meeting = item.getMeeting()
+        if (meeting and item.getMeeting().is_late()) or \
+           (not meeting and item.getItemReference()):
+            res = True
+        return res
 
     security.declarePrivate('addRecurringItemToMeeting')
 
@@ -4553,8 +4565,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """Send notifications that depends on old/new review_state."""
         self._sendAdviceToGiveMailIfRelevant(old_review_state, new_review_state)
         self._sendCopyGroupsMailIfRelevant(old_review_state, new_review_state)
-        self._send_proposing_group_suffix_if_relevant(old_review_state,transition_id, new_review_state)
-        self._send_history_aware_mail_if_relevant(old_review_state, transition_id, new_review_state)
+        self._send_proposing_group_suffix_if_relevant(
+            old_review_state, transition_id, new_review_state)
+        self._send_history_aware_mail_if_relevant(
+            old_review_state, transition_id, new_review_state)
 
     def _sendAdviceToGiveMailIfRelevant(self,
                                         old_review_state,
@@ -4677,8 +4691,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     notified_user_ids.append(member.getId())
         return notified_user_ids
 
-    def _send_proposing_group_suffix_if_relevant(self, old_review_state, transition_id,
-                                            new_review_state):
+    def _send_proposing_group_suffix_if_relevant(
+            self,
+            old_review_state,
+            transition_id,
+            new_review_state):
         """
         Notify by mail the proposing group suffix that will take care of this item in 'new_review_state'
         """

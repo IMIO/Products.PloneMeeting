@@ -10,7 +10,6 @@ from plone.app.layout.viewlets import ViewletBase
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.events import _is_held_pos_uid_used_by
 from Products.PloneMeeting.utils import displaying_available_items
-from Products.PloneMeeting.utils import get_states_before
 from zope.component import getMultiAdapter
 
 
@@ -24,8 +23,7 @@ class ForceInsertNormal(ViewletBase):
 
     def enabled(self):
         """Is the checkbox enabled?  Only necessary if meeting is in a late state."""
-        late_state = self.context.adapted().get_late_state()
-        return self.context.query_state() not in get_states_before(self.context, late_state)
+        return self.context.is_late()
 
     def render(self):
         if self.available():

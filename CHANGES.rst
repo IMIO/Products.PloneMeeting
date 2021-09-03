@@ -93,6 +93,13 @@ Changelog
   [gbastien]
 - Completed `IEncodeSecretVotes.validate_votes` to ensure values are integers.
   [gbastien]
+- Added parameter `MeetingConfig.computeItemReferenceForItemsOutOfMeeting` to
+  enable computation of item reference for items decided out of meeting.
+  Now item reference is updated when item inserted/removed from a meeting but also
+  when back to validated and for transitions deciding out of meeting.
+  [gbastien]
+- Added helper method `Meeting.is_late` and use it everywhere necessary.
+  [gbastien]
 
 4.2b13 (2021-07-16)
 -------------------
