@@ -3178,17 +3178,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Check doc in interfaces.py.'''
         return []
 
-    security.declarePrivate('listTemplateUsingGroups')
-
-    def listTemplateUsingGroups(self):
-        '''Returns a list of orgs that will restrict the use of this item
-           when used (usage) as an item template.'''
-        res = []
-        orgs = get_organizations()
-        for org in orgs:
-            res.append((org.UID(), org.get_full_title()))
-        return DisplayList(tuple(res))
-
     security.declarePrivate('listMeetingsAcceptingItems')
 
     def listMeetingsAcceptingItems(self):
@@ -3239,17 +3228,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def listMeetingTransitions(self):
         '''Lists the possible transitions for meetings of the same meeting
            config as this item.'''
-        # I add here the "initial transition", that is not stored as a real
-        # transition.
-        res = [('_init_', translate('_init_', domain="plone", context=self.REQUEST))]
         tool = api.portal.get_tool('portal_plonemeeting')
-        wfTool = api.portal.get_tool('portal_workflow')
         cfg = tool.getMeetingConfig(self)
-        meetingWorkflow = wfTool.getWorkflowsFor(cfg.getMeetingTypeName())[0]
-        for transition in meetingWorkflow.transitions.objectValues():
-            name = translate(transition.id, domain="plone", context=self.REQUEST) + ' (' + transition.id + ')'
-            res.append((transition.id, name))
-        return DisplayList(tuple(res))
+        res = cfg.listEveryMeetingTransitions()
+        res.add('_init_',
+                translate('_init_', domain="plone", context=self.REQUEST))
+        return res
 
     security.declarePrivate('listOtherMeetingConfigsClonableTo')
 
