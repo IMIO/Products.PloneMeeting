@@ -2130,7 +2130,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(self.hasPermission(View, i1))
         # validate the item
         self.changeUser('pmManager')
+        # copyGroups icon is black
+        self.assertFalse("green-colored" in i1())
         self.validateItem(i1)
+        self.assertTrue("green-colored" in i1())
         # not viewable because no copyGroups defined...
         self.changeUser('pmCreator2')
         self.failIf(self.hasPermission(View, i1))
@@ -2691,6 +2694,15 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(secretItem.adapted().isPrivacyViewable())
         self.failUnless(publicItem.adapted().isPrivacyViewable())
         self.failIf(secretHeadingItem.adapted().isPrivacyViewable())
+        self.failUnless(publicHeadingItem.adapted().isPrivacyViewable())
+
+        # when disabling MeetingConfig.restrictAccessToSecretItems
+        # then everybody has access, the privacy is only an information
+        cfg.setRestrictAccessToSecretItems(False)
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.isPrivacyViewable')
+        self.failUnless(secretItem.adapted().isPrivacyViewable())
+        self.failUnless(publicItem.adapted().isPrivacyViewable())
+        self.failUnless(secretHeadingItem.adapted().isPrivacyViewable())
         self.failUnless(publicHeadingItem.adapted().isPrivacyViewable())
 
     def test_pm_IsPrivacyViewableViewAccessTakePrecedenceOverPowerObserversRestrictions(self):
