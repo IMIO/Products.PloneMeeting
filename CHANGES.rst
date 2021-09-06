@@ -104,6 +104,8 @@ Changelog
   is not shown to powerobservers, the advisers of the advice have access to the
   advice even if they are also powerobservers.
   [gbastien]
+- Removed unused method `MeetingItemWorkflowConditions._check_review_and_required`.
+  [gbastien]
 
 4.2b13 (2021-07-16)
 -------------------

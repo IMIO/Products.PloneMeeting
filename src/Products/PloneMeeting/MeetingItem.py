@@ -227,16 +227,6 @@ class MeetingItemWorkflowConditions(object):
                 msg = No(_('required_groupsInCharge_ko'))
         return msg
 
-    def _check_review_and_required(self, destination_state):
-        """Base check that will check for ReviewPortalContent and required data."""
-        res = False
-        if _checkPermission(ReviewPortalContent, self.context):
-            res = True
-            msg = self._check_required_data(destination_state)
-            if msg is not None:
-                res = msg
-        return res
-
     security.declarePublic('mayProposeToNextValidationLevel')
 
     def mayProposeToNextValidationLevel(self, destinationState=None):
