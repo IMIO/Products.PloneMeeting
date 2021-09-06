@@ -233,8 +233,8 @@ class testContacts(PloneMeetingTestCase):
         self.assertFalse(meeting.get_item_excused(by_persons=True))
 
         # byebye person on item1 and item2
-        hp1_uid = meeting_attendees[0]
-        hp2_uid = meeting_attendees[1]
+        hp1_uid = unicode(meeting_attendees[0])
+        hp2_uid = unicode(meeting_attendees[1])
         byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form')
         byebye_nonattendee_form = item1.restrictedTraverse('@@item_byebye_nonattendee_form')
         byebye_form.meeting = meeting
@@ -322,10 +322,15 @@ class testContacts(PloneMeetingTestCase):
             self.assertEqual(view.getItemsForNotPresent(), [item1, item2])
 
         # welcome hp1 on item2
+        self.request.set('person_uid', hp1_uid)
         welcome_form = item2.restrictedTraverse('@@item_welcome_attendee_form')
         welcome_form.meeting = meeting
         welcome_form.person_uid = hp1_uid
         welcome_form.apply_until_item_number = u''
+        welcome_form.update()
+        self.assertEqual(
+            welcome_form.description,
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1')
         welcome_form._doApply()
         self.assertEqual(item1.get_item_absents(), (hp1_uid, ))
         self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
@@ -335,24 +340,38 @@ class testContacts(PloneMeetingTestCase):
         welcome_form.meeting = meeting
         welcome_form.person_uid = hp1_uid
         welcome_form.apply_until_item_number = u''
+        welcome_form.update()
+        self.assertEqual(
+            welcome_form.description,
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1')
         welcome_form._doApply()
         self.assertFalse(item1.get_item_absents())
         self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
         self.assertFalse(item2.get_item_absents())
         # welcome hp2 on item1
+        self.request.set('person_uid', hp2_uid)
         welcome_form = item1.restrictedTraverse('@@item_welcome_attendee_form')
         welcome_form.meeting = meeting
         welcome_form.person_uid = hp2_uid
         welcome_form.apply_until_item_number = u''
+        welcome_form.update()
+        self.assertEqual(
+            welcome_form.description,
+            u'Monsieur Person2FirstName Person2LastName, Assembly member 2')
         welcome_form._doApply()
         self.assertFalse(item1.get_item_excused())
         self.assertFalse(item2.get_item_excused())
         self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
         # welcome non attendee hp1 on item1 and item2
+        self.request.set('person_uid', hp1_uid)
         welcome_nonattendee_form = item1.restrictedTraverse('@@item_welcome_nonattendee_form')
         welcome_nonattendee_form.meeting = meeting
         welcome_nonattendee_form.person_uid = hp1_uid
         welcome_nonattendee_form.apply_until_item_number = u'200'
+        welcome_nonattendee_form.update()
+        self.assertEqual(
+            welcome_nonattendee_form.description,
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1')
         welcome_nonattendee_form._doApply()
         self.assertFalse(item1.get_item_excused())
         self.assertFalse(item2.get_item_excused())
