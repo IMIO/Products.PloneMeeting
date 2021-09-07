@@ -452,12 +452,15 @@ class testVotes(PloneMeetingTestCase):
             self._createMeetingWithVotes(include_yes=False)
 
         # encode votes form
-        votes_form = secret_item.restrictedTraverse('@@item_encode_secret_votes_form').form_instance
+        votes_form = secret_item.restrictedTraverse(
+            '@@item_encode_secret_votes_form').form_instance
+        self.request['PUBLISHED'] = secret_item
         votes_form.meeting = meeting
         votes_form.votes = [
             {'vote_value': 'yes', 'vote_count': 0, 'vote_value_id': 'yes'},
             {'vote_value': 'no', 'vote_count': 4, 'vote_value_id': 'no'},
             {'vote_value': 'abstain', 'vote_count': 0, 'vote_value_id': 'abstain'}]
+        self.request.form['vote_number'] = 0
         votes_form.vote_number = 0
         votes_form.label = u"My label"
         votes_form.linked_to_previous = False
@@ -466,6 +469,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, votes_form._doApply)
         self.changeUser('pmManager')
         self.assertEqual(secret_item.getVoteCount('yes'), 1)
+        votes_form.update()
         votes_form._doApply()
         # votes were updated
         self.assertEqual(secret_item.getVoteCount('yes'), 0)

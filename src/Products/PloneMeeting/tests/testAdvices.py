@@ -3532,6 +3532,9 @@ class testAdvices(PloneMeetingTestCase):
         item = self.create('MeetingItem', **data)
 
         self.changeUser('pmAdviser1')
+        # advice is addable
+        advices_icons = item.restrictedTraverse('@@advices-icons')
+        self.assertTrue("Add an advice" in advices_icons())
         # before advice is given, creator is obviously not displayed
         advices_icons_infos = item.restrictedTraverse('@@advices-icons-infos')
         adviser_fullname = '<span>{0}</span>'.format(self.member.getProperty('fullname'))
