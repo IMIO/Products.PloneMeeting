@@ -39,8 +39,6 @@
            name="Products.PloneMeeting.vocabularies.creatorsvocabulary" />
   <utility component=".vocabularies.CreatorsForFacetedFilterVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.creatorsforfacetedfiltervocabulary" />
-  <utility component=".vocabularies.CreatorsWithNobodyForFacetedFilterVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.creatorswithnobodyforfacetedfiltervocabulary" />
   <utility component=".vocabularies.MeetingDatesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.meetingdatesvocabulary" />
   <utility component=".vocabularies.ItemOptionalAdvicesVocabularyFactory"
