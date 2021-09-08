@@ -171,8 +171,18 @@ class testVotes(PloneMeetingTestCase):
         meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
             self._createMeetingWithVotes()
 
+        # public_item
         self.changeUser('pmCreator1')
         delete_view = public_item.restrictedTraverse('@@item_delete_vote')
+        self.assertRaises(Unauthorized, delete_view, 0, redirect=False)
+        self.changeUser('pmManager')
+        self.assertTrue(delete_view.context.get_item_votes(include_unexisting=False))
+        delete_view(0, redirect=False)
+        self.assertFalse(delete_view.context.get_item_votes(include_unexisting=False))
+
+        # secret_item
+        self.changeUser('pmCreator1')
+        delete_view = secret_item.restrictedTraverse('@@item_delete_vote')
         self.assertRaises(Unauthorized, delete_view, 0, redirect=False)
         self.changeUser('pmManager')
         self.assertTrue(delete_view.context.get_item_votes(include_unexisting=False))
@@ -349,6 +359,7 @@ class testVotes(PloneMeetingTestCase):
         person4 = self.portal.contacts.get('person4')
         hp4 = person4.get_held_positions()[0]
         hp4_uid = hp4.UID()
+        self.request['PUBLISHED'] = public_item
         votes_form = public_item.restrictedTraverse('@@item_encode_votes_form').form_instance
         votes_form.meeting = meeting
         # change vote to all 'no'
@@ -357,13 +368,16 @@ class testVotes(PloneMeetingTestCase):
                             {'voter_uid': hp3_uid, 'vote_value': 'no'},
                             {'voter_uid': hp4_uid, 'vote_value': 'no'}]
         votes_form.vote_number = 0
+        self.request.form['vote_number'] = 0
         votes_form.label = u"My label"
         votes_form.linked_to_previous = False
+        votes_form.update()
         # only for MeetingManagers
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, votes_form._doApply)
         self.changeUser('pmManager')
         self.assertEqual(public_item.getVoteCount('yes'), 2)
+        votes_form.update()
         votes_form._doApply()
         # votes were updated
         self.assertEqual(public_item.getVoteCount('yes'), 0)

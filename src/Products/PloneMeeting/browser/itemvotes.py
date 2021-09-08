@@ -257,6 +257,7 @@ class EncodeVotesForm(BaseAttendeeForm):
     fields['votes'].widgetFactory = DataGridFieldFactory
 
     def updateWidgets(self):
+        import ipdb; ipdb.set_trace()
         # hide vote_number field
         self.fields['vote_number'].mode = HIDDEN_MODE
         # do not hide it, when hidding it, value is always True???
