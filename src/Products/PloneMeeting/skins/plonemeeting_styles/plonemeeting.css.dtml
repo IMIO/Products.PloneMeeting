@@ -1360,6 +1360,10 @@ div.pmMoreInfo p.page-break:after {
 span[id^="parent-fieldname-itemIconColor"] {
     padding-left: 20px;
 }
+img.itemIconColor {
+    position: relative;
+    top: 32px;
+}
 
 dl.portletWidgetCollection dt span {
    vertical-align: middle;

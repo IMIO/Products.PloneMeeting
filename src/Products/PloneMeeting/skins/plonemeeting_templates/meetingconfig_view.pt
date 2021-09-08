@@ -70,9 +70,9 @@
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td width="25%" tal:define="field python:here.getField('itemIconColor')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-            <img style="position: absolute; margin-top: -20px;"
+            <img class="itemIconColor"
                  tal:attributes="src string:${portal_url}/${here/getItemIconColorName}" />
+            <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
         <tr valign="top">
