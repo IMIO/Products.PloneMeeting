@@ -324,6 +324,9 @@ class ItemNumberColumn(BrowserViewCallColumn):
         _may_change_items_order = getattr(self.table, '_may_change_items_order', None)
         if _may_change_items_order is None:
             self.table._may_change_items_order = meeting.wfConditions().may_change_items_order()
+            if not self.table._may_change_items_order:
+                # avoid init table DND, would slow browser for nothing
+                self.header_js = u''
         return self.table._may_change_items_order
 
     def renderHeadCell(self):

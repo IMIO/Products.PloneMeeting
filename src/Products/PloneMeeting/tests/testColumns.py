@@ -207,10 +207,18 @@ class testColumns(PloneMeetingTestCase):
         column = faceted_table.columnByName['getCategory']
         item_brain = self.catalog(UID=item.UID())[0]
         self.assertEqual(column.renderCell(item_brain), u'Development topics')
+        self.assertEqual(
+            column.getCSSClasses(item_brain),
+            {'td': 'td_cell_getCategory td_cell_development',
+             'th': 'th_header_getCategory'})
         item.setCategory('')
         item.reindexObject(idxs=['getCategory'])
         item_brain = self.catalog(UID=item.UID())[0]
         self.assertEqual(column.renderCell(item_brain), u'-')
+        self.assertEqual(
+            column.getCSSClasses(item_brain),
+            {'td': 'td_cell_getCategory td_cell_',
+             'th': 'th_header_getCategory'})
 
     def test_pm_MeetingPrettyLinkColumnWithStaticInfos(self):
         """Test the PMPrettyLinkColumn for Meeting, especially when displaying static infos."""
@@ -262,12 +270,29 @@ class testColumns(PloneMeetingTestCase):
         self.assertTrue(u"\u28ff" in column.renderCell(item_brain))
         self.assertTrue(u"data-item_number='100'" in column.renderCell(item_brain))
         self.assertTrue('onclick="moveItem(baseUrl' in column.renderCell(item_brain))
+        # header and CSS
+        self.assertEqual(
+            column.getCSSClasses(item_brain),
+            {'td': 'draggable',
+             'th': 'th_header_draggable'})
+        self.assertEqual(
+            column.renderHeadCell(),
+            u'</th><th class="th_header_getItemNumber"><script '
+            u'type="text/javascript">initializeItemsDND();</script> ')
+
+        # simplified for non MeetingManagers
         self.changeUser('pmCreator1')
         faceted_table = meeting.restrictedTraverse('faceted-table-view')
         faceted_table.initColumns()
         column = faceted_table.columnByName['getItemNumber']
         self.assertEqual(column.renderCell(item_brain).strip(),
                          u'<span class="itemnumber">1</span>')
+        # header and CSS
+        self.assertEqual(
+            column.getCSSClasses(item_brain),
+            {'td': 'td_cell_getItemNumber', 'th': 'th_header_getItemNumber'})
+        # no header to avoid init table DND uselessly
+        self.assertEqual(column.renderHeadCell(), u' ')
 
 
 def test_suite():
