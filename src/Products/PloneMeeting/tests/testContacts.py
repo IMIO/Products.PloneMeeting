@@ -2283,7 +2283,7 @@ class testContacts(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         meeting_attendees = meeting.get_attendees()
-        hp1_uid = meeting_attendees[0]
+        hp1_uid = unicode(meeting_attendees[0])
         self.assertTrue(meeting_attendees)
         item1 = self.create('MeetingItem')
         item2 = self.create('MeetingItem')
@@ -2296,9 +2296,11 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(meeting.get_attendee_position_for(item2_uid, hp1_uid), u"default")
         form = item1.restrictedTraverse('@@item_redefine_attendee_position_form')
         form.person_uid = hp1_uid
+        self.request.form.set('person_uid', hp1_uid)
         form.position_type = u"dg"
         form.apply_until_item_number = 200
         form.meeting = meeting
+        form.update()
         form._doApply()
         self.assertEqual(meeting.get_attendee_position_for(item1_uid, hp1_uid), u"dg")
         self.assertEqual(meeting.get_attendee_position_for(item2_uid, hp1_uid), u"dg")
