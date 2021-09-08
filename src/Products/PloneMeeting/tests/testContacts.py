@@ -2296,7 +2296,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(meeting.get_attendee_position_for(item2_uid, hp1_uid), u"default")
         form = item1.restrictedTraverse('@@item_redefine_attendee_position_form')
         form.person_uid = hp1_uid
-        self.request.form.set('person_uid', hp1_uid)
+        self.request.form['person_uid'] = hp1_uid
         form.position_type = u"dg"
         form.apply_until_item_number = 200
         form.meeting = meeting
