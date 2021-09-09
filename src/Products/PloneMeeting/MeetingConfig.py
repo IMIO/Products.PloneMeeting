@@ -4362,7 +4362,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                              context=self.REQUEST)
 
         # if a committees_ field is selected, then committees must be selected as well
-        committees_attr = [v for v in newValue if v.startswith('committees_')]
+        # except the committees_observations field that may be used alone
+        committees_attr = [v for v in newValue if v.startswith('committees_')
+                           and v not in ('committees_observations', )]
         if committees_attr and "committees" not in newValue:
             return translate('committees_required', domain=pm, context=self.REQUEST)
 

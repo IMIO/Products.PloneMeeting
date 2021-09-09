@@ -9,6 +9,11 @@ Changelog
   meeting, only check if powerobserver is also member of proposingGroup when
   context is an item, nonsense when it is a meeting.
   [gbastien]
+- Fixed `MeetingConfig.validate_usedMeetingAttributes` that prevent use of
+  fields beginning with `committees_` if field `committees` is not enabled.
+  Ignore field `committees_observations` that may be used alone without
+  field `committees` being enabled.
+  [gbastien]
 
 4.2b14 (2021-09-09)
 -------------------
