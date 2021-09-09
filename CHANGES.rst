@@ -25,6 +25,7 @@ Changelog
     users to which advice is asked are notified;
   - It is still possible for other advisers to give advice and all advices to
     give are still returned by the `All advices to give` search.
+
   [gbastien]
 - Adapted CSS now that link to enable faceted filters is a simple link,
   no more icons.
@@ -68,6 +69,7 @@ Changelog
     that will take care of this item in the new review state
   - Item state changed, notify proposing group suffix except manager : Same as above except we don't
     notify manager(s)
+
   [aduchene]
 - Completed `MeetingConfig.validate_itemWFValidationLevels` to check that the
   `itemcreated` state always exists as first element (even if may be disabled),
