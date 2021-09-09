@@ -1502,13 +1502,15 @@ class PMContentHistoryView(IHContentHistoryView):
         res = super(PMContentHistoryView, self).show_history()
         if res:
             # if history shown, check MeetingConfig.hideHistoryTo
-            # only if current user is not member of proposingGroup
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
             hideHistoryTo = cfg.getHideHistoryTo()
             if hideHistoryTo:
                 check = True
                 if self.context.__class__.__name__ == "MeetingItem":
+                    # for MeetingItem, take into account that powerobserver
+                    # could also be member of the proposingGroup
+                    # in this case we do not hide the history to the user
                     item_review_state = self.context.query_state()
                     proposing_group = self.context._getGroupManagingItem(
                         item_review_state, theObject=False)
