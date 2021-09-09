@@ -3,6 +3,7 @@
 '''This module allows to perform some standard sets of adaptations in the
    PloneMeeting data structures and workflows.'''
 
+from imio.helpers.content import object_values
 from plone import api
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -261,26 +262,9 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
     ordered_wfAdaptations = meetingConfig.listWorkflowAdaptations(sorted=False).keys()
     wfAdaptations = list(wfAdaptations)
     wfAdaptations.sort(key=lambda x: ordered_wfAdaptations.index(x))
-    wfTool = api.portal.get_tool('portal_workflow')
 
-    def _getItemWorkflow():
-        """ """
-        itemWorkflows = wfTool.getWorkflowsFor(meetingConfig.getItemTypeName())
-        if not itemWorkflows:
-            logger.warning(WF_DOES_NOT_EXIST_WARNING % meetingConfig.getItemWorkflow())
-            return
-        return itemWorkflows[0]
-
-    def _getMeetingWorkflow():
-        """ """
-        meetingWorkflows = wfTool.getWorkflowsFor(meetingConfig.getMeetingTypeName())
-        if not meetingWorkflows:
-            logger.warning(WF_DOES_NOT_EXIST_WARNING % meetingConfig.getMeetingWorkflow())
-            return
-        return meetingWorkflows[0]
-
-    itemWorkflow = _getItemWorkflow()
-    meetingWorkflow = _getMeetingWorkflow()
+    itemWorkflow = meetingConfig.getItemWorkflow(True)
+    meetingWorkflow = meetingConfig.getMeetingWorkflow(True)
 
     def _addDecidedState(new_state_id,
                          transition_id,
@@ -631,25 +615,6 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             if 'itempublished' in wf.states:
                 wf.states.deleteStates(['itempublished'])
 
-        # "no_proposal" removes state 'proposed' in the item workflow: this way,
-        # people can directly validate items after they have been created.
-        elif wfAdaptation == 'no_proposal':
-            continue
-            wf = itemWorkflow
-            # Delete transitions 'propose' and 'backToProposed'
-            for tr in ('propose', 'backToProposed'):
-                if tr in wf.transitions:
-                    wf.transitions.deleteTransitions([tr])
-            # Update connection between states and transitions
-            wf.states['itemcreated'].setProperties(
-                title='itemcreated', description='', transitions=['validate'])
-            wf.states['validated'].setProperties(
-                title='validated', description='',
-                transitions=['backToItemCreated', 'present'])
-            # Delete state 'proposed'
-            if 'proposed' in wf.states:
-                wf.states.deleteStates(['proposed'])
-
         # "reviewers_take_back_validated_item" give the ability to reviewers to
         # take back an item that is validated.
         # This is managed in MeetingItem.MeetingItemWorkflowConditions.mayCorrect
@@ -744,14 +709,12 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                     toConfirm.append('Meeting.backToDecisionsPublished')
                     meetingConfig.setTransitionsToConfirm(toConfirm)
                 # State "decisions_published" must be selected in decisions DashboardCollections
-                # XXX to be removed in PloneMeeting 4.1, test on 'searches' will be no more necessary
-                if meetingConfig.get('searches'):
-                    for collection in meetingConfig.searches.searches_decisions.objectValues('DashboardCollection'):
-                        for criterion in collection.query:
-                            if criterion['i'] == 'review_state' and \
-                               'decisions_published' not in criterion['v']:
-                                updateCollectionCriterion(collection, criterion['i'],
-                                                          tuple(criterion['v']) + ('decisions_published', ))
+                for collection in object_values(meetingConfig.searches.searches_decisions, 'DashboardCollection'):
+                    for criterion in collection.query:
+                        if criterion['i'] == 'review_state' and \
+                           'decisions_published' not in criterion['v']:
+                            updateCollectionCriterion(collection, criterion['i'],
+                                                      tuple(criterion['v']) + ('decisions_published', ))
 
         # "waiting_advices/waiting_advices_from_last_validation_level"
         # add state 'xxx_waiting_advices' in the item workflow
@@ -953,24 +916,6 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             validation_state_infos = meetingConfig.getItemWFValidationLevels(state=item_validation_state)
             back_transition = validation_state_infos['back_transition']
             presented.transitions = presented.transitions + (back_transition, )
-
-        # "presented_item_back_to_prevalidated" allows the MeetingManagers to send a presented
-        # item directly back to "prevalidated" in addition to back to "validated"
-        elif wfAdaptation == 'presented_item_back_to_prevalidated':
-            wf = itemWorkflow
-            if 'prevalidated' in wf.states:
-                presented = wf.states.presented
-                if 'backToPrevalidated' not in presented.transitions:
-                    presented.transitions = presented.transitions + ('backToPrevalidated', )
-
-        # "presented_item_back_to_proposed" allows the MeetingManagers to send a presented
-        # item directly back to "proposed" in addition to back to "validated"
-        elif wfAdaptation == 'presented_item_back_to_proposed':
-            wf = itemWorkflow
-            if 'proposed' in wf.states:
-                presented = wf.states.presented
-                if 'backToProposed' not in presented.transitions:
-                    presented.transitions = presented.transitions + ('backToProposed', )
 
         logger.info(WF_APPLIED % (wfAdaptation, meetingConfig.getId()))
 
