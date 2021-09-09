@@ -1507,10 +1507,14 @@ class PMContentHistoryView(IHContentHistoryView):
             cfg = tool.getMeetingConfig(self.context)
             hideHistoryTo = cfg.getHideHistoryTo()
             if hideHistoryTo:
-                item_review_state = self.context.query_state()
-                proposing_group = self.context._getGroupManagingItem(
-                    item_review_state, theObject=False)
-                if proposing_group not in tool.get_orgs_for_user(the_objects=False):
+                check = True
+                if self.context.__class__.__name__ == "MeetingItem":
+                    item_review_state = self.context.query_state()
+                    proposing_group = self.context._getGroupManagingItem(
+                        item_review_state, theObject=False)
+                    if proposing_group in tool.get_orgs_for_user(the_objects=False):
+                        check = False
+                if check:
                     for power_observer_type in hideHistoryTo:
                         if tool.isPowerObserverForCfg(
                            cfg, power_observer_type=power_observer_type):

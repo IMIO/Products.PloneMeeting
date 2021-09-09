@@ -2542,8 +2542,7 @@ class testViews(PloneMeetingTestCase):
         self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'),))
         self.changeUser('pmCreator1')
         item = self.create("MeetingItem")
-        contenthistory = getMultiAdapter(
-            (item, self.request), name='contenthistory')
+        contenthistory = getMultiAdapter((item, self.request), name='contenthistory')
         self.assertTrue(contenthistory.show_history())
         self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, item))
@@ -2556,6 +2555,17 @@ class testViews(PloneMeetingTestCase):
         # when power observer is also member of the item proposingGroup
         # then he has access to the item history
         self._addPrincipalToGroup(self.member.getId(), self.developers_creators)
+        self.assertTrue(contenthistory.show_history())
+
+        # will also hide the link on Meeting if relevant
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        contenthistory = getMultiAdapter((meeting, self.request), name='contenthistory')
+        self.assertTrue(contenthistory.show_history())
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, meeting))
+        self.assertFalse(contenthistory.show_history())
+        self.meetingConfig.setHideHistoryTo(())
         self.assertTrue(contenthistory.show_history())
 
 

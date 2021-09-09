@@ -5,8 +5,10 @@ Changelog
 4.2b15 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Fixed `PMContentHistoryView.show_history` as it may be called on item or
+  meeting, only check if powerobserver is also member of proposingGroup when
+  context is an item, nonsense when it is a meeting.
+  [gbastien]
 
 4.2b14 (2021-09-09)
 -------------------
