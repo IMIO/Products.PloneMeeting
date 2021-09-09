@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2b14 (unreleased)
+4.2b14 (2021-09-09)
 -------------------
 
 - Fixed an issue in `_migrateItemPredecessorReference` when migrating to 4200.
