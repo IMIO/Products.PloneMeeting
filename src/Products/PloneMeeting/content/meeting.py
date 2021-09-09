@@ -13,8 +13,8 @@ from datetime import datetime
 from datetime import timedelta
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import richtextval
-from imio.helpers.content import uuidToObject
 from imio.helpers.content import uuidsToObjects
+from imio.helpers.content import uuidToObject
 from imio.prettylink.interfaces import IPrettyLink
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping

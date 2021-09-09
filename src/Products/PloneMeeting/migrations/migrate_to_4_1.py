@@ -11,8 +11,8 @@ from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentgenerator.utils import update_oo_config
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from copy import deepcopy
-from datetime import date
 from DateTime import DateTime
+from datetime import date
 from eea.facetednavigation.interfaces import ICriteria
 from ftw.labels.interfaces import ILabelJar
 from persistent.mapping import PersistentMapping
