@@ -2204,7 +2204,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         required_values = {"assembly": ["assembly_excused", "assembly_absents"],
                            "attendees": ["excused", "absents"],
                            "committees": [v for v in cfg.Vocabulary('usedMeetingAttributes')[0]
-                                          if v.startswith("committees_")]}
+                                          if v.startswith("committees_") and
+                                          v not in ('committees_observations', )]}
         for k, values in required_values.items():
             for v in values:
                 self.failUnless(cfg.validate_usedMeetingAttributes([v]))
