@@ -21,6 +21,7 @@ from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ADVICE_STATES_ENDED
@@ -3537,7 +3538,8 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue("Add an advice" in advices_icons())
         # before advice is given, creator is obviously not displayed
         advices_icons_infos = item.restrictedTraverse('@@advices-icons-infos')
-        adviser_fullname = '<span>{0}</span>'.format(self.member.getProperty('fullname'))
+        adviser_fullname = '<span>{0}</span>'.format(
+            safe_unicode(self.tool.getUserName(self.member.getId())))
         self.assertFalse(adviser_fullname in advices_icons_infos(adviceType=u'not_given'))
         createContentInContainer(
             item,
