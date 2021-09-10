@@ -9,6 +9,7 @@ from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
+from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
 from collective.datagridcolumns.SelectColumn import SelectColumn
@@ -3824,22 +3825,27 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''List advisers that will be selectable in the MeetingItem.optionalAdvisers field.'''
 
         res = []
-        # display every groups and mark empty advisers group
+        # display every groups with number of users of advisers Plone group
         activeOrgs = get_organizations(only_selected=True)
-        nonEmptyOrgs = get_organizations(only_selected=False, not_empty_suffix='advisers')
         advisers_msg = translate('advisers',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-        non_empty_advisers_group_msg = translate('empty_advisers_group',
-                                                 mapping={'suffix': advisers_msg},
-                                                 domain='PloneMeeting',
-                                                 context=self.REQUEST)
         for org in activeOrgs:
-            # display if a group is disabled or empty
-            title = safe_unicode(org.get_full_title(first_index=1)) + u' (%s)' % org.UID()
-            if org not in nonEmptyOrgs:
-                title = title + ' (%s)' % non_empty_advisers_group_msg
-            res.append((org.UID(), title))
+            org_uid = org.UID()
+            title = u"{0} ({1})".format(
+                safe_unicode(org.get_full_title(first_index=1)),
+                org_uid)
+            advisers = get_plone_group(org_uid, "advisers")
+            users = advisers.getMemberIds()
+            users_suffixed_group_msg = translate(
+                'users_in_suffixed_group',
+                mapping={'suffix': advisers_msg,
+                         'users': len(users)},
+                domain='PloneMeeting',
+                context=self.REQUEST,
+                default="${users} users in \"${suffix}\" sub-group")
+            term_title = u"{0} ({1})".format(title, users_suffixed_group_msg)
+            res.append((org_uid, term_title))
         return DisplayList(res).sortedByValue()
 
     security.declarePrivate('validate_shortName')

@@ -18,6 +18,10 @@ Changelog
   `MeetingConfig.selectableAdviserUsers` and a user fullname contained a
   letter with accent.
   [gbastien]
+- Adapted `MeetingConfig.listSelectableAdvisers` to display number of users of the
+  `advisers` Plone group so we know if it is relevant to select it,
+  especially when using `MeetingConfig.selectableAdviserUsers`.
+  [gbastien]
 
 4.2b14 (2021-09-09)
 -------------------

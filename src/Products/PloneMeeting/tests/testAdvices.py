@@ -3538,7 +3538,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue("Add an advice" in advices_icons())
         # before advice is given, creator is obviously not displayed
         advices_icons_infos = item.restrictedTraverse('@@advices-icons-infos')
-        adviser_fullname = '<span>{0}</span>'.format(
+        adviser_fullname = u'<span>{0}</span>'.format(
             safe_unicode(self.tool.getUserName(self.member.getId())))
         self.assertFalse(adviser_fullname in advices_icons_infos(adviceType=u'not_given'))
         createContentInContainer(
