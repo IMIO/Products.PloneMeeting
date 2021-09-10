@@ -5392,7 +5392,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for userid in userids:
             rendered_users.append(
                 userid_pattern.format(
-                    escape(help_msg), portal_url, tool.getUserName(userid)))
+                    escape(help_msg),
+                    portal_url,
+                    safe_unicode(tool.getUserName(userid))))
         res = u", ".join(rendered_users)
         return res
 

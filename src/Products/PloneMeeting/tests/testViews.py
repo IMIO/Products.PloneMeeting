@@ -1195,7 +1195,7 @@ class testViews(PloneMeetingTestCase):
             "<p class='pmAdvices'><u>Vendors:</u><br /><u>Advice type :</u> "
             "<i>Not given yet</i></p><p class='pmAdvices'><u>Developers:</u><br />"
             "<u>Advice type :</u> <i>Positive</i><br /><u>Advice given by :</u> "
-            "<i>M. PMAdviser One</i><br /><u>Advice comment :</u> My comment<p></p></p>")
+            "<i>M. PMAdviser One (H\xc3\xa9)</i><br /><u>Advice comment :</u> My comment<p></p></p>")
 
         # every advices given
         self.changeUser('pmReviewer2')
@@ -1211,7 +1211,7 @@ class testViews(PloneMeetingTestCase):
             "<u>Advice given by :</u> <i>M. PMReviewer Two</i><br />"
             "<u>Advice comment :</u> -<p></p></p><p class='pmAdvices'><u>Developers:</u><br />"
             "<u>Advice type :</u> <i>Positive</i><br /><u>Advice given by :</u> "
-            "<i>M. PMAdviser One</i><br /><u>Advice comment :</u> My comment<p></p></p>")
+            "<i>M. PMAdviser One (H\xc3\xa9)</i><br /><u>Advice comment :</u> My comment<p></p></p>")
 
     def test_pm_print_meeting_date(self):
         # Setup

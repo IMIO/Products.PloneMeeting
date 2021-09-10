@@ -154,7 +154,7 @@ pmReviewer2 = UserDescriptor('pmReviewer2', [], email="pmreviewer2@plonemeeting.
 pmReviewerLevel2 = UserDescriptor('pmReviewerLevel2', [],
                                   email="pmreviewerlevel2@plonemeeting.org", fullname='M. PMReviewer Level Two')
 pmObserver2 = UserDescriptor('pmObserver2', [], email="pmobserver2@plonemeeting.org", fullname='M. PMObserver Two')
-pmAdviser1 = UserDescriptor('pmAdviser1', [], email="pmadviser1@plonemeeting.org", fullname='M. PMAdviser One')
+pmAdviser1 = UserDescriptor('pmAdviser1', [], email="pmadviser1@plonemeeting.org", fullname='M. PMAdviser One (Hé)')
 voter1 = UserDescriptor('voter1', [], email="voter1@plonemeeting.org", fullname='M. Voter One')
 voter2 = UserDescriptor('voter2', [], email="voter2@plonemeeting.org", fullname='M. Voter Two')
 powerobserver1 = UserDescriptor('powerobserver1',

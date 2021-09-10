@@ -14,6 +14,10 @@ Changelog
   Ignore field `committees_observations` that may be used alone without
   field `committees` being enabled.
   [gbastien]
+- Fixed `ItemOptionalAdvicesVocabulary` that was failing when using
+  `MeetingConfig.selectableAdviserUsers` and a user fullname contained a
+  letter with accent.
+  [gbastien]
 
 4.2b14 (2021-09-09)
 -------------------
