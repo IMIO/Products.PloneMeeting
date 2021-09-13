@@ -22,6 +22,10 @@ Changelog
   `advisers` Plone group so we know if it is relevant to select it,
   especially when using `MeetingConfig.selectableAdviserUsers`.
   [gbastien]
+- Parameter `use_safe_html` of `BaseDGHV.printXhtml` is now `False` by default
+  as `collective.documentgenerator` call to `appy.pod` `Rendered` sets
+  `html=True` that does almost the same (make sure given content is XHTML compliant).
+  [gbastien]
 
 4.2b14 (2021-09-09)
 -------------------

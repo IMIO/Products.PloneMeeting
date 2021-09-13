@@ -6,6 +6,7 @@
 #
 
 from AccessControl import Unauthorized
+from appy.pod.xhtml2odt import XhtmlPreprocessor
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.documentgenerator.interfaces import IGenerablePODTemplates
 from collective.eeafaceted.dashboard.interfaces import IDashboardGenerablePODTemplates
@@ -1082,16 +1083,20 @@ class testViews(PloneMeetingTestCase):
         img = getattr(item, img_id)
         img_blob_path = img.getBlobWrapper().blob._p_blob_committed
         text = "<p>Text with image <img src='{0}'/> and more text.".format(img.absolute_url())
-        self.assertEqual(helper.printXhtml(item,
-                                           [motivation, 'separator', decision, 'separator', text],
-                                           image_src_to_paths=True,
-                                           keepWithNext=True,
-                                           keepWithNextNumberOfChars=60),
+        # res is parsed by XhtmlPreprocessor.html2xhtml in appy.pod
+        res = helper.printXhtml(
+            item,
+            [motivation, 'separator', decision, 'separator', text],
+            image_src_to_paths=True,
+            keepWithNext=True,
+            keepWithNextNumberOfChars=60)
+        res = XhtmlPreprocessor.html2xhtml(res)
+        self.assertEqual(res,
                          '<p>The motivation using UTF-8 characters : &#232;&#224;.</p>'
                          '<p>&#160;</p>'
                          '<p class="ParaKWN">The d&#233;cision using UTF-8 characters.</p>'
                          '<p class="ParaKWN">&#160;</p>'
-                         '<p class="ParaKWN">Text with image <img src="{0}" /> and more text.</p>'
+                         '<p class="ParaKWN">Text with image <img src="{0}"/> and more text.</p>'
                          .format(img_blob_path))
 
     def test_pm_PrintXhtmlImageSrcToData(self):
@@ -1103,16 +1108,19 @@ class testViews(PloneMeetingTestCase):
         data = open(file_path, 'r')
         img_id = item.invokeFactory('Image', id='img', title='Image', file=data.read())
         img = getattr(item, img_id)
-        pattern = '<p>Text with image <img src="{0}" /> and more text.</p>'
+        pattern = '<p>Text with image <img src="{0}"/> and more text.</p>'
         text = pattern.format(img.absolute_url())
         # in tests the monkeypatch for safe_html.hasScript does not seem to be applied...
         # so disable remove_javascript from safe_html
         self.portal.portal_transforms.safe_html._v_transform.config['remove_javascript'] = 0
-        self.assertEqual(helper.printXhtml(item,
-                                           text,
-                                           image_src_to_paths=False,
-                                           image_src_to_data=True,
-                                           use_safe_html=True),
+        # res is parsed by XhtmlPreprocessor.html2xhtml in appy.pod
+        res = helper.printXhtml(
+            item,
+            text,
+            image_src_to_paths=False,
+            image_src_to_data=True)
+        res = XhtmlPreprocessor.html2xhtml(res)
+        self.assertEqual(res,
                          pattern.format(IMG_BASE64_DATA))
         self.portal.portal_transforms.safe_html._v_transform.config['remove_javascript'] = 1
 
@@ -1134,31 +1142,36 @@ class testViews(PloneMeetingTestCase):
                          '<p class="sample">The d&#233;cision using UTF-8 characters.</p>')
 
     def test_pm_PrintXhtmlUseSafeHTML(self):
-        '''safe_html will do result XHTML compliant.'''
+        '''safe_html will do result XHTML compliant (no more used by default).'''
         item, motivation, decision, helper = self._setupPrintXhtml()
         # use_safe_html is True by default
         self.assertEqual(
-            helper.printXhtml(item, [motivation, '<br>']),
+            helper.printXhtml(item, [motivation, '<br>'], use_safe_html=True),
             motivation + '<br />')
         self.assertEqual(
-            helper.printXhtml(item, [motivation, '<br>'], use_safe_html=False),
+            helper.printXhtml(item, [motivation, '<br>']),
             motivation + '<br>')
 
     def test_pm_PrintXhtmlClean(self):
         '''clean=True will use separate_images from imio.helpers.xhtlm.'''
         item, motivation, decision, helper = self._setupPrintXhtml()
-        text = '<p>Text1</p><p><img src="http://plone/nohost/img1.png" />' \
-            '<img src="http://plone/nohost/img2.png" /></p>' \
-            '<p>Text2</p><p><img src="http://plone/nohost/img3.png" /></p>'
+        text = '<p>Text1</p><p><img src="http://plone/nohost/img1.png"/>' \
+            '<img src="http://plone/nohost/img2.png"/></p>' \
+            '<p>Text2</p><p><img src="http://plone/nohost/img3.png"/></p>'
         # True by default
-        self.assertEqual(helper.printXhtml(item, text, clean=False), text)
+        # res is parsed by XhtmlPreprocessor.html2xhtml in appy.pod
+        res = helper.printXhtml(item, text, clean=False)
+        res = XhtmlPreprocessor.html2xhtml(res)
+        self.assertEqual(res, text)
         # when used, images are moved in their own <p> when necessary
-        self.assertEqual(helper.printXhtml(item, text),
+        res = helper.printXhtml(item, text)
+        res = XhtmlPreprocessor.html2xhtml(res)
+        self.assertEqual(res,
                          '<p>Text1</p>'
-                         '<p><img src="http://plone/nohost/img1.png" /></p>'
-                         '<p><img src="http://plone/nohost/img2.png" /></p>'
+                         '<p><img src="http://plone/nohost/img1.png"/></p>'
+                         '<p><img src="http://plone/nohost/img2.png"/></p>'
                          '<p>Text2</p>'
-                         '<p><img src="http://plone/nohost/img3.png" /></p>')
+                         '<p><img src="http://plone/nohost/img3.png"/></p>')
 
     def test_pm_print_advices_infos(self):
         """Test the print_advices_infos method."""

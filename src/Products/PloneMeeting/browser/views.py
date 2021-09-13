@@ -545,7 +545,7 @@ class BaseDGHV(object):
                    keepWithNextNumberOfChars=CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT,
                    checkNeedSeparator=True,
                    addCSSClass=None,
-                   use_safe_html=True,
+                   use_safe_html=False,
                    clean=True):
         """Helper method to format a p_xhtmlContents.  The xhtmlContents is a list or a string containing
            either XHTML content or some specific recognized words like :
@@ -603,8 +603,11 @@ class BaseDGHV(object):
         if clean:
             xhtmlFinal = separate_images(xhtmlFinal)
 
-        # finally use_safe_html to clean the HTML, it does not only clean
-        # but turns the result into a XHTML compliant HTML, by replacing <br> with <br /> for example
+        # use_safe_html to clean the HTML
+        # originally it was used to make xhtmlContents XHTML compliant
+        # by replacing <br> with <br /> for example, but now it is done
+        # by appy.pod calling the Rendered with html=True parameter
+        # so use_safe_html=False by default
         if use_safe_html:
             pt = api.portal.get_tool('portal_transforms')
             xhtmlFinal = pt.convert('safe_html', xhtmlFinal).getData()
