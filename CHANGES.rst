@@ -5,8 +5,12 @@ Changelog
 4.1.28.29 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Backport from 4.2.x:
 
+  - Parameter `use_safe_html` of `BaseDGHV.printXhtml` is now `False` by default
+    as `collective.documentgenerator` call to `appy.pod` `Rendered` sets
+    `html=True` that does almost the same (make sure given content is XHTML compliant).
+    [gbastien]
 
 4.1.28.28 (2021-08-17)
 ----------------------
