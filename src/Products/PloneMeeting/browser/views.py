@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
+from appy.pod.xhtml2odt import XhtmlPreprocessor
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.core.utils import get_gender_and_number
@@ -546,6 +547,7 @@ class BaseDGHV(object):
                    checkNeedSeparator=True,
                    addCSSClass=None,
                    use_safe_html=False,
+                   use_appy_pod_preprocessor=False,
                    clean=True):
         """Helper method to format a p_xhtmlContents.  The xhtmlContents is a list or a string containing
            either XHTML content or some specific recognized words like :
@@ -611,6 +613,9 @@ class BaseDGHV(object):
         if use_safe_html:
             pt = api.portal.get_tool('portal_transforms')
             xhtmlFinal = pt.convert('safe_html', xhtmlFinal).getData()
+
+        if use_appy_pod_preprocessor:
+            xhtmlFinal = XhtmlPreprocessor.html2xhtml(xhtmlFinal)
 
         return xhtmlFinal
 
@@ -1962,6 +1967,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             xhtmlContents,
             image_src_to_paths=False,
             image_src_to_data=True,
+            use_appy_pod_preprocessor=True,
             **kwargs)
 
     def print_public_deliberation(self, xhtmlContents=[], **kwargs):
