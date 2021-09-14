@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
-from appy.pod.xhtml2odt import XhtmlPreprocessor
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.documentgenerator.interfaces import IGenerablePODTemplates
 from collective.eeafaceted.dashboard.interfaces import IDashboardGenerablePODTemplates
@@ -970,8 +969,8 @@ class testViews(PloneMeetingTestCase):
             [motivation, 'separator', decision, 'separator', text],
             image_src_to_paths=True,
             keepWithNext=True,
-            keepWithNextNumberOfChars=60)
-        res = XhtmlPreprocessor.html2xhtml(res)
+            keepWithNextNumberOfChars=60,
+            use_appy_pod_preprocessor=True)
         self.assertEqual(res,
                          '<p>The motivation using UTF-8 characters : &#232;&#224;.</p>'
                          '<p>&#160;</p>'
@@ -999,8 +998,8 @@ class testViews(PloneMeetingTestCase):
             item,
             text,
             image_src_to_paths=False,
-            image_src_to_data=True)
-        res = XhtmlPreprocessor.html2xhtml(res)
+            image_src_to_data=True,
+            use_appy_pod_preprocessor=True)
         self.assertEqual(res,
                          pattern.format(IMG_BASE64_DATA))
         self.portal.portal_transforms.safe_html._v_transform.config['remove_javascript'] = 1
@@ -1041,12 +1040,10 @@ class testViews(PloneMeetingTestCase):
             '<p>Text2</p><p><img src="http://plone/nohost/img3.png"/></p>'
         # True by default
         # res is parsed by XhtmlPreprocessor.html2xhtml in appy.pod
-        res = helper.printXhtml(item, text, clean=False)
-        res = XhtmlPreprocessor.html2xhtml(res)
+        res = helper.printXhtml(item, text, clean=False, use_appy_pod_preprocessor=True)
         self.assertEqual(res, text)
         # when used, images are moved in their own <p> when necessary
-        res = helper.printXhtml(item, text)
-        res = XhtmlPreprocessor.html2xhtml(res)
+        res = helper.printXhtml(item, text, use_appy_pod_preprocessor=True)
         self.assertEqual(res,
                          '<p>Text1</p>'
                          '<p><img src="http://plone/nohost/img1.png"/></p>'
