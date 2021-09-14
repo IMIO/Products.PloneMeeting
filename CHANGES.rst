@@ -10,7 +10,10 @@ Changelog
   - Parameter `use_safe_html` of `BaseDGHV.printXhtml` is now `False` by default
     as `collective.documentgenerator` call to `appy.pod` `Rendered` sets
     `html=True` that does almost the same (make sure given content is XHTML compliant).
-    [gbastien]
+    Added parameter `use_appy_pod_preprocessor=False` to `BaseDGHV.printXhtml`
+    so it is possible to enable it when using `printXhtml` in another scope than
+    a POD template (in `print_deliberation` for example used to format restapi result).
+  [gbastien]
 
 4.1.28.28 (2021-08-17)
 ----------------------
