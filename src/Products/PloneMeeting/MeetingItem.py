@@ -2056,8 +2056,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.isDefinedInTool(item_type='itemtemplate'):
             return
 
+        # while created thru plonemeeting.restapi for example, make sure
+        # current user is member if proposingGroup
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if self.checkCreationFlag() and \
+           value not in tool.get_orgs_for_user(
+                only_selected=False, suffixes=["creators"], the_objects=False):
+            return translate('proposing_group_not_available',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
         if not value and not self.attributeIsUsed('proposingGroupWithGroupInCharge'):
-            return translate('proposing_group_required', domain='PloneMeeting', context=self.REQUEST)
+            return translate('proposing_group_required',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
 
     security.declarePrivate('validate_proposingGroupWithGroupInCharge')
 

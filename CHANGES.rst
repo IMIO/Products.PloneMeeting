@@ -29,6 +29,11 @@ Changelog
   so it is possible to enable it when using `printXhtml` in another scope than
   a POD template (in `print_deliberation` for example used to format restapi result).
   [gbastien]
+- Completed `MeetingItem.validate_proposingGroup` to check when creating a new item
+  if selected proposingGroup if one of the current user.  This is necessary when
+  creating an item using plonemeeting.restapi to check that a user is not creating
+  an item for a proposingGroup he is not member of.
+  [gbastien]
 
 4.2b14 (2021-09-09)
 -------------------

@@ -4091,12 +4091,23 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_Validate_proposingGroup(self):
         '''MeetingItem.proposingGroup is mandatory excepted for item templates.'''
         cfg = self.meetingConfig
-        self.changeUser('pmManager')
+        self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
+        item.markCreationFlag()
+        # must provide a proposingGroup
         proposing_group_required_msg = translate('proposing_group_required',
                                                  domain='PloneMeeting',
                                                  context=self.portal.REQUEST)
         self.assertEqual(item.validate_proposingGroup(''), proposing_group_required_msg)
+        # provided proposingGroup must be available
+        proposing_group_not_available_msg = translate(
+            'proposing_group_not_available',
+            domain='PloneMeeting',
+            context=self.portal.REQUEST)
+        self.assertEqual(item.validate_proposingGroup(self.vendors_uid),
+                         proposing_group_not_available_msg)
+
+        # ok if user member of group
         self.failIf(item.validate_proposingGroup(self.developers_uid))
 
         # if item isDefinedInTool, the proposing group is not required if it is an item template
