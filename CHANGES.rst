@@ -13,7 +13,10 @@ Changelog
     Added parameter `use_appy_pod_preprocessor=False` to `BaseDGHV.printXhtml`
     so it is possible to enable it when using `printXhtml` in another scope than
     a POD template (in `print_deliberation` for example used to format restapi result).
-  [gbastien]
+    [gbastien]
+  - Moved logic of `BaseDGHV.printXhtml` to `utils.convert2xhtml` so it is easy to
+    call from outside code like from `plonemeeting.restapi`.
+    [gbastien]
 
 4.1.28.28 (2021-08-17)
 ----------------------
