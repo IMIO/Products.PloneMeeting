@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
-from appy.pod.xhtml2odt import XhtmlPreprocessor
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.core.utils import get_gender_and_number
@@ -20,11 +19,7 @@ from ftw.labels.interfaces import ILabeling
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.annex.browser.views import DownloadAnnexesBatchActionForm
 from imio.helpers.content import uuidToObject
-from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
-from imio.helpers.xhtml import imagesToData
-from imio.helpers.xhtml import imagesToPath
-from imio.helpers.xhtml import separate_images
 from imio.zamqp.core.utils import scan_id_barcode
 from plone import api
 from plone.app.caching.operations.utils import getContext
@@ -52,11 +47,11 @@ from Products.PloneMeeting.indexes import _to_coded_adviser_index
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
+from Products.PloneMeeting.utils import convert2xhtml
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_field
 from Products.PloneMeeting.utils import get_dx_widget
 from Products.PloneMeeting.utils import get_person_from_userid
-from Products.PloneMeeting.utils import signatureNotAlone
 from z3c.form.field import Fields
 from z3c.form.interfaces import DISPLAY_MODE
 from zope import schema
@@ -549,75 +544,19 @@ class BaseDGHV(object):
                    use_safe_html=False,
                    use_appy_pod_preprocessor=False,
                    clean=True):
-        """Helper method to format a p_xhtmlContents.  The xhtmlContents is a list or a string containing
-           either XHTML content or some specific recognized words like :
-           - 'separator', in this case, it is replaced with the p_separatorValue;
-           Given xhtmlContents are all merged together to be printed in the document.
-           If p_keepWithNext is True, signatureNotAlone is applied on the resulting XHTML.
-           If p_image_src_to_paths is True, if some <img> are contained in the XHTML, the link to the image
-           is replaced with a path to the .blob of the image of the server so LibreOffice may access it.
-           Indeed, private images not accessible by anonymous may not be reached by LibreOffice.
-           If p_checkNeedSeparator is True, it will only add the separator if previous
-           xhtmlContent did not contain empty lines at the end.
-           If addCSSClass is given, a CSS class will be added to every tags of p_chtmlContents.
-           Finally, the separatorValue is used when word 'separator' is encountered in xhtmlContents.
-           A call to printXHTML in a POD template with an item as context could be :
-           view.printXHTML(self.getMotivation(), 'separator', '<p>DECIDE :</p>', 'separator', self.getDecision())
-        """
-        xhtmlFinal = ''
-        # xhtmlContents may be a single string value or a list
-        if not hasattr(xhtmlContents, '__iter__'):
-            xhtmlContents = [xhtmlContents]
-        for xhtmlContent in xhtmlContents:
-            if isinstance(xhtmlContent, RichTextValue):
-                xhtmlContent = xhtmlContent.output
-            if xhtmlContent is None:
-                xhtmlContent = ''
-            if xhtmlContent == 'separator':
-                hasSeparation = False
-                if checkNeedSeparator:
-                    preparedXhtmlContent = "<special_tag>%s</special_tag>" % xhtmlContent
-                    tree = lxml.html.fromstring(safe_unicode(preparedXhtmlContent))
-                    children = tree.getchildren()
-                    if children and not children[-1].text:
-                        hasSeparation = True
-                if not hasSeparation:
-                    xhtmlFinal += separatorValue
-            else:
-                xhtmlFinal += xhtmlContent
-
-        # manage image_src_to_paths/image_src_to_data, exclusive parameters
-        # turning http link to image to blob path will avoid unauthorized by appy.pod
-        if image_src_to_paths:
-            xhtmlFinal = imagesToPath(context, xhtmlFinal)
-        elif image_src_to_data:
-            # turning http link to image to data base64 value will make html "self-supporting"
-            xhtmlFinal = imagesToData(context, xhtmlFinal)
-
-        # manage keepWithNext
-        if keepWithNext:
-            xhtmlFinal = signatureNotAlone(xhtmlFinal, numberOfChars=keepWithNextNumberOfChars)
-
-        # manage addCSSClass
-        if addCSSClass:
-            xhtmlFinal = addClassToContent(xhtmlFinal, addCSSClass)
-
-        if clean:
-            xhtmlFinal = separate_images(xhtmlFinal)
-
-        # use_safe_html to clean the HTML
-        # originally it was used to make xhtmlContents XHTML compliant
-        # by replacing <br> with <br /> for example, but now it is done
-        # by appy.pod calling the Rendered with html=True parameter
-        # so use_safe_html=False by default
-        if use_safe_html:
-            pt = api.portal.get_tool('portal_transforms')
-            xhtmlFinal = pt.convert('safe_html', xhtmlFinal).getData()
-
-        if use_appy_pod_preprocessor:
-            xhtmlFinal = XhtmlPreprocessor.html2xhtml(xhtmlFinal)
-
-        return xhtmlFinal
+        """ """
+        return convert2xhtml(obj=context,
+                             xhtmlContents=xhtmlContents,
+                             image_src_to_paths=image_src_to_paths,
+                             image_src_to_data=image_src_to_data,
+                             separatorValue=separatorValue,
+                             keepWithNext=keepWithNext,
+                             keepWithNextNumberOfChars=keepWithNextNumberOfChars,
+                             checkNeedSeparator=checkNeedSeparator,
+                             addCSSClass=addCSSClass,
+                             use_safe_html=use_safe_html,
+                             use_appy_pod_preprocessor=use_appy_pod_preprocessor,
+                             clean=clean)
 
     def print_history(self):
         """Return the history view for templates. """

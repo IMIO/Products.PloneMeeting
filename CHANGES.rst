@@ -34,6 +34,9 @@ Changelog
   creating an item using plonemeeting.restapi to check that a user is not creating
   an item for a proposingGroup he is not member of.
   [gbastien]
+- Moved logic of `BaseDGHV.printXhtml` to `utils.convert2xhtml` so it is easy to
+  call from outside code like from `plonemeeting.restapi`.
+  [gbastien]
 
 4.2b14 (2021-09-09)
 -------------------

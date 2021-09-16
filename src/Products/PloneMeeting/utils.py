@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+
 from AccessControl.Permission import Permission
 from Acquisition import aq_base
+from appy.pod.xhtml2odt import XhtmlPreprocessor
 from appy.shared.diff import HtmlDiff
 from bs4 import BeautifulSoup
 from collections import OrderedDict
@@ -20,10 +22,14 @@ from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from imio.helpers.content import richtextval
 from imio.helpers.security import fplog
+from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import addClassToLastChildren
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
+from imio.helpers.xhtml import imagesToData
+from imio.helpers.xhtml import imagesToPath
 from imio.helpers.xhtml import markEmptyTags
 from imio.helpers.xhtml import removeBlanks
+from imio.helpers.xhtml import separate_images
 from imio.helpers.xhtml import storeImagesLocally
 from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.utils import getLastWFAction
@@ -97,6 +103,7 @@ from zope.security.interfaces import IPermission
 import cgi
 import itertools
 import logging
+import lxml
 import os
 import os.path
 import re
@@ -2119,6 +2126,90 @@ def number_word(number):
 
 def escape(text):
     return cgi.escape(safe_unicode(text), quote=True)
+
+
+def convert2xhtml(obj,
+                  xhtmlContents,
+                  image_src_to_paths=False,
+                  image_src_to_data=False,
+                  separatorValue='',
+                  keepWithNext=False,
+                  keepWithNextNumberOfChars=CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT,
+                  checkNeedSeparator=False,
+                  addCSSClass=None,
+                  use_safe_html=False,
+                  use_appy_pod_preprocessor=False,
+                  clean=False):
+    """Helper method to format a p_xhtmlContents.  The xhtmlContents is a list or a string containing
+       either XHTML content or some specific recognized words like :
+       - 'separator', in this case, it is replaced with the p_separatorValue;
+       Given xhtmlContents are all merged together to be printed in the document.
+       If p_keepWithNext is True, signatureNotAlone is applied on the resulting XHTML.
+       If p_image_src_to_paths is True, if some <img> are contained in the XHTML, the link to the image
+       is replaced with a path to the .blob of the image of the server so LibreOffice may access it.
+       Indeed, private images not accessible by anonymous may not be reached by LibreOffice.
+       If p_checkNeedSeparator is True, it will only add the separator if previous
+       xhtmlContent did not contain empty lines at the end.
+       If addCSSClass is given, a CSS class will be added to every tags of p_chtmlContents.
+       Finally, the separatorValue is used when word 'separator' is encountered in xhtmlContents.
+       A call to printXHTML in a POD template with an item as context could be :
+       view.printXHTML(self.getMotivation(), 'separator', '<p>DECIDE :</p>', 'separator', self.getDecision())
+       BY DEFAULT, THIS WILL DO NOTHING!
+    """
+    xhtmlFinal = ''
+    # xhtmlContents may be a single string value or a list
+    if not hasattr(xhtmlContents, '__iter__'):
+        xhtmlContents = [xhtmlContents]
+    for xhtmlContent in xhtmlContents:
+        if isinstance(xhtmlContent, RichTextValue):
+            xhtmlContent = xhtmlContent.output
+        if xhtmlContent is None:
+            xhtmlContent = ''
+        if xhtmlContent == 'separator':
+            hasSeparation = False
+            if checkNeedSeparator:
+                preparedXhtmlContent = "<special_tag>%s</special_tag>" % xhtmlContent
+                tree = lxml.html.fromstring(safe_unicode(preparedXhtmlContent))
+                children = tree.getchildren()
+                if children and not children[-1].text:
+                    hasSeparation = True
+            if not hasSeparation:
+                xhtmlFinal += separatorValue
+        else:
+            xhtmlFinal += xhtmlContent
+
+    # manage image_src_to_paths/image_src_to_data, exclusive parameters
+    # turning http link to image to blob path will avoid unauthorized by appy.pod
+    if image_src_to_paths:
+        xhtmlFinal = imagesToPath(obj, xhtmlFinal)
+    elif image_src_to_data:
+        # turning http link to image to data base64 value will make html "self-supporting"
+        xhtmlFinal = imagesToData(obj, xhtmlFinal)
+
+    # manage keepWithNext
+    if keepWithNext:
+        xhtmlFinal = signatureNotAlone(xhtmlFinal, numberOfChars=keepWithNextNumberOfChars)
+
+    # manage addCSSClass
+    if addCSSClass:
+        xhtmlFinal = addClassToContent(xhtmlFinal, addCSSClass)
+
+    if clean:
+        xhtmlFinal = separate_images(xhtmlFinal)
+
+    # use_safe_html to clean the HTML
+    # originally it was used to make xhtmlContents XHTML compliant
+    # by replacing <br> with <br /> for example, but now it is done
+    # by appy.pod calling the Rendered with html=True parameter
+    # so use_safe_html=False by default
+    if use_safe_html:
+        pt = api.portal.get_tool('portal_transforms')
+        xhtmlFinal = pt.convert('safe_html', xhtmlFinal).getData()
+
+    if use_appy_pod_preprocessor:
+        xhtmlFinal = XhtmlPreprocessor.html2xhtml(xhtmlFinal)
+
+    return xhtmlFinal
 
 
 class AdvicesUpdatedEvent(ObjectEvent):
