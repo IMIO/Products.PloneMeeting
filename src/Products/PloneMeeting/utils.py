@@ -463,11 +463,26 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         translationMapping = mapping
     else:
         translationMapping = {}
+    wf_action = getLastWFAction(obj)
+
     translationMapping.update({
-        'portalUrl': portalUrl, 'portalTitle': safe_unicode(portal.Title()),
-        'objectTitle': safe_unicode(obj.Title()), 'objectUrl': get_public_url(obj),
-        'meetingTitle': '', 'meetingLongTitle': '', 'itemTitle': '', 'user': userName,
-        'groups': userGroups, 'meetingConfigTitle': safe_unicode(cfg.Title()),
+        'portalUrl': portalUrl,
+        'portalTitle': safe_unicode(portal.Title()),
+        'objectTitle': safe_unicode(obj.Title()),
+        'objectUrl': get_public_url(obj),
+        'meetingTitle': '',
+        'meetingLongTitle': '',
+        'itemTitle': '',
+        'user': userName,
+        'groups': userGroups,
+        'meetingConfigTitle': safe_unicode(cfg.Title()),
+        'transitionActor': wf_action and \
+            tool.getUserName(wf_action['actor'], withUserId=True) or '',
+        'transitionTitle': wf_action and \
+            translate(wf_action['action'], domain="plone", context=obj.REQUEST) or '',
+        'stateTitle': wf_action and \
+            translate(wf_action['review_state'], domain="plone", context=obj.REQUEST) or '',
+        'transitionComments': wf_action and wf_action['comments'] or '',
     })
     if obj.getTagName() == 'Meeting':
         translationMapping['meetingTitle'] = safe_unicode(obj.Title())
@@ -502,7 +517,10 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         if subjectLabel.startswith('meeting_state_changed_'):
             subjectLabel = u'meeting_state_changed_default_mail_subject'
         else:
-            subjectLabel = u'item_state_changed_default_mail_subject'
+            if '__proposing_group_suffix' in subjectLabel:
+                subjectLabel = u'item_state_changed_proposing_group_suffix_mail_subject'
+            else:
+                subjectLabel = u'item_state_changed_default_mail_subject'
         subject = translate(subjectLabel,
                             domain=d,
                             mapping=translationMapping,
@@ -523,7 +541,10 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         if bodyLabel.startswith('meeting_state_changed_'):
             bodyLabel = u'meeting_state_changed_default_mail_body'
         else:
-            bodyLabel = u'item_state_changed_default_mail_body'
+            if '__proposing_group_suffix' in bodyLabel:
+                bodyLabel = u'item_state_changed_proposing_group_suffix_mail_body'
+            else:
+                bodyLabel = u'item_state_changed_default_mail_body'
         body = translate(bodyLabel,
                          domain=d,
                          mapping=translationMapping,
@@ -668,7 +689,7 @@ def sendMailIfRelevant(obj,
             unique_emails.append(email)
             unique_email_recipients.append(recipient)
         mail_subject, mail_body = sendMail(unique_email_recipients, obj, event, mapping=mapping)
-        logger.info("Mail(s) sent to :" +  " ".join(recipients))
+        logger.info("Mail(s) %s sent to %s" % (event, ", ".join(recipients)))
     debug = debug or obj.REQUEST.get('debug_sendMailIfRelevant', False)
     if debug:
         return recipients, mail_subject, mail_body
