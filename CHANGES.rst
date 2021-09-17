@@ -17,6 +17,9 @@ Changelog
   - Moved logic of `BaseDGHV.printXhtml` to `utils.convert2xhtml` so it is easy to
     call from outside code like from `plonemeeting.restapi`.
     [gbastien]
+  - Adapted `MeetingItem.validate_category` and `MeetingItem.validate_classifier`
+    to make sure passed value exists.
+    [gbastien]
 
 4.1.28.28 (2021-08-17)
 ----------------------

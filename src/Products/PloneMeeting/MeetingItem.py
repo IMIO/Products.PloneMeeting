@@ -1615,10 +1615,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        # Value could be '_none_' if it was displayed as listbox or None if
-        # it was displayed as radio buttons...  Category uses 'flex' format
-        if (not cfg.getUseGroupsAsCategories()) and \
-           (value == '_none_' or not value):
+        # check if value is among categories defined in the MeetingConfig
+        if not cfg.getUseGroupsAsCategories() and value not in cfg.categories.objectIds():
             return translate('category_required', domain='PloneMeeting', context=self.REQUEST)
 
     security.declarePrivate('validate_classifier')
@@ -1631,10 +1629,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.isDefinedInTool(item_type='itemtemplate'):
             return
 
-        # Value could be '_none_' if it was displayed as listbox or None if
-        # it was displayed as radio buttons...  Classifier uses 'flex' format
-        if (self.attributeIsUsed('classifier')) and \
-           (value == '_none_' or not value):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        # check if value is among classifiers defined in the MeetingConfig
+        if (self.attributeIsUsed('classifier')) and value not in cfg.classifiers.objectIds():
             return translate('classifier_required', domain='PloneMeeting', context=self.REQUEST)
 
     security.declarePrivate('validate_groupsInCharge')
