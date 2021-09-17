@@ -463,6 +463,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         translationMapping = mapping
     else:
         translationMapping = {}
+
     wf_action = getLastWFAction(obj)
 
     translationMapping.update({
@@ -477,12 +478,10 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         'groups': userGroups,
         'meetingConfigTitle': safe_unicode(cfg.Title()),
         'transitionActor': wf_action and \
-            tool.getUserName(wf_action['actor'], withUserId=True) or '',
+            tool.getUserName(wf_action['actor'], withUserId=True) or '-',
         'transitionTitle': wf_action and \
-            translate(wf_action['action'], domain="plone", context=obj.REQUEST) or '',
-        'stateTitle': wf_action and \
-            translate(wf_action['review_state'], domain="plone", context=obj.REQUEST) or '',
-        'transitionComments': wf_action and wf_action['comments'] or '',
+            translate(wf_action['action'], domain="plone", context=obj.REQUEST) or '-',
+        'transitionComments': wf_action and safe_unicode(wf_action['comments']) or '-',
     })
     if obj.getTagName() == 'Meeting':
         translationMapping['meetingTitle'] = safe_unicode(obj.Title())
@@ -517,10 +516,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         if subjectLabel.startswith('meeting_state_changed_'):
             subjectLabel = u'meeting_state_changed_default_mail_subject'
         else:
-            if '__proposing_group_suffix' in subjectLabel:
-                subjectLabel = u'item_state_changed_proposing_group_suffix_mail_subject'
-            else:
-                subjectLabel = u'item_state_changed_default_mail_subject'
+            subjectLabel = u'item_state_changed_default_mail_subject'
         subject = translate(subjectLabel,
                             domain=d,
                             mapping=translationMapping,
@@ -541,10 +537,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         if bodyLabel.startswith('meeting_state_changed_'):
             bodyLabel = u'meeting_state_changed_default_mail_body'
         else:
-            if '__proposing_group_suffix' in bodyLabel:
-                bodyLabel = u'item_state_changed_proposing_group_suffix_mail_body'
-            else:
-                bodyLabel = u'item_state_changed_default_mail_body'
+            bodyLabel = u'item_state_changed_default_mail_body'
         body = translate(bodyLabel,
                          domain=d,
                          mapping=translationMapping,

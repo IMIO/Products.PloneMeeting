@@ -65,7 +65,6 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import TestRequest
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_CORRECT_VALUE
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_WRONG_VALUE
 from Products.PloneMeeting.utils import get_annexes
-from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getTransitionToReachState
 from Products.PloneMeeting.utils import ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
@@ -7475,10 +7474,8 @@ class testMeetingItem(PloneMeetingTestCase):
         ])
 
         self.changeUser('siteadmin')
-        cfg.setMailItemEvents(("item_state_changed_backToItemCreated__history_aware",))
-        self.changeUser('pmCreator1')
-        item2 = self.create("MeetingItem", title="My item that notify when backToItemCreated")
-        self.proposeItem(item2, as_manager=False)
+        cfg.setMailItemEvents(("item_state_changed_backToItemCreated__history_aware",
+                               "item_state_changed_backToProposed__history_aware",))
 
         self.changeUser("pmManager")
         self.backToState(item, 'itemcreated', as_manager=False)
@@ -7489,19 +7486,42 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(sorted(recipients), [
             u'M. PMCreator One <pmcreator1@plonemeeting.org>'
         ])
+
+        # check that back from validated works as well
         self.changeUser('pmCreator1b')
         self.proposeItem(item, as_manager=False)
+        self.changeUser("pmReviewer1")
+        self.validateItem(item, as_manager=False)
         self.changeUser("pmManager")
-        self.proposeItem(item)
-        self.validateItem(item)
+        self.backToState(item, 'proposed', as_manager=False, comment="Héhé")
+        recipients, subject, body = item._send_history_aware_mail_if_relevant('validated',
+                                                                              'backToProposed',
+                                                                              'proposed')
+        # Notify pmReviewer1 as this is him that valdated the item this time.
+        self.assertEqual(sorted(recipients),
+                         [u'M. PMReviewer One <pmreviewer1@plonemeeting.org>'])
+        # subject and body contain relevant informations
+        self.assertEqual(
+            subject,
+            u'{0} - Item in state "Proposed" '
+            u'(following "Back to \'Proposed\'") - '
+            u'My item that notify when propose'.format(cfg.Title()))
+        self.assertEqual(
+            body,
+            u'The item is entitled "My item that notify when propose". '
+            u'You can access this item here: http://nohost/plone/Members/pmCreator1/'
+            u'mymeetings/{0}/my-item-that-notify-when-propose.'
+            u'\n\nAction was done by "M. PMManager (pmManager)".'
+            u'\nComments: H\xe9h\xe9.'.format(cfg.getId()))
+
+        # back to itemcreated
         self.backToState(item, 'itemcreated', as_manager=False)
         recipients, subject, body = item._send_history_aware_mail_if_relevant('proposed',
                                                                               'backToItemCreated',
                                                                               'itemcreated')
-        # Notify PMCreator1b as this is him that proposed the item this time.
-        self.assertEqual(sorted(recipients), [
-            u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>'
-        ])
+        # Notify pmCreator1b as this is him that proposed the item this time.
+        self.assertEqual(sorted(recipients),
+                         [u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>'])
 
     def test_pm_ItemEditAndView(self):
         """Just call the edit and view to check it is displayed correctly."""

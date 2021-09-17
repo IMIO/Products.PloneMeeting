@@ -37,6 +37,15 @@ Changelog
 - Moved logic of `BaseDGHV.printXhtml` to `utils.convert2xhtml` so it is easy to
   call from outside code like from `plonemeeting.restapi`.
   [gbastien]
+- Completed mail notification sent when an item changed state
+  (every `item_state_changed_` like notifications) to add transition title
+  (so when an item is proposed, notified users know if it was itemcreated or
+  validated before) and to add transition actor and transition comments to
+  the mail body.
+  [gbastien]
+- Fixed `MeetingItem._send_history_aware_mail_if_relevant` that was breaking
+  if the `down` transition came from `validated`.
+  [gbastien]
 
 4.2b14 (2021-09-09)
 -------------------
