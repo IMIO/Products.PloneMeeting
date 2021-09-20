@@ -593,7 +593,8 @@ div.hsGrey {
     border-bottom: 0 none transparent !important;
 }
 
-/* Hightlight that a value has been modified, for example the itemAssembly is overriden on a MeetingItem */
+/* Highlight that a value has been modified, for example
+   the itemAssembly is overriden on a MeetingItem */
 p.highlightValue,
 span.highlightValue,
 dt.highlightValue span {
@@ -610,6 +611,8 @@ span.warningValue {
 .highlight-blue {color: blue;}
 .highlight-green {color: green;}
 .highlight-yellow {background-color: yellow;}
+.pm-anonymize {background-color: lightgrey;}
+
 p.indent-firstline {text-indent: 40px;}
 .xSmallText {font-size: 70%;}
 .smallText {font-size: 85%;}
@@ -1345,6 +1348,11 @@ div.highlightBlankRow:before {
 p.page-break {
     border: 1px dotted grey;
     page-break-after: always;
+}
+
+/* make sure ckeditor dropdowns (especially "styles") is width enough */
+.cke_panel {
+    width: 300px !important;
 }
 
 body.cke_editable p.page-break:after,
