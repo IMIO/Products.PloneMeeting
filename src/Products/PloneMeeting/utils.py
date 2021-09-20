@@ -463,11 +463,25 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         translationMapping = mapping
     else:
         translationMapping = {}
+
+    wf_action = getLastWFAction(obj)
+
     translationMapping.update({
-        'portalUrl': portalUrl, 'portalTitle': safe_unicode(portal.Title()),
-        'objectTitle': safe_unicode(obj.Title()), 'objectUrl': get_public_url(obj),
-        'meetingTitle': '', 'meetingLongTitle': '', 'itemTitle': '', 'user': userName,
-        'groups': userGroups, 'meetingConfigTitle': safe_unicode(cfg.Title()),
+        'portalUrl': portalUrl,
+        'portalTitle': safe_unicode(portal.Title()),
+        'objectTitle': safe_unicode(obj.Title()),
+        'objectUrl': get_public_url(obj),
+        'meetingTitle': '',
+        'meetingLongTitle': '',
+        'itemTitle': '',
+        'user': userName,
+        'groups': userGroups,
+        'meetingConfigTitle': safe_unicode(cfg.Title()),
+        'transitionActor': wf_action and \
+            tool.getUserName(wf_action['actor'], withUserId=True) or '-',
+        'transitionTitle': wf_action and \
+            translate(wf_action['action'], domain="plone", context=obj.REQUEST) or '-',
+        'transitionComments': wf_action and safe_unicode(wf_action['comments']) or '-',
     })
     if obj.getTagName() == 'Meeting':
         translationMapping['meetingTitle'] = safe_unicode(obj.Title())
@@ -668,7 +682,7 @@ def sendMailIfRelevant(obj,
             unique_emails.append(email)
             unique_email_recipients.append(recipient)
         mail_subject, mail_body = sendMail(unique_email_recipients, obj, event, mapping=mapping)
-        logger.info("Mail(s) sent to :" +  " ".join(recipients))
+        logger.info("Mail(s) %s sent to %s" % (event, ", ".join(recipients)))
     debug = debug or obj.REQUEST.get('debug_sendMailIfRelevant', False)
     if debug:
         return recipients, mail_subject, mail_body

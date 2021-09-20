@@ -4735,8 +4735,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         elif wf_direction == "down":
             # We are going down so we will notify the user that made the precedent 'leading_transition'
             # to the 'old_review_state'
-            wf_action_to_find = cfg.getItemWFValidationLevels(state=old_review_state)[
-                "leading_transition"]
+            wf_action_to_find = cfg.getItemWFValidationLevels(state=old_review_state)
+            if wf_action_to_find:
+                wf_action_to_find = wf_action_to_find["leading_transition"]
+            elif old_review_state == "validated":
+                # special management when going down from "validated"
+                # as this information is not in the "itemWFValidationLevels"
+                # but we now that the leading_transition is always "validate"
+                wf_action_to_find = "validate"
+            else:
+                raise Exception("Unable to find leading transition!")
+
             wf_action = getLastWFAction(self, wf_action_to_find)
             if wf_action:  # In case WF definition has changed in the meantime
                 notified_user_ids = [wf_action["actor"]]

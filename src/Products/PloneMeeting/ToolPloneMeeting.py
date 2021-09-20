@@ -854,7 +854,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getUserName')
 
-    def getUserName(self, userId):
+    def getUserName(self, userId, withUserId=False):
         '''Returns the full name of user having id p_userId.'''
         res = userId
         user = api.user.get(userid=userId)
@@ -867,6 +867,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # always return as utf-8!
         if isinstance(res, unicode):
             res = res.encode('utf-8')
+        if withUserId:
+            res = res + " ({0})".format(userId)
         return res
 
     security.declarePublic('getColoredLink')
