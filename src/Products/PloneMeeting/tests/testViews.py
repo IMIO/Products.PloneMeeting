@@ -1170,6 +1170,28 @@ class testViews(PloneMeetingTestCase):
                          '<p>Text2</p>'
                          '<p><img src="http://plone/nohost/img3.png"/></p>')
 
+    def test_pm_PrintXhtmlAnonymize(self):
+        '''Elements using class "pm-anonymize" will be anonymized if anonymize=True.'''
+        item, motivation, decision, helper = self._setupPrintXhtml()
+
+        # do nothing if nothing to do
+        self.assertEqual(helper.printXhtml(item, motivation, anonymize=True),
+                         '<p>The motivation using UTF-8 characters : &#232;&#224;.</p>')
+        # anonymize=True
+        motivation += '<p>The motivation <span class="pm-anonymize">chars \xc3\xa8\xc3\xa0</span>.</p>'
+        self.assertEqual(helper.printXhtml(item, motivation, anonymize=True),
+                         '<p>The motivation using UTF-8 characters : &#232;&#224;.</p>'
+                         '<p>The motivation <span class="pm-anonymize"></span>.</p>')
+
+        # anonymize may be a dict with some more config
+        anonymize = {"css_class": "pm-hide", "new_content": "[Hidden]"}
+        motivation += '<p>The motivation <span class="pm-hide">chars \xc3\xa8\xc3\xa0</span>.</p>'
+        self.assertEqual(
+            helper.printXhtml(item, motivation, anonymize=anonymize),
+            '<p>The motivation using UTF-8 characters : &#232;&#224;.</p>'
+            '<p>The motivation <span class="pm-anonymize">chars &#232;&#224;</span>.</p>'
+            '<p>The motivation <span class="pm-hide">[Hidden]</span>.</p>')
+
     def test_pm_print_advices_infos(self):
         """Test the print_advices_infos method."""
         cfg = self.meetingConfig

@@ -2214,7 +2214,7 @@ def convert2xhtml(obj,
     if anonymize:
         if anonymize is True:
             css_class = "pm-anonymize"
-            new_content = u"[Texte masqué RGPD]"
+            new_content = u""
             new_content_link = {}
         else:
             css_class = anonymize["css_class"]

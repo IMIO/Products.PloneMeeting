@@ -1907,6 +1907,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
         return self.printXhtml(
             self.context,
             xhtmlContents,
+            anonymize=True,
             image_src_to_paths=False,
             image_src_to_data=True,
             use_appy_pod_preprocessor=True,
