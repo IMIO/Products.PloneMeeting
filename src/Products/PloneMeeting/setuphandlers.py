@@ -425,7 +425,7 @@ def _configureCKeditor(site):
         msg_highlight_yellow = translate('ckeditor_style_highlight_in_yellow',
                                          domain='PloneMeeting',
                                          context=site.REQUEST).encode('utf-8')
-        msg_anonymize = translate('ckeditor_style_anonymize',
+        msg_anonymize = translate('ckeditor_style_pm_anonymize',
                                    domain='PloneMeeting',
                                    context=site.REQUEST).encode('utf-8')
         msg_x_small = translate('ckeditor_style_x_small',
