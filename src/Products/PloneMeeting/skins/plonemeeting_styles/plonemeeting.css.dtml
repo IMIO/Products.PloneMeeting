@@ -611,7 +611,10 @@ span.warningValue {
 .highlight-blue {color: blue;}
 .highlight-green {color: green;}
 .highlight-yellow {background-color: yellow;}
-.pm-anonymize {background-color: lightgrey;}
+.pm-anonymize {
+    background-color: #dfdfdf;
+    padding: 0.1em !important;
+}
 
 p.indent-firstline {text-indent: 40px;}
 .xSmallText {font-size: 70%;}
@@ -1686,7 +1689,7 @@ div.pmMoreInfo table[cellpadding='0'] tr th {
 /* increase height of CKeditor styles combobox,
    increase also zIndex to make sure menu is viewable in FF when opened in a popup */
 div.cke.cke_combopanel, div.cke.cke_menu_panel {
-    height: 300px;
+    height: 450px;
     z-index: 11000 !important;
 }
 
