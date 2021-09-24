@@ -46,6 +46,8 @@ Changelog
 - Fixed `MeetingItem._send_history_aware_mail_if_relevant` that was breaking
   if the `down` transition came from `validated`.
   [gbastien]
+- Added holidays for 2022.
+  [gbastien]
 - Added `Migrator.addCKEditorStyle` helper to ease adding an new CKeditor style.
   [gbastien]
 - Added possibility to anonymize a part of a rich text using new added CKeditor
