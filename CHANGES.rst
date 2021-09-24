@@ -26,6 +26,8 @@ Changelog
     style `span.pm-anonymize`.
     This is also taken into account when data get using restapi.
     [gbastien]
+- Added upgrade step to 4113 to `updateHolidays`.
+  [gbastien]
 
 4.1.28.28 (2021-08-17)
 ----------------------

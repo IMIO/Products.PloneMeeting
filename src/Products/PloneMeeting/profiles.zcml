@@ -138,4 +138,12 @@
       handler="Products.PloneMeeting.migrations.migrate_to_4112.migrate"
       profile="Products.PloneMeeting:default" />
 
+   <genericsetup:upgradeStep
+      title="Go to PloneMeeting 4113"
+      description=""
+      source="4112"
+      destination="4113"
+      handler="Products.PloneMeeting.migrations.migrate_to_4113.migrate"
+      profile="Products.PloneMeeting:default" />
+
 </configure>
