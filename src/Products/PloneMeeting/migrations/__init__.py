@@ -26,6 +26,7 @@ from Products.PloneMeeting.setuphandlers import columnInfos
 from Products.PloneMeeting.setuphandlers import indexInfos
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.ZCatalog.ProgressHandler import ZLogHandler
+from zope.i18n import translate
 
 import logging
 
@@ -250,6 +251,34 @@ class Migrator(BaseMigrator):
                 cfg.at_post_edit_script()
             else:
                 cfg.registerPortalTypes()
+        logger.info('Done.')
+
+    def addCKEditorStyle(self, style_name, style_element):
+        """Helper for adding a new style to the CKeditor styles.
+           The rules:
+           - p_style_name may use "-" or "_";
+           - p_style_element is the tag name, so "p" or "span";
+           - the corresponding translation is "ckeditor_style_" +
+             style_name where "-" are replaced by "_". """
+        logger.info("Adding style '%s' to CKEditor styles..." % style_name)
+        cke_props = self.portal.portal_properties.ckeditor_properties
+        if cke_props.menuStyles.find(style_name) == -1:
+            msg_style_name = translate('ckeditor_style_%s' % style_name.replace("-", "_"),
+                                       domain='PloneMeeting',
+                                       context=self.request).encode('utf-8')
+            menuStyles = cke_props.menuStyles
+            style = "{{ name : '{0}'\t\t, element : '{1}', attributes : " \
+                "{{ 'class' : '{2}' }} }},\n]".format(msg_style_name, style_element, style_name)
+            # last element, check if we need a ',' before or not...
+            strippedMenuStyles = menuStyles.replace(' ', '').replace('\n', '').replace('\r', '')
+            if ',]' not in strippedMenuStyles:
+                menuStyles = menuStyles.replace('\n]', ']')
+                style = ",\n" + style
+            menuStyles = menuStyles.replace(']', style)
+            cke_props.menuStyles = menuStyles
+            self.warn(logger, "Style '{0}' was added...".format(style_name))
+        else:
+            logger.info("Style '{0}' already exists and was not added...".format(style_name))
         logger.info('Done.')
 
     def _already_migrated(self, done=True):
