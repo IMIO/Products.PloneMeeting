@@ -28,6 +28,8 @@ Changelog
     [gbastien]
 - Added upgrade step to 4113 to `updateHolidays`.
   [gbastien]
+- Added holidays for 2022.
+  [gbastien]
 
 4.1.28.28 (2021-08-17)
 ----------------------
