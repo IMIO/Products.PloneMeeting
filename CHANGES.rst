@@ -48,6 +48,12 @@ Changelog
   [gbastien]
 - Added holidays for 2022.
   [gbastien]
+- Added `Migrator.addCKEditorStyle` helper to ease adding an new CKeditor style.
+  [gbastien]
+- Added possibility to anonymize a part of a rich text using new added CKeditor
+  style `span.pm-anonymize`.
+  This is also taken into account when data get using restapi.
+  [gbastien]
 
 4.2b14 (2021-09-09)
 -------------------

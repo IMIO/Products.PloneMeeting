@@ -29,6 +29,7 @@ from imio.helpers.xhtml import imagesToData
 from imio.helpers.xhtml import imagesToPath
 from imio.helpers.xhtml import markEmptyTags
 from imio.helpers.xhtml import removeBlanks
+from imio.helpers.xhtml import replace_content
 from imio.helpers.xhtml import separate_images
 from imio.helpers.xhtml import storeImagesLocally
 from imio.helpers.xhtml import xhtmlContentIsEmpty
@@ -2151,6 +2152,7 @@ def convert2xhtml(obj,
                   keepWithNextNumberOfChars=CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT,
                   checkNeedSeparator=False,
                   addCSSClass=None,
+                  anonymize=False,
                   use_safe_html=False,
                   use_appy_pod_preprocessor=False,
                   clean=False):
@@ -2207,6 +2209,23 @@ def convert2xhtml(obj,
     # manage addCSSClass
     if addCSSClass:
         xhtmlFinal = addClassToContent(xhtmlFinal, addCSSClass)
+
+    # manage anonymize_css_class
+    if anonymize:
+        if anonymize is True:
+            css_class = "pm-anonymize"
+            new_content = u""
+            new_content_link = {}
+        else:
+            css_class = anonymize["css_class"]
+            new_content = anonymize.get("new_content", u"")
+            new_content_link = anonymize.get("new_content_link", u"")
+
+        xhtmlFinal = replace_content(
+            xhtmlFinal,
+            css_class=css_class,
+            new_content=new_content,
+            new_content_link=new_content_link)
 
     if clean:
         xhtmlFinal = separate_images(xhtmlFinal)

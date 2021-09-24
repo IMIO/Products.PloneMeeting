@@ -593,7 +593,8 @@ div.hsGrey {
     border-bottom: 0 none transparent !important;
 }
 
-/* Hightlight that a value has been modified, for example the itemAssembly is overriden on a MeetingItem */
+/* Highlight that a value has been modified, for example
+   the itemAssembly is overriden on a MeetingItem */
 p.highlightValue,
 span.highlightValue,
 dt.highlightValue span {
@@ -610,6 +611,11 @@ span.warningValue {
 .highlight-blue {color: blue;}
 .highlight-green {color: green;}
 .highlight-yellow {background-color: yellow;}
+.pm-anonymize {
+    background-color: #dfdfdf;
+    padding: 0.1em !important;
+}
+
 p.indent-firstline {text-indent: 40px;}
 .xSmallText {font-size: 70%;}
 .smallText {font-size: 85%;}
@@ -1347,6 +1353,11 @@ p.page-break {
     page-break-after: always;
 }
 
+/* make sure ckeditor dropdowns (especially "styles") is width enough */
+.cke_panel {
+    width: 300px !important;
+}
+
 body.cke_editable p.page-break:after,
 div[id^='hook_'] p.page-break:after,
 div.pmMoreInfo p.page-break:after {
@@ -1678,7 +1689,7 @@ div.pmMoreInfo table[cellpadding='0'] tr th {
 /* increase height of CKeditor styles combobox,
    increase also zIndex to make sure menu is viewable in FF when opened in a popup */
 div.cke.cke_combopanel, div.cke.cke_menu_panel {
-    height: 300px;
+    height: 450px;
     z-index: 11000 !important;
 }
 
