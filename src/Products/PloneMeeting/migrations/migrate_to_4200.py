@@ -720,7 +720,6 @@ class Migrate_To_4200(Migrator):
 
         # add "pm-anonymize" CKeditor style
         self.addCKEditorStyle("pm-anonymize", "span")
-        return
 
         # configure new WFs
         self.cleanMeetingConfigs(field_names=['itemDecidedStates', 'itemPositiveDecidedStates'])

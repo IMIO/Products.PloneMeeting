@@ -457,7 +457,7 @@ class Migrator(BaseMigrator):
                 style = ",\n" + style
             menuStyles = menuStyles.replace(']', style)
             cke_props.menuStyles = menuStyles
-            logger.info("Style '{0}' was added...".format(style_name))
+            self.warn(logger, "Style '{0}' was added...".format(style_name))
         else:
             logger.info("Style '{0}' already exists and was not added...".format(style_name))
         logger.info('Done.')
