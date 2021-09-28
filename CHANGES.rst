@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2b16 (unreleased)
+4.2b16 (2021-09-28)
 -------------------
 
 - Renamed `CKeditor` style `Anonymize`, needed to fix
