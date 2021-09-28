@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2b15 (unreleased)
+4.2b15 (2021-09-28)
 -------------------
 
 - Fixed `PMContentHistoryView.show_history` as it may be called on item or
