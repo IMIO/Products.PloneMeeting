@@ -1355,7 +1355,7 @@ p.page-break {
 
 /* make sure ckeditor dropdowns (especially "styles") is width enough */
 .cke_panel {
-    width: 300px !important;
+    width: 475px !important;
 }
 
 body.cke_editable p.page-break:after,

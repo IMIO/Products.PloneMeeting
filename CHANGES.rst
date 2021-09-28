@@ -5,8 +5,11 @@ Changelog
 4.2b16 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Renamed `CKeditor` style `Anonymize`, needed to fix
+  `Migrator.addCKEditorStyle` to avoid `UnicodeDecodeError` when added
+  `CKeditor` style name contains special characters.
+  Make also the `CKeditor` styles panel displayed larger.
+  [gbastien]
 
 4.2b15 (2021-09-28)
 -------------------
