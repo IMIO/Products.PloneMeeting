@@ -8,6 +8,7 @@
 from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.utils import select_org_for_function
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
 from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriterion
@@ -2349,6 +2350,24 @@ class testMeetingConfig(PloneMeetingTestCase):
             u'be given on an item (notify users of advisers group '
             u'selected on item or the users able to add advice)" '
             u'may not be selected together.')
+
+    def test_pm_ListSelectableAdvisers(self):
+        """Vocabulary used for MeetingConfig.selectableAdvisers
+           and Meetingconfig.selectableAdviserUsers fields."""
+        cfg = self.meetingConfig
+        self.changeUser("siteadmin")
+        self._select_organization(self.endUsers_uid)
+        import ipdb; ipdb.set_trace()
+        self.assertEqual(
+            cfg.listSelectableAdvisers().keys(),
+            [self.developers_uid, self.endUsers_uid, self.vendors_uid])
+        # restrict _advisers to developers and vendors
+        select_org_for_function(self.developers_uid, "advisers")
+        select_org_for_function(self.vendors_uid, "advisers")
+        # endUsers no more in selectable advisers
+        self.assertEqual(
+            cfg.listSelectableAdvisers().keys(),
+            [self.developers_uid, self.vendors_uid])
 
 
 def test_suite():
