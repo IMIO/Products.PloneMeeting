@@ -45,11 +45,8 @@ class ChangeItemPollTypeView(BrowserView):
         '''Change pollType value.'''
         self._changePollType(new_value)
 
-    def _changePollType(self, new_value):
-        '''Helper method that changes pollType value and check that :
-           - new_value is among selectable pollType values;
-           - user actually mayChangePollType;
-           - adapt Meeting.item_votes values.'''
+    def validate_new_poll_type(self, old_pollType, new_value):
+        '''Make sure the new selected value can be selected.'''
         # make sure new_value exists
         factory = queryUtility(IVocabularyFactory,
                                'Products.PloneMeeting.vocabularies.polltypesvocabulary')
@@ -62,7 +59,6 @@ class ChangeItemPollTypeView(BrowserView):
 
         # if user tries to switch from a public pollType to a secret
         # and vice-versa, it can not be done if some votes are encoded
-        old_pollType = self.context.getPollType()
         is_switching_vote_mode = (old_pollType.startswith('secret') and
                                   not new_value.startswith('secret')) or \
                                  (not old_pollType.startswith('secret') and
@@ -70,8 +66,18 @@ class ChangeItemPollTypeView(BrowserView):
         if (new_value == 'no_vote' or is_switching_vote_mode) and \
            self.context.get_item_votes(include_unexisting=False):
             can_not_switch_polltype_msg = _('can_not_switch_polltype_votes_encoded')
+            return can_not_switch_polltype_msg
+
+    def _changePollType(self, new_value):
+        '''Helper method that changes pollType value and check that :
+           - new_value is among selectable pollType values;
+           - user actually mayChangePollType;
+           - adapt Meeting.item_votes values.'''
+        old_pollType = self.context.getPollType()
+        validation_msg = self.validate_new_poll_type(old_pollType, new_value)
+        if validation_msg:
             api.portal.show_message(
-                can_not_switch_polltype_msg, request=self.request, type='warning')
+                validation_msg, request=self.request, type='warning')
             return
 
         # save old_pollType so we can pass it the the ItemPollTypeChangedEvent

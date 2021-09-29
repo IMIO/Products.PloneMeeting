@@ -656,7 +656,8 @@ class testVotes(PloneMeetingTestCase):
     def test_pm_ChangePollTypeView(self):
         """The view that let's change MeetingItem.pollType on item view.
            It manage changes, but also avoid to change from a "secret" mode
-           to a "public" mode if some votes are already encoded."""
+           to a "public" mode if some votes are already encoded.
+           The validation also work from MeetingItem edit form."""
         self._enableField('pollType')
         self.changeUser('pmManager')
         meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
@@ -666,16 +667,22 @@ class testVotes(PloneMeetingTestCase):
         change_pt_view = secret_item.restrictedTraverse('@@change-item-polltype')
         # try to change to an unexisting value
         self.assertRaises(KeyError, change_pt_view, "unexisting")
+        self.assertRaises(KeyError, secret_item.validate_pollType, "unexisting")
         # can not switch to no_vote if votes encoded
         self.assertTrue(secret_item.get_item_votes())
         original_poll_type = secret_item.getPollType()
         self.assertEqual(original_poll_type, 'secret')
         change_pt_view("no_vote")
+        self.assertEqual(str(secret_item.validate_pollType("no_vote")),
+                         "can_not_switch_polltype_votes_encoded")
         self.assertEqual(secret_item.getPollType(), original_poll_type)
         # can not switch to a "public" mode vote
         change_pt_view("freehand")
         self.assertEqual(secret_item.getPollType(), original_poll_type)
+        self.assertEqual(str(secret_item.validate_pollType("freehand")),
+                         "can_not_switch_polltype_votes_encoded")
         # but can change to a vote is same mode, "secret"
+        self.failIf(secret_item.validate_pollType("secret_separated"))
         change_pt_view("secret_separated")
         self.assertNotEqual(secret_item.getPollType(), original_poll_type)
         self.assertEqual(secret_item.getPollType(), "secret_separated")

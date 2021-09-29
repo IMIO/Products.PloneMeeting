@@ -2048,6 +2048,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              domain='PloneMeeting',
                              context=self.REQUEST)
 
+    security.declarePrivate('validate_pollType')
+
+    def validate_pollType(self, value):
+        '''Validate the pollType field.'''
+        view = self.restrictedTraverse("@@change-item-polltype")
+        # validation_msg is None is it passed
+        validation_msg = view.validate_new_poll_type(self.getPollType(), value)
+        return validation_msg
+
     security.declarePrivate('validate_proposingGroup')
 
     def validate_proposingGroup(self, value):
