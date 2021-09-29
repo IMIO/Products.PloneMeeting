@@ -3836,6 +3836,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 safe_unicode(org.get_full_title(first_index=1)),
                 org_uid)
             advisers = get_plone_group(org_uid, "advisers")
+            # bypass organizations that do not have an _advisers Plone group
+            if not advisers:
+                continue
             users = advisers.getMemberIds()
             users_suffixed_group_msg = translate(
                 'users_in_suffixed_group',

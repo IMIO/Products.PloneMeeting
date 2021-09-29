@@ -3,6 +3,7 @@
 from collective.contact.plonegroup.browser.settings import IContactPlonegroupConfig
 from collective.contact.plonegroup.config import get_registry_functions
 from collective.contact.plonegroup.utils import get_all_suffixes
+from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group_id
 from datetime import date
@@ -10,6 +11,7 @@ from DateTime import DateTime
 from plone import api
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import getInterface
 from Products.validation.interfaces.IValidator import IValidator
@@ -78,7 +80,7 @@ def _validate_certified_signatures(value):
                    not datetime_to.strftime('%Y/%m/%d') == date_to or \
                    not datetime_from <= datetime_to:
                     raise SyntaxError
-            except:
+            except Exception:
                 return translate('error_certified_signatures_invalid_dates',
                                  mapping={'row_number': row_number},
                                  domain='PloneMeeting',
@@ -200,11 +202,19 @@ class PloneGroupSettingsValidator(validator.SimpleFieldValidator):
         # check that plonegroups and suffixes not used in MeetingConfigs
         removed_plonegroups = set(removed_plonegroups)
         tool = api.portal.get_tool('portal_plonemeeting')
+        # advisers
+        advisers_removed_plonegroups = [
+            REAL_ORG_UID_PATTERN.format(get_organization(removed_plonegroup_id))
+            for removed_plonegroup_id in removed_plonegroups]
         for cfg in tool.objectValues('MeetingConfig'):
             msg = _("can_not_delete_plone_group_meetingconfig",
                     mapping={'cfg_title': safe_unicode(cfg.Title())})
-            # plonegroups
+            # copyGroups
             if removed_plonegroups.intersection(cfg.getSelectableCopyGroups()):
+                raise Invalid(msg)
+            # advisers (selectableAdvisers/selectableAdviserUsers)
+            if set(advisers_removed_plonegroups).intersection(cfg.getSelectableAdvisers()) or \
+               set(advisers_removed_plonegroups).intersection(cfg.getSelectableAdviserUsers()):
                 raise Invalid(msg)
             # suffixes, values are like 'suffix_proposing_group_level1reviewers'
             composed_values_attributes = ['itemAnnexConfidentialVisibleFor',
@@ -228,7 +238,13 @@ class PloneGroupSettingsValidator(validator.SimpleFieldValidator):
         # need to be performant or may kill the instance when several items exist
         if removed_plonegroups:
             catalog = api.portal.get_tool('portal_catalog')
-            for brain in catalog(meta_type="MeetingItem", getCopyGroups=tuple(removed_plonegroups)):
+            # copy_groups
+            brains = catalog(
+                meta_type="MeetingItem", getCopyGroups=tuple(removed_plonegroups))
+            if not brains:
+                brains = catalog(
+                    meta_type="MeetingItem", indexAdvisers=tuple(advisers_removed_plonegroups))
+            for brain in brains:
                 item = brain.getObject()
                 if item.isDefinedInTool():
                     msgid = "can_not_delete_plone_group_config_meetingitem"
@@ -236,6 +252,7 @@ class PloneGroupSettingsValidator(validator.SimpleFieldValidator):
                     msgid = "can_not_delete_plone_group_meetingitem"
                 msg = _(msgid, mapping={'item_url': item.absolute_url()})
                 raise Invalid(msg)
+
 
 validator.WidgetValidatorDiscriminators(
     PloneGroupSettingsValidator, field=IContactPlonegroupConfig['functions'])

@@ -9,6 +9,9 @@ Changelog
   `ChangeItemPollTypeView.validate_new_poll_type` to make sure that it is not
   possible to break encoded votes from the item edit form.
   [gbastien]
+- Fixed `MeetingConfig.listSelectableAdvisers` when an organization does not have
+  a `_advisers` Plone group.
+  [gbastien]
 
 4.2b16 (2021-09-28)
 -------------------
