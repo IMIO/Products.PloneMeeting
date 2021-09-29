@@ -265,16 +265,16 @@ class Migrator(BaseMigrator):
         if cke_props.menuStyles.find(style_name) == -1:
             msg_style_name = translate('ckeditor_style_%s' % style_name.replace("-", "_"),
                                        domain='PloneMeeting',
-                                       context=self.request).encode('utf-8')
+                                       context=self.request)
             menuStyles = cke_props.menuStyles
-            style = "{{ name : '{0}'\t\t, element : '{1}', attributes : " \
-                "{{ 'class' : '{2}' }} }},\n]".format(msg_style_name, style_element, style_name)
+            style = u"{{ name : '{0}'\t\t, element : '{1}', attributes : " \
+                u"{{ 'class' : '{2}' }} }},\n]".format(msg_style_name, style_element, style_name)
             # last element, check if we need a ',' before or not...
-            strippedMenuStyles = menuStyles.replace(' ', '').replace('\n', '').replace('\r', '')
-            if ',]' not in strippedMenuStyles:
-                menuStyles = menuStyles.replace('\n]', ']')
-                style = ",\n" + style
-            menuStyles = menuStyles.replace(']', style)
+            strippedMenuStyles = menuStyles.replace(u' ', u'').replace(u'\n', u'').replace(u'\r', u'')
+            if u',]' not in strippedMenuStyles:
+                menuStyles = menuStyles.replace(u'\n]', u']')
+                style = u",\n" + style
+            menuStyles = menuStyles.replace(u']', style)
             cke_props.menuStyles = menuStyles
             self.warn(logger, "Style '{0}' was added...".format(style_name))
         else:
