@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2b17 (unreleased)
+4.2b17 (2021-09-29)
 -------------------
 
 - Added `MeetingItem.validate_pollType` that relies on
