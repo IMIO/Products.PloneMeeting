@@ -2357,7 +2357,6 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser("siteadmin")
         self._select_organization(self.endUsers_uid)
-        import ipdb; ipdb.set_trace()
         self.assertEqual(
             cfg.listSelectableAdvisers().keys(),
             [self.developers_uid, self.endUsers_uid, self.vendors_uid])
