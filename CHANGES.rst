@@ -5,8 +5,9 @@ Changelog
 4.2b18 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Optimized `MeetingItem.setManuallyLinkedItems` by using cache to get items to
+  store and especially data used to sort items by meeting date.
+  [gbastien]
 
 4.2b17 (2021-09-29)
 -------------------
