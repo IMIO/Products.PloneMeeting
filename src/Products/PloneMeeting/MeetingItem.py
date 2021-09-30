@@ -2128,7 +2128,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declareProtected(ModifyPortalContent, 'setManuallyLinkedItems')
 
-    def setManuallyLinkedItems(self, value, **kwargs):
+    def setManuallyLinkedItems(self, value, caching=True, **kwargs):
         '''Overrides the field 'manuallyLinkedItems' mutator so we synchronize
            field manuallyLinkedItems of every linked items...
            We are using ZCatalog.unrestrictedSearchResults and ZCatalog.unrestrictedSearchResults
@@ -2144,31 +2144,50 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         valueToStore = list(value)
         # only compute if something changed
         if not set(stored) == set(value):
+
             # we will use unrestrictedSearchResults because in the case a user update manually linked items
             # and in already selected items, there is an item he can not view, it will be found in the catalog
             unrestrictedSearch = api.portal.get_tool('portal_catalog').unrestrictedSearchResults
+            item_infos = {}
+
+            def _get_item_infos(item_uid):
+                """Return meeting_date and item_created data for given p_item_uid."""
+                if not caching or item_uid not in item_infos:
+                    brains = unrestrictedSearch(UID=item_uid)
+                    if brains:
+                        item = brains[0]._unrestrictedGetObject()
+                        meeting = item.getMeeting()
+                        item_infos[item_uid] = {
+                            'item': item,
+                            'meeting_date': meeting and meeting.getDate() or None,
+                            'item_created': item.created()}
+                    else:
+                        item_infos[item_uid] = None
+                return item_infos[item_uid]
 
             # sorting method, items will be sorted by meeting date descending
             # then, for items that are not in a meeting date, by creation date
             def _sortByMeetingDate(xUid, yUid):
                 '''Sort method that will sort items by meetingDate.
                    x and y are uids of items to sort.'''
-                item1 = unrestrictedSearch(UID=xUid)[0]._unrestrictedGetObject()
-                item2 = unrestrictedSearch(UID=yUid)[0]._unrestrictedGetObject()
-                item1Meeting = item1.getMeeting()
-                item2Meeting = item2.getMeeting()
-                if item1Meeting and item2Meeting:
+                item1_infos = _get_item_infos(xUid)
+                item1_created = item1_infos['item_created']
+                item1_meeting_date = item1_infos['meeting_date']
+                item2_infos = _get_item_infos(yUid)
+                item2_created = item2_infos['item_created']
+                item2_meeting_date = item2_infos['meeting_date']
+                if item1_meeting_date and item2_meeting_date:
                     # both items have a meeting, compare meeting dates
-                    return cmp(item2Meeting.getDate(), item1Meeting.getDate())
-                elif item1Meeting and not item2Meeting:
+                    return cmp(item2_meeting_date, item1_meeting_date)
+                elif item1_meeting_date and not item2_meeting_date:
                     # only item1 has a Meeting, it will be displayed before
                     return -1
-                elif not item1Meeting and item2Meeting:
+                elif not item1_meeting_date and item2_meeting_date:
                     # only item2 has a Meeting, it will be displayed before
                     return 1
                 else:
                     # no meeting at all, sort by item creation date
-                    return cmp(item1.created(), item2.created())
+                    return cmp(item1_created, item2_created)
 
             # update every items linked together that are still kept (in value)
             newUids = list(set(value).difference(set(stored)))
@@ -2176,12 +2195,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             newLinkedUids = []
             for newUid in newUids:
                 # add every manually linked items of this newUid...
-                newItem = unrestrictedSearch(UID=newUid)[0]._unrestrictedGetObject()
+                newItem = _get_item_infos(newUid)['item']
                 # getRawManuallyLinkedItems still holds old UID of deleted items
                 # so we use getManuallyLinkedItems to be sure that item object still exists
                 mLinkedItemUids = [tmp_item.UID() for tmp_item in newItem.getManuallyLinkedItems()]
                 for mLinkedItemUid in mLinkedItemUids:
-                    if mLinkedItemUid and mLinkedItemUid not in newLinkedUids:
+                    if mLinkedItemUid not in newLinkedUids:
                         newLinkedUids.append(mLinkedItemUid)
             # do not forget newUids
             newLinkedUids = newLinkedUids + newUids
@@ -2197,11 +2216,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # self UID is in newLinkedUids but is managed here above, so pass
                 if linkedItemUid == self.UID():
                     continue
-                linkedItem = unrestrictedSearch(UID=linkedItemUid)[0]._unrestrictedGetObject()
+                linkedItem = _get_item_infos(linkedItemUid)['item']
                 # do not self reference
                 newLinkedUidsToStore = list(newLinkedUids)
-                if linkedItem.UID() in newLinkedUids:
-                    newLinkedUidsToStore.remove(linkedItem.UID())
+                if linkedItemUid in newLinkedUids:
+                    newLinkedUidsToStore.remove(linkedItemUid)
                 newLinkedUidsToStore.sort(_sortByMeetingDate)
                 linkedItem.getField('manuallyLinkedItems').set(linkedItem, newLinkedUidsToStore, **kwargs)
                 # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
@@ -2209,15 +2228,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
             # now if links were removed, remove linked items on every removed items...
             removedUids = set(stored).difference(set(value))
-            if removedUids:
-                for removedUid in removedUids:
-                    removedItemBrains = unrestrictedSearch(UID=removedUid)
-                    if not removedItemBrains:
-                        continue
-                    removedItem = removedItemBrains[0]._unrestrictedGetObject()
-                    removedItem.getField('manuallyLinkedItems').set(removedItem, [], **kwargs)
-                    # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
-                    removedItem._p_changed = True
+            for removedUid in removedUids:
+                removedItemBrains = unrestrictedSearch(UID=removedUid)
+                if not removedItemBrains:
+                    continue
+                removedItem = removedItemBrains[0]._unrestrictedGetObject()
+                removedItem.getField('manuallyLinkedItems').set(removedItem, [], **kwargs)
+                # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
+                removedItem._p_changed = True
 
             # save newUids, newLinkedUids and removedUids in the REQUEST
             # so it can be used by submethods like subscribers

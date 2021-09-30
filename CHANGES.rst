@@ -31,6 +31,9 @@ Changelog
     `CKeditor` style name contains special characters.
     Make also the `CKeditor` styles panel displayed larger.
     [gbastien]
+  - Optimized `MeetingItem.setManuallyLinkedItems` by using cache to get items to
+    store and especially data used to sort items by meeting date.
+    [gbastien]
 - Added holidays for 2022 and added upgrade step to 4113 to `updateHolidays`.
   [gbastien]
 
