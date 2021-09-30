@@ -2680,22 +2680,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # we will use unrestrictedSearchResults because in the case a user update manually linked items
             # and in already selected items, there is an item he can not view, it will be found in the catalog
             unrestrictedSearch = api.portal.get_tool('portal_catalog').unrestrictedSearchResults
-            item_meeting_dates = {}
+            item_infos = {}
 
             def _get_item_infos(item_uid):
                 """Return meeting_date and item_created data for given p_item_uid."""
-                if not caching or item_uid not in item_meeting_dates:
+                if not caching or item_uid not in item_infos:
                     brains = unrestrictedSearch(UID=item_uid)
                     if brains:
                         item = brains[0]._unrestrictedGetObject()
                         meeting = item.getMeeting()
-                        item_meeting_dates[item_uid] = {
+                        item_infos[item_uid] = {
                             'item': item,
                             'meeting_date': meeting and meeting.date or None,
                             'item_created': item.created()}
                     else:
-                        item_meeting_dates[item_uid] = None
-                return item_meeting_dates[item_uid]
+                        item_infos[item_uid] = None
+                return item_infos[item_uid]
 
             # sorting method, items will be sorted by meeting date descending
             # then, for items that are not in a meeting date, by creation date
