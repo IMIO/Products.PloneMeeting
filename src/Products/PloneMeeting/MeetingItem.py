@@ -2685,12 +2685,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             def _get_item_infos(item_uid):
                 """Return meeting_date and item_created data for given p_item_uid."""
                 if not caching or item_uid not in item_meeting_dates:
-                    item = unrestrictedSearch(UID=item_uid)[0]._unrestrictedGetObject()
-                    meeting = item.getMeeting()
-                    item_meeting_dates[item_uid] = {
-                        'item': item,
-                        'meeting_date': meeting and meeting.date or None,
-                        'item_created': item.created()}
+                    brains = unrestrictedSearch(UID=item_uid)
+                    if brains:
+                        item = brains[0]._unrestrictedGetObject()
+                        meeting = item.getMeeting()
+                        item_meeting_dates[item_uid] = {
+                            'item': item,
+                            'meeting_date': meeting and meeting.date or None,
+                            'item_created': item.created()}
+                    else:
+                        item_meeting_dates[item_uid] = None
                 return item_meeting_dates[item_uid]
 
             # sorting method, items will be sorted by meeting date descending
@@ -2728,7 +2732,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # so we use getManuallyLinkedItems to be sure that item object still exists
                 mLinkedItemUids = [tmp_item.UID() for tmp_item in newItem.getManuallyLinkedItems()]
                 for mLinkedItemUid in mLinkedItemUids:
-                    if mLinkedItemUid and mLinkedItemUid not in newLinkedUids:
+                    if mLinkedItemUid not in newLinkedUids:
                         newLinkedUids.append(mLinkedItemUid)
             # do not forget newUids
             newLinkedUids = newLinkedUids + newUids
