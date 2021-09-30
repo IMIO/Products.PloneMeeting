@@ -379,6 +379,38 @@ class testPerformances(PloneMeetingTestCase):
         for time in range(times):
             self.tool.getMeetingConfig(context, caching=caching)
 
+    def test_pm_SpeedSetManuallyLinkedItems(self):
+        '''Test MeetingItem.setManuallyLinkedItems method performances.'''
+
+        meeting1, items1 = self._setupMeetingItemsWithAnnexes(10, 0, as_uids=False)
+        meeting2, items2 = self._setupMeetingItemsWithAnnexes(10, 0, as_uids=False)
+        meeting3, items3 = self._setupMeetingItemsWithAnnexes(10, 0, as_uids=False)
+        meeting4, items4 = self._setupMeetingItemsWithAnnexes(10, 0, as_uids=False)
+        meeting5, items5 = self._setupMeetingItemsWithAnnexes(10, 0, as_uids=False)
+        item = items1[0]
+        linked_items = items1[1:] + items2 + items3 + items4 + items5
+        linked_item_uids = [linked_item.UID() for linked_item in linked_items]
+        # set with caching
+        pm_logger.info('setManuallyLinkedItems with cahing=True (1).')
+        self._setManuallyLinkedItemsOnItem(item, linked_item_uids)
+        # set without caching
+        item.setManuallyLinkedItems([])
+        pm_logger.info('setManuallyLinkedItems with cahing=False (1).')
+        self._setManuallyLinkedItemsOnItem(item, linked_item_uids, caching=False)
+        # set with caching second time
+        item.setManuallyLinkedItems([])
+        pm_logger.info('setManuallyLinkedItems with cahing=True (2).')
+        self._setManuallyLinkedItemsOnItem(item, linked_item_uids)
+        # set without caching second time
+        item.setManuallyLinkedItems([])
+        pm_logger.info('setManuallyLinkedItems with cahing=False (2).')
+        self._setManuallyLinkedItemsOnItem(item, linked_item_uids, caching=False)
+
+    @timecall
+    def _setManuallyLinkedItemsOnItem(self, item, linked_item_uids, caching=True):
+        ''' '''
+        item.setManuallyLinkedItems(linked_item_uids, caching=caching)
+
     def test_pm_IsManager(self):
         '''Test ToolPloneMeeting.isManager method performances.
            Need to comment manually ram.cache on ToolPloneMeeting.isManager
