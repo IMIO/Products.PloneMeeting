@@ -5,8 +5,10 @@ Changelog
 4.1.28.30 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Temporary fix until fixed in `collective.documentgenerator`, set
+  `BaseDGHV.printXhtml` parameter `use_appy_pod_preprocessor`
+  to `True` by default.
+  [gbastien]
 
 4.1.28.29 (2021-09-30)
 ----------------------

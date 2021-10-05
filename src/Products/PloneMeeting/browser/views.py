@@ -691,7 +691,7 @@ class BaseDGHV(object):
                    addCSSClass=None,
                    anonymize=False,
                    use_safe_html=False,
-                   use_appy_pod_preprocessor=False,
+                   use_appy_pod_preprocessor=True,
                    clean=True):
         """p_anonymize may be a boolean (False/True), then it will use default values,
            or a dict with specific "css_class" and "new_content" values."""
