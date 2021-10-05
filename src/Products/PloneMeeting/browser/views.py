@@ -620,6 +620,7 @@ class BaseDGHV(object):
                             withAuthor=True,
                             ordered=True):
         '''Helper method to have a printable version of advices.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
         res = ""
         if withAdvicesTitle:
             res += "<p class='pmAdvices'><u><b>%s :</b></u></p>" % \
@@ -664,12 +665,7 @@ class BaseDGHV(object):
                 if withAuthor and not adviceType == NOT_GIVEN_ADVICE_VALUE:
                     adviceHolder = advice.get('adviceHolder', item)
                     adviceObj = adviceHolder.getAdviceObj(advice['id'])
-                    membershipTool = api.portal.get_tool('portal_membership')
-                    author = membershipTool.getMemberInfo(adviceObj.Creator())
-                    if author:
-                        author = author['fullname']
-                    else:
-                        author = adviceObj.Creator()
+                    author = tool.getUserName(adviceObj.Creator())
                     res = res + u"<br /><u>%s :</u> <i>%s</i>" % (translate('Advice given by',
                                                                   domain='PloneMeeting',
                                                                   context=self.request),
@@ -728,8 +724,8 @@ class BaseDGHV(object):
 
     def print_fullname(self, user_id):
         """ """
-        user = api.user.get(user_id)
-        return user and user.getProperty('fullname') or user_id
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return tool.getUserName(user_id)
 
     def print_assembly(self, striked=True, use_print_attendees_by_type=True, **kwargs):
         '''Returns the assembly for this meeting or item.

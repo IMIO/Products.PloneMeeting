@@ -13,11 +13,11 @@
             <h1 class="documentFirstHeading" i18n:translate="">
                 History of delay changes for <span i18n:name="advice" tal:content="infos/name">advice</span>
             </h1>
-    
+
             <div id="content-core"
                  tal:define="historyInfos infos/delay_changes_history;
                              dummy python: historyInfos.reverse();">
-    
+
             <tal:comments replace="nothing">Table containing the history of advice delay changes</tal:comments>
             <tal:history condition="historyInfos">
             <table class="listing nosort" style="width: 100%">
@@ -34,7 +34,7 @@
               <tr tal:define="odd repeat/historyInfo/odd;
                               comments historyInfo/comments|nothing;"
                   tal:attributes="class python: odd and 'even' or 'odd'" valign="top">
-    
+
                 <tal:change_delay_from_to_action tal:condition="python: isinstance(historyInfo['action'], tuple)">
                     <td tal:define="from python: historyInfo['action'][0];
                                     to python: historyInfo['action'][1];">
@@ -46,15 +46,13 @@
                         <span tal:content="historyInfo/action" i18n:translate="">Action</span>
                     </td>
                 </tal:other_action>
-    
+
                 <td tal:define="actorid python:historyInfo.get('actor');
-                                actor python:context.portal_membership.getMemberInfo(actorid);
-                                fullname actor/fullname|nothing;
-                                username actor/username|nothing"
-                    tal:content="python:fullname or username or actorid"/>
+                                username python:view.tool.getUserName(actorid);"
+                    tal:content="python:username"/>
                 <td tal:content="python:context.restrictedTraverse('@@plone').toLocalizedTime(historyInfo['time'],long_format=True)"/>
                 <td>
-                  <tal:comments condition="comments" i18n:translate="" i18n:domain="PloneMeeting" tal:content="structure comments"/>
+                  <tal:comments condition="comments" i18n:translate="" i18n:domain="PloneMeeting" tal:content="structure python:view.renderComments(comments)"/>
                   <span tal:condition="not:comments" i18n:domain="plone" i18n:translate="no_comments" class="discreet">No comments</span>
                 </td>
               </tr>

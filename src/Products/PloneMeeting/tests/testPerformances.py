@@ -737,6 +737,21 @@ class testPerformances(PloneMeetingTestCase):
         for time in range(times):
             self.tool.group_is_not_empty(self.vendors_uid, "creators")
 
+    def test_pm_SpeedGetMemberInfo(self):
+        '''Test MembershipTool.getMemberInfo that is monkeypatched.
+           This needs to be done manually, enable or disable ram.cache decorator.'''
+        self.changeUser('pmManager')
+        # call getMemberInfo 1000 times
+        membership = api.portal.get_tool('portal_membership')
+        self._get_member_info(membership, times=1000)
+
+    @timecall
+    def _get_member_info(self, membership, times=1):
+        ''' '''
+        pm_logger.info('Call {0} times'.format(times))
+        for time in range(times):
+            membership.getMemberInfo("pmManager")
+
 
 def test_suite():
     from unittest import makeSuite

@@ -32,6 +32,7 @@ from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanVocabularyCacheFor
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.content import get_user_fullname
 from imio.helpers.security import fplog
 from imio.migrator.utils import end_time
 from imio.prettylink.interfaces import IPrettyLink
@@ -856,12 +857,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def getUserName(self, userId, withUserId=False):
         '''Returns the full name of user having id p_userId.'''
-        res = userId
-        user = api.user.get(userid=userId)
-        if user:
-            fullName = user.getProperty('fullname')
-            if fullName:
-                res = fullName
+        res = get_user_fullname(userId)
         # fullname of a Zope user (admin) is returned as unicode
         # and fullname of a Plone user is returned as utf-8...
         # always return as utf-8!
@@ -1276,7 +1272,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if not userInfo or not userInfo.getProperty('email'):
             return None
         # Compute the mail recipient string
-        fullname = userInfo.getProperty('fullname') or userInfo.id
+        fullname = self.getUserName(userInfo.id)
         name = fullname.decode(enc)
         res = name + u' <%s>' % userInfo.getProperty('email').decode(enc)
         return safe_unicode(res)

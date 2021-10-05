@@ -8,6 +8,12 @@ Changelog
 - Optimized `MeetingItem.setManuallyLinkedItems` by using cache to get items to
   store and especially data used to sort items by meeting date.
   [gbastien]
+- Avoid use of `Member.getProperty`:
+
+  - use `ToolPloneMeeting.getUserName` to get user fullname;
+  - monkey patched `MembershipTool.getMemberInfo` to add caching.
+
+  [gbastien]
 
 4.2b17 (2021-09-29)
 -------------------
