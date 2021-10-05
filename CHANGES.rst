@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.28.30 (unreleased)
+4.1.28.30 (2021-10-05)
 ----------------------
 
 - Temporary fix until fixed in `collective.documentgenerator`, set
