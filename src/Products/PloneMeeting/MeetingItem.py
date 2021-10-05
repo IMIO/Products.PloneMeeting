@@ -5781,6 +5781,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             saved_stored_data[org_uid]['delay_changes_history'] = \
                 'delay_changes_history' in adviceInfo and \
                 adviceInfo['delay_changes_history'] or []
+            saved_stored_data[org_uid]['proposing_group_comment'] = \
+                adviceInfo.get('proposing_group_comment', u'')
             saved_stored_data[org_uid]['inherited'] = \
                 'inherited' in adviceInfo and \
                 adviceInfo['inherited'] or bool(org_uid in inheritedAdviserUids)
@@ -5873,11 +5875,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     d['delay_changes_history'] = saved_stored_data[org_uid]['delay_changes_history']
                     d['isConfidential'] = saved_stored_data[org_uid]['isConfidential']
                     d['inherited'] = saved_stored_data[org_uid]['inherited']
+                    d['proposing_group_comment'] = \
+                        saved_stored_data[org_uid]['proposing_group_comment']
                 else:
                     d['delay_for_automatic_adviser_changed_manually'] = False
                     d['delay_changes_history'] = []
                     d['isConfidential'] = cfg.getAdviceConfidentialityDefault()
                     d['inherited'] = bool(org_uid in inheritedAdviserUids)
+                    d['proposing_group_comment'] = u''
                 # index view/add/edit access
                 d['item_viewable_by_advisers'] = False
                 d['advice_addable'] = False
@@ -5906,15 +5911,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     adviceInfo['delay_started_on'] = saved_stored_data[org_uid]['delay_started_on']
                 if org_uid in saved_stored_data:
                     adviceInfo['delay_stopped_on'] = saved_stored_data[org_uid]['delay_stopped_on']
-                if org_uid in saved_stored_data:
                     adviceInfo['delay_for_automatic_adviser_changed_manually'] = \
                         saved_stored_data[org_uid]['delay_for_automatic_adviser_changed_manually']
                     adviceInfo['delay_changes_history'] = saved_stored_data[org_uid]['delay_changes_history']
                     adviceInfo['isConfidential'] = saved_stored_data[org_uid]['isConfidential']
+                    adviceInfo['proposing_group_comment'] = \
+                        saved_stored_data[org_uid]['proposing_group_comment']
                 else:
                     adviceInfo['delay_for_automatic_adviser_changed_manually'] = False
                     adviceInfo['delay_changes_history'] = []
                     adviceInfo['isConfidential'] = cfg.getAdviceConfidentialityDefault()
+                    adviceInfo['proposing_group_comment'] = u''
                 # index view/add/edit access
                 adviceInfo['item_viewable_by_advisers'] = False
                 adviceInfo['advice_addable'] = False
