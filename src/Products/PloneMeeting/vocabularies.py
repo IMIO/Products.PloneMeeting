@@ -442,10 +442,10 @@ class CreatorsVocabulary(object):
     def __call__(self, context):
         """ """
         catalog = api.portal.get_tool('portal_catalog')
+        tool = api.portal.get_tool('portal_plonemeeting')
         res = []
         for creator in catalog.uniqueValuesFor('Creator'):
-            member = api.user.get(creator)
-            value = member and member.getProperty('fullname') or creator
+            value = tool.getUserName(creator)
             res.append(SimpleTerm(creator,
                                   creator,
                                   safe_unicode(value))
@@ -480,8 +480,7 @@ class CreatorsForFacetedFilterVocabulary(object):
         filteredCreators = [creator for creator in creators if creator not in creatorsToHide]
 
         for creator in filteredCreators:
-            member = api.user.get(creator)
-            value = member and member.getProperty('fullname') or creator
+            value = tool.getUserName(creator)
             res.append(SimpleTerm(creator,
                                   creator,
                                   safe_unicode(value))

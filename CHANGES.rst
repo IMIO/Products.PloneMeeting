@@ -14,6 +14,12 @@ Changelog
     to get `GroupData` instances instead group ids.
     This is used by the `plonemeeting.restapi` `@users` endpoint.
     [gbastien]
+  - Avoid use of `Member.getProperty`:
+
+    - use `ToolPloneMeeting.getUserName` to get user fullname;
+    - monkey patched `MembershipTool.getMemberInfo` to add caching.
+
+    [gbastien]
 
 4.1.28.30 (2021-10-05)
 ----------------------

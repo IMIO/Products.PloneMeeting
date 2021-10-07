@@ -93,3 +93,12 @@ class ItemCompletenessHistoryView(BrowserView):
         super(BrowserView, self).__init__(context, request)
         self.context = context
         self.request = request
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+
+    def renderComments(self, comments):
+        """
+          Borrowed from imio.history.
+        """
+        transformsTool = api.portal.get_tool('portal_transforms')
+        data = transformsTool.convertTo('text/x-html-safe', comments)
+        return data.getData()

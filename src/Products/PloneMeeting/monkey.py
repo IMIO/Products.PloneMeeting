@@ -9,6 +9,7 @@ from Products.Archetypes.BaseObject import BaseObject
 from Products.Archetypes.Field import Field
 from Products.CMFPlone.CatalogTool import CatalogTool
 from Products.PloneMeeting import logger
+from Products.PlonePAS.tools.membership import MembershipTool
 from Products.PortalTransforms.cache import Cache
 from Products.PortalTransforms.transforms import safe_html
 from Products.PortalTransforms.transforms.safe_html import CSS_COMMENT
@@ -127,6 +128,7 @@ def _listAllowedRolesAndUsers(self, user):
     result.append('Anonymous')
     return result
 
+
 CatalogTool._listAllowedRolesAndUsers = _listAllowedRolesAndUsers
 logger.info("Monkey patching Products.CMFPlone.CatalogTool.CatalogTool (_listAllowedRolesAndUsers)")
 
@@ -142,6 +144,7 @@ def hasScript(s):
         if t in s:
             return True
     return False
+
 
 safe_html.hasScript = hasScript
 logger.info("Monkey patching Products.PortalTransforms.transforms.safe_html (hasScript)")
@@ -161,5 +164,25 @@ def validate_content_types(self, instance, value, errors):
             error = None
     return error
 
+
 Field.validate_content_types = validate_content_types
 logger.info("Monkey patching Products.Archetypes.Field.Field (validate_content_types)")
+
+
+def getMemberInfo_cachekey(method, self, memberId=None):
+    '''cachekey method for self.getMemberInfo.
+       Cache is invalidated by plone.app.controlpanel upon any control panel changes.'''
+    return memberId
+
+
+MembershipTool.__old_pm_getMemberInfo = MembershipTool.getMemberInfo
+
+
+@ram.cache(getMemberInfo_cachekey)
+def getMemberInfo(self, memberId=None):
+    """Monkeypatched to add caching."""
+    return self.__old_pm_getMemberInfo(memberId)
+
+
+MembershipTool.getMemberInfo = getMemberInfo
+logger.info("Monkey patching Products.PlonePAS.tools.membership.MembershipTool (getMemberInfo)")

@@ -399,10 +399,8 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         return
     # Compute user name
     pms = api.portal.get_tool('portal_membership')
-    userName = pms.getAuthenticatedMember().getId()
-    userInfo = pms.getMemberById(userName)
-    if userInfo and userInfo.getProperty('fullname'):
-        userName = safe_unicode(userInfo.getProperty('fullname'))
+    userInfo = pms.getAuthenticatedMember()
+    userName = safe_unicode(tool.getUserName(userInfo.getId()))
     # Compute list of MeetingGroups for this user
     userGroups = ', '.join([g.Title() for g in tool.get_orgs_for_user()])
     # Create the message parts

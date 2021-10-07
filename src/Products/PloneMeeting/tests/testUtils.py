@@ -22,8 +22,10 @@
 # 02110-1301, USA.
 #
 
+from plone.app.controlpanel.events import ConfigurationChangedEvent
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import validate_item_assembly_value
+from zope.event import notify
 
 
 ASSEMBLY_CORRECT_VALUE = u'[[Text]][[Text]]'
@@ -56,6 +58,17 @@ class testUtils(PloneMeetingTestCase):
         # is bypassed, this let's edit an old wrong value
         self.request.set('initial_edit', u'1')
         self.assertTrue(validate_item_assembly_value(ASSEMBLY_WRONG_VALUE))
+
+    def test_pm_GetMemberInfo(self):
+        """Test portal_membership.getMemberInfo as is it monkeypatched to add caching."""
+        pm = self.portal.portal_membership
+        self.changeUser("pmManager")
+        self.assertEqual(pm.getMemberInfo("pmManager")["fullname"], 'M. PMManager')
+        self.member.setMemberProperties({"fullname": "M. PMManager New"})
+        # still not changed as cache was not invalidated
+        self.assertEqual(pm.getMemberInfo("pmManager")["fullname"], 'M. PMManager')
+        notify(ConfigurationChangedEvent(self.portal, self.request))
+        self.assertEqual(pm.getMemberInfo("pmManager")["fullname"], 'M. PMManager New')
 
 
 def test_suite():
