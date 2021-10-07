@@ -5611,8 +5611,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             data[advId]['creator_fullname'] = None
             if given_advice:
                 creator_id = given_advice.Creator()
-                creator = api.user.get(creator_id)
-                creator_fullname = creator and creator.getProperty('fullname') or creator_id
+                creator_fullname = tool.getUserName(creator_id)
                 data[advId]['creator_id'] = creator_id
                 data[advId]['creator_fullname'] = creator_fullname
 

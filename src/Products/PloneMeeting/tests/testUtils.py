@@ -6,6 +6,7 @@
 #
 
 from collective.contact.plonegroup.utils import get_plone_group
+from plone.app.controlpanel.events import ConfigurationChangedEvent
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import duplicate_portal_type
 from Products.PloneMeeting.utils import escape
@@ -13,6 +14,7 @@ from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.PloneMeeting.utils import validate_item_assembly_value
+from zope.event import notify
 
 
 ASSEMBLY_CORRECT_VALUE = u'[[Text]][[Text]]'
@@ -202,6 +204,17 @@ class testUtils(PloneMeetingTestCase):
         self.assertEqual(escape('<h1>We have no respect for <em><strong>HTML tags</strong></em> either</h1>'),
                          '&lt;h1&gt;We have no respect for &lt;em&gt;&lt;strong&gt;'
                          'HTML tags&lt;/strong&gt;&lt;/em&gt; either&lt;/h1&gt;')
+
+    def test_pm_GetMemberInfo(self):
+        """Test portal_membership.getMemberInfo as is it monkeypatched to add caching."""
+        pm = self.portal.portal_membership
+        self.changeUser("pmManager")
+        self.assertEqual(pm.getMemberInfo("pmManager")["fullname"], 'M. PMManager')
+        self.member.setMemberProperties({"fullname": "M. PMManager New"})
+        # still not changed as cache was not invalidated
+        self.assertEqual(pm.getMemberInfo("pmManager")["fullname"], 'M. PMManager')
+        notify(ConfigurationChangedEvent(self.portal, self.request))
+        self.assertEqual(pm.getMemberInfo("pmManager")["fullname"], 'M. PMManager New')
 
 
 def test_suite():

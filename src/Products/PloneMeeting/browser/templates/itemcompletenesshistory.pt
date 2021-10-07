@@ -40,13 +40,11 @@
                       tal:attributes="class string:item_${historyInfo/action};">Action</span>
             </td>
             <td tal:define="actorid python:historyInfo.get('actor');
-                            actor python:context.portal_membership.getMemberInfo(actorid);
-                            fullname actor/fullname|nothing;
-                            username actor/username|nothing"
-                tal:content="python:fullname or username or actorid"/>
+                            username python:view.tool.getUserName(actorid);"
+                tal:content="python:username"/>
             <td tal:content="python:context.restrictedTraverse('@@plone').toLocalizedTime(historyInfo['time'],long_format=True)"/>
             <td>
-              <tal:comments condition="comments" i18n:translate="" i18n:domain="PloneMeeting" tal:content="structure comments"/>
+              <tal:comments condition="comments" i18n:translate="" i18n:domain="PloneMeeting" tal:content="structure python:view.renderComments(comments)"/>
               <span tal:condition="not:comments" i18n:domain="plone" i18n:translate="no_comments" class="discreet">No comments</span>
             </td>
           </tr>
