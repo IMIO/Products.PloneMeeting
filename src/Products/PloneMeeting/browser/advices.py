@@ -386,7 +386,7 @@ def advice_uid_default():
       Get the value from the REQUEST as it is passed when calling the
       form : form?advice_uid=advice_uid.
     """
-    request = getRequest
+    request = getRequest()
     return request.get('advice_id', u'')
 
 
