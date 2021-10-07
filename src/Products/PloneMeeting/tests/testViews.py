@@ -1031,7 +1031,7 @@ class testViews(PloneMeetingTestCase):
         # but even when set to False, in 4.1.x use_appy_pod_preprocessor=True by default
         self.assertEqual(
             helper.printXhtml(item, [motivation, '<br>'], use_safe_html=False),
-            motivation + '<br />')
+            motivation + '<br/>')
         # without any xhtmlization
         self.assertEqual(
             helper.printXhtml(item,
