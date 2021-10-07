@@ -853,10 +853,16 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         else:
             return True
 
+    def getUserName_cachekey(method, self, userId, withUserId=False):
+        '''cachekey method for self.getUserName.'''
+        return userId, withUserId
+
     security.declarePublic('getUserName')
 
+    # @ram.cache(getUserName_cachekey)
     def getUserName(self, userId, withUserId=False):
-        '''Returns the full name of user having id p_userId.'''
+        '''Returns the full name of user having id p_userId.
+           Performance test does not show that ram.cache is necessary.'''
         res = get_user_fullname(userId)
         # fullname of a Zope user (admin) is returned as unicode
         # and fullname of a Plone user is returned as utf-8...
