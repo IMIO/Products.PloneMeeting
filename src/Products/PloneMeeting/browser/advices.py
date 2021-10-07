@@ -237,14 +237,14 @@ class AdvicesIconsInfos(BrowserView):
                         suffixes.append(k)
         return json.dumps(["{0}_{1}".format(advice_id, suffix) for suffix in suffixes])
 
-    def mayEditProposingGroupComment(self, advice_id):
+    def mayEditProposingGroupComment(self):
         """Proposing group may edit comment if able to edit item.
            Advice comment may be changed by proposingGroup when:
            - member is a group editor (not an observer for example) and item is editable;
            - advice is addable/editable."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        advice_info = self.context.adviceIndex[advice_id]
+        advice_info = self.context.adviceIndex[self.advice_id]
         res = False
         suffixes = cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
         org_uid = self.context.getProposingGroup()

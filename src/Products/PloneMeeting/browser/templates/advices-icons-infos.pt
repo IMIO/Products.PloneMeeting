@@ -261,7 +261,7 @@
                              <legend>
                                 <span i18n:translate="">Advice proposing group comment</span>
                                 <a href="advice_proposing_group_comment_form"
-                                   tal:condition="python: view.mayEditProposingGroupComment(advice['id'])"
+                                   tal:condition="python: view.mayEditProposingGroupComment()"
                                    class="link-overlay-pm"
                                    target='_parent'
                                    tal:attributes="href string:${item_url}/advice_proposing_group_comment_form?advice_id=${advice/id}">
