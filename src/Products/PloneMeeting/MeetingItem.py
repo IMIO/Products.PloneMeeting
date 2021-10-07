@@ -2279,8 +2279,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(item)
         res = tool.isManager(cfg)
         if not res:
-            res = tool.isPowerObserverForCfg(cfg) or \
-                item.query_state() in cfg.getItemDecidedStates()
+            res = tool.isPowerObserverForCfg(cfg) or self.is_decided(cfg)
         return res
 
     security.declarePublic('showIsAcceptableOutOfMeeting')
@@ -2436,7 +2435,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(item)
             item_state = item.query_state()
-            if item_state in cfg.getItemDecidedStates() and \
+            if self.is_decided(cfg, item_state) and \
                item.adapted()._getGroupManagingItem(item_state, theObject=False) in \
                tool.get_orgs_for_user(the_objects=False):
                 res = True
@@ -3746,7 +3745,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             tool = api.portal.get_tool("portal_plonemeeting")
             cfg = tool.getMeetingConfig(item)
             may_update = cfg.getComputeItemReferenceForItemsOutOfMeeting() and \
-                item.query_state() in cfg.getItemDecidedStates()
+                item.is_decided(cfg)
         return may_update
 
     security.declarePublic('update_item_reference')
@@ -6449,7 +6448,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 mmanagers_group_id = "{0}_{1}".format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
                 # 'Reviewer' also on decided item, the WF guard will avoid correct is meeting closed
                 mmanagers_roles = ['Reader', 'Reviewer']
-                if item_state not in cfg.getItemDecidedStates():
+                if not self.is_decided(cfg, item_state):
                     mmanagers_roles += ['Editor', 'Contributor']
                 self.manage_addLocalRoles(mmanagers_group_id, tuple(mmanagers_roles))
 
@@ -7476,6 +7475,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if intersection:
                 res.append(gic)
         return res
+
+    def is_decided(self, cfg, item_state=None, positive_only=False):
+        '''Is item considered decided?'''
+        item_state = item_state or self.query_state()
+        if positive_only:
+            return item_state in cfg.getPositiveDecidedStates()
+        else:
+            return item_state in cfg.getItemDecidedStates()
 
 
 registerType(MeetingItem, PROJECTNAME)

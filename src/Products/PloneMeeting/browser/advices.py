@@ -7,16 +7,23 @@ from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.content import get_state_infos
 from imio.history.browser.views import IHVersionPreviewView
 from plone import api
+from plone.autoform import directives
+from plone.autoform.form import AutoExtensibleForm
 from plone.dexterity.browser.edit import DefaultEditForm
 from plone.dexterity.browser.view import DefaultView
 from plone.memoize import ram
+from plone.supermodel import model
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.PageTemplates.Expressions import SecureModuleImporter
 from Products.PloneMeeting.browser.advicechangedelay import _reinit_advice_delay
 from Products.PloneMeeting.config import PMMessageFactory as _
+from z3c.form import form
+from zope import schema
 from zope.event import notify
+from zope.globalrequest import getRequest
+from zope.i18n import translate
 from zope.lifecycleevent import ObjectModifiedEvent
 
 import json
@@ -165,8 +172,7 @@ class AdvicesIconsInfos(BrowserView):
              in a itemAdviceEditStates review_state."""
         res = False
         if self.adviceIsInherited:
-            if self.tool.isManager(self.cfg) and \
-               self.context.query_state() not in self.cfg.getItemDecidedStates():
+            if self.tool.isManager(self.cfg) and not self.context.is_decided(self.cfg):
                 res = True
             else:
                 if self.cfg.getInheritedAdviceRemoveableByAdviser() and \
@@ -184,7 +190,8 @@ class AdvicesIconsInfos(BrowserView):
         """ """
         return self.memberIsAdviserForGroup or \
             self.mayEdit or \
-            self.adviceType not in ('hidden_during_redaction', 'considered_not_given_hidden_during_redaction')
+            self.adviceType not in ('hidden_during_redaction',
+                                    'considered_not_given_hidden_during_redaction')
 
     def mayChangeDelay(self):
         """ """
@@ -229,6 +236,26 @@ class AdvicesIconsInfos(BrowserView):
                     if k not in suffixes:
                         suffixes.append(k)
         return json.dumps(["{0}_{1}".format(advice_id, suffix) for suffix in suffixes])
+
+    def mayEditProposingGroupComment(self, advice_id):
+        """Proposing group may edit comment if able to edit item.
+           Advice comment may be changed by proposingGroup when:
+           - member is a group editor (not an observer for example) and item is editable;
+           - advice is addable/editable."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        advice_info = self.context.adviceIndex[advice_id]
+        res = False
+        suffixes = cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
+        org_uid = self.context.getProposingGroup()
+        # bypass for managers
+        if tool.isManager(cfg, realManagers=True) or \
+           (tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes) and
+            (_checkPermission(ModifyPortalContent, self.context) or
+                (advice_info['advice_addable'] or advice_info['advice_editable']) or
+                tool.isManager(cfg))):
+            res = True
+        return res
 
 
 class ChangeAdviceHiddenDuringRedactionView(BrowserView):
@@ -352,3 +379,49 @@ class AdviceEdit(DefaultEditForm):
         super(AdviceEdit, self).update()
         if not self.actions.executedActions:
             _display_asked_again_warning(self.context, self.context.aq_inner.aq_parent)
+
+
+def advice_uid_default():
+    """
+      Get the value from the REQUEST as it is passed when calling the
+      form : form?advice_uid=advice_uid.
+    """
+    request = getRequest
+    return request.get('advice_id', u'')
+
+
+class IBaseAdviceInfoSchema(model.Schema):
+
+    directives.mode(advice_uid='hidden')
+    advice_uid = schema.TextLine(
+        title=_(u"Advice uid"),
+        description=_(u""),
+        defaultFactory=advice_uid_default,
+        required=False)
+
+
+class AdviceAdviceInfoForm(AutoExtensibleForm, form.EditForm):
+    """
+      Base form make to work also when advice is not given.
+    """
+    label = _(u"")
+    description = u''
+    schema = IBaseAdviceInfoSchema
+    ignoreContext = True  # don't use context to get widget data
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.label = translate(self.label,
+                               domain='PloneMeeting',
+                               context=self.request)
+
+    def _advice_infos(self, data):
+        '''Init @@advices-icons-infos and returns it.'''
+        # check if may remove inherited advice
+        advice_infos = self.context.restrictedTraverse('@@advices-icons-infos')
+        # initialize advice_infos
+        advice_data = self.context.getAdviceDataFor(self.context, data['advice_uid'])
+        advice_infos(self.context._shownAdviceTypeFor(advice_data))
+        advice_infos._initAdviceInfos(data['advice_uid'])
+        return advice_infos

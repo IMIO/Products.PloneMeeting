@@ -211,49 +211,70 @@
                   </a>
                 </td>
               </tr>
-              <tr tal:condition="python: adviceType != 'not_given'">
-                <td colspan="6" class="table_widget_value"
-                    tal:define="comment python: obj.advice_comment and obj.advice_comment.output;
-                                needToCropComment python: comment and len(comment) > 400;
-                                observations python: obj.advice_observations and obj.advice_observations.output;
-                                needToCropObservations python: observations and len(observations) > 400;">
-                    <img tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_${advice/type}.png;
-                                         title string:${advice/type};"
-                         i18n:attributes="title" title=""/>
-                    <span tal:content="string:${advice/type}" i18n:translate="">Advice type</span>
-                    <tal:comment replace="nothing">Display previous advice value if advice asked again.</tal:comment>
-                    <tal:previousAdviceType condition="python: adviceType == 'asked_again'">
-                      <tal:defines define="previous python: context.portal_repository.retrieve(obj, (context.portal_repository.getHistoryMetadata(obj).nextVersionId -1)).object">
-                        (<img tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_${previous/advice_type}.png;
-                                         title string:${previous/advice_type};"
-                         i18n:attributes="title" title=""/>
-                         <span tal:content="string:${previous/advice_type}" i18n:translate="">Previous advice type</span>)
-                      </tal:defines>
-                    </tal:previousAdviceType>
+              <tr>
+                <td colspan="6" class="table_widget_value">
+                    <tal:infos_advice_given_only
+                        condition="python: adviceType != 'not_given'">
+                        <tal:defines
+                            define="comment python: obj.advice_comment and obj.advice_comment.output;
+                                    observations python: obj.advice_observations and obj.advice_observations.output;">
+                            <img tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_${advice/type}.png;
+                                                 title string:${advice/type};"
+                                 i18n:attributes="title" title=""/>
+                            <span tal:content="string:${advice/type}" i18n:translate="">Advice type</span>
+                            <tal:comment replace="nothing">Display previous advice value if advice asked again.</tal:comment>
+                            <tal:previousAdviceType condition="python: adviceType == 'asked_again'">
+                              <tal:defines define="previous python: context.portal_repository.retrieve(obj, (context.portal_repository.getHistoryMetadata(obj).nextVersionId -1)).object">
+                                (<img tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_${previous/advice_type}.png;
+                                                 title string:${previous/advice_type};"
+                                 i18n:attributes="title" title=""/>
+                                 <span tal:content="string:${previous/advice_type}" i18n:translate="">Previous advice type</span>)
+                              </tal:defines>
+                            </tal:previousAdviceType>
 
-                    <div class="viewlet_workflowstate" i18n:domain="plone" tal:condition="nocall:obj">
-                      <span i18n:translate="label_state"></span>&nbsp;
-                      <span tal:define="advice_state_infos python: view.state_infos(obj);
-                                        global displayedReviewState python: True"
-                            tal:content="advice_state_infos/state_title"
-                            tal:attributes="class string:state-${advice_state_infos/state_name}"></span>
-                    </div>
+                            <div class="viewlet_workflowstate" i18n:domain="plone" tal:condition="nocall:obj">
+                              <span i18n:translate="label_state"></span>&nbsp;
+                              <span tal:define="advice_state_infos python: view.state_infos(obj);
+                                                global displayedReviewState python: True"
+                                    tal:content="advice_state_infos/state_title"
+                                    tal:attributes="class string:state-${advice_state_infos/state_name}"></span>
+                            </div>
 
-                    <fieldset class="advice_comment">
-                         <legend i18n:translate="">Advice official comment</legend>
-                         <tal:comment define="readmore_text comment">
-                           <metal:readmorable use-macro='here/@@pm-macros/readmorable' />
-                         </tal:comment>
-                    </fieldset>
+                            <fieldset class="advice_comment">
+                                 <legend i18n:translate="">Advice official comment</legend>
+                                 <tal:comment define="readmore_text comment">
+                                   <metal:readmorable use-macro='here/@@pm-macros/readmorable' />
+                                 </tal:comment>
+                            </fieldset>
 
-                    <fieldset class="advice_observations">
-                         <legend i18n:translate="">Advice observations</legend>
-                         <tal:observations define="readmore_text observations">
-                           <metal:readmorable use-macro='here/@@pm-macros/readmorable' />
-                         </tal:observations>
-                      </fieldset>
-                    <br />
-
+                            <fieldset class="advice_observations">
+                                 <legend i18n:translate="">Advice observations</legend>
+                                 <tal:observations define="readmore_text observations">
+                                   <metal:readmorable use-macro='here/@@pm-macros/readmorable' />
+                                 </tal:observations>
+                            </fieldset>
+                        </tal:defines>
+                    </tal:infos_advice_given_only>
+                    <tal:infos_any_advices
+                        define="proposing_group_comment python: advice['proposing_group_comment']">
+                        <fieldset class="advice_proposing_group_comment">
+                             <legend>
+                                <span i18n:translate="">Advice proposing group comment</span>
+                                <a href="advice_proposing_group_comment_form"
+                                   tal:condition="python: view.mayEditProposingGroupComment(advice['id'])"
+                                   class="link-overlay-pm"
+                                   target='_parent'
+                                   tal:attributes="href string:${item_url}/advice_proposing_group_comment_form?advice_id=${advice/id}">
+                                  <img i18n:attributes="title" title="advice_proposing_group_comment_edit"
+                                       tal:attributes="src string:${view/portal_url}/edit.png;" />
+                                </a>
+                             </legend>
+                             <tal:proposing_group_comment define="readmore_text proposing_group_comment">
+                               <metal:readmorable use-macro='here/@@pm-macros/readmorable' />
+                             </tal:proposing_group_comment>
+                        </fieldset>
+                        <br />
+                    </tal:infos_any_advices>
                 </td>
               </tr>
               <tr tal:condition="python: adviceType != 'not_given'">
