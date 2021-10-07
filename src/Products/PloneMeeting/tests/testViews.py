@@ -1024,12 +1024,20 @@ class testViews(PloneMeetingTestCase):
     def test_pm_PrintXhtmlUseSafeHTML(self):
         '''safe_html will do result XHTML compliant (no more used by default).'''
         item, motivation, decision, helper = self._setupPrintXhtml()
-        # use_safe_html is True by default
+        # use_safe_html is False by default
         self.assertEqual(
             helper.printXhtml(item, [motivation, '<br>'], use_safe_html=True),
             motivation + '<br />')
+        # but even when set to False, in 4.1.x use_appy_pod_preprocessor=True by default
         self.assertEqual(
-            helper.printXhtml(item, [motivation, '<br>']),
+            helper.printXhtml(item, [motivation, '<br>'], use_safe_html=False),
+            motivation + '<br />')
+        # without any xhtmlization
+        self.assertEqual(
+            helper.printXhtml(item,
+                              [motivation, '<br>'],
+                              use_safe_html=False,
+                              use_appy_pod_preprocessor=False),
             motivation + '<br>')
 
     def test_pm_PrintXhtmlClean(self):
