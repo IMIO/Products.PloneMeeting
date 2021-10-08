@@ -13,7 +13,7 @@
 
   <metal:main fill-slot="content-core">
     <metal:content-core define-macro="content-core">
-  
+
       <tal:comment replace="nothing">Force show of plone.belowcontenttitle viewlet while
       the advice is displayed in an overlay because every vielwets are hidden in overlays...</tal:comment>
       <tal:overlayViewlets condition="python: 'ajax_load' in context.REQUEST">
@@ -55,6 +55,27 @@
               </tal:not_is_rich>
             </tr>
             </tal:loop>
+            <tr>
+                <td colspan="2"
+                    tal:define="proposing_group_comment python: view.parent.adviceIndex[context.advice_group]['proposing_group_comment'].replace('\n', '<br/>');">
+                    <a name="proposing_group_comment"></a>
+                    <fieldset class="advice_proposing_group_comment">
+                         <legend>
+                            <span i18n:translate="">Advice proposing group comment</span>
+                            <a href="advice_proposing_group_comment_form"
+                               tal:define="form python: context.restrictedTraverse('advice_proposing_group_comment_form').form_instance"
+                               tal:condition="python: form.mayEditProposingGroupComment({'advice_uid': context.advice_group})"
+                               class="link-overlay-pm"
+                               target='_parent'
+                               tal:attributes="href string:${context/absolute_url}/advice_proposing_group_comment_form?advice_id=${context/advice_group}">
+                              <img i18n:attributes="title" title="advice_proposing_group_comment_edit"
+                                   tal:attributes="src string:${view/portal_url}/edit.png;" />
+                            </a>
+                         </legend>
+                      <tal:comment tal:replace="structure python: proposing_group_comment" />
+                    </fieldset>
+                </td>
+            </tr>
         </table>
 
         <div class="meeting-advice-view">
@@ -67,7 +88,7 @@
         </tal:close_button>
 
       </div>
-  
+
     </metal:content-core>
   </metal:main>
 

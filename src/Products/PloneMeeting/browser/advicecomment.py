@@ -12,6 +12,14 @@ from zope.interface import provider
 from zope.schema.interfaces import IContextAwareDefaultFactory
 
 
+def get_item(context):
+    """Context may be an item or an advice."""
+    if context.__class__.__name__ == "MeetingItem":
+        return context
+    else:
+        return context.aq_parent
+
+
 @provider(IContextAwareDefaultFactory)
 def proposing_group_comment_default(context):
     """
@@ -19,7 +27,8 @@ def proposing_group_comment_default(context):
       in MeetingItem.adviceIndex.
     """
     adviser_id = context.REQUEST.get('advice_id', u'')
-    return context.adviceIndex[adviser_id]['proposing_group_comment']
+    item = get_item(context)
+    return item.adviceIndex[adviser_id]['proposing_group_comment']
 
 
 class IAdviceProposingGroupComment(IBaseAdviceInfoSchema):
@@ -46,15 +55,27 @@ class AdviceProposingGroupCommentForm(AdviceAdviceInfoForm):
                                domain='PloneMeeting',
                                context=self.request)
 
+    def mayEditProposingGroupComment(self, data):
+        """ """
+        advice_infos = self._advice_infos(data, get_item(self.context))
+        return advice_infos.mayEditProposingGroupComment()
+
     @button.buttonAndHandler(_('save'), name='Save')
     def handleSave(self, action):
         data, errors = self.extractData()
         if errors:
             self.status = self.formErrorsMessage
             return
-        advice_infos = self._advice_infos(data)
-        if not advice_infos.mayEditProposingGroupComment():
+        if not self.mayEditProposingGroupComment(data):
             raise Unauthorized
+
+        # save proposing_group_comment and return
+        item = get_item(self.context)
+        item.adviceIndex[data['advice_uid']]['proposing_group_comment'] = \
+            data['proposing_group_comment']
+
+        self.request.RESPONSE.redirect(
+            self.context.absolute_url() + "/#adviceAndAnnexes")
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
     def handleCancel(self, action):

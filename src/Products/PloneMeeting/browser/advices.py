@@ -367,6 +367,10 @@ class AdviceView(DefaultView):
         if not advice_icons_infos.mayView():
             raise Unauthorized
         _display_asked_again_warning(self.context, parent)
+        # set some variables for PageTemplate
+        self.parent = parent
+        self.portal = api.portal.get()
+        self.portal_url = self.portal.absolute_url()
         return super(AdviceView, self).__call__()
 
 
@@ -416,12 +420,13 @@ class AdviceAdviceInfoForm(AutoExtensibleForm, form.EditForm):
                                domain='PloneMeeting',
                                context=self.request)
 
-    def _advice_infos(self, data):
+    def _advice_infos(self, data, context):
         '''Init @@advices-icons-infos and returns it.'''
+        context = context or self.context
         # check if may remove inherited advice
-        advice_infos = self.context.restrictedTraverse('@@advices-icons-infos')
+        advice_infos = context.restrictedTraverse('@@advices-icons-infos')
         # initialize advice_infos
-        advice_data = self.context.getAdviceDataFor(self.context, data['advice_uid'])
-        advice_infos(self.context._shownAdviceTypeFor(advice_data))
+        advice_data = context.getAdviceDataFor(context, data['advice_uid'])
+        advice_infos(context._shownAdviceTypeFor(advice_data))
         advice_infos._initAdviceInfos(data['advice_uid'])
         return advice_infos

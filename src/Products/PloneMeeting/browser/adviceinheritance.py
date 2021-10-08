@@ -51,16 +51,6 @@ class AdviceRemoveInheritanceForm(AdviceAdviceInfoForm):
                                domain='PloneMeeting',
                                context=self.request)
 
-    def _advice_infos(self, data):
-        '''Init @@advices-icons-infos and returns it.'''
-        # check if may remove inherited advice
-        advice_infos = self.context.restrictedTraverse('@@advices-icons-infos')
-        # initialize advice_infos
-        advice_data = self.context.getAdviceDataFor(self.context, data['advice_uid'])
-        advice_infos(self.context._shownAdviceTypeFor(advice_data))
-        advice_infos._initAdviceInfos(data['advice_uid'])
-        return advice_infos
-
     @button.buttonAndHandler(_('save'), name='save_remove_advice_inheritance')
     def handleSaveRemoveAdviceInheritance(self, action):
         data, errors = self.extractData()

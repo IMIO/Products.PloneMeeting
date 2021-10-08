@@ -653,6 +653,13 @@
         class=".advicecomment.AdviceProposingGroupCommentFormWrapper"
         permission="zope2.View"
       />
+    <browser:page
+        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        name="advice_proposing_group_comment_form"
+        class=".advicecomment.AdviceProposingGroupCommentFormWrapper"
+        permission="zope2.View"
+      />
 
     <!-- Form that manage removing advice inheritance -->
     <browser:page
