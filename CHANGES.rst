@@ -14,6 +14,10 @@ Changelog
   - monkey patched `MembershipTool.getMemberInfo` to add caching.
 
   [gbastien]
+- Fixed `FolderDocumentGenerationHelperView.get_meeting_assembly_stats`,
+  use `imio.helpers.content.uuidToObject` instead `api.content.uuidToObject`
+  to be able to use the `unrestricted=True` parameter.
+  [gbastien]
 
 4.2b17 (2021-09-29)
 -------------------
