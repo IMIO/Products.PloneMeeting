@@ -1593,6 +1593,9 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
         :return: A list of dict representing the attendance on a bunch of Meetings organized by held position.
         """
 
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+
         def _add_attendances_for_meeting(attendances, meeting, presents, excused, absents):
             """
             Populates the statistics for a Meeting or a MeetingItem by held position in the assembly.
@@ -1623,10 +1626,8 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
             _add_attendance(attendances, meeting, absents, 'absent')
 
         attendances = OrderedDict({})
-        cfg = self.appy_renderer.originalContext['meetingConfig']
-
         for contact in cfg.getOrderedContacts():
-            position = api.content.uuidToObject(contact, unrestricted=True)
+            position = uuidToObject(contact, unrestricted=True)
             attendances[contact] = {'name': position.get_person_title(),
                                     'function': position.get_label(),
                                     'present': 0,

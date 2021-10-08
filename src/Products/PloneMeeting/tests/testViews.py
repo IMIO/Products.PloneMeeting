@@ -2601,6 +2601,63 @@ class testViews(PloneMeetingTestCase):
         self.meetingConfig.setHideHistoryTo(())
         self.assertTrue(contenthistory.show_history())
 
+    def test_pm_Get_meeting_assembly_stats(self):
+        """Method that generates assembly stats when using contacts."""
+        cfg = self.meetingConfig
+        # enable attendees and signatories fields for Meeting
+        self._setUpOrderedContacts()
+
+        self.changeUser('pmManager')
+        meeting1 = self.create('Meeting')
+        meeting2 = self.create('Meeting', date=datetime(2021, 10, 8))
+        meeting3 = self.create('Meeting', date=datetime(2021, 10, 10))
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse("document-generation")
+        helper = view.get_generation_context_helper()
+        brains = self.catalog(portal_type=cfg.getMeetingTypeName())
+        helper.get_meeting_assembly_stats(brains)
+        # for now every body present
+        self.assertEqual([v['present'] for v in
+                          helper.get_meeting_assembly_stats(brains)],
+                         [3, 3, 3, 3])
+        # set some absents and excused
+        attendees = meeting1.get_attendees()
+        attendee1 = attendees[0]
+        attendee2 = attendees[1]
+        meeting1.ordered_contacts[attendee1]['attendee'] = False
+        meeting1.ordered_contacts[attendee1]['absent'] = True
+        meeting1.ordered_contacts[attendee2]['attendee'] = False
+        meeting1.ordered_contacts[attendee2]['excused'] = True
+        meeting2.ordered_contacts[attendee1]['attendee'] = False
+        meeting2.ordered_contacts[attendee1]['absent'] = True
+        meeting2.ordered_contacts[attendee2]['attendee'] = False
+        meeting2.ordered_contacts[attendee2]['excused'] = True
+        meeting3.ordered_contacts[attendee1]['attendee'] = False
+        meeting3.ordered_contacts[attendee1]['absent'] = True
+        meeting3.ordered_contacts[attendee2]['attendee'] = False
+        meeting3.ordered_contacts[attendee2]['absent'] = True
+
+        # get_meeting_assembly_stats
+        stats = helper.get_meeting_assembly_stats(brains)
+        self.assertEqual([v['present'] for v in stats], [0, 0, 3, 3])
+        self.assertEqual([v['absent'] for v in stats], [3, 1, 0, 0])
+        self.assertEqual([v['excused'] for v in stats], [0, 2, 0, 0])
+
+        # get_meeting_assembly_stats_by_meeting
+        attendances = helper.get_meeting_assembly_stats_by_meeting(brains)
+        presents = []
+        for info in attendances:
+            presents.append(sorted([at['present'] for at in info['attendances']]))
+        absents = []
+        for info in attendances:
+            absents.append(sorted([at['absent'] for at in info['attendances']]))
+        excused = []
+        for info in attendances:
+            excused.append(sorted([at['excused'] for at in info['attendances']]))
+        self.assertEqual(sorted(presents), [[0, 0, 2, 2], [0, 0, 2, 2], [0, 0, 2, 2]])
+        self.assertEqual(sorted(absents), [[0, 0, 0, 2], [0, 0, 0, 2], [0, 0, 2, 2]])
+        self.assertEqual(sorted(excused), [[0, 0, 0, 0], [0, 0, 0, 2], [0, 0, 0, 2]])
+
 
 def test_suite():
     from unittest import makeSuite
