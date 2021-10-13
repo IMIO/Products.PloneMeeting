@@ -152,6 +152,8 @@ class AdvicesIconsInfos(BrowserView):
         self.itemReviewState = self.context.query_state()
         org_uid = self.context.getProposingGroup()
         self.userIsInProposingGroup = self.tool.user_is_in_org(org_uid=org_uid)
+        self.isManager = self.tool.isManager(self.cfg)
+        self.isRealManager = self.tool.isManager(self.cfg, realManagers=True)
         # edit proposingGroup comment, only compute if item not decided
         self.userIsProposingGroupCommentEditor = False
         self.userMayEditItem = False
@@ -160,9 +162,6 @@ class AdvicesIconsInfos(BrowserView):
             self.userIsProposingGroupCommentEditor = self.isManager or \
                 self.tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes)
             self.userMayEditItem = _checkPermission(ModifyPortalContent, self.context)
-
-        self.isManager = self.tool.isManager(self.cfg)
-        self.isRealManager = self.tool.isManager(self.cfg, realManagers=True)
 
     def _initAdviceInfos(self, advice_id):
         """ """
@@ -440,7 +439,7 @@ class AdviceAdviceInfoForm(AutoExtensibleForm, form.EditForm):
                                domain='PloneMeeting',
                                context=self.request)
 
-    def _advice_infos(self, data, context):
+    def _advice_infos(self, data, context=None):
         '''Init @@advices-icons-infos and returns it.'''
         context = context or self.context
         # check if may remove inherited advice
