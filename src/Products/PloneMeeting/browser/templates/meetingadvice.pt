@@ -25,7 +25,7 @@
           </div>
       </tal:overlayViewlets>
       <div>
-        <tal:back_to_item condition="python: not 'ajax_load' in context.REQUEST">
+        <tal:back_to_item condition="python: 'ajax_load' not in context.REQUEST">
           <metal:backToItem use-macro='here/@@pm-macros/backToItem' />
         </tal:back_to_item>
         <table class="no-style-table" width="100%">
@@ -55,7 +55,9 @@
               </tal:not_is_rich>
             </tr>
             </tal:loop>
-            <tr>
+            <tr tal:define="form python: context.restrictedTraverse('advice_proposing_group_comment_form').form_instance;
+                            dummy python: form._init({'advice_uid': context.advice_group});"
+                tal:condition="python:form.mayViewProposingGroupComment()">
                 <td colspan="2"
                     tal:define="proposing_group_comment python: view.parent.adviceIndex[context.advice_group]['proposing_group_comment'].replace('\n', '<br/>');">
                     <a name="proposing_group_comment"></a>
@@ -63,8 +65,7 @@
                          <legend>
                             <span i18n:translate="">Advice proposing group comment</span>
                             <a href="advice_proposing_group_comment_form"
-                               tal:define="form python: context.restrictedTraverse('advice_proposing_group_comment_form').form_instance"
-                               tal:condition="python: form.mayEditProposingGroupComment({'advice_uid': context.advice_group})"
+                               tal:condition="python:form.mayEditProposingGroupComment()"
                                class="link-overlay-pm"
                                target='_parent'
                                tal:attributes="href string:${context/absolute_url}/advice_proposing_group_comment_form?advice_id=${context/advice_group}">
@@ -78,6 +79,7 @@
             </tr>
         </table>
 
+        <a name="adviceAndAnnexes"></a>
         <div class="meeting-advice-view">
           <tal:annexes replace="structure context/@@display-annexes" />
         </div>

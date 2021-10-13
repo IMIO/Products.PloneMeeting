@@ -149,16 +149,29 @@ class AdvicesIconsInfos(BrowserView):
         self.advicesByType = self.context.getAdvicesByType()
         self.adviceType = adviceType
         self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
+        self.itemReviewState = self.context.query_state()
+        org_uid = self.context.getProposingGroup()
+        self.userIsInProposingGroup = self.tool.user_is_in_org(org_uid=org_uid)
+        # edit proposingGroup comment, only compute if item not decided
+        self.userIsProposingGroupEditor = False
+        self.userMayEditItem = False
+        if not self.context.is_decided(self.cfg, self.itemReviewState):
+            suffixes = self.cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
+            self.userIsProposingGroupEditor = self.tool.user_is_in_org(
+                org_uid=org_uid, suffixes=suffixes)
+            self.userMayEditItem = _checkPermission(ModifyPortalContent, self.context)
+
+        self.isManager = self.tool.isManager(self.cfg)
+        self.isRealManager = self.tool.isManager(self.cfg, realManagers=True)
 
     def _initAdviceInfos(self, advice_id):
         """ """
         self.advice_id = advice_id
         self.memberIsAdviserForGroup = advice_id in self.userAdviserOrgUids
         self.adviceIsInherited = self.context.adviceIsInherited(advice_id)
-        isRealManager = self.tool.isManager(self.cfg, realManagers=True)
         self.mayEdit = not self.adviceIsInherited and \
             ((self.advicesToEdit and advice_id in self.advicesToEdit) or
-             (isRealManager and not self.adviceType == 'not_given'))
+             (self.isRealManager and not self.adviceType == 'not_given'))
 
     def showLinkToInherited(self, adviceHolder):
         """ """
@@ -177,7 +190,7 @@ class AdvicesIconsInfos(BrowserView):
             else:
                 if self.cfg.getInheritedAdviceRemoveableByAdviser() and \
                    self.advice_id in self.userAdviserOrgUids and \
-                   self.context.query_state() in get_organization(
+                   self.itemReviewState in get_organization(
                         self.advice_id).get_item_advice_edit_states(cfg=self.cfg):
                     return True
         return res
@@ -238,22 +251,29 @@ class AdvicesIconsInfos(BrowserView):
         return json.dumps(["{0}_{1}".format(advice_id, suffix) for suffix in suffixes])
 
     def mayEditProposingGroupComment(self):
-        """Proposing group may edit comment if able to edit item.
+        """Proposing group may edit comment if able to edit item (not on an inherited advice).
            Advice comment may be changed by proposingGroup when:
-           - member is a group editor (not an observer for example) and item is editable;
-           - advice is addable/editable."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        advice_info = self.context.adviceIndex[self.advice_id]
+           - member is a group editor (not an observer for example);
+           - item is editable or advice is addable/editable."""
         res = False
-        suffixes = cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
-        org_uid = self.context.getProposingGroup()
-        # bypass for managers
-        if tool.isManager(cfg, realManagers=True) or \
-           (tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes) and
-            (_checkPermission(ModifyPortalContent, self.context) or
-                (advice_info['advice_addable'] or advice_info['advice_editable']) or
-                tool.isManager(cfg))):
+        advice_info = self.context.adviceIndex[self.advice_id]
+        if not self.adviceIsInherited:
+            if (self.isManager or self.userIsProposingGroupEditor) and \
+                (self.isRealManager or self.userMayEditItem or
+                 (advice_info['advice_addable'] or advice_info['advice_editable'])):
+                res = True
+        return res
+
+    def mayViewProposingGroupComment(self):
+        """May view comment:
+           - Proposing group;
+           - Asked advice advisers;
+           - (Meeting)Managers."""
+        res = False
+        # bypass for (Meeting)Managers
+        if self.isManager or \
+           self.memberIsAdviserForGroup or \
+           self.userIsInProposingGroup:
             res = True
         return res
 

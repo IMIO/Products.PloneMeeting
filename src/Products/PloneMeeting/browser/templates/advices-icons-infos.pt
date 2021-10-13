@@ -256,7 +256,8 @@
                         </tal:defines>
                     </tal:infos_advice_given_only>
                     <tal:infos_any_advices
-                        define="proposing_group_comment python: advice['proposing_group_comment'].replace('\n', '<br/>')">
+                        define="proposing_group_comment python: advice['proposing_group_comment'].replace('\n', '<br/>')"
+                        condition="python:view.mayViewProposingGroupComment()">
                         <fieldset class="advice_proposing_group_comment">
                              <legend>
                                 <span i18n:translate="">Advice proposing group comment</span>

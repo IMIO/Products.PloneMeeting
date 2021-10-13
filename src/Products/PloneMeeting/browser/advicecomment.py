@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
+from plone.app.caching.operations.utils import doNotCache
 from plone.z3cform.layout import wrap_form
 from Products.PloneMeeting.browser.advices import AdviceAdviceInfoForm
 from Products.PloneMeeting.browser.advices import IBaseAdviceInfoSchema
@@ -44,7 +45,7 @@ class AdviceProposingGroupCommentForm(AdviceAdviceInfoForm):
     """
     """
     label = _(u"Advice proposing group comment")
-    description = u''
+    description = _(u"Advice proposing group comment description")
     schema = IAdviceProposingGroupComment
     ignoreContext = True  # don't use context to get widget data
 
@@ -55,10 +56,19 @@ class AdviceProposingGroupCommentForm(AdviceAdviceInfoForm):
                                domain='PloneMeeting',
                                context=self.request)
 
-    def mayEditProposingGroupComment(self, data):
+    def _init(self, data):
         """ """
-        advice_infos = self._advice_infos(data, get_item(self.context))
-        return advice_infos.mayEditProposingGroupComment()
+        self.item = get_item(self.context)
+        self.advice_infos = self._advice_infos(data, self.item)
+
+    def mayEditProposingGroupComment(self):
+        """ """
+        return 'ajax_load' not in self.request and \
+            self.advice_infos.mayEditProposingGroupComment()
+
+    def mayViewProposingGroupComment(self):
+        """ """
+        return self.advice_infos.mayViewProposingGroupComment()
 
     @button.buttonAndHandler(_('save'), name='Save')
     def handleSave(self, action):
@@ -66,16 +76,24 @@ class AdviceProposingGroupCommentForm(AdviceAdviceInfoForm):
         if errors:
             self.status = self.formErrorsMessage
             return
-        if not self.mayEditProposingGroupComment(data):
+
+        # initialize some values on self
+        self._init(data)
+
+        if not self.mayEditProposingGroupComment():
             raise Unauthorized
 
         # save proposing_group_comment and return
-        item = get_item(self.context)
-        item.adviceIndex[data['advice_uid']]['proposing_group_comment'] = \
+        self.item.adviceIndex[data['advice_uid']]['proposing_group_comment'] = \
             data['proposing_group_comment']
-
+        # make sure advice cache is invalidated as proposing group comment
+        # is displayed on advice view and does not change the advice modified date
+        advice = self.item.getAdviceObj(data['advice_uid'])
+        if advice is not None:
+            doNotCache(advice, self.request, self.request.RESPONSE)
+        # redirect to item or advice view on correct anchor
         self.request.RESPONSE.redirect(
-            self.context.absolute_url() + "/#adviceAndAnnexes")
+            self.context.absolute_url() + "#adviceAndAnnexes")
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
     def handleCancel(self, action):
