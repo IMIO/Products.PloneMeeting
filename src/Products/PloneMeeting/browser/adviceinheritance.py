@@ -57,7 +57,7 @@ class AdviceRemoveInheritanceForm(AdviceAdviceInfoForm):
         if errors:
             self.status = self.formErrorsMessage
             return
-        advice_infos = self._advice_infos(data)
+        advice_infos = self._advice_infos(data, self.context)
         if not advice_infos.mayRemoveInheritedAdvice():
             raise Unauthorized
 
