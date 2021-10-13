@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2b18 (unreleased)
+4.2b18 (2021-10-13)
 -------------------
 
 - Optimized `MeetingItem.setManuallyLinkedItems` by using cache to get items to
