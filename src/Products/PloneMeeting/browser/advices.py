@@ -153,12 +153,12 @@ class AdvicesIconsInfos(BrowserView):
         org_uid = self.context.getProposingGroup()
         self.userIsInProposingGroup = self.tool.user_is_in_org(org_uid=org_uid)
         # edit proposingGroup comment, only compute if item not decided
-        self.userIsProposingGroupEditor = False
+        self.userIsProposingGroupCommentEditor = False
         self.userMayEditItem = False
         if not self.context.is_decided(self.cfg, self.itemReviewState):
             suffixes = self.cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
-            self.userIsProposingGroupEditor = self.tool.user_is_in_org(
-                org_uid=org_uid, suffixes=suffixes)
+            self.userIsProposingGroupCommentEditor = self.isManager or \
+                self.tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes)
             self.userMayEditItem = _checkPermission(ModifyPortalContent, self.context)
 
         self.isManager = self.tool.isManager(self.cfg)
@@ -258,7 +258,7 @@ class AdvicesIconsInfos(BrowserView):
         res = False
         advice_info = self.context.adviceIndex[self.advice_id]
         if not self.adviceIsInherited:
-            if (self.isManager or self.userIsProposingGroupEditor) and \
+            if self.userIsProposingGroupCommentEditor and \
                 (self.isRealManager or self.userMayEditItem or
                  (advice_info['advice_addable'] or advice_info['advice_editable'])):
                 res = True
