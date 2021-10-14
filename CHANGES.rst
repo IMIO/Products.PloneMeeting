@@ -9,6 +9,9 @@ Changelog
   to make sure it is only displayed if some
   `MeetingConfig.selectableAdviserUsers` are defined.
  [gbastien]
+- Adapted `MeetingItem.validate_proposingGroup` to bypass validation for Managers
+  as most of time they are member of none group.
+  [gbastien]
 
 4.2b18 (2021-10-13)
 -------------------

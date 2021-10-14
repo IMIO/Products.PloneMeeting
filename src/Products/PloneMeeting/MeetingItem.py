@@ -2071,15 +2071,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              context=self.REQUEST)
 
         # while created thru plonemeeting.restapi for example, make sure
-        # current user is member if proposingGroup
-        tool = api.portal.get_tool('portal_plonemeeting')
+        # current user is member of proposingGroup
+
         if value and \
-           self.checkCreationFlag() and \
-           value not in tool.get_orgs_for_user(
+           self.checkCreationFlag():
+            tool = api.portal.get_tool('portal_plonemeeting')
+            if value not in tool.get_orgs_for_user(
                 only_selected=False, suffixes=["creators"], the_objects=False):
-            return translate('proposing_group_not_available',
-                             domain='PloneMeeting',
-                             context=self.REQUEST)
+                cfg = tool.getMeetingConfig(self)
+                if not tool.isManager(cfg, realManagers=True):
+                    return translate(
+                        'proposing_group_not_available',
+                        domain='PloneMeeting',
+                        context=self.REQUEST)
 
     security.declarePrivate('validate_proposingGroupWithGroupInCharge')
 
