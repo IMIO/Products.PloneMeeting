@@ -5,8 +5,10 @@ Changelog
 4.2b19 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Adapted display condition of the `searchmyitemstoadvice` dashboard collection
+  to make sure it is only displayed if some
+  `MeetingConfig.selectableAdviserUsers` are defined.
+ [gbastien]
 
 4.2b18 (2021-10-13)
 -------------------
