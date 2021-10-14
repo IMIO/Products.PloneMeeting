@@ -17,6 +17,9 @@ from Products.PortalTransforms.transforms.safe_html import decode_htmlentities
 from types import StringType
 from z3c.form import interfaces
 from z3c.form.widget import SequenceWidget
+from imio.helpers.security import fplog
+from plone.restapi.services import Service
+from plonemeeting.restapi import logger as pmrestapi_logger
 
 
 def _patched_equal(context, row):
@@ -218,3 +221,25 @@ def getMemberInfo(self, memberId=None):
 
 MembershipTool.getMemberInfo = getMemberInfo
 logger.info("Monkey patching Products.PlonePAS.tools.membership.MembershipTool (getMemberInfo)")
+
+
+# plonemeeting.restapi, need to monkeypatch here because order of packages
+# monkey patching in plonemeeting.restapi does not seem to work...
+
+Service.__old_pm_render = Service.render
+
+
+def render(self):
+    """Monkeypatched to add fplog."""
+    query_string = self.request.get('QUERY_STRING')
+    extras = 'name={0} url={1}{2}'.format(
+        self.__name__,
+        self.request.get('ACTUAL_URL'),
+        query_string and " query_string={0}".format(query_string) or '')
+    fplog("restapi_call", extras=extras)
+
+    return self.__old_pm_render()
+
+
+Service.render = render
+pmrestapi_logger.info("Monkey patching plone.restapi.services.RestService (render)")
