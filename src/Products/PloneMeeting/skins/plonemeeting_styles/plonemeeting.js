@@ -749,7 +749,13 @@ $(document).ready(function () {
   }
   $(Faceted.Events).bind(Faceted.Events.AJAX_QUERY_SUCCESS, function() {
     updatePortletTodo();
-
+  });
+  $(Faceted.Events).bind(Faceted.Events.INITIALIZE, function() {
+    let searchParams = new URLSearchParams(window.location.search);
+    b_start = searchParams.get('b_start');
+    if (b_start) {
+        Faceted.Query.b_start = parseInt(b_start);
+    }
   });
 });
 

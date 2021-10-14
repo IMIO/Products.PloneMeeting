@@ -316,7 +316,10 @@ class ObjectGoToView(BrowserView):
             page_num = float(item_pos) / items_by_page
             # round 0.85 to 0 or 1.05 to 1
             int_page_num = int(page_num)
-            url = "{0}#b_start={1}".format(
+            # we pass b_start as URL parameter and retrieve it
+            # in Faceted.Query JS on the meeting view
+            # this way parameters are computed like numer of elements by page
+            url = "{0}?b_start={1}".format(
                 meeting.absolute_url(), int_page_num*items_by_page)
             return self.request.RESPONSE.redirect(url)
 
