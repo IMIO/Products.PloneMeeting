@@ -12,6 +12,9 @@ Changelog
 - Adapted `MeetingItem.validate_proposingGroup` to bypass validation for Managers
   as most of time they are member of none group.
   [gbastien]
+- Adpated CSS to make sure element in review_state `itemcreated_waiting_advices`
+  is displayed in red.
+  [gbastien]
 
 4.2b18 (2021-10-13)
 -------------------
