@@ -5,8 +5,23 @@ Changelog
 4.2b19 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Adapted display condition of the `searchmyitemstoadvice` dashboard collection
+  to make sure it is only displayed if some
+  `MeetingConfig.selectableAdviserUsers` are defined.
+ [gbastien]
+- Adapted `MeetingItem.validate_proposingGroup` to bypass validation for Managers
+  as most of time they are member of none group.
+  [gbastien]
+- Adpated CSS to make sure element in review_state `itemcreated_waiting_advices`
+  is displayed in red.
+  [gbastien]
+- Fixed fonctionnality to go from an item back to the meeting and display the
+  item on the correct page, this was not working as expected because faceted
+  criteria where not initialized with their default value but with the fallback
+  value, for example b_size of 40 was actually set to 20.  Now we just pass the
+  `b_start` as an url parameter and we manage it in the `Faceted.Query`
+  at faceted initialization time.
+  [gbastien]
 
 4.2b18 (2021-10-13)
 -------------------

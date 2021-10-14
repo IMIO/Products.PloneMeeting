@@ -2956,6 +2956,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': True,
                     'tal_condition': "python: cfg.getUseAdvices() and "
+                        "cfg.getSelectableAdviserUsers() and "
                         "tool.userIsAmong(['advisers'], "
                         "cfg=cfg, "
                         "using_groups=cfg.getSelectableAdviserUsers())",

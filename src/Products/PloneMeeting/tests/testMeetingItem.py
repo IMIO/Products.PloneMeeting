@@ -4109,8 +4109,13 @@ class testMeetingItem(PloneMeetingTestCase):
         # ok if user member of group
         self.failIf(item.validate_proposingGroup(self.developers_uid))
 
+        # ok if user is a Manager
+        self.changeUser('siteadmin')
+        self.failIf(item.validate_proposingGroup(self.developers_uid))
+
         # if item isDefinedInTool, the proposing group is not required if it is an item template
         # required for a recurring item
+        self.changeUser('pmCreator1')
         recurringItem = cfg.getRecurringItems()[0]
         self.assertEqual(recurringItem.validate_proposingGroup(''), proposing_group_required_msg)
         self.failIf(recurringItem.validate_proposingGroup(self.developers_uid))
