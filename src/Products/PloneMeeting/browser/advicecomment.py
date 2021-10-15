@@ -61,6 +61,14 @@ class AdviceProposingGroupCommentForm(AdviceAdviceInfoForm):
         self.item = get_item(self.context)
         self.advice_infos = self._advice_infos(data, self.item)
 
+    def _check_auth(self, data):
+        """Raise Unauthorized if current user may not view or edit comment."""
+        # initialize some values on self
+        self._init(data)
+        if not self.mayEditProposingGroupComment() or \
+           not self.mayViewProposingGroupComment():
+            raise Unauthorized
+
     def mayEditProposingGroupComment(self):
         """ """
         return 'ajax_load' not in self.request and \
@@ -77,11 +85,8 @@ class AdviceProposingGroupCommentForm(AdviceAdviceInfoForm):
             self.status = self.formErrorsMessage
             return
 
-        # initialize some values on self
-        self._init(data)
-
-        if not self.mayEditProposingGroupComment():
-            raise Unauthorized
+        # check that user is not trying to workaround security
+        self._check_auth(data)
 
         # save proposing_group_comment and return
         self.item.adviceIndex[data['advice_uid']]['proposing_group_comment'] = \
@@ -102,6 +107,7 @@ class AdviceProposingGroupCommentForm(AdviceAdviceInfoForm):
     def update(self):
         """ """
         super(AdviceProposingGroupCommentForm, self).update()
+        self._check_auth({"advice_uid": self.widgets['advice_uid'].value})
         # after calling parent's update, self.actions are available
         self.actions.get('cancel').addClass('standalone')
 

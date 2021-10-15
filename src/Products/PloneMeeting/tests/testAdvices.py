@@ -1988,6 +1988,78 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(item.adviceIndex[self.vendors_uid]['delay'], '20')
         self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_for_automatic_adviser_changed_manually'])
 
+    def test_pm_AdviceProposingGroupComment(self):
+        '''Test the view '@@advice_proposing_group_comment_form' form that will
+           let editors of the proposingGroup add a comment on an asked advice.'''
+        cfg = self.meetingConfig
+        # make advice addable when item is itemcreated and give access to copyGroups
+        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'),
+                                 self._stateMappingFor('proposed'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'),
+                                     self._stateMappingFor('proposed'), ))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'),
+                                     self._stateMappingFor('proposed'),
+                                     self._stateMappingFor('validated'), ))
+        cfg.setUseCopies(True)
+        cfg.setItemCopyGroupsStates((self._stateMappingFor('itemcreated'),
+                                     self._stateMappingFor('proposed'), ))
+        # create item and ask advices
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers((self.developers_uid, self.vendors_uid, ))
+        item.setCopyGroups((self.vendors_creators, ))
+        item._update_after_edit()
+        # add comment to developers advice
+        comment = u"Proposing group comment héhé"
+        self.request['advice_id'] = unicode(self.developers_uid)
+        form = item.restrictedTraverse('@@advice_proposing_group_comment_form').form_instance
+        self.request.form['form.widgets.advice_uid'] = unicode(self.developers_uid)
+        self.request.form['form.widgets.proposing_group_comment'] = comment
+        form.update()
+        data = form.extractData()[0]
+        form.handleSave(form, None)
+        self.assertEqual(item.adviceIndex[self.developers_uid]['proposing_group_comment'], comment)
+
+        # member of another group may not view comment
+        self.changeUser('pmCreator2')
+        form = item.restrictedTraverse('@@advice_proposing_group_comment_form').form_instance
+        self.assertRaises(Unauthorized, form.update)
+        self.assertFalse(form.mayViewProposingGroupComment())
+
+        # advisers may view comment but not edit it
+        self.changeUser('pmAdviser1')
+        form = item.restrictedTraverse('@@advice_proposing_group_comment_form').form_instance
+        form._init(data)
+        self.assertTrue(form.mayViewProposingGroupComment())
+        self.assertRaises(Unauthorized, form.update)
+        # vendors adviser may see item but not comment
+        self.changeUser('pmReviewer2')
+        form = item.restrictedTraverse('@@advice_proposing_group_comment_form').form_instance
+        form._init(data)
+        self.assertFalse(form.mayViewProposingGroupComment())
+        self.assertRaises(Unauthorized, form.update)
+        # still editable when item no more editable but advice addable/editable
+        self.changeUser('pmCreator1')
+        self.proposeItem(item)
+        form = item.restrictedTraverse('@@advice_proposing_group_comment_form').form_instance
+        form._init(data)
+        self.assertTrue(form.mayViewProposingGroupComment())
+        self.assertTrue(form.mayEditProposingGroupComment())
+        self.assertIsNone(form.update())
+        # no more editable when item no more editable nor advice addable/editable
+        self.validateItem(item)
+        form = item.restrictedTraverse('@@advice_proposing_group_comment_form').form_instance
+        form._init(data)
+        self.assertTrue(form.mayViewProposingGroupComment())
+        self.assertFalse(form.mayEditProposingGroupComment())
+        self.assertRaises(Unauthorized, form.update)
+        # still viewable by advisers
+        self.changeUser('pmAdviser1')
+        form = item.restrictedTraverse('@@advice_proposing_group_comment_form').form_instance
+        form._init(data)
+        self.assertTrue(form.mayViewProposingGroupComment())
+        self.assertRaises(Unauthorized, form.update)
+
     def test_pm_ReinitAdviceDelayView(self):
         '''Test the view '@@advice-reinit-delay' that reinitialize the advice delay to 0.'''
         cfg = self.meetingConfig
