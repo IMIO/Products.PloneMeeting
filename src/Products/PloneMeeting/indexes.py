@@ -209,12 +209,15 @@ def sentToInfos(obj):
 
 def SearchableText(obj):
     """
-      Contained annex title is indexed in the SearchableText.
+      Contained annex title and scan_id are indexed in the SearchableText.
     """
     res = []
     res.append(obj.SearchableText())
     for annex in get_annexes(obj):
         res.append(annex.Title())
+        scan_id = getattr(annex, "scan_id", None)
+        if scan_id:
+            res.append(scan_id)
     res = ' '.join(res)
     return res or _marker
 
