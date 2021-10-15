@@ -22,6 +22,9 @@ Changelog
   `b_start` as an url parameter and we manage it in the `Faceted.Query`
   at faceted initialization time.
   [gbastien]
+- Added logging when accessing restapi calls, needed to monkeypatch
+  `plone.restapi.services.Service`.
+  [gbastien]
 
 4.2b18 (2021-10-13)
 -------------------
