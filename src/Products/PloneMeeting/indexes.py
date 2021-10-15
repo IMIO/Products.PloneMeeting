@@ -10,6 +10,7 @@ from collective.iconifiedcategory.indexes import content_category_uid
 from datetime import datetime
 from imio.annex.content.annex import IAnnex
 from imio.helpers.content import _contained_objects
+from imio.helpers.content import safe_encode
 from imio.history.utils import getLastWFAction
 from OFS.interfaces import IItem
 from plone import api
@@ -217,7 +218,8 @@ def SearchableText(obj):
         res.append(annex.Title())
         scan_id = getattr(annex, "scan_id", None)
         if scan_id:
-            res.append(scan_id)
+            # we need utf-8, when edited thru the UI, scan_id is stored as unicode
+            res.append(safe_encode(scan_id))
     res = ' '.join(res)
     return res or _marker
 
