@@ -25,6 +25,9 @@ Changelog
 - Added logging when accessing restapi calls, needed to monkeypatch
   `plone.restapi.services.Service`.
   [gbastien]
+- Index annexes `scan_id` in item `SearchableText` like it is already the case
+  for annex `title`.
+  [gbastien]
 
 4.2b18 (2021-10-13)
 -------------------
