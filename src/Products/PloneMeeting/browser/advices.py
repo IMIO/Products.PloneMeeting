@@ -155,8 +155,9 @@ class AdvicesIconsInfos(BrowserView):
         self.isManager = self.tool.isManager(self.cfg)
         self.isRealManager = self.tool.isManager(self.cfg, realManagers=True)
         # edit proposingGroup comment, only compute if item not decided
-        self.userIsProposingGroupCommentEditor = False
-        self.userMayEditItem = False
+        # by default editable by Managers only
+        self.userIsProposingGroupCommentEditor = self.isRealManager
+        self.userMayEditItem = self.isRealManager
         if not self.context.is_decided(self.cfg, self.itemReviewState):
             suffixes = self.cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
             self.userIsProposingGroupCommentEditor = self.isManager or \
