@@ -2196,19 +2196,19 @@ class testViews(PloneMeetingTestCase):
         view = item1.restrictedTraverse('@@object_goto')
         view(itemNumber=None, way='meeting')
         self.assertEqual(self.request.response.getHeader('location'),
-                         "{0}#b_start=0".format(meeting_url))
+                         "{0}?b_start=0".format(meeting_url))
         # from item2, page 1 of meeting
         self.assertEqual(item2.getItemNumber(), 200)
         view = item2.restrictedTraverse('@@object_goto')
         view(itemNumber=None, way='meeting')
         self.assertEqual(self.request.response.getHeader('location'),
-                         "{0}#b_start=0".format(meeting_url))
+                         "{0}?b_start=0".format(meeting_url))
         # from item3, page 2 of meeting
         self.assertEqual(item3.getItemNumber(), 300)
         view = item3.restrictedTraverse('@@object_goto')
         view(itemNumber=None, way='meeting')
         self.assertEqual(self.request.response.getHeader('location'),
-                         "{0}#b_start=2".format(meeting_url))
+                         "{0}?b_start=2".format(meeting_url))
 
     def test_pm_ETags(self):
         """Test that correct ETags are used for :
