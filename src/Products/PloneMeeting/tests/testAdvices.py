@@ -1992,20 +1992,19 @@ class testAdvices(PloneMeetingTestCase):
         '''Test the view '@@advice_proposing_group_comment_form' form that will
            let editors of the proposingGroup add a comment on an asked advice.'''
         cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
         # make advice addable when item is itemcreated and give access to copyGroups
         cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'),
                                  self._stateMappingFor('proposed'), ))
         cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'),
                                      self._stateMappingFor('proposed'), ))
-        cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'),
-                                     self._stateMappingFor('proposed'),
-                                     self._stateMappingFor('validated'), ))
+        cfg.setKeepAccessToItemWhenAdvice("was_giveable")
         cfg.setUseCopies(True)
         cfg.setItemCopyGroupsStates((self._stateMappingFor('itemcreated'),
                                      self._stateMappingFor('proposed'), ))
         # create item and ask advices
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
+        item = self.create('MeetingItem', decision=self.decisionText)
         item.setOptionalAdvisers((self.developers_uid, self.vendors_uid, ))
         item.setCopyGroups((self.vendors_creators, ))
         item._update_after_edit()
@@ -2020,45 +2019,55 @@ class testAdvices(PloneMeetingTestCase):
         form.handleSave(form, None)
         self.assertEqual(item.adviceIndex[self.developers_uid]['proposing_group_comment'], comment)
 
+        def _check(mayView=True, mayEdit=False):
+            """ """
+            form = item.restrictedTraverse('@@advice_proposing_group_comment_form').form_instance
+            form._init(data)
+            if mayView:
+                self.assertTrue(form.mayViewProposingGroupComment())
+            else:
+                self.assertFalse(form.mayViewProposingGroupComment())
+            if mayEdit:
+                self.assertTrue(form.mayEditProposingGroupComment())
+                self.assertIsNone(form.update())
+            else:
+                self.assertRaises(Unauthorized, form.update)
+
         # member of another group may not view comment
         self.changeUser('pmCreator2')
-        form = item.restrictedTraverse('@@advice_proposing_group_comment_form').form_instance
-        self.assertRaises(Unauthorized, form.update)
-        self.assertFalse(form.mayViewProposingGroupComment())
-
+        _check(mayView=False, mayEdit=False)
         # advisers may view comment but not edit it
         self.changeUser('pmAdviser1')
-        form = item.restrictedTraverse('@@advice_proposing_group_comment_form').form_instance
-        form._init(data)
-        self.assertTrue(form.mayViewProposingGroupComment())
-        self.assertRaises(Unauthorized, form.update)
+        _check(mayView=True, mayEdit=False)
         # vendors adviser may see item but not comment
         self.changeUser('pmReviewer2')
-        form = item.restrictedTraverse('@@advice_proposing_group_comment_form').form_instance
-        form._init(data)
-        self.assertFalse(form.mayViewProposingGroupComment())
-        self.assertRaises(Unauthorized, form.update)
+        _check(mayView=False, mayEdit=False)
         # still editable when item no more editable but advice addable/editable
         self.changeUser('pmCreator1')
         self.proposeItem(item)
-        form = item.restrictedTraverse('@@advice_proposing_group_comment_form').form_instance
-        form._init(data)
-        self.assertTrue(form.mayViewProposingGroupComment())
-        self.assertTrue(form.mayEditProposingGroupComment())
-        self.assertIsNone(form.update())
+        _check(mayView=True, mayEdit=True)
         # no more editable when item no more editable nor advice addable/editable
         self.validateItem(item)
         form = item.restrictedTraverse('@@advice_proposing_group_comment_form').form_instance
-        form._init(data)
-        self.assertTrue(form.mayViewProposingGroupComment())
-        self.assertFalse(form.mayEditProposingGroupComment())
-        self.assertRaises(Unauthorized, form.update)
+        _check(mayView=True, mayEdit=False)
         # still viewable by advisers
         self.changeUser('pmAdviser1')
-        form = item.restrictedTraverse('@@advice_proposing_group_comment_form').form_instance
-        form._init(data)
-        self.assertTrue(form.mayViewProposingGroupComment())
-        self.assertRaises(Unauthorized, form.update)
+        _check(mayView=True, mayEdit=False)
+        # visible and editable by MeetingManagers
+        self.changeUser('pmManager')
+        _check(mayView=True, mayEdit=True)
+        # but no more when item is decided
+        meeting = self.create('Meeting')
+        self.presentItem(item)
+        _check(mayView=True, mayEdit=True)
+        self.closeMeeting(meeting)
+        self.assertEqual(item.query_state(), "accepted")
+        _check(mayView=True, mayEdit=False)
+        # still viewable by proposingGroup and advisers
+        self.changeUser('pmCreator1')
+        _check(mayView=True, mayEdit=False)
+        self.changeUser('pmAdviser1')
+        _check(mayView=True, mayEdit=False)
 
     def test_pm_ReinitAdviceDelayView(self):
         '''Test the view '@@advice-reinit-delay' that reinitialize the advice delay to 0.'''
