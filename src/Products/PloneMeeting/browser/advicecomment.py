@@ -71,8 +71,7 @@ class AdviceProposingGroupCommentForm(AdviceAdviceInfoForm):
 
     def mayEditProposingGroupComment(self):
         """ """
-        return 'ajax_load' not in self.request and \
-            self.advice_infos.mayEditProposingGroupComment()
+        return self.advice_infos.mayEditProposingGroupComment()
 
     def mayViewProposingGroupComment(self):
         """ """
