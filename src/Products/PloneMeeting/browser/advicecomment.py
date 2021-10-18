@@ -93,11 +93,17 @@ class AdviceProposingGroupCommentForm(AdviceAdviceInfoForm):
         # make sure advice cache is invalidated as proposing group comment
         # is displayed on advice view and does not change the advice modified date
         advice = self.item.getAdviceObj(data['advice_uid'])
-        if advice is not None:
-            doNotCache(advice, self.request, self.request.RESPONSE)
         # redirect to item or advice view on correct anchor
         self.request.RESPONSE.redirect(
             self.context.absolute_url() + "#adviceAndAnnexes")
+        # invalidate advice view cache
+        if advice is not None:
+            # as we use etags, we will change the _p_mtime because
+            # doNotCache(advice, self.request, self.request.RESPONSE)
+            # seems to work with FF but not with Chrome...
+            # Setting an arbitrary attribute will update _p_mtime
+            # description is not used but exists on any DX content
+            advice.description = advice.description
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
     def handleCancel(self, action):
