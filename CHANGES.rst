@@ -30,7 +30,8 @@ Changelog
   [gbastien]
 - Added possibility for the proposingGroup to add a comment on an advice:
 
-  - comment may be edited only by the proposingGroup;
+  - comment may be edited only by the proposingGroup as long as item is editable
+    or advice is addable/editable;
   - comment is only viewable by advisers of the asked advice (and MeetingManagers);
   - added helper method MeetingItem.is_decided.
 
