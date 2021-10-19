@@ -6,6 +6,7 @@
 #
 
 from imio.helpers.content import object_values
+from pkgutil import iter_importers
 from plone import api
 from Products.GenericSetup.context import DirectoryImportContext
 from Products.PloneMeeting.config import HAS_SOLR
@@ -237,6 +238,17 @@ class testSetup(PloneMeetingTestCase):
         else:
             self.assertEqual(brains[0].__class__.__name__, 'mybrains')
             pm_logger.info("HAS_SOLR is False so there is nothing more to check")
+
+    def test_pm_DevPackages(self):
+        """Display a log message with packages found in dev.
+           This is useful for the bin/testprod that should have 0 dev packages."""
+        dev_package_paths = [package.path for package in iter_importers()
+                             if hasattr(package, "path") and
+                             package.path and
+                             "/src/" in package.path]
+        pm_logger.info("Number of dev packages: %d" % len(dev_package_paths))
+        for dev_package_path in dev_package_paths:
+            pm_logger.info("Dev package: %s" % dev_package_path)
 
 
 def test_suite():
