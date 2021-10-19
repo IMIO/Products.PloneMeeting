@@ -40,6 +40,10 @@ Changelog
   `MeetingConfig` folder if an element having same id existed at Plone root or
   in Members (a user having same id as the MeetingConfig).
   [gbastien]
+- Added JS function that is triggered when a `MeetingConfig` is saved (edit form)
+  to make sure every `InAndOutWidget` values are selected, this avoid losing
+  values when user clicked on a value of the right panel of the `InAndOutWidget`.
+  [gbastien]
 
 4.2b18 (2021-10-13)
 -------------------

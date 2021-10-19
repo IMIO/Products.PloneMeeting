@@ -1006,3 +1006,11 @@ function start_meeting_scroll_to_item_observer(tag=null, row_id=null) {
 $(document).ready(function () {
     start_meeting_scroll_to_item_observer();
 });
+
+$(document).ready(function () {
+
+    $("body.portaltype-meetingconfig input.context[type='submit']").click(function() {
+      $("div.ArchetypesInAndOutWidget").each(
+        function() {inout_selectAllWords(this.dataset.fieldname);});
+    });
+});
