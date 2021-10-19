@@ -6,7 +6,7 @@ from imio.helpers.content import get_vocab
 from imio.helpers.security import fplog
 from plone import api
 from plone.z3cform.layout import wrap_form
-from Products.PloneMeeting.browser.advices import AdviceAdviceInfoForm
+from Products.PloneMeeting.browser.advices import BaseAdviceInfoForm
 from Products.PloneMeeting.browser.advices import IBaseAdviceInfoSchema
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import cleanMemoize
@@ -32,7 +32,7 @@ class IAdviceRemoveInheritance(IBaseAdviceInfoSchema):
         required=True)
 
 
-class AdviceRemoveInheritanceForm(AdviceAdviceInfoForm):
+class AdviceRemoveInheritanceForm(BaseAdviceInfoForm):
     """
       This form will give the possibility to remove an inherited advice :
       - completely (no more asked and registered);

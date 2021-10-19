@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
-from plone.app.caching.operations.utils import doNotCache
 from plone.z3cform.layout import wrap_form
-from Products.PloneMeeting.browser.advices import AdviceAdviceInfoForm
+from Products.PloneMeeting.browser.advices import BaseAdviceInfoForm
 from Products.PloneMeeting.browser.advices import IBaseAdviceInfoSchema
 from Products.PloneMeeting.config import PMMessageFactory as _
 from z3c.form import button
@@ -41,7 +40,7 @@ class IAdviceProposingGroupComment(IBaseAdviceInfoSchema):
         required=True)
 
 
-class AdviceProposingGroupCommentForm(AdviceAdviceInfoForm):
+class AdviceProposingGroupCommentForm(BaseAdviceInfoForm):
     """
     """
     label = _(u"Advice proposing group comment")

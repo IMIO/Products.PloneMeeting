@@ -380,11 +380,11 @@ class AdviceView(DefaultView):
     def __call__(self):
         """Check if viewable by current user in case smart guy call the right url."""
         parent = self.context.aq_inner.aq_parent
-        advice_icons_infos = parent.restrictedTraverse('@@advices-icons-infos')
+        self.advice_icons_infos = parent.restrictedTraverse('@@advices-icons-infos')
         advice_type = parent._shownAdviceTypeFor(parent.adviceIndex[self.context.advice_group])
-        advice_icons_infos._initAdvicesInfos(advice_type)
-        advice_icons_infos._initAdviceInfos(self.context.advice_group)
-        if not advice_icons_infos.mayView():
+        self.advice_icons_infos._initAdvicesInfos(advice_type)
+        self.advice_icons_infos._initAdviceInfos(self.context.advice_group)
+        if not self.advice_icons_infos.mayView():
             raise Unauthorized
         _display_asked_again_warning(self.context, parent)
         # set some variables for PageTemplate
@@ -424,7 +424,7 @@ class IBaseAdviceInfoSchema(model.Schema):
         required=False)
 
 
-class AdviceAdviceInfoForm(AutoExtensibleForm, form.EditForm):
+class BaseAdviceInfoForm(AutoExtensibleForm, form.EditForm):
     """
       Base form make to work also when advice is not given.
     """

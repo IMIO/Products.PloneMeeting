@@ -8,7 +8,7 @@ Changelog
 - Adapted display condition of the `searchmyitemstoadvice` dashboard collection
   to make sure it is only displayed if some
   `MeetingConfig.selectableAdviserUsers` are defined.
- [gbastien]
+  [gbastien]
 - Adapted `MeetingItem.validate_proposingGroup` to bypass validation for Managers
   as most of time they are member of none group.
   [gbastien]
@@ -27,6 +27,13 @@ Changelog
   [gbastien]
 - Index annexes `scan_id` in item `SearchableText` like it is already the case
   for annex `title`.
+  [gbastien]
+- Added possibility for the proposingGroup to add a comment on an advice:
+
+  - comment may be edited only by the proposingGroup;
+  - comment is only viewable by advisers of the asked advice (and MeetingManagers);
+  - added helper method MeetingItem.is_decided.
+
   [gbastien]
 
 4.2b18 (2021-10-13)
