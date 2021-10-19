@@ -34,16 +34,17 @@ class PMRichTextWidget(RichTextWidget):
 
     def may_edit(self):
         """This field may sometimes be edited using specific write permissions."""
-        portal_types = api.portal.get_tool('portal_types')
-        fti = portal_types[self.context.portal_type]
-        schema = fti.lookupSchema()
-        write_permissions = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY, {})
-        write_perm = write_permissions.get(self.__name__, ModifyPortalContent)
         res = False
-        if checkMayQuickEdit(self.context, permission=write_perm):
-            # check that context is not locked
-            res = not self.context.restrictedTraverse(
-                '@@plone_lock_info').is_locked_for_current_user()
+        if 'ajax_load' not in self.request.form:
+            portal_types = api.portal.get_tool('portal_types')
+            fti = portal_types[self.context.portal_type]
+            schema = fti.lookupSchema()
+            write_permissions = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY, {})
+            write_perm = write_permissions.get(self.__name__, ModifyPortalContent)
+            if checkMayQuickEdit(self.context, permission=write_perm):
+                # check that context is not locked
+                res = not self.context.restrictedTraverse(
+                    '@@plone_lock_info').is_locked_for_current_user()
         return res
 
     def need_to_refresh_page(self):

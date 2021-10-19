@@ -5,49 +5,34 @@ from imio.actionspanel.utils import findViewableURL
 from imio.helpers.content import get_vocab
 from imio.helpers.security import fplog
 from plone import api
-from plone.autoform import directives
-from plone.autoform.form import AutoExtensibleForm
-from plone.supermodel import model
 from plone.z3cform.layout import wrap_form
+from Products.PloneMeeting.browser.advices import BaseAdviceInfoForm
+from Products.PloneMeeting.browser.advices import IBaseAdviceInfoSchema
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import cleanMemoize
 from z3c.form import button
-from z3c.form import form
 from zope import schema
-from zope.component.hooks import getSite
 from zope.i18n import translate
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
 
 
-def advice_uid_default():
-    """
-      Get the value from the REQUEST as it is passed when calling the
-      form : form?advice_uid=advice_uid.
-    """
-    request = getSite().REQUEST
-    return request.get('advice_id', u'')
-
-
-class IAdviceRemoveInheritance(model.Schema):
-
-    directives.mode(advice_uid='hidden')
-    advice_uid = schema.TextLine(
-        title=_(u"Advice uid"),
-        description=_(u""),
-        defaultFactory=advice_uid_default,
-        required=False)
+class IAdviceRemoveInheritance(IBaseAdviceInfoSchema):
 
     inherited_advice_action = schema.Choice(
         title=_(u"Inherited advice action"),
         description=_(u""),
         vocabulary=SimpleVocabulary(
-            [SimpleTerm('ask_locally', 'ask_locally', _(u"Remove inherited advice and ask advice locally")),
-             SimpleTerm('remove', 'remove', _(u"Remove inherited advice"))]),
+            [SimpleTerm('ask_locally',
+                        'ask_locally',
+                        _(u"Remove inherited advice and ask advice locally")),
+             SimpleTerm('remove',
+                        'remove',
+                        _(u"Remove inherited advice"))]),
         required=True)
 
 
-class AdviceRemoveInheritanceForm(AutoExtensibleForm, form.EditForm):
+class AdviceRemoveInheritanceForm(BaseAdviceInfoForm):
     """
       This form will give the possibility to remove an inherited advice :
       - completely (no more asked and registered);
@@ -65,16 +50,6 @@ class AdviceRemoveInheritanceForm(AutoExtensibleForm, form.EditForm):
         self.label = translate(self.label,
                                domain='PloneMeeting',
                                context=self.request)
-
-    def _advice_infos(self, data):
-        '''Init @@advices-icons-infos and returns it.'''
-        # check if may remove inherited advice
-        advice_infos = self.context.restrictedTraverse('@@advices-icons-infos')
-        # initialize advice_infos
-        advice_data = self.context.getAdviceDataFor(self.context, data['advice_uid'])
-        advice_infos(self.context._shownAdviceTypeFor(advice_data))
-        advice_infos._initAdviceInfos(data['advice_uid'])
-        return advice_infos
 
     @button.buttonAndHandler(_('save'), name='save_remove_advice_inheritance')
     def handleSaveRemoveAdviceInheritance(self, action):

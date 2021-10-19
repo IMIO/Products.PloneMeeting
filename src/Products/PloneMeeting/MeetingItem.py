@@ -2283,8 +2283,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(item)
         res = tool.isManager(cfg)
         if not res:
-            res = tool.isPowerObserverForCfg(cfg) or \
-                item.query_state() in cfg.getItemDecidedStates()
+            res = tool.isPowerObserverForCfg(cfg) or self.is_decided(cfg)
         return res
 
     security.declarePublic('showIsAcceptableOutOfMeeting')
@@ -2440,7 +2439,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(item)
             item_state = item.query_state()
-            if item_state in cfg.getItemDecidedStates() and \
+            if self.is_decided(cfg, item_state) and \
                item.adapted()._getGroupManagingItem(item_state, theObject=False) in \
                tool.get_orgs_for_user(the_objects=False):
                 res = True
@@ -3750,7 +3749,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             tool = api.portal.get_tool("portal_plonemeeting")
             cfg = tool.getMeetingConfig(item)
             may_update = cfg.getComputeItemReferenceForItemsOutOfMeeting() and \
-                item.query_state() in cfg.getItemDecidedStates()
+                item.is_decided(cfg)
         return may_update
 
     security.declarePublic('update_item_reference')
@@ -5784,6 +5783,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             saved_stored_data[org_uid]['delay_changes_history'] = \
                 'delay_changes_history' in adviceInfo and \
                 adviceInfo['delay_changes_history'] or []
+            saved_stored_data[org_uid]['proposing_group_comment'] = \
+                adviceInfo.get('proposing_group_comment', u'')
             saved_stored_data[org_uid]['inherited'] = \
                 'inherited' in adviceInfo and \
                 adviceInfo['inherited'] or bool(org_uid in inheritedAdviserUids)
@@ -5876,11 +5877,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     d['delay_changes_history'] = saved_stored_data[org_uid]['delay_changes_history']
                     d['isConfidential'] = saved_stored_data[org_uid]['isConfidential']
                     d['inherited'] = saved_stored_data[org_uid]['inherited']
+                    d['proposing_group_comment'] = \
+                        saved_stored_data[org_uid]['proposing_group_comment']
                 else:
                     d['delay_for_automatic_adviser_changed_manually'] = False
                     d['delay_changes_history'] = []
                     d['isConfidential'] = cfg.getAdviceConfidentialityDefault()
                     d['inherited'] = bool(org_uid in inheritedAdviserUids)
+                    d['proposing_group_comment'] = u''
                 # index view/add/edit access
                 d['item_viewable_by_advisers'] = False
                 d['advice_addable'] = False
@@ -5909,15 +5913,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     adviceInfo['delay_started_on'] = saved_stored_data[org_uid]['delay_started_on']
                 if org_uid in saved_stored_data:
                     adviceInfo['delay_stopped_on'] = saved_stored_data[org_uid]['delay_stopped_on']
-                if org_uid in saved_stored_data:
                     adviceInfo['delay_for_automatic_adviser_changed_manually'] = \
                         saved_stored_data[org_uid]['delay_for_automatic_adviser_changed_manually']
                     adviceInfo['delay_changes_history'] = saved_stored_data[org_uid]['delay_changes_history']
                     adviceInfo['isConfidential'] = saved_stored_data[org_uid]['isConfidential']
+                    adviceInfo['proposing_group_comment'] = \
+                        saved_stored_data[org_uid]['proposing_group_comment']
                 else:
                     adviceInfo['delay_for_automatic_adviser_changed_manually'] = False
                     adviceInfo['delay_changes_history'] = []
                     adviceInfo['isConfidential'] = cfg.getAdviceConfidentialityDefault()
+                    adviceInfo['proposing_group_comment'] = u''
                 # index view/add/edit access
                 adviceInfo['item_viewable_by_advisers'] = False
                 adviceInfo['advice_addable'] = False
@@ -6446,7 +6452,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 mmanagers_group_id = "{0}_{1}".format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
                 # 'Reviewer' also on decided item, the WF guard will avoid correct is meeting closed
                 mmanagers_roles = ['Reader', 'Reviewer']
-                if item_state not in cfg.getItemDecidedStates():
+                if not self.is_decided(cfg, item_state):
                     mmanagers_roles += ['Editor', 'Contributor']
                 self.manage_addLocalRoles(mmanagers_group_id, tuple(mmanagers_roles))
 
@@ -7473,6 +7479,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if intersection:
                 res.append(gic)
         return res
+
+    def is_decided(self, cfg, item_state=None, positive_only=False):
+        '''Is item considered decided?'''
+        item_state = item_state or self.query_state()
+        if positive_only:
+            return item_state in cfg.getPositiveDecidedStates()
+        else:
+            return item_state in cfg.getItemDecidedStates()
 
 
 registerType(MeetingItem, PROJECTNAME)

@@ -7,16 +7,23 @@ from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.content import get_state_infos
 from imio.history.browser.views import IHVersionPreviewView
 from plone import api
+from plone.autoform import directives
+from plone.autoform.form import AutoExtensibleForm
 from plone.dexterity.browser.edit import DefaultEditForm
 from plone.dexterity.browser.view import DefaultView
 from plone.memoize import ram
+from plone.supermodel import model
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.PageTemplates.Expressions import SecureModuleImporter
 from Products.PloneMeeting.browser.advicechangedelay import _reinit_advice_delay
 from Products.PloneMeeting.config import PMMessageFactory as _
+from z3c.form import form
+from zope import schema
 from zope.event import notify
+from zope.globalrequest import getRequest
+from zope.i18n import translate
 from zope.lifecycleevent import ObjectModifiedEvent
 
 import json
@@ -142,16 +149,29 @@ class AdvicesIconsInfos(BrowserView):
         self.advicesByType = self.context.getAdvicesByType()
         self.adviceType = adviceType
         self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
+        self.itemReviewState = self.context.query_state()
+        org_uid = self.context.getProposingGroup()
+        self.userIsInProposingGroup = self.tool.user_is_in_org(org_uid=org_uid)
+        self.isManager = self.tool.isManager(self.cfg)
+        self.isRealManager = self.tool.isManager(self.cfg, realManagers=True)
+        # edit proposingGroup comment, only compute if item not decided
+        # by default editable by Managers only
+        self.userIsProposingGroupCommentEditor = self.isRealManager
+        self.userMayEditItem = self.isRealManager
+        if not self.context.is_decided(self.cfg, self.itemReviewState):
+            suffixes = self.cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
+            self.userIsProposingGroupCommentEditor = self.isManager or \
+                self.tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes)
+            self.userMayEditItem = _checkPermission(ModifyPortalContent, self.context)
 
     def _initAdviceInfos(self, advice_id):
         """ """
         self.advice_id = advice_id
         self.memberIsAdviserForGroup = advice_id in self.userAdviserOrgUids
         self.adviceIsInherited = self.context.adviceIsInherited(advice_id)
-        isRealManager = self.tool.isManager(self.cfg, realManagers=True)
         self.mayEdit = not self.adviceIsInherited and \
             ((self.advicesToEdit and advice_id in self.advicesToEdit) or
-             (isRealManager and not self.adviceType == 'not_given'))
+             (self.isRealManager and not self.adviceType == 'not_given'))
 
     def showLinkToInherited(self, adviceHolder):
         """ """
@@ -165,13 +185,12 @@ class AdvicesIconsInfos(BrowserView):
              in a itemAdviceEditStates review_state."""
         res = False
         if self.adviceIsInherited:
-            if self.tool.isManager(self.cfg) and \
-               self.context.query_state() not in self.cfg.getItemDecidedStates():
+            if self.tool.isManager(self.cfg) and not self.context.is_decided(self.cfg):
                 res = True
             else:
                 if self.cfg.getInheritedAdviceRemoveableByAdviser() and \
                    self.advice_id in self.userAdviserOrgUids and \
-                   self.context.query_state() in get_organization(
+                   self.itemReviewState in get_organization(
                         self.advice_id).get_item_advice_edit_states(cfg=self.cfg):
                     return True
         return res
@@ -184,7 +203,8 @@ class AdvicesIconsInfos(BrowserView):
         """ """
         return self.memberIsAdviserForGroup or \
             self.mayEdit or \
-            self.adviceType not in ('hidden_during_redaction', 'considered_not_given_hidden_during_redaction')
+            self.adviceType not in ('hidden_during_redaction',
+                                    'considered_not_given_hidden_during_redaction')
 
     def mayChangeDelay(self):
         """ """
@@ -229,6 +249,33 @@ class AdvicesIconsInfos(BrowserView):
                     if k not in suffixes:
                         suffixes.append(k)
         return json.dumps(["{0}_{1}".format(advice_id, suffix) for suffix in suffixes])
+
+    def mayEditProposingGroupComment(self):
+        """Proposing group may edit comment if able to edit item (not on an inherited advice).
+           Advice comment may be changed by proposingGroup when:
+           - member is a group editor (not an observer for example);
+           - item is editable or advice is addable/editable."""
+        res = False
+        advice_info = self.context.adviceIndex[self.advice_id]
+        if not self.adviceIsInherited:
+            if self.userIsProposingGroupCommentEditor and \
+                (self.isRealManager or self.userMayEditItem or
+                 (advice_info['advice_addable'] or advice_info['advice_editable'])):
+                res = True
+        return res
+
+    def mayViewProposingGroupComment(self):
+        """May view comment:
+           - Proposing group;
+           - Asked advice advisers;
+           - (Meeting)Managers."""
+        res = False
+        # bypass for (Meeting)Managers
+        if self.isManager or \
+           self.memberIsAdviserForGroup or \
+           self.userIsInProposingGroup:
+            res = True
+        return res
 
 
 class ChangeAdviceHiddenDuringRedactionView(BrowserView):
@@ -333,13 +380,17 @@ class AdviceView(DefaultView):
     def __call__(self):
         """Check if viewable by current user in case smart guy call the right url."""
         parent = self.context.aq_inner.aq_parent
-        advice_icons_infos = parent.restrictedTraverse('@@advices-icons-infos')
+        self.advice_icons_infos = parent.restrictedTraverse('@@advices-icons-infos')
         advice_type = parent._shownAdviceTypeFor(parent.adviceIndex[self.context.advice_group])
-        advice_icons_infos._initAdvicesInfos(advice_type)
-        advice_icons_infos._initAdviceInfos(self.context.advice_group)
-        if not advice_icons_infos.mayView():
+        self.advice_icons_infos._initAdvicesInfos(advice_type)
+        self.advice_icons_infos._initAdviceInfos(self.context.advice_group)
+        if not self.advice_icons_infos.mayView():
             raise Unauthorized
         _display_asked_again_warning(self.context, parent)
+        # set some variables for PageTemplate
+        self.parent = parent
+        self.portal = api.portal.get()
+        self.portal_url = self.portal.absolute_url()
         return super(AdviceView, self).__call__()
 
 
@@ -352,3 +403,50 @@ class AdviceEdit(DefaultEditForm):
         super(AdviceEdit, self).update()
         if not self.actions.executedActions:
             _display_asked_again_warning(self.context, self.context.aq_inner.aq_parent)
+
+
+def advice_uid_default():
+    """
+      Get the value from the REQUEST as it is passed when calling the
+      form : form?advice_uid=advice_uid.
+    """
+    request = getRequest()
+    return request.get('advice_id', u'')
+
+
+class IBaseAdviceInfoSchema(model.Schema):
+
+    directives.mode(advice_uid='hidden')
+    advice_uid = schema.TextLine(
+        title=_(u"Advice uid"),
+        description=_(u""),
+        defaultFactory=advice_uid_default,
+        required=False)
+
+
+class BaseAdviceInfoForm(AutoExtensibleForm, form.EditForm):
+    """
+      Base form make to work also when advice is not given.
+    """
+    label = _(u"")
+    description = u''
+    schema = IBaseAdviceInfoSchema
+    ignoreContext = True  # don't use context to get widget data
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.label = translate(self.label,
+                               domain='PloneMeeting',
+                               context=self.request)
+
+    def _advice_infos(self, data, context=None):
+        '''Init @@advices-icons-infos and returns it.'''
+        context = context or self.context
+        # check if may remove inherited advice
+        advice_infos = context.restrictedTraverse('@@advices-icons-infos')
+        # initialize advice_infos
+        advice_data = context.getAdviceDataFor(context, data['advice_uid'])
+        advice_infos(context._shownAdviceTypeFor(advice_data))
+        advice_infos._initAdviceInfos(data['advice_uid'])
+        return advice_infos
