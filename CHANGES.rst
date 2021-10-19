@@ -36,6 +36,10 @@ Changelog
   - added helper method MeetingItem.is_decided.
 
   [gbastien]
+- Fixed `ToolPloneMeeting.getPloneMeetingFolder` that was not creating a
+  `MeetingConfig` folder if an element having same id existed at Plone root or
+  in Members (a user having same id as the MeetingConfig).
+  [gbastien]
 
 4.2b18 (2021-10-13)
 -------------------

@@ -645,7 +645,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             rootFolder.setImmediatelyAddableTypes(['Folder'])
 
         root_folder = getattr(home_folder, ROOT_FOLDER)
-        if not hasattr(root_folder, meetingConfigId):
+        if not hasattr(aq_base(root_folder), meetingConfigId):
             self.createMeetingConfigFolder(meetingConfigId, userId)
         return getattr(root_folder, meetingConfigId)
 
