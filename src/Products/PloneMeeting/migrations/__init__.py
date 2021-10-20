@@ -189,6 +189,9 @@ class Migrator(BaseMigrator):
              never use single word, a single word may also be a
              POD template context variable ("listTypes", "review_state", ...)."""
         logger.info('Fixing POD templates instructions....')
+        # first make sure collective.documentgenerator is upgraded
+        # before search&replace in POD templates
+        self.upgradeProfile("collective.documentgenerator:default")
         results = []
         for cfg in self.tool.objectValues('MeetingConfig'):
             pod_templates = object_values(
