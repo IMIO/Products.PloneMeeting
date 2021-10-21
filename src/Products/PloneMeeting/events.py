@@ -964,7 +964,7 @@ def _redirect_if_default_item_template(item):
 def onItemWillBeMoved(item, event):
     '''Do not move the ITEM_DEFAULT_TEMPLATE_ID.'''
     # If we are trying to move the whole MeetingConfig, bypass this hook.
-    if event.object.meta_type in ['MeetingConfig']:
+    if event.object.meta_type in ['Plone Site', 'MeetingConfig']:
         return
 
     return _redirect_if_default_item_template(item)
