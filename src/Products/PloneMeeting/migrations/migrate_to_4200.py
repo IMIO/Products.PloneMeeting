@@ -614,6 +614,9 @@ class Migrate_To_4200(Migrator):
                         'self.getStrikedAssembly(': 'view.print_assembly(',
                         'self.getStrikedItemAssembly(': 'view.print_assembly(',
                         '.isDecided(': '.is_decided(',
+                        # formatMeetingDate to format_date
+                        'withHour=': "with_hour=",
+                        'withWeekDayName=': "with_week_day_name=",
                         }
         # specific for Meeting POD Templates
         meeting_replacements = {
@@ -630,10 +633,15 @@ class Migrate_To_4200(Migrator):
             'self.getSecretMeetingObservations()': "view.print_value('secret_meeting_observations')",
             'self.getSignatures()': "self.get_signatures()",
             'self.Title()': "view.print_value('date')",
+            # formatMeetingDate to format_date
+            'tool.formatMeetingDate(self': "tool.format_date(self.date",
+
         }
         # specific for MeetingItem POD Templates
         item_replacements = {
             'meeting.Title()': "view.getDGHV(meeting).print_value('date')",
+            # formatMeetingDate to format_date
+            'tool.formatMeetingDate(meeting': "tool.format_date(meeting.date",
         }
 
         self.updatePODTemplatesCode(replacements, meeting_replacements, item_replacements)
