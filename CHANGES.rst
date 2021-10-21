@@ -49,6 +49,10 @@ Changelog
 - Do not add `pm-anonymize` style to CKeditor by default,
   this will only be configured on demand.
   [gbastien]
+- Added `the_objects=False` parameter to `ToolPloneMeeting.get_plone_groups_for_user`
+  to get `GroupData` instances instead group ids.
+  This is used by the `plonemeeting.restapi` `@users` endpoint.
+  [gbastien]
 
 4.2b18 (2021-10-13)
 -------------------
