@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
+from imio.helpers.security import fplog
 from plone.z3cform.layout import wrap_form
 from Products.PloneMeeting.browser.advices import BaseAdviceInfoForm
 from Products.PloneMeeting.browser.advices import IBaseAdviceInfoSchema
@@ -103,6 +104,9 @@ class AdviceProposingGroupCommentForm(BaseAdviceInfoForm):
             # Setting an arbitrary attribute will update _p_mtime
             # description is not used but exists on any DX content
             advice.description = advice.description
+        extras = 'item={0} advice_id={1}'.format(
+            repr(self.item), data['advice_uid'])
+        fplog('edit_proposing_group_comment', extras=extras)
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
     def handleCancel(self, action):
