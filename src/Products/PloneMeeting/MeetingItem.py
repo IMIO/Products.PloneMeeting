@@ -2077,7 +2077,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            self.checkCreationFlag():
             tool = api.portal.get_tool('portal_plonemeeting')
             if value not in tool.get_orgs_for_user(
-                only_selected=False, suffixes=["creators"], the_objects=False):
+                    only_selected=False, suffixes=["creators"], the_objects=False):
                 cfg = tool.getMeetingConfig(self)
                 if not tool.isManager(cfg, realManagers=True):
                     return translate(
@@ -2283,7 +2283,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(item)
         res = tool.isManager(cfg)
         if not res:
-            res = tool.isPowerObserverForCfg(cfg) or self.is_decided(cfg)
+            res = tool.isPowerObserverForCfg(cfg) or item.is_decided(cfg)
         return res
 
     security.declarePublic('showIsAcceptableOutOfMeeting')
