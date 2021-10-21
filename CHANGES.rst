@@ -44,6 +44,11 @@ Changelog
   to make sure every `InAndOutWidget` values are selected, this avoid losing
   values when user clicked on a value of the right panel of the `InAndOutWidget`.
   [gbastien]
+- Fixed `onItemWillBeMoved` event that prevented to delete a `Plone Site`.
+  [gbastien]
+- Do not add `pm-anonymize` style to CKeditor by default,
+  this will only be configured on demand.
+  [gbastien]
 
 4.2b18 (2021-10-13)
 -------------------

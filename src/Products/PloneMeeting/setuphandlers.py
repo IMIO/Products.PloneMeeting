@@ -425,9 +425,6 @@ def _configureCKeditor(site):
         msg_highlight_yellow = translate('ckeditor_style_highlight_in_yellow',
                                          domain='PloneMeeting',
                                          context=site.REQUEST).encode('utf-8')
-        msg_anonymize = translate('ckeditor_style_pm_anonymize',
-                                   domain='PloneMeeting',
-                                   context=site.REQUEST).encode('utf-8')
         msg_x_small = translate('ckeditor_style_x_small',
                                 domain='PloneMeeting',
                                 context=site.REQUEST).encode('utf-8')
@@ -455,20 +452,18 @@ def _configureCKeditor(site):
             "{{ name : '{2}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-blue' }} }},\n"
             "{{ name : '{3}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-green' }} }},\n"
             "{{ name : '{4}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-yellow' }} }},\n"
-            "{{ name : '{5}'\t\t, element : 'span', attributes : {{ 'class' : 'pm-anonymize' }} }},\n"
-            "{{ name : '{6}'\t\t, element : 'p', attributes : {{ 'class' : 'xSmallText' }} }},\n"
-            "{{ name : '{7}'\t\t, element : 'p', attributes : {{ 'class' : 'smallText' }} }},\n"
-            "{{ name : '{8}'\t\t, element : 'p', attributes : {{ 'class' : 'largeText' }} }},\n"
-            "{{ name : '{9}'\t\t, element : 'p', attributes : {{ 'class' : 'xLargeText' }} }},\n"
-            "{{ name : '{10}'\t\t, element : 'table', styles : {{ 'table-layout' : 'fixed' }} }},\n"
-            "{{ name : '{11}'\t\t, element : 'p', attributes : {{ 'style' : 'text-indent: 40px;' }} }},\n"
-            "{{ name : '{12}'\t\t, element : 'p', attributes : {{ 'class' : 'page-break' }} }},\n]\n".
+            "{{ name : '{5}'\t\t, element : 'p', attributes : {{ 'class' : 'xSmallText' }} }},\n"
+            "{{ name : '{6}'\t\t, element : 'p', attributes : {{ 'class' : 'smallText' }} }},\n"
+            "{{ name : '{7}'\t\t, element : 'p', attributes : {{ 'class' : 'largeText' }} }},\n"
+            "{{ name : '{8}'\t\t, element : 'p', attributes : {{ 'class' : 'xLargeText' }} }},\n"
+            "{{ name : '{9}'\t\t, element : 'table', styles : {{ 'table-layout' : 'fixed' }} }},\n"
+            "{{ name : '{10}'\t\t, element : 'p', attributes : {{ 'style' : 'text-indent: 40px;' }} }},\n"
+            "{{ name : '{11}'\t\t, element : 'p', attributes : {{ 'class' : 'page-break' }} }},\n]\n".
             format(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG,
                    msg_highlight_red,
                    msg_highlight_blue,
                    msg_highlight_green,
                    msg_highlight_yellow,
-                   msg_anonymize,
                    msg_x_small,
                    msg_small,
                    msg_large,
