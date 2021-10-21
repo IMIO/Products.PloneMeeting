@@ -1038,6 +1038,17 @@ class testToolPloneMeeting(PloneMeetingTestCase):
             self.tool.get_plone_groups_for_user(userId='pmReviewer1'),
             self.tool.get_plone_groups_for_user())
 
+        # may get group objects when the_objects=True
+        self.assertEqual(
+            sorted([group.id for group in self.tool.get_plone_groups_for_user(the_objects=True)]),
+            sorted(self.tool.get_plone_groups_for_user(the_objects=False)))
+        self.assertEqual(
+            sorted([group.id for group in
+                    self.tool.get_plone_groups_for_user(
+                        org_uid=self.developers_uid, the_objects=True)]),
+            sorted(self.tool.get_plone_groups_for_user(
+                org_uid=self.developers_uid, the_objects=False)))
+
         # works also when using api.env.adopt_user like it is the case
         # in MeetingItem.setHistorizedTakenOverBy
         pmCreator1 = api.user.get('pmCreator1')

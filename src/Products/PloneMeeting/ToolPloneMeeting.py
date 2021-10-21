@@ -445,28 +445,36 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         source_groups = portal.acl_users.source_groups
         return source_groups._principal_groups.byValue(0)
 
-    def get_plone_groups_for_user_cachekey(method, self, userId=None, org_uid=None):
+    def get_plone_groups_for_user_cachekey(method, self, userId=None, org_uid=None, the_objects=False):
         '''cachekey method for self.get_plone_groups_for_user.'''
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user')
         return (date,
                 self._users_groups_value(),
                 userId or api.user.get_current(),
-                org_uid)
+                org_uid,
+                the_objects)
 
     security.declarePublic('get_plone_groups_for_user')
 
     @ram.cache(get_plone_groups_for_user_cachekey)
-    def get_plone_groups_for_user(self, userId=None, org_uid=None):
+    def get_plone_groups_for_user(self, userId=None, org_uid=None, the_objects=False):
         """Just return user.getGroups but cached."""
         if api.user.is_anonymous():
             return []
         user = userId and api.user.get(userId) or api.user.get_current()
         if not hasattr(user, "getGroups"):
             return []
-        user_groups = user.getGroups()
-        if org_uid:
-            user_groups = [plone_group for plone_group in user_groups
-                           if plone_group.startswith(org_uid)]
+        if the_objects:
+            pg = api.portal.get_tool("portal_groups")
+            user_groups = pg.getGroupsByUserId(user.id)
+            if org_uid:
+                user_groups = [plone_group for plone_group in user_groups
+                               if plone_group.id.startswith(org_uid)]
+        else:
+            user_groups = user.getGroups()
+            if org_uid:
+                user_groups = [plone_group for plone_group in user_groups
+                               if plone_group.startswith(org_uid)]
         return sorted(user_groups)
 
     def group_is_not_empty_cachekey(method, self, org_uid, suffix, user_id=None):
