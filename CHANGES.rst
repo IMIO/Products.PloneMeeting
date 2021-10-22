@@ -5,8 +5,11 @@ Changelog
 4.1.28.31 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Backport from 4.2.x:
 
+  - Added `utils.get_annexes_config` function to be able to get the annexes config
+    depending on `context` and annex `portal_type`.
+    [gbastien]
 
 4.1.28.30 (2021-10-05)
 ----------------------

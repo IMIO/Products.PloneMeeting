@@ -13,6 +13,8 @@ from collective.fingerpointing.config import AUDIT_MESSAGE
 from collective.fingerpointing.logger import log_info
 from collective.fingerpointing.utils import get_request_information
 from collective.iconifiedcategory.interfaces import IIconifiedInfos
+from collective.iconifiedcategory.utils import get_config_root
+from collective.iconifiedcategory.utils import get_group
 from datetime import datetime
 from datetime import timedelta
 from DateTime import DateTime
@@ -1919,6 +1921,23 @@ def convert2xhtml(obj,
         xhtmlFinal = XhtmlPreprocessor.html2xhtml(xhtmlFinal)
 
     return xhtmlFinal
+
+
+def get_annexes_config(context, portal_type="annex", annex_group=False):
+    """ """
+    if portal_type == 'annexDecision':
+        context.REQUEST.set('force_use_item_decision_annexes_group', True)
+        config = get_config_root(context)
+        if annex_group:
+            group = get_group(config, context)
+        context.REQUEST.set('force_use_item_decision_annexes_group', False)
+    else:
+        config = get_config_root(context)
+        if annex_group:
+            group = get_group(config, context)
+    if annex_group:
+        return group
+    return config
 
 
 class AdvicesUpdatedEvent(ObjectEvent):
