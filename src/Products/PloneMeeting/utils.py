@@ -13,6 +13,8 @@ from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
 from collective.iconifiedcategory.interfaces import IIconifiedInfos
+from collective.iconifiedcategory.utils import get_config_root
+from collective.iconifiedcategory.utils import get_group
 from datetime import datetime
 from datetime import timedelta
 from DateTime import DateTime
@@ -476,10 +478,10 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         'user': userName,
         'groups': userGroups,
         'meetingConfigTitle': safe_unicode(cfg.Title()),
-        'transitionActor': wf_action and \
-            tool.getUserName(wf_action['actor'], withUserId=True) or '-',
-        'transitionTitle': wf_action and \
-            translate(wf_action['action'], domain="plone", context=obj.REQUEST) or '-',
+        'transitionActor': wf_action and
+        tool.getUserName(wf_action['actor'], withUserId=True) or '-',
+        'transitionTitle': wf_action and
+        translate(wf_action['action'], domain="plone", context=obj.REQUEST) or '-',
         'transitionComments': wf_action and safe_unicode(wf_action['comments']) or '-',
     })
     if obj.getTagName() == 'Meeting':
@@ -2241,6 +2243,23 @@ def convert2xhtml(obj,
         xhtmlFinal = XhtmlPreprocessor.html2xhtml(xhtmlFinal)
 
     return xhtmlFinal
+
+
+def get_annexes_config(context, portal_type="annex", annex_group=False):
+    """ """
+    if portal_type == 'annexDecision':
+        context.REQUEST.set('force_use_item_decision_annexes_group', True)
+        config = get_config_root(context)
+        if annex_group:
+            group = get_group(config, context)
+        context.REQUEST.set('force_use_item_decision_annexes_group', False)
+    else:
+        config = get_config_root(context)
+        if annex_group:
+            group = get_group(config, context)
+    if annex_group:
+        return group
+    return config
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

@@ -53,6 +53,9 @@ Changelog
   to get `GroupData` instances instead group ids.
   This is used by the `plonemeeting.restapi` `@users` endpoint.
   [gbastien]
+- Added `utils.get_annexes_config` function to be able to get the annexes config
+  depending on `context` and annex `portal_type`.
+  [gbastien]
 
 4.2b18 (2021-10-13)
 -------------------

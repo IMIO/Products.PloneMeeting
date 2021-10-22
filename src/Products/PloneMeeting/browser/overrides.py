@@ -69,6 +69,7 @@ from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_annexes_config
 from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import is_editing
 from Products.PloneMeeting.utils import normalize_id
@@ -1260,13 +1261,7 @@ class CategorizedAnnexesView(CategorizedTabView):
 
     def _config(self):
         """ """
-        if self.portal_type == 'annexDecision':
-            self.request.set('force_use_item_decision_annexes_group', True)
-            config = collective_iconifiedcategory_utils.get_config_root(self.context)
-            self.request.set('force_use_item_decision_annexes_group', False)
-        else:
-            config = collective_iconifiedcategory_utils.get_config_root(self.context)
-        return config
+        return get_annexes_config(self.context, self.portal_type)
 
     def _show_column(self, action_type):
         """Made to be overrided."""
