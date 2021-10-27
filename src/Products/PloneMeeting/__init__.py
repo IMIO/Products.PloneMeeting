@@ -31,8 +31,8 @@ from config import PROJECTNAME
 from plone.registry.field import DisallowedProperty
 from Products.Archetypes import listTypes
 from Products.Archetypes.atapi import process_types
-from Products.CMFCore import utils as cmfutils
 from Products.CMFCore import DirectoryView
+from Products.CMFCore import utils as cmfutils
 from Products.CMFPlone.utils import ToolInit
 from Products.validation import validation
 from Products.validation.validators.BaseValidators import baseValidators

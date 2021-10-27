@@ -42,7 +42,6 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone import PloneMessageFactory
 from Products.CMFPlone.CatalogTool import getIcon
 from Products.CMFPlone.utils import safe_unicode
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
@@ -52,6 +51,7 @@ from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.config import WriteHarmlessConfig

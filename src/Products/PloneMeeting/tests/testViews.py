@@ -4,8 +4,8 @@ from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.documentgenerator.interfaces import IGenerablePODTemplates
 from collective.eeafaceted.dashboard.interfaces import IDashboardGenerablePODTemplates
-from DateTime import DateTime
 from datetime import datetime
+from DateTime import DateTime
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
 from imio.helpers.cache import cleanRamCacheFor

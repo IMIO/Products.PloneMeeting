@@ -15,8 +15,8 @@ from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
 from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.utils import _checkPermission
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_GIVEN_HISTORIZED_COMMENT
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingContent

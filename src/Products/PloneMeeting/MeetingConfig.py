@@ -64,7 +64,6 @@ from Products.DataGridField import DataGridField
 from Products.DataGridField.CheckboxColumn import CheckboxColumn
 from Products.DataGridField.Column import Column
 from Products.DataGridField.SelectColumn import SelectColumn
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import CLONE_TO_OTHER_MC_ACTION_SUFFIX
 from Products.PloneMeeting.config import CLONE_TO_OTHER_MC_EMERGENCY_ACTION_SUFFIX
@@ -80,6 +79,7 @@ from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES

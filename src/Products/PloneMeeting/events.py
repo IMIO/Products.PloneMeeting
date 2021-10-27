@@ -21,7 +21,6 @@ from plone.app.textfield.value import RichTextValue
 from plone.registry.interfaces import IRecordModifiedEvent
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
@@ -29,6 +28,7 @@ from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.interfaces import IConfigElement

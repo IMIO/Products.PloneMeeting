@@ -15,8 +15,8 @@ from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group_id
 from copy import deepcopy
-from DateTime import DateTime
 from datetime import datetime
+from DateTime import DateTime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
@@ -53,7 +53,6 @@ from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import safe_unicode
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import AUTO_COPY_GROUP_PREFIX
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
@@ -74,6 +73,7 @@ from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY

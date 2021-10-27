@@ -5,8 +5,8 @@ from collective.contact.plonegroup.config import get_registry_functions
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group_id
-from DateTime import DateTime
 from datetime import date
+from DateTime import DateTime
 from plone import api
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import getInterface

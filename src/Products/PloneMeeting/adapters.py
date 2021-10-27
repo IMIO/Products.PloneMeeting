@@ -13,8 +13,8 @@ from collective.eeafaceted.dashboard.content.pod_template import IDashboardPODTe
 from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
 from collective.iconifiedcategory.adapter import CategorizedObjectInfoAdapter
 from collective.iconifiedcategory.utils import get_categories
-from DateTime import DateTime
 from datetime import datetime
+from DateTime import DateTime
 from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget

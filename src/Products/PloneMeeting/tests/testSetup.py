@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import os
-
 from plone import api
 from Products.GenericSetup.context import DirectoryImportContext
 from Products.PloneMeeting.config import HAS_SOLR
@@ -10,6 +8,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import cleanMemoize
 
+import os
 import random
 
 

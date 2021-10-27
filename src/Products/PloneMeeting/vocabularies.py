@@ -23,8 +23,8 @@ from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
 from imio.helpers.cache import get_cachekey_volatile
-from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import get_vocab
+from imio.helpers.content import uuidsToObjects
 from natsort import humansorted
 from operator import attrgetter
 from plone import api
@@ -32,12 +32,12 @@ from plone.app.vocabularies.users import UsersFactory
 from plone.memoize import ram
 from plone.uuid.interfaces import ATTRIBUTE_NAME
 from Products.CMFPlone.utils import safe_unicode
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig

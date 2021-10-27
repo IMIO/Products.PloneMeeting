@@ -28,8 +28,8 @@ from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import update_all_categorized_elements
-from DateTime import DateTime
 from datetime import datetime
+from DateTime import DateTime
 from ftw.labels.labeling import ANNOTATION_KEY as FTW_LABELS_ANNOTATION_KEY
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import cleanRamCache
@@ -67,12 +67,12 @@ from Products.CPUtils.Extensions.utils import remove_generated_previews
 from Products.DataGridField import DataGridField
 from Products.DataGridField.Column import Column
 from Products.PloneMeeting import logger
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ADD_CONTENT_PERMISSIONS
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PloneMeetingError
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import PY_DATETIME_WEEKDAYS
 from Products.PloneMeeting.config import ROOT_FOLDER
