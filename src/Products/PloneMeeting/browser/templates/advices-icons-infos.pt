@@ -1,31 +1,32 @@
 <div i18n:domain="PloneMeeting"
      id="content"
      class="advice_infos_tooltipster"
-     tal:define="item_url context/absolute_url;
-                 adviceType view/adviceType;
-                 advicesByType view/advicesByType;
-                 advicesToAdd view/advicesToAdd;
-                 advicesToEdit view/advicesToEdit;
-                 userAdviserOrgUids view/userAdviserOrgUids;">
+     tal:define="item_url python: context.absolute_url();
+                 adviceType python: view.adviceType;
+                 advicesByType python: view.advicesByType;
+                 advicesToAdd python: view.advicesToAdd;
+                 advicesToEdit python: view.advicesToEdit;
+                 userAdviserOrgUids python: view.userAdviserOrgUids;">
   <tal:defines define="cfg python: view.cfg;
                        displayedAddIcon python: False;
                        displayedReviewState python: False;
                        adviceStyle python: cfg.getAdviceStyle();
                        displayAdviceConfidentiality python: cfg.getEnableAdviceConfidentiality() and view.tool.isManager(cfg);
-                       item_review_state context/query_state;">
+                       item_review_state python: view.itemReviewState;
+                       readmorable here/@@pm-macros/readmorable;">
 
           <tal:comment replace="nothing">List of group names</tal:comment>
           <tal:loop repeat="advice python:advicesByType[adviceType]">
             <fieldset tal:define="dummy python: view._initAdviceInfos(advice['id']);
                                   adviceHolder python: advice.get('adviceHolder', None) or view.context;
-                                  adviceHolderIsViewable adviceHolder/isViewable;
+                                  adviceHolderIsViewable python: adviceHolder.isViewable();
                                   obj python: advice.get('advice_id', None) and adviceHolder.get(advice['advice_id'], None);
-                                  obj_absolute_url python: obj and obj.absolute_url() or '';
+                                  obj_absolute_url python: advice.get('advice_id', None) and item_url + '/' + advice['advice_id'] or '';
                                   customMessageInfos python: context.adapted().getCustomAdviceMessageFor(advice);
-                                  displayDefaultComplementaryMessage customMessageInfos/displayDefaultComplementaryMessage;
-                                  displayAdviceReviewState customMessageInfos/displayAdviceReviewState;
-                                  customAdviceMessage customMessageInfos/customAdviceMessage;
-                                  mayView view/mayView"
+                                  displayDefaultComplementaryMessage python: customMessageInfos['displayDefaultComplementaryMessage'];
+                                  displayAdviceReviewState python: customMessageInfos['displayAdviceReviewState'];
+                                  customAdviceMessage python: customMessageInfos['customAdviceMessage'];
+                                  mayView python: view.mayView()"
                        tal:attributes="class python: (advice['id'] in advicesToAdd or advice['id'] in advicesToEdit) and 'advice-addable-editable' or ''">
                 <legend>
                   <div style="display: inline"
@@ -212,7 +213,8 @@
                 </td>
               </tr>
               <tr>
-                <td colspan="6" class="table_widget_value">
+                <td colspan="6"
+                    class="table_widget_value">
                     <tal:infos_advice_given_only
                         condition="python: adviceType != 'not_given'">
                         <tal:defines
@@ -243,14 +245,14 @@
                             <fieldset class="advice_comment">
                                  <legend i18n:translate="">Advice official comment</legend>
                                  <tal:comment define="readmore_text comment">
-                                   <metal:readmorable use-macro='here/@@pm-macros/readmorable' />
+                                   <metal:readmorable use-macro='readmorable' />
                                  </tal:comment>
                             </fieldset>
 
                             <fieldset class="advice_observations">
                                  <legend i18n:translate="">Advice observations</legend>
                                  <tal:observations define="readmore_text observations">
-                                   <metal:readmorable use-macro='here/@@pm-macros/readmorable' />
+                                   <metal:readmorable use-macro='readmorable' />
                                  </tal:observations>
                             </fieldset>
                         </tal:defines>
@@ -271,7 +273,7 @@
                                 </a>
                              </legend>
                              <tal:proposing_group_comment define="readmore_text proposing_group_comment">
-                               <metal:readmorable use-macro='here/@@pm-macros/readmorable' />
+                               <metal:readmorable use-macro='readmorable' />
                              </tal:proposing_group_comment>
                         </fieldset>
                         <br />
