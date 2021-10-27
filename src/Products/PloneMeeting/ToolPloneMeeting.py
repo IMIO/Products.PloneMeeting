@@ -37,8 +37,6 @@ from imio.helpers.cache import cleanVocabularyCacheFor
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.content import get_user_fullname
-from imio.helpers.security import fplog
-from imio.migrator.utils import end_time
 from imio.prettylink.interfaces import IPrettyLink
 from OFS import CopySupport
 from persistent.mapping import PersistentMapping
