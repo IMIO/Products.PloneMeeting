@@ -1938,6 +1938,10 @@ table tbody tr td.td_cell_category-column {
 #content span.edit-element:before {
    content: "\f304";
 }
+/* increase size of fieldset legend */
+#content legend {
+    font-size: 110% !important;
+}
 #content legend span.edit-element {
    font-size: 90%;
    color: &dtml-linkColor;;
