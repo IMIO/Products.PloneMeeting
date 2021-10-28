@@ -1593,7 +1593,7 @@ def getTransitionToReachState(obj, state):
 def findMeetingAdvicePortalType(context):
     """ """
     tool = api.portal.get_tool('portal_plonemeeting')
-    advicePortalTypeIds = tool.getAdvicePortalTypes(as_ids=True)
+    advicePortalTypeIds = tool.getAdvicePortalTypeIds()
     if context.portal_type in advicePortalTypeIds:
         return context.portal_type
 

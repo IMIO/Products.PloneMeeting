@@ -5939,7 +5939,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             portalType.allowed_content_types = basePortalType.allowed_content_types
             # for MeetingItem, make sure every 'meetingadvice' portal_types are in allowed_types
             if basePortalType.id == 'MeetingItem':
-                advice_portal_types = tool.getAdvicePortalTypes(as_ids=True)
+                advice_portal_types = tool.getAdvicePortalTypeIds()
                 allowed = tuple(set(portalType.allowed_content_types + tuple(advice_portal_types)))
                 portalType.allowed_content_types = allowed
             # Meeting is DX
@@ -7075,7 +7075,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         portal_types = []
         portal_types.append(self.getItemTypeName())
         portal_types.append(self.getMeetingTypeName())
-        portal_types += tool.getAdvicePortalTypes(as_ids=True)
+        portal_types += tool.getAdvicePortalTypeIds()
         self._updateAnnexConfidentiality(portal_types=portal_types)
 
         api.portal.show_message('Done.', request=self.REQUEST)
@@ -7299,10 +7299,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            It returns a tuple of meeting review_states.'''
         return tuple(self.listStateIds("Meeting", excepted='closed'))
 
-    def getMeetingsAcceptingItems_cachekey(method, self, review_states=[], inTheFuture=False):
-        '''cachekey method for self.getMeetingsAcceptingItems.'''
-        return (repr(self), str(self.REQUEST._debug), review_states, inTheFuture)
-
     def _getMeetingsAcceptingItemsQuery(self, review_states=[], inTheFuture=False):
         '''Compute the catalog query to get meeting accepting items.'''
         # If the current user is a meetingManager (or a Manager),
@@ -7319,6 +7315,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             query['meeting_date'] = {'query': datetime.now(), 'range': 'min'}
 
         return query
+
+    def getMeetingsAcceptingItems_cachekey(method, self, review_states=[], inTheFuture=False):
+        '''cachekey method for self.getMeetingsAcceptingItems.'''
+        return (repr(self), str(self.REQUEST._debug), review_states, inTheFuture)
 
     @ram.cache(getMeetingsAcceptingItems_cachekey)
     def getMeetingsAcceptingItems(self, review_states=[], inTheFuture=False):

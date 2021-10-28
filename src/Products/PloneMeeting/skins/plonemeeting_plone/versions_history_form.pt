@@ -238,7 +238,7 @@
         <tal:defines define="infos python: getattr(vdata.object, 'historized_item_data', []);
                              item context/getParentNode;
                              itemSchema item/Schema;"
-                     condition="python: context.portal_type in context.portal_plonemeeting.getAdvicePortalTypes(as_ids=True)"
+                     condition="python: context.portal_type in context.portal_plonemeeting.getAdvicePortalTypeIds()"
                      i18n:domain="PloneMeeting">
           <h1 class="documentFirstHeading" i18n:translate="">Data of the item when advice was given</h1>
           <table class="no-style-table" width="100%" i18n:domain="PloneMeeting">

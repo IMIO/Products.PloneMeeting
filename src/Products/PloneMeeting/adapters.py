@@ -923,6 +923,11 @@ def query_meeting_config_modified_cachekey(method, self):
     return self.context.modified(), cfg_modified
 
 
+def forever_cachekey(method, self):
+    '''cachekey method for caching for the time of a request.'''
+    return True
+
+
 class LastDecisionsAdapter(CompoundCriterionBaseAdapter):
 
     @property
@@ -964,12 +969,8 @@ class ItemsOfMyGroupsAdapter(CompoundCriterionBaseAdapter):
 
 class MyItemsTakenOverAdapter(CompoundCriterionBaseAdapter):
 
-    def myitemstakenover_cachekey(method, self):
-        '''cachekey method for every CompoundCriterion adapters.'''
-        return str(self.request._debug)
-
     @property
-    @ram.cache(myitemstakenover_cachekey)
+    @ram.cache(forever_cachekey)
     def query_myitemstakenover(self):
         '''Queries all items that current user take over.'''
         if not self.cfg:
@@ -1447,8 +1448,8 @@ class AdvisedItemsAdapter(CompoundCriterionBaseAdapter):
         wfTool = api.portal.get_tool('portal_workflow')
         adviceStates = []
         # manage multiple 'meetingadvice' portal_types
-        for portal_type in self.tool.getAdvicePortalTypes():
-            adviceWF = wfTool.getWorkflowsFor(portal_type.id)[0]
+        for portal_type_id in self.tool.getAdvicePortalTypeIds():
+            adviceWF = wfTool.getWorkflowsFor(portal_type_id)[0]
             adviceStates += adviceWF.states.keys()
         # remove duplicates
         adviceStates = tuple(set(adviceStates))
@@ -1480,8 +1481,8 @@ class AdvisedItemsWithDelayAdapter(CompoundCriterionBaseAdapter):
         wfTool = api.portal.get_tool('portal_workflow')
         adviceStates = []
         # manage multiple 'meetingadvice' portal_types
-        for portal_type in self.tool.getAdvicePortalTypes():
-            adviceWF = wfTool.getWorkflowsFor(portal_type.id)[0]
+        for portal_type_id in self.tool.getAdvicePortalTypeIds():
+            adviceWF = wfTool.getWorkflowsFor(portal_type_id)[0]
             adviceStates += adviceWF.states.keys()
         # remove duplicates
         adviceStates = tuple(set(adviceStates))
@@ -1610,7 +1611,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
            apply local_roles and give 'View' to 'AnnexReader' either,
            remove every local_roles and acquire 'View'."""
         if self.parent.getTagName() == 'MeetingItem' or \
-           self.parent.portal_type in self.tool.getAdvicePortalTypes(as_ids=True):
+           self.parent.portal_type in self.tool.getAdvicePortalTypeIds():
             # reinitialize permissions in case no more confidential
             # or confidentiality configuration changed
             self.context.__ac_local_roles_block__ = False

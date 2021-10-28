@@ -2377,18 +2377,15 @@ ContainedDecisionAnnexesVocabularyFactory = ContainedDecisionAnnexesVocabulary()
 class PMUsers(UsersFactory):
     """Append ' (userid)' to term title."""
 
-    def _user_fullname(self, userid):
-        """ """
-        storage = self.mutable_properties._storage
-        data = storage.get(userid, None)
-        if data is not None:
-            return data.get('fullname', '') or userid
-        else:
-            return userid
+    def __call___cachekey(method, self, context, query=''):
+        '''cachekey method for self.__call__.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return tool._users_groups_value(), query
 
+    @ram.cache(__call___cachekey)
     def __call__(self, context, query=''):
+        tool = api.portal.get_tool('portal_plonemeeting')
         acl_users = api.portal.get_tool('acl_users')
-        self.mutable_properties = acl_users.mutable_properties
         users = acl_users.searchUsers(sort_by='')
         terms = []
         # manage duplicates, this can be the case when using LDAP and same userid in source_users
@@ -2402,7 +2399,7 @@ class PMUsers(UsersFactory):
                     unicode(user_id)
                 except UnicodeDecodeError:
                     continue
-                term_title = u'{0} ({1})'.format(safe_unicode(self._user_fullname(user_id)), user_id)
+                term_title = safe_unicode(tool.getUserName(user_id, withUserId=True))
                 term = SimpleTerm(user_id, user_id, term_title)
                 terms.append(term)
         terms = humansorted(terms, key=attrgetter('title'))

@@ -248,14 +248,36 @@ def onConfigBeforeTransition(config, event):
 
 def _invalidateOrgRelatedCachedVocabularies():
     '''Clean cache for vocabularies using organizations.'''
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.associatedgroupsvocabulary")
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.copygroupsvocabulary")
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.everyorganizationsvocabulary")
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary")
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
+    invalidate_cachekey_volatile_for(
+        "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary", get_again=True)
+    invalidate_cachekey_volatile_for(
+        "Products.PloneMeeting.vocabularies.associatedgroupsvocabulary", get_again=True)
+    invalidate_cachekey_volatile_for(
+        "Products.PloneMeeting.vocabularies.copygroupsvocabulary", get_again=True)
+    invalidate_cachekey_volatile_for(
+        "Products.PloneMeeting.vocabularies.everyorganizationsvocabulary", get_again=True)
+    invalidate_cachekey_volatile_for(
+        "Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary", get_again=True)
+    invalidate_cachekey_volatile_for(
+        "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary", get_again=True)
+    invalidate_cachekey_volatile_for(
+        "Products.PloneMeeting.vocabularies.groupsinchargevocabulary", get_again=True)
+    invalidate_cachekey_volatile_for(
+        "Products.PloneMeeting.vocabularies.askedadvicesvocabulary", get_again=True)
+
+
+def _invalidateUsersAndGroupsRelatedCachedVocabularies():
+    '''Clean cache for vocabularies using Plone users and groups.'''
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user', get_again=True)
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user', get_again=True)
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.ToolPloneMeeting.group_is_not_empty', get_again=True)
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.ToolPloneMeeting.userIsAmong', get_again=True)
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.ToolPloneMeeting._users_groups_value', get_again=True)
 
 
 def onOrgWillBeRemoved(current_org, event):
@@ -373,11 +395,7 @@ def onRegistryModified(event):
     if IRecordModifiedEvent.providedBy(event):  # and event.record.interface == IContactPlonegroupConfig:
         if event.record.fieldName == 'organizations' and event.oldValue:
             _invalidateOrgRelatedCachedVocabularies()
-            # invalidate cache for organizations related methods
-            invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
-            invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user')
-            invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.group_is_not_empty')
-            invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
+            _invalidateUsersAndGroupsRelatedCachedVocabularies()
 
             old_set = set(event.oldValue)
             new_set = set(event.newValue)
@@ -1425,3 +1443,13 @@ def onMeetingWillBeRemoved(meeting, event):
     member = api.user.get_current()
     if member.has_role('Manager'):
         meeting.REQUEST.set('items_to_remove', meeting.get_items())
+
+
+def onPrincipalAddedToGroup(event):
+    """ """
+    _invalidateUsersAndGroupsRelatedCachedVocabularies()
+
+
+def onPrincipalRemovedFromGroup(event):
+    """ """
+    _invalidateUsersAndGroupsRelatedCachedVocabularies()

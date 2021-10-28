@@ -1151,7 +1151,7 @@ class Migrate_To_4_1(Migrator):
     def _migrateMeetingConfigDefaultAdviceHiddenDuringRedaction(self):
         """MeetingConfig.defaultAdviceHiddenDuringRedaction was a boolean, now it is a list."""
         logger.info('Migrating value for MeetingConfig.defaultAdviceHiddenDuringRedaction for every configs...')
-        advice_portal_types = self.tool.getAdvicePortalTypes(as_ids=True)
+        advice_portal_types = self.tool.getAdvicePortalTypeIds()
         for cfg in self.tool.objectValues('MeetingConfig'):
             defaultAdviceHiddenDuringRedaction = cfg.defaultAdviceHiddenDuringRedaction
             if isinstance(defaultAdviceHiddenDuringRedaction, bool):

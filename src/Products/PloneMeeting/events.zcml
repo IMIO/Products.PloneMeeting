@@ -185,7 +185,7 @@
   <subscriber for="imio.annex.content.annex.IAnnex
                    zope.lifecycleevent.IObjectModifiedEvent"
               handler=".events.onAnnexModified" />
- 
+
   <subscriber for="imio.annex.content.annex.IAnnex
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onAnnexRemoved" />
@@ -196,7 +196,7 @@
 
   <subscriber for=".interfaces.IConfigElement
                    collective.iconifiedcategory.interfaces.ICategorizedElementsUpdatedEvent"
-              handler=".events.onCategorizedElementsUpdatedEvent" /> 
+              handler=".events.onCategorizedElementsUpdatedEvent" />
 
   <!-- collective.contact.core events -->
   <subscriber for="collective.contact.core.content.directory.IDirectory
@@ -225,5 +225,11 @@
   <subscriber for="eea.facetednavigation.interfaces.IFacetedNavigable
                    eea.facetednavigation.interfaces.IFacetedGlobalSettingsChangedEvent"
               handler=".events.onFacetedGlobalSettingsChanged" />
+
+  <!-- PAS events -->
+  <subscriber for="Products.PluggableAuthService.interfaces.events.IPrincipalAddedToGroupEvent"
+              handler=".events.onPrincipalAddedToGroup" />
+  <subscriber for="Products.PluggableAuthService.interfaces.events.IPrincipalRemovedFromGroupEvent"
+              handler=".events.onPrincipalRemovedFromGroup" />
 
 </configure>

@@ -94,6 +94,7 @@ from zope.i18n import translate
 from zope.interface import implements
 
 import interfaces
+import md5
 import OFS.Moniker
 import time
 
@@ -431,20 +432,21 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     def _users_groups_value_cachekey(method, self):
-        """ """
-        # async does not have a REQUEST
-        if hasattr(self, 'REQUEST'):
-            return str(self.REQUEST._debug)
-        else:
-            return None
+        """Invalidated thru user added/removed from group events."""
+        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+        return date
 
     @ram.cache(_users_groups_value_cachekey)
     def _users_groups_value(self):
         """Return the byValue representation of the _principal_groups BTree
-           to check if it changed, meaning that users/groups associations changed."""
+           to check if it changed, meaning that users/groups associations changed.
+           This is to be used in cachekeys and does not return users/groups associations!"""
         portal = self.aq_inner.aq_parent
         source_groups = portal.acl_users.source_groups
-        return source_groups._principal_groups.byValue(0)
+        # return md5 as this is used in several cachekey values
+        # cachekey is stored as md5 hash in ram.cache
+        # but the value is stored as is obviously
+        return md5.md5(str(source_groups._principal_groups.byValue(0))).hexdigest()
 
     def get_plone_groups_for_user_cachekey(method, self, userId=None, org_uid=None, the_objects=False):
         '''cachekey method for self.get_plone_groups_for_user.'''
@@ -1540,13 +1542,20 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return {}
 
-    def getAdvicePortalTypes_cachekey(method, self, as_ids=False):
+    def getAdvicePortalTypeIds_cachekey(method, self):
         '''cachekey method for self.getAdvicePortalTypes.'''
-        return (str(self.REQUEST._debug), as_ids)
+        return True
+
+    security.declarePublic('getAdvicePortalTypeIds')
+
+    @ram.cache(getAdvicePortalTypeIds_cachekey)
+    def getAdvicePortalTypeIds(self):
+        """We may have several 'meetingadvice' portal_types,
+           return it as ids."""
+        return self.getAdvicePortalTypes(as_ids=True)
 
     security.declarePublic('getAdvicePortalTypes')
 
-    @ram.cache(getAdvicePortalTypes_cachekey)
     def getAdvicePortalTypes(self, as_ids=False):
         """We may have several 'meetingadvice' portal_types."""
         typesTool = api.portal.get_tool('portal_types')

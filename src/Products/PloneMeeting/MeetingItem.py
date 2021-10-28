@@ -3142,7 +3142,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def isPrivacyViewable_cachekey(method, self):
         '''cachekey method for self.isPrivacyViewable.'''
         item = self.getSelf()
-        return (repr(item), str(item.REQUEST._debug))
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return (repr(item), item.modified(), tool._users_groups_value())
 
     security.declarePublic('isPrivacyViewable')
 
@@ -3701,7 +3702,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def attributeIsUsed_cachekey(method, self, name):
         '''cachekey method for self.attributeIsUsed.'''
-        return (name, str(self.REQUEST._debug))
+        return name
 
     security.declarePublic('attributeIsUsed')
 
@@ -5079,7 +5080,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns a list of contained meetingadvice objects.'''
         res = []
         tool = api.portal.get_tool('portal_plonemeeting')
-        advicePortalTypeIds = tool.getAdvicePortalTypes(as_ids=True)
+        advicePortalTypeIds = tool.getAdvicePortalTypeIds()
         for obj in self.objectValues('Dexterity Container'):
             if obj.portal_type in advicePortalTypeIds:
                 res.append(obj)
@@ -6707,7 +6708,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def showDuplicateItemAction_cachekey(method, self, brain=False):
         '''cachekey method for self.showDuplicateItemAction.'''
-        return (repr(self), str(self.REQUEST._debug))
+        item = self.getSelf()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return (repr(item), item.modified(), tool._users_groups_value())
 
     security.declarePublic('showDuplicateItemAction')
 
