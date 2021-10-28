@@ -368,16 +368,18 @@ class testPerformances(PloneMeetingTestCase):
         # create an item
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        # call getMeetingConfig 2000 times wihout caching
-        self._getMeetingConfigOnTool(item, 2000, caching=False)
-        # call getMeetingConfig 2000 times with caching
-        self._getMeetingConfigOnTool(item, 2000, caching=True)
+        # call getMeetingConfig 2000 times with item
+        self._getMeetingConfigOnTool(item, 2000)
+        # call getMeetingConfig 2000 times with item parent
+        self._getMeetingConfigOnTool(item.aq_inner.aq_parent, 2000)
+        # call getMeetingConfig 2000 times with searches_items folder
+        self._getMeetingConfigOnTool(item.aq_inner.aq_parent.searches_items, 2000)
 
     @timecall
-    def _getMeetingConfigOnTool(self, context, times=1, caching=True):
+    def _getMeetingConfigOnTool(self, context, times=1):
         ''' '''
         for time in range(times):
-            self.tool.getMeetingConfig(context, caching=caching)
+            self.tool.getMeetingConfig(context)
 
     def test_pm_SpeedSetManuallyLinkedItems(self):
         '''Test MeetingItem.setManuallyLinkedItems method performances.'''

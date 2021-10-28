@@ -656,7 +656,6 @@ class PMAnnexPrettyLinkAdapter(AnnexPrettyLinkAdapter):
         # check also MeetingConfig modified as updating categorized elements
         # from the ContentCategory will update MeetingConfig.modified
         tool = api.portal.get_tool('portal_plonemeeting')
-        # maximize cache on calling getMeetingConfig from parent
         cfg = tool.getMeetingConfig(self.context.aq_parent)
         return res + (cfg.modified(), )
 

@@ -551,7 +551,7 @@ def _check_item_pasted_in_cfg(item):
         # we get an element with a wrong portal_type, moreover it would be work
         # to ensure that copied data are valid : category, opitonal fields, ...
         tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(item, caching=False)
+        cfg = tool.getMeetingConfig(item)
         # not same cfg manage portal_type
         recurringItemPortalType = cfg.getItemTypeName(configType='MeetingItemRecurring')
         itemTemplatePortalType = cfg.getItemTypeName(configType='MeetingItemTemplate')

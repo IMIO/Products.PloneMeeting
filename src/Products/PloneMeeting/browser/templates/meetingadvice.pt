@@ -44,7 +44,7 @@
                 <td class="table_widget_value">
                     <tal:adviceType condition="python: widget.name == 'form.widgets.advice_type'">
                         <img src="#"
-                             tal:define="adviceStyle python: context.portal_plonemeeting.getMeetingConfig(context).getAdviceStyle()"
+                             tal:define="adviceStyle python: view.advice_icons_infos.cfg.getAdviceStyle()"
                              tal:attributes="src string:$portal_url/advice_${adviceStyle}_${context/advice_type}.png" />
                     </tal:adviceType>
                     <tal:render tal:content="structure widget/render">Value</tal:render>

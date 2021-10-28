@@ -707,49 +707,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getMeetingConfig')
 
-    def getMeetingConfig(self, context, caching=True):
+    def getMeetingConfig(self, context):
         '''Based on p_context's portal type, we get the corresponding meeting
            config.'''
-        data = None
-        # we only do caching when we are sure that context portal_type
-        # is linked to only one MeetingConfig, it is the case for Meeting and MeetingItem
-        # portal_types, but if we have a 'Topic' or a 'Folder', we can not determinate
-        # in wich MeetingConfig it is, we can not do caching...
-        if caching and context.getTagName() in ('Meeting', 'MeetingItem', ):
-            key = "tool-getmeetingconfig-%s" % context.portal_type
-            # async does not have a REQUEST
-            if hasattr(self, 'REQUEST'):
-                cache = IAnnotations(self.REQUEST)
-                data = cache.get(key, None)
-            else:
-                caching = False
-        else:
-            caching = False
-        if data is None:
-            portalTypeName = context.getPortalTypeName()
-            if portalTypeName in ('MeetingItem', 'Meeting'):
-                # When this method is called within a default_method
-                # (when displaying a edit form), the portal_type is not already
-                # set (it is equal to the meta_type, which is not
-                # necessarily equal to the portal type). In this case we look for
-                # the correct portal type in the request.
-                portalTypeName = self.REQUEST.get('type_name', portalTypeName)
-            if portalTypeName.startswith('Meeting'):
-                # Find config based on portal_type of current p_context
-                for config in self.objectValues('MeetingConfig'):
-                    if (portalTypeName == config.getItemTypeName()) or \
-                       (portalTypeName == config.getMeetingTypeName()):
-                        data = config
-                        break
-            if not data:
-                # Get the property on the folder that indicates that this is the
-                # "official" folder of a meeting config.
-                try:
-                    data = getattr(self, context.aq_acquire(MEETING_CONFIG))
-                except AttributeError:
-                    data = None
-            if caching:
-                cache[key] = data
+        try:
+            data = getattr(self, context.aq_acquire(MEETING_CONFIG))
+        except AttributeError:
+            data = None
         return data
 
     security.declarePublic('getDefaultMeetingConfig')
@@ -1359,7 +1323,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         for brain in brains:
             obj = brain.getObject()
             annexes = get_categorized_elements(obj, result_type='objects')
-            cfg = self.getMeetingConfig(obj, caching=False)
+            cfg = self.getMeetingConfig(obj)
             for annex in annexes:
                 to_be_printed_activated = get_config_root(annex)
                 # convert if auto_convert is enabled or to_print is enabled for printing
