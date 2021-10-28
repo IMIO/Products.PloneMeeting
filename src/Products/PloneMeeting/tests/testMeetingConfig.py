@@ -1776,9 +1776,11 @@ class testMeetingConfig(PloneMeetingTestCase):
         item_template_cfg_modified = cfg.modified()
         self.assertNotEqual(recurring_item_cfg_modified, item_template_cfg_modified)
 
-        # test add and remove a POD template
+        # test add and remove a POD template using pod_template_to_use
         # add
-        new_pod_template = self.create('ConfigurablePODTemplate', odt_file=self._annex_file_content())
+        new_pod_template = self.create(
+            'ConfigurablePODTemplate',
+            pod_template_to_use=cfg.podtemplates.itemTemplate.UID())
         new_pod_template_cfg_modified = cfg.modified()
         self.assertNotEqual(item_template_cfg_modified, new_pod_template_cfg_modified)
         # remove
