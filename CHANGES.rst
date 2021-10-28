@@ -20,6 +20,9 @@ Changelog
     - monkey patched `MembershipTool.getMemberInfo` to add caching.
 
     [gbastien]
+  - Do not fail in `vocabularies.PMUsers` when `user_id` contains special chars,
+    it may be the case when using `LDAP`, ignore these values.
+    [gbastien]
 
 4.1.28.30 (2021-10-05)
 ----------------------
