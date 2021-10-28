@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+import os
 
+import pas
 from AccessControl import Unauthorized
 from Acquisition import aq_base
 from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
@@ -40,13 +42,13 @@ from imio.helpers.content import get_vocab
 from imio.history import utils as imio_history_utils
 from imio.history.browser.views import IHContentHistoryView
 from imio.history.browser.views import IHDocumentBylineViewlet
+from pas.plugins.imio.browser.usergroups import ImioUsersOverviewControlPanel
 from plone import api
 from plone import namedfile
 from plone.app.content.browser.foldercontents import FolderContentsView
 from plone.app.controlpanel.overview import OverviewControlPanel
 from plone.app.controlpanel.usergroups import GroupsOverviewControlPanel
 from plone.app.controlpanel.usergroups import UsersGroupsControlPanelView
-from plone.app.controlpanel.usergroups import UsersOverviewControlPanel
 from plone.app.layout.viewlets.common import ContentActionsViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize import ram
@@ -1655,8 +1657,14 @@ class PMBaseOverviewControlPanel(UsersGroupsControlPanelView):
         return adapted_results
 
 
-class PMUsersOverviewControlPanel(PMBaseOverviewControlPanel, UsersOverviewControlPanel):
+def _path_to_pas_plugins_imio_plone4_userpref_template():
+    templates_path = os.path.dirname(pas.plugins.imio.browser.__file__)
+    return os.path.join(templates_path, "templates", "usergroups_usersoverview_p4.pt")
+
+
+class PMUsersOverviewControlPanel(PMBaseOverviewControlPanel, ImioUsersOverviewControlPanel):
     """See PMBaseOverviewControlPanel docstring."""
+    index = ViewPageTemplateFile(_path_to_pas_plugins_imio_plone4_userpref_template())
 
 
 class PMGroupsOverviewControlPanel(PMBaseOverviewControlPanel, GroupsOverviewControlPanel):

@@ -1143,7 +1143,6 @@
             for="Products.CMFPlone.interfaces.IPloneSiteRoot"
             class="Products.PloneMeeting.browser.overrides.PMUsersOverviewControlPanel"
             permission="plone.app.controlpanel.UsersAndGroups"
-            template="usergroups_usersoverview.pt"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
     </configure>
 
