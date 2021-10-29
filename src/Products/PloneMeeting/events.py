@@ -45,6 +45,7 @@ from Products.PloneMeeting.utils import AdviceAfterModifyEvent
 from Products.PloneMeeting.utils import AdviceAfterTransitionEvent
 from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_current_user_id
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import ItemAfterTransitionEvent
 from Products.PloneMeeting.utils import MeetingAfterTransitionEvent
@@ -327,7 +328,7 @@ def onOrgWillBeRemoved(current_org, event):
                                                       mapping={'cfg_url': mc.absolute_url()},
                                                       domain="plone",
                                                       context=request))
-        for cat in mc.getCategories(catType='all', onlySelectable=False, caching=False):
+        for cat in mc.getCategories(catType='all', onlySelectable=False):
             if current_org_uid in cat.get_using_groups() or current_org_uid in cat.get_groups_in_charge():
                 raise BeforeDeleteException(translate("can_not_delete_organization_meetingcategory",
                                                       mapping={'url': cat.absolute_url()},
@@ -640,8 +641,8 @@ def item_added_or_initialized(item):
     item._v_already_initialized = True
 
     # make sure workflow mapping is applied, plone.restapi needs it...
-    user = api.user.get_current()
-    item.manage_addLocalRoles(user.getId(), ('Editor', 'Reader'))
+    user_id = get_current_user_id()
+    item.manage_addLocalRoles(user_id, ('Editor', 'Reader'))
     # Add a place to store adviceIndex
     item.adviceIndex = PersistentMapping()
     # Add a place to store emergency changes history
@@ -1047,7 +1048,7 @@ def onMeetingCreated(meeting, event):
        - created;
        - moved;
        - added."""
-    userId = api.user.get_current().getId()
+    userId = get_current_user_id()
     meeting.manage_addLocalRoles(userId, ('Owner',))
     # place to store item absents
     meeting.item_absents = PersistentMapping()
@@ -1412,7 +1413,7 @@ def onCategoryWillBeRemoved(category, event):
     for other_cfg in tool.objectValues('MeetingConfig'):
         if other_cfg == cfg:
             continue
-        for other_cat in other_cfg.getCategories(catType=catType, onlySelectable=False, caching=False):
+        for other_cat in other_cfg.getCategories(catType=catType, onlySelectable=False):
             if cat_mapping_id in other_cat.category_mapping_when_cloning_to_other_mc:
                 msg = translate(
                     "can_not_delete_meetingcategory_other_category_mapping",

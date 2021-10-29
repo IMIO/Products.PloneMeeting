@@ -10,6 +10,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.utils import get_current_user_id
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form
@@ -233,9 +234,9 @@ class AdviceChangeDelayForm(form.EditForm):
             self.context.adviceIndex[currentAdviceData['org']]['delay_for_automatic_adviser_changed_manually'] = True
         self.context.update_local_roles()
         # add a line to the item's adviceIndex advice delay_changes_history
-        member = api.user.get_current()
+        member_id = get_current_user_id()
         history_data = {'action': (currentAdviceData['delay'], newAdviceData['delay']),
-                        'actor': member.getId(),
+                        'actor': member_id,
                         'time': DateTime(),
                         'comments': data['comment']}
         self.context.adviceIndex[currentAdviceData['org']]['delay_changes_history'].append(history_data)
@@ -324,9 +325,9 @@ class AdviceReinitializeDelayView(BrowserView):
             raise Unauthorized
         # reinit delay and add a line to the item's adviceIndex advice delay_changes_history
         _reinit_advice_delay(self.context, advice_uid)
-        member = api.user.get_current()
+        member_id = get_current_user_id()
         history_data = {'action': 'Reinitiatlize delay',
-                        'actor': member.getId(),
+                        'actor': member_id,
                         'time': DateTime(),
                         'comments': None}
         adviceInfos = self.context.adviceIndex[advice_uid]

@@ -5,6 +5,7 @@ from DateTime import DateTime
 from plone import api
 from Products.Archetypes import DisplayList
 from Products.Five.browser import BrowserView
+from Products.PloneMeeting.utils import get_current_user_id
 
 
 class ItemCompletenessView(BrowserView):
@@ -78,9 +79,9 @@ class ChangeItemCompletenessView(BrowserView):
             raise Unauthorized
         self.context.setCompleteness(new_completeness_value)
         # add a line to the item's completeness_changes_history
-        member = api.user.get_current()
+        member_id = get_current_user_id()
         history_data = {'action': new_completeness_value,
-                        'actor': member.getId(),
+                        'actor': member_id,
                         'time': DateTime(),
                         'comments': comment}
         self.context.completeness_changes_history.append(history_data)

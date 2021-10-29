@@ -55,6 +55,7 @@ from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import findNewValue
 from Products.PloneMeeting.utils import get_context_with_request
+from Products.PloneMeeting.utils import get_current_user_id
 from Products.PloneMeeting.utils import get_referer_obj
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getHistoryTexts
@@ -248,7 +249,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         current_member_id = None
         takenOverBy = self.context.getTakenOverBy()
         if takenOverBy:
-            current_member_id = api.user.get_current().getId()
+            current_member_id = get_current_user_id()
 
         # manage when displaying the icon with informations about
         # the predecessor living in another MC
@@ -611,8 +612,8 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             takenOverBy = self.context.getTakenOverBy()
             if takenOverBy:
                 # if taken over, display a different icon if taken over by current user or not
-                user = api.user.get_current()
-                takenOverByCurrentUser = bool(user.getId() == takenOverBy)
+                user_id = get_current_user_id()
+                takenOverByCurrentUser = bool(user_id == takenOverBy)
                 iconName = takenOverByCurrentUser and 'takenOverByCurrentUser.png' or 'takenOverByOtherUser.png'
                 res.append((iconName, translate(u'Taken over by ${fullname}',
                                                 domain="PloneMeeting",
@@ -798,92 +799,95 @@ class Criteria(eeaCriteria):
       - for listing of meetings : filter out criteria no in MeetingConfig.getDashboardMeetingsFilters.
     """
 
-    def compute_criteria_cachekey(method, self, context):
-        '''cachekey method for self.compute_criteria.'''
-        return repr(context), str(context.REQUEST._debug)
-
     def __init__(self, context):
         """ """
         self.context, self.criteria = self.compute_criteria(context)
 
-    @ram.cache(compute_criteria_cachekey)
     def compute_criteria(self, context):
         """ """
         req = context.REQUEST
-        # return really stored widgets when necessary
-        if 'portal_plonemeeting' in context.absolute_url() or \
-           req.get('enablingFacetedDashboard', False) or \
-           (req.get('SERVER_URL') == 'http://foo' or
-                req.get('PARENTS', [])[0] == api.portal.get_tool('portal_setup')):  # migrating
-            super(Criteria, self).__init__(context)
-            return self.context, self.criteria
-        try:
-            tool = api.portal.get_tool('portal_plonemeeting')
-        except InvalidParameterError:
-            # in case 'portal_plonemeeting' is not available, use original criteria behaviour
-            super(Criteria, self).__init__(context)
-            return self.context, self.criteria
-        cfg = tool.getMeetingConfig(context)
-        if not cfg:
-            super(Criteria, self).__init__(context)
-            return self.context, self.criteria
-        # meeting view
-        kept_filters = []
-        resultsperpagedefault = 20
-        meeting_view = False
-        if IMeeting.providedBy(context):
-            meeting_view = True
-            is_displaying_available_items = displaying_available_items(context)
-            self.context = cfg.searches.searches_items
-            if is_displaying_available_items:
-                kept_filters = cfg.getDashboardMeetingAvailableItemsFilters()
-                resultsperpagedefault = cfg.getMaxShownAvailableItems()
-            else:
-                kept_filters = cfg.getDashboardMeetingLinkedItemsFilters()
-                resultsperpagedefault = cfg.getMaxShownMeetingItems()
-        else:
-            # on a faceted?  it is a pmFolder or a subFolder of the pmFolder
-            resultsperpagedefault = cfg.getMaxShownListings()
-            if IFacetedNavigable.providedBy(context):
-                # listings of items has some configuration but not listings of meetings
-                if context.getId() == 'searches_items':
-                    kept_filters = cfg.getDashboardItemsListingsFilters()
-                    self.context = cfg.searches.searches_items
-                elif context.getId() == 'searches_meetings':
-                    self.context = cfg.searches.searches_meetings
-                    self.criteria = self._criteria()
-                    return self.context, self.criteria
-                elif context.getId() == 'searches_decisions':
-                    self.context = cfg.searches.searches_decisions
-                    self.criteria = self._criteria()
-                    return self.context, self.criteria
-                else:
-                    self.context = cfg.searches
-                    self.criteria = self._criteria()
-                    return self.context, self.criteria
+        key = "PloneMeeting-adapters-criteria-compute_criteria-{0}".format(repr(context))
+        cache = IAnnotations(req)
+        cached = cache.get(key, None)
 
-        res = PersistentList()
-        for criterion in self._criteria():
-            if meeting_view and criterion.widget == u'sorting':
-                # keep it only of displaying available items, default sorting
-                # is set on 'getProposingGroup', if not displaying available items
-                # the sorting widget is not kept so sorting is disabled for presented items
+        if cached is not None:
+            self.context, self.criteria = cached
+        else:
+            # return really stored widgets when necessary
+            if 'portal_plonemeeting' in context.absolute_url() or \
+               req.get('enablingFacetedDashboard', False) or \
+               (req.get('SERVER_URL') == 'http://foo' or
+                    req.get('PARENTS', [])[0] == api.portal.get_tool('portal_setup')):  # migrating
+                super(Criteria, self).__init__(context)
+                return self.context, self.criteria
+            try:
+                tool = api.portal.get_tool('portal_plonemeeting')
+            except InvalidParameterError:
+                # in case 'portal_plonemeeting' is not available, use original criteria behaviour
+                super(Criteria, self).__init__(context)
+                return self.context, self.criteria
+            cfg = tool.getMeetingConfig(context)
+            if not cfg:
+                super(Criteria, self).__init__(context)
+                return self.context, self.criteria
+            # meeting view
+            kept_filters = []
+            resultsperpagedefault = 20
+            meeting_view = False
+            if IMeeting.providedBy(context):
+                meeting_view = True
+                is_displaying_available_items = displaying_available_items(context)
+                self.context = cfg.searches.searches_items
                 if is_displaying_available_items:
+                    kept_filters = cfg.getDashboardMeetingAvailableItemsFilters()
+                    resultsperpagedefault = cfg.getMaxShownAvailableItems()
+                else:
+                    kept_filters = cfg.getDashboardMeetingLinkedItemsFilters()
+                    resultsperpagedefault = cfg.getMaxShownMeetingItems()
+            else:
+                # on a faceted?  it is a pmFolder or a subFolder of the pmFolder
+                resultsperpagedefault = cfg.getMaxShownListings()
+                if IFacetedNavigable.providedBy(context):
+                    # listings of items has some configuration but not listings of meetings
+                    if context.getId() == 'searches_items':
+                        kept_filters = cfg.getDashboardItemsListingsFilters()
+                        self.context = cfg.searches.searches_items
+                    elif context.getId() == 'searches_meetings':
+                        self.context = cfg.searches.searches_meetings
+                        self.criteria = self._criteria()
+                        return self.context, self.criteria
+                    elif context.getId() == 'searches_decisions':
+                        self.context = cfg.searches.searches_decisions
+                        self.criteria = self._criteria()
+                        return self.context, self.criteria
+                    else:
+                        self.context = cfg.searches
+                        self.criteria = self._criteria()
+                        return self.context, self.criteria
+
+            res = PersistentList()
+            for criterion in self._criteria():
+                if meeting_view and criterion.widget == u'sorting':
+                    # keep it only of displaying available items, default sorting
+                    # is set on 'getProposingGroup', if not displaying available items
+                    # the sorting widget is not kept so sorting is disabled for presented items
+                    if is_displaying_available_items:
+                        new_criterion = Criterion()
+                        new_criterion.update(**criterion.__dict__)
+                        new_criterion.default = u'getProposingGroup'
+                        res.append(new_criterion)
+                    continue
+                if criterion.section != u'advanced' or \
+                   criterion.__name__ in kept_filters:
+                    # create new object to avoid modifying stored one
                     new_criterion = Criterion()
                     new_criterion.update(**criterion.__dict__)
-                    new_criterion.default = u'getProposingGroup'
+                    # manage default value for the 'resultsperpage' criterion
+                    if criterion.widget == ResultsPerPageWidget.widget_type:
+                        new_criterion.default = resultsperpagedefault
                     res.append(new_criterion)
-                continue
-            if criterion.section != u'advanced' or \
-               criterion.__name__ in kept_filters:
-                # create new object to avoid modifying stored one
-                new_criterion = Criterion()
-                new_criterion.update(**criterion.__dict__)
-                # manage default value for the 'resultsperpage' criterion
-                if criterion.widget == ResultsPerPageWidget.widget_type:
-                    new_criterion.default = resultsperpagedefault
-                res.append(new_criterion)
-        self.criteria = res
+            self.criteria = res
+
         return self.context, self.criteria
 
 
@@ -902,17 +906,12 @@ class CompoundCriterionBaseAdapter(object):
 
 
 # cachekeys useable for CompoundCriterionAdapters
-def query_request_cachekey(method, self):
-    '''cachekey method for caching for the time of a request.'''
-    return str(self.request._debug)
-
-
 def query_user_groups_cachekey(method, self):
     '''cachekey method for caching as long as global users/groups
        associations did not change.'''
     # always check cfg.modified() as queries are portal_type aware
     cfg_modified = self.cfg and self.cfg.modified() or datetime.now()
-    return self.context.modified(), api.user.get_current().getId(), \
+    return self.context.modified(), get_current_user_id(), \
         self.tool._users_groups_value(), cfg_modified
 
 
@@ -974,9 +973,9 @@ class MyItemsTakenOverAdapter(CompoundCriterionBaseAdapter):
         '''Queries all items that current user take over.'''
         if not self.cfg:
             return {}
-        member = api.user.get_current()
+        member_id = get_current_user_id()
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
-                'getTakenOverBy': {'query': member.getId()}, }
+                'getTakenOverBy': {'query': member_id}, }
 
     # we may not ram.cache methods in same file with same name...
     query = query_myitemstakenover
@@ -1308,7 +1307,7 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
                 ['delay__{0}_advice_{1}'.format(org_uid, HIDDEN_DURING_REDACTION_ADVICE_VALUE)
                  for org_uid in org_uids]
         if only_for_current_user:
-            userid = api.user.get_current().getId()
+            userid = get_current_user_id()
             tmp_indexAdvisers = list(indexAdvisers)
             indexAdvisers = []
             for v in tmp_indexAdvisers:
@@ -1524,7 +1523,7 @@ class PersonalLabelsAdapter(CompoundCriterionBaseAdapter):
         # get personal labels to make current user aware and to negativate
         labels = [value for value in self.context.query if value[u'i'] == u'labels']
         if labels:
-            member_id = api.user.get_current().getId()
+            member_id = get_current_user_id()
             labels = labels[0][u'v']
             personal_labels = ['{0}:{1}'.format(member_id, label) for label in labels]
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
@@ -1546,7 +1545,7 @@ class NegativePersonalLabelsAdapter(CompoundCriterionBaseAdapter):
         # get personal labels to make current user aware and to negativate
         labels = [value for value in self.context.query if value[u'i'] == u'labels']
         if labels:
-            member_id = api.user.get_current().getId()
+            member_id = get_current_user_id()
             # if no selected values, the 'v' key is not there...
             labels = labels[0].get('v', [])
             personal_labels = ['{0}:{1}'.format(member_id, label) for label in labels]

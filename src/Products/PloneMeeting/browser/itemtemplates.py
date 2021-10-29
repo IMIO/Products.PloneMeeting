@@ -8,6 +8,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.Five.browser import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
+from Products.PloneMeeting.utils import get_current_user_id
 from zope.component import getMultiAdapter
 from zope.i18n import translate
 
@@ -67,7 +68,7 @@ class ItemTemplateView(BrowserView):
         catalog = api.portal.get_tool('portal_catalog')
         templateItem = catalog(UID=templateUID)[0].getObject()
         # Create the new item by duplicating the template item
-        member = api.user.get_current()
+        member_id = get_current_user_id()
         template_path_and_title = safe_unicode(self._template_path_and_title(templateItem))
         cloneEventActionLabel = translate(
             'create_meeting_item_from_template_label_comments',
@@ -80,7 +81,7 @@ class ItemTemplateView(BrowserView):
         proposingGroup = templateItem.getProposingGroup()
         if get_plone_group_id(proposingGroup, 'creators') in self.tool.get_plone_groups_for_user():
             keepProposingGroup = True
-        newItem = templateItem.clone(newOwnerId=member.id,
+        newItem = templateItem.clone(newOwnerId=member_id,
                                      cloneEventAction='create_meeting_item_from_template',
                                      cloneEventActionLabel=cloneEventActionLabel,
                                      destFolder=self.context,

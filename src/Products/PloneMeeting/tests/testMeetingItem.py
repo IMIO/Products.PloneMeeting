@@ -110,8 +110,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self._disableObj(cfg.classifiers.classifier2)
         expectedCategories.remove('deployment')
         expectedClassifiers.remove('classifier2')
-        # getCategories has caching in the REQUEST, we need to wipe this out
-        self.cleanMemoize()
         self.changeUser('pmCreator1')
         # A deactivated category will not be returned by getCategories no matter an item is given or not
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
@@ -122,8 +120,6 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.classifiers.classifier1.using_groups = (self.vendors_uid,)
         expectedCategories.remove('maintenance')
         expectedClassifiers.remove('classifier1')
-        # getCategories has caching in the REQUEST, we need to wipe this out
-        self.cleanMemoize()
         self.changeUser('pmCreator1')
         # if current user is not creator for one of the using_groups defined for the category, he can not use it
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
@@ -137,8 +133,6 @@ class testMeetingItem(PloneMeetingTestCase):
         # change using_groups for 'subproducts'
         cfg.categories.subproducts.using_groups = (self.developers_uid,)
         expectedCategories.remove('subproducts')
-        # getCategories has caching in the REQUEST, we need to wipe this out
-        self.cleanMemoize()
         self.assertEqual([cat.id for cat in cfg.getCategories(userId='pmCreator2')], expectedCategories)
 
         # if useGroupsAsCategories is on, getCategories will still return categories

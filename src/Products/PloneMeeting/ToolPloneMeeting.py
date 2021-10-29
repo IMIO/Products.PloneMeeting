@@ -82,6 +82,7 @@ from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import add_wf_history_action
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_current_user_id
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import monthsIds
@@ -453,7 +454,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user')
         return (date,
                 self._users_groups_value(),
-                userId or api.user.get_current(),
+                userId or get_current_user_id(self.REQUEST),
                 org_uid,
                 the_objects)
 
@@ -511,7 +512,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
         return (date,
                 self._users_groups_value(),
-                (user_id or api.user.get_current()),
+                (user_id or get_current_user_id()),
                 only_selected, suffixes, omitted_suffixes, using_groups, the_objects)
 
     security.declarePublic('get_orgs_for_user')
@@ -574,7 +575,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
         return (date,
                 self._users_groups_value(),
-                api.user.get_current(),
+                get_current_user_id(),
                 suffixes,
                 cfg and cfg.getId(),
                 using_groups)
@@ -763,7 +764,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # as they have both no group when initializing portal, some requests
         # (first time viewlet initialization?) have sometims anonymous as user
         return (self.get_plone_groups_for_user(),
-                api.user.get_current().id,
+                get_current_user_id(),
                 repr(context),
                 realManagers)
 
@@ -972,9 +973,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = True
         if restrictMode:
             if not self.isManager(self):
-                user = api.user.get_current()
+                user_id = get_current_user_id()
                 # Check if the user is in specific list
-                if user.id not in [u.strip() for u in self.getUnrestrictedUsers().split('\n')]:
+                if user_id not in [u.strip() for u in self.getUnrestrictedUsers().split('\n')]:
                     res = False
         return res
 
@@ -995,7 +996,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         destMeetingConfig = self.getMeetingConfig(destFolder)
         # Current user may not have the right to create object in destFolder.
         # We will grant him the right temporarily
-        loggedUserId = api.user.get_current().getId()
+        loggedUserId = get_current_user_id()
         userLocalRoles = destFolder.get_local_roles_for_userid(loggedUserId)
         destFolder.manage_addLocalRoles(loggedUserId, ('Owner',))
 

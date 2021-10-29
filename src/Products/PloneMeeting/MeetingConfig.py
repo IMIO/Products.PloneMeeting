@@ -27,6 +27,7 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanVocabularyCacheFor
+from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidToObject
 from persistent.list import PersistentList
@@ -112,6 +113,7 @@ from Products.PloneMeeting.utils import createOrUpdatePloneGroup
 from Products.PloneMeeting.utils import duplicate_workflow
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_current_user_id
 from Products.PloneMeeting.utils import get_datagridfield_column_value
 from Products.PloneMeeting.utils import get_dx_attrs
 from Products.PloneMeeting.utils import get_dx_schema
@@ -6867,41 +6869,52 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                           if committee['enabled'] == '1']
         return committees
 
+    def getCategoriesIds_cachekey(method, self,  catType='categories', onlySelectable=True, userId=None):
+        '''cachekey method for self.getCategoriesIds.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.categoriesvocabulary')
+        return date, catType, onlySelectable, userId
+
+    security.declarePublic('getCategoriesIds')
+
+    @ram.cache(getCategoriesIds_cachekey)
+    def getCategoriesIds(self, catType='categories', onlySelectable=True, userId=None):
+        """Cached method to speed up getCategories and to be able to keep cache
+           for longer than a request as getCategories returns objects."""
+        ids = []
+        if catType == 'all':
+            categories = self.categories.objectValues() + self.classifiers.objectValues()
+        elif catType == 'classifiers':
+            categories = self.classifiers.objectValues()
+        else:
+            categories = self.categories.objectValues()
+
+        for cat in categories:
+            if not onlySelectable or cat.is_selectable(userId=userId):
+                ids.append(cat.getId())
+        return ids
+
     security.declarePublic('getCategories')
 
-    def getCategories(self, catType='categories', onlySelectable=True, userId=None, caching=True):
+    def getCategories(self, catType='categories', onlySelectable=True, userId=None,):
         '''Returns the categories defined for this meeting config.
            If p_onlySelectable is True, there will be a check to see if the category
            is available to the current user, otherwise, we return every existing categories.
            If a p_userId is given, it will be used to be passed to isSelectable.
            p_catType may be 'categories' (default), then returns categories, 'classifiers',
            then returns classifiers or 'all', then return every categories and classifiers.'''
-        data = None
-        if caching:
-            key = "meeting-config-getcategories-%s-%s-%s-%s" % (
-                self.getId(), str(catType), str(onlySelectable), str(userId))
-            cache = IAnnotations(self.REQUEST)
-            data = cache.get(key, None)
-        if data is None:
-            data = []
-            if catType == 'all':
-                categories = self.categories.objectValues() + self.classifiers.objectValues()
-            elif catType == 'classifiers':
-                categories = self.classifiers.objectValues()
-            else:
-                categories = self.categories.objectValues()
 
-            if onlySelectable:
-                for cat in categories:
-                    if cat.is_selectable(userId=userId):
-                        data.append(cat)
-            else:
-                data = categories
-            # be coherent as objectValues returns a LazyMap
-            data = list(data)
-            if caching:
-                cache[key] = data
-        return data
+        if catType == 'all':
+            categories = self.categories.objectValues() + self.classifiers.objectValues()
+        elif catType == 'classifiers':
+            categories = self.classifiers.objectValues()
+        else:
+            categories = self.categories.objectValues()
+
+        if onlySelectable:
+            filter_ids = self.getCategoriesIds(catType, onlySelectable, userId)
+            categories = [cat for cat in categories if cat.getId() in filter_ids]
+
+        return categories
 
     security.declarePublic('listInsertingMethods')
 
@@ -7030,10 +7043,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             query['review_state'] = 'active'
         if filtered:
             tool = api.portal.get_tool('portal_plonemeeting')
-            member = api.user.get_current()
+            member_id = get_current_user_id()
             memberOrgUids = [org_uid for org_uid in
                              tool.get_orgs_for_user(
-                                 user_id=member.getId(),
+                                 user_id=member_id,
                                  suffixes=['creators'],
                                  the_objects=False)]
             query['templateUsingGroups'] = ('__nothing_selected__', '__folder_in_itemtemplates__', ) + \
@@ -7316,16 +7329,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         return query
 
-    def getMeetingsAcceptingItems_cachekey(method, self, review_states=[], inTheFuture=False):
-        '''cachekey method for self.getMeetingsAcceptingItems.'''
-        return (repr(self), str(self.REQUEST._debug), review_states, inTheFuture)
-
-    @ram.cache(getMeetingsAcceptingItems_cachekey)
     def getMeetingsAcceptingItems(self, review_states=[], inTheFuture=False):
         '''Returns meetings accepting items.'''
-        catalog = api.portal.get_tool('portal_catalog')
-        query = self._getMeetingsAcceptingItemsQuery(review_states, inTheFuture)
-        return catalog.unrestrictedSearchResults(**query)
+        req = self.REQUEST
+        key = "PloneMeeting-MeetingConfig-getMeetingsAcceptingItems-{0}-{1}-{2}".format(
+            repr(self), review_states, inTheFuture)
+        cache = IAnnotations(req)
+        brains = cache.get(key, None)
+
+        if brains is None:
+            catalog = api.portal.get_tool('portal_catalog')
+            query = self._getMeetingsAcceptingItemsQuery(review_states, inTheFuture)
+            brains = catalog.unrestrictedSearchResults(**query)
+            cache[key] = brains
+        return brains
 
     def update_cfgs(self, field_name, cfg_ids=[], reload=False):
         """Update other MeetingConfigs p_field_name base on self field_name value."""

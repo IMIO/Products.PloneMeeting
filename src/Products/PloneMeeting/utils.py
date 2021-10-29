@@ -640,7 +640,8 @@ def sendMailIfRelevant(obj,
         # isGroupIds
         for plone_group_id in value:
             plone_group = api.group.get(plone_group_id)
-            userIds += plone_group.getMemberIds()
+            if plone_group:
+                userIds += plone_group.getMemberIds()
     else:
         # isUserIds
         userIds = value
@@ -2025,7 +2026,7 @@ def add_wf_history_action(obj, action_name, action_label, user_id=None, insert_i
     newEvent['comments'] = action_label or ''
     # action_name must be translated in the plone domain
     newEvent['action'] = action_name
-    newEvent['actor'] = user_id or api.user.get_current().id
+    newEvent['actor'] = user_id or get_current_user_id(obj.REQUEST)
     # if an insert_index is defined, use same 'time' as previous as
     # events are sorted on 'time' and just add 1 millisecond
     if insert_index is not None:
@@ -2260,6 +2261,16 @@ def get_annexes_config(context, portal_type="annex", annex_group=False):
     if annex_group:
         return group
     return config
+
+
+def get_current_user_id(request):
+    """Try to get user_id from REQUEST or fallback to plone.api."""
+    user_id = None
+    try:
+        user_id = request["AUTHENTICATED_USER "].getId()
+    except Exception:
+        user_id = api.user.get_current().getId()
+    return user_id
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

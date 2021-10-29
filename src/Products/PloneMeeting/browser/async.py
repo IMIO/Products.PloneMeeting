@@ -15,6 +15,7 @@ from Products.PloneMeeting.browser.meeting import BaseMeetingView
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.content.meeting import get_all_used_held_positions
+from Products.PloneMeeting.utils import get_current_user_id
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from zope.i18n import translate
 
@@ -114,8 +115,7 @@ class TakenOverBy(BrowserView):
         if not self.context.adapted().mayTakeOver():
             raise Unauthorized
 
-        member = api.user.get_current()
-        memberId = member.getId()
+        memberId = get_current_user_id()
 
         tool = api.portal.get_tool('portal_plonemeeting')
         currentlyTakenOverBy = self.context.getTakenOverBy()

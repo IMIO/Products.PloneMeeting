@@ -5,6 +5,7 @@ from imio.helpers.cache import get_cachekey_volatile
 from plone import api
 from plone.memoize import ram
 from Products.PloneMeeting.utils import get_context_with_request
+from Products.PloneMeeting.utils import get_current_user_id
 from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
@@ -63,15 +64,14 @@ class FTWLabelsForFacetedFilterVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         # personal labels include current user id
-        member_id = api.user.get_current().getId()
-        return date, cfg.getId(), cfg.modified(), member_id
+        return date, cfg.getId(), cfg.modified(), get_current_user_id()
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
         context = get_context_with_request(context)
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        member_id = api.user.get_current().getId()
+        member_id = get_current_user_id()
 
         res = []
         labels = ILabelJar(cfg).list()
