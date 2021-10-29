@@ -117,7 +117,11 @@ class testMeetingItem(PloneMeetingTestCase):
         # Specify that a category is restricted to some groups pmCreator1 is not creator for
         self.changeUser('admin')
         cfg.categories.maintenance.using_groups = (self.vendors_uid,)
+        # invalidate cache of MeetingConfig.getCategories
+        notify(ObjectModifiedEvent(cfg.categories.maintenance))
         cfg.classifiers.classifier1.using_groups = (self.vendors_uid,)
+        # invalidate cache of MeetingConfig.getCategories
+        notify(ObjectModifiedEvent(cfg.classifiers.classifier1))
         expectedCategories.remove('maintenance')
         expectedClassifiers.remove('classifier1')
         self.changeUser('pmCreator1')
@@ -132,12 +136,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual([cat.id for cat in cfg.getCategories(userId='pmCreator2')], expectedCategories)
         # change using_groups for 'subproducts'
         cfg.categories.subproducts.using_groups = (self.developers_uid,)
+        # invalidate cache of MeetingConfig.getCategories
+        notify(ObjectModifiedEvent(cfg.categories.subproducts))
         expectedCategories.remove('subproducts')
         self.assertEqual([cat.id for cat in cfg.getCategories(userId='pmCreator2')], expectedCategories)
 
         # if useGroupsAsCategories is on, getCategories will still return categories
         cfg.setUseGroupsAsCategories(True)
-        self.cleanMemoize()
         expectedCategories.remove('maintenance')
         expectedCategories.append('subproducts')
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
