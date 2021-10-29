@@ -57,10 +57,16 @@ Changelog
   depending on `context` and annex `portal_type`.
   [gbastien]
 - Adapted `ToolPloneMeeting._users_groups_value` returned value and cachekey:
+
   - before we returned the full users/groups association which may be huge and
     take much RAM, now we only return md5 hash;
   - before the cachekey was for one request now we use the PAS principal
     added/removed from from to invalidate cache.
+  - Some performances optimization related to this change:
+
+    - Added caching for vocabularies.PMUsers;
+    - Simplified ToolPloneMeeting.getMeetingConfig, simple use of aq_acquire is
+      the fastest implementation, no need for caching.
 
   [gbastien]
 

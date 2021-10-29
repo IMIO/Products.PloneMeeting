@@ -992,15 +992,20 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
     def test_pm__users_groups_value(self):
         """Test that this cached method behaves normally."""
-        # get pmManager groups
-        pmManagerGroups = [groups for groups, user in self.tool._users_groups_value()
-                           if user == 'pmManager'][0]
-        self.assertTrue(self.developers_creators in pmManagerGroups)
-        # remove pmManager from developers creators
+        hash1 = self.tool._users_groups_value()
         self._removePrincipalFromGroups('pmManager', [self.developers_creators])
-        pmManagerGroups = [groups for groups, user in self.tool._users_groups_value()
-                           if user == 'pmManager'][0]
-        self.assertFalse(self.developers_creators in pmManagerGroups)
+        hash2 = self.tool._users_groups_value()
+        self.assertNotEqual(hash1, hash2)
+        self._addPrincipalToGroup('pmManager', self.developers_creators)
+        hash3 = self.tool._users_groups_value()
+        self.assertNotEqual(hash2, hash3)
+        # test use of plone.api remove_user
+        self._removeUsersFromEveryGroups(['pmManager'])
+        hash4 = self.tool._users_groups_value()
+        self.assertNotEqual(hash3, hash4)
+        # cached
+        hash5 = self.tool._users_groups_value()
+        self.assertEqual(hash4, hash5)
 
     def test_pm_Get_plone_groups_for_user(self):
         """Test that this cached method behaves normally."""
