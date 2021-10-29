@@ -519,12 +519,14 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         # borg localroles are memoized...
         # so while checking local roles twice, there could be problems...
         # remove memoized localroles
-        cleanMemoize(self.portal, prefixes=['borg.localrole.workspace.checkLocalRolesAllowed',
-                                            'tool-getmeetinggroups-',
-                                            'meeting-config-getcategories-',
-                                            'meeting-config-gettopics-',
-                                            'plonegroup-utils-get_organizations-',
-                                            'add_auto_copy_groups_search_for_expression__'])
+        cleanMemoize(self.portal,
+                     prefixes=['borg.localrole.workspace.checkLocalRolesAllowed',
+                               'tool-getmeetinggroups-',
+                               'meeting-config-getcategories-',
+                               'meeting-config-gettopics-',
+                               'plonegroup-utils-get_organizations-',
+                               'add_auto_copy_groups_search_for_expression__',
+                               'PloneMeeting-MeetingConfig-getMeetingsAcceptingItems'])
 
     def _removeOrganizations(self):
         """Delete every organizations found in own_org."""

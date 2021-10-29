@@ -3099,7 +3099,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     @ram.cache(getMeetingToInsertIntoWhenNoCurrentMeetingObjectPath_cachekey)
     def getMeetingToInsertIntoWhenNoCurrentMeetingObjectPath(self):
         """Cached method used by getMeetingToInsertIntoWhenNoCurrentMeetingObject."""
-        meeting = None
+        res = None
         # first, find meetings in the future still accepting items
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
@@ -3129,8 +3129,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # that current user may edit returned meeting
             if meeting.wfConditions().may_accept_items() and \
                (not meeting.is_late() or self.wfConditions().isLateFor(meeting)):
+                res = meeting
                 break
-        return meeting and "/".join(meeting.getPhysicalPath())
+        return res and "/".join(res.getPhysicalPath())
 
     def getMeetingToInsertIntoWhenNoCurrentMeetingObject(self):
         '''Return the meeting the item will be inserted into in case the 'present'

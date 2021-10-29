@@ -454,7 +454,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user')
         return (date,
                 self._users_groups_value(),
-                userId or get_current_user_id(self.REQUEST),
+                userId or get_current_user_id(getattr(self, "REQUEST", None)),
                 org_uid,
                 the_objects)
 

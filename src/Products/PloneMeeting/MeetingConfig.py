@@ -6914,7 +6914,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             filter_ids = self.getCategoriesIds(catType, onlySelectable, userId)
             categories = [cat for cat in categories if cat.getId() in filter_ids]
 
-        return categories
+        return list(categories)
 
     security.declarePublic('listInsertingMethods')
 

@@ -4478,7 +4478,6 @@ class testMeetingItem(PloneMeetingTestCase):
         # unset current meeting so we check with the getMeetingToInsertIntoWhenNoCurrentMeetingObject
         item.REQUEST['PUBLISHED'] = item
         # here item is presentable
-        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         self.assertTrue(item.wfConditions().mayPresent())
         actions_panel._transitions = None
         validatedItemCreatedMeeting_rendered_actions_panel = actions_panel()
@@ -4501,7 +4500,6 @@ class testMeetingItem(PloneMeetingTestCase):
         validatedItemCreatedMeeting_rendered_actions_panel = actions_panel()
         self.freezeMeeting(meeting)
         # here item is no more presentable
-        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         self.assertFalse(item.wfConditions().mayPresent())
         actions_panel._transitions = None
         validatedItemFrozenMeeting_rendered_actions_panel = actions_panel()

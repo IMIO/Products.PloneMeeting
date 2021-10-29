@@ -65,8 +65,13 @@ Changelog
   - Some performances optimization related to this change:
 
     - Added caching for vocabularies.PMUsers;
-    - Simplified ToolPloneMeeting.getMeetingConfig, simple use of aq_acquire is
-      the fastest implementation, no need for caching.
+    - Simplified `ToolPloneMeeting.getMeetingConfig`, simple use of aq_acquire is
+      the fastest implementation, no need for caching;
+    - Do not use `ram.cache` when cache is only living during one request, use an
+      annotation on the request or use `ram.cache` to store an intermediate format
+      (ids ou paths) as it can not cache real objects;
+    - use `utils.get_current_user_id` instead `plone.api.user.get_current` when
+      it is possible.
 
   [gbastien]
 
