@@ -641,7 +641,7 @@ def item_added_or_initialized(item):
     item._v_already_initialized = True
 
     # make sure workflow mapping is applied, plone.restapi needs it...
-    user_id = get_current_user_id()
+    user_id = get_current_user_id(item.REQUEST)
     item.manage_addLocalRoles(user_id, ('Editor', 'Reader'))
     # Add a place to store adviceIndex
     item.adviceIndex = PersistentMapping()
@@ -1048,7 +1048,7 @@ def onMeetingCreated(meeting, event):
        - created;
        - moved;
        - added."""
-    userId = get_current_user_id()
+    userId = get_current_user_id(meeting.REQUEST)
     meeting.manage_addLocalRoles(userId, ('Owner',))
     # place to store item absents
     meeting.item_absents = PersistentMapping()

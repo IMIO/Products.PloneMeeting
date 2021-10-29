@@ -512,7 +512,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
         return (date,
                 self._users_groups_value(),
-                (user_id or get_current_user_id()),
+                (user_id or get_current_user_id(self.REQUEST)),
                 only_selected, suffixes, omitted_suffixes, using_groups, the_objects)
 
     security.declarePublic('get_orgs_for_user')
@@ -575,7 +575,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
         return (date,
                 self._users_groups_value(),
-                get_current_user_id(),
+                get_current_user_id(self.REQUEST),
                 suffixes,
                 cfg and cfg.getId(),
                 using_groups)
@@ -764,7 +764,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # as they have both no group when initializing portal, some requests
         # (first time viewlet initialization?) have sometims anonymous as user
         return (self.get_plone_groups_for_user(),
-                get_current_user_id(),
+                get_current_user_id(self.REQUEST),
                 repr(context),
                 realManagers)
 
@@ -973,7 +973,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = True
         if restrictMode:
             if not self.isManager(self):
-                user_id = get_current_user_id()
+                user_id = get_current_user_id(self.REQUEST)
                 # Check if the user is in specific list
                 if user_id not in [u.strip() for u in self.getUnrestrictedUsers().split('\n')]:
                     res = False
@@ -996,7 +996,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         destMeetingConfig = self.getMeetingConfig(destFolder)
         # Current user may not have the right to create object in destFolder.
         # We will grant him the right temporarily
-        loggedUserId = get_current_user_id()
+        loggedUserId = get_current_user_id(self.REQUEST)
         userLocalRoles = destFolder.get_local_roles_for_userid(loggedUserId)
         destFolder.manage_addLocalRoles(loggedUserId, ('Owner',))
 

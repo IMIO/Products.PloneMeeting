@@ -249,7 +249,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         current_member_id = None
         takenOverBy = self.context.getTakenOverBy()
         if takenOverBy:
-            current_member_id = get_current_user_id()
+            current_member_id = get_current_user_id(self.request)
 
         # manage when displaying the icon with informations about
         # the predecessor living in another MC
@@ -612,7 +612,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             takenOverBy = self.context.getTakenOverBy()
             if takenOverBy:
                 # if taken over, display a different icon if taken over by current user or not
-                user_id = get_current_user_id()
+                user_id = get_current_user_id(self.request)
                 takenOverByCurrentUser = bool(user_id == takenOverBy)
                 iconName = takenOverByCurrentUser and 'takenOverByCurrentUser.png' or 'takenOverByOtherUser.png'
                 res.append((iconName, translate(u'Taken over by ${fullname}',
@@ -911,7 +911,7 @@ def query_user_groups_cachekey(method, self):
        associations did not change.'''
     # always check cfg.modified() as queries are portal_type aware
     cfg_modified = self.cfg and self.cfg.modified() or datetime.now()
-    return self.context.modified(), get_current_user_id(), \
+    return self.context.modified(), get_current_user_id(self.request), \
         self.tool._users_groups_value(), cfg_modified
 
 
@@ -973,7 +973,7 @@ class MyItemsTakenOverAdapter(CompoundCriterionBaseAdapter):
         '''Queries all items that current user take over.'''
         if not self.cfg:
             return {}
-        member_id = get_current_user_id()
+        member_id = get_current_user_id(self.request)
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'getTakenOverBy': {'query': member_id}, }
 
@@ -1307,7 +1307,7 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
                 ['delay__{0}_advice_{1}'.format(org_uid, HIDDEN_DURING_REDACTION_ADVICE_VALUE)
                  for org_uid in org_uids]
         if only_for_current_user:
-            userid = get_current_user_id()
+            userid = get_current_user_id(self.request)
             tmp_indexAdvisers = list(indexAdvisers)
             indexAdvisers = []
             for v in tmp_indexAdvisers:
@@ -1523,7 +1523,7 @@ class PersonalLabelsAdapter(CompoundCriterionBaseAdapter):
         # get personal labels to make current user aware and to negativate
         labels = [value for value in self.context.query if value[u'i'] == u'labels']
         if labels:
-            member_id = get_current_user_id()
+            member_id = get_current_user_id(self.request)
             labels = labels[0][u'v']
             personal_labels = ['{0}:{1}'.format(member_id, label) for label in labels]
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
@@ -1545,7 +1545,7 @@ class NegativePersonalLabelsAdapter(CompoundCriterionBaseAdapter):
         # get personal labels to make current user aware and to negativate
         labels = [value for value in self.context.query if value[u'i'] == u'labels']
         if labels:
-            member_id = get_current_user_id()
+            member_id = get_current_user_id(self.request)
             # if no selected values, the 'v' key is not there...
             labels = labels[0].get('v', [])
             personal_labels = ['{0}:{1}'.format(member_id, label) for label in labels]

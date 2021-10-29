@@ -7043,7 +7043,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             query['review_state'] = 'active'
         if filtered:
             tool = api.portal.get_tool('portal_plonemeeting')
-            member_id = get_current_user_id()
+            member_id = get_current_user_id(self.REQUEST)
             memberOrgUids = [org_uid for org_uid in
                              tool.get_orgs_for_user(
                                  user_id=member_id,

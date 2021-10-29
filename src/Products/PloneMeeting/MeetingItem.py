@@ -468,7 +468,7 @@ class MeetingItemWorkflowConditions(object):
                             # is current user member of destinationState level?
                             suffix = self.cfg.getItemWFValidationLevels(state=destinationState, data='suffix')
                             res = self.tool.group_is_not_empty(
-                                proposingGroup, suffix, user_id=get_current_user_id())
+                                proposingGroup, suffix, user_id=get_current_user_id(self.context.REQUEST))
                         # if not, maybe it is an adviser able to give an advice?
                         if not res and 'waiting_advices_adviser_send_back' in wfas:
                             # adviser may send back to validated when using
@@ -6346,7 +6346,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.autoCopyGroups = PersistentList()
         # Remove temp local role that allowed to create the item in
         # portal_factory.
-        userId = get_current_user_id()
+        userId = get_current_user_id(self.REQUEST)
         self.manage_delLocalRoles([userId])
         self.manage_addLocalRoles(userId, ('Owner',))
         # update groupsInCharge before update_local_roles
@@ -6410,7 +6410,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         if self.query_state() in cfg.getRecordItemHistoryStates():
             # Create the event
-            user_id = get_current_user_id()
+            user_id = get_current_user_id(self.REQUEST)
             event = {'action': action, 'type': subObj.meta_type,
                      'title': subObj.Title(), 'time': DateTime(),
                      'actor': user_id}
@@ -6795,7 +6795,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # Get the PloneMeetingFolder of the current user as destFolder
         tool = api.portal.get_tool('portal_plonemeeting')
-        userId = get_current_user_id()
+        userId = get_current_user_id(self.REQUEST)
         # make sure the newOwnerId exist (for example a user created an item, the
         # user was deleted and we are now cloning his item)
         if newOwnerId and not api.user.get(userid=newOwnerId):
@@ -7208,7 +7208,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Just check that the item is myself, a Plone Site or removing a MeetingConfig.
         # We can remove an item directly, not "through" his container.
         if item.meta_type not in ['Plone Site', 'MeetingConfig', 'MeetingItem', ]:
-            user_id = get_current_user_id()
+            user_id = get_current_user_id(item.REQUEST)
             logger.warn(BEFOREDELETE_ERROR % (user_id, self.id))
             raise BeforeDeleteException(
                 translate("can_not_delete_meetingitem_container",
