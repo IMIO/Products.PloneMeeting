@@ -59,6 +59,9 @@ Changelog
 - Fixed sending a WF transition notification e-mail when actor had
   a special character in it's fullname.
   [gastien]
+- Removed reference to `pre_validation` WF adaptation that does not exist anymore,
+  adapted code accordingly.
+  [gbastien]
 
 4.2b18 (2021-10-13)
 -------------------

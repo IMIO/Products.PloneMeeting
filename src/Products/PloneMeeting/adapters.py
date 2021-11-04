@@ -1111,13 +1111,6 @@ class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCrit
                 if not foundLevel and not reviewer_suffix == highestReviewerLevel:
                     continue
                 foundLevel = True
-                # specific management for workflows using the 'pre_validation' or
-                # 'pre_validation_keep_reviewer_permissions' wfAdaptation
-                if reviewer_suffix == 'reviewers' and \
-                    ('pre_validation' in self.cfg.getWorkflowAdaptations() or
-                     'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()) and \
-                   review_states == ['proposed']:
-                    review_states = ['prevalidated']
                 review_states = [
                     '%s%s' % (prefix_review_state, review_state) for review_state in review_states]
                 reviewProcessInfo = [
@@ -1186,12 +1179,6 @@ class BaseItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter)
                 # current user may be able to validate at at least
                 # one level of the entire validation process, we take it into account
                 if userPloneGroupId.endswith('_%s' % reviewer_suffix):
-                    # specific management for workflows using the 'pre_validation' wfAdaptation
-                    if reviewer_suffix == 'reviewers' and \
-                        ('pre_validation' in self.cfg.getWorkflowAdaptations() or
-                         'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()) and \
-                       review_states == ['proposed']:
-                        review_states = ['prevalidated']
                     org_uid = userPloneGroupId.split('_')[0]
                     review_states = [
                         '%s%s' % (prefix_review_state, review_state) for review_state in review_states]
