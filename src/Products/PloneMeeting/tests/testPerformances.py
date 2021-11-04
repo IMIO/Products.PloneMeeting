@@ -475,70 +475,77 @@ class testPerformances(PloneMeetingTestCase):
 
     def test_pm_GetCategoriesCaching(self):
         '''Test MeetingConfig.getCategories caching.'''
+        times = 1000
         self.meetingConfig.setUseGroupsAsCategories(False)
         # first test with 10 groups without usingGroups
         self._setupForMeetingCategories(10, withUsingGroups=False)
-        pm_logger.info('getCategories called 100 times with %d activated groups, without usingGroups.' % 10)
+        pm_logger.info('getCategories called %d times with %d activated groups, without usingGroups.'
+                       % (times, 10))
         pm_logger.info('Not cached..')
-        self._getCategoriesOnMeetingConfig(times=100)
+        self._getCategoriesOnMeetingConfig(times=times)
         # second time, cached
         pm_logger.info('Cached.')
-        self._getCategoriesOnMeetingConfig(times=100)
+        self._getCategoriesOnMeetingConfig(times=times)
         # remove cache
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
 
         # first test with 10 groups with usingGroups
         self._setupForMeetingCategories(10, withUsingGroups=True)
-        pm_logger.info('getCategories called 100 times with %d activated groups, with usingGroups.' % 10)
+        pm_logger.info('getCategories called %d times with %d activated groups, with usingGroups.'
+                       % (times, 10))
         pm_logger.info('No cached.')
-        self._getCategoriesOnMeetingConfig(times=100)
+        self._getCategoriesOnMeetingConfig(times=times)
         # second time, cached
         pm_logger.info('Cached.')
-        self._getCategoriesOnMeetingConfig(times=100)
+        self._getCategoriesOnMeetingConfig(times=times)
         # remove cache
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
 
         # test with 100 categories without usingGroups
         self._setupForMeetingCategories(100, withUsingGroups=False)
-        pm_logger.info('getCategories called 100 times with %d activated groups, without usingGroups.' % 100)
+        pm_logger.info('getCategories called %d times with %d activated groups, without usingGroups.'
+                       % (times, 100))
         pm_logger.info('No cached.')
-        self._getCategoriesOnMeetingConfig(times=100)
+        self._getCategoriesOnMeetingConfig(times=times)
         # second time, cached
         pm_logger.info('Cached.')
-        self._getCategoriesOnMeetingConfig(times=100)
+        self._getCategoriesOnMeetingConfig(times=times)
         # remove cache
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
 
         # test with 100 categories with usingGroups
         self._setupForMeetingCategories(100, withUsingGroups=True)
-        pm_logger.info('getCategories called 100 times with %d activated groups, with usingGroups.' % 100)
+        pm_logger.info('getCategories called %d times with %d activated groups, with usingGroups.'
+                       % (times, 100))
         pm_logger.info('No cached.')
-        self._getCategoriesOnMeetingConfig(times=100)
+        self._getCategoriesOnMeetingConfig(times=times)
         # second time, cached
         pm_logger.info('Cached.')
-        self._getCategoriesOnMeetingConfig(times=100)
+        self._getCategoriesOnMeetingConfig(times=times)
         # remove cache
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
 
         # test with 250 categories without usingGroups
         self._setupForMeetingCategories(250, withUsingGroups=False)
-        pm_logger.info('getCategories called 100 times with %d activated groups, without usingGroups.' % 250)
+        pm_logger.info('getCategories called %d times with %d activated groups, without usingGroups.'
+                       % (times, 250))
         pm_logger.info('No cached.')
-        self._getCategoriesOnMeetingConfig(times=100)
+        self._getCategoriesOnMeetingConfig(times=times)
         # second time, cached
         pm_logger.info('Cached.')
-        self._getCategoriesOnMeetingConfig(times=100)
+        self._getCategoriesOnMeetingConfig(times=times)
         # remove cache
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
 
         # test with 250 categories with usingGroups
         self._setupForMeetingCategories(250, withUsingGroups=True)
-        pm_logger.info('getCategories called 100 times with %d activated groups, with usingGroups.' % 250)
+        pm_logger.info('getCategories called %d times with %d activated groups, with usingGroups.'
+                       % (times, 250))
         pm_logger.info('No cached.')
-        self._getCategoriesOnMeetingConfig(times=100)
+        self._getCategoriesOnMeetingConfig(times=1000)
         # second time, cached
         pm_logger.info('Cached.')
-        self._getCategoriesOnMeetingConfig(times=100)
+        self._getCategoriesOnMeetingConfig(times=1000)
         # remove cache
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
 
