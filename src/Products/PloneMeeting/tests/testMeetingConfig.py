@@ -2370,6 +2370,29 @@ class testMeetingConfig(PloneMeetingTestCase):
             cfg.listSelectableAdvisers().keys(),
             [self.developers_uid, self.vendors_uid])
 
+    def test_pm_GetCategories(self):
+        """Test the MeetingConfig.getCategories method
+           especially because it is ram.cached."""
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        self.changeUser('pmManager')
+        # onlySelectable=True by default
+        cfg_cat_ids = [cat.getId() for cat in cfg.getCategories()]
+        cfg2_cat_ids = [cat.getId() for cat in cfg2.getCategories()]
+        self.assertEqual(cfg_cat_ids,
+                         ['development', 'research', 'events'])
+        self.assertEqual(cfg2_cat_ids,
+                         ['deployment', 'maintenance', 'development',
+                          'events', 'research', 'projects'])
+        # onlySelectable=False
+        cfg_cat_ids = [cat.getId() for cat in cfg.getCategories(onlySelectable=False)]
+        cfg2_cat_ids = [cat.getId() for cat in cfg2.getCategories(onlySelectable=False)]
+        self.assertEqual(cfg_cat_ids,
+                         ['development', 'research', 'events'])
+        self.assertEqual(cfg2_cat_ids,
+                         ['deployment', 'maintenance', 'development',
+                          'events', 'research', 'projects', 'marketing', 'subproducts'])
+
 
 def test_suite():
     from unittest import makeSuite

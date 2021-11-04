@@ -10,6 +10,7 @@ from collective.contact.plonegroup.utils import get_plone_groups
 from collective.eeafaceted.batchactions.utils import listify_uids
 from datetime import datetime
 from datetime import timedelta
+from imio.helpers.cache import invalidate_cachekey_volatile_for
 from plone import api
 from PloneMeetingTestCase import pm_logger
 from Products.CMFCore.utils import getToolByName
@@ -368,16 +369,18 @@ class testPerformances(PloneMeetingTestCase):
         # create an item
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        # call getMeetingConfig 2000 times wihout caching
-        self._getMeetingConfigOnTool(item, 2000, caching=False)
-        # call getMeetingConfig 2000 times with caching
-        self._getMeetingConfigOnTool(item, 2000, caching=True)
+        # call getMeetingConfig 2000 times with item
+        self._getMeetingConfigOnTool(item, 2000)
+        # call getMeetingConfig 2000 times with item parent
+        self._getMeetingConfigOnTool(item.aq_inner.aq_parent, 2000)
+        # call getMeetingConfig 2000 times with searches_items folder
+        self._getMeetingConfigOnTool(item.aq_inner.aq_parent.searches_items, 2000)
 
     @timecall
-    def _getMeetingConfigOnTool(self, context, times=1, caching=True):
+    def _getMeetingConfigOnTool(self, context, times=1):
         ''' '''
         for time in range(times):
-            self.tool.getMeetingConfig(context, caching=caching)
+            self.tool.getMeetingConfig(context)
 
     def test_pm_SpeedSetManuallyLinkedItems(self):
         '''Test MeetingItem.setManuallyLinkedItems method performances.'''
@@ -472,78 +475,85 @@ class testPerformances(PloneMeetingTestCase):
 
     def test_pm_GetCategoriesCaching(self):
         '''Test MeetingConfig.getCategories caching.'''
+        times = 1000
         self.meetingConfig.setUseGroupsAsCategories(False)
         # first test with 10 groups without usingGroups
         self._setupForMeetingCategories(10, withUsingGroups=False)
-        pm_logger.info('getCategories called 100 times with %d activated groups, without usingGroups.' % 10)
-        pm_logger.info('No caching.')
-        self._getCategoriesOnMeetingConfig(times=100, caching=False)
+        pm_logger.info('getCategories called %d times with %d activated groups, without usingGroups.'
+                       % (times, 10))
+        pm_logger.info('Not cached..')
+        self._getCategoriesOnMeetingConfig(times=times)
         # second time, cached
-        pm_logger.info('Caching.')
-        self._getCategoriesOnMeetingConfig(times=100, caching=True)
+        pm_logger.info('Cached.')
+        self._getCategoriesOnMeetingConfig(times=times)
         # remove cache
-        self.cleanMemoize()
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
 
         # first test with 10 groups with usingGroups
         self._setupForMeetingCategories(10, withUsingGroups=True)
-        pm_logger.info('getCategories called 100 times with %d activated groups, with usingGroups.' % 10)
-        pm_logger.info('No caching.')
-        self._getCategoriesOnMeetingConfig(times=100, caching=False)
+        pm_logger.info('getCategories called %d times with %d activated groups, with usingGroups.'
+                       % (times, 10))
+        pm_logger.info('No cached.')
+        self._getCategoriesOnMeetingConfig(times=times)
         # second time, cached
-        pm_logger.info('Caching.')
-        self._getCategoriesOnMeetingConfig(times=100, caching=True)
+        pm_logger.info('Cached.')
+        self._getCategoriesOnMeetingConfig(times=times)
         # remove cache
-        self.cleanMemoize()
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
 
         # test with 100 categories without usingGroups
         self._setupForMeetingCategories(100, withUsingGroups=False)
-        pm_logger.info('getCategories called 100 times with %d activated groups, without usingGroups.' % 100)
-        pm_logger.info('No caching.')
-        self._getCategoriesOnMeetingConfig(times=100, caching=False)
+        pm_logger.info('getCategories called %d times with %d activated groups, without usingGroups.'
+                       % (times, 100))
+        pm_logger.info('No cached.')
+        self._getCategoriesOnMeetingConfig(times=times)
         # second time, cached
-        pm_logger.info('Caching.')
-        self._getCategoriesOnMeetingConfig(times=100, caching=True)
+        pm_logger.info('Cached.')
+        self._getCategoriesOnMeetingConfig(times=times)
         # remove cache
-        self.cleanMemoize()
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
 
         # test with 100 categories with usingGroups
         self._setupForMeetingCategories(100, withUsingGroups=True)
-        pm_logger.info('getCategories called 100 times with %d activated groups, with usingGroups.' % 100)
-        pm_logger.info('No caching.')
-        self._getCategoriesOnMeetingConfig(times=100, caching=False)
+        pm_logger.info('getCategories called %d times with %d activated groups, with usingGroups.'
+                       % (times, 100))
+        pm_logger.info('No cached.')
+        self._getCategoriesOnMeetingConfig(times=times)
         # second time, cached
-        pm_logger.info('Caching.')
-        self._getCategoriesOnMeetingConfig(times=100, caching=True)
+        pm_logger.info('Cached.')
+        self._getCategoriesOnMeetingConfig(times=times)
         # remove cache
-        self.cleanMemoize()
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
 
         # test with 250 categories without usingGroups
         self._setupForMeetingCategories(250, withUsingGroups=False)
-        pm_logger.info('getCategories called 100 times with %d activated groups, without usingGroups.' % 250)
-        pm_logger.info('No caching.')
-        self._getCategoriesOnMeetingConfig(times=100, caching=False)
+        pm_logger.info('getCategories called %d times with %d activated groups, without usingGroups.'
+                       % (times, 250))
+        pm_logger.info('No cached.')
+        self._getCategoriesOnMeetingConfig(times=times)
         # second time, cached
-        pm_logger.info('Caching.')
-        self._getCategoriesOnMeetingConfig(times=100, caching=True)
+        pm_logger.info('Cached.')
+        self._getCategoriesOnMeetingConfig(times=times)
         # remove cache
-        self.cleanMemoize()
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
 
         # test with 250 categories with usingGroups
         self._setupForMeetingCategories(250, withUsingGroups=True)
-        pm_logger.info('getCategories called 100 times with %d activated groups, with usingGroups.' % 250)
-        pm_logger.info('No caching.')
-        self._getCategoriesOnMeetingConfig(times=100, caching=False)
+        pm_logger.info('getCategories called %d times with %d activated groups, with usingGroups.'
+                       % (times, 250))
+        pm_logger.info('No cached.')
+        self._getCategoriesOnMeetingConfig(times=1000)
         # second time, cached
-        pm_logger.info('Caching.')
-        self._getCategoriesOnMeetingConfig(times=100, caching=True)
+        pm_logger.info('Cached.')
+        self._getCategoriesOnMeetingConfig(times=1000)
         # remove cache
-        self.cleanMemoize()
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
 
     @timecall
-    def _getCategoriesOnMeetingConfig(self, times=1, caching=True):
+    def _getCategoriesOnMeetingConfig(self, times=1):
         ''' '''
         for time in range(times):
-            self.meetingConfig.getCategories(userId='pmManager', caching=caching)
+            self.meetingConfig.getCategories(userId='pmManager', onlySelectable=True)
 
     def _setupItemsForUpdateLocalRoles(self, add_advices=True, add_annexes=True):
         '''Call.update_local_roles on items holding many annexes and advices.'''

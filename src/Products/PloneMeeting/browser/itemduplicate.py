@@ -13,6 +13,7 @@ from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
+from Products.PloneMeeting.utils import get_current_user_id
 from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from z3c.form import button
 from z3c.form import field
@@ -112,7 +113,7 @@ class DuplicateItemForm(z3c_form.Form):
     def _doApply(self, data):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
-        user = api.user.get_current()
+        user_id = get_current_user_id()
         cloneEventAction = DUPLICATE_EVENT_ACTION
         setCurrentAsPredecessor = False
         manualLinkToPredecessor = False
@@ -135,7 +136,7 @@ class DuplicateItemForm(z3c_form.Form):
         newItem = self.context.clone(
             copyAnnexes=copyAnnexes,
             copyDecisionAnnexes=copyDecisionAnnexes,
-            newOwnerId=user.id,
+            newOwnerId=user_id,
             cloneEventAction=cloneEventAction,
             keepProposingGroup=keepProposingGroup,
             setCurrentAsPredecessor=setCurrentAsPredecessor,

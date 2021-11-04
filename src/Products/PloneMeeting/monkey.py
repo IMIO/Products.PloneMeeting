@@ -9,6 +9,7 @@ from Products.Archetypes.BaseObject import BaseObject
 from Products.Archetypes.Field import Field
 from Products.CMFPlone.CatalogTool import CatalogTool
 from Products.PloneMeeting import logger
+from Products.PloneMeeting.utils import get_current_user_id
 from Products.PlonePAS.tools.membership import MembershipTool
 from Products.PortalTransforms.cache import Cache
 from Products.PortalTransforms.transforms import safe_html
@@ -61,8 +62,7 @@ def userAndGroupsAwarePortalTransformsCacheKey():
         key = key.replace('-', '_')
         key = key.replace(' ', '_')
         # XXX begin changes by PM, do the cache key user and groups aware
-        user = api.user.get_current()
-        user_id = user.getId()
+        user_id = get_current_user_id()
         tool = api.portal.get_tool('portal_plonemeeting')
         groups = tool.get_plone_groups_for_user()
         key = '%s_%s_%s' % (key, user_id, '_'.join(groups))
@@ -86,7 +86,7 @@ def validate(self, REQUEST=None, errors=None, data=None, metadata=None):
     """Monkeypatch to log errors because sometimes, when errors occur in multiple
        or on disabled fields, it is not visible into the UI."""
     errors = self.__old_pm_validate(REQUEST, errors, data, metadata)
-    if errors and api.user.get_current().has_role('Manager'):
+    if errors and api.user.get_current(REQUEST).has_role('Manager'):
         logger.info(errors)
     return errors
 

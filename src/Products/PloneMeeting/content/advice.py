@@ -237,7 +237,7 @@ class AdviceGroupVocabulary(object):
         """"""
         terms = []
         tool = api.portal.get_tool('portal_plonemeeting')
-        advicePortalTypeIds = tool.getAdvicePortalTypes(as_ids=True)
+        advicePortalTypeIds = tool.getAdvicePortalTypeIds()
 
         # take into account groups for wich user can add an advice
         # while adding an advice, the context is his parent, aka a MeetingItem
@@ -279,7 +279,7 @@ class AdviceTypeVocabulary(object):
         terms = []
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        advicePortalTypeIds = tool.getAdvicePortalTypes(as_ids=True)
+        advicePortalTypeIds = tool.getAdvicePortalTypeIds()
 
         # manage when portal_type accessed from the Dexterity types configuration
         if cfg:

@@ -59,6 +59,7 @@ from Products.PloneMeeting.utils import get_context_with_request
 from Products.PloneMeeting.utils import get_datagridfield_column_value
 from Products.PloneMeeting.utils import number_word
 from z3c.form.interfaces import NO_VALUE
+from zope.annotation import IAnnotations
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
@@ -131,7 +132,7 @@ class ItemCategoriesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         catType = classifiers and 'classifiers' or 'categories'
-        categories = cfg.getCategories(catType=catType, onlySelectable=False, caching=False)
+        categories = cfg.getCategories(catType=catType, onlySelectable=False)
         activeCategories = [cat for cat in categories if cat.enabled]
         notActiveCategories = [cat for cat in categories if not cat.enabled]
         res_active = []
@@ -301,12 +302,11 @@ class GroupsInChargeVocabulary(object):
                         res.append(group_in_charge)
             # categories
             if not cfg.getUseGroupsAsCategories():
-                categories = cfg.getCategories(onlySelectable=False, caching=False)
+                categories = cfg.getCategories(onlySelectable=False)
                 # add classifiers when using it
                 if 'classifier' in cfg.getUsedItemAttributes():
-                    categories += cfg.getCategories(catType='classifiers',
-                                                    onlySelectable=False,
-                                                    caching=False)
+                    categories += cfg.getCategories(
+                        catType='classifiers', onlySelectable=False)
                 for cat in categories:
                     for group_in_charge in cat.get_groups_in_charge(the_objects=True):
                         # manage duplicates
@@ -1045,44 +1045,47 @@ class UsedVoteValuesVocabulary(object):
         """ """
         return self.item_vote['linked_to_previous']
 
-    def __call___cachekey(method, self, context, vote_number=None):
-        '''cachekey method for self.__call__.'''
-        context = get_context_with_request(context)
-        request_debug = str(hasattr(context, 'REQUEST') and context.REQUEST._debug or None)
-        return request_debug, vote_number
-
-    @ram.cache(__call___cachekey)
     def __call__(self, context, vote_number=None):
         """ """
+
         # as used in a datagridfield, context may vary...
         self.context = get_context_with_request(context)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        res = []
-        # get vote_number, as _voter_number when editing
-        # as form.widgets.vote_number when saving
-        if vote_number is None:
-            vote_number = int(self.context.REQUEST.form.get(
-                'vote_number',
-                self.context.REQUEST.form.get('form.widgets.vote_number')))
-        self.item_vote = self.context.get_item_votes(vote_number=vote_number)
-        used_values_attr = 'usedVoteValues'
-        if self.is_linked_vote():
-            used_values_attr = 'nextLinkedVotesUsedVoteValues'
-        elif self.is_first_linked_vote(vote_number):
-            used_values_attr = 'firstLinkedVoteUsedVoteValues'
-        for usedVoteValue in cfg.getUsedVoteValues(
-                used_values_attr=used_values_attr,
-                include_not_encoded=not self.context.get_votes_are_secret()):
-            res.append(
-                SimpleTerm(
-                    usedVoteValue,
-                    usedVoteValue,
-                    translate(
-                        'vote_value_{0}'.format(usedVoteValue),
-                        domain='PloneMeeting',
-                        context=self.context.REQUEST)))
-        return SimpleVocabulary(res)
+
+        # caching as called too much times by datagridfield...
+        key = "PloneMeeting-vocabularies-UsedVoteValuesVocabulary-{0}-{1}".format(
+            repr(self.context), vote_number)
+        cache = IAnnotations(self.context.REQUEST)
+        vocab = cache.get(key, None)
+        if vocab is None:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self.context)
+            res = []
+            # get vote_number, as _voter_number when editing
+            # as form.widgets.vote_number when saving
+            if vote_number is None:
+                vote_number = int(self.context.REQUEST.form.get(
+                    'vote_number',
+                    self.context.REQUEST.form.get('form.widgets.vote_number')))
+            self.item_vote = self.context.get_item_votes(vote_number=vote_number)
+            used_values_attr = 'usedVoteValues'
+            if self.is_linked_vote():
+                used_values_attr = 'nextLinkedVotesUsedVoteValues'
+            elif self.is_first_linked_vote(vote_number):
+                used_values_attr = 'firstLinkedVoteUsedVoteValues'
+            for usedVoteValue in cfg.getUsedVoteValues(
+                    used_values_attr=used_values_attr,
+                    include_not_encoded=not self.context.get_votes_are_secret()):
+                res.append(
+                    SimpleTerm(
+                        usedVoteValue,
+                        usedVoteValue,
+                        translate(
+                            'vote_value_{0}'.format(usedVoteValue),
+                            domain='PloneMeeting',
+                            context=self.context.REQUEST)))
+            vocab = SimpleVocabulary(res)
+            cache[key] = vocab
+        return vocab
 
 
 UsedVoteValuesVocabularyFactory = UsedVoteValuesVocabulary()
@@ -2377,18 +2380,15 @@ ContainedDecisionAnnexesVocabularyFactory = ContainedDecisionAnnexesVocabulary()
 class PMUsers(UsersFactory):
     """Append ' (userid)' to term title."""
 
-    def _user_fullname(self, userid):
-        """ """
-        storage = self.mutable_properties._storage
-        data = storage.get(userid, None)
-        if data is not None:
-            return data.get('fullname', '') or userid
-        else:
-            return userid
+    def __call___cachekey(method, self, context, query=''):
+        '''cachekey method for self.__call__.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return tool._users_groups_value(), query
 
+    @ram.cache(__call___cachekey)
     def __call__(self, context, query=''):
+        tool = api.portal.get_tool('portal_plonemeeting')
         acl_users = api.portal.get_tool('acl_users')
-        self.mutable_properties = acl_users.mutable_properties
         users = acl_users.searchUsers(sort_by='')
         terms = []
         # manage duplicates, this can be the case when using LDAP and same userid in source_users
@@ -2402,7 +2402,7 @@ class PMUsers(UsersFactory):
                     unicode(user_id)
                 except UnicodeDecodeError:
                     continue
-                term_title = u'{0} ({1})'.format(safe_unicode(self._user_fullname(user_id)), user_id)
+                term_title = safe_unicode(tool.getUserName(user_id, withUserId=True))
                 term = SimpleTerm(user_id, user_id, term_title)
                 terms.append(term)
         terms = humansorted(terms, key=attrgetter('title'))

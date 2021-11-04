@@ -82,6 +82,7 @@ from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import add_wf_history_action
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_current_user_id
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import monthsIds
@@ -94,6 +95,7 @@ from zope.i18n import translate
 from zope.interface import implements
 
 import interfaces
+import md5
 import OFS.Moniker
 import time
 
@@ -431,27 +433,28 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     def _users_groups_value_cachekey(method, self):
-        """ """
-        # async does not have a REQUEST
-        if hasattr(self, 'REQUEST'):
-            return str(self.REQUEST._debug)
-        else:
-            return None
+        """Invalidated thru user added/removed from group events."""
+        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+        return date
 
     @ram.cache(_users_groups_value_cachekey)
     def _users_groups_value(self):
         """Return the byValue representation of the _principal_groups BTree
-           to check if it changed, meaning that users/groups associations changed."""
+           to check if it changed, meaning that users/groups associations changed.
+           This is to be used in cachekeys and does not return users/groups associations!"""
         portal = self.aq_inner.aq_parent
         source_groups = portal.acl_users.source_groups
-        return source_groups._principal_groups.byValue(0)
+        # return md5 as this is used in several cachekey values
+        # cachekey is stored as md5 hash in ram.cache
+        # but the value is stored as is obviously
+        return md5.md5(str(source_groups._principal_groups.byValue(0))).hexdigest()
 
     def get_plone_groups_for_user_cachekey(method, self, userId=None, org_uid=None, the_objects=False):
         '''cachekey method for self.get_plone_groups_for_user.'''
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user')
         return (date,
                 self._users_groups_value(),
-                userId or api.user.get_current(),
+                userId or get_current_user_id(getattr(self, "REQUEST", None)),
                 org_uid,
                 the_objects)
 
@@ -509,7 +512,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
         return (date,
                 self._users_groups_value(),
-                (user_id or api.user.get_current()),
+                (user_id or get_current_user_id(self.REQUEST)),
                 only_selected, suffixes, omitted_suffixes, using_groups, the_objects)
 
     security.declarePublic('get_orgs_for_user')
@@ -572,7 +575,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
         return (date,
                 self._users_groups_value(),
-                api.user.get_current(),
+                get_current_user_id(self.REQUEST),
                 suffixes,
                 cfg and cfg.getId(),
                 using_groups)
@@ -705,49 +708,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getMeetingConfig')
 
-    def getMeetingConfig(self, context, caching=True):
+    def getMeetingConfig(self, context):
         '''Based on p_context's portal type, we get the corresponding meeting
            config.'''
-        data = None
-        # we only do caching when we are sure that context portal_type
-        # is linked to only one MeetingConfig, it is the case for Meeting and MeetingItem
-        # portal_types, but if we have a 'Topic' or a 'Folder', we can not determinate
-        # in wich MeetingConfig it is, we can not do caching...
-        if caching and context.getTagName() in ('Meeting', 'MeetingItem', ):
-            key = "tool-getmeetingconfig-%s" % context.portal_type
-            # async does not have a REQUEST
-            if hasattr(self, 'REQUEST'):
-                cache = IAnnotations(self.REQUEST)
-                data = cache.get(key, None)
-            else:
-                caching = False
-        else:
-            caching = False
-        if data is None:
-            portalTypeName = context.getPortalTypeName()
-            if portalTypeName in ('MeetingItem', 'Meeting'):
-                # When this method is called within a default_method
-                # (when displaying a edit form), the portal_type is not already
-                # set (it is equal to the meta_type, which is not
-                # necessarily equal to the portal type). In this case we look for
-                # the correct portal type in the request.
-                portalTypeName = self.REQUEST.get('type_name', portalTypeName)
-            if portalTypeName.startswith('Meeting'):
-                # Find config based on portal_type of current p_context
-                for config in self.objectValues('MeetingConfig'):
-                    if (portalTypeName == config.getItemTypeName()) or \
-                       (portalTypeName == config.getMeetingTypeName()):
-                        data = config
-                        break
-            if not data:
-                # Get the property on the folder that indicates that this is the
-                # "official" folder of a meeting config.
-                try:
-                    data = getattr(self, context.aq_acquire(MEETING_CONFIG))
-                except AttributeError:
-                    data = None
-            if caching:
-                cache[key] = data
+        try:
+            data = getattr(self, context.aq_acquire(MEETING_CONFIG))
+        except AttributeError:
+            data = None
         return data
 
     security.declarePublic('getDefaultMeetingConfig')
@@ -797,7 +764,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # as they have both no group when initializing portal, some requests
         # (first time viewlet initialization?) have sometims anonymous as user
         return (self.get_plone_groups_for_user(),
-                api.user.get_current().id,
+                get_current_user_id(self.REQUEST),
                 repr(context),
                 realManagers)
 
@@ -1006,9 +973,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = True
         if restrictMode:
             if not self.isManager(self):
-                user = api.user.get_current()
+                user_id = get_current_user_id(self.REQUEST)
                 # Check if the user is in specific list
-                if user.id not in [u.strip() for u in self.getUnrestrictedUsers().split('\n')]:
+                if user_id not in [u.strip() for u in self.getUnrestrictedUsers().split('\n')]:
                     res = False
         return res
 
@@ -1029,7 +996,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         destMeetingConfig = self.getMeetingConfig(destFolder)
         # Current user may not have the right to create object in destFolder.
         # We will grant him the right temporarily
-        loggedUserId = api.user.get_current().getId()
+        loggedUserId = get_current_user_id(self.REQUEST)
         userLocalRoles = destFolder.get_local_roles_for_userid(loggedUserId)
         destFolder.manage_addLocalRoles(loggedUserId, ('Owner',))
 
@@ -1357,7 +1324,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         for brain in brains:
             obj = brain.getObject()
             annexes = get_categorized_elements(obj, result_type='objects')
-            cfg = self.getMeetingConfig(obj, caching=False)
+            cfg = self.getMeetingConfig(obj)
             for annex in annexes:
                 to_be_printed_activated = get_config_root(annex)
                 # convert if auto_convert is enabled or to_print is enabled for printing
@@ -1540,13 +1507,20 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return {}
 
-    def getAdvicePortalTypes_cachekey(method, self, as_ids=False):
+    def getAdvicePortalTypeIds_cachekey(method, self):
         '''cachekey method for self.getAdvicePortalTypes.'''
-        return (str(self.REQUEST._debug), as_ids)
+        return True
+
+    security.declarePublic('getAdvicePortalTypeIds')
+
+    @ram.cache(getAdvicePortalTypeIds_cachekey)
+    def getAdvicePortalTypeIds(self):
+        """We may have several 'meetingadvice' portal_types,
+           return it as ids."""
+        return self.getAdvicePortalTypes(as_ids=True)
 
     security.declarePublic('getAdvicePortalTypes')
 
-    @ram.cache(getAdvicePortalTypes_cachekey)
     def getAdvicePortalTypes(self, as_ids=False):
         """We may have several 'meetingadvice' portal_types."""
         typesTool = api.portal.get_tool('portal_types')

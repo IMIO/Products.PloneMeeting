@@ -1008,7 +1008,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         mapping = {
             'item_annexes': [cfg.getItemTypeName()],
             'item_decision_annexes': [cfg.getItemTypeName()],
-            'advice_annexes': tool.getAdvicePortalTypes(as_ids=True),
+            'advice_annexes': tool.getAdvicePortalTypeIds(),
             'meeting_annexes': [cfg.getMeetingTypeName()],
         }
         return mapping

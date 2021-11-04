@@ -143,7 +143,7 @@ class testFaceted(PloneMeetingTestCase):
         # once get, it is cached
         terms = vocab(pmFolder)
         # every existing categories are shown, no matter it is disabled
-        nbOfCategories = len(cfg.getCategories(onlySelectable=False, caching=False))
+        nbOfCategories = len(cfg.getCategories(onlySelectable=False))
         self.assertEqual(len(terms), nbOfCategories)
         # here we make sure it is cached by changing a category title
         # manually without using the processForm way
@@ -199,7 +199,7 @@ class testFaceted(PloneMeetingTestCase):
         # once get, it is cached
         terms = vocab(pmFolder)
         # every existing categories are shown, no matter it is disabled
-        nbOfCategories = len(cfg.getCategories(catType='classifiers', onlySelectable=False, caching=False))
+        nbOfCategories = len(cfg.getCategories(catType='classifiers', onlySelectable=False))
         self.assertEqual(len(terms), nbOfCategories)
         # here we make sure it is cached by changing a category title
         # manually without using the processForm way

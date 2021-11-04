@@ -75,7 +75,7 @@ class ParentModified(object):
         context = getContext(self.published)
         tool = api.portal.get_tool('portal_plonemeeting')
         res = 'pm_0'
-        if context.portal_type in tool.getAdvicePortalTypes(as_ids=True):
+        if context.portal_type in tool.getAdvicePortalTypeIds():
             parent = context.aq_inner.aq_parent
             res = 'pm_' + _modified(parent)
         return res

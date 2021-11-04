@@ -62,6 +62,24 @@ Changelog
 - Removed reference to `pre_validation` WF adaptation that does not exist anymore,
   adapted code accordingly.
   [gbastien]
+- Adapted `ToolPloneMeeting._users_groups_value` returned value and cachekey:
+
+  - before we returned the full users/groups association which may be huge and
+    take much RAM, now we only return md5 hash;
+  - before the cachekey was for one request now we use the PAS principal
+    added/removed from from to invalidate cache.
+  - Some performances optimization related to this change:
+
+    - Added caching for vocabularies.PMUsers;
+    - Simplified `ToolPloneMeeting.getMeetingConfig`, simple use of aq_acquire is
+      the fastest implementation, no need for caching;
+    - Do not use `ram.cache` when cache is only living during one request, use an
+      annotation on the request or use `ram.cache` to store an intermediate format
+      (ids ou paths) as it can not cache real objects;
+    - use `utils.get_current_user_id` instead `plone.api.user.get_current` when
+      it is possible.
+
+  [gbastien]
 
 4.2b18 (2021-10-13)
 -------------------

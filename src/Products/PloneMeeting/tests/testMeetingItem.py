@@ -110,8 +110,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self._disableObj(cfg.classifiers.classifier2)
         expectedCategories.remove('deployment')
         expectedClassifiers.remove('classifier2')
-        # getCategories has caching in the REQUEST, we need to wipe this out
-        self.cleanMemoize()
         self.changeUser('pmCreator1')
         # A deactivated category will not be returned by getCategories no matter an item is given or not
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
@@ -119,11 +117,13 @@ class testMeetingItem(PloneMeetingTestCase):
         # Specify that a category is restricted to some groups pmCreator1 is not creator for
         self.changeUser('admin')
         cfg.categories.maintenance.using_groups = (self.vendors_uid,)
+        # invalidate cache of MeetingConfig.getCategories
+        notify(ObjectModifiedEvent(cfg.categories.maintenance))
         cfg.classifiers.classifier1.using_groups = (self.vendors_uid,)
+        # invalidate cache of MeetingConfig.getCategories
+        notify(ObjectModifiedEvent(cfg.classifiers.classifier1))
         expectedCategories.remove('maintenance')
         expectedClassifiers.remove('classifier1')
-        # getCategories has caching in the REQUEST, we need to wipe this out
-        self.cleanMemoize()
         self.changeUser('pmCreator1')
         # if current user is not creator for one of the using_groups defined for the category, he can not use it
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
@@ -136,14 +136,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual([cat.id for cat in cfg.getCategories(userId='pmCreator2')], expectedCategories)
         # change using_groups for 'subproducts'
         cfg.categories.subproducts.using_groups = (self.developers_uid,)
+        # invalidate cache of MeetingConfig.getCategories
+        notify(ObjectModifiedEvent(cfg.categories.subproducts))
         expectedCategories.remove('subproducts')
-        # getCategories has caching in the REQUEST, we need to wipe this out
-        self.cleanMemoize()
         self.assertEqual([cat.id for cat in cfg.getCategories(userId='pmCreator2')], expectedCategories)
 
         # if useGroupsAsCategories is on, getCategories will still return categories
         cfg.setUseGroupsAsCategories(True)
-        self.cleanMemoize()
         expectedCategories.remove('maintenance')
         expectedCategories.append('subproducts')
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
@@ -4484,7 +4483,6 @@ class testMeetingItem(PloneMeetingTestCase):
         # unset current meeting so we check with the getMeetingToInsertIntoWhenNoCurrentMeetingObject
         item.REQUEST['PUBLISHED'] = item
         # here item is presentable
-        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         self.assertTrue(item.wfConditions().mayPresent())
         actions_panel._transitions = None
         validatedItemCreatedMeeting_rendered_actions_panel = actions_panel()
@@ -4507,7 +4505,6 @@ class testMeetingItem(PloneMeetingTestCase):
         validatedItemCreatedMeeting_rendered_actions_panel = actions_panel()
         self.freezeMeeting(meeting)
         # here item is no more presentable
-        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         self.assertFalse(item.wfConditions().mayPresent())
         actions_panel._transitions = None
         validatedItemFrozenMeeting_rendered_actions_panel = actions_panel()

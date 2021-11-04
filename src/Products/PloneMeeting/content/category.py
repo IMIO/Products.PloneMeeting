@@ -133,13 +133,12 @@ class MeetingCategory(Item):
         tool = api.portal.get_tool('portal_plonemeeting')
         # If we have using_groups make sure userId is creator for one of it
         selectable = self.enabled
-        if selectable and self.get_using_groups() and not tool.isManager(self, realManagers=True):
-            cfg = tool.getMeetingConfig(self)
-            selectable_orgs = tool.get_selectable_orgs(cfg, user_id=userId)
-            keys = [selectable_org.UID() for selectable_org in selectable_orgs]
-            # Check intersection between self.usingGroups and orgs for which
+        cfg = tool.getMeetingConfig(self)
+        if selectable and self.get_using_groups() and not tool.isManager(cfg, realManagers=True):
+            selectable_org_uids = tool.get_selectable_orgs(cfg, user_id=userId, the_objects=False)
+            # Check intersection between self.usingGroups and org uids for which
             # the current user is creator
-            selectable = bool(set(self.get_using_groups()).intersection(keys))
+            selectable = bool(set(self.get_using_groups()).intersection(selectable_org_uids))
         return selectable
 
     def get_groups_in_charge(self, the_objects=False):

@@ -346,7 +346,6 @@ class PloneMeetingTestingHelpers:
             for group_id in [user_group_id for user_group_id in user.getGroups()
                              if '_' in user_group_id]:
                 api.group.remove_user(groupname=group_id, username=extra_user_id)
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
 
     def _initial_state(self, obj):
         """Return the workflow initial_state of given p_obj."""

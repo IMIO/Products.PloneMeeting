@@ -18,6 +18,7 @@ from copy import deepcopy
 from datetime import datetime
 from DateTime import DateTime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
+from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import get_vocab
 from imio.helpers.content import safe_delattr
 from imio.helpers.content import uuidsToObjects
@@ -106,6 +107,7 @@ from Products.PloneMeeting.utils import down_or_up_wf
 from Products.PloneMeeting.utils import escape
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
+from Products.PloneMeeting.utils import get_current_user_id
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -438,7 +440,7 @@ class MeetingItemWorkflowConditions(object):
                         # is current user member of last validation level?
                         suffix = self.cfg.getItemWFValidationLevels(state=last_val_state, data='suffix')
                         res = self.tool.group_is_not_empty(
-                            proposingGroup, suffix, user_id=api.user.get_current().id)
+                            proposingGroup, suffix, user_id=get_current_user_id())
             # using 'waiting_advices_XXX_send_back' WFAdaptations,
             elif item_state.endswith('_waiting_advices'):
                 item_validation_states = self.cfg.getItemWFValidationLevels(data='state', only_enabled=True)
@@ -466,7 +468,7 @@ class MeetingItemWorkflowConditions(object):
                             # is current user member of destinationState level?
                             suffix = self.cfg.getItemWFValidationLevels(state=destinationState, data='suffix')
                             res = self.tool.group_is_not_empty(
-                                proposingGroup, suffix, user_id=api.user.get_current().id)
+                                proposingGroup, suffix, user_id=get_current_user_id(self.context.REQUEST))
                         # if not, maybe it is an adviser able to give an advice?
                         if not res and 'waiting_advices_adviser_send_back' in wfas:
                             # adviser may send back to validated when using
@@ -3088,16 +3090,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         self.REQUEST.set('meeting__%s' % meeting_uid, res)
         return res
 
-    def getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey(method, self):
-        '''cachekey method for self.getMeetingToInsertIntoWhenNoCurrentMeetingObject.'''
-        # do only recompute once by REQUEST
-        return (repr(self), str(self.REQUEST._debug))
 
-    @ram.cache(getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey)
-    def getMeetingToInsertIntoWhenNoCurrentMeetingObject(self):
-        '''Return the meeting the item will be inserted into in case the 'present'
-           transition from another view than the meeting view.  This will take into
-           acount meeting states defined in MeetingConfig.meetingPresentItemWhenNoCurrentMeetingStates.'''
+    def getMeetingToInsertIntoWhenNoCurrentMeetingObjectPath_cachekey(method, self):
+        '''cachekey method for self.getMeetingToInsertIntoWhenNoCurrentMeetingObjectPath.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.Meeting.modified')
+        return repr(self), self.modified(), date
+
+    @ram.cache(getMeetingToInsertIntoWhenNoCurrentMeetingObjectPath_cachekey)
+    def getMeetingToInsertIntoWhenNoCurrentMeetingObjectPath(self):
+        """Cached method used by getMeetingToInsertIntoWhenNoCurrentMeetingObject."""
+        res = None
         # first, find meetings in the future still accepting items
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
@@ -3127,8 +3129,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # that current user may edit returned meeting
             if meeting.wfConditions().may_accept_items() and \
                (not meeting.is_late() or self.wfConditions().isLateFor(meeting)):
-                return meeting
-        return None
+                res = meeting
+                break
+        return res and "/".join(res.getPhysicalPath())
+
+    def getMeetingToInsertIntoWhenNoCurrentMeetingObject(self):
+        '''Return the meeting the item will be inserted into in case the 'present'
+           transition from another view than the meeting view.  This will take into
+           acount meeting states defined in MeetingConfig.meetingPresentItemWhenNoCurrentMeetingStates.'''
+        meeting_path = self.getMeetingToInsertIntoWhenNoCurrentMeetingObjectPath()
+        meeting = None
+        if meeting_path:
+            portal = api.portal.get()
+            meeting = portal.unrestrictedTraverse(meeting_path)
+        return meeting
 
     def _getOtherMeetingConfigsImAmClonedIn(self):
         '''Returns a list of meetingConfig ids self has been cloned to'''
@@ -3142,7 +3156,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def isPrivacyViewable_cachekey(method, self):
         '''cachekey method for self.isPrivacyViewable.'''
         item = self.getSelf()
-        return (repr(item), str(item.REQUEST._debug))
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return (repr(item), item.modified(), tool._users_groups_value())
 
     security.declarePublic('isPrivacyViewable')
 
@@ -3701,7 +3716,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def attributeIsUsed_cachekey(method, self, name):
         '''cachekey method for self.attributeIsUsed.'''
-        return (name, str(self.REQUEST._debug))
+        return name
 
     security.declarePublic('attributeIsUsed')
 
@@ -5079,7 +5094,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns a list of contained meetingadvice objects.'''
         res = []
         tool = api.portal.get_tool('portal_plonemeeting')
-        advicePortalTypeIds = tool.getAdvicePortalTypes(as_ids=True)
+        advicePortalTypeIds = tool.getAdvicePortalTypeIds()
         for obj in self.objectValues('Dexterity Container'):
             if obj.portal_type in advicePortalTypeIds:
                 res.append(obj)
@@ -6332,7 +6347,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.autoCopyGroups = PersistentList()
         # Remove temp local role that allowed to create the item in
         # portal_factory.
-        userId = api.user.get_current().getId()
+        userId = get_current_user_id(self.REQUEST)
         self.manage_delLocalRoles([userId])
         self.manage_addLocalRoles(userId, ('Owner',))
         # update groupsInCharge before update_local_roles
@@ -6396,10 +6411,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         if self.query_state() in cfg.getRecordItemHistoryStates():
             # Create the event
-            user = api.user.get_current()
+            user_id = get_current_user_id(self.REQUEST)
             event = {'action': action, 'type': subObj.meta_type,
                      'title': subObj.Title(), 'time': DateTime(),
-                     'actor': user.id}
+                     'actor': user_id}
             event.update(kwargs)
             # Add the event to item's history
             self.itemHistory.append(event)
@@ -6707,7 +6722,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def showDuplicateItemAction_cachekey(method, self, brain=False):
         '''cachekey method for self.showDuplicateItemAction.'''
-        return (repr(self), str(self.REQUEST._debug))
+        item = self.getSelf()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return (repr(item), item.modified(), tool._users_groups_value())
 
     security.declarePublic('showDuplicateItemAction')
 
@@ -6779,7 +6796,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # Get the PloneMeetingFolder of the current user as destFolder
         tool = api.portal.get_tool('portal_plonemeeting')
-        userId = api.user.get_current().getId()
+        userId = get_current_user_id(self.REQUEST)
         # make sure the newOwnerId exist (for example a user created an item, the
         # user was deleted and we are now cloning his item)
         if newOwnerId and not api.user.get(userid=newOwnerId):
@@ -7192,8 +7209,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Just check that the item is myself, a Plone Site or removing a MeetingConfig.
         # We can remove an item directly, not "through" his container.
         if item.meta_type not in ['Plone Site', 'MeetingConfig', 'MeetingItem', ]:
-            user = api.user.get_current()
-            logger.warn(BEFOREDELETE_ERROR % (user.getId(), self.id))
+            user_id = get_current_user_id(item.REQUEST)
+            logger.warn(BEFOREDELETE_ERROR % (user_id, self.id))
             raise BeforeDeleteException(
                 translate("can_not_delete_meetingitem_container",
                           domain="plone",

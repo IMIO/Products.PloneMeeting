@@ -244,9 +244,6 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         '''Logs out currently logged user and logs in p_loginName.'''
         logout()
         self.cleanMemoize()
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user')
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.isPowerObserverForCfg')
         if loginName == 'admin':
             login(self.app, loginName)
         else:
@@ -522,12 +519,14 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         # borg localroles are memoized...
         # so while checking local roles twice, there could be problems...
         # remove memoized localroles
-        cleanMemoize(self.portal, prefixes=['borg.localrole.workspace.checkLocalRolesAllowed',
-                                            'tool-getmeetinggroups-',
-                                            'meeting-config-getcategories-',
-                                            'meeting-config-gettopics-',
-                                            'plonegroup-utils-get_organizations-',
-                                            'add_auto_copy_groups_search_for_expression__'])
+        cleanMemoize(self.portal,
+                     prefixes=['borg.localrole.workspace.checkLocalRolesAllowed',
+                               'tool-getmeetinggroups-',
+                               'meeting-config-getcategories-',
+                               'meeting-config-gettopics-',
+                               'plonegroup-utils-get_organizations-',
+                               'add_auto_copy_groups_search_for_expression__',
+                               'PloneMeeting-MeetingConfig-getMeetingsAcceptingItems'])
 
     def _removeOrganizations(self):
         """Delete every organizations found in own_org."""
@@ -614,14 +613,12 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         """We need to changeUser so getGroups is updated."""
         self.portal.portal_groups.addPrincipalToGroup(principal_id, group_id)
         self.changeUser(self.member.getId())
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
 
     def _removePrincipalFromGroups(self, principal_id, group_ids):
         """We need to changeUser so getGroups is updated."""
         for group_id in group_ids:
             self.portal.portal_groups.removePrincipalFromGroup(principal_id, group_id)
         self.changeUser(self.member.getId())
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
 
     def _setPowerObserverStates(self,
                                 cfg=None,

@@ -45,6 +45,7 @@ from Products.PloneMeeting.utils import AdviceAfterModifyEvent
 from Products.PloneMeeting.utils import AdviceAfterTransitionEvent
 from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_current_user_id
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import ItemAfterTransitionEvent
 from Products.PloneMeeting.utils import MeetingAfterTransitionEvent
@@ -248,14 +249,36 @@ def onConfigBeforeTransition(config, event):
 
 def _invalidateOrgRelatedCachedVocabularies():
     '''Clean cache for vocabularies using organizations.'''
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.associatedgroupsvocabulary")
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.copygroupsvocabulary")
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.everyorganizationsvocabulary")
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary")
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
+    invalidate_cachekey_volatile_for(
+        "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary", get_again=True)
+    invalidate_cachekey_volatile_for(
+        "Products.PloneMeeting.vocabularies.associatedgroupsvocabulary", get_again=True)
+    invalidate_cachekey_volatile_for(
+        "Products.PloneMeeting.vocabularies.copygroupsvocabulary", get_again=True)
+    invalidate_cachekey_volatile_for(
+        "Products.PloneMeeting.vocabularies.everyorganizationsvocabulary", get_again=True)
+    invalidate_cachekey_volatile_for(
+        "Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary", get_again=True)
+    invalidate_cachekey_volatile_for(
+        "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary", get_again=True)
+    invalidate_cachekey_volatile_for(
+        "Products.PloneMeeting.vocabularies.groupsinchargevocabulary", get_again=True)
+    invalidate_cachekey_volatile_for(
+        "Products.PloneMeeting.vocabularies.askedadvicesvocabulary", get_again=True)
+
+
+def _invalidateUsersAndGroupsRelatedCachedVocabularies():
+    '''Clean cache for vocabularies using Plone users and groups.'''
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user', get_again=True)
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user', get_again=True)
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.ToolPloneMeeting.group_is_not_empty', get_again=True)
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.ToolPloneMeeting.userIsAmong', get_again=True)
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.ToolPloneMeeting._users_groups_value', get_again=True)
 
 
 def onOrgWillBeRemoved(current_org, event):
@@ -305,7 +328,7 @@ def onOrgWillBeRemoved(current_org, event):
                                                       mapping={'cfg_url': mc.absolute_url()},
                                                       domain="plone",
                                                       context=request))
-        for cat in mc.getCategories(catType='all', onlySelectable=False, caching=False):
+        for cat in mc.getCategories(catType='all', onlySelectable=False):
             if current_org_uid in cat.get_using_groups() or current_org_uid in cat.get_groups_in_charge():
                 raise BeforeDeleteException(translate("can_not_delete_organization_meetingcategory",
                                                       mapping={'url': cat.absolute_url()},
@@ -373,11 +396,7 @@ def onRegistryModified(event):
     if IRecordModifiedEvent.providedBy(event):  # and event.record.interface == IContactPlonegroupConfig:
         if event.record.fieldName == 'organizations' and event.oldValue:
             _invalidateOrgRelatedCachedVocabularies()
-            # invalidate cache for organizations related methods
-            invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
-            invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user')
-            invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.group_is_not_empty')
-            invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
+            _invalidateUsersAndGroupsRelatedCachedVocabularies()
 
             old_set = set(event.oldValue)
             new_set = set(event.newValue)
@@ -533,7 +552,7 @@ def _check_item_pasted_in_cfg(item):
         # we get an element with a wrong portal_type, moreover it would be work
         # to ensure that copied data are valid : category, opitonal fields, ...
         tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(item, caching=False)
+        cfg = tool.getMeetingConfig(item)
         # not same cfg manage portal_type
         recurringItemPortalType = cfg.getItemTypeName(configType='MeetingItemRecurring')
         itemTemplatePortalType = cfg.getItemTypeName(configType='MeetingItemTemplate')
@@ -622,8 +641,8 @@ def item_added_or_initialized(item):
     item._v_already_initialized = True
 
     # make sure workflow mapping is applied, plone.restapi needs it...
-    user = api.user.get_current()
-    item.manage_addLocalRoles(user.getId(), ('Editor', 'Reader'))
+    user_id = get_current_user_id(item.REQUEST)
+    item.manage_addLocalRoles(user_id, ('Editor', 'Reader'))
     # Add a place to store adviceIndex
     item.adviceIndex = PersistentMapping()
     # Add a place to store emergency changes history
@@ -1029,7 +1048,7 @@ def onMeetingCreated(meeting, event):
        - created;
        - moved;
        - added."""
-    userId = api.user.get_current().getId()
+    userId = get_current_user_id(meeting.REQUEST)
     meeting.manage_addLocalRoles(userId, ('Owner',))
     # place to store item absents
     meeting.item_absents = PersistentMapping()
@@ -1394,7 +1413,7 @@ def onCategoryWillBeRemoved(category, event):
     for other_cfg in tool.objectValues('MeetingConfig'):
         if other_cfg == cfg:
             continue
-        for other_cat in other_cfg.getCategories(catType=catType, onlySelectable=False, caching=False):
+        for other_cat in other_cfg.getCategories(catType=catType, onlySelectable=False):
             if cat_mapping_id in other_cat.category_mapping_when_cloning_to_other_mc:
                 msg = translate(
                     "can_not_delete_meetingcategory_other_category_mapping",
@@ -1425,3 +1444,13 @@ def onMeetingWillBeRemoved(meeting, event):
     member = api.user.get_current()
     if member.has_role('Manager'):
         meeting.REQUEST.set('items_to_remove', meeting.get_items())
+
+
+def onPrincipalAddedToGroup(event):
+    """ """
+    _invalidateUsersAndGroupsRelatedCachedVocabularies()
+
+
+def onPrincipalRemovedFromGroup(event):
+    """ """
+    _invalidateUsersAndGroupsRelatedCachedVocabularies()
