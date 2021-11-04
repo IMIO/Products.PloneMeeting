@@ -21,7 +21,7 @@
                                   adviceHolder python: advice.get('adviceHolder', None) or view.context;
                                   adviceHolderIsViewable python: adviceHolder.isViewable();
                                   obj python: advice.get('advice_id', None) and adviceHolder.get(advice['advice_id'], None);
-                                  obj_absolute_url python: advice.get('advice_id', None) and item_url + '/' + advice['advice_id'] or '';
+                                  obj_absolute_url python: obj and obj.absolute_url() or '';
                                   customMessageInfos python: context.adapted().getCustomAdviceMessageFor(advice);
                                   displayDefaultComplementaryMessage python: customMessageInfos['displayDefaultComplementaryMessage'];
                                   displayAdviceReviewState python: customMessageInfos['displayAdviceReviewState'];
