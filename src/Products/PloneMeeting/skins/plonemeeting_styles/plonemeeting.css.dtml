@@ -1071,6 +1071,7 @@ div.discreet.advice_additional_infos {
 /* skin the way number of days left for delay-aware advice is displayed (colors, ...) */
 .advice_delay {
     position: relative;
+    top: 2px;
     left: -7px;
     margin-right: -6px;
     font-weight: bold;
