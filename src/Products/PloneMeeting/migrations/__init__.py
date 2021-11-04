@@ -472,6 +472,12 @@ class Migrator(BaseMigrator):
         if done:
             logger.info('Done.')
 
+    def warnPortalSkinsCustom(self):
+        """Add a warning for each value found in portal_skins/custom."""
+        values = self.portal.portal_skins.custom.objectIds()
+        for value in values:
+            self.warn(logger, "\"%s\" was found in portal_skins/custom, still necessary?" % value)
+
     def run(self):
         '''Must be overridden. This method does the migration job.'''
         raise 'You should have overridden me darling.'''
@@ -487,6 +493,7 @@ class Migrator(BaseMigrator):
         for cfgId in self.cfgsAdvicesInvalidation:
             cfg = getattr(self.tool, cfgId)
             cfg.setEnableAdviceInvalidation(self.cfgsAdvicesInvalidation[cfgId])
+        self.warnPortalSkinsCustom()
         self.cleanRegistries()
         self.tool.invalidateAllCache()
         BaseMigrator.finish(self)
