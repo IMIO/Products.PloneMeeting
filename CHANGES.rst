@@ -56,6 +56,12 @@ Changelog
 - Added `utils.get_annexes_config` function to be able to get the annexes config
   depending on `context` and annex `portal_type`.
   [gbastien]
+- Fixed sending a WF transition notification e-mail when actor had
+  a special character in it's fullname.
+  [gastien]
+- Removed reference to `pre_validation` WF adaptation that does not exist anymore,
+  adapted code accordingly.
+  [gbastien]
 - Adapted `ToolPloneMeeting._users_groups_value` returned value and cachekey:
 
   - before we returned the full users/groups association which may be huge and

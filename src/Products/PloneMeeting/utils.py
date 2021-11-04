@@ -476,13 +476,13 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         'meetingLongTitle': '',
         'itemTitle': '',
         'user': userName,
-        'groups': userGroups,
+        'groups': safe_unicode(userGroups),
         'meetingConfigTitle': safe_unicode(cfg.Title()),
         'transitionActor': wf_action and
-        tool.getUserName(wf_action['actor'], withUserId=True) or '-',
+        safe_unicode(tool.getUserName(wf_action['actor'], withUserId=True)) or u'-',
         'transitionTitle': wf_action and
-        translate(wf_action['action'], domain="plone", context=obj.REQUEST) or '-',
-        'transitionComments': wf_action and safe_unicode(wf_action['comments']) or '-',
+        translate(wf_action['action'], domain="plone", context=obj.REQUEST) or u'-',
+        'transitionComments': wf_action and safe_unicode(wf_action['comments']) or u'-',
     })
     if obj.getTagName() == 'Meeting':
         translationMapping['meetingTitle'] = safe_unicode(obj.Title())

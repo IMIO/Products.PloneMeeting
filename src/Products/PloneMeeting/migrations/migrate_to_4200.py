@@ -698,6 +698,9 @@ class Migrate_To_4200(Migrator):
         self.updateTALConditions("isManager(context", "isManager(cfg")
         self.updateTALConditions("isManager(here", "isManager(cfg")
         self.updateTALConditions("isManager(obj)", "isManager(cfg)")
+        self.updateTALConditions(
+            "'pre_validation' in cfg.getWorkflowAdaptations()",
+            "'pre_validated' in cfg.getItemWFValidationLevels(data='state', only_enabled=True)")
 
         # replacements MeetingConfig item columns
         self.cleanItemColumns(

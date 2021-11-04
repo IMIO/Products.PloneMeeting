@@ -51,6 +51,7 @@ from Products.PloneMeeting.utils import convert2xhtml
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_field
 from Products.PloneMeeting.utils import get_dx_widget
+from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import get_person_from_userid
 from z3c.form.field import Fields
 from z3c.form.interfaces import DISPLAY_MODE
@@ -1944,10 +1945,8 @@ class PMDisplayGroupUsersView(DisplayGroupUsersView):
         """ """
         suffixes = get_all_suffixes(group_id)
         cfg = self.tool.getMeetingConfig(self.context)
-        if 'prereviewers' in suffixes and \
-           not [wfa for wfa in cfg.getWorkflowAdaptations()
-                if wfa.startswith('pre_validation')]:
-            suffixes.remove('prereviewers')
+        cfg_suffixes = get_item_validation_wf_suffixes(cfg)
+        suffixes = [suffix for suffix in suffixes if suffix in cfg_suffixes]
         return suffixes
 
 
