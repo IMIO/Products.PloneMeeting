@@ -56,6 +56,9 @@ Changelog
 - Added `utils.get_annexes_config` function to be able to get the annexes config
   depending on `context` and annex `portal_type`.
   [gbastien]
+- Fixed sending a WF transition notification e-mail when actor had
+  a special character in it's fullname.
+  [gastien]
 
 4.2b18 (2021-10-13)
 -------------------
