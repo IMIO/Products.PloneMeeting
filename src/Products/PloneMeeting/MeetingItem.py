@@ -2758,7 +2758,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             org = get_organization(k)
             groupsInCharge = org.groups_in_charge
             if not groupsInCharge:
-                # append a value that will let use a simple proposingGroup without groupInCharge
+                # append a value that will let use a simple
+                # proposingGroup without groupInCharge
                 key = u'{0}__groupincharge__{1}'.format(k, '')
                 res.append((key, u'{0} ()'.format(v)))
             for gic_org_uid in org.groups_in_charge:
@@ -2771,11 +2772,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # make sure current value is still in the vocabulary
         current_value = self.getProposingGroupWithGroupInCharge()
-        if current_value and current_value not in res.keys():
-            current_proposingGroupUid, current_groupInChargeUid = current_value.split('__groupincharge__')
+        if include_stored and current_value and current_value not in res.keys():
+            current_proposingGroupUid, current_groupInChargeUid = \
+                current_value.split('__groupincharge__')
             res.add(current_value,
-                    u'{0} ({1})'.format(get_organization(current_proposingGroupUid).get_full_title(),
-                                        get_organization(current_groupInChargeUid).get_full_title()))
+                    u'{0} ({1})'.format(
+                        get_organization(current_proposingGroupUid).get_full_title(),
+                        get_organization(current_groupInChargeUid).get_full_title()))
         return res.sortedByValue()
 
     security.declarePrivate('listItemTags')

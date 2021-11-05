@@ -286,32 +286,38 @@ class testToolPloneMeeting(PloneMeetingTestCase):
     def test_pm_CloneItemKeepProposingGroupWithGroupInCharge(self):
         '''Test keepProposingGroup when using field proposingGroupWithGroupInCharge.'''
         self._enableField('proposingGroupWithGroupInCharge')
+        # make pmCreator2 able to see item of pmCreator1 so he may duplicate it
+        self._addPrincipalToGroup('pmCreator2', self.developers_observers)
         # set vendors in charge of dev and vice versa
         self.developers.groups_in_charge = (self.vendors_uid, )
         self.vendors.groups_in_charge = (self.developers_uid, )
-        self.changeUser('pmCreator2')
+        self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setProposingGroupWithGroupInCharge(item.listProposingGroupsWithGroupsInCharge()[0])
         self.assertEqual(item.getProposingGroupWithGroupInCharge(),
-                         '{0}__groupincharge__{1}'.format(self.vendors_uid, self.developers_uid))
-        self.assertEqual(item.getProposingGroup(), self.vendors_uid)
-        self.assertEqual(item.getGroupsInCharge(), [self.developers_uid])
-        # clone as pmManager that is not creator for vendors
+                         '{0}__groupincharge__{1}'.format(self.developers_uid, self.vendors_uid))
+        self.assertEqual(item.getProposingGroup(), self.developers_uid)
+        self.assertEqual(item.getGroupsInCharge(), [self.vendors_uid])
+        # clone as pmCreator2 that is not creator for developers
         self.validateItem(item)
-        self.changeUser('pmManager')
-        self.failIf(self.vendors_creators in self.member.getGroups())
+        self.changeUser('pmCreator2')
+        self.failIf(self.developers_creators in self.member.getGroups())
         # clone it keeping the proposingGroup
         clonedItem = item.clone(keepProposingGroup=True)
-        self.assertEqual(clonedItem.getProposingGroup(), self.vendors_uid)
-        self.assertEqual(clonedItem.getGroupsInCharge(), [self.developers_uid])
         self.assertEqual(clonedItem.getProposingGroupWithGroupInCharge(),
-                         '{0}__groupincharge__{1}'.format(self.vendors_uid, self.developers_uid))
-        # clone it without keeping the proposingGroup
-        clonedItem = item.clone()
+                         item.getProposingGroupWithGroupInCharge())
         self.assertEqual(clonedItem.getProposingGroup(), self.developers_uid)
         self.assertEqual(clonedItem.getGroupsInCharge(), [self.vendors_uid])
         self.assertEqual(clonedItem.getProposingGroupWithGroupInCharge(),
                          '{0}__groupincharge__{1}'.format(self.developers_uid, self.vendors_uid))
+        # clone it without keeping the proposingGroup
+        clonedItem = item.clone()
+        self.assertNotEqual(clonedItem.getProposingGroupWithGroupInCharge(),
+                            item.getProposingGroupWithGroupInCharge())
+        self.assertEqual(clonedItem.getProposingGroup(), self.vendors_uid)
+        self.assertEqual(clonedItem.getGroupsInCharge(), [self.developers_uid])
+        self.assertEqual(clonedItem.getProposingGroupWithGroupInCharge(),
+                         '{0}__groupincharge__{1}'.format(self.vendors_uid, self.developers_uid))
 
     def test_pm_PasteItem(self):
         '''Paste an item (previously copied) in destFolder.'''

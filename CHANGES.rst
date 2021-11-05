@@ -13,6 +13,11 @@ Changelog
 
 - Fixed `meetingitem_view` that still needs the `ploneEditor` value in 4.1.x.
   [gbastien]
+- Fixed bug when duplicating an item and using field
+  `MeetingItem.proposingGroupWithGroupInCharge`, it could happen that resulting
+  item kept the original `proposingGroup` for which current user is not creator
+  resulting into an item not viewable or editable.
+  [gbastien]
 
 4.1.28.31 (2021-10-28)
 ----------------------
