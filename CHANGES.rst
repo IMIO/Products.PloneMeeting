@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.28.32 (unreleased)
+4.1.28.32 (2021-11-05)
 ----------------------
 
 - Fixed `meetingitem_view` that still needs the `ploneEditor` value in 4.1.x.
