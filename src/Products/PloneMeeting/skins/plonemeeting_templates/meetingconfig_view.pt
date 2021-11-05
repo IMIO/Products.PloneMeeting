@@ -1259,7 +1259,7 @@
     </tal:votes>
 
     <tal:doc condition="python: pageName=='doc'">
-    <p i18n:translate="meetingconfig_doc_descr" class='pageNameDescr'></p><br />
+      <p i18n:translate="meetingconfig_doc_descr" class='pageNameDescr'></p><br />
 
       <table width="100%" class="discreet">
         <tr valign="top">
@@ -1271,7 +1271,8 @@
 
       <a name="podtemplates"></a>
       <fieldset tal:define="pFolder python:context.podtemplates;
-                            pFolderUrl pFolder/absolute_url">
+                            pFolderUrl python: pFolder.absolute_url();
+                            show_details python: context.REQUEST.get('show_details', False)">
         <legend>
          <span i18n:translate="PodTemplates"></span>
          <a href="#"
@@ -1281,7 +1282,7 @@
           <img src="#" tal:attributes="src string:$portal_url/new.png;" />
          </a>
         </legend>
-        <p class="discreet" i18n:translate="pod_templates_descr"></p><br />
+        <p class="discreet" i18n:translate="pod_templates_descr"></p>
         <h3 i18n:translate="">Style templates</h3>
         <table class="listing nosort"
                align="right"
@@ -1312,6 +1313,7 @@
                 </h5>
                 <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
                 <tal:additionalInformations
+                    condition="show_details"
                     define="context python: obj;
                             excludedFields python: ()">
                     <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
@@ -1362,6 +1364,7 @@
                 </h5>
                 <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
                 <tal:additionalInformations
+                    condition="show_details"
                     define="context python: obj;
                             excludedFields python: ('pod_formats', 'enabled')">
                     <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />

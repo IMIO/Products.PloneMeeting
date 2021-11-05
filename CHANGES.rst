@@ -80,6 +80,10 @@ Changelog
       it is possible.
 
   [gbastien]
+- By default when displaying the list of POD templates on the `MeetingConfig`
+  (in the `Documents` tab), do not display the POD templates details (every fields)
+  as it may be slow, this is only done when needed (click on link `Show details`).
+  [gbastien]
 
 4.2b18 (2021-10-13)
 -------------------
