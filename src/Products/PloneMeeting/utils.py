@@ -233,7 +233,10 @@ def get_referer_obj(request):
     referer_path = _referer_to_path(request)
     catalog = api.portal.get_tool('portal_catalog')
     brains = catalog(path={'query': referer_path, 'depth': 0})
-    return brains[0].getObject()
+    obj = None
+    if brains:
+        obj = brains[0].getObject()
+    return obj
 
 
 def getCurrentMeetingObject(context):

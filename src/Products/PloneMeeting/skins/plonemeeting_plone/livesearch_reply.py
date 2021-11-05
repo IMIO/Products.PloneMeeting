@@ -11,21 +11,12 @@ from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone import PloneMessageFactory as _
 from Products.CMFPlone.browser.navtree import getNavigationRoot
 from Products.CMFPlone.utils import safe_unicode
-from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PythonScripts.standard import html_quote
 from Products.PythonScripts.standard import url_quote_plus
 
 
 ploneUtils = getToolByName(context, 'plone_utils')
 portal_url = getToolByName(context, 'portal_url')()
-# XXX begin changes by PloneMeeting, define advanced_search_url
-tool = getToolByName(context, 'portal_plonemeeting')
-currentMeetingObject = getCurrentMeetingObject(context)
-mc = None
-if currentMeetingObject:
-    mc = tool.getMeetingConfig(currentMeetingObject)
-advanced_search_url = mc and (tool.getPloneMeetingFolder(mc.getId()).absolute_url() + '/search_form') or (portal_url + '/@@search')
-# XXX end changes by PloneMeeting
 pretty_title_or_id = ploneUtils.pretty_title_or_id
 plone_view = context.restrictedTraverse('@@plone')
 portal_state = context.restrictedTraverse('@@plone_portal_state')
@@ -127,10 +118,7 @@ if not results:
             % ts.translate(label_no_results_found, context=REQUEST))
     write('''<div class="LSRow">''')
     write('<a href="%s" class="advancedsearchlink">%s</a>' %
-    # XXX begin change by Products.PloneMeeting, comment line below to use advanced_search_url
-    #        (portal_url + '/@@search',
-            (advanced_search_url,
-    # XXX end change by Products.PloneMeeting
+           (portal_url + '/@@search',
             ts.translate(label_advanced_search, context=REQUEST)))
     write('''</div>''')
     write('''</div>''')
@@ -177,10 +165,7 @@ else:
 
     write('''<li class="LSRow">''')
     write('<a href="%s" class="advancedsearchlink advanced-search">%s</a>' %
-    # XXX begin change by Products.PloneMeeting, comment line below to use advanced_search_url
-    #        (portal_url + '/@@search',
-            (advanced_search_url,
-    # XXX end change by Products.PloneMeeting
+           (portal_url + '/@@search',
             ts.translate(label_advanced_search, context=REQUEST)))
     write('''</li>''')
 
