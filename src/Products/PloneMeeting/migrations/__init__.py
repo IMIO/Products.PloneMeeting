@@ -472,7 +472,7 @@ class Migrator(BaseMigrator):
         if done:
             logger.info('Done.')
 
-    def warnPortalSkinsCustom(self):
+    def _warnPortalSkinsCustom(self):
         """Add a warning for each value found in portal_skins/custom."""
         values = self.portal.portal_skins.custom.objectIds()
         for value in values:
@@ -493,7 +493,7 @@ class Migrator(BaseMigrator):
         for cfgId in self.cfgsAdvicesInvalidation:
             cfg = getattr(self.tool, cfgId)
             cfg.setEnableAdviceInvalidation(self.cfgsAdvicesInvalidation[cfgId])
-        self.warnPortalSkinsCustom()
+        self._warnPortalSkinsCustom()
         self.cleanRegistries()
         self.tool.invalidateAllCache()
         BaseMigrator.finish(self)
