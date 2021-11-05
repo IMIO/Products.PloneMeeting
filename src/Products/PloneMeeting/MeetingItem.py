@@ -3090,7 +3090,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         self.REQUEST.set('meeting__%s' % meeting_uid, res)
         return res
 
-
     def getMeetingToInsertIntoWhenNoCurrentMeetingObjectPath_cachekey(method, self):
         '''cachekey method for self.getMeetingToInsertIntoWhenNoCurrentMeetingObjectPath.'''
         date = get_cachekey_volatile('Products.PloneMeeting.Meeting.modified')
@@ -3156,8 +3155,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def isPrivacyViewable_cachekey(method, self):
         '''cachekey method for self.isPrivacyViewable.'''
         item = self.getSelf()
-        tool = api.portal.get_tool('portal_plonemeeting')
-        return (repr(item), item.modified(), tool._users_groups_value())
+        if item.getPrivacy().startswith('public'):
+            return True
+        else:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(item)
+            if not cfg.getRestrictAccessToSecretItems():
+                return True
+        return repr(item), item.modified(), get_current_user_id(), tool._users_groups_value()
 
     security.declarePublic('isPrivacyViewable')
 
@@ -6723,15 +6728,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                        for key, value in sibling.items()}
         return sibling.get(whichItem, sibling)
 
-    def showDuplicateItemAction_cachekey(method, self, brain=False):
-        '''cachekey method for self.showDuplicateItemAction.'''
-        item = self.getSelf()
-        tool = api.portal.get_tool('portal_plonemeeting')
-        return (repr(item), item.modified(), tool._users_groups_value())
-
     security.declarePublic('showDuplicateItemAction')
 
-    @ram.cache(showDuplicateItemAction_cachekey)
     def showDuplicateItemAction(self):
         '''Condition for displaying the 'duplicate' action in the interface.
            Returns True if the user can duplicate the item.'''
