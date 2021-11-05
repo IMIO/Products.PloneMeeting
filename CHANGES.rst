@@ -84,6 +84,11 @@ Changelog
   (in the `Documents` tab), do not display the POD templates details (every fields)
   as it may be slow, this is only done when needed (click on link `Show details`).
   [gbastien]
+- Fixed bug when duplicating an item and using field
+  `MeetingItem.proposingGroupWithGroupInCharge`, it could happen that resulting
+  item kept the original `proposingGroup` for which current user is not creator
+  resulting into an item not viewable or editable.
+  [gbastien]
 
 4.2b18 (2021-10-13)
 -------------------
