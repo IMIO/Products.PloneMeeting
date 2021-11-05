@@ -74,7 +74,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion name="c5" i18n:attributes="title">
@@ -96,11 +96,11 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion name="c6" i18n:attributes="title">
-   <property name="widget">checkbox</property>
+   <property name="widget">multiselect</property>
    <property name="title">Review state</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -111,11 +111,14 @@
    <property name="index">review_state</property>
    <property name="operator">or</property>
    <property name="operator_visible">False</property>
+   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.itemreviewstatesvocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
+   <property name="closeonselect">True</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion name="c7" i18n:attributes="title">
@@ -137,7 +140,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion name="c8" i18n:attributes="title">
@@ -159,7 +162,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion name="c9" i18n:attributes="title">
@@ -181,7 +184,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion name="c10" i18n:attributes="title">
@@ -203,7 +206,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion name="c11" i18n:attributes="title">
@@ -225,7 +228,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion name="c12" i18n:attributes="title">
@@ -247,7 +250,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion name="c13" i18n:attributes="title">
@@ -447,7 +450,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion name="c24" i18n:attributes="title">
@@ -469,7 +472,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion name="c26" i18n:attributes="title">
@@ -491,7 +494,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion name="c27" i18n:attributes="title">
@@ -513,7 +516,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion name="c28">
@@ -551,7 +554,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">False</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion name="c30">
@@ -589,7 +592,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
  </criteria>
