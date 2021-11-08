@@ -7,6 +7,10 @@
 # GNU General Public License (GPL)
 #
 
+
+import monkey # noqa
+
+
 from plone import api
 from plone.app.robotframework.testing import REMOTE_LIBRARY_BUNDLE_FIXTURE
 from plone.app.testing import FunctionalTesting
@@ -56,8 +60,8 @@ PM_Z2 = z2.IntegrationTesting(bases=(z2.STARTUP, PM_ZCML),
 PM_TESTING_PROFILE = PMLayer(
     zcml_filename="testing.zcml",
     zcml_package=Products.PloneMeeting,
-    additional_z2_products=('collective.eeafaceted.collectionwidget',
-                            'Products.PloneMeeting',
+    additional_z2_products=('Products.PloneMeeting',
+                            'collective.eeafaceted.collectionwidget',
                             'Products.CMFPlacefulWorkflow',
                             'Products.PasswordStrength'),
     gs_profile_id='Products.PloneMeeting:testing',

@@ -67,13 +67,19 @@ class testMeetingConfig(PloneMeetingTestCase):
     def test_pm_Validate_shortName(self):
         '''Test the MeetingConfig.shortName validate method.
            This validates that the shortName is unique across every MeetingConfigs.'''
+        self.changeUser("siteadmin")
         cfg = self.meetingConfig
         cfg2Name = self.meetingConfig2.getShortName()
         # can validate it's own shortName
         self.assertFalse(cfg.validate_shortName(cfg.getShortName()))
         # can validate an unknown shortName
         self.assertFalse(cfg.validate_shortName('other-short-name'))
-        self.assertTrue(cfg.validate_shortName(cfg2Name) == DUPLICATE_SHORT_NAME % cfg2Name)
+        self.assertEqual(cfg.validate_shortName(cfg2Name),
+                         DUPLICATE_SHORT_NAME % cfg2Name)
+        # test the validate method as it is monkeypatched
+        self.request.form["shortName"] = cfg2Name
+        self.assertEqual(cfg.validate(REQUEST=self.request, data=self.request.form),
+                         {"shortName": DUPLICATE_SHORT_NAME % cfg2Name})
 
     def test_pm_Validate_customAdvisersSameRowIdForDifferentRows(self):
         '''This validates that there can not be several rows having same 'row_id'.

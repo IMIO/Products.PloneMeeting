@@ -47,6 +47,7 @@ setup(name='Products.PloneMeeting',
                           amqp=[]),
       install_requires=[
           'appy > 0.8.0',
+          'archetypes.schematuning',
           'beautifulsoup4',
           'natsort',
           'setuptools',
