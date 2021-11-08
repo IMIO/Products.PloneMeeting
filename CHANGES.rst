@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2b19 (unreleased)
+4.2b19 (2021-11-08)
 -------------------
 
 - Adapted display condition of the `searchmyitemstoadvice` dashboard collection
