@@ -58,7 +58,6 @@ def initialize(context):
     """initialize product (called by zope)"""
 
     from Products.PloneMeeting import monkey
-
     import Meeting
     import MeetingCategory
     import MeetingConfig

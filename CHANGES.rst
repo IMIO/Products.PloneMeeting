@@ -5,8 +5,10 @@ Changelog
 4.2b20 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Rely on `archetypes.schematuning` (thought it was already the case).
+  [gbastien]
+- Fixed `monkey.validate` (load `monkey` in tests so it is taken into account).
+  [gbastien]
 
 4.2b19 (2021-11-08)
 -------------------
