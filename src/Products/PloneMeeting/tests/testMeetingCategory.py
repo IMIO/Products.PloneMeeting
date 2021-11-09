@@ -126,6 +126,9 @@ class testMeetingCategory(PloneMeetingTestCase):
         '''Test the vocabulary of the 'category_mapping_when_cloning_to_other_mc' field.'''
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
+        # use special chars in MC title to check for unicodeDecodeErrors
+        cfg.setTitle("héhé")
+        cfg2.setTitle("hàhà")
         # by default, items of meetingConfig can be sent to meetingConfig2
         # as meetingConfig2 use categories, it will appear in a category of meetingConfig
         aCatInMC = cfg.categories.development
@@ -137,7 +140,8 @@ class testMeetingCategory(PloneMeetingTestCase):
         self.assertFalse(cfg2.categories.marketing.enabled)
         self.assertTrue("{0}.marketing".format(cfg2.getId()) in vocab_factory(aCatInMC))
         # only terms of cfg2
-        self.assertFalse([term for term in vocab_factory(aCatInMC) if cfg2.getId() not in term.token])
+        self.assertFalse([term for term in vocab_factory(aCatInMC)
+                          if cfg2.getId() not in term.token])
         # but as meetingConfig does not use categories, a category of meetingConfig2 will not see it
         aCatInMC2 = cfg2.categories.deployment
         self.assertEqual(len(vocab_factory(aCatInMC2)), 0)
@@ -151,7 +155,8 @@ class testMeetingCategory(PloneMeetingTestCase):
               'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
         self.assertEqual(len(vocab_factory(aCatInMC2)), 3)
         # only terms of cfg
-        self.assertFalse([term for term in vocab_factory(aCatInMC2) if cfg.getId() not in term.token])
+        self.assertFalse([term for term in vocab_factory(aCatInMC2)
+                          if cfg.getId() not in term.token])
 
     def test_pm_validate_category_mapping_when_cloning_to_other_mc(self):
         '''Test the 'category_mapping_when_cloning_to_other_mc' invariant.

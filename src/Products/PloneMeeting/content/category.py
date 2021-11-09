@@ -7,6 +7,7 @@ from plone import api
 from plone.autoform import directives as form
 from plone.dexterity.content import Item
 from plone.dexterity.schema import DexteritySchemaPolicy
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
@@ -197,7 +198,7 @@ class CategoriesOfOtherMCsVocabulary(object):
             otherMCTitle = otherMCObj.Title()
             for category in otherMCObj.getCategories(catType=catType, onlySelectable=False):
                 cat_id = '%s.%s' % (otherMCId, category.getId())
-                cat_title = '%s -> %s' % (otherMCTitle, category.Title())
+                cat_title = safe_unicode('%s -> %s' % (otherMCTitle, category.Title()))
                 if not category.enabled:
                     cat_title = translate(
                         '${element_title} (Inactive)',

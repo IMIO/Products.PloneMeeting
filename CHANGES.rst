@@ -9,6 +9,9 @@ Changelog
   [gbastien]
 - Fixed `monkey.validate` (load `monkey` in tests so it is taken into account).
   [gbastien]
+- Fixed `UnicodeDecodeError` in `CategoriesOfOtherMCsVocabulary` when an disabled
+  category was in a `MeetingConfig` ihaving special characters in it's title.
+  [gbastien]
 
 4.2b19 (2021-11-08)
 -------------------
