@@ -12,6 +12,9 @@ Changelog
 - Fixed `UnicodeDecodeError` in `CategoriesOfOtherMCsVocabulary` when an disabled
   category was in a `MeetingConfig` ihaving special characters in it's title.
   [gbastien]
+- Do not fail in `PMGenerablePODTemplatesAdapter.get_all_pod_templates` when
+  `portal_ploneMeeting` is not available (for example when testing `imio.pm.wsclient`).
+  [gbastien]
 
 4.2b19 (2021-11-08)
 -------------------

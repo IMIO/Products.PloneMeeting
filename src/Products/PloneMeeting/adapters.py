@@ -1888,7 +1888,11 @@ class PMGenerablePODTemplatesAdapter(GenerablePODTemplatesAdapter):
 
     def get_all_pod_templates(self):
         """Query by MeetingConfig."""
-        tool = api.portal.get_tool('portal_plonemeeting')
+        try:
+            tool = api.portal.get_tool('portal_plonemeeting')
+        except InvalidParameterError:
+            return []
+
         cfg = tool.getMeetingConfig(self.context)
         if not cfg:
             return []
