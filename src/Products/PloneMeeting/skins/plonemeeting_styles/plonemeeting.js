@@ -766,3 +766,11 @@ $(document).ready(function () {
         document.body.classList.add('using-firefox');
     }
 });
+
+$(document).ready(function () {
+
+    $("body.portaltype-meetingconfig input.context[type='submit']").click(function() {
+      $("div.ArchetypesInAndOutWidget").each(
+        function() {inout_selectAllWords(this.dataset.fieldname);});
+    });
+});

@@ -5,8 +5,12 @@ Changelog
 4.1.28.34 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Backport from 4.2.x:
 
+  - Added JS function that is triggered when a `MeetingConfig` is saved (edit form)
+    to make sure every `InAndOutWidget` values are selected, this avoid losing
+    values when user clicked on a value of the right panel of the `InAndOutWidget`.
+    [gbastien]
 
 4.1.28.33 (2021-11-05)
 ----------------------
