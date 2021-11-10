@@ -1,9 +1,8 @@
 <tal:defines i18n:domain="PloneMeeting"
-             define="item_url context/absolute_url;
-                     advicesByType view/advicesByType;
-                     advisableGroups view/advisableGroups;
-                     advicesToAdd python: [info[0] for info in advisableGroups[0]];">
-  
+             define="item_url python: context.absolute_url();
+                     advicesByType python: view.advicesByType;
+                     advicesToAdd python: view.advicesToAdd;">
+
       <tal:advicesToAddOrExisting condition="python: advicesByType or advicesToAdd">
       <tal:definesIfSomethingToShow define="cfg python: view.cfg;
                                             displayedAddIcon python: False;
@@ -21,11 +20,11 @@
                    tal:attributes="class python: adviceToWarn and tooltipster_base_class + ' deactivated warn_delay_advice' or tooltipster_base_class + ' deactivated';
                                    data-adviceType string:${adviceType};
                                    data-base_url string:${item_url}">
-    
+
                   <img tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_$adviceType.png;
                                        title adviceType;"
                        i18n:attributes="title"/><span class="advices_of_type" tal:content="python: len(advicesByType[adviceType])"></span>
-    
+
                   <tal:adviceWarnDelay tal:condition="adviceToWarn">
                     <tal:defines define="adviceToWarnGroupId python: advicesToWarn[adviceType][0];
                                          adviceToWarnIcon python: advicesToWarn[adviceType][1];">

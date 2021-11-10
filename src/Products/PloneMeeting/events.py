@@ -270,7 +270,7 @@ def _invalidateOrgRelatedCachedVocabularies():
 def _invalidateUsersAndGroupsRelatedCachedVocabularies():
     '''Clean cache for vocabularies using Plone users and groups.'''
     invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user', get_again=True)
+        'Products.PloneMeeting.ToolPloneMeeting.get_org_uids_for_user', get_again=True)
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user', get_again=True)
     invalidate_cachekey_volatile_for(

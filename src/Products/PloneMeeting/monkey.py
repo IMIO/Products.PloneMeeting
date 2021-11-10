@@ -243,3 +243,34 @@ def render(self):
 
 Service.render = render
 pmrestapi_logger.info("Monkey patching plone.restapi.services.RestService (render)")
+
+
+from time import time
+from zope.ramcache.ram import Storage
+
+
+Storage.__old_pm_getEntry = Storage.getEntry
+
+
+def getEntry(self, ob, key):
+    if self.lastCleanup <= time() - self.cleanupInterval:
+        self.cleanup()
+
+    try:
+        data = self._data[ob][key]
+    except KeyError:
+        if ob not in self._misses:
+            self._misses[ob] = 0
+        self._misses[ob] += 1
+        raise
+    else:
+        data[2] += 1                    # increment access count
+        # XXX begin change by PM, update timestamp
+        timestamp = time()
+        data[1] = timestamp
+        # XXX end change by PM
+
+        return data[0]
+
+Storage.getEntry = getEntry
+logger.info("Monkey patching zope.ramcache.ram.Storage (getEntry)")

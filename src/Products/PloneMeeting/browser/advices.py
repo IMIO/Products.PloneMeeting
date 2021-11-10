@@ -72,8 +72,10 @@ class AdvicesIcons(BrowserView):
         self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
         self.advisableGroups = self.context.getAdvicesGroupsInfosForUser(compute_to_edit=False)
+        self.advicesToAdd = self.advisableGroups[0]
+        self.advicesToEdit = self.advisableGroups[1]
         self.advicesByType = self.context.getAdvicesByType()
-        self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
+        self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'])
         self.advice_infos = self.context.getAdviceDataFor(self.context, ordered=True)
         if not self.context.adapted().isPrivacyViewable():
             return '<div style="display: inline">&nbsp;-&nbsp;&nbsp;&nbsp;</div>'
@@ -143,12 +145,12 @@ class AdvicesIconsInfos(BrowserView):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
-        self.advisableGroups = self.context.getAdvicesGroupsInfosForUser(compute_to_add=True)
-        self.advicesToAdd = [info[0] for info in self.advisableGroups[0]]
-        self.advicesToEdit = [info[0] for info in self.advisableGroups[1]]
+        self.advisableGroups = self.context.getAdvicesGroupsInfosForUser(compute_to_add=True, compute_power_advisers=False)
+        self.advicesToAdd = self.advisableGroups[0]
+        self.advicesToEdit = self.advisableGroups[1]
         self.advicesByType = self.context.getAdvicesByType()
         self.adviceType = adviceType
-        self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
+        self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'])
         self.itemReviewState = self.context.query_state()
         org_uid = self.context.getProposingGroup()
         self.userIsInProposingGroup = self.tool.user_is_in_org(org_uid=org_uid)

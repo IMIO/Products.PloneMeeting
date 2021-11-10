@@ -447,7 +447,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2.setUsingGroups([self.vendors_uid])
         self.changeUser('pmCreator1')
-        self.assertFalse(self.vendors in self.tool.get_orgs_for_user())
+        self.assertFalse(self.vendors_uid in self.tool.get_orgs_for_user())
         self.assertTrue(self.tool.showPloneMeetingTab(cfg))
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
         self.assertFalse(self.tool.showPloneMeetingTab(cfg2))
@@ -698,26 +698,26 @@ class testToolPloneMeeting(PloneMeetingTestCase):
             self.tool.get_orgs_for_user(the_objects=False),
             [self.developers_uid, self.vendors_uid])
         self.assertEqual(
-            self.tool.get_orgs_for_user(),
+            self.tool.get_orgs_for_user(the_objects=True),
             [get_organization(self.developers_uid), get_organization(self.vendors_uid)])
 
         # check the 'suffix' parameter, it will check that user is in a Plone group of that suffix
         # here, 'pmManager' is only in the '_creators' or 'developers'
         self.assertEqual(
-            [org.UID() for org in self.tool.get_orgs_for_user(suffixes=['reviewers'])],
+            self.tool.get_orgs_for_user(suffixes=['reviewers']),
             [self.developers_uid])
 
         # check the 'omitted_suffixes' parameter, it will not consider Plone group having that suffix
         # here, if we omit the 'advisers' suffix, the 'vendors' organization will not be returned
         self.assertEqual(
-            [org.UID() for org in self.tool.get_orgs_for_user(omitted_suffixes=['advisers'])],
+            self.tool.get_orgs_for_user(omitted_suffixes=['advisers']),
             [self.developers_uid])
 
         # we can get organization for another user
         pmCreator1 = api.user.get('pmCreator1')
         self.assertEqual(sorted(pmCreator1.getGroups()),
                          sorted(['AuthenticatedUsers', self.developers_creators]))
-        self.assertEqual([org.UID() for org in self.tool.get_orgs_for_user(user_id='pmCreator1')],
+        self.assertEqual(self.tool.get_orgs_for_user(user_id='pmCreator1'),
                          [self.developers_uid, ])
 
         # the 'active' parameter will return only active orgs
@@ -725,9 +725,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.changeUser('admin')
         self._select_organization(self.vendors_uid, remove=True)
         self.changeUser('user')
-        self.assertEqual([org.UID() for org in self.tool.get_orgs_for_user(only_selected=True)],
+        self.assertEqual(self.tool.get_orgs_for_user(only_selected=True),
                          [self.developers_uid, ])
-        self.assertEqual([org.UID() for org in self.tool.get_orgs_for_user(only_selected=False)],
+        self.assertEqual(self.tool.get_orgs_for_user(only_selected=False),
                          [self.developers_uid, self.vendors_uid, ])
 
     def test_pm_UpdateCopyGroups(self):

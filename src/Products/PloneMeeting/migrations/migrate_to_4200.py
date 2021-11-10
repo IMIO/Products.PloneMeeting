@@ -753,7 +753,7 @@ class Migrate_To_4200(Migrator):
 
         # update local_roles, workflow mappings and catalogs
         self.tool.update_all_local_roles()
-        self.refreshDatabase(workflows=True, catalogsToUpdate=[])
+        #self.refreshDatabase(workflows=True, catalogsToUpdate=[])
 
 
 def migrate(context):

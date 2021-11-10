@@ -33,6 +33,7 @@ from imio.helpers.cache import cleanVocabularyCacheFor
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.content import get_user_fullname
+from imio.helpers.content import uuidsToObjects
 from imio.helpers.security import fplog
 from imio.migrator.utils import end_time
 from imio.prettylink.interfaces import IPrettyLink
@@ -428,7 +429,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                self.checkMayView(cfg) and \
                (isManager or isPowerObserver or
                     (check_using_groups and self.get_orgs_for_user(
-                        using_groups=cfg.getUsingGroups(), the_objects=False))):
+                        using_groups=cfg.getUsingGroups()))):
                 res.append(cfg)
         return res
 
@@ -500,43 +501,37 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         group_users = portal.acl_users.source_groups._group_principal_map.get(plone_group_id, [])
         return len(group_users) and not user_id or user_id in group_users
 
-    def get_orgs_for_user_cachekey(method,
-                                   self,
-                                   user_id=None,
-                                   only_selected=True,
-                                   suffixes=[],
-                                   omitted_suffixes=[],
-                                   using_groups=[],
-                                   the_objects=True):
+    def get_org_uids_for_user_cachekey(method,
+                                       self,
+                                       user_id=None,
+                                       only_selected=True,
+                                       suffixes=[],
+                                       omitted_suffixes=[],
+                                       using_groups=[]):
         '''cachekey method for self.get_orgs_for_user.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
+        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.get_org_uids_for_user')
         return (date,
                 self._users_groups_value(),
                 (user_id or get_current_user_id(self.REQUEST)),
-                only_selected, suffixes, omitted_suffixes, using_groups, the_objects)
+                only_selected, list(suffixes), list(omitted_suffixes), list(using_groups))
 
-    security.declarePublic('get_orgs_for_user')
+    security.declarePublic('get_org_uids_for_user')
 
-    @ram.cache(get_orgs_for_user_cachekey)
-    def get_orgs_for_user(self,
-                          user_id=None,
-                          only_selected=True,
-                          suffixes=[],
-                          omitted_suffixes=[],
-                          using_groups=[],
-                          the_objects=True):
-        '''Gets the organizations p_user_id belongs to. If p_user_id is None, we use the
-           authenticated user. If p_only_selected is True, we consider only selected
-           organizations. If p_suffixes is not empty, we select only orgs having
-           at least one of p_suffixes. If p_omitted_suffixes, we do not consider
-           orgs the user is in using those suffixes.'''
+    @ram.cache(get_org_uids_for_user_cachekey)
+    def get_org_uids_for_user(self,
+                              user_id=None,
+                              only_selected=True,
+                              suffixes=[],
+                              omitted_suffixes=[],
+                              using_groups=[]):
+        '''This method is there to be cached as get_orgs_for_user(the_objects=True)
+           will return objects, this may not be ram.cached.'''
         res = []
         user_plone_group_ids = self.get_plone_groups_for_user(user_id)
-        orgs = get_organizations(only_selected=only_selected,
-                                 kept_org_uids=using_groups,
-                                 the_objects=the_objects)
-        for org in orgs:
-            org_uid = the_objects and org.UID() or org
+        org_uids = get_organizations(only_selected=only_selected,
+                                     kept_org_uids=using_groups,
+                                     the_objects=False)
+        for org_uid in org_uids:
             for suffix in get_all_suffixes(org_uid):
                 if suffixes and (suffix not in suffixes):
                     continue
@@ -547,8 +542,43 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     continue
                 # If we are here, the user belongs to this group.
                 # Add the organization
-                if org not in res:
-                    res.append(org)
+                if org_uid not in res:
+                    res.append(org_uid)
+        return res
+
+    def get_orgs_for_user(self,
+                          user_id=None,
+                          only_selected=True,
+                          suffixes=[],
+                          omitted_suffixes=[],
+                          using_groups=[],
+                          the_objects=False):
+        '''Gets the organizations p_user_id belongs to. If p_user_id is None, we use the
+           authenticated user. If p_only_selected is True, we consider only selected
+           organizations. If p_suffixes is not empty, we select only orgs having
+           at least one of p_suffixes. If p_omitted_suffixes, we do not consider
+           orgs the user is in using those suffixes.
+           If p_the_objects=True, organizations objects are returned, else the uids.'''
+        res = self.get_org_uids_for_user(user_id=user_id,
+                                         only_selected=only_selected,
+                                         suffixes=suffixes,
+                                         omitted_suffixes=omitted_suffixes,
+                                         using_groups=using_groups)
+        if res and the_objects:
+            request = self.REQUEST
+            # in some cases like in tests, request can not be retrieved
+            key = "PloneMeeting-tool-get_orgs_for_user-{0}".format(
+                '_'.join(sorted(res)))
+            cache = IAnnotations(request)
+            orgs = cache.get(key, None)
+
+            if orgs is None:
+                orgs = uuidsToObjects(res, ordered=True, unrestricted=True)
+                logger.info(
+                    "Getting organizations from "
+                    "ToolPloneMeeting.get_orgs_for_user(the_objects=True)")
+            cache[key] = list(orgs)
+            res = orgs
         return res
 
     security.declarePublic('get_selectable_orgs')

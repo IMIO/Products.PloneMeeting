@@ -775,6 +775,26 @@ class testPerformances(PloneMeetingTestCase):
         for time in range(times):
             self.tool.getUserName(userId)
 
+    def test_pm_SpeedItemQueryState(self):
+        '''Test MeetingItem.query_state.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        # get a large workflow_history
+        self.validateItem(item)
+        self.backToState(item, 'itemcreated')
+        self.validateItem(item)
+        self.backToState(item, 'itemcreated')
+        self.validateItem(item)
+        # call query_state 1000 times
+        self._query_state(item, times=1000)
+
+    @timecall
+    def _query_state(self, item, times=1):
+        ''' '''
+        pm_logger.info('Call {0} times'.format(times))
+        for time in range(times):
+            item.query_state()
+
 
 def test_suite():
     from unittest import makeSuite

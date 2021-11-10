@@ -697,7 +697,7 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
         if self.context.getTagName() == 'MeetingItem':
             if self.cfg.getHideItemHistoryCommentsToUsersOutsideProposingGroup() and \
                not self.tool.isManager(self.cfg):
-                userOrgUids = self.tool.get_orgs_for_user(the_objects=False)
+                userOrgUids = self.tool.get_orgs_for_user()
                 group_managing_item_uid = \
                     self.context.adapted()._getGroupManagingItem(event['review_state']).UID()
                 if group_managing_item_uid not in userOrgUids:
@@ -957,7 +957,7 @@ class ItemsOfMyGroupsAdapter(CompoundCriterionBaseAdapter):
            of the group the user is in.'''
         if not self.cfg:
             return {}
-        userOrgUids = self.tool.get_orgs_for_user(only_selected=False, the_objects=False)
+        userOrgUids = self.tool.get_orgs_for_user(only_selected=False)
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'getProposingGroup': {'query': userOrgUids}, }
 
@@ -1008,7 +1008,7 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
             return {}
 
         # now get highest hierarchic level for every user groups
-        org_uids = self.tool.get_orgs_for_user(the_objects=False)
+        org_uids = self.tool.get_orgs_for_user()
         userPloneGroupIds = self.tool.get_plone_groups_for_user()
         reviewers = reviewersFor(self.cfg)
         userReviewerPloneGroupIds = []
@@ -1091,7 +1091,7 @@ class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCrit
         if not self.cfg:
             return {}
         # search every highest reviewer level for each group of the user
-        userOrgUids = self.tool.get_orgs_for_user(the_objects=False)
+        userOrgUids = self.tool.get_orgs_for_user()
         userPloneGroups = self.tool.get_plone_groups_for_user()
         reviewProcessInfos = []
         for org_uid in userOrgUids:
@@ -1252,9 +1252,9 @@ class BaseItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
                     if set(edit_roles).intersection(set(roles)):
                         suffixes.append(suffix)
                 # we have suffixes to keep, now find suffixed orgs for current user
-                userOrgIds = [org.UID() for org in self.tool.get_orgs_for_user(suffixes=suffixes)]
-                for userOrgId in userOrgIds:
-                    reviewProcessInfos.append('%s__reviewprocess__%s' % (userOrgId, review_state))
+                userOrgUids = self.tool.get_orgs_for_user(suffixes=suffixes)
+                for userOrgUid in userOrgUids:
+                    reviewProcessInfos.append('%s__reviewprocess__%s' % (userOrgUid, review_state))
         if not reviewProcessInfos:
             return _find_nothing_query(self.cfg.getItemTypeName())
         # Create query parameters
@@ -1280,7 +1280,7 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
         '''Queries all items for which the current user must give an advice.'''
         if not self.cfg:
             return {}
-        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
+        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # Consider not_given, asked_again and hidden_during_redaction advices,
         # this search will return 'not delay-aware' and 'delay-aware' advices
         indexAdvisers = [org_uid + '_advice_not_given' for org_uid in org_uids] + \
@@ -1358,7 +1358,7 @@ class ItemsToAdviceWithoutDelayAdapter(CompoundCriterionBaseAdapter):
         '''Queries all items for which the current user must give an advice without delay.'''
         if not self.cfg:
             return {}
-        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
+        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
         # this search will only return 'not delay-aware' advices
         indexAdvisers = [org_uid + '_advice_not_given' for org_uid in org_uids] + \
@@ -1381,7 +1381,7 @@ class ItemsToAdviceWithDelayAdapter(CompoundCriterionBaseAdapter):
         '''Queries all items for which the current user must give an advice with delay.'''
         if not self.cfg:
             return {}
-        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
+        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
         # this search will only return 'delay-aware' advices
         indexAdvisers = ['delay__' + org_uid + '_advice_not_given' for org_uid in org_uids] + \
@@ -1405,7 +1405,7 @@ class ItemsToAdviceWithExceededDelayAdapter(CompoundCriterionBaseAdapter):
         '''Queries all items for which the current user must give an advice with exceeded delay.'''
         if not self.cfg:
             return {}
-        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
+        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # Add a '_delay_exceeded' at the end of every group id: we want "not given" advices.
         # this search will only return 'delay-aware' advices for wich delay is exceeded
         indexAdvisers = ['delay__' + org_uid + '_advice_delay_exceeded' for org_uid in org_uids]
@@ -1426,7 +1426,7 @@ class AdvisedItemsAdapter(CompoundCriterionBaseAdapter):
         '''Queries items for which an advice has been given.'''
         if not self.cfg:
             return {}
-        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
+        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # advised items are items that has an advice in a particular review_state
         # just append every available meetingadvice state: we want "given" advices.
         # this search will return every advices
@@ -1459,7 +1459,7 @@ class AdvisedItemsWithDelayAdapter(CompoundCriterionBaseAdapter):
         '''Queries items for which an advice has been given with delay.'''
         if not self.cfg:
             return {}
-        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
+        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # advised items are items that has an advice in a particular review_state
         # just append every available meetingadvice state: we want "given" advices.
         # this search will only return 'delay-aware' advices

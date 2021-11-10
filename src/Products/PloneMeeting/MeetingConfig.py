@@ -2797,7 +2797,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: tool.get_orgs_for_user(the_objects=False)",
+                    'tal_condition': "python: tool.get_orgs_for_user()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Living items, items in the current flow, by default every states but decidedStates
@@ -2816,7 +2816,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: tool.get_orgs_for_user(the_objects=False)",
+                    'tal_condition': "python: tool.get_orgs_for_user()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items I take over
@@ -7048,8 +7048,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             memberOrgUids = [org_uid for org_uid in
                              tool.get_orgs_for_user(
                                  user_id=member_id,
-                                 suffixes=['creators'],
-                                 the_objects=False)]
+                                 suffixes=['creators'])]
             query['templateUsingGroups'] = ('__nothing_selected__', '__folder_in_itemtemplates__', ) + \
                 tuple(memberOrgUids)
         return query

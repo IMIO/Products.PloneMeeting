@@ -2013,7 +2013,9 @@ class Meeting(Container):
 
     security.declarePublic('query_state')
 
-    @ram.cache(query_state_cachekey)
+    # not ramcached perf tests says it does not change anything
+    # and this avoid useless entry in cache
+    #@ram.cache(query_state_cachekey)
     def query_state(self):
         '''In what state am I ?'''
         wfTool = api.portal.get_tool('portal_workflow')

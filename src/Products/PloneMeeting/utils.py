@@ -454,7 +454,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     userInfo = pms.getAuthenticatedMember()
     userName = safe_unicode(tool.getUserName(userInfo.getId()))
     # Compute list of MeetingGroups for this user
-    userGroups = ', '.join([g.Title() for g in tool.get_orgs_for_user()])
+    userGroups = ', '.join([g.Title() for g in tool.get_orgs_for_user(the_object=True)])
     # Create the message parts
     d = 'PloneMeeting'
     portal = api.portal.get()

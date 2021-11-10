@@ -196,8 +196,8 @@ class testViews(PloneMeetingTestCase):
         # item has been created with a filled proposing group
         # and privacy is still ok
         self.assertTrue(newItem2.getId() in folder.objectIds())
-        userGroups = self.tool.get_orgs_for_user(suffixes=['creators'])
-        self.assertEqual(newItem2.getProposingGroup(), userGroups[0].UID())
+        userGroupUids = self.tool.get_orgs_for_user(suffixes=['creators'])
+        self.assertEqual(newItem2.getProposingGroup(), userGroupUids[0])
         self.assertEqual(newItem2.getPrivacy(), itemTemplate.getPrivacy())
 
     def test_pm_CreateItemFromTemplateInSubfolderWithSpecialChars(self):

@@ -1442,7 +1442,8 @@ class PMCategoryVocabulary(CategoryVocabulary):
             stored_content_category = getattr(context, 'content_category', None)
         if container.meta_type == 'MeetingItem':
             tool = api.portal.get_tool('portal_plonemeeting')
-            isManager = tool.isManager(context)
+            cfg = tool.getMeetingConfig(context)
+            isManager = tool.isManager(cfg)
             categories = [cat for cat in categories if not cat.only_for_meeting_managers or
                           isManager or
                           (stored_content_category and stored_content_category == calculate_category_id(cat))]
@@ -1460,7 +1461,8 @@ class PMCategoryVocabulary(CategoryVocabulary):
             stored_content_category = getattr(context, 'content_category', None)
         if container.meta_type == 'MeetingItem':
             tool = api.portal.get_tool('portal_plonemeeting')
-            isManager = tool.isManager(context)
+            cfg = tool.getMeetingConfig(context)
+            isManager = tool.isManager(cfg)
             tmp = []
             for subcat_brain in subcategories:
                 if not isManager:

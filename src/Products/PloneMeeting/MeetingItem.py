@@ -2079,7 +2079,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            self.checkCreationFlag():
             tool = api.portal.get_tool('portal_plonemeeting')
             if value not in tool.get_orgs_for_user(
-                    only_selected=False, suffixes=["creators"], the_objects=False):
+                    only_selected=False, suffixes=["creators"]):
                 cfg = tool.getMeetingConfig(self)
                 if not tool.isManager(cfg, realManagers=True):
                     return translate(
@@ -2443,7 +2443,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             item_state = item.query_state()
             if self.is_decided(cfg, item_state) and \
                item.adapted()._getGroupManagingItem(item_state, theObject=False) in \
-               tool.get_orgs_for_user(the_objects=False):
+               tool.get_orgs_for_user():
                 res = True
         return res
 
@@ -3741,7 +3741,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('query_state')
 
-    @ram.cache(query_state_cachekey)
+    # not ramcached perf tests says it does not change anything
+    # and this avoid useless entry in cache
+    #@ram.cache(query_state_cachekey)
     def query_state(self):
         '''In what state am I ?'''
         wfTool = api.portal.get_tool('portal_workflow')
@@ -5115,7 +5117,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getAdvicesGroupsInfosForUser')
 
-    def getAdvicesGroupsInfosForUser(self, compute_to_add=True, compute_to_edit=True):
+    def getAdvicesGroupsInfosForUser(self, compute_to_add=True, compute_to_edit=True, compute_power_advisers=True):
         '''This method returns 2 lists of groups in the name of which the
            currently logged user may, on this item:
            - add an advice;
@@ -5128,8 +5130,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not cfg.getUseAdvices():
             return ([], [])
         # Logged user must be an adviser
-        user_orgs = tool.get_orgs_for_user(suffixes=['advisers'])
-        if not user_orgs:
+        user_org_uids = tool.get_orgs_for_user(suffixes=['advisers'])
+        if not user_org_uids:
             return ([], [])
         # Produce the lists of groups to which the user belongs and for which,
         # - no advice has been given yet (list of advices to add)
@@ -5138,25 +5140,29 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         toEdit = []
         powerAdvisers = cfg.getPowerAdvisersGroups()
         itemState = self.query_state()
-        for user_org in user_orgs:
-            user_org_uid = user_org.UID()
+        user_orgs = []
+        for user_org_uid in user_org_uids:
             if user_org_uid in self.adviceIndex:
                 advice = self.adviceIndex[user_org_uid]
                 if compute_to_add and advice['type'] == NOT_GIVEN_ADVICE_VALUE and \
                    advice['advice_addable'] and \
                    self.adapted()._adviceIsAddableByCurrentUser(user_org_uid):
-                    toAdd.append((user_org_uid, user_org.get_full_title()))
+                    toAdd.append(user_org_uid)
                 if compute_to_edit and advice['type'] != NOT_GIVEN_ADVICE_VALUE and \
                    advice['advice_editable'] and \
                    self.adapted()._adviceIsEditableByCurrentUser(user_org_uid):
-                    toEdit.append((user_org_uid, user_org.get_full_title()))
+                    toEdit.append(user_org_uid)
             # if not in self.adviceIndex, aka not already given
             # check if group is a power adviser and if he is allowed
             # to add an advice in current item state
-            elif compute_to_add and \
-                    user_org_uid in powerAdvisers and \
-                    itemState in user_org.get_item_advice_states(cfg):
-                toAdd.append((user_org_uid, user_org.get_full_title()))
+            elif compute_to_add and compute_power_advisers and user_org_uid in powerAdvisers:
+                # we avoid call to ToolPloneMeeting.get_orgs_for_user(the_objects=True)
+                # here it will only be called if user is a powerAdviser
+                user_orgs = user_orgs or tool.get_orgs_for_user(
+                    suffixes=['advisers'], the_objects=True)
+                current_user_org = user_orgs[user_org_uids.index(user_org_uid)]
+                if itemState in current_user_org.get_item_advice_states(cfg):
+                    toAdd.append(user_org_uid)
         return (toAdd, toEdit)
 
     def _advicePortalTypeForAdviser(self, org_uid):
@@ -5597,7 +5603,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         data = {}
         tool = api.portal.get_tool('portal_plonemeeting')
-        adviser_org_uids = tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
+        adviser_org_uids = tool.get_orgs_for_user(suffixes=['advisers'])
         for adviceInfo in self.adviceIndex.values():
             advId = adviceInfo['id']
             # if advice is inherited get real adviceInfo
@@ -7460,7 +7466,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         if not proposingGroup or \
-           self.getProposingGroup(theObject=False) in tool.get_orgs_for_user(the_objects=False) or \
+           self.getProposingGroup() in tool.get_orgs_for_user() or \
            tool.isManager(cfg):
             res = True
         return res

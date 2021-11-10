@@ -243,12 +243,10 @@ class AdviceGroupVocabulary(object):
         # while adding an advice, the context is his parent, aka a MeetingItem
         alterable_advice_org_uids = []
         if context.meta_type == 'MeetingItem':
-            alterable_advice_org_uids = [org_uid for org_uid, org_title in
-                                         context.getAdvicesGroupsInfosForUser(compute_to_edit=False)[0]]
+            alterable_advice_org_uids = context.getAdvicesGroupsInfosForUser(compute_to_edit=False)[0]
         # take into account groups for which user can edit an advice
         elif context.portal_type in advicePortalTypeIds:
-            alterable_advice_org_uids = [org_uid for org_uid, org_title in
-                                         context.getAdvicesGroupsInfosForUser(compute_to_add=False)[1]]
+            alterable_advice_org_uids = context.getAdvicesGroupsInfosForUser(compute_to_add=False)[1]
             # make sure advice_group selected on advice is in the vocabulary
             if context.advice_group not in alterable_advice_org_uids:
                 alterable_advice_org_uids.append(context.advice_group)
