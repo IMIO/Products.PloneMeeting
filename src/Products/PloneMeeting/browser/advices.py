@@ -60,25 +60,35 @@ class AdvicesIcons(BrowserView):
         # any change on advice (added, removed, edited, attribute changed)
         # adviceIndex can also be updated by another item from which context inherits
         context_modified = max(int(self.context.modified()), self.context._p_mtime)
+        # regarding groups, we intersect current user plone groups
+        # and advices related groups to see if current user has any action on advices
+        user_adviser_plone_groups = tool.get_plone_groups_for_user(
+            org_uids=self.context.adviceIndex.keys())
+        # power advisers
+        user_org_uids = tool.get_orgs_for_user(suffixes=['advisers'])
+        cfg = tool.getMeetingConfig(self.context)
+        is_power_adviser = set(cfg.getPowerAdvisersGroups()).intersection(user_org_uids)
         return (self.context.UID(),
                 context_modified,
                 server_url,
-                tool.get_plone_groups_for_user())
+                user_adviser_plone_groups,
+                is_power_adviser)
 
     @ram.cache(__call___cachekey)
     def __call__(self):
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.tool.getMeetingConfig(self.context)
-        self.portal = api.portal.get()
-        self.portal_url = self.portal.absolute_url()
         self.advisableGroups = self.context.getAdvicesGroupsInfosForUser(compute_to_edit=False)
         self.advicesToAdd = self.advisableGroups[0]
         self.advicesToEdit = self.advisableGroups[1]
         self.advicesByType = self.context.getAdvicesByType()
-        self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'])
-        self.advice_infos = self.context.getAdviceDataFor(self.context, ordered=True)
-        if not self.context.adapted().isPrivacyViewable():
-            return '<div style="display: inline">&nbsp;-&nbsp;&nbsp;&nbsp;</div>'
+        if self.advicesByType or self.advicesToAdd:
+            self.tool = api.portal.get_tool('portal_plonemeeting')
+            self.cfg = self.tool.getMeetingConfig(self.context)
+            self.portal = api.portal.get()
+            self.portal_url = self.portal.absolute_url()
+            self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'])
+            self.advice_infos = self.context.getAdviceDataFor(self.context, ordered=True)
+            if not self.context.adapted().isPrivacyViewable():
+                return '<div style="display: inline">&nbsp;-&nbsp;&nbsp;&nbsp;</div>'
         return super(AdvicesIcons, self).__call__()
 
     def advicesDelayToWarn(self):
@@ -145,7 +155,8 @@ class AdvicesIconsInfos(BrowserView):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
-        self.advisableGroups = self.context.getAdvicesGroupsInfosForUser(compute_to_add=True, compute_power_advisers=False)
+        self.advisableGroups = self.context.getAdvicesGroupsInfosForUser(
+            compute_to_add=True, compute_power_advisers=False)
         self.advicesToAdd = self.advisableGroups[0]
         self.advicesToEdit = self.advisableGroups[1]
         self.advicesByType = self.context.getAdvicesByType()

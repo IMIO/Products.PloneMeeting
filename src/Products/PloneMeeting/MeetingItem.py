@@ -2336,7 +2336,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # user must be in one of the proposingGroup Plone groups
         org_uid = self.getProposingGroup()
-        if tool.get_plone_groups_for_user(org_uid=org_uid):
+        if tool.get_plone_groups_for_user(org_uids=[org_uid]):
             return True
         return False
 

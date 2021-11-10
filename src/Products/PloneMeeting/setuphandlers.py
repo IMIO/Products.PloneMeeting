@@ -18,7 +18,6 @@ from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.emailer import get_mail_host
 from plone import api
-from plone.memoize.ram import global_cache
 from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import WorkflowPolicyConfig_id
 from Products.CMFPlone.utils import base_hasattr
 from Products.CPUtils.Extensions.utils import configure_ckeditor
@@ -363,10 +362,6 @@ def postInstall(context):
 
     # enable plone.app.caching
     api.portal.set_registry_record('plone.caching.interfaces.ICacheSettings.enabled', True)
-    # setup global_cache utility
-    # change if default value still used
-    if global_cache.maxEntries == 1000:
-        global_cache.update(maxEntries=100000, maxAge=1800, cleanupInterval=1800)
 
     # configure dexterity localrolesfield
     _configureDexterityLocalRolesField()

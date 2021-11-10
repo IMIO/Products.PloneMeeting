@@ -1338,6 +1338,8 @@ class PMCategorizedChildView(CategorizedChildView):
 
     def __call___cachekey(method, self, portal_type=None, show_nothing=False):
         '''cachekey method for self.__call__.'''
+        if not self.context.categorized_elements:
+            return None
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         # URL to the annex_type can change if server URL changed
@@ -1346,13 +1348,17 @@ class PMCategorizedChildView(CategorizedChildView):
         # any change on annex (added, removed, edited, attribute changed)
         context_modified = self.context.modified()
         cfg_modified = cfg.modified()
+        # filter on user plone groups if there are any confidential annexes
+        confidential_annexes = [elt for elt in self.context.categorized_elements.values()
+                                if elt["confidential"]]
+        user_plone_groups = confidential_annexes and tool.get_plone_groups_for_user()
         # value of the annexes faceted filter
         filters = self._filters
         return (self.context.UID(),
                 context_modified,
                 cfg_modified,
                 server_url,
-                tool.get_plone_groups_for_user(),
+                user_plone_groups,
                 portal_type,
                 show_nothing,
                 filters)
