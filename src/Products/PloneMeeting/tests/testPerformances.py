@@ -795,6 +795,25 @@ class testPerformances(PloneMeetingTestCase):
         for time in range(times):
             item.query_state()
 
+    def test_pm_SpeedIsPowerObserverForCfg(self):
+        '''Test ToolPloneMeeting.isPowerObserverForCfg.'''
+        self.changeUser('pmManager')
+        # call query_state 1000 times
+        self._isPowerObserverForCfg(times=1000)
+
+    @timecall
+    def _isPowerObserverForCfg(self, times=1):
+        ''' '''
+        pm_logger.info('Call {0} times'.format(times))
+        for time in range(times):
+            self.tool.isPowerObserverForCfg(self.meetingConfig)
+            self.tool.isPowerObserverForCfg(self.meetingConfig,
+                                            ["powerobservers"])
+            self.tool.isPowerObserverForCfg(self.meetingConfig,
+                                            ["restrictedpowerobservers"])
+            self.tool.isPowerObserverForCfg(self.meetingConfig,
+                                            ["powerobservers", "restrictedpowerobservers"])
+
 
 def test_suite():
     from unittest import makeSuite

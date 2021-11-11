@@ -2336,7 +2336,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # user must be in one of the proposingGroup Plone groups
         org_uid = self.getProposingGroup()
-        if tool.get_plone_groups_for_user(org_uids=[org_uid]):
+        if tool.get_filtered_plone_groups_for_user(org_uids=[org_uid]):
             return True
         return False
 
@@ -3197,9 +3197,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # check if current user is a power observer in MeetingConfig.restrictAccessToSecretItemsTo
         isAPowerObserver = tool.isPowerObserverForCfg(cfg)
-        for power_observer_type in cfg.getRestrictAccessToSecretItemsTo():
-            if tool.isPowerObserverForCfg(cfg, power_observer_type=power_observer_type):
-                return False
+        restricted_power_obs = cfg.getRestrictAccessToSecretItemsTo()
+        if restricted_power_obs and \
+           tool.isPowerObserverForCfg(cfg, power_observer_types=restricted_power_obs):
+            return False
         # a power observer not in restrictAccessToSecretItemsTo?
         if isAPowerObserver:
             return True
@@ -3743,7 +3744,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     # not ramcached perf tests says it does not change anything
     # and this avoid useless entry in cache
-    #@ram.cache(query_state_cachekey)
+    # @ram.cache(query_state_cachekey)
     def query_state(self):
         '''In what state am I ?'''
         wfTool = api.portal.get_tool('portal_workflow')
@@ -5140,7 +5141,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         toEdit = []
         powerAdvisers = cfg.getPowerAdvisersGroups()
         itemState = self.query_state()
-        user_orgs = []
         for user_org_uid in user_org_uids:
             if user_org_uid in self.adviceIndex:
                 advice = self.adviceIndex[user_org_uid]
@@ -5156,12 +5156,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # check if group is a power adviser and if he is allowed
             # to add an advice in current item state
             elif compute_to_add and compute_power_advisers and user_org_uid in powerAdvisers:
-                # we avoid call to ToolPloneMeeting.get_orgs_for_user(the_objects=True)
-                # here it will only be called if user is a powerAdviser
-                user_orgs = user_orgs or tool.get_orgs_for_user(
-                    suffixes=['advisers'], the_objects=True)
-                current_user_org = user_orgs[user_org_uids.index(user_org_uid)]
-                if itemState in current_user_org.get_item_advice_states(cfg):
+                # we avoid waking up the organization, we get states using
+                # MeetingConfig.getItemAdviceStates that is ram.cached
+                if itemState in cfg.getItemAdviceStates(org_uid=user_org_uid):
                     toAdd.append(user_org_uid)
         return (toAdd, toEdit)
 
@@ -5182,7 +5179,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _adviceIsViewableForCurrentUser(self,
                                         cfg,
-                                        user_power_observer_types,
+                                        is_confidential_power_observer,
                                         adviceInfo):
         '''
           Returns True if current user may view the advice.
@@ -5194,7 +5191,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             tool = api.portal.get_tool('portal_plonemeeting')
             advisers_group_id = get_plone_group_id(adviceInfo['id'], 'advisers')
             if advisers_group_id not in tool.get_plone_groups_for_user() and \
-               set(user_power_observer_types).intersection(set(cfg.getAdviceConfidentialFor())):
+               is_confidential_power_observer:
                 return False
         return True
 
@@ -5220,8 +5217,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = {}
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        user_power_observer_types = [po_infos['row_id'] for po_infos in cfg.getPowerObservers()
-                                     if tool.isPowerObserverForCfg(cfg, power_observer_type=po_infos['row_id'])]
+        is_confidential_power_observer = tool.isPowerObserverForCfg(
+            cfg, cfg.getAdviceConfidentialFor())
         for groupId, adviceInfo in self.adviceIndex.iteritems():
             if not include_not_asked and adviceInfo['not_asked']:
                 continue
@@ -5235,7 +5232,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 adviceInfo['inherited'] = True
             # Create the entry for this type of advice if not yet created.
             # first check if current user may access advice, aka advice is not confidential to him
-            if not self._adviceIsViewableForCurrentUser(cfg, user_power_observer_types, adviceInfo):
+            if not self._adviceIsViewableForCurrentUser(
+               cfg, is_confidential_power_observer, adviceInfo):
                 continue
 
             adviceType = self._shownAdviceTypeFor(adviceInfo)
@@ -7291,9 +7289,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         hideNotViewableLinkedItemsTo = cfg.getHideNotViewableLinkedItemsTo()
-        for power_observer_type in hideNotViewableLinkedItemsTo:
-            if tool.isPowerObserverForCfg(cfg, power_observer_type=power_observer_type):
-                return False
+        if hideNotViewableLinkedItemsTo and \
+           tool.isPowerObserverForCfg(cfg, power_observer_types=hideNotViewableLinkedItemsTo):
+            return False
         return True
 
     security.declarePublic('get_predecessors')

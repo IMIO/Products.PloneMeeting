@@ -6388,6 +6388,23 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     subFolder.processForm(values={'dummy': None})
                 subFolder.reindexObject()
 
+    def getItemAdviceStates_cachekey(method, self, org_uid=None, **kwargs):
+        '''cachekey method for self.getItemAdviceStates.'''
+        return (repr(self), org_uid, kwargs)
+
+    security.declarePublic('getItemAdviceStates')
+
+    @ram.cache(getItemAdviceStates_cachekey)
+    def getItemAdviceStates(self, org_uid=None, **kwargs):
+        '''Overrides field 'itemAdviceStates' accessor to be able to pass
+           the p_org_uid and to cache the result as it is called in
+           MeetingItem.getAdvicesGroupsInfosForUser especially.'''
+        itemAdviceStates = self.getField('itemAdviceStates').get(self, **kwargs)
+        if org_uid:
+            org = uuidToObject(org_uid, unrestricted=True)
+            itemAdviceStates = org.get_item_advice_states(cfg=self)
+        return itemAdviceStates
+
     security.declarePublic('getItemWorkflow')
 
     def getItemWorkflow(self, theObject=False, type_name=None, **kwargs):

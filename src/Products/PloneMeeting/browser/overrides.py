@@ -28,6 +28,7 @@ from collective.iconifiedcategory.browser.tabview import CategorizedTable
 from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
 from collective.iconifiedcategory.browser.views import CategorizedChildView
+from collective.iconifiedcategory.utils import _categorized_elements
 from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
@@ -720,13 +721,14 @@ class MeetingActionsPanelView(BaseActionsPanelView):
            - different item or user;
            - user groups changed.'''
         cfg_modified = self.cfg.modified()
-        userGroups = self.tool.get_plone_groups_for_user()
+        isManager = self.tool.isManager(self.cfg)
+        isRealManager = self.tool.isManager(self.cfg, realManagers=True)
         date = get_cachekey_volatile(
             'Products.PloneMeeting.Meeting.UID.{0}'.format(self.context.UID()))
         # check also portal_url in case application is accessed thru different URI
         return (self.context.UID(), self.context.modified(),
                 self.context.get_raw_items(), cfg_modified,
-                userGroups, date,
+                isManager, isRealManager, date,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
                 showArrows, self.portal_url, kwargs)
@@ -1338,8 +1340,8 @@ class PMCategorizedChildView(CategorizedChildView):
 
     def __call___cachekey(method, self, portal_type=None, show_nothing=False):
         '''cachekey method for self.__call__.'''
-        if not self.context.categorized_elements:
-            return None
+        if not _categorized_elements(self.context):
+            return []
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         # URL to the annex_type can change if server URL changed
@@ -1518,11 +1520,10 @@ class PMContentHistoryView(IHContentHistoryView):
                     if proposing_group_uid in tool.get_orgs_for_user():
                         check = False
                 if check:
-                    for power_observer_type in hideHistoryTo:
-                        if tool.isPowerObserverForCfg(
-                           cfg, power_observer_type=power_observer_type):
-                            res = False
-                            break
+                    if hideHistoryTo and \
+                       tool.isPowerObserverForCfg(
+                           cfg, power_observer_types=hideHistoryTo):
+                        res = False
         return res
 
 

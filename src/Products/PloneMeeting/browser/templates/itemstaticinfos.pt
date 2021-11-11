@@ -1,5 +1,5 @@
 <div class="static-infos static-infos-item">
-  <tal:loop repeat="field_name view/static_infos_field_names">
+  <tal:loop repeat="field_name python: view.static_infos_field_names">
     <tal:labels condition="python: field_name == 'labels'">
       <div id="labeling-viewlet"
            tal:define="active_labels python: view.active_labels"

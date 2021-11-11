@@ -1043,12 +1043,13 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(
             sorted([group.id for group in self.tool.get_plone_groups_for_user(the_objects=True)]),
             sorted(self.tool.get_plone_groups_for_user(the_objects=False)))
+        # when necessary to filter on org_uids, use get_filtered_plone_groups_for_user
         self.assertEqual(
             sorted([group.id for group in
-                    self.tool.get_plone_groups_for_user(
-                        org_uid=self.developers_uid, the_objects=True)]),
-            sorted(self.tool.get_plone_groups_for_user(
-                org_uid=self.developers_uid, the_objects=False)))
+                    self.tool.get_filtered_plone_groups_for_user(
+                        org_uids=[self.developers_uid], the_objects=True)]),
+            sorted(self.tool.get_filtered_plone_groups_for_user(
+                org_uids=[self.developers_uid], the_objects=False)))
 
         # works also when using api.env.adopt_user like it is the case
         # in MeetingItem.setHistorizedTakenOverBy
@@ -1103,28 +1104,34 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         self.assertFalse(self.tool.isPowerObserverForCfg(cfg))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
-                                                         power_observer_type='powerobservers'))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
-                                                         power_observer_type='restrictedpowerobservers'))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
-                                                         power_observer_type='unknown'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['powerobservers']))
+        self.assertFalse(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['restrictedpowerobservers']))
+        self.assertFalse(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['powerobservers', 'restrictedpowerobservers']))
+        self.assertFalse(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['unknown']))
         self.changeUser('powerobserver1')
         self.assertTrue(self.tool.isPowerObserverForCfg(cfg))
-        self.assertTrue(self.tool.isPowerObserverForCfg(cfg,
-                                                        power_observer_type='powerobservers'))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
-                                                         power_observer_type='restrictedpowerobservers'))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
-                                                         power_observer_type='unknown'))
+        self.assertTrue(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['powerobservers']))
+        self.assertFalse(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['restrictedpowerobservers']))
+        self.assertTrue(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['powerobservers', 'restrictedpowerobservers']))
+        self.assertFalse(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['unknown']))
         self.changeUser('restrictedpowerobserver1')
         self.assertTrue(self.tool.isPowerObserverForCfg(cfg))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
-                                                         power_observer_type='powerobservers'))
-        self.assertTrue(self.tool.isPowerObserverForCfg(cfg,
-                                                        power_observer_type='restrictedpowerobservers'))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
-                                                         power_observer_type='unknown'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['powerobservers']))
+        self.assertTrue(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['restrictedpowerobservers']))
+        self.assertTrue(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['powerobservers', 'restrictedpowerobservers']))
+        self.assertFalse(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['unknown']))
 
     def test_pm_ToolAccessibleByUsersWithoutGroups(self):
         """Whe a user without any group logs in, he may access methods on portal_plonemeeting,

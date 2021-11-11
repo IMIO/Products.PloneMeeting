@@ -62,17 +62,28 @@ class AdvicesIcons(BrowserView):
         context_modified = max(int(self.context.modified()), self.context._p_mtime)
         # regarding groups, we intersect current user plone groups
         # and advices related groups to see if current user has any action on advices
-        user_adviser_plone_groups = tool.get_plone_groups_for_user(
-            org_uids=self.context.adviceIndex.keys())
+        is_user_adviser_for_item = bool(tool.get_filtered_plone_groups_for_user(
+            org_uids=self.context.adviceIndex.keys()))
         # power advisers
         user_org_uids = tool.get_orgs_for_user(suffixes=['advisers'])
         cfg = tool.getMeetingConfig(self.context)
         is_power_adviser = set(cfg.getPowerAdvisersGroups()).intersection(user_org_uids)
+        # filter on user plone groups as power obsever
+        # if there are any confidential advices
+        # warning, if current user is a power observer that would not see the advice
+        # we store user plone groups because a power adviser may see a confidential advice
+        # if member of the proposingGroup
+        confidential_advices = [advice for advice in self.context.adviceIndex.values()
+                                if advice["isConfidential"]]
+        user_plone_groups = confidential_advices and \
+            tool.isPowerObserverForCfg(cfg, power_observer_types=cfg.getAdviceConfidentialFor()) and \
+            tool.get_plone_groups_for_user()
         return (self.context.UID(),
                 context_modified,
                 server_url,
-                user_adviser_plone_groups,
-                is_power_adviser)
+                is_user_adviser_for_item,
+                is_power_adviser,
+                user_plone_groups)
 
     @ram.cache(__call___cachekey)
     def __call__(self):

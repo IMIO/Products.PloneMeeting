@@ -27,10 +27,10 @@ class HighlightRemover(object):
     def _hideCssClasses(self, hideCssClassesTo):
         """Hide if current user may not edit current self.context
            and regarding MeetingConfig.hideCssClassesTo."""
-        for po_infos in self.cfg.getPowerObservers():
-            if po_infos['row_id'] in hideCssClassesTo and \
-               self.tool.isPowerObserverForCfg(self.cfg, power_observer_type=po_infos['row_id']):
-                return True
+        po_infos = self.cfg.getPowerObservers()
+        if po_infos and \
+           self.tool.isPowerObserverForCfg(self.cfg, power_observer_types=po_infos):
+            return True
         return False
 
     def __call__(self, data):

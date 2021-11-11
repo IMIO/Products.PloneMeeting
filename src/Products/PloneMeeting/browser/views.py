@@ -162,24 +162,25 @@ class BaseStaticInfosView(BrowserView):
     def __call__(self, visibleColumns):
         """ """
         self.visibleColumns = visibleColumns
-        if IDexterityContent.providedBy(self.context):
+        self.static_infos_field_names = self._static_infos_field_names()
+        if self.static_infos_field_names and IDexterityContent.providedBy(self.context):
             view = self.context.restrictedTraverse('@@view')
             view.update()
             self.dx_view = view
+            # if we ask to display a field that is not enabled, it could
+            # not be in dx_view.w, will only be shown if not None
+            # (check BaseMeetingView.show_field)
+            self.static_infos_field_names = [
+                field_name for field_name in self.static_infos_field_names
+                if field_name in self.dx_view.w]
 
         return super(BaseStaticInfosView, self).__call__()
 
-    def static_infos_field_names(self):
+    def _static_infos_field_names(self):
         """Field names displayed as static infos.
            These are selected values starting with 'static_'."""
         field_names = [field_name.replace('static_', '') for field_name in self.visibleColumns
                        if field_name.startswith('static_')]
-        if IDexterityContent.providedBy(self.context):
-            # if we ask to display a field that is not enabled, it could
-            # not be in dx_view.w, will only be shown if not None
-            # (check BaseMeetingView.show_field)
-            field_names = [field_name for field_name in field_names
-                           if field_name in self.dx_view.w]
         return field_names
 
 

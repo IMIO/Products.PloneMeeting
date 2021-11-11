@@ -134,11 +134,10 @@ class MeetingAdvice(Container):
         if self.advice_group in parent.adviceIndex and parent.adviceIndex[self.advice_group]['isConfidential']:
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
-            user_power_observer_types = [po_infos['row_id'] for po_infos in cfg.getPowerObservers()
-                                         if tool.isPowerObserverForCfg(cfg, power_observer_type=po_infos['row_id'])]
-            if not parent._adviceIsViewableForCurrentUser(cfg,
-                                                          user_power_observer_types,
-                                                          parent.adviceIndex[self.advice_group]):
+            is_confidential_power_observer = tool.isPowerObserverForCfg(
+                cfg, cfg.getAdviceConfidentialFor())
+            if not parent._adviceIsViewableForCurrentUser(
+               cfg, is_confidential_power_observer, parent.adviceIndex[self.advice_group]):
                 raise Unauthorized
 
         # we can not return a translated msg using _ so translate it

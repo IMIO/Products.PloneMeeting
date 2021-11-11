@@ -450,19 +450,19 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # but the value is stored as is obviously
         return md5.md5(str(source_groups._principal_groups.byValue(0))).hexdigest()
 
-    def get_plone_groups_for_user_cachekey(method, self, userId=None, org_uids=[], the_objects=False):
+    def get_plone_groups_for_user_cachekey(method, self, userId=None, the_objects=False):
         '''cachekey method for self.get_plone_groups_for_user.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user')
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user')
         return (date,
                 self._users_groups_value(),
                 userId or get_current_user_id(getattr(self, "REQUEST", None)),
-                org_uids,
                 the_objects)
 
     security.declarePublic('get_plone_groups_for_user')
 
     @ram.cache(get_plone_groups_for_user_cachekey)
-    def get_plone_groups_for_user(self, userId=None, org_uids=[], the_objects=False):
+    def get_plone_groups_for_user(self, userId=None, the_objects=False):
         """Just return user.getGroups but cached."""
         if api.user.is_anonymous():
             return []
@@ -472,14 +472,22 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if the_objects:
             pg = api.portal.get_tool("portal_groups")
             user_groups = pg.getGroupsByUserId(user.id)
-            if org_uids:
-                user_groups = [plone_group for plone_group in user_groups
-                               if plone_group.id.split('_')[0] in org_uids]
         else:
             user_groups = user.getGroups()
-            if org_uids:
-                user_groups = [plone_group_id for plone_group_id in user_groups
-                               if plone_group_id.split('_')[0] in org_uids]
+        return sorted(user_groups)
+
+    def get_filtered_plone_groups_for_user(self, org_uids, userId=None, the_objects=False):
+        """For caching reasons, we only use ram.cache on get_plone_groups_for_user
+           to avoid too much entries when using p_org_uids.
+           Use this when needing to filter on org_uids."""
+        user_groups = self.get_plone_groups_for_user(
+            userId=userId, the_objects=the_objects)
+        if the_objects:
+            user_groups = [plone_group for plone_group in user_groups
+                           if plone_group.id.split('_')[0] in org_uids]
+        else:
+            user_groups = [plone_group_id for plone_group_id in user_groups
+                           if plone_group_id.split('_')[0] in org_uids]
         return sorted(user_groups)
 
     def group_is_not_empty_cachekey(method, self, org_uid, suffix, user_id=None):
@@ -811,25 +819,30 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             'Site Administrator' in userRoles or \
             (not realManagers and 'MeetingManager' in userRoles)
 
-    def isPowerObserverForCfg_cachekey(method, self, cfg, power_observer_type=None):
+    def isPowerObserverForCfg_cachekey(method, self, cfg, power_observer_types=[]):
         '''cachekey method for self.isPowerObserverForCfg.'''
         return (self.get_plone_groups_for_user(),
                 repr(cfg),
-                power_observer_type)
+                power_observer_types)
 
     security.declarePublic('isPowerObserverForCfg')
 
-    @ram.cache(isPowerObserverForCfg_cachekey)
-    def isPowerObserverForCfg(self, cfg, power_observer_type=None):
+    # not ramcached perf tests says it does not change anything
+    # and this avoid useless entry in cache
+    # @ram.cache(isPowerObserverForCfg_cachekey)
+    def isPowerObserverForCfg(self, cfg, power_observer_types=[]):
         """
-          Returns True if the current user is a power observer for the given p_itemOrMeeting.
-          It is a power observer if member of the corresponding p_power_observer_type suffixed group.
-          If no p_power_observer_type we check every existing power_observers groups.
+          Returns True if the current user is a power observer
+          for the given p_itemOrMeeting.
+          It is a power observer if member of the corresponding
+          p_power_observer_types suffixed groups.
+          If no p_power_observer_types we check every existing power_observers groups.
         """
+        user_plone_groups = self.get_plone_groups_for_user()
         for po_infos in cfg.getPowerObservers():
-            if not power_observer_type or po_infos['row_id'] == power_observer_type:
+            if not power_observer_types or po_infos['row_id'] in power_observer_types:
                 groupId = "{0}_{1}".format(cfg.getId(), po_infos['row_id'])
-                if groupId in self.get_plone_groups_for_user():
+                if groupId in user_plone_groups:
                     return True
         return False
 
