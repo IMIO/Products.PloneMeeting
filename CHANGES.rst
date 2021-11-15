@@ -5,8 +5,8 @@ Changelog
 4.2b21 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Fixed `utils.sendMailIfRelevant` when using mode `test`.
+  [gbastien]
 
 4.2b20 (2021-11-15)
 -------------------

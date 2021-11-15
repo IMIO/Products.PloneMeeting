@@ -562,22 +562,22 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         logger.info('Test mode / we should send mail to %s' % str(recipients))
         logger.info('Subject is [%s]' % subject)
         logger.info('Body is [%s]' % body)
-        return
-    # Use 'plain' for mail format so the email client will turn links to clickable links
-    mailFormat = 'plain'
-    # Send the mail(s)
-    try:
-        if not attachments:
-            # Send a personalized email for every user.
-            for recipient in recipients:
-                _sendMail(obj, body, recipient, fromAddress, subject, mailFormat)
-        else:
-            # Send a single mail with everybody in bcc, for performance reasons
-            # (avoid to duplicate the attached file(s)).
-            _sendMail(obj, body, recipients, fromAddress, subject, mailFormat,
-                      attachments)
-    except EmailError, ee:
-        logger.warn(str(ee))
+    else:
+        # Use 'plain' for mail format so the email client will turn links to clickable links
+        mailFormat = 'plain'
+        # Send the mail(s)
+        try:
+            if not attachments:
+                # Send a personalized email for every user.
+                for recipient in recipients:
+                    _sendMail(obj, body, recipient, fromAddress, subject, mailFormat)
+            else:
+                # Send a single mail with everybody in bcc, for performance reasons
+                # (avoid to duplicate the attached file(s)).
+                _sendMail(obj, body, recipients, fromAddress, subject, mailFormat,
+                          attachments)
+        except EmailError, ee:
+            logger.warn(str(ee))
     return subject, body
 
 
@@ -687,7 +687,8 @@ def sendMailIfRelevant(obj,
             unique_emails.append(email)
             unique_email_recipients.append(recipient)
         mail_subject, mail_body = sendMail(unique_email_recipients, obj, event, mapping=mapping)
-        logger.info("Mail(s) %s sent to %s" % (event, ", ".join(recipients)))
+        logger.info("Mail(s) \"%s (%s)\" sent to \"%s\"" % (
+            event, mail_subject, ", ".join(recipients)))
     debug = debug or obj.REQUEST.get('debug_sendMailIfRelevant', False)
     if debug:
         return recipients, mail_subject, mail_body
