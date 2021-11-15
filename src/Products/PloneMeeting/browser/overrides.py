@@ -614,6 +614,17 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             meetingModified = meeting.modified()
         annotations = str(IAnnotations(self.context))
         cfg_modified = self.cfg.modified()
+
+        # try to share cache among user "profiles"
+        # Manager
+        # MeetingManager
+        # member of proposingGroup able to edit
+        # powerobservers to manage MeetingConfig.hideHistoryTo
+        # any others
+        isManager = self.tool.isManager(self.cfg)
+        isRealManager = self.tool.isManager(self.cfg, realManagers=True)
+
+
         userGroups = self.tool.get_plone_groups_for_user()
         # if item is validated, the 'present' action could appear if a meeting
         # is now available for the item to be inserted into

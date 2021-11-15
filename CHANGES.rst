@@ -7,6 +7,17 @@ Changelog
 
 - Fixed `utils.sendMailIfRelevant` when using mode `test`.
   [gbastien]
+- Optimized `ram.cache` configuration:
+  - Monkeypatched `zope.ramcache.Storage.getEntry` to update timestamp while
+    getting an existing entry;
+  - Adapted ToolPloneMeeting.get_orgs_for_user to no more return objects as
+    it uses `ram.cache`, parameter `the_objects=False` by default now;
+  - Adapted `global_cache` settings, set `maxEntries=100000`, `maxAge=86400`,
+    `cleanupInterval=3600` so cache is kept for a long time.
+  - Do not more `ram.cache` `Meeting.query_state` and `MeetingItem.query_state`,
+    performance test shows it is not necessary.
+
+  [gbastien]
 
 4.2b20 (2021-11-15)
 -------------------
@@ -20,17 +31,6 @@ Changelog
   [gbastien]
 - Do not fail in `PMGenerablePODTemplatesAdapter.get_all_pod_templates` when
   `portal_ploneMeeting` is not available (for example when testing `imio.pm.wsclient`).
-  [gbastien]
-- Optimized `ram.cache` configuration:
-  - Monkeypatched `zope.ramcache.Storage.getEntry` to update timestamp while
-    getting an existing entry;
-  - Adapted ToolPloneMeeting.get_orgs_for_user to no more return objects as
-    it uses `ram.cache`, parameter `the_objects=False` by default now;
-  - Adapted `global_cache` settings, set `maxEntries=100000`, `maxAge=86400`,
-    `cleanupInterval=3600` so cache is kept for a long time.
-  - Do not more `ram.cache` `Meeting.query_state` and `MeetingItem.query_state`,
-    performance test shows it is not necessary.
-
   [gbastien]
 
 4.2b19 (2021-11-08)
