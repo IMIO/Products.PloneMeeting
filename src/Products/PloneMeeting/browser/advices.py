@@ -60,25 +60,30 @@ class AdvicesIcons(BrowserView):
         # any change on advice (added, removed, edited, attribute changed)
         # adviceIndex can also be updated by another item from which context inherits
         context_modified = max(int(self.context.modified()), self.context._p_mtime)
-        # regarding groups, we intersect current user plone groups
-        # and advices related groups to see if current user has any action on advices
-        is_user_adviser_for_item = bool(tool.get_filtered_plone_groups_for_user(
-            org_uids=self.context.adviceIndex.keys()))
         # power advisers
         user_org_uids = tool.get_orgs_for_user(suffixes=['advisers'])
         cfg = tool.getMeetingConfig(self.context)
         is_power_adviser = set(cfg.getPowerAdvisersGroups()).intersection(user_org_uids)
-        # filter on user plone groups as power obsever
-        # if there are any confidential advices
-        # warning, if current user is a power observer that would not see the advice
-        # we store user plone groups because a power adviser may see a confidential advice
-        # if member of the proposingGroup
-        confidential_advices = [advice for advice in self.context.adviceIndex.values()
-                                if advice["isConfidential"]]
-        user_plone_groups = confidential_advices and \
-            tool.isPowerObserverForCfg(cfg, power_observer_types=cfg.getAdviceConfidentialFor()) and \
-            tool.get_plone_groups_for_user()
-        return (self.context.UID(),
+        # bypass if no advices
+        advices = self.context.adviceIndex.keys()
+        context = is_user_adviser_for_item = confidential_advices = user_plone_groups = None
+        if advices:
+            context = repr(self.context)
+            # regarding groups, we intersect current user plone groups
+            # and advices related groups to see if current user has any action on advices
+            is_user_adviser_for_item = bool(tool.get_filtered_plone_groups_for_user(
+                org_uids=advices))
+            # filter on user plone groups as power obsever
+            # if there are any confidential advices
+            # warning, if current user is a power observer that would not see the advice
+            # we store user plone groups because a power adviser may see a confidential advice
+            # if member of the proposingGroup
+            confidential_advices = [advice for advice in self.context.adviceIndex.values()
+                                    if advice["isConfidential"]]
+            user_plone_groups = confidential_advices and \
+                tool.isPowerObserverForCfg(cfg, power_observer_types=cfg.getAdviceConfidentialFor()) and \
+                tool.get_plone_groups_for_user()
+        return (context,
                 context_modified,
                 server_url,
                 is_user_adviser_for_item,
@@ -183,9 +188,8 @@ class AdvicesIconsInfos(BrowserView):
         self.userIsProposingGroupCommentEditor = self.isRealManager
         self.userMayEditItem = self.isRealManager
         if not self.context.is_decided(self.cfg, self.itemReviewState):
-            suffixes = self.cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
             self.userIsProposingGroupCommentEditor = self.isManager or \
-                self.tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes)
+                self.cfg.user_is_proposing_group_editor(org_uid=org_uid)
             self.userMayEditItem = _checkPermission(ModifyPortalContent, self.context)
 
     def _initAdviceInfos(self, advice_id):

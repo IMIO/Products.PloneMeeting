@@ -798,7 +798,7 @@ class testPerformances(PloneMeetingTestCase):
     def test_pm_SpeedIsPowerObserverForCfg(self):
         '''Test ToolPloneMeeting.isPowerObserverForCfg.'''
         self.changeUser('pmManager')
-        # call query_state 1000 times
+        # call it 1000 times
         self._isPowerObserverForCfg(times=1000)
 
     @timecall
@@ -813,6 +813,21 @@ class testPerformances(PloneMeetingTestCase):
                                             ["restrictedpowerobservers"])
             self.tool.isPowerObserverForCfg(self.meetingConfig,
                                             ["powerobservers", "restrictedpowerobservers"])
+
+    def test_pm_SpeedUserIsAmong(self):
+        '''Test ToolPloneMeeting.userIsAmong.'''
+        self.changeUser('pmManager')
+        # call it 1000 times
+        self._userIsAmong(times=1000)
+
+    @timecall
+    def _userIsAmong(self, times=1):
+        ''' '''
+        pm_logger.info('Call {0} times'.format(times))
+        for time in range(times):
+            self.tool.userIsAmong(["advisers"])
+            self.tool.userIsAmong(["creators", "reviewers"])
+            self.tool.userIsAmong(["powerobservers"])
 
 
 def test_suite():

@@ -96,14 +96,14 @@
         for="*"
         name="categorized-annexes"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        class=".overrides.CategorizedAnnexesView"
+        class=".annexes.CategorizedAnnexesView"
         permission="zope2.View"
         template="templates/categorized_annexes.pt" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingContent"
         name="iconifiedcategory"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        class=".overrides.CategorizedAnnexesView"
+        class=".annexes.CategorizedAnnexesView"
         permission="zope2.View"
         template="templates/categorized_annexes.pt" />
 
@@ -1046,45 +1046,45 @@
             for="Products.PloneMeeting.interfaces.IMeetingContent"
             name="categorized-childs"
             permission="zope2.Public"
-            class="Products.PloneMeeting.browser.overrides.PMCategorizedChildView"
+            class="Products.PloneMeeting.browser.annexes.PMCategorizedChildView"
             layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
             template="browser/templates/categorized-childs.pt" />
         <browser:page
             for="Products.PloneMeeting.interfaces.IMeetingContent"
             name="categorized-childs-infos"
             permission="zope2.Public"
-            class="Products.PloneMeeting.browser.overrides.PMCategorizedChildInfosView"
+            class="Products.PloneMeeting.browser.annexes.PMCategorizedChildInfosView"
             layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
             template="browser/templates/categorized-childs-infos.pt" />
         <browser:page
           name="iconified-confidential"
           for="imio.annex.content.annex.IAnnex"
           layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
-          class="Products.PloneMeeting.browser.overrides.PMConfidentialChangeView"
+          class="Products.PloneMeeting.browser.annexes.PMConfidentialChangeView"
           permission="zope2.View" />
         <browser:page
           name="iconified-publishable"
           for="imio.annex.content.annex.IAnnex"
           layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
-          class="Products.PloneMeeting.browser.overrides.PMPublishableChangeView"
+          class="Products.PloneMeeting.browser.annexes.PMPublishableChangeView"
           permission="zope2.View" />
         <browser:page
           name="iconified-signed"
           for="imio.annex.content.annex.IAnnex"
           layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
-          class="Products.PloneMeeting.browser.overrides.PMSignedChangeView"
+          class="Products.PloneMeeting.browser.annexes.PMSignedChangeView"
           permission="zope2.View" />
         <browser:page
           name="iconified-print"
           for="imio.annex.content.annex.IAnnex"
           layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
-          class="Products.PloneMeeting.browser.overrides.PMToPrintChangeView"
+          class="Products.PloneMeeting.browser.annexes.PMToPrintChangeView"
           permission="zope2.View" />
         <browser:view
           for="Products.PloneMeeting.interfaces.IMeetingContent"
           name="iconifiedcategory_table"
           layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
-          class="Products.PloneMeeting.browser.overrides.CategorizedAnnexesTable"
+          class="Products.PloneMeeting.browser.annexes.CategorizedAnnexesTable"
           permission="zope2.View" />
     </configure>
 

@@ -10,7 +10,6 @@ from Acquisition import aq_base
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_all_suffixes
-from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentviewer.async import queueJob
@@ -640,14 +639,17 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 using_groups = cfg_using_groups
             activeOrgUids = [org_uid for org_uid in get_organizations(
                 only_selected=True, the_objects=False, kept_org_uids=using_groups)]
+            org_suffixes = get_all_suffixes()
             for plone_group_id in self.get_plone_groups_for_user():
                 # check if the plone_group_id ends with a least one of the p_suffixes
-                has_kept_suffixes = [suffix for suffix in suffixes if plone_group_id.endswith('_%s' % suffix)]
+                has_kept_suffixes = [suffix for suffix in suffixes
+                                     if plone_group_id.endswith('_%s' % suffix)]
                 if has_kept_suffixes:
-                    org = get_organization(plone_group_id)
-                    # if we can not find the org, it means that it is a suffix like 'powerobservers'
-                    # if we find the org, we check that it is among activeOrgUids
-                    if not org or org.UID() in activeOrgUids:
+                    org_uid, suffix = plone_group_id.split('_')
+                    # if suffix is a org suffix and org is active, we are good
+                    # if suffix is not an org suffix, it means it is something like _powerobservers
+                    if (suffix in org_suffixes and org_uid in activeOrgUids) or \
+                       suffix not in org_suffixes:
                         res = True
                         break
         return res

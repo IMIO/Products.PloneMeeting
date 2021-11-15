@@ -466,9 +466,12 @@ class MeetingItemWorkflowConditions(object):
                     else:
                         if 'waiting_advices_proposing_group_send_back' in wfas:
                             # is current user member of destinationState level?
-                            suffix = self.cfg.getItemWFValidationLevels(state=destinationState, data='suffix')
+                            suffix = self.cfg.getItemWFValidationLevels(
+                                state=destinationState, data='suffix')
                             res = self.tool.group_is_not_empty(
-                                proposingGroup, suffix, user_id=get_current_user_id(self.context.REQUEST))
+                                proposingGroup,
+                                suffix,
+                                user_id=get_current_user_id(self.context.REQUEST))
                         # if not, maybe it is an adviser able to give an advice?
                         if not res and 'waiting_advices_adviser_send_back' in wfas:
                             # adviser may send back to validated when using
@@ -7334,7 +7337,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def downOrUpWorkflowAgain_cachekey(method, self, brain=False):
         '''cachekey method for self.downOrUpWorkflowAgain.'''
-        return (repr(self), self.modified())
+        repr_self = None
+        last_action_time = None
+        if not self.hasMeeting():
+            repr_self = repr(self)
+            last_action_time = getLastWFAction(self)["time"]
+        return repr_self, last_action_time
 
     security.declarePrivate('downOrUpWorkflowAgain')
 
