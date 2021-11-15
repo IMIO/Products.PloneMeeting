@@ -2,7 +2,13 @@ Changelog
 =========
 
 
-4.2b20 (unreleased)
+4.2b21 (unreleased)
+-------------------
+
+- Fixed `utils.sendMailIfRelevant` when using mode `test`.
+  [gbastien]
+
+4.2b20 (2021-11-15)
 -------------------
 
 - Rely on `archetypes.schematuning` (thought it was already the case).
