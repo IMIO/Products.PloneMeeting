@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2b20 (unreleased)
+4.2b20 (2021-11-15)
 -------------------
 
 - Rely on `archetypes.schematuning` (thought it was already the case).
