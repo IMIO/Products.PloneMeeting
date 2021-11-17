@@ -20,16 +20,17 @@ class HighlightRemover(object):
         self.cfg = self.tool.getMeetingConfig(self.context)
 
     def is_enabled(self):
+        """Hide if enabled when current user may not edit."""
         return bool(self.cfg) and \
             bool(self.cfg.getCssClassesToHide() and self.cfg.getHideCssClassesTo()) and \
             not _checkPermission(ModifyPortalContent, self.context)
 
     def _hideCssClasses(self, hideCssClassesTo):
-        """Hide if current user may not edit current self.context
-           and regarding MeetingConfig.hideCssClassesTo."""
-        po_infos = self.cfg.getPowerObservers()
-        if po_infos and \
-           self.tool.isPowerObserverForCfg(self.cfg, power_observer_types=po_infos):
+        """Hide regarding MeetingConfig.hideCssClassesTo."""
+        pos = [po["row_id"] for po in self.cfg.getPowerObservers()
+                    if po["row_id"] in hideCssClassesTo]
+        if pos and \
+           self.tool.isPowerObserverForCfg(self.cfg, power_observer_types=pos):
             return True
         return False
 
