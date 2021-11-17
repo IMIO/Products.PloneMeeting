@@ -605,6 +605,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             userAbleToCorrectItemWaitingAdvices = isPowerObserverHiddenHistory = None
         # Manager
         isRealManager = self.tool.isManager(self.cfg, realManagers=True)
+        # MeetingManager, necessary for MeetingConfig.itemActionsColumnConfig for example
         isManager = self.tool.isManager(self.cfg)
         if not isRealManager:
             self.item_state = self.context.query_state()

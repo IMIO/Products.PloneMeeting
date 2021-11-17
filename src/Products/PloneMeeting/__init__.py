@@ -98,7 +98,7 @@ def initialize(context):
     # setup global_cache utility
     # change if default value still used
     if global_cache.maxEntries == 1000:
-        global_cache.update(maxEntries=100000, maxAge=1800, cleanupInterval=300)
+        global_cache.update(maxEntries=100000, maxAge=1800, cleanupInterval=600)
 
     allow_module('Products.PloneMeeting.utils')
     allow_module('Products.PloneMeeting.browser.meeting')
