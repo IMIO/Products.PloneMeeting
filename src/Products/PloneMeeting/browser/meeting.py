@@ -153,7 +153,7 @@ class BaseMeetingView(object):
     def show_votes_observations(self):
         '''Show the votes_observations field to
            meeting managers and power observers.'''
-        res = self.tool.isManager(self.context)
+        res = self.tool.isManager(self.cfg)
         if not res:
             res = self.tool.isPowerObserverForCfg(self.cfg) or \
                 (self.context.__class__.__name__ == 'Meeting' and
@@ -438,7 +438,7 @@ class MeetingView(FacetedContainerView):
         """ """
         # initialize member in call because it is Anonymous in __init__ of view...
         self.member = api.user.get_current()
-        self.is_manager = self.tool.isManager(self.context)
+        self.is_manager = self.tool.isManager(self.cfg)
         # make the 'view' widget available on faceted view
         view = self.context.restrictedTraverse('@@view')
         view.update()

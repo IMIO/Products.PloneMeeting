@@ -803,8 +803,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # check also user id to avoid problems between Zope admin and anonymous
         # as they have both no group when initializing portal, some requests
         # (first time viewlet initialization?) have sometims anonymous as user
-        return (self.get_plone_groups_for_user(),
-                get_current_user_id(self.REQUEST),
+        user_groups = self.get_plone_groups_for_user()
+        return (user_groups,
+                user_groups and get_current_user_id(self.REQUEST) or None,
                 repr(context),
                 realManagers)
 
@@ -816,6 +817,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            only returns True if user has role Manager/Site Administrator, either
            (by default) MeetingManager is also considered as a 'Manager'?'''
         user = api.user.get_current()
+        if realManagers and context.__class__.__name__ != "ToolPloneMeeting":
+            raise Exception(
+                "For caching reasons, please pass \"tool\" as \"context\" "
+                "when calling \"tool.isManager\" with \"realManagers=True\"")
+        elif not realManagers and context.__class__.__name__ != "MeetingConfig":
+            raise Exception(
+                "For caching reasons, please pass \"cfg\" as \"context\" "
+                "when calling \"tool.isManager\" with \"realManagers=False\"")
         userRoles = user.getRolesInContext(context)
         return 'Manager' in userRoles or \
             'Site Administrator' in userRoles or \
@@ -1531,16 +1540,22 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                  context=self.REQUEST))
         return res
 
-    def showHolidaysWarning(self, context):
+    def showHolidaysWarning(self, cfg):
         """Condition for showing the 'holidays_waring_message'."""
-        holidays = self.getHolidays()
-        # if user isManager and last defined holiday is in less than 60 days, display warning
-        if self.isManager(context) and \
-           (not holidays or DateTime(holidays[-1]['date']) < DateTime() + 60):
-            return True
+        if cfg is not None:
+            holidays = self.getHolidays()
+            # if user isManager and last defined holiday is in less than 60 days, display warning
+            if self.isManager(cfg) and \
+               (not holidays or DateTime(holidays[-1]['date']) < DateTime() + 60):
+                return True
         return False
 
-    def performCustomWFAdaptations(self, meetingConfig, wfAdaptation, logger, itemWorkflow, meetingWorkflow):
+    def performCustomWFAdaptations(self,
+                                   meetingConfig,
+                                   wfAdaptation,
+                                   logger,
+                                   itemWorkflow,
+                                   meetingWorkflow):
         '''See doc in interfaces.py.'''
         return False
 

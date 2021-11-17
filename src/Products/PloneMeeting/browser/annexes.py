@@ -36,7 +36,7 @@ class AnnexActionsPanelView(BaseActionsPanelView):
         parent = self.context.aq_inner.aq_parent
         while parent.__class__.__name__ not in ('MeetingItem', 'Meeting'):
             parent = parent.aq_inner.aq_parent
-        return self.tool.isManager(parent, realManagers=True)
+        return self.tool.isManager(self.tool, realManagers=True)
 
 
 class CategorizedAnnexesTable(CategorizedTable):

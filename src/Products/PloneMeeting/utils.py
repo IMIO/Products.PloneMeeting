@@ -231,11 +231,12 @@ def _referer_to_path(request):
 def get_referer_obj(request):
     """ """
     referer_path = _referer_to_path(request)
-    catalog = api.portal.get_tool('portal_catalog')
-    brains = catalog(path={'query': referer_path, 'depth': 0})
+    portal = api.portal.get()
     obj = None
-    if brains:
-        obj = brains[0].getObject()
+    try:
+        obj = portal.unrestrictedTraverse(referer_path)
+    except Exception:
+        pass
     return obj
 
 
@@ -1729,11 +1730,11 @@ def checkMayQuickEdit(obj,
     member = api.user.get_current()
     res = False
     meeting = obj.getTagName() == "Meeting" and obj or (obj.hasMeeting() and obj.getMeeting())
-    if (not onlyForManagers or (onlyForManagers and tool.isManager(obj))) and \
+    if (not onlyForManagers or (onlyForManagers and tool.isManager(tool.getMeetingConfig(obj)))) and \
        (bypassWritePermissionCheck or member.has_permission(permission, obj)) and \
        (_evaluateExpression(obj, expression)) and \
        (not (meeting and meeting.query_state() in Meeting.MEETINGCLOSEDSTATES) or
-            tool.isManager(obj, realManagers=True)):
+            tool.isManager(tool, realManagers=True)):
         res = True
     return res
 

@@ -2083,8 +2083,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             tool = api.portal.get_tool('portal_plonemeeting')
             if value not in tool.get_orgs_for_user(
                     only_selected=False, suffixes=["creators"]):
-                cfg = tool.getMeetingConfig(self)
-                if not tool.isManager(cfg, realManagers=True):
+                if not tool.isManager(tool, realManagers=True):
                     return translate(
                         'proposing_group_not_available',
                         domain='PloneMeeting',
@@ -2333,8 +2332,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # bypass for Managers
         tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        if tool.isManager(cfg, realManagers=True):
+        if tool.isManager(tool, realManagers=True):
             return True
 
         # user must be in one of the proposingGroup Plone groups
@@ -2412,7 +2410,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(item)
 
         # bypass for the Manager role
-        if tool.isManager(cfg, realManagers=True):
+        if tool.isManager(tool, realManagers=True):
             return True
 
         # Only MeetingManagers can sign an item if it is decided
@@ -3377,7 +3375,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         isDefinedInTool = self.isDefinedInTool()
         # bypass for Managers, pass idDefinedInTool to True so Managers
         # can select any available organizations
-        isManager = tool.isManager(cfg, realManagers=True)
+        isManager = tool.isManager(tool, realManagers=True)
         # show every groups for Managers or when isDefinedInTool
         only_selectable = not bool(isDefinedInTool or isManager)
         orgs = tool.get_selectable_orgs(cfg, only_selectable=only_selectable)

@@ -79,7 +79,7 @@ class MeetingWorkflowConditions(object):
 
         meeting_state = self.context.query_state()
         if meeting_state == 'closed':
-            if self.tool.isManager(self.context, realManagers=True) or \
+            if self.tool.isManager(self.tool, realManagers=True) or \
                'meetingmanager_correct_closed_meeting' in self.cfg.getWorkflowAdaptations():
                 return True
             else:

@@ -34,5 +34,10 @@
                 acquire="False">
       <role name="Manager"/>
     </permission>
+    <!-- avoid that index effectiveRange is added to every queries -->
+    <permission name="Access inactive portal content"
+                acquire="True">
+      <role name="Member"/>
+    </permission>
   </permissions>
 </rolemap>

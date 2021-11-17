@@ -291,7 +291,7 @@ def postInstall(context):
                                    context=site.REQUEST),
                     msg_type='significant',
                     req_roles=['Manager', 'MeetingManager'],
-                    tal_condition='python: tool.showHolidaysWarning(context)',
+                    tal_condition='python: tool.showHolidaysWarning(cfg)',
                     activate=True)
     # if collective.messagesviewlet "browser-warning-ff-chrome" is found, make sure it is enabled
     if messages_config:

@@ -85,7 +85,9 @@ class PMLabeling(Labeling):
     @property
     def can_edit(self):
         tool = api.portal.get_tool('portal_plonemeeting')
-        return _checkPermission(ModifyPortalContent, self.context) or tool.isManager(self.context)
+        cfg = tool.getMeetingConfig(self.context)
+        return _checkPermission(ModifyPortalContent, self.context) or \
+            tool.isManager(cfg)
 
     @property
     def can_personal_edit(self):

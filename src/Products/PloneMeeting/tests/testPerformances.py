@@ -427,7 +427,7 @@ class testPerformances(PloneMeetingTestCase):
     def _isManager(self, context, times=1):
         ''' '''
         for time in range(times):
-            self.tool.isManager(context)
+            self.tool.isManager(self.meetingConfig)
 
     def test_pm_GetAuthenticatedMember(self):
         '''Test performance between portal_membership.getAuthenticatedMember and

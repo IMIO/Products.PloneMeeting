@@ -315,7 +315,8 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
         if not pod_template.store_as_annex:
             return False
         tool = api.portal.get_tool('portal_plonemeeting')
-        return tool.isManager(self.context)
+        cfg = tool.getMeetingConfig(self.context)
+        return tool.isManager(cfg)
 
     def get_store_as_annex_title_msg(self, annex_type_title):
         """ """
@@ -604,7 +605,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         isRealManager = isManager = isEditorUser = advicesIndexModified = \
             userAbleToCorrectItemWaitingAdvices = isPowerObserverHiddenHistory = None
         # Manager
-        isRealManager = self.tool.isManager(self.cfg, realManagers=True)
+        isRealManager = self.tool.isManager(self.tool, realManagers=True)
         # MeetingManager, necessary for MeetingConfig.itemActionsColumnConfig for example
         isManager = self.tool.isManager(self.cfg)
         if not isRealManager:
@@ -673,7 +674,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             # hide 'duplicate' actions when showing icons if not in cfg.itemActionsColumnConfig
             itemActionsColumnConfig = self.cfg.getItemActionsColumnConfig()
             isMeetingManager = self.tool.isManager(self.cfg)
-            isManager = self.tool.isManager(self.cfg, realManagers=True)
+            isManager = self.tool.isManager(self.tool, realManagers=True)
             if not (
                 (isMeetingManager and 'meetingmanager_duplicate' in itemActionsColumnConfig) or
                 (isManager and 'manager_duplicate' in itemActionsColumnConfig) or
@@ -714,7 +715,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
 
 def _meeting_modified_cachekey(meeting, tool, cfg):
     """ """
-    isRealManager = tool.isManager(cfg, realManagers=True)
+    isRealManager = tool.isManager(tool, realManagers=True)
     isManager = not isRealManager and tool.isManager(cfg)
     date = get_cachekey_volatile(
         'Products.PloneMeeting.Meeting.UID.{0}'.format(meeting.UID()))
@@ -753,7 +754,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
            - cfg modified;
            - different item or user;
            - user groups changed.'''
-        isRealManager = self.tool.isManager(self.cfg, realManagers=True)
+        isRealManager = self.tool.isManager(self.tool, realManagers=True)
         isManager = not isRealManager and self.tool.isManager(self.cfg)
         date = get_cachekey_volatile(
             'Products.PloneMeeting.Meeting.UID.{0}'.format(self.context.UID()))
