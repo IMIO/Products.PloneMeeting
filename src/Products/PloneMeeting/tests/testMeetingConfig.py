@@ -2053,6 +2053,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
                          level_removed_config_error)
         cfg.setItemAdviceStates(())
+        cfg.at_post_edit_script()
         # used in transitionsToConfirm, as transition
         cfg.setTransitionsToConfirm(('MeetingItem.propose', 'MeetingItem.validate'))
         level_removed_config_error = \

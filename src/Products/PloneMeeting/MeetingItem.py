@@ -5160,8 +5160,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # to add an advice in current item state
             elif compute_to_add and compute_power_advisers and user_org_uid in powerAdvisers:
                 # we avoid waking up the organization, we get states using
-                # MeetingConfig.getItemAdviceStates that is ram.cached
-                if itemState in cfg.getItemAdviceStates(org_uid=user_org_uid):
+                # MeetingConfig.getItemAdviceStatesForOrg that is ram.cached
+                if itemState in cfg.getItemAdviceStatesForOrg(org_uid=user_org_uid):
                     toAdd.append(user_org_uid)
         return (toAdd, toEdit)
 

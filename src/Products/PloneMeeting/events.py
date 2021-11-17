@@ -1195,8 +1195,8 @@ def _notifyContainerModified(child):
 def onConfigOrPloneElementAdded(element, event):
     '''Called whenever an element in the MeetingConfig or a default element in Plone was added.'''
     # invalidate cache of relevant vocabularies
-    if hasattr(element, '_invalidateCachedVocabularies'):
-        element._invalidateCachedVocabularies()
+    if hasattr(element, '_invalidateCachedMethods'):
+        element._invalidateCachedMethods()
 
     # set modification date on every containers
     _notifyContainerModified(element)
@@ -1212,8 +1212,8 @@ def onConfigOrPloneElementModified(element, event):
         return
 
     # invalidate cache of relevant vocabularies
-    if hasattr(element, '_invalidateCachedVocabularies'):
-        element._invalidateCachedVocabularies()
+    if hasattr(element, '_invalidateCachedMethods'):
+        element._invalidateCachedMethods()
 
     # set modification date on every containers
     _notifyContainerModified(element)
@@ -1226,8 +1226,8 @@ def onConfigOrPloneElementTransition(element, event):
         return
 
     # invalidate cache of relevant vocabularies
-    if hasattr(element, '_invalidateCachedVocabularies'):
-        element._invalidateCachedVocabularies()
+    if hasattr(element, '_invalidateCachedMethods'):
+        element._invalidateCachedMethods()
 
     # set modification date on every containers
     _notifyContainerModified(element)
@@ -1240,8 +1240,8 @@ def onConfigOrPloneElementRemoved(element, event):
         return
 
     # invalidate cache of relevant vocabularies
-    if hasattr(element, '_invalidateCachedVocabularies'):
-        element._invalidateCachedVocabularies()
+    if hasattr(element, '_invalidateCachedMethods'):
+        element._invalidateCachedMethods()
 
     # set modification date on every containers
     _notifyContainerModified(element)

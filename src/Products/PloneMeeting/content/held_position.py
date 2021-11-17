@@ -328,7 +328,7 @@ class PMHeldPosition(HeldPosition):
             res = u'{0} {1}'.format(self.person_title, res)
         return res
 
-    def _invalidateCachedVocabularies(self):
+    def _invalidateCachedMethods(self):
         '''Clean cache for vocabularies using held_positions.'''
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary")

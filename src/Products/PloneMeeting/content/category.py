@@ -120,7 +120,7 @@ class MeetingCategory(Item):
             i = None
         return i
 
-    def _invalidateCachedVocabularies(self):
+    def _invalidateCachedMethods(self):
         """Clean cache for vocabularies using MeetingCategories."""
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
