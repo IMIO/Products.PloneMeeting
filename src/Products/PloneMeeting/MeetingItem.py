@@ -1275,7 +1275,7 @@ schema = Schema((
         name='oralQuestion',
         default=False,
         widget=BooleanField._properties['widget'](
-            condition="python: here.attributeIsUsed('oralQuestion') and here.portal_plonemeeting.isManager(here)",
+            condition="python: here.showOralQuestion()",
             description="OralQuestion",
             description_msgid="oral_question_item_descr",
             label='Oralquestion',
@@ -1287,7 +1287,7 @@ schema = Schema((
     BooleanField(
         name='toDiscuss',
         widget=BooleanField._properties['widget'](
-            condition="here/showToDiscuss",
+            condition="python: here.showToDiscuss()",
             label='Todiscuss',
             label_msgid='PloneMeeting_label_toDiscuss',
             i18n_domain='PloneMeeting',
@@ -2348,6 +2348,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         return cfg.show_meeting_manager_reserved_field(name, meta_type='MeetingItem')
+
+    security.declarePublic('showOralQuestion')
+
+    def showOralQuestion(self):
+        '''On edit, show if field enabled and if current user isManager.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        res = self.attributeIsUsed('oralQuestion') and tool.isManager(cfg)
+        return res
 
     security.declarePublic('showToDiscuss')
 

@@ -2834,7 +2834,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'showNumberOfItems': False,
                     'tal_condition': "python: 'takenOverBy' in cfg.getUsedItemAttributes() "
                                      "and (tool.get_orgs_for_user(omitted_suffixes=['observers', ], "
-                                     "the_objects=False) or tool.isManager(here))",
+                                     "the_objects=False) or tool.isManager(cfg))",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # All (visible) items
@@ -3174,7 +3174,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: tool.isManager(here) and "
+                    'tal_condition': "python: tool.isManager(cfg) and "
                                      "('return_to_proposing_group' in cfg.getWorkflowAdaptations() or "
                                      "'return_to_proposing_group_with_all_validations' in "
                                      "cfg.getWorkflowAdaptations() or 'return_to_proposing_group_with_last_validation' "

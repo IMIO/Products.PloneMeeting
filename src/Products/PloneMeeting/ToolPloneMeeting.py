@@ -1542,7 +1542,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def showHolidaysWarning(self, cfg):
         """Condition for showing the 'holidays_waring_message'."""
-        if cfg is not None:
+        if cfg is not None and cfg.__class__.__name__ == "MeetingConfig":
             holidays = self.getHolidays()
             # if user isManager and last defined holiday is in less than 60 days, display warning
             if self.isManager(cfg) and \

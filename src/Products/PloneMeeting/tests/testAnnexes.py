@@ -65,7 +65,8 @@ class testAnnexes(PloneMeetingTestCase):
         # enable confidentiality
         annex_group.confidentiality_activated = True
         # now it fails because not a MeetingManager
-        self.assertFalse(self.tool.isManager(annex))
+        cfg = self.tool.getMeetingConfig(annex)
+        self.assertFalse(self.tool.isManager(cfg))
         self.assertRaises(Unauthorized,
                           view.set_values, {'confidential': 'true'})
 
