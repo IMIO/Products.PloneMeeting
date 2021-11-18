@@ -363,6 +363,14 @@ def postInstall(context):
     # enable plone.app.caching
     api.portal.set_registry_record('plone.caching.interfaces.ICacheSettings.enabled', True)
 
+    # disable RSS, it does useless catalog search sometimes...
+    api.portal.set_registry_record(
+        name='Products.CMFPlone.interfaces.syndication.ISiteSyndicationSettings.allowed',
+        value=False)
+    api.portal.set_registry_record(
+        name='Products.CMFPlone.interfaces.syndication.ISiteSyndicationSettings.search_rss_enabled',
+        value=False)
+
     # configure dexterity localrolesfield
     _configureDexterityLocalRolesField()
 

@@ -27,6 +27,7 @@ from imio.annex import utils as imio_annex_utils
 from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.content import uuidToObject
 from imio.history import utils as imio_history_utils
 from imio.history.browser.views import IHContentHistoryView
 from imio.history.browser.views import IHDocumentBylineViewlet
@@ -292,14 +293,14 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
         no_faceted_context = IMeeting.providedBy(self.context) or not IFacetedNavigable.providedBy(self.context)
         return no_faceted_context and available
 
-    def add_extra_links_info(self, template, infos):
+    def add_extra_links_info(self, pod_template, infos):
         """Complete infos with the store_as_annex data."""
         res = {'store_as_annex_uid': None,
                'store_as_annex_title': None}
-        if template.store_as_annex:
-            annex_type_uid = template.store_as_annex
+        if self.may_store_as_annex(pod_template):
+            annex_type_uid = pod_template.store_as_annex
             res['store_as_annex_uid'] = annex_type_uid
-            annex_type = api.content.find(UID=annex_type_uid)[0].getObject()
+            annex_type = uuidToObject(annex_type_uid, unrestricted=True)
             annex_type_title = '{0} ➔ {1}'.format(
                 annex_type.aq_parent.Title(),
                 annex_type.Title())

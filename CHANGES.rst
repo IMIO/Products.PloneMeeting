@@ -16,6 +16,7 @@ Changelog
     `cleanupInterval=3600` so cache is kept for a long time.
   - Do not more `ram.cache` `Meeting.query_state` and `MeetingItem.query_state`,
     performance test shows it is not necessary.
+  - Use unrestricted catalog query when possible.
 
   [gbastien]
 

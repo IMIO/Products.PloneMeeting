@@ -21,6 +21,7 @@ from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import get_vocab
 from imio.helpers.content import safe_delattr
+from imio.helpers.content import uuidToObject
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.security import fplog
@@ -32,7 +33,6 @@ from OFS.ObjectManager import BeforeDeleteException
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from plone import api
-from plone.app.uuid.utils import uuidToObject
 from plone.memoize import ram
 from Products.Archetypes.atapi import BaseFolder
 from Products.Archetypes.atapi import BooleanField
@@ -3606,7 +3606,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            group if p_theObject is True.'''
         res = self.getField('proposingGroup').get(self, **kwargs)  # = group id
         if res and theObject:
-            res = uuidToObject(res)
+            res = uuidToObject(res, unrestricted=True)
         return res
 
     def getPreferredMeeting(self, theObject=False, caching=True, **kwargs):
@@ -3681,7 +3681,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = [res[0]]
 
         if theObjects:
-            res = uuidsToObjects(res, ordered=True)
+            res = uuidsToObjects(res, ordered=True, unrestricted=True)
 
         if res and first:
             res = res[0]
@@ -3695,7 +3695,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            groups if p_theObjects is True.'''
         res = self.getField('associatedGroups').get(self, **kwargs)
         if res and theObjects:
-            return tuple(uuidsToObjects(uuids=res, ordered=True))
+            return tuple(uuidsToObjects(uuids=res, ordered=True, unrestricted=True))
         return res
 
     security.declarePublic('fieldIsEmpty')
@@ -5101,7 +5101,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # missing terms
         stored_terms = self.getItemInitiator()
         missing_term_uids = [uid for uid in stored_terms if uid not in cfg.getOrderedItemInitiators()]
-        missing_terms = uuidsToObjects(missing_term_uids)
+        missing_terms = uuidsToObjects(missing_term_uids, unrestricted=True)
         for org_or_hp in cfg.getOrderedItemInitiators(theObjects=True) + missing_terms:
             if org_or_hp.portal_type == 'organization':
                 res.append((org_or_hp.UID(), org_or_hp.Title()))

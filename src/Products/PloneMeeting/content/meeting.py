@@ -1174,14 +1174,7 @@ class Meeting(Container):
 
         res = contact_uids
         if the_objects:
-            catalog = api.portal.get_tool('portal_catalog')
-            brains = catalog(UID=contact_uids)
-            res = [brain.getObject() for brain in brains]
-
-            # keep correct order that was lost by catalog query
-            def get_key(item):
-                return contact_uids.index(item.UID())
-            res = sorted(res, key=get_key)
+            res = uuidsToObjects(contact_uids, ordered=True, unrestricted=True)
         return tuple(res)
 
     security.declarePublic('get_attendees')

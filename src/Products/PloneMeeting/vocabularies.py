@@ -32,8 +32,10 @@ from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.content import find
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
+from imio.helpers.content import uuidToObject
 from natsort import humansorted
 from operator import attrgetter
 from plone import api
@@ -86,9 +88,9 @@ class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
         root = context
         while IFacetedNavigable.providedBy(root.aq_inner.aq_parent):
             root = root.aq_inner.aq_parent
-        catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(
-            path=dict(query='/'.join(root.getPhysicalPath())),
+        brains = find(
+            context=root,
+            unrestricted=True,
             portal_type='DashboardCollection',
             enabled=True,
             sort_on='getObjPositionInParent'
@@ -362,7 +364,7 @@ class ItemGroupsInChargeVocabulary(GroupsInChargeVocabulary):
         missing_term_uids = [uid for uid in stored_terms
                              if uid not in term_uids]
         if missing_term_uids:
-            missing_terms = uuidsToObjects(missing_term_uids, ordered=False)
+            missing_terms = uuidsToObjects(missing_term_uids, ordered=False, unrestricted=True)
             for org in missing_terms:
                 org_uid = org.UID()
                 terms.append(SimpleTerm(org_uid, org_uid, org.get_full_title()))
@@ -1412,19 +1414,19 @@ class PMCategoryVocabulary(CategoryVocabulary):
         isManager = tool.isManager(cfg)
         # in case called from dexterity types configuration panel, no cfg
         cfg_modified = cfg and cfg.modified() or None
-        # if context is an annex, cache on context.UID() + context.modified() to manage stored term
-        context_uid = None
-        context_modified = None
+        # if context is an annex, cache on context.UID() + context.modified()
+        # to manage stored term
+        # XXX we do not do this that will simply make cache inefficient
+        # context_uid = None
+        # context_modified = None
         # with plone.restapi, validation is done before context fully initialized
         # during validation, vocabulary for field content_category is called
-        if IAnnex.providedBy(context) and getattr(context, ATTRIBUTE_NAME, None):
-            context_uid = context.UID()
-            context_modified = context.modified()
+        # if IAnnex.providedBy(context) and getattr(context, ATTRIBUTE_NAME, None):
+        #     context_uid = context.UID()
+        #     context_modified = context.modified()
         # invalidate if user groups changed
-        user_plone_groups = tool.get_plone_groups_for_user()
         return annex_group.getId(), \
-            isManager, cfg_modified, use_category_uid_as_token, \
-            context_uid, context_modified, user_plone_groups
+            isManager, cfg_modified, use_category_uid_as_token
 
     @ram.cache(__call___cachekey)
     def __call__(self, context, use_category_uid_as_token=False):
@@ -2429,8 +2431,7 @@ class PMPositionTypesVocabulary(PositionTypesVocabulary):
             # used in attendees management forms
             person_uid = context.REQUEST.get('person_uid', None)
             if person_uid:
-                catalog = api.portal.get_tool('portal_catalog')
-                hp = catalog(UID=person_uid)[0].getObject()
+                hp = uuidToObject(person_uid)
                 person = hp.get_person()
         return person
 
