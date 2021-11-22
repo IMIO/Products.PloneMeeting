@@ -724,7 +724,7 @@ def get_all_used_held_positions(obj, include_new=False, the_objects=True):
         new_selectable_contacts = [c for c in selectable_contacts if c not in contacts]
         contacts = contacts + new_selectable_contacts
 
-    if the_objects:
+    if contacts and the_objects:
         contacts = uuidsToObjects(uuids=contacts, ordered=True)
 
     return tuple(contacts)
@@ -1173,7 +1173,7 @@ class Meeting(Container):
             contact_uids = uids
 
         res = contact_uids
-        if the_objects:
+        if res and the_objects:
             res = uuidsToObjects(contact_uids, ordered=True, unrestricted=True)
         return tuple(res)
 
@@ -1509,12 +1509,7 @@ class Meeting(Container):
 
     def get_raw_items(self):
         """Simply get linked items."""
-        catalog = api.portal.get_tool('portal_catalog')
-        collection_behavior = ICollection(self)
-        catalog_query = collection_behavior._get_query(force_linked_items_query=True)
-        query = queryparser.parseFormquery(self, catalog_query)
-        res = [brain.UID for brain in catalog.unrestrictedSearchResults(**query)]
-        return res
+        return self.get_items(the_objects=False, unrestricted=True)
 
     security.declarePublic('get_item_by_number')
 
@@ -1682,6 +1677,8 @@ class Meeting(Container):
                                      'listType',
                                      'meeting_uid',
                                      'meeting_date'])
+        # store number of items
+        self._number_of_items = len(items)
         # meeting is considered modified, do this before update_item_references
         self.notifyModified()
 
@@ -1750,6 +1747,8 @@ class Meeting(Container):
         # reindex relevant indexes now that item is removed
         item.reindexObject(idxs=['listType', 'meeting_uid', 'meeting_date'])
 
+        # store number of items
+        self._number_of_items = len(items)
         # meeting is considered modified, do this before update_item_references
         self.notifyModified()
 
@@ -2072,7 +2071,7 @@ class Meeting(Container):
 
     def number_of_items(self, as_int=False):
         '''How much items in this meeting ?'''
-        total = len(self.get_raw_items())
+        total = getattr(self, "_number_of_items")
         if not as_int:
             total = str(total)
         return total

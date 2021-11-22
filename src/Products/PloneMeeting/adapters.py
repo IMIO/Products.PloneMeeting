@@ -47,6 +47,7 @@ from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.MeetingConfig import CONFIGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import READERPREFIX
@@ -1896,12 +1897,17 @@ class PMGenerablePODTemplatesAdapter(GenerablePODTemplatesAdapter):
         cfg = tool.getMeetingConfig(self.context)
         if not cfg:
             return []
+        # do not render on other contents than IMeetingContent
+        # or it is also computed on Folder (dashboards) and other Plone pages
+        if not IMeetingContent.providedBy(self.context):
+            return []
+
+        # OK, we are on a IMeetingContent, compute the pod templates
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog.unrestrictedSearchResults(
-            object_provides={'query': IPODTemplate.__identifier__,
-                             'not': IDashboardPODTemplate.__identifier__},
-            # PloneMeeting, just added following line
-            path={'query': '/'.join(cfg.getPhysicalPath())},
+            portal_type='ConfigurablePODTemplate',
+            getConfigId=cfg.getId(),
+            enabled=True,
             sort_on='getObjPositionInParent'
         )
         pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
@@ -1916,10 +1922,11 @@ class PMDashboardGenerablePODTemplatesAdapter(DashboardGenerablePODTemplatesAdap
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         query = {'object_provides': {'query': IDashboardPODTemplate.__identifier__},
+                 'enabled': True,
                  'sort_on': 'getObjPositionInParent'}
         # filter on MeetingConfig if we are in it
         if cfg:
-            query['path'] = {'query': '/'.join(cfg.getPhysicalPath())}
+            query['getConfigId'] = cfg.getId()
         else:
             # out of a MeetingConfig
             query['getConfigId'] = EMPTY_STRING

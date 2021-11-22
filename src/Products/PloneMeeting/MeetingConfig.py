@@ -6377,14 +6377,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     subFolder.processForm(values={'dummy': None})
                 subFolder.reindexObject()
 
-    def getItemAdviceStatesForOrg_cachekey(method, self, org_uid=None, **kwargs):
+    def getItemAdviceStatesForOrg_cachekey(method, self, org_uid=None):
         '''cachekey method for self.getItemAdviceStatesForOrg.'''
-        return (repr(self), org_uid, kwargs)
+        return (repr(self), org_uid)
 
     security.declarePublic('getItemAdviceStates')
 
     @ram.cache(getItemAdviceStatesForOrg_cachekey)
-    def getItemAdviceStatesForOrg(self, org_uid, **kwargs):
+    def getItemAdviceStatesForOrg(self, org_uid):
         '''Method that gets itemAdvicesStates for a given p_org_uid.
            Made for caching, as it is called in
            MeetingItem.getAdvicesGroupsInfosForUser especially.'''

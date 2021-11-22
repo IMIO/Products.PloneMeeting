@@ -375,7 +375,7 @@ class MeetingItemWorkflowConditions(object):
            self.context.getMeeting().query_state() in ('decided', 'decisions_published', 'closed'):
             return True
 
-    def _currentUserIsAdviserAbleToSendItemBackExtraCondition(self, org, destinationState):
+    def _currentUserIsAdviserAbleToSendItemBackExtraCondition(self, org_uid, destinationState):
         ''' '''
         return True
 
@@ -396,14 +396,13 @@ class MeetingItemWorkflowConditions(object):
         user_plone_groups = self.tool.get_plone_groups_for_user()
         res = False
         for org_uid in self.context.adviceIndex:
-            org = get_organization(org_uid)
             # org can give advice in current state and member is adviser for it
             # user able to evaluate completeness and item complete or
             # not able to evaluate completeness but completeness evaluation not required
             # but advice not editable, this means also advice still not added
             # this last case is "not using completeness"
             may_eval_completeness = self.context.adapted().mayEvaluateCompleteness()
-            if item_state in org.get_item_advice_states(self.cfg) and \
+            if item_state in self.cfg.getItemAdviceStatesForOrg(org_uid) and \
                get_plone_group_id(org_uid, 'advisers') in user_plone_groups and \
                (self.context._advice_is_given(org_uid) or
                 (may_eval_completeness and
@@ -413,7 +412,7 @@ class MeetingItemWorkflowConditions(object):
                                                     'completeness_not_yet_evaluated']) and
                 (not self._adviceSendableBackOnlyWhenNoMoreEditable(org_uid) or
                  not self.context.adviceIndex[org_uid]['advice_editable'])) and \
-               self._currentUserIsAdviserAbleToSendItemBackExtraCondition(org, destinationState):
+               self._currentUserIsAdviserAbleToSendItemBackExtraCondition(org_uid, destinationState):
                 res = True
                 break
         return res
@@ -568,8 +567,7 @@ class MeetingItemWorkflowConditions(object):
             # only consider advices to give
             if adviceInfo['type'] not in (NOT_GIVEN_ADVICE_VALUE, 'asked_again', ):
                 continue
-            org = get_organization(org_uid)
-            adviceStates = org.get_item_advice_states(self.cfg)
+            adviceStates = self.cfg.getItemAdviceStatesForOrg(org_uid)
             if destination_state in adviceStates:
                 hasAdvicesToGive = True
                 break
@@ -4642,8 +4640,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # send of this notification to some defined groups
             if not self.adapted()._sendAdviceToGiveToGroup(org_uid):
                 continue
-            org = get_organization(org_uid)
-            adviceStates = org.get_item_advice_states(cfg)
+            adviceStates = cfg.getItemAdviceStatesForOrg(org_uid)
             # If force_resend_if_in_review_states=True,
             # check if current item review_state in adviceStates
             # This is useful when asking advice again and
@@ -5985,8 +5982,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # we even consider orgs having their _advisers Plone group
             # empty because this does not change anything in the UI and adding a
             # user after in the _advisers suffixed Plone group will do things work as expected
-            org = get_organization(org_uid)
-            if item_state in org.get_item_advice_states(cfg):
+            if item_state in cfg.getItemAdviceStatesForOrg(org_uid):
                 plone_group_id = get_plone_group_id(org_uid, suffix='advisers')
                 # power advisers get only the right to add the advice, but not to see the item
                 # this must be provided using another functionnality, like power observers or so
@@ -6349,8 +6345,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # advice review_states related informations (addable, editable/removeable, viewable)
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        org = get_organization(adviceInfos['id'])
-        item_advice_states = org.get_item_advice_states(cfg)
+        item_advice_states = cfg.getItemAdviceStatesForOrg(adviceInfos['id'])
         translated_item_advice_states = translate_list(item_advice_states)
         advice_states_msg = translate(
             'This advice is addable in following states : ${item_advice_states}.',

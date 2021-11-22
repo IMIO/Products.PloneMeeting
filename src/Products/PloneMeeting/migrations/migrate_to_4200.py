@@ -18,6 +18,7 @@ from Products.contentmigration.basemigrator.migrator import CMFFolderMigrator
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.browser.itemattendee import position_type_default
 from Products.PloneMeeting.content.advice import IMeetingAdvice
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingDashboardBatchActionsMarker
 from Products.PloneMeeting.interfaces import IMeetingItemDashboardBatchActionsMarker
 from Products.PloneMeeting.migrations import logger
@@ -352,6 +353,7 @@ class Migrate_To_4200(Migrator):
         """Now that an arbitraty label may be defined when redefining item signatory,
            store it, the default value was the secondary_position_type or the position_type."""
         logger.info("Updating 'itemSignagtories' for every Meetings...")
+        # looking for meta_type='Meeting' will only find AT Meeting
         brains = self.catalog(meta_type='Meeting')
         for brain in brains:
             meeting = brain.getObject()
@@ -398,6 +400,7 @@ class Migrate_To_4200(Migrator):
     def _removeMeetingItemsReferenceField(self):
         '''ReferenceField Meeting.items was removed and is now managed manually.'''
         logger.info("Removing Meeting.items reference field...")
+        # looking for meta_type='Meeting' will only find AT Meeting
         for brain in self.catalog(meta_type='Meeting'):
             meeting = brain.getObject()
             # get references from at_references so order is kept
@@ -541,6 +544,18 @@ class Migrate_To_4200(Migrator):
             if defaultAdviceType == "asked_again":
                 defaultAdviceType = "positive"
                 cfg.setDefaultAdviceType(defaultAdviceType)
+        logger.info('Done.')
+
+    def _updateMeetingsNumberOfItems(self):
+        """Meeting number of items is now stored in Meeting._number_of_items."""
+        logger.info('Updating "_number_of_items" for every meetings...')
+        brains = self.catalog(object_provides=IMeeting.__identifier__)
+        for brain in brains:
+            meeting = brain.getObject()
+            if base_hasattr(meeting, '_number_of_items'):
+                continue
+            meeting._number_of_items = len(meeting.get_raw_items())
+            meeting._p_changed = True
         logger.info('Done.')
 
     def _updateItemGroupsInCharge(self):
@@ -763,6 +778,9 @@ class Migrate_To_4200(Migrator):
 
         # add new collections, the "searchmyitemstoadvice" for example
         self.addNewSearches()
+
+        # store meeting number of items
+        self._updateMeetingsNumberOfItems()
 
         # update local_roles, workflow mappings and catalogs
         self.tool.update_all_local_roles()

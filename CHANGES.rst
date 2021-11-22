@@ -16,7 +16,12 @@ Changelog
     `cleanupInterval=3600` so cache is kept for a long time.
   - Do not more `ram.cache` `Meeting.query_state` and `MeetingItem.query_state`,
     performance test shows it is not necessary.
-  - Use unrestricted catalog query when possible.
+  - Use unrestricted catalog query when possible and avoid use of `path` index;
+  - Stored meeting number of items in `Meeting._number_of_items` instead
+    computing it every times the meeting is displayed;
+  - Added ram.cached method `MeetingConfig.getItemAdviceStatesForOrg`, it avoids
+    getting the organization, use it everywhere possible.
+  - Added `ram.cache` for faceted counters (`PMRenderTermView.number_of_items`).
 
   [gbastien]
 

@@ -218,8 +218,7 @@ class AdvicesIconsInfos(BrowserView):
             else:
                 if self.cfg.getInheritedAdviceRemoveableByAdviser() and \
                    self.advice_id in self.userAdviserOrgUids and \
-                   self.itemReviewState in get_organization(
-                        self.advice_id).get_item_advice_edit_states(cfg=self.cfg):
+                   self.itemReviewState in self.cfg.getItemAdviceStatesForOrg(self.advice_id):
                     return True
         return res
 

@@ -472,6 +472,19 @@ class PMRenderTermView(RenderTermPortletView):
                     self.context.UID(), api.portal.get().absolute_url())
         return rendered_term
 
+    def number_of_items_cachekey(method, self, init=False):
+        '''cachekey method for self.number_of_items.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        userGroups = tool.get_plone_groups_for_user()
+        # cache until an item is modified
+        date = get_cachekey_volatile('Products.PloneMeeting.MeetingItem.modified')
+        return (repr(self.context), userGroups, date, init)
+
+    @ram.cache(number_of_items_cachekey)
+    def number_of_items(self, init=False):
+        """Just added caching until an item is modified results will remain the same."""
+        return super(PMRenderTermView, self).number_of_items(init=init)
+
 
 class PMRenderCategoryView(IDRenderCategoryView):
     '''
@@ -761,7 +774,6 @@ class MeetingActionsPanelView(BaseActionsPanelView):
             'Products.PloneMeeting.Meeting.UID.{0}'.format(self.context.UID()))
         # check also portal_url in case application is accessed thru different URI
         return (self.context.UID(), self.context.modified(),
-                self.context.get_raw_items(),
                 isRealManager, isManager, date,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
