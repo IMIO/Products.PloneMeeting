@@ -3451,14 +3451,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getItemWFValidationLevels')
 
     def getItemWFValidationLevels(self,
-                                  state=None,
+                                  states=[],
                                   data=None,
                                   only_enabled=False,
                                   value=None,
                                   translated_itemWFValidationLevels=False,
+                                  return_state_singleton=True,
                                   **kwargs):
         '''Override the field 'itemWFValidationLevels' accessor to be able to handle some paramters :
-           - state : return row relative to given p_state;
+           - states : return rows relative to given p_states (when p_return_state_singleton=True
+             and only one row to return (one state given) then a single dict is returned,
+             either a list of dict);
            - data : return every values defined for a given datagrid column name;
            - only_enabled : make sure to return rows having enabled '1'.'''
         res = value is None and self.getField('itemWFValidationLevels').get(self, **kwargs) or value
@@ -3468,11 +3471,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if only_enabled:
             res = [level for level in res if level['enabled'] in enabled]
 
-        if state:
-            res = [level for level in res if level['state'] == state]
+        if states:
+            res = [level for level in res if level['state'] in states]
         if data:
             res = [level[data] for level in res]
-        if state:
+        if return_state_singleton and len(states) == 1:
             res = res and res[0] or res
         # when displayed, append translated values to elements title
         if self.REQUEST.get('translated_itemWFValidationLevels',
@@ -4648,7 +4651,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         values = res
 
         itemcreated_values_state = self.getItemWFValidationLevels(
-            state='itemcreated',
+            states=['itemcreated'],
             value=values)
         if not itemcreated_values_state:
             return translate('item_wf_val_states_itemcreated_must_exist',

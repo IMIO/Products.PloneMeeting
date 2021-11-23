@@ -445,7 +445,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             # get info about return_to_proposing_group validation
             # level in MeetingConfig.itemWFValidationLevels
             validation_state = itemState.replace('returned_to_proposing_group_', '')
-            level = cfg.getItemWFValidationLevels(state=validation_state)
+            level = cfg.getItemWFValidationLevels(states=[validation_state])
             res.append(
                 ('goTo_{0}.png'.format(itemState),
                  translate('icon_help_returned_to_proposing_group_with_validation_state',
@@ -460,7 +460,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             # manage MeetingConfig.itemWFValidationLevels states
             item_validation_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
             if itemState in item_validation_states:
-                level = cfg.getItemWFValidationLevels(state=itemState, only_enabled=True)
+                level = cfg.getItemWFValidationLevels(states=[itemState], only_enabled=True)
                 res.append(('{0}.png'.format(itemState),
                             translate('icon_help_{0}'.format(itemState),
                                       domain="PloneMeeting",
@@ -700,7 +700,7 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
                not self.tool.isManager(self.cfg):
                 userOrgUids = self.tool.get_orgs_for_user()
                 group_managing_item_uid = \
-                    self.context.adapted()._getGroupManagingItem(event['review_state']).UID()
+                    self.context.adapted()._getGroupManagingItem(event['review_state'])
                 if group_managing_item_uid not in userOrgUids:
                     userMayAccessComment = False
         return userMayAccessComment

@@ -337,11 +337,11 @@ class IMeetingItemDocumentation:
         """Condition to update item reference.  By default the item reference
            will be updated if item is in a meeting and meeting review_state is
            not 'before frozen'."""
-    def _getGroupManagingItem(self, review_state=None):
+    def _getGroupManagingItem(self, review_state=None, theObject=False):
         """Returns the group managing the item.
            By default this will be the proposingGroup.
            Given p_review_state may be used to know what group manage item in which review_state.
-           This method must return a MeetingGroup."""
+           This method must return an organization UID (or organization when theObject=True)."""
     def _getAllGroupsManagingItem(self):
         """Returns the list of groups that manages the item during the entire item life.
            See _getGroupManagingItem docstring for more informations."""

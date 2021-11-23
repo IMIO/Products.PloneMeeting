@@ -626,8 +626,8 @@ def sendMailIfRelevant(obj,
     recipients = []
     userIds = []
     if isSuffix:
-        org = obj.adapted()._getGroupManagingItem(obj.query_state())
-        plone_group = get_plone_group(org.UID(), value)
+        org_uid = obj.adapted()._getGroupManagingItem(obj.query_state(), theObject=False)
+        plone_group = get_plone_group(org_uid, value)
         if not plone_group:
             # maybe the suffix is a MeetingConfig related suffix, like _meetingmanagers
             plone_group = get_plone_group(cfg.getId(), value)
