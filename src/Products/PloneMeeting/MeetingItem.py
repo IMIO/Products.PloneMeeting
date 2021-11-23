@@ -375,7 +375,19 @@ class MeetingItemWorkflowConditions(object):
            self.context.getMeeting().query_state() in ('decided', 'decisions_published', 'closed'):
             return True
 
-    def _currentUserIsAdviserAbleToSendItemBackExtraCondition(self, org, destinationState):
+    def _userIsPGMemberAbleToSendItemBack(self, proposingGroup, destinationState):
+        '''Is current user member of destinationState level?'''
+        suffix = self.cfg.getItemWFValidationLevels(
+            states=[destinationState], data='suffix')
+        return self.tool.group_is_not_empty(
+            proposingGroup,
+            suffix,
+            user_id=get_current_user_id(self.context.REQUEST)) and \
+            self._userIsPGMemberAbleToSendItemBackExtraCondition(
+                proposingGroup, destinationState)
+
+    def _userIsPGMemberAbleToSendItemBackExtraCondition(
+            self, proposingGroup, destinationState):
         ''' '''
         return True
 
@@ -417,6 +429,10 @@ class MeetingItemWorkflowConditions(object):
                 res = True
                 break
         return res
+
+    def _currentUserIsAdviserAbleToSendItemBackExtraCondition(self, org, destinationState):
+        ''' '''
+        return True
 
     security.declarePublic('mayCorrect')
 
@@ -466,13 +482,10 @@ class MeetingItemWorkflowConditions(object):
                         res = True
                     else:
                         if 'waiting_advices_proposing_group_send_back' in wfas:
-                            # is current user member of destinationState level?
-                            suffix = self.cfg.getItemWFValidationLevels(
-                                states=[destinationState], data='suffix')
-                            res = self.tool.group_is_not_empty(
-                                proposingGroup,
-                                suffix,
-                                user_id=get_current_user_id(self.context.REQUEST))
+                            # is current user proposingGroup member able to trigger transition?
+                            res = self._userIsPGMemberAbleToSendItemBack(
+                                proposingGroup, destinationState)
+
                         # if not, maybe it is an adviser able to give an advice?
                         if not res and 'waiting_advices_adviser_send_back' in wfas:
                             # adviser may send back to validated when using
@@ -480,11 +493,13 @@ class MeetingItemWorkflowConditions(object):
                             if 'waiting_advices_adviser_may_validate' in wfas:
                                 sendable_back_states.append('validated')
 
-                            # get advisers that are able to trigger transition
+                            # is current user adviser able to trigger transition?
                             res = self._currentUserIsAdviserAbleToSendItemBack(destinationState)
             else:
-                # maybe destinationState is a validation state? in this case return True only if group not empty
-                suffix = self.cfg.getItemWFValidationLevels(states=[destinationState], data='suffix')
+                # maybe destinationState is a validation state?
+                # in this case return True only if group not empty
+                suffix = self.cfg.getItemWFValidationLevels(
+                    states=[destinationState], data='suffix')
                 res = _checkPermission(ReviewPortalContent, self.context) and \
                     (not suffix or self.tool.group_is_not_empty(proposingGroup, suffix))
         return res

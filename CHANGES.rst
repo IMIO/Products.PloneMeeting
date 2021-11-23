@@ -19,6 +19,12 @@ Changelog
   [gbastien]
 - `Meeting._getGroupManagingItem` parameter `theObject` is now `False` by default.
   [gbastien]
+- Moved logic of `Proposing group may change state of waiting_advices item` to
+  `MeetingItemWorkflowConditions._userIsPGMemberAbleToSendItemBack` and added
+  `MeetingItemWorkflowConditions._userIsPGMemberAbleToSendItemBackExtraCondition`
+  so it is easy to override (like it is already the case for the
+  `Adviser may send item waiting advices back to proposing group` logic).
+  [gbastien]
 
 4.2b20 (2021-11-15)
 -------------------
