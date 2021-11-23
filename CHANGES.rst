@@ -7,6 +7,18 @@ Changelog
 
 - Fixed `utils.sendMailIfRelevant` when using mode `test`.
   [gbastien]
+- Fixed `waiting_advices` workflow adaptations, only rely on selected workflow
+  adaptations and no more manage the ReviewPortalContent permission.
+  Adapted also `MeetingItem.mayAskAdviceAgain` to let the proposingGroup member
+  ask advice again when item is in a `_waiting_advices` review state.
+  [gbastien]
+- Adapted `MeetingConfig.getItemWFValidationLevels` parameter `state` to `states`
+  so it is possible to pass several review_states.
+  New parameter `return_state_singleton=True`, will do method work like before
+  by default.
+  [gbastien]
+- `Meeting._getGroupManagingItem` parameter `theObject` is now `False` by default.
+  [gbastien]
 
 4.2b20 (2021-11-15)
 -------------------

@@ -16,6 +16,7 @@ from collective.iconifiedcategory.utils import get_group
 from copy import deepcopy
 from datetime import datetime
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import get_transitions
 from imio.helpers.content import object_values
 from imio.helpers.testing import testing_logger
 from plone import api
@@ -587,11 +588,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.cleanMemoize()
 
     def transitions(self, obj):
-        '''Returns the list of transitions that the current user may trigger
-           on p_obj.'''
-        res = [t['id'] for t in self.wfTool.getTransitionsFor(obj)]
-        res.sort()
-        return res
+        '''Returns the list of transition ids that the current user
+           may trigger on p_obj.'''
+        return sorted(get_transitions(obj))
 
     def _get_viewlet_manager(self, context, manager_name):
         """ """

@@ -237,7 +237,7 @@ class MeetingItemWorkflowConditions(object):
         if _checkPermission(ReviewPortalContent, self.context):
             # check if next validation level suffixed Plone group is not empty
             suffix = self.cfg.getItemWFValidationLevels(
-                state=destinationState, data='suffix', only_enabled=True)
+                states=[destinationState], data='suffix', only_enabled=True)
             res = self.tool.group_is_not_empty(self.context.getProposingGroup(), suffix)
         # check category after transition as transition could not be doable
         # at all and in this case, we would display a No button for a transition not doable...
@@ -438,7 +438,7 @@ class MeetingItemWorkflowConditions(object):
                     # manage the reviewers_take_back_validated_item WFAdaptation
                     elif 'reviewers_take_back_validated_item' in self.cfg.getWorkflowAdaptations():
                         # is current user member of last validation level?
-                        suffix = self.cfg.getItemWFValidationLevels(state=last_val_state, data='suffix')
+                        suffix = self.cfg.getItemWFValidationLevels(states=[last_val_state], data='suffix')
                         res = self.tool.group_is_not_empty(
                             proposingGroup, suffix, user_id=get_current_user_id())
             # using 'waiting_advices_XXX_send_back' WFAdaptations,
@@ -459,16 +459,20 @@ class MeetingItemWorkflowConditions(object):
                     for waiting_advice_config in adaptations.WAITING_ADVICES_FROM_STATES:
                         sendable_back_states += list(waiting_advice_config['back_states'])
 
-                if destinationState in sendable_back_states or destinationState not in item_validation_states:
+                if destinationState in sendable_back_states or \
+                   destinationState not in item_validation_states:
                     # bypass for Manager
                     if _checkPermission(ReviewPortalContent, self.context):
                         res = True
                     else:
                         if 'waiting_advices_proposing_group_send_back' in wfas:
                             # is current user member of destinationState level?
-                            suffix = self.cfg.getItemWFValidationLevels(state=destinationState, data='suffix')
+                            suffix = self.cfg.getItemWFValidationLevels(
+                                states=[destinationState], data='suffix')
                             res = self.tool.group_is_not_empty(
-                                proposingGroup, suffix, user_id=get_current_user_id(self.context.REQUEST))
+                                proposingGroup,
+                                suffix,
+                                user_id=get_current_user_id(self.context.REQUEST))
                         # if not, maybe it is an adviser able to give an advice?
                         if not res and 'waiting_advices_adviser_send_back' in wfas:
                             # adviser may send back to validated when using
@@ -480,7 +484,7 @@ class MeetingItemWorkflowConditions(object):
                             res = self._currentUserIsAdviserAbleToSendItemBack(destinationState)
             else:
                 # maybe destinationState is a validation state? in this case return True only if group not empty
-                suffix = self.cfg.getItemWFValidationLevels(state=destinationState, data='suffix')
+                suffix = self.cfg.getItemWFValidationLevels(states=[destinationState], data='suffix')
                 res = _checkPermission(ReviewPortalContent, self.context) and \
                     (not suffix or self.tool.group_is_not_empty(proposingGroup, suffix))
         return res
@@ -589,8 +593,7 @@ class MeetingItemWorkflowConditions(object):
         """Get the xxx_waiting_advices state from originState,
            this will manage the fact that state can be 'itemcreated_waiting_advices' or
            'itemcreated__or__proposed_waiting_advices'."""
-        wfTool = api.portal.get_tool('portal_workflow')
-        itemWF = wfTool.getWorkflowsFor(self.context)[0]
+        itemWF = self.cfg.getItemWorkflow(theObject=True)
         originState = itemWF.states[originStateId]
         waiting_advices_transition = [tr for tr in originState.transitions
                                       if tr.startswith('wait_advices_from')][0]
@@ -2595,19 +2598,40 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def mayAskAdviceAgain(self, advice):
         '''Returns True if current user may ask given p_advice advice again.
            For this :
-           - advice must not be 'asked_again'...;
-           - advice is no more editable (except for MeetingManagers);
-           - item is editable by current user (including MeetingManagers).'''
+           - advice must not be 'asked_again', inherited or not_asked (initiative);
+           - item is editable by current user (Manager and MeetingManager) or
+             using WFA "waiting_advices_proposing_group_send_back" and current
+             user is member of the proposingGroup able to send item back in WF.'''
 
         item = self.getSelf()
+        adviser_uid = advice.advice_group
 
         if advice.advice_type == 'asked_again' or \
-           item.adviceIsInherited(advice.advice_group):
+           item.adviceIsInherited(adviser_uid) or \
+           item.adviceIndex[adviser_uid]["not_asked"]:
             return False
 
-        member = api.user.get_current()
-        if member.has_permission(ModifyPortalContent, item):
+        # (Meeting)Managers
+        if _checkPermission(ModifyPortalContent, item):
             return True
+        # _waiting_advices
+        item_state = item.query_state()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
+        if item_state.endswith("_waiting_advices") and \
+           "waiting_advices_proposing_group_send_back" in cfg.getWorkflowAdaptations() and \
+           item.adviceIndex[adviser_uid]["advice_editable"]:
+            # check that current user is member of the proposingGroup suffix
+            # to which the item state could go back to
+            org_uid = self._getGroupManagingItem(item_state)
+            # get the "back" states, item_state is like "proposed_waiting_advices"
+            # of "itemcreated__or__proposed_waiting_advices"
+            states = item_state.replace("_waiting_advices", "")
+            states = states.split("__or__")
+            suffixes = cfg.getItemWFValidationLevels(
+                states=states, data='suffix', only_enabled=True, return_state_singleton=False)
+            if tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes):
+                return True
         return False
 
     security.declarePublic('mayBackToPreviousAdvice')
@@ -4717,7 +4741,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        suffix_notified = cfg.getItemWFValidationLevels(state=review_state)["suffix"]
+        suffix_notified = cfg.getItemWFValidationLevels(states=[review_state])["suffix"]
         plone_group_id_notified = get_plone_group_id(self.getProposingGroup(), suffix_notified)
         plone_group_notified = api.group.get(plone_group_id_notified)
 
@@ -4780,7 +4804,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if wf_direction == "up":
             # We are going up (again) so we will notify the user that made any transition
             # after the last p_transition_id
-            wf_action_to_find = cfg.getItemWFValidationLevels(state=old_review_state)[
+            wf_action_to_find = cfg.getItemWFValidationLevels(states=[old_review_state])[
                 "back_transition"]
             wf_action = getLastWFAction(self, wf_action_to_find)
             if wf_action:  # In case WF definition has changed in the meantime
@@ -4788,7 +4812,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         elif wf_direction == "down":
             # We are going down so we will notify the user that made the precedent 'leading_transition'
             # to the 'old_review_state'
-            wf_action_to_find = cfg.getItemWFValidationLevels(state=old_review_state)
+            wf_action_to_find = cfg.getItemWFValidationLevels(states=[old_review_state])
             if wf_action_to_find:
                 wf_action_to_find = wf_action_to_find["leading_transition"]
             elif old_review_state == "validated":
@@ -6427,7 +6451,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Add the event to item's history
             self.itemHistory.append(event)
 
-    def _getGroupManagingItem(self, review_state, theObject=True):
+    def _getGroupManagingItem(self, review_state, theObject=False):
         '''See doc in interfaces.py.'''
         item = self.getSelf()
         return item.getProposingGroup(theObject=theObject)
@@ -6453,7 +6477,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            For unknown states, method _get_corresponding_state_to_assign_local_roles
            will be used to determinate a known configuration to take into ccount"""
         # Add the local roles corresponding to the group managing the item
-        org = self.adapted()._getGroupManagingItem(item_state)
+        org = self.adapted()._getGroupManagingItem(item_state, theObject=True)
         # in some case like ItemTemplate, we have no proposing group
         if not org:
             return

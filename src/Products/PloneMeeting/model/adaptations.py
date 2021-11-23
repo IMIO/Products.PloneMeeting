@@ -804,16 +804,8 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                     new_state.setProperties(title=new_state_title,
                                             description='',
                                             transitions=back_transition_ids)
-                    # store roles having the 'Review portal content' permission
-                    # from states going to 'xxx_waiting_advices' so it will be used
-                    # on the 'xxx_waiting_advices' states for 'Review portal content' permission
-                    # every roles able to 'wait_advices' are able to get it back
-                    review_portal_content_roles = []
                     for from_state_id in from_state_ids:
                         from_state = wf.states[from_state_id]
-                        review_portal_content_roles += \
-                            list(set(from_state.permission_roles[ReviewPortalContent]).difference(
-                                set(review_portal_content_roles)))
                         existing_transitions = from_state.transitions
                         from_transition_id = FROM_TRANSITION_ID_PATTERN.format(from_state_id)
                         from_state.setProperties(title=from_state_id, description='',
@@ -824,12 +816,12 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                     perm_cloned_state = wf.states['validated']
                     for permission, roles in perm_cloned_state.permission_roles.iteritems():
                         if WAITING_ADVICES_REMOVE_MODIFY_ACCESS and permission in edit_permissions:
-                            # remove every roles but 'Manager', 'MeetingManager' and 'MeetingBudgetImpactEditor'
+                            # remove every roles but 'Manager', 'MeetingManager' and
+                            # 'MeetingBudgetImpactEditor', the intersection takes care of keeping
+                            # the relevant roles
                             edit_roles = set(roles).intersection(
                                 set(('Manager', 'MeetingManager', 'MeetingBudgetImpactEditor')))
                             new_state.setPermission(permission, 0, edit_roles)
-                        elif permission == ReviewPortalContent:
-                            new_state.setPermission(permission, 0, review_portal_content_roles)
                         else:
                             new_state.setPermission(permission, 0, roles)
 

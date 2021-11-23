@@ -1507,9 +1507,9 @@ class PMContentHistoryView(IHContentHistoryView):
                     # could also be member of the proposingGroup
                     # in this case we do not hide the history to the user
                     item_review_state = self.context.query_state()
-                    proposing_group = self.context._getGroupManagingItem(
+                    proposing_group_uid = self.context._getGroupManagingItem(
                         item_review_state, theObject=False)
-                    if proposing_group in tool.get_orgs_for_user(the_objects=False):
+                    if proposing_group_uid in tool.get_orgs_for_user(the_objects=False):
                         check = False
                 if check:
                     for power_observer_type in hideHistoryTo:
