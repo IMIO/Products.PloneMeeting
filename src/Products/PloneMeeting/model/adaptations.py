@@ -905,7 +905,8 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             presented = wf.states.presented
             item_validation_state = wfAdaptation.replace('presented_item_back_to_', '')
             # find back transition that leads to item_validation_state
-            validation_state_infos = meetingConfig.getItemWFValidationLevels(state=item_validation_state)
+            validation_state_infos = meetingConfig.getItemWFValidationLevels(
+                states=[item_validation_state])
             back_transition = validation_state_infos['back_transition']
             presented.transitions = presented.transitions + (back_transition, )
 

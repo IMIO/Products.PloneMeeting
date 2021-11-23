@@ -3458,7 +3458,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                   return_state_singleton=True,
                                   **kwargs):
         '''Override the field 'itemWFValidationLevels' accessor to be able to handle some paramters :
-           - states : return row relative to given p_states;
+           - states : return rows relative to given p_states (when p_return_state_singleton=True
+             and only one row to return (one state given) then a single dict is returned,
+             either a list of dict);
            - data : return every values defined for a given datagrid column name;
            - only_enabled : make sure to return rows having enabled '1'.'''
         res = value is None and self.getField('itemWFValidationLevels').get(self, **kwargs) or value
