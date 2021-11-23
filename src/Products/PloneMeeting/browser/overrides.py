@@ -1341,11 +1341,9 @@ class PMContentHistoryView(IHContentHistoryView):
                         item_review_state, theObject=False)
                     if proposing_group_uid in tool.get_orgs_for_user():
                         check = False
-                if check:
-                    if hideHistoryTo and \
-                       tool.isPowerObserverForCfg(
-                           cfg, power_observer_types=hideHistoryTo):
-                        res = False
+                if check and tool.isPowerObserverForCfg(
+                        cfg, power_observer_types=hideHistoryTo):
+                    res = False
         return res
 
 
