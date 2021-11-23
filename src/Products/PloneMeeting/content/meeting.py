@@ -1516,10 +1516,11 @@ class Meeting(Container):
     def get_item_by_number(self, number):
         '''Gets the item thas has number p_number.'''
         catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(meeting_uid=self.UID(), getItemNumber=number)
+        brains = catalog.unrestrictedSearchResults(
+            meeting_uid=self.UID(), getItemNumber=number)
         if not brains:
             return None
-        return brains[0].getObject()
+        return brains[0]._unrestrictedGetObject()
 
     def get_late_state(self):
         '''See doc in interfaces.py.'''
@@ -1603,7 +1604,7 @@ class Meeting(Container):
         else:
             item.setListType(item.adapted().getListTypeNormalValue(self))
             to_discuss_value = cfg.getToDiscussDefault()
-        items = self.get_items(ordered=True)
+        items = self.get_items(ordered=True, unrestricted=True)
         # Set the correct value for the 'toDiscuss' field if required
         if cfg.getToDiscussSetOnItemInsert():
             item.setToDiscuss(to_discuss_value)
@@ -1658,8 +1659,9 @@ class Meeting(Container):
                 # first added item
                 item.setItemNumber(100)
 
-        # Add the item at the end of the items list
         item._update_meeting_link(self)
+        # store number of items
+        self._number_of_items = len(items)
         self._finalize_item_insert(items_to_update=[item])
 
     def _finalize_item_insert(self, items_to_update=[]):
@@ -1677,8 +1679,6 @@ class Meeting(Container):
                                      'listType',
                                      'meeting_uid',
                                      'meeting_date'])
-        # store number of items
-        self._number_of_items = len(items)
         # meeting is considered modified, do this before update_item_references
         self.notifyModified()
 
@@ -1693,7 +1693,7 @@ class Meeting(Container):
         # Remember the item number now; once the item will not be in the meeting
         # anymore, it will loose its number.
         item_number = item.getItemNumber()
-        items = self.get_items()
+        items = self.get_items(unrestricted=True)
         try:
             item._update_meeting_link(None)
             items.remove(item)
@@ -1758,7 +1758,14 @@ class Meeting(Container):
         item.update_item_reference()
         self.update_item_references(start_number=item_number)
 
-    def update_item_references(self, start_number=0, check_needed=False):
+    def _may_update_item_references(self):
+        '''See docstring in interfaces.py.'''
+        may_update = False
+        meeting = self.getSelf()
+        may_update = meeting.is_late()
+        return may_update
+
+    def update_item_references(self, start_number=0, check_needed=False, force=False):
         """Update reference of every contained items, if p_start_number is given,
            we update items starting from p_start_number itemNumber.
            By default, if p_start_number=0, every linked items will be updated.
@@ -1769,21 +1776,23 @@ class Meeting(Container):
             return
         if check_needed and not self.REQUEST.get('need_Meeting_update_item_references', False):
             return
+
         # force disable 'need_Meeting_update_item_references' from REQUEST
         self.REQUEST.set('need_Meeting_update_item_references', False)
 
-        # we query items from start_number to last item of the meeting
-        # moreover we get_items unrestricted to be sure we have every elements
-        brains = self.get_items(
-            ordered=True,
-            the_objects=False,
-            unrestricted=True,
-            additional_catalog_query={
-                'getItemNumber': {'query': start_number,
-                                  'range': 'min'}, })
-        for brain in brains:
-            item = brain._unrestrictedGetObject()
-            item.update_item_reference()
+        if force or self.adapted()._may_update_item_references():
+            # we query items from start_number to last item of the meeting
+            # moreover we get_items unrestricted to be sure we have every elements
+            brains = self.get_items(
+                ordered=True,
+                the_objects=False,
+                unrestricted=True,
+                additional_catalog_query={
+                    'getItemNumber': {'query': start_number,
+                                      'range': 'min'}, })
+            for brain in brains:
+                item = brain._unrestrictedGetObject()
+                item.update_item_reference(force=True)
 
     security.declarePrivate('update_title')
 

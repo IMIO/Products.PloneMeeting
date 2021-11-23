@@ -472,6 +472,9 @@ class IMeetingDocumentation:
     def get_late_state(self):
         '''Returns the meeting first review state from which presented items
            will be considered 'late'.'''
+    def _may_update_item_references(self):
+        """Condition to update items reference.  By default the item reference
+           will be updated if meeting is late."""
 
 
 class IMeetingWorkflowConditions(Interface):

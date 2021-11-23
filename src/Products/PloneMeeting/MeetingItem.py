@@ -898,7 +898,7 @@ class MeetingItemWorkflowActions(object):
             self.context.getMeeting().remove_item(self.context)
         # back to validated from "accepted_out_of_meeting"
         if stateChange.new_state.id == "validated" and self.context.getItemReference():
-            self.context.update_item_reference()
+            self.context.update_item_reference(force=True)
         # if an item was returned to proposing group for corrections and that
         # this proposing group sends the item back to the meeting managers, we
         # send an email to warn the MeetingManagers if relevant
@@ -3811,9 +3811,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See docstring in interfaces.py.'''
         may_update = False
         item = self.getSelf()
-        meeting = item.getMeeting()
-        if meeting:
-            may_update = meeting.is_late()
+        if self.hasMeeting():
+            may_update = True
         else:
             # manage reference for items decided out of meeting
             tool = api.portal.get_tool("portal_plonemeeting")
@@ -3824,14 +3823,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('update_item_reference')
 
-    def update_item_reference(self):
+    def update_item_reference(self, force=False):
         '''Update the item reference, recompute it,
            stores it and reindex 'getItemReference'.
            This rely on _may_update_item_reference.'''
         res = ''
         item = self.getSelf()
         meeting = item.getMeeting()
-        if self.adapted()._may_update_item_reference():
+        if force or self.adapted()._may_update_item_reference():
             extra_expr_ctx = _base_extra_expr_ctx(item)
             extra_expr_ctx.update({'item': item, 'meeting': meeting})
             cfg = extra_expr_ctx['cfg']
@@ -6588,8 +6587,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # this way for example users that have Reader role on item may view the advices
         self._propagateReaderAndMeetingManagerLocalRolesToSubObjects(cfg)
         # reindex object security except if avoid_reindex=True and localroles are the same
+        # or if we are here after transition as WorkflowTool._reindexWorkflowVariables
+        # will reindexObjectSecurity
         avoid_reindex = kwargs.get('avoid_reindex', False)
-        if not avoid_reindex or old_local_roles != self.__ac_local_roles__:
+        if not triggered_by_transition and \
+          (not avoid_reindex or old_local_roles != self.__ac_local_roles__):
             self.reindexObjectSecurity()
         # return indexes_to_update in case a reindexObject is not done
         return ['getCopyGroups', 'getGroupsInCharge']

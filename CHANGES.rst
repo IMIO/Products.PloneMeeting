@@ -39,7 +39,11 @@ Changelog
     computing it every times the meeting is displayed;
   - Added ram.cached method `MeetingConfig.getItemAdviceStatesForOrg`, it avoids
     getting the organization, use it everywhere possible.
-  - Added `ram.cache` for faceted counters (`PMRenderTermView.number_of_items`).
+  - Added `ram.cache` for faceted counters (`PMRenderTermView.number_of_items`);
+  - Added `Meeting._may_update_item_references` that holds the logic of updating
+    item reference, this avoids to loop on items if reference does not need to be updated.
+  - In `MeetingItem.update_local_roles`, only `reindexObjectSecurity` if not
+    `triggered_by_transition` as the `WorkflowTool` will also `reindexObjectSecurity`.
 
   [gbastien]
 
