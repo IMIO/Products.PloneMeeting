@@ -22,7 +22,9 @@ from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
+from zope.event import notify
 from zope.i18n import translate
+from zope.lifecycleevent import ObjectModifiedEvent
 
 
 class testWFAdaptations(PloneMeetingTestCase):
@@ -487,6 +489,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         waiting_advices_proposed_state = '{0}_waiting_advices'.format(self._stateMappingFor('proposed'))
         self.vendors.item_advice_states = ("{0}__state__{1}".format(
             cfg.getId(), waiting_advices_proposed_state),)
+        # clean MeetingConfig.getItemAdviceStatesForOrg
+        notify(ObjectModifiedEvent(self.vendors))
 
         waiting_advices_removed_error = translate('wa_removed_waiting_advices_error',
                                                   domain='PloneMeeting',
@@ -1339,7 +1343,11 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse(waiting_transition_name in self.transitions(item))
 
         # do things work
-        self.vendors.item_advice_states = ("{0}__state__{1}".format(cfg.getId(), waiting_state_name), )
+        self.vendors.item_advice_states = ("{0}__state__{1}".format(
+            cfg.getId(), waiting_state_name), )
+        # clean MeetingConfig.getItemAdviceStatesForOrg
+        notify(ObjectModifiedEvent(self.vendors))
+
         self.assertTrue(waiting_transition_name in self.transitions(item))
         self._setItemToWaitingAdvices(item, waiting_transition_name)
         self.assertEqual(item.query_state(), waiting_state_name)
@@ -1385,6 +1393,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         waiting_advices_state = '{0}__or__prevalidated_waiting_advices'.format(
             self._stateMappingFor('proposed_first_level'))
         self.vendors.item_advice_states = ("{0}__state__{1}".format(cfg.getId(), waiting_advices_state), )
+        # clean MeetingConfig.getItemAdviceStatesForOrg
+        notify(ObjectModifiedEvent(self.vendors))
 
         # by default it is linked to the 'proposed' state
         itemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
@@ -1477,6 +1487,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.vendors.item_advice_states = (
             "{0}__state__{1}".format(cfg.getId(), waiting_advices_itemcreated_state),
             "{0}__state__{1}".format(cfg.getId(), waiting_advices_proposed_state),)
+        # clean MeetingConfig.getItemAdviceStatesForOrg
+        notify(ObjectModifiedEvent(self.vendors))
+
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers((self.vendors_uid, ))
@@ -1526,6 +1539,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._activate_wfas(('waiting_advices', 'waiting_advices_proposing_group_send_back'))
         self.vendors.item_advice_states = ("{0}__state__{1}".format(
             cfg.getId(), 'itemcreated_waiting_advices'), )
+        # clean MeetingConfig.getItemAdviceStatesForOrg
+        notify(ObjectModifiedEvent(self.vendors))
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')

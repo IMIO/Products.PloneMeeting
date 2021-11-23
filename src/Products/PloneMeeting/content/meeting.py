@@ -1661,7 +1661,7 @@ class Meeting(Container):
 
         item._update_meeting_link(self)
         # store number of items
-        self._number_of_items = len(items)
+        self._number_of_items = len(items) + 1
         self._finalize_item_insert(items_to_update=[item])
 
     def _finalize_item_insert(self, items_to_update=[]):

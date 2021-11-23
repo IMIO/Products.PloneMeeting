@@ -1917,6 +1917,8 @@ class testMeetingType(PloneMeetingTestCase):
         meeting = self._createMeetingWithItems()
         # by default, 7 normal items and none late
         self.assertEqual(meeting.number_of_items(), '7')
+        self.assertEqual(meeting.number_of_items(True), 7)
+        self.assertEqual(len(meeting.get_raw_items()), 7)
         # add a late item
         self.freezeMeeting(meeting)
         item = self.create('MeetingItem')
@@ -1924,7 +1926,19 @@ class testMeetingType(PloneMeetingTestCase):
         self.presentItem(item)
         # now 8 items
         self.assertEqual(meeting.number_of_items(), '8')
+        self.assertEqual(meeting.number_of_items(True), 8)
         self.assertEqual(len(meeting.get_raw_items()), 8)
+        # remove an item
+        self.backToState(item, 'validated')
+        self.assertEqual(meeting.number_of_items(), '7')
+        self.assertEqual(meeting.number_of_items(True), 7)
+        self.assertEqual(len(meeting.get_raw_items()), 7)
+        # delete an item
+        first_item = meeting.get_items(the_objects=True, ordered=True)[0]
+        self.deleteAsManager(first_item.UID())
+        self.assertEqual(meeting.number_of_items(), '6')
+        self.assertEqual(meeting.number_of_items(True), 6)
+        self.assertEqual(len(meeting.get_raw_items()), 6)
 
     def test_pm_AvailableItems(self):
         """

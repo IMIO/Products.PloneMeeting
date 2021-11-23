@@ -898,7 +898,7 @@ class MeetingItemWorkflowActions(object):
             self.context.getMeeting().remove_item(self.context)
         # back to validated from "accepted_out_of_meeting"
         if stateChange.new_state.id == "validated" and self.context.getItemReference():
-            self.context.update_item_reference(force=True)
+            self.context.update_item_reference()
         # if an item was returned to proposing group for corrections and that
         # this proposing group sends the item back to the meeting managers, we
         # send an email to warn the MeetingManagers if relevant
