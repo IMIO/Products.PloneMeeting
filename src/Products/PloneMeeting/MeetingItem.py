@@ -898,7 +898,7 @@ class MeetingItemWorkflowActions(object):
             self.context.getMeeting().remove_item(self.context)
         # back to validated from "accepted_out_of_meeting"
         if stateChange.new_state.id == "validated" and self.context.getItemReference():
-            self.context.update_item_reference()
+            self.context.update_item_reference(clear=True)
         # if an item was returned to proposing group for corrections and that
         # this proposing group sends the item back to the meeting managers, we
         # send an email to warn the MeetingManagers if relevant
@@ -3823,14 +3823,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('update_item_reference')
 
-    def update_item_reference(self, force=False):
+    def update_item_reference(self, clear=False):
         '''Update the item reference, recompute it,
            stores it and reindex 'getItemReference'.
            This rely on _may_update_item_reference.'''
         res = ''
         item = self.getSelf()
         meeting = item.getMeeting()
-        if force or self.adapted()._may_update_item_reference():
+        if not clear and self.adapted()._may_update_item_reference():
             extra_expr_ctx = _base_extra_expr_ctx(item)
             extra_expr_ctx.update({'item': item, 'meeting': meeting})
             cfg = extra_expr_ctx['cfg']

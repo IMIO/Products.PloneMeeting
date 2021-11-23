@@ -168,9 +168,12 @@ def onMeetingTransition(meeting, event):
     # to late state or the other way round
     late_state = meeting.adapted().get_late_state()
     beforeLateStates = get_states_before(meeting, late_state)
-    if (event.old_state.id in beforeLateStates and event.new_state.id not in beforeLateStates) or \
-       (event.old_state.id not in beforeLateStates and event.new_state.id in beforeLateStates):
+    if event.old_state.id in beforeLateStates and event.new_state.id not in beforeLateStates:
+        # freshly late
         meeting.update_item_references()
+    elif event.old_state.id not in beforeLateStates and event.new_state.id in beforeLateStates:
+        # no more late, clear item references
+        meeting.update_item_references(clear=True)
 
     # invalidate last meeting modified, use get_again for async meetings term render
     invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)

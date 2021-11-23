@@ -1765,7 +1765,7 @@ class Meeting(Container):
         may_update = meeting.is_late()
         return may_update
 
-    def update_item_references(self, start_number=0, check_needed=False, force=False):
+    def update_item_references(self, start_number=0, check_needed=False, clear=False):
         """Update reference of every contained items, if p_start_number is given,
            we update items starting from p_start_number itemNumber.
            By default, if p_start_number=0, every linked items will be updated.
@@ -1780,7 +1780,7 @@ class Meeting(Container):
         # force disable 'need_Meeting_update_item_references' from REQUEST
         self.REQUEST.set('need_Meeting_update_item_references', False)
 
-        if force or self.adapted()._may_update_item_references():
+        if clear or self.adapted()._may_update_item_references():
             # we query items from start_number to last item of the meeting
             # moreover we get_items unrestricted to be sure we have every elements
             brains = self.get_items(
@@ -1792,7 +1792,7 @@ class Meeting(Container):
                                       'range': 'min'}, })
             for brain in brains:
                 item = brain._unrestrictedGetObject()
-                item.update_item_reference(force=True)
+                item.update_item_reference(clear=clear)
 
     security.declarePrivate('update_title')
 
