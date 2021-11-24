@@ -273,14 +273,6 @@ def _invalidateOrgRelatedCachedVocabularies():
 def _invalidateUsersAndGroupsRelatedCachedVocabularies():
     '''Clean cache for vocabularies using Plone users and groups.'''
     invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.ToolPloneMeeting.get_org_uids_for_user', get_again=True)
-    invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user', get_again=True)
-    invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.ToolPloneMeeting.group_is_not_empty', get_again=True)
-    invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.ToolPloneMeeting.userIsAmong', get_again=True)
-    invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.ToolPloneMeeting._users_groups_value', get_again=True)
 
 
@@ -717,7 +709,10 @@ def onItemModified(item, event):
                     item._renameAfterCreation(check_auto_id=False)
                     item._at_creation_flag = False
     # An item has ben modified, use get_again for portlet_todo
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.MeetingItem.modified',
+        get_again=True,
+        invalidated_methods=[])
 
 
 def storeImagesLocallyDexterity(obj):

@@ -15,6 +15,7 @@ from plone import api
 from PloneMeetingTestCase import pm_logger
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import down_or_up_wf
 from Products.PloneMeeting.utils import get_annexes
 from profilehooks import timecall
 
@@ -828,6 +829,26 @@ class testPerformances(PloneMeetingTestCase):
             self.tool.userIsAmong(["advisers"])
             self.tool.userIsAmong(["creators", "reviewers"])
             self.tool.userIsAmong(["powerobservers"])
+
+    def test_pm_SpeedUtilsdown_or_up_wf(self):
+        '''Test utils.down_or_up_wf for MeetingItem.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        # get a larger workflow_history
+        self.validateItem(item)
+        self.backToState(item, 'itemcreated')
+        self.validateItem(item)
+        self.backToState(item, 'itemcreated')
+        self.validateItem(item)
+        # call down_or_up_wf 1000 times
+        self._down_or_up_wf(item, times=1000)
+
+    @timecall
+    def _down_or_up_wf(self, item, times=1):
+        ''' '''
+        pm_logger.info('Call {0} times'.format(times))
+        for time in range(times):
+            down_or_up_wf(item)
 
 
 def test_suite():

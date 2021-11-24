@@ -378,6 +378,11 @@ NO_COMMITTEE = u"no_committee"
 # for performance reason we do not dynamically get the annexes criterion id
 FACETED_ANNEXES_CRITERION_ID = 'c20'
 
+INVALIDATED_METHODS_MAPPING = {
+    'Products.PloneMeeting.MeetingItem.modified':
+        ['Products.PloneMeeting.browser.overrides.number_of_items'],
+}
+
 
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the

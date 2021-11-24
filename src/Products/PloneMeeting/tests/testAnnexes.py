@@ -1366,11 +1366,17 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(view.showAddAnnex())
         self.assertTrue(view.showAddAnnexDecision())
 
-        # if it is selected on an annex, then it is in the vocabulary
+        # if it is selected on an annex, then it is not in the vocabulary
+        # but it is displayed correctly in the z3c.form that uses a MissingTerms adapter
         annex2 = self.addAnnex(item, annexType='overhead-analysis')
         self.changeUser('pmCreator1')
         term_tokens = [term.token for term in vocab(annex2)._terms]
-        self.assertTrue(overhead_analysis_category_id in term_tokens)
+        self.assertFalse(overhead_analysis_category_id in term_tokens)
+        # but correctly displayed in the widget
+        annex2_view = annex2.restrictedTraverse('view')
+        annex2_view.update()
+        widget = annex2_view.widgets['IIconifiedCategorization.content_category']
+        self.assertTrue("Administrative overhead analysis" in widget.render())
         self.assertFalse(budget_analysis_subannex_category_id in term_tokens)
         self.changeUser('pmManager')
         term_tokens = [term.token for term in vocab(annex2)._terms]

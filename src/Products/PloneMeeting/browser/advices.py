@@ -53,42 +53,36 @@ class AdvicesIcons(BrowserView):
 
     def __call___cachekey(method, self):
         '''cachekey method for self.__call__.'''
+        # bypass if no advices
+        advices = self.context.adviceIndex.keys()
+        if not advices:
+            return []
         tool = api.portal.get_tool('portal_plonemeeting')
         # URL to the advice_type can change if server URL changed
         server_url = self.request.get('SERVER_URL', None)
-        # an advice container's modification date is updated upon
-        # any change on advice (added, removed, edited, attribute changed)
-        # adviceIndex can also be updated by another item from which context inherits
-        context_modified = max(int(self.context.modified()), self.context._p_mtime)
-        # power advisers
-        user_org_uids = tool.get_orgs_for_user(suffixes=['advisers'])
         cfg = tool.getMeetingConfig(self.context)
-        is_power_adviser = set(cfg.getPowerAdvisersGroups()).intersection(user_org_uids)
-        # bypass if no advices
-        advices = self.context.adviceIndex.keys()
-        context = is_user_adviser_for_item = confidential_advices = user_plone_groups = None
-        if advices:
-            context = repr(self.context)
-            # regarding groups, we intersect current user plone groups
-            # and advices related groups to see if current user has any action on advices
-            is_user_adviser_for_item = bool(tool.get_filtered_plone_groups_for_user(
-                org_uids=advices))
-            # filter on user plone groups as power obsever
-            # if there are any confidential advices
-            # warning, if current user is a power observer that would not see the advice
+        # when advices to add, the add advice icon is displayed
+        has_advices_to_add = self.context.getAdvicesGroupsInfosForUser(compute_to_edit=False)
+        # confidential advices
+        # check confidential advices if not MeetingManager
+        isManager = tool.isManager(cfg)
+        may_view_confidential_advices = True
+        if not isManager:
+            # if current user is a power observer that would not see the advice
             # we store user plone groups because a power adviser may see a confidential advice
             # if member of the proposingGroup
+            user_plone_groups = tool.get_plone_groups_for_user()
             confidential_advices = [advice for advice in self.context.adviceIndex.values()
-                                    if advice["isConfidential"]]
-            user_plone_groups = confidential_advices and \
-                tool.isPowerObserverForCfg(cfg, power_observer_types=cfg.getAdviceConfidentialFor()) and \
-                tool.get_plone_groups_for_user()
-        return (context,
-                context_modified,
+                                    if advice["isConfidential"] and
+                                    not get_plone_group_id(advice["id"], "advisers") in
+                                    user_plone_groups]
+            may_view_confidential_advices = not confidential_advices or \
+                not tool.isPowerObserverForCfg(cfg, power_observer_types=cfg.getAdviceConfidentialFor())
+        return (repr(self.context),
+                self.context.adviceIndex._p_mtime,
                 server_url,
-                is_user_adviser_for_item,
-                is_power_adviser,
-                user_plone_groups)
+                has_advices_to_add,
+                may_view_confidential_advices)
 
     @ram.cache(__call___cachekey)
     def __call__(self):

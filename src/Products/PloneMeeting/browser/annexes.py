@@ -131,6 +131,11 @@ class PMCategorizedChildView(CategorizedChildView):
         '''cachekey method for self.__call__.'''
         if not _categorized_elements(self.context):
             return []
+        # value of the annexes faceted filter
+        filters = self._filters
+        if filters:
+            raise ram.DontCache
+
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         # URL to the annex_type can change if server URL changed
@@ -139,32 +144,30 @@ class PMCategorizedChildView(CategorizedChildView):
         # any change on annex (added, removed, edited, attribute changed)
         context_modified = self.context.modified()
         cfg_modified = cfg.modified()
-        # check confidential_annexes if not MeetingManager
-        isManager = self.tool.isManager(self.cfg)
-        confidential_annexes = []
-        user_plone_groups = []
+        # check confidential annexes if not MeetingManager
+        isManager = tool.isManager(cfg)
+        # manage confidential annexes for non managers
+        may_view_confidential_annexes = True
         if not isManager:
-            # filter on user plone groups if there are any confidential annexes
             confidential_annexes = [elt for elt in self.context.categorized_elements.values()
                                     if elt["confidential"]]
-            user_plone_groups = confidential_annexes and tool.get_plone_groups_for_user()
-        # value of the annexes faceted filter
-        filters = self._filters
-        return (self.context.UID(),
+            may_view_confidential_annexes = not confidential_annexes or \
+                set(tool.get_plone_groups_for_user()).intersection(
+                    confidential_annexes[0]["visible_for_groups"])
+        return (repr(self.context),
                 context_modified,
                 cfg_modified,
                 server_url,
-                user_plone_groups,
+                may_view_confidential_annexes,
                 portal_type,
-                show_nothing,
-                filters)
+                show_nothing)
 
     @property
     def _filters(self):
         """ """
         return _get_filters(self.request)
 
-    # @ram.cache(__call___cachekey)
+    @ram.cache(__call___cachekey)
     def __call__(self, portal_type=None, show_nothing=False):
         """Override to change show_nothing=False instead show_nothing=True and to add caching."""
         return super(PMCategorizedChildView, self).__call__(portal_type, show_nothing)

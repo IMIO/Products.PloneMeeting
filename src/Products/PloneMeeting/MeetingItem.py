@@ -5160,7 +5160,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getAdvicesGroupsInfosForUser')
 
-    def getAdvicesGroupsInfosForUser(self, compute_to_add=True, compute_to_edit=True, compute_power_advisers=True):
+    def getAdvicesGroupsInfosForUser(self,
+                                     compute_to_add=True,
+                                     compute_to_edit=True,
+                                     compute_power_advisers=True):
         '''This method returns 2 lists of groups in the name of which the
            currently logged user may, on this item:
            - add an advice;
@@ -7386,7 +7389,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('downOrUpWorkflowAgain')
 
-    @ram.cache(downOrUpWorkflowAgain_cachekey)
+    # not ramcached perf tests says it does not change anything
+    # and this avoid useless entry in cache
+    # @ram.cache(downOrUpWorkflowAgain_cachekey)
     def downOrUpWorkflowAgain(self):
         """Was current item already in same review_state before?
            And if so, is it up or down the workflow?"""

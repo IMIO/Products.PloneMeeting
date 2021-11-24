@@ -7,7 +7,6 @@ from appy.shared.diff import HtmlDiff
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentgenerator.adapters import GenerablePODTemplatesAdapter
-from collective.documentgenerator.content.pod_template import IPODTemplate
 from collective.eeafaceted.dashboard.adapters import DashboardGenerablePODTemplatesAdapter
 from collective.eeafaceted.dashboard.content.pod_template import IDashboardPODTemplate
 from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
@@ -21,7 +20,9 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from eea.facetednavigation.widgets.storage import Criterion
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
 from imio.annex.adapters import AnnexPrettyLinkAdapter
+from imio.helpers.adapters import MissingTerms
 from imio.helpers.catalog import merge_queries
+from imio.helpers.content import get_vocab
 from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.adapters import BaseImioHistoryAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
@@ -62,8 +63,10 @@ from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getHistoryTexts
 from Products.PloneMeeting.utils import is_transition_before_date
 from Products.PloneMeeting.utils import reviewersFor
+from z3c.form.term import MissingChoiceTermsVocabulary
 from zope.annotation import IAnnotations
 from zope.i18n import translate
+from zope.schema.vocabulary import SimpleVocabulary
 
 import logging
 
@@ -1936,3 +1939,19 @@ class PMDashboardGenerablePODTemplatesAdapter(DashboardGenerablePODTemplatesAdap
         pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
 
         return pod_templates
+
+
+#########################
+# vocabularies adapters #
+#########################
+
+
+class AnnexMissingTermsVocabulary(MissingChoiceTermsVocabulary, MissingTerms):
+    """ Managing missing terms for IAnnex. """
+
+    def complete_voc(self):
+        if self.field.getName() == 'content_category':
+            return get_vocab(self.context,
+                             'collective.iconifiedcategory.every_categories')
+        else:
+            return SimpleVocabulary([])

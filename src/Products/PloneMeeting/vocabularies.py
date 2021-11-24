@@ -21,16 +21,16 @@ from collective.documentgenerator.content.vocabulary import StyleTemplatesVocabu
 from collective.eeafaceted.collectionwidget.content.dashboardcollection import IDashboardCollection
 from collective.eeafaceted.collectionwidget.vocabulary import CachedCollectionVocabulary
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
-from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import render_filesize
 from collective.iconifiedcategory.vocabularies import CategoryTitleVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryVocabulary
+from collective.iconifiedcategory.vocabularies import EveryCategoryTitleVocabulary
+from collective.iconifiedcategory.vocabularies import EveryCategoryVocabulary
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
-from imio.annex.content.annex import IAnnex
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import find
 from imio.helpers.content import get_vocab
@@ -41,7 +41,6 @@ from operator import attrgetter
 from plone import api
 from plone.app.vocabularies.users import UsersFactory
 from plone.memoize import ram
-from plone.uuid.interfaces import ATTRIBUTE_NAME
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
@@ -1405,82 +1404,114 @@ class PMCategoryVocabulary(CategoryVocabulary):
     """Override to take into account field 'only_for_meeting_managers' on the category
        for annexes added on items."""
 
-    def __call___cachekey(method, self, context, use_category_uid_as_token=False):
+    def __call___cachekey(method, self, context, use_category_uid_as_token=False, only_enabled=True):
         '''cachekey method for self.__call__.'''
         annex_config = get_config_root(context)
         annex_group = get_group(annex_config, context)
-        # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         isManager = tool.isManager(cfg)
-        # in case called from dexterity types configuration panel, no cfg
-        cfg_modified = cfg and cfg.modified() or None
-        # if context is an annex, cache on context.UID() + context.modified()
-        # to manage stored term
-        # XXX we do not do this that will simply make cache inefficient
-        # context_uid = None
-        # context_modified = None
-        # with plone.restapi, validation is done before context fully initialized
-        # during validation, vocabulary for field content_category is called
-        # if IAnnex.providedBy(context) and getattr(context, ATTRIBUTE_NAME, None):
-        #     context_uid = context.UID()
-        #     context_modified = context.modified()
-        # invalidate if user groups changed
-        return annex_group.getId(), \
-            isManager, cfg_modified, use_category_uid_as_token
+        # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
+        cfg_modified = cfg.modified()
+        # we do not cache per context as we manage missing terms using an adapter
+        return annex_group.getId(), isManager, use_category_uid_as_token, cfg_modified, only_enabled
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context, use_category_uid_as_token=False):
+    def __call__(self, context, use_category_uid_as_token=False, only_enabled=True):
         return super(PMCategoryVocabulary, self).__call__(
-            context, use_category_uid_as_token=use_category_uid_as_token)
+            context,
+            use_category_uid_as_token=use_category_uid_as_token,
+            only_enabled=only_enabled)
 
-    def _get_categories(self, context):
+    def _get_categories(self, context, only_enabled=True):
         """ """
-        categories = super(PMCategoryVocabulary, self)._get_categories(context)
-        # when adding an annex, context is the parent
-        container = context
-        stored_content_category = None
-        if IAnnex.providedBy(context):
-            container = context.aq_parent
-            stored_content_category = getattr(context, 'content_category', None)
-        if container.meta_type == 'MeetingItem':
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(context)
-            isManager = tool.isManager(cfg)
-            categories = [cat for cat in categories if not cat.only_for_meeting_managers or
-                          isManager or
-                          (stored_content_category and stored_content_category == calculate_category_id(cat))]
+        categories = super(PMCategoryVocabulary, self)._get_categories(
+            context, only_enabled=only_enabled)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        isManager = tool.isManager(cfg)
+        categories = [cat for cat in categories if
+                      not cat.only_for_meeting_managers or isManager]
         return categories
 
-    def _get_subcategories(self, context, category):
+    def _get_subcategories(self, context, category, only_enabled=True):
         """Return subcategories for given category.
            This needs to return a list of subcategory brains."""
-        subcategories = super(PMCategoryVocabulary, self)._get_subcategories(context, category)
-        # when adding an annex, context is the parent
-        container = context
-        stored_content_category = None
-        if IAnnex.providedBy(context):
-            container = context.aq_parent
-            stored_content_category = getattr(context, 'content_category', None)
-        if container.meta_type == 'MeetingItem':
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(context)
-            isManager = tool.isManager(cfg)
-            tmp = []
-            for subcat_brain in subcategories:
-                if not isManager:
-                    subcat = subcat_brain.getObject()
-                    if subcat.only_for_meeting_managers and \
-                       (stored_content_category and
-                            stored_content_category != calculate_category_id(subcat)):
-                        continue
-                tmp.append(subcat_brain)
-            subcategories = tmp
+        subcategories = super(PMCategoryVocabulary, self)._get_subcategories(
+            context, category, only_enabled=only_enabled)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        isManager = tool.isManager(cfg)
+        tmp = []
+        for subcat_brain in subcategories:
+            if not isManager:
+                subcat = subcat_brain.getObject()
+                if subcat.only_for_meeting_managers:
+                    continue
+            tmp.append(subcat_brain)
+        subcategories = tmp
         return subcategories
 
 
 class PMCategoryTitleVocabulary(CategoryTitleVocabulary, PMCategoryVocabulary):
     """Override to use same _get_categories as PMCategoryVocabulary."""
+
+    def __call___cachekey(method, self, context, only_enabled=True):
+        '''cachekey method for self.__call__.'''
+        annex_config = get_config_root(context)
+        annex_group = get_group(annex_config, context)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        isManager = tool.isManager(cfg)
+        # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
+        cfg_modified = cfg.modified()
+        # we do not cache per context as we manage missing terms using an adapter
+        return annex_group.getId(), isManager, cfg_modified, only_enabled
+
+    @ram.cache(__call___cachekey)
+    def __call__(self, context, only_enabled=True):
+        return super(PMCategoryTitleVocabulary, self).__call__(
+            context,
+            only_enabled=only_enabled)
+
+
+class PMEveryCategoryVocabulary(EveryCategoryVocabulary):
+    """Override to add ram.cache."""
+
+    def __call___cachekey(method, self, context, use_category_uid_as_token=False, only_enabled=False):
+        '''cachekey method for self.__call__.'''
+        annex_config = get_config_root(context)
+        annex_group = get_group(annex_config, context)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
+        cfg_modified = cfg.modified()
+        return annex_group.getId(), use_category_uid_as_token, cfg_modified, only_enabled
+
+    def __call__(self, context, use_category_uid_as_token=False, only_enabled=False):
+        return super(PMEveryCategoryVocabulary, self).__call__(
+            context,
+            use_category_uid_as_token=use_category_uid_as_token,
+            only_enabled=only_enabled)
+
+
+class PMEveryCategoryTitleVocabulary(EveryCategoryTitleVocabulary):
+    """Override to add ram.cache."""
+
+    def __call___cachekey(method, self, context, use_category_uid_as_token=False, only_enabled=False):
+        '''cachekey method for self.__call__.'''
+        annex_config = get_config_root(context)
+        annex_group = get_group(annex_config, context)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
+        cfg_modified = cfg.modified()
+        return annex_group.getId(), use_category_uid_as_token, cfg_modified, only_enabled
+
+    def __call__(self, context, only_enabled=False):
+        return super(PMEveryCategoryTitleVocabulary, self).__call__(
+            context,
+            only_enabled=only_enabled)
 
 
 class HeldPositionUsagesVocabulary(object):

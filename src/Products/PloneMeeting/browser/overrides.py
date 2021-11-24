@@ -477,7 +477,7 @@ class PMRenderTermView(RenderTermPortletView):
         tool = api.portal.get_tool('portal_plonemeeting')
         userGroups = tool.get_plone_groups_for_user()
         # cache until an item is modified
-        date = get_cachekey_volatile('Products.PloneMeeting.MeetingItem.modified')
+        date = get_cachekey_volatile('Products.PloneMeeting.MeetingItem.modified', method)
         return (repr(self.context), userGroups, date, init)
 
     @ram.cache(number_of_items_cachekey)
@@ -942,7 +942,7 @@ class ConfigActionsPanelView(ActionsPanelView):
         """
           Add a link to linked Plone groups for an organization.
         """
-        if self.tool.isManager(self.cfg, True) and self.context.getId() != PLONEGROUP_ORG:
+        if self.tool.isManager(self.tool, True) and self.context.getId() != PLONEGROUP_ORG:
             return ViewPageTemplateFile("templates/actions_panel_config_linkedplonegroups.pt")(self)
         return ''
 
