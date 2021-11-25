@@ -22,7 +22,7 @@
             </span>
         </tal:defines>
         <tal:comment replace="nothing">Create a new item from a template</tal:comment>
-        <tal:create_from_template condition="view/templateItems">
+        <tal:create_from_template condition="view/hasTemplateItems">
             <a id="newTemplateItemCreation"
                class="link-overlay-pm"
                tal:condition="not:is_editing"

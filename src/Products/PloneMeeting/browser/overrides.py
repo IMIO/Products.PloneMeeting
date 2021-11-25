@@ -519,7 +519,8 @@ class PMRenderCategoryView(IDRenderCategoryView):
         default_template = self.cfg.get_default_item_template()
         default_template_uid = None
         if default_template and \
-           self.tool.get_orgs_for_user(using_groups=default_template.getTemplateUsingGroups()):
+           set(self.tool.get_orgs_for_user()).intersection(
+                default_template.getTemplateUsingGroups()):
             default_template_uid = default_template.UID()
         return default_template_uid
 
@@ -532,7 +533,13 @@ class PMRenderCategoryView(IDRenderCategoryView):
     def _is_editing(self):
         return is_editing(self.cfg)
 
-    def templateItems(self):
+    def hasTemplateItems_cachekey(method, self, init=False):
+        '''cachekey method for self.hasTemplateItems.'''
+        # when an itemTemplate is added/removed/edited/state changed, cfg is modified
+        return self.cfg.modified()
+
+    @ram.cache(hasTemplateItems_cachekey)
+    def hasTemplateItems(self):
         '''Check if there are item templates defined or not.'''
         itemTemplates = self.cfg.getItemTemplates(as_brains=True, onlyActive=True)
         res = False

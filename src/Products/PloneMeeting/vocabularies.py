@@ -31,6 +31,7 @@ from collective.iconifiedcategory.vocabularies import EveryCategoryTitleVocabula
 from collective.iconifiedcategory.vocabularies import EveryCategoryVocabulary
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
+from imio.annex.content.annex import IAnnex
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import find
 from imio.helpers.content import get_vocab
@@ -1427,11 +1428,16 @@ class PMCategoryVocabulary(CategoryVocabulary):
         """ """
         categories = super(PMCategoryVocabulary, self)._get_categories(
             context, only_enabled=only_enabled)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(context)
-        isManager = tool.isManager(cfg)
-        categories = [cat for cat in categories if
-                      not cat.only_for_meeting_managers or isManager]
+        # filter container on only_for_meeting_managers if it is an item
+        container = context
+        if IAnnex.providedBy(context):
+            container = context.aq_parent
+        if container.__class__.__name__ == "MeetingItem":
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(context)
+            isManager = tool.isManager(cfg)
+            categories = [cat for cat in categories if
+                          not cat.only_for_meeting_managers or isManager]
         return categories
 
     def _get_subcategories(self, context, category, only_enabled=True):
@@ -1439,17 +1445,22 @@ class PMCategoryVocabulary(CategoryVocabulary):
            This needs to return a list of subcategory brains."""
         subcategories = super(PMCategoryVocabulary, self)._get_subcategories(
             context, category, only_enabled=only_enabled)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(context)
-        isManager = tool.isManager(cfg)
-        tmp = []
-        for subcat_brain in subcategories:
-            if not isManager:
-                subcat = subcat_brain.getObject()
-                if subcat.only_for_meeting_managers:
-                    continue
-            tmp.append(subcat_brain)
-        subcategories = tmp
+        # filter container on only_for_meeting_managers if it is an item
+        container = context
+        if IAnnex.providedBy(context):
+            container = context.aq_parent
+        if container.__class__.__name__ == "MeetingItem":
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(context)
+            isManager = tool.isManager(cfg)
+            tmp = []
+            for subcat_brain in subcategories:
+                if not isManager:
+                    subcat = subcat_brain.getObject()
+                    if subcat.only_for_meeting_managers:
+                        continue
+                tmp.append(subcat_brain)
+            subcategories = tmp
         return subcategories
 
 

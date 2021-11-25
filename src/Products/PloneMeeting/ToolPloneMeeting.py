@@ -52,6 +52,7 @@ from Products.Archetypes.atapi import StringField
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
 from Products.ATContentTypes import permission as ATCTPermissions
+from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
@@ -807,12 +808,15 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('isManager')
 
-    @ram.cache(isManager_cachekey)
+    # not ramcached see perf test
+    # @ram.cache(isManager_cachekey)
     def isManager(self, context, realManagers=False):
         '''Is the current user a 'MeetingManager' on context?  If p_realManagers is True,
            only returns True if user has role Manager/Site Administrator, either
            (by default) MeetingManager is also considered as a 'Manager'?'''
-        user = api.user.get_current()
+        if api.user.is_anonymous():
+            return False
+
         if realManagers and context.__class__.__name__ != "ToolPloneMeeting":
             raise Exception(
                 "For caching reasons, please pass \"tool\" as \"context\" "
@@ -821,10 +825,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             raise Exception(
                 "For caching reasons, please pass \"cfg\" as \"context\" "
                 "when calling \"tool.isManager\" with \"realManagers=False\"")
-        userRoles = user.getRolesInContext(context)
-        return 'Manager' in userRoles or \
-            'Site Administrator' in userRoles or \
-            (not realManagers and 'MeetingManager' in userRoles)
+        res = False
+        if not realManagers:
+            mmanager_group_id = get_plone_group_id(context.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
+            res = mmanager_group_id in self.get_plone_groups_for_user()
+        if realManagers or not res:
+            res = _checkPermission(ManagePortal, self)
+        return res
 
     def isPowerObserverForCfg_cachekey(method, self, cfg, power_observer_types=[]):
         '''cachekey method for self.isPowerObserverForCfg.'''
@@ -855,6 +862,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def showPloneMeetingTab_cachekey(method, self, cfg):
         '''cachekey method for self.showPloneMeetingTab.'''
+        if api.user.is_anonymous():
+            return False
         # we only recompute if user groups changed or self changed
         return (cfg._p_mtime, self.get_plone_groups_for_user(), repr(cfg))
 
