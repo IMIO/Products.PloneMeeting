@@ -108,7 +108,7 @@ class LinkedMeetingModified(object):
             if cfg and cfg.getRedirectToNextMeeting():
                 # this changes when meeting added/removed/date changed
                 meeting_date_last_modified = get_cachekey_volatile(
-                    'Products.PloneMeeting.vocabularies.meetingdatesvocabulary')
+                    'Products.PloneMeeting.Meeting.date')
                 res = 'lm_' + str(int(DateTime(meeting_date_last_modified)))
         return res
 

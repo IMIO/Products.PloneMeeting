@@ -1032,10 +1032,9 @@ def onMeetingAdded(meeting, event):
                               xmlpath=os.path.dirname(__file__) +
                               '/faceted_conf/default_dashboard_widgets.xml')
     meeting.setLayout('meeting_view')
-    # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-    # use get_again for async meetings term render
+    # a Meeting date changed
     invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.vocabularies.meetingdatesvocabulary', get_again=True)
+        'Products.PloneMeeting.Meeting.date', get_again=True)
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.Meeting.modified', get_again=True)
 
@@ -1096,9 +1095,9 @@ def onMeetingModified(meeting, event):
             for brain in brains:
                 item = brain.getObject()
                 item.reindexObject(idxs=['meeting_date', 'preferred_meeting_date'])
-            # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
+            # clean cache for "Products.PloneMeeting.Meeting.date"
             invalidate_cachekey_volatile_for(
-                "Products.PloneMeeting.vocabularies.meetingdatesvocabulary", get_again=True)
+                "Products.PloneMeeting.Meeting.date", get_again=True)
 
         # update local roles as power observers local roles may vary depending on meeting_access_on
         meeting.update_local_roles()
@@ -1170,10 +1169,9 @@ def onMeetingRemoved(meeting, event):
     for item_to_reindex in items_to_reindex:
         item_to_reindex.reindexObject(
             idxs=['preferred_meeting_uid', 'preferred_meeting_date'])
-    # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-    # use get_again for async meetings term render
+    # a Meeting date changed
     invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.vocabularies.meetingdatesvocabulary', get_again=True)
+        'Products.PloneMeeting.Meeting.date', get_again=True)
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.Meeting.modified', get_again=True)
 
