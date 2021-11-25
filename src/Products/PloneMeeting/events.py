@@ -175,8 +175,10 @@ def onMeetingTransition(meeting, event):
         # no more late, clear item references
         meeting.update_item_references(clear=True)
 
-    # invalidate last meeting modified, use get_again for async meetings term render
+    # invalidate last meeting modified
     invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
+    # invalidate last meeting review_state changed
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.review_state', get_again=True)
 
     # notify a MeetingAfterTransitionEvent for subplugins so we are sure
     # that it is called after PloneMeeting meeting transition
@@ -1034,6 +1036,9 @@ def onMeetingAdded(meeting, event):
         'Products.PloneMeeting.Meeting.date', get_again=True)
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.Meeting.modified', get_again=True)
+    # a Meeting review_state changed
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.Meeting.review_state', get_again=True)
 
 
 def onMeetingCreated(meeting, event):
@@ -1058,7 +1063,7 @@ def onMeetingCreated(meeting, event):
     meeting.item_votes = PersistentMapping()
     # place to store attendees when using contacts
     meeting.ordered_contacts = OrderedDict()
-
+    meeting._number_of_items = 0
 
 def onMeetingModified(meeting, event):
     """ """

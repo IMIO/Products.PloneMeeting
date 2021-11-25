@@ -3138,8 +3138,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''cachekey method for self.getMeetingToInsertIntoWhenNoCurrentMeetingObjectPath.'''
         # valid until a meeting was modified (date or review_state)
         # and when preferredMeeting is still the same
-        date = get_cachekey_volatile('Products.PloneMeeting.Meeting.modified')
-        return repr(self), self.getPreferredMeeting(), date
+        date_date = get_cachekey_volatile('Products.PloneMeeting.Meeting.date')
+        date_review_state = get_cachekey_volatile('Products.PloneMeeting.Meeting.review_state')
+        return repr(self), self.getPreferredMeeting(), date_date, date_review_state
 
     @ram.cache(getMeetingToInsertIntoWhenNoCurrentMeetingObjectPath_cachekey)
     def getMeetingToInsertIntoWhenNoCurrentMeetingObjectPath(self):
