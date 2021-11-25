@@ -636,6 +636,21 @@ class MeetingPrettyLinkAdapter(PrettyLinkAdapter):
     """
       Override to take into account PloneMeeting use cases...
     """
+    def getLink_cachekey(method, self):
+        '''cachekey method for self.getLink.'''
+        res = super(MeetingPrettyLinkAdapter, self).getLink_cachekey(self)
+
+        # res check context_modified but we just want to check date
+        meeting_date = self.context.date
+        res = list(res)
+        del res[1]
+        res.append(meeting_date)
+        return tuple(res)
+
+    @ram.cache(getLink_cachekey)
+    def getLink(self):
+        """Necessary to be able to override the cachekey."""
+        return self._getLink()
 
     def _leadingIcons(self):
         """

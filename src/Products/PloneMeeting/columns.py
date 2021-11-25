@@ -176,6 +176,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         obj = self._getObject(item)
         prettyLinker = IPrettyLink(obj)
         prettyLinker.target = '_parent'
+        contentValue = obj.Title()
 
         annexes = staticInfos = moreInfos = ''
 
@@ -209,9 +210,13 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
             visibleColumns = cfg.getMeetingColumns()
             staticInfos = obj.restrictedTraverse('@@static-infos')(visibleColumns=visibleColumns)
             annexes += obj.restrictedTraverse('@@categorized-childs')(portal_type='annex')
+            # display number of items in meeting title
+            contentValue = "{0} <span class='meeting-number-items'>[{1}]</span>".format(
+                contentValue, obj.number_of_items())
         if annexes:
             annexes = u"<div class='dashboard_annexes'>{0}</div>".format(annexes)
 
+        prettyLinker.contentValue = contentValue
         pretty_link = prettyLinker.getLink()
         return pretty_link + staticInfos + moreInfos + annexes
 

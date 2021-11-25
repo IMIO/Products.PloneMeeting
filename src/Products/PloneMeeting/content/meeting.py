@@ -887,7 +887,8 @@ class Meeting(Container):
                         notViewableHelpMessage=None,
                         appendToUrl='',
                         link_pattern=None,
-                        with_hour=True):
+                        with_hour=True,
+                        with_number_of_items=False):
         """Return the IPrettyLink version of the title."""
         adapted = IPrettyLink(self)
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -895,6 +896,9 @@ class Meeting(Container):
                                                 with_hour=with_hour,
                                                 prefixed=prefixed,
                                                 short=short)
+        if with_number_of_items:
+            adapted.contentValue = u"{0} <span class='meeting-number-items'>[{1}]</span>".format(
+                adapted.contentValue, self.number_of_items())
         adapted.isViewable = adapted.isViewable and isViewable
         if notViewableHelpMessage is not None:
             adapted.notViewableHelpMessage = notViewableHelpMessage

@@ -47,6 +47,9 @@ Changelog
 
   [gbastien]
 
+- Now that the meeting number of items is stored, display it in the dashboards.
+  [gbastien]
+
 4.2b20 (2021-11-15)
 -------------------
 
