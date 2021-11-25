@@ -826,16 +826,15 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 "For caching reasons, please pass \"cfg\" as \"context\" "
                 "when calling \"tool.isManager\" with \"realManagers=False\"")
         res = False
-        user_plone_groups = self.get_plone_groups_for_user()
         if not realManagers:
             mmanager_group_id = get_plone_group_id(context.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
-            res = mmanager_group_id in user_plone_groups
+            res = mmanager_group_id in self.get_plone_groups_for_user()
         if realManagers or not res:
             # can not use _checkPermission(ManagePortal, self)
             # because it would say True when using adopt_roles
             # use user.getRoles
-            res = "Administrators" in user_plone_groups or \
-                "Manager" in api.user.get_current().getRoles()
+            user = get_current_user_id(self.REQUEST)
+            res = "Manager" in user.getRoles()
         return res
 
     def isPowerObserverForCfg_cachekey(method, self, cfg, power_observer_types=[]):
