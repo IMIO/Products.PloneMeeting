@@ -710,8 +710,7 @@ def onItemModified(item, event):
     # An item has ben modified, use get_again for portlet_todo
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.MeetingItem.modified',
-        get_again=True,
-        invalidated_methods=[])
+        get_again=True)
 
 
 def storeImagesLocallyDexterity(obj):
