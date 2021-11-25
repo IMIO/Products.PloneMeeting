@@ -727,15 +727,6 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         return res and bool(self.context.adapted().isPrivacyViewable())
 
 
-def _meeting_modified_cachekey(meeting, tool, cfg):
-    """ """
-    isRealManager = tool.isManager(tool, realManagers=True)
-    isManager = not isRealManager and tool.isManager(cfg)
-    date = get_cachekey_volatile(
-        'Products.PloneMeeting.Meeting.UID.{0}'.format(meeting.UID()))
-    return isRealManager, isManager, date
-
-
 class MeetingActionsPanelView(BaseActionsPanelView):
     """
       Specific actions displayed on a meeting.
@@ -764,17 +755,14 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         '''cachekey method for self.__call__ method.
            The cache is invalidated if :
            - meeting is modified (modified is also triggered when review_state changed);
-           - linked items changed;
            - cfg modified;
            - different item or user;
            - user groups changed.'''
         isRealManager = self.tool.isManager(self.tool, realManagers=True)
         isManager = not isRealManager and self.tool.isManager(self.cfg)
-        date = get_cachekey_volatile(
-            'Products.PloneMeeting.Meeting.UID.{0}'.format(self.context.UID()))
         # check also portal_url in case application is accessed thru different URI
-        return (self.context.UID(), self.context.modified(),
-                isRealManager, isManager, date,
+        return (repr(self.context), self.context.modified(),
+                isRealManager, isManager,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
                 showArrows, self.portal_url, kwargs)

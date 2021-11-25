@@ -435,8 +435,10 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
            Cache is invalidated depending on :
            - current user may edit or not;
            - something is redefined for current item or not.'''
+        # when using raw fields (assembly, absents, signatures, ...)
+        # we invalidate if a raw value changed
         date = get_cachekey_volatile(
-            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignatures')
+            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignaturesRawFields')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
@@ -525,15 +527,14 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
         is_manager = tool.isManager(cfg)
         cfg_modified = cfg.modified()
         ordered_contacts = self.context.ordered_contacts.items()
-        item_votes = self.context.get_item_votes()
-        context_uid = self.context.UID()
+        item_votes = sorted(self.context.get_item_votes().items())
         cache_date = self.request.get('cache_date', None)
         return (date,
                 is_manager,
                 cfg_modified,
                 ordered_contacts,
                 item_votes,
-                context_uid,
+                repr(self.context),
                 cache_date)
 
     def get_all_used_held_positions(self):

@@ -680,9 +680,6 @@ def onItemModified(item, event):
     if not isinstance(event, ContainerModifiedEvent):
         meeting = item.getMeeting()
         if meeting:
-            # invalidate meeting actions panel
-            invalidate_cachekey_volatile_for(
-                'Products.PloneMeeting.Meeting.UID.{0}'.format(meeting.UID()), get_again=True)
             # update item references if necessary
             meeting.update_item_references(start_number=item.getItemNumber(), check_needed=True)
             # invalidate Meeting.get_item_insert_order caching
@@ -1081,11 +1078,11 @@ def onMeetingModified(meeting, event):
         # update every items itemReference if needed
         if set(mod_attrs).intersection(['date', 'first_item_number', 'meeting_number']):
             meeting.update_item_references(check_needed=False)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(meeting)
         # reindex every linked items if date value changed
         if not mod_attrs or "date" in mod_attrs:
             catalog = api.portal.get_tool('portal_catalog')
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(meeting)
             # items linked to the meeting
             brains = catalog(portal_type=cfg.getItemTypeName(),
                              meeting_uid=meeting.UID())
@@ -1111,10 +1108,11 @@ def onMeetingModified(meeting, event):
         invalidate_cachekey_volatile_for(
             'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures',
             get_again=True)
-        # invalidate assembly async load on item
-        invalidate_cachekey_volatile_for(
-            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignatures',
-            get_again=True)
+        # invalidate assembly async load on item when using raw fields
+        if not cfg.isUsingContacts():
+            invalidate_cachekey_volatile_for(
+                'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignaturesRawFields',
+                get_again=True)
         if need_reindex:
             meeting.reindexObject()
 
