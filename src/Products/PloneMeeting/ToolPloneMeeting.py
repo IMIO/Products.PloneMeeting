@@ -833,7 +833,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # can not use _checkPermission(ManagePortal, self)
             # because it would say True when using adopt_roles
             # use user.getRoles
-            user = get_current_user_id(self.REQUEST)
+            user = api.user.get_current()
             res = "Manager" in user.getRoles()
         return res
 
