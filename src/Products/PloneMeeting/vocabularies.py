@@ -123,7 +123,7 @@ class ItemCategoriesVocabulary(object):
 
     def __call___cachekey(method, self, context, classifiers=False):
         '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.categoriesvocabulary')
+        date = get_cachekey_volatile('Products.PloneMeeting.MeetingConfig.getCategoriesIds')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         return date, repr(cfg), classifiers

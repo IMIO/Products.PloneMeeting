@@ -6878,7 +6878,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getCategoriesIds_cachekey(method, self,  catType='categories', onlySelectable=True, userId=None):
         '''cachekey method for self.getCategoriesIds.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.categoriesvocabulary')
+        date = get_cachekey_volatile('Products.PloneMeeting.MeetingConfig.getCategoriesIds')
         return repr(self), date, catType, onlySelectable, userId or get_current_user_id()
 
     security.declarePublic('getCategoriesIds')

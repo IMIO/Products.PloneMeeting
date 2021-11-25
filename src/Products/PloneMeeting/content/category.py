@@ -122,7 +122,7 @@ class MeetingCategory(Item):
 
     def _invalidateCachedMethods(self):
         """Clean cache for vocabularies using MeetingCategories."""
-        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.MeetingConfig.getCategoriesIds")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
 
     security.declarePublic('is_selectable')
