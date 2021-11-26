@@ -415,7 +415,7 @@ class testPerformances(PloneMeetingTestCase):
         ''' '''
         item.setManuallyLinkedItems(linked_item_uids, caching=caching)
 
-    def test_pm_IsManager(self):
+    def test_pm_SpeedIsManager(self):
         '''Test ToolPloneMeeting.isManager method performances.
            Need to comment manually ram.cache on ToolPloneMeeting.isManager
            to see difference.  Performance is better with @ram.cache.'''
