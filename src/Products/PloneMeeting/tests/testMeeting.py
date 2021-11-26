@@ -2800,10 +2800,11 @@ class testMeetingType(PloneMeetingTestCase):
         dummyItemAction_rendered_actions_panel = actions_panel()
         self.assertEqual(frozenMeeting_rendered_actions_panel, dummyItemAction_rendered_actions_panel)
         item._update_after_edit()
-        # the actions panel has been invalidated
+        # the actions panel is still the same as item modified does not change anything to the meeting
+        # before it was the case as not able to freeze an empty meeting, no more now
         actions_panel._transitions = None
         dummyItemAction_rendered_actions_panel = actions_panel()
-        self.assertNotEqual(frozenMeeting_rendered_actions_panel, dummyItemAction_rendered_actions_panel)
+        self.assertEqual(frozenMeeting_rendered_actions_panel, dummyItemAction_rendered_actions_panel)
 
         # invalidated when user changed
         self.changeUser('pmReviewer1')
