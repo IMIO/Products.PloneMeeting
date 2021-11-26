@@ -2154,10 +2154,10 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(publicItem1.getSiblingItem('last'), secretItem3.getItemNumber())
         view = publicItem1.restrictedTraverse('@@object_goto')
         # first, next and last items are not accessible (not privacy viewable)
-        self.assertEqual(view('3', 'next'), publicItem2.absolute_url())
-        self.assertEqual(view('1', 'previous'), view.context.absolute_url())
-        self.assertEqual(view('1', 'first'), view.context.absolute_url())
-        self.assertEqual(view('5', 'last'), publicItem2.absolute_url())
+        self.assertEqual(view('next'), publicItem2.absolute_url())
+        self.assertEqual(view('previous'), view.context.absolute_url())
+        self.assertEqual(view('first'), view.context.absolute_url())
+        self.assertEqual(view('last'), publicItem2.absolute_url())
 
         # do secret items accessible
         secretItem1.setPrivacy('public')
@@ -2168,10 +2168,10 @@ class testViews(PloneMeetingTestCase):
         secretItem3.reindexObject()
         # MeetingItem.isPrivacyViewable is RAMCached
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.isPrivacyViewable')
-        self.assertEqual(view('3', 'next'), secretItem2.absolute_url())
-        self.assertEqual(view('1', 'previous'), secretItem1.absolute_url())
-        self.assertEqual(view('1', 'first'), secretItem1.absolute_url())
-        self.assertEqual(view('5', 'last'), secretItem3.absolute_url())
+        self.assertEqual(view('next'), secretItem2.absolute_url())
+        self.assertEqual(view('previous'), secretItem1.absolute_url())
+        self.assertEqual(view('first'), secretItem1.absolute_url())
+        self.assertEqual(view('last'), secretItem3.absolute_url())
 
     def test_pm_goto_object_meeting(self):
         """Test the item navigation widget when way='meeting'."""

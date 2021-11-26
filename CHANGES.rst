@@ -44,7 +44,8 @@ Changelog
     item reference, this avoids to loop on items if reference does not need to be updated.
   - In `MeetingItem.update_local_roles`, only `reindexObjectSecurity` if not
     `triggered_by_transition` as the `WorkflowTool` will also `reindexObjectSecurity`.
-
+  - Adapted item navigation widget to not compute available item number on
+    display but only when asking first/previous/next/last item.
   [gbastien]
 
 - Now that the meeting number of items is stored, display it in the dashboards.
