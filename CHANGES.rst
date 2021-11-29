@@ -13,6 +13,10 @@ Changelog
   is in competition with the workflow confirmation popup and both functionnalities
   should not be enabled togheter.
   [gbastien]
+- On the `MeetingConfig` page displaying POD templates, for POD templates reusing
+  the `odt_file` of another POD template, display a link the the POD template
+  `odt_file` real holder.
+  [gbastien]
 
 4.2b21 (2021-11-26)
 -------------------

@@ -1339,8 +1339,9 @@
           <tr>
             <th class="nosort" width="20px"></th>
             <th class="nosort" i18n:translate="listingheader_title">Title</th>
-            <th class="nosort" width="50px"  i18n:translate="heading_is_active">Active?</th>
-            <th class="nosort" width="130px"  i18n:translate="heading_actions">Actions</th>
+            <th class="nosort" width="200px" i18n:translate="listingheader_pod_template_or_odt_file">POD template or odt_file</th>
+            <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
+            <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
           </tr>
           <tal:comment replace="nothing">No template is defined.</tal:comment>
           <tr tal:condition="python: not pFolder.objectValues()">
@@ -1356,7 +1357,8 @@
                      title="Format"
                      class="svg-icon"
                      tal:attributes="title fmt;
-                                     src string:$portal_url/++resource++collective.documentgenerator/$fmt.svg"/></td>
+                                     src string:$portal_url/++resource++collective.documentgenerator/$fmt.svg"/>
+            </td>
             <td>
                 <h5>
                   <a tal:attributes="href obj/absolute_url;">
@@ -1376,6 +1378,20 @@
                             excludedFields python: ('pod_formats', 'enabled')">
                     <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
                 </tal:additionalInformations>
+            </td>
+            <td>
+              <a tal:attributes="href string:${obj/absolute_url}/view/++widget++form.widgets.odt_file/@@download"
+                 tal:condition="python: obj.odt_file">
+                <img tal:attributes="src string:${portal_url}/download_icon.png;
+                                     title string:Download"
+                     i18n:domain="plone"
+                     i18n:attributes="title" />
+              </a>
+              <a tal:define="podTemplateHolder python: obj.get_pod_template_to_use();
+                             otherCfg python: tool.getMeetingConfig(podTemplateHolder)"
+                 tal:attributes="href string:${podTemplateHolder/absolute_url}"
+                 tal:condition="python: obj.odt_file is None"
+                 tal:content="string:${otherCfg/title} ➔ ${podTemplateHolder/Title}">File holder</a>
             </td>
             <td i18n:domain="plone">
               <span tal:condition="obj/enabled" i18n:translate="">Yes</span>
