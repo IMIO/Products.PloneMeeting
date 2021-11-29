@@ -2420,6 +2420,20 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    BooleanField(
+        name='itemLabelsEditableByProposingGroupForever',
+        default=defValues.itemLabelsEditableByProposingGroupForever,
+        widget=BooleanField._properties['widget'](
+            description="ItemLabelsEditableByProposingGroupForever",
+            description_msgid="item_labels_editable_by_proposing_group_forever_descr",
+            label='Itemlabelseditablebyproposinggroupforever',
+            label_msgid='PloneMeeting_label_itemLabelsEditableByProposingGroupForever',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
+    ),
+
     LinesField(
         name='usingGroups',
         widget=MultiSelectionWidget(

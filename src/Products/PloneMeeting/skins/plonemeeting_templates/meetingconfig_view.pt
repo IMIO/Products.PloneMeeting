@@ -1205,13 +1205,13 @@
           </td>
         </tr>
         <tr>
+          <td tal:define="field python:here.getField('itemLabelsEditableByProposingGroupForever')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
           <td tal:define="field python:here.getField('usingGroups')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td>
-          </td>
-          <td>
-          </td>
+          <td></td>
         </tr>
       </table>
     </tal:advices>

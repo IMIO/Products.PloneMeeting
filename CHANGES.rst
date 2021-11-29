@@ -17,6 +17,10 @@ Changelog
   the `odt_file` of another POD template, display a link the the POD template
   `odt_file` real holder.
   [gbastien]
+- Added parameter `MeetingConfig.itemLabelsEditableByProposingGroupForever`,
+  `False` by default, when set to `True`, the item proposing group editors
+  will be able to edit the item labels forever.
+  [gbastien]
 
 4.2b21 (2021-11-26)
 -------------------

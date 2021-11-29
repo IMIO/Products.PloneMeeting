@@ -1928,6 +1928,12 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
     return apply_meetingmanagers_access, suffix_roles
 
 
+def is_proposing_group_editor(org_uid, cfg):
+    """ """
+    suffixes = cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
+    return cfg.aq_parent.user_is_in_org(org_uid=org_uid, suffixes=suffixes)
+
+
 def org_id_to_uid(org_info, raise_on_error=True, ignore_underscore=False):
     """Returns the corresponding org based value for given org_info based value.
        'developers', will return 'orguid'.
