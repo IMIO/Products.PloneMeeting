@@ -1402,7 +1402,7 @@ class PMCategoryVocabulary(CategoryVocabulary):
     """Override to take into account field 'only_for_meeting_managers' on the category
        for annexes added on items."""
 
-    def __call___cachekey(method, self, context, use_category_uid_as_token=False):
+    def __call___cachekey(method, self, context, use_category_uid_as_token=False, only_enabled=True):
         '''cachekey method for self.__call__.'''
         annex_config = get_config_root(context)
         annex_group = get_group(annex_config, context)
@@ -1424,16 +1424,17 @@ class PMCategoryVocabulary(CategoryVocabulary):
         user_plone_groups = tool.get_plone_groups_for_user()
         return annex_group.getId(), \
             isManager, cfg_modified, use_category_uid_as_token, \
-            context_uid, context_modified, user_plone_groups
+            context_uid, context_modified, user_plone_groups, only_enabled
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context, use_category_uid_as_token=False):
+    def __call__(self, context, use_category_uid_as_token=False, only_enabled=True):
         return super(PMCategoryVocabulary, self).__call__(
-            context, use_category_uid_as_token=use_category_uid_as_token)
+            context, use_category_uid_as_token=use_category_uid_as_token, only_enabled=only_enabled)
 
-    def _get_categories(self, context):
+    def _get_categories(self, context, only_enabled=True):
         """ """
-        categories = super(PMCategoryVocabulary, self)._get_categories(context)
+        categories = super(PMCategoryVocabulary, self)._get_categories(
+            context, only_enabled=only_enabled)
         # when adding an annex, context is the parent
         container = context
         stored_content_category = None
@@ -1448,10 +1449,11 @@ class PMCategoryVocabulary(CategoryVocabulary):
                           (stored_content_category and stored_content_category == calculate_category_id(cat))]
         return categories
 
-    def _get_subcategories(self, context, category):
+    def _get_subcategories(self, context, category, only_enabled=True):
         """Return subcategories for given category.
            This needs to return a list of subcategory brains."""
-        subcategories = super(PMCategoryVocabulary, self)._get_subcategories(context, category)
+        subcategories = super(PMCategoryVocabulary, self)._get_subcategories(
+            context, category, only_enabled=only_enabled)
         # when adding an annex, context is the parent
         container = context
         stored_content_category = None
