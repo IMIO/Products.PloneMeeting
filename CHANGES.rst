@@ -5,8 +5,9 @@ Changelog
 4.2b22 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Adapted `PMCategoryVocabulary` to take into account new parameter
+  `only_enabled=True` introduced in `collective.iconifiedcategory`.
+  [gbastien]
 
 4.2b21 (2021-11-26)
 -------------------
