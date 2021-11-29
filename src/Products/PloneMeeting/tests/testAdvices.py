@@ -2002,6 +2002,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setUseCopies(True)
         cfg.setItemCopyGroupsStates((self._stateMappingFor('itemcreated'),
                                      self._stateMappingFor('proposed'), ))
+        cfg.setEnableAdviceProposingGroupComment(True)
         # create item and ask advices
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', decision=self.decisionText)
@@ -2013,7 +2014,14 @@ class testAdvices(PloneMeetingTestCase):
         self.request['advice_id'] = unicode(self.developers_uid)
         form = item.restrictedTraverse('@@advice_proposing_group_comment_form').form_instance
         self.request.form['form.widgets.advice_uid'] = unicode(self.developers_uid)
-        self.request.form['form.widgets.proposing_group_comment'] = comment
+        # first set None, it is saved as u""
+        self.request.form['form.widgets.proposing_group_comment'] = None
+        form.update()
+        form.handleSave(form, None)
+        self.assertEqual(item.adviceIndex[self.developers_uid]['proposing_group_comment'], u"")
+        # now set a real text
+        form = item.restrictedTraverse('@@advice_proposing_group_comment_form').form_instance
+        self.request['form.widgets.proposing_group_comment'] = comment
         form.update()
         data = form.extractData()[0]
         form.handleSave(form, None)

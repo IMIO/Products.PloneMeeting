@@ -1916,6 +1916,19 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    BooleanField(
+        name='enableAdviceProposingGroupComment',
+        default=defValues.enableAdviceProposingGroupComment,
+        widget=BooleanField._properties['widget'](
+            description="EnableAdviceProposingGroupComment",
+            description_msgid="enable_advice_proposing_group_comment_descr",
+            label='Enableadviceproposinggroupcomment',
+            label_msgid='PloneMeeting_label_enableAdviceProposingGroupComment',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     LinesField(
         name='defaultAdviceHiddenDuringRedaction',
         default=defValues.defaultAdviceHiddenDuringRedaction,

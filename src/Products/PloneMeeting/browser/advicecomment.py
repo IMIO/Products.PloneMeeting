@@ -38,7 +38,7 @@ class IAdviceProposingGroupComment(IBaseAdviceInfoSchema):
         title=_(u"Comment"),
         description=_(u""),
         defaultFactory=proposing_group_comment_default,
-        required=True)
+        required=False)
 
 
 class AdviceProposingGroupCommentForm(BaseAdviceInfoForm):
@@ -87,9 +87,9 @@ class AdviceProposingGroupCommentForm(BaseAdviceInfoForm):
         # check that user is not trying to workaround security
         self._check_auth(data)
 
-        # save proposing_group_comment and return
+        # save proposing_group_comment and return, make sure we do not set None
         self.item.adviceIndex[data['advice_uid']]['proposing_group_comment'] = \
-            data['proposing_group_comment']
+            data['proposing_group_comment'] or u""
         # make sure advice cache is invalidated as proposing group comment
         # is displayed on advice view and does not change the advice modified date
         advice = self.item.getAdviceObj(data['advice_uid'])

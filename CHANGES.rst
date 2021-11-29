@@ -8,6 +8,11 @@ Changelog
 - Adapted `PMCategoryVocabulary` to take into account new parameter
   `only_enabled=True` introduced in `collective.iconifiedcategory`.
   [gbastien]
+- Added parameter `MeetingConfig.enableAdviceProposingGroupComment`, `False` by
+  default to be able to enable/disable the advice proposing group comment as it
+  is in competition with the workflow confirmation popup and both functionnalities
+  should not be enabled togheter.
+  [gbastien]
 
 4.2b21 (2021-11-26)
 -------------------
