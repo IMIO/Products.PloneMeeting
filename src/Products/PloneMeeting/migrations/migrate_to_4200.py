@@ -295,6 +295,13 @@ class Migrate_To_4200(Migrator):
             # make sure new wfAdaptations are enabled (were default, now optional)
             cleaned_wfas += [wfa for wfa in ('pre_accepted', 'delayed', 'accepted_but_modified', )
                              if wfa in cfg.listWorkflowAdaptations()]
+            # when using "waiting_advices", and not other "waiting_advices_" wfas are enabled
+            # enable the "waiting_advices_proposing_group_send_back" as it was the
+            # default behaviour before and now it is configurable
+            waiting_advices_wfas = [wfa for wfa in cleaned_wfas
+                                    if wfa.startswith("waiting_advices")]
+            if "waiting_advices" in cleaned_wfas and len(waiting_advices_wfas) == 1:
+                cleaned_wfas.append("waiting_advices_proposing_group_send_back")
             # remove duplicates (in case migration is launched several times)
             cleaned_wfas = tuple(set(cleaned_wfas))
             cfg.setWorkflowAdaptations(cleaned_wfas)
