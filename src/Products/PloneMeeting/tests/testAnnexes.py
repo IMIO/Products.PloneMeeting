@@ -992,7 +992,10 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         self.assertFalse(self.hasPermission(AddAnnex, item))
         self.assertFalse(self.hasPermission(AddAnnexDecision, item))
-        self.assertRaises(Unauthorized, item.folder_position_typeaware, position='up', id=annex1.getId())
+        self.assertRaises(Unauthorized,
+                          item.folder_position_typeaware,
+                          position='bottom',
+                          id=annex1.getId())
 
     def test_pm_AnnexesCreationDateKeptWhenItemDuplicated(self):
         """When an item is duplicated, if annexes are kept,
