@@ -17,6 +17,11 @@ Changelog
   the `odt_file` of another POD template, display a link the the POD template
   `odt_file` real holder.
   [gbastien]
+- Fixed bug where an adviser could add an `annex` or `annexDecision` because
+  the role `Contributor` was used for both `Add annexes` and `Add advices`
+  permissions.
+  A new role `MeetingAdviser` is added to manage the `Add advice` permission.
+  [gbastien]
 
 4.2b21 (2021-11-26)
 -------------------
