@@ -2090,9 +2090,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failUnless(READER_USECASES['copy_groups'] in i1.__ac_local_roles__[self.developers_advisers])
         self.failUnless(READER_USECASES['copy_groups'] in i1.__ac_local_roles__[self.vendors_advisers])
         # advisers that have an advice to give have the 'Contributor' role
-        self.failUnless('Contributor' in i1.__ac_local_roles__[self.developers_advisers])
+        self.failUnless('MeetingAdviser' in i1.__ac_local_roles__[self.developers_advisers])
         # but not others
-        self.failIf('Contributor' in i1.__ac_local_roles__[self.vendors_advisers])
+        self.failIf('MeetingAdviser' in i1.__ac_local_roles__[self.vendors_advisers])
         # now, remove developers in optionalAdvisers
         i1.setOptionalAdvisers(())
         i1.update_local_roles()
