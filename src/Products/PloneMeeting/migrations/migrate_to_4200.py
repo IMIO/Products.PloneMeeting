@@ -674,7 +674,7 @@ class Migrate_To_4200(Migrator):
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
 
-        #self._fixPODTemplatesInstructions()
+        self._fixPODTemplatesInstructions()
         self._fixFacetedFilters()
 
         # apply correct batch actions marker on searches_* folders
