@@ -2433,7 +2433,6 @@ schema = Schema((
         schemata="advices",
         write_permission="PloneMeeting: Write risky config",
     ),
-
     LinesField(
         name='usingGroups',
         widget=MultiSelectionWidget(
