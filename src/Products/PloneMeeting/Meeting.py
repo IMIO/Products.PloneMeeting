@@ -328,7 +328,7 @@ schema = Schema((
     DateTimeField(
         name='startDate',
         widget=DateTimeField._properties['widget'](
-            condition="python: here.attributeIsUsed('startDate') and not here.isTemporary()",
+            condition="python: here.attribute_is_used('startDate') and not here.isTemporary()",
             minute_step=1,
             label='Startdate',
             label_msgid='PloneMeeting_label_startDate',
@@ -339,7 +339,7 @@ schema = Schema((
     DateTimeField(
         name='midDate',
         widget=DateTimeField._properties['widget'](
-            condition="python: here.attributeIsUsed('midDate') and not here.isTemporary()",
+            condition="python: here.attribute_is_used('midDate') and not here.isTemporary()",
             minute_step=1,
             label='Middate',
             label_msgid='PloneMeeting_label_midDate',
@@ -350,7 +350,7 @@ schema = Schema((
     DateTimeField(
         name='endDate',
         widget=DateTimeField._properties['widget'](
-            condition="python: here.attributeIsUsed('endDate') and not here.isTemporary()",
+            condition="python: here.attribute_is_used('endDate') and not here.isTemporary()",
             minute_step=1,
             label='Enddate',
             label_msgid='PloneMeeting_label_endDate',
@@ -361,7 +361,7 @@ schema = Schema((
     DateTimeField(
         name='approvalDate',
         widget=DateTimeField._properties['widget'](
-            condition="python: here.attributeIsUsed('approvalDate')",
+            condition="python: here.attribute_is_used('approvalDate')",
             minute_step=1,
             label='Approvaldate',
             label_msgid='PloneMeeting_label_approvalDate',
@@ -372,7 +372,7 @@ schema = Schema((
     DateTimeField(
         name='convocationDate',
         widget=DateTimeField._properties['widget'](
-            condition="python: here.attributeIsUsed('convocationDate')",
+            condition="python: here.attribute_is_used('convocationDate')",
             minute_step=1,
             label='Convocationdate',
             label_msgid='PloneMeeting_label_convocationDate',
@@ -483,7 +483,7 @@ schema = Schema((
     StringField(
         name='place',
         widget=StringField._properties['widget'](
-            condition="python: here.attributeIsUsed('place')",
+            condition="python: here.attribute_is_used('place')",
             label='Place',
             label_msgid='PloneMeeting_label_place',
             i18n_domain='PloneMeeting',
@@ -495,7 +495,7 @@ schema = Schema((
         name='extraordinarySession',
         default=False,
         widget=BooleanField._properties['widget'](
-            condition="python: here.attributeIsUsed('extraordinarySession')",
+            condition="python: here.attribute_is_used('extraordinarySession')",
             label='Extraordinarysession',
             label_msgid='PloneMeeting_label_extraordinarySession',
             i18n_domain='PloneMeeting',
@@ -538,7 +538,7 @@ schema = Schema((
         name='observations',
         allowable_content_types=('text/html',),
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('observations')",
+            condition="python: here.attribute_is_used('observations')",
             description="Observations",
             description_msgid="field_vieawable_by_everyone_descr",
             label_msgid="PloneMeeting_meetingObservations",
@@ -553,7 +553,7 @@ schema = Schema((
     DateTimeField(
         name='preMeetingDate',
         widget=DateTimeField._properties['widget'](
-            condition="python: here.attributeIsUsed('preMeetingDate')",
+            condition="python: here.attribute_is_used('preMeetingDate')",
             label='Premeetingdate',
             label_msgid='PloneMeeting_label_preMeetingDate',
             i18n_domain='PloneMeeting',
@@ -563,7 +563,7 @@ schema = Schema((
     StringField(
         name='preMeetingPlace',
         widget=StringField._properties['widget'](
-            condition="python: here.attributeIsUsed('preMeetingPlace')",
+            condition="python: here.attribute_is_used('preMeetingPlace')",
             label='Premeetingplace',
             label_msgid='PloneMeeting_label_preMeetingPlace',
             i18n_domain='PloneMeeting',
@@ -575,7 +575,7 @@ schema = Schema((
         name='preObservations',
         allowable_content_types=('text/html',),
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('preObservations')",
+            condition="python: here.attribute_is_used('preObservations')",
             description_msgid="field_vieawable_by_everyone_descr",
             label='Preobservations',
             label_msgid='PloneMeeting_label_preObservations',
@@ -590,7 +590,7 @@ schema = Schema((
         name='committeeObservations',
         allowable_content_types=('text/html',),
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('committeeObservations')",
+            condition="python: here.attribute_is_used('committeeObservations')",
             description_msgid="field_vieawable_by_everyone_descr",
             label='Committeeobservations',
             label_msgid='PloneMeeting_label_committeeObservations',
@@ -605,7 +605,7 @@ schema = Schema((
         name='votesObservations',
         allowable_content_types=('text/html',),
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('votesObservations') and "
+            condition="python: here.attribute_is_used('votesObservations') and "
                       "here.adapted().show_votesObservations()",
             description_msgid="field_vieawable_by_everyone_once_meeting_decided_descr",
             label='Votesobservations',
@@ -621,7 +621,7 @@ schema = Schema((
         name='publicMeetingObservations',
         allowable_content_types=('text/html',),
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('publicMeetingObservations')",
+            condition="python: here.attribute_is_used('publicMeetingObservations')",
             description_msgid="field_vieawable_by_everyone_descr",
             label='Publicmeetingobservations',
             label_msgid='PloneMeeting_label_publicMeetingObservations',
@@ -698,7 +698,7 @@ schema = Schema((
     DateTimeField(
         name='deadlinePublish',
         widget=DateTimeField._properties['widget'](
-            condition="python: here.attributeIsUsed('deadlinePublish') and not here.isTemporary()",
+            condition="python: here.attribute_is_used('deadlinePublish') and not here.isTemporary()",
             label='Deadlinepublish',
             label_msgid='PloneMeeting_label_deadlinePublish',
             i18n_domain='PloneMeeting',
@@ -708,7 +708,7 @@ schema = Schema((
     DateTimeField(
         name='deadlineFreeze',
         widget=DateTimeField._properties['widget'](
-            condition="python: here.attributeIsUsed('deadlineFreeze') and not here.isTemporary()",
+            condition="python: here.attribute_is_used('deadlineFreeze') and not here.isTemporary()",
             label='Deadlinefreeze',
             label_msgid='PloneMeeting_label_deadlineFreeze',
             i18n_domain='PloneMeeting',
@@ -1354,14 +1354,14 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         res = not self.isTemporary() and \
             tool.isManager(self) and \
-            self.attributeIsUsed(name)
+            self.attribute_is_used(name)
         return res
 
     security.declarePrivate('validate_preMeetingDate')
 
     def validate_preMeetingDate(self, value):
         '''Checks that the preMeetingDate comes before the meeting date.'''
-        if not value or not self.attributeIsUsed('preMeetingDate'):
+        if not value or not self.attribute_is_used('preMeetingDate'):
             return
         # Get the meeting date from the request
         try:
@@ -1724,7 +1724,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('getDefaultAssembly')
 
     def getDefaultAssembly(self):
-        if self.attributeIsUsed('assembly'):
+        if self.attribute_is_used('assembly'):
             tool = api.portal.get_tool('portal_plonemeeting')
             return tool.getMeetingConfig(self).getAssembly()
         return ''
@@ -1732,7 +1732,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('getDefaultAssemblyStaves')
 
     def getDefaultAssemblyStaves(self):
-        if self.attributeIsUsed('assemblyStaves'):
+        if self.attribute_is_used('assemblyStaves'):
             tool = api.portal.get_tool('portal_plonemeeting')
             return tool.getMeetingConfig(self).getAssemblyStaves()
         return ''
@@ -1740,7 +1740,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('getDefaultSignatures')
 
     def getDefaultSignatures(self):
-        if self.attributeIsUsed('signatures'):
+        if self.attribute_is_used('signatures'):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
             return cfg.getSignatures()
@@ -2071,9 +2071,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in utils.py.'''
         return hasHistory(self, fieldName)
 
-    security.declarePublic('attributeIsUsed')
+    security.declarePublic('attribute_is_used')
 
-    def attributeIsUsed(self, name):
+    def attribute_is_used(self, name):
         '''Is the attribute named p_name used in this meeting config ?'''
         tool = api.portal.get_tool('portal_plonemeeting')
         meetingConfig = tool.getMeetingConfig(self)
@@ -2191,7 +2191,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def showAttendeesFields(self):
         '''Display attendee related fields in view/edit?'''
-        return (self.attributeIsUsed('attendees') or self.get_attendees()) and not self.getAssembly()
+        return (self.attribute_is_used('attendees') or self.get_attendees()) and not self.getAssembly()
 
     def shownAssemblyFields_cachekey(method, self):
         '''cachekey method for self.shownAssemblyFields.'''
@@ -2219,7 +2219,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def showSignatures(self):
         '''Show the 'signatures' field?'''
-        return self.attributeIsUsed('signatures') or self.getSignatures()
+        return self.attribute_is_used('signatures') or self.getSignatures()
 
     security.declarePublic('show_votesObservations')
 

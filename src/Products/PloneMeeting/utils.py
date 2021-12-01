@@ -1528,12 +1528,12 @@ def _addManagedPermissions(obj):
             schema = get_dx_schema(obj)
             write_permissions = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY, {})
             for field_id, write_permission in write_permissions.items():
-                if isinstance(schema.get(field_id), RichText):
+                if isinstance(schema.get(field_id), RichText) and obj.attribute_is_used(field_id):
                     write_perms.append(write_permission)
         else:
             # Archetypes
             for field in obj.Schema().filterFields(default_content_type='text/html'):
-                if field.write_permission:
+                if field.write_permission and obj.attribute_is_used(field.getName()):
                     write_perms.append(field.write_permission)
 
         roles = []

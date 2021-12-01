@@ -29,7 +29,12 @@ Changelog
     decision annexes were only addable when item in review_state before
     validated or when decided);
   - new parameter `MeetingConfig.itemInternalNotesEditableByMeetingManagers`
-    will let MeetingManagers also be able to view/edit internal notes.
+    will let MeetingManagers also be able to view/edit internal notes;
+  - renamed adaptations.performWorkflowAdaptations to
+    adpatations._performWorkflowAdaptations to show that it should not be called directly.
+  - renamed `MeetingItem.attributeIsUsed` to `MeetingItem.attribute_is_used` so
+    the same method is available on `Meeting`, `MeetingItem` and `MeetingAdvice`
+    and may be used by `utils._addManagedPermissions`.
 
   [gbastien]
 

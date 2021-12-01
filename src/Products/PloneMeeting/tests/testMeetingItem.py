@@ -5778,7 +5778,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse('emergency' in cfg.getUsedItemAttributes())
         self.assertRaises(Unauthorized, form)
         cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() + ('emergency', ))
-        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
         # not changed until required values are given
         request = TestRequest(form={
             'form.widgets.new_emergency_value': u'emergency_asked',
@@ -6039,6 +6039,7 @@ class testMeetingItem(PloneMeetingTestCase):
         """A user able to edit at least one RichText field must be able to add images."""
         # configure so different access are enabled when item is validated
         cfg = self.meetingConfig
+        self._enableField("budgetInfos")
         cfg.setUseCopies(True)
         cfg.setSelectableCopyGroups((self.vendors_creators, ))
         cfg.setUseAdvices(True)
@@ -6142,7 +6143,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
         # in some WF 'pmReviewer1' has the AddPortalContent permission because able to add annex
-        if self.hasPermission(AddAnnex, item):
+        if self.hasPermission(AddAnnex, item) or self.hasPermission(AddAnnexDecision, item):
             self.assertTrue(self.hasPermission(AddPortalContent, item))
         else:
             self.assertFalse(self.hasPermission(AddPortalContent, item))
@@ -6358,8 +6359,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # enable 'otherMeetingConfigsClonableToPrivacy' that is also displayed
         cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() +
                                   ('otherMeetingConfigsClonableToPrivacy', ))
-        # MeetingItem.attributeIsUsed is RAMCached
-        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
+        # MeetingItem.attribute_is_used is RAMCached
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
         self.assertEqual(
             item.displayOtherMeetingConfigsClonableTo(),
             unicode("{0} (<span class='item_privacy_public'>Public meeting</span> - {1}), "
@@ -6445,8 +6446,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item.showInternalNotes())
         # enable field internalNotes
         cfg.setUsedItemAttributes(('internalNotes', ))
-        # MeetingItem.attributeIsUsed is RAMCached
-        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
+        # MeetingItem.attribute_is_used is RAMCached
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
         self.assertTrue(item.showInternalNotes())
         self.assertTrue(item.mayQuickEdit('internalNotes'))
 
@@ -7147,8 +7148,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
         self.assertTrue(item.adapted().showObservations())
         cfg.setUsedItemAttributes(('observations', ))
-        # MeetingItem.attributeIsUsed is RAMCached
-        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
+        # MeetingItem.attribute_is_used is RAMCached
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
         self.assertTrue(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
         self.assertTrue(item.adapted().showObservations())
 
