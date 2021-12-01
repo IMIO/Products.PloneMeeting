@@ -21,6 +21,17 @@ Changelog
   `False` by default, when set to `True`, the item proposing group editors
   will be able to edit the item labels forever.
   [gbastien]
+- Changed default behavior of `MeetingItem.internalNotes`:
+
+  - now internal notes are editable forever by proposing group editors, to do
+    so, reused the `PloneMeeting: Add annexDecision` permission and fixed item
+    workflow so decision annexes are addable in any item review_state (before
+    decision annexes were only addable when item in review_state before
+    validated or when decided);
+  - new parameter `MeetingConfig.itemInternalNotesEditableByMeetingManagers`
+    will let MeetingManagers also be able to view/edit internal notes.
+
+  [gbastien]
 
 4.2b21 (2021-11-26)
 -------------------

@@ -61,6 +61,7 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import AddAdvice
+from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import AUTO_COPY_GROUP_PREFIX
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
@@ -1420,6 +1421,7 @@ schema = Schema((
         default_content_type="text/html",
         default_output_type="text/x-html-safe",
         optional=True,
+        write_permission=AddAnnexDecision,
     ),
     TextField(
         name='marginalNotes',
@@ -2349,12 +2351,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # bypass for Managers
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        if tool.isManager(cfg, realManagers=True):
+        if tool.isManager(tool, realManagers=True) or \
+           (cfg.getItemInternalNotesEditableByMeetingManagers() and
+                tool.isManager(cfg)):
             return True
 
         # user must be in one of the proposingGroup Plone groups
         org_uid = self.getProposingGroup()
-        if tool.get_plone_groups_for_user(org_uid=org_uid):
+        if tool.user_is_in_org(org_uid=org_uid):
             return True
         return False
 
@@ -4402,20 +4406,27 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('mayQuickEdit')
 
-    def mayQuickEdit(self, fieldName, bypassWritePermissionCheck=False, onlyForManagers=False):
+    def mayQuickEdit(self,
+                     fieldName,
+                     bypassWritePermissionCheck=False,
+                     onlyForManagers=False,
+                     bypassMeetingClosedCheck=False):
         '''Check if the current p_fieldName can be quick edited thru the meetingitem_view.
            By default, an item can be quickedited if the field condition is True (field is used,
            current user is Manager, current item is linekd to a meeting) and if the meeting
            the item is presented in is not considered as 'closed'.  Bypass if current user is
            a real Manager (Site Administrator/Manager).
-           If p_bypassWritePermissionCheck is True, we will not check for write_permission.'''
+           If p_bypassWritePermissionCheck is True, we will not check for write_permission.
+           If p_bypassMeetingClosedCheck is True, we will not check if meeting is closed but
+           only for permission and condition.'''
         field = self.Schema()[fieldName]
         return checkMayQuickEdit(
             self,
             bypassWritePermissionCheck=bypassWritePermissionCheck,
             permission=field.write_permission,
             expression=self.Schema()[fieldName].widget.condition,
-            onlyForManagers=onlyForManagers)
+            onlyForManagers=onlyForManagers,
+            bypassMeetingClosedCheck=bypassMeetingClosedCheck)
 
     def mayQuickEditItemAssembly(self):
         """Show edit icon if itemAssembly or itemAssemblyGuests field editable."""
@@ -6512,10 +6523,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             mmanagers_item_states = ['validated'] + list(cfg.getItemDecidedStates())
             if item_state in mmanagers_item_states or self.hasMeeting():
                 mmanagers_group_id = "{0}_{1}".format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
-                # 'Reviewer' also on decided item, the WF guard will avoid correct is meeting closed
-                mmanagers_roles = ['Reader', 'Reviewer']
+                # 'Reviewer' also on decided item, the WF guard will
+                # avoid correct is meeting closed, and give 'Contributor' to be
+                # able to add decision annexes
+                mmanagers_roles = ['Reader', 'Reviewer', 'Contributor']
                 if not self.is_decided(cfg, item_state):
-                    mmanagers_roles += ['Editor', 'Contributor']
+                    mmanagers_roles += ['Editor']
                 self.manage_addLocalRoles(mmanagers_group_id, tuple(mmanagers_roles))
 
     security.declareProtected(ModifyPortalContent, 'update_local_roles')

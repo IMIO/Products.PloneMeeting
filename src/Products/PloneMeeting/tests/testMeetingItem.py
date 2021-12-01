@@ -58,7 +58,6 @@ from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.indexes import previous_review_state
 from Products.PloneMeeting.indexes import sentToInfos
 from Products.PloneMeeting.MeetingItem import MeetingItem
-from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.tests.PloneMeetingTestCase import TestRequest
@@ -2248,7 +2247,7 @@ class testMeetingItem(PloneMeetingTestCase):
         if 'refused' in cfg.listWorkflowAdaptations() and \
            'refused' not in cfg.getWorkflowAdaptations():
             cfg.setWorkflowAdaptations(('refused', ))
-            performWorkflowAdaptations(cfg, logger=pm_logger)
+            cfg.at_post_edit_script()
         self._setPowerObserverStates(states=(
             'itemcreated', 'validated', 'presented', 'itemfrozen', 'accepted', 'delayed'))
         self._setPowerObserverStates(field_name='meeting_states',
@@ -4150,7 +4149,7 @@ class testMeetingItem(PloneMeetingTestCase):
         if 'hide_decisions_when_under_writing' not in cfg.listWorkflowAdaptations():
             return
         cfg.setWorkflowAdaptations(('hide_decisions_when_under_writing', ))
-        performWorkflowAdaptations(cfg, logger=pm_logger)
+        cfg.at_post_edit_script()
 
         self.changeUser('pmManager')
         # create 1 meeting with items so we can play the workflow
@@ -5115,8 +5114,8 @@ class testMeetingItem(PloneMeetingTestCase):
         newItem = item.clone()
         self.assertEqual(item.Title(), newItem.Title())
         self.assertEqual(item.getOptionalAdvisers(), newItem.getOptionalAdvisers())
-        self.assertNotEquals(item.getInternalNotes(), newItem.getInternalNotes())
-        self.assertFalse(newItem.getInternalNotes())
+        self.assertNotEqual(item.getInternalNotes(), newItem.getInternalNotes())
+        self.assertEqual(newItem.getInternalNotes(), '')
 
     def test_pm_CopiedFieldsWhenDuplicatedAsItemTemplate(self):
         '''Test that relevant fields are kept when an item is created from an itemTemplate.
@@ -6421,10 +6420,13 @@ class testMeetingItem(PloneMeetingTestCase):
                             prefixed=False, showContentIcon=False).encode('utf-8')),
                     'utf-8'))
 
-    def test_pm_InternalNotesIsRestrictedToProposingGroupOnly(self, ):
+    def test_pm_InternalNotesIsRestrictedToProposingGroup(self, ):
         """Field MeetingItem.internalNotes is only available to members
-           of the proposing group."""
+           of the proposing group and it editable forever.
+           When enabling MeetingConfig.itemInternalNotesEditableByMeetingManagers,
+           then MeetingManagers may manage it as well."""
         cfg = self.meetingConfig
+        self._removeConfigObjectsFor(self.meetingConfig)
         self.changeUser('siteadmin')
         # remove 'pmManager' from every 'vendors' groups
         for ploneGroup in get_plone_groups(self.vendors_uid):
@@ -6437,7 +6439,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # create an item
         self.changeUser('pmCreator2')
-        item = self.create('MeetingItem')
+        item = self.create('MeetingItem', decision=self.decisionText)
         item.setCopyGroups((self.developers_reviewers))
         # if not used, not shown
         self.assertFalse(item.showInternalNotes())
@@ -6455,6 +6457,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item.showInternalNotes())
         self.assertFalse(item.mayQuickEdit('internalNotes'))
 
+        # except when using MeetingConfig.itemInternalNotesEditableByMeetingManagers
+        cfg.setItemInternalNotesEditableByMeetingManagers(True)
+        cfg.at_post_edit_script()
+        self.assertTrue(item.showInternalNotes())
+        self.assertTrue(item.mayQuickEdit('internalNotes'))
+
         # copyGroups no more
         self.changeUser('pmReviewer1')
         self.assertTrue(self.hasPermission(View, item))
@@ -6466,6 +6474,31 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         self.assertTrue(item.showInternalNotes())
         self.assertTrue(item.mayQuickEdit('internalNotes'))
+
+        # internalNotes are editable forever
+        def _check(item):
+            self.changeUser('pmCreator2')
+            self.assertTrue(self.hasPermission(View, item))
+            self.assertTrue(item.showInternalNotes())
+            self.assertTrue(item.mayQuickEdit('internalNotes',
+                                              bypassMeetingClosedCheck=True))
+            self.changeUser('pmManager')
+            self.assertTrue(self.hasPermission(View, item))
+            self.assertTrue(item.showInternalNotes())
+            self.assertTrue(item.mayQuickEdit('internalNotes',
+                                              bypassMeetingClosedCheck=True))
+
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        self.presentItem(item)
+        _check(item)
+        self.freezeMeeting(meeting)
+        _check(item)
+        self.decideMeeting(meeting)
+        _check(item)
+        self.closeMeeting(meeting)
+        self.assertEqual(item.query_state(), 'accepted')
+        _check(item)
 
     def test_pm_HideCssClasses(self):
         """ """

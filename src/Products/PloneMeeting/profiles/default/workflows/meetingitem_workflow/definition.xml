@@ -116,7 +116,7 @@
   <permission-map name="PloneMeeting: Add annex"
                   acquired="False">
    <permission-role>Manager</permission-role>
-   <permission-role>Contributor</permission-role>
+   <permission-role>MeetingManager</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Add annexDecision"
                   acquired="False">
@@ -193,7 +193,7 @@
   <permission-map name="PloneMeeting: Add annex"
                   acquired="False">
    <permission-role>Manager</permission-role>
-   <permission-role>Contributor</permission-role>
+   <permission-role>MeetingManager</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Add annexDecision"
                   acquired="False">
@@ -270,7 +270,7 @@
   <permission-map name="PloneMeeting: Add annex"
                   acquired="False">
    <permission-role>Manager</permission-role>
-   <permission-role>Contributor</permission-role>
+   <permission-role>MeetingManager</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Add annexDecision"
                   acquired="False">
