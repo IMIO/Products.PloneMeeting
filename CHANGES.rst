@@ -21,6 +21,11 @@ Changelog
   `False` by default, when set to `True`, the item proposing group editors
   will be able to edit the item labels forever.
   [gbastien]
+- Fixed bug where an adviser could add an `annex` or `annexDecision` because
+  the role `Contributor` was used for both `Add annexes` and `Add advices`
+  permissions.
+  A new role `MeetingAdviser` is added to manage the `Add advice` permission.
+  [gbastien]
 - Changed default behavior of `MeetingItem.internalNotes`:
 
   - now internal notes are editable forever by proposing group editors, to do

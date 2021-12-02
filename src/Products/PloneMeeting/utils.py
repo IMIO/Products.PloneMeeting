@@ -1567,7 +1567,8 @@ def _addManagedPermissions(obj):
         obj.manage_permission(AddPortalContent, roles, acquire=True)
 
     def _addManagePropertiesPermission():
-        # give it to roles having 'PloneMeeting: add annex' or 'PloneMeeting: add annexDecision' permission
+        # give it to roles having 'PloneMeeting: add annex' or
+        # 'PloneMeeting: add annexDecision' permission
         roles = []
         add_annex_permission = Permission(AddAnnex, {}, obj)
         roles += add_annex_permission.getRoles()
