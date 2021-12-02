@@ -5721,8 +5721,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if role_to_remove in roles:
             # cleanup roles as the permission is also returned with a leading '_'
             roles = [role for role in roles if not role.startswith('_')]
-            roles.remove(role_to_remove)
-            obj.manage_permission(permission, roles)
+            if role_to_remove in roles:
+                roles.remove(role_to_remove)
+                obj.manage_permission(permission, roles)
 
     def _removeEveryContainedAdvices(self):
         """Remove every contained advices."""
@@ -5996,9 +5997,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # and remove specific permissions given to add advices
         # make sure the 'PloneMeeting: Add advice' permission is not
-        # given to the 'Contributor' role
+        # given to the 'MeetingAdviser' role
         self._removePermissionToRole(permission=AddAdvice,
-                                     role_to_remove='Contributor',
+                                     role_to_remove='MeetingAdviser',
                                      obj=self)
         # manage PowerAdvisers
         # we will give those groups the ability to give an advice on this item
@@ -6015,10 +6016,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 plone_group_id = get_plone_group_id(org_uid, suffix='advisers')
                 # power advisers get only the right to add the advice, but not to see the item
                 # this must be provided using another functionnality, like power observers or so
-                self.manage_addLocalRoles(plone_group_id, ('Contributor', ))
-                # make sure 'Contributor' has the 'AddAdvice' permission
+                self.manage_addLocalRoles(plone_group_id, ('MeetingAdviser', ))
+                # make sure 'MeetingAdviser' has the 'AddAdvice' permission
                 self._grantPermissionToRole(permission=AddAdvice,
-                                            role_to_give='Contributor',
+                                            role_to_give='MeetingAdviser',
                                             obj=self)
 
         # Then, add local roles regarding asked advices
@@ -6082,12 +6083,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                    delayIsNotExceeded and \
                    self.adapted()._adviceIsAddable(org_uid):
                     # advisers must be able to add a 'meetingadvice', give
-                    # relevant permissions to 'Contributor' role
-                    # the 'Add portal content' permission is given by default to 'Contributor', so
-                    # we need to give 'PloneMeeting: Add advice' permission too
-                    self.manage_addLocalRoles(plone_group_id, ('Contributor', ))
+                    # relevant permissions to 'MeetingAdviser' role
+                    # the 'Add portal content' permission is given by default to 'MeetingAdviser',
+                    # so we need to give 'PloneMeeting: Add advice' permission too
+                    self.manage_addLocalRoles(plone_group_id, ('MeetingAdviser', ))
                     self._grantPermissionToRole(permission=AddAdvice,
-                                                role_to_give='Contributor',
+                                                role_to_give='MeetingAdviser',
                                                 obj=self)
                     self.adviceIndex[org_uid]['advice_addable'] = True
 

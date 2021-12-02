@@ -17,6 +17,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.contentmigration.basemigrator.migrator import CMFFolderMigrator
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.browser.itemattendee import position_type_default
+from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.content.advice import IMeetingAdvice
 from Products.PloneMeeting.interfaces import IMeetingDashboardBatchActionsMarker
 from Products.PloneMeeting.interfaces import IMeetingItemDashboardBatchActionsMarker
@@ -437,7 +438,11 @@ class Migrate_To_4200(Migrator):
         for brain in brains:
             i += 1
             pghandler.report(i)
-            advice = brain.getObject()
+            try:
+                advice = brain.getObject()
+            except AttributeError:
+                import ipdb; ipdb.set_trace()
+                continue
             for field_name in ['advice_comment', 'advice_observations']:
                 field_value = getattr(advice, field_name)
                 if field_value:
@@ -653,6 +658,19 @@ class Migrate_To_4200(Migrator):
 
         self.updatePODTemplatesCode(replacements, meeting_replacements, item_replacements)
 
+    def _fixItemAddAdvicePermission(self):
+        """Changed role that is able to add advice from 'Contributor' to 'MeetingAdviser'.
+           Actually we just remove the 'Contributor' role from 'PloneMeeting: Add advice' permission
+           as the update local roles we set it back again correctly."""
+        logger.info("Removing role 'Contributor' for add advice permission for every items...")
+        for brain in self.catalog(meta_type='MeetingItem'):
+            item = brain.getObject()
+            item._removePermissionToRole(
+                permission=AddAdvice,
+                role_to_remove='Contributor',
+                obj=item)
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
 
@@ -757,6 +775,9 @@ class Migrate_To_4200(Migrator):
 
         # add new collections, the "searchmyitemstoadvice" for example
         self.addNewSearches()
+
+        # adviser role able to add advice is now MeetingAdviser
+        self._fixItemAddAdvicePermission()
 
         # update local_roles, workflow mappings and catalogs
         self.tool.update_all_local_roles()

@@ -23,6 +23,8 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import AddAdvice
+from Products.PloneMeeting.config import AddAnnex
+from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ADVICE_STATES_ENDED
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
@@ -3903,6 +3905,27 @@ class testAdvices(PloneMeetingTestCase):
         new_item = item.clone()
         # clone does not break and developers advice was asked
         self.assertEqual(new_item.adviceIndex.keys(), [self.developers_uid])
+
+    def test_pm_AdviserNotAbleToAddAnnexToItem(self):
+        """This test a bug that was fixed becaues we used the "Contributor" role
+           to manage annexes and advices "Add" permissions, now we use role
+           "MeetingAdviser" to manage add advice permission."""
+        cfg = self.meetingConfig
+        cfg.setCustomAdvisers([])
+        cfg.setItemAdviceStates(('itemcreated', ))
+        cfg.setItemAdviceEditStates(('itemcreated', ))
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers((self.developers_uid, ))
+        item._update_after_edit()
+
+        # pmAdviser is able to add advice but not annexes
+        self.changeUser('pmAdviser1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(AddPortalContent, item))
+        self.assertTrue(self.hasPermission(AddAdvice, item))
+        self.assertFalse(self.hasPermission(AddAnnex, item))
+        self.assertFalse(self.hasPermission(AddAnnexDecision, item))
 
 
 def test_suite():
