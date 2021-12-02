@@ -177,7 +177,7 @@ class DuplicateItemForm(z3c_form.Form):
     def _user_able_to_add(self, annex_portal_type='annex'):
         """Is current user able to add given p_annex_portal_type
            on newly created item?"""
-        # does MeetingMember have Add annex when item created?
+        # does user have Add annex when item created?
         typesTool = api.portal.get_tool('portal_types')
         wfTool = api.portal.get_tool('portal_workflow')
         item_wf = wfTool.getWorkflowsFor(self.context)[0]
@@ -187,12 +187,9 @@ class DuplicateItemForm(z3c_form.Form):
         # need the permission title (u'PloneMeeting: Add annex')
         add_permission = queryUtility(IPermission, add_permission).title
         permission_roles = initial_state.permission_roles[add_permission]
-        # compatibility PM4.1/PM4.2
-        # XXX to be adapted in PM4.2, remove 'MeetingMember' and be more accurate
-        # indeed maybe Contributor does not have permission, but another role of current
-        # user has it...
         res = False
-        if 'MeetingMember' in permission_roles or \
+        # Editor is the role that may add annex, Contributor is used to add annex decision
+        if 'Editor' in permission_roles or \
            'Contributor' in permission_roles:
             res = True
         return res
