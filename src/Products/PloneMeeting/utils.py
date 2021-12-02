@@ -1910,12 +1910,12 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
             for suffix in suffixes:
                 if suffix not in suffix_roles:
                     suffix_roles[suffix] = []
-                given_roles = ['Reader']
+                # 'Contributor' will allow add annex decision and edit MeetingItem.internalNotes
+                given_roles = ['Reader', 'Contributor']
                 # we are on the current state
                 if level['state'] == item_state:
                     given_roles.append('Editor')
                     given_roles.append('Reviewer')
-                    given_roles.append('Contributor')
                 for role in given_roles:
                     if role not in suffix_roles[suffix]:
                         suffix_roles[suffix].append(role)
