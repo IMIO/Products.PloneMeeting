@@ -3031,16 +3031,22 @@ class testMeetingItem(PloneMeetingTestCase):
         # so use these fields, test when one activated and not the other
         # and the other way round then activate both and continue
         cfg.setUsedMeetingAttributes(('signatures', ))
+        # Meeting.attribute_is_used is ram.cached
+        cfg.at_post_edit_script()
         # only itemSignatures
         self.assertIsNone(formSignatures.update())
         self.assertRaises(Unauthorized, formAssembly.update)
         # only itemAssembly
         cfg.setUsedMeetingAttributes(('assembly', ))
+        # Meeting.attribute_is_used is ram.cached
+        cfg.at_post_edit_script()
         self.assertIsNone(formAssembly.update())
         self.assertRaises(Unauthorized, formSignatures.update)
         # if fields not used but filled (like when switching from assembly to attendees)
         # then is it still possible to edit it
         cfg.setUsedMeetingAttributes(())
+        # Meeting.attribute_is_used is ram.cached
+        cfg.at_post_edit_script()
         meeting.assembly = RichTextValue('Meeting assembly')
         meeting.assembly_absents = RichTextValue('Meeting assembly absents')
         meeting.assembly_excused = RichTextValue('Meeting assembly excused')
@@ -3049,6 +3055,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertIsNone(formAssembly.update())
         # now when fields enabled, current user must be at least MeetingManager to use this
         cfg.setUsedMeetingAttributes(('assembly', 'signatures'))
+        # Meeting.attribute_is_used is ram.cached
+        cfg.at_post_edit_script()
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, formAssembly.update)
         self.assertRaises(Unauthorized, formAssembly._doApplyItemAssembly)
@@ -3252,6 +3260,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.setDecision(self.decisionText)
         cfg.setUsedMeetingAttributes(('assembly', 'signatures'))
+        # Meeting.attribute_is_used is ram.cached
+        cfg.at_post_edit_script()
         self.assertFalse(item.mayQuickEditItemAssembly())
         self.assertFalse(item.mayQuickEditItemSignatures())
         self.validateItem(item)
@@ -3275,6 +3285,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # but if it contains something, then is is still editable
         # this can be the case when switching from assembly to attendees
         cfg.setUsedMeetingAttributes(())
+        # Meeting.attribute_is_used is ram.cached
+        cfg.at_post_edit_script()
         _checkOnlyEditableByManagers(item)
         # empty fields
         meeting.assembly = RichTextValue('')
@@ -3284,6 +3296,8 @@ class testMeetingItem(PloneMeetingTestCase):
                                      may_not_edit=['pmManager', 'pmCreator1', 'pmReviewer1'])
         # change itemAssembly/itemSignatures
         cfg.setUsedMeetingAttributes(('assembly', 'signatures'))
+        # Meeting.attribute_is_used is ram.cached
+        cfg.at_post_edit_script()
         item.setItemAssembly('New assembly')
         item.setItemSignatures('New signatures')
         _checkOnlyEditableByManagers(item)
