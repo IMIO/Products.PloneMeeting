@@ -2,7 +2,48 @@ Changelog
 =========
 
 
-4.2b21 (unreleased)
+4.2b22 (unreleased)
+-------------------
+
+- Adapted `PMCategoryVocabulary` to take into account new parameter
+  `only_enabled=True` introduced in `collective.iconifiedcategory`.
+  [gbastien]
+- Added parameter `MeetingConfig.enableAdviceProposingGroupComment`, `False` by
+  default to be able to enable/disable the advice proposing group comment as it
+  is in competition with the workflow confirmation popup and both functionnalities
+  should not be enabled togheter.
+  [gbastien]
+- On the `MeetingConfig` page displaying POD templates, for POD templates reusing
+  the `odt_file` of another POD template, display a link the the POD template
+  `odt_file` real holder.
+  [gbastien]
+- Fixed bug where an adviser could add an `annex` or `annexDecision` because
+  the role `Contributor` was used for both `Add annexes` and `Add advices`
+  permissions.
+  A new role `MeetingAdviser` is added to manage the `Add advice` permission.
+  [gbastien]
+- Added parameter `MeetingConfig.itemLabelsEditableByProposingGroupForever`,
+  `False` by default, when set to `True`, the item proposing group editors
+  will be able to edit the item labels forever.
+  [gbastien]
+- Changed default behavior of `MeetingItem.internalNotes`:
+
+  - now internal notes are editable forever by proposing group editors, to do
+    so, reused the `PloneMeeting: Add annexDecision` permission and fixed item
+    workflow so decision annexes are addable in any item review_state (before
+    decision annexes were only addable when item in review_state before
+    validated or when decided);
+  - new parameter `MeetingConfig.itemInternalNotesEditableByMeetingManagers`
+    will let MeetingManagers also be able to view/edit internal notes;
+  - renamed adaptations.performWorkflowAdaptations to
+    adpatations._performWorkflowAdaptations to show that it should not be called directly.
+  - renamed `MeetingItem.attributeIsUsed` to `MeetingItem.attribute_is_used` so
+    the same method is available on `Meeting`, `MeetingItem` and `MeetingAdvice`
+    and may be used by `utils._addManagedPermissions`.
+
+  [gbastien]
+
+4.2b21 (2021-11-26)
 -------------------
 
 - Fixed `utils.sendMailIfRelevant` when using mode `test`.

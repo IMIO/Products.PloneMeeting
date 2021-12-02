@@ -58,7 +58,6 @@ from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.indexes import previous_review_state
 from Products.PloneMeeting.indexes import sentToInfos
 from Products.PloneMeeting.MeetingItem import MeetingItem
-from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.tests.PloneMeetingTestCase import TestRequest
@@ -2090,9 +2089,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failUnless(READER_USECASES['copy_groups'] in i1.__ac_local_roles__[self.developers_advisers])
         self.failUnless(READER_USECASES['copy_groups'] in i1.__ac_local_roles__[self.vendors_advisers])
         # advisers that have an advice to give have the 'Contributor' role
-        self.failUnless('Contributor' in i1.__ac_local_roles__[self.developers_advisers])
+        self.failUnless('MeetingAdviser' in i1.__ac_local_roles__[self.developers_advisers])
         # but not others
-        self.failIf('Contributor' in i1.__ac_local_roles__[self.vendors_advisers])
+        self.failIf('MeetingAdviser' in i1.__ac_local_roles__[self.vendors_advisers])
         # now, remove developers in optionalAdvisers
         i1.setOptionalAdvisers(())
         i1.update_local_roles()
@@ -2248,7 +2247,7 @@ class testMeetingItem(PloneMeetingTestCase):
         if 'refused' in cfg.listWorkflowAdaptations() and \
            'refused' not in cfg.getWorkflowAdaptations():
             cfg.setWorkflowAdaptations(('refused', ))
-            performWorkflowAdaptations(cfg, logger=pm_logger)
+            cfg.at_post_edit_script()
         self._setPowerObserverStates(states=(
             'itemcreated', 'validated', 'presented', 'itemfrozen', 'accepted', 'delayed'))
         self._setPowerObserverStates(field_name='meeting_states',
@@ -3032,16 +3031,22 @@ class testMeetingItem(PloneMeetingTestCase):
         # so use these fields, test when one activated and not the other
         # and the other way round then activate both and continue
         cfg.setUsedMeetingAttributes(('signatures', ))
+        # Meeting.attribute_is_used is ram.cached
+        cfg.at_post_edit_script()
         # only itemSignatures
         self.assertIsNone(formSignatures.update())
         self.assertRaises(Unauthorized, formAssembly.update)
         # only itemAssembly
         cfg.setUsedMeetingAttributes(('assembly', ))
+        # Meeting.attribute_is_used is ram.cached
+        cfg.at_post_edit_script()
         self.assertIsNone(formAssembly.update())
         self.assertRaises(Unauthorized, formSignatures.update)
         # if fields not used but filled (like when switching from assembly to attendees)
         # then is it still possible to edit it
         cfg.setUsedMeetingAttributes(())
+        # Meeting.attribute_is_used is ram.cached
+        cfg.at_post_edit_script()
         meeting.assembly = RichTextValue('Meeting assembly')
         meeting.assembly_absents = RichTextValue('Meeting assembly absents')
         meeting.assembly_excused = RichTextValue('Meeting assembly excused')
@@ -3050,6 +3055,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertIsNone(formAssembly.update())
         # now when fields enabled, current user must be at least MeetingManager to use this
         cfg.setUsedMeetingAttributes(('assembly', 'signatures'))
+        # Meeting.attribute_is_used is ram.cached
+        cfg.at_post_edit_script()
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, formAssembly.update)
         self.assertRaises(Unauthorized, formAssembly._doApplyItemAssembly)
@@ -3253,6 +3260,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.setDecision(self.decisionText)
         cfg.setUsedMeetingAttributes(('assembly', 'signatures'))
+        # Meeting.attribute_is_used is ram.cached
+        cfg.at_post_edit_script()
         self.assertFalse(item.mayQuickEditItemAssembly())
         self.assertFalse(item.mayQuickEditItemSignatures())
         self.validateItem(item)
@@ -3276,6 +3285,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # but if it contains something, then is is still editable
         # this can be the case when switching from assembly to attendees
         cfg.setUsedMeetingAttributes(())
+        # Meeting.attribute_is_used is ram.cached
+        cfg.at_post_edit_script()
         _checkOnlyEditableByManagers(item)
         # empty fields
         meeting.assembly = RichTextValue('')
@@ -3285,6 +3296,8 @@ class testMeetingItem(PloneMeetingTestCase):
                                      may_not_edit=['pmManager', 'pmCreator1', 'pmReviewer1'])
         # change itemAssembly/itemSignatures
         cfg.setUsedMeetingAttributes(('assembly', 'signatures'))
+        # Meeting.attribute_is_used is ram.cached
+        cfg.at_post_edit_script()
         item.setItemAssembly('New assembly')
         item.setItemSignatures('New signatures')
         _checkOnlyEditableByManagers(item)
@@ -4150,7 +4163,7 @@ class testMeetingItem(PloneMeetingTestCase):
         if 'hide_decisions_when_under_writing' not in cfg.listWorkflowAdaptations():
             return
         cfg.setWorkflowAdaptations(('hide_decisions_when_under_writing', ))
-        performWorkflowAdaptations(cfg, logger=pm_logger)
+        cfg.at_post_edit_script()
 
         self.changeUser('pmManager')
         # create 1 meeting with items so we can play the workflow
@@ -5115,8 +5128,8 @@ class testMeetingItem(PloneMeetingTestCase):
         newItem = item.clone()
         self.assertEqual(item.Title(), newItem.Title())
         self.assertEqual(item.getOptionalAdvisers(), newItem.getOptionalAdvisers())
-        self.assertNotEquals(item.getInternalNotes(), newItem.getInternalNotes())
-        self.assertFalse(newItem.getInternalNotes())
+        self.assertNotEqual(item.getInternalNotes(), newItem.getInternalNotes())
+        self.assertEqual(newItem.getInternalNotes(), '')
 
     def test_pm_CopiedFieldsWhenDuplicatedAsItemTemplate(self):
         '''Test that relevant fields are kept when an item is created from an itemTemplate.
@@ -5779,7 +5792,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse('emergency' in cfg.getUsedItemAttributes())
         self.assertRaises(Unauthorized, form)
         cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() + ('emergency', ))
-        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
         # not changed until required values are given
         request = TestRequest(form={
             'form.widgets.new_emergency_value': u'emergency_asked',
@@ -6040,6 +6053,7 @@ class testMeetingItem(PloneMeetingTestCase):
         """A user able to edit at least one RichText field must be able to add images."""
         # configure so different access are enabled when item is validated
         cfg = self.meetingConfig
+        self._enableField("budgetInfos")
         cfg.setUseCopies(True)
         cfg.setSelectableCopyGroups((self.vendors_creators, ))
         cfg.setUseAdvices(True)
@@ -6143,7 +6157,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
         # in some WF 'pmReviewer1' has the AddPortalContent permission because able to add annex
-        if self.hasPermission(AddAnnex, item):
+        if self.hasPermission(AddAnnex, item) or self.hasPermission(AddAnnexDecision, item):
             self.assertTrue(self.hasPermission(AddPortalContent, item))
         else:
             self.assertFalse(self.hasPermission(AddPortalContent, item))
@@ -6359,8 +6373,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # enable 'otherMeetingConfigsClonableToPrivacy' that is also displayed
         cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() +
                                   ('otherMeetingConfigsClonableToPrivacy', ))
-        # MeetingItem.attributeIsUsed is RAMCached
-        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
+        # MeetingItem.attribute_is_used is RAMCached
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
         self.assertEqual(
             item.displayOtherMeetingConfigsClonableTo(),
             unicode("{0} (<span class='item_privacy_public'>Public meeting</span> - {1}), "
@@ -6421,10 +6435,13 @@ class testMeetingItem(PloneMeetingTestCase):
                             prefixed=False, showContentIcon=False).encode('utf-8')),
                     'utf-8'))
 
-    def test_pm_InternalNotesIsRestrictedToProposingGroupOnly(self, ):
+    def test_pm_InternalNotesIsRestrictedToProposingGroup(self, ):
         """Field MeetingItem.internalNotes is only available to members
-           of the proposing group."""
+           of the proposing group and it editable forever.
+           When enabling MeetingConfig.itemInternalNotesEditableByMeetingManagers,
+           then MeetingManagers may manage it as well."""
         cfg = self.meetingConfig
+        self._removeConfigObjectsFor(self.meetingConfig)
         self.changeUser('siteadmin')
         # remove 'pmManager' from every 'vendors' groups
         for ploneGroup in get_plone_groups(self.vendors_uid):
@@ -6437,14 +6454,14 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # create an item
         self.changeUser('pmCreator2')
-        item = self.create('MeetingItem')
+        item = self.create('MeetingItem', decision=self.decisionText)
         item.setCopyGroups((self.developers_reviewers))
         # if not used, not shown
         self.assertFalse(item.showInternalNotes())
         # enable field internalNotes
         cfg.setUsedItemAttributes(('internalNotes', ))
-        # MeetingItem.attributeIsUsed is RAMCached
-        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
+        # MeetingItem.attribute_is_used is RAMCached
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
         self.assertTrue(item.showInternalNotes())
         self.assertTrue(item.mayQuickEdit('internalNotes'))
 
@@ -6454,6 +6471,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         self.assertFalse(item.showInternalNotes())
         self.assertFalse(item.mayQuickEdit('internalNotes'))
+
+        # except when using MeetingConfig.itemInternalNotesEditableByMeetingManagers
+        cfg.setItemInternalNotesEditableByMeetingManagers(True)
+        cfg.at_post_edit_script()
+        self.assertTrue(item.showInternalNotes())
+        self.assertTrue(item.mayQuickEdit('internalNotes'))
 
         # copyGroups no more
         self.changeUser('pmReviewer1')
@@ -6466,6 +6489,31 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         self.assertTrue(item.showInternalNotes())
         self.assertTrue(item.mayQuickEdit('internalNotes'))
+
+        # internalNotes are editable forever
+        def _check(item):
+            self.changeUser('pmCreator2')
+            self.assertTrue(self.hasPermission(View, item))
+            self.assertTrue(item.showInternalNotes())
+            self.assertTrue(item.mayQuickEdit('internalNotes',
+                                              bypassMeetingClosedCheck=True))
+            self.changeUser('pmManager')
+            self.assertTrue(self.hasPermission(View, item))
+            self.assertTrue(item.showInternalNotes())
+            self.assertTrue(item.mayQuickEdit('internalNotes',
+                                              bypassMeetingClosedCheck=True))
+
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        self.presentItem(item)
+        _check(item)
+        self.freezeMeeting(meeting)
+        _check(item)
+        self.decideMeeting(meeting)
+        _check(item)
+        self.closeMeeting(meeting)
+        self.assertEqual(item.query_state(), 'accepted')
+        _check(item)
 
     def test_pm_HideCssClasses(self):
         """ """
@@ -7114,8 +7162,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
         self.assertTrue(item.adapted().showObservations())
         cfg.setUsedItemAttributes(('observations', ))
-        # MeetingItem.attributeIsUsed is RAMCached
-        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
+        # MeetingItem.attribute_is_used is RAMCached
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
         self.assertTrue(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
         self.assertTrue(item.adapted().showObservations())
 

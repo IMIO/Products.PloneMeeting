@@ -17,6 +17,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.contentmigration.basemigrator.migrator import CMFFolderMigrator
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.browser.itemattendee import position_type_default
+from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.content.advice import IMeetingAdvice
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingDashboardBatchActionsMarker
@@ -296,6 +297,13 @@ class Migrate_To_4200(Migrator):
             # make sure new wfAdaptations are enabled (were default, now optional)
             cleaned_wfas += [wfa for wfa in ('pre_accepted', 'delayed', 'accepted_but_modified', )
                              if wfa in cfg.listWorkflowAdaptations()]
+            # when using "waiting_advices", and not other "waiting_advices_" wfas are enabled
+            # enable the "waiting_advices_proposing_group_send_back" as it was the
+            # default behaviour before and now it is configurable
+            waiting_advices_wfas = [wfa for wfa in cleaned_wfas
+                                    if wfa.startswith("waiting_advices")]
+            if "waiting_advices" in cleaned_wfas and len(waiting_advices_wfas) == 1:
+                cleaned_wfas.append("waiting_advices_proposing_group_send_back")
             # remove duplicates (in case migration is launched several times)
             cleaned_wfas = tuple(set(cleaned_wfas))
             cfg.setWorkflowAdaptations(cleaned_wfas)
@@ -433,7 +441,11 @@ class Migrate_To_4200(Migrator):
         for brain in brains:
             i += 1
             pghandler.report(i)
-            advice = brain.getObject()
+            try:
+                advice = brain.getObject()
+            except AttributeError:
+                import ipdb; ipdb.set_trace()
+                continue
             for field_name in ['advice_comment', 'advice_observations']:
                 field_value = getattr(advice, field_name)
                 if field_value:
@@ -661,6 +673,19 @@ class Migrate_To_4200(Migrator):
 
         self.updatePODTemplatesCode(replacements, meeting_replacements, item_replacements)
 
+    def _fixItemAddAdvicePermission(self):
+        """Changed role that is able to add advice from 'Contributor' to 'MeetingAdviser'.
+           Actually we just remove the 'Contributor' role from 'PloneMeeting: Add advice' permission
+           as the update local roles we set it back again correctly."""
+        logger.info("Removing role 'Contributor' for add advice permission for every items...")
+        for brain in self.catalog(meta_type='MeetingItem'):
+            item = brain.getObject()
+            item._removePermissionToRole(
+                permission=AddAdvice,
+                role_to_remove='Contributor',
+                obj=item)
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
 
@@ -781,6 +806,9 @@ class Migrate_To_4200(Migrator):
 
         # store meeting number of items
         self._updateMeetingsNumberOfItems()
+
+        # adviser role able to add advice is now MeetingAdviser
+        self._fixItemAddAdvicePermission()
 
         # update local_roles, workflow mappings and catalogs
         self.tool.update_all_local_roles()

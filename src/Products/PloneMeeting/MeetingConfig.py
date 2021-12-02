@@ -106,7 +106,7 @@ from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.model.adaptations import _getValidationReturnedStates
-from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
+from Products.PloneMeeting.model.adaptations import _performWorkflowAdaptations
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import computeCertifiedSignatures
@@ -1917,6 +1917,19 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    BooleanField(
+        name='enableAdviceProposingGroupComment',
+        default=defValues.enableAdviceProposingGroupComment,
+        widget=BooleanField._properties['widget'](
+            description="EnableAdviceProposingGroupComment",
+            description_msgid="enable_advice_proposing_group_comment_descr",
+            label='Enableadviceproposinggroupcomment',
+            label_msgid='PloneMeeting_label_enableAdviceProposingGroupComment',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     LinesField(
         name='defaultAdviceHiddenDuringRedaction',
         default=defValues.defaultAdviceHiddenDuringRedaction,
@@ -2406,6 +2419,32 @@ schema = Schema((
         vocabulary='listPowerObserversTypes',
         default=defValues.adviceConfidentialFor,
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    BooleanField(
+        name='itemLabelsEditableByProposingGroupForever',
+        default=defValues.itemLabelsEditableByProposingGroupForever,
+        widget=BooleanField._properties['widget'](
+            description="ItemLabelsEditableByProposingGroupForever",
+            description_msgid="item_labels_editable_by_proposing_group_forever_descr",
+            label='Itemlabelseditablebyproposinggroupforever',
+            label_msgid='PloneMeeting_label_itemLabelsEditableByProposingGroupForever',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    BooleanField(
+        name='itemInternalNotesEditableByMeetingManagers',
+        default=defValues.itemInternalNotesEditableByMeetingManagers,
+        widget=BooleanField._properties['widget'](
+            description="ItemInternalNotesEditableByMeetingManagers",
+            description_msgid="item_internal_notes_editable_by_meeting_managers_descr",
+            label='Iteminternalnoteseditablebymeetingmanagers',
+            label_msgid='PloneMeeting_label_itemInternalNotesEditableByMeetingManagers',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -5866,7 +5905,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         portal_factory.manage_setPortalFactoryTypes(
             listOfTypeIds=factoryTypesToRegister + registeredFactoryTypes)
         # Perform workflow adaptations if required
-        performWorkflowAdaptations(self)
+        _performWorkflowAdaptations(self)
 
     def _updatePortalTypes(self):
         '''Reupdates the portal_types in this meeting config.'''

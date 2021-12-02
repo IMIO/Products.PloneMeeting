@@ -1853,16 +1853,41 @@ class testViews(PloneMeetingTestCase):
         # enable viewlet
         self._enable_ftw_labels()
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
+        item = self.create('MeetingItem', decision=self.decisionText)
         viewlet = self._get_viewlet(
-            context=item, manager_name='plone.belowcontenttitle', viewlet_name='ftw.labels.labeling')
+            context=item,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
         self.assertTrue(viewlet.available)
 
         # can_edit
         self.assertTrue(self.hasPermission(ModifyPortalContent, item))
         self.assertTrue(viewlet.can_edit)
         # propose so no more editable
-        self.proposeItem(item)
+        self.validateItem(item)
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.assertFalse(viewlet.can_edit)
+        # enable MeetingConfig.itemLabelsEditableByProposingGroupForever
+        self.meetingConfig.setItemLabelsEditableByProposingGroupForever(True)
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.assertTrue(viewlet.can_edit)
+
+        # MeetingManagers may edit labels even when item decided
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        self.presentItem(item)
+        self.closeMeeting(meeting)
+        self.assertEqual(item.query_state(), 'accepted')
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.assertTrue(viewlet.can_edit)
+        # proposing group editors may still edit labels
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.assertTrue(viewlet.can_edit)
+        # but not proposing group other roles
+        self.changeUser('pmObserver1')
+        self.assertTrue(self.hasPermission(View, item))
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         self.assertFalse(viewlet.can_edit)
 

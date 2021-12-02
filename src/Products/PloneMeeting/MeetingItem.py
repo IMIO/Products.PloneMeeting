@@ -61,6 +61,7 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import AddAdvice
+from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import AUTO_COPY_GROUP_PREFIX
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
@@ -993,7 +994,7 @@ schema = Schema((
         name='detailedDescription',
         allowable_content_types=('text/html',),
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('detailedDescription')",
+            condition="python: here.attribute_is_used('detailedDescription')",
             label='Detaileddescription',
             label_msgid='PloneMeeting_label_detailedDescription',
             i18n_domain='PloneMeeting',
@@ -1006,7 +1007,7 @@ schema = Schema((
     BooleanField(
         name='budgetRelated',
         widget=BooleanField._properties['widget'](
-            condition="python: here.attributeIsUsed('budgetInfos')",
+            condition="python: here.attribute_is_used('budgetInfos')",
             description="BudgetRelated",
             description_msgid="item_budget_related_descr",
             label='Budgetrelated',
@@ -1019,7 +1020,7 @@ schema = Schema((
     TextField(
         name='budgetInfos',
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('budgetInfos')",
+            condition="python: here.attribute_is_used('budgetInfos')",
             description="BudgetInfos",
             description_msgid="item_budgetinfos_descr",
             label='Budgetinfos',
@@ -1038,7 +1039,7 @@ schema = Schema((
     StringField(
         name='proposingGroup',
         widget=SelectionWidget(
-            condition="python: not here.attributeIsUsed('proposingGroupWithGroupInCharge')",
+            condition="python: not here.attribute_is_used('proposingGroupWithGroupInCharge')",
             format="select",
             label='Proposinggroup',
             label_msgid='PloneMeeting_label_proposingGroup',
@@ -1050,7 +1051,7 @@ schema = Schema((
     StringField(
         name='proposingGroupWithGroupInCharge',
         widget=SelectionWidget(
-            condition="python: here.attributeIsUsed('proposingGroupWithGroupInCharge')",
+            condition="python: here.attribute_is_used('proposingGroupWithGroupInCharge')",
             format="select",
             label='Proposinggroupwithgroupincharge',
             label_msgid='PloneMeeting_label_proposingGroupWithGroupInCharge',
@@ -1080,7 +1081,7 @@ schema = Schema((
     LinesField(
         name='associatedGroups',
         widget=MultiSelectionWidget(
-            condition="python: here.attributeIsUsed('associatedGroups')",
+            condition="python: here.attribute_is_used('associatedGroups')",
             size=10,
             description="AssociatedGroupItem",
             description_msgid="associated_group_item_descr",
@@ -1110,7 +1111,7 @@ schema = Schema((
     StringField(
         name='classifier',
         widget=SelectionWidget(
-            condition="python: here.attributeIsUsed('classifier')",
+            condition="python: here.attribute_is_used('classifier')",
             format="select",
             description="Classifier",
             description_msgid="item_classifier_descr",
@@ -1181,7 +1182,7 @@ schema = Schema((
     LinesField(
         name='itemTags',
         widget=MultiSelectionWidget(
-            condition="python: here.attributeIsUsed('itemTags')",
+            condition="python: here.attribute_is_used('itemTags')",
             format="checkbox",
             label='Itemtags',
             label_msgid='PloneMeeting_label_itemTags',
@@ -1197,7 +1198,7 @@ schema = Schema((
         name='itemKeywords',
         widget=StringField._properties['widget'](
             size=50,
-            condition="python: here.attributeIsUsed('itemKeywords')",
+            condition="python: here.attribute_is_used('itemKeywords')",
             label='Itemkeywords',
             label_msgid='PloneMeeting_label_itemKeywords',
             i18n_domain='PloneMeeting',
@@ -1224,7 +1225,7 @@ schema = Schema((
     TextField(
         name='motivation',
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('motivation')",
+            condition="python: here.attribute_is_used('motivation')",
             label='Motivation',
             label_msgid='PloneMeeting_label_motivation',
             i18n_domain='PloneMeeting',
@@ -1255,7 +1256,7 @@ schema = Schema((
     TextField(
         name='decisionSuite',
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('decisionSuite')",
+            condition="python: here.attribute_is_used('decisionSuite')",
             label='DecisionSuite',
             label_msgid='PloneMeeting_label_decisionSuite',
             i18n_domain='PloneMeeting',
@@ -1271,7 +1272,7 @@ schema = Schema((
     TextField(
         name='decisionEnd',
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('decisionEnd')",
+            condition="python: here.attribute_is_used('decisionEnd')",
             label='DecisionEnd',
             label_msgid='PloneMeeting_label_decisionEnd',
             i18n_domain='PloneMeeting',
@@ -1311,7 +1312,7 @@ schema = Schema((
     LinesField(
         name='itemInitiator',
         widget=MultiSelectionWidget(
-            condition="python: here.attributeIsUsed('itemInitiator')",
+            condition="python: here.attribute_is_used('itemInitiator')",
             description="ItemInitiator",
             description_msgid="item_initiator_descr",
             format="checkbox",
@@ -1418,6 +1419,7 @@ schema = Schema((
         default_content_type="text/html",
         default_output_type="text/x-html-safe",
         optional=True,
+        write_permission=AddAnnexDecision,
     ),
     TextField(
         name='marginalNotes',
@@ -1425,7 +1427,7 @@ schema = Schema((
         widget=RichWidget(
             description="MarginalNotes",
             description_msgid="marginal_notes_descr",
-            condition="python: here.attributeIsUsed('marginalNotes')",
+            condition="python: here.attribute_is_used('marginalNotes')",
             label_msgid="PloneMeeting_label_marginalNotes",
             label='Marginalnotes',
             i18n_domain='PloneMeeting',
@@ -1439,7 +1441,7 @@ schema = Schema((
         name='observations',
         widget=RichWidget(
             label_msgid="PloneMeeting_itemObservations",
-            condition="python: here.attributeIsUsed('observations') and here.adapted().showObservations()",
+            condition="python: here.attribute_is_used('observations') and here.adapted().showObservations()",
             description_msgid="descr_field_vieawable_by_everyone",
             label='Observations',
             i18n_domain='PloneMeeting',
@@ -1576,7 +1578,7 @@ schema = Schema((
     StringField(
         name='pollType',
         widget=SelectionWidget(
-            condition="python: here.attributeIsUsed('pollType') or here.isVotesEnabled()",
+            condition="python: here.attribute_is_used('pollType') or here.isVotesEnabled()",
             label='Polltype',
             label_msgid='PloneMeeting_label_pollType',
             i18n_domain='PloneMeeting',
@@ -1590,7 +1592,7 @@ schema = Schema((
         name='pollTypeObservations',
         widget=RichWidget(
             label_msgid="PloneMeeting_label_pollTypeObservations",
-            condition="python: here.attributeIsUsed('pollTypeObservations')",
+            condition="python: here.attribute_is_used('pollTypeObservations')",
             description_msgid="descr_field_vieawable_by_everyone",
             label='Polltypeobservations',
             i18n_domain='PloneMeeting',
@@ -1606,7 +1608,7 @@ schema = Schema((
         name='committeeObservations',
         allowable_content_types=('text/html',),
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('committeeObservations')",
+            condition="python: here.attribute_is_used('committeeObservations')",
             description_msgid="descr_field_vieawable_by_everyone",
             label='Committeeobservations',
             label_msgid='PloneMeeting_label_committeeObservations',
@@ -1622,7 +1624,7 @@ schema = Schema((
         name='votesObservations',
         widget=RichWidget(
             label_msgid="PloneMeeting_label_votesObservations",
-            condition="python: here.attributeIsUsed('votesObservations') and "
+            condition="python: here.attribute_is_used('votesObservations') and "
                       "here.adapted().show_votesObservations()",
             description_msgid="field_vieawable_by_everyone_once_item_decided_descr",
             label='Votesobservations',
@@ -1642,7 +1644,7 @@ schema = Schema((
         widget=ReferenceBrowserWidget(
             description="ManuallyLinkedItems",
             description_msgid="manually_linked_items_descr",
-            condition="python: here.attributeIsUsed('manuallyLinkedItems') and not here.isDefinedInTool()",
+            condition="python: here.attribute_is_used('manuallyLinkedItems') and not here.isDefinedInTool()",
             allow_search=True,
             allow_browse=False,
             base_query="manuallyLinkedItemsBaseQuery",
@@ -1672,7 +1674,7 @@ schema = Schema((
     LinesField(
         name='otherMeetingConfigsClonableToEmergency',
         widget=MultiSelectionWidget(
-            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToEmergency')",
+            condition="python: here.attribute_is_used('otherMeetingConfigsClonableToEmergency')",
             format="checkbox",
             label="Othermeetingconfigsclonabletoemergency",
             label_msgid='PloneMeeting_label_otherMeetingConfigsClonableToEmergency',
@@ -1686,7 +1688,7 @@ schema = Schema((
     LinesField(
         name='otherMeetingConfigsClonableToPrivacy',
         widget=MultiSelectionWidget(
-            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToPrivacy')",
+            condition="python: here.attribute_is_used('otherMeetingConfigsClonableToPrivacy')",
             format="checkbox",
             label="Othermeetingconfigsclonabletoprivacy",
             label_msgid='PloneMeeting_label_otherMeetingConfigsClonableToPrivacy',
@@ -1702,7 +1704,7 @@ schema = Schema((
         searchable=True,
         default='',
         widget=StringWidget(
-            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToFieldTitle')",
+            condition="python: here.attribute_is_used('otherMeetingConfigsClonableToFieldTitle')",
             label_msgid="PloneMeeting_label_itemTitle",
             label='OtherMeetingConfigsClonableToFieldTitle',
             i18n_domain='PloneMeeting',
@@ -1713,7 +1715,7 @@ schema = Schema((
     TextField(
         name='otherMeetingConfigsClonableToFieldDescription',
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToFieldDescription')",
+            condition="python: here.attribute_is_used('otherMeetingConfigsClonableToFieldDescription')",
             label_msgid="PloneMeeting_label_itemDescription",
             label='Description',
             i18n_domain='PloneMeeting',
@@ -1727,7 +1729,7 @@ schema = Schema((
     TextField(
         name='otherMeetingConfigsClonableToFieldMotivation',
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToFieldMotivation')",
+            condition="python: here.attribute_is_used('otherMeetingConfigsClonableToFieldMotivation')",
             label='OtherMeetingConfigsClonableToFieldMotivation',
             label_msgid='PloneMeeting_label_motivation',
             i18n_domain='PloneMeeting',
@@ -1743,7 +1745,7 @@ schema = Schema((
     TextField(
         name='otherMeetingConfigsClonableToFieldDecision',
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToFieldDecision')",
+            condition="python: here.attribute_is_used('otherMeetingConfigsClonableToFieldDecision')",
             label='OtherMeetingConfigsClonableToFieldDecision',
             label_msgid='PloneMeeting_label_decision',
             i18n_domain='PloneMeeting',
@@ -1759,7 +1761,7 @@ schema = Schema((
     TextField(
         name='otherMeetingConfigsClonableToFieldDecisionSuite',
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToFieldDecisionSuite')",
+            condition="python: here.attribute_is_used('otherMeetingConfigsClonableToFieldDecisionSuite')",
             label='OtherMeetingConfigsClonableToFieldDecisionSuite',
             label_msgid='PloneMeeting_label_decisionSuite',
             i18n_domain='PloneMeeting',
@@ -1775,7 +1777,7 @@ schema = Schema((
     TextField(
         name='otherMeetingConfigsClonableToFieldDecisionEnd',
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToFieldDecisionEnd')",
+            condition="python: here.attribute_is_used('otherMeetingConfigsClonableToFieldDecisionEnd')",
             label='OtherMeetingConfigsClonableToFieldDecisionEnd',
             label_msgid='PloneMeeting_label_decisionEnd',
             i18n_domain='PloneMeeting',
@@ -1804,7 +1806,7 @@ schema = Schema((
         name='sendToAuthority',
         default=False,
         widget=BooleanField._properties['widget'](
-            condition="python: here.attributeIsUsed('sendToAuthority')",
+            condition="python: here.attribute_is_used('sendToAuthority')",
             description="SendToAuthority",
             description_msgid="send_to_authority_descr",
             label='Sendtoauthority',
@@ -1817,7 +1819,7 @@ schema = Schema((
         name='privacy',
         default='public',
         widget=SelectionWidget(
-            condition="python: here.attributeIsUsed('privacy')",
+            condition="python: here.attribute_is_used('privacy')",
             label='Privacy',
             label_msgid='PloneMeeting_label_privacy',
             i18n_domain='PloneMeeting',
@@ -1830,7 +1832,7 @@ schema = Schema((
         name='completeness',
         default='completeness_not_yet_evaluated',
         widget=SelectionWidget(
-            condition="python: here.attributeIsUsed('completeness') and "
+            condition="python: here.attribute_is_used('completeness') and "
                       "(here.adapted().mayEvaluateCompleteness() or here.adapted().mayAskCompletenessEvalAgain())",
             description="Completeness",
             description_msgid="item_completeness_descr",
@@ -1856,7 +1858,7 @@ schema = Schema((
     StringField(
         name='takenOverBy',
         widget=StringField._properties['widget'](
-            condition="python: here.attributeIsUsed('takenOverBy')",
+            condition="python: here.attribute_is_used('takenOverBy')",
             label='Takenoverby',
             label_msgid='PloneMeeting_label_takenOverBy',
             i18n_domain='PloneMeeting',
@@ -2037,7 +2039,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # check if value is among classifiers defined in the MeetingConfig
-        if (self.attributeIsUsed('classifier')) and value not in cfg.classifiers.objectIds():
+        if (self.attribute_is_used('classifier')) and value not in cfg.classifiers.objectIds():
             return translate('classifier_required', domain='PloneMeeting', context=self.REQUEST)
 
     security.declarePrivate('validate_groupsInCharge')
@@ -2054,7 +2056,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         value = [v for v in value if v]
 
         # check if field is enabled in the MeetingConfig
-        if self.attributeIsUsed('groupsInCharge') and not value:
+        if self.attribute_is_used('groupsInCharge') and not value:
             return translate('groupsInCharge_required', domain='PloneMeeting', context=self.REQUEST)
 
     security.declarePrivate('validate_itemAssembly')
@@ -2083,7 +2085,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.isDefinedInTool(item_type='itemtemplate'):
             return
 
-        if not value and not self.attributeIsUsed('proposingGroupWithGroupInCharge'):
+        if not value and not self.attribute_is_used('proposingGroupWithGroupInCharge'):
             return translate('proposing_group_required',
                              domain='PloneMeeting',
                              context=self.REQUEST)
@@ -2110,7 +2112,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.isDefinedInTool(item_type='itemtemplate'):
             return
 
-        if not value and self.attributeIsUsed('proposingGroupWithGroupInCharge'):
+        if not value and self.attribute_is_used('proposingGroupWithGroupInCharge'):
             return translate('proposing_group_required', domain='PloneMeeting', context=self.REQUEST)
 
     security.declarePrivate('validate_optionalAdvisers')
@@ -2326,7 +2328,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         wfAdaptations = cfg.getWorkflowAdaptations()
-        return (self.attributeIsUsed('emergency') or
+        return (self.attribute_is_used('emergency') or
                 ('accepted_out_of_meeting' in wfAdaptations or
                 'accepted_out_of_meeting_and_duplicated' in wfAdaptations)) and \
             not self.isDefinedInTool()
@@ -2336,7 +2338,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def showInternalNotes(self):
         '''Show field 'internalNotes' if attribute is used,
            and only to members of the proposingGroup (+ real Managers).'''
-        if not self.attributeIsUsed('internalNotes'):
+        if not self.attribute_is_used('internalNotes'):
             return False
 
         # creating new item, show field
@@ -2345,12 +2347,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # bypass for Managers
         tool = api.portal.get_tool('portal_plonemeeting')
-        if tool.isManager(tool, realManagers=True):
+        cfg = tool.getMeetingConfig(self)
+        if tool.isManager(tool, realManagers=True) or \
+           (cfg.getItemInternalNotesEditableByMeetingManagers() and
+                tool.isManager(cfg)):
             return True
 
         # user must be in one of the proposingGroup Plone groups
-        org_uid = self.getProposingGroup()
-        if tool.get_filtered_plone_groups_for_user(org_uids=[org_uid]):
+        if tool.user_is_in_org(org_uid=org_uid):
             return True
         return False
 
@@ -2368,7 +2372,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''On edit, show if field enabled and if current user isManager.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        res = self.attributeIsUsed('oralQuestion') and tool.isManager(cfg)
+        res = self.attribute_is_used('oralQuestion') and tool.isManager(cfg)
         return res
 
     security.declarePublic('showToDiscuss')
@@ -2381,7 +2385,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                  to a meeting.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        res = self.attributeIsUsed('toDiscuss') and \
+        res = self.attribute_is_used('toDiscuss') and \
             (not cfg.getToDiscussSetOnItemInsert() or
              (not self.isDefinedInTool() and
               cfg.getToDiscussSetOnItemInsert() and
@@ -2393,7 +2397,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def showItemIsSigned(self):
         '''Condition for showing the 'itemIsSigned' field on views.
            The attribute must be used and the item must be decided.'''
-        return self.attributeIsUsed('itemIsSigned') and \
+        return self.attribute_is_used('itemIsSigned') and \
             (self.hasMeeting() or self.query_state() == 'validated')
 
     security.declarePublic('mayChangeListType')
@@ -3770,14 +3774,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in utils.py.'''
         return hasHistory(self, fieldName)
 
-    def attributeIsUsed_cachekey(method, self, name):
-        '''cachekey method for self.attributeIsUsed.'''
-        return name
+    def attribute_is_used_cachekey(method, self, name):
+        '''cachekey method for self.attribute_is_used.'''
+        return "{0}.{1}".format(self.__class__.__name__, name)
 
-    security.declarePublic('attributeIsUsed')
+    security.declarePublic('attribute_is_used')
 
-    @ram.cache(attributeIsUsed_cachekey)
-    def attributeIsUsed(self, name):
+    @ram.cache(attribute_is_used_cachekey)
+    def attribute_is_used(self, name):
         '''Is the attribute named p_name used in this meeting config ?'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
@@ -4412,20 +4416,27 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('mayQuickEdit')
 
-    def mayQuickEdit(self, fieldName, bypassWritePermissionCheck=False, onlyForManagers=False):
+    def mayQuickEdit(self,
+                     fieldName,
+                     bypassWritePermissionCheck=False,
+                     onlyForManagers=False,
+                     bypassMeetingClosedCheck=False):
         '''Check if the current p_fieldName can be quick edited thru the meetingitem_view.
            By default, an item can be quickedited if the field condition is True (field is used,
            current user is Manager, current item is linekd to a meeting) and if the meeting
            the item is presented in is not considered as 'closed'.  Bypass if current user is
            a real Manager (Site Administrator/Manager).
-           If p_bypassWritePermissionCheck is True, we will not check for write_permission.'''
+           If p_bypassWritePermissionCheck is True, we will not check for write_permission.
+           If p_bypassMeetingClosedCheck is True, we will not check if meeting is closed but
+           only for permission and condition.'''
         field = self.Schema()[fieldName]
         return checkMayQuickEdit(
             self,
             bypassWritePermissionCheck=bypassWritePermissionCheck,
             permission=field.write_permission,
             expression=self.Schema()[fieldName].widget.condition,
-            onlyForManagers=onlyForManagers)
+            onlyForManagers=onlyForManagers,
+            bypassMeetingClosedCheck=bypassMeetingClosedCheck)
 
     def mayQuickEditItemAssembly(self):
         """Show edit icon if itemAssembly or itemAssemblyGuests field editable."""
@@ -5415,7 +5426,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             displayPrivacy = False
             if otherMC in self.getOtherMeetingConfigsClonableToEmergency():
                 displayEmergency = True
-            if self.attributeIsUsed('otherMeetingConfigsClonableToPrivacy'):
+            if self.attribute_is_used('otherMeetingConfigsClonableToPrivacy'):
                 displayPrivacy = True
 
             emergencyAndPrivacyInfos = []
@@ -5734,8 +5745,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if role_to_remove in roles:
             # cleanup roles as the permission is also returned with a leading '_'
             roles = [role for role in roles if not role.startswith('_')]
-            roles.remove(role_to_remove)
-            obj.manage_permission(permission, roles)
+            if role_to_remove in roles:
+                roles.remove(role_to_remove)
+                obj.manage_permission(permission, roles)
 
     def _removeEveryContainedAdvices(self):
         """Remove every contained advices."""
@@ -6009,9 +6021,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # and remove specific permissions given to add advices
         # make sure the 'PloneMeeting: Add advice' permission is not
-        # given to the 'Contributor' role
+        # given to the 'MeetingAdviser' role
         self._removePermissionToRole(permission=AddAdvice,
-                                     role_to_remove='Contributor',
+                                     role_to_remove='MeetingAdviser',
                                      obj=self)
         # manage PowerAdvisers
         # we will give those groups the ability to give an advice on this item
@@ -6027,10 +6039,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 plone_group_id = get_plone_group_id(org_uid, suffix='advisers')
                 # power advisers get only the right to add the advice, but not to see the item
                 # this must be provided using another functionnality, like power observers or so
-                self.manage_addLocalRoles(plone_group_id, ('Contributor', ))
-                # make sure 'Contributor' has the 'AddAdvice' permission
+                self.manage_addLocalRoles(plone_group_id, ('MeetingAdviser', ))
+                # make sure 'MeetingAdviser' has the 'AddAdvice' permission
                 self._grantPermissionToRole(permission=AddAdvice,
-                                            role_to_give='Contributor',
+                                            role_to_give='MeetingAdviser',
                                             obj=self)
 
         # Then, add local roles regarding asked advices
@@ -6094,12 +6106,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                    delayIsNotExceeded and \
                    self.adapted()._adviceIsAddable(org_uid):
                     # advisers must be able to add a 'meetingadvice', give
-                    # relevant permissions to 'Contributor' role
-                    # the 'Add portal content' permission is given by default to 'Contributor', so
-                    # we need to give 'PloneMeeting: Add advice' permission too
-                    self.manage_addLocalRoles(plone_group_id, ('Contributor', ))
+                    # relevant permissions to 'MeetingAdviser' role
+                    # the 'Add portal content' permission is given by default to 'MeetingAdviser',
+                    # so we need to give 'PloneMeeting: Add advice' permission too
+                    self.manage_addLocalRoles(plone_group_id, ('MeetingAdviser', ))
                     self._grantPermissionToRole(permission=AddAdvice,
-                                                role_to_give='Contributor',
+                                                role_to_give='MeetingAdviser',
                                                 obj=self)
                     self.adviceIndex[org_uid]['advice_addable'] = True
 
@@ -6523,10 +6535,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             mmanagers_item_states = ['validated'] + list(cfg.getItemDecidedStates())
             if item_state in mmanagers_item_states or self.hasMeeting():
                 mmanagers_group_id = "{0}_{1}".format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
-                # 'Reviewer' also on decided item, the WF guard will avoid correct is meeting closed
-                mmanagers_roles = ['Reader', 'Reviewer']
+                # 'Reviewer' also on decided item, the WF guard will
+                # avoid correct if meeting closed, and give 'Contributor' to be
+                # able to add decision annexes
+                mmanagers_roles = ['Reader', 'Reviewer', 'Contributor']
                 if not self.is_decided(cfg, item_state):
-                    mmanagers_roles += ['Editor', 'Contributor']
+                    mmanagers_roles += ['Editor']
                 self.manage_addLocalRoles(mmanagers_group_id, tuple(mmanagers_roles))
 
     security.declareProtected(ModifyPortalContent, 'update_local_roles')

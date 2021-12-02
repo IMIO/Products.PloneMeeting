@@ -2004,8 +2004,13 @@ class Meeting(Container):
            this method returns me.'''
         return getCustomAdapter(self)
 
+    def attribute_is_used_cachekey(method, self, name):
+        '''cachekey method for self.attribute_is_used.'''
+        return "{0}.{1}".format(self.__class__.__name__, name)
+
     security.declarePublic('attribute_is_used')
 
+    @ram.cache(attribute_is_used_cachekey)
     def attribute_is_used(self, name):
         '''Is the attribute named p_name used in this meeting config ?'''
         tool = api.portal.get_tool('portal_plonemeeting')

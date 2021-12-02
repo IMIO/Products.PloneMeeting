@@ -19,6 +19,7 @@ from Products.Five import BrowserView
 from Products.PageTemplates.Expressions import SecureModuleImporter
 from Products.PloneMeeting.browser.advicechangedelay import _reinit_advice_delay
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.utils import is_proposing_group_editor
 from z3c.form import form
 from zope import schema
 from zope.event import notify
@@ -179,12 +180,15 @@ class AdvicesIconsInfos(BrowserView):
         self.isRealManager = self.tool.isManager(self.tool, realManagers=True)
         # edit proposingGroup comment, only compute if item not decided
         # by default editable by Managers only
-        self.userIsProposingGroupCommentEditor = self.isRealManager
-        self.userMayEditItem = self.isRealManager
-        if not self.context.is_decided(self.cfg, self.itemReviewState):
-            self.userIsProposingGroupCommentEditor = self.isManager or \
-                self.cfg.user_is_proposing_group_editor(org_uid=org_uid)
-            self.userMayEditItem = _checkPermission(ModifyPortalContent, self.context)
+        self.userIsProposingGroupCommentEditor = False
+        self.userMayEditItem = False
+        if self.cfg.getEnableAdviceProposingGroupComment():
+            self.userIsProposingGroupCommentEditor = self.isRealManager
+            self.userMayEditItem = self.isRealManager
+            if not self.context.is_decided(self.cfg, self.itemReviewState):
+                self.userIsProposingGroupCommentEditor = self.isManager or \
+                    is_proposing_group_editor(org_uid, self.cfg)
+                self.userMayEditItem = _checkPermission(ModifyPortalContent, self.context)
 
     def _initAdviceInfos(self, advice_id):
         """ """
@@ -277,12 +281,13 @@ class AdvicesIconsInfos(BrowserView):
            - member is a group editor (not an observer for example);
            - item is editable or advice is addable/editable."""
         res = False
-        advice_info = self.context.adviceIndex[self.advice_id]
-        if not self.adviceIsInherited:
-            if self.userIsProposingGroupCommentEditor and \
-                (self.isRealManager or self.userMayEditItem or
-                 (advice_info['advice_addable'] or advice_info['advice_editable'])):
-                res = True
+        if self.cfg.getEnableAdviceProposingGroupComment():
+            advice_info = self.context.adviceIndex[self.advice_id]
+            if not self.adviceIsInherited:
+                if self.userIsProposingGroupCommentEditor and \
+                    (self.isRealManager or self.userMayEditItem or
+                     (advice_info['advice_addable'] or advice_info['advice_editable'])):
+                    res = True
         return res
 
     def mayViewProposingGroupComment(self):
@@ -291,11 +296,13 @@ class AdvicesIconsInfos(BrowserView):
            - Asked advice advisers;
            - (Meeting)Managers."""
         res = False
-        # bypass for (Meeting)Managers
-        if self.isManager or \
-           self.memberIsAdviserForGroup or \
-           self.userIsInProposingGroup:
-            res = True
+        if self.cfg.getEnableAdviceProposingGroupComment() or \
+           self.context.adviceIndex[self.advice_id]["proposing_group_comment"]:
+            # bypass for (Meeting)Managers
+            if self.isManager or \
+               self.memberIsAdviserForGroup or \
+               self.userIsInProposingGroup:
+                res = True
         return res
 
 

@@ -1187,7 +1187,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # the defined proposing group, except if p_keepProposingGroup is True
             if not keepProposingGroup:
                 # proposingGroupWithGroupInCharge
-                if newItem.attributeIsUsed('proposingGroupWithGroupInCharge'):
+                if newItem.attribute_is_used('proposingGroupWithGroupInCharge'):
                     userProposingGroupUids = newItem.listProposingGroupsWithGroupsInCharge(
                         include_stored=False).keys()
                     if userProposingGroupUids:

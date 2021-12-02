@@ -570,6 +570,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.adviceConfidentialFor = ()
         self.hideNotViewableLinkedItemsTo = ()
         self.inheritedAdviceRemoveableByAdviser = False
+        self.itemLabelsEditableByProposingGroupForever = False
+        self.itemInternalNotesEditableByMeetingManagers = False
         self.usingGroups = []
         # List of other meetingConfigs, item of this meetingConfig
         # will be clonable to
@@ -812,6 +814,7 @@ class MeetingConfigDescriptor(Descriptor):
         # Items where advice invalidation should be enabled.
         self.itemAdviceInvalidateStates = []
         self.adviceStyle = 'standard'
+        self.enableAdviceProposingGroupComment = False
         self.defaultAdviceHiddenDuringRedaction = []
         self.transitionsReinitializingDelays = []
         self.historizeItemDataWhenAdviceIsGiven = True
