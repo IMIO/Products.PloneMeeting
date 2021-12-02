@@ -1528,12 +1528,17 @@ def _addManagedPermissions(obj):
             schema = get_dx_schema(obj)
             write_permissions = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY, {})
             for field_id, write_permission in write_permissions.items():
-                if isinstance(schema.get(field_id), RichText):
+                # only consider enabled fields
+                if isinstance(schema.get(field_id), RichText) and \
+                        obj.attribute_is_used(field_id):
                     write_perms.append(write_permission)
         else:
             # Archetypes
             for field in obj.Schema().filterFields(default_content_type='text/html'):
-                if field.write_permission:
+                # only consider enabled fields, for example as MeetingItem.internalNotes
+                # is editable in every states, that will give the permission in every
+                # states, but only when field used
+                if field.write_permission and obj.attribute_is_used(field.getName()):
                     write_perms.append(field.write_permission)
 
         roles = []
@@ -1723,7 +1728,8 @@ def checkMayQuickEdit(obj,
                       bypassWritePermissionCheck=False,
                       permission=ModifyPortalContent,
                       expression='',
-                      onlyForManagers=False):
+                      onlyForManagers=False,
+                      bypassMeetingClosedCheck=False):
     """ """
     from Products.PloneMeeting.content.meeting import Meeting
     tool = api.portal.get_tool('portal_plonemeeting')
@@ -1733,7 +1739,9 @@ def checkMayQuickEdit(obj,
     if (not onlyForManagers or (onlyForManagers and tool.isManager(obj))) and \
        (bypassWritePermissionCheck or member.has_permission(permission, obj)) and \
        (_evaluateExpression(obj, expression)) and \
-       (not (meeting and meeting.query_state() in Meeting.MEETINGCLOSEDSTATES) or
+       (not (not bypassMeetingClosedCheck and
+                meeting and
+                meeting.query_state() in Meeting.MEETINGCLOSEDSTATES) or
             tool.isManager(obj, realManagers=True)):
         res = True
     return res
@@ -1917,16 +1925,22 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
     # states out of item validation (validated and following states)
     else:
         # every item validation suffixes get View access
-        # if item is in a decided state, we also give the Contributor
-        # role to every validation suffixes
-        item_is_decided = item_state in cfg.getItemDecidedStates()
+        # we also give the Contributor except to 'observers'
+        # so every editors roles get the "PloneMeeting: Add decision annex"
+        # permission that let add decision annex and write the MeetingItem.internalNotes
         for suffix in get_item_validation_wf_suffixes(cfg, org):
             given_roles = ['Reader']
-            if item_is_decided and suffix != 'observers':
+            if suffix != 'observers':
                 given_roles.append('Contributor')
             suffix_roles[suffix] = given_roles
 
     return apply_meetingmanagers_access, suffix_roles
+
+
+def is_proposing_group_editor(org_uid, cfg):
+    """ """
+    suffixes = cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
+    return cfg.aq_parent.user_is_in_org(org_uid=org_uid, suffixes=suffixes)
 
 
 def org_id_to_uid(org_info, raise_on_error=True, ignore_underscore=False):

@@ -397,7 +397,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            of wfAdaptations 'removed' or 'removed_and_duplicated' that is not possible if
            some items are 'removed'."""
 
-        # refused is a default WFAdaptation, do not performWorkflowAdaptations again
+        # refused is a default WFAdaptation, do not _performWorkflowAdaptations again
         self._validate_item_decision_state_removed(
             wf_adaptation_name='removed',
             item_state='removed',

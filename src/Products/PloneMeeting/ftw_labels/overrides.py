@@ -18,6 +18,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
+from Products.PloneMeeting.utils import is_proposing_group_editor
 
 
 class PMFTWLabelsRenderer(ftw_labels_renderer):
@@ -85,7 +86,11 @@ class PMLabeling(Labeling):
     @property
     def can_edit(self):
         tool = api.portal.get_tool('portal_plonemeeting')
-        return _checkPermission(ModifyPortalContent, self.context) or tool.isManager(self.context)
+        cfg = tool.getMeetingConfig(self.context)
+        return _checkPermission(ModifyPortalContent, self.context) or \
+            tool.isManager(cfg) or \
+            (cfg.getItemLabelsEditableByProposingGroupForever() and
+             is_proposing_group_editor(self.context.getProposingGroup(), cfg))
 
     @property
     def can_personal_edit(self):

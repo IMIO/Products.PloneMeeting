@@ -19,6 +19,7 @@ from Products.Five import BrowserView
 from Products.PageTemplates.Expressions import SecureModuleImporter
 from Products.PloneMeeting.browser.advicechangedelay import _reinit_advice_delay
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.utils import is_proposing_group_editor
 from z3c.form import form
 from zope import schema
 from zope.event import notify
@@ -162,9 +163,8 @@ class AdvicesIconsInfos(BrowserView):
             self.userIsProposingGroupCommentEditor = self.isRealManager
             self.userMayEditItem = self.isRealManager
             if not self.context.is_decided(self.cfg, self.itemReviewState):
-                suffixes = self.cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
                 self.userIsProposingGroupCommentEditor = self.isManager or \
-                    self.tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes)
+                    is_proposing_group_editor(org_uid, self.cfg)
                 self.userMayEditItem = _checkPermission(ModifyPortalContent, self.context)
 
     def _initAdviceInfos(self, advice_id):

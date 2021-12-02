@@ -7,8 +7,8 @@ from imio.helpers.content import object_values
 from plone import api
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
-from Products.CMFCore.permissions import ReviewPortalContent
 from Products.PloneMeeting import logger
+from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.utils import updateCollectionCriterion
 
 
@@ -244,7 +244,7 @@ def clone_permissions(wf_id, base_state_id, new_state_id):
         new_state.setPermission(permission, isinstance(roles, list) and 1 or 0, roles)
 
 
-def performWorkflowAdaptations(meetingConfig, logger=logger):
+def _performWorkflowAdaptations(meetingConfig, logger=logger):
     '''This function applies workflow adaptations as specified by the p_meetingConfig.'''
 
     # Hereafter, adaptations are applied in some meaningful sequence:
@@ -547,6 +547,12 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             level.pop('back_transition')
             level.pop('back_transition_title')
             addState(itemWorkflow.id, **level)
+
+        # change permission for PloneMeeting: add annex for state "validated"
+        # replace "Contributor" by "MeetingManager"
+        validated = itemWorkflow.states["validated"]
+        assert(validated.permission_roles[AddAnnex] == ('Manager', 'Contributor'))
+        validated.permission_roles[AddAnnex] = ('Manager', 'MeetingManager')
 
     tool = api.portal.get_tool('portal_plonemeeting')
     # first of all, manage MeetingConfig.itemWFValidationLevels

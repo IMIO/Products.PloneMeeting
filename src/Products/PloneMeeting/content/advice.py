@@ -222,6 +222,18 @@ class MeetingAdvice(Container):
             delattr(self, 'historized_item_data')
             self.reindexObject(idxs=['modified', 'ModificationDate'])
 
+    # def attribute_is_used_cachekey(method, self, name):
+    #     '''cachekey method for self.attribute_is_used.'''
+    #     return "{0}.{1}".format(self.__class__.__name__, name)
+
+    security.declarePublic('attribute_is_used')
+
+    #  @ram.cache(attribute_is_used_cachekey)
+    def attribute_is_used(self, name):
+        '''Necessary for utils._addManagedPermissions for advice for now
+           any attribute is used ?'''
+        return True
+
 
 class MeetingAdviceSchemaPolicy(DexteritySchemaPolicy):
     """ """
