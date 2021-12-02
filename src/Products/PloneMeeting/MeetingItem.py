@@ -6525,7 +6525,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if item_state in mmanagers_item_states or self.hasMeeting():
                 mmanagers_group_id = "{0}_{1}".format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
                 # 'Reviewer' also on decided item, the WF guard will
-                # avoid correct is meeting closed, and give 'Contributor' to be
+                # avoid correct if meeting closed, and give 'Contributor' to be
                 # able to add decision annexes
                 mmanagers_roles = ['Reader', 'Reviewer', 'Contributor']
                 if not self.is_decided(cfg, item_state):

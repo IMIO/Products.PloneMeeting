@@ -17,14 +17,14 @@ Changelog
   the `odt_file` of another POD template, display a link the the POD template
   `odt_file` real holder.
   [gbastien]
-- Added parameter `MeetingConfig.itemLabelsEditableByProposingGroupForever`,
-  `False` by default, when set to `True`, the item proposing group editors
-  will be able to edit the item labels forever.
-  [gbastien]
 - Fixed bug where an adviser could add an `annex` or `annexDecision` because
   the role `Contributor` was used for both `Add annexes` and `Add advices`
   permissions.
   A new role `MeetingAdviser` is added to manage the `Add advice` permission.
+  [gbastien]
+- Added parameter `MeetingConfig.itemLabelsEditableByProposingGroupForever`,
+  `False` by default, when set to `True`, the item proposing group editors
+  will be able to edit the item labels forever.
   [gbastien]
 - Changed default behavior of `MeetingItem.internalNotes`:
 

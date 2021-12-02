@@ -1528,11 +1528,16 @@ def _addManagedPermissions(obj):
             schema = get_dx_schema(obj)
             write_permissions = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY, {})
             for field_id, write_permission in write_permissions.items():
-                if isinstance(schema.get(field_id), RichText) and obj.attribute_is_used(field_id):
+                # only consider enabled fields
+                if isinstance(schema.get(field_id), RichText) and \
+                        obj.attribute_is_used(field_id):
                     write_perms.append(write_permission)
         else:
             # Archetypes
             for field in obj.Schema().filterFields(default_content_type='text/html'):
+                # only consider enabled fields, for example as MeetingItem.internalNotes
+                # is editable in every states, that will give the permission in every
+                # states, but only when field used
                 if field.write_permission and obj.attribute_is_used(field.getName()):
                     write_perms.append(field.write_permission)
 
