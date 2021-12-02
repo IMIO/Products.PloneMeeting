@@ -551,7 +551,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         # change permission for PloneMeeting: add annex for state "validated"
         # replace "Contributor" by "MeetingManager"
         validated = itemWorkflow.states["validated"]
-        assert(validated.permission_roles[AddAnnex] == ('Manager', 'Contributor'))
+        assert(validated.permission_roles[AddAnnex] == ('Manager', 'Editor'))
         validated.permission_roles[AddAnnex] = ('Manager', 'MeetingManager')
 
     tool = api.portal.get_tool('portal_plonemeeting')
