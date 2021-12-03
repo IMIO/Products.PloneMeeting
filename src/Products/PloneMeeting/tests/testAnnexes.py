@@ -1282,10 +1282,10 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(view.showAddAnnexDecision())
         self.assertTrue(view.showAnnexesSection())
         self.assertTrue(view.showDecisionAnnexesSection())
-        # propose item, annex sections are still shown but not addable
+        # propose item, annex sections are still shown but only decision annex is addable
         self.proposeItem(item)
         self.assertFalse(view.showAddAnnex())
-        self.assertFalse(view.showAddAnnexDecision())
+        self.assertTrue(view.showAddAnnexDecision())
         self.assertTrue(view.showAnnexesSection())
         self.assertTrue(view.showDecisionAnnexesSection())
         # ok for reviewer

@@ -2354,6 +2354,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
 
         # user must be in one of the proposingGroup Plone groups
+        org_uid = self.getProposingGroup()
         if tool.user_is_in_org(org_uid=org_uid):
             return True
         return False
@@ -6611,7 +6612,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # will reindexObjectSecurity
         avoid_reindex = kwargs.get('avoid_reindex', False)
         if not triggered_by_transition and \
-          (not avoid_reindex or old_local_roles != self.__ac_local_roles__):
+           (not avoid_reindex or old_local_roles != self.__ac_local_roles__):
             self.reindexObjectSecurity()
         # return indexes_to_update in case a reindexObject is not done
         return ['getCopyGroups', 'getGroupsInCharge']
