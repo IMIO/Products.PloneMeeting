@@ -174,9 +174,9 @@ class testWorkflows(PloneMeetingTestCase):
         # The creator can add a decision annex on created item
         self.addAnnex(item1, relatedTo='item_decision')
         self.do(item1, 'propose')
-        # The creator cannot add a decision annex on proposed item
+        # The creator cannot add an annex, only a decision annex on proposed item
         self.assertRaises(Unauthorized, self.addAnnex, item1)
-        self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
+        self.addAnnex(item1, relatedTo='item_decision')
         self.failIf(self.transitions(item1))  # He may trigger no more action
         # pmManager creates a meeting
         self.changeUser('pmManager')
@@ -191,7 +191,8 @@ class testWorkflows(PloneMeetingTestCase):
         self.do(item3, 'propose')
         # pmReviewer1 validates item1 and adds an annex to it
         self.changeUser('pmReviewer1')
-        # The reviewer can add a decision annex on proposed item
+        # The reviewer can add any annex on proposed item
+        self.addAnnex(item1)
         self.addAnnex(item1, relatedTo='item_decision')
         self.do(item1, 'validate')
         # Reviewers may add decision annexes but not normal annexes
