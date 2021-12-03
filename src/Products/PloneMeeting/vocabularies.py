@@ -2180,11 +2180,13 @@ class SelectableCommitteesVocabulary(object):
         committees = []
         if context.getTagName() == "MeetingItem":
             committees = context.getCommittees()
+        # check_is_manager_for_suppl depend on isManager
+        isManager = tool.isManager(cfg)
         # cache by user_plone_groups if using committees "using_groups"
         user_plone_groups = []
         if cfg.is_committees_using("using_groups"):
             user_plone_groups = tool.get_plone_groups_for_user()
-        return date, repr(cfg), committees, user_plone_groups, \
+        return date, repr(cfg), committees, user_plone_groups, isManager, \
             term_title_attr, include_suppl, \
             check_is_manager_for_suppl, include_all_disabled, \
             cfg_committees, add_no_committee_value, \
