@@ -184,7 +184,8 @@ class ItemProposingGroupsVocabulary(object):
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.proposinggroupsvocabulary')
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary')
         return date
 
     @ram.cache(__call___cachekey)
@@ -381,7 +382,8 @@ class PMEveryOrganizationsVocabulary(EveryOrganizationsVocabulary):
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.everyorganizationsvocabulary')
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.vocabularies.everyorganizationsvocabulary')
         return date
 
     @ram.cache(__call___cachekey)
@@ -401,7 +403,8 @@ class EveryOrganizationsAcronymsVocabulary(EveryOrganizationsVocabulary):
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary')
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary')
         return date
 
     @ram.cache(__call___cachekey)
@@ -508,7 +511,8 @@ class CreatorsForFacetedFilterVocabulary(object):
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.creatorsforfacetedfiltervocabulary')
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.vocabularies.creatorsforfacetedfiltervocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         return date, repr(cfg)
@@ -523,7 +527,8 @@ class CreatorsForFacetedFilterVocabulary(object):
         cfg = tool.getMeetingConfig(context)
         creatorsToHide = cfg.getUsersHiddenInDashboardFilter()
         creators = catalog.uniqueValuesFor('Creator')
-        filteredCreators = [creator for creator in creators if creator not in creatorsToHide]
+        filteredCreators = [creator for creator in creators
+                            if creator not in creatorsToHide]
 
         for creator in filteredCreators:
             value = tool.getUserName(creator)
@@ -1499,6 +1504,7 @@ class PMEveryCategoryVocabulary(EveryCategoryVocabulary):
         cfg_modified = cfg.modified()
         return annex_group.getId(), use_category_uid_as_token, cfg_modified, only_enabled
 
+    @ram.cache(__call___cachekey)
     def __call__(self, context, use_category_uid_as_token=False, only_enabled=False):
         return super(PMEveryCategoryVocabulary, self).__call__(
             context,
@@ -1519,6 +1525,7 @@ class PMEveryCategoryTitleVocabulary(EveryCategoryTitleVocabulary):
         cfg_modified = cfg.modified()
         return annex_group.getId(), use_category_uid_as_token, cfg_modified, only_enabled
 
+    @ram.cache(__call___cachekey)
     def __call__(self, context, only_enabled=False):
         return super(PMEveryCategoryTitleVocabulary, self).__call__(
             context,
@@ -1708,6 +1715,25 @@ class BaseHeldPositionsVocabulary(object):
         return IMeetingConfig.providedBy(context) and \
             'base_edit' not in context.REQUEST.getURL()
 
+    def __call___cachekey(method,
+                          self,
+                          context,
+                          usage=None,
+                          uids=[],
+                          highlight_missing=False,
+                          include_usages=True,
+                          include_defaults=True,
+                          include_signature_number=True,
+                          pattern=u"{0}",
+                          review_state=['active']):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.vocabularies.allheldpositionsvocabularies')
+        return date, repr(context), usage, uids, self._is_editing_config(context),
+        highlight_missing, include_usages, include_defaults, include_signature_number,
+        pattern, review_state
+
+    @ram.cache(__call___cachekey)
     def __call__(self,
                  context,
                  usage=None,
@@ -1764,13 +1790,6 @@ class BaseHeldPositionsVocabulary(object):
 class SelectableHeldPositionsVocabulary(BaseHeldPositionsVocabulary):
     """ """
 
-    def __call___cachekey(method, self, context, usage=None, uids=[]):
-        '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile(
-            'Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary')
-        return date, repr(context), usage, uids, self._is_editing_config(context)
-
-    @ram.cache(__call___cachekey)
     def __call__(self, context, usage=None, uids=[]):
         res = super(SelectableHeldPositionsVocabulary, self).__call__(context, usage=None)
         return res
@@ -1782,13 +1801,6 @@ SelectableHeldPositionsVocabularyFactory = SelectableHeldPositionsVocabulary()
 class SimplifiedSelectableHeldPositionsVocabulary(BaseHeldPositionsVocabulary):
     """ """
 
-    def __call___cachekey(method, self, context, usage=None, uids=[]):
-        '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile(
-            'Products.PloneMeeting.vocabularies.simplifiedselectableheldpositionsvocabulary')
-        return date, repr(context), usage, uids, self._is_editing_config(context)
-
-    @ram.cache(__call___cachekey)
     def __call__(self, context, usage=None, uids=[]):
         res = super(SimplifiedSelectableHeldPositionsVocabulary, self).__call__(
             context,
@@ -1805,13 +1817,6 @@ SimplifiedSelectableHeldPositionsVocabularyFactory = SimplifiedSelectableHeldPos
 class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
     """ """
 
-    def __call___cachekey(method, self, context, usage=None, uids=[]):
-        '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile(
-            'Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary')
-        return date, repr(context), usage, uids, self._is_editing_config(context)
-
-    @ram.cache(__call___cachekey)
     def __call__(self, context, usage=None, uids=[]):
         terms = super(SelectableAssemblyMembersVocabulary, self).__call__(
             context, usage='assemblyMember')
@@ -1849,20 +1854,13 @@ SelectableAssemblyMembersVocabularyFactory = SelectableAssemblyMembersVocabulary
 class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
     """ """
 
-    def __call___cachekey(method, self, context, usage=None, uids=[]):
-        '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile(
-            'Products.PloneMeeting.vocabularies.selectableiteminitiatorsvocabulary')
-        return date, repr(context), usage, uids, self._is_editing_config(context)
-
-    @ram.cache(__call___cachekey)
     def __call__(self, context):
         terms = super(SelectableItemInitiatorsVocabulary, self).__call__(
             context, usage='asker')
         if IMeetingConfig.providedBy(context):
             stored_terms = context.getOrderedItemInitiators()
         else:
-            # MeetingItem
+            # MeetingItem, XXX not used for now
             stored_terms = context.getItemInitiator()
         # add missing terms as inactive held_positions are not in the vocabulary
         missing_term_uids = [uid for uid in stored_terms if uid not in terms]
@@ -1953,7 +1951,8 @@ class AssociatedGroupsVocabulary(object):
 
     def __call___cachekey(method, self, context, sort=True):
         '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.associatedgroupsvocabulary')
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.vocabularies.associatedgroupsvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         return date, sort, repr(cfg)
@@ -2181,7 +2180,10 @@ class SelectableCommitteesVocabulary(object):
         committees = []
         if context.getTagName() == "MeetingItem":
             committees = context.getCommittees()
-        user_plone_groups = tool.get_plone_groups_for_user()
+        # cache by user_plone_groups if using committees "using_groups"
+        user_plone_groups = []
+        if cfg.is_committees_using("using_groups"):
+            user_plone_groups = tool.get_plone_groups_for_user()
         return date, repr(cfg), committees, user_plone_groups, \
             term_title_attr, include_suppl, \
             check_is_manager_for_suppl, include_all_disabled, \
@@ -2416,7 +2418,8 @@ class ContainedDecisionAnnexesVocabulary(ContainedAnnexesVocabulary):
     def __call__(self, context, portal_type='annexDecision'):
         """ """
         context.REQUEST['force_use_item_decision_annexes_group'] = True
-        terms = super(ContainedDecisionAnnexesVocabulary, self).__call__(context, portal_type=portal_type)
+        terms = super(ContainedDecisionAnnexesVocabulary, self).__call__(
+            context, portal_type=portal_type)
         context.REQUEST['force_use_item_decision_annexes_group'] = False
         return terms
 
@@ -2429,8 +2432,8 @@ class PMUsers(UsersFactory):
 
     def __call___cachekey(method, self, context, query=''):
         '''cachekey method for self.__call__.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        return tool._users_groups_value(), query
+        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+        return date, query
 
     @ram.cache(__call___cachekey)
     def __call__(self, context, query=''):

@@ -54,10 +54,6 @@ class AdvicesIcons(BrowserView):
 
     def __call___cachekey(method, self):
         '''cachekey method for self.__call__.'''
-        # bypass if no advices
-        advices = self.context.adviceIndex.keys()
-        if not advices:
-            return []
         tool = api.portal.get_tool('portal_plonemeeting')
         # URL to the advice_type can change if server URL changed
         server_url = self.request.get('SERVER_URL', None)
@@ -68,12 +64,16 @@ class AdvicesIcons(BrowserView):
         # check confidential advices if not MeetingManager
         isManager = tool.isManager(cfg)
         may_view_confidential_advices = True
-        if not isManager:
+        # bypass if no advices
+        # but we need nevertheless to compute has_advices_to_add because
+        # we may have no advices and no advices and power adviser may add advice
+        advices = self.context.adviceIndex.values()
+        if advices and not isManager:
             # if current user is a power observer that would not see the advice
             # we store user plone groups because a power adviser may see a confidential advice
             # if member of the proposingGroup
             user_plone_groups = tool.get_plone_groups_for_user()
-            confidential_advices = [advice for advice in self.context.adviceIndex.values()
+            confidential_advices = [advice for advice in advices
                                     if advice["isConfidential"] and
                                     not get_plone_group_id(advice["id"], "advisers") in
                                     user_plone_groups]

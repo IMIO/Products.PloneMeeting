@@ -299,7 +299,7 @@ class AsyncRenderSearchTerm(BrowserView):
                 collection_uid)
 
     @ram.cache(__call___cachekey)
-    def __call__(self):
+    def AsyncRenderSearchTerm__call__(self):
         """ """
         self.collection_uid = self.request.get('collection_uid')
         self.tool = api.portal.get_tool('portal_plonemeeting')
@@ -308,6 +308,9 @@ class AsyncRenderSearchTerm(BrowserView):
         self.brains = self.collection.results(batch=False, brains=True)
         rendered_term = ViewPageTemplateFile("templates/term_searchmeetings.pt")(self)
         return rendered_term
+
+    # do ram.cache have a different key name
+    __call__ = AsyncRenderSearchTerm__call__
 
 
 class AsyncLoadLinkedItems(BrowserView):
@@ -496,10 +499,13 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
             self.counts = None
 
     @ram.cache(__call___cachekey)
-    def __call__(self):
+    def AsyncLoadItemAssemblyAndSignatures__call__(self):
         """ """
         self._update()
         return self.index()
+
+    # do ram.cache have a different key name
+    __call__ = AsyncLoadItemAssemblyAndSignatures__call__
 
     def get_all_used_held_positions(self):
         """ """
@@ -553,7 +559,10 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
         self.meeting_view = view
 
     @ram.cache(__call___cachekey)
-    def __call__(self):
+    def AsyncLoadMeetingAssemblyAndSignatures__call__(self):
         """ """
         self._update()
         return self.index()
+
+    # do ram.cache have a different key name
+    __call__ = AsyncLoadMeetingAssemblyAndSignatures__call__

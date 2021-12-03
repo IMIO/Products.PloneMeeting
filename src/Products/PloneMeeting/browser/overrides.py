@@ -477,7 +477,7 @@ class PMRenderTermView(RenderTermPortletView):
         tool = api.portal.get_tool('portal_plonemeeting')
         userGroups = tool.get_plone_groups_for_user()
         # cache until an item is modified
-        date = get_cachekey_volatile('Products.PloneMeeting.MeetingItem.modified') # , method)
+        date = get_cachekey_volatile('Products.PloneMeeting.MeetingItem.modified', method)
         return (repr(self.context), userGroups, date, init)
 
     @ram.cache(number_of_items_cachekey)
@@ -675,18 +675,19 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                 showArrows, isPresentable, self.portal_url, kwargs)
 
     @ram.cache(__call___cachekey)
-    def __call__(self,
-                 useIcons=True,
-                 showTransitions=True,
-                 appendTypeNameToTransitionLabel=False,
-                 showEdit=True,
-                 showOwnDelete=True,
-                 showActions=True,
-                 showAddContent=False,
-                 showHistory=False,
-                 showHistoryLastEventHasComments=True,
-                 showArrows=False,
-                 **kwargs):
+    def MeetingItemActionsPanelView__call__(
+            self,
+            useIcons=True,
+            showTransitions=True,
+            appendTypeNameToTransitionLabel=False,
+            showEdit=True,
+            showOwnDelete=True,
+            showActions=True,
+            showAddContent=False,
+            showHistory=False,
+            showHistoryLastEventHasComments=True,
+            showArrows=False,
+            **kwargs):
         """
           Redefined to add ram.cache...
         """
@@ -725,6 +726,9 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                      showHistoryLastEventHasComments=showHistoryLastEventHasComments,
                      showArrows=showArrows,
                      **kwargs)
+
+    # do ram.cache have a different key name
+    __call__ = MeetingItemActionsPanelView__call__
 
     def showHistoryForContext(self):
         """
@@ -775,18 +779,19 @@ class MeetingActionsPanelView(BaseActionsPanelView):
                 showArrows, self.portal_url, kwargs)
 
     @ram.cache(__call___cachekey)
-    def __call__(self,
-                 useIcons=True,
-                 showTransitions=True,
-                 appendTypeNameToTransitionLabel=False,
-                 showEdit=True,
-                 showOwnDelete=True,
-                 showActions=True,
-                 showAddContent=False,
-                 showHistory=False,
-                 showHistoryLastEventHasComments=True,
-                 showArrows=False,
-                 **kwargs):
+    def MeetingActionsPanelView__call__(
+            self,
+            useIcons=True,
+            showTransitions=True,
+            appendTypeNameToTransitionLabel=False,
+            showEdit=True,
+            showOwnDelete=True,
+            showActions=True,
+            showAddContent=False,
+            showHistory=False,
+            showHistoryLastEventHasComments=True,
+            showArrows=False,
+            **kwargs):
         """
           Redefined to add ram.cache...
         """
@@ -802,6 +807,9 @@ class MeetingActionsPanelView(BaseActionsPanelView):
                      showHistoryLastEventHasComments=showHistoryLastEventHasComments,
                      showArrows=showArrows,
                      **kwargs)
+
+    # do ram.cache have a different key name
+    __call__ = MeetingActionsPanelView__call__
 
     def renderDeleteWholeMeeting(self):
         """

@@ -149,8 +149,9 @@ class PMCategorizedChildView(CategorizedChildView):
         # manage confidential annexes for non managers
         may_view_confidential_annexes = True
         if not isManager:
-            confidential_annexes = [elt for elt in self.context.categorized_elements.values()
-                                    if elt["confidential"]]
+            confidential_annexes = [
+                elt for elt in self.context.categorized_elements.values()
+                if elt["confidential"]]
             may_view_confidential_annexes = not confidential_annexes or \
                 set(tool.get_plone_groups_for_user()).intersection(
                     confidential_annexes[0]["visible_for_groups"])
@@ -169,8 +170,10 @@ class PMCategorizedChildView(CategorizedChildView):
 
     @ram.cache(__call___cachekey)
     def __call__(self, portal_type=None, show_nothing=False):
-        """Override to change show_nothing=False instead show_nothing=True and to add caching."""
-        return super(PMCategorizedChildView, self).__call__(portal_type, show_nothing)
+        """Override to change show_nothing=False instead
+           show_nothing=True and to add caching."""
+        return super(PMCategorizedChildView, self).__call__(
+            portal_type, show_nothing)
 
 
 class PMCategorizedChildInfosView(CategorizedChildInfosView):
