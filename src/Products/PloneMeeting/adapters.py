@@ -643,6 +643,11 @@ class MeetingPrettyLinkAdapter(PrettyLinkAdapter):
                         translate('this_meeting_is_extraordinary_session',
                                   domain="PloneMeeting",
                                   context=self.request)))
+        if self.context.videoconference:
+            res.append(('videoconference.png',
+                        translate('this_meeting_is_videoconference',
+                                  domain="PloneMeeting",
+                                  context=self.request)))
         return res
 
 

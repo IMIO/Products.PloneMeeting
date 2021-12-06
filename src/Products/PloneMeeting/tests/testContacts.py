@@ -1255,6 +1255,24 @@ class testContacts(PloneMeetingTestCase):
             u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
             u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5;')
 
+        meeting.videoconference = True
+        view = meeting.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        self.assertEqual(
+            helper.print_attendees_by_type(),
+            u'<strong><u>Connect\xe9s&nbsp;:</u></strong><br />'
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
+            u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
+            u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
+            u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5;')
+        self.assertEqual(
+            helper.print_attendees_by_type(adapt_for_videoconference=False),
+            u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
+            u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
+            u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
+            u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5;')
+
     def test_pm_Print_attendees_by_type_committee_id(self):
         """Print Meeting committee attendees by type."""
         self.changeUser('pmManager')
