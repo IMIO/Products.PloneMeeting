@@ -128,18 +128,19 @@ class ItemPollTypeColumn(VocabularyColumn):
     vocabulary = u'Products.PloneMeeting.vocabularies.polltypesvocabulary'
 
 
-def render_item_annexes(item, tool, show_nothing=False):
+def render_item_annexes(item, tool, show_nothing=False, check_can_view=False):
     """ """
     annexes = ''
     annexes += item.restrictedTraverse('@@categorized-childs')(
-        portal_type='annex', show_nothing=show_nothing)
-    if tool.hasAnnexes(item, portal_type='annexDecision'):
+        portal_type='annex', show_nothing=show_nothing, check_can_view=check_can_view)
+    decision_annexes = item.restrictedTraverse('@@categorized-childs')(
+        portal_type='annexDecision', show_nothing=show_nothing, check_can_view=check_can_view)
+    if decision_annexes.strip():
         decision_term = translate("AnnexesDecisionShort",
                                   domain='PloneMeeting',
                                   context=item.REQUEST)
         annexes += u"<span class='discreet'>{0}&nbsp;:&nbsp;</span>".format(decision_term)
-        annexes += item.restrictedTraverse('@@categorized-childs')(
-            portal_type='annexDecision', show_nothing=show_nothing)
+        annexes += decision_annexes
     return annexes
 
 
@@ -209,7 +210,8 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         elif obj.getTagName() == 'Meeting':
             visibleColumns = cfg.getMeetingColumns()
             staticInfos = obj.restrictedTraverse('@@static-infos')(visibleColumns=visibleColumns)
-            annexes += obj.restrictedTraverse('@@categorized-childs')(portal_type='annex')
+            annexes += obj.restrictedTraverse('@@categorized-childs')(
+                portal_type='annex', check_can_view=True)
             # display number of items in meeting title
             contentValue = "{0} <span class='meeting-number-items'>[{1}]</span>".format(
                 contentValue, obj.number_of_items())
@@ -266,7 +268,7 @@ class ItemLinkedMeetingColumn(BaseColumn):
         if not value or value.year <= 1950:
             res = u'-'
         else:
-            catalog = api.portal.get_tool('portal_catalog')
+            catalog = self.table.portal.portal_catalog
             # done unrestricted because can be used to display meeting date
             # in dashboard when current user may not see the meeting
             brains = catalog.unrestrictedSearchResults(UID=getattr(item, self.meeting_uid_attr))

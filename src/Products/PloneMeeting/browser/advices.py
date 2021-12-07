@@ -59,7 +59,9 @@ class AdvicesIcons(BrowserView):
         server_url = self.request.get('SERVER_URL', None)
         cfg = tool.getMeetingConfig(self.context)
         # when advices to add, the add advice icon is displayed
-        has_advices_to_add = self.context.getAdvicesGroupsInfosForUser(compute_to_edit=False)
+        # this takes PowerAdviser into account as well
+        has_advices_to_add = self.context.getAdvicesGroupsInfosForUser(
+            compute_to_edit=False)
         # confidential advices
         # check confidential advices if not MeetingManager
         isManager = tool.isManager(cfg)
@@ -68,21 +70,25 @@ class AdvicesIcons(BrowserView):
         # but we need nevertheless to compute has_advices_to_add because
         # we may have no advices and no advices and power adviser may add advice
         advices = self.context.adviceIndex.values()
+        isPrivacyViewable = True
         if advices and not isManager:
-            # if current user is a power observer that would not see the advice
-            # we store user plone groups because a power adviser may see a confidential advice
-            # if member of the proposingGroup
-            user_plone_groups = tool.get_plone_groups_for_user()
-            confidential_advices = [advice for advice in advices
-                                    if advice["isConfidential"] and
-                                    not get_plone_group_id(advice["id"], "advisers") in
-                                    user_plone_groups]
-            may_view_confidential_advices = not confidential_advices or \
-                not tool.isPowerObserverForCfg(cfg, power_observer_types=cfg.getAdviceConfidentialFor())
+            isPrivacyViewable = self.context.isPrivacyViewable()
+            if isPrivacyViewable:
+                # if current user is a power observer that would not see the advice
+                # we store user plone groups because a power adviser may see a confidential advice
+                # if member of the proposingGroup
+                user_plone_groups = tool.get_plone_groups_for_user()
+                confidential_advices = [advice for advice in advices
+                                        if advice["isConfidential"] and
+                                        not get_plone_group_id(advice["id"], "advisers") in
+                                        user_plone_groups]
+                may_view_confidential_advices = not confidential_advices or \
+                    not tool.isPowerObserverForCfg(cfg, power_observer_types=cfg.getAdviceConfidentialFor())
         return (repr(self.context),
                 self.context.adviceIndex._p_mtime,
                 server_url,
                 has_advices_to_add,
+                isPrivacyViewable,
                 may_view_confidential_advices)
 
     @ram.cache(__call___cachekey)

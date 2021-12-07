@@ -1,6 +1,7 @@
 <h1 class="documentFirstHeading" i18n:domain="PloneMeeting">
     <span tal:content="structure context/getPrettyLink">Pretty title</span>
-    <tal:itemRef define="itemNumber python: context.getItemNumber(relativeTo='meeting', for_display=True);
+    <tal:itemRef define="dummy context/checkPrivacyViewable;
+                         itemNumber python: context.getItemNumber(relativeTo='meeting', for_display=True);
                          itemReference python: context.getItemReference();"
                  condition="python: context.adapted().mustShowItemReference()">
         <br />

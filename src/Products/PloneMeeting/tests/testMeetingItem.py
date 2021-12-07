@@ -2591,7 +2591,8 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # create a 'public' and a 'secret' item
         self.changeUser('pmManager')
-        # add copyGroups that check that 'external' viewers can access the item but not isPrivacyViewable
+        # add copyGroups that check that 'external' viewers can access
+        # the item but not isPrivacyViewable
         publicItem = self.create('MeetingItem')
         publicItem.setPrivacy('public')
         publicItem.setCategory('development')
@@ -2634,6 +2635,10 @@ class testMeetingItem(PloneMeetingTestCase):
         # but not isPrivacyViewable
         self.failIf(secretItem.adapted().isPrivacyViewable())
         self.assertRaises(Unauthorized, secretItem.meetingitem_view)
+        annexes_view = secretItem.restrictedTraverse('@@categorized-annexes')
+        self.assertRaises(Unauthorized, annexes_view)
+        iconifiedcategory_view = secretItem.restrictedTraverse('@@iconifiedcategory')
+        self.assertRaises(Unauthorized, iconifiedcategory_view)
         self.failIf(secretHeadingItem.adapted().isPrivacyViewable())
         self.assertRaises(Unauthorized, secretHeadingItem.meetingitem_view)
         # if we try to duplicate a not privacy viewable item, it raises Unauthorized

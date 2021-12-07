@@ -19,7 +19,6 @@
     <metal:body_macro define-macro="body"
                       tal:define="tool python: context.portal_plonemeeting;
                                   member context/@@plone_portal_state/member;
-                                  dummy context/checkPrivacyViewable;
                                   meetingConfig python:tool.getMeetingConfig(context);
                                   meeting context/getMeeting;
                                   usedAttrs meetingConfig/getUsedItemAttributes;

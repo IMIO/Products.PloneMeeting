@@ -146,7 +146,7 @@ class MeetingCategory(Item):
         """ """
         res = self.groups_in_charge
         if res and the_objects:
-            res = uuidsToObjects(res, ordered=True)
+            res = uuidsToObjects(res, ordered=True, unrestricted=True)
         return res
 
     def get_using_groups(self, the_objects=False):

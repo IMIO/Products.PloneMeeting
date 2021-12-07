@@ -127,7 +127,7 @@ def _get_filters(request):
 class PMCategorizedChildView(CategorizedChildView):
     """Add caching."""
 
-    def __call___cachekey(method, self, portal_type=None, show_nothing=False):
+    def __call___cachekey(method, self, portal_type=None, show_nothing=False, check_can_view=False):
         '''cachekey method for self.__call__.'''
         if not _categorized_elements(self.context):
             return []
@@ -140,9 +140,9 @@ class PMCategorizedChildView(CategorizedChildView):
         cfg = tool.getMeetingConfig(self.context)
         # URL to the annex_type can change if server URL changed
         server_url = self.request.get('SERVER_URL', None)
-        # an annex container's modification date is updated upon
-        # any change on annex (added, removed, edited, attribute changed)
-        context_modified = self.context.modified()
+        # use "last_updated" to know when categorized_elements was last updated...
+        last_updated = max(
+            [info['last_updated'] for info in self.context.categorized_elements.values()])
         cfg_modified = cfg.modified()
         # check confidential annexes if not MeetingManager
         isManager = tool.isManager(cfg)
@@ -156,12 +156,13 @@ class PMCategorizedChildView(CategorizedChildView):
                 set(tool.get_plone_groups_for_user()).intersection(
                     confidential_annexes[0]["visible_for_groups"])
         return (repr(self.context),
-                context_modified,
+                last_updated,
                 cfg_modified,
                 server_url,
                 may_view_confidential_annexes,
                 portal_type,
-                show_nothing)
+                show_nothing,
+                check_can_view)
 
     @property
     def _filters(self):
@@ -169,11 +170,11 @@ class PMCategorizedChildView(CategorizedChildView):
         return _get_filters(self.request)
 
     @ram.cache(__call___cachekey)
-    def __call__(self, portal_type=None, show_nothing=False):
+    def __call__(self, portal_type=None, show_nothing=False, check_can_view=False):
         """Override to change show_nothing=False instead
            show_nothing=True and to add caching."""
         return super(PMCategorizedChildView, self).__call__(
-            portal_type, show_nothing)
+            portal_type, show_nothing, check_can_view)
 
 
 class PMCategorizedChildInfosView(CategorizedChildInfosView):

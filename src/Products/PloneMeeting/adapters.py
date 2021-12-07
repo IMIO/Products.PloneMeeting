@@ -1756,7 +1756,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
         class_name = self.context.__class__.__name__
         # special management for not confidential annexes displayed on not viewable context
         if not can_view and not infos['confidential']:
-            # check if displaying annexes on a not viewable item
+            # check if displaying annexes on a not viewable item using the linked items on an item
             # if not viewable annexes are actually displayed,
             # check that current user has access to a viewable linked item
             if (class_name == 'MeetingItem' and
@@ -1797,7 +1797,8 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
             if class_name == 'Meeting':
                 # if we have a SUFFIXPROFILEPREFIX prefixed group,
                 # check using "userIsAmong", this is only done for Meetings
-                if set(self.tool.get_plone_groups_for_user()).intersection(infos['visible_for_groups']):
+                if set(self.tool.get_plone_groups_for_user()).intersection(
+                        infos['visible_for_groups']):
                     return True
                 # build suffixes to pass to tool.userIsAmong
                 suffixes = []

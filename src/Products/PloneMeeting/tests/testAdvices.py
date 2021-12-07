@@ -3927,6 +3927,77 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(AddAnnex, item))
         self.assertFalse(self.hasPermission(AddAnnexDecision, item))
 
+    def test_pm_AdvicesIconsCaching(self):
+        """Test @@advices-icons caching."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates([self._stateMappingFor('itemcreated'), ])
+        cfg.setItemAdviceEditStates([self._stateMappingFor('itemcreated'), ])
+        cfg.setItemAdviceViewStates([self._stateMappingFor('itemcreated'), ])
+        cfg.setPowerAdvisersGroups((self.vendors_uid, ))
+        self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'), ))
+        cfg.setUseCopies(True)
+        cfg.setItemCopyGroupsStates((self._stateMappingFor('itemcreated'), ))
+        self._setPowerObserverStates(observer_type='restrictedpowerobservers',
+                                     states=('itemcreated', ))
+        cfg.setRestrictAccessToSecretItems(True)
+        self.assertTrue('restrictedpowerobservers' in cfg.getRestrictAccessToSecretItemsTo())
+
+        # create an item and ask the advice of group 'developers'
+        self.changeUser('pmCreator1')
+        data = {
+            'title': 'Item to advice',
+            'category': 'maintenance',
+            'optionalAdvisers': (self.developers_uid, ),
+            'copyGroups': (self.vendors_advisers, ),
+            'privacy': 'secret'
+        }
+        item = self.create('MeetingItem', **data)
+        # not able to add advice
+        advices_icons_content = "Not given yet"
+        add_advice_action = "++add++meetingadvice"
+        advices_icons = item.restrictedTraverse('@@advices-icons')
+        self.assertTrue(advices_icons_content in advices_icons())
+        self.assertFalse(add_advice_action in advices_icons())
+
+        # test for an adviser
+        self.changeUser('pmAdviser1')
+        advices_icons = item.restrictedTraverse('@@advices-icons')
+        self.assertTrue(advices_icons_content in advices_icons())
+        self.assertTrue(add_advice_action in advices_icons())
+
+        # reviewer
+        self.changeUser('pmReviewer1')
+        advices_icons = item.restrictedTraverse('@@advices-icons')
+        self.assertTrue(advices_icons_content in advices_icons())
+        self.assertFalse(add_advice_action in advices_icons())
+
+        # power adviser
+        self.changeUser('pmReviewer2')
+        advices_icons = item.restrictedTraverse('@@advices-icons')
+        self.assertTrue(advices_icons_content in advices_icons())
+        self.assertTrue(add_advice_action in advices_icons())
+
+        # when using restrictAccessToSecretItemsTo
+        self.changeUser('restrictedpowerobserver1')
+        advices_icons = item.restrictedTraverse('@@advices-icons')
+        self.assertFalse(advices_icons_content in advices_icons())
+        self.assertFalse(add_advice_action in advices_icons())
+
+        # MeetingManager
+        # make it no more adviser and power adviser
+        self._removePrincipalFromGroups('pmManager', [self.developers_advisers])
+        self._removePrincipalFromGroups('pmManager', [self.vendors_advisers])
+        self.changeUser('pmManager')
+        advices_icons = item.restrictedTraverse('@@advices-icons')
+        self.assertTrue(advices_icons_content in advices_icons())
+        self.assertFalse(add_advice_action in advices_icons())
+
+        # Manager
+        self.changeUser('siteadmin')
+        advices_icons = item.restrictedTraverse('@@advices-icons')
+        self.assertTrue(advices_icons_content in advices_icons())
+        self.assertFalse(add_advice_action in advices_icons())
+
 
 def test_suite():
     from unittest import makeSuite

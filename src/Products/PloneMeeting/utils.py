@@ -1667,6 +1667,7 @@ def updateAnnexesAccess(container):
             adapter.obj = aq_base(annex)
         v['visible_for_groups'] = adapter._visible_for_groups()
         v['allowedRolesAndUsers'] = adapter._allowedRolesAndUsers
+        v['last_updated'] = datetime.now()
 
 
 def validate_item_assembly_value(value):

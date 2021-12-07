@@ -67,7 +67,7 @@ class Discuss(BrowserView):
         src = "%s/%s" % (portal_url, filename)
 
         html = self.IMG_TEMPLATE % (src, title, name)
-        self.context._update_after_edit()
+        self.context._update_after_edit(idxs=['to_discuss'])
         return html
 
     def synchToggle(self, itemUid, discussAction):

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from collective.iconifiedcategory.utils import _modified
 from collective.messagesviewlet.utils import get_messages_to_show
 from DateTime import DateTime
 from imio.helpers.cache import get_cachekey_volatile
@@ -11,13 +12,6 @@ from zope.interface import implements
 from zope.interface import Interface
 
 import zlib
-
-
-def _modified(obj):
-    """Returns max value between obj.modified() and obj._p_mtime,
-       in case an annotation is changed on obj, obj._p_mtime is changed,
-       not obj.modified()."""
-    return str(max(int(obj.modified()), obj._p_mtime))
 
 
 class UserGroups(object):
@@ -55,7 +49,7 @@ class ContextModified(object):
 
     def __call__(self):
         context = getContext(self.published)
-        return 'cm_' + _modified(context)
+        return 'cm_' + str(_modified(context, asdatetime=False))
 
 
 class ParentModified(object):
@@ -77,7 +71,7 @@ class ParentModified(object):
         res = 'pm_0'
         if context.portal_type in tool.getAdvicePortalTypeIds():
             parent = context.aq_inner.aq_parent
-            res = 'pm_' + _modified(parent)
+            res = 'pm_' + str(_modified(parent, asdatetime=False))
         return res
 
 
@@ -99,7 +93,7 @@ class LinkedMeetingModified(object):
         if context.meta_type == 'MeetingItem':
             meeting = context.getMeeting()
             if meeting:
-                res = 'lm_' + _modified(meeting)
+                res = 'lm_' + str(_modified(meeting, asdatetime=False))
         elif context.portal_type == 'Folder':
             # in case this is a meeting folder
             # we return last Meeting modified when using MeetingConfig.redirectToNextMeeting
@@ -131,7 +125,7 @@ class ConfigModified(object):
         cfg = tool.getMeetingConfig(context)
         res = 'cfgm_0'
         if cfg:
-            res = 'cfgm_' + _modified(cfg)
+            res = 'cfgm_' + str(_modified(cfg, asdatetime=False))
         return res
 
 
@@ -149,7 +143,7 @@ class ToolModified(object):
 
     def __call__(self):
         tool = api.portal.get_tool('portal_plonemeeting')
-        return 'toolm_' + _modified(tool)
+        return 'toolm_' + str(_modified(tool, asdatetime=False))
 
 
 class MessagesViewlet(object):
@@ -167,4 +161,5 @@ class MessagesViewlet(object):
     def __call__(self):
         context = getContext(self.published)
         messages = get_messages_to_show(context)
-        return 'msgviewlet_' + '_'.join([_modified(msg) for msg in messages])
+        return 'msgviewlet_' + '_'.join([str(_modified(msg, asdatetime=False))
+                                         for msg in messages])

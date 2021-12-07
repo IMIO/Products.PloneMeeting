@@ -190,7 +190,7 @@ class PMOrganization(Organization):
         """Accessor so it can be called in a TAL expression."""
         res = self.groups_in_charge
         if res and the_objects:
-            res = uuidsToObjects(res, ordered=True)
+            res = uuidsToObjects(res, ordered=True, unrestricted=True)
         return res
 
     def get_full_title(self, separator=u' / ', first_index=0, force_separator=False):

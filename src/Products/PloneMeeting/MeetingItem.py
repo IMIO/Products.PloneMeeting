@@ -218,14 +218,13 @@ class MeetingItemWorkflowConditions(object):
         # or we are using the UI (actionspanel), in this case, we validate every transitions
         if destination_state == 'presented' or \
            'imio.actionspanel_portal_cachekey' in self.context.REQUEST:
-            usedItemAttrs = self.cfg.getUsedItemAttributes()
             if not self.cfg.getUseGroupsAsCategories() and \
                not self.context.getCategory(theObject=True):
                 msg = No(_('required_category_ko'))
-            elif 'classifier' in usedItemAttrs and not self.context.getClassifier():
+            elif self.context.attribute_is_used('classifier') and not self.context.getClassifier():
                 msg = No(_('required_classifier_ko'))
-            elif ('proposingGroupWithGroupInCharge' in usedItemAttrs or
-                  'groupsInCharge' in usedItemAttrs) and \
+            elif (self.context.attribute_is_used('proposingGroupWithGroupInCharge') or
+                  self.context.attribute_is_used('groupsInCharge')) and \
                     not self.context.getGroupsInCharge():
                 msg = No(_('required_groupsInCharge_ko'))
         return msg
@@ -3214,7 +3213,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             cfg = tool.getMeetingConfig(item)
             if not cfg.getRestrictAccessToSecretItems():
                 return True
-        return repr(item), item.modified(), get_current_user_id(), tool._users_groups_value()
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+        return repr(item), item.modified(), tool.get_plone_groups_for_user(), date
 
     security.declarePublic('isPrivacyViewable')
 
@@ -3248,13 +3249,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
 
         # check if current user is a power observer in MeetingConfig.restrictAccessToSecretItemsTo
-        isAPowerObserver = tool.isPowerObserverForCfg(cfg)
         restricted_power_obs = cfg.getRestrictAccessToSecretItemsTo()
         if restricted_power_obs and \
            tool.isPowerObserverForCfg(cfg, power_observer_types=restricted_power_obs):
             return False
+
         # a power observer not in restrictAccessToSecretItemsTo?
-        if isAPowerObserver:
+        if tool.isPowerObserverForCfg(cfg):
             return True
 
     def isViewable(self):
@@ -6455,10 +6456,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def at_post_edit_script(self):
         # update groupsInCharge before update_local_roles
-        self.update_groups_in_charge()
-        self.update_local_roles(invalidate=self.willInvalidateAdvices(),
-                                isCreated=False,
-                                avoid_reindex=True)
+        #self.update_groups_in_charge()
+        #self.update_local_roles(invalidate=self.willInvalidateAdvices(),
+        #                        isCreated=False,
+        #                        avoid_reindex=True)
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Add a line in history if historized fields have changed
