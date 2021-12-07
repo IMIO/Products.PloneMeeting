@@ -42,6 +42,10 @@ Changelog
     and may be used by `utils._addManagedPermissions`.
 
   [gbastien]
+- Added two parameters to `view.print_attendees_by_type` to improve formatting in documents.
+  `unbreakable_contact_value` to avoid line break in the middle of a person and `end_type_character`
+  to end a attendee type with a specific character.
+  [aduchene]
 
 4.2b21 (2021-11-26)
 -------------------
