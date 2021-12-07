@@ -2009,7 +2009,7 @@ class ItemAssociatedGroupsVocabulary(AssociatedGroupsVocabulary):
         missing_term_uids = [uid for uid in stored_terms
                              if uid not in term_uids]
         if missing_term_uids:
-            missing_terms = uuidsToObjects(missing_term_uids, ordered=False)
+            missing_terms = uuidsToObjects(missing_term_uids, ordered=False, unrestricted=True)
             for org in missing_terms:
                 org_uid = org.UID()
                 terms.append(SimpleTerm(org_uid, org_uid, org.get_full_title()))
@@ -2124,11 +2124,12 @@ class SelectableCommitteeAttendeesVocabulary(object):
         # add missing terms
         stored_term_uids = [row['default_attendees'] for row in cfg.getCommittees()]
         # merge lists and remove duplicates
+        orderedCommitteeContacts = cfg.getOrderedCommitteeContacts()
         stored_term_uids = set(list(itertools.chain.from_iterable(stored_term_uids)))
         missing_term_uids = [uid for uid in stored_term_uids
-                             if uid not in cfg.getOrderedCommitteeContacts()]
-        missing_terms = uuidsToObjects(missing_term_uids)
-        selectable_hps = uuidsToObjects(cfg.getOrderedCommitteeContacts(), ordered=True)
+                             if uid not in orderedCommitteeContacts]
+        missing_terms = uuidsToObjects(missing_term_uids, unrestricted=True)
+        selectable_hps = uuidsToObjects(orderedCommitteeContacts, ordered=True, unrestricted=True)
         for hp in selectable_hps + missing_terms:
             hp_uid = hp.UID()
             term = SimpleTerm(hp_uid, hp_uid, hp.get_short_title())

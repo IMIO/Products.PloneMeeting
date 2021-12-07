@@ -6456,10 +6456,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def at_post_edit_script(self):
         # update groupsInCharge before update_local_roles
-        #self.update_groups_in_charge()
-        #self.update_local_roles(invalidate=self.willInvalidateAdvices(),
-        #                        isCreated=False,
-        #                        avoid_reindex=True)
+        self.update_groups_in_charge()
+        self.update_local_roles(invalidate=self.willInvalidateAdvices(),
+                                isCreated=False,
+                                avoid_reindex=True)
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Add a line in history if historized fields have changed
