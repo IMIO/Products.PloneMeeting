@@ -814,7 +814,8 @@ def rememberPreviousData(obj, name=None):
        historized field (or only for p_name if explicitly given), the previous
        value. Result is a dict ~{s_fieldName: previousFieldValue}~'''
     res = {}
-    cfg = obj.portal_plonemeeting.getMeetingConfig(obj)
+    tool = api.portal.get_tool(TOOL_ID)
+    cfg = tool.getMeetingConfig(obj)
     # Do nothing if the object is not in a state when historization is enabled.
     if obj.query_state() not in cfg.getRecordItemHistoryStates():
         return res
@@ -851,7 +852,7 @@ def addDataChange(obj, previousData=None):
     if not previousData:
         return
     # Add an event in the history
-    userId = obj.portal_membership.getAuthenticatedMember().getId()
+    userId = get_current_user_id()
     event = {'action': '_datachange_', 'actor': userId, 'time': DateTime(),
              'comments': '', 'review_state': obj.query_state(),
              'changes': previousData}

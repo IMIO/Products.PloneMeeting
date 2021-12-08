@@ -5,6 +5,7 @@
 # GNU General Public License (GPL)
 #
 
+from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.eeafaceted.batchactions.utils import listify_uids
@@ -362,6 +363,25 @@ class testPerformances(PloneMeetingTestCase):
         ''' '''
         for time in range(times):
             get_organizations(not_empty_suffix='advisers', caching=caching)
+
+    def test_pm_get_organization_caching(self):
+        '''Test collective.contact.plonegroup.utils.get_organization caching.
+           Check if faster than using catalog unrestricted.'''
+        # test with 100 orgs
+        self._setupForOrgs(100)
+        pm_logger.info('get_organization called 1000 time with 100 activated orgs.')
+        # with caching=False
+        pm_logger.info('No caching.')
+        self._get_organization(times=1000, caching=False)
+        # with caching=True
+        pm_logger.info('Caching.')
+        self._get_organization(times=1000, caching=True)
+
+    @timecall
+    def _get_organization(self, times=1, caching=True):
+        ''' '''
+        for time in range(times):
+            get_organization(self.vendors_uid, caching=caching)
 
     def test_pm_SpeedGetMeetingConfig(self):
         '''Test ToolPloneMeeting.getMeetingConfig method performances.

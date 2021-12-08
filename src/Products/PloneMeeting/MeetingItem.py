@@ -6450,24 +6450,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # reindexObject is done in _processForm, then notify and
         # call to at_post_edit_script are done
         notifyModifiedAndReindex(self, extra_idxs=idxs, notify_event=True)
-        self.at_post_edit_script()
+        self.at_post_edit_script(full_edit_form=False)
 
     security.declarePrivate('at_post_edit_script')
 
-    def at_post_edit_script(self):
+    def at_post_edit_script(self, full_edit_form=True):
         # update groupsInCharge before update_local_roles
         self.update_groups_in_charge()
         self.update_local_roles(invalidate=self.willInvalidateAdvices(),
                                 isCreated=False,
                                 avoid_reindex=True)
-        # Apply potential transformations to richtext fields
-        transformAllRichTextFields(self)
-        # Add a line in history if historized fields have changed
-        addDataChange(self)
-        # Make sure we have 'text/html' for every Rich fields
-        forceHTMLContentTypeForEmptyRichFields(self)
-        # update committees if necessary
-        self.update_committees()
+        if full_edit_form:
+            # Apply potential transformations to richtext fields
+            transformAllRichTextFields(self)
+            # Add a line in history if historized fields have changed
+            addDataChange(self)
+            # Make sure we have 'text/html' for every Rich fields
+            forceHTMLContentTypeForEmptyRichFields(self)
+            # update committees if necessary
+            self.update_committees()
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
 

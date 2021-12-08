@@ -96,7 +96,7 @@ class Discuss(BrowserView):
             toDiscuss = not item.getToDiscuss()
             item.setToDiscuss(toDiscuss)
             item.adapted().onDiscussChanged(toDiscuss)
-        self.context._update_after_edit()
+        self.context._update_after_edit(idxs=['to_discuss'])
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
 
@@ -174,6 +174,7 @@ class TakenOverBy(BrowserView):
         # do not notifyModifiedAndReindex because an item may be taken over
         # when it is decided, by members of the proposingGroup
         # and in this case item must not be modified
+        # cache will be invalidated because we check for modified and _p_mtime
         self.context.reindexObject(idxs=['getTakenOverBy'])
         return html
 
@@ -216,7 +217,7 @@ class AdviceIsConfidential(BrowserView):
         portal_url = self.portal.absolute_url()
         src = "%s/%s" % (portal_url, filename)
         html = self.IMG_TEMPLATE % (src, title, name)
-        self.context._update_after_edit()
+        self.context._update_after_edit(idxs=[])
         return html
 
 
@@ -265,7 +266,7 @@ class BudgetRelated(BrowserView):
         # reload the page if current toggle did change adviceIndex
         # indeed, budgetRelated informations often impact automtic advices
         storedAdviceIndex = self.context.adviceIndex
-        self.context._update_after_edit()
+        self.context._update_after_edit(idxs=[])
         if not self.context.adviceIndex == storedAdviceIndex:
             # we set a status reponse of 500 so the jQuery calling this
             # will refresh the page

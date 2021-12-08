@@ -133,7 +133,7 @@ class ItemEmergencyChangeForm(form.Form):
                         'comments': data['comment']}
         self.context.emergency_changes_history.append(history_data)
         # update item
-        self.context._update_after_edit()
+        self.context._update_after_edit(idxs=[])
         plone_utils = api.portal.get_tool('plone_utils')
         plone_utils.addPortalMessage(_("Item emergency changed."))
         self.request.RESPONSE.redirect(self.context.absolute_url())
