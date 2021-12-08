@@ -34,6 +34,8 @@ from zope.i18n import translate
 from zope.interface import Invalid
 from zope.intid.interfaces import IIntIds
 from zope.lifecycleevent import ObjectModifiedEvent
+from zope.security.management import endInteraction
+from zope.security.management import newInteraction
 
 import os
 import Products.PloneMeeting
@@ -2324,6 +2326,22 @@ class testContacts(PloneMeetingTestCase):
         # still on item1, no more on item2
         self.assertEqual(meeting.get_attendee_position_for(item1_uid, hp1_uid), u"dg")
         self.assertEqual(meeting.get_attendee_position_for(item2_uid, hp1_uid), u"default")
+
+    def test_pm_HeldPositionDefaultPosition(self):
+        """When adding a held_position, the default position is set to the own organization."""
+        self.changeUser('admin')
+        person = self.portal.contacts.get('person1')
+        own_org = self.portal.contacts.get(PLONEGROUP_ORG)
+        add_view = person.restrictedTraverse('++add++held_position')
+        add_view.ti = self.portal.portal_types.held_position
+        self.request['PUBLISHED'] = add_view
+        add_form_instance = add_view.form_instance
+        # necessary for z3c.formwidget.query widget initialization...
+        newInteraction()
+        add_form_instance.update()
+        widget = add_form_instance.groups[0].widgets["position"]
+        self.assertEqual(widget.value, ["/".join(own_org.getPhysicalPath())])
+        endInteraction()
 
 
 def test_suite():
