@@ -129,7 +129,8 @@ class PMCategorizedChildView(CategorizedChildView):
 
     def __call___cachekey(method, self, portal_type=None, show_nothing=False, check_can_view=False):
         '''cachekey method for self.__call__.'''
-        if not _categorized_elements(self.context):
+        categorized_elements = _categorized_elements(self.context)
+        if not categorized_elements:
             return []
         # value of the annexes faceted filter
         filters = self._filters
@@ -142,7 +143,9 @@ class PMCategorizedChildView(CategorizedChildView):
         server_url = self.request.get('SERVER_URL', None)
         # use "last_updated" to know when categorized_elements was last updated...
         last_updated = max(
-            [info['last_updated'] for info in self.context.categorized_elements.values()])
+            [info['last_updated'] for info in categorized_elements.values()])
+        # this is necessary in case an annex is removed
+        len_annexes = len(categorized_elements)
         cfg_modified = cfg.modified()
         # check confidential annexes if not MeetingManager
         isManager = tool.isManager(cfg)
@@ -157,6 +160,7 @@ class PMCategorizedChildView(CategorizedChildView):
                     confidential_annexes[0]["visible_for_groups"])
         return (repr(self.context),
                 last_updated,
+                len_annexes,
                 cfg_modified,
                 server_url,
                 may_view_confidential_annexes,
