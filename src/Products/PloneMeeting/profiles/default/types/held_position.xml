@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <object name="held_position" meta_type="Dexterity FTI" i18n:domain="collective.contact.core"
    xmlns:i18n="http://xml.zope.org/namespaces/i18n">
- <property name="add_view_expr">string:${folder_url}/++add++held_position?form.widgets.position=/${portal/id}/contacts/plonegroup-organization</property>
+ <!-- XXX "add_view_expr" to be removed in PM 4.3, this is setting back default value -->
+ <property name="add_view_expr">string:${folder_url}/++add++held_position</property>
  <property name="klass">Products.PloneMeeting.content.held_position.PMHeldPosition</property>
  <property name="schema_policy">schema_policy_pm_held_position</property>
 </object>
