@@ -42,6 +42,11 @@ Changelog
     and may be used by `utils._addManagedPermissions`.
 
   [gbastien]
+- Fixed default value of `held_position.position` that was not working when
+  using a mount point, use a `@form.default_value` (set to own organization)
+  instead passing the default values in the URL when adding a new element
+  (`++add++held_position?form.widgets.position=...`).
+  [gbastien]
 
 4.2b21 (2021-11-26)
 -------------------
