@@ -1474,7 +1474,8 @@ class testAnnexes(PloneMeetingTestCase):
         _check_parent_modified(meeting, parent_modified, annex)
 
     def test_pm_AnnexesCategorizedChildsCaching(self):
-        """The icon displayed in various place with number of annexes is cached."""
+        """The icon displayed in various place with number of annexes is cached.
+           Check classic behavior for creator to add, remove, edit annex."""
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         # cache is invalidated upon any change on annex create/delete/edit/change attr
@@ -1493,6 +1494,49 @@ class testAnnexes(PloneMeetingTestCase):
         self.deleteAsManager(annex2.UID())
         no_annex_left_rendered = view()
         self.assertEqual(no_annex_left_rendered, no_annex_rendered)
+
+    def test_pm_ConfidentialAnnexesCategorizedChildsCaching(self):
+        """The icon displayed in various place with number of annexes is cached.
+           It works with confidentiality."""
+        cfg = self.meetingConfig
+        cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
+        item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
+        # make pmCreator1 able to change annex confidentiality
+        cfg.setAnnexRestrictShownAndEditableAttributes(())
+        # confidential annexes are visible by pg creators
+        cfg.setItemAnnexConfidentialVisibleFor(('suffix_proposing_group_creators', ))
+        # setup item and annexes
+        item_initial_state, item, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes(
+                powerObserverStates=(item_initial_state, ))
+        # the view to change confidentiality
+        confidential_action = annexConfidential.restrictedTraverse('@@iconified-confidential')
+        confidential_action.attribute_mapping = {'confidential': 'confidential'}
+
+        # creators may see confidential annexes
+        view = item.restrictedTraverse('@@categorized-childs')
+        one_annex = "<span>1</span>"
+        two_annexes = "<span>2</span>"
+        self.assertTrue(two_annexes in view())
+
+        # as gp reviewer, one annex
+        self.changeUser("pmReviewer1")
+        self.assertTrue(one_annex in view())
+
+        # as restrictedpowerobserver, one annex
+        self.changeUser("restrictedpowerobserver1")
+        self.assertTrue(one_annex in view())
+
+        # make confidential annex no more confidential
+        self.changeUser("pmCreator1")
+        confidential_action()
+        self.assertTrue(two_annexes in view())
+
+        # now everyone see every annexes
+        self.changeUser("pmReviewer1")
+        self.assertTrue(two_annexes in view())
+        self.changeUser("restrictedpowerobserver1")
+        self.assertTrue(two_annexes in view())
 
     def test_pm_AddingAnnexesDoesNotCreateWrongCatalogPaths(self):
         """A bug due to reindeing parent when annex added was adding
