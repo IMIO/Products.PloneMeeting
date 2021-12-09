@@ -184,8 +184,9 @@ class ItemProposingGroupsVocabulary(object):
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
+        # this volatile is invalidated when plonegroup config changed
         date = get_cachekey_volatile(
-            'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary')
+            'Products.PloneMeeting.vocabularies._users_groups_value')
         return date
 
     @ram.cache(__call___cachekey)
@@ -229,8 +230,9 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
+        # this volatile is invalidated when plonegroup config changed
         date = get_cachekey_volatile(
-            'Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary')
+            'Products.PloneMeeting.vocabularies._users_groups_value')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         return date, repr(cfg)
@@ -422,9 +424,9 @@ EveryOrganizationsAcronymsVocabularyFactory = EveryOrganizationsAcronymsVocabula
 class PMSortedSelectedOrganizationsElephantVocabulary(SortedSelectedOrganizationsElephantVocabulary):
     """Vocabulary returning org objects, to be used with RelationList fields."""
 
-    #def _term_value(self, orga):
-    #    """RelationList vocabulary must be objects."""
-    #    return orga
+    # def _term_value(self, orga):
+    #     """RelationList vocabulary must be objects."""
+    #     return orga
 
     def __call__(self, context):
         """Does not work with ElephantVocabulary when used as vocabulary
@@ -1967,8 +1969,9 @@ class AssociatedGroupsVocabulary(object):
 
     def __call___cachekey(method, self, context, sort=True):
         '''cachekey method for self.__call__.'''
+        # this volatile is invalidated when plonegroup config changed
         date = get_cachekey_volatile(
-            'Products.PloneMeeting.vocabularies.associatedgroupsvocabulary')
+            'Products.PloneMeeting.vocabularies._users_groups_value')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         return date, sort, repr(cfg)
@@ -2042,7 +2045,9 @@ class CopyGroupsVocabulary(object):
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.copygroupsvocabulary')
+        # this volatile is invalidated when plonegroup config changed
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.vocabularies._users_groups_value')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         return date, repr(cfg)

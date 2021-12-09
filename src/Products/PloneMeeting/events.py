@@ -255,17 +255,9 @@ def onConfigBeforeTransition(config, event):
 def _invalidateOrgRelatedCachedVocabularies():
     '''Clean cache for vocabularies using organizations.'''
     invalidate_cachekey_volatile_for(
-        "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary", get_again=True)
-    invalidate_cachekey_volatile_for(
-        "Products.PloneMeeting.vocabularies.associatedgroupsvocabulary", get_again=True)
-    invalidate_cachekey_volatile_for(
-        "Products.PloneMeeting.vocabularies.copygroupsvocabulary", get_again=True)
-    invalidate_cachekey_volatile_for(
         "Products.PloneMeeting.vocabularies.everyorganizationsvocabulary", get_again=True)
     invalidate_cachekey_volatile_for(
         "Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary", get_again=True)
-    invalidate_cachekey_volatile_for(
-        "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary", get_again=True)
     invalidate_cachekey_volatile_for(
         "Products.PloneMeeting.vocabularies.groupsinchargevocabulary", get_again=True)
     invalidate_cachekey_volatile_for(
