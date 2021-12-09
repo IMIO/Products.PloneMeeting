@@ -4422,7 +4422,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                      fieldName,
                      bypassWritePermissionCheck=False,
                      onlyForManagers=False,
-                     bypassMeetingClosedCheck=False):
+                     bypassMeetingClosedCheck=False,
+                     raiseOnError=False):
         '''Check if the current p_fieldName can be quick edited thru the meetingitem_view.
            By default, an item can be quickedited if the field condition is True (field is used,
            current user is Manager, current item is linekd to a meeting) and if the meeting
@@ -4432,13 +4433,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            If p_bypassMeetingClosedCheck is True, we will not check if meeting is closed but
            only for permission and condition.'''
         field = self.Schema()[fieldName]
-        return checkMayQuickEdit(
+        res = checkMayQuickEdit(
             self,
             bypassWritePermissionCheck=bypassWritePermissionCheck,
             permission=field.write_permission,
             expression=self.Schema()[fieldName].widget.condition,
             onlyForManagers=onlyForManagers,
             bypassMeetingClosedCheck=bypassMeetingClosedCheck)
+        if not res and raiseOnError:
+            raise Unauthorized
+        return res
 
     def mayQuickEditItemAssembly(self):
         """Show edit icon if itemAssembly or itemAssemblyGuests field editable."""
