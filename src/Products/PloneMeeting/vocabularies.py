@@ -422,16 +422,32 @@ EveryOrganizationsAcronymsVocabularyFactory = EveryOrganizationsAcronymsVocabula
 class PMSortedSelectedOrganizationsElephantVocabulary(SortedSelectedOrganizationsElephantVocabulary):
     """Vocabulary returning org objects, to be used with RelationList fields."""
 
-    def _term_value(self, orga):
-        """RelationList vocabulary must be objects."""
-        return orga
+    #def _term_value(self, orga):
+    #    """RelationList vocabulary must be objects."""
+    #    return orga
 
     def __call__(self, context):
         """Does not work with ElephantVocabulary when used as vocabulary
            for a RelationList field, so unwrap it."""
-        wrapped_vocab = super(PMSortedSelectedOrganizationsElephantVocabulary, self).__call__(
-            context)
-        return wrapped_vocab.vocab
+
+        # caching
+        key = "PloneMeeting-vocabularies-PMSortedSelectedOrganizationsElephantVocabulary"
+        cache = IAnnotations(context.REQUEST)
+        vocab = cache.get(key, None)
+        if vocab is None:
+            wrapped_vocab = super(PMSortedSelectedOrganizationsElephantVocabulary, self).__call__(
+                context)
+            vocab = wrapped_vocab.vocab
+            # term values need to be an object but can not be ram.cached...
+            uids = [term.value for term in vocab._terms]
+            objs = uuidsToObjects(uids, ordered=True, unrestricted=True)
+            # build a new vocab to avoid changing value of original terms
+            terms = []
+            for term, obj in itertools.izip(vocab._terms, objs):
+                terms.append(SimpleTerm(obj, term.token, term.title))
+            vocab = SimpleVocabulary(terms)
+            cache[key] = vocab
+        return vocab
 
 
 PMSortedSelectedOrganizationsElephantVocabularyFactory = PMSortedSelectedOrganizationsElephantVocabulary()
