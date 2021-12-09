@@ -6430,6 +6430,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # WARNING, we do things the same order processForm do it
         # reindexObject is done in _processForm, then notify and
         # call to at_post_edit_script are done
+        # moreover, warn when called with idxs=['*']
+        if idxs == ['*']:
+            logger.warn("MeetingItem._update_after_edit was called with "
+                        "idxs=['*'], make sure this is correct!")
         notifyModifiedAndReindex(self, extra_idxs=idxs, notify_event=True)
         self.at_post_edit_script(full_edit_form=False)
 

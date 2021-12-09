@@ -6226,7 +6226,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # test using at_post_edit_script, aka full edit form
         decision = '<p>Working external image <img src="%s"/>.</p>' % self.external_image3
         item.setDecision(decision)
-        item._update_after_edit()
+        item.at_post_edit_script()
         self.assertTrue('1035-600x400.jpg' in item.objectIds())
         img3 = item.get('1035-600x400.jpg')
         # external image link was updated
@@ -6238,7 +6238,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # that has a link to an unexisting image or so
         decision = '<p>Not working external image <img src="https://i.picsum.photos/id/449/400.png">.</p>'
         item.setDecision(decision)
-        item._update_after_edit()
+        item.at_post_edit_script()
         self.assertTrue('1035-600x400.jpg' in item.objectIds())
         # nothing was done
         self.assertListEqual(
@@ -6272,7 +6272,7 @@ class testMeetingItem(PloneMeetingTestCase):
             'resolveuid/{0}'.format(img2.UID()))
         item.setDescription(text)
         self.assertEqual(item.objectIds(), ['dot.gif', 'dot2.gif'])
-        item._update_after_edit()
+        item.at_post_edit_script()
         # we have images saved locally
         self.assertEqual(sorted(item.objectIds()), ['1025-400x300.jpg', 'dot.gif', 'dot2.gif'])
 
