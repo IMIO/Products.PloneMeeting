@@ -262,6 +262,9 @@ def _invalidateOrgRelatedCachedVocabularies():
         "Products.PloneMeeting.vocabularies.groupsinchargevocabulary", get_again=True)
     invalidate_cachekey_volatile_for(
         "Products.PloneMeeting.vocabularies.askedadvicesvocabulary", get_again=True)
+    # also invalidated here, called from organization._invalidateCachedMethods
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.ToolPloneMeeting._users_groups_value', get_again=True)
 
 
 def _invalidateUsersAndGroupsRelatedCachedVocabularies():

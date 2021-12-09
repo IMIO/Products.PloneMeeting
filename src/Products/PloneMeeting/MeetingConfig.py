@@ -6421,7 +6421,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getItemAdviceStatesForOrg_cachekey(method, self, org_uid=None):
         '''cachekey method for self.getItemAdviceStatesForOrg.'''
-        return (repr(self), org_uid)
+        # this volatile is invalidated when an organization changed
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+        return repr(self), org_uid, date
 
     security.declarePublic('getItemAdviceStates')
 
@@ -7534,6 +7537,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             used_attrs = self.getUsedItemAttributes()
         res = tool.isManager(self) and name in used_attrs
         return res
+
+    def get_orgs_with_as_copy_group_on_expression_cachekey(method, self):
+        '''cachekey method for self.get_orgs_with_as_copy_group_on_expression.
+           MeetingConfig.modified is updated when an organization added/removed/edited.'''
+        # this volatile is invalidated when an organization changed
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+        return repr(self), self.modified(), date
+
+    @ram.cache(get_orgs_with_as_copy_group_on_expression_cachekey)
+    def get_orgs_with_as_copy_group_on_expression(self):
+        """Returns a dict with organizations having a as_copy_group_on TAL expression."""
+        orgs = self.getUsingGroups(theObjects=True)
+        # keep order as new and old item local_roles are compared
+        # to check if other updates must be done
+        data = OrderedDict()
+        for org in orgs:
+            expr = org.as_copy_group_on
+            if not expr or not expr.strip():
+                continue
+            data[org.UID()] = expr
+        return data
 
 
 registerType(MeetingConfig, PROJECTNAME)

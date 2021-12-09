@@ -1898,6 +1898,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # not in the meetingConfig.selectableCopyGroups
         self.developers.as_copy_group_on = "python: item.getProposingGroup() == " \
             "pm_utils.org_id_to_uid('vendors') and ['reviewers', 'advisers', ] or []"
+        notify(ObjectModifiedEvent(self.developers))
         self.changeUser('pmManager')
         # Creating an item with the default proposingGroup ('developers') does nothing
         i3 = self.create('MeetingItem')
@@ -1925,6 +1926,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # addAutoCopyGroups is triggered upon each edit (at_post_edit_script)
         self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
             "pm_utils.org_id_to_uid('vendors') and ['reviewers', ] or []"
+        notify(ObjectModifiedEvent(self.vendors))
         # edit the item, 'vendors_reviewers' should be in the copyGroups of the item
         i5._update_after_edit()
         self.failIf(i5.getCopyGroups())
@@ -1939,6 +1941,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # when removed from the config, while updating every items,
         # copyGroups are updated correctly
         self.vendors.as_copy_group_on = None
+        notify(ObjectModifiedEvent(self.vendors))
         self.changeUser('siteadmin')
         self.tool.update_all_local_roles()
         self.assertEqual(i5.autoCopyGroups,
@@ -1950,6 +1953,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__[self.developers_advisers])
         # if a wrong TAL expression is used, it does not break anything upon item at_post_edit_script
         self.vendors.as_copy_group_on = u"python: item.someUnexistingMethod()"
+        notify(ObjectModifiedEvent(self.vendors))
         i5._update_after_edit()
         self.assertEqual(i5.autoCopyGroups,
                          ['auto__{0}'.format(self.developers_reviewers),
@@ -1979,6 +1983,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # is only True on item creation
         self.vendors.as_copy_group_on = "python: (isCreated and item.getProposingGroup() == " \
             "pm_utils.org_id_to_uid('developers')) and ['reviewers', ] or []"
+        notify(ObjectModifiedEvent(self.vendors))
         item2 = self.create('MeetingItem')
         self.assertEqual(item2.autoCopyGroups, [auto_vendors_reviewers])
         # now unselect it and call at_post_edit_script again
@@ -2006,29 +2011,36 @@ class testMeetingItem(PloneMeetingTestCase):
         # set a correct expression so vendors is set as copy group
         self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
             "pm_utils.org_id_to_uid('developers') and ['reviewers', ] or []"
+        notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
         auto_vendors_reviewers = 'auto__{0}'.format(self.vendors_reviewers)
         self.assertEqual(item.autoCopyGroups, [auto_vendors_reviewers])
         # with a wrong TAL expression (syntax or content) it does not break
         self.vendors.as_copy_group_on = "python: item.someUnexistingMethod()"
+        notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
         # no matter the expression is wrong now, when a group is added in copy, it is left
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         self.vendors.as_copy_group_on = "python: some syntax error"
+        notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
         # no more there
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         # if it is a right TAL expression but that does not returns usable sufixes, it does not break neither
         self.vendors.as_copy_group_on = "python: item.getId() and True or True"
+        notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         self.vendors.as_copy_group_on = "python: item.getId() and 'some_wrong_string' or 'some_wrong_string'"
+        notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         self.vendors.as_copy_group_on = "python: item.getId()"
+        notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         self.vendors.as_copy_group_on = "python: 123"
+        notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
 
@@ -2047,7 +2059,7 @@ class testMeetingItem(PloneMeetingTestCase):
                          (self.developers_reviewers, ))
         self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
             "pm_utils.org_id_to_uid('developers') and ['reviewers', ] or []"
-        self.cleanMemoize()
+        notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
         auto_vendors_reviewers = 'auto__{0}'.format(self.vendors_reviewers)
         self.assertEqual(item.getAllCopyGroups(),
@@ -3563,6 +3575,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # test with autoCopyGroups and the include_auto=False parameter
         self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
             "pm_utils.org_id_to_uid('developers') and ['observers', 'advisers', ] or []"
+        notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
         self.assertEqual(item.autoCopyGroups, ['auto__{0}'.format(self.vendors_observers),
                                                'auto__{0}'.format(self.vendors_advisers)])

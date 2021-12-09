@@ -526,7 +526,6 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                                'meeting-config-getcategories-',
                                'meeting-config-gettopics-',
                                'plonegroup-utils-get_organizations-',
-                               'add_auto_copy_groups_search_for_expression__',
                                'PloneMeeting-MeetingConfig-getMeetingsAcceptingItems'])
 
     def _removeOrganizations(self):

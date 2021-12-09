@@ -486,7 +486,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         if not self._check_wfa_available(['waiting_advices']):
             return
 
-        waiting_advices_proposed_state = '{0}_waiting_advices'.format(self._stateMappingFor('proposed'))
+        waiting_advices_proposed_state = '{0}_waiting_advices'.format(
+            self._stateMappingFor('proposed'))
         self.vendors.item_advice_states = ("{0}__state__{1}".format(
             cfg.getId(), waiting_advices_proposed_state),)
         # clean MeetingConfig.getItemAdviceStatesForOrg

@@ -328,7 +328,6 @@ class PMOrganization(Organization):
     def _invalidateCachedMethods(self):
         '''Clean cache for various methods using organizations.'''
         _invalidateOrgRelatedCachedVocabularies()
-        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getItemAdviceStatesForOrg')
 
 
 class PMOrganizationSchemaPolicy(DexteritySchemaPolicy):
