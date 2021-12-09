@@ -1752,16 +1752,17 @@ class BaseHeldPositionsVocabulary(object):
         pattern, review_state
 
     @ram.cache(__call___cachekey)
-    def __call__(self,
-                 context,
-                 usage=None,
-                 uids=[],
-                 highlight_missing=False,
-                 include_usages=True,
-                 include_defaults=True,
-                 include_signature_number=True,
-                 pattern=u"{0}",
-                 review_state=['active']):
+    def BaseHeldPositionsVocabulary__call__(
+            self,
+            context,
+            usage=None,
+            uids=[],
+            highlight_missing=False,
+            include_usages=True,
+            include_defaults=True,
+            include_signature_number=True,
+            pattern=u"{0}",
+            review_state=['active']):
         catalog = api.portal.get_tool('portal_catalog')
         query = {'portal_type': 'held_position',
                  'sort_on': 'sortable_title'}
@@ -1804,6 +1805,9 @@ class BaseHeldPositionsVocabulary(object):
                                 forced_position_type_value=forced_position_type_value))))
         return SimpleVocabulary(res)
 
+    # do ram.cache have a different key name
+    __call__ = BaseHeldPositionsVocabulary__call__
+
 
 class SelectableHeldPositionsVocabulary(BaseHeldPositionsVocabulary):
     """ """
@@ -1816,20 +1820,39 @@ class SelectableHeldPositionsVocabulary(BaseHeldPositionsVocabulary):
 SelectableHeldPositionsVocabularyFactory = SelectableHeldPositionsVocabulary()
 
 
-class SimplifiedSelectableHeldPositionsVocabulary(BaseHeldPositionsVocabulary):
+class BaseSimplifiedHeldPositionsVocabulary(BaseHeldPositionsVocabulary):
     """ """
 
     def __call__(self, context, usage=None, uids=[]):
-        res = super(SimplifiedSelectableHeldPositionsVocabulary, self).__call__(
+        res = super(BaseSimplifiedHeldPositionsVocabulary, self).__call__(
             context,
             usage=None,
+            uids=uids,
             include_usages=False,
             include_defaults=False,
             include_signature_number=False)
         return res
 
 
-SimplifiedSelectableHeldPositionsVocabularyFactory = SimplifiedSelectableHeldPositionsVocabulary()
+BaseSimplifiedHeldPositionsVocabularyFactory = BaseSimplifiedHeldPositionsVocabulary()
+
+
+class SelectableCommitteeAttendeesVocabulary(BaseSimplifiedHeldPositionsVocabulary):
+    """ """
+
+    def __call__(self, context):
+        # as vocabulary is used in a DataGridField
+        # context is often NO_VALUE...
+        if not hasattr(context, "getTagName"):
+            context = get_context_with_request(context)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        return super(SelectableCommitteeAttendeesVocabulary, self).__call__(
+            context=context,
+            uids=cfg.getOrderedCommitteeContacts())
+
+
+SelectableCommitteeAttendeesVocabularyFactory = SelectableCommitteeAttendeesVocabulary()
 
 
 class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
@@ -2120,45 +2143,6 @@ class ItemCopyGroupsVocabulary(CopyGroupsVocabulary):
 
 
 ItemCopyGroupsVocabularyFactory = ItemCopyGroupsVocabulary()
-
-
-class SelectableCommitteeAttendeesVocabulary(object):
-    """ """
-
-    implements(IVocabularyFactory)
-
-    def __call___cachekey(method, self, context):
-        '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile(
-            'Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary')
-        return date, repr(context)
-
-    @ram.cache(__call___cachekey)
-    def __call__(self, context):
-        terms = []
-        # as vocabulary is used in a DataGridField
-        # context is often NO_VALUE...
-        if not hasattr(context, "getTagName"):
-            context = get_context_with_request(context)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(context)
-        # add missing terms
-        stored_term_uids = [row['default_attendees'] for row in cfg.getCommittees()]
-        # merge lists and remove duplicates
-        orderedCommitteeContacts = cfg.getOrderedCommitteeContacts()
-        stored_term_uids = set(list(itertools.chain.from_iterable(stored_term_uids)))
-        missing_term_uids = [uid for uid in stored_term_uids
-                             if uid not in orderedCommitteeContacts]
-        missing_terms = uuidsToObjects(missing_term_uids, unrestricted=True)
-        selectable_hps = uuidsToObjects(orderedCommitteeContacts, ordered=True, unrestricted=True)
-        for hp in selectable_hps + missing_terms:
-            hp_uid = hp.UID()
-            term = SimpleTerm(hp_uid, hp_uid, hp.get_short_title())
-            terms.append(term)
-        return SimpleVocabulary(terms)
-
-
-SelectableCommitteeAttendeesVocabularyFactory = SelectableCommitteeAttendeesVocabulary()
 
 
 class SelectableCommitteesVocabulary(object):

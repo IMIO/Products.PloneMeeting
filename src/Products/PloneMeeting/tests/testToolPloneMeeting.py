@@ -733,9 +733,10 @@ class testToolPloneMeeting(PloneMeetingTestCase):
     def test_pm_UpdateCopyGroups(self):
         """Test the update_all_local_roles method that update every items when configuration changed.
            First set copy groups may view items in state 'itemcreated' then change to 'proposed'."""
-        self.meetingConfig.setSelectableCopyGroups((self.developers_reviewers, self.vendors_reviewers))
-        self.meetingConfig.setUseCopies(True)
-        self.meetingConfig.setItemCopyGroupsStates(('itemcreated', ))
+        cfg = self.meetingConfig
+        cfg.setSelectableCopyGroups((self.developers_reviewers, self.vendors_reviewers))
+        cfg.setUseCopies(True)
+        cfg.setItemCopyGroupsStates(('itemcreated', ))
         # only available to 'Managers'
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'update_all_local_roles')
@@ -751,7 +752,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         # change configuration, update_all_local_roles then check again
         self.changeUser('siteadmin')
-        self.meetingConfig.setItemCopyGroupsStates((self._stateMappingFor('proposed'), ))
+        cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), ))
         self.tool.restrictedTraverse('update_all_local_roles')()
         self.assertFalse(self.vendors_reviewers in item1.__ac_local_roles__)
         self.assertTrue(self.vendors_reviewers in item2.__ac_local_roles__)

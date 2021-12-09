@@ -226,14 +226,14 @@
     <browser:page
       for="Products.PloneMeeting.content.meeting.IMeeting"
       name="meeting_view"
-      class="Products.PloneMeeting.browser.meeting.MeetingView"
+      class="Products.PloneMeeting.browser.meeting.MeetingFacetedView"
       template="templates/meeting_view.pt"
       permission="zope2.View" />
     <browser:page
       for="Products.PloneMeeting.content.meeting.IMeeting"
       name="meeting_available_items_view"
       template="templates/meeting_available_items_view.pt"
-      class=".meeting.MeetingView"
+      class=".meeting.MeetingFacetedAvailableItemsView"
       permission="zope2.View" />
     <browser:page
       for="Products.PloneMeeting.content.meeting.IMeeting"

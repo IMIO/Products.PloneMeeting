@@ -2477,7 +2477,7 @@ schema = Schema((
         ),
         schemata="committees",
         multiValued=1,
-        vocabulary_factory='Products.PloneMeeting.vocabularies.simplified_selectable_heldpositions_vocabulary',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.every_heldpositions_vocabulary',
         default=defValues.orderedCommitteeContacts,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",

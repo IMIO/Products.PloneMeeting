@@ -424,15 +424,22 @@ class MeetingAdd(DefaultAddView):
     form = MeetingAddForm
 
 
-class MeetingView(FacetedContainerView):
-    """ """
+class BaseMeetingFacetedView(FacetedContainerView):
 
     def __init__(self, context, request):
         """ """
-        super(MeetingView, self).__init__(context, request)
+        super(BaseMeetingFacetedView, self).__init__(context, request)
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self._canonical = '<NOT SET>'
+
+
+class MeetingFacetedAvailableItemsView(BaseMeetingFacetedView):
+    """ """
+
+
+class MeetingFacetedView(BaseMeetingFacetedView):
+    """ """
 
     def _init(self):
         """ """
@@ -447,7 +454,7 @@ class MeetingView(FacetedContainerView):
     def __call__(self):
         """ """
         self._init()
-        return super(MeetingView, self).__call__()
+        return super(MeetingFacetedView, self).__call__()
 
     def show_page(self):
         """Display page to current user?"""
