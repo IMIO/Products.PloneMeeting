@@ -802,11 +802,11 @@ class ItemOptionalAdvicesVocabulary(object):
                 resDelayAwareAdvisers, adviserId, value_to_display)
 
         resNonDelayAwareAdvisers = []
-        selectableAdvisers = cfg.getSelectableAdvisers()
-        for org_uid in selectableAdvisers:
-            org = get_organization(org_uid)
+        selectableAdviserOrgs = uuidsToObjects(
+            cfg.getSelectableAdvisers(), ordered=True, unrestricted=True)
+        for org in selectableAdviserOrgs:
             _insert_term_and_users(
-                resNonDelayAwareAdvisers, org_uid, org.get_full_title())
+                resNonDelayAwareAdvisers, org.UID(), org.get_full_title())
 
         # make sure optionalAdvisers actually stored have their corresponding
         # term in the vocabulary, if not, add it

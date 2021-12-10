@@ -12,7 +12,6 @@ from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
-from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group_id
 from copy import deepcopy
 from datetime import datetime
@@ -6486,11 +6485,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         return item.getProposingGroup(theObject=theObject)
 
-    def _getAllGroupsManagingItem(self):
+    def _getAllGroupsManagingItem(self, theObjects=False):
         '''See doc in interfaces.py.'''
         res = []
         item = self.getSelf()
-        proposingGroup = item.getProposingGroup(True)
+        proposingGroup = item.getProposingGroup(theObject=theObjects)
         if proposingGroup:
             res.append(proposingGroup)
         return res
@@ -6507,17 +6506,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            For unknown states, method _get_corresponding_state_to_assign_local_roles
            will be used to determinate a known configuration to take into ccount"""
         # Add the local roles corresponding to the group managing the item
-        org = self.adapted()._getGroupManagingItem(item_state, theObject=True)
+        org_uid = self.adapted()._getGroupManagingItem(item_state, theObject=False)
         # in some case like ItemTemplate, we have no proposing group
-        if not org:
+        if not org_uid:
             return
         apply_meetingmanagers_access, suffix_roles = compute_item_roles_to_assign_to_suffixes(
-            cfg, item_state, org)
+            cfg, item_state, org_uid)
 
         # apply local roles to computed suffixes
         for suffix, roles in suffix_roles.items():
             # suffix_roles keep only existing suffixes
-            plone_group_id = get_plone_group_id(org.UID(), suffix)
+            plone_group_id = get_plone_group_id(org_uid, suffix)
             self.manage_addLocalRoles(plone_group_id, tuple(roles))
 
         # MeetingManagers get access if item at least validated or decided
@@ -6671,9 +6670,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Get the current groupsInCharge and give View access to the _observers Plone group.'''
         if item_state not in cfg.getItemGroupsInChargeStates():
             return
-        groupsInCharge = self.getGroupsInCharge(theObjects=True, includeAuto=True)
-        for groupInCharge in groupsInCharge:
-            observersPloneGroupId = get_plone_group_id(groupInCharge.UID(), 'observers')
+        groupsInChargeUids = self.getGroupsInCharge(theObjects=False, includeAuto=True)
+        for groupInChargeUid in groupsInChargeUids:
+            observersPloneGroupId = get_plone_group_id(groupInChargeUid, 'observers')
             self.manage_addLocalRoles(observersPloneGroupId, (READER_USECASES['groupsincharge'],))
 
     def _versionateAdvicesOnItemEdit(self):
@@ -7526,7 +7525,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         if not proposingGroup or \
-           self.getProposingGroup() in tool.get_orgs_for_user() or \
+           proposingGroup in tool.get_orgs_for_user() or \
            tool.isManager(cfg):
             res = True
         return res

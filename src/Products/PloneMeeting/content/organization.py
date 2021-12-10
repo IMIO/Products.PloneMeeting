@@ -10,7 +10,6 @@ from collective.z3cform.datagridfield import DictRow
 from datetime import date
 from datetime import datetime
 from DateTime import DateTime
-from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import get_back_relations
 from imio.helpers.content import uuidsToObjects
 from plone.autoform import directives as form

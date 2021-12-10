@@ -1847,7 +1847,7 @@ def duplicate_portal_type(portalTypeName, duplicatedPortalTypeId):
     return duplicatedPortalType
 
 
-def get_item_validation_wf_suffixes(cfg, org=None, only_enabled=True):
+def get_item_validation_wf_suffixes(cfg, org_uid=None, only_enabled=True):
     """Returns suffixes related to MeetingItem validation WF,
        so the 'creators', 'observers' and suffixes managed by
        MeetingConfig.itemWFValidationLevels.
@@ -1862,20 +1862,20 @@ def get_item_validation_wf_suffixes(cfg, org=None, only_enabled=True):
     config_suffixes = [config_suffix] + list(config_extra_suffixes)
     config_suffixes = list(itertools.chain.from_iterable(config_suffixes))
     suffixes = base_suffixes + config_suffixes
-    if org:
+    if org_uid:
         # only return suffixes that are available for p_org
-        available_suffixes = set(get_all_suffixes(org.UID()))
+        available_suffixes = set(get_all_suffixes(org_uid))
         suffixes = list(available_suffixes.intersection(set(suffixes)))
     return suffixes
 
 
-def compute_item_roles_to_assign_to_suffixes_cachekey(method, cfg, item_state, org=None):
+def compute_item_roles_to_assign_to_suffixes_cachekey(method, cfg, item_state, org_uid=None):
     '''cachekey method for compute_item_roles_to_assign_to_suffixes.'''
-    return cfg.getId(), cfg.modified(), item_state, org and org.UID()
+    return cfg.getId(), cfg.modified(), item_state, org_uid
 
 
 @ram.cache(compute_item_roles_to_assign_to_suffixes_cachekey)
-def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
+def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org_uid=None):
     """ """
     apply_meetingmanagers_access = True
     suffix_roles = {}
@@ -1883,12 +1883,14 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
     # roles given to item_state are managed automatically
     # it is possible to manage it manually for extra states (coming from wfAdaptations for example)
     # try to find corresponding item state
-    corresponding_auto_item_state = cfg.adapted().get_item_corresponding_state_to_assign_local_roles(item_state)
+    corresponding_auto_item_state = cfg.adapted().get_item_corresponding_state_to_assign_local_roles(
+        item_state)
     if corresponding_auto_item_state:
         item_state = corresponding_auto_item_state
     else:
         # if no corresponding item state, check if we manage state suffix roles manually
-        apply_meetingmanagers_access, suffix_roles = cfg.adapted().get_item_custom_suffix_roles(item_state)
+        apply_meetingmanagers_access, suffix_roles = cfg.adapted().get_item_custom_suffix_roles(
+            item_state)
 
     # find suffix_roles if it was not managed manually
     if suffix_roles:
@@ -1931,7 +1933,7 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
         # we also give the Contributor except to 'observers'
         # so every editors roles get the "PloneMeeting: Add decision annex"
         # permission that let add decision annex and write the MeetingItem.internalNotes
-        for suffix in get_item_validation_wf_suffixes(cfg, org):
+        for suffix in get_item_validation_wf_suffixes(cfg, org_uid):
             given_roles = ['Reader']
             if suffix != 'observers':
                 given_roles.append('Contributor')

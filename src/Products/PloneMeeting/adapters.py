@@ -1707,12 +1707,12 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
     def _suffix_proposinggroup(self, visible_fors):
         """ """
         res = []
-        groups_managing_item = self.parent.adapted()._getAllGroupsManagingItem()
+        groups_managing_item_uids = self.parent.adapted()._getAllGroupsManagingItem()
         for visible_for in visible_fors:
             if visible_for.startswith(PROPOSINGGROUPPREFIX):
                 suffix = visible_for.replace(PROPOSINGGROUPPREFIX, '')
-                for group_managing_item in groups_managing_item:
-                    plone_group_id = get_plone_group_id(group_managing_item.UID(), suffix)
+                for group_managing_item_uid in groups_managing_item_uids:
+                    plone_group_id = get_plone_group_id(group_managing_item_uid, suffix)
                     res.append(plone_group_id)
         return res
 
