@@ -9,7 +9,6 @@ from appy.gen import No
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
-from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
@@ -1043,7 +1042,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_proposingGroup',
             i18n_domain='PloneMeeting',
         ),
-        vocabulary='listProposingGroups',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.userproposinggroupsvocabulary',
         enforceVocabulary=True,
     ),
     StringField(
@@ -1056,7 +1055,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         optional=True,
-        vocabulary='listProposingGroupsWithGroupsInCharge',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.userproposinggroupswithgroupsinchargevocabulary',
         enforceVocabulary=True,
     ),
     LinesField(
@@ -3324,16 +3323,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if preferredMeetingUID and preferredMeetingUID not in [meetingInfo[0] for meetingInfo in res]:
             # check that stored preferredMeeting still exists, if it
             # is the case, add it the the vocabulary
-            catalog = api.portal.get_tool('portal_catalog')
-            brains = catalog(UID=preferredMeetingUID)
-            if brains:
-                preferredMeetingBrain = brains[0]
+            brain = uuidToCatalogBrain(preferredMeetingUID, unrestricted=True)
+            if brain:
                 preferredMeetingDate = tool.format_date(
-                    preferredMeetingBrain.meeting_date, with_hour=True)
-                preferredMeetingState = translate(preferredMeetingBrain.review_state,
+                    brain.meeting_date, with_hour=True)
+                preferredMeetingState = translate(brain.review_state,
                                                   domain="plone",
                                                   context=self.REQUEST)
-                res.append((preferredMeetingBrain.UID,
+                res.append((brain.UID,
                             u"{0} ({1})".format(preferredMeetingDate, preferredMeetingState)))
         res.reverse()
         res.insert(0, (ITEM_NO_PREFERRED_MEETING_VALUE, 'Any meeting'))
@@ -3413,74 +3410,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if meetingConfigId not in otherMeetingConfigsClonableToPrivacyInVocab:
                     res.append((meetingConfigId, translated_msg))
         return DisplayList(tuple(res))
-
-    security.declarePrivate('listProposingGroups')
-
-    def listProposingGroups(self, include_stored=True):
-        '''This is used as vocabulary for field 'proposingGroup'.
-           Return the organization(s) the user is creator for.
-           If this item is being created or edited in portal_plonemeeting (as a
-           recurring item), the list of active groups is returned.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        isDefinedInTool = self.isDefinedInTool()
-        # bypass for Managers, pass idDefinedInTool to True so Managers
-        # can select any available organizations
-        isManager = tool.isManager(tool, realManagers=True)
-        # show every groups for Managers or when isDefinedInTool
-        only_selectable = not bool(isDefinedInTool or isManager)
-        orgs = tool.get_selectable_orgs(cfg, only_selectable=only_selectable)
-        res = DisplayList(tuple([(org.UID(), org.get_full_title(first_index=1)) for org in orgs]))
-        # make sure current selected proposingGroup is listed here
-        proposingGroup = self.getProposingGroup()
-        if include_stored and proposingGroup and proposingGroup not in res.keys():
-            current_org = self.getProposingGroup(theObject=True)
-            res.add(current_org.UID(), current_org.get_full_title())
-        # add a 'make_a_choice' value when used on an itemtemplate
-        if self.isDefinedInTool(item_type='itemtemplate'):
-            res.add('', translate('make_a_choice',
-                                  domain='PloneMeeting',
-                                  context=self.REQUEST).encode('utf-8'))
-        if 'proposingGroup' not in cfg.getItemFieldsToKeepConfigSortingFor():
-            res = res.sortedByValue()
-        return res
-
-    security.declarePrivate('listProposingGroupsWithGroupsInCharge')
-
-    def listProposingGroupsWithGroupsInCharge(self, include_stored=True):
-        '''Like self.listProposingGroups but appends the various possible groups in charge.'''
-        base_res = self.listProposingGroups(include_stored=include_stored)
-        res = []
-        active_org_uids = get_registry_organizations()
-        for k, v in base_res.items():
-            if not k:
-                res.append((k, v))
-                continue
-            org = get_organization(k)
-            groupsInCharge = org.groups_in_charge
-            if not groupsInCharge:
-                # append a value that will let use a simple
-                # proposingGroup without groupInCharge
-                key = u'{0}__groupincharge__{1}'.format(k, '')
-                res.append((key, u'{0} ()'.format(v)))
-            for gic_org_uid in org.groups_in_charge:
-                groupInCharge = get_organization(gic_org_uid)
-                key = u'{0}__groupincharge__{1}'.format(k, gic_org_uid)
-                # only take active groups in charge
-                if gic_org_uid in active_org_uids:
-                    res.append((key, u'{0} ({1})'.format(v, groupInCharge.get_full_title())))
-        res = DisplayList(tuple(res))
-
-        # make sure current value is still in the vocabulary
-        current_value = self.getProposingGroupWithGroupInCharge()
-        if include_stored and current_value and current_value not in res.keys():
-            current_proposingGroupUid, current_groupInChargeUid = \
-                current_value.split('__groupincharge__')
-            res.add(current_value,
-                    u'{0} ({1})'.format(
-                        get_organization(current_proposingGroupUid).get_full_title(),
-                        get_organization(current_groupInChargeUid).get_full_title()))
-        return res.sortedByValue()
 
     security.declarePrivate('listItemTags')
 
@@ -3777,7 +3706,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def attribute_is_used_cachekey(method, self, name):
         '''cachekey method for self.attribute_is_used.'''
-        return "{0}.{1}".format(self.__class__.__name__, name)
+        return "{0}.{1}".format(self.portal_type, name)
 
     security.declarePublic('attribute_is_used')
 
@@ -5133,7 +5062,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # missing terms
         stored_terms = self.getItemInitiator()
         missing_term_uids = [uid for uid in stored_terms if uid not in cfg.getOrderedItemInitiators()]
-        missing_terms = uuidsToObjects(missing_term_uids, unrestricted=True)
+        missing_terms = []
+        if missing_term_uids:
+            missing_terms = uuidsToObjects(missing_term_uids, unrestricted=True)
         for org_or_hp in cfg.getOrderedItemInitiators(theObjects=True) + missing_terms:
             if org_or_hp.portal_type == 'organization':
                 res.append((org_or_hp.UID(), org_or_hp.Title()))

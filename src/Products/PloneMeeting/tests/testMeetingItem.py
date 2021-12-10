@@ -147,7 +147,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
         self.assertEqual([cat.id for cat in cfg.getCategories(catType='classifiers')], expectedClassifiers)
 
-    def test_pm_ListProposingGroups(self):
+    def test_pm_ItemProposingGroupsVocabulary(self):
         '''Check MeetingItem.proposingGroup vocabulary.'''
         # test that if a user is cretor for a group but only reviewer for
         # another, it only returns the groups the user is creator for...  This
@@ -163,37 +163,41 @@ class testMeetingItem(PloneMeetingTestCase):
         _createMemberarea(self.portal, 'pmReviewer1')
         self.changeUser('pmReviewer1')
         item = self.create('MeetingItem')
-        self.assertEqual(item.listProposingGroups().keys(), [self.vendors_uid, ])
+        vocab = get_vocab(
+            item, "Products.PloneMeeting.vocabularies.userproposinggroupsvocabulary", only_factory=True)
+        self.assertEqual(vocab(item).by_value.keys(), [self.vendors_uid, ])
         # a 'Manager' will be able to select any proposing group
         # no matter he is a creator or not
         self.changeUser('admin')
-        self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid, self.vendors_uid, ])
+        self.assertEqual(vocab(item).by_value.keys(), [self.developers_uid, self.vendors_uid, ])
         # if 'developers' was selected on the item, it will be available to 'pmReviewer1'
         item.setProposingGroup(self.developers_uid)
         self.changeUser('pmReviewer1')
-        self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid, self.vendors_uid, ])
+        self.assertEqual(vocab(item).by_value.keys(), [self.developers_uid, self.vendors_uid, ])
 
-    def test_pm_ListProposingGroupsCaching(self):
-        '''If a user is added or removed from a _creators group, listProposingGroups
+    def test_pm_ItemProposingGroupsVocabularyCaching(self):
+        '''If a user is added or removed from a _creators group, the vocabulary
            behaves as expected.'''
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid])
+        vocab = get_vocab(
+            item, "Products.PloneMeeting.vocabularies.userproposinggroupsvocabulary", only_factory=True)
+        self.assertEqual(vocab(item).by_value.keys(), [self.developers_uid])
         self._addPrincipalToGroup('pmCreator1', self.vendors_creators)
-        self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid, self.vendors_uid])
+        self.assertEqual(vocab(item).by_value.keys(), [self.developers_uid, self.vendors_uid])
         # add user to a disabled group
         self._addPrincipalToGroup('pmCreator1', self.endUsers_creators)
-        self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid, self.vendors_uid])
+        self.assertEqual(vocab(item).by_value.keys(), [self.developers_uid, self.vendors_uid])
         # enable disabled group
         self.changeUser('siteadmin')
         self._select_organization(self.endUsers_uid)
         self.changeUser('pmCreator1')
-        self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid, self.endUsers_uid, self.vendors_uid])
+        self.assertEqual(vocab(item).by_value.keys(), [self.developers_uid, self.endUsers_uid, self.vendors_uid])
         # remove user from vendors
         self._removePrincipalFromGroups('pmCreator1', [self.vendors_creators])
-        self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid, self.endUsers_uid])
+        self.assertEqual(vocab(item).by_value.keys(), [self.developers_uid, self.endUsers_uid])
 
-    def test_pm_ListProposingGroupsKeepConfigSorting(self):
+    def test_pm_ItemProposingGroupsVocabularyKeepConfigSorting(self):
         """If 'proposingGroup' selected in MeetingConfig.itemFieldsToKeepConfigSortingFor,
            the vocabulary keeps config order, not sorted alphabetically."""
         cfg = self.meetingConfig
@@ -202,16 +206,20 @@ class testMeetingItem(PloneMeetingTestCase):
         self._select_organization(self.endUsers_uid)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
+        vocab = get_vocab(
+            item, "Products.PloneMeeting.vocabularies.userproposinggroupsvocabulary", only_factory=True)
         self.changeUser('siteadmin')
         # not in itemFieldsToKeepConfigSortingFor for now
         self.assertFalse('proposingGroup' in cfg.getItemFieldsToKeepConfigSortingFor())
-        self.assertEqual(item.listProposingGroups().keys(),
+        self.assertEqual([term.value for term in vocab(item)._terms],
                          [self.developers_uid, self.endUsers_uid, self.vendors_uid])
         cfg.setItemFieldsToKeepConfigSortingFor(('proposingGroup', ))
-        self.assertEqual(item.listProposingGroups().keys(),
+        # invalidate vocabularies caching
+        cfg.at_post_edit_script()
+        self.assertEqual([term.value for term in vocab(item)._terms],
                          [self.developers_uid, self.vendors_uid, self.endUsers_uid])
 
-    def test_pm_ListProposingGroupsWithGroupsInCharge(self):
+    def test_pm_ItemProposingGroupsWithGroupsInChargeVocabulary(self):
         '''Check MeetingItem.proposingGroupWithGroupInCharge vocabulary.
            It will evolve regarding groupInCharge, old value are kept and new values
            take groupsInCharge review_state into account.'''
@@ -234,35 +242,39 @@ class testMeetingItem(PloneMeetingTestCase):
         item1 = self.create('MeetingItem')
         developers_gic1 = '{0}__groupincharge__{1}'.format(self.developers_uid, org1_uid)
         vendors_gic2 = '{0}__groupincharge__{1}'.format(self.vendors_uid, org2_uid)
-        self.assertEqual(item1.listProposingGroupsWithGroupsInCharge().items(),
-                         ((developers_gic1, 'Developers (Org 1)'),
-                          (vendors_gic2, 'Vendors (Org 2)')))
+        vocab = get_vocab(
+            None,
+            "Products.PloneMeeting.vocabularies.userproposinggroupswithgroupsinchargevocabulary",
+            only_factory=True)
+        self.assertEqual([(term.value, term.title) for term in vocab(item1)._terms],
+                         [(developers_gic1, 'Developers (Org 1)'),
+                          (vendors_gic2, 'Vendors (Org 2)')])
         item1.setProposingGroupWithGroupInCharge(developers_gic1)
         # now disable group1
         self.changeUser('siteadmin')
         self._select_organization(org1_uid, remove=True)
         self.changeUser('pmCreator1')
         # still available for item as is use it
-        self.assertEqual(item1.listProposingGroupsWithGroupsInCharge().items(),
-                         ((developers_gic1, 'Developers (Org 1)'),
-                          (vendors_gic2, 'Vendors (Org 2)'),))
+        self.assertEqual([(term.value, term.title) for term in vocab(item1)._terms],
+                         [(developers_gic1, 'Developers (Org 1)'),
+                          (vendors_gic2, 'Vendors (Org 2)')])
         # but not for a new item
         item2 = self.create('MeetingItem')
-        self.assertEqual(item2.listProposingGroupsWithGroupsInCharge().items(),
-                         ((vendors_gic2, 'Vendors (Org 2)'),))
+        self.assertEqual([(term.value, term.title) for term in vocab(item2)._terms],
+                         [(vendors_gic2, 'Vendors (Org 2)')])
 
         # define another groupInCharge for developers
         self.developers.groups_in_charge = (org1_uid, org3_uid)
         # 3 choices are available on item1
         developers_gic3 = '{0}__groupincharge__{1}'.format(self.developers_uid, org3_uid)
-        self.assertEqual(item1.listProposingGroupsWithGroupsInCharge().items(),
-                         ((developers_gic1, 'Developers (Org 1)'),
+        self.assertEqual([(term.value, term.title) for term in vocab(item1)._terms],
+                         [(developers_gic1, 'Developers (Org 1)'),
                           (developers_gic3, 'Developers (Org 3)'),
-                          (vendors_gic2, 'Vendors (Org 2)'),))
+                          (vendors_gic2, 'Vendors (Org 2)')])
         # but only 2 for item2
-        self.assertEqual(item2.listProposingGroupsWithGroupsInCharge().items(),
-                         ((developers_gic3, 'Developers (Org 3)'),
-                          (vendors_gic2, 'Vendors (Org 2)'),))
+        self.assertEqual([(term.value, term.title) for term in vocab(item2)._terms],
+                         [(developers_gic3, 'Developers (Org 3)'),
+                          (vendors_gic2, 'Vendors (Org 2)')])
 
         # now if we remove completely group1 from groupsInCharge of developers
         # it still works, this way we may change a groupInCharge from group
@@ -270,15 +282,15 @@ class testMeetingItem(PloneMeetingTestCase):
         self.developers.groups_in_charge = (org3_uid, )
         self.vendors.groups_in_charge = (org1_uid, org2_uid, org3_uid)
         vendors_gic3 = '{0}__groupincharge__{1}'.format(self.vendors_uid, org3_uid)
-        self.assertEqual(item1.listProposingGroupsWithGroupsInCharge().items(),
-                         ((developers_gic1, 'Developers (Org 1)'),
+        self.assertEqual([(term.value, term.title) for term in vocab(item1)._terms],
+                         [(developers_gic1, 'Developers (Org 1)'),
                           (developers_gic3, 'Developers (Org 3)'),
                           (vendors_gic2, 'Vendors (Org 2)'),
-                          (vendors_gic3, 'Vendors (Org 3)'),))
-        self.assertEqual(item2.listProposingGroupsWithGroupsInCharge().items(),
-                         ((developers_gic3, 'Developers (Org 3)'),
+                          (vendors_gic3, 'Vendors (Org 3)')])
+        self.assertEqual([(term.value, term.title) for term in vocab(item2)._terms],
+                         [(developers_gic3, 'Developers (Org 3)'),
                           (vendors_gic2, 'Vendors (Org 2)'),
-                          (vendors_gic3, 'Vendors (Org 3)'),))
+                          (vendors_gic3, 'Vendors (Org 3)')])
 
     def test_pm_CloneItemRemovesAnnotations(self):
         '''Annotations relative to item sent to other MC are correctly cleaned.'''

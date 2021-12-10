@@ -444,7 +444,6 @@ class Migrate_To_4200(Migrator):
             try:
                 advice = brain.getObject()
             except AttributeError:
-                import ipdb; ipdb.set_trace()
                 continue
             for field_name in ['advice_comment', 'advice_observations']:
                 field_value = getattr(advice, field_name)

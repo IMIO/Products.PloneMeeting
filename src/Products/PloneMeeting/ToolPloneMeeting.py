@@ -32,6 +32,7 @@ from imio.helpers.cache import cleanVocabularyCacheFor
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.content import get_user_fullname
+from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.security import fplog
 from imio.migrator.utils import end_time
@@ -507,30 +508,31 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         group_users = portal.acl_users.source_groups._group_principal_map.get(plone_group_id, [])
         return len(group_users) and not user_id or user_id in group_users
 
-    def get_org_uids_for_user_cachekey(method,
-                                       self,
-                                       user_id=None,
-                                       only_selected=True,
-                                       suffixes=[],
-                                       omitted_suffixes=[],
-                                       using_groups=[]):
-        '''cachekey method for self.get_orgs_for_user.'''
+    def _get_org_uids_for_user_cachekey(method,
+                                        self,
+                                        user_id=None,
+                                        only_selected=True,
+                                        suffixes=[],
+                                        omitted_suffixes=[],
+                                        using_groups=[]):
+        '''cachekey method for self._get_orgs_for_user.'''
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
         return (date,
                 (user_id or get_current_user_id(self.REQUEST)),
                 only_selected, list(suffixes), list(omitted_suffixes), list(using_groups))
 
-    security.declarePublic('get_org_uids_for_user')
+    security.declarePrivate('_get_org_uids_for_user')
 
-    @ram.cache(get_org_uids_for_user_cachekey)
-    def get_org_uids_for_user(self,
-                              user_id=None,
-                              only_selected=True,
-                              suffixes=[],
-                              omitted_suffixes=[],
-                              using_groups=[]):
+    @ram.cache(_get_org_uids_for_user_cachekey)
+    def _get_org_uids_for_user(self,
+                               user_id=None,
+                               only_selected=True,
+                               suffixes=[],
+                               omitted_suffixes=[],
+                               using_groups=[]):
         '''This method is there to be cached as get_orgs_for_user(the_objects=True)
-           will return objects, this may not be ram.cached.'''
+           will return objects, this may not be ram.cached.
+           This submethod should not be called directly.'''
         res = []
         user_plone_group_ids = self.get_plone_groups_for_user(user_id)
         org_uids = get_organizations(only_selected=only_selected,
@@ -564,11 +566,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            at least one of p_suffixes. If p_omitted_suffixes, we do not consider
            orgs the user is in using those suffixes.
            If p_the_objects=True, organizations objects are returned, else the uids.'''
-        res = self.get_org_uids_for_user(user_id=user_id,
-                                         only_selected=only_selected,
-                                         suffixes=suffixes,
-                                         omitted_suffixes=omitted_suffixes,
-                                         using_groups=using_groups)
+        res = self._get_org_uids_for_user(user_id=user_id,
+                                          only_selected=only_selected,
+                                          suffixes=suffixes,
+                                          omitted_suffixes=omitted_suffixes,
+                                          using_groups=using_groups)
         if res and the_objects:
             request = self.REQUEST
             # in some cases like in tests, request can not be retrieved
@@ -1188,14 +1190,16 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if not keepProposingGroup:
                 # proposingGroupWithGroupInCharge
                 if newItem.attribute_is_used('proposingGroupWithGroupInCharge'):
-                    userProposingGroupUids = newItem.listProposingGroupsWithGroupsInCharge(
-                        include_stored=False).keys()
+                    field = newItem.getField('proposingGroupWithGroupInCharge')
+                    vocab = get_vocab(newItem, field.vocabulary_factory, only_factory=True)
+                    userProposingGroupUids = vocab(newItem, include_stored=False).by_value.keys()
                     if userProposingGroupUids:
                         newItem.setProposingGroupWithGroupInCharge(userProposingGroupUids[0])
                 else:
                     # proposingGroup
-                    userProposingGroupUids = newItem.listProposingGroups(
-                        include_stored=False).keys()
+                    field = newItem.getField('proposingGroup')
+                    vocab = get_vocab(newItem, field.vocabulary_factory, only_factory=True)
+                    userProposingGroupUids = vocab(newItem, include_stored=False).by_value.keys()
                     if userProposingGroupUids:
                         newItem.setProposingGroup(userProposingGroupUids[0])
 

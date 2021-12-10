@@ -280,6 +280,139 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
 ItemProposingGroupsForFacetedFilterVocabularyFactory = ItemProposingGroupsForFacetedFilterVocabulary()
 
 
+class UserProposingGroupsVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def _user_proposing_group_terms_cachekey(method, self, context, tool, cfg):
+        '''cachekey method for self._user_proposing_group_terms.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+        selectable_org_uids = self._get_selectable_orgs(context, tool, cfg, the_objects=False)
+        return date, context.portal_type, selectable_org_uids
+
+    def _get_selectable_orgs(self, context, tool, cfg, the_objects=True):
+        """ """
+        isDefinedInTool = context.isDefinedInTool()
+        # bypass for Managers, pass isDefinedInTool to True so Managers
+        # can select any available organizations
+        isManager = tool.isManager(tool, realManagers=True)
+        # show every groups for Managers or when isDefinedInTool
+        only_selectable = not bool(isDefinedInTool or isManager)
+        orgs = tool.get_selectable_orgs(
+            cfg, only_selectable=only_selectable, the_objects=the_objects)
+        return orgs
+
+    @ram.cache(_user_proposing_group_terms_cachekey)
+    def _user_proposing_group_terms(self, context, tool, cfg):
+        """ """
+        orgs = self._get_selectable_orgs(context, tool, cfg)
+        terms = []
+        term_values = []
+        for org in orgs:
+            term_value = org.UID()
+            terms.append(
+                SimpleTerm(term_value,
+                           term_value,
+                           safe_unicode(org.get_full_title(first_index=1))))
+            term_values.append(term_value)
+        return term_values, terms
+
+    def _handle_include_stored(self, context, term_values, terms):
+        """ """
+        proposingGroup = context.getProposingGroup()
+        if proposingGroup and proposingGroup not in term_values:
+            org = context.getProposingGroup(theObject=True)
+            term_value = org.UID()
+            terms.append(
+                SimpleTerm(term_value,
+                           term_value,
+                           safe_unicode(org.get_full_title(first_index=1))))
+        return terms
+
+    def __call__(self, context, include_stored=True):
+        '''This is used as vocabulary for field 'MeetingItem.proposingGroup'.
+           Return the organization(s) the user is creator for.
+           If this item is being created or edited in portal_plonemeeting (as a
+           recurring item), the list of active groups is returned.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        term_values, terms = self._user_proposing_group_terms(context, tool, cfg)
+        # avoid modifying original list
+        terms = list(terms)
+        # include_stored
+        if include_stored:
+            terms = self._handle_include_stored(context, term_values, terms)
+        # sort correctly
+        if 'proposingGroup' not in cfg.getItemFieldsToKeepConfigSortingFor():
+            terms = humansorted(terms, key=attrgetter('title'))
+        # add a 'make_a_choice' value when used on an itemtemplate
+        if context.isDefinedInTool(item_type='itemtemplate'):
+            terms.insert(
+                0,
+                SimpleTerm("",
+                           "",
+                           translate('make_a_choice',
+                                     domain='PloneMeeting',
+                                     context=context.REQUEST).encode('utf-8')))
+        return SimpleVocabulary(terms)
+
+
+UserProposingGroupsVocabularyFactory = UserProposingGroupsVocabulary()
+
+
+class UserProposingGroupsWithGroupsInChargeVocabulary(UserProposingGroupsVocabulary):
+    """ """
+
+    def _user_proposing_group_terms(self, context, tool, cfg):
+        """ """
+        orgs = self._get_selectable_orgs(context, tool, cfg)
+        terms = []
+        uids = []
+        active_org_uids = get_registry_organizations()
+        for org in orgs:
+            org_uid = org.UID()
+            groupsInCharge = org.groups_in_charge
+            if not groupsInCharge:
+                # append a value that will let use a simple
+                # proposingGroup without groupInCharge
+                term_value = u'{0}__groupincharge__{1}'.format(org_uid, '')
+                terms.append(
+                    SimpleTerm(term_value,
+                               term_value,
+                               u'{0} ()'.format(org.get_full_title())))
+            for gic_org in org.get_groups_in_charge(the_objects=True):
+                gic_org_uid = gic_org.UID()
+                term_value = u'{0}__groupincharge__{1}'.format(
+                    org_uid, gic_org_uid)
+                # only take active groups in charge
+                if gic_org_uid in active_org_uids:
+                    terms.append(
+                        SimpleTerm(
+                            term_value,
+                            term_value,
+                            u'{0} ({1})'.format(
+                                org.get_full_title(), gic_org.get_full_title())))
+        return uids, terms
+
+    def _handle_include_stored(self, context, term_values, terms):
+        """ """
+        current_value = context.getProposingGroupWithGroupInCharge()
+        if current_value and current_value not in term_values:
+            current_proposingGroupUid, current_groupInChargeUid = \
+                current_value.split('__groupincharge__')
+            terms.append(
+                SimpleTerm(
+                    current_value,
+                    current_value,
+                    u'{0} ({1})'.format(
+                        get_organization(current_proposingGroupUid).get_full_title(),
+                        get_organization(current_groupInChargeUid).get_full_title())))
+        return terms
+
+
+UserProposingGroupsWithGroupsInChargeVocabularyFactory = UserProposingGroupsWithGroupsInChargeVocabulary()
+
+
 class GroupsInChargeVocabulary(object):
     implements(IVocabularyFactory)
 

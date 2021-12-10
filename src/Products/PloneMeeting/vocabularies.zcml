@@ -9,6 +9,10 @@
            name="Products.PloneMeeting.vocabularies.categoriesvocabulary" />
   <utility component=".vocabularies.ItemClassifiersVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.classifiersvocabulary" />
+  <utility component=".vocabularies.UserProposingGroupsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.userproposinggroupsvocabulary" />
+  <utility component=".vocabularies.UserProposingGroupsWithGroupsInChargeVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.userproposinggroupswithgroupsinchargevocabulary" />
   <utility component=".vocabularies.ItemProposingGroupsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" />
   <utility component=".vocabularies.ItemProposingGroupsForFacetedFilterVocabularyFactory"

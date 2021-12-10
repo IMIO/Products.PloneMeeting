@@ -277,7 +277,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.vendors.groups_in_charge = (self.developers_uid, )
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setProposingGroupWithGroupInCharge(item.listProposingGroupsWithGroupsInCharge()[0])
+        item.setProposingGroupWithGroupInCharge(
+            item.Vocabulary('proposingGroupWithGroupInCharge')[0][0])
         self.assertEqual(item.getProposingGroupWithGroupInCharge(),
                          '{0}__groupincharge__{1}'.format(self.developers_uid, self.vendors_uid))
         self.assertEqual(item.getProposingGroup(), self.developers_uid)

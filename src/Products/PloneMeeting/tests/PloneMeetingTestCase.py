@@ -320,7 +320,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             attrs.update({'date': datetime.now()})
         if objectType == 'MeetingItem':
             if 'proposingGroup' not in attrs.keys():
-                cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.get_org_uids_for_user')
+                cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._get_org_uids_for_user')
                 proposingGroupUids = self.tool.get_orgs_for_user(suffixes=['creators'])
                 if len(proposingGroupUids):
                     attrs.update({'proposingGroup': proposingGroupUids[0]})

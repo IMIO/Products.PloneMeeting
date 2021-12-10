@@ -223,7 +223,7 @@ class MeetingAdvice(Container):
 
     # def attribute_is_used_cachekey(method, self, name):
     #     '''cachekey method for self.attribute_is_used.'''
-    #     return "{0}.{1}".format(self.__class__.__name__, name)
+    #     return "{0}.{1}".format(self.portal_type, name)
 
     security.declarePublic('attribute_is_used')
 
