@@ -42,6 +42,11 @@ Changelog
     and may be used by `utils._addManagedPermissions`.
 
   [gbastien]
+- Fixed default value of `held_position.position` that was not working when
+  using a mount point, use a `@form.default_value` (set to own organization)
+  instead passing the default values in the URL when adding a new element
+  (`++add++held_position?form.widgets.position=...`).
+  [gbastien]
 - Added two parameters to `view.print_attendees_by_type` to improve formatting in documents.
   `unbreakable_contact_value` to avoid line break in the middle of a person and `end_type_character`
   to end a attendee type with a specific character.

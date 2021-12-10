@@ -7,8 +7,10 @@ from collective.contact.core.utils import get_position_type_name
 from collective.contact.core.vocabulary import get_directory
 from collective.contact.core.vocabulary import NoDirectoryFound
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
+from collective.contact.plonegroup.utils import get_own_organization
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from plone.autoform import directives as form
+from plone.directives import form as directives_form
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.supermodel import model
 from Products.CMFPlone.utils import safe_unicode
@@ -89,6 +91,11 @@ class IPMHeldPosition(IHeldPosition):
                            'start_date', 'end_date',
                            'usages', 'defaults', 'signature_number',
                            'represented_organizations'])
+
+
+@directives_form.default_value(field=IHeldPosition['position'])
+def position_default(data):
+    return get_own_organization()
 
 
 def split_gender_and_number(value):
