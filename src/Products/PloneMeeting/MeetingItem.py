@@ -3755,7 +3755,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See docstring in interfaces.py.'''
         may_update = False
         item = self.getSelf()
-        if self.hasMeeting():
+        if item.hasMeeting():
             may_update = True
         else:
             # manage reference for items decided out of meeting
@@ -7292,7 +7292,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
 
         tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
+        cfg = tool.getMeetingConfig(item)
         predecessor = item.get_predecessor()
         predecessors = []
         # retrieve every predecessors
