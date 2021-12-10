@@ -1256,6 +1256,16 @@ class testContacts(PloneMeetingTestCase):
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
             u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
             u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5;')
+        self.assertEqual(
+            helper.print_attendees_by_type(
+                unbreakable_contact_value=True,
+                end_type_character="."
+            ),
+            u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
+            u'Monsieur&nbsp;Person1FirstName&nbsp;Person1LastName,&nbsp;Assembly&nbsp;member&nbsp;1, '
+            u'Monsieur&nbsp;Person2FirstName&nbsp;Person2LastName,&nbsp;Assembly&nbsp;member&nbsp;2, '
+            u'Monsieur&nbsp;Person3FirstName&nbsp;Person3LastName,&nbsp;Assembly&nbsp;member&nbsp;3, '
+            u'Monsieur&nbsp;Person4FirstName&nbsp;Person4LastName,&nbsp;Assembly&nbsp;member&nbsp;4&nbsp;&amp;&nbsp;5.')
 
     def test_pm_Print_attendees_by_type_committee_id(self):
         """Print Meeting committee attendees by type."""
