@@ -961,6 +961,8 @@ class BaseDGHV(object):
                                 render_as_html=True,
                                 escape_for_html=True,
                                 position_type_format=u", {0};",
+                                unbreakable_contact_value=False,
+                                end_type_character=None,
                                 show_grouped_attendee_type=True,
                                 show_item_grouped_attendee_type=True,
                                 custom_grouped_attendee_type_patterns={},
@@ -1006,6 +1008,8 @@ class BaseDGHV(object):
                             replaced[contact_uid],
                             include_held_position_label=include_replace_by_held_position_label,
                             include_sub_organizations=False))
+                if unbreakable_contact_value:
+                    contact_value = contact_value.replace(" ", "&nbsp;")
                 grouped_contacts_value.append(contact_value)
             return grouped_contacts_value
 
@@ -1056,6 +1060,10 @@ class BaseDGHV(object):
                             single_pos_attendee_ender
                         every_contacts.extend(contact_infos)
                         sub_res.append(grouped_contacts_value)
+                    if end_type_character and global_contact_infos.keys()[-1] == org:
+                        # If there is an end_type_character defined and we are at the last contact
+                        # for a given attendee_type, swap the last char with end_type_character
+                        sub_res[-1] = sub_res[-1][:-1] + end_type_character
                 if every_contacts:
                     gn = get_gender_and_number(every_contacts)
                     attendee_type_value = grouped_attendee_type_patterns[attendee_type].get(
