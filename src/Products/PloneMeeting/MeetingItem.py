@@ -6121,8 +6121,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         notify(AdvicesUpdatedEvent(self,
                                    triggered_by_transition=triggered_by_transition,
                                    old_adviceIndex=old_adviceIndex))
-        self.reindexObject(idxs=['indexAdvisers'])
         self.REQUEST.set('currentlyUpdatingAdvice', False)
+        return ['indexAdvisers']
 
     def _itemToAdviceIsViewable(self, org_uid):
         '''See doc in interfaces.py.'''
@@ -6542,8 +6542,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not triggered_by_transition and \
            (not avoid_reindex or old_local_roles != self.__ac_local_roles__):
             self.reindexObjectSecurity()
-        # return indexes_to_update in case a reindexObject is not done
-        return ['getCopyGroups', 'getGroupsInCharge']
+        # return indexes_to_update in case a full reindexObject is not done
+        return ['indexAdvisers', 'getCopyGroups', 'getGroupsInCharge']
 
     def _propagateReaderAndMeetingManagerLocalRolesToSubObjects(self, cfg):
         """Propagate the 'Reader' and 'MeetingManager' local roles to

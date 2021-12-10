@@ -83,9 +83,10 @@ def do(action, event):
     # Execute some actions defined in the corresponding adapter
     actionMethod = getattr(actionsAdapter, action)
     actionMethod(event)
+    local_roles_indexes = None
     if objectType == 'MeetingItem':
         # Update every local roles : advices, copyGroups, powerObservers, budgetImpactEditors, ...
-        event.object.update_local_roles(triggered_by_transition=event.transition.id)
+        local_roles_indexes = event.object.update_local_roles(triggered_by_transition=event.transition.id)
         # Send mail regarding advices to give if relevant
         event.object.sendStateDependingMailIfRelevant(
             event.old_state.id, event.transition.id, event.new_state.id
@@ -99,7 +100,7 @@ def do(action, event):
         event.object.notifyModified()
     elif objectType == 'Meeting':
         # update every local roles
-        event.object.update_local_roles()
+        local_roles_indexes = event.object.update_local_roles()
         # Add recurring items to the meeting if relevant
         event.object.add_recurring_items_if_relevant(event.transition.id)
         # Send mail if relevant
@@ -112,6 +113,7 @@ def do(action, event):
         event.object.notifyModified()
     elif objectType == 'MeetingAdvice':
         _addManagedPermissions(event.object)
+    return local_roles_indexes
 
 
 def onItemTransition(item, event):
@@ -131,7 +133,7 @@ def onItemTransition(item, event):
             action = 'doItem%s%s' % (transitionId[4].upper(), transitionId[5:])
         else:
             action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
-    do(action, event)
+    local_roles_indexes = do(action, event)
 
     # check if we need to send the item to another meetingConfig
     if item.query_state() in cfg.getItemAutoSentToOtherMCStates():
@@ -151,10 +153,11 @@ def onItemTransition(item, event):
     notify(ItemAfterTransitionEvent(
         event.object, event.workflow, event.old_state, event.new_state,
         event.transition, event.status, event.kwargs))
-    # just reindex the entire object
-    item.reindexObject()
+    # update review_state and local_roles related indexes
+    item.reindexObject(idxs=local_roles_indexes + ['downOrUpWorkflowAgain', 'reviewProcessInfo'])
     # An item has ben modified, use get_again for portlet_todo
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def onMeetingTransition(meeting, event):
@@ -1058,6 +1061,7 @@ def onMeetingCreated(meeting, event):
     # place to store attendees when using contacts
     meeting.ordered_contacts = OrderedDict()
     meeting._number_of_items = 0
+
 
 def onMeetingModified(meeting, event):
     """ """
