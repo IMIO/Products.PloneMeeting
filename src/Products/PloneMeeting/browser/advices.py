@@ -208,7 +208,7 @@ class AdvicesIconsInfos(BrowserView):
     def showLinkToInherited(self, adviceHolder):
         """ """
         return bool(self.adviceIsInherited and self.context._appendLinkedItem(
-            adviceHolder, only_viewable=True))
+            adviceHolder, self.tool, self.cfg, only_viewable=True))
 
     def mayRemoveInheritedAdvice(self):
         """To remove an inherited advice, must be :

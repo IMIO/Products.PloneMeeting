@@ -1249,6 +1249,7 @@ class testContacts(PloneMeetingTestCase):
         # meeting
         view = meeting.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
+        import ipdb; ipdb.set_trace()
         self.assertEqual(
             helper.print_attendees_by_type(),
             u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'

@@ -2933,8 +2933,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Overrides the field 'manuallyLinkedItems' accessor to be able
            to return only items for that are viewable by current user.'''
         linkedItems = self.getField('manuallyLinkedItems').get(self, **kwargs)
-        linkedItems = [linkedItem for linkedItem in linkedItems if
-                       self._appendLinkedItem(linkedItem, only_viewable=only_viewable)]
+        if linkedItems:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            linkedItems = [
+                linkedItem for linkedItem in linkedItems if
+                self._appendLinkedItem(
+                    linkedItem, tool, cfg, only_viewable=only_viewable)]
         return linkedItems
 
     security.declarePublic('onDiscussChanged')
@@ -3320,7 +3325,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         preferredMeetingUID = self.getPreferredMeeting()
         # add it if we actually have a preferredMeetingUID stored
         # and if it is not yet in the vocabulary!
-        if preferredMeetingUID and preferredMeetingUID not in [meetingInfo[0] for meetingInfo in res]:
+        if preferredMeetingUID and \
+           preferredMeetingUID != ITEM_NO_PREFERRED_MEETING_VALUE and \
+           preferredMeetingUID not in [meetingInfo[0] for meetingInfo in res]:
             # check that stored preferredMeeting still exists, if it
             # is the case, add it the the vocabulary
             brain = uuidToCatalogBrain(preferredMeetingUID, unrestricted=True)
@@ -7268,14 +7275,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.UID(), hp.UID())
         return hp.get_short_title(forced_position_type_value=position_type, **kwargs)
 
-    def _appendLinkedItem(self, item, only_viewable):
-        if not only_viewable or _checkPermission(View, item):
+    def _appendLinkedItem(self, item, tool, cfg, only_viewable):
+        if not only_viewable:
             return True
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
         hideNotViewableLinkedItemsTo = cfg.getHideNotViewableLinkedItemsTo()
         if hideNotViewableLinkedItemsTo and \
-           tool.isPowerObserverForCfg(cfg, power_observer_types=hideNotViewableLinkedItemsTo):
+           tool.isPowerObserverForCfg(cfg, power_observer_types=hideNotViewableLinkedItemsTo) and \
+           not _checkPermission(View, item):
             return False
         return True
 
@@ -7285,11 +7291,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         item = self.getSelf()
 
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         predecessor = item.get_predecessor()
         predecessors = []
         # retrieve every predecessors
         while predecessor:
-            if item._appendLinkedItem(predecessor, only_viewable=only_viewable):
+            if item._appendLinkedItem(predecessor, tool, cfg, only_viewable=only_viewable):
                 predecessors.append(predecessor)
             predecessor = predecessor.get_predecessor()
         # keep order
@@ -7297,7 +7305,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # retrieve successors too
         successors = item.get_every_successors()
         successors = [successor for successor in successors
-                      if item._appendLinkedItem(successor, only_viewable)]
+                      if item._appendLinkedItem(successor, tool, cfg, only_viewable)]
         return predecessors + successors
 
     security.declarePublic('displayLinkedItem')

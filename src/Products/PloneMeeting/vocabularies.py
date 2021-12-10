@@ -891,10 +891,6 @@ class ItemOptionalAdvicesVocabulary(object):
                                              context=request)
             return value_to_display
 
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(context)
-        selectableAdviserUsers = cfg.getSelectableAdviserUsers()
-
         def _insert_term_and_users(res, term_value, term_title):
             """ """
             term = SimpleTerm(term_value, term_value, term_title)
@@ -911,6 +907,24 @@ class ItemOptionalAdvicesVocabulary(object):
                     res.append(user_term)
             return
 
+        def _getNonDelayAwareAdvisers_cachekey(method, cfg):
+            '''cachekey method for self._getNonDelayAwareAdvisers.'''
+            return repr(cfg), cfg.modified()
+
+        @ram.cache(_getNonDelayAwareAdvisers_cachekey)
+        def _getNonDelayAwareAdvisers(cfg):
+            """Separated so it can be cached."""
+            resNonDelayAwareAdvisers = []
+            selectableAdviserOrgs = uuidsToObjects(
+                cfg.getSelectableAdvisers(), ordered=True, unrestricted=True)
+            for org in selectableAdviserOrgs:
+                _insert_term_and_users(
+                    resNonDelayAwareAdvisers, org.UID(), org.get_full_title())
+            return resNonDelayAwareAdvisers
+
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        selectableAdviserUsers = cfg.getSelectableAdviserUsers()
         resDelayAwareAdvisers = []
         # add delay-aware optionalAdvisers
         # validity_date is used for customAdviser validaty (date from, date to)
@@ -934,12 +948,7 @@ class ItemOptionalAdvicesVocabulary(object):
             _insert_term_and_users(
                 resDelayAwareAdvisers, adviserId, value_to_display)
 
-        resNonDelayAwareAdvisers = []
-        selectableAdviserOrgs = uuidsToObjects(
-            cfg.getSelectableAdvisers(), ordered=True, unrestricted=True)
-        for org in selectableAdviserOrgs:
-            _insert_term_and_users(
-                resNonDelayAwareAdvisers, org.UID(), org.get_full_title())
+        resNonDelayAwareAdvisers = _getNonDelayAwareAdvisers(cfg)
 
         # make sure optionalAdvisers actually stored have their corresponding
         # term in the vocabulary, if not, add it
