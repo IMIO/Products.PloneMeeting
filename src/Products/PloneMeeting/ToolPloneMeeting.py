@@ -1489,11 +1489,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                          brain.portal_type,
                          '/'.join(itemOrMeeting.getPhysicalPath())))
             i = i + 1
-            indexes_to_update = itemOrMeeting.update_local_roles(avoid_reindex=True)
-            # if auto rules regarding copyGroups or groupsInCharge changed
-            # we could have more or less copyGroups/groupsInCharge so reindex relevant indexes
-            if indexes_to_update:
-                itemOrMeeting.reindexObject(idxs=indexes_to_update)
+            itemOrMeeting.update_local_roles(avoid_reindex=True)
 
         logger.info(end_time(
             startTime,

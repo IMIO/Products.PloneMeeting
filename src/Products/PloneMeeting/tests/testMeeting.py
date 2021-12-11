@@ -2058,8 +2058,10 @@ class testMeetingType(PloneMeetingTestCase):
         item2 = self.create('MeetingItem')
         # meeting as preferredMeeting
         item1.setPreferredMeeting(meeting.UID())
+        item1._update_after_edit()
         # after_meeting as preferredMeeting
         item2.setPreferredMeeting(after_meeting.UID())
+        item2._update_after_edit()
         self.freezeMeeting(meeting)
         self.validateItem(item1)
         self.validateItem(item2)
@@ -3735,9 +3737,12 @@ class testMeetingType(PloneMeetingTestCase):
 
         # supplements
         suppl_item1 = self.create('MeetingItem', proposingGroup=self.vendors_uid)
-        suppl_item1.setCommittees(("committee_2__suppl__1", ))
         suppl_item2 = self.create('MeetingItem', proposingGroup=self.vendors_uid)
+        # change committees set automatically
+        suppl_item1.setCommittees(("committee_2__suppl__1", ))
+        suppl_item1.reindexObject()
         suppl_item2.setCommittees(("committee_2__suppl__2", ))
+        suppl_item2.reindexObject()
         self.presentItem(suppl_item1)
         self.presentItem(suppl_item2)
         # by default only normal (not supplements) are returned for a committee

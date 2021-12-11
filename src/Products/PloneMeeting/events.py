@@ -86,7 +86,8 @@ def do(action, event):
     local_roles_indexes = None
     if objectType == 'MeetingItem':
         # Update every local roles : advices, copyGroups, powerObservers, budgetImpactEditors, ...
-        local_roles_indexes = event.object.update_local_roles(triggered_by_transition=event.transition.id)
+        local_roles_indexes = event.object.update_local_roles(
+            triggered_by_transition=event.transition.id, reindex=False)
         # Send mail regarding advices to give if relevant
         event.object.sendStateDependingMailIfRelevant(
             event.old_state.id, event.transition.id, event.new_state.id
@@ -154,7 +155,9 @@ def onItemTransition(item, event):
         event.object, event.workflow, event.old_state, event.new_state,
         event.transition, event.status, event.kwargs))
     # update review_state and local_roles related indexes
-    item.reindexObject(idxs=local_roles_indexes + ['downOrUpWorkflowAgain', 'reviewProcessInfo'])
+    review_state_related_indexes = [
+        'downOrUpWorkflowAgain', 'getTakenOverBy', 'reviewProcessInfo']
+    item.reindexObject(idxs=local_roles_indexes + review_state_related_indexes)
     # An item has ben modified, use get_again for portlet_todo
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.MeetingItem.modified', get_again=True)

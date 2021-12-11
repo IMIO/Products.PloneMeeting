@@ -909,7 +909,10 @@ class ItemOptionalAdvicesVocabulary(object):
 
         def _getNonDelayAwareAdvisers_cachekey(method, cfg):
             '''cachekey method for self._getNonDelayAwareAdvisers.'''
-            return repr(cfg), cfg.modified()
+            # this volatile is invalidated when plonegroup config changed
+            date = get_cachekey_volatile(
+                'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+            return date, repr(cfg), cfg.modified()
 
         @ram.cache(_getNonDelayAwareAdvisers_cachekey)
         def _getNonDelayAwareAdvisers(cfg):
@@ -948,7 +951,8 @@ class ItemOptionalAdvicesVocabulary(object):
             _insert_term_and_users(
                 resDelayAwareAdvisers, adviserId, value_to_display)
 
-        resNonDelayAwareAdvisers = _getNonDelayAwareAdvisers(cfg)
+        # _getNonDelayAwareAdvisers uses ram.cache, create a new list
+        resNonDelayAwareAdvisers = list(_getNonDelayAwareAdvisers(cfg))
 
         # make sure optionalAdvisers actually stored have their corresponding
         # term in the vocabulary, if not, add it

@@ -3671,6 +3671,8 @@ class testAdvices(PloneMeetingTestCase):
 
         # 2.2) if advice is not askable, advice inheritance is not removed
         cfg.setSelectableAdvisers(())
+        # invalidate cache for item advices vocabulary used by MeetingItem.showOptionalAdvisers
+        cfg.at_post_edit_script()
         item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
         self.changeUser('pmManager')
         self.assertTrue(item2.adviceIndex[self.vendors_uid]['inherited'])

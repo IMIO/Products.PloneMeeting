@@ -170,12 +170,12 @@ class testMeetingItem(PloneMeetingTestCase):
         # no matter he is a creator or not
         self.changeUser('admin')
         self.assertEqual([term.value for term in vocab(item)._terms],
-            [self.developers_uid, self.vendors_uid, ])
+                         [self.developers_uid, self.vendors_uid, ])
         # if 'developers' was selected on the item, it will be available to 'pmReviewer1'
         item.setProposingGroup(self.developers_uid)
         self.changeUser('pmReviewer1')
         self.assertEqual([term.value for term in vocab(item)._terms],
-            [self.developers_uid, self.vendors_uid, ])
+                         [self.developers_uid, self.vendors_uid, ])
 
     def test_pm_ItemProposingGroupsVocabularyCaching(self):
         '''If a user is added or removed from a _creators group, the vocabulary
@@ -187,21 +187,21 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(vocab(item).by_value.keys(), [self.developers_uid])
         self._addPrincipalToGroup('pmCreator1', self.vendors_creators)
         self.assertEqual([term.value for term in vocab(item)._terms],
-            [self.developers_uid, self.vendors_uid])
+                         [self.developers_uid, self.vendors_uid])
         # add user to a disabled group
         self._addPrincipalToGroup('pmCreator1', self.endUsers_creators)
         self.assertEqual([term.value for term in vocab(item)._terms],
-            [self.developers_uid, self.vendors_uid])
+                         [self.developers_uid, self.vendors_uid])
         # enable disabled group
         self.changeUser('siteadmin')
         self._select_organization(self.endUsers_uid)
         self.changeUser('pmCreator1')
         self.assertEqual([term.value for term in vocab(item)._terms],
-            [self.developers_uid, self.endUsers_uid, self.vendors_uid])
+                         [self.developers_uid, self.endUsers_uid, self.vendors_uid])
         # remove user from vendors
         self._removePrincipalFromGroups('pmCreator1', [self.vendors_creators])
         self.assertEqual([term.value for term in vocab(item)._terms],
-            [self.developers_uid, self.endUsers_uid])
+                         [self.developers_uid, self.endUsers_uid])
 
     def test_pm_ItemProposingGroupsVocabularyKeepConfigSorting(self):
         """If 'proposingGroup' selected in MeetingConfig.itemFieldsToKeepConfigSortingFor,
@@ -2566,6 +2566,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.validateItem(item)
         self.assertTrue(item.maySignItem())
         item.setItemIsSigned(True)
+        item._update_after_edit()
         self.presentItem(item)
         self.assertTrue(item.maySignItem())
         self.freezeMeeting(meeting)
@@ -3840,6 +3841,7 @@ class testMeetingItem(PloneMeetingTestCase):
         vocab_keys = [term.token for term in vocab_factory(item)._terms]
         self.assertEqual(vocab_keys, [self.developers_uid])
         cfg.setSelectableAdvisers([self.developers_uid, self.vendors_uid])
+        cfg.at_post_edit_script()
         # now select the 'developers' as optionalAdvisers for the item
         item.setOptionalAdvisers((self.developers_uid, ))
         # still the complete vocabulary
@@ -3891,6 +3893,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # while using MeetingConfig.selectableAdviserUsers
         cfg.setSelectableAdvisers((self.vendors_uid, self.developers_uid))
         cfg.setSelectableAdviserUsers((self.developers_uid, ))
+        cfg.at_post_edit_script()
         vocab_keys = [term.token for term in vocab_factory(item, include_selected=False)._terms]
         # __userid__ available for developers but not for vendors
         self.assertEqual(

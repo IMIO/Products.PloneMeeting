@@ -6122,7 +6122,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                    triggered_by_transition=triggered_by_transition,
                                    old_adviceIndex=old_adviceIndex))
         self.REQUEST.set('currentlyUpdatingAdvice', False)
-        return ['indexAdvisers']
+        indexes = []
+        if self.adviceIndex != old_adviceIndex:
+            indexes.append('indexAdvisers')
+        return indexes
 
     def _itemToAdviceIsViewable(self, org_uid):
         '''See doc in interfaces.py.'''
@@ -6360,7 +6363,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
 
-    def _update_after_edit(self, idxs=['*']):
+    def _update_after_edit(self, idxs=['*'], reindex_local_roles=True):
         """Convenience method that make sure ObjectModifiedEvent and
            at_post_edit_script are called, like it is the case in
            Archetypes.BaseObject.processForm.
@@ -6376,16 +6379,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             logger.warn("MeetingItem._update_after_edit was called with "
                         "idxs=['*'], make sure this is correct!")
         notifyModifiedAndReindex(self, extra_idxs=idxs, notify_event=True)
-        self.at_post_edit_script(full_edit_form=False)
+        self.at_post_edit_script(
+            full_edit_form=False, reindex_local_roles=reindex_local_roles)
 
     security.declarePrivate('at_post_edit_script')
 
-    def at_post_edit_script(self, full_edit_form=True):
+    def at_post_edit_script(self, full_edit_form=True, reindex_local_roles=False):
         # update groupsInCharge before update_local_roles
         self.update_groups_in_charge()
         self.update_local_roles(invalidate=self.willInvalidateAdvices(),
                                 isCreated=False,
-                                avoid_reindex=True)
+                                avoid_reindex=True,
+                                reindex=reindex_local_roles)
         if full_edit_form:
             # Apply potential transformations to richtext fields
             transformAllRichTextFields(self)
@@ -6474,7 +6479,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declareProtected(ModifyPortalContent, 'update_local_roles')
 
-    def update_local_roles(self, **kwargs):
+    def update_local_roles(self, reindex=True, **kwargs):
         '''Updates the local roles of this item, regarding :
            - the proposing group;
            - copyGroups;
@@ -6489,6 +6494,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         item_state = self.query_state()
+        # local_roles related indexes
+        related_indexes = ['getCopyGroups', 'getGroupsInCharge']
 
         # update suffixes related local roles
         self.assign_roles_to_group_suffixes(cfg, item_state)
@@ -6501,11 +6508,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         triggered_by_transition = kwargs.get('triggered_by_transition', None)
         invalidate = kwargs.get('invalidate', False)
         inheritedAdviserUids = kwargs.get('inheritedAdviserUids', [])
-        self._updateAdvices(cfg,
-                            item_state,
-                            invalidate=invalidate,
-                            triggered_by_transition=triggered_by_transition,
-                            inheritedAdviserUids=inheritedAdviserUids)
+        # reindex "indexAdvisers" if adviceIndex changed
+        related_indexes += self._updateAdvices(
+            cfg,
+            item_state,
+            invalidate=invalidate,
+            triggered_by_transition=triggered_by_transition,
+            inheritedAdviserUids=inheritedAdviserUids)
         # Update every 'power observers' local roles given to the
         # corresponding MeetingConfig.powerObsevers
         # it is done on every edit because of 'item_access_on' TAL expression
@@ -6539,11 +6548,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # or if we are here after transition as WorkflowTool._reindexWorkflowVariables
         # will reindexObjectSecurity
         avoid_reindex = kwargs.get('avoid_reindex', False)
-        if not triggered_by_transition and \
-           (not avoid_reindex or old_local_roles != self.__ac_local_roles__):
-            self.reindexObjectSecurity()
-        # return indexes_to_update in case a full reindexObject is not done
-        return ['indexAdvisers', 'getCopyGroups', 'getGroupsInCharge']
+        if not avoid_reindex or old_local_roles != self.__ac_local_roles__:
+            # triggering transition will reindexObjectSecurity
+            if not triggered_by_transition:
+                self.reindexObjectSecurity()
+        if reindex:
+            self.reindexObject(idxs=related_indexes)
+        return related_indexes
 
     def _propagateReaderAndMeetingManagerLocalRolesToSubObjects(self, cfg):
         """Propagate the 'Reader' and 'MeetingManager' local roles to
