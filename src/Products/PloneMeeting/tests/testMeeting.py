@@ -2907,6 +2907,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(itemBrain.meeting_date, datetime(1950, 1, 1))
         self.assertEqual(itemBrain.preferred_meeting_date, datetime(1950, 1, 1))
         item.setPreferredMeeting(meeting.UID())
+        item._update_after_edit()
         self.presentItem(item)
         itemBrain = self.catalog(UID=item.UID())[0]
         self.assertEqual(itemBrain.meeting_date, meeting.date)
