@@ -19,6 +19,7 @@
  <permission>PloneMeeting: Read budget infos</permission>
  <permission>PloneMeeting: Write budget infos</permission>
  <permission>PloneMeeting: Write marginal notes</permission>
+ <permission>PloneMeeting: Write internal notes</permission>
  <state state_id="accepted"
         title="accepted"
         i18n:attributes="title">
@@ -72,6 +73,11 @@
                   acquired="False">
    <permission-role>Manager</permission-role>
    <permission-role>Editor</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write internal notes"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingInternalNotesEditor</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
                   acquired="False">
@@ -148,6 +154,11 @@
                   acquired="False">
    <permission-role>Manager</permission-role>
    <permission-role>Editor</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write internal notes"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingInternalNotesEditor</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
                   acquired="False">
@@ -226,6 +237,11 @@
    <permission-role>Manager</permission-role>
    <permission-role>Editor</permission-role>
   </permission-map>
+  <permission-map name="PloneMeeting: Write internal notes"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingInternalNotesEditor</permission-role>
+  </permission-map>
   <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -303,6 +319,11 @@
    <permission-role>Manager</permission-role>
    <permission-role>Editor</permission-role>
   </permission-map>
+  <permission-map name="PloneMeeting: Write internal notes"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingInternalNotesEditor</permission-role>
+  </permission-map>
   <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -377,6 +398,11 @@
                   acquired="False">
    <permission-role>Manager</permission-role>
    <permission-role>Editor</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write internal notes"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingInternalNotesEditor</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
                   acquired="False">

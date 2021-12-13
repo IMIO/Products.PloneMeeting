@@ -1740,8 +1740,8 @@ def checkMayQuickEdit(obj,
        (bypassWritePermissionCheck or member.has_permission(permission, obj)) and \
        (_evaluateExpression(obj, expression)) and \
        (not (not bypassMeetingClosedCheck and
-                meeting and
-                meeting.query_state() in Meeting.MEETINGCLOSEDSTATES) or
+        meeting and
+        meeting.query_state() in Meeting.MEETINGCLOSEDSTATES) or
             tool.isManager(obj, realManagers=True)):
         res = True
     return res
@@ -1910,7 +1910,7 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
             for suffix in suffixes:
                 if suffix not in suffix_roles:
                     suffix_roles[suffix] = []
-                # 'Contributor' will allow add annex decision and edit MeetingItem.internalNotes
+                # 'Contributor' will allow add annex decision
                 given_roles = ['Reader', 'Contributor']
                 # we are on the current state
                 if level['state'] == item_state:
@@ -1927,10 +1927,11 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
         # every item validation suffixes get View access
         # we also give the Contributor except to 'observers'
         # so every editors roles get the "PloneMeeting: Add decision annex"
-        # permission that let add decision annex and write the MeetingItem.internalNotes
+        # permission that let add decision annex
+        item_is_decided = item_state in cfg.getItemDecidedStates()
         for suffix in get_item_validation_wf_suffixes(cfg, org):
             given_roles = ['Reader']
-            if suffix != 'observers':
+            if item_is_decided and suffix != 'observers':
                 given_roles.append('Contributor')
             suffix_roles[suffix] = given_roles
 

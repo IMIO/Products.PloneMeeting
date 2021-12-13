@@ -436,7 +436,8 @@ class MeetingConfigDescriptor(Descriptor):
                          'annexRestrictShownAndEditableAttributes', 'itemAnnexConfidentialVisibleFor',
                          'adviceAnnexConfidentialVisibleFor', 'meetingAnnexConfidentialVisibleFor',
                          'enableAdviceConfidentiality', 'adviceConfidentialityDefault', 'adviceConfidentialFor',
-                         'hideNotViewableLinkedItemsTo', 'inheritedAdviceRemoveableByAdviser', 'usingGroups',
+                         'hideNotViewableLinkedItemsTo', 'itemInternalNotesEditableBy',
+                         'inheritedAdviceRemoveableByAdviser', 'usingGroups',
                          'hideHistoryTo', 'orderedAssociatedOrganizations',
                          'orderedGroupsInCharge', 'orderedItemInitiators', 'selectableRedefinedPositionTypes',
                          'orderedCommitteeContacts', 'committees')
@@ -571,7 +572,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.hideNotViewableLinkedItemsTo = ()
         self.inheritedAdviceRemoveableByAdviser = False
         self.itemLabelsEditableByProposingGroupForever = False
-        self.itemInternalNotesEditableByMeetingManagers = False
+        self.itemInternalNotesEditableBy = [u'suffix_proposing_group_creators',
+                                            u'suffix_proposing_group_reviewers']
         self.usingGroups = []
         # List of other meetingConfigs, item of this meetingConfig
         # will be clonable to

@@ -14,6 +14,7 @@ from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group_id
+from collective.iconifiedcategory.interfaces import IIconifiedInfos
 from copy import deepcopy
 from datetime import datetime
 from DateTime import DateTime
@@ -61,7 +62,6 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import AddAdvice
-from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import AUTO_COPY_GROUP_PREFIX
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
@@ -86,6 +86,9 @@ from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
+from Products.PloneMeeting.config import ReadBudgetInfos
+from Products.PloneMeeting.config import WriteBudgetInfos
+from Products.PloneMeeting.config import WriteInternalNotes
 from Products.PloneMeeting.config import WriteMarginalNotes
 from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.events import item_added_or_initialized
@@ -133,6 +136,7 @@ from Products.PloneMeeting.utils import validate_item_assembly_value
 from Products.PloneMeeting.utils import workday
 from Products.PloneMeeting.widgets.pm_textarea import render_textarea
 from zope.annotation.interfaces import IAnnotations
+from zope.component import getAdapter
 from zope.component import getMultiAdapter
 from zope.component import queryUtility
 from zope.event import notify
@@ -1016,8 +1020,8 @@ schema = Schema((
             label_msgid='PloneMeeting_label_budgetRelated',
             i18n_domain='PloneMeeting',
         ),
-        read_permission="PloneMeeting: Read budget infos",
-        write_permission="PloneMeeting: Write budget infos",
+        read_permission=ReadBudgetInfos,
+        write_permission=WriteBudgetInfos,
     ),
     TextField(
         name='budgetInfos',
@@ -1035,8 +1039,8 @@ schema = Schema((
         default_method="getDefaultBudgetInfo",
         default_output_type="text/x-html-safe",
         optional=True,
-        read_permission="PloneMeeting: Read budget infos",
-        write_permission="PloneMeeting: Write budget infos",
+        read_permission=ReadBudgetInfos,
+        write_permission=WriteBudgetInfos,
     ),
     StringField(
         name='proposingGroup',
@@ -1413,7 +1417,7 @@ schema = Schema((
         widget=RichWidget(
             description="InternalNotes",
             description_msgid="internal_notes_descr",
-            condition="python: here.showInternalNotes()",
+            condition="python: here.attribute_is_used('internalNotes')",
             label_msgid="PloneMeeting_label_internalNotes",
             label='Internalnotes',
             i18n_domain='PloneMeeting',
@@ -1421,7 +1425,8 @@ schema = Schema((
         default_content_type="text/html",
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission=AddAnnexDecision,
+        read_permission=WriteInternalNotes,
+        write_permission=WriteInternalNotes,
     ),
     TextField(
         name='marginalNotes',
@@ -1436,6 +1441,7 @@ schema = Schema((
         ),
         default_content_type="text/html",
         default_output_type="text/x-html-safe",
+        searchable=True,
         optional=True,
         write_permission=WriteMarginalNotes,
     ),
@@ -2335,32 +2341,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 ('accepted_out_of_meeting' in wfAdaptations or
                 'accepted_out_of_meeting_and_duplicated' in wfAdaptations)) and \
             not self.isDefinedInTool()
-
-    security.declarePublic('showInternalNotes')
-
-    def showInternalNotes(self):
-        '''Show field 'internalNotes' if attribute is used,
-           and only to members of the proposingGroup (+ real Managers).'''
-        if not self.attribute_is_used('internalNotes'):
-            return False
-
-        # creating new item, show field
-        if self.isTemporary():
-            return True
-
-        # bypass for Managers
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        if tool.isManager(tool, realManagers=True) or \
-           (cfg.getItemInternalNotesEditableByMeetingManagers() and
-                tool.isManager(cfg)):
-            return True
-
-        # user must be in one of the proposingGroup Plone groups
-        org_uid = self.getProposingGroup()
-        if tool.user_is_in_org(org_uid=org_uid):
-            return True
-        return False
 
     security.declarePublic('showMeetingManagerReservedField')
 
@@ -6541,6 +6521,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            - advices;
            - power observers;
            - budget impact editors;
+           - internal notes editors;
            - categorized elements (especially 'visible_for_groups');
            - then call a subscriber 'after local roles updated'.'''
         # remove every localRoles then recompute
@@ -6571,9 +6552,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # it is done on every edit because of 'item_access_on' TAL expression
         self._updatePowerObserversLocalRoles(cfg, item_state)
         # update budget impact editors local roles
-        # actually it could be enough to do in in the onItemTransition but as it is
-        # always done after update_local_roles, we do it here as it is trivial
         self._updateBudgetImpactEditorsLocalRoles(cfg, item_state)
+        # update internal notes editors local roles
+        self._updateInternalNotesEditorsLocalRoles(cfg, item_state)
         # update group in charge local roles
         # we will give the current groupsInCharge _observers sub group access to this item
         self._updateGroupsInChargeLocalRoles(cfg, item_state)
@@ -6660,6 +6641,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return
         budgetImpactEditorsGroupId = "%s_%s" % (cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)
         self.manage_addLocalRoles(budgetImpactEditorsGroupId, ('MeetingBudgetImpactEditor',))
+
+    def _updateInternalNotesEditorsLocalRoles(self, cfg, item_state):
+        '''Add local roles depending on MeetingConfig.
+           We use the IIconifiedInfos adapter that computes groups to give local roles to.'''
+        if not self.attribute_is_used('internalNotes'):
+            return
+        # as computing groups for internal notes is the same as computing groups
+        # for access to confidential annexes, we use the code in the IIconifiedInfos adapter
+        adapter = getAdapter(self, IIconifiedInfos)
+        adapter.parent = self
+        groups = adapter._item_visible_for_groups(
+            adapter.cfg.getItemInternalNotesEditableBy())
+        for group in groups:
+            self.manage_addLocalRoles(group, ('MeetingInternalNotesEditor',))
 
     def _updateGroupsInChargeLocalRoles(self, cfg, item_state):
         '''Get the current groupsInCharge and give View access to the _observers Plone group.'''
