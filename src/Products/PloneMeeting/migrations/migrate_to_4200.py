@@ -25,6 +25,7 @@ from Products.PloneMeeting.interfaces import IMeetingDashboardBatchActionsMarker
 from Products.PloneMeeting.interfaces import IMeetingItemDashboardBatchActionsMarker
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.setuphandlers import columnInfos
 from Products.PloneMeeting.setuphandlers import indexInfos
@@ -694,6 +695,17 @@ class Migrate_To_4200(Migrator):
         cron_configlet.cronjobs = [u'45 1 * * portal/@@pm-night-tasks']
         logger.info('Done.')
 
+    def _initMeetingConfigItemInternalNotesEditableBy(self):
+        """By default, make proposingGroup editors able to use MeetingItem.internalNotes."""
+        logger.info("Updating every MeetingConfig.ItemInternalNotesEditableBy...")
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            if "internalNotes" in cfg.getUsedItemAttributes():
+                suffixes = cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
+                values = ['{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix)
+                          for suffix in suffixes]
+                cfg.setItemInternalNotesEditableBy(values)
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
 
@@ -705,7 +717,6 @@ class Migrate_To_4200(Migrator):
 
         # update cron4plone
         self._updateCron4Plone()
-        return
 
         # update preferred meeting path on items
         self._updateItemPreferredMeetingLink()
@@ -737,6 +748,9 @@ class Migrate_To_4200(Migrator):
         self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'typeinfo')
         # configure wfAdaptations before reinstall
         self._configureItemWFValidationLevels()
+
+        # init MeetingConfig.itemInternalNotesEditableBy after _configureItemWFValidationLevels
+        self._initMeetingConfigItemInternalNotesEditableBy()
 
         # need to reindex new indexes before migrating Meeting to DX
         addOrUpdateIndexes(self.portal, indexInfos)
