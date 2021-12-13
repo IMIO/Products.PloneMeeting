@@ -41,6 +41,7 @@ from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
 from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.indexes import _to_coded_adviser_index
@@ -380,10 +381,19 @@ class ObjectGoToView(BrowserView):
             return self.request.RESPONSE.redirect(self.context.absolute_url())
 
 
-class UpdateDelayAwareAdvicesView(BrowserView):
+class NightTasksView(BrowserView):
     """
       This is a view that is called as a maintenance task by Products.cron4plone.
-      As we use clear days to compute advice delays, it will be launched at 0:00
+    """
+
+    def __call__(self):
+        self.context.restrictedTraverse('@@update-delay-aware-advices')()
+        self.context.restrictedTraverse('@@update-items-to-reindex')()
+
+
+class UpdateDelayAwareAdvicesView(BrowserView):
+    """
+      As we use clear days to compute advice delays, this is launched at 0:00
       each night and update relevant items containing delay-aware advices still addable/editable.
       It will also update the indexAdvisers portal_catalog index.
     """
@@ -441,6 +451,33 @@ class UpdateDelayAwareAdvicesView(BrowserView):
                 '/'.join(item.getPhysicalPath())))
             i = i + 1
             item.update_local_roles()
+        logger.info('Done.')
+
+
+class UpdateItemsToReindexView(BrowserView):
+    """
+      When adding annexes, we avoid reindexing the SearchableText.
+      It will be nevertheless most of times updated by another reindex
+      made on item (modified rich text).  But if any are still to reindex, we
+      do this during the night.
+    """
+    def __call__(self):
+        """ """
+        catalog = api.portal.get_tool('portal_catalog')
+        query = {'pm_technical_index': [REINDEX_NEEDED_MARKER]}
+        brains = catalog(**query)
+        numberOfBrains = len(brains)
+        i = 1
+        logger.info('Reindexing %s items' % str(numberOfBrains))
+        for brain in brains:
+            item = brain.getObject()
+            logger.info('%d/%d Reindexing of item at %s' % (
+                i,
+                numberOfBrains,
+                '/'.join(item.getPhysicalPath())))
+            i = i + 1
+            setattr(item, REINDEX_NEEDED_MARKER, False)
+            item.reindexObject()
         logger.info('Done.')
 
 

@@ -559,11 +559,27 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
+    <!-- the global night maintenance task view that calls other views -->
+    <browser:view
+        for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
+        name="pm-night-tasks"
+        class=".views.NightTasksView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="cmf.ManagePortal" />
+
     <!-- the maintenance task view that update delay-aware advisers -->
     <browser:view
         for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
         name="update-delay-aware-advices"
         class=".views.UpdateDelayAwareAdvicesView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="cmf.ManagePortal" />
+
+    <!-- the maintenance task view that reindex necessary elements -->
+    <browser:view
+        for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
+        name="update-items-to-reindex"
+        class=".views.UpdateItemsToReindexView"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="cmf.ManagePortal" />
 

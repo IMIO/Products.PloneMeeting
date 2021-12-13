@@ -33,6 +33,7 @@ from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.content.meeting import IMeeting
@@ -97,8 +98,6 @@ def do(action, event):
         sendMailIfRelevant(event.object, event_id, 'View', isPermission=True)
         # apply on transition field transform if any
         applyOnTransitionFieldTransform(event.object, event.transition.id)
-        # update modification date upon state change
-        event.object.notifyModified()
     elif objectType == 'Meeting':
         # update every local roles
         local_roles_indexes = event.object.update_local_roles()
@@ -110,8 +109,6 @@ def do(action, event):
         # trigger some transitions on contained items depending on
         # MeetingConfig.onMeetingTransitionItemActionToExecute
         meetingExecuteActionOnLinkedItems(event.object, event.transition.id)
-        # update modification date upon state change
-        event.object.notifyModified()
     elif objectType == 'MeetingAdvice':
         _addManagedPermissions(event.object)
     return local_roles_indexes
@@ -155,9 +152,9 @@ def onItemTransition(item, event):
         event.object, event.workflow, event.old_state, event.new_state,
         event.transition, event.status, event.kwargs))
     # update review_state and local_roles related indexes
-    review_state_related_indexes = [
-        'downOrUpWorkflowAgain', 'getTakenOverBy', 'reviewProcessInfo']
-    item.reindexObject(idxs=local_roles_indexes + review_state_related_indexes)
+    review_state_related_indexes = item.adapted().getReviewStateRelatedIndexes()
+    notifyModifiedAndReindex(
+        item, extra_idxs=local_roles_indexes + review_state_related_indexes)
     # An item has ben modified, use get_again for portlet_todo
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.MeetingItem.modified', get_again=True)
@@ -191,8 +188,7 @@ def onMeetingTransition(meeting, event):
     notify(MeetingAfterTransitionEvent(
         event.object, event.workflow, event.old_state, event.new_state,
         event.transition, event.status, event.kwargs))
-    # just reindex the entire object
-    event.object.reindexObject()
+    notifyModifiedAndReindex(meeting)
 
 
 def onAdviceTransition(advice, event):
@@ -855,11 +851,13 @@ def onAnnexAdded(annex, event):
             # Potentially I must notify MeetingManagers through email.
             sendMailIfRelevant(parent, 'annexAdded', 'meetingmanagers', isSuffix=True)
 
+        # reindexing SearchableText to include annex title is deferred
+        setattr(parent, REINDEX_NEEDED_MARKER, True)
         # update parent modificationDate, it is used for caching and co
         # and reindex parent relevant indexes
         notifyModifiedAndReindex(
             parent,
-            extra_idxs=['SearchableText', 'annexes_index'])
+            extra_idxs=['annexes_index'])
 
 
 def onAnnexEditFinished(annex, event):
@@ -873,9 +871,12 @@ def onAnnexEditFinished(annex, event):
 def onAnnexModified(annex, event):
     '''When an annex is modified, update parent's modification date.'''
     parent = annex.aq_inner.aq_parent
+    # reindexing SearchableText to include annex title is deferred
+    # only mark to reindex if annex title changed
+    if 'title' in get_modified_attrs(event):
+        setattr(parent, REINDEX_NEEDED_MARKER, True)
     # update modificationDate, it is used for caching and co
-    # we need to reindex parent's SearchableText as annex title is stored in it
-    notifyModifiedAndReindex(parent, extra_idxs=['SearchableText'])
+    notifyModifiedAndReindex(parent)
 
 
 def onAnnexFileChanged(annex, event):
@@ -907,8 +908,10 @@ def onAnnexRemoved(annex, event):
         if parent.willInvalidateAdvices():
             parent.update_local_roles(invalidate=True)
 
-    # update modification date and SearchableText
-    notifyModifiedAndReindex(parent, extra_idxs=['SearchableText', 'annexes_index'])
+    # reindexing SearchableText to include annex title is deferred
+    setattr(parent, REINDEX_NEEDED_MARKER, True)
+    # update modification date
+    notifyModifiedAndReindex(parent, extra_idxs=['annexes_index'])
 
 
 def onAnnexAttrChanged(annex, event):
@@ -919,6 +922,7 @@ def onAnnexAttrChanged(annex, event):
     if not event.is_created:
         # update relevant indexes if not event.is_created
         parent = annex.aq_inner.aq_parent
+        # reindex annexes_index here because annex modified is not called when attr changed
         notifyModifiedAndReindex(parent, extra_idxs=["annexes_index"])
 
         extras = 'object={0} values={1}'.format(

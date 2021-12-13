@@ -65,6 +65,7 @@ from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
 from Products.PloneMeeting.config import TOOL_ID
 from Products.PloneMeeting.interfaces import IAdviceAfterAddEvent
 from Products.PloneMeeting.interfaces import IAdviceAfterModifyEvent
@@ -1035,6 +1036,8 @@ def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True
             extra_idxs.append(field_name)
         if probable_index_name in index_names:
             extra_idxs.append(probable_index_name)
+        # unmark deferred SearchableText reindexing
+        setattr(obj, REINDEX_NEEDED_MARKER, False)
         notifyModifiedAndReindex(obj, extra_idxs=extra_idxs)
     if unlock:
         # just unlock, do not call ObjectEditedEvent because it does too much
@@ -1055,7 +1058,8 @@ def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False):
 
     idxs = []
     if '*' not in extra_idxs:
-        idxs = ['modified', 'ModificationDate', 'Date'] + extra_idxs
+        idxs = [
+            'pm_technical_index', 'modified', 'ModificationDate', 'Date'] + extra_idxs
     obj.reindexObject(idxs=idxs)
 
     if notify_event:
@@ -1743,8 +1747,8 @@ def checkMayQuickEdit(obj,
        (bypassWritePermissionCheck or member.has_permission(permission, obj)) and \
        (_evaluateExpression(obj, expression)) and \
        (not (not bypassMeetingClosedCheck and
-                meeting and
-                meeting.query_state() in Meeting.MEETINGCLOSEDSTATES) or
+        meeting and
+        meeting.query_state() in Meeting.MEETINGCLOSEDSTATES) or
             tool.isManager(tool, realManagers=True)):
         res = True
     return res

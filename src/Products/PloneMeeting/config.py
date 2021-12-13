@@ -379,6 +379,9 @@ NO_COMMITTEE = u"no_committee"
 # for performance reason we do not dynamically get the annexes criterion id
 FACETED_ANNEXES_CRITERION_ID = 'c20'
 
+# name of marker specifyng that a reindex is required
+REINDEX_NEEDED_MARKER = "_catalog_reindex_needed"
+
 
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the

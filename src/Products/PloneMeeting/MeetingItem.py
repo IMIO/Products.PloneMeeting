@@ -83,6 +83,7 @@ from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
+from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.config import ReadBudgetInfos
 from Products.PloneMeeting.config import WriteBudgetInfos
@@ -6659,7 +6660,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # given advices are historized with right item data
             if hasattr(self, 'adviceIndex'):
                 self._versionateAdvicesOnItemEdit()
-        return BaseFolder.processForm(self, data=data, metadata=metadata, REQUEST=REQUEST, values=values)
+        # unmark deferred SearchableText reindexing
+        setattr(self, REINDEX_NEEDED_MARKER, False)
+        return BaseFolder.processForm(
+            self, data=data, metadata=metadata, REQUEST=REQUEST, values=values)
 
     security.declarePublic('showOptionalAdvisers')
 
@@ -7456,6 +7460,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getAdviceRelatedIndexes(self):
         '''See doc in interfaces.py.'''
         return ['indexAdvisers']
+
+    security.declarePrivate('getReviewStateRelatedIndexes')
+
+    def getReviewStateRelatedIndexes(self):
+        '''See doc in interfaces.py.'''
+        return ['downOrUpWorkflowAgain', 'getTakenOverBy', 'reviewProcessInfo']
 
     def _mayChangeAttendees(self):
         """Check that user may quickEdit

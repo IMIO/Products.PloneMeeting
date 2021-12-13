@@ -77,7 +77,10 @@ indexInfos = {
     # Meeting-related indexes
     'meeting_date': ('DateIndex', {}),
     # Indexes used by every portal_types
-    'getConfigId': ('FieldIndex', {}), }
+    'getConfigId': ('FieldIndex', {}),
+    # a technical index used to store various informations
+    'pm_technical_index': ('KeywordIndex', {}),
+}
 # Metadata to create in portal_catalog
 columnInfos = ('getAssociatedGroups',
                'getCategory',
@@ -276,7 +279,7 @@ def postInstall(context):
     if not cron_configlet.cronjobs:
         # add a cron job that will be launched at 02:00 so set 01:45
         # Syntax: m h dom mon command.
-        cron_configlet.cronjobs = [u'45 1 * * portal/@@update-delay-aware-advices']
+        cron_configlet.cronjobs = [u'45 1 * * portal/@@pm-night-tasks']
 
     # add a collective.messagesviewlet message that will be used to warn MeetingManagers
     # that there are no more holidays in the configuration in less that 2 months

@@ -1173,8 +1173,8 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             confidential=confidential_default,
             used_pod_template_id=pod_template.getId(),
             scan_id=scan_id)
-        # if we have a scan_id it means that a barcode has been inserted in the generated document
-        # we mark stored annex as barcoded
+        # if we have a scan_id it means that a barcode has been inserted
+        # in the generated document, we mark stored annex as barcoded
         if scan_id:
             setattr(annex, BARCODE_INSERTED_ATTR_ID, True)
 

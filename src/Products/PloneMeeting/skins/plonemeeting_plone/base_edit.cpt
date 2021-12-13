@@ -15,7 +15,7 @@ to use <fieldset> in the edit form.
                    errors options/state/getErrors | nothing;
                    schematas context/Schemata;
                    allow_tabbing python: False;
-                   fieldsets python: ['default'];
+                   fieldsets python: [fieldset for fieldset in schematas.keys() if fieldset not in ['metadata', 'settings']];
                    default_fieldset python:'default' in fieldsets and 'default' or fieldsets and fieldsets[0] or None;
                    fieldset request/fieldset|options/fieldset|default_fieldset;
                    fields python: context.Schemata()['default'].fields();

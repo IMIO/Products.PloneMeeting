@@ -246,6 +246,7 @@
   <adapter name="meeting_date" factory=".indexes.meeting_date" />
   <adapter name="meeting_date" factory=".indexes.item_meeting_date" />
   <adapter name="meeting_uid" factory=".indexes.meeting_uid" />
+  <adapter name="pm_technical_index" factory=".indexes.pm_technical_index" />
   <adapter name="previous_review_state" factory=".indexes.previous_review_state" />
   <adapter name="reviewProcessInfo" factory=".indexes.reviewProcessInfo" />
   <adapter name="SearchableText" factory=".indexes.SearchableText_item" />

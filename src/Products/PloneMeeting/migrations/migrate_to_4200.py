@@ -15,6 +15,7 @@ from plone.app.textfield.value import RichTextValue
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.contentmigration.basemigrator.migrator import CMFFolderMigrator
+from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.browser.itemattendee import position_type_default
 from Products.PloneMeeting.config import AddAdvice
@@ -29,6 +30,7 @@ from Products.PloneMeeting.setuphandlers import columnInfos
 from Products.PloneMeeting.setuphandlers import indexInfos
 from Products.PloneMeeting.utils import cleanMemoize
 from Products.ZCatalog.ProgressHandler import ZLogHandler
+from zope.component import queryUtility
 from zope.interface import alsoProvides
 from zope.interface import noLongerProvides
 
@@ -685,14 +687,25 @@ class Migrate_To_4200(Migrator):
                 obj=item)
         logger.info('Done.')
 
+    def _updateCron4Plone(self):
+        """The maintenance task view name changed to @@pm-night-tasks."""
+        logger.info("Updating cron4plone configuration...")
+        cron_configlet = queryUtility(ICronConfiguration, 'cron4plone_config')
+        cron_configlet.cronjobs = [u'45 1 * * portal/@@pm-night-tasks']
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
 
-        self._fixPODTemplatesInstructions()
+        #self._fixPODTemplatesInstructions()
         self._fixFacetedFilters()
 
         # apply correct batch actions marker on searches_* folders
         self._updateSearchedFolderBatchActionsMarkerInterface()
+
+        # update cron4plone
+        self._updateCron4Plone()
+        return
 
         # update preferred meeting path on items
         self._updateItemPreferredMeetingLink()
