@@ -684,7 +684,6 @@ class testViews(PloneMeetingTestCase):
         """The @@update-items-to-reindex called by @@pm-night-tasks."""
         # create item with annexes, annexes not found in catalog
         self.changeUser('pmCreator1')
-        import ipdb; ipdb.set_trace()
         item = self.create('MeetingItem', title="Classic item title")
         self.addAnnex(item, annexTitle="Special annex title")
         self.assertTrue(self.catalog(SearchableText="Classic"))
