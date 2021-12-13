@@ -219,7 +219,8 @@ class PloneGroupSettingsValidator(validator.SimpleFieldValidator):
             # suffixes, values are like 'suffix_proposing_group_level1reviewers'
             composed_values_attributes = ['itemAnnexConfidentialVisibleFor',
                                           'adviceAnnexConfidentialVisibleFor',
-                                          'meetingAnnexConfidentialVisibleFor']
+                                          'meetingAnnexConfidentialVisibleFor',
+                                          'itemInternalNotesEditableBy']
             for composed_values_attr in composed_values_attributes:
                 values = cfg.getField(composed_values_attr).getAccessor(cfg)()
                 values = [v for v in values

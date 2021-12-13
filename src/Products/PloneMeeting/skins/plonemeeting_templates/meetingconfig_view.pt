@@ -1208,7 +1208,7 @@
           <td tal:define="field python:here.getField('itemLabelsEditableByProposingGroupForever')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('itemInternalNotesEditableByMeetingManagers')">
+          <td tal:define="field python:here.getField('itemInternalNotesEditableBy')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('usingGroups')">

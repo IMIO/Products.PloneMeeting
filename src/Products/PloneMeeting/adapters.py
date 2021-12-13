@@ -1639,34 +1639,34 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         groups = []
         parent_classname = self.parent.getTagName()
         if parent_classname == 'MeetingItem':
-            groups = self._item_visible_for_groups()
+            visible_fors = self.cfg.getItemAnnexConfidentialVisibleFor()
+            groups = self._item_visible_for_groups(visible_fors)
         elif parent_classname == 'Meeting':
-            groups = self._meeting_visible_for_groups()
+            visible_fors = self.cfg.getMeetingAnnexConfidentialVisibleFor()
+            groups = self._meeting_visible_for_groups(visible_fors)
         else:
             # advice
-            groups = self._advice_visible_for_groups()
+            visible_fors = self.cfg.getAdviceAnnexConfidentialVisibleFor()
+            groups = self._advice_visible_for_groups(visible_fors)
         return groups
 
-    def _item_visible_for_groups(self):
+    def _item_visible_for_groups(self, visible_fors):
         """ """
-        visible_fors = self.cfg.getItemAnnexConfidentialVisibleFor()
         res = []
         res += self._configgroup_groups(visible_fors)
         res += self._reader_groups(visible_fors)
         res += self._suffix_proposinggroup(visible_fors)
         return res
 
-    def _meeting_visible_for_groups(self):
+    def _meeting_visible_for_groups(self, visible_fors):
         """ """
-        visible_fors = self.cfg.getMeetingAnnexConfidentialVisibleFor()
         res = []
         res += self._configgroup_groups(visible_fors)
         res += self._suffix_profile_proposinggroup(visible_fors)
         return res
 
-    def _advice_visible_for_groups(self):
+    def _advice_visible_for_groups(self, visible_fors):
         """ """
-        visible_fors = self.cfg.getAdviceAnnexConfidentialVisibleFor()
         res = []
         res += self._configgroup_groups(visible_fors)
         res += self._reader_groups(visible_fors)
