@@ -216,7 +216,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.validateItem(item)
         self.assertEqual(item.query_state(), 'validated')
 
-        proposingGroupSuffixes = [k for k in cfg.listItemAnnexConfidentialVisibleFor()
+        proposingGroupSuffixes = [k for k in cfg.listItemAttributeVisibleFor()
                                   if k.startswith(PROPOSINGGROUPPREFIX)]
         for proposingGroupSuffix in proposingGroupSuffixes:
             cfg.setItemAnnexConfidentialVisibleFor((proposingGroupSuffix, ))
@@ -470,7 +470,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.validateItem(item)
         self.assertEqual(item.query_state(), 'validated')
 
-        proposingGroupSuffixes = [k for k in cfg.listItemAnnexConfidentialVisibleFor()
+        proposingGroupSuffixes = [k for k in cfg.listItemAttributeVisibleFor()
                                   if k.startswith(PROPOSINGGROUPPREFIX)]
         for proposingGroupSuffix in proposingGroupSuffixes:
             cfg.setAdviceAnnexConfidentialVisibleFor((proposingGroupSuffix, ))
@@ -967,8 +967,9 @@ class testAnnexes(PloneMeetingTestCase):
 
     def test_pm_ChangeAnnexPosition(self):
         """Annexes are orderable by the user able to add annexes."""
+        self._removeConfigObjectsFor(self.meetingConfig)
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
+        item = self.create('MeetingItem', decision=self.decisionText)
         annex1 = self.addAnnex(item)
         annex2 = self.addAnnex(item)
         annex3 = self.addAnnex(item)
@@ -984,6 +985,18 @@ class testAnnexes(PloneMeetingTestCase):
         # only members able to add annexes are able to change position
         self.validateItem(item)
         self.assertEqual(item.query_state(), 'validated')
+        self.assertFalse(self.hasPermission(AddAnnex, item))
+        self.assertFalse(self.hasPermission(AddAnnexDecision, item))
+        self.assertRaises(Unauthorized,
+                          item.folder_position_typeaware,
+                          position='up',
+                          id=annex1.getId())
+        # creators may manage decision annexes on decided item
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        self.presentItem(item)
+        self.closeMeeting(meeting)
+        self.assertEqual(item.query_state(), 'accepted')
         self.assertFalse(self.hasPermission(AddAnnex, item))
         self.assertTrue(self.hasPermission(AddAnnexDecision, item))
         item.folder_position_typeaware(position='up', id=annex1.getId())

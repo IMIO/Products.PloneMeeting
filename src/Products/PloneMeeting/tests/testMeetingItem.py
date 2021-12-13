@@ -6474,11 +6474,9 @@ class testMeetingItem(PloneMeetingTestCase):
                             prefixed=False, showContentIcon=False).encode('utf-8')),
                     'utf-8'))
 
-    def test_pm_InternalNotesIsRestrictedToProposingGroup(self, ):
-        """Field MeetingItem.internalNotes is only available to members
-           of the proposing group and it editable forever.
-           When enabling MeetingConfig.itemInternalNotesEditableByMeetingManagers,
-           then MeetingManagers may manage it as well."""
+    def test_pm_ItemInternalNotesEditableBy(self, ):
+        """Field MeetingItem.internalNotes will only be visible and editable
+           by profiles selected in MeetingConfig.itemInternalNotesEditableBy."""
         cfg = self.meetingConfig
         self._removeConfigObjectsFor(self.meetingConfig)
         self.changeUser('siteadmin')
@@ -6486,73 +6484,90 @@ class testMeetingItem(PloneMeetingTestCase):
         for ploneGroup in get_plone_groups(self.vendors_uid):
             if 'pmManager' in ploneGroup.getGroupMemberIds():
                 ploneGroup.removeMember('pmManager')
-        # make copyGroups able to see item when it is validated
+        # make copyGroups able to see item in every states
         cfg.setItemCopyGroupsStates(('validated', ))
         cfg.setUseCopies(True)
         cfg.setSelectableCopyGroups((self.developers_reviewers, self.vendors_reviewers))
+        # make power observers able to see validated items
+        self._setPowerObserverStates(states=('validated', ))
+
+        def _check(item, view_edit=False):
+            view = item.restrictedTraverse('base_view')
+            if view_edit:
+                self.assertTrue("Internal notes" in view())
+                self.assertTrue(item.mayQuickEdit("internalNotes"))
+            else:
+                self.assertFalse("Internal notes" in view())
+                self.assertFalse(item.mayQuickEdit("internalNotes"))
 
         # create an item
         self.changeUser('pmCreator2')
         item = self.create('MeetingItem', decision=self.decisionText)
         item.setCopyGroups((self.developers_reviewers))
+        item._update_after_edit()
         # if not used, not shown
-        self.assertFalse(item.showInternalNotes())
+        _check(item, False)
         # enable field internalNotes
-        cfg.setUsedItemAttributes(('internalNotes', ))
-        # MeetingItem.attribute_is_used is RAMCached
-        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
-        self.assertTrue(item.showInternalNotes())
-        self.assertTrue(item.mayQuickEdit('internalNotes'))
-
-        # a MeetingManager may not access it neither
+        self._enableField('internalNotes', reload=True)
+        # when config changes, need to update_local_roles on item
+        item.update_local_roles()
+        _check(item, True)
+        # a MeetingManager may not access by default
         self.validateItem(item)
         self.changeUser('pmManager')
-        self.assertTrue(self.hasPermission(View, item))
-        self.assertFalse(item.showInternalNotes())
-        self.assertFalse(item.mayQuickEdit('internalNotes'))
+        _check(item, False)
+        # except when seleced in MeetingConfig.itemInternalNotesEditableBy
+        self._activate_config('itemInternalNotesEditableBy',
+                              'configgroup_meetingmanagers')
+        item.update_local_roles()
+        _check(item, True)
 
-        # except when using MeetingConfig.itemInternalNotesEditableByMeetingManagers
-        cfg.setItemInternalNotesEditableByMeetingManagers(True)
-        cfg.at_post_edit_script()
-        self.assertTrue(item.showInternalNotes())
-        self.assertTrue(item.mayQuickEdit('internalNotes'))
-
-        # copyGroups no more
+        # copyGroups may not see
         self.changeUser('pmReviewer1')
         self.assertTrue(self.hasPermission(View, item))
-        self.assertFalse(item.showInternalNotes())
-        self.assertFalse(item.mayQuickEdit('internalNotes'))
+        _check(item, False)
+        # except when seleced in MeetingConfig.itemInternalNotesEditableBy
+        self._activate_config('itemInternalNotesEditableBy',
+                              'reader_copy_groups')
+        item.update_local_roles()
+        _check(item, True)
+
+        # powerobservers may not see
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        _check(item, False)
+        # except when seleced in MeetingConfig.itemInternalNotesEditableBy
+        self._activate_config('itemInternalNotesEditableBy',
+                              'configgroup_powerobservers')
+        item.update_local_roles()
+        _check(item, True)
 
         # a Manager may see it
         self.changeUser('siteadmin')
         self.assertTrue(self.hasPermission(View, item))
-        self.assertTrue(item.showInternalNotes())
-        self.assertTrue(item.mayQuickEdit('internalNotes'))
+        _check(item, True)
 
         # internalNotes are editable forever
-        def _check(item):
-            self.changeUser('pmCreator2')
-            self.assertTrue(self.hasPermission(View, item))
-            self.assertTrue(item.showInternalNotes())
-            self.assertTrue(item.mayQuickEdit('internalNotes',
-                                              bypassMeetingClosedCheck=True))
-            self.changeUser('pmManager')
-            self.assertTrue(self.hasPermission(View, item))
-            self.assertTrue(item.showInternalNotes())
-            self.assertTrue(item.mayQuickEdit('internalNotes',
-                                              bypassMeetingClosedCheck=True))
+        def _check_editable(item):
+            for user_id in ('pmCreator2', 'pmManager'):
+                self.changeUser(user_id)
+                self.assertTrue(self.hasPermission(View, item))
+                view = item.restrictedTraverse('base_view')
+                self.assertTrue("Internal notes" in view())
+                self.assertTrue(item.mayQuickEdit('internalNotes',
+                                                  bypassMeetingClosedCheck=True))
 
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         self.presentItem(item)
-        _check(item)
+        _check_editable(item)
         self.freezeMeeting(meeting)
-        _check(item)
+        _check_editable(item)
         self.decideMeeting(meeting)
-        _check(item)
+        _check_editable(item)
         self.closeMeeting(meeting)
         self.assertEqual(item.query_state(), 'accepted')
-        _check(item)
+        _check_editable(item)
 
     def test_pm_HideCssClasses(self):
         """ """

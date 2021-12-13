@@ -653,6 +653,31 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             cfg.at_post_edit_script()
         self.changeUser(currentUser)
 
+    def _activate_config(self,
+                         field_name,
+                         value,
+                         cfg=None,
+                         keep_existing=True,
+                         remove=False,
+                         reload=True):
+        """Helper to activate a value in the configuration."""
+        cfg = cfg or self.meetingConfig
+        field = cfg.getField(field_name)
+        values = list(field.get(cfg))
+        if remove:
+            values.remove(value)
+        else:
+            if keep_existing:
+                values.append(value)
+            else:
+                values = [value]
+        field.getMutator(cfg)(values)
+        if reload:
+            currentUser = self.member.getId()
+            self.changeUser('siteadmin')
+            cfg.at_post_edit_script()
+            self.changeUser(currentUser)
+
     def _enableAutoConvert(self, enable=True):
         """Enable collective.documentviewer auto_convert."""
         gsettings = GlobalSettings(self.portal)
@@ -660,7 +685,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
         return gsettings
 
-    def _enableField(self, field_names, cfg=None, related_to='MeetingItem', enable=True):
+    def _enableField(self, field_names, cfg=None, related_to='MeetingItem', enable=True, reload=False):
         """ """
         if not hasattr(field_names, "__iter__"):
             field_names = [field_names]
@@ -680,6 +705,11 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 elif not enable and field_name in usedMeetingAttrs:
                     usedMeetingAttrs.remove(field_name)
                 cfg.setUsedMeetingAttributes(tuple(usedMeetingAttrs))
+        if reload:
+            currentUser = self.member.getId()
+            self.changeUser('siteadmin')
+            cfg.at_post_edit_script()
+            self.changeUser(currentUser)
 
     def _enable_annex_config(self,
                              obj,

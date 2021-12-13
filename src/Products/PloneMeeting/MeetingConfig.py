@@ -2339,7 +2339,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listItemAnnexConfidentialVisibleFor',
+        vocabulary='listItemAttributeVisibleFor',
         default=defValues.itemAnnexConfidentialVisibleFor,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -2434,23 +2434,27 @@ schema = Schema((
         schemata="advices",
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
-        name='itemInternalNotesEditableByMeetingManagers',
-        default=defValues.itemInternalNotesEditableByMeetingManagers,
-        widget=BooleanField._properties['widget'](
+    LinesField(
+        name='itemInternalNotesEditableBy',
+        widget=MultiSelectionWidget(
             description="ItemInternalNotesEditableByMeetingManagers",
-            description_msgid="item_internal_notes_editable_by_meeting_managers_descr",
-            label='Iteminternalnoteseditablebymeetingmanagers',
-            label_msgid='PloneMeeting_label_itemInternalNotesEditableByMeetingManagers',
+            description_msgid="item_internal_notes_editable_by_descr",
+            format="checkbox",
+            label='Iteminternalnoteseditableby',
+            label_msgid='PloneMeeting_label_itemInternalNotesEditableBy',
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
+        multiValued=1,
+        vocabulary='listItemAttributeVisibleForWithMeetingManagers',
+        default=defValues.usingGroups,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
         name='usingGroups',
         widget=MultiSelectionWidget(
-            description="usingGroups",
+            description="UsingGroups",
             description_msgid="config_using_groups_descr",
             format="checkbox",
             label='Usinggroups',
@@ -5626,14 +5630,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         ))
         return res
 
-    security.declarePrivate('listItemAnnexConfidentialVisibleFor')
+    security.declarePrivate('listItemAttributeVisibleFor')
 
-    def listItemAnnexConfidentialVisibleFor(self):
-        '''
-          Vocabulary for the 'itemAnnexConfidentialVisibleFor' field.
-        '''
+    def listItemAttributeVisibleFor(self, include_for_meetingmanagers=False):
+        '''Vocabulary listing profiles available in the application.
+           If p_include_for_meetingmanagers=True, add also the meetingmanagers profile.'''
+
         confidential_profiles = ['{0}{1}'.format(CONFIGGROUPPREFIX,
                                                  BUDGETIMPACTEDITORS_GROUP_SUFFIX)]
+        if include_for_meetingmanagers:
+            confidential_profiles.append('{0}{1}'.format(
+                CONFIGGROUPPREFIX, MEETINGMANAGERS_GROUP_SUFFIX))
+
         # do not consider READER_USECASES 'confidentialannex' and 'itemtemplatesmanagers'
         reader_usecases = [usecase for usecase in READER_USECASES.keys()
                            if usecase not in ['confidentialannex', 'itemtemplatesmanagers']]
@@ -5681,6 +5689,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                         context=self.REQUEST,
                                         default=u"Visible for {0}".format(profile))))
         return DisplayList(res).sortedByValue()
+
+    security.declarePrivate('listItemAttributeVisibleForWithMeetingManagers')
+
+    def listItemAttributeVisibleForWithMeetingManagers(self):
+        '''Vocabulary listing profiles available in the application
+           including the meetingmanagers profile.'''
+        return self.listItemAttributeVisibleFor(include_for_meetingmanagers=True)
 
     security.declarePrivate('listAdviceAnnexConfidentialVisibleFor')
 

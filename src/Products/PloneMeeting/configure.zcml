@@ -269,6 +269,12 @@
     provides="collective.iconifiedcategory.interfaces.IIconifiedInfos"
     factory=".adapters.PMCategorizedObjectInfoAdapter" />
 
+  <!-- available on MeetingItem to compute internalNotes releated local_roles -->
+  <adapter
+    for="Products.PloneMeeting.interfaces.IMeetingItem"
+    provides="collective.iconifiedcategory.interfaces.IIconifiedInfos"
+    factory=".adapters.PMCategorizedObjectInfoAdapter" />
+
   <adapter
     for="Products.PloneMeeting.interfaces.IMeetingContent
          zope.publisher.interfaces.browser.IBrowserRequest

@@ -195,12 +195,10 @@ class testWorkflows(PloneMeetingTestCase):
         self.addAnnex(item1)
         self.addAnnex(item1, relatedTo='item_decision')
         self.do(item1, 'validate')
-        # Reviewers may add decision annexes but not normal annexes
-        self.changeUser('pmReviewer1')
-        self.failIf(self.hasPermission(AddAnnex, item1))
-        self.assertTrue(self.hasPermission(AddAnnexDecision, item1))
-        self.assertRaises(Unauthorized, self.addAnnex, item1)
-        self.addAnnex(item1, relatedTo='item_decision')
+        # The reviewer cannot add a decision annex on validated item
+        self.assertFalse(self.hasPermission(AddAnnexDecision, item1))
+        self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
+        self.assertFalse(self.hasPermission(AddAnnex, item1))
         # pmManager inserts item1 into the meeting and publishes it
         self.changeUser('pmManager')
         # The meetingManager can add annexes, decision-related or not
@@ -209,11 +207,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(managerAnnex.UID())
         self.do(item1, 'present')
         self.changeUser('pmCreator1')
-        # The creator can add a decision annex on presented item
-        self.addAnnex(item1, relatedTo='item_decision')
-        # but not an observer
-        self.changeUser('pmObserver1')
-        self.assertTrue(self.hasPermission(View, item1))
+        # The creator can not  add a decision annex on presented item
         self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
         # pmCreator2 cannot view the annex created by pmCreator1
         self.changeUser('pmCreator2')
@@ -237,22 +231,24 @@ class testWorkflows(PloneMeetingTestCase):
         # So now I should have 5 normal items (do not forget the autoadded
         # recurring item) and no late item
         self.failIf(len(meeting.get_items()) != 5)
-        # Reviewers may add decision annexes but not normal annexes
+        # Reviewers can't add annexes
+        self.changeUser('pmReviewer2')
+        self.failIf(self.hasPermission(AddAnnex, item2))
+        self.assertRaises(Unauthorized, self.addAnnex, item2, relatedTo='item_decision')
         self.changeUser('pmReviewer1')
-        self.failIf(self.hasPermission(AddAnnex, item1))
-        self.assertTrue(self.hasPermission(AddAnnexDecision, item1))
         self.assertRaises(Unauthorized, self.addAnnex, item1)
-        self.addAnnex(item1, relatedTo='item_decision')
+        self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
         # pmManager adds a decision to item1 and freezes the meeting
         self.changeUser('pmManager')
         item1.setDecision(self.decisionText)
         self.do(meeting, 'decide')
-        # Reviewers may add decision annexes but not normal annexes
+        # Reviewers may still not add decision annexes or normal annexes
         self.changeUser('pmReviewer1')
+        self.assertFalse(item1.is_decided(self.meetingConfig))
         self.failIf(self.hasPermission(AddAnnex, item1))
-        self.assertTrue(self.hasPermission(AddAnnexDecision, item1))
+        self.failIf(self.hasPermission(AddAnnexDecision, item1))
         self.assertRaises(Unauthorized, self.addAnnex, item1)
-        self.addAnnex(item1, relatedTo='item_decision')
+        self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
         # pmManager adds a decision for item2, decides and closes the meeting
         self.changeUser('pmManager')
         item2.setDecision(self.decisionText)

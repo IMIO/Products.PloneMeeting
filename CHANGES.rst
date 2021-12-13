@@ -28,15 +28,13 @@ Changelog
   [gbastien]
 - Changed default behavior of `MeetingItem.internalNotes`:
 
-  - now internal notes are editable forever by proposing group editors, to do
-    so, reused the `PloneMeeting: Add annexDecision` permission and fixed item
-    workflow so decision annexes are addable in any item review_state (before
-    decision annexes were only addable when item in review_state before
-    validated or when decided);
-  - new parameter `MeetingConfig.itemInternalNotesEditableByMeetingManagers`
-    will let MeetingManagers also be able to view/edit internal notes;
-  - renamed adaptations.performWorkflowAdaptations to
-    adpatations._performWorkflowAdaptations to show that it should not be called directly.
+  - now internal notes are editable forever by profiles selected in new parameter
+    `MeetingConfig.itemInternalNotesEditableBy`.
+    A new role `MeetingInternalNotesEditor` is added and manages the view/edit
+    permission of field `MeetingItem.internalNotes`;
+  - renamed `adaptations.performWorkflowAdaptations` to
+    `adpatations._performWorkflowAdaptations` to show that it should not be
+    called directly.
   - renamed `MeetingItem.attributeIsUsed` to `MeetingItem.attribute_is_used` so
     the same method is available on `Meeting`, `MeetingItem` and `MeetingAdvice`
     and may be used by `utils._addManagedPermissions`.
