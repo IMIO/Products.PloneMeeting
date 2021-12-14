@@ -685,6 +685,7 @@ class testViews(PloneMeetingTestCase):
         # create item with annexes, annexes not found in catalog
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', title="Classic item title")
+        self.tool.setDeferAnnexParentReindex(True)
         self.addAnnex(item, annexTitle="Special annex title")
         self.assertTrue(self.catalog(SearchableText="Classic"))
         self.assertFalse(self.catalog(SearchableText="Special"))
