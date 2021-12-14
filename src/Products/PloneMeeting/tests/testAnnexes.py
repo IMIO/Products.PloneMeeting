@@ -747,11 +747,24 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertEquals(index.getEntryForObject(itemRID),
                           [ITEM_TITLE.lower(), 'p', 'item', 'description', 'text', 'p',
                            'p', 'item', 'decision', 'text', 'p', ANNEX_TITLE.lower()])
+        # when ToolPloneMeeting.deferAnnexParentReindex is True, then
+        # the SearchableText is not updated when annex added
+        # add an annex and test that the annex title is found in the item's SearchableText
+        self.tool.setDeferAnnexParentReindex(True)
+        self.addAnnex(item, annexTitle="SuperSpecialAnnexTitle")
+        self.assertEqual(len(self.catalog(SearchableText="SuperSpecialAnnexTitle")), 0)
+        # updated by the @@pm-night-tasks or a reindexObject
+        self.assertRaises(Unauthorized, self.portal.restrictedTraverse, "@@pm-night-tasks")
+        self.changeUser('siteadmin')
+        self.portal.restrictedTraverse("@@pm-night-tasks")()
+        self.changeUser('pmCreator1')
+        self.assertEqual(len(self.catalog(SearchableText="SuperSpecialAnnexTitle")), 1)
         # if we remove the annex, the item is not found anymore when querying
         # on removed annex's title
         self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())
         self.assertTrue(self.catalog(SearchableText=ITEM_TITLE))
         self.assertFalse(self.catalog(SearchableText=ANNEX_TITLE))
+        self.assertEqual(len(self.catalog(SearchableText="SuperSpecialAnnexTitle")), 1)
 
     def test_pm_AnnexesTitleFoundInMeetingSearchableText(self):
         '''Annexes title is indexed in the meeting SearchableText.'''
@@ -774,8 +787,6 @@ class testAnnexes(PloneMeetingTestCase):
         annex = self.addAnnex(item, annexTitle="Big bad text.txt", annexFile=u'annex_not_to_index.txt')
         self.presentItem(item)
         self.changeUser('pmManager')
-        # ensure this annex is indexed
-        annex.reindexObject()
         self.assertEqual(len(self.catalog(UID=annex.UID())), 1)
         brains = self.catalog(Title='Big bad text')
         self.assertEqual(len(brains), 1)

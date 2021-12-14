@@ -233,6 +233,18 @@ class MeetingAdvice(Container):
            any attribute is used ?'''
         return True
 
+    def getAnnexRelatedIndexes(self):
+        '''See doc in interfaces.py.'''
+        idxs = ['SearchableText']
+        return idxs
+
+    security.declarePublic('adapted')
+
+    def adapted(self):
+        '''Make adapted method available on advice, but actually no adapter
+           can be defined, just return self.'''
+        return self
+
 
 class MeetingAdviceSchemaPolicy(DexteritySchemaPolicy):
     """ """

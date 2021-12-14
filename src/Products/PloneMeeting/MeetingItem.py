@@ -7467,6 +7467,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return ['downOrUpWorkflowAgain', 'getTakenOverBy', 'reviewProcessInfo']
 
+    def getAnnexRelatedIndexes(self, check_deferred=True):
+        '''See doc in interfaces.py.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        idxs = ['annexes_index', 'SearchableText']
+        if check_deferred and tool.getDeferAnnexParentReindex():
+            # mark item reindex deferred so it can be updated at right moment
+            item = self.getSelf()
+            setattr(item, REINDEX_NEEDED_MARKER, True)
+            idxs.remove('SearchableText')
+        return idxs
+
     def _mayChangeAttendees(self):
         """Check that user may quickEdit
            item_absents/item_excused/item_non_attendees/votes/..."""

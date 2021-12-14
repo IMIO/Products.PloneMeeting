@@ -353,6 +353,8 @@ class IMeetingItemDocumentation:
            only the 'indexAdvisers' index is returned.'''
     def getReviewStateRelatedIndexes(self):
         '''Return item indexes related to review_state.'''
+    def getAnnexRelatedIndexes(self):
+        '''Return item indexes related to annexes.'''
     def show_votesObservations():
         '''Votes observations field is only viewable by MeetingManagers and
            power observers until item is decided, in this case everybody may see it.'''

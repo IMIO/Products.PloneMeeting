@@ -33,7 +33,6 @@ from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PMMessageFactory as _
-from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.content.meeting import IMeeting
@@ -851,13 +850,10 @@ def onAnnexAdded(annex, event):
             # Potentially I must notify MeetingManagers through email.
             sendMailIfRelevant(parent, 'annexAdded', 'meetingmanagers', isSuffix=True)
 
-        # reindexing SearchableText to include annex title is deferred
-        setattr(parent, REINDEX_NEEDED_MARKER, True)
         # update parent modificationDate, it is used for caching and co
-        # and reindex parent relevant indexes
-        notifyModifiedAndReindex(
-            parent,
-            extra_idxs=['annexes_index'])
+        # reindexing SearchableText to include annex title may be deferred
+        extra_idxs = parent.adapted().getAnnexRelatedIndexes()
+        notifyModifiedAndReindex(parent, extra_idxs=extra_idxs)
 
 
 def onAnnexEditFinished(annex, event):
@@ -871,12 +867,12 @@ def onAnnexEditFinished(annex, event):
 def onAnnexModified(annex, event):
     '''When an annex is modified, update parent's modification date.'''
     parent = annex.aq_inner.aq_parent
-    # reindexing SearchableText to include annex title is deferred
-    # only mark to reindex if annex title changed
-    if 'title' in get_modified_attrs(event):
-        setattr(parent, REINDEX_NEEDED_MARKER, True)
-    # update modificationDate, it is used for caching and co
-    notifyModifiedAndReindex(parent)
+    # update parent modificationDate, it is used for caching and co
+    # reindexing SearchableText to include annex title may be deferred
+    extra_idxs = parent.adapted().getAnnexRelatedIndexes()
+    if 'title' not in get_modified_attrs(event) and 'SearchableText' in extra_idxs:
+        extra_idxs.remove('SearchableText')
+    notifyModifiedAndReindex(parent, extra_idxs=extra_idxs)
 
 
 def onAnnexFileChanged(annex, event):
@@ -908,10 +904,11 @@ def onAnnexRemoved(annex, event):
         if parent.willInvalidateAdvices():
             parent.update_local_roles(invalidate=True)
 
-    # reindexing SearchableText to include annex title is deferred
-    setattr(parent, REINDEX_NEEDED_MARKER, True)
-    # update modification date
-    notifyModifiedAndReindex(parent, extra_idxs=['annexes_index'])
+    # update parent modificationDate, it is used for caching and co
+    # reindexing SearchableText to include annex title may be deferred
+    # remove does not use deferred reindex
+    extra_idxs = parent.adapted().getAnnexRelatedIndexes(check_deferred=False)
+    notifyModifiedAndReindex(parent, extra_idxs=extra_idxs)
 
 
 def onAnnexAttrChanged(annex, event):

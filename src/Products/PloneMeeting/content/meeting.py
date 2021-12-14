@@ -44,6 +44,7 @@ from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import READER_USECASES
+from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
 from Products.PloneMeeting.interfaces import IDXMeetingContent
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
@@ -1964,6 +1965,17 @@ class Meeting(Container):
         if not self.REQUEST.get('currently_migrating_meeting_dx') and \
            (not avoid_reindex or old_local_roles != self.__ac_local_roles__):
             self.reindexObjectSecurity()
+
+    def getAnnexRelatedIndexes(self, check_deferred=True):
+        '''See doc in interfaces.py.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        idxs = ['SearchableText']
+        if check_deferred and tool.getDeferAnnexParentReindex():
+            # mark meeting reindex deferred so it can be updated at right moment
+            meeting = self.getSelf()
+            setattr(meeting, REINDEX_NEEDED_MARKER, True)
+            idxs.remove('SearchableText')
+        return idxs
 
     def _update_power_observers_local_roles(self):
         '''Give local roles to the groups defined in MeetingConfig.powerObservers.'''

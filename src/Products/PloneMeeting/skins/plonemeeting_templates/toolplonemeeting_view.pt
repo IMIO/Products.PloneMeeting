@@ -169,7 +169,9 @@
             <td tal:define="field python:here.getField('enableScanDocs')">
               <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
-            <td></td>
+            <td tal:define="field python:here.getField('deferAnnexParentReindex')">
+              <span metal:use-macro="here/widgets/field/macros/view" />
+            </td>
           </tr>
         </table>
       </fieldset>

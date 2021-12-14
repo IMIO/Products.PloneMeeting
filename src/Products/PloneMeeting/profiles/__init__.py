@@ -876,6 +876,7 @@ class PloneMeetingConfiguration(Descriptor):
         self.restrictUsers = False
         self.unrestrictedUsers = ''
         self.enableScanDocs = False
+        self.deferAnnexParentReindex = False
         self.workingDays = ('mon', 'tue', 'wed', 'thu', 'fri')
         self.holidays = [
             {'date': '2021/01/01', },  # 2021

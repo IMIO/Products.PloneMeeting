@@ -53,7 +53,6 @@ from Products.Archetypes.atapi import StringField
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
 from Products.ATContentTypes import permission as ATCTPermissions
-from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
@@ -258,6 +257,17 @@ schema = Schema((
             description_msgid="enable_scan_docs_descr",
             label='Enablescandocs',
             label_msgid='PloneMeeting_label_enableScanDocs',
+            i18n_domain='PloneMeeting',
+        ),
+    ),
+    BooleanField(
+        name='deferAnnexParentReindex',
+        default=defValues.deferAnnexParentReindex,
+        widget=BooleanField._properties['widget'](
+            description="DeferAnnexParentReindex",
+            description_msgid="defer_annex_parent_reindex_descr",
+            label='Deferannexparentreindex',
+            label_msgid='PloneMeeting_label_deferAnnexParentReindex',
             i18n_domain='PloneMeeting',
         ),
     ),
