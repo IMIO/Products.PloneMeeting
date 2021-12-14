@@ -1674,7 +1674,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         res = []
         res += self._configgroup_groups(visible_fors)
         res += self._reader_groups(visible_fors)
-        res += self._suffix_proposinggroup(visible_fors)
+        res += self._suffix_proposinggroup(visible_fors, self.parent)
         return res
 
     def _meeting_visible_for_groups(self, visible_fors):
@@ -1689,7 +1689,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         res = []
         res += self._configgroup_groups(visible_fors)
         res += self._reader_groups(visible_fors)
-        res += self._suffix_proposinggroup(visible_fors)
+        res += self._suffix_proposinggroup(visible_fors, self.parent.aq_parent)
         if 'adviser_group' in visible_fors:
             plone_group_id = get_plone_group_id(self.parent.advice_group, 'advisers')
             res.append(plone_group_id)
@@ -1704,10 +1704,10 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
                 res.append('{0}_{1}'.format(self.cfg.getId(), suffix))
         return res
 
-    def _suffix_proposinggroup(self, visible_fors):
+    def _suffix_proposinggroup(self, visible_fors, item):
         """ """
         res = []
-        groups_managing_item_uids = self.parent.adapted()._getAllGroupsManagingItem()
+        groups_managing_item_uids = item.adapted()._getAllGroupsManagingItem()
         for visible_for in visible_fors:
             if visible_for.startswith(PROPOSINGGROUPPREFIX):
                 suffix = visible_for.replace(PROPOSINGGROUPPREFIX, '')
