@@ -1217,6 +1217,30 @@ class testContacts(PloneMeetingTestCase):
             u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5, '
             u'<strong>pr\xe9sent</strong>')
 
+        meeting.videoconference = True
+        view = meeting.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        self.assertEqual(
+            helper.print_attendees(),
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
+            u'<strong>connect\xe9</strong><br />'
+            u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
+            u'<strong>connect\xe9</strong><br />'
+            u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
+            u'<strong>connect\xe9</strong><br />'
+            u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5, '
+            u'<strong>connect\xe9</strong>')
+        self.assertEqual(
+            helper.print_attendees(adapt_for_videoconference=False),
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
+            u'<strong>pr\xe9sent</strong><br />'
+            u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
+            u'<strong>pr\xe9sent</strong><br />'
+            u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
+            u'<strong>pr\xe9sent</strong><br />'
+            u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5, '
+            u'<strong>pr\xe9sent</strong>')
+
     def test_pm_Print_attendees_committee_id(self):
         """Print Meeting committee attendees."""
         self.changeUser('pmManager')
