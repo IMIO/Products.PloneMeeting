@@ -864,8 +864,8 @@ class BaseDGHV(object):
 
         if adapt_for_videoconference:
             self._update_patterns_for_videoconference(meeting, attendee_type_values, {'attendee': {
-                'M': u'présent',
-                'FS': u'présente',
+                'M': u'connecté',
+                'F': u'connectée',
             }})
 
         res = OrderedDict()
