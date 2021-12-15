@@ -29,8 +29,8 @@ from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanVocabularyCacheFor
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import get_vocab
-from imio.helpers.content import uuidToObject
 from imio.helpers.content import uuidsToObjects
+from imio.helpers.content import uuidToObject
 from persistent.list import PersistentList
 from plone import api
 from plone.app.portlets.portlets import navigation

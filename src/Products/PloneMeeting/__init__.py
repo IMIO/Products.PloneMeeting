@@ -8,7 +8,6 @@
 from AccessControl import allow_module
 from AccessControl import allow_type
 from datetime import datetime
-from plone.memoize.ram import global_cache
 from plone.registry.field import DisallowedProperty
 from Products.Archetypes import listTypes
 from Products.Archetypes.atapi import process_types
@@ -94,11 +93,6 @@ def initialize(context):
         context.registerClass(meta_type=all_ftis[i]['meta_type'],
                               constructors=(all_constructors[i],),
                               permission=ADD_CONTENT_PERMISSIONS[klassname])
-
-    # setup global_cache utility
-    # change if default value still used
-    if global_cache.maxEntries == 1000:
-        global_cache.update(maxEntries=100000, maxAge=1800, cleanupInterval=600)
 
     allow_module('Products.PloneMeeting.utils')
     allow_module('Products.PloneMeeting.browser.meeting')

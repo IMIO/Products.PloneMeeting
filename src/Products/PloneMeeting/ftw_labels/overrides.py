@@ -17,8 +17,8 @@ from plone import api
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.PloneMeeting.config import PMMessageFactory as _
-from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import is_proposing_group_editor
+from Products.PloneMeeting.utils import notifyModifiedAndReindex
 
 
 class PMFTWLabelsRenderer(ftw_labels_renderer):

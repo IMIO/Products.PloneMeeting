@@ -66,6 +66,8 @@ from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import set_field_from_ajax
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
+from zope.component import queryUtility
+from zope.ramcache.interfaces.ram import IRAMCache
 
 import sys
 
@@ -93,6 +95,12 @@ class PMGlobalSectionsViewlet(GlobalSectionsViewlet):
     '''
 
     def selectedTabs(self, default_tab='index_html', portal_tabs=()):
+        # setup ram.cache utility
+        # change if default value still used
+        ramcache = queryUtility(IRAMCache)
+        if ramcache.maxEntries == 1000:
+            ramcache.update(maxEntries=100000, maxAge=2400, cleanupInterval=600)
+
         plone_url = api.portal.get_tool('portal_url')()
         plone_url_len = len(plone_url)
         request = self.request

@@ -37,7 +37,6 @@
   <include package="plone.app.dexterity" />
   <include package="plone.directives.form" file="meta.zcml" />
   <include package="plone.directives.form" />
-  <!-- this will make ram.cache use global_cache instead default zope.ramcache -->
   <include package="plone.memoize" />
   <include package="Products.CMFPlacefulWorkflow"/>
   <include package="Products.cron4plone" />

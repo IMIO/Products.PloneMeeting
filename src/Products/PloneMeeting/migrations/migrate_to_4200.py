@@ -23,9 +23,9 @@ from Products.PloneMeeting.content.advice import IMeetingAdvice
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingDashboardBatchActionsMarker
 from Products.PloneMeeting.interfaces import IMeetingItemDashboardBatchActionsMarker
+from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
-from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.setuphandlers import columnInfos
 from Products.PloneMeeting.setuphandlers import indexInfos
@@ -829,15 +829,15 @@ class Migrate_To_4200(Migrator):
         # add new collections, the "searchmyitemstoadvice" for example
         self.addNewSearches()
 
-        # store meeting number of items
-        self._updateMeetingsNumberOfItems()
-
         # adviser role able to add advice is now MeetingAdviser
         self._fixItemAddAdvicePermission()
 
         # update local_roles, workflow mappings and catalogs
         self.tool.update_all_local_roles()
         self.refreshDatabase(workflows=True, catalogsToUpdate=[])
+
+        # store meeting number of items
+        self._updateMeetingsNumberOfItems()
 
 
 def migrate(context):

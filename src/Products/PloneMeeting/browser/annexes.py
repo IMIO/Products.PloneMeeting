@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from collective.iconifiedcategory.browser.tabview import CategorizedTable
-from collective.iconifiedcategory.browser.tabview import CategorizedTabView
-from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
-from collective.iconifiedcategory.browser.views import CategorizedChildView
 from collective.iconifiedcategory.browser.actionview import BaseView as BaseActionView
 from collective.iconifiedcategory.browser.actionview import ConfidentialChangeView
 from collective.iconifiedcategory.browser.actionview import PublishableChangeView
 from collective.iconifiedcategory.browser.actionview import SignedChangeView
 from collective.iconifiedcategory.browser.actionview import ToPrintChangeView
+from collective.iconifiedcategory.browser.tabview import CategorizedTable
+from collective.iconifiedcategory.browser.tabview import CategorizedTabView
+from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
+from collective.iconifiedcategory.browser.views import CategorizedChildView
 from collective.iconifiedcategory.utils import _categorized_elements
 from imio.helpers.content import get_vocab
 from plone import api
