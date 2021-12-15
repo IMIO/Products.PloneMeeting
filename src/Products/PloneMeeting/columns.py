@@ -349,8 +349,9 @@ class ItemNumberColumn(BrowserViewCallColumn):
         self.params = {'may_change_items_order': may_change_items_order}
         cell = super(ItemNumberColumn, self).renderCell(item)
         if may_change_items_order:
+            obj = self._getObject(item)
             cell = u"⣿</td><td td_cell_getItemNumber data-item_number='{0}'>".format(
-                item.getItemNumber) + cell
+                obj.getItemNumber()) + cell
         return cell
 
 

@@ -1,10 +1,13 @@
 
 from Acquisition import aq_base
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.security import fplog
 from plone import api
 from plone.api.exc import InvalidParameterError
 from plone.app.querystring import queryparser
 from plone.memoize import ram
+from plone.restapi.services import Service
+from plonemeeting.restapi import logger as pmrestapi_logger
 from Products.Archetypes.BaseObject import BaseObject
 from Products.Archetypes.Field import Field
 from Products.CMFPlone.CatalogTool import CatalogTool
@@ -15,12 +18,11 @@ from Products.PortalTransforms.cache import Cache
 from Products.PortalTransforms.transforms import safe_html
 from Products.PortalTransforms.transforms.safe_html import CSS_COMMENT
 from Products.PortalTransforms.transforms.safe_html import decode_htmlentities
+from time import time
 from types import StringType
 from z3c.form import interfaces
 from z3c.form.widget import SequenceWidget
-from imio.helpers.security import fplog
-from plone.restapi.services import Service
-from plonemeeting.restapi import logger as pmrestapi_logger
+from zope.ramcache.ram import Storage
 
 
 def _patched_equal(context, row):
@@ -245,10 +247,6 @@ Service.render = render
 pmrestapi_logger.info("Monkey patching plone.restapi.services.RestService (render)")
 
 
-from time import time
-from zope.ramcache.ram import Storage
-
-
 Storage.__old_pm_getEntry = Storage.getEntry
 
 
@@ -271,6 +269,7 @@ def getEntry(self, ob, key):
         # XXX end change by PM
 
         return data[0]
+
 
 Storage.getEntry = getEntry
 logger.info("Monkey patching zope.ramcache.ram.Storage (getEntry)")

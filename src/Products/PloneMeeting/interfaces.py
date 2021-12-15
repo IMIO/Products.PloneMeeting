@@ -353,8 +353,9 @@ class IMeetingItemDocumentation:
            only the 'indexAdvisers' index is returned.'''
     def getReviewStateRelatedIndexes(self, check_deferred=True):
         '''Return item indexes related to review_state.'''
-    def getAnnexRelatedIndexes(self, check_deferred=True):
-        '''Return item indexes related to annexes.'''
+    def getIndexesRelatedTo(self, related_to='annex', check_deferred=True):
+        '''Return catalog indexes related to given p_related_to and
+           manage defering SearchableText reindex.'''
     def show_votesObservations():
         '''Votes observations field is only viewable by MeetingManagers and
            power observers until item is decided, in this case everybody may see it.'''
@@ -550,8 +551,9 @@ class IMeetingWorkflowActions(Interface):
 class IMeetingCustom(IMeeting):
     '''If you want to propose your own implementations of IMeeting methods,
        you must define an adapter that adapts IMeeting to IMeetingCustom.'''
-    def getAnnexRelatedIndexes(self, check_deferred=True):
-        '''Return item indexes related to annexes.'''
+    def getIndexesRelatedTo(self, related_to='annex', check_deferred=True):
+        '''Return catalog indexes related to given p_related_to and
+           manage defering SearchableText reindex.'''
 
 
 # Interfaces used for customizing the behaviour of meeting advice ----------

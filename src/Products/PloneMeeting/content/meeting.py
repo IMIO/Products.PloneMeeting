@@ -1750,7 +1750,10 @@ class Meeting(Container):
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
 
         # reindex relevant indexes now that item is removed
-        item.reindexObject(idxs=['listType', 'meeting_uid', 'meeting_date'])
+        item.reindexObject(idxs=['getItemNumber',
+                                 'listType',
+                                 'meeting_uid',
+                                 'meeting_date'])
 
         # store number of items
         self._number_of_items = len(items)
@@ -1966,11 +1969,12 @@ class Meeting(Container):
            (not avoid_reindex or old_local_roles != self.__ac_local_roles__):
             self.reindexObjectSecurity()
 
-    def getAnnexRelatedIndexes(self, check_deferred=True):
+    def getIndexesRelatedTo(self, related_to='annex', check_deferred=True):
         '''See doc in interfaces.py.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        idxs = ['SearchableText']
-        if check_deferred and tool.getDeferAnnexParentReindex():
+        if related_to == 'annex':
+            idxs = ['SearchableText']
+        if check_deferred and related_to in tool.getDeferParentReindex():
             # mark meeting reindex deferred so it can be updated at right moment
             meeting = self.getSelf()
             setattr(meeting, REINDEX_NEEDED_MARKER, True)
@@ -2095,7 +2099,6 @@ class Meeting(Container):
             error = adapted.addRecurringItemToMeeting(self)
             if not error:
                 notify(ItemDuplicatedFromConfigEvent(new_item, 'as_recurring_item'))
-                new_item.reindexObject()
 
     security.declarePublic('number_of_items')
 

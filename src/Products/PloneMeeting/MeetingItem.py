@@ -20,9 +20,9 @@ from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import get_vocab
 from imio.helpers.content import safe_delattr
-from imio.helpers.content import uuidToObject
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToCatalogBrain
+from imio.helpers.content import uuidToObject
 from imio.helpers.security import fplog
 from imio.history.utils import get_all_history_attr
 from imio.history.utils import getLastWFAction
@@ -82,10 +82,10 @@ from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import PROJECTNAME
+from Products.PloneMeeting.config import ReadBudgetInfos
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
-from Products.PloneMeeting.config import ReadBudgetInfos
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.config import WriteInternalNotes
 from Products.PloneMeeting.config import WriteMarginalNotes
@@ -125,6 +125,7 @@ from Products.PloneMeeting.utils import networkdays
 from Products.PloneMeeting.utils import normalize
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import rememberPreviousData
+from Products.PloneMeeting.utils import reindex_object
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import set_field_from_ajax
@@ -2686,7 +2687,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         current_item_number = self.getField('itemNumber').get(self, **kwargs)
         if not value == current_item_number:
             self.getField('itemNumber').set(self, value, **kwargs)
-            self.reindexObject(idxs=['getItemNumber'])
+            reindex_object(self, idxs=['getItemNumber'], update_metadata=False)
 
     security.declareProtected(ModifyPortalContent, 'setManuallyLinkedItems')
 
@@ -3753,15 +3754,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            stores it and reindex 'getItemReference'.
            This rely on _may_update_item_reference.'''
         res = ''
-        item = self.getSelf()
-        meeting = item.getMeeting()
+        meeting = self.getMeeting()
         if not clear and self.adapted()._may_update_item_reference():
-            extra_expr_ctx = _base_extra_expr_ctx(item)
-            extra_expr_ctx.update({'item': item, 'meeting': meeting})
+            extra_expr_ctx = _base_extra_expr_ctx(self)
+            extra_expr_ctx.update({'item': self, 'meeting': meeting})
             cfg = extra_expr_ctx['cfg']
             # default raise_on_error=False so if the expression
             # raise an error, we will get '' for reference and a message in the log
-            res = _evaluateExpression(item,
+            res = _evaluateExpression(self,
                                       expression=cfg.getItemReferenceFormat().strip(),
                                       roles_bypassing_expression=[],
                                       extra_expr_ctx=extra_expr_ctx)
@@ -3771,7 +3771,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         stored = self.getField('itemReference').get(self)
         if stored != res:
             self.setItemReference(res)
-            self.reindexObject(idxs=['SearchableText'])
+            idxs = self.adapted().getIndexesRelatedTo('item_reference')
+            if idxs:
+                # avoid update_metadata, we do not need to update modified neither
+                reindex_object(self, idxs=idxs, update_metadata=0)
         return res
 
     def update_groups_in_charge(self):
@@ -6330,8 +6333,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_addLocalRoles(userId, ('Owner',))
         # update groupsInCharge before update_local_roles
         self.update_groups_in_charge()
+        # reindex=True will reindex indexAdvisers/getCopyGroups/getGroupsInCharge
         self.update_local_roles(isCreated=True,
-                                inheritedAdviserUids=kwargs.get('inheritedAdviserUids', []))
+                                inheritedAdviserUids=kwargs.get('inheritedAdviserUids', []),
+                                reindex=True)
         # clean borg.localroles caching
         cleanMemoize(self, prefixes=['borg.localrole.workspace.checkLocalRolesAllowed'])
         # Apply potential transformations to richtext fields
@@ -6342,7 +6347,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.update_committees()
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
-        self.reindexObject()
 
     def _update_after_edit(self, idxs=['*'], reindex_local_roles=True):
         """Convenience method that make sure ObjectModifiedEvent and
@@ -6730,7 +6734,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if whichItem == 'last' or whichItem == 'all':
                 sibling['last'] = brains[-1]
         if sibling and itemNumber:
-            sibling = {key: value and value.getItemNumber or None
+            # turn value (brain) into item number value (like 800)
+            sibling = {key: value and value._unrestrictedGetObject().getItemNumber() or None
                        for key, value in sibling.items()}
         return sibling.get(whichItem, sibling)
 
@@ -6896,6 +6901,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # notify that item has been duplicated so subproducts may interact if necessary
         notify(ItemDuplicatedEvent(self, newItem))
+
+        # at_post_create_script does not reindex, reindex here
+        # regarding everything that may have changed, excepted ZCTextIndexes
+        reindex_object(newItem, no_idxs=['SearchableText', 'Title', 'Description'])
 
         # add logging message to fingerpointing log
         extras = 'object={0} clone_event={1}'.format(
@@ -7098,9 +7107,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         ann = IAnnotations(self)
         ann[annotation_key] = newItem.UID()
 
-        # reindex, everything for newItem and 'sentToInfos' for self
-        newItem.reindexObject()
-        self.reindexObject(idxs=['sentToInfos'])
+        # reindex, everything but ZCTextIndexes for newItem
+        # and 'sentToInfos' for self
+        reindex_object(newItem, no_idxs=['SearchableText', 'Title', 'Description'])
+        reindex_object(self, idxs=['sentToInfos'], update_metadata=False)
 
         # When an item is duplicated, if it was sent from a MeetingConfig to
         # another, we will add a line in the original item history specifying that
@@ -7237,7 +7247,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         cfgId)
                     del ann[annotation_key]
                     # reindex predecessor's sentToInfos index
-                    predecessor.reindexObject(idxs=['sentToInfos'])
+                    reindex_object(predecessor, idxs=['sentToInfos'], update_metadata=0)
             # manage_beforeDelete is called before the IObjectWillBeRemovedEvent
             # in IObjectWillBeRemovedEvent references are already broken, we need to remove
             # the item from a meeting if it is inserted in there...
@@ -7467,11 +7477,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return ['downOrUpWorkflowAgain', 'getTakenOverBy', 'reviewProcessInfo']
 
-    def getAnnexRelatedIndexes(self, check_deferred=True):
+    def getIndexesRelatedTo(self, related_to='annex', check_deferred=True):
         '''See doc in interfaces.py.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        idxs = ['annexes_index', 'SearchableText']
-        if check_deferred and tool.getDeferAnnexParentReindex():
+        idxs = ['pm_technical_index', 'SearchableText']
+        if related_to == 'annex':
+            idxs.append('annexes_index')
+        elif related_to == 'item_reference':
+            pass
+        if check_deferred and related_to in tool.getDeferParentReindex():
             # mark item reindex deferred so it can be updated at right moment
             item = self.getSelf()
             setattr(item, REINDEX_NEEDED_MARKER, True)

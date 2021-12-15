@@ -4239,8 +4239,12 @@ class testMeetingItem(PloneMeetingTestCase):
               'tal_expression': 'string:%s' % delayedItemDecision},))
         item2 = items[1]
         item2.setDecision(originalDecision)
+        # check not found for now in catalog
+        self.assertFalse(self.catalog(SearchableText='delayed'))
         self.do(item2, 'delay')
         self.assertEqual(item2.getDecision(), delayedItemDecision)
+        # correctly reindexed
+        self.assertTrue(self.catalog(SearchableText='delayed'))
         # if the item was duplicated (often the case when delaying an item), the duplicated
         # item keep the original decision
         duplicatedItem = item2.get_successors()[0]
@@ -7092,14 +7096,15 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemReferenceFoundInItemSearchableText(self):
         """ """
+        self.tool.setDeferParentReindex(())
         # remove recurring items in self.meetingConfig
         self._removeConfigObjectsFor(self.meetingConfig)
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=datetime(2017, 3, 3, 0, 0))
-        item1 = self.create('MeetingItem')
-        item2 = self.create('MeetingItem')
-        item3 = self.create('MeetingItem')
-        item4 = self.create('MeetingItem')
+        item1 = self.create('MeetingItem', title="Item1 title")
+        item2 = self.create('MeetingItem', title="Item2 title")
+        item3 = self.create('MeetingItem', title="Item3 title")
+        item4 = self.create('MeetingItem', title="Item4 title")
         self.presentItem(item1)
         self.presentItem(item2)
         self.presentItem(item3)
@@ -7126,6 +7131,19 @@ class testMeetingItem(PloneMeetingTestCase):
         brains_item4_ref = self.catalog(SearchableText=item4.getItemReference())
         self.assertEqual(len(brains_item4_ref), 1)
         self.assertEqual(brains_item4_ref[0].UID, item4.UID())
+        # reindex may be deferred when updating item reference
+        self.tool.setDeferParentReindex(('item_reference'))
+        item1.setItemReference('')
+        item1.reindexObject()
+        meeting.update_item_references()
+        self.assertEqual(item1.getItemReference(), 'Ref. 20170303/1')
+        self.assertEqual(item2.getItemReference(), 'Ref. 20170303/2')
+        self.assertEqual(item3.getItemReference(), 'Ref. 20170303/3')
+        self.assertEqual(item4.getItemReference(), 'Ref. 20170303/4')
+        self.assertFalse(self.catalog(SearchableText=item1.getItemReference()))
+        # when deferred, reindex at next opportunity
+        item1.processForm()
+        self.assertTrue(self.catalog(SearchableText=item1.getItemReference()))
 
     def test_pm_ItemReferenceOfItemsOutsideMeeting(self):
         """Item reference is also computed on items outside meeting

@@ -122,6 +122,7 @@ from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import listifySignatures
+from Products.PloneMeeting.utils import reindex_object
 from Products.PloneMeeting.utils import reviewersFor
 from Products.PloneMeeting.utils import translate_list
 from Products.PloneMeeting.utils import updateAnnexesAccess
@@ -7273,7 +7274,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             for label_id in personal_labels:
                 item_labeling.storage[label_id] = PersistentList(item_user_ids)
             if reindex:
-                item.reindexObject(idxs=['labels'])
+                reindex_object(item, idxs=['labels'], update_metadata=0)
         logger.info('Done.')
         return numberOfBrains
 

@@ -233,7 +233,7 @@ class MeetingAdvice(Container):
            any attribute is used ?'''
         return True
 
-    def getAnnexRelatedIndexes(self, check_deferred=True):
+    def getIndexesRelatedTo(self, related_to='annex', check_deferred=True):
         '''See doc in interfaces.py.'''
         idxs = ['SearchableText']
         return idxs

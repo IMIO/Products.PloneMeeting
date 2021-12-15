@@ -698,6 +698,7 @@ class testAnnexes(PloneMeetingTestCase):
 
     def test_pm_AnnexesTitleFoundInItemSearchableText(self):
         '''Annexes title is indexed in the item SearchableText.'''
+        self.tool.setDeferParentReindex(())
         ANNEX_TITLE = "SpecialAnnexTitle"
         ITEM_TITLE = "SpecialItemTitle"
         ITEM_DESCRIPTION = "Item description text"
@@ -747,10 +748,10 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertEquals(index.getEntryForObject(itemRID),
                           [ITEM_TITLE.lower(), 'p', 'item', 'description', 'text', 'p',
                            'p', 'item', 'decision', 'text', 'p', ANNEX_TITLE.lower()])
-        # when ToolPloneMeeting.deferAnnexParentReindex is True, then
+        # when 'annex' is selected in ToolPloneMeeting.deferParentReindex, then
         # the SearchableText is not updated when annex added
         # add an annex and test that the annex title is found in the item's SearchableText
-        self.tool.setDeferAnnexParentReindex(True)
+        self.tool.setDeferParentReindex(['annex'])
         self.addAnnex(item, annexTitle="SuperSpecialAnnexTitle")
         self.assertEqual(len(self.catalog(SearchableText="SuperSpecialAnnexTitle")), 0)
         # updated by the @@pm-night-tasks or a reindexObject
@@ -768,6 +769,7 @@ class testAnnexes(PloneMeetingTestCase):
 
     def test_pm_AnnexesTitleFoundInMeetingSearchableText(self):
         '''Annexes title is indexed in the meeting SearchableText.'''
+        self.tool.setDeferParentReindex(())
         ANNEX_TITLE = "SpecialAnnexTitle"
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
@@ -781,6 +783,7 @@ class testAnnexes(PloneMeetingTestCase):
 
     def test_pm_ItemAnnexesContentNotInAnnexSearchableText(self):
         '''Annexes content is not indexed in any SearchableText.'''
+        self.tool.setDeferParentReindex(())
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', title='My beautifull item')
         # add an annex
@@ -809,6 +812,7 @@ class testAnnexes(PloneMeetingTestCase):
 
     def test_pm_MeetingAnnexesContentNotInAnnexSearchableText(self):
         '''Annexes content is not indexed in any SearchableText.'''
+        self.tool.setDeferParentReindex(())
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         # add an annex

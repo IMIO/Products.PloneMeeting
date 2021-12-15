@@ -67,7 +67,8 @@ class UnrestrictedMethodsView(BrowserView):
             # divide lastItem itemNumber by 100 so we are sure to ignore subnumbers
             # 308 will become 3 or 1400 will become 14
             items = meeting.get_items(the_objects=False, ordered=True, unrestricted=True)
-            lastItemNumber = items and items[-1].getItemNumber / 100 or 0
+            item = items and items[-1]._unrestrictedGetObject()
+            lastItemNumber = item and item.getItemNumber() / 100 or 0
             numberOfItemsBefore += lastItemNumber
             if not meeting.first_item_number == -1:
                 previousFirstItemNumber = meeting.first_item_number

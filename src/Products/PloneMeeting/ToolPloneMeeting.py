@@ -260,17 +260,21 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
     ),
-    BooleanField(
-        name='deferAnnexParentReindex',
-        default=defValues.deferAnnexParentReindex,
-        widget=BooleanField._properties['widget'](
-            description="DeferAnnexParentReindex",
-            description_msgid="defer_annex_parent_reindex_descr",
-            label='Deferannexparentreindex',
-            label_msgid='PloneMeeting_label_deferAnnexParentReindex',
+    LinesField(
+        name='deferParentReindex',
+        default=defValues.deferParentReindex,
+        widget=MultiSelectionWidget(
+            description="DeferParentReindex",
+            description_msgid="defer_parent_reindex_descr",
+            format="checkbox",
+            label='Deferparentreindex',
+            label_msgid='PloneMeeting_label_deferParentReindex',
             i18n_domain='PloneMeeting',
         ),
+        multiValued=1,
+        vocabulary='listDeferParentReindexes',
     ),
+
 ),
 )
 
@@ -986,11 +990,16 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                               context=self.REQUEST))
         return res
 
-    security.declarePrivate('listSelectableInternalOrganizations')
+    security.declarePrivate('listDeferParentReindexes')
 
-    def listSelectableInternalOrganizations(self):
-        '''Method returning list of selectable internal organizations.'''
+    def listDeferParentReindexes(self):
+        '''Vocabulary for deferParentReindexes field.'''
         res = DisplayList()
+        for defer in ('annex', 'item_reference'):
+            res.add(defer,
+                    translate('defer_%s' % defer,
+                              domain='PloneMeeting',
+                              context=self.REQUEST))
         return res
 
     def getNonWorkingDayNumbers_cachekey(method, self):

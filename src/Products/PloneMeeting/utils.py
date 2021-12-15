@@ -1048,7 +1048,7 @@ def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True
     fplog('quickedit_field', extras=extras)
 
 
-def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False):
+def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False, update_metadata=1):
     """Ease notifyModified and reindex of a given p_obj.
        If p_extra_idxs contains '*', a full reindex is done, if not
        only 'modified' related indexes are updated.
@@ -1060,10 +1060,24 @@ def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False):
     if '*' not in extra_idxs:
         idxs = [
             'pm_technical_index', 'modified', 'ModificationDate', 'Date'] + extra_idxs
-    obj.reindexObject(idxs=idxs)
+
+    reindex_object(obj, idxs, update_metadata=update_metadata)
 
     if notify_event:
         notify(ObjectEditedEvent(obj))
+
+
+def reindex_object(obj, idxs=[], no_idxs=[], update_metadata=1):
+    """Reimplement self.reindexObject for AT as p_update_metadata is not available.
+       p_idxs and p_no_idxs are mutually exclusive, passing indexes in p_no_idxs
+       means every indexes excepted these indexes."""
+    catalog = api.portal.get_tool('portal_catalog')
+    indexes = catalog.indexes()
+    if no_idxs:
+        idxs = [i for i in indexes if i not in no_idxs]
+    else:
+        idxs = [i for i in idxs if i in indexes]
+    catalog.catalog_object(obj, idxs=list(set(idxs)), update_metadata=update_metadata)
 
 
 def transformAllRichTextFields(obj, onlyField=None):
@@ -1171,11 +1185,11 @@ def applyOnTransitionFieldTransform(obj, transitionId):
                     ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR % (
                         transform['field_name'].split('.')[1], str(e)),
                     type='warning')
-                return
-    # XXX do not reindex for now as full reindex is done after
-    # when moving to dexerity, will be able to reindex more efficiently
-    if False and idxs:
-        obj.reindexObject(idxs=idxs)
+                break
+    # if something changed, pass supposed indexes + SearchableText
+    if idxs:
+        idxs.append('SearchableText')
+    return idxs
 
 
 # ------------------------------------------------------------------------------
@@ -1202,7 +1216,8 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId):
                         pass
                 else:
                     # execute the TAL expression, will not fail but log if an error occurs
-                    # do this as Manager to avoid permission problems, the configuration is supposed to be applied
+                    # do this as Manager to avoid permission problems, the configuration
+                    # is supposed to be applied
                     with api.env.adopt_roles(['Manager']):
                         extra_expr_ctx.update({'item': item, 'meeting': meeting})
                         _evaluateExpression(

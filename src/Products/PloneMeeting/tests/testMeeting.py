@@ -2561,7 +2561,8 @@ class testMeetingType(PloneMeetingTestCase):
         # we have brains
         self.assertTrue(isinstance(brainsInOrder[0], AbstractCatalogBrain))
         # items are ordered
-        self.assertEqual([brain.getItemNumber for brain in brainsInOrder],
+        self.assertEqual([brain._unrestrictedGetObject().getItemNumber()
+                          for brain in brainsInOrder],
                          [100, 200, 300, 400, 500, 600, 700])
         self.assertEqual(len(meeting.get_items(uids=itemUids, the_objects=False)), 4)
         # we can specify the listType

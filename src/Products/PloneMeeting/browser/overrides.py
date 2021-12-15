@@ -608,17 +608,17 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                           **kwargs):
         '''cachekey method for self.__call__ method.
            The cache is invalidated if :
-           - linked meeting is modified (modified is also triggered when review_state changed);
+           - linked meeting review_state changed (modified is too large);
            - item is modified (modified is also triggered when review_state changed);
            - something changed around advices;
            - cfg changed;
            - different item;
            - if item query_state is 'validated', check also if it is presentable;
            - sent_to other mc informations.'''
-        meetingModified = ''
+        meeting_review_state = None
         meeting = self.context.getMeeting()
         if meeting:
-            meetingModified = meeting.modified()
+            meeting_review_state = meeting.query_state()
         # send to other mc annotations
         sent_to = self.context._getOtherMeetingConfigsImAmClonedIn()
 
@@ -670,7 +670,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                 sent_to,
                 isRealManager, isManager, isEditorUser,
                 userAbleToCorrectItemWaitingAdvices, isPowerObserverHiddenHistory,
-                meetingModified, useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
+                meeting_review_state, useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
                 showArrows, isPresentable, self.portal_url, kwargs)
 

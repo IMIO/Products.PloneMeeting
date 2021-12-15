@@ -83,10 +83,10 @@ def do(action, event):
     # Execute some actions defined in the corresponding adapter
     actionMethod = getattr(actionsAdapter, action)
     actionMethod(event)
-    local_roles_indexes = None
+    indexes = []
     if objectType == 'MeetingItem':
         # Update every local roles : advices, copyGroups, powerObservers, budgetImpactEditors, ...
-        local_roles_indexes = event.object.update_local_roles(
+        indexes += event.object.update_local_roles(
             triggered_by_transition=event.transition.id, reindex=False)
         # Send mail regarding advices to give if relevant
         event.object.sendStateDependingMailIfRelevant(
@@ -96,10 +96,10 @@ def do(action, event):
         event_id = "item_state_changed_%s" % event.transition.id
         sendMailIfRelevant(event.object, event_id, 'View', isPermission=True)
         # apply on transition field transform if any
-        applyOnTransitionFieldTransform(event.object, event.transition.id)
+        indexes += applyOnTransitionFieldTransform(event.object, event.transition.id)
     elif objectType == 'Meeting':
         # update every local roles
-        local_roles_indexes = event.object.update_local_roles()
+        indexes = event.object.update_local_roles()
         # Add recurring items to the meeting if relevant
         event.object.add_recurring_items_if_relevant(event.transition.id)
         # Send mail if relevant
@@ -110,7 +110,7 @@ def do(action, event):
         meetingExecuteActionOnLinkedItems(event.object, event.transition.id)
     elif objectType == 'MeetingAdvice':
         _addManagedPermissions(event.object)
-    return local_roles_indexes
+    return indexes
 
 
 def onItemTransition(item, event):
@@ -130,7 +130,7 @@ def onItemTransition(item, event):
             action = 'doItem%s%s' % (transitionId[4].upper(), transitionId[5:])
         else:
             action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
-    local_roles_indexes = do(action, event)
+    indexes = do(action, event)
 
     # check if we need to send the item to another meetingConfig
     if item.query_state() in cfg.getItemAutoSentToOtherMCStates():
@@ -153,7 +153,7 @@ def onItemTransition(item, event):
     # update review_state and local_roles related indexes
     review_state_related_indexes = item.adapted().getReviewStateRelatedIndexes()
     notifyModifiedAndReindex(
-        item, extra_idxs=local_roles_indexes + review_state_related_indexes)
+        item, extra_idxs=indexes + review_state_related_indexes)
     # An item has ben modified, use get_again for portlet_todo
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.MeetingItem.modified', get_again=True)
@@ -852,7 +852,7 @@ def onAnnexAdded(annex, event):
 
         # update parent modificationDate, it is used for caching and co
         # reindexing SearchableText to include annex title may be deferred
-        extra_idxs = parent.adapted().getAnnexRelatedIndexes()
+        extra_idxs = parent.adapted().getIndexesRelatedTo('annex')
         notifyModifiedAndReindex(parent, extra_idxs=extra_idxs)
 
 
@@ -869,7 +869,7 @@ def onAnnexModified(annex, event):
     parent = annex.aq_inner.aq_parent
     # update parent modificationDate, it is used for caching and co
     # reindexing SearchableText to include annex title may be deferred
-    extra_idxs = parent.adapted().getAnnexRelatedIndexes()
+    extra_idxs = parent.adapted().getIndexesRelatedTo('annex')
     if 'title' not in get_modified_attrs(event) and 'SearchableText' in extra_idxs:
         extra_idxs.remove('SearchableText')
     notifyModifiedAndReindex(parent, extra_idxs=extra_idxs)
@@ -907,7 +907,7 @@ def onAnnexRemoved(annex, event):
     # update parent modificationDate, it is used for caching and co
     # reindexing SearchableText to include annex title may be deferred
     # remove does not use deferred reindex
-    extra_idxs = parent.adapted().getAnnexRelatedIndexes(check_deferred=False)
+    extra_idxs = parent.adapted().getIndexesRelatedTo('annex', check_deferred=False)
     notifyModifiedAndReindex(parent, extra_idxs=extra_idxs)
 
 
@@ -1091,11 +1091,12 @@ def onMeetingModified(meeting, event):
         if not mod_attrs or "date" in mod_attrs:
             catalog = api.portal.get_tool('portal_catalog')
             # items linked to the meeting
+            meeting_uid = meeting.UID()
             brains = catalog(portal_type=cfg.getItemTypeName(),
-                             meeting_uid=meeting.UID())
+                             meeting_uid=meeting_uid)
             # items having the meeting as the preferredMeeting
             brains = brains + catalog(portal_type=cfg.getItemTypeName(),
-                                      preferred_meeting_uid=meeting.UID())
+                                      preferred_meeting_uid=meeting_uid)
             for brain in brains:
                 item = brain.getObject()
                 item.reindexObject(idxs=['meeting_date', 'preferred_meeting_date'])

@@ -16,6 +16,7 @@ from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.utils import get_current_user_id
+from Products.PloneMeeting.utils import reindex_object
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from zope.i18n import translate
 
@@ -175,7 +176,7 @@ class TakenOverBy(BrowserView):
         # when it is decided, by members of the proposingGroup
         # and in this case item must not be modified
         # cache will be invalidated because we check for modified and _p_mtime
-        self.context.reindexObject(idxs=['getTakenOverBy'])
+        reindex_object(self.context, idxs=['getTakenOverBy'], update_metadata=False)
         return html
 
 
