@@ -566,8 +566,6 @@ class Migrate_To_4200(Migrator):
         brains = self.catalog(object_provides=IMeeting.__identifier__)
         for brain in brains:
             meeting = brain.getObject()
-            if base_hasattr(meeting, '_number_of_items'):
-                continue
             meeting._number_of_items = len(meeting.get_raw_items())
             meeting._p_changed = True
         logger.info('Done.')
