@@ -7346,13 +7346,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # display the meeting date if the item is linked to a meeting
         if meeting:
             title = item.Title(withMeetingDate=True)
+            return tool.getColoredLink(item,
+                                       showColors=True,
+                                       showContentIcon=True,
+                                       contentValue=title)
         else:
-            title = item.Title()
-        title = safe_unicode(title)
-        return tool.getColoredLink(item,
-                                   showColors=True,
-                                   showContentIcon=True,
-                                   contentValue=title)
+            # try to share cache of getPrettyLink
+            return item.getPrettyLink()
 
     def downOrUpWorkflowAgain_cachekey(method, self, brain=False):
         '''cachekey method for self.downOrUpWorkflowAgain.'''

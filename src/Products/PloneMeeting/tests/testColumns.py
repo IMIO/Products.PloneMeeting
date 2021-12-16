@@ -89,7 +89,6 @@ class testColumns(PloneMeetingTestCase):
         # annexes
         self.assertTrue(' class="pmMoreInfo">' in publicBrainPrettyLinkColumn)
         # the secret item is not accessible
-        import ipdb; ipdb.set_trace()
         self.assertEqual(
             secretBrainPrettyLinkColumn,
             u"<div class='pretty_link' title='Secret item title'>"
