@@ -3810,6 +3810,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
              (this avoid changing old if configuration changed)."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
+        indexes = []
         if "committees" in cfg.getUsedMeetingAttributes() and \
            (not self.getCommittees() or self.REQUEST.get('need_MeetingItem_update_committees')) and \
            not self.hasMeeting():
@@ -3821,7 +3822,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                        "classifier__" + self.getClassifier() in committee["auto_from"]:
                         committees.append(committee['row_id'])
                 committees = committees or [NO_COMMITTEE]
-                self.setCommittees(committees)
+                # only set committees if value changed
+                if self.getCommittees() != committees:
+                    self.setCommittees(committees)
+                    indexes.append('committees_index')
+        return indexes
 
     security.declarePublic('hasItemSignatures')
 
@@ -6333,10 +6338,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_addLocalRoles(userId, ('Owner',))
         # update groupsInCharge before update_local_roles
         self.update_groups_in_charge()
-        # reindex=True will reindex indexAdvisers/getCopyGroups/getGroupsInCharge
-        self.update_local_roles(isCreated=True,
-                                inheritedAdviserUids=kwargs.get('inheritedAdviserUids', []),
-                                reindex=True)
+        indexes = self.update_local_roles(
+            isCreated=True,
+            inheritedAdviserUids=kwargs.get('inheritedAdviserUids', []))
         # clean borg.localroles caching
         cleanMemoize(self, prefixes=['borg.localrole.workspace.checkLocalRolesAllowed'])
         # Apply potential transformations to richtext fields
@@ -6344,7 +6348,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Make sure we have 'text/html' for every Rich fields
         forceHTMLContentTypeForEmptyRichFields(self)
         # update committees if necessary
-        self.update_committees()
+        indexes += self.update_committees()
+        # reindex necessary indexes
+        self.reindexObject(idxs=indexes)
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
 
@@ -6372,10 +6378,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def at_post_edit_script(self, full_edit_form=True, reindex_local_roles=False):
         # update groupsInCharge before update_local_roles
         self.update_groups_in_charge()
-        self.update_local_roles(invalidate=self.willInvalidateAdvices(),
-                                isCreated=False,
-                                avoid_reindex=True,
-                                reindex=reindex_local_roles)
+        indexes = self.update_local_roles(
+            invalidate=self.willInvalidateAdvices(),
+            isCreated=False,
+            avoid_reindex=True)
         if full_edit_form:
             # Apply potential transformations to richtext fields
             transformAllRichTextFields(self)
@@ -6384,7 +6390,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Make sure we have 'text/html' for every Rich fields
             forceHTMLContentTypeForEmptyRichFields(self)
             # update committees if necessary
-            self.update_committees()
+            indexes += self.update_committees()
+        if reindex_local_roles or full_edit_form:
+            self.reindexObject(idxs=indexes)
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
 

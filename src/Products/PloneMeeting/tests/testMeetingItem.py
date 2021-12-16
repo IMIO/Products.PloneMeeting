@@ -4610,11 +4610,14 @@ class testMeetingItem(PloneMeetingTestCase):
         beforeMeetingEdit_rendered_actions_panel = actions_panel()
         meeting.date = datetime(2010, 10, 10)
         meeting._update_after_edit()
-        # now action is available
+        # action is not available because WE DO NOT INVALIDATE WHEN MEETING MODIFIED
+        # why?  because that would make cache disappear too fast and it is not necessary
         object_buttons = [k['id'] for k in pa.listFilteredActionsFor(item)['object_buttons']]
         self.assertTrue('dummy' in object_buttons)
         # and actions panel has been invalidated
-        self.assertNotEqual(beforeMeetingEdit_rendered_actions_panel, actions_panel())
+        self.assertEqual(beforeMeetingEdit_rendered_actions_panel, actions_panel())
+        # so that fictious usecase does not work for now, for performance reasons
+        # if needed, then the cachekey could manage meeting.modified optionnaly
 
     def test_pm_ItemActionsPanelCachingInvalidatedWhenMeetingConfigEdited(self):
         """Actions panel cache is invalidated when the MeetingConfig is edited."""
@@ -6838,6 +6841,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemReferenceAdaptedWhenItemInsertedOrRemovedOrDeletedFromMeeting(self):
         """Item reference is set when item is inserted into a meeting."""
+        self.tool.setDeferParentReindex(())
         # remove recurring items in self.meetingConfig
         self._removeConfigObjectsFor(self.meetingConfig)
         self.changeUser('pmManager')
@@ -6938,6 +6942,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemReferenceUpdateWhenItemPositionChangedOnMeeting(self):
         """When an item position changed in the meeting, the itemReference is updated."""
+        self.tool.setDeferParentReindex(())
         # remove recurring items in self.meetingConfig
         self._removeConfigObjectsFor(self.meetingConfig)
         self.changeUser('pmManager')
