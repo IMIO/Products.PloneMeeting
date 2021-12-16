@@ -1,5 +1,7 @@
 <h1 class="documentFirstHeading" i18n:domain="PloneMeeting">
-    <span tal:content="structure context/getPrettyLink">Pretty title</span>
+    <tal:comment replace="nothing">Important to call context.getPrettyLink() without arguments,
+    so we can test that we have same result here and in dashboard cell</tal:comment>
+    <span tal:content="structure python: context.getPrettyLink()">Pretty title</span>
     <tal:itemRef define="dummy context/checkPrivacyViewable;
                          itemNumber python: context.getItemNumber(relativeTo='meeting', for_display=True);
                          itemReference python: context.getItemReference();"

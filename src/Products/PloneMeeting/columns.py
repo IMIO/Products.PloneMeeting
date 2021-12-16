@@ -177,7 +177,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         obj = self._getObject(item)
         prettyLinker = IPrettyLink(obj)
         prettyLinker.target = '_parent'
-        contentValue = obj.Title()
+        prettyLinker.showContentIcon = True
 
         annexes = staticInfos = moreInfos = ''
 
@@ -214,11 +214,12 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                 portal_type='annex', check_can_view=True)
             # display number of items in meeting title
             contentValue = "{0} <span class='meeting-number-items'>[{1}]</span>".format(
-                contentValue, obj.number_of_items())
+                obj.Title(), obj.number_of_items())
+            prettyLinker.contentValue = contentValue
+
         if annexes:
             annexes = u"<div class='dashboard_annexes'>{0}</div>".format(annexes)
 
-        prettyLinker.contentValue = contentValue
         pretty_link = prettyLinker.getLink()
         return pretty_link + staticInfos + moreInfos + annexes
 

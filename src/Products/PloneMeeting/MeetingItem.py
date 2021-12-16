@@ -1941,6 +1941,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getPrettyLink(self, **kwargs):
         """Return the IPrettyLink version of the title."""
         adapted = IPrettyLink(self)
+        adapted.target = '_parent'
         adapted.showContentIcon = kwargs.get('showContentIcon', True)
         for k, v in kwargs.items():
             setattr(adapted, k, v)
