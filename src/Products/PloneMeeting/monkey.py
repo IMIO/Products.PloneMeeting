@@ -23,6 +23,7 @@ from types import StringType
 from z3c.form import interfaces
 from z3c.form.widget import SequenceWidget
 from zope.ramcache.ram import Storage
+from cPickle import dumps
 
 
 def _patched_equal(context, row):
@@ -273,3 +274,29 @@ def getEntry(self, ob, key):
 
 Storage.getEntry = getEntry
 logger.info("Monkey patching zope.ramcache.ram.Storage (getEntry)")
+
+
+Storage.__old_pm_getStatistics = Storage.getStatistics
+
+
+def getStatistics(self):
+    objects = self._data.keys()
+    objects.sort()
+    result = []
+
+    for ob in objects:
+        size = len(dumps(self._data[ob]))
+        hits = sum(entry[2] for entry in self._data[ob].itervalues())
+        from DateTime import DateTime
+        older_date = min(entry[1] for entry in self._data[ob].itervalues())
+        result.append({'path': ob,
+                       'hits': hits,
+                       'misses': self._misses.get(ob, 0),
+                       'size': size,
+                       'entries': len(self._data[ob]),
+                       'older_date': older_date and DateTime(older_date)})
+    return tuple(result)
+
+
+Storage.getStatistics = getStatistics
+logger.info("Monkey patching zope.ramcache.ram.Storage (getStatistics)")
