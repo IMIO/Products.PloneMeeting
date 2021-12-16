@@ -997,7 +997,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = DisplayList()
         for defer in ('annex', 'item_reference'):
             res.add(defer,
-                    translate('defer_%s' % defer,
+                    translate('defer_reindex_for_%s' % defer,
                               domain='PloneMeeting',
                               context=self.REQUEST))
         return res
