@@ -342,6 +342,22 @@ class testValidators(PloneMeetingTestCase):
         set_registry_functions(functions_without_samplers)
         self.assertFalse(dev_samplers in api.group.get_groups())
 
+        # an _advisers may not be disabled if used
+        item.setOptionalAdvisers((self.developers_uid, ))
+        item._update_after_edit(idxs=['indexAdvisers'])
+        functions_with_fct_orgs_advisers = deepcopy(functions)
+        self.assertEqual(functions_with_fct_orgs_advisers[0]['fct_id'],  u'advisers')
+        functions_with_fct_orgs_advisers[0]['fct_orgs'] = [self.vendors_uid]
+        with self.assertRaises(Invalid) as cm:
+            validator.validate(functions_with_fct_orgs_advisers)
+        self.assertEqual(cm.exception.message, validation_error_msg)
+        # remove adviser so it validates
+        item.setOptionalAdvisers(())
+        item._update_after_edit(idxs=['indexAdvisers'])
+        self.assertIsNone(validator.validate(functions_with_fct_orgs_advisers))
+        set_registry_functions(functions_with_fct_orgs_advisers)
+        self.assertFalse(self.developers_advisers in api.group.get_groups())
+
 
 def test_suite():
     from unittest import makeSuite

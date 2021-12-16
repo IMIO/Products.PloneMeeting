@@ -204,7 +204,7 @@ class PloneGroupSettingsValidator(validator.SimpleFieldValidator):
         tool = api.portal.get_tool('portal_plonemeeting')
         # advisers
         advisers_removed_plonegroups = [
-            REAL_ORG_UID_PATTERN.format(get_organization(removed_plonegroup_id))
+            REAL_ORG_UID_PATTERN.format(removed_plonegroup_id.split('_')[0])
             for removed_plonegroup_id in removed_plonegroups]
         for cfg in tool.objectValues('MeetingConfig'):
             msg = _("can_not_delete_plone_group_meetingconfig",
