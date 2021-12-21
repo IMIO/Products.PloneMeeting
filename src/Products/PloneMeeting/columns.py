@@ -272,7 +272,8 @@ class ItemLinkedMeetingColumn(BaseColumn):
             catalog = self.table.portal.portal_catalog
             # done unrestricted because can be used to display meeting date
             # in dashboard when current user may not see the meeting
-            brains = catalog.unrestrictedSearchResults(UID=getattr(item, self.meeting_uid_attr))
+            brains = catalog.unrestrictedSearchResults(
+                UID=getattr(item, self.meeting_uid_attr))
             meeting = brains[0]._unrestrictedGetObject()
             res = meeting.get_pretty_link()
 

@@ -2755,12 +2755,17 @@ class testMeetingType(PloneMeetingTestCase):
         # action is available
         object_buttons = [k['id'] for k in pa.listFilteredActionsFor(meeting)['object_buttons']]
         self.assertTrue('dummy' in object_buttons)
-        # actions panel was invalidated
+        # actions panel was NOT invalidated on edit
+        # for performance reasons, we invalidate only when review_state changed
+        # this usecase is not supported for now
         actions_panel._transitions = None
         afterEdit_rendered_actions_panel = actions_panel()
-        self.assertNotEqual(beforeEdit_rendered_actions_panel, afterEdit_rendered_actions_panel)
+        # still equal, actions panel was not invalidated
+        self.assertEqual(beforeEdit_rendered_actions_panel, afterEdit_rendered_actions_panel)
 
-        # invalidated when getRawItems changed
+        # NOT invalidated neither when getRawItems changed
+        # for performance reasons, we invalidate only when review_state changed
+        # this usecase is not supported for now
         # for now, no item in the meeting, the 'no_items' action is shown
         object_buttons = [k['id'] for k in pa.listFilteredActionsFor(meeting)['object_buttons']]
         self.assertTrue('no_items' in object_buttons)
@@ -2770,7 +2775,8 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertFalse('no_items' in object_buttons)
         actions_panel._transitions = None
         presentedItem_rendered_actions_panel = actions_panel()
-        self.assertNotEqual(afterEdit_rendered_actions_panel, presentedItem_rendered_actions_panel)
+        # still equal, actions panel was not invalidated
+        self.assertEqual(afterEdit_rendered_actions_panel, presentedItem_rendered_actions_panel)
 
         # invalidated when review state changed
         # just make sure the contained item is not changed

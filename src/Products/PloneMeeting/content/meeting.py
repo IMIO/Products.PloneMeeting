@@ -726,7 +726,7 @@ def get_all_used_held_positions(obj, include_new=False, the_objects=True):
         contacts = contacts + new_selectable_contacts
 
     if contacts and the_objects:
-        contacts = uuidsToObjects(uuids=contacts, ordered=True)
+        contacts = uuidsToObjects(uuids=contacts, ordered=True, unrestricted=True)
 
     return tuple(contacts)
 
