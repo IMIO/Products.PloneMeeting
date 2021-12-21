@@ -1,23 +1,22 @@
-<tal:defines define="showItemIsSigned context/showItemIsSigned;
+<tal:defines define="showItemIsSigned python: context.showItemIsSigned();
                      mayEdit python: context.adapted().maySignItem();
-                     itemIsSigned context/getItemIsSigned;
+                     itemIsSigned python: context.getItemIsSigned();
                      portal_url python: view.portal_url"
              i18n:domain="PloneMeeting">
   <span id="marker_toggle_itemissigned_UID#"
         tal:attributes="id string:marker_toggle_itemissigned_$UID;"
-        tal:define="UID context/UID;
-                    baseUrl context/absolute_url;"
+        tal:define="UID string:[uid];"
         tal:condition="python: showItemIsSigned and mayEdit">
     <img class="itemIsSignedEditable" tal:condition="itemIsSigned" name="itemIsSignedNo"
          height="16" width="16"
          title="item_is_signed_yes_edit" i18n:attributes="title"
          tal:attributes="src string:$portal_url/itemIsSignedYes.png;
-                         onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_item_is_signed\', baseSelector=\'#marker_toggle_itemissigned_\')'"/>
+                         onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'[baseUrl]\', viewName=\'@@toggle_item_is_signed\', baseSelector=\'#marker_toggle_itemissigned_\')'"/>
     <img class="itemIsSignedEditable" tal:condition="not: itemIsSigned" name="itemIsSignedYes"
          height="16" width="16"
          title="item_is_signed_no_edit" i18n:attributes="title"
          tal:attributes="src string:$portal_url/itemIsSignedNo.png;
-                         onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_item_is_signed\', baseSelector=\'#marker_toggle_itemissigned_\')'"/>
+                         onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'[baseUrl]\', viewName=\'@@toggle_item_is_signed\', baseSelector=\'#marker_toggle_itemissigned_\')'"/>
   </span>
   <tal:showItemIsSigned condition="python: not showItemIsSigned">-</tal:showItemIsSigned>
   <tal:forTheOthers condition="python: showItemIsSigned and not mayEdit">

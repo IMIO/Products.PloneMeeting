@@ -25,6 +25,7 @@ from plone import api
 from plone.app.caching.operations.utils import getContext
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.interfaces import IDexterityContent
+from plone.memoize import ram
 from plone.memoize.view import memoize
 from plone.memoize.view import memoize_contextless
 from Products.CMFCore.permissions import ManagePortal
@@ -204,16 +205,6 @@ class MeetingStaticInfosView(BaseStaticInfosView):
     """
 
 
-class ItemIsSignedView(BrowserView):
-    """
-      This manage the view displaying itemIsSigned widget
-    """
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-        self.portal_url = api.portal.get().absolute_url()
-
-
 class ItemNumberView(BrowserView):
     """
       This manage the view displaying the itemNumber on the meeting view
@@ -232,6 +223,39 @@ class ItemNumberView(BrowserView):
         return _is_integer(number)
 
 
+class ItemIsSignedView(BrowserView):
+    """
+      This manage the view displaying itemIsSigned widget
+    """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def __call__parent_cachekey(method, self):
+        '''cachekey method for self.__call__.'''
+        return self.context.getItemIsSigned(), \
+            self.context.adapted().maySignItem(), self.context.showItemIsSigned()
+
+    @ram.cache(__call__parent_cachekey)
+    def __call__parent(self):
+        """ """
+        self.portal_url = api.portal.get().absolute_url()
+        return super(ItemIsSignedView, self).__call__()
+
+    def __call__(self):
+        """ """
+        result = self.__call__parent()
+        result = self._patch_html_content(result)
+        return result
+
+    def _patch_html_content(self, html_content):
+        """To be able to use caching, we need to
+           change UID and baseURL after __call__ is rendered."""
+        html_content = html_content.replace("[uid]", self.context.UID())
+        html_content = html_content.replace("[baseUrl]", self.context.absolute_url())
+        return html_content
+
+
 class ItemToDiscussView(BrowserView):
     """
       This manage the view displaying toDiscuss widget
@@ -239,9 +263,31 @@ class ItemToDiscussView(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
+
+    def __call__parent_cachekey(method, self):
+        '''cachekey method for self.__call__.'''
+        return self.context.getToDiscuss(), self.mayEdit()
+
+    @ram.cache(__call__parent_cachekey)
+    def __call__parent(self):
+        """ """
         self.portal_url = api.portal.get().absolute_url()
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+        return super(ItemToDiscussView, self).__call__()
+
+    def __call__(self):
+        """ """
+        result = self.__call__parent()
+        result = self._patch_html_content(result)
+        return result
+
+    def _patch_html_content(self, html_content):
+        """To be able to use caching, we need to
+           change UID and baseURL after __call__ is rendered."""
+        html_content = html_content.replace("[uid]", self.context.UID())
+        html_content = html_content.replace("[baseUrl]", self.context.absolute_url())
+        return html_content
 
     def mayEdit(self):
         """ """
