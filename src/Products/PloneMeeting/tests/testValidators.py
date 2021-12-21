@@ -346,7 +346,7 @@ class testValidators(PloneMeetingTestCase):
         item.setOptionalAdvisers((self.developers_uid, ))
         item._update_after_edit(idxs=['indexAdvisers'])
         functions_with_fct_orgs_advisers = deepcopy(functions)
-        self.assertEqual(functions_with_fct_orgs_advisers[0]['fct_id'],  u'advisers')
+        self.assertEqual(functions_with_fct_orgs_advisers[0]['fct_id'], u'advisers')
         functions_with_fct_orgs_advisers[0]['fct_orgs'] = [self.vendors_uid]
         with self.assertRaises(Invalid) as cm:
             validator.validate(functions_with_fct_orgs_advisers)

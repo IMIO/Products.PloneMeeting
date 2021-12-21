@@ -73,12 +73,14 @@ from Products.statusmessages.interfaces import IStatusMessage
 from zExceptions import Redirect
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getAdapter
+from zope.component import queryUtility
 from zope.event import notify
 from zope.i18n import translate
 from zope.interface import Interface
 from zope.interface import Invalid
 from zope.lifecycleevent import Attributes
 from zope.lifecycleevent import ObjectModifiedEvent
+from zope.ramcache.interfaces.ram import IRAMCache
 
 import transaction
 
@@ -4636,6 +4638,111 @@ class testMeetingItem(PloneMeetingTestCase):
         self.cleanMemoize()
         afterMCEdit_rendered_actions_panel = actions_panel()
         self.assertNotEqual(beforeMCEdit_rendered_actions_panel, afterMCEdit_rendered_actions_panel)
+
+    def test_pm_ItemActionsPanelCachingProfiles(self):
+        """Actions panel cache is generated for various profiles, check
+           that is works as expected, profiles are:
+           - Manager;
+           - MeetingManager;
+           - item editor;
+           - item viewer;
+           - powerobserver."""
+        cfg = self.meetingConfig
+        # enable everything
+        cfg.setItemCopyGroupsStates(('itemcreated', 'proposed', 'validated'))
+        self._setPowerObserverStates(states=('itemcreated', 'proposed', 'validated'))
+        cfg.setItemAdviceStates(('itemcreated', 'proposed', 'validated'))
+        cfg.setItemAdviceEditStates(('itemcreated', 'proposed', 'validated'))
+        cfg.setItemAdviceViewStates(('itemcreated', 'proposed', 'validated'))
+
+        # create item
+        self.changeUser('pmCreator1')
+        data = {'copyGroups': (self.vendors_reviewers, ),
+                'optionalAdvisers': (self.vendors_uid, )}
+        item = self.create('MeetingItem', **data)
+        ramcache = queryUtility(IRAMCache)
+
+        def _call_actions_panel():
+            item_actions = item.restrictedTraverse('@@actions_panel')
+            # there is cache in request in imio.actionspanel
+            item_actions.member = self.member
+            item_actions()
+            return item_actions
+
+
+        def _sum_entries(call_actions_panel=True):
+            if call_actions_panel:
+                _call_actions_panel()
+            return sum(
+                [data['entries'] for data in ramcache.getStatistics()
+                 if data['path'] ==
+                 'Products.PloneMeeting.browser.overrides.MeetingItemActionsPanelView__call__'])
+
+        # creator
+        self.assertEqual(_sum_entries(False), 0)
+        self.assertEqual(_sum_entries(), 1)
+        # reviewer, does not have the hand on item, view as a Reader
+        self.changeUser('pmReviewer1')
+        self.assertEqual(_sum_entries(), 2)
+        # observer, Reader
+        self.changeUser('pmObserver1')
+        self.assertEqual(_sum_entries(), 2)
+        # copyGroups or optionalAdvisers, Reader
+        self.changeUser('pmReviewer2')
+        self.assertEqual(_sum_entries(), 2)
+        # powerobserver, Reader
+        self.changeUser('powerobserver1')
+        self.assertEqual(_sum_entries(), 2)
+
+        # propose item, pmReviewer1 has hand on item, other are Readers
+        self.changeUser('pmCreator1')
+        self.proposeItem(item)
+        self.assertEqual(_sum_entries(False), 2)
+        self.assertEqual(_sum_entries(), 3)
+        # reviewer, has hand on item
+        self.changeUser('pmReviewer1')
+        self.assertEqual(_sum_entries(), 4)
+        # observer, Reader
+        self.changeUser('pmObserver1')
+        self.assertEqual(_sum_entries(), 4)
+        # copyGroups or optionalAdvisers, Reader
+        self.changeUser('pmReviewer2')
+        self.assertEqual(_sum_entries(), 4)
+        # powerobserver,Reader
+        self.changeUser('powerobserver1')
+        self.assertEqual(_sum_entries(), 4)
+
+        # special case for powerobservers when using MeetingConfig.hideHistoryTo
+        cfg.setHideHistoryTo(('powerobservers', ))
+        self.assertEqual(_sum_entries(), 5)
+        # but still ok for others
+        self.changeUser('pmReviewer2')
+        self.assertEqual(_sum_entries(), 5)
+
+        # now test as a MeetingManager that has access when item validated
+        self.changeUser('pmReviewer1')
+        self.validateItem(item, as_manager=False)
+        self.assertEqual(_sum_entries(), 6)
+        # without meeting, MeetingManager may edit
+        self.changeUser('pmManager')
+        self.assertEqual(_sum_entries(), 7)
+        self.create('Meeting')
+        self.assertEqual(_sum_entries(), 8)
+        # does not change for others
+        self.changeUser('pmCreator1')
+        self.assertEqual(_sum_entries(), 8)
+        # reviewer, has hand on item
+        self.changeUser('pmReviewer1')
+        self.assertEqual(_sum_entries(), 8)
+        # observer, Reader
+        self.changeUser('pmObserver1')
+        self.assertEqual(_sum_entries(), 8)
+        # copyGroups or optionalAdvisers, Reader
+        self.changeUser('pmReviewer2')
+        self.assertEqual(_sum_entries(), 8)
+        # powerobserver, Reader but changed as using MeetingConfig.hideHistoryTo
+        self.changeUser('powerobserver1')
+        self.assertEqual(_sum_entries(), 9)
 
     def test_pm_HistoryCommentViewability(self):
         '''Test the MeetingConfig.hideItemHistoryCommentsToUsersOutsideProposingGroup parameter

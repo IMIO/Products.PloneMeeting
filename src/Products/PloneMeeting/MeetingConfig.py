@@ -6060,7 +6060,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if previous_collection_id is not None and \
                previous_collection_id in container.objectIds():
                 previous_collection_id_pos = container.getObjectPosition(previous_collection_id)
-                container.moveObjectToPosition(collectionId, previous_collection_id_pos+1)
+                container.moveObjectToPosition(collectionId, previous_collection_id_pos + 1)
             previous_collection_id = collectionId
         return added_collections
 
@@ -6934,7 +6934,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                           if committee['enabled'] == '1']
         return committees
 
-    def getCategoriesIds_cachekey(method, self,  catType='categories', onlySelectable=True, userId=None):
+    def getCategoriesIds_cachekey(method, self, catType='categories', onlySelectable=True, userId=None):
         '''cachekey method for self.getCategoriesIds.'''
         date = get_cachekey_volatile('Products.PloneMeeting.MeetingConfig.getCategoriesIds')
         return repr(self), date, catType, onlySelectable, userId or get_current_user_id()

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
-from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.content import get_state_infos

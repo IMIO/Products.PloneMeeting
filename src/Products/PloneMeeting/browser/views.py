@@ -325,7 +325,7 @@ class ObjectGoToView(BrowserView):
             # in Faceted.Query JS on the meeting view
             # this way parameters are computed like numer of elements by page
             url = "{0}?b_start={1}".format(
-                meeting.absolute_url(), int_page_num*items_by_page)
+                meeting.absolute_url(), int_page_num * items_by_page)
             return self.request.RESPONSE.redirect(url)
 
         # navigate thru items

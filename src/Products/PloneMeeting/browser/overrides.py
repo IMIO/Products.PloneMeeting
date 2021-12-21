@@ -64,9 +64,9 @@ from Products.PloneMeeting.utils import is_editing
 from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import set_field_from_ajax
+from zope.component import queryUtility
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
-from zope.component import queryUtility
 from zope.ramcache.interfaces.ram import IRAMCache
 
 import sys

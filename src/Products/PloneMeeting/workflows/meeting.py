@@ -108,6 +108,7 @@ class MeetingWorkflowConditions(object):
             res = False
         return res
 
+
 InitializeClass(MeetingWorkflowConditions)
 
 
@@ -221,5 +222,6 @@ class MeetingWorkflowActions(object):
 
     def doBackToFrozen(self, stateChange):
         pass
+
 
 InitializeClass(MeetingWorkflowActions)
