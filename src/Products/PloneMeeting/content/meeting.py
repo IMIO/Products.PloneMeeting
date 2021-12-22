@@ -250,6 +250,12 @@ class IMeeting(IDXMeetingContent):
         default=False,
         required=False)
 
+    form.widget('videoconference', RadioFieldWidget)
+    videoconference = schema.Bool(
+        title=_(u'title_videoconference'),
+        default=False,
+        required=False)
+
     form.widget('assembly', PMTextAreaFieldWidget)
     assembly = RichText(
         title=_(u"title_assembly"),
@@ -425,7 +431,7 @@ class IMeeting(IDXMeetingContent):
                    fields=['date', 'start_date', 'mid_date', 'end_date',
                            'approval_date', 'convocation_date',
                            'validation_deadline', 'freeze_deadline',
-                           'place', 'place_other',
+                           'place', 'place_other', 'videoconference',
                            'pre_meeting_date', 'pre_meeting_place',
                            'extraordinary_session'])
 
@@ -801,6 +807,9 @@ class Meeting(Container):
             {'optional': False,
              'condition': "python:view.show_field('place') and "
                 "(view.mode != 'display' or context.place == u'other')"},
+        'videoconference':
+            {'optional': True,
+             'condition': ""},
         'extraordinary_session':
             {'optional': True,
              'condition': ""},

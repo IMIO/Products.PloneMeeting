@@ -906,6 +906,11 @@ class BaseDGHV(object):
         return meeting, attendees, item_absents, item_excused, item_non_attendees, \
             contacts, excused, absents, replaced
 
+    def _update_patterns_for_videoconference(self, meeting, patterns, value):
+        if hasattr(meeting, "videoconference") and meeting.videoconference:
+            patterns.update(value)
+
+
     def print_attendees(self,
                         by_parent_org=False,
                         render_as_html=True,
@@ -918,6 +923,7 @@ class BaseDGHV(object):
                         by_parent_org_first_format=None,
                         by_parent_org_format=u"<br /><strong><u>{0}</u></strong>",
                         custom_attendee_type_values={},
+                        adapt_for_videoconference=True,
                         custom_grouped_attendee_type_patterns={},
                         replaced_by_format={'M': u'<strong>remplacé par {0}</strong>',
                                             'F': u'<strong>remplacée par {0}</strong>'},
@@ -961,6 +967,12 @@ class BaseDGHV(object):
         meeting, attendees, item_absents, item_excused, item_non_attendees, \
             contacts, excused, absents, replaced = self._get_attendees(committee_id)
         context_uid = self.context.UID()
+
+        if adapt_for_videoconference:
+            self._update_patterns_for_videoconference(meeting, attendee_type_values, {'attendee': {
+                'M': u'connecté',
+                'F': u'connectée',
+            }})
 
         res = OrderedDict()
         for contact in contacts:
@@ -1055,6 +1067,7 @@ class BaseDGHV(object):
                                 show_grouped_attendee_type=True,
                                 show_item_grouped_attendee_type=True,
                                 custom_grouped_attendee_type_patterns={},
+                                adapt_for_videoconference=True,
                                 show_replaced_by=True,
                                 replaced_by_format={'M': u'{0}, <strong>remplacé par {1}</strong>',
                                                     'F': u'{0}, <strong>remplacée par {1}</strong>'},
@@ -1200,6 +1213,7 @@ class BaseDGHV(object):
               'FP': u'<strong><u>Ne participent pas à ce point&nbsp;:</u></strong>',
               '*': u'<strong><u>Ne participent pas à ce point&nbsp;:</u></strong>'}),
         ])
+
         if not show_grouped_attendee_type:
             grouped_attendee_type_patterns.update(OrderedDict([
                 ('attendee', {'*': u''}),
@@ -1216,6 +1230,17 @@ class BaseDGHV(object):
         # initial values
         meeting, attendees, item_absents, item_excused, item_non_attendees, \
             contacts, excused, absents, replaced = self._get_attendees(committee_id)
+
+        if adapt_for_videoconference:
+            self._update_patterns_for_videoconference(meeting, grouped_attendee_type_patterns, {
+                'attendee': {
+                    'MS': u'<strong><u>Connecté&nbsp;:</u></strong>',
+                    'MP': u'<strong><u>Connectés&nbsp;:</u></strong>',
+                    'FS': u'<strong><u>Connectée&nbsp;:</u></strong>',
+                    'FP': u'<strong><u>Connectées&nbsp;:</u></strong>',
+                    '*': u'<strong><u>Connectés&nbsp;:</u></strong>'
+                }
+            })
 
         res = OrderedDict([(key, []) for key in grouped_attendee_type_patterns.keys()])
         striked_contact_uids = []

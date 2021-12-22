@@ -50,6 +50,10 @@ Changelog
   to end a attendee type with a specific character.
   [aduchene]
 
+- Added a new boolean field "videoconference" on Meeting schema. When it is set, attendees change
+  label to "Connected" and a distinctive icon is shown with imio.prettylink.
+  [aduchene]
+
 4.2b21 (2021-11-26)
 -------------------
 
