@@ -2045,9 +2045,16 @@ class SelectableCommitteeAttendeesVocabulary(BaseSimplifiedHeldPositionsVocabula
             context = get_context_with_request(context)
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
+        # manage missing terms manually as used in a datagridfield...
+        current_values = set(
+            itertools.chain.from_iterable(
+                [row['attendees'] or [] for row in context.committees]))
+        cfg_values = list(cfg.getOrderedCommitteeContacts())
+        missing_values = list(current_values.difference(cfg_values))
+        uids = cfg_values + missing_values
         return super(SelectableCommitteeAttendeesVocabulary, self).__call__(
             context=context,
-            uids=cfg.getOrderedCommitteeContacts())
+            uids=uids)
 
 
 SelectableCommitteeAttendeesVocabularyFactory = SelectableCommitteeAttendeesVocabulary()

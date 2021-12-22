@@ -483,13 +483,4 @@
              z3c.form.interfaces.ISelectWidget"
         factory=".adapters.AnnexMissingTermsVocabulary" />
 
-    <adapter
-        for="dict
-             z3c.form.interfaces.IFormLayer
-             zope.interface.Interface
-             zope.schema.interfaces.IList
-             zope.schema.interfaces.IBaseVocabulary
-             z3c.form.interfaces.IOrderedSelectWidget"
-        factory=".adapters.MeetingMissingTermsVocabulary" />
-
 </configure>

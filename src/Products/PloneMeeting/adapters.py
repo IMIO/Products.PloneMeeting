@@ -1980,17 +1980,3 @@ class AnnexMissingTermsVocabulary(MissingChoiceTermsVocabulary, MissingTerms):
                              'collective.iconifiedcategory.every_categories')
         else:
             return SimpleVocabulary([])
-
-
-class MeetingMissingTermsVocabulary(MissingChoiceTermsVocabulary, MissingTerms):
-    """ Managing missing terms for IMeeting. """
-
-    def complete_voc(self):
-        if isinstance(self.context, dict):
-            # datagridfield
-            if self.field.getName() == 'attendees':
-                return get_vocab(
-                    self.context,
-                    'Products.PloneMeeting.vocabularies.every_heldpositions_vocabulary')
-        else:
-            return SimpleVocabulary([])
