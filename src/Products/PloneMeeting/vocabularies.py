@@ -2048,7 +2048,8 @@ class SelectableCommitteeAttendeesVocabulary(BaseSimplifiedHeldPositionsVocabula
         # manage missing terms manually as used in a datagridfield...
         current_values = set(
             itertools.chain.from_iterable(
-                [data.get('attendees', []) for data in context.committees or {}]))
+                [data.get('attendees') or []
+                 for data in context.committees or []]))
         cfg_values = list(cfg.getOrderedCommitteeContacts())
         missing_values = list(current_values.difference(cfg_values))
         uids = cfg_values + missing_values
