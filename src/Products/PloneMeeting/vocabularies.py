@@ -130,7 +130,7 @@ class ItemCategoriesVocabulary(object):
         return date, repr(cfg), classifiers
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context, classifiers=False):
+    def ItemCategoriesVocabulary__call__(self, context, classifiers=False):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
@@ -164,6 +164,9 @@ class ItemCategoriesVocabulary(object):
         res = res + sorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
+    # do ram.cache have a different key name
+    __call__ = ItemCategoriesVocabulary__call__
+
 
 ItemCategoriesVocabularyFactory = ItemCategoriesVocabulary()
 
@@ -190,7 +193,7 @@ class ItemProposingGroupsVocabulary(object):
         return date
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context):
+    def ItemProposingGroupsVocabulary__call__(self, context):
         """ """
         active_orgs = get_organizations(only_selected=True)
         not_active_orgs = [org for org in get_organizations(only_selected=False)
@@ -221,6 +224,9 @@ class ItemProposingGroupsVocabulary(object):
         res = res + humansorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
+    # do ram.cache have a different key name
+    __call__ = ItemProposingGroupsVocabulary__call__
+
 
 ItemProposingGroupsVocabularyFactory = ItemProposingGroupsVocabulary()
 
@@ -238,7 +244,7 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
         return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context):
+    def ItemProposingGroupsForFacetedFilterVocabulary__call__(self, context):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
@@ -276,6 +282,9 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
         res = res + humansorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
+    # do ram.cache have a different key name
+    __call__ = ItemProposingGroupsForFacetedFilterVocabulary__call__
+
 
 ItemProposingGroupsForFacetedFilterVocabularyFactory = ItemProposingGroupsForFacetedFilterVocabulary()
 
@@ -288,7 +297,8 @@ class UserProposingGroupsVocabulary(object):
         '''cachekey method for self._user_proposing_group_terms.'''
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
         selectable_org_uids = self._get_selectable_orgs(context, tool, cfg, the_objects=False)
-        return date, context.portal_type, selectable_org_uids
+        # use self.__class__.__name__ to get different ram.cache keys
+        return date, context.portal_type, selectable_org_uids, self.__class__.__name__
 
     def _get_selectable_orgs(self, context, tool, cfg, the_objects=True):
         """ """
@@ -367,7 +377,7 @@ class UserProposingGroupsWithGroupsInChargeVocabulary(UserProposingGroupsVocabul
         """ """
         orgs = self._get_selectable_orgs(context, tool, cfg)
         terms = []
-        uids = []
+        term_values = []
         active_org_uids = get_registry_organizations()
         for org in orgs:
             org_uid = org.UID()
@@ -380,6 +390,7 @@ class UserProposingGroupsWithGroupsInChargeVocabulary(UserProposingGroupsVocabul
                     SimpleTerm(term_value,
                                term_value,
                                u'{0} ()'.format(org.get_full_title())))
+                term_values.append(term_value)
             for gic_org in org.get_groups_in_charge(the_objects=True):
                 gic_org_uid = gic_org.UID()
                 term_value = u'{0}__groupincharge__{1}'.format(
@@ -392,7 +403,8 @@ class UserProposingGroupsWithGroupsInChargeVocabulary(UserProposingGroupsVocabul
                             term_value,
                             u'{0} ({1})'.format(
                                 org.get_full_title(), gic_org.get_full_title())))
-        return uids, terms
+                    term_values.append(term_value)
+        return term_values, terms
 
     def _handle_include_stored(self, context, term_values, terms):
         """ """
@@ -459,7 +471,7 @@ class GroupsInChargeVocabulary(object):
         return is_using_cfg_order, res
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context, only_selected=True, sort=True):
+    def GroupsInChargeVocabulary__call__(self, context, only_selected=True, sort=True):
         """List groups in charge :
            - if groupsInCharge in MeetingConfig.usedItemAttributes,
              list MeetingConfig.orderedGroupsInCharge;
@@ -477,6 +489,9 @@ class GroupsInChargeVocabulary(object):
             terms = humansorted(terms, key=attrgetter('title'))
 
         return SimpleVocabulary(terms)
+
+    # do ram.cache have a different key name
+    __call__ = GroupsInChargeVocabulary__call__
 
 
 GroupsInChargeVocabularyFactory = GroupsInChargeVocabulary()
@@ -522,12 +537,15 @@ class PMEveryOrganizationsVocabulary(EveryOrganizationsVocabulary):
         return date
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context):
+    def PMEveryOrganizationsVocabulary__call__(self, context):
         return super(PMEveryOrganizationsVocabulary, self).__call__(context)
 
     def _term_title(self, orga, parent_label):
         # ignore parent_label
         return orga.title
+
+    # do ram.cache have a different key name
+    __call__ = PMEveryOrganizationsVocabulary__call__
 
 
 PMEveryOrganizationsVocabularyFactory = PMEveryOrganizationsVocabulary()
@@ -543,12 +561,15 @@ class EveryOrganizationsAcronymsVocabulary(EveryOrganizationsVocabulary):
         return date
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context):
+    def EveryOrganizationsAcronymsVocabulary__call__(self, context):
         return super(EveryOrganizationsAcronymsVocabulary, self).__call__(context)
 
     def _term_title(self, orga, parent_label):
         # org acronym instead title
         return orga.acronym or translate("None", domain="PloneMeeting", context=orga.REQUEST)
+
+    # do ram.cache have a different key name
+    __call__ = EveryOrganizationsAcronymsVocabulary__call__
 
 
 EveryOrganizationsAcronymsVocabularyFactory = EveryOrganizationsAcronymsVocabulary()
@@ -561,7 +582,7 @@ class PMSortedSelectedOrganizationsElephantVocabulary(SortedSelectedOrganization
     #     """RelationList vocabulary must be objects."""
     #     return orga
 
-    def __call__(self, context):
+    def PMSortedSelectedOrganizationsElephantVocabulary__call__(self, context):
         """Does not work with ElephantVocabulary when used as vocabulary
            for a RelationList field, so unwrap it."""
 
@@ -583,6 +604,9 @@ class PMSortedSelectedOrganizationsElephantVocabulary(SortedSelectedOrganization
             vocab = SimpleVocabulary(terms)
             cache[key] = vocab
         return vocab
+
+    # do ram.cache have a different key name
+    __call__ = PMSortedSelectedOrganizationsElephantVocabulary__call__
 
 
 PMSortedSelectedOrganizationsElephantVocabularyFactory = PMSortedSelectedOrganizationsElephantVocabulary()
@@ -639,7 +663,7 @@ class CreatorsVocabulary(object):
         return date
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context):
+    def CreatorsVocabulary__call__(self, context):
         """ """
         catalog = api.portal.get_tool('portal_catalog')
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -652,6 +676,9 @@ class CreatorsVocabulary(object):
                        )
         res = humansorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
+
+    # do ram.cache have a different key name
+    __call__ = CreatorsVocabulary__call__
 
 
 CreatorsVocabularyFactory = CreatorsVocabulary()
@@ -669,7 +696,7 @@ class CreatorsForFacetedFilterVocabulary(object):
         return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context):
+    def CreatorsForFacetedFilterVocabulary__call__(self, context):
         """ """
         catalog = api.portal.get_tool('portal_catalog')
         res = []
@@ -690,6 +717,9 @@ class CreatorsForFacetedFilterVocabulary(object):
         res = humansorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
+    # do ram.cache have a different key name
+    __call__ = CreatorsForFacetedFilterVocabulary__call__
+
 
 CreatorsForFacetedFilterVocabularyFactory = CreatorsForFacetedFilterVocabulary()
 
@@ -705,7 +735,7 @@ class MeetingDatesVocabulary(object):
         return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context):
+    def MeetingDatesVocabulary__call__(self, context):
         """ """
         catalog = api.portal.get_tool('portal_catalog')
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -727,6 +757,9 @@ class MeetingDatesVocabulary(object):
                                                    short=True))
                        )
         return SimpleVocabulary(res)
+
+    # do ram.cache have a different key name
+    __call__ = MeetingDatesVocabulary__call__
 
 
 MeetingDatesVocabularyFactory = MeetingDatesVocabulary()
@@ -815,7 +848,7 @@ class AskedAdvicesVocabulary(object):
         return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context):
+    def AskedAdvicesVocabulary__call__(self, context):
         """ """
         res = []
         context = get_context_with_request(context) or context
@@ -856,6 +889,9 @@ class AskedAdvicesVocabulary(object):
 
         res = res + humansorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
+
+    # do ram.cache have a different key name
+    __call__ = AskedAdvicesVocabulary__call__
 
 
 AskedAdvicesVocabularyFactory = AskedAdvicesVocabulary()
@@ -1025,7 +1061,7 @@ class AdviceTypesVocabulary(object):
         return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context):
+    def AdviceTypesVocabulary__call__(self, context):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
@@ -1066,6 +1102,9 @@ class AdviceTypesVocabulary(object):
                                         context=context.REQUEST))
                    )
         return SimpleVocabulary(res)
+
+    # do ram.cache have a different key name
+    __call__ = AdviceTypesVocabulary__call__
 
 
 AdviceTypesVocabularyFactory = AdviceTypesVocabulary()
@@ -1587,11 +1626,14 @@ class PMCategoryVocabulary(CategoryVocabulary):
         return annex_group.getId(), isManager, use_category_uid_as_token, cfg_modified, only_enabled
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context, use_category_uid_as_token=False, only_enabled=True):
+    def PMCategoryVocabulary__call__(self, context, use_category_uid_as_token=False, only_enabled=True):
         return super(PMCategoryVocabulary, self).__call__(
             context,
             use_category_uid_as_token=use_category_uid_as_token,
             only_enabled=only_enabled)
+
+    # do ram.cache have a different key name
+    __call__ = PMCategoryVocabulary__call__
 
     def _get_categories(self, context, only_enabled=True):
         """ """
@@ -1649,10 +1691,13 @@ class PMCategoryTitleVocabulary(CategoryTitleVocabulary, PMCategoryVocabulary):
         return annex_group.getId(), isManager, cfg_modified, only_enabled
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context, only_enabled=True):
+    def PMCategoryTitleVocabulary__call__(self, context, only_enabled=True):
         return super(PMCategoryTitleVocabulary, self).__call__(
             context,
             only_enabled=only_enabled)
+
+    # do ram.cache have a different key name
+    __call__ = PMCategoryTitleVocabulary__call__
 
 
 class PMEveryCategoryVocabulary(EveryCategoryVocabulary):
@@ -1669,11 +1714,15 @@ class PMEveryCategoryVocabulary(EveryCategoryVocabulary):
         return annex_group.getId(), use_category_uid_as_token, cfg_modified, only_enabled
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context, use_category_uid_as_token=False, only_enabled=False):
+    def PMEveryCategoryVocabulary__call__(
+            self, context, use_category_uid_as_token=False, only_enabled=False):
         return super(PMEveryCategoryVocabulary, self).__call__(
             context,
             use_category_uid_as_token=use_category_uid_as_token,
             only_enabled=only_enabled)
+
+    # do ram.cache have a different key name
+    __call__ = PMEveryCategoryVocabulary__call__
 
 
 class PMEveryCategoryTitleVocabulary(EveryCategoryTitleVocabulary):
@@ -1690,10 +1739,13 @@ class PMEveryCategoryTitleVocabulary(EveryCategoryTitleVocabulary):
         return annex_group.getId(), use_category_uid_as_token, cfg_modified, only_enabled
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context, only_enabled=False):
+    def PMEveryCategoryTitleVocabulary__call__(self, context, only_enabled=False):
         return super(PMEveryCategoryTitleVocabulary, self).__call__(
             context,
             only_enabled=only_enabled)
+
+    # do ram.cache have a different key name
+    __call__ = PMEveryCategoryTitleVocabulary__call__
 
 
 class HeldPositionUsagesVocabulary(object):
@@ -2082,7 +2134,7 @@ class ItemVotersVocabulary(BaseHeldPositionsVocabulary):
         return date, repr(context), self._is_editing_config(context)
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context):
+    def ItemVotersVocabulary__call__(self, context):
         context = get_context_with_request(context)
         item_voter_uids = context.get_item_voters()
         terms = super(ItemVotersVocabulary, self).__call__(
@@ -2100,6 +2152,9 @@ class ItemVotersVocabulary(BaseHeldPositionsVocabulary):
             return item_voter_uids.index(term.token)
         terms = sorted(terms, key=getKey)
         return SimpleVocabulary(terms)
+
+    # do ram.cache have a different key name
+    __call__ = ItemVotersVocabulary__call__
 
 
 ItemVotersVocabularyFactory = ItemVotersVocabulary()
@@ -2160,7 +2215,7 @@ class AssociatedGroupsVocabulary(object):
         return is_using_cfg_order, orgs
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context, sort=True):
+    def AssociatedGroupsVocabulary__call__(self, context, sort=True):
         """ """
         is_using_cfg_order, orgs = self._get_organizations(context)
         terms = []
@@ -2171,6 +2226,9 @@ class AssociatedGroupsVocabulary(object):
         if sort or not is_using_cfg_order:
             terms = humansorted(terms, key=attrgetter('title'))
         return SimpleVocabulary(terms)
+
+    # do ram.cache have a different key name
+    __call__ = AssociatedGroupsVocabulary__call__
 
 
 AssociatedGroupsVocabularyFactory = AssociatedGroupsVocabulary()
@@ -2222,7 +2280,7 @@ class CopyGroupsVocabulary(object):
         return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context):
+    def CopyGroupsVocabulary__call__(self, context):
         '''Lists the groups that will be selectable to be in copy for this
            item.  If p_include_auto is True, we add terms regarding self.autoCopyGroups.'''
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -2235,6 +2293,9 @@ class CopyGroupsVocabulary(object):
 
         terms = humansorted(terms, key=attrgetter('title'))
         return SimpleVocabulary(terms)
+
+    # do ram.cache have a different key name
+    __call__ = CopyGroupsVocabulary__call__
 
 
 CopyGroupsVocabularyFactory = CopyGroupsVocabulary()
@@ -2345,16 +2406,17 @@ class SelectableCommitteesVocabulary(object):
             check_using_groups, include_empty_string
 
     @ram.cache(__call___cachekey)
-    def __call__(self,
-                 context,
-                 term_title_attr="label",
-                 include_suppl=True,
-                 check_is_manager_for_suppl=False,
-                 include_all_disabled=True,
-                 cfg_committees=None,
-                 add_no_committee_value=True,
-                 check_using_groups=False,
-                 include_empty_string=True):
+    def SelectableCommitteesVocabulary__call__(
+            self,
+            context,
+            term_title_attr="label",
+            include_suppl=True,
+            check_is_manager_for_suppl=False,
+            include_all_disabled=True,
+            cfg_committees=None,
+            add_no_committee_value=True,
+            check_using_groups=False,
+            include_empty_string=True):
         """ """
         terms = []
         if include_empty_string:
@@ -2448,6 +2510,9 @@ class SelectableCommitteesVocabulary(object):
                     if include_suppl:
                         terms += _add_suppl(committee, enabled=False)
         return SimpleVocabulary(terms)
+
+    # do ram.cache have a different key name
+    __call__ = SelectableCommitteesVocabulary__call__
 
 
 SelectableCommitteesVocabularyFactory = SelectableCommitteesVocabulary()
@@ -2591,7 +2656,7 @@ class PMUsers(UsersFactory):
         return date, query
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context, query=''):
+    def PMUsers__call__(self, context, query=''):
         tool = api.portal.get_tool('portal_plonemeeting')
         acl_users = api.portal.get_tool('acl_users')
         users = acl_users.searchUsers(sort_by='')
@@ -2612,6 +2677,9 @@ class PMUsers(UsersFactory):
                 terms.append(term)
         terms = humansorted(terms, key=attrgetter('title'))
         return SimpleVocabulary(terms)
+
+    # do ram.cache have a different key name
+    __call__ = PMUsers__call__
 
 
 PMUsersFactory = PMUsers()

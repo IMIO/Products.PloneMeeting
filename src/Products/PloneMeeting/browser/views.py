@@ -237,7 +237,7 @@ class ItemIsSignedView(BrowserView):
             self.context.adapted().maySignItem(), self.context.showItemIsSigned()
 
     @ram.cache(__call__parent_cachekey)
-    def __call__parent(self):
+    def ItemIsSignedView__call__parent(self):
         """ """
         self.portal_url = api.portal.get().absolute_url()
         return super(ItemIsSignedView, self).__call__()
@@ -255,6 +255,9 @@ class ItemIsSignedView(BrowserView):
         html_content = html_content.replace("[baseUrl]", self.context.absolute_url())
         return html_content
 
+    # do ram.cache have a different key name
+    __call__parent = ItemIsSignedView__call__parent
+
 
 class ItemToDiscussView(BrowserView):
     """
@@ -269,7 +272,7 @@ class ItemToDiscussView(BrowserView):
         return self.context.getToDiscuss(), self.mayEdit()
 
     @ram.cache(__call__parent_cachekey)
-    def __call__parent(self):
+    def ItemToDiscussView__call__parent(self):
         """ """
         self.portal_url = api.portal.get().absolute_url()
         self.tool = api.portal.get_tool('portal_plonemeeting')
@@ -305,6 +308,9 @@ class ItemToDiscussView(BrowserView):
     def useToggleDiscuss(self):
         """ """
         return self.context.restrictedTraverse('@@toggle_to_discuss').isAsynchToggleEnabled()
+
+    # do ram.cache have a different key name
+    __call__parent = ItemToDiscussView__call__parent
 
 
 class PloneMeetingRedirectToAppView(BrowserView):
