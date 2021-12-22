@@ -645,6 +645,10 @@ class MeetingPrettyLinkAdapter(PrettyLinkAdapter):
         res = list(res)
         del res[1]
         res.append(meeting_date)
+        # check also on 2 usecases adding an icon,
+        # extraordinary_session/videoconference
+        res.append(self.context.extraordinary_session)
+        res.append(self.context.videoconference)
         return tuple(res)
 
     @ram.cache(getLink_cachekey)

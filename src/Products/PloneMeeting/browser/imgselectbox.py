@@ -76,7 +76,7 @@ class GoToMeetingImgSelectBoxView(BaseImgSelectBoxView):
         link = self.selected_value().get_pretty_link(
             isViewable=False,
             notViewableHelpMessage=u'',
-            link_pattern=u"<span class='pretty_link'{0}>{1}<span class='pretty_link_content{2}'>{3}</span></span>")
+            link_pattern=u"<div class='pretty_link'{0}>{1}<span class='pretty_link_content{2}'>{3}</span></div>")
         return u"""
 <span id="idButtonText_{0}" class="ploneMeetingRef">{1}</span>
 """.format(self.select_box_name, link)

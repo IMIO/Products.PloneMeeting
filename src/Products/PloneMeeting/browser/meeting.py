@@ -199,7 +199,7 @@ class BaseMeetingView(object):
     def view_widget(self, widget, empty_value="-"):
         """Render an empty_value instead nothing when field empty."""
         value = getattr(self.context, widget.__name__, None)
-        if not value and not self._is_rich(widget):
+        if value is None and not self._is_rich(widget):
             rendered = "-"
         else:
             rendered = widget.render()
