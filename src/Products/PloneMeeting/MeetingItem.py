@@ -3197,7 +3197,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(item)
-            if not cfg.getRestrictAccessToSecretItems():
+            if not cfg.getRestrictAccessToSecretItems() or tool.isManager(cfg):
                 return True
         date = get_cachekey_volatile(
             'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
