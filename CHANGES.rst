@@ -49,10 +49,34 @@ Changelog
   `unbreakable_contact_value` to avoid line break in the middle of a person and `end_type_character`
   to end a attendee type with a specific character.
   [aduchene]
-
 - Added a new boolean field "videoconference" on Meeting schema. When it is set, attendees change
   label to "Connected" and a distinctive icon is shown with imio.prettylink.
   [aduchene]
+- Optimized `ram.cache` configuration:
+  - Monkeypatched `zope.ramcache.Storage.getEntry` to update timestamp while
+    getting an existing entry;
+  - Adapted ToolPloneMeeting.get_orgs_for_user to no more return objects as
+    it uses `ram.cache`, parameter `the_objects=False` by default now;
+  - Adapted `global_cache` settings, set `maxEntries=100000`, `maxAge=2400`,
+    `cleanupInterval=600` so cache is kept for a long time.
+  - Do not more `ram.cache` `Meeting.query_state` and `MeetingItem.query_state`,
+    performance test shows it is not necessary.
+  - Use unrestricted catalog query when possible and avoid use of `path` index;
+  - Stored meeting number of items in `Meeting._number_of_items` instead
+    computing it every times the meeting is displayed;
+  - Added ram.cached method `MeetingConfig.getItemAdviceStatesForOrg`, it avoids
+    getting the organization, use it everywhere possible.
+  - Added `ram.cache` for faceted counters (`PMRenderTermView.number_of_items`);
+  - Added `Meeting._may_update_item_references` that holds the logic of updating
+    item reference, this avoids to loop on items if reference does not need to be updated.
+  - In `MeetingItem.update_local_roles`, only `reindexObjectSecurity` if not
+    `triggered_by_transition` as the `WorkflowTool` will also `reindexObjectSecurity`.
+  - Adapted item navigation widget to not compute available item number on
+    display but only when asking first/previous/next/last item.
+  - Make cache more shared on dashboards (prettylink, annexes, advices, actions panel).
+  [gbastien]
+- Now that the meeting number of items is stored, display it in the dashboards.
+  [gbastien]
 
 4.2b21 (2021-11-26)
 -------------------
@@ -76,31 +100,6 @@ Changelog
   `MeetingItemWorkflowConditions._userIsPGMemberAbleToSendItemBackExtraCondition`
   so it is easy to override (like it is already the case for the
   `Adviser may send item waiting advices back to proposing group` logic).
-  [gbastien]
-- Optimized `ram.cache` configuration:
-  - Monkeypatched `zope.ramcache.Storage.getEntry` to update timestamp while
-    getting an existing entry;
-  - Adapted ToolPloneMeeting.get_orgs_for_user to no more return objects as
-    it uses `ram.cache`, parameter `the_objects=False` by default now;
-  - Adapted `global_cache` settings, set `maxEntries=100000`, `maxAge=86400`,
-    `cleanupInterval=3600` so cache is kept for a long time.
-  - Do not more `ram.cache` `Meeting.query_state` and `MeetingItem.query_state`,
-    performance test shows it is not necessary.
-  - Use unrestricted catalog query when possible and avoid use of `path` index;
-  - Stored meeting number of items in `Meeting._number_of_items` instead
-    computing it every times the meeting is displayed;
-  - Added ram.cached method `MeetingConfig.getItemAdviceStatesForOrg`, it avoids
-    getting the organization, use it everywhere possible.
-  - Added `ram.cache` for faceted counters (`PMRenderTermView.number_of_items`);
-  - Added `Meeting._may_update_item_references` that holds the logic of updating
-    item reference, this avoids to loop on items if reference does not need to be updated.
-  - In `MeetingItem.update_local_roles`, only `reindexObjectSecurity` if not
-    `triggered_by_transition` as the `WorkflowTool` will also `reindexObjectSecurity`.
-  - Adapted item navigation widget to not compute available item number on
-    display but only when asking first/previous/next/last item.
-  [gbastien]
-
-- Now that the meeting number of items is stored, display it in the dashboards.
   [gbastien]
 
 4.2b20 (2021-11-15)
