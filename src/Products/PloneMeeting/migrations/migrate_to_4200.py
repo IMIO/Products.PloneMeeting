@@ -438,7 +438,7 @@ class Migrate_To_4200(Migrator):
            a correct mimeType and outputMimeType."""
         brains = self.catalog(object_provides=IMeetingAdvice.__identifier__)
         logger.info('Fixing mimeType/outputMimeType for every advices...')
-        pghandler = ZLogHandler(steps=100)
+        pghandler = ZLogHandler(steps=1000)
         pghandler.init('Updating RichText fields for advices...', len(brains))
         i = 0
         for brain in brains:
@@ -519,7 +519,7 @@ class Migrate_To_4200(Migrator):
     def _migrateItemPredecessorReference(self):
         '''MeetingItem.predecessor ReferenceField is managed manually now.'''
         logger.info("Migrating MeetingItem.predecessor ReferenceField...")
-        pghandler = ZLogHandler(steps=100)
+        pghandler = ZLogHandler(steps=1000)
         brains = self.portal.reference_catalog(relationship='ItemPredecessor')
         pghandler.init('Migrating MeetingItem.predecessor reference field...', len(brains))
         pghandler.info('Migrating MeetingItem.predecessor reference field...')
@@ -581,7 +581,7 @@ class Migrate_To_4200(Migrator):
                 i = 0
                 brains = self.catalog(portal_type=cfg.getItemTypeName(configType='all'))
                 msg = 'Updating items for MeetingConfig "{0}"...'.format(cfg.Title())
-                pghandler = ZLogHandler(steps=100)
+                pghandler = ZLogHandler(steps=1000)
                 pghandler.init(msg, len(brains))
                 pghandler.info(msg)
                 for brain in brains:
@@ -704,11 +704,34 @@ class Migrate_To_4200(Migrator):
                 cfg.setItemInternalNotesEditableBy(values)
         logger.info('Done.')
 
+    def _removeBrokenAnnexes(self):
+        """Remove annexes that do not have a content_category,
+           that could happen with quickupload."""
+        logger.info("Remove broken annexes, annexes uploaded withtout a content_category...")
+        brains = self.catalog(portal_type=['annex', 'annexDecision'])
+        i = 0
+        idxs = ['modified', 'ModificationDate', 'Date']
+        for brain in brains:
+            if not brain.content_category_uid:
+                annex = brain.getObject()
+                logger.info('In _removeBrokenAnnexes, removed %s' % brain.getPath())
+                # make sure parent is not modified
+                parent = annex.aq_parent
+                parent_modified = parent.modified()
+                parent.manage_delObjects(ids=[annex.getId()])
+                parent.setModificationDate(parent_modified)
+                parent.reindexObject(idxs=idxs)
+                i += 1
+        if i:
+            self.warn(logger, 'In _removeBrokenAnnexes, removed %s annexe(s)' % i)
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
 
         self._fixPODTemplatesInstructions()
         self._fixFacetedFilters()
+        self._removeBrokenAnnexes()
 
         # apply correct batch actions marker on searches_* folders
         self._updateSearchedFolderBatchActionsMarkerInterface()
