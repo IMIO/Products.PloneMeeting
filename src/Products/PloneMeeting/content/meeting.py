@@ -2039,8 +2039,8 @@ class Meeting(Container):
     def attribute_is_used(self, name):
         '''Is the attribute named p_name used in this meeting config ?'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        meetingConfig = tool.getMeetingConfig(self)
-        return (name in meetingConfig.getUsedMeetingAttributes())
+        cfg = tool.getMeetingConfig(self)
+        return (name in cfg.getUsedMeetingAttributes())
 
     def query_state_cachekey(method, self):
         '''cachekey method for self.query_state.'''

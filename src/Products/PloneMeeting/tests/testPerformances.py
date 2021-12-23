@@ -14,6 +14,7 @@ from datetime import timedelta
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from plone import api
 from PloneMeetingTestCase import pm_logger
+from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import down_or_up_wf
@@ -870,6 +871,29 @@ class testPerformances(PloneMeetingTestCase):
         pm_logger.info('Call {0} times'.format(times))
         for time in range(times):
             down_or_up_wf(item)
+
+    def test_pm_CheckAndHasPermission(self):
+        '''Test _checkPermission and user.has_permission.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        # call _checkPermission 1000 times
+        self._check_permission(item, times=1000)
+        # call user.has_permission 1000 times
+        self._user_has_permission(item, times=1000)
+
+    @timecall
+    def _check_permission(self, item, times=1):
+        ''' '''
+        pm_logger.info('Call _check_permission {0} times'.format(times))
+        for time in range(times):
+            _checkPermission("ModifyPortalContent", item)
+
+    @timecall
+    def _user_has_permission(self, item, times=1):
+        ''' '''
+        pm_logger.info('Call user.has_permission {0} times'.format(times))
+        for time in range(times):
+            self.member.has_permission("ModifyPortalContent", item)
 
 
 def test_suite():

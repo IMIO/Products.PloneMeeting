@@ -363,8 +363,7 @@ class ItemCheckBoxColumn(CheckBoxColumn):
     def show_insert_or_remove_selected_items_action(self):
         '''Return True/False if the 'Remove selected items' or 'Present selected items'
            action must be displayed on the meeting view displaying presented items.'''
-        member = api.user.get_current()
-        return bool(member.has_permission(ModifyPortalContent, self.context) and
+        return bool(_checkPermission(ModifyPortalContent, self.context) and
                     not self.context.query_state() in self.context.MEETINGCLOSEDSTATES)
 
     def renderHeadCell(self):

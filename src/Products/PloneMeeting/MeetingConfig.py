@@ -4918,11 +4918,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  context=self.REQUEST)
 
         # check that if we selected 'on_to_discuss', we actually use the field 'toDisucss'...
+        usedItemAttrs = self.getUsedItemAttributes()
         if 'on_to_discuss' in res:
             if hasattr(self.REQUEST, 'usedItemAttributes'):
                 notUsingToDiscuss = 'toDiscuss' not in self.REQUEST.get('usedItemAttributes')
             else:
-                notUsingToDiscuss = 'toDiscuss' not in self.getUsedItemAttributes()
+                notUsingToDiscuss = 'toDiscuss' not in usedItemAttrs
             if notUsingToDiscuss:
                 return translate('inserting_methods_not_using_to_discuss_error',
                                  domain='PloneMeeting',
@@ -4933,7 +4934,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if hasattr(self.REQUEST, 'usedItemAttributes'):
                 notUsingPollType = 'pollType' not in self.REQUEST.get('usedItemAttributes')
             else:
-                notUsingPollType = 'pollType' not in self.getUsedItemAttributes()
+                notUsingPollType = 'pollType' not in usedItemAttrs
             if notUsingPollType:
                 return translate('inserting_methods_not_using_poll_type_error',
                                  domain='PloneMeeting',
@@ -4943,7 +4944,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if hasattr(self.REQUEST, 'usedItemAttributes'):
                 notUsingPrivacy = 'privacy' not in self.REQUEST.get('usedItemAttributes')
             else:
-                notUsingPrivacy = 'privacy' not in self.getUsedItemAttributes()
+                notUsingPrivacy = 'privacy' not in usedItemAttrs
             if notUsingPrivacy:
                 return translate('inserting_methods_not_using_privacy_error',
                                  domain='PloneMeeting',

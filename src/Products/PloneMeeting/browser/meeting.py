@@ -13,6 +13,7 @@ from plone.dexterity.browser.add import DefaultAddView
 from plone.dexterity.browser.edit import DefaultEditForm
 from plone.dexterity.browser.view import DefaultView
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
@@ -481,7 +482,7 @@ class MeetingFacetedView(BaseMeetingFacetedView):
     def show_available_items(self):
         """Show the available items part?"""
         return (
-            self.member.has_permission(ModifyPortalContent, self.context) or
+            _checkPermission(ModifyPortalContent, self.context) or
             self._display_available_items_to()) and \
             self.context.wfConditions().may_accept_items()
 

@@ -666,9 +666,8 @@ def sendMailIfRelevant(obj,
             # then "isPermission"
             # Does the user have the corresponding permission on p_obj ?
             # we do this here for performance reason as we have the "user" object
-            if not api.user.has_permission(permission=value,
-                                           obj=obj,
-                                           user=user):
+            if not api.user.has_permission(
+                    permission=value, obj=obj, user=user):
                 continue
         elif isRole:
             if not user.has_role(value, obj):
@@ -1086,7 +1085,6 @@ def transformAllRichTextFields(obj, onlyField=None):
        transformRichTextField that may be overridden by an adapter. This
        method calls it for every rich text field defined on this obj (item or meeting), if
        the user has the permission to update the field.'''
-    member = api.user.get_current()
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(obj)
     fieldsToTransform = cfg.getXhtmlTransformFields()
@@ -1103,7 +1101,7 @@ def transformAllRichTextFields(obj, onlyField=None):
                       for field_name, field in getFieldsInOrder(schema)
                       if field.__class__.__name__ == "RichText" and
                       (write_permissions.get(field.__name__) and
-                       member.has_permission(write_permissions[field_name], obj) or True)}
+                       _checkPermission(write_permissions[field_name], obj) or True)}
     else:
         if onlyField:
             field = obj.schema[onlyField]
@@ -1111,7 +1109,7 @@ def transformAllRichTextFields(obj, onlyField=None):
         else:
             fields = {field.getName(): field.getRaw(obj).strip() for field in obj.schema.fields()
                       if field.widget.getName() == 'RichWidget' and
-                      member.has_permission(field.write_permission, obj)}
+                      _checkPermission(field.write_permission, obj)}
 
     for field_name, field_raw_value in fields.items():
         if not field_raw_value:
@@ -1755,11 +1753,10 @@ def checkMayQuickEdit(obj,
     """ """
     from Products.PloneMeeting.content.meeting import Meeting
     tool = api.portal.get_tool('portal_plonemeeting')
-    member = api.user.get_current()
     res = False
     meeting = obj.getTagName() == "Meeting" and obj or (obj.hasMeeting() and obj.getMeeting())
     if (not onlyForManagers or (onlyForManagers and tool.isManager(tool.getMeetingConfig(obj)))) and \
-       (bypassWritePermissionCheck or member.has_permission(permission, obj)) and \
+       (bypassWritePermissionCheck or _checkPermission(permission, obj)) and \
        (_evaluateExpression(obj, expression)) and \
        (not (not bypassMeetingClosedCheck and
         meeting and

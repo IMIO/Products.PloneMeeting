@@ -945,7 +945,7 @@ class ConfigActionsPanelView(ActionsPanelView):
           some users have 'Modify portal content' but no field to edit...
           In the case there is no field to edit, do not display the edit action.
         """
-        return self.member.has_permission(ModifyPortalContent, self.context) and \
+        return _checkPermission(ModifyPortalContent, self.context) and \
             (not self.context.portal_type == 'MeetingConfig' or
              self.context.Schema().editableFields(self.context.Schema()))
 

@@ -1446,7 +1446,7 @@ schema = Schema((
         name='observations',
         widget=RichWidget(
             label_msgid="PloneMeeting_itemObservations",
-            condition="python: here.attribute_is_used('observations') and here.adapted().showObservations()",
+            condition="python: here.adapted().showObservations()",
             description_msgid="descr_field_vieawable_by_everyone",
             label='Observations',
             i18n_domain='PloneMeeting',
@@ -1629,8 +1629,7 @@ schema = Schema((
         name='votesObservations',
         widget=RichWidget(
             label_msgid="PloneMeeting_label_votesObservations",
-            condition="python: here.attribute_is_used('votesObservations') and "
-                      "here.adapted().show_votesObservations()",
+            condition="python: here.adapted().show_votesObservations()",
             description_msgid="field_vieawable_by_everyone_once_item_decided_descr",
             label='Votesobservations',
             i18n_domain='PloneMeeting',
@@ -1649,7 +1648,8 @@ schema = Schema((
         widget=ReferenceBrowserWidget(
             description="ManuallyLinkedItems",
             description_msgid="manually_linked_items_descr",
-            condition="python: here.attribute_is_used('manuallyLinkedItems') and not here.isDefinedInTool()",
+            condition="python: here.attribute_is_used('manuallyLinkedItems') and "
+            "not here.isDefinedInTool()",
             allow_search=True,
             allow_browse=False,
             base_query="manuallyLinkedItemsBaseQuery",
@@ -1799,7 +1799,7 @@ schema = Schema((
         name='isAcceptableOutOfMeeting',
         default=False,
         widget=BooleanField._properties['widget'](
-            condition="here/showIsAcceptableOutOfMeeting",
+            condition="python: here.showIsAcceptableOutOfMeeting()",
             description="IsAcceptableOutOfMeeting",
             description_msgid="is_acceptable_out_of_meeting_descr",
             label='Isacceptableoutofmeeting',
@@ -2247,7 +2247,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def showObservations(self):
         '''See doc in interfaces.py.'''
-        return True
+        return self.attribute_is_used('observations')
 
     security.declarePublic('show_groups_in_charge')
 
@@ -2256,23 +2256,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            When using MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup
            or MeetingConfig.includeGroupsInChargeDefinedOnCategory
            then it is editable by MeetingManagers.'''
+        # using field, viewable/editable
+        if self.attribute_is_used("groupsInCharge"):
+            return True
+
         res = False
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         _is_editing = is_editing(cfg)
-        res = False
         raw_groups_in_charge = self.getRawGroupsInCharge()
-        usedAttrs = cfg.getUsedItemAttributes()
-        # using field, viewable/editable
-        if "groupsInCharge" in usedAttrs:
-            res = True
         # viewable if not empty
-        elif not _is_editing and raw_groups_in_charge:
+        if not _is_editing and raw_groups_in_charge:
             res = True
         # editable when not empty and user is MeetingManager
         # this may result from various functionnality like "MeetingConfig.include..."
         # except when using "proposingGroupWithGroupInCharge"
-        elif "proposingGroupWithGroupInCharge" not in usedAttrs and \
+        elif self.attribute_is_used("proposingGroupWithGroupInCharge") and \
                 _is_editing and \
                 raw_groups_in_charge and \
                 tool.isManager(cfg):
@@ -2285,16 +2284,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''When field 'committees' is used, show it to editors if
            not using "auto_from" or if user is a MeetingManager.'''
         res = False
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
         raw_committees = getattr(self, 'committees', ())
-        if "committees" in cfg.getUsedMeetingAttributes() or raw_committees:
+        if self.attribute_is_used("committees") or raw_committees:
             res = True
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
             if is_editing(cfg):
                 # when using "auto_from" in MeetingConfig.committees
                 # field is only shown to MeetingManagers
-                tool = api.portal.get_tool('portal_plonemeeting')
-                cfg = tool.getMeetingConfig(self)
                 if cfg.is_committees_using("auto_from") and not tool.isManager(cfg):
                     res = False
         return res
@@ -2304,11 +2301,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def show_votesObservations(self):
         '''See doc in interfaces.py.'''
         item = self.getSelf()
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(item)
-        res = tool.isManager(cfg)
-        if not res:
-            res = tool.isPowerObserverForCfg(cfg) or item.is_decided(cfg)
+        res = False
+        if item.attribute_is_used("votesObservations") or \
+           item.getRawVotesObservations():
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(item)
+            res = tool.isManager(cfg)
+            if not res:
+                res = tool.isPowerObserverForCfg(cfg) or item.is_decided(cfg)
         return res
 
     security.declarePublic('showIsAcceptableOutOfMeeting')
@@ -2331,13 +2331,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
           - or if WFAdaptation 'accepted_out_of_meeting_emergency' or
             'accepted_out_of_meeting_emergency_and_duplicated' is enabled;
           - and hide it if isDefinedInTool.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        wfAdaptations = cfg.getWorkflowAdaptations()
-        return (self.attribute_is_used('emergency') or
-                ('accepted_out_of_meeting' in wfAdaptations or
-                'accepted_out_of_meeting_and_duplicated' in wfAdaptations)) and \
-            not self.isDefinedInTool()
+        res = False
+        if self.attribute_is_used('emergency'):
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            wfAdaptations = cfg.getWorkflowAdaptations()
+            res = ('accepted_out_of_meeting' in wfAdaptations or
+                   'accepted_out_of_meeting_and_duplicated' in wfAdaptations) and \
+                not self.isDefinedInTool()
+        return res
 
     security.declarePublic('showMeetingManagerReservedField')
 
@@ -2351,9 +2353,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def showOralQuestion(self):
         '''On edit, show if field enabled and if current user isManager.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        res = self.attribute_is_used('oralQuestion') and tool.isManager(cfg)
+        res = False
+        if self.attribute_is_used('oralQuestion'):
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            res = tool.isManager(cfg)
         return res
 
     security.declarePublic('showToDiscuss')
@@ -2364,13 +2368,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                - MeetingConfig.toDiscussSetOnItemInsert is False or;
                - MeetingConfig.toDiscussSetOnItemInsert is True and item is linked
                  to a meeting.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        res = self.attribute_is_used('toDiscuss') and \
-            (not cfg.getToDiscussSetOnItemInsert() or
-             (not self.isDefinedInTool() and
-              cfg.getToDiscussSetOnItemInsert() and
-              self.hasMeeting()))
+        res = False
+        if self.attribute_is_used('toDiscuss'):
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            res = (not cfg.getToDiscussSetOnItemInsert() or
+                   (not self.isDefinedInTool() and
+                    cfg.getToDiscussSetOnItemInsert() and
+                    self.hasMeeting()))
         return res
 
     security.declarePublic('showItemIsSigned')
@@ -2513,8 +2518,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if item.isDefinedInTool():
             return False
 
-        member = api.user.get_current()
-        if member.has_permission(ModifyPortalContent, item):
+        if _checkPermission(ModifyPortalContent, item):
             return True
 
     security.declarePublic('mayAcceptOrRefuseEmergency')
@@ -2525,8 +2529,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
-        member = api.user.get_current()
-        if tool.isManager(cfg) and member.has_permission(ModifyPortalContent, item):
+        if tool.isManager(cfg) and _checkPermission(ModifyPortalContent, item):
             return True
         return False
 
@@ -2542,9 +2545,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = False
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
-        member = api.user.get_current()
         # user must be an item completeness editor (one of corresponding role)
-        if member.has_permission(ModifyPortalContent, item) and \
+        if _checkPermission(ModifyPortalContent, item) and \
            (tool.userIsAmong(ITEM_COMPLETENESS_EVALUATORS) or tool.isManager(cfg)):
             res = True
         return res
@@ -2561,10 +2563,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = False
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
-        member = api.user.get_current()
         # user must be an item completeness editor (one of corresponding role)
         if item.getCompleteness() == 'completeness_incomplete' and \
-           member.has_permission(ModifyPortalContent, item) and \
+           _checkPermission(ModifyPortalContent, item) and \
            (tool.userIsAmong(ITEM_COMPLETENESS_ASKERS) or tool.isManager(cfg)):
             res = True
         return res
@@ -2582,10 +2583,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
-        member = api.user.get_current()
         # user must be able to edit the item and must be a Manager
         if item.adviceIsInherited(org_uid) or \
-           not member.has_permission(ModifyPortalContent, item) or \
+           not _checkPermission(ModifyPortalContent, item) or \
            not tool.isManager(cfg):
             return False
         return True
@@ -2664,8 +2664,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            not tool.isManager(cfg):
             return False
 
-        member = api.user.get_current()
-        if member.has_permission(ModifyPortalContent, item):
+        if _checkPermission(ModifyPortalContent, item):
             return True
         return False
 
@@ -3809,12 +3808,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            - no commitees selected on item of a parameter on item changed;
            - the item is not inserted into a meeting
              (this avoid changing old if configuration changed)."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
         indexes = []
-        if "committees" in cfg.getUsedMeetingAttributes() and \
+        if self.attribute_is_used("committees") and \
            (not self.getCommittees() or self.REQUEST.get('need_MeetingItem_update_committees')) and \
            not self.hasMeeting():
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
             if cfg.is_committees_using("auto_from"):
                 committees = []
                 for committee in cfg.getCommittees(only_enabled=True):
@@ -7034,7 +7033,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             newItem.setPreferredMeeting(meeting.UID())
         # handle 'otherMeetingConfigsClonableToPrivacy' of original item
         if destMeetingConfigId in self.getOtherMeetingConfigsClonableToPrivacy() and \
-           'privacy' in destMeetingConfig.getUsedItemAttributes():
+           'privacy' in destUsedItemAttributes:
             newItem.setPrivacy('secret')
 
         # handle 'otherMeetingConfigsClonableToFieldXXX' of original item
@@ -7527,11 +7526,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
           'assembly, excused, absents', we will translate the 'assembly' label
           a different way.
         '''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        usedMeetingAttributes = cfg.getUsedMeetingAttributes()
-        if 'assembly_excused' in usedMeetingAttributes or \
-           'assembly_absents' in usedMeetingAttributes:
+        if self.attribute_is_used('assembly_excused') or \
+           self.attribute_is_used('assembly_absents'):
             return _('attendees_for_item')
         else:
             return _('PloneMeeting_label_itemAssembly')

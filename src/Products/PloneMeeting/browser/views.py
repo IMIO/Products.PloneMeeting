@@ -294,9 +294,8 @@ class ItemToDiscussView(BrowserView):
 
     def mayEdit(self):
         """ """
-        member = api.user.get_current()
         toDiscuss_write_perm = self.context.getField('toDiscuss').write_permission
-        return member.has_permission(toDiscuss_write_perm, self.context) and \
+        return _checkPermission(toDiscuss_write_perm, self.context) and \
             self.context.showToDiscuss()
 
     @memoize_contextless
@@ -2145,14 +2144,15 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
     button_with_icon = True
 
     def __init__(self, context, request):
-        super(MeetingStoreItemsPodTemplateAsAnnexBatchActionForm, self).__init__(context, request)
+        super(MeetingStoreItemsPodTemplateAsAnnexBatchActionForm, self).__init__(
+            context, request)
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(context)
 
     def available(self):
         """ """
         if self.cfg.getMeetingItemTemplatesToStoreAsAnnex() and \
-           api.user.get_current().has_permission(ModifyPortalContent, self.context):
+           _checkPermission(ModifyPortalContent, self.context):
             return True
 
     def _update(self):
