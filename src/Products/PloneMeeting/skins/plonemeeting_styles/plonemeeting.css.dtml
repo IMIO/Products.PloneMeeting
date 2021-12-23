@@ -1457,7 +1457,7 @@ p.item-before-budget-related {
 div.advice_popup_label {
     display: inline-block;
     vertical-align: middle;
-    max-width: 500px;
+    max-width: 520px;
 }
 div.advice_popup_label span.advice-label {
     font-weight: normal;
