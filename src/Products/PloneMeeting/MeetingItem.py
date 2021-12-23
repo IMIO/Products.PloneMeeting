@@ -795,7 +795,7 @@ class MeetingItemWorkflowActions(object):
 
     def doAccept_out_of_meeting_emergency(self, stateChange):
         """Duplicate item to validated if WFAdaptation
-           'accepted_out_of_meeting_and_duplicated' is used."""
+           'accepted_out_of_meeting_emergency_and_duplicated' is used."""
         if 'accepted_out_of_meeting_emergency_and_duplicated' in self.cfg.getWorkflowAdaptations():
             self._duplicateAndValidate(cloneEventAction='create_from_accepted_out_of_meeting_emergency')
         self.context.update_item_reference()
@@ -2271,7 +2271,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # editable when not empty and user is MeetingManager
         # this may result from various functionnality like "MeetingConfig.include..."
         # except when using "proposingGroupWithGroupInCharge"
-        elif self.attribute_is_used("proposingGroupWithGroupInCharge") and \
+        elif not self.attribute_is_used("proposingGroupWithGroupInCharge") and \
                 _is_editing and \
                 raw_groups_in_charge and \
                 tool.isManager(cfg):
@@ -2284,11 +2284,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''When field 'committees' is used, show it to editors if
            not using "auto_from" or if user is a MeetingManager.'''
         res = False
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         raw_committees = getattr(self, 'committees', ())
-        if self.attribute_is_used("committees") or raw_committees:
+        # take care that committees is activated in MeetingConfig.usedMeetingAttributes
+        if "committees" in cfg.getUsedMeetingAttributes() or raw_committees:
             res = True
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self)
             if is_editing(cfg):
                 # when using "auto_from" in MeetingConfig.committees
                 # field is only shown to MeetingManagers
@@ -2333,11 +2334,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
           - and hide it if isDefinedInTool.'''
         res = False
         if self.attribute_is_used('emergency'):
+            res = True
+        else:
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
             wfAdaptations = cfg.getWorkflowAdaptations()
-            res = ('accepted_out_of_meeting' in wfAdaptations or
-                   'accepted_out_of_meeting_and_duplicated' in wfAdaptations) and \
+            res = ('accepted_out_of_meeting_emergency' in wfAdaptations or
+                   'accepted_out_of_meeting_emergency_and_duplicated' in wfAdaptations) and \
                 not self.isDefinedInTool()
         return res
 

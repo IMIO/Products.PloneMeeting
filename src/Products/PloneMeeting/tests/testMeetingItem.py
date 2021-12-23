@@ -7347,7 +7347,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         widget = item.getField('observations').widget
         self.assertFalse(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
-        self.assertTrue(item.adapted().showObservations())
+        self.assertFalse(item.adapted().showObservations())
         cfg.setUsedItemAttributes(('observations', ))
         # MeetingItem.attribute_is_used is RAMCached
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
