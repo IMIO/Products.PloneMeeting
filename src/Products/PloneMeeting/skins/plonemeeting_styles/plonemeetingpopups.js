@@ -407,8 +407,8 @@ function advicesInfos() {
                   click: true,
                   tap: true, },
                functionReady_callback: initializeAdvicePopup,
-               minWidth: 750,
-               maxWidth: 750,
+               minWidth: 600,
+               maxWidth: 800,
                close_other_tips: true});
     tooltipster_helper(
       selector='a.tooltipster-advices-infos',
