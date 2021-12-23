@@ -3812,11 +3812,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            - the item is not inserted into a meeting
              (this avoid changing old if configuration changed)."""
         indexes = []
-        if self.attribute_is_used("committees") and \
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        # warning, "committees" is in MeetingConfig.usedMeetingAttributes
+        if "committees" in cfg.getUsedMeetingAttributes() and \
            (not self.getCommittees() or self.REQUEST.get('need_MeetingItem_update_committees')) and \
            not self.hasMeeting():
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self)
             if cfg.is_committees_using("auto_from"):
                 committees = []
                 for committee in cfg.getCommittees(only_enabled=True):

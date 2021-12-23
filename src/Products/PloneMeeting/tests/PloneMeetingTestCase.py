@@ -710,6 +710,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             self.changeUser('siteadmin')
             cfg.at_post_edit_script()
             self.changeUser(currentUser)
+        else:
+            cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
+            cleanRamCacheFor('Products.PloneMeeting.content.meeting.attribute_is_used')
 
     def _enable_annex_config(self,
                              obj,
