@@ -10,7 +10,6 @@ from Acquisition import aq_base
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_all_suffixes
-from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentviewer.async import queueJob
@@ -33,6 +32,8 @@ from imio.helpers.cache import cleanVocabularyCacheFor
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.content import get_user_fullname
+from imio.helpers.content import get_vocab
+from imio.helpers.content import uuidsToObjects
 from imio.helpers.security import fplog
 from imio.migrator.utils import end_time
 from imio.prettylink.interfaces import IPrettyLink
@@ -259,6 +260,21 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
     ),
+    LinesField(
+        name='deferParentReindex',
+        default=defValues.deferParentReindex,
+        widget=MultiSelectionWidget(
+            description="DeferParentReindex",
+            description_msgid="defer_parent_reindex_descr",
+            format="checkbox",
+            label='Deferparentreindex',
+            label_msgid='PloneMeeting_label_deferParentReindex',
+            i18n_domain='PloneMeeting',
+        ),
+        multiValued=1,
+        vocabulary='listDeferParentReindexes',
+    ),
+
 ),
 )
 
@@ -428,7 +444,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                self.checkMayView(cfg) and \
                (isManager or isPowerObserver or
                     (check_using_groups and self.get_orgs_for_user(
-                        using_groups=cfg.getUsingGroups(), the_objects=False))):
+                        using_groups=cfg.getUsingGroups()))):
                 res.append(cfg)
         return res
 
@@ -449,19 +465,17 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # but the value is stored as is obviously
         return md5.md5(str(source_groups._principal_groups.byValue(0))).hexdigest()
 
-    def get_plone_groups_for_user_cachekey(method, self, userId=None, org_uid=None, the_objects=False):
+    def get_plone_groups_for_user_cachekey(method, self, userId=None, the_objects=False):
         '''cachekey method for self.get_plone_groups_for_user.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user')
+        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
         return (date,
-                self._users_groups_value(),
                 userId or get_current_user_id(getattr(self, "REQUEST", None)),
-                org_uid,
                 the_objects)
 
     security.declarePublic('get_plone_groups_for_user')
 
     @ram.cache(get_plone_groups_for_user_cachekey)
-    def get_plone_groups_for_user(self, userId=None, org_uid=None, the_objects=False):
+    def get_plone_groups_for_user(self, userId=None, the_objects=False):
         """Just return user.getGroups but cached."""
         if api.user.is_anonymous():
             return []
@@ -471,25 +485,33 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if the_objects:
             pg = api.portal.get_tool("portal_groups")
             user_groups = pg.getGroupsByUserId(user.id)
-            if org_uid:
-                user_groups = [plone_group for plone_group in user_groups
-                               if plone_group.id.startswith(org_uid)]
         else:
             user_groups = user.getGroups()
-            if org_uid:
-                user_groups = [plone_group for plone_group in user_groups
-                               if plone_group.startswith(org_uid)]
+        return sorted(user_groups)
+
+    def get_filtered_plone_groups_for_user(self, org_uids, userId=None, the_objects=False):
+        """For caching reasons, we only use ram.cache on get_plone_groups_for_user
+           to avoid too much entries when using p_org_uids.
+           Use this when needing to filter on org_uids."""
+        user_groups = self.get_plone_groups_for_user(
+            userId=userId, the_objects=the_objects)
+        if the_objects:
+            user_groups = [plone_group for plone_group in user_groups
+                           if plone_group.id.split('_')[0] in org_uids]
+        else:
+            user_groups = [plone_group_id for plone_group_id in user_groups
+                           if plone_group_id.split('_')[0] in org_uids]
         return sorted(user_groups)
 
     def group_is_not_empty_cachekey(method, self, org_uid, suffix, user_id=None):
         '''cachekey method for self.group_is_not_empty.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.group_is_not_empty')
+        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
         return (date,
-                self._users_groups_value(),
                 org_uid,
                 suffix,
                 user_id)
 
+    # not ramcached see perf test
     # @ram.cache(group_is_not_empty_cachekey)
     def group_is_not_empty(self, org_uid, suffix, user_id=None):
         '''Is there any user in the group?
@@ -500,43 +522,37 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         group_users = portal.acl_users.source_groups._group_principal_map.get(plone_group_id, [])
         return len(group_users) and not user_id or user_id in group_users
 
-    def get_orgs_for_user_cachekey(method,
-                                   self,
-                                   user_id=None,
-                                   only_selected=True,
-                                   suffixes=[],
-                                   omitted_suffixes=[],
-                                   using_groups=[],
-                                   the_objects=True):
-        '''cachekey method for self.get_orgs_for_user.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
+    def _get_org_uids_for_user_cachekey(method,
+                                        self,
+                                        user_id=None,
+                                        only_selected=True,
+                                        suffixes=[],
+                                        omitted_suffixes=[],
+                                        using_groups=[]):
+        '''cachekey method for self._get_orgs_for_user.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
         return (date,
-                self._users_groups_value(),
                 (user_id or get_current_user_id(self.REQUEST)),
-                only_selected, suffixes, omitted_suffixes, using_groups, the_objects)
+                only_selected, list(suffixes), list(omitted_suffixes), list(using_groups))
 
-    security.declarePublic('get_orgs_for_user')
+    security.declarePrivate('_get_org_uids_for_user')
 
-    @ram.cache(get_orgs_for_user_cachekey)
-    def get_orgs_for_user(self,
-                          user_id=None,
-                          only_selected=True,
-                          suffixes=[],
-                          omitted_suffixes=[],
-                          using_groups=[],
-                          the_objects=True):
-        '''Gets the organizations p_user_id belongs to. If p_user_id is None, we use the
-           authenticated user. If p_only_selected is True, we consider only selected
-           organizations. If p_suffixes is not empty, we select only orgs having
-           at least one of p_suffixes. If p_omitted_suffixes, we do not consider
-           orgs the user is in using those suffixes.'''
+    @ram.cache(_get_org_uids_for_user_cachekey)
+    def _get_org_uids_for_user(self,
+                               user_id=None,
+                               only_selected=True,
+                               suffixes=[],
+                               omitted_suffixes=[],
+                               using_groups=[]):
+        '''This method is there to be cached as get_orgs_for_user(the_objects=True)
+           will return objects, this may not be ram.cached.
+           This submethod should not be called directly.'''
         res = []
         user_plone_group_ids = self.get_plone_groups_for_user(user_id)
-        orgs = get_organizations(only_selected=only_selected,
-                                 kept_org_uids=using_groups,
-                                 the_objects=the_objects)
-        for org in orgs:
-            org_uid = the_objects and org.UID() or org
+        org_uids = get_organizations(only_selected=only_selected,
+                                     kept_org_uids=using_groups,
+                                     the_objects=False)
+        for org_uid in org_uids:
             for suffix in get_all_suffixes(org_uid):
                 if suffixes and (suffix not in suffixes):
                     continue
@@ -547,8 +563,43 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     continue
                 # If we are here, the user belongs to this group.
                 # Add the organization
-                if org not in res:
-                    res.append(org)
+                if org_uid not in res:
+                    res.append(org_uid)
+        return res
+
+    def get_orgs_for_user(self,
+                          user_id=None,
+                          only_selected=True,
+                          suffixes=[],
+                          omitted_suffixes=[],
+                          using_groups=[],
+                          the_objects=False):
+        '''Gets the organizations p_user_id belongs to. If p_user_id is None, we use the
+           authenticated user. If p_only_selected is True, we consider only selected
+           organizations. If p_suffixes is not empty, we select only orgs having
+           at least one of p_suffixes. If p_omitted_suffixes, we do not consider
+           orgs the user is in using those suffixes.
+           If p_the_objects=True, organizations objects are returned, else the uids.'''
+        res = self._get_org_uids_for_user(user_id=user_id,
+                                          only_selected=only_selected,
+                                          suffixes=suffixes,
+                                          omitted_suffixes=omitted_suffixes,
+                                          using_groups=using_groups)
+        if res and the_objects:
+            request = self.REQUEST
+            # in some cases like in tests, request can not be retrieved
+            key = "PloneMeeting-tool-get_orgs_for_user-{0}".format(
+                '_'.join(sorted(res)))
+            cache = IAnnotations(request)
+            orgs = cache.get(key, None)
+
+            if orgs is None:
+                orgs = uuidsToObjects(res, ordered=True, unrestricted=True)
+                logger.info(
+                    "Getting organizations from "
+                    "ToolPloneMeeting.get_orgs_for_user(the_objects=True)")
+            cache[key] = list(orgs)
+            res = orgs
         return res
 
     security.declarePublic('get_selectable_orgs')
@@ -572,9 +623,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def userIsAmong_cachekey(method, self, suffixes, cfg=None, using_groups=[]):
         '''cachekey method for self.userIsAmong.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
+        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
         return (date,
-                self._users_groups_value(),
                 get_current_user_id(self.REQUEST),
                 suffixes,
                 cfg and cfg.getId(),
@@ -602,14 +652,17 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 using_groups = cfg_using_groups
             activeOrgUids = [org_uid for org_uid in get_organizations(
                 only_selected=True, the_objects=False, kept_org_uids=using_groups)]
+            org_suffixes = get_all_suffixes()
             for plone_group_id in self.get_plone_groups_for_user():
                 # check if the plone_group_id ends with a least one of the p_suffixes
-                has_kept_suffixes = [suffix for suffix in suffixes if plone_group_id.endswith('_%s' % suffix)]
+                has_kept_suffixes = [suffix for suffix in suffixes
+                                     if plone_group_id.endswith('_%s' % suffix)]
                 if has_kept_suffixes:
-                    org = get_organization(plone_group_id)
-                    # if we can not find the org, it means that it is a suffix like 'powerobservers'
-                    # if we find the org, we check that it is among activeOrgUids
-                    if not org or org.UID() in activeOrgUids:
+                    org_uid, suffix = plone_group_id.split('_')
+                    # if suffix is a org suffix and org is active, we are good
+                    # if suffix is not an org suffix, it means it is something like _powerobservers
+                    if (suffix in org_suffixes and org_uid in activeOrgUids) or \
+                       suffix not in org_suffixes:
                         res = True
                         break
         return res
@@ -760,51 +813,77 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def isManager_cachekey(method, self, context, realManagers=False):
         '''cachekey method for self.isManager.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
         # check also user id to avoid problems between Zope admin and anonymous
         # as they have both no group when initializing portal, some requests
         # (first time viewlet initialization?) have sometims anonymous as user
-        return (self.get_plone_groups_for_user(),
+        return (date,
                 get_current_user_id(self.REQUEST),
                 repr(context),
                 realManagers)
 
     security.declarePublic('isManager')
 
-    @ram.cache(isManager_cachekey)
+    # not ramcached see perf test
+    # @ram.cache(isManager_cachekey)
     def isManager(self, context, realManagers=False):
         '''Is the current user a 'MeetingManager' on context?  If p_realManagers is True,
            only returns True if user has role Manager/Site Administrator, either
            (by default) MeetingManager is also considered as a 'Manager'?'''
-        user = api.user.get_current()
-        userRoles = user.getRolesInContext(context)
-        return 'Manager' in userRoles or \
-            'Site Administrator' in userRoles or \
-            (not realManagers and 'MeetingManager' in userRoles)
+        if api.user.is_anonymous():
+            return False
 
-    def isPowerObserverForCfg_cachekey(method, self, cfg, power_observer_type=None):
+        if realManagers and context.__class__.__name__ != "ToolPloneMeeting":
+            raise Exception(
+                "For caching reasons, please pass \"tool\" as \"context\" "
+                "when calling \"tool.isManager\" with \"realManagers=True\"")
+        elif not realManagers and context.__class__.__name__ != "MeetingConfig":
+            raise Exception(
+                "For caching reasons, please pass \"cfg\" as \"context\" "
+                "when calling \"tool.isManager\" with \"realManagers=False\"")
+        res = False
+        if not realManagers:
+            mmanager_group_id = get_plone_group_id(context.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
+            res = mmanager_group_id in self.get_plone_groups_for_user()
+        if realManagers or not res:
+            # can not use _checkPermission(ManagePortal, self)
+            # because it would say True when using adopt_roles
+            # use user.getRoles
+            user = api.user.get_current()
+            res = "Manager" in user.getRoles()
+        return res
+
+    def isPowerObserverForCfg_cachekey(method, self, cfg, power_observer_types=[]):
         '''cachekey method for self.isPowerObserverForCfg.'''
         return (self.get_plone_groups_for_user(),
                 repr(cfg),
-                power_observer_type)
+                power_observer_types)
 
     security.declarePublic('isPowerObserverForCfg')
 
-    @ram.cache(isPowerObserverForCfg_cachekey)
-    def isPowerObserverForCfg(self, cfg, power_observer_type=None):
+    # not ramcached perf tests says it does not change anything
+    # and this avoid useless entry in cache
+    # @ram.cache(isPowerObserverForCfg_cachekey)
+    def isPowerObserverForCfg(self, cfg, power_observer_types=[]):
         """
-          Returns True if the current user is a power observer for the given p_itemOrMeeting.
-          It is a power observer if member of the corresponding p_power_observer_type suffixed group.
-          If no p_power_observer_type we check every existing power_observers groups.
+          Returns True if the current user is a power observer
+          for the given p_itemOrMeeting.
+          It is a power observer if member of the corresponding
+          p_power_observer_types suffixed groups.
+          If no p_power_observer_types we check every existing power_observers groups.
         """
+        user_plone_groups = self.get_plone_groups_for_user()
         for po_infos in cfg.getPowerObservers():
-            if not power_observer_type or po_infos['row_id'] == power_observer_type:
+            if not power_observer_types or po_infos['row_id'] in power_observer_types:
                 groupId = "{0}_{1}".format(cfg.getId(), po_infos['row_id'])
-                if groupId in self.get_plone_groups_for_user():
+                if groupId in user_plone_groups:
                     return True
         return False
 
     def showPloneMeetingTab_cachekey(method, self, cfg):
         '''cachekey method for self.showPloneMeetingTab.'''
+        if api.user.is_anonymous():
+            return False
         # we only recompute if user groups changed or self changed
         return (cfg._p_mtime, self.get_plone_groups_for_user(), repr(cfg))
 
@@ -911,11 +990,16 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                               context=self.REQUEST))
         return res
 
-    security.declarePrivate('listSelectableInternalOrganizations')
+    security.declarePrivate('listDeferParentReindexes')
 
-    def listSelectableInternalOrganizations(self):
-        '''Method returning list of selectable internal organizations.'''
+    def listDeferParentReindexes(self):
+        '''Vocabulary for deferParentReindexes field.'''
         res = DisplayList()
+        for defer in ('annex', 'item_reference'):
+            res.add(defer,
+                    translate('defer_reindex_for_%s' % defer,
+                              domain='PloneMeeting',
+                              context=self.REQUEST))
         return res
 
     def getNonWorkingDayNumbers_cachekey(method, self):
@@ -1125,14 +1209,16 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if not keepProposingGroup:
                 # proposingGroupWithGroupInCharge
                 if newItem.attribute_is_used('proposingGroupWithGroupInCharge'):
-                    userProposingGroupUids = newItem.listProposingGroupsWithGroupsInCharge(
-                        include_stored=False).keys()
+                    field = newItem.getField('proposingGroupWithGroupInCharge')
+                    vocab = get_vocab(newItem, field.vocabulary_factory, only_factory=True)
+                    userProposingGroupUids = vocab(newItem, include_stored=False).by_value.keys()
                     if userProposingGroupUids:
                         newItem.setProposingGroupWithGroupInCharge(userProposingGroupUids[0])
                 else:
                     # proposingGroup
-                    userProposingGroupUids = newItem.listProposingGroups(
-                        include_stored=False).keys()
+                    field = newItem.getField('proposingGroup')
+                    vocab = get_vocab(newItem, field.vocabulary_factory, only_factory=True)
+                    userProposingGroupUids = vocab(newItem, include_stored=False).by_value.keys()
                     if userProposingGroupUids:
                         newItem.setProposingGroup(userProposingGroupUids[0])
 
@@ -1422,11 +1508,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                          brain.portal_type,
                          '/'.join(itemOrMeeting.getPhysicalPath())))
             i = i + 1
-            indexes_to_update = itemOrMeeting.update_local_roles(avoid_reindex=True)
-            # if auto rules regarding copyGroups or groupsInCharge changed
-            # we could have more or less copyGroups/groupsInCharge so reindex relevant indexes
-            if indexes_to_update:
-                itemOrMeeting.reindexObject(idxs=indexes_to_update)
+            itemOrMeeting.update_local_roles(avoid_reindex=True)
 
         logger.info(end_time(
             startTime,
@@ -1486,16 +1568,22 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                  context=self.REQUEST))
         return res
 
-    def showHolidaysWarning(self, context):
+    def showHolidaysWarning(self, cfg):
         """Condition for showing the 'holidays_waring_message'."""
-        holidays = self.getHolidays()
-        # if user isManager and last defined holiday is in less than 60 days, display warning
-        if self.isManager(context) and \
-           (not holidays or DateTime(holidays[-1]['date']) < DateTime() + 60):
-            return True
+        if cfg is not None and cfg.__class__.__name__ == "MeetingConfig":
+            holidays = self.getHolidays()
+            # if user isManager and last defined holiday is in less than 60 days, display warning
+            if self.isManager(cfg) and \
+               (not holidays or DateTime(holidays[-1]['date']) < DateTime() + 60):
+                return True
         return False
 
-    def performCustomWFAdaptations(self, meetingConfig, wfAdaptation, logger, itemWorkflow, meetingWorkflow):
+    def performCustomWFAdaptations(self,
+                                   meetingConfig,
+                                   wfAdaptation,
+                                   logger,
+                                   itemWorkflow,
+                                   meetingWorkflow):
         '''See doc in interfaces.py.'''
         return False
 

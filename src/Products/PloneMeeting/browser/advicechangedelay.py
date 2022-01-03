@@ -108,10 +108,10 @@ class AdviceDelaysView(BrowserView):
         advice_uid = self.advice['id']
         # MeetingManagers and advisers of the group
         # can access the delay changes history
-        userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
+        userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'])
         if self.tool.isManager(self.cfg) or \
            advice_uid in userAdviserOrgUids or \
-           self.context.getProposingGroup() in self.tool.get_orgs_for_user(the_objects=False):
+           self.context.getProposingGroup() in self.tool.get_orgs_for_user():
             return True
         else:
             return False

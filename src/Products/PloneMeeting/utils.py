@@ -65,6 +65,7 @@ from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
 from Products.PloneMeeting.config import TOOL_ID
 from Products.PloneMeeting.interfaces import IAdviceAfterAddEvent
 from Products.PloneMeeting.interfaces import IAdviceAfterModifyEvent
@@ -231,11 +232,12 @@ def _referer_to_path(request):
 def get_referer_obj(request):
     """ """
     referer_path = _referer_to_path(request)
-    catalog = api.portal.get_tool('portal_catalog')
-    brains = catalog(path={'query': referer_path, 'depth': 0})
+    portal = api.portal.get()
     obj = None
-    if brains:
-        obj = brains[0].getObject()
+    try:
+        obj = portal.unrestrictedTraverse(referer_path)
+    except Exception:
+        pass
     return obj
 
 
@@ -454,7 +456,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     userInfo = pms.getAuthenticatedMember()
     userName = safe_unicode(tool.getUserName(userInfo.getId()))
     # Compute list of MeetingGroups for this user
-    userGroups = ', '.join([g.Title() for g in tool.get_orgs_for_user()])
+    userGroups = ', '.join([g.Title() for g in tool.get_orgs_for_user(the_objects=True)])
     # Create the message parts
     d = 'PloneMeeting'
     portal = api.portal.get()
@@ -664,9 +666,8 @@ def sendMailIfRelevant(obj,
             # then "isPermission"
             # Does the user have the corresponding permission on p_obj ?
             # we do this here for performance reason as we have the "user" object
-            if not api.user.has_permission(permission=value,
-                                           obj=obj,
-                                           user=user):
+            if not api.user.has_permission(
+                    permission=value, obj=obj, user=user):
                 continue
         elif isRole:
             if not user.has_role(value, obj):
@@ -813,7 +814,8 @@ def rememberPreviousData(obj, name=None):
        historized field (or only for p_name if explicitly given), the previous
        value. Result is a dict ~{s_fieldName: previousFieldValue}~'''
     res = {}
-    cfg = obj.portal_plonemeeting.getMeetingConfig(obj)
+    tool = api.portal.get_tool(TOOL_ID)
+    cfg = tool.getMeetingConfig(obj)
     # Do nothing if the object is not in a state when historization is enabled.
     if obj.query_state() not in cfg.getRecordItemHistoryStates():
         return res
@@ -850,7 +852,7 @@ def addDataChange(obj, previousData=None):
     if not previousData:
         return
     # Add an event in the history
-    userId = obj.portal_membership.getAuthenticatedMember().getId()
+    userId = get_current_user_id()
     event = {'action': '_datachange_', 'actor': userId, 'time': DateTime(),
              'comments': '', 'review_state': obj.query_state(),
              'changes': previousData}
@@ -1033,6 +1035,8 @@ def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True
             extra_idxs.append(field_name)
         if probable_index_name in index_names:
             extra_idxs.append(probable_index_name)
+        # unmark deferred SearchableText reindexing
+        setattr(obj, REINDEX_NEEDED_MARKER, False)
         notifyModifiedAndReindex(obj, extra_idxs=extra_idxs)
     if unlock:
         # just unlock, do not call ObjectEditedEvent because it does too much
@@ -1043,7 +1047,7 @@ def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True
     fplog('quickedit_field', extras=extras)
 
 
-def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False):
+def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False, update_metadata=1):
     """Ease notifyModified and reindex of a given p_obj.
        If p_extra_idxs contains '*', a full reindex is done, if not
        only 'modified' related indexes are updated.
@@ -1053,11 +1057,26 @@ def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False):
 
     idxs = []
     if '*' not in extra_idxs:
-        idxs = ['modified', 'ModificationDate', 'Date'] + extra_idxs
-    obj.reindexObject(idxs=idxs)
+        idxs = [
+            'pm_technical_index', 'modified', 'ModificationDate', 'Date'] + extra_idxs
+
+    reindex_object(obj, idxs, update_metadata=update_metadata)
 
     if notify_event:
         notify(ObjectEditedEvent(obj))
+
+
+def reindex_object(obj, idxs=[], no_idxs=[], update_metadata=1):
+    """Reimplement self.reindexObject for AT as p_update_metadata is not available.
+       p_idxs and p_no_idxs are mutually exclusive, passing indexes in p_no_idxs
+       means every indexes excepted these indexes."""
+    catalog = api.portal.get_tool('portal_catalog')
+    indexes = catalog.indexes()
+    if no_idxs:
+        idxs = [i for i in indexes if i not in no_idxs]
+    else:
+        idxs = [i for i in idxs if i in indexes]
+    catalog.catalog_object(obj, idxs=list(set(idxs)), update_metadata=update_metadata)
 
 
 def transformAllRichTextFields(obj, onlyField=None):
@@ -1066,7 +1085,6 @@ def transformAllRichTextFields(obj, onlyField=None):
        transformRichTextField that may be overridden by an adapter. This
        method calls it for every rich text field defined on this obj (item or meeting), if
        the user has the permission to update the field.'''
-    member = api.user.get_current()
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(obj)
     fieldsToTransform = cfg.getXhtmlTransformFields()
@@ -1083,7 +1101,7 @@ def transformAllRichTextFields(obj, onlyField=None):
                       for field_name, field in getFieldsInOrder(schema)
                       if field.__class__.__name__ == "RichText" and
                       (write_permissions.get(field.__name__) and
-                       member.has_permission(write_permissions[field_name], obj) or True)}
+                       _checkPermission(write_permissions[field_name], obj) or True)}
     else:
         if onlyField:
             field = obj.schema[onlyField]
@@ -1091,7 +1109,7 @@ def transformAllRichTextFields(obj, onlyField=None):
         else:
             fields = {field.getName(): field.getRaw(obj).strip() for field in obj.schema.fields()
                       if field.widget.getName() == 'RichWidget' and
-                      member.has_permission(field.write_permission, obj)}
+                      _checkPermission(field.write_permission, obj)}
 
     for field_name, field_raw_value in fields.items():
         if not field_raw_value:
@@ -1165,11 +1183,11 @@ def applyOnTransitionFieldTransform(obj, transitionId):
                     ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR % (
                         transform['field_name'].split('.')[1], str(e)),
                     type='warning')
-                return
-    # XXX do not reindex for now as full reindex is done after
-    # when moving to dexerity, will be able to reindex more efficiently
-    if False and idxs:
-        obj.reindexObject(idxs=idxs)
+                break
+    # if something changed, pass supposed indexes + SearchableText
+    if idxs:
+        idxs.append('SearchableText')
+    return idxs
 
 
 # ------------------------------------------------------------------------------
@@ -1196,7 +1214,8 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId):
                         pass
                 else:
                     # execute the TAL expression, will not fail but log if an error occurs
-                    # do this as Manager to avoid permission problems, the configuration is supposed to be applied
+                    # do this as Manager to avoid permission problems, the configuration
+                    # is supposed to be applied
                     with api.env.adopt_roles(['Manager']):
                         extra_expr_ctx.update({'item': item, 'meeting': meeting})
                         _evaluateExpression(
@@ -1666,6 +1685,7 @@ def updateAnnexesAccess(container):
             adapter.obj = aq_base(annex)
         v['visible_for_groups'] = adapter._visible_for_groups()
         v['allowedRolesAndUsers'] = adapter._allowedRolesAndUsers
+        v['last_updated'] = datetime.now()
 
 
 def validate_item_assembly_value(value):
@@ -1733,16 +1753,15 @@ def checkMayQuickEdit(obj,
     """ """
     from Products.PloneMeeting.content.meeting import Meeting
     tool = api.portal.get_tool('portal_plonemeeting')
-    member = api.user.get_current()
     res = False
     meeting = obj.getTagName() == "Meeting" and obj or (obj.hasMeeting() and obj.getMeeting())
-    if (not onlyForManagers or (onlyForManagers and tool.isManager(obj))) and \
-       (bypassWritePermissionCheck or member.has_permission(permission, obj)) and \
+    if (not onlyForManagers or (onlyForManagers and tool.isManager(tool.getMeetingConfig(obj)))) and \
+       (bypassWritePermissionCheck or _checkPermission(permission, obj)) and \
        (_evaluateExpression(obj, expression)) and \
        (not (not bypassMeetingClosedCheck and
         meeting and
         meeting.query_state() in Meeting.MEETINGCLOSEDSTATES) or
-            tool.isManager(obj, realManagers=True)):
+            tool.isManager(tool, realManagers=True)):
         res = True
     return res
 
@@ -1844,7 +1863,7 @@ def duplicate_portal_type(portalTypeName, duplicatedPortalTypeId):
     return duplicatedPortalType
 
 
-def get_item_validation_wf_suffixes(cfg, org=None, only_enabled=True):
+def get_item_validation_wf_suffixes(cfg, org_uid=None, only_enabled=True):
     """Returns suffixes related to MeetingItem validation WF,
        so the 'creators', 'observers' and suffixes managed by
        MeetingConfig.itemWFValidationLevels.
@@ -1859,20 +1878,20 @@ def get_item_validation_wf_suffixes(cfg, org=None, only_enabled=True):
     config_suffixes = [config_suffix] + list(config_extra_suffixes)
     config_suffixes = list(itertools.chain.from_iterable(config_suffixes))
     suffixes = base_suffixes + config_suffixes
-    if org:
+    if org_uid:
         # only return suffixes that are available for p_org
-        available_suffixes = set(get_all_suffixes(org.UID()))
+        available_suffixes = set(get_all_suffixes(org_uid))
         suffixes = list(available_suffixes.intersection(set(suffixes)))
     return suffixes
 
 
-def compute_item_roles_to_assign_to_suffixes_cachekey(method, cfg, item_state, org=None):
+def compute_item_roles_to_assign_to_suffixes_cachekey(method, cfg, item_state, org_uid=None):
     '''cachekey method for compute_item_roles_to_assign_to_suffixes.'''
-    return cfg.getId(), cfg.modified(), item_state, org and org.UID()
+    return cfg.getId(), cfg.modified(), item_state, org_uid
 
 
 @ram.cache(compute_item_roles_to_assign_to_suffixes_cachekey)
-def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
+def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org_uid=None):
     """ """
     apply_meetingmanagers_access = True
     suffix_roles = {}
@@ -1880,12 +1899,14 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
     # roles given to item_state are managed automatically
     # it is possible to manage it manually for extra states (coming from wfAdaptations for example)
     # try to find corresponding item state
-    corresponding_auto_item_state = cfg.adapted().get_item_corresponding_state_to_assign_local_roles(item_state)
+    corresponding_auto_item_state = cfg.adapted().get_item_corresponding_state_to_assign_local_roles(
+        item_state)
     if corresponding_auto_item_state:
         item_state = corresponding_auto_item_state
     else:
         # if no corresponding item state, check if we manage state suffix roles manually
-        apply_meetingmanagers_access, suffix_roles = cfg.adapted().get_item_custom_suffix_roles(item_state)
+        apply_meetingmanagers_access, suffix_roles = cfg.adapted().get_item_custom_suffix_roles(
+            item_state)
 
     # find suffix_roles if it was not managed manually
     if suffix_roles:
@@ -1929,7 +1950,7 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
         # so every editors roles get the "PloneMeeting: Add decision annex"
         # permission that let add decision annex
         item_is_decided = item_state in cfg.getItemDecidedStates()
-        for suffix in get_item_validation_wf_suffixes(cfg, org):
+        for suffix in get_item_validation_wf_suffixes(cfg, org_uid):
             given_roles = ['Reader']
             if item_is_decided and suffix != 'observers':
                 given_roles.append('Contributor')

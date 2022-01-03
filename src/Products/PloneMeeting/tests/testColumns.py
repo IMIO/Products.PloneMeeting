@@ -59,6 +59,9 @@ class testColumns(PloneMeetingTestCase):
         self.assertTrue(secretItem.adapted().isPrivacyViewable())
         publicBrainPrettyLinkColumn = column.renderCell(publicBrain)
         secretBrainPrettyLinkColumn = column.renderCell(secretBrain)
+        # make sure cache is shared between cell and item view
+        self.assertTrue(publicItem.getPrettyLink() in publicBrainPrettyLinkColumn)
+        self.assertTrue(secretItem.getPrettyLink() in secretBrainPrettyLinkColumn)
         # link to title
         self.assertTrue("href='{0}'".format(publicBrain.getURL()) in publicBrainPrettyLinkColumn)
         self.assertTrue("href='{0}'".format(secretBrain.getURL()) in secretBrainPrettyLinkColumn)
@@ -76,6 +79,9 @@ class testColumns(PloneMeetingTestCase):
         self.assertFalse(secretItem.adapted().isPrivacyViewable())
         publicBrainPrettyLinkColumn = column.renderCell(publicBrain)
         secretBrainPrettyLinkColumn = column.renderCell(secretBrain)
+        # make sure cache is shared between cell and item view
+        self.assertTrue(publicItem.getPrettyLink() in publicBrainPrettyLinkColumn)
+        self.assertTrue(secretItem.getPrettyLink() in secretBrainPrettyLinkColumn)
         # link to title
         self.assertTrue("href='{0}'".format(publicBrain.getURL()) in publicBrainPrettyLinkColumn)
         # more infos
@@ -86,8 +92,12 @@ class testColumns(PloneMeetingTestCase):
         self.assertEqual(
             secretBrainPrettyLinkColumn,
             u"<div class='pretty_link' title='Secret item title'>"
-            u"<span class='pretty_link_content state-itemcreated'>Secret item title <span class='discreet no_access'>"
-            u"(You can not access this element)</span></span></div>")
+            u"<span class='pretty_link_icons'>"
+            u"<img title='Item' src='http://nohost/plone/MeetingItem.png' "
+            u"style=\"width: 16px; height: 16px;\" /></span>"
+            u"<span class='pretty_link_content state-itemcreated'>Secret item title "
+            u"<span class='discreet no_access'>(You can not access this element)</span>"
+            u"</span></div>")
 
     def test_pm_AnnexActionsColumnShowArrows(self):
         """Arrows are only shown if annex or annexDecision are orderable.

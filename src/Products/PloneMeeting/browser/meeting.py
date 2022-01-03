@@ -13,6 +13,7 @@ from plone.dexterity.browser.add import DefaultAddView
 from plone.dexterity.browser.edit import DefaultEditForm
 from plone.dexterity.browser.view import DefaultView
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
@@ -153,7 +154,7 @@ class BaseMeetingView(object):
     def show_votes_observations(self):
         '''Show the votes_observations field to
            meeting managers and power observers.'''
-        res = self.tool.isManager(self.context)
+        res = self.tool.isManager(self.cfg)
         if not res:
             res = self.tool.isPowerObserverForCfg(self.cfg) or \
                 (self.context.__class__.__name__ == 'Meeting' and
@@ -199,7 +200,7 @@ class BaseMeetingView(object):
     def view_widget(self, widget, empty_value="-"):
         """Render an empty_value instead nothing when field empty."""
         value = getattr(self.context, widget.__name__, None)
-        if not value and not self._is_rich(widget):
+        if value is None and not self._is_rich(widget):
             rendered = "-"
         else:
             rendered = widget.render()
@@ -424,21 +425,28 @@ class MeetingAdd(DefaultAddView):
     form = MeetingAddForm
 
 
-class MeetingView(FacetedContainerView):
-    """ """
+class BaseMeetingFacetedView(FacetedContainerView):
 
     def __init__(self, context, request):
         """ """
-        super(MeetingView, self).__init__(context, request)
+        super(BaseMeetingFacetedView, self).__init__(context, request)
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self._canonical = '<NOT SET>'
+
+
+class MeetingFacetedAvailableItemsView(BaseMeetingFacetedView):
+    """ """
+
+
+class MeetingFacetedView(BaseMeetingFacetedView):
+    """ """
 
     def _init(self):
         """ """
         # initialize member in call because it is Anonymous in __init__ of view...
         self.member = api.user.get_current()
-        self.is_manager = self.tool.isManager(self.context)
+        self.is_manager = self.tool.isManager(self.cfg)
         # make the 'view' widget available on faceted view
         view = self.context.restrictedTraverse('@@view')
         view.update()
@@ -447,7 +455,7 @@ class MeetingView(FacetedContainerView):
     def __call__(self):
         """ """
         self._init()
-        return super(MeetingView, self).__call__()
+        return super(MeetingFacetedView, self).__call__()
 
     def show_page(self):
         """Display page to current user?"""
@@ -474,7 +482,7 @@ class MeetingView(FacetedContainerView):
     def show_available_items(self):
         """Show the available items part?"""
         return (
-            self.member.has_permission(ModifyPortalContent, self.context) or
+            _checkPermission(ModifyPortalContent, self.context) or
             self._display_available_items_to()) and \
             self.context.wfConditions().may_accept_items()
 

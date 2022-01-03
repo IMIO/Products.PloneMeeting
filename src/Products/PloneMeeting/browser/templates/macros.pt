@@ -33,11 +33,7 @@
   <form tal:attributes="id string:ajax_edit_$fieldName;" class="enableUnloadProtection enableAutoFocus enableUnlockProtection">
 
   <div tal:define="errors python:{};
-                   schematas context/Schemata;
-                   fieldsets python:[key for key in schematas.keys() if (key != 'metadata') and (schematas[key].editableFields(context, visible_only=True))];
-                   default_fieldset python:(not schematas or schematas.has_key('default')) and 'default' or fieldsets[0];
-                   fieldset request/fieldset|options/fieldset|default_fieldset;
-                   dummy python:here.at_isEditable(fields);
+                   dummy python: context.mayQuickEdit(fieldName, raiseOnError=True);
                    dummyNotifyEditBegunEvent python: context.restrictedTraverse('@@pm-notify-event').notifyEditBegunEvent();
                    portal_type context/portal_type;
                    type_name portal_type;

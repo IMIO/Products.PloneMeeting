@@ -15,12 +15,15 @@ from plone.app.textfield.value import RichTextValue
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.contentmigration.basemigrator.migrator import CMFFolderMigrator
+from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.browser.itemattendee import position_type_default
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.content.advice import IMeetingAdvice
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingDashboardBatchActionsMarker
 from Products.PloneMeeting.interfaces import IMeetingItemDashboardBatchActionsMarker
+from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
@@ -28,6 +31,7 @@ from Products.PloneMeeting.setuphandlers import columnInfos
 from Products.PloneMeeting.setuphandlers import indexInfos
 from Products.PloneMeeting.utils import cleanMemoize
 from Products.ZCatalog.ProgressHandler import ZLogHandler
+from zope.component import queryUtility
 from zope.interface import alsoProvides
 from zope.interface import noLongerProvides
 
@@ -360,6 +364,7 @@ class Migrate_To_4200(Migrator):
         """Now that an arbitraty label may be defined when redefining item signatory,
            store it, the default value was the secondary_position_type or the position_type."""
         logger.info("Updating 'itemSignagtories' for every Meetings...")
+        # looking for meta_type='Meeting' will only find AT Meeting
         brains = self.catalog(meta_type='Meeting')
         for brain in brains:
             meeting = brain.getObject()
@@ -406,6 +411,7 @@ class Migrate_To_4200(Migrator):
     def _removeMeetingItemsReferenceField(self):
         '''ReferenceField Meeting.items was removed and is now managed manually.'''
         logger.info("Removing Meeting.items reference field...")
+        # looking for meta_type='Meeting' will only find AT Meeting
         for brain in self.catalog(meta_type='Meeting'):
             meeting = brain.getObject()
             # get references from at_references so order is kept
@@ -441,7 +447,6 @@ class Migrate_To_4200(Migrator):
             try:
                 advice = brain.getObject()
             except AttributeError:
-                import ipdb; ipdb.set_trace()
                 continue
             for field_name in ['advice_comment', 'advice_observations']:
                 field_value = getattr(advice, field_name)
@@ -553,6 +558,16 @@ class Migrate_To_4200(Migrator):
             if defaultAdviceType == "asked_again":
                 defaultAdviceType = "positive"
                 cfg.setDefaultAdviceType(defaultAdviceType)
+        logger.info('Done.')
+
+    def _updateMeetingsNumberOfItems(self):
+        """Meeting number of items is now stored in Meeting._number_of_items."""
+        logger.info('Updating "_number_of_items" for every meetings...')
+        brains = self.catalog(object_provides=IMeeting.__identifier__)
+        for brain in brains:
+            meeting = brain.getObject()
+            meeting._number_of_items = len(meeting.get_raw_items())
+            meeting._p_changed = True
         logger.info('Done.')
 
     def _updateItemGroupsInCharge(self):
@@ -671,8 +686,27 @@ class Migrate_To_4200(Migrator):
                 obj=item)
         logger.info('Done.')
 
+    def _updateCron4Plone(self):
+        """The maintenance task view name changed to @@pm-night-tasks."""
+        logger.info("Updating cron4plone configuration...")
+        cron_configlet = queryUtility(ICronConfiguration, 'cron4plone_config')
+        cron_configlet.cronjobs = [u'45 1 * * portal/@@pm-night-tasks']
+        logger.info('Done.')
+
+    def _initMeetingConfigItemInternalNotesEditableBy(self):
+        """By default, make proposingGroup editors able to use MeetingItem.internalNotes."""
+        logger.info("Updating every MeetingConfig.ItemInternalNotesEditableBy...")
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            if "internalNotes" in cfg.getUsedItemAttributes():
+                suffixes = cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
+                values = ['{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix)
+                          for suffix in suffixes]
+                cfg.setItemInternalNotesEditableBy(values)
+        logger.info('Done.')
+
     def _removeBrokenAnnexes(self):
-        """ """
+        """Remove annexes that do not have a content_category,
+           that could happen with quickupload."""
         logger.info("Remove broken annexes, annexes uploaded withtout a content_category...")
         brains = self.catalog(portal_type=['annex', 'annexDecision'])
         i = 0
@@ -702,6 +736,9 @@ class Migrate_To_4200(Migrator):
         # apply correct batch actions marker on searches_* folders
         self._updateSearchedFolderBatchActionsMarkerInterface()
 
+        # update cron4plone
+        self._updateCron4Plone()
+
         # update preferred meeting path on items
         self._updateItemPreferredMeetingLink()
         self._migrateItemPredecessorReference()
@@ -722,6 +759,7 @@ class Migrate_To_4200(Migrator):
         self.removeUnusedColumns(
             columns=['toDiscuss',
                      'getDate',
+                     'getItemNumber',
                      'linkedMeetingUID',
                      'linkedMeetingDate'])
 
@@ -733,6 +771,9 @@ class Migrate_To_4200(Migrator):
         # configure wfAdaptations before reinstall
         self._configureItemWFValidationLevels()
 
+        # init MeetingConfig.itemInternalNotesEditableBy after _configureItemWFValidationLevels
+        self._initMeetingConfigItemInternalNotesEditableBy()
+
         # need to reindex new indexes before migrating Meeting to DX
         addOrUpdateIndexes(self.portal, indexInfos)
         addOrUpdateColumns(self.portal, columnInfos)
@@ -742,12 +783,25 @@ class Migrate_To_4200(Migrator):
         self.updateTALConditions("getDate()", "date")
         self.updateTALConditions("getStartDate()", "start_date")
         self.updateTALConditions("getEndDate()", "end_date")
-        self.updateTALConditions("isManager(context", "isManager(cfg")
-        self.updateTALConditions("isManager(here", "isManager(cfg")
+        self.updateTALConditions("isManager(context)", "isManager(cfg")
+        self.updateTALConditions("isManager(here)", "isManager(cfg)")
         self.updateTALConditions("isManager(obj)", "isManager(cfg)")
+        self.updateTALConditions("isManager(context, realManagers=True)",
+                                 "isManager(tool, realManagers=True)")
+        self.updateTALConditions("isManager(here, realManagers=True)",
+                                 "isManager(tool, realManagers=True)")
+        self.updateTALConditions("isManager(obj, realManagers=True)",
+                                 "isManager(tool, realManagers=True)")
+        self.updateTALConditions("isManager(context,realManagers=True)",
+                                 "isManager(tool, realManagers=True)")
+        self.updateTALConditions("isManager(here,realManagers=True)",
+                                 "isManager(tool, realManagers=True)")
+        self.updateTALConditions("isManager(obj,realManagers=True)",
+                                 "isManager(tool, realManagers=True)")
         self.updateTALConditions(
             "'pre_validation' in cfg.getWorkflowAdaptations()",
             "'pre_validated' in cfg.getItemWFValidationLevels(data='state', only_enabled=True)")
+        self.updateTALConditions(".showHolidaysWarning(context)", ".showHolidaysWarning(cfg)")
 
         # replacements MeetingConfig item columns
         self.cleanItemColumns(
@@ -804,6 +858,9 @@ class Migrate_To_4200(Migrator):
         # update local_roles, workflow mappings and catalogs
         self.tool.update_all_local_roles()
         self.refreshDatabase(workflows=True, catalogsToUpdate=[])
+
+        # store meeting number of items
+        self._updateMeetingsNumberOfItems()
 
 
 def migrate(context):

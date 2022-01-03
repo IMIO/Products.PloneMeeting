@@ -83,9 +83,11 @@ def do(action, event):
     # Execute some actions defined in the corresponding adapter
     actionMethod = getattr(actionsAdapter, action)
     actionMethod(event)
+    indexes = []
     if objectType == 'MeetingItem':
         # Update every local roles : advices, copyGroups, powerObservers, budgetImpactEditors, ...
-        event.object.update_local_roles(triggered_by_transition=event.transition.id)
+        indexes += event.object.update_local_roles(
+            triggered_by_transition=event.transition.id, reindex=False)
         # Send mail regarding advices to give if relevant
         event.object.sendStateDependingMailIfRelevant(
             event.old_state.id, event.transition.id, event.new_state.id
@@ -94,12 +96,10 @@ def do(action, event):
         event_id = "item_state_changed_%s" % event.transition.id
         sendMailIfRelevant(event.object, event_id, 'View', isPermission=True)
         # apply on transition field transform if any
-        applyOnTransitionFieldTransform(event.object, event.transition.id)
-        # update modification date upon state change
-        event.object.notifyModified()
+        indexes += applyOnTransitionFieldTransform(event.object, event.transition.id)
     elif objectType == 'Meeting':
         # update every local roles
-        event.object.update_local_roles()
+        indexes = event.object.update_local_roles()
         # Add recurring items to the meeting if relevant
         event.object.add_recurring_items_if_relevant(event.transition.id)
         # Send mail if relevant
@@ -108,10 +108,9 @@ def do(action, event):
         # trigger some transitions on contained items depending on
         # MeetingConfig.onMeetingTransitionItemActionToExecute
         meetingExecuteActionOnLinkedItems(event.object, event.transition.id)
-        # update modification date upon state change
-        event.object.notifyModified()
     elif objectType == 'MeetingAdvice':
         _addManagedPermissions(event.object)
+    return indexes
 
 
 def onItemTransition(item, event):
@@ -131,7 +130,7 @@ def onItemTransition(item, event):
             action = 'doItem%s%s' % (transitionId[4].upper(), transitionId[5:])
         else:
             action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
-    do(action, event)
+    indexes = do(action, event)
 
     # check if we need to send the item to another meetingConfig
     if item.query_state() in cfg.getItemAutoSentToOtherMCStates():
@@ -151,10 +150,13 @@ def onItemTransition(item, event):
     notify(ItemAfterTransitionEvent(
         event.object, event.workflow, event.old_state, event.new_state,
         event.transition, event.status, event.kwargs))
-    # just reindex the entire object
-    item.reindexObject()
+    # update review_state and local_roles related indexes
+    review_state_related_indexes = item.adapted().getReviewStateRelatedIndexes()
+    notifyModifiedAndReindex(
+        item, extra_idxs=indexes + review_state_related_indexes)
     # An item has ben modified, use get_again for portlet_todo
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def onMeetingTransition(meeting, event):
@@ -168,20 +170,24 @@ def onMeetingTransition(meeting, event):
     # to late state or the other way round
     late_state = meeting.adapted().get_late_state()
     beforeLateStates = get_states_before(meeting, late_state)
-    if (event.old_state.id in beforeLateStates and event.new_state.id not in beforeLateStates) or \
-       (event.old_state.id not in beforeLateStates and event.new_state.id in beforeLateStates):
+    if event.old_state.id in beforeLateStates and event.new_state.id not in beforeLateStates:
+        # freshly late
         meeting.update_item_references()
+    elif event.old_state.id not in beforeLateStates and event.new_state.id in beforeLateStates:
+        # no more late, clear item references
+        meeting.update_item_references(clear=True)
 
-    # invalidate last meeting modified, use get_again for async meetings term render
+    # invalidate last meeting modified
     invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
+    # invalidate last meeting review_state changed
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.review_state', get_again=True)
 
     # notify a MeetingAfterTransitionEvent for subplugins so we are sure
     # that it is called after PloneMeeting meeting transition
     notify(MeetingAfterTransitionEvent(
         event.object, event.workflow, event.old_state, event.new_state,
         event.transition, event.status, event.kwargs))
-    # just reindex the entire object
-    event.object.reindexObject()
+    notifyModifiedAndReindex(meeting)
 
 
 def onAdviceTransition(advice, event):
@@ -250,33 +256,20 @@ def onConfigBeforeTransition(config, event):
 def _invalidateOrgRelatedCachedVocabularies():
     '''Clean cache for vocabularies using organizations.'''
     invalidate_cachekey_volatile_for(
-        "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary", get_again=True)
-    invalidate_cachekey_volatile_for(
-        "Products.PloneMeeting.vocabularies.associatedgroupsvocabulary", get_again=True)
-    invalidate_cachekey_volatile_for(
-        "Products.PloneMeeting.vocabularies.copygroupsvocabulary", get_again=True)
-    invalidate_cachekey_volatile_for(
         "Products.PloneMeeting.vocabularies.everyorganizationsvocabulary", get_again=True)
     invalidate_cachekey_volatile_for(
         "Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary", get_again=True)
     invalidate_cachekey_volatile_for(
-        "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary", get_again=True)
-    invalidate_cachekey_volatile_for(
         "Products.PloneMeeting.vocabularies.groupsinchargevocabulary", get_again=True)
     invalidate_cachekey_volatile_for(
         "Products.PloneMeeting.vocabularies.askedadvicesvocabulary", get_again=True)
+    # also invalidated here, called from organization._invalidateCachedMethods
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.ToolPloneMeeting._users_groups_value', get_again=True)
 
 
 def _invalidateUsersAndGroupsRelatedCachedVocabularies():
     '''Clean cache for vocabularies using Plone users and groups.'''
-    invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user', get_again=True)
-    invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user', get_again=True)
-    invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.ToolPloneMeeting.group_is_not_empty', get_again=True)
-    invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.ToolPloneMeeting.userIsAmong', get_again=True)
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.ToolPloneMeeting._users_groups_value', get_again=True)
 
@@ -685,9 +678,6 @@ def onItemModified(item, event):
     if not isinstance(event, ContainerModifiedEvent):
         meeting = item.getMeeting()
         if meeting:
-            # invalidate meeting actions panel
-            invalidate_cachekey_volatile_for(
-                'Products.PloneMeeting.Meeting.UID.{0}'.format(meeting.UID()), get_again=True)
             # update item references if necessary
             meeting.update_item_references(start_number=item.getItemNumber(), check_needed=True)
             # invalidate Meeting.get_item_insert_order caching
@@ -714,7 +704,9 @@ def onItemModified(item, event):
                     item._renameAfterCreation(check_auto_id=False)
                     item._at_creation_flag = False
     # An item has ben modified, use get_again for portlet_todo
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.MeetingItem.modified',
+        get_again=True)
 
 
 def storeImagesLocallyDexterity(obj):
@@ -859,10 +851,9 @@ def onAnnexAdded(annex, event):
             sendMailIfRelevant(parent, 'annexAdded', 'meetingmanagers', isSuffix=True)
 
         # update parent modificationDate, it is used for caching and co
-        # and reindex parent relevant indexes
-        notifyModifiedAndReindex(
-            parent,
-            extra_idxs=['SearchableText', 'annexes_index'])
+        # reindexing SearchableText to include annex title may be deferred
+        extra_idxs = parent.adapted().getIndexesRelatedTo('annex')
+        notifyModifiedAndReindex(parent, extra_idxs=extra_idxs)
 
 
 def onAnnexEditFinished(annex, event):
@@ -876,9 +867,12 @@ def onAnnexEditFinished(annex, event):
 def onAnnexModified(annex, event):
     '''When an annex is modified, update parent's modification date.'''
     parent = annex.aq_inner.aq_parent
-    # update modificationDate, it is used for caching and co
-    # we need to reindex parent's SearchableText as annex title is stored in it
-    notifyModifiedAndReindex(parent, extra_idxs=['SearchableText'])
+    # update parent modificationDate, it is used for caching and co
+    # reindexing SearchableText to include annex title may be deferred
+    extra_idxs = parent.adapted().getIndexesRelatedTo('annex')
+    if 'title' not in get_modified_attrs(event) and 'SearchableText' in extra_idxs:
+        extra_idxs.remove('SearchableText')
+    notifyModifiedAndReindex(parent, extra_idxs=extra_idxs)
 
 
 def onAnnexFileChanged(annex, event):
@@ -910,8 +904,11 @@ def onAnnexRemoved(annex, event):
         if parent.willInvalidateAdvices():
             parent.update_local_roles(invalidate=True)
 
-    # update modification date and SearchableText
-    notifyModifiedAndReindex(parent, extra_idxs=['SearchableText', 'annexes_index'])
+    # update parent modificationDate, it is used for caching and co
+    # reindexing SearchableText to include annex title may be deferred
+    # remove does not use deferred reindex
+    extra_idxs = parent.adapted().getIndexesRelatedTo('annex', check_deferred=False)
+    notifyModifiedAndReindex(parent, extra_idxs=extra_idxs)
 
 
 def onAnnexAttrChanged(annex, event):
@@ -922,6 +919,7 @@ def onAnnexAttrChanged(annex, event):
     if not event.is_created:
         # update relevant indexes if not event.is_created
         parent = annex.aq_inner.aq_parent
+        # reindex annexes_index here because annex modified is not called when attr changed
         notifyModifiedAndReindex(parent, extra_idxs=["annexes_index"])
 
         extras = 'object={0} values={1}'.format(
@@ -1034,12 +1032,14 @@ def onMeetingAdded(meeting, event):
                               xmlpath=os.path.dirname(__file__) +
                               '/faceted_conf/default_dashboard_widgets.xml')
     meeting.setLayout('meeting_view')
-    # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-    # use get_again for async meetings term render
+    # a Meeting date changed
     invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.vocabularies.meetingdatesvocabulary', get_again=True)
+        'Products.PloneMeeting.Meeting.date', get_again=True)
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.Meeting.modified', get_again=True)
+    # a Meeting review_state changed
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.Meeting.review_state', get_again=True)
 
 
 def onMeetingCreated(meeting, event):
@@ -1064,6 +1064,7 @@ def onMeetingCreated(meeting, event):
     meeting.item_votes = PersistentMapping()
     # place to store attendees when using contacts
     meeting.ordered_contacts = OrderedDict()
+    meeting._number_of_items = 0
 
 
 def onMeetingModified(meeting, event):
@@ -1084,23 +1085,24 @@ def onMeetingModified(meeting, event):
         # update every items itemReference if needed
         if set(mod_attrs).intersection(['date', 'first_item_number', 'meeting_number']):
             meeting.update_item_references(check_needed=False)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(meeting)
         # reindex every linked items if date value changed
         if not mod_attrs or "date" in mod_attrs:
             catalog = api.portal.get_tool('portal_catalog')
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(meeting)
             # items linked to the meeting
+            meeting_uid = meeting.UID()
             brains = catalog(portal_type=cfg.getItemTypeName(),
-                             meeting_uid=meeting.UID())
+                             meeting_uid=meeting_uid)
             # items having the meeting as the preferredMeeting
             brains = brains + catalog(portal_type=cfg.getItemTypeName(),
-                                      preferred_meeting_uid=meeting.UID())
+                                      preferred_meeting_uid=meeting_uid)
             for brain in brains:
                 item = brain.getObject()
                 item.reindexObject(idxs=['meeting_date', 'preferred_meeting_date'])
-            # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
+            # clean cache for "Products.PloneMeeting.Meeting.date"
             invalidate_cachekey_volatile_for(
-                "Products.PloneMeeting.vocabularies.meetingdatesvocabulary", get_again=True)
+                "Products.PloneMeeting.Meeting.date", get_again=True)
 
         # update local roles as power observers local roles may vary depending on meeting_access_on
         meeting.update_local_roles()
@@ -1114,10 +1116,11 @@ def onMeetingModified(meeting, event):
         invalidate_cachekey_volatile_for(
             'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures',
             get_again=True)
-        # invalidate assembly async load on item
-        invalidate_cachekey_volatile_for(
-            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignatures',
-            get_again=True)
+        # invalidate assembly async load on item when using raw fields
+        if not cfg.isUsingContacts():
+            invalidate_cachekey_volatile_for(
+                'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignaturesRawFields',
+                get_again=True)
         if need_reindex:
             meeting.reindexObject()
 
@@ -1172,10 +1175,9 @@ def onMeetingRemoved(meeting, event):
     for item_to_reindex in items_to_reindex:
         item_to_reindex.reindexObject(
             idxs=['preferred_meeting_uid', 'preferred_meeting_date'])
-    # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-    # use get_again for async meetings term render
+    # a Meeting date changed
     invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.vocabularies.meetingdatesvocabulary', get_again=True)
+        'Products.PloneMeeting.Meeting.date', get_again=True)
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.Meeting.modified', get_again=True)
 
@@ -1195,8 +1197,8 @@ def _notifyContainerModified(child):
 def onConfigOrPloneElementAdded(element, event):
     '''Called whenever an element in the MeetingConfig or a default element in Plone was added.'''
     # invalidate cache of relevant vocabularies
-    if hasattr(element, '_invalidateCachedVocabularies'):
-        element._invalidateCachedVocabularies()
+    if hasattr(element, '_invalidateCachedMethods'):
+        element._invalidateCachedMethods()
 
     # set modification date on every containers
     _notifyContainerModified(element)
@@ -1212,8 +1214,8 @@ def onConfigOrPloneElementModified(element, event):
         return
 
     # invalidate cache of relevant vocabularies
-    if hasattr(element, '_invalidateCachedVocabularies'):
-        element._invalidateCachedVocabularies()
+    if hasattr(element, '_invalidateCachedMethods'):
+        element._invalidateCachedMethods()
 
     # set modification date on every containers
     _notifyContainerModified(element)
@@ -1226,8 +1228,8 @@ def onConfigOrPloneElementTransition(element, event):
         return
 
     # invalidate cache of relevant vocabularies
-    if hasattr(element, '_invalidateCachedVocabularies'):
-        element._invalidateCachedVocabularies()
+    if hasattr(element, '_invalidateCachedMethods'):
+        element._invalidateCachedMethods()
 
     # set modification date on every containers
     _notifyContainerModified(element)
@@ -1240,8 +1242,8 @@ def onConfigOrPloneElementRemoved(element, event):
         return
 
     # invalidate cache of relevant vocabularies
-    if hasattr(element, '_invalidateCachedVocabularies'):
-        element._invalidateCachedVocabularies()
+    if hasattr(element, '_invalidateCachedMethods'):
+        element._invalidateCachedMethods()
 
     # set modification date on every containers
     _notifyContainerModified(element)

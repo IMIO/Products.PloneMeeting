@@ -713,7 +713,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                      'adviser_group': 'Vendors'},
             context=self.portal.REQUEST)
         # we need to invalidate ram.cache of _findLinkedRowsFor
-        cfg.setModificationDate(DateTime())
+        cfg.at_post_edit_script()
         self.assertEqual(cfg.validate_customAdvisers(customAdvisers), isolated_row_msg)
         customAdvisers[1]['is_linked_to_previous_row'] = '1'
 
@@ -2053,6 +2053,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
                          level_removed_config_error)
         cfg.setItemAdviceStates(())
+        cfg.at_post_edit_script()
         # used in transitionsToConfirm, as transition
         cfg.setTransitionsToConfirm(('MeetingItem.propose', 'MeetingItem.validate'))
         level_removed_config_error = \

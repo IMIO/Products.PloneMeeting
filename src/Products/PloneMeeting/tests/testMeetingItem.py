@@ -73,12 +73,14 @@ from Products.statusmessages.interfaces import IStatusMessage
 from zExceptions import Redirect
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getAdapter
+from zope.component import queryUtility
 from zope.event import notify
 from zope.i18n import translate
 from zope.interface import Interface
 from zope.interface import Invalid
 from zope.lifecycleevent import Attributes
 from zope.lifecycleevent import ObjectModifiedEvent
+from zope.ramcache.interfaces.ram import IRAMCache
 
 import transaction
 
@@ -147,7 +149,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
         self.assertEqual([cat.id for cat in cfg.getCategories(catType='classifiers')], expectedClassifiers)
 
-    def test_pm_ListProposingGroups(self):
+    def test_pm_ItemProposingGroupsVocabulary(self):
         '''Check MeetingItem.proposingGroup vocabulary.'''
         # test that if a user is cretor for a group but only reviewer for
         # another, it only returns the groups the user is creator for...  This
@@ -163,37 +165,47 @@ class testMeetingItem(PloneMeetingTestCase):
         _createMemberarea(self.portal, 'pmReviewer1')
         self.changeUser('pmReviewer1')
         item = self.create('MeetingItem')
-        self.assertEqual(item.listProposingGroups().keys(), [self.vendors_uid, ])
+        vocab = get_vocab(
+            item, "Products.PloneMeeting.vocabularies.userproposinggroupsvocabulary", only_factory=True)
+        self.assertEqual(vocab(item).by_value.keys(), [self.vendors_uid, ])
         # a 'Manager' will be able to select any proposing group
         # no matter he is a creator or not
         self.changeUser('admin')
-        self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid, self.vendors_uid, ])
+        self.assertEqual([term.value for term in vocab(item)._terms],
+                         [self.developers_uid, self.vendors_uid, ])
         # if 'developers' was selected on the item, it will be available to 'pmReviewer1'
         item.setProposingGroup(self.developers_uid)
         self.changeUser('pmReviewer1')
-        self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid, self.vendors_uid, ])
+        self.assertEqual([term.value for term in vocab(item)._terms],
+                         [self.developers_uid, self.vendors_uid, ])
 
-    def test_pm_ListProposingGroupsCaching(self):
-        '''If a user is added or removed from a _creators group, listProposingGroups
+    def test_pm_ItemProposingGroupsVocabularyCaching(self):
+        '''If a user is added or removed from a _creators group, the vocabulary
            behaves as expected.'''
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid])
+        vocab = get_vocab(
+            item, "Products.PloneMeeting.vocabularies.userproposinggroupsvocabulary", only_factory=True)
+        self.assertEqual(vocab(item).by_value.keys(), [self.developers_uid])
         self._addPrincipalToGroup('pmCreator1', self.vendors_creators)
-        self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid, self.vendors_uid])
+        self.assertEqual([term.value for term in vocab(item)._terms],
+                         [self.developers_uid, self.vendors_uid])
         # add user to a disabled group
         self._addPrincipalToGroup('pmCreator1', self.endUsers_creators)
-        self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid, self.vendors_uid])
+        self.assertEqual([term.value for term in vocab(item)._terms],
+                         [self.developers_uid, self.vendors_uid])
         # enable disabled group
         self.changeUser('siteadmin')
         self._select_organization(self.endUsers_uid)
         self.changeUser('pmCreator1')
-        self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid, self.endUsers_uid, self.vendors_uid])
+        self.assertEqual([term.value for term in vocab(item)._terms],
+                         [self.developers_uid, self.endUsers_uid, self.vendors_uid])
         # remove user from vendors
         self._removePrincipalFromGroups('pmCreator1', [self.vendors_creators])
-        self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid, self.endUsers_uid])
+        self.assertEqual([term.value for term in vocab(item)._terms],
+                         [self.developers_uid, self.endUsers_uid])
 
-    def test_pm_ListProposingGroupsKeepConfigSorting(self):
+    def test_pm_ItemProposingGroupsVocabularyKeepConfigSorting(self):
         """If 'proposingGroup' selected in MeetingConfig.itemFieldsToKeepConfigSortingFor,
            the vocabulary keeps config order, not sorted alphabetically."""
         cfg = self.meetingConfig
@@ -202,16 +214,20 @@ class testMeetingItem(PloneMeetingTestCase):
         self._select_organization(self.endUsers_uid)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
+        vocab = get_vocab(
+            item, "Products.PloneMeeting.vocabularies.userproposinggroupsvocabulary", only_factory=True)
         self.changeUser('siteadmin')
         # not in itemFieldsToKeepConfigSortingFor for now
         self.assertFalse('proposingGroup' in cfg.getItemFieldsToKeepConfigSortingFor())
-        self.assertEqual(item.listProposingGroups().keys(),
+        self.assertEqual([term.value for term in vocab(item)._terms],
                          [self.developers_uid, self.endUsers_uid, self.vendors_uid])
         cfg.setItemFieldsToKeepConfigSortingFor(('proposingGroup', ))
-        self.assertEqual(item.listProposingGroups().keys(),
+        # invalidate vocabularies caching
+        cfg.at_post_edit_script()
+        self.assertEqual([term.value for term in vocab(item)._terms],
                          [self.developers_uid, self.vendors_uid, self.endUsers_uid])
 
-    def test_pm_ListProposingGroupsWithGroupsInCharge(self):
+    def test_pm_ItemProposingGroupsWithGroupsInChargeVocabulary(self):
         '''Check MeetingItem.proposingGroupWithGroupInCharge vocabulary.
            It will evolve regarding groupInCharge, old value are kept and new values
            take groupsInCharge review_state into account.'''
@@ -234,35 +250,39 @@ class testMeetingItem(PloneMeetingTestCase):
         item1 = self.create('MeetingItem')
         developers_gic1 = '{0}__groupincharge__{1}'.format(self.developers_uid, org1_uid)
         vendors_gic2 = '{0}__groupincharge__{1}'.format(self.vendors_uid, org2_uid)
-        self.assertEqual(item1.listProposingGroupsWithGroupsInCharge().items(),
-                         ((developers_gic1, 'Developers (Org 1)'),
-                          (vendors_gic2, 'Vendors (Org 2)')))
+        vocab = get_vocab(
+            None,
+            "Products.PloneMeeting.vocabularies.userproposinggroupswithgroupsinchargevocabulary",
+            only_factory=True)
+        self.assertEqual([(term.value, term.title) for term in vocab(item1)._terms],
+                         [(developers_gic1, 'Developers (Org 1)'),
+                          (vendors_gic2, 'Vendors (Org 2)')])
         item1.setProposingGroupWithGroupInCharge(developers_gic1)
         # now disable group1
         self.changeUser('siteadmin')
         self._select_organization(org1_uid, remove=True)
         self.changeUser('pmCreator1')
         # still available for item as is use it
-        self.assertEqual(item1.listProposingGroupsWithGroupsInCharge().items(),
-                         ((developers_gic1, 'Developers (Org 1)'),
-                          (vendors_gic2, 'Vendors (Org 2)'),))
+        self.assertEqual([(term.value, term.title) for term in vocab(item1)._terms],
+                         [(developers_gic1, 'Developers (Org 1)'),
+                          (vendors_gic2, 'Vendors (Org 2)')])
         # but not for a new item
         item2 = self.create('MeetingItem')
-        self.assertEqual(item2.listProposingGroupsWithGroupsInCharge().items(),
-                         ((vendors_gic2, 'Vendors (Org 2)'),))
+        self.assertEqual([(term.value, term.title) for term in vocab(item2)._terms],
+                         [(vendors_gic2, 'Vendors (Org 2)')])
 
         # define another groupInCharge for developers
         self.developers.groups_in_charge = (org1_uid, org3_uid)
         # 3 choices are available on item1
         developers_gic3 = '{0}__groupincharge__{1}'.format(self.developers_uid, org3_uid)
-        self.assertEqual(item1.listProposingGroupsWithGroupsInCharge().items(),
-                         ((developers_gic1, 'Developers (Org 1)'),
+        self.assertEqual([(term.value, term.title) for term in vocab(item1)._terms],
+                         [(developers_gic1, 'Developers (Org 1)'),
                           (developers_gic3, 'Developers (Org 3)'),
-                          (vendors_gic2, 'Vendors (Org 2)'),))
+                          (vendors_gic2, 'Vendors (Org 2)')])
         # but only 2 for item2
-        self.assertEqual(item2.listProposingGroupsWithGroupsInCharge().items(),
-                         ((developers_gic3, 'Developers (Org 3)'),
-                          (vendors_gic2, 'Vendors (Org 2)'),))
+        self.assertEqual([(term.value, term.title) for term in vocab(item2)._terms],
+                         [(developers_gic3, 'Developers (Org 3)'),
+                          (vendors_gic2, 'Vendors (Org 2)')])
 
         # now if we remove completely group1 from groupsInCharge of developers
         # it still works, this way we may change a groupInCharge from group
@@ -270,15 +290,15 @@ class testMeetingItem(PloneMeetingTestCase):
         self.developers.groups_in_charge = (org3_uid, )
         self.vendors.groups_in_charge = (org1_uid, org2_uid, org3_uid)
         vendors_gic3 = '{0}__groupincharge__{1}'.format(self.vendors_uid, org3_uid)
-        self.assertEqual(item1.listProposingGroupsWithGroupsInCharge().items(),
-                         ((developers_gic1, 'Developers (Org 1)'),
+        self.assertEqual([(term.value, term.title) for term in vocab(item1)._terms],
+                         [(developers_gic1, 'Developers (Org 1)'),
                           (developers_gic3, 'Developers (Org 3)'),
                           (vendors_gic2, 'Vendors (Org 2)'),
-                          (vendors_gic3, 'Vendors (Org 3)'),))
-        self.assertEqual(item2.listProposingGroupsWithGroupsInCharge().items(),
-                         ((developers_gic3, 'Developers (Org 3)'),
+                          (vendors_gic3, 'Vendors (Org 3)')])
+        self.assertEqual([(term.value, term.title) for term in vocab(item2)._terms],
+                         [(developers_gic3, 'Developers (Org 3)'),
                           (vendors_gic2, 'Vendors (Org 2)'),
-                          (vendors_gic3, 'Vendors (Org 3)'),))
+                          (vendors_gic3, 'Vendors (Org 3)')])
 
     def test_pm_CloneItemRemovesAnnotations(self):
         '''Annotations relative to item sent to other MC are correctly cleaned.'''
@@ -1898,6 +1918,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # not in the meetingConfig.selectableCopyGroups
         self.developers.as_copy_group_on = "python: item.getProposingGroup() == " \
             "pm_utils.org_id_to_uid('vendors') and ['reviewers', 'advisers', ] or []"
+        notify(ObjectModifiedEvent(self.developers))
         self.changeUser('pmManager')
         # Creating an item with the default proposingGroup ('developers') does nothing
         i3 = self.create('MeetingItem')
@@ -1925,6 +1946,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # addAutoCopyGroups is triggered upon each edit (at_post_edit_script)
         self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
             "pm_utils.org_id_to_uid('vendors') and ['reviewers', ] or []"
+        notify(ObjectModifiedEvent(self.vendors))
         # edit the item, 'vendors_reviewers' should be in the copyGroups of the item
         i5._update_after_edit()
         self.failIf(i5.getCopyGroups())
@@ -1939,6 +1961,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # when removed from the config, while updating every items,
         # copyGroups are updated correctly
         self.vendors.as_copy_group_on = None
+        notify(ObjectModifiedEvent(self.vendors))
         self.changeUser('siteadmin')
         self.tool.update_all_local_roles()
         self.assertEqual(i5.autoCopyGroups,
@@ -1950,6 +1973,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__[self.developers_advisers])
         # if a wrong TAL expression is used, it does not break anything upon item at_post_edit_script
         self.vendors.as_copy_group_on = u"python: item.someUnexistingMethod()"
+        notify(ObjectModifiedEvent(self.vendors))
         i5._update_after_edit()
         self.assertEqual(i5.autoCopyGroups,
                          ['auto__{0}'.format(self.developers_reviewers),
@@ -1979,6 +2003,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # is only True on item creation
         self.vendors.as_copy_group_on = "python: (isCreated and item.getProposingGroup() == " \
             "pm_utils.org_id_to_uid('developers')) and ['reviewers', ] or []"
+        notify(ObjectModifiedEvent(self.vendors))
         item2 = self.create('MeetingItem')
         self.assertEqual(item2.autoCopyGroups, [auto_vendors_reviewers])
         # now unselect it and call at_post_edit_script again
@@ -2006,29 +2031,36 @@ class testMeetingItem(PloneMeetingTestCase):
         # set a correct expression so vendors is set as copy group
         self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
             "pm_utils.org_id_to_uid('developers') and ['reviewers', ] or []"
+        notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
         auto_vendors_reviewers = 'auto__{0}'.format(self.vendors_reviewers)
         self.assertEqual(item.autoCopyGroups, [auto_vendors_reviewers])
         # with a wrong TAL expression (syntax or content) it does not break
         self.vendors.as_copy_group_on = "python: item.someUnexistingMethod()"
+        notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
         # no matter the expression is wrong now, when a group is added in copy, it is left
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         self.vendors.as_copy_group_on = "python: some syntax error"
+        notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
         # no more there
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         # if it is a right TAL expression but that does not returns usable sufixes, it does not break neither
         self.vendors.as_copy_group_on = "python: item.getId() and True or True"
+        notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         self.vendors.as_copy_group_on = "python: item.getId() and 'some_wrong_string' or 'some_wrong_string'"
+        notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         self.vendors.as_copy_group_on = "python: item.getId()"
+        notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         self.vendors.as_copy_group_on = "python: 123"
+        notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
 
@@ -2047,7 +2079,7 @@ class testMeetingItem(PloneMeetingTestCase):
                          (self.developers_reviewers, ))
         self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
             "pm_utils.org_id_to_uid('developers') and ['reviewers', ] or []"
-        self.cleanMemoize()
+        notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
         auto_vendors_reviewers = 'auto__{0}'.format(self.vendors_reviewers)
         self.assertEqual(item.getAllCopyGroups(),
@@ -2536,6 +2568,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.validateItem(item)
         self.assertTrue(item.maySignItem())
         item.setItemIsSigned(True)
+        item._update_after_edit()
         self.presentItem(item)
         self.assertTrue(item.maySignItem())
         self.freezeMeeting(meeting)
@@ -2591,7 +2624,8 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # create a 'public' and a 'secret' item
         self.changeUser('pmManager')
-        # add copyGroups that check that 'external' viewers can access the item but not isPrivacyViewable
+        # add copyGroups that check that 'external' viewers can access
+        # the item but not isPrivacyViewable
         publicItem = self.create('MeetingItem')
         publicItem.setPrivacy('public')
         publicItem.setCategory('development')
@@ -2634,6 +2668,10 @@ class testMeetingItem(PloneMeetingTestCase):
         # but not isPrivacyViewable
         self.failIf(secretItem.adapted().isPrivacyViewable())
         self.assertRaises(Unauthorized, secretItem.meetingitem_view)
+        annexes_view = secretItem.restrictedTraverse('@@categorized-annexes')
+        self.assertRaises(Unauthorized, annexes_view)
+        iconifiedcategory_view = secretItem.restrictedTraverse('@@iconifiedcategory')
+        self.assertRaises(Unauthorized, iconifiedcategory_view)
         self.failIf(secretHeadingItem.adapted().isPrivacyViewable())
         self.assertRaises(Unauthorized, secretHeadingItem.meetingitem_view)
         # if we try to duplicate a not privacy viewable item, it raises Unauthorized
@@ -3558,6 +3596,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # test with autoCopyGroups and the include_auto=False parameter
         self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
             "pm_utils.org_id_to_uid('developers') and ['observers', 'advisers', ] or []"
+        notify(ObjectModifiedEvent(self.vendors))
         item._update_after_edit()
         self.assertEqual(item.autoCopyGroups, ['auto__{0}'.format(self.vendors_observers),
                                                'auto__{0}'.format(self.vendors_advisers)])
@@ -3804,6 +3843,7 @@ class testMeetingItem(PloneMeetingTestCase):
         vocab_keys = [term.token for term in vocab_factory(item)._terms]
         self.assertEqual(vocab_keys, [self.developers_uid])
         cfg.setSelectableAdvisers([self.developers_uid, self.vendors_uid])
+        cfg.at_post_edit_script()
         # now select the 'developers' as optionalAdvisers for the item
         item.setOptionalAdvisers((self.developers_uid, ))
         # still the complete vocabulary
@@ -3855,6 +3895,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # while using MeetingConfig.selectableAdviserUsers
         cfg.setSelectableAdvisers((self.vendors_uid, self.developers_uid))
         cfg.setSelectableAdviserUsers((self.developers_uid, ))
+        cfg.at_post_edit_script()
         vocab_keys = [term.token for term in vocab_factory(item, include_selected=False)._terms]
         # __userid__ available for developers but not for vendors
         self.assertEqual(
@@ -4200,8 +4241,12 @@ class testMeetingItem(PloneMeetingTestCase):
               'tal_expression': 'string:%s' % delayedItemDecision},))
         item2 = items[1]
         item2.setDecision(originalDecision)
+        # check not found for now in catalog
+        self.assertFalse(self.catalog(SearchableText='delayed'))
         self.do(item2, 'delay')
         self.assertEqual(item2.getDecision(), delayedItemDecision)
+        # correctly reindexed
+        self.assertTrue(self.catalog(SearchableText='delayed'))
         # if the item was duplicated (often the case when delaying an item), the duplicated
         # item keep the original decision
         duplicatedItem = item2.get_successors()[0]
@@ -4567,11 +4612,14 @@ class testMeetingItem(PloneMeetingTestCase):
         beforeMeetingEdit_rendered_actions_panel = actions_panel()
         meeting.date = datetime(2010, 10, 10)
         meeting._update_after_edit()
-        # now action is available
+        # action is not available because WE DO NOT INVALIDATE WHEN MEETING MODIFIED
+        # why?  because that would make cache disappear too fast and it is not necessary
         object_buttons = [k['id'] for k in pa.listFilteredActionsFor(item)['object_buttons']]
         self.assertTrue('dummy' in object_buttons)
         # and actions panel has been invalidated
-        self.assertNotEqual(beforeMeetingEdit_rendered_actions_panel, actions_panel())
+        self.assertEqual(beforeMeetingEdit_rendered_actions_panel, actions_panel())
+        # so that fictious usecase does not work for now, for performance reasons
+        # if needed, then the cachekey could manage meeting.modified optionnaly
 
     def test_pm_ItemActionsPanelCachingInvalidatedWhenMeetingConfigEdited(self):
         """Actions panel cache is invalidated when the MeetingConfig is edited."""
@@ -4590,6 +4638,111 @@ class testMeetingItem(PloneMeetingTestCase):
         self.cleanMemoize()
         afterMCEdit_rendered_actions_panel = actions_panel()
         self.assertNotEqual(beforeMCEdit_rendered_actions_panel, afterMCEdit_rendered_actions_panel)
+
+    def test_pm_ItemActionsPanelCachingProfiles(self):
+        """Actions panel cache is generated for various profiles, check
+           that is works as expected, profiles are:
+           - Manager;
+           - MeetingManager;
+           - item editor;
+           - item viewer;
+           - powerobserver."""
+        cfg = self.meetingConfig
+        # enable everything
+        cfg.setItemCopyGroupsStates(('itemcreated', 'proposed', 'validated'))
+        self._setPowerObserverStates(states=('itemcreated', 'proposed', 'validated'))
+        cfg.setItemAdviceStates(('itemcreated', 'proposed', 'validated'))
+        cfg.setItemAdviceEditStates(('itemcreated', 'proposed', 'validated'))
+        cfg.setItemAdviceViewStates(('itemcreated', 'proposed', 'validated'))
+
+        # create item
+        self.changeUser('pmCreator1')
+        data = {'copyGroups': (self.vendors_reviewers, ),
+                'optionalAdvisers': (self.vendors_uid, )}
+        item = self.create('MeetingItem', **data)
+        ramcache = queryUtility(IRAMCache)
+
+        def _call_actions_panel():
+            item_actions = item.restrictedTraverse('@@actions_panel')
+            # there is cache in request in imio.actionspanel
+            item_actions.member = self.member
+            item_actions()
+            return item_actions
+
+
+        def _sum_entries(call_actions_panel=True):
+            if call_actions_panel:
+                _call_actions_panel()
+            return sum(
+                [data['entries'] for data in ramcache.getStatistics()
+                 if data['path'] ==
+                 'Products.PloneMeeting.browser.overrides.MeetingItemActionsPanelView__call__'])
+
+        # creator
+        self.assertEqual(_sum_entries(False), 0)
+        self.assertEqual(_sum_entries(), 1)
+        # reviewer, does not have the hand on item, view as a Reader
+        self.changeUser('pmReviewer1')
+        self.assertEqual(_sum_entries(), 2)
+        # observer, Reader
+        self.changeUser('pmObserver1')
+        self.assertEqual(_sum_entries(), 2)
+        # copyGroups or optionalAdvisers, Reader
+        self.changeUser('pmReviewer2')
+        self.assertEqual(_sum_entries(), 2)
+        # powerobserver, Reader
+        self.changeUser('powerobserver1')
+        self.assertEqual(_sum_entries(), 2)
+
+        # propose item, pmReviewer1 has hand on item, other are Readers
+        self.changeUser('pmCreator1')
+        self.proposeItem(item)
+        self.assertEqual(_sum_entries(False), 2)
+        self.assertEqual(_sum_entries(), 3)
+        # reviewer, has hand on item
+        self.changeUser('pmReviewer1')
+        self.assertEqual(_sum_entries(), 4)
+        # observer, Reader
+        self.changeUser('pmObserver1')
+        self.assertEqual(_sum_entries(), 4)
+        # copyGroups or optionalAdvisers, Reader
+        self.changeUser('pmReviewer2')
+        self.assertEqual(_sum_entries(), 4)
+        # powerobserver,Reader
+        self.changeUser('powerobserver1')
+        self.assertEqual(_sum_entries(), 4)
+
+        # special case for powerobservers when using MeetingConfig.hideHistoryTo
+        cfg.setHideHistoryTo(('powerobservers', ))
+        self.assertEqual(_sum_entries(), 5)
+        # but still ok for others
+        self.changeUser('pmReviewer2')
+        self.assertEqual(_sum_entries(), 5)
+
+        # now test as a MeetingManager that has access when item validated
+        self.changeUser('pmReviewer1')
+        self.validateItem(item, as_manager=False)
+        self.assertEqual(_sum_entries(), 6)
+        # without meeting, MeetingManager may edit
+        self.changeUser('pmManager')
+        self.assertEqual(_sum_entries(), 7)
+        self.create('Meeting')
+        self.assertEqual(_sum_entries(), 8)
+        # does not change for others
+        self.changeUser('pmCreator1')
+        self.assertEqual(_sum_entries(), 8)
+        # reviewer, has hand on item
+        self.changeUser('pmReviewer1')
+        self.assertEqual(_sum_entries(), 8)
+        # observer, Reader
+        self.changeUser('pmObserver1')
+        self.assertEqual(_sum_entries(), 8)
+        # copyGroups or optionalAdvisers, Reader
+        self.changeUser('pmReviewer2')
+        self.assertEqual(_sum_entries(), 8)
+        # powerobserver, Reader but changed as using MeetingConfig.hideHistoryTo
+        self.changeUser('powerobserver1')
+        self.assertEqual(_sum_entries(), 9)
 
     def test_pm_HistoryCommentViewability(self):
         '''Test the MeetingConfig.hideItemHistoryCommentsToUsersOutsideProposingGroup parameter
@@ -6208,7 +6361,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # test using at_post_edit_script, aka full edit form
         decision = '<p>Working external image <img src="%s"/>.</p>' % self.external_image3
         item.setDecision(decision)
-        item._update_after_edit()
+        item.at_post_edit_script()
         self.assertTrue('1035-600x400.jpg' in item.objectIds())
         img3 = item.get('1035-600x400.jpg')
         # external image link was updated
@@ -6220,7 +6373,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # that has a link to an unexisting image or so
         decision = '<p>Not working external image <img src="https://i.picsum.photos/id/449/400.png">.</p>'
         item.setDecision(decision)
-        item._update_after_edit()
+        item.at_post_edit_script()
         self.assertTrue('1035-600x400.jpg' in item.objectIds())
         # nothing was done
         self.assertListEqual(
@@ -6254,7 +6407,7 @@ class testMeetingItem(PloneMeetingTestCase):
             'resolveuid/{0}'.format(img2.UID()))
         item.setDescription(text)
         self.assertEqual(item.objectIds(), ['dot.gif', 'dot2.gif'])
-        item._update_after_edit()
+        item.at_post_edit_script()
         # we have images saved locally
         self.assertEqual(sorted(item.objectIds()), ['1025-400x300.jpg', 'dot.gif', 'dot2.gif'])
 
@@ -6798,6 +6951,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemReferenceAdaptedWhenItemInsertedOrRemovedOrDeletedFromMeeting(self):
         """Item reference is set when item is inserted into a meeting."""
+        self.tool.setDeferParentReindex(())
         # remove recurring items in self.meetingConfig
         self._removeConfigObjectsFor(self.meetingConfig)
         self.changeUser('pmManager')
@@ -6898,6 +7052,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemReferenceUpdateWhenItemPositionChangedOnMeeting(self):
         """When an item position changed in the meeting, the itemReference is updated."""
+        self.tool.setDeferParentReindex(())
         # remove recurring items in self.meetingConfig
         self._removeConfigObjectsFor(self.meetingConfig)
         self.changeUser('pmManager')
@@ -7056,14 +7211,15 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemReferenceFoundInItemSearchableText(self):
         """ """
+        self.tool.setDeferParentReindex(())
         # remove recurring items in self.meetingConfig
         self._removeConfigObjectsFor(self.meetingConfig)
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=datetime(2017, 3, 3, 0, 0))
-        item1 = self.create('MeetingItem')
-        item2 = self.create('MeetingItem')
-        item3 = self.create('MeetingItem')
-        item4 = self.create('MeetingItem')
+        item1 = self.create('MeetingItem', title="Item1 title")
+        item2 = self.create('MeetingItem', title="Item2 title")
+        item3 = self.create('MeetingItem', title="Item3 title")
+        item4 = self.create('MeetingItem', title="Item4 title")
         self.presentItem(item1)
         self.presentItem(item2)
         self.presentItem(item3)
@@ -7090,6 +7246,19 @@ class testMeetingItem(PloneMeetingTestCase):
         brains_item4_ref = self.catalog(SearchableText=item4.getItemReference())
         self.assertEqual(len(brains_item4_ref), 1)
         self.assertEqual(brains_item4_ref[0].UID, item4.UID())
+        # reindex may be deferred when updating item reference
+        self.tool.setDeferParentReindex(('item_reference'))
+        item1.setItemReference('')
+        item1.reindexObject()
+        meeting.update_item_references()
+        self.assertEqual(item1.getItemReference(), 'Ref. 20170303/1')
+        self.assertEqual(item2.getItemReference(), 'Ref. 20170303/2')
+        self.assertEqual(item3.getItemReference(), 'Ref. 20170303/3')
+        self.assertEqual(item4.getItemReference(), 'Ref. 20170303/4')
+        self.assertFalse(self.catalog(SearchableText=item1.getItemReference()))
+        # when deferred, reindex at next opportunity
+        item1.processForm()
+        self.assertTrue(self.catalog(SearchableText=item1.getItemReference()))
 
     def test_pm_ItemReferenceOfItemsOutsideMeeting(self):
         """Item reference is also computed on items outside meeting
@@ -7178,7 +7347,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         widget = item.getField('observations').widget
         self.assertFalse(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
-        self.assertTrue(item.adapted().showObservations())
+        self.assertFalse(item.adapted().showObservations())
         cfg.setUsedItemAttributes(('observations', ))
         # MeetingItem.attribute_is_used is RAMCached
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')

@@ -277,7 +277,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.vendors.groups_in_charge = (self.developers_uid, )
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setProposingGroupWithGroupInCharge(item.listProposingGroupsWithGroupsInCharge()[0])
+        item.setProposingGroupWithGroupInCharge(
+            item.Vocabulary('proposingGroupWithGroupInCharge')[0][0])
         self.assertEqual(item.getProposingGroupWithGroupInCharge(),
                          '{0}__groupincharge__{1}'.format(self.developers_uid, self.vendors_uid))
         self.assertEqual(item.getProposingGroup(), self.developers_uid)
@@ -447,7 +448,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2.setUsingGroups([self.vendors_uid])
         self.changeUser('pmCreator1')
-        self.assertFalse(self.vendors in self.tool.get_orgs_for_user())
+        self.assertFalse(self.vendors_uid in self.tool.get_orgs_for_user())
         self.assertTrue(self.tool.showPloneMeetingTab(cfg))
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
         self.assertFalse(self.tool.showPloneMeetingTab(cfg2))
@@ -698,26 +699,26 @@ class testToolPloneMeeting(PloneMeetingTestCase):
             self.tool.get_orgs_for_user(the_objects=False),
             [self.developers_uid, self.vendors_uid])
         self.assertEqual(
-            self.tool.get_orgs_for_user(),
+            self.tool.get_orgs_for_user(the_objects=True),
             [get_organization(self.developers_uid), get_organization(self.vendors_uid)])
 
         # check the 'suffix' parameter, it will check that user is in a Plone group of that suffix
         # here, 'pmManager' is only in the '_creators' or 'developers'
         self.assertEqual(
-            [org.UID() for org in self.tool.get_orgs_for_user(suffixes=['reviewers'])],
+            self.tool.get_orgs_for_user(suffixes=['reviewers']),
             [self.developers_uid])
 
         # check the 'omitted_suffixes' parameter, it will not consider Plone group having that suffix
         # here, if we omit the 'advisers' suffix, the 'vendors' organization will not be returned
         self.assertEqual(
-            [org.UID() for org in self.tool.get_orgs_for_user(omitted_suffixes=['advisers'])],
+            self.tool.get_orgs_for_user(omitted_suffixes=['advisers']),
             [self.developers_uid])
 
         # we can get organization for another user
         pmCreator1 = api.user.get('pmCreator1')
         self.assertEqual(sorted(pmCreator1.getGroups()),
                          sorted(['AuthenticatedUsers', self.developers_creators]))
-        self.assertEqual([org.UID() for org in self.tool.get_orgs_for_user(user_id='pmCreator1')],
+        self.assertEqual(self.tool.get_orgs_for_user(user_id='pmCreator1'),
                          [self.developers_uid, ])
 
         # the 'active' parameter will return only active orgs
@@ -725,17 +726,18 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.changeUser('admin')
         self._select_organization(self.vendors_uid, remove=True)
         self.changeUser('user')
-        self.assertEqual([org.UID() for org in self.tool.get_orgs_for_user(only_selected=True)],
+        self.assertEqual(self.tool.get_orgs_for_user(only_selected=True),
                          [self.developers_uid, ])
-        self.assertEqual([org.UID() for org in self.tool.get_orgs_for_user(only_selected=False)],
+        self.assertEqual(self.tool.get_orgs_for_user(only_selected=False),
                          [self.developers_uid, self.vendors_uid, ])
 
     def test_pm_UpdateCopyGroups(self):
         """Test the update_all_local_roles method that update every items when configuration changed.
            First set copy groups may view items in state 'itemcreated' then change to 'proposed'."""
-        self.meetingConfig.setSelectableCopyGroups((self.developers_reviewers, self.vendors_reviewers))
-        self.meetingConfig.setUseCopies(True)
-        self.meetingConfig.setItemCopyGroupsStates(('itemcreated', ))
+        cfg = self.meetingConfig
+        cfg.setSelectableCopyGroups((self.developers_reviewers, self.vendors_reviewers))
+        cfg.setUseCopies(True)
+        cfg.setItemCopyGroupsStates(('itemcreated', ))
         # only available to 'Managers'
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'update_all_local_roles')
@@ -751,7 +753,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         # change configuration, update_all_local_roles then check again
         self.changeUser('siteadmin')
-        self.meetingConfig.setItemCopyGroupsStates((self._stateMappingFor('proposed'), ))
+        cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), ))
         self.tool.restrictedTraverse('update_all_local_roles')()
         self.assertFalse(self.vendors_reviewers in item1.__ac_local_roles__)
         self.assertTrue(self.vendors_reviewers in item2.__ac_local_roles__)
@@ -895,21 +897,23 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # only available to MeetingManagers if last defined holidays is < 60 days in the future
         self.changeUser('pmManager')
 
-        # working for now
-        self.assertFalse(self.tool.showHolidaysWarning(self.portal))
+        # not shown for now
+        self.assertFalse(self.tool.showHolidaysWarning(self.meetingConfig))
 
         # make message shows
         self.tool.setHolidays([{'date': (DateTime() + 59).strftime('%y/%m/%d')}])
-        self.assertTrue(self.tool.showHolidaysWarning(self.tool))
+        self.assertTrue(self.tool.showHolidaysWarning(self.meetingConfig))
+        # not shown if passing something else than a MeetingConfig
+        self.assertFalse(self.tool.showHolidaysWarning(self.portal))
 
         # not shown if not a MeetingManager
         self.changeUser('pmCreator1')
-        self.assertFalse(self.tool.showHolidaysWarning(self.tool))
+        self.assertFalse(self.tool.showHolidaysWarning(self.meetingConfig))
 
         # not shown if last defined holiday is in more than 60 days
         self.changeUser('pmManager')
         self.tool.setHolidays([{'date': (DateTime() + 61).strftime('%Y/%m/%d')}])
-        self.assertFalse(self.tool.showHolidaysWarning(self.tool))
+        self.assertFalse(self.tool.showHolidaysWarning(self.meetingConfig))
 
     def test_pm_UserIsAmong(self):
         """This method will check if a user has a group that ends with a list of given suffixes.
@@ -1043,12 +1047,13 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(
             sorted([group.id for group in self.tool.get_plone_groups_for_user(the_objects=True)]),
             sorted(self.tool.get_plone_groups_for_user(the_objects=False)))
+        # when necessary to filter on org_uids, use get_filtered_plone_groups_for_user
         self.assertEqual(
             sorted([group.id for group in
-                    self.tool.get_plone_groups_for_user(
-                        org_uid=self.developers_uid, the_objects=True)]),
-            sorted(self.tool.get_plone_groups_for_user(
-                org_uid=self.developers_uid, the_objects=False)))
+                    self.tool.get_filtered_plone_groups_for_user(
+                        org_uids=[self.developers_uid], the_objects=True)]),
+            sorted(self.tool.get_filtered_plone_groups_for_user(
+                org_uids=[self.developers_uid], the_objects=False)))
 
         # works also when using api.env.adopt_user like it is the case
         # in MeetingItem.setHistorizedTakenOverBy
@@ -1103,28 +1108,34 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         self.assertFalse(self.tool.isPowerObserverForCfg(cfg))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
-                                                         power_observer_type='powerobservers'))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
-                                                         power_observer_type='restrictedpowerobservers'))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
-                                                         power_observer_type='unknown'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['powerobservers']))
+        self.assertFalse(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['restrictedpowerobservers']))
+        self.assertFalse(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['powerobservers', 'restrictedpowerobservers']))
+        self.assertFalse(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['unknown']))
         self.changeUser('powerobserver1')
         self.assertTrue(self.tool.isPowerObserverForCfg(cfg))
-        self.assertTrue(self.tool.isPowerObserverForCfg(cfg,
-                                                        power_observer_type='powerobservers'))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
-                                                         power_observer_type='restrictedpowerobservers'))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
-                                                         power_observer_type='unknown'))
+        self.assertTrue(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['powerobservers']))
+        self.assertFalse(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['restrictedpowerobservers']))
+        self.assertTrue(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['powerobservers', 'restrictedpowerobservers']))
+        self.assertFalse(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['unknown']))
         self.changeUser('restrictedpowerobserver1')
         self.assertTrue(self.tool.isPowerObserverForCfg(cfg))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
-                                                         power_observer_type='powerobservers'))
-        self.assertTrue(self.tool.isPowerObserverForCfg(cfg,
-                                                        power_observer_type='restrictedpowerobservers'))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
-                                                         power_observer_type='unknown'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['powerobservers']))
+        self.assertTrue(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['restrictedpowerobservers']))
+        self.assertTrue(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['powerobservers', 'restrictedpowerobservers']))
+        self.assertFalse(self.tool.isPowerObserverForCfg(
+            cfg, power_observer_types=['unknown']))
 
     def test_pm_ToolAccessibleByUsersWithoutGroups(self):
         """Whe a user without any group logs in, he may access methods on portal_plonemeeting,

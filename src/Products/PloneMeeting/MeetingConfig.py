@@ -29,6 +29,7 @@ from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanVocabularyCacheFor
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import get_vocab
+from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToObject
 from persistent.list import PersistentList
 from plone import api
@@ -121,6 +122,7 @@ from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import listifySignatures
+from Products.PloneMeeting.utils import reindex_object
 from Products.PloneMeeting.utils import reviewersFor
 from Products.PloneMeeting.utils import translate_list
 from Products.PloneMeeting.utils import updateAnnexesAccess
@@ -2480,7 +2482,7 @@ schema = Schema((
         ),
         schemata="committees",
         multiValued=1,
-        vocabulary_factory='Products.PloneMeeting.vocabularies.simplified_selectable_heldpositions_vocabulary',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.every_heldpositions_vocabulary',
         default=defValues.orderedCommitteeContacts,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -2840,7 +2842,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: tool.get_orgs_for_user(the_objects=False)",
+                    'tal_condition': "python: tool.get_orgs_for_user()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Living items, items in the current flow, by default every states but decidedStates
@@ -2859,7 +2861,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: tool.get_orgs_for_user(the_objects=False)",
+                    'tal_condition': "python: tool.get_orgs_for_user()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items I take over
@@ -2877,7 +2879,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'showNumberOfItems': False,
                     'tal_condition': "python: 'takenOverBy' in cfg.getUsedItemAttributes() "
                                      "and (tool.get_orgs_for_user(omitted_suffixes=['observers', ], "
-                                     "the_objects=False) or tool.isManager(here))",
+                                     "the_objects=False) or tool.isManager(cfg))",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # All (visible) items
@@ -3217,7 +3219,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: tool.isManager(here) and "
+                    'tal_condition': "python: tool.isManager(cfg) and "
                                      "('return_to_proposing_group' in cfg.getWorkflowAdaptations() or "
                                      "'return_to_proposing_group_with_all_validations' in "
                                      "cfg.getWorkflowAdaptations() or 'return_to_proposing_group_with_last_validation' "
@@ -3543,16 +3545,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Overrides the field 'orderedItemInitiators' acessor to manage theObjects.'''
         res = self.getField('orderedItemInitiators').get(self, **kwargs)
         if theObjects:
-            # query held_positions
-            catalog = api.portal.get_tool('portal_catalog')
-            brains = catalog(UID=res)
-
-            # make sure we have correct order because query was not sorted
-            # we need to sort found brains according to uids
-            def getKey(item):
-                return res.index(item.UID)
-            brains = sorted(brains, key=getKey)
-            res = [brain.getObject() for brain in brains]
+            res = uuidsToObjects(res, ordered=True, unrestricted=True)
         return res
 
     security.declarePublic('getOrderedAssociatedOrganizations')
@@ -3561,15 +3554,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Overrides the field 'orderedAssociatedOrganizations' acessor to manage theObjects.'''
         res = self.getField('orderedAssociatedOrganizations').get(self, **kwargs)
         if theObjects:
-            catalog = api.portal.get_tool('portal_catalog')
-            brains = catalog(UID=res)
-
-            # make sure we have correct order because query was not sorted
-            # we need to sort found brains according to uids
-            def getKey(item):
-                return res.index(item.UID)
-            brains = sorted(brains, key=getKey)
-            res = [brain.getObject() for brain in brains]
+            res = uuidsToObjects(res, ordered=True, unrestricted=True)
         return res
 
     security.declarePublic('getOrderedGroupsInCharge')
@@ -3578,15 +3563,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Overrides the field 'orderedGroupsInCharge' acessor to manage theObjects.'''
         res = self.getField('orderedGroupsInCharge').get(self, **kwargs)
         if theObjects:
-            catalog = api.portal.get_tool('portal_catalog')
-            brains = catalog(UID=res)
-
-            # make sure we have correct order because query was not sorted
-            # we need to sort found brains according to uids
-            def getKey(item):
-                return res.index(item.UID)
-            brains = sorted(brains, key=getKey)
-            res = [brain.getObject() for brain in brains]
+            res = uuidsToObjects(res, ordered=True, unrestricted=True)
         return res
 
     security.declarePublic('getMaxShownListings')
@@ -3613,14 +3590,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Overrides the field 'toDoListSearches' accessor to manage theObjects.'''
         res = self.getField('toDoListSearches').get(self, **kwargs)
         if theObjects:
-            catalog = api.portal.get_tool('portal_catalog')
-            brains = catalog(UID=res)
-            searches = [brain.getObject() for brain in brains]
-
-            # keep order as defined in the field
-            def getKey(item):
-                return res.index(item.UID())
-            res = sorted(searches, key=getKey)
+            res = uuidsToObjects(res, ordered=True, unrestricted=True)
         return res
 
     security.declarePrivate('listAnnexesBatchActions')
@@ -3939,7 +3909,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         removedIdentifiers = [v['identifier'] for v in self.getListTypes() if v['identifier'] not in identifiers]
         catalog = api.portal.get_tool('portal_catalog')
         for removedIdentifier in removedIdentifiers:
-            brains = catalog(portal_type=self.getItemTypeName(), listType=removedIdentifier)
+            brains = catalog.unrestrictedSearchResults(
+                portal_type=self.getItemTypeName(), listType=removedIdentifier)
             if brains:
                 return _('error_list_types_identifier_removed_already_used',
                          mapping={'url': brains[0].getURL()})
@@ -3961,7 +3932,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         catalog = api.portal.get_tool('portal_catalog')
         for removed in removeds:
             # may be linked to an item or a meeting
-            brains = catalog(getConfigId=self.getId(), committees_index=removed)
+            brains = catalog.unrestrictedSearchResults(
+                getConfigId=self.getId(), committees_index=removed)
             if brains:
                 return _('error_committee_row_id_removed_already_used',
                          mapping={'url': brains[0].getURL(),
@@ -4246,9 +4218,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # the rule is in use, check every items if the rule is used
             catalog = api.portal.get_tool('portal_catalog')
             org_uid = self._dataForCustomAdviserRowId(row_id)['org']
-            brains = catalog(portal_type=self.getItemTypeName(),
-                             indexAdvisers=[DELAYAWARE_ROW_ID_PATTERN.format(row_id),
-                                            REAL_ORG_UID_PATTERN.format(org_uid)])
+            brains = catalog.unrestrictedSearchResults(
+                portal_type=self.getItemTypeName(),
+                indexAdvisers=[DELAYAWARE_ROW_ID_PATTERN.format(row_id),
+                               REAL_ORG_UID_PATTERN.format(org_uid)])
             if brains:
                 item = brains[0].getObject()
                 return item.absolute_url()
@@ -4555,8 +4528,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if 'no_publication' in added:
             # this will remove the 'published' state for Meeting and 'itempublished' for MeetingItem
             # check that no more elements are in these states
-            if catalog(portal_type=self.getItemTypeName(), review_state='itempublished') or \
-               catalog(portal_type=self.getMeetingTypeName(), review_state='published'):
+            if catalog.unrestrictedSearchResults(
+                portal_type=self.getItemTypeName(), review_state='itempublished') or \
+               catalog.unrestrictedSearchResults(
+                    portal_type=self.getMeetingTypeName(), review_state='published'):
                 return translate('wa_added_no_publication_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4574,7 +4549,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # 'itemcreated__or__proposedToValidationLevel1__or__..._waiting_advices' for example
             itemWF = wfTool.getWorkflowsFor(self.getItemTypeName())[0]
             waiting_advices_states = [state for state in itemWF.states if 'waiting_advices' in state]
-            if catalog(portal_type=self.getItemTypeName(), review_state=waiting_advices_states):
+            if catalog.unrestrictedSearchResults(
+                    portal_type=self.getItemTypeName(), review_state=waiting_advices_states):
                 return translate('wa_removed_waiting_advices_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4583,7 +4559,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                  ('return_to_proposing_group_with_all_validations' in added)):
             # this will remove the 'returned_to_proposing_group' state for MeetingItem
             # check that no more items are in this state
-            if catalog(portal_type=self.getItemTypeName(), review_state='returned_to_proposing_group'):
+            if catalog.unrestrictedSearchResults(
+                    portal_type=self.getItemTypeName(), review_state='returned_to_proposing_group'):
                 return translate('wa_removed_return_to_proposing_group_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4592,7 +4569,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            not ('return_to_proposing_group_with_all_validations' in added):
             # this will remove the 'returned_to_proposing_group with last validation state'
             # for MeetingItem check that no more items are in this state
-            if catalog(portal_type=self.getItemTypeName(), review_state=validation_returned_states):
+            if catalog.unrestrictedSearchResults(
+                    portal_type=self.getItemTypeName(), review_state=validation_returned_states):
                 return translate('wa_removed_return_to_proposing_group_with_last_validation_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4600,17 +4578,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # this will remove the 'returned_to_proposing_group with every validation states'
             # for MeetingItem check that no more items are in these states
             # not downgrade from all to last validation if one item is in intermediary state
-            if (catalog(portal_type=self.getItemTypeName(), review_state=validation_returned_states)) or \
+            if (catalog.unrestrictedSearchResults(
+                    portal_type=self.getItemTypeName(), review_state=validation_returned_states)) or \
                (('return_to_proposing_group' not in added) and
                 ('return_to_proposing_group_with_last_validation' not in added) and
-                    (catalog(portal_type=self.getItemTypeName(), review_state='returned_to_proposing_group'))):
+                    (catalog.unrestrictedSearchResults(
+                        portal_type=self.getItemTypeName(), review_state='returned_to_proposing_group'))):
                 return translate('wa_removed_return_to_proposing_group_with_all_validations_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
         if 'hide_decisions_when_under_writing' in removed:
             # this will remove the 'decisions_published' state for Meeting
             # check that no more meetings are in this state
-            if catalog(portal_type=self.getMeetingTypeName(), review_state='decisions_published'):
+            if catalog.unrestrictedSearchResults(
+                    portal_type=self.getMeetingTypeName(), review_state='decisions_published'):
                 return translate('wa_removed_hide_decisions_when_under_writing_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4618,7 +4599,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            'accepted_out_of_meeting_and_duplicated' in removed:
             # this will remove the 'accepted_out_of_meeting' state for Item
             # check that no more items are in this state
-            if catalog(portal_type=self.getItemTypeName(), review_state='accepted_out_of_meeting'):
+            if catalog.unrestrictedSearchResults(
+                    portal_type=self.getItemTypeName(), review_state='accepted_out_of_meeting'):
                 return translate('wa_removed_accepted_out_of_meeting_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4626,49 +4608,56 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            'accepted_out_of_meeting_emergency_and_duplicated' in removed:
             # this will remove the 'accepted_out_of_meeting_emergency' state for Item
             # check that no more items are in this state
-            if catalog(portal_type=self.getItemTypeName(), review_state='accepted_out_of_meeting_emergency'):
+            if catalog.unrestrictedSearchResults(
+                    portal_type=self.getItemTypeName(), review_state='accepted_out_of_meeting_emergency'):
                 return translate('wa_removed_accepted_out_of_meeting_emergency_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
         if 'postpone_next_meeting' in removed:
             # this will remove the 'postponed_next_meeting' state for Item
             # check that no more items are in this state
-            if catalog(portal_type=self.getItemTypeName(), review_state='postponed_next_meeting'):
+            if catalog.unrestrictedSearchResults(
+                    portal_type=self.getItemTypeName(), review_state='postponed_next_meeting'):
                 return translate('wa_removed_postpone_next_meeting_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
         if 'mark_not_applicable' in removed:
             # this will remove the 'marked_not_applicable' state for Item
             # check that no more items are in this state
-            if catalog(portal_type=self.getItemTypeName(), review_state='marked_not_applicable'):
+            if catalog.unrestrictedSearchResults(
+                    portal_type=self.getItemTypeName(), review_state='marked_not_applicable'):
                 return translate('wa_removed_mark_not_applicable_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
         if 'refused' in removed:
             # this will remove the 'refused' state for Item
             # check that no more items are in this state
-            if catalog(portal_type=self.getItemTypeName(), review_state='refused'):
+            if catalog.unrestrictedSearchResults(
+                    portal_type=self.getItemTypeName(), review_state='refused'):
                 return translate('wa_removed_refused_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
         if 'delayed' in removed:
             # this will remove the 'delayed' state for Item
             # check that no more items are in this state
-            if catalog(portal_type=self.getItemTypeName(), review_state='delayed'):
+            if catalog.unrestrictedSearchResults(
+                    portal_type=self.getItemTypeName(), review_state='delayed'):
                 return translate('wa_removed_delayed_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
         if 'accepted_but_modified' in removed:
             # this will remove the 'accepted_but_modified' state for Item
             # check that no more items are in this state
-            if catalog(portal_type=self.getItemTypeName(), review_state='accepted_but_modified'):
+            if catalog.unrestrictedSearchResults(
+                    portal_type=self.getItemTypeName(), review_state='accepted_but_modified'):
                 return translate('wa_removed_accepted_but_modified_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
         if 'pre_accepted' in removed:
             # this will remove the 'pre_accepted' state for Item
             # check that no more items are in this state
-            if catalog(portal_type=self.getItemTypeName(), review_state='pre_accepted'):
+            if catalog.unrestrictedSearchResults(
+                    portal_type=self.getItemTypeName(), review_state='pre_accepted'):
                 return translate('wa_removed_pre_accepted_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4678,7 +4667,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            ('removed_and_duplicated' in removed and 'removed' not in added):
             # this will remove the 'removed' state for Item
             # check that no more items are in this state
-            if catalog(portal_type=self.getItemTypeName(), review_state='removed'):
+            if catalog.unrestrictedSearchResults(
+                    portal_type=self.getItemTypeName(), review_state='removed'):
                 return translate('wa_removed_removed_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4769,8 +4759,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         item_contained_states += list(removed_or_disabled_states)
         if item_contained_states:
             catalog = api.portal.get_tool('portal_catalog')
-            brains = catalog(portal_type=self.getItemTypeName(),
-                             review_state=item_contained_states)
+            brains = catalog.unrestrictedSearchResults(
+                portal_type=self.getItemTypeName(), review_state=item_contained_states)
             if brains:
                 aBrain = brains[0]
                 return translate('item_wf_val_states_can_not_be_removed_in_use',
@@ -4928,11 +4918,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  context=self.REQUEST)
 
         # check that if we selected 'on_to_discuss', we actually use the field 'toDisucss'...
+        usedItemAttrs = self.getUsedItemAttributes()
         if 'on_to_discuss' in res:
             if hasattr(self.REQUEST, 'usedItemAttributes'):
                 notUsingToDiscuss = 'toDiscuss' not in self.REQUEST.get('usedItemAttributes')
             else:
-                notUsingToDiscuss = 'toDiscuss' not in self.getUsedItemAttributes()
+                notUsingToDiscuss = 'toDiscuss' not in usedItemAttrs
             if notUsingToDiscuss:
                 return translate('inserting_methods_not_using_to_discuss_error',
                                  domain='PloneMeeting',
@@ -4943,7 +4934,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if hasattr(self.REQUEST, 'usedItemAttributes'):
                 notUsingPollType = 'pollType' not in self.REQUEST.get('usedItemAttributes')
             else:
-                notUsingPollType = 'pollType' not in self.getUsedItemAttributes()
+                notUsingPollType = 'pollType' not in usedItemAttrs
             if notUsingPollType:
                 return translate('inserting_methods_not_using_poll_type_error',
                                  domain='PloneMeeting',
@@ -4953,7 +4944,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if hasattr(self.REQUEST, 'usedItemAttributes'):
                 notUsingPrivacy = 'privacy' not in self.REQUEST.get('usedItemAttributes')
             else:
-                notUsingPrivacy = 'privacy' not in self.getUsedItemAttributes()
+                notUsingPrivacy = 'privacy' not in usedItemAttrs
             if notUsingPrivacy:
                 return translate('inserting_methods_not_using_privacy_error',
                                  domain='PloneMeeting',
@@ -5972,7 +5963,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     portalType.icon_expr = icon_expr
                     portalType.icon_expr_object = Expression(portalType.icon_expr)
                     catalog = api.portal.get_tool('portal_catalog')
-                    brains = catalog(portal_type=portal_type)
+                    brains = catalog.unrestrictedSearchResults(portal_type=portal_type)
                     for brain in brains:
                         item = brain.getObject()
                         item.reindexObject(idxs=['getIcon', ])
@@ -6070,7 +6061,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if previous_collection_id is not None and \
                previous_collection_id in container.objectIds():
                 previous_collection_id_pos = container.getObjectPosition(previous_collection_id)
-                container.moveObjectToPosition(collectionId, previous_collection_id_pos+1)
+                container.moveObjectToPosition(collectionId, previous_collection_id_pos + 1)
             previous_collection_id = collectionId
         return added_collections
 
@@ -6444,6 +6435,23 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 if base_hasattr(subFolder, 'processForm'):
                     subFolder.processForm(values={'dummy': None})
                 subFolder.reindexObject()
+
+    def getItemAdviceStatesForOrg_cachekey(method, self, org_uid=None):
+        '''cachekey method for self.getItemAdviceStatesForOrg.'''
+        # this volatile is invalidated when an organization changed
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+        return repr(self), org_uid, date
+
+    security.declarePublic('getItemAdviceStates')
+
+    @ram.cache(getItemAdviceStatesForOrg_cachekey)
+    def getItemAdviceStatesForOrg(self, org_uid):
+        '''Method that gets itemAdvicesStates for a given p_org_uid.
+           Made for caching, as it is called in
+           MeetingItem.getAdvicesGroupsInfosForUser especially.'''
+        org = uuidToObject(org_uid, unrestricted=True)
+        return org.get_item_advice_states(cfg=self)
 
     security.declarePublic('getItemWorkflow')
 
@@ -6927,9 +6935,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                           if committee['enabled'] == '1']
         return committees
 
-    def getCategoriesIds_cachekey(method, self,  catType='categories', onlySelectable=True, userId=None):
+    def getCategoriesIds_cachekey(method, self, catType='categories', onlySelectable=True, userId=None):
         '''cachekey method for self.getCategoriesIds.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.categoriesvocabulary')
+        date = get_cachekey_volatile('Products.PloneMeeting.MeetingConfig.getCategoriesIds')
         return repr(self), date, catType, onlySelectable, userId or get_current_user_id()
 
     security.declarePublic('getCategoriesIds')
@@ -7105,8 +7113,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             memberOrgUids = [org_uid for org_uid in
                              tool.get_orgs_for_user(
                                  user_id=member_id,
-                                 suffixes=['creators'],
-                                 the_objects=False)]
+                                 suffixes=['creators'])]
             query['templateUsingGroups'] = ('__nothing_selected__', '__folder_in_itemtemplates__', ) + \
                 tuple(memberOrgUids)
         return query
@@ -7121,7 +7128,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         catalog = api.portal.get_tool('portal_catalog')
         query = self._itemTemplatesQuery(onlyActive, filtered)
-        brains = catalog(**query)
+        brains = catalog.unrestrictedSearchResults(**query)
 
         if as_brains:
             res = brains
@@ -7138,11 +7145,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def updateAnnexConfidentiality(self, annex_portal_types=['annex', 'annexDecision']):
         '''Update the confidentiality of existing annexes regarding default value
            for confidentiality defined in the corresponding annex type.'''
-        if not self.isManager(self, realManagers=True):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if not self.isManager(tool, realManagers=True):
             raise Unauthorized
 
         # update every annexes of items, meeting and advices of this MeetingConfig
-        tool = api.portal.get_tool('portal_plonemeeting')
         portal_types = []
         portal_types.append(self.getItemTypeName())
         portal_types.append(self.getMeetingTypeName())
@@ -7193,7 +7200,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         catalog = api.portal.get_tool('portal_catalog')
         for portal_type in portal_types:
-            brains = catalog(portal_type=portal_type, getConfigId=self.getId())
+            brains = catalog.unrestrictedSearchResults(
+                portal_type=portal_type, getConfigId=self.getId())
             _update(brains)
         logger.info('Done.')
 
@@ -7202,8 +7210,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def updatePersonalLabels(self, personal_labels=[], modified_since_days=30):
         '''Update the given p_personal_labels on items of this MeetingConfig
            for which modified is older than given p_modified_since_days number of days.'''
-
-        if not self.isManager(self, realManagers=True):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if not self.isManager(tool, realManagers=True):
             raise Unauthorized
         # remove empty strings from personal_labels
         personal_labels = [label for label in personal_labels if label]
@@ -7222,9 +7230,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         """Private method used by self.updatePersonalLabels."""
 
         catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(portal_type=self.getItemTypeName(),
-                         modified={'range': 'max',
-                                   'query': DateTime() - modified_since_days})
+        brains = catalog.unrestrictedSearchResults(
+            portal_type=self.getItemTypeName(),
+            modified={'range': 'max', 'query': DateTime() - modified_since_days})
         numberOfBrains = len(brains)
         i = 1
         membershipTool = api.portal.get_tool('portal_membership')
@@ -7267,7 +7275,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             for label_id in personal_labels:
                 item_labeling.storage[label_id] = PersistentList(item_user_ids)
             if reindex:
-                item.reindexObject(idxs=['labels'])
+                reindex_object(item, idxs=['labels'], update_metadata=0)
         logger.info('Done.')
         return numberOfBrains
 
@@ -7276,11 +7284,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def updateAdviceConfidentiality(self):
         '''Update the confidentiality of existing advices regarding default value
            in MeetingConfig.adviceConfidentialityDefault.'''
-        if not self.isManager(self, realManagers=True):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if not self.isManager(tool, realManagers=True):
             raise Unauthorized
         # update every advices of items of this MeetingConfig
         catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(portal_type=self.getItemTypeName())
+        brains = catalog.unrestrictedSearchResults(portal_type=self.getItemTypeName())
         numberOfBrains = len(brains)
         i = 1
         adviceConfidentialityDefault = self.getAdviceConfidentialityDefault()
@@ -7299,7 +7308,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def checkPodTemplates(self):
         '''Check Pod templates.'''
-        if not self.isManager(self, realManagers=True):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if not self.isManager(tool, realManagers=True):
             raise Unauthorized
         return self.REQUEST.RESPONSE.redirect(self.absolute_url() + '/@@check-pod-templates')
 
@@ -7505,10 +7515,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return True, []
 
+    def user_is_proposing_group_editor(self, org_uid):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        suffixes = self.getItemWFValidationLevels(data='suffix', only_enabled=True)
+        return tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes)
+
     def render_editform_errors(self, errors):
         """Render errors in the edit form in case it comes from another fieldset."""
         tool = api.portal.get_tool('portal_plonemeeting')
-        if not tool.isManager(self, realManagers=True):
+        if not tool.isManager(tool, realManagers=True):
             return
         error_pattern = u"<dl class=\"portalMessage error\"><dt>{0}</dt><dd>{1}</dd></dl>"
         res = []
@@ -7538,6 +7554,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             used_attrs = self.getUsedItemAttributes()
         res = tool.isManager(self) and name in used_attrs
         return res
+
+    def get_orgs_with_as_copy_group_on_expression_cachekey(method, self):
+        '''cachekey method for self.get_orgs_with_as_copy_group_on_expression.
+           MeetingConfig.modified is updated when an organization added/removed/edited.'''
+        # this volatile is invalidated when an organization changed
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+        return repr(self), self.modified(), date
+
+    @ram.cache(get_orgs_with_as_copy_group_on_expression_cachekey)
+    def get_orgs_with_as_copy_group_on_expression(self):
+        """Returns a dict with organizations having a as_copy_group_on TAL expression."""
+        orgs = self.getUsingGroups(theObjects=True)
+        # keep order as new and old item local_roles are compared
+        # to check if other updates must be done
+        data = OrderedDict()
+        for org in orgs:
+            expr = org.as_copy_group_on
+            if not expr or not expr.strip():
+                continue
+            data[org.UID()] = expr
+        return data
 
 
 registerType(MeetingConfig, PROJECTNAME)

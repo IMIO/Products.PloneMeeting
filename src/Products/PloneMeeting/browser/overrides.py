@@ -19,15 +19,6 @@ from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentG
 from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGeneratorLinksViewlet
 from collective.eeafaceted.dashboard.browser.views import RenderTermPortletView
 from collective.iconifiedcategory import utils as collective_iconifiedcategory_utils
-from collective.iconifiedcategory.browser.actionview import BaseView as BaseActionView
-from collective.iconifiedcategory.browser.actionview import ConfidentialChangeView
-from collective.iconifiedcategory.browser.actionview import PublishableChangeView
-from collective.iconifiedcategory.browser.actionview import SignedChangeView
-from collective.iconifiedcategory.browser.actionview import ToPrintChangeView
-from collective.iconifiedcategory.browser.tabview import CategorizedTable
-from collective.iconifiedcategory.browser.tabview import CategorizedTabView
-from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
-from collective.iconifiedcategory.browser.views import CategorizedChildView
 from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
@@ -36,7 +27,7 @@ from imio.annex import utils as imio_annex_utils
 from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
 from imio.helpers.cache import get_cachekey_volatile
-from imio.helpers.content import get_vocab
+from imio.helpers.content import uuidToObject
 from imio.history import utils as imio_history_utils
 from imio.history.browser.views import IHContentHistoryView
 from imio.history.browser.views import IHDocumentBylineViewlet
@@ -60,7 +51,6 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting import utils as pm_utils
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
-from Products.PloneMeeting.config import FACETED_ANNEXES_CRITERION_ID
 from Products.PloneMeeting.config import HAS_RESTAPI
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
@@ -69,15 +59,15 @@ from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import get_annexes
-from Products.PloneMeeting.utils import get_annexes_config
 from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import is_editing
 from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import set_field_from_ajax
-from zope.annotation import IAnnotations
+from zope.component import queryUtility
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
+from zope.ramcache.interfaces.ram import IRAMCache
 
 import sys
 
@@ -105,6 +95,12 @@ class PMGlobalSectionsViewlet(GlobalSectionsViewlet):
     '''
 
     def selectedTabs(self, default_tab='index_html', portal_tabs=()):
+        # setup ram.cache utility
+        # change if default value still used
+        ramcache = queryUtility(IRAMCache)
+        if ramcache.maxEntries == 1000:
+            ramcache.update(maxEntries=100000, maxAge=2400, cleanupInterval=600)
+
         plone_url = api.portal.get_tool('portal_url')()
         plone_url_len = len(plone_url)
         request = self.request
@@ -305,14 +301,14 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
         no_faceted_context = IMeeting.providedBy(self.context) or not IFacetedNavigable.providedBy(self.context)
         return no_faceted_context and available
 
-    def add_extra_links_info(self, template, infos):
+    def add_extra_links_info(self, pod_template, infos):
         """Complete infos with the store_as_annex data."""
         res = {'store_as_annex_uid': None,
                'store_as_annex_title': None}
-        if template.store_as_annex:
-            annex_type_uid = template.store_as_annex
+        if self.may_store_as_annex(pod_template):
+            annex_type_uid = pod_template.store_as_annex
             res['store_as_annex_uid'] = annex_type_uid
-            annex_type = api.content.find(UID=annex_type_uid)[0].getObject()
+            annex_type = uuidToObject(annex_type_uid, unrestricted=True)
             annex_type_title = '{0} ➔ {1}'.format(
                 annex_type.aq_parent.Title(),
                 annex_type.Title())
@@ -328,7 +324,8 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
         if not pod_template.store_as_annex:
             return False
         tool = api.portal.get_tool('portal_plonemeeting')
-        return tool.isManager(self.context)
+        cfg = tool.getMeetingConfig(self.context)
+        return tool.isManager(cfg)
 
     def get_store_as_annex_title_msg(self, annex_type_title):
         """ """
@@ -483,6 +480,19 @@ class PMRenderTermView(RenderTermPortletView):
                     self.context.UID(), api.portal.get().absolute_url())
         return rendered_term
 
+    def number_of_items_cachekey(method, self, init=False):
+        '''cachekey method for self.number_of_items.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        userGroups = tool.get_plone_groups_for_user()
+        # cache until an item is modified
+        date = get_cachekey_volatile('Products.PloneMeeting.MeetingItem.modified', method)
+        return (repr(self.context), userGroups, date, init)
+
+    @ram.cache(number_of_items_cachekey)
+    def number_of_items(self, init=False):
+        """Just added caching until an item is modified results will remain the same."""
+        return super(PMRenderTermView, self).number_of_items(init=init)
+
 
 class PMRenderCategoryView(IDRenderCategoryView):
     '''
@@ -517,7 +527,8 @@ class PMRenderCategoryView(IDRenderCategoryView):
         default_template = self.cfg.get_default_item_template()
         default_template_uid = None
         if default_template and \
-           self.tool.get_orgs_for_user(using_groups=default_template.getTemplateUsingGroups()):
+           set(self.tool.get_orgs_for_user()).intersection(
+                default_template.getTemplateUsingGroups()):
             default_template_uid = default_template.UID()
         return default_template_uid
 
@@ -530,7 +541,13 @@ class PMRenderCategoryView(IDRenderCategoryView):
     def _is_editing(self):
         return is_editing(self.cfg)
 
-    def templateItems(self):
+    def hasTemplateItems_cachekey(method, self, init=False):
+        '''cachekey method for self.hasTemplateItems.'''
+        # when an itemTemplate is added/removed/edited/state changed, cfg is modified
+        return self.cfg.modified()
+
+    @ram.cache(hasTemplateItems_cachekey)
+    def hasTemplateItems(self):
         '''Check if there are item templates defined or not.'''
         itemTemplates = self.cfg.getItemTemplates(as_brains=True, onlyActive=True)
         res = False
@@ -599,21 +616,57 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                           **kwargs):
         '''cachekey method for self.__call__ method.
            The cache is invalidated if :
-           - linked meeting is modified (modified is also triggered when review_state changed);
+           - linked meeting review_state changed (modified is too large);
            - item is modified (modified is also triggered when review_state changed);
            - something changed around advices;
            - cfg changed;
            - different item;
-           - user groups changed;
            - if item query_state is 'validated', check also if it is presentable;
-           - finally, invalidate if annotations changed.'''
-        meetingModified = ''
+           - sent_to other mc informations.'''
+        meeting_review_state = None
         meeting = self.context.getMeeting()
         if meeting:
-            meetingModified = meeting.modified()
-        annotations = str(IAnnotations(self.context))
-        cfg_modified = self.cfg.modified()
-        userGroups = self.tool.get_plone_groups_for_user()
+            meeting_review_state = meeting.query_state()
+        # send to other mc annotations
+        sent_to = self.context._getOtherMeetingConfigsImAmClonedIn()
+
+        # try to share cache among user "profiles"
+        isRealManager = isManager = isEditorUser = advicesIndexModified = \
+            userAbleToCorrectItemWaitingAdvices = isPowerObserverHiddenHistory = None
+        # Manager
+        isRealManager = self.tool.isManager(self.tool, realManagers=True)
+        # MeetingManager, necessary for MeetingConfig.itemActionsColumnConfig for example
+        isManager = self.tool.isManager(self.cfg)
+        if not isRealManager:
+            self.item_state = self.context.query_state()
+            # member able to edit item, manage isEditorUser/userAbleToCorrectItemWaitingAdvices
+            if _checkPermission(ModifyPortalContent, self.context):
+                isEditorUser = True
+            elif self.item_state.endswith('_waiting_advices'):
+                advicesIndexModified = self.context.adviceIndex._p_mtime
+                wfas = self.cfg.getWorkflowAdaptations()
+                userAbleToCorrectItemWaitingAdvices = []
+                if "waiting_advices_adviser_send_back" in wfas:
+                    # will only work if only one advice to give in this state
+                    userAbleToCorrectItemWaitingAdvices += \
+                        self.tool.get_filtered_plone_groups_for_user(
+                            org_uids=self.context.adviceIndex.keys())
+                if "waiting_advices_proposing_group_send_back" in wfas:
+                    # convenience, return every user proposingGroup suffixes
+                    # user able to do this depends on state to go to
+                    group_managing_item_uid = self.context.adapted()._getGroupManagingItem(
+                        self.item_state, theObject=False)
+                    userAbleToCorrectItemWaitingAdvices += \
+                        self.tool.get_filtered_plone_groups_for_user(
+                            org_uids=[group_managing_item_uid])
+
+            # powerobservers to manage MeetingConfig.hideHistoryTo
+            hideHistoryTo = self.cfg.getHideHistoryTo()
+            if hideHistoryTo and \
+               self.tool.isPowerObserverForCfg(self.cfg, power_observer_types=hideHistoryTo):
+                # any others
+                isPowerObserverHiddenHistory = True
+
         # if item is validated, the 'present' action could appear if a meeting
         # is now available for the item to be inserted into
         isPresentable = False
@@ -621,25 +674,28 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             isPresentable = self.context.wfConditions().mayPresent()
 
         # check also portal_url in case application is accessed thru different URI
-        return (self.context.UID(), self.context.modified(), self.context.adviceIndex, cfg_modified,
-                userGroups, annotations,
-                meetingModified, useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
+        return (repr(self.context), self.context.modified(), advicesIndexModified,
+                sent_to,
+                isRealManager, isManager, isEditorUser,
+                userAbleToCorrectItemWaitingAdvices, isPowerObserverHiddenHistory,
+                meeting_review_state, useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
                 showArrows, isPresentable, self.portal_url, kwargs)
 
     @ram.cache(__call___cachekey)
-    def __call__(self,
-                 useIcons=True,
-                 showTransitions=True,
-                 appendTypeNameToTransitionLabel=False,
-                 showEdit=True,
-                 showOwnDelete=True,
-                 showActions=True,
-                 showAddContent=False,
-                 showHistory=False,
-                 showHistoryLastEventHasComments=True,
-                 showArrows=False,
-                 **kwargs):
+    def MeetingItemActionsPanelView__call__(
+            self,
+            useIcons=True,
+            showTransitions=True,
+            appendTypeNameToTransitionLabel=False,
+            showEdit=True,
+            showOwnDelete=True,
+            showActions=True,
+            showAddContent=False,
+            showHistory=False,
+            showHistoryLastEventHasComments=True,
+            showArrows=False,
+            **kwargs):
         """
           Redefined to add ram.cache...
         """
@@ -648,7 +704,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             # hide 'duplicate' actions when showing icons if not in cfg.itemActionsColumnConfig
             itemActionsColumnConfig = self.cfg.getItemActionsColumnConfig()
             isMeetingManager = self.tool.isManager(self.cfg)
-            isManager = self.tool.isManager(self.cfg, realManagers=True)
+            isManager = self.tool.isManager(self.tool, realManagers=True)
             if not (
                 (isMeetingManager and 'meetingmanager_duplicate' in itemActionsColumnConfig) or
                 (isManager and 'manager_duplicate' in itemActionsColumnConfig) or
@@ -678,6 +734,9 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                      showHistoryLastEventHasComments=showHistoryLastEventHasComments,
                      showArrows=showArrows,
                      **kwargs)
+
+    # do ram.cache have a different key name
+    __call__ = MeetingItemActionsPanelView__call__
 
     def showHistoryForContext(self):
         """
@@ -715,35 +774,32 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         '''cachekey method for self.__call__ method.
            The cache is invalidated if :
            - meeting is modified (modified is also triggered when review_state changed);
-           - linked items changed;
            - cfg modified;
            - different item or user;
            - user groups changed.'''
-        cfg_modified = self.cfg.modified()
-        userGroups = self.tool.get_plone_groups_for_user()
-        date = get_cachekey_volatile(
-            'Products.PloneMeeting.Meeting.UID.{0}'.format(self.context.UID()))
+        isRealManager = self.tool.isManager(self.tool, realManagers=True)
+        isManager = not isRealManager and self.tool.isManager(self.cfg)
         # check also portal_url in case application is accessed thru different URI
-        return (self.context.UID(), self.context.modified(),
-                self.context.get_raw_items(), cfg_modified,
-                userGroups, date,
+        return (repr(self.context), self.context.query_state(),
+                isRealManager, isManager,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
                 showArrows, self.portal_url, kwargs)
 
     @ram.cache(__call___cachekey)
-    def __call__(self,
-                 useIcons=True,
-                 showTransitions=True,
-                 appendTypeNameToTransitionLabel=False,
-                 showEdit=True,
-                 showOwnDelete=True,
-                 showActions=True,
-                 showAddContent=False,
-                 showHistory=False,
-                 showHistoryLastEventHasComments=True,
-                 showArrows=False,
-                 **kwargs):
+    def MeetingActionsPanelView__call__(
+            self,
+            useIcons=True,
+            showTransitions=True,
+            appendTypeNameToTransitionLabel=False,
+            showEdit=True,
+            showOwnDelete=True,
+            showActions=True,
+            showAddContent=False,
+            showHistory=False,
+            showHistoryLastEventHasComments=True,
+            showArrows=False,
+            **kwargs):
         """
           Redefined to add ram.cache...
         """
@@ -759,6 +815,9 @@ class MeetingActionsPanelView(BaseActionsPanelView):
                      showHistoryLastEventHasComments=showHistoryLastEventHasComments,
                      showArrows=showArrows,
                      **kwargs)
+
+    # do ram.cache have a different key name
+    __call__ = MeetingActionsPanelView__call__
 
     def renderDeleteWholeMeeting(self):
         """
@@ -797,26 +856,6 @@ class AdviceActionsPanelView(BaseActionsPanelView):
         for transition in adviceWF.transitions:
             toConfirm.append('{0}.{1}'.format(portal_type, transition))
         return toConfirm
-
-
-class AnnexActionsPanelView(BaseActionsPanelView):
-    """
-      Specific actions displayed on an annex.
-    """
-
-    def showHistoryForContext(self):
-        """
-          History on annexes is only shown to Managers.
-        """
-        if not super(AnnexActionsPanelView, self).showHistoryForContext():
-            return False
-
-        # check isManager on parent (item) so caching is used as context is a key
-        # used in the caching invalidation
-        parent = self.context.aq_inner.aq_parent
-        while parent.__class__.__name__ not in ('MeetingItem', 'Meeting'):
-            parent = parent.aq_inner.aq_parent
-        return self.tool.isManager(parent, realManagers=True)
 
 
 class ConfigActionsPanelView(ActionsPanelView):
@@ -906,7 +945,7 @@ class ConfigActionsPanelView(ActionsPanelView):
           some users have 'Modify portal content' but no field to edit...
           In the case there is no field to edit, do not display the edit action.
         """
-        return self.member.has_permission(ModifyPortalContent, self.context) and \
+        return _checkPermission(ModifyPortalContent, self.context) and \
             (not self.context.portal_type == 'MeetingConfig' or
              self.context.Schema().editableFields(self.context.Schema()))
 
@@ -914,7 +953,7 @@ class ConfigActionsPanelView(ActionsPanelView):
         """
           Add a link to linked Plone groups for an organization.
         """
-        if self.tool.isManager(self.cfg, True) and self.context.getId() != PLONEGROUP_ORG:
+        if self.tool.isManager(self.tool, True) and self.context.getId() != PLONEGROUP_ORG:
             return ViewPageTemplateFile("templates/actions_panel_config_linkedplonegroups.pt")(self)
         return ''
 
@@ -1142,8 +1181,8 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             confidential=confidential_default,
             used_pod_template_id=pod_template.getId(),
             scan_id=scan_id)
-        # if we have a scan_id it means that a barcode has been inserted in the generated document
-        # we mark stored annex as barcoded
+        # if we have a scan_id it means that a barcode has been inserted
+        # in the generated document, we mark stored annex as barcoded
         if scan_id:
             setattr(annex, BARCODE_INSERTED_ATTR_ID, True)
 
@@ -1235,71 +1274,6 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
 
-class CategorizedAnnexesTable(CategorizedTable):
-    """ """
-
-    def initColumns(self):
-        """Change name of checkbox column for annex decisions,
-           because for batchaction, column name must be different than
-           checkbox column of normal annexes.
-           """
-        super(CategorizedAnnexesTable, self).initColumns()
-        if self.portal_type == 'annexDecision':
-            column = self.columnByName['select_row']
-            column.name = "select_item_annex_decision"
-
-
-class CategorizedAnnexesView(CategorizedTabView):
-    """ """
-
-    def __init__(self, context, request):
-        """ """
-        super(CategorizedAnnexesView, self).__init__(context, request)
-        self.portal_url = api.portal.get().absolute_url()
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.tool.getMeetingConfig(self.context)
-
-    def _config(self):
-        """ """
-        return get_annexes_config(self.context, self.portal_type)
-
-    def _show_column(self, action_type):
-        """Made to be overrided."""
-        annex_attr_config = '{0}_display'.format(action_type)
-        check = annex_attr_config in self.cfg.getAnnexRestrictShownAndEditableAttributes()
-        return not check or self.tool.isManager(self.cfg)
-
-    def showAddAnnex(self):
-        """ """
-        portal_types = api.portal.get_tool('portal_types')
-        annexTypeInfo = portal_types['annex']
-        vocab = get_vocab(self.context, 'collective.iconifiedcategory.categories')
-        return annexTypeInfo in self.context.allowedContentTypes() and len(vocab)
-
-    def showAddAnnexDecision(self):
-        """ """
-        portal_types = api.portal.get_tool('portal_types')
-        annexTypeInfo = portal_types['annexDecision']
-        self.request.set('force_use_item_decision_annexes_group', True)
-        vocab = get_vocab(self.context, 'collective.iconifiedcategory.categories')
-        self.request.set('force_use_item_decision_annexes_group', False)
-        return annexTypeInfo in self.context.allowedContentTypes() and len(vocab)
-
-    def showAnnexesSection(self):
-        """ """
-        return True
-
-    def showDecisionAnnexesSection(self):
-        """ """
-        # check if context contains decisionAnnexes or if there
-        # are some decisionAnnex annex types available in the configuration
-        if self.context.__class__.__name__ == 'MeetingItem' and \
-            (get_annexes(self.context, portal_types=['annexDecision']) or
-             self.showAddAnnexDecision()):
-            return True
-        return False
-
-
 class PMCKFinder(CKFinder):
 
     def __init__(self, context, request):
@@ -1311,139 +1285,6 @@ class PMCKFinder(CKFinder):
         self.allowaddfolder = False
         self.showsearchbox = False
         self.openuploadwidgetdefault = True
-
-
-def _get_filters(request):
-    """ """
-    # caching
-    res = request.get("cached_annexes_filters", None)
-    if res is None:
-        res = {}
-        # in request.form, faceted criterion is like 'c20[]'
-        faceted_filter = request.form.get(FACETED_ANNEXES_CRITERION_ID + '[]', None)
-        if faceted_filter is not None:
-            if not hasattr(faceted_filter, '__iter__'):
-                faceted_filter = [faceted_filter]
-            for value in faceted_filter:
-                if value.startswith('not_'):
-                    res[value.replace('not_', '')] = False
-                else:
-                    res[value] = True
-        request["cached_annexes_filters"] = res
-    return res
-
-
-class PMCategorizedChildView(CategorizedChildView):
-    """Add caching."""
-
-    def __call___cachekey(method, self, portal_type=None, show_nothing=False):
-        '''cachekey method for self.__call__.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        # URL to the annex_type can change if server URL changed
-        server_url = self.request.get('SERVER_URL', None)
-        # an annex container's modification date is updated upon
-        # any change on annex (added, removed, edited, attribute changed)
-        context_modified = self.context.modified()
-        cfg_modified = cfg.modified()
-        # value of the annexes faceted filter
-        filters = self._filters
-        return (self.context.UID(),
-                context_modified,
-                cfg_modified,
-                server_url,
-                tool.get_plone_groups_for_user(),
-                portal_type,
-                show_nothing,
-                filters)
-
-    @property
-    def _filters(self):
-        """ """
-        return _get_filters(self.request)
-
-    @ram.cache(__call___cachekey)
-    def __call__(self, portal_type=None, show_nothing=False):
-        """Override to change show_nothing=False instead show_nothing=True and to add caching."""
-        return super(PMCategorizedChildView, self).__call__(portal_type, show_nothing)
-
-
-class PMCategorizedChildInfosView(CategorizedChildInfosView):
-    """ """
-
-    def __init__(self, context, request):
-        """ """
-        super(PMCategorizedChildInfosView, self).__init__(context, request)
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.tool.getMeetingConfig(self.context)
-
-    @property
-    def _filters(self):
-        """ """
-        return _get_filters(self.request)
-
-    def show_preview_link(self):
-        """Show link if preview is enabled, aka the auto_convert in collective.documentviewer."""
-        return self.tool.auto_convert_annexes()
-
-    def show_nothing(self):
-        """Do not display the 'Nothing' label."""
-        return False
-
-    def categorized_elements_more_infos_url(self):
-        """ """
-        return "{0}/@@categorized-annexes".format(self.context.absolute_url())
-
-    def _show_detail(self, detail_type):
-        """ """
-        annex_attr_config = '{0}_display'.format(detail_type)
-        check = annex_attr_config in self.cfg.getAnnexRestrictShownAndEditableAttributes()
-        return not check or self.tool.isManager(self.cfg)
-
-
-class PMBaseActionView(BaseActionView):
-    """ """
-
-    def _get_config_attributes(self):
-        """ """
-        category_group_attr_name = getattr(self, 'category_group_attr_name', None)
-        # get current type of action
-        # turn to_be_printed_activated to to_be_printed_edit/to_be_printed_display
-        # if an element is not displayed only to MeetingManagers, we consider it is ony editable as well
-        config_attr_display = category_group_attr_name.replace('_activated', '_display')
-        config_attr_edit = category_group_attr_name.replace('_activated', '_edit')
-        return config_attr_display, config_attr_edit
-
-    def _may_set_values(self, values, ):
-        res = super(PMBaseActionView, self)._may_set_values(values)
-        if res:
-            # get current type of action
-            # turn to_be_printed_activated to to_be_printed_edit/to_be_printed_display
-            # if an element is not displayed only to MeetingManagers, we consider it is ony editable as well
-            config_attr_display, config_attr_edit = self._get_config_attributes()
-            # restricted to MeetingManagers?
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self.context)
-            annex_attr_config = cfg.getAnnexRestrictShownAndEditableAttributes()
-            if config_attr_display in annex_attr_config or config_attr_edit in annex_attr_config:
-                res = tool.isManager(cfg)
-        return res
-
-
-class PMConfidentialChangeView(ConfidentialChangeView, PMBaseActionView):
-    """Override to use new base klass."""
-
-
-class PMPublishableChangeView(PublishableChangeView, PMBaseActionView):
-    """Override to use new base klass."""
-
-
-class PMSignedChangeView(SignedChangeView, PMBaseActionView):
-    """Override to use new base klass."""
-
-
-class PMToPrintChangeView(ToPrintChangeView, PMBaseActionView):
-    """Override to use new base klass."""
 
 
 class PMReferenceBrowserPopup(ReferenceBrowserPopup):
@@ -1509,14 +1350,11 @@ class PMContentHistoryView(IHContentHistoryView):
                     item_review_state = self.context.query_state()
                     proposing_group_uid = self.context._getGroupManagingItem(
                         item_review_state, theObject=False)
-                    if proposing_group_uid in tool.get_orgs_for_user(the_objects=False):
+                    if proposing_group_uid in tool.get_orgs_for_user():
                         check = False
-                if check:
-                    for power_observer_type in hideHistoryTo:
-                        if tool.isPowerObserverForCfg(
-                           cfg, power_observer_type=power_observer_type):
-                            res = False
-                            break
+                if check and tool.isPowerObserverForCfg(
+                        cfg, power_observer_types=hideHistoryTo):
+                    res = False
         return res
 
 

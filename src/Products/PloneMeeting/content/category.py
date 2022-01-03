@@ -120,9 +120,9 @@ class MeetingCategory(Item):
             i = None
         return i
 
-    def _invalidateCachedVocabularies(self):
+    def _invalidateCachedMethods(self):
         """Clean cache for vocabularies using MeetingCategories."""
-        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.MeetingConfig.getCategoriesIds")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
 
     security.declarePublic('is_selectable')
@@ -135,7 +135,7 @@ class MeetingCategory(Item):
         # If we have using_groups make sure userId is creator for one of it
         selectable = self.enabled
         cfg = tool.getMeetingConfig(self)
-        if selectable and self.get_using_groups() and not tool.isManager(cfg, realManagers=True):
+        if selectable and self.get_using_groups() and not tool.isManager(tool, realManagers=True):
             selectable_org_uids = tool.get_selectable_orgs(cfg, user_id=userId, the_objects=False)
             # Check intersection between self.usingGroups and org uids for which
             # the current user is creator
@@ -146,7 +146,7 @@ class MeetingCategory(Item):
         """ """
         res = self.groups_in_charge
         if res and the_objects:
-            res = uuidsToObjects(res, ordered=True)
+            res = uuidsToObjects(res, ordered=True, unrestricted=True)
         return res
 
     def get_using_groups(self, the_objects=False):

@@ -425,7 +425,7 @@ class ManageItemAssemblyForm(form.Form):
 
         # invalidate assembly async load on item
         invalidate_cachekey_volatile_for(
-            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignatures',
+            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignaturesRawFields',
             get_again=True)
 
         first_item_number = items_to_update[0].getItemNumber(for_display=True)

@@ -10,8 +10,8 @@ from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_own_organization
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from plone.autoform import directives as form
-from plone.directives import form as directives_form
 from plone.dexterity.schema import DexteritySchemaPolicy
+from plone.directives import form as directives_form
 from plone.supermodel import model
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -335,11 +335,9 @@ class PMHeldPosition(HeldPosition):
             res = u'{0} {1}'.format(self.person_title, res)
         return res
 
-    def _invalidateCachedVocabularies(self):
+    def _invalidateCachedMethods(self):
         '''Clean cache for vocabularies using held_positions.'''
-        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary")
-        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary")
-        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.selectableiteminitiatorsvocabulary")
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.allheldpositionsvocabularies")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.itemvotersvocabulary")
 
 

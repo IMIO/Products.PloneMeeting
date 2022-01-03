@@ -96,14 +96,14 @@
         for="*"
         name="categorized-annexes"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        class=".overrides.CategorizedAnnexesView"
+        class=".annexes.CategorizedAnnexesView"
         permission="zope2.View"
         template="templates/categorized_annexes.pt" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingContent"
         name="iconifiedcategory"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        class=".overrides.CategorizedAnnexesView"
+        class=".annexes.CategorizedAnnexesView"
         permission="zope2.View"
         template="templates/categorized_annexes.pt" />
 
@@ -226,14 +226,14 @@
     <browser:page
       for="Products.PloneMeeting.content.meeting.IMeeting"
       name="meeting_view"
-      class="Products.PloneMeeting.browser.meeting.MeetingView"
+      class="Products.PloneMeeting.browser.meeting.MeetingFacetedView"
       template="templates/meeting_view.pt"
       permission="zope2.View" />
     <browser:page
       for="Products.PloneMeeting.content.meeting.IMeeting"
       name="meeting_available_items_view"
       template="templates/meeting_available_items_view.pt"
-      class=".meeting.MeetingView"
+      class=".meeting.MeetingFacetedAvailableItemsView"
       permission="zope2.View" />
     <browser:page
       for="Products.PloneMeeting.content.meeting.IMeeting"
@@ -559,11 +559,27 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
+    <!-- the global night maintenance task view that calls other views -->
+    <browser:view
+        for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
+        name="pm-night-tasks"
+        class=".views.NightTasksView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="cmf.ManagePortal" />
+
     <!-- the maintenance task view that update delay-aware advisers -->
     <browser:view
         for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
         name="update-delay-aware-advices"
         class=".views.UpdateDelayAwareAdvicesView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="cmf.ManagePortal" />
+
+    <!-- the maintenance task view that reindex necessary elements -->
+    <browser:view
+        for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
+        name="update-items-to-reindex"
+        class=".views.UpdateItemsToReindexView"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="cmf.ManagePortal" />
 
@@ -1046,45 +1062,45 @@
             for="Products.PloneMeeting.interfaces.IMeetingContent"
             name="categorized-childs"
             permission="zope2.Public"
-            class="Products.PloneMeeting.browser.overrides.PMCategorizedChildView"
+            class="Products.PloneMeeting.browser.annexes.PMCategorizedChildView"
             layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
             template="browser/templates/categorized-childs.pt" />
         <browser:page
             for="Products.PloneMeeting.interfaces.IMeetingContent"
             name="categorized-childs-infos"
             permission="zope2.Public"
-            class="Products.PloneMeeting.browser.overrides.PMCategorizedChildInfosView"
+            class="Products.PloneMeeting.browser.annexes.PMCategorizedChildInfosView"
             layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
             template="browser/templates/categorized-childs-infos.pt" />
         <browser:page
           name="iconified-confidential"
           for="imio.annex.content.annex.IAnnex"
           layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
-          class="Products.PloneMeeting.browser.overrides.PMConfidentialChangeView"
+          class="Products.PloneMeeting.browser.annexes.PMConfidentialChangeView"
           permission="zope2.View" />
         <browser:page
           name="iconified-publishable"
           for="imio.annex.content.annex.IAnnex"
           layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
-          class="Products.PloneMeeting.browser.overrides.PMPublishableChangeView"
+          class="Products.PloneMeeting.browser.annexes.PMPublishableChangeView"
           permission="zope2.View" />
         <browser:page
           name="iconified-signed"
           for="imio.annex.content.annex.IAnnex"
           layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
-          class="Products.PloneMeeting.browser.overrides.PMSignedChangeView"
+          class="Products.PloneMeeting.browser.annexes.PMSignedChangeView"
           permission="zope2.View" />
         <browser:page
           name="iconified-print"
           for="imio.annex.content.annex.IAnnex"
           layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
-          class="Products.PloneMeeting.browser.overrides.PMToPrintChangeView"
+          class="Products.PloneMeeting.browser.annexes.PMToPrintChangeView"
           permission="zope2.View" />
         <browser:view
           for="Products.PloneMeeting.interfaces.IMeetingContent"
           name="iconifiedcategory_table"
           layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
-          class="Products.PloneMeeting.browser.overrides.CategorizedAnnexesTable"
+          class="Products.PloneMeeting.browser.annexes.CategorizedAnnexesTable"
           permission="zope2.View" />
     </configure>
 
@@ -1165,8 +1181,16 @@
             class="Products.PloneMeeting.browser.overrides.PMRenderTermView"
             template="browser/templates/term.pt"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-            permission="zope2.View"
-            />
+            permission="zope2.View" />
     </configure>
+
+    <!-- Override @@caching-controlpanel-ramcache -->
+    <browser:page
+        name="caching-controlpanel-ramcache"
+        for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+        class="plone.app.caching.browser.controlpanel.RAMCache"
+        template="templates/ramcache.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="cmf.ManagePortal" />
 
 </configure>

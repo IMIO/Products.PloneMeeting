@@ -92,7 +92,7 @@
         <browser:page
             for="imio.annex.content.annex.IAnnex"
             name="actions_panel"
-            class="Products.PloneMeeting.browser.overrides.AnnexActionsPanelView"
+            class="Products.PloneMeeting.browser.annexes.AnnexActionsPanelView"
             template="browser/actions_panel.pt"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             permission="zope2.View" />

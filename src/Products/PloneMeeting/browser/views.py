@@ -25,6 +25,7 @@ from plone import api
 from plone.app.caching.operations.utils import getContext
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.interfaces import IDexterityContent
+from plone.memoize import ram
 from plone.memoize.view import memoize
 from plone.memoize.view import memoize_contextless
 from Products.CMFCore.permissions import ManagePortal
@@ -41,6 +42,7 @@ from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
 from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.indexes import _to_coded_adviser_index
@@ -147,7 +149,8 @@ class ItemMoreInfosView(BrowserView):
 
     def render_annexes(self):
         """ """
-        return render_item_annexes(self.context, self.tool, show_nothing=True)
+        return render_item_annexes(
+            self.context, self.tool, show_nothing=True, check_can_view=True)
 
 
 class BaseStaticInfosView(BrowserView):
@@ -162,24 +165,25 @@ class BaseStaticInfosView(BrowserView):
     def __call__(self, visibleColumns):
         """ """
         self.visibleColumns = visibleColumns
-        if IDexterityContent.providedBy(self.context):
+        self.static_infos_field_names = self._static_infos_field_names()
+        if self.static_infos_field_names and IDexterityContent.providedBy(self.context):
             view = self.context.restrictedTraverse('@@view')
             view.update()
             self.dx_view = view
+            # if we ask to display a field that is not enabled, it could
+            # not be in dx_view.w, will only be shown if not None
+            # (check BaseMeetingView.show_field)
+            self.static_infos_field_names = [
+                field_name for field_name in self.static_infos_field_names
+                if field_name in self.dx_view.w]
 
         return super(BaseStaticInfosView, self).__call__()
 
-    def static_infos_field_names(self):
+    def _static_infos_field_names(self):
         """Field names displayed as static infos.
            These are selected values starting with 'static_'."""
         field_names = [field_name.replace('static_', '') for field_name in self.visibleColumns
                        if field_name.startswith('static_')]
-        if IDexterityContent.providedBy(self.context):
-            # if we ask to display a field that is not enabled, it could
-            # not be in dx_view.w, will only be shown if not None
-            # (check BaseMeetingView.show_field)
-            field_names = [field_name for field_name in field_names
-                           if field_name in self.dx_view.w]
         return field_names
 
 
@@ -201,16 +205,6 @@ class MeetingStaticInfosView(BaseStaticInfosView):
     """
 
 
-class ItemIsSignedView(BrowserView):
-    """
-      This manage the view displaying itemIsSigned widget
-    """
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-        self.portal_url = api.portal.get().absolute_url()
-
-
 class ItemNumberView(BrowserView):
     """
       This manage the view displaying the itemNumber on the meeting view
@@ -229,6 +223,42 @@ class ItemNumberView(BrowserView):
         return _is_integer(number)
 
 
+class ItemIsSignedView(BrowserView):
+    """
+      This manage the view displaying itemIsSigned widget
+    """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def __call__parent_cachekey(method, self):
+        '''cachekey method for self.__call__.'''
+        return self.context.getItemIsSigned(), \
+            self.context.adapted().maySignItem(), self.context.showItemIsSigned()
+
+    @ram.cache(__call__parent_cachekey)
+    def ItemIsSignedView__call__parent(self):
+        """ """
+        self.portal_url = api.portal.get().absolute_url()
+        return super(ItemIsSignedView, self).__call__()
+
+    def __call__(self):
+        """ """
+        result = self.__call__parent()
+        result = self._patch_html_content(result)
+        return result
+
+    def _patch_html_content(self, html_content):
+        """To be able to use caching, we need to
+           change UID and baseURL after __call__ is rendered."""
+        html_content = html_content.replace("[uid]", self.context.UID())
+        html_content = html_content.replace("[baseUrl]", self.context.absolute_url())
+        return html_content
+
+    # do ram.cache have a different key name
+    __call__parent = ItemIsSignedView__call__parent
+
+
 class ItemToDiscussView(BrowserView):
     """
       This manage the view displaying toDiscuss widget
@@ -236,15 +266,36 @@ class ItemToDiscussView(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
+
+    def __call__parent_cachekey(method, self):
+        '''cachekey method for self.__call__.'''
+        return self.context.getToDiscuss(), self.mayEdit()
+
+    @ram.cache(__call__parent_cachekey)
+    def ItemToDiscussView__call__parent(self):
+        """ """
         self.portal_url = api.portal.get().absolute_url()
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+        return super(ItemToDiscussView, self).__call__()
+
+    def __call__(self):
+        """ """
+        result = self.__call__parent()
+        result = self._patch_html_content(result)
+        return result
+
+    def _patch_html_content(self, html_content):
+        """To be able to use caching, we need to
+           change UID and baseURL after __call__ is rendered."""
+        html_content = html_content.replace("[uid]", self.context.UID())
+        html_content = html_content.replace("[baseUrl]", self.context.absolute_url())
+        return html_content
 
     def mayEdit(self):
         """ """
-        member = api.user.get_current()
         toDiscuss_write_perm = self.context.getField('toDiscuss').write_permission
-        return member.has_permission(toDiscuss_write_perm, self.context) and \
+        return _checkPermission(toDiscuss_write_perm, self.context) and \
             self.context.showToDiscuss()
 
     @memoize_contextless
@@ -256,6 +307,9 @@ class ItemToDiscussView(BrowserView):
     def useToggleDiscuss(self):
         """ """
         return self.context.restrictedTraverse('@@toggle_to_discuss').isAsynchToggleEnabled()
+
+    # do ram.cache have a different key name
+    __call__parent = ItemToDiscussView__call__parent
 
 
 class PloneMeetingRedirectToAppView(BrowserView):
@@ -294,11 +348,12 @@ class ObjectGoToView(BrowserView):
       Manage go to a given itemNumber.  This method is used
       in the item navigation widget (go to previous item, go to next item, ...)
     """
-    def __call__(self, itemNumber, way='previous'):
+    def __call__(self, way=None, itemNumber=None):
         """
           p_itemNumber is the number of the item we want to go to.  This item
           is in the same meeting than self.context.
         """
+        not_accessible_item_found = False
         meeting = self.context.getMeeting()
         # got to meeting view on relevant item?
         if way == 'meeting':
@@ -321,52 +376,75 @@ class ObjectGoToView(BrowserView):
             # in Faceted.Query JS on the meeting view
             # this way parameters are computed like numer of elements by page
             url = "{0}?b_start={1}".format(
-                meeting.absolute_url(), int_page_num*items_by_page)
+                meeting.absolute_url(), int_page_num * items_by_page)
             return self.request.RESPONSE.redirect(url)
 
         # navigate thru items
+        elif way:
+            brain = self.context.getSiblingItem(whichItem=way, itemNumber=False)
+            if brain is None:
+                not_accessible_item_found = True
+            else:
+                obj = brain.getObject()
+                # check if obj isPrivacyViewable, if not, find the previous/next viewable item
+                next_obj = None
+                # if on last or first item, change way
+                if way == 'last':
+                    way = 'previous'
+                elif way == 'first':
+                    way = 'next'
+                not_accessible_item_found = False
+                while not obj.adapted().isPrivacyViewable() and \
+                        not next_obj == obj and \
+                        not next_obj == self.context:
+                    not_accessible_item_found = True
+                    next_obj = obj.getSiblingItem(whichItem=way, itemNumber=False)
+                    if next_obj:
+                        next_obj = next_obj.getObject()
+                    else:
+                        next_obj = self.context
+                    obj = next_obj
+                if not_accessible_item_found:
+                    self.context.plone_utils.addPortalMessage(
+                        translate(msgid='item_number_not_accessible_redirected_to_closest_item',
+                                  domain='PloneMeeting',
+                                  context=self.request),
+                        type='warning')
+                return self.request.RESPONSE.redirect(obj.absolute_url())
         else:
+            # itemNumber
             catalog = api.portal.get_tool('portal_catalog')
             itemNumber = _itemNumber_to_storedItemNumber(itemNumber)
-            brains = catalog(meeting_uid=meeting.UID(), getItemNumber=itemNumber)
+            brains = catalog(meeting_uid=meeting.UID(), getItemNumber=int(itemNumber))
             if not brains:
-                self.context.plone_utils.addPortalMessage(
-                    translate(msgid='item_number_not_accessible',
-                              domain='PloneMeeting',
-                              context=self.request),
-                    type='warning')
-                return self.request.RESPONSE.redirect(self.context.absolute_url())
-
-            obj = brains[0].getObject()
-            # check if obj isPrivacyViewable, if not, find the previous/next viewable item
-            next_obj = None
-            # if on last or first item, change way
-            if way == 'last':
-                way = 'previous'
-            elif way == 'first':
-                way = 'next'
-            not_accessible_item_found = False
-            while not obj.adapted().isPrivacyViewable() and not next_obj == obj and not next_obj == self.context:
                 not_accessible_item_found = True
-                next_obj = obj.getSiblingItem(whichItem=way, itemNumber=False)
-                if next_obj:
-                    next_obj = next_obj.getObject()
-                else:
-                    next_obj = self.context
-                obj = next_obj
-            if not_accessible_item_found:
-                self.context.plone_utils.addPortalMessage(
-                    translate(msgid='item_number_not_accessible_redirected_to_closest_item',
-                              domain='PloneMeeting',
-                              context=self.request),
-                    type='warning')
-            return self.request.RESPONSE.redirect(obj.absolute_url())
+            else:
+                obj = brains[0].getObject()
+                return self.request.RESPONSE.redirect(obj.absolute_url())
+
+        # fallback when item not accessible (no previous, no next, no asked item number, ...)
+        if not_accessible_item_found:
+            self.context.plone_utils.addPortalMessage(
+                translate(msgid='item_number_not_accessible',
+                          domain='PloneMeeting',
+                          context=self.request),
+                type='warning')
+            return self.request.RESPONSE.redirect(self.context.absolute_url())
+
+
+class NightTasksView(BrowserView):
+    """
+      This is a view that is called as a maintenance task by Products.cron4plone.
+    """
+
+    def __call__(self):
+        self.context.restrictedTraverse('@@update-delay-aware-advices')()
+        self.context.restrictedTraverse('@@update-items-to-reindex')()
 
 
 class UpdateDelayAwareAdvicesView(BrowserView):
     """
-      This is a view that is called as a maintenance task by Products.cron4plone.
-      As we use clear days to compute advice delays, it will be launched at 0:00
+      As we use clear days to compute advice delays, this is launched at 0:00
       each night and update relevant items containing delay-aware advices still addable/editable.
       It will also update the indexAdvisers portal_catalog index.
     """
@@ -424,6 +502,33 @@ class UpdateDelayAwareAdvicesView(BrowserView):
                 '/'.join(item.getPhysicalPath())))
             i = i + 1
             item.update_local_roles()
+        logger.info('Done.')
+
+
+class UpdateItemsToReindexView(BrowserView):
+    """
+      When adding annexes, we avoid reindexing the SearchableText.
+      It will be nevertheless most of times updated by another reindex
+      made on item (modified rich text).  But if any are still to reindex, we
+      do this during the night.
+    """
+    def __call__(self):
+        """ """
+        catalog = api.portal.get_tool('portal_catalog')
+        query = {'pm_technical_index': [REINDEX_NEEDED_MARKER]}
+        brains = catalog(**query)
+        numberOfBrains = len(brains)
+        i = 1
+        logger.info('Reindexing %s items' % str(numberOfBrains))
+        for brain in brains:
+            item = brain.getObject()
+            logger.info('%d/%d Reindexing of item at %s' % (
+                i,
+                numberOfBrains,
+                '/'.join(item.getPhysicalPath())))
+            i = i + 1
+            setattr(item, REINDEX_NEEDED_MARKER, False)
+            item.reindexObject()
         logger.info('Done.')
 
 
@@ -2039,14 +2144,15 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
     button_with_icon = True
 
     def __init__(self, context, request):
-        super(MeetingStoreItemsPodTemplateAsAnnexBatchActionForm, self).__init__(context, request)
+        super(MeetingStoreItemsPodTemplateAsAnnexBatchActionForm, self).__init__(
+            context, request)
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(context)
 
     def available(self):
         """ """
         if self.cfg.getMeetingItemTemplatesToStoreAsAnnex() and \
-           api.user.get_current().has_permission(ModifyPortalContent, self.context):
+           _checkPermission(ModifyPortalContent, self.context):
             return True
 
     def _update(self):

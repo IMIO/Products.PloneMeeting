@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
-from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.content import get_state_infos
@@ -57,27 +56,55 @@ class AdvicesIcons(BrowserView):
         tool = api.portal.get_tool('portal_plonemeeting')
         # URL to the advice_type can change if server URL changed
         server_url = self.request.get('SERVER_URL', None)
-        # an advice container's modification date is updated upon
-        # any change on advice (added, removed, edited, attribute changed)
-        # adviceIndex can also be updated by another item from which context inherits
-        context_modified = max(int(self.context.modified()), self.context._p_mtime)
-        return (self.context.UID(),
-                context_modified,
+        cfg = tool.getMeetingConfig(self.context)
+        # when advices to add, the add advice icon is displayed
+        # this takes PowerAdviser into account as well
+        has_advices_to_add = self.context.getAdvicesGroupsInfosForUser(
+            compute_to_edit=False)
+        # confidential advices
+        # check confidential advices if not MeetingManager
+        isManager = tool.isManager(cfg)
+        may_view_confidential_advices = True
+        # bypass if no advices
+        # but we need nevertheless to compute has_advices_to_add because
+        # we may have no advices and no advices and power adviser may add advice
+        advices = self.context.adviceIndex.values()
+        isPrivacyViewable = True
+        if advices and not isManager:
+            isPrivacyViewable = self.context.isPrivacyViewable()
+            if isPrivacyViewable:
+                # if current user is a power observer that would not see the advice
+                # we store user plone groups because a power adviser may see a confidential advice
+                # if member of the proposingGroup
+                user_plone_groups = tool.get_plone_groups_for_user()
+                confidential_advices = [advice for advice in advices
+                                        if advice["isConfidential"] and
+                                        not get_plone_group_id(advice["id"], "advisers") in
+                                        user_plone_groups]
+                may_view_confidential_advices = not confidential_advices or \
+                    not tool.isPowerObserverForCfg(cfg, power_observer_types=cfg.getAdviceConfidentialFor())
+        return (repr(self.context),
+                self.context.adviceIndex._p_mtime,
                 server_url,
-                tool.get_plone_groups_for_user())
+                has_advices_to_add,
+                isPrivacyViewable,
+                may_view_confidential_advices)
 
     @ram.cache(__call___cachekey)
     def __call__(self):
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.tool.getMeetingConfig(self.context)
-        self.portal = api.portal.get()
-        self.portal_url = self.portal.absolute_url()
         self.advisableGroups = self.context.getAdvicesGroupsInfosForUser(compute_to_edit=False)
+        self.advicesToAdd = self.advisableGroups[0]
+        self.advicesToEdit = self.advisableGroups[1]
         self.advicesByType = self.context.getAdvicesByType()
-        self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
-        self.advice_infos = self.context.getAdviceDataFor(self.context, ordered=True)
-        if not self.context.adapted().isPrivacyViewable():
-            return '<div style="display: inline">&nbsp;-&nbsp;&nbsp;&nbsp;</div>'
+        if self.advicesByType or self.advicesToAdd:
+            self.tool = api.portal.get_tool('portal_plonemeeting')
+            self.cfg = self.tool.getMeetingConfig(self.context)
+            self.portal = api.portal.get()
+            self.portal_url = self.portal.absolute_url()
+            self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'])
+            self.advice_infos = self.context.getAdviceDataFor(self.context, ordered=True)
+            if not self.context.adapted().isPrivacyViewable():
+                return '<div style="display: inline">&nbsp;-&nbsp;&nbsp;&nbsp;</div>'
         return super(AdvicesIcons, self).__call__()
 
     def advicesDelayToWarn(self):
@@ -144,17 +171,18 @@ class AdvicesIconsInfos(BrowserView):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
-        self.advisableGroups = self.context.getAdvicesGroupsInfosForUser(compute_to_add=True)
-        self.advicesToAdd = [info[0] for info in self.advisableGroups[0]]
-        self.advicesToEdit = [info[0] for info in self.advisableGroups[1]]
+        self.advisableGroups = self.context.getAdvicesGroupsInfosForUser(
+            compute_to_add=True, compute_power_advisers=False)
+        self.advicesToAdd = self.advisableGroups[0]
+        self.advicesToEdit = self.advisableGroups[1]
         self.advicesByType = self.context.getAdvicesByType()
         self.adviceType = adviceType
-        self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
+        self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'])
         self.itemReviewState = self.context.query_state()
         org_uid = self.context.getProposingGroup()
         self.userIsInProposingGroup = self.tool.user_is_in_org(org_uid=org_uid)
         self.isManager = self.tool.isManager(self.cfg)
-        self.isRealManager = self.tool.isManager(self.cfg, realManagers=True)
+        self.isRealManager = self.tool.isManager(self.tool, realManagers=True)
         # edit proposingGroup comment, only compute if item not decided
         # by default editable by Managers only
         self.userIsProposingGroupCommentEditor = False
@@ -179,7 +207,7 @@ class AdvicesIconsInfos(BrowserView):
     def showLinkToInherited(self, adviceHolder):
         """ """
         return bool(self.adviceIsInherited and self.context._appendLinkedItem(
-            adviceHolder, only_viewable=True))
+            adviceHolder, self.tool, self.cfg, only_viewable=True))
 
     def mayRemoveInheritedAdvice(self):
         """To remove an inherited advice, must be :
@@ -193,8 +221,7 @@ class AdvicesIconsInfos(BrowserView):
             else:
                 if self.cfg.getInheritedAdviceRemoveableByAdviser() and \
                    self.advice_id in self.userAdviserOrgUids and \
-                   self.itemReviewState in get_organization(
-                        self.advice_id).get_item_advice_edit_states(cfg=self.cfg):
+                   self.itemReviewState in self.cfg.getItemAdviceStatesForOrg(self.advice_id):
                     return True
         return res
 

@@ -16,6 +16,7 @@ from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.utils import get_current_user_id
+from Products.PloneMeeting.utils import reindex_object
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from zope.i18n import translate
 
@@ -67,7 +68,7 @@ class Discuss(BrowserView):
         src = "%s/%s" % (portal_url, filename)
 
         html = self.IMG_TEMPLATE % (src, title, name)
-        self.context._update_after_edit()
+        self.context._update_after_edit(idxs=['to_discuss'])
         return html
 
     def synchToggle(self, itemUid, discussAction):
@@ -96,7 +97,7 @@ class Discuss(BrowserView):
             toDiscuss = not item.getToDiscuss()
             item.setToDiscuss(toDiscuss)
             item.adapted().onDiscussChanged(toDiscuss)
-        self.context._update_after_edit()
+        self.context._update_after_edit(idxs=['to_discuss'])
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
 
@@ -174,7 +175,8 @@ class TakenOverBy(BrowserView):
         # do not notifyModifiedAndReindex because an item may be taken over
         # when it is decided, by members of the proposingGroup
         # and in this case item must not be modified
-        self.context.reindexObject(idxs=['getTakenOverBy'])
+        # cache will be invalidated because we check for modified and _p_mtime
+        reindex_object(self.context, idxs=['getTakenOverBy'], update_metadata=False)
         return html
 
 
@@ -216,7 +218,7 @@ class AdviceIsConfidential(BrowserView):
         portal_url = self.portal.absolute_url()
         src = "%s/%s" % (portal_url, filename)
         html = self.IMG_TEMPLATE % (src, title, name)
-        self.context._update_after_edit()
+        self.context._update_after_edit(idxs=[])
         return html
 
 
@@ -265,7 +267,7 @@ class BudgetRelated(BrowserView):
         # reload the page if current toggle did change adviceIndex
         # indeed, budgetRelated informations often impact automtic advices
         storedAdviceIndex = self.context.adviceIndex
-        self.context._update_after_edit()
+        self.context._update_after_edit(idxs=[])
         if not self.context.adviceIndex == storedAdviceIndex:
             # we set a status reponse of 500 so the jQuery calling this
             # will refresh the page
@@ -299,7 +301,7 @@ class AsyncRenderSearchTerm(BrowserView):
                 collection_uid)
 
     @ram.cache(__call___cachekey)
-    def __call__(self):
+    def AsyncRenderSearchTerm__call__(self):
         """ """
         self.collection_uid = self.request.get('collection_uid')
         self.tool = api.portal.get_tool('portal_plonemeeting')
@@ -308,6 +310,9 @@ class AsyncRenderSearchTerm(BrowserView):
         self.brains = self.collection.results(batch=False, brains=True)
         rendered_term = ViewPageTemplateFile("templates/term_searchmeetings.pt")(self)
         return rendered_term
+
+    # do ram.cache have a different key name
+    __call__ = AsyncRenderSearchTerm__call__
 
 
 class AsyncLoadLinkedItems(BrowserView):
@@ -435,8 +440,10 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
            Cache is invalidated depending on :
            - current user may edit or not;
            - something is redefined for current item or not.'''
+        # when using raw fields (assembly, absents, signatures, ...)
+        # we invalidate if a raw value changed
         date = get_cachekey_volatile(
-            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignatures')
+            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignaturesRawFields')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
@@ -494,10 +501,13 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
             self.counts = None
 
     @ram.cache(__call___cachekey)
-    def __call__(self):
+    def AsyncLoadItemAssemblyAndSignatures__call__(self):
         """ """
         self._update()
         return self.index()
+
+    # do ram.cache have a different key name
+    __call__ = AsyncLoadItemAssemblyAndSignatures__call__
 
     def get_all_used_held_positions(self):
         """ """
@@ -525,15 +535,14 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
         is_manager = tool.isManager(cfg)
         cfg_modified = cfg.modified()
         ordered_contacts = self.context.ordered_contacts.items()
-        item_votes = self.context.get_item_votes()
-        context_uid = self.context.UID()
+        item_votes = sorted(self.context.get_item_votes().items())
         cache_date = self.request.get('cache_date', None)
         return (date,
                 is_manager,
                 cfg_modified,
                 ordered_contacts,
                 item_votes,
-                context_uid,
+                repr(self.context),
                 cache_date)
 
     def get_all_used_held_positions(self):
@@ -552,7 +561,10 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
         self.meeting_view = view
 
     @ram.cache(__call___cachekey)
-    def __call__(self):
+    def AsyncLoadMeetingAssemblyAndSignatures__call__(self):
         """ """
         self._update()
         return self.index()
+
+    # do ram.cache have a different key name
+    __call__ = AsyncLoadMeetingAssemblyAndSignatures__call__

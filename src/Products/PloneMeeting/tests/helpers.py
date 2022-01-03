@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from collective.contact.plonegroup.utils import select_organization
-from imio.helpers.cache import cleanRamCacheFor
 from plone import api
 from plone.app.testing import logout
 from plone.app.textfield.value import RichTextValue

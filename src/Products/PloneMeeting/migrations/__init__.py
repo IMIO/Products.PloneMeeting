@@ -139,6 +139,15 @@ class Migrator(BaseMigrator):
                 adapted.set_tal_condition(tal_condition)
                 logger.info('Word "{0}" was replaced by "{1}" for element "{2}"'.format(
                     old_word, new_word, repr(obj)))
+            # mailing_lists for POD templates
+            if obj.__class__.__name__ == "ConfigurablePODTemplate":
+                mailing_lists = obj.mailing_lists
+                if mailing_lists and old_word in mailing_lists:
+                    mailing_lists = mailing_lists.replace(old_word, new_word)
+                    obj.mailing_lists = mailing_lists
+                    logger.info('Word "{0}" was replaced by "{1}" for element "{2}"'.format(
+                        old_word, new_word, repr(obj)))
+
         # MeetingConfig
         for cfg in object_values(self.tool, 'MeetingConfig'):
             # datagrid fields

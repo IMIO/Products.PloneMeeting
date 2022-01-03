@@ -1,13 +1,13 @@
 <tal:annexes condition="view/show">
-  <fieldset tal:define="hasAnnexes python: view.tool.hasAnnexes(context, portal_type=view.annex_portal_type);"
+  <fieldset tal:define="annexes python: context.restrictedTraverse('@@categorized-childs')(portal_type=view.annex_portal_type).strip();"
             tal:attributes="class string:section_${view/annex_portal_type}">
       <legend i18n:domain="PloneMeeting" i18n:translate="" tal:content="view/fieldset_legend">Annexes</legend>
       <table width="100%" class="no-style-table" cellpadding="0" cellspacing="0" style="margin: 0;">
           <tr tal:define="obj python: context">
-              <td tal:condition="hasAnnexes">
-                  <tal:annexes replace="structure python: context.restrictedTraverse('@@categorized-childs')(portal_type=view.annex_portal_type)" />
+              <td tal:condition="annexes">
+                  <tal:annexes replace="structure annexes" />
               </td>
-              <td tal:condition="python: not hasAnnexes">
+              <td tal:condition="python: not annexes">
                 <div style="float: left; height: 26px;">-</div>
                 <div style="float: right;">
                   <a tal:define="anchor_name python: view.annex_portal_type == 'annex' and 'annexes' or 'annexes_decision'"

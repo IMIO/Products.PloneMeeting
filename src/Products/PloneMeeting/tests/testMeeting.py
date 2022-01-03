@@ -1917,6 +1917,8 @@ class testMeetingType(PloneMeetingTestCase):
         meeting = self._createMeetingWithItems()
         # by default, 7 normal items and none late
         self.assertEqual(meeting.number_of_items(), '7')
+        self.assertEqual(meeting.number_of_items(True), 7)
+        self.assertEqual(len(meeting.get_raw_items()), 7)
         # add a late item
         self.freezeMeeting(meeting)
         item = self.create('MeetingItem')
@@ -1924,7 +1926,19 @@ class testMeetingType(PloneMeetingTestCase):
         self.presentItem(item)
         # now 8 items
         self.assertEqual(meeting.number_of_items(), '8')
+        self.assertEqual(meeting.number_of_items(True), 8)
         self.assertEqual(len(meeting.get_raw_items()), 8)
+        # remove an item
+        self.backToState(item, 'validated')
+        self.assertEqual(meeting.number_of_items(), '7')
+        self.assertEqual(meeting.number_of_items(True), 7)
+        self.assertEqual(len(meeting.get_raw_items()), 7)
+        # delete an item
+        first_item = meeting.get_items(the_objects=True, ordered=True)[0]
+        self.deleteAsManager(first_item.UID())
+        self.assertEqual(meeting.number_of_items(), '6')
+        self.assertEqual(meeting.number_of_items(True), 6)
+        self.assertEqual(len(meeting.get_raw_items()), 6)
 
     def test_pm_AvailableItems(self):
         """
@@ -2044,8 +2058,10 @@ class testMeetingType(PloneMeetingTestCase):
         item2 = self.create('MeetingItem')
         # meeting as preferredMeeting
         item1.setPreferredMeeting(meeting.UID())
+        item1._update_after_edit()
         # after_meeting as preferredMeeting
         item2.setPreferredMeeting(after_meeting.UID())
+        item2._update_after_edit()
         self.freezeMeeting(meeting)
         self.validateItem(item1)
         self.validateItem(item2)
@@ -2545,7 +2561,8 @@ class testMeetingType(PloneMeetingTestCase):
         # we have brains
         self.assertTrue(isinstance(brainsInOrder[0], AbstractCatalogBrain))
         # items are ordered
-        self.assertEqual([brain.getItemNumber for brain in brainsInOrder],
+        self.assertEqual([brain._unrestrictedGetObject().getItemNumber()
+                          for brain in brainsInOrder],
                          [100, 200, 300, 400, 500, 600, 700])
         self.assertEqual(len(meeting.get_items(uids=itemUids, the_objects=False)), 4)
         # we can specify the listType
@@ -2738,12 +2755,17 @@ class testMeetingType(PloneMeetingTestCase):
         # action is available
         object_buttons = [k['id'] for k in pa.listFilteredActionsFor(meeting)['object_buttons']]
         self.assertTrue('dummy' in object_buttons)
-        # actions panel was invalidated
+        # actions panel was NOT invalidated on edit
+        # for performance reasons, we invalidate only when review_state changed
+        # this usecase is not supported for now
         actions_panel._transitions = None
         afterEdit_rendered_actions_panel = actions_panel()
-        self.assertNotEqual(beforeEdit_rendered_actions_panel, afterEdit_rendered_actions_panel)
+        # still equal, actions panel was not invalidated
+        self.assertEqual(beforeEdit_rendered_actions_panel, afterEdit_rendered_actions_panel)
 
-        # invalidated when getRawItems changed
+        # NOT invalidated neither when getRawItems changed
+        # for performance reasons, we invalidate only when review_state changed
+        # this usecase is not supported for now
         # for now, no item in the meeting, the 'no_items' action is shown
         object_buttons = [k['id'] for k in pa.listFilteredActionsFor(meeting)['object_buttons']]
         self.assertTrue('no_items' in object_buttons)
@@ -2753,7 +2775,8 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertFalse('no_items' in object_buttons)
         actions_panel._transitions = None
         presentedItem_rendered_actions_panel = actions_panel()
-        self.assertNotEqual(afterEdit_rendered_actions_panel, presentedItem_rendered_actions_panel)
+        # still equal, actions panel was not invalidated
+        self.assertEqual(afterEdit_rendered_actions_panel, presentedItem_rendered_actions_panel)
 
         # invalidated when review state changed
         # just make sure the contained item is not changed
@@ -2786,10 +2809,11 @@ class testMeetingType(PloneMeetingTestCase):
         dummyItemAction_rendered_actions_panel = actions_panel()
         self.assertEqual(frozenMeeting_rendered_actions_panel, dummyItemAction_rendered_actions_panel)
         item._update_after_edit()
-        # the actions panel has been invalidated
+        # the actions panel is still the same as item modified does not change anything to the meeting
+        # before it was the case as not able to freeze an empty meeting, no more now
         actions_panel._transitions = None
         dummyItemAction_rendered_actions_panel = actions_panel()
-        self.assertNotEqual(frozenMeeting_rendered_actions_panel, dummyItemAction_rendered_actions_panel)
+        self.assertEqual(frozenMeeting_rendered_actions_panel, dummyItemAction_rendered_actions_panel)
 
         # invalidated when user changed
         self.changeUser('pmReviewer1')
@@ -2890,6 +2914,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(itemBrain.meeting_date, datetime(1950, 1, 1))
         self.assertEqual(itemBrain.preferred_meeting_date, datetime(1950, 1, 1))
         item.setPreferredMeeting(meeting.UID())
+        item._update_after_edit()
         self.presentItem(item)
         itemBrain = self.catalog(UID=item.UID())[0]
         self.assertEqual(itemBrain.meeting_date, meeting.date)
@@ -3720,9 +3745,12 @@ class testMeetingType(PloneMeetingTestCase):
 
         # supplements
         suppl_item1 = self.create('MeetingItem', proposingGroup=self.vendors_uid)
-        suppl_item1.setCommittees(("committee_2__suppl__1", ))
         suppl_item2 = self.create('MeetingItem', proposingGroup=self.vendors_uid)
+        # change committees set automatically
+        suppl_item1.setCommittees(("committee_2__suppl__1", ))
+        suppl_item1.reindexObject()
         suppl_item2.setCommittees(("committee_2__suppl__2", ))
+        suppl_item2.reindexObject()
         self.presentItem(suppl_item1)
         self.presentItem(suppl_item2)
         # by default only normal (not supplements) are returned for a committee

@@ -1,10 +1,13 @@
 
 from Acquisition import aq_base
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.security import fplog
 from plone import api
 from plone.api.exc import InvalidParameterError
 from plone.app.querystring import queryparser
 from plone.memoize import ram
+from plone.restapi.services import Service
+from plonemeeting.restapi import logger as pmrestapi_logger
 from Products.Archetypes.BaseObject import BaseObject
 from Products.Archetypes.Field import Field
 from Products.CMFPlone.CatalogTool import CatalogTool
@@ -15,12 +18,12 @@ from Products.PortalTransforms.cache import Cache
 from Products.PortalTransforms.transforms import safe_html
 from Products.PortalTransforms.transforms.safe_html import CSS_COMMENT
 from Products.PortalTransforms.transforms.safe_html import decode_htmlentities
+from time import time
 from types import StringType
 from z3c.form import interfaces
 from z3c.form.widget import SequenceWidget
-from imio.helpers.security import fplog
-from plone.restapi.services import Service
-from plonemeeting.restapi import logger as pmrestapi_logger
+from zope.ramcache.ram import Storage
+from cPickle import dumps
 
 
 def _patched_equal(context, row):
@@ -97,7 +100,7 @@ logger.info("Monkey patching Products.Archetypes.BaseObject.BaseObject (validate
 
 def _listAllowedRolesAndUsers_cachekey(method, self, user):
     '''cachekey method for self._listAllowedRolesAndUsers.'''
-    date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user')
+    date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
     try:
         tool = api.portal.get_tool('portal_plonemeeting')
         users_groups = tool._users_groups_value()
@@ -243,3 +246,57 @@ def render(self):
 
 Service.render = render
 pmrestapi_logger.info("Monkey patching plone.restapi.services.RestService (render)")
+
+
+Storage.__old_pm_getEntry = Storage.getEntry
+
+
+def getEntry(self, ob, key):
+    if self.lastCleanup <= time() - self.cleanupInterval:
+        self.cleanup()
+
+    try:
+        data = self._data[ob][key]
+    except KeyError:
+        if ob not in self._misses:
+            self._misses[ob] = 0
+        self._misses[ob] += 1
+        raise
+    else:
+        data[2] += 1                    # increment access count
+        # XXX begin change by PM, update timestamp
+        timestamp = time()
+        data[1] = timestamp
+        # XXX end change by PM
+
+        return data[0]
+
+
+Storage.getEntry = getEntry
+logger.info("Monkey patching zope.ramcache.ram.Storage (getEntry)")
+
+
+Storage.__old_pm_getStatistics = Storage.getStatistics
+
+
+def getStatistics(self):
+    objects = self._data.keys()
+    objects.sort()
+    result = []
+
+    for ob in objects:
+        size = len(dumps(self._data[ob]))
+        hits = sum(entry[2] for entry in self._data[ob].itervalues())
+        from DateTime import DateTime
+        older_date = min(entry[1] for entry in self._data[ob].itervalues())
+        result.append({'path': ob,
+                       'hits': hits,
+                       'misses': self._misses.get(ob, 0),
+                       'size': size,
+                       'entries': len(self._data[ob]),
+                       'older_date': older_date and DateTime(older_date)})
+    return tuple(result)
+
+
+Storage.getStatistics = getStatistics
+logger.info("Monkey patching zope.ramcache.ram.Storage (getStatistics)")

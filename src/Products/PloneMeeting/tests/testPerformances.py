@@ -5,6 +5,7 @@
 # GNU General Public License (GPL)
 #
 
+from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.eeafaceted.batchactions.utils import listify_uids
@@ -13,8 +14,10 @@ from datetime import timedelta
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from plone import api
 from PloneMeetingTestCase import pm_logger
+from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import down_or_up_wf
 from Products.PloneMeeting.utils import get_annexes
 from profilehooks import timecall
 
@@ -362,6 +365,25 @@ class testPerformances(PloneMeetingTestCase):
         for time in range(times):
             get_organizations(not_empty_suffix='advisers', caching=caching)
 
+    def test_pm_get_organization_caching(self):
+        '''Test collective.contact.plonegroup.utils.get_organization caching.
+           Check if faster than using catalog unrestricted.'''
+        # test with 100 orgs
+        self._setupForOrgs(100)
+        pm_logger.info('get_organization called 1000 time with 100 activated orgs.')
+        # with caching=False
+        pm_logger.info('No caching.')
+        self._get_organization(times=1000, caching=False)
+        # with caching=True
+        pm_logger.info('Caching.')
+        self._get_organization(times=1000, caching=True)
+
+    @timecall
+    def _get_organization(self, times=1, caching=True):
+        ''' '''
+        for time in range(times):
+            get_organization(self.vendors_uid, caching=caching)
+
     def test_pm_SpeedGetMeetingConfig(self):
         '''Test ToolPloneMeeting.getMeetingConfig method performances.
            We call the method 2000 times, this is what happens when displaying
@@ -414,7 +436,7 @@ class testPerformances(PloneMeetingTestCase):
         ''' '''
         item.setManuallyLinkedItems(linked_item_uids, caching=caching)
 
-    def test_pm_IsManager(self):
+    def test_pm_SpeedIsManager(self):
         '''Test ToolPloneMeeting.isManager method performances.
            Need to comment manually ram.cache on ToolPloneMeeting.isManager
            to see difference.  Performance is better with @ram.cache.'''
@@ -427,7 +449,8 @@ class testPerformances(PloneMeetingTestCase):
     def _isManager(self, context, times=1):
         ''' '''
         for time in range(times):
-            self.tool.isManager(context)
+            self.tool.isManager(self.meetingConfig)
+            self.tool.isManager(self.tool, realManagers=True)
 
     def test_pm_GetAuthenticatedMember(self):
         '''Test performance between portal_membership.getAuthenticatedMember and
@@ -774,6 +797,103 @@ class testPerformances(PloneMeetingTestCase):
         pm_logger.info('Call {0} times'.format(times))
         for time in range(times):
             self.tool.getUserName(userId)
+
+    def test_pm_SpeedItemQueryState(self):
+        '''Test MeetingItem.query_state.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        # get a large workflow_history
+        self.validateItem(item)
+        self.backToState(item, 'itemcreated')
+        self.validateItem(item)
+        self.backToState(item, 'itemcreated')
+        self.validateItem(item)
+        # call query_state 1000 times
+        self._query_state(item, times=1000)
+
+    @timecall
+    def _query_state(self, item, times=1):
+        ''' '''
+        pm_logger.info('Call {0} times'.format(times))
+        for time in range(times):
+            item.query_state()
+
+    def test_pm_SpeedIsPowerObserverForCfg(self):
+        '''Test ToolPloneMeeting.isPowerObserverForCfg.'''
+        self.changeUser('pmManager')
+        # call it 1000 times
+        self._isPowerObserverForCfg(times=1000)
+
+    @timecall
+    def _isPowerObserverForCfg(self, times=1):
+        ''' '''
+        pm_logger.info('Call {0} times'.format(times))
+        for time in range(times):
+            self.tool.isPowerObserverForCfg(self.meetingConfig)
+            self.tool.isPowerObserverForCfg(self.meetingConfig,
+                                            ["powerobservers"])
+            self.tool.isPowerObserverForCfg(self.meetingConfig,
+                                            ["restrictedpowerobservers"])
+            self.tool.isPowerObserverForCfg(self.meetingConfig,
+                                            ["powerobservers", "restrictedpowerobservers"])
+
+    def test_pm_SpeedUserIsAmong(self):
+        '''Test ToolPloneMeeting.userIsAmong.'''
+        self.changeUser('pmManager')
+        # call it 1000 times
+        self._userIsAmong(times=1000)
+
+    @timecall
+    def _userIsAmong(self, times=1):
+        ''' '''
+        pm_logger.info('Call {0} times'.format(times))
+        for time in range(times):
+            self.tool.userIsAmong(["advisers"])
+            self.tool.userIsAmong(["creators", "reviewers"])
+            self.tool.userIsAmong(["powerobservers"])
+
+    def test_pm_SpeedUtilsdown_or_up_wf(self):
+        '''Test utils.down_or_up_wf for MeetingItem.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        # get a larger workflow_history
+        self.validateItem(item)
+        self.backToState(item, 'itemcreated')
+        self.validateItem(item)
+        self.backToState(item, 'itemcreated')
+        self.validateItem(item)
+        # call down_or_up_wf 1000 times
+        self._down_or_up_wf(item, times=1000)
+
+    @timecall
+    def _down_or_up_wf(self, item, times=1):
+        ''' '''
+        pm_logger.info('Call {0} times'.format(times))
+        for time in range(times):
+            down_or_up_wf(item)
+
+    def test_pm_CheckAndHasPermission(self):
+        '''Test _checkPermission and user.has_permission.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        # call _checkPermission 1000 times
+        self._check_permission(item, times=1000)
+        # call user.has_permission 1000 times
+        self._user_has_permission(item, times=1000)
+
+    @timecall
+    def _check_permission(self, item, times=1):
+        ''' '''
+        pm_logger.info('Call _check_permission {0} times'.format(times))
+        for time in range(times):
+            _checkPermission("ModifyPortalContent", item)
+
+    @timecall
+    def _user_has_permission(self, item, times=1):
+        ''' '''
+        pm_logger.info('Call user.has_permission {0} times'.format(times))
+        for time in range(times):
+            self.member.has_permission("ModifyPortalContent", item)
 
 
 def test_suite():

@@ -77,14 +77,16 @@ indexInfos = {
     # Meeting-related indexes
     'meeting_date': ('DateIndex', {}),
     # Indexes used by every portal_types
-    'getConfigId': ('FieldIndex', {}), }
+    'getConfigId': ('FieldIndex', {}),
+    # a technical index used to store various informations
+    'pm_technical_index': ('KeywordIndex', {}),
+}
 # Metadata to create in portal_catalog
 columnInfos = ('getAssociatedGroups',
                'getCategory',
                'meeting_date',
                'committees_index',
                'getGroupsInCharge',
-               'getItemNumber',
                'preferred_meeting_uid',
                'preferred_meeting_date',
                'getProposingGroup',
@@ -276,7 +278,7 @@ def postInstall(context):
     if not cron_configlet.cronjobs:
         # add a cron job that will be launched at 02:00 so set 01:45
         # Syntax: m h dom mon command.
-        cron_configlet.cronjobs = [u'45 1 * * portal/@@update-delay-aware-advices']
+        cron_configlet.cronjobs = [u'45 1 * * portal/@@pm-night-tasks']
 
     # add a collective.messagesviewlet message that will be used to warn MeetingManagers
     # that there are no more holidays in the configuration in less that 2 months
@@ -291,7 +293,7 @@ def postInstall(context):
                                    context=site.REQUEST),
                     msg_type='significant',
                     req_roles=['Manager', 'MeetingManager'],
-                    tal_condition='python: tool.showHolidaysWarning(context)',
+                    tal_condition='python: tool.showHolidaysWarning(cfg)',
                     activate=True)
     # if collective.messagesviewlet "browser-warning-ff-chrome" is found, make sure it is enabled
     if messages_config:
@@ -362,6 +364,14 @@ def postInstall(context):
 
     # enable plone.app.caching
     api.portal.set_registry_record('plone.caching.interfaces.ICacheSettings.enabled', True)
+
+    # disable RSS, it does useless catalog search sometimes...
+    api.portal.set_registry_record(
+        name='Products.CMFPlone.interfaces.syndication.ISiteSyndicationSettings.allowed',
+        value=False)
+    api.portal.set_registry_record(
+        name='Products.CMFPlone.interfaces.syndication.ISiteSyndicationSettings.search_rss_enabled',
+        value=False)
 
     # configure dexterity localrolesfield
     _configureDexterityLocalRolesField()

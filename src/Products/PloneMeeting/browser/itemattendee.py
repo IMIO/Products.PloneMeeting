@@ -126,10 +126,7 @@ class BaseAttendeeForm(form.Form):
         invalidate_cachekey_volatile_for(
             'Products.PloneMeeting.vocabularies.itemvotersvocabulary',
             get_again=True)
-        # invalidate attendees async load on item and meeting
-        invalidate_cachekey_volatile_for(
-            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignatures',
-            get_again=True)
+        # invalidate attendees async load on meeting
         invalidate_cachekey_volatile_for(
             'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures',
             get_again=True)

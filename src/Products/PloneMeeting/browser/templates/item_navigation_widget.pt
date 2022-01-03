@@ -1,69 +1,58 @@
 <div class="navigateItem" i18n:domain="PloneMeeting" tal:condition="mayView"
-               tal:define="context_url context/absolute_url;
-                           meeting context/getMeeting;
-                           mayView python: view.tool.checkMayView(meeting);
+               tal:define="context_url python: context.absolute_url();
+                           meeting python: context.getMeeting();
                            itemNumber python: context.getItemNumber(relativeTo='meeting', for_display=True);
-                           siblings python: context.getSiblingItem('all');
-                           firstItemNumber siblings/first;
-                           firstItemNumberDisplay python: view.display_number(firstItemNumber);
-                           previousItemNumber siblings/previous;
-                           previousItemNumberDisplay python: previousItemNumber and view.display_number(previousItemNumber) or None;
-                           nextItemNumber siblings/next;
-                           nextItemNumberDisplay python: nextItemNumber and view.display_number(nextItemNumber) or None;
-                           lastItemNumber siblings/last;
-                           lastItemNumberDisplay python: view.display_number(lastItemNumber);">
+                           lastItemNumber python: meeting.number_of_items();
+                           mayView python: view.tool.checkMayView(meeting);">
 
     <tal:comment replace="nothing">Go to the meeting</tal:comment>
     <a href="#"
-       tal:attributes="href string:${context_url}/@@object_goto?itemNumber=0&way=meeting;
+       tal:attributes="href string:${context_url}/@@object_goto?&way=meeting;
                        onclick string:localStorage.setItem('dashboardRowId', 'row_${context/UID}');">
         <img title="pm_goto_meeting" i18n:attributes="title" style="cursor:pointer"
              tal:attributes="src string:${view/portal_url}/gotoMeeting.png;"/>
     </a>
 
     <tal:comment replace="nothing">Go to the first item</tal:comment>
-    <a href="#" tal:attributes="href string:${context_url}/@@object_goto?itemNumber=${firstItemNumberDisplay}&way=first">
-        <img tal:condition="python: itemNumber != firstItemNumber"
-             style="cursor:pointer" title="pm_goto_first" i18n:attributes="title"
+    <a href="#" tal:attributes="href string:${context_url}/@@object_goto?way=first">
+        <img style="cursor:pointer" title="pm_goto_first" i18n:attributes="title"
              tal:attributes="src string:${view/portal_url}/arrowLeftDouble.png;"/>
     </a>
 
     <tal:comment replace="nothing">Go to the previous item</tal:comment>
-    <a href="#" tal:attributes="href string:${context_url}/@@object_goto?itemNumber=${previousItemNumberDisplay}&way=previous">
-        <img tal:condition="previousItemNumber" style="cursor:pointer"
-             title="pm_goto_previous" i18n:attributes="title"
+    <a href="#" tal:attributes="href string:${context_url}/@@object_goto?way=previous">
+        <img title="pm_goto_previous" i18n:attributes="title"
              tal:attributes="src string:${view/portal_url}/arrowLeftSimple.png;"/>
     </a>
 
     <tal:comment replace="nothing">Number of last item.</tal:comment>
     <span class="discreet">
         <span i18n:domain="plone" i18n:translate="">MeetingItem</span>&nbsp;
-        <span tal:replace="itemNumber"/><span tal:condition="lastItemNumber"> / <span tal:replace="lastItemNumberDisplay"/></span>
+        <span tal:replace="itemNumber"/> / <span tal:replace="lastItemNumber"/>
     </span>
 
     <tal:comment replace="nothing">Go to the next item</tal:comment>
-    <a href="#" tal:attributes="href string:${context_url}/@@object_goto?itemNumber=${nextItemNumberDisplay}&way=next">
-        <img tal:condition="nextItemNumber" style="cursor:pointer"
+    <a href="#" tal:attributes="href string:${context_url}/@@object_goto?way=next">
+        <img style="cursor:pointer"
              title="pm_goto_next" i18n:attributes="title"
              tal:attributes="src string:${view/portal_url}/arrowRightSimple.png;"/>
     </a>
 
     <tal:comment replace="nothing">Go to the last item</tal:comment>
-    <a href="#" tal:attributes="href string:${context_url}/@@object_goto?itemNumber=${lastItemNumberDisplay}&way=last">
-        <img tal:condition="python: itemNumber != lastItemNumber"
-             style="cursor:pointer" title="pm_goto_last" i18n:attributes="title"
+    <a href="#" tal:attributes="href string:${context_url}/@@object_goto?way=last">
+        <img style="cursor:pointer" title="pm_goto_last" i18n:attributes="title"
              tal:attributes="src string:${view/portal_url}/arrowRightDouble.png;"/>
     </a>
 
     <tal:comment replace="nothing">Go to meetingitem_view for a given item number</tal:comment>
-    <span class="discreet" tal:condition="python: lastItemNumber!=False">&nbsp;&nbsp;
+    <span class="discreet">&nbsp;&nbsp;
         <span i18n:translate="">goto_item</span>
         &nbsp;&nbsp;<input class="goto_meeting"
                            type="text"
                            size="3"
-                           tal:attributes="onKeyPress string:if (event.keyCode==13) gotoItem($(this), $lastItemNumberDisplay);" />
+                           tal:attributes="onKeyPress string:if (event.keyCode==13) gotoItem($(this), $lastItemNumber);" />
         <img tal:attributes="src string:${view/portal_url}/gotoItem.png;
-                             onClick string:javascript:gotoItem($$(this).prev(), ${lastItemNumberDisplay});"
+                             onClick string:javascript:gotoItem($$(this).prev(), ${lastItemNumber});"
              style="cursor:pointer"/>
     </span>
 </div>

@@ -9,6 +9,10 @@
            name="Products.PloneMeeting.vocabularies.categoriesvocabulary" />
   <utility component=".vocabularies.ItemClassifiersVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.classifiersvocabulary" />
+  <utility component=".vocabularies.UserProposingGroupsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.userproposinggroupsvocabulary" />
+  <utility component=".vocabularies.UserProposingGroupsWithGroupsInChargeVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.userproposinggroupswithgroupsinchargevocabulary" />
   <utility component=".vocabularies.ItemProposingGroupsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" />
   <utility component=".vocabularies.ItemProposingGroupsForFacetedFilterVocabularyFactory"
@@ -73,8 +77,8 @@
            name="Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary" />
   <utility component=".vocabularies.SelectableHeldPositionsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary" />
-  <utility component=".vocabularies.SimplifiedSelectableHeldPositionsVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.simplified_selectable_heldpositions_vocabulary" />
+  <utility component=".vocabularies.BaseSimplifiedHeldPositionsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.every_heldpositions_vocabulary" />
   <utility component=".vocabularies.SelectableCommitteeAttendeesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary" />
   <utility name="Products.PloneMeeting.vocabularies.selectable_committees_vocabulary"

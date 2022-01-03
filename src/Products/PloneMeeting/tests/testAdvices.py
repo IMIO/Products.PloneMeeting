@@ -151,7 +151,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([], []))
         self.changeUser('pmReviewer2')
         # 'pmReviewer2' has one advice to give for 'vendors' and no advice to edit
-        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([(self.vendors_uid, u'Vendors')], []))
+        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([self.vendors_uid], []))
         self.assertEqual(item1.hasAdvices(), False)
         # fields 'advice_type' and 'advice_group' are mandatory
         form = item1.restrictedTraverse('++add++meetingadvice').form_instance
@@ -196,7 +196,7 @@ class testAdvices(PloneMeetingTestCase):
         form.createAndAdd(form.request.form)
         self.assertEqual(item1.hasAdvices(), True)
         # 'pmReviewer2' has no more addable advice (as already given) but has now an editable advice
-        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([], [(self.vendors_uid, 'Vendors')]))
+        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([], [self.vendors_uid]))
         # given advice is correctly stored
         self.assertEqual(item1.adviceIndex[self.vendors_uid]['type'], 'positive')
         self.assertEqual(item1.adviceIndex[self.vendors_uid]['comment'], u'My comment')
@@ -212,11 +212,11 @@ class testAdvices(PloneMeetingTestCase):
         # but he can still edit the advice he just gave
         self.changeUser('pmReviewer2')
         self.failUnless(self.hasPermission(View, item1))
-        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([], [(self.vendors_uid, 'Vendors')]))
+        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([], [self.vendors_uid]))
         self.failUnless(self.hasPermission(ModifyPortalContent, given_advice))
         # another member of the same _advisers group may also edit the given advice
         self.changeUser('pmManager')
-        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([], [(self.vendors_uid, 'Vendors')]))
+        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([], [self.vendors_uid]))
         self.failUnless(self.hasPermission(ModifyPortalContent, given_advice))
         # if a user that can not remove the advice tries he gets Unauthorized
         self.changeUser('pmReviewer1')
@@ -228,7 +228,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         # remove the advice
         item1.restrictedTraverse('@@delete_givenuid')(item1.meetingadvice.UID())
-        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([(self.vendors_uid, u'Vendors')], []))
+        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([self.vendors_uid], []))
 
         # if advices are disabled in the meetingConfig, getAdvicesGroupsInfosForUser is emtpy
         self.changeUser('admin')
@@ -240,7 +240,7 @@ class testAdvices(PloneMeetingTestCase):
 
         # activate advices again and this time remove the fact that we asked the advice
         self.changeUser('pmReviewer2')
-        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([(self.vendors_uid, u'Vendors')], []))
+        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([self.vendors_uid], []))
         self.changeUser('pmManager')
         item1.setOptionalAdvisers([])
         item1._update_after_edit()
@@ -369,7 +369,7 @@ class testAdvices(PloneMeetingTestCase):
         # check than the adviser can see the item
         self.changeUser('pmReviewer2')
         self.failUnless(self.hasPermission(View, item1))
-        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([(self.vendors_uid, u'Vendors')], []))
+        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([self.vendors_uid], []))
         self.failUnless(self.hasPermission(AddAdvice, item1))
 
     def test_pm_AdvicesInvalidation(self):
@@ -391,7 +391,7 @@ class testAdvices(PloneMeetingTestCase):
         self.proposeItem(item)
         # login as adviser and add an advice
         self.changeUser('pmReviewer2')
-        self.assertEqual(item.getAdvicesGroupsInfosForUser(), ([(self.vendors_uid, u'Vendors')], []))
+        self.assertEqual(item.getAdvicesGroupsInfosForUser(), ([self.vendors_uid], []))
         # give an advice
         createContentInContainer(item,
                                  'meetingadvice',
@@ -1064,7 +1064,7 @@ class testAdvices(PloneMeetingTestCase):
         # 'vendors' is still in adviceIndex, the TAL expr could be evaluated correctly
         self.assertTrue(self.vendors_uid in item.adviceIndex)
         self.assertEqual(item.getAdvicesGroupsInfosForUser(),
-                         ([(self.vendors_uid, 'Vendors')], []))
+                         ([self.vendors_uid], []))
         createContentInContainer(item,
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
@@ -1477,7 +1477,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(item.query_state(), self._stateMappingFor('proposed'))
         # the advice is giveable by the vendors
         self.changeUser('pmReviewer2')
-        self.assertTrue(self.vendors_uid in [key for key, value in item.getAdvicesGroupsInfosForUser()[0]])
+        self.assertTrue(self.vendors_uid in item.getAdvicesGroupsInfosForUser()[0])
         # now if we define on the 'vendors' item_advice_states
         # that advice is giveable when item is 'validated', it will not be anymore
         # in 'proposed' state, but well in 'validated' state
@@ -1489,13 +1489,13 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(self.vendors.get_item_advice_states(cfg), [self._stateMappingFor('validated')])
         item.at_post_create_script()
         self.changeUser('pmReviewer2')
-        self.assertTrue(self.vendors_uid not in [key for key, value in item.getAdvicesGroupsInfosForUser()[0]])
+        self.assertTrue(self.vendors_uid not in item.getAdvicesGroupsInfosForUser()[0])
         # now validate the item and the advice is giveable
         self.changeUser('pmManager')
         self.validateItem(item)
         self.changeUser('pmReviewer2')
         self.assertEqual(item.query_state(), self._stateMappingFor('validated'))
-        self.assertTrue(self.vendors_uid in [key for key, value in item.getAdvicesGroupsInfosForUser()[0]])
+        self.assertTrue(self.vendors_uid in item.getAdvicesGroupsInfosForUser()[0])
 
         # it is the same for itemAdviceEditStates and itemAdviceViewStates
         self.assertEqual(self.vendors.get_item_advice_edit_states(cfg), cfg.getItemAdviceEditStates())
@@ -1896,7 +1896,7 @@ class testAdvices(PloneMeetingTestCase):
         # adviser
         self.changeUser('pmReviewer2')
         self.assertEqual(item.getAdvicesGroupsInfosForUser(),
-                         ([(self.vendors_uid, 'Vendors')], []))
+                         ([self.vendors_uid], []))
         self.assertTrue(availableDelaysView._mayAccessDelayChangesHistory())
         # but not for powerobservers for example
         self.changeUser('powerobserver1')
@@ -3671,6 +3671,8 @@ class testAdvices(PloneMeetingTestCase):
 
         # 2.2) if advice is not askable, advice inheritance is not removed
         cfg.setSelectableAdvisers(())
+        # invalidate cache for item advices vocabulary used by MeetingItem.showOptionalAdvisers
+        cfg.at_post_edit_script()
         item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
         self.changeUser('pmManager')
         self.assertTrue(item2.adviceIndex[self.vendors_uid]['inherited'])
@@ -3926,6 +3928,77 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(AddAdvice, item))
         self.assertFalse(self.hasPermission(AddAnnex, item))
         self.assertFalse(self.hasPermission(AddAnnexDecision, item))
+
+    def test_pm_AdvicesIconsCaching(self):
+        """Test @@advices-icons caching."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates([self._stateMappingFor('itemcreated'), ])
+        cfg.setItemAdviceEditStates([self._stateMappingFor('itemcreated'), ])
+        cfg.setItemAdviceViewStates([self._stateMappingFor('itemcreated'), ])
+        cfg.setPowerAdvisersGroups((self.vendors_uid, ))
+        self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'), ))
+        cfg.setUseCopies(True)
+        cfg.setItemCopyGroupsStates((self._stateMappingFor('itemcreated'), ))
+        self._setPowerObserverStates(observer_type='restrictedpowerobservers',
+                                     states=('itemcreated', ))
+        cfg.setRestrictAccessToSecretItems(True)
+        self.assertTrue('restrictedpowerobservers' in cfg.getRestrictAccessToSecretItemsTo())
+
+        # create an item and ask the advice of group 'developers'
+        self.changeUser('pmCreator1')
+        data = {
+            'title': 'Item to advice',
+            'category': 'maintenance',
+            'optionalAdvisers': (self.developers_uid, ),
+            'copyGroups': (self.vendors_advisers, ),
+            'privacy': 'secret'
+        }
+        item = self.create('MeetingItem', **data)
+        # not able to add advice
+        advices_icons_content = "Not given yet"
+        add_advice_action = "++add++meetingadvice"
+        advices_icons = item.restrictedTraverse('@@advices-icons')
+        self.assertTrue(advices_icons_content in advices_icons())
+        self.assertFalse(add_advice_action in advices_icons())
+
+        # test for an adviser
+        self.changeUser('pmAdviser1')
+        advices_icons = item.restrictedTraverse('@@advices-icons')
+        self.assertTrue(advices_icons_content in advices_icons())
+        self.assertTrue(add_advice_action in advices_icons())
+
+        # reviewer
+        self.changeUser('pmReviewer1')
+        advices_icons = item.restrictedTraverse('@@advices-icons')
+        self.assertTrue(advices_icons_content in advices_icons())
+        self.assertFalse(add_advice_action in advices_icons())
+
+        # power adviser
+        self.changeUser('pmReviewer2')
+        advices_icons = item.restrictedTraverse('@@advices-icons')
+        self.assertTrue(advices_icons_content in advices_icons())
+        self.assertTrue(add_advice_action in advices_icons())
+
+        # when using restrictAccessToSecretItemsTo
+        self.changeUser('restrictedpowerobserver1')
+        advices_icons = item.restrictedTraverse('@@advices-icons')
+        self.assertFalse(advices_icons_content in advices_icons())
+        self.assertFalse(add_advice_action in advices_icons())
+
+        # MeetingManager
+        # make it no more adviser and power adviser
+        self._removePrincipalFromGroups('pmManager', [self.developers_advisers])
+        self._removePrincipalFromGroups('pmManager', [self.vendors_advisers])
+        self.changeUser('pmManager')
+        advices_icons = item.restrictedTraverse('@@advices-icons')
+        self.assertTrue(advices_icons_content in advices_icons())
+        self.assertFalse(add_advice_action in advices_icons())
+
+        # Manager
+        self.changeUser('siteadmin')
+        advices_icons = item.restrictedTraverse('@@advices-icons')
+        self.assertTrue(advices_icons_content in advices_icons())
+        self.assertFalse(add_advice_action in advices_icons())
 
 
 def test_suite():

@@ -17,7 +17,7 @@
        tal:define="isRealManager python: context.isManager(context, True);
                    mode string:view;">
 
-    <tal:hideToNonManagers condition="python: isRealManager or context.isManager(context)">
+    <tal:hideToNonManagers condition="python: isRealManager or user.has_role('MeetingManager', context)">
       <p class="tool_pm_descr" i18n:translate="plonemeeting_descr"></p>
 
       <tal:comment replace="nothing">Meeting configurations</tal:comment>
@@ -37,7 +37,7 @@
 
         <fieldset tal:repeat="grouped_config python: context.getGroupedConfigs(check_access=False, as_items=True)">
           <legend tal:content="python: '{0} ({1})'.format(grouped_config[0][1], grouped_config[0][2] or '-')">Config group title</legend>
-  
+
             <table class="vertical listing nosort" width="100%">
               <thead>
               <tr>
@@ -169,7 +169,9 @@
             <td tal:define="field python:here.getField('enableScanDocs')">
               <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
-            <td></td>
+            <td tal:define="field python:here.getField('deferParentReindex')">
+              <span metal:use-macro="here/widgets/field/macros/view" />
+            </td>
           </tr>
         </table>
       </fieldset>

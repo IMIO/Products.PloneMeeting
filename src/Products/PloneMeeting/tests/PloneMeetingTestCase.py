@@ -320,10 +320,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             attrs.update({'date': datetime.now()})
         if objectType == 'MeetingItem':
             if 'proposingGroup' not in attrs.keys():
-                cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
-                proposingGroup = self.tool.get_orgs_for_user(suffixes=['creators'])
-                if len(proposingGroup):
-                    attrs.update({'proposingGroup': proposingGroup[0].UID()})
+                cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._get_org_uids_for_user')
+                proposingGroupUids = self.tool.get_orgs_for_user(suffixes=['creators'])
+                if len(proposingGroupUids):
+                    attrs.update({'proposingGroup': proposingGroupUids[0]})
         obj = getattr(folder, folder.invokeFactory(contentType, **attrs))
         if objectType == 'Meeting':
             self.setCurrentMeeting(obj)
@@ -526,8 +526,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                                'meeting-config-getcategories-',
                                'meeting-config-gettopics-',
                                'plonegroup-utils-get_organizations-',
-                               'add_auto_copy_groups_search_for_expression__',
-                               'PloneMeeting-MeetingConfig-getMeetingsAcceptingItems'])
+                               'PloneMeeting-MeetingConfig-getMeetingsAcceptingItems',
+                               'PloneMeeting-tool-get_orgs_for_user'])
 
     def _removeOrganizations(self):
         """Delete every organizations found in own_org."""
@@ -710,6 +710,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             self.changeUser('siteadmin')
             cfg.at_post_edit_script()
             self.changeUser(currentUser)
+        else:
+            cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
+            cleanRamCacheFor('Products.PloneMeeting.content.meeting.attribute_is_used')
 
     def _enable_annex_config(self,
                              obj,

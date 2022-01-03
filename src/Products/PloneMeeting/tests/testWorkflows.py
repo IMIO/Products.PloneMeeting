@@ -495,7 +495,9 @@ class testWorkflows(PloneMeetingTestCase):
         self.create('MeetingItemRecurring', title='Rec item developers',
                     proposingGroup=self.developers_uid,
                     meetingTransitionInsertingMe='_init_')
-        self.createUser('pmManagerRestricted', ('MeetingManager', ))
+        self.createUser('pmManagerRestricted', ('Member', ))
+        self._addPrincipalToGroup('pmManagerRestricted', '{0}_meetingmanagers'.format(
+            self.meetingConfig.getId()))
         self._addPrincipalToGroup('pmManagerRestricted', self.developers_creators)
         self.changeUser('pmManagerRestricted')
         # first check that current 'pmManager' may not 'propose'
@@ -509,7 +511,8 @@ class testWorkflows(PloneMeetingTestCase):
         if availableTransitions:
             self.assertEqual(len(availableTransitions), 1)
             self.assertTrue(availableTransitions[0]['id'].startswith('back'))
-        # now, create a meeting, the item is correctly added no matter MeetingManager could not validate it
+        # now, create a meeting, the item is correctly added no matter
+        # MeetingManager could not validate it
         meeting = self.create('Meeting')
         self.assertEqual(len(meeting.get_items()), 1)
         self.assertEqual(meeting.get_items()[0].getProposingGroup(), self.developers_uid)

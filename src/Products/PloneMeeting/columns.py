@@ -128,18 +128,19 @@ class ItemPollTypeColumn(VocabularyColumn):
     vocabulary = u'Products.PloneMeeting.vocabularies.polltypesvocabulary'
 
 
-def render_item_annexes(item, tool, show_nothing=False):
+def render_item_annexes(item, tool, show_nothing=False, check_can_view=False):
     """ """
     annexes = ''
     annexes += item.restrictedTraverse('@@categorized-childs')(
-        portal_type='annex', show_nothing=show_nothing)
-    if tool.hasAnnexes(item, portal_type='annexDecision'):
+        portal_type='annex', show_nothing=show_nothing, check_can_view=check_can_view)
+    decision_annexes = item.restrictedTraverse('@@categorized-childs')(
+        portal_type='annexDecision', show_nothing=show_nothing, check_can_view=check_can_view)
+    if decision_annexes.strip():
         decision_term = translate("AnnexesDecisionShort",
                                   domain='PloneMeeting',
                                   context=item.REQUEST)
         annexes += u"<span class='discreet'>{0}&nbsp;:&nbsp;</span>".format(decision_term)
-        annexes += item.restrictedTraverse('@@categorized-childs')(
-            portal_type='annexDecision', show_nothing=show_nothing)
+        annexes += decision_annexes
     return annexes
 
 
@@ -176,6 +177,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         obj = self._getObject(item)
         prettyLinker = IPrettyLink(obj)
         prettyLinker.target = '_parent'
+        prettyLinker.showContentIcon = True
 
         annexes = staticInfos = moreInfos = ''
 
@@ -208,7 +210,13 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         elif obj.getTagName() == 'Meeting':
             visibleColumns = cfg.getMeetingColumns()
             staticInfos = obj.restrictedTraverse('@@static-infos')(visibleColumns=visibleColumns)
-            annexes += obj.restrictedTraverse('@@categorized-childs')(portal_type='annex')
+            annexes += obj.restrictedTraverse('@@categorized-childs')(
+                portal_type='annex', check_can_view=True)
+            # display number of items in meeting title
+            contentValue = "{0} <span class='meeting-number-items'>[{1}]</span>".format(
+                obj.Title(), obj.number_of_items())
+            prettyLinker.contentValue = contentValue
+
         if annexes:
             annexes = u"<div class='dashboard_annexes'>{0}</div>".format(annexes)
 
@@ -261,10 +269,11 @@ class ItemLinkedMeetingColumn(BaseColumn):
         if not value or value.year <= 1950:
             res = u'-'
         else:
-            catalog = api.portal.get_tool('portal_catalog')
+            catalog = self.table.portal.portal_catalog
             # done unrestricted because can be used to display meeting date
             # in dashboard when current user may not see the meeting
-            brains = catalog.unrestrictedSearchResults(UID=getattr(item, self.meeting_uid_attr))
+            brains = catalog.unrestrictedSearchResults(
+                UID=getattr(item, self.meeting_uid_attr))
             meeting = brains[0]._unrestrictedGetObject()
             res = meeting.get_pretty_link()
 
@@ -342,8 +351,9 @@ class ItemNumberColumn(BrowserViewCallColumn):
         self.params = {'may_change_items_order': may_change_items_order}
         cell = super(ItemNumberColumn, self).renderCell(item)
         if may_change_items_order:
+            obj = self._getObject(item)
             cell = u"⣿</td><td td_cell_getItemNumber data-item_number='{0}'>".format(
-                item.getItemNumber) + cell
+                obj.getItemNumber()) + cell
         return cell
 
 
@@ -353,8 +363,7 @@ class ItemCheckBoxColumn(CheckBoxColumn):
     def show_insert_or_remove_selected_items_action(self):
         '''Return True/False if the 'Remove selected items' or 'Present selected items'
            action must be displayed on the meeting view displaying presented items.'''
-        member = api.user.get_current()
-        return bool(member.has_permission(ModifyPortalContent, self.context) and
+        return bool(_checkPermission(ModifyPortalContent, self.context) and
                     not self.context.query_state() in self.context.MEETINGCLOSEDSTATES)
 
     def renderHeadCell(self):

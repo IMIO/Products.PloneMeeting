@@ -867,7 +867,7 @@ class PloneMeetingConfiguration(Descriptor):
         return klass.instance
     get = classmethod(get)
 
-    multiSelectFields = ('workingDays', 'configGroups')
+    multiSelectFields = ('workingDays', 'configGroups', 'deferParentReindex')
 
     def __init__(self, meetingFolderTitle, meetingConfigs, orgs):
         self.meetingFolderTitle = meetingFolderTitle
@@ -876,6 +876,7 @@ class PloneMeetingConfiguration(Descriptor):
         self.restrictUsers = False
         self.unrestrictedUsers = ''
         self.enableScanDocs = False
+        self.deferParentReindex = ['annex', 'item_reference']
         self.workingDays = ('mon', 'tue', 'wed', 'thu', 'fri')
         self.holidays = [
             {'date': '2021/01/01', },  # 2021

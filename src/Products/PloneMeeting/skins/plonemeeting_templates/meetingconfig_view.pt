@@ -22,7 +22,7 @@
                       tal:define="tool python: context.aq_inner.aq_parent;
                                   context_url context/absolute_url;
                                   isManager python: tool.isManager(context, False);
-                                  isRealManager python: tool.isManager(context, True);
+                                  isRealManager python: tool.isManager(tool, True);
                                   mode python:'view';
                                   pageName request/pageName|string:default;
                                   member context/@@plone_portal_state/member;

@@ -80,8 +80,8 @@ class ChangeItemOrderView(BrowserView):
                     type='warning')
                 return False
 
-        nbOfItems = len(meeting.get_raw_items())
-        items = meeting.get_items(ordered=True)
+        nbOfItems = meeting.number_of_items(as_int=True)
+        items = meeting.get_items(ordered=True, unrestricted=True)
 
         # Calibrate and validate moveValue
         if moveType == 'number':
@@ -166,7 +166,7 @@ class ChangeItemOrderView(BrowserView):
                 # Move the item to an absolute position
                 self.context.setItemNumber(moveNumber)
                 # get items again now that context number was updated
-                items = meeting.get_items(ordered=True)
+                items = meeting.get_items(ordered=True, unrestricted=True)
                 oldIndexIsInteger = _is_integer(oldIndex)
                 oldIndexHasSubnumbers = meeting.get_item_by_number(oldIndex + 1)
                 if moveNumber < oldIndex:

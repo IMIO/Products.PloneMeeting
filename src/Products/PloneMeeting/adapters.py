@@ -7,7 +7,6 @@ from appy.shared.diff import HtmlDiff
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentgenerator.adapters import GenerablePODTemplatesAdapter
-from collective.documentgenerator.content.pod_template import IPODTemplate
 from collective.eeafaceted.dashboard.adapters import DashboardGenerablePODTemplatesAdapter
 from collective.eeafaceted.dashboard.content.pod_template import IDashboardPODTemplate
 from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
@@ -21,7 +20,9 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from eea.facetednavigation.widgets.storage import Criterion
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
 from imio.annex.adapters import AnnexPrettyLinkAdapter
+from imio.helpers.adapters import MissingTerms
 from imio.helpers.catalog import merge_queries
+from imio.helpers.content import get_vocab
 from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.adapters import BaseImioHistoryAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
@@ -47,6 +48,7 @@ from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.MeetingConfig import CONFIGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import READERPREFIX
@@ -61,8 +63,10 @@ from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getHistoryTexts
 from Products.PloneMeeting.utils import is_transition_before_date
 from Products.PloneMeeting.utils import reviewersFor
+from z3c.form.term import MissingChoiceTermsVocabulary
 from zope.annotation import IAnnotations
 from zope.i18n import translate
+from zope.schema.vocabulary import SimpleVocabulary
 
 import logging
 
@@ -126,7 +130,7 @@ class AdviceContentDeletableAdapter(APContentDeletableAdapter):
         if mayDelete:
             tool = api.portal.get_tool('portal_plonemeeting')
             pr = api.portal.get_tool('portal_repository')
-            if not tool.isManager(self.context, realManagers=True) and \
+            if not tool.isManager(tool, realManagers=True) and \
                pr.getHistoryMetadata(self.context):
                 return False
         return mayDelete
@@ -632,6 +636,25 @@ class MeetingPrettyLinkAdapter(PrettyLinkAdapter):
     """
       Override to take into account PloneMeeting use cases...
     """
+    def getLink_cachekey(method, self):
+        '''cachekey method for self.getLink.'''
+        res = super(MeetingPrettyLinkAdapter, self).getLink_cachekey(self)
+
+        # res check context_modified but we just want to check date
+        meeting_date = self.context.date
+        res = list(res)
+        del res[1]
+        res.append(meeting_date)
+        # check also on 2 usecases adding an icon,
+        # extraordinary_session/videoconference
+        res.append(self.context.extraordinary_session)
+        res.append(self.context.videoconference)
+        return tuple(res)
+
+    @ram.cache(getLink_cachekey)
+    def getLink(self):
+        """Necessary to be able to override the cachekey."""
+        return self._getLink()
 
     def _leadingIcons(self):
         """
@@ -702,7 +725,7 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
         if self.context.getTagName() == 'MeetingItem':
             if self.cfg.getHideItemHistoryCommentsToUsersOutsideProposingGroup() and \
                not self.tool.isManager(self.cfg):
-                userOrgUids = self.tool.get_orgs_for_user(the_objects=False)
+                userOrgUids = self.tool.get_orgs_for_user()
                 group_managing_item_uid = \
                     self.context.adapted()._getGroupManagingItem(event['review_state'])
                 if group_managing_item_uid not in userOrgUids:
@@ -962,7 +985,7 @@ class ItemsOfMyGroupsAdapter(CompoundCriterionBaseAdapter):
            of the group the user is in.'''
         if not self.cfg:
             return {}
-        userOrgUids = self.tool.get_orgs_for_user(only_selected=False, the_objects=False)
+        userOrgUids = self.tool.get_orgs_for_user(only_selected=False)
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'getProposingGroup': {'query': userOrgUids}, }
 
@@ -1013,7 +1036,7 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
             return {}
 
         # now get highest hierarchic level for every user groups
-        org_uids = self.tool.get_orgs_for_user(the_objects=False)
+        org_uids = self.tool.get_orgs_for_user()
         userPloneGroupIds = self.tool.get_plone_groups_for_user()
         reviewers = reviewersFor(self.cfg)
         userReviewerPloneGroupIds = []
@@ -1096,7 +1119,7 @@ class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCrit
         if not self.cfg:
             return {}
         # search every highest reviewer level for each group of the user
-        userOrgUids = self.tool.get_orgs_for_user(the_objects=False)
+        userOrgUids = self.tool.get_orgs_for_user()
         userPloneGroups = self.tool.get_plone_groups_for_user()
         reviewProcessInfos = []
         for org_uid in userOrgUids:
@@ -1257,9 +1280,9 @@ class BaseItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
                     if set(edit_roles).intersection(set(roles)):
                         suffixes.append(suffix)
                 # we have suffixes to keep, now find suffixed orgs for current user
-                userOrgIds = [org.UID() for org in self.tool.get_orgs_for_user(suffixes=suffixes)]
-                for userOrgId in userOrgIds:
-                    reviewProcessInfos.append('%s__reviewprocess__%s' % (userOrgId, review_state))
+                userOrgUids = self.tool.get_orgs_for_user(suffixes=suffixes)
+                for userOrgUid in userOrgUids:
+                    reviewProcessInfos.append('%s__reviewprocess__%s' % (userOrgUid, review_state))
         if not reviewProcessInfos:
             return _find_nothing_query(self.cfg.getItemTypeName())
         # Create query parameters
@@ -1285,7 +1308,7 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
         '''Queries all items for which the current user must give an advice.'''
         if not self.cfg:
             return {}
-        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
+        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # Consider not_given, asked_again and hidden_during_redaction advices,
         # this search will return 'not delay-aware' and 'delay-aware' advices
         indexAdvisers = [org_uid + '_advice_not_given' for org_uid in org_uids] + \
@@ -1363,7 +1386,7 @@ class ItemsToAdviceWithoutDelayAdapter(CompoundCriterionBaseAdapter):
         '''Queries all items for which the current user must give an advice without delay.'''
         if not self.cfg:
             return {}
-        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
+        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
         # this search will only return 'not delay-aware' advices
         indexAdvisers = [org_uid + '_advice_not_given' for org_uid in org_uids] + \
@@ -1386,7 +1409,7 @@ class ItemsToAdviceWithDelayAdapter(CompoundCriterionBaseAdapter):
         '''Queries all items for which the current user must give an advice with delay.'''
         if not self.cfg:
             return {}
-        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
+        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
         # this search will only return 'delay-aware' advices
         indexAdvisers = ['delay__' + org_uid + '_advice_not_given' for org_uid in org_uids] + \
@@ -1410,7 +1433,7 @@ class ItemsToAdviceWithExceededDelayAdapter(CompoundCriterionBaseAdapter):
         '''Queries all items for which the current user must give an advice with exceeded delay.'''
         if not self.cfg:
             return {}
-        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
+        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # Add a '_delay_exceeded' at the end of every group id: we want "not given" advices.
         # this search will only return 'delay-aware' advices for wich delay is exceeded
         indexAdvisers = ['delay__' + org_uid + '_advice_delay_exceeded' for org_uid in org_uids]
@@ -1431,7 +1454,7 @@ class AdvisedItemsAdapter(CompoundCriterionBaseAdapter):
         '''Queries items for which an advice has been given.'''
         if not self.cfg:
             return {}
-        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
+        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # advised items are items that has an advice in a particular review_state
         # just append every available meetingadvice state: we want "given" advices.
         # this search will return every advices
@@ -1464,7 +1487,7 @@ class AdvisedItemsWithDelayAdapter(CompoundCriterionBaseAdapter):
         '''Queries items for which an advice has been given with delay.'''
         if not self.cfg:
             return {}
-        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
+        org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # advised items are items that has an advice in a particular review_state
         # just append every available meetingadvice state: we want "given" advices.
         # this search will only return 'delay-aware' advices
@@ -1660,7 +1683,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         res = []
         res += self._configgroup_groups(visible_fors)
         res += self._reader_groups(visible_fors)
-        res += self._suffix_proposinggroup(visible_fors)
+        res += self._suffix_proposinggroup(visible_fors, self.parent)
         return res
 
     def _meeting_visible_for_groups(self, visible_fors):
@@ -1675,7 +1698,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         res = []
         res += self._configgroup_groups(visible_fors)
         res += self._reader_groups(visible_fors)
-        res += self._suffix_proposinggroup(visible_fors)
+        res += self._suffix_proposinggroup(visible_fors, self.parent.aq_parent)
         if 'adviser_group' in visible_fors:
             plone_group_id = get_plone_group_id(self.parent.advice_group, 'advisers')
             res.append(plone_group_id)
@@ -1690,15 +1713,15 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
                 res.append('{0}_{1}'.format(self.cfg.getId(), suffix))
         return res
 
-    def _suffix_proposinggroup(self, visible_fors):
+    def _suffix_proposinggroup(self, visible_fors, item):
         """ """
         res = []
-        groups_managing_item = self.parent.adapted()._getAllGroupsManagingItem()
+        groups_managing_item_uids = item.adapted()._getAllGroupsManagingItem()
         for visible_for in visible_fors:
             if visible_for.startswith(PROPOSINGGROUPPREFIX):
                 suffix = visible_for.replace(PROPOSINGGROUPPREFIX, '')
-                for group_managing_item in groups_managing_item:
-                    plone_group_id = get_plone_group_id(group_managing_item.UID(), suffix)
+                for group_managing_item_uid in groups_managing_item_uids:
+                    plone_group_id = get_plone_group_id(group_managing_item_uid, suffix)
                     res.append(plone_group_id)
         return res
 
@@ -1742,7 +1765,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
         class_name = self.context.__class__.__name__
         # special management for not confidential annexes displayed on not viewable context
         if not can_view and not infos['confidential']:
-            # check if displaying annexes on a not viewable item
+            # check if displaying annexes on a not viewable item using the linked items on an item
             # if not viewable annexes are actually displayed,
             # check that current user has access to a viewable linked item
             if (class_name == 'MeetingItem' and
@@ -1783,7 +1806,8 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
             if class_name == 'Meeting':
                 # if we have a SUFFIXPROFILEPREFIX prefixed group,
                 # check using "userIsAmong", this is only done for Meetings
-                if set(self.tool.get_plone_groups_for_user()).intersection(infos['visible_for_groups']):
+                if set(self.tool.get_plone_groups_for_user()).intersection(
+                        infos['visible_for_groups']):
                     return True
                 # build suffixes to pass to tool.userIsAmong
                 suffixes = []
@@ -1901,12 +1925,17 @@ class PMGenerablePODTemplatesAdapter(GenerablePODTemplatesAdapter):
         cfg = tool.getMeetingConfig(self.context)
         if not cfg:
             return []
+        # do not render on other contents than IMeetingContent
+        # or it is also computed on Folder (dashboards) and other Plone pages
+        if not IMeetingContent.providedBy(self.context):
+            return []
+
+        # OK, we are on a IMeetingContent, compute the pod templates
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog.unrestrictedSearchResults(
-            object_provides={'query': IPODTemplate.__identifier__,
-                             'not': IDashboardPODTemplate.__identifier__},
-            # PloneMeeting, just added following line
-            path={'query': '/'.join(cfg.getPhysicalPath())},
+            portal_type='ConfigurablePODTemplate',
+            getConfigId=cfg.getId(),
+            enabled=True,
             sort_on='getObjPositionInParent'
         )
         pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
@@ -1921,10 +1950,11 @@ class PMDashboardGenerablePODTemplatesAdapter(DashboardGenerablePODTemplatesAdap
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         query = {'object_provides': {'query': IDashboardPODTemplate.__identifier__},
+                 'enabled': True,
                  'sort_on': 'getObjPositionInParent'}
         # filter on MeetingConfig if we are in it
         if cfg:
-            query['path'] = {'query': '/'.join(cfg.getPhysicalPath())}
+            query['getConfigId'] = cfg.getId()
         else:
             # out of a MeetingConfig
             query['getConfigId'] = EMPTY_STRING
@@ -1934,3 +1964,19 @@ class PMDashboardGenerablePODTemplatesAdapter(DashboardGenerablePODTemplatesAdap
         pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
 
         return pod_templates
+
+
+#########################
+# vocabularies adapters #
+#########################
+
+
+class AnnexMissingTermsVocabulary(MissingChoiceTermsVocabulary, MissingTerms):
+    """ Managing missing terms for IAnnex. """
+
+    def complete_voc(self):
+        if self.field.getName() == 'content_category':
+            return get_vocab(self.context,
+                             'collective.iconifiedcategory.every_categories')
+        else:
+            return SimpleVocabulary([])

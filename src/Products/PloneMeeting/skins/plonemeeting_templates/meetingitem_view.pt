@@ -19,20 +19,19 @@
     <metal:body_macro define-macro="body"
                       tal:define="tool python: context.portal_plonemeeting;
                                   member context/@@plone_portal_state/member;
-                                  dummy context/checkPrivacyViewable;
                                   meetingConfig python:tool.getMeetingConfig(context);
-                                  meeting context/getMeeting;
-                                  usedAttrs meetingConfig/getUsedItemAttributes;
-                                  usedMeetingAttrs meetingConfig/getUsedMeetingAttributes;
-                                  context_url context/absolute_url;
+                                  meeting python: context.getMeeting();
+                                  usedAttrs python: meetingConfig.getUsedItemAttributes();
+                                  usedMeetingAttrs python: meetingConfig.getUsedMeetingAttributes();
+                                  context_url python: context.absolute_url();
                                   isVotesEnabled python: context.isVotesEnabled();
                                   showAdvices python: context.adapted().showAdvices();
-                                  showClonableToOtherMCs context/showClonableToOtherMCs;
+                                  showClonableToOtherMCs python: context.showClonableToOtherMCs();
                                   showAdvancedClonableToOtherMCs python: context.adapted().showAdvancedClonableToOtherMCs(showClonableToOtherMCs);">
 
     <tal:comment replace="nothing">Show navigation between items of the same meeting</tal:comment>
     <tal:itemNavigation tal:condition="nocall:meeting">
-      <tal:itemNavigation replace="structure context/@@item-navigation-widget" />
+      <tal:itemNavigation replace="structure python: context.restrictedTraverse('@@item-navigation-widget')()" />
     </tal:itemNavigation>
 
     <table width="100%" border="0" class="item-infos">
@@ -78,7 +77,7 @@
 
             <tal:comment replace="nothing">Associated groups</tal:comment>
             <div class="discreet" tal:condition="python: 'associatedGroups' in usedAttrs"
-                                  tal:define="associatedGroups context/getAssociatedGroups;">
+                                  tal:define="associatedGroups python: context.getAssociatedGroups();">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_associatedGroups"></span>:&nbsp;&nbsp;
                 <tal:displayAssociatedGroups condition="associatedGroups">
@@ -111,7 +110,7 @@
 
             <tal:comment replace="nothing">Committees</tal:comment>
             <div class="discreet" tal:condition="python: 'committees' in usedMeetingAttrs"
-                                  tal:define="committees context/getCommittees;">
+                                  tal:define="committees python: context.getCommittees();">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_committees"></span>:&nbsp;&nbsp;
                 <tal:displayCommittees condition="committees">
@@ -122,7 +121,7 @@
 
             <tal:comment replace="nothing">Advices</tal:comment>
             <div class="discreet" tal:condition="showAdvices"
-                                  tal:define="advisers context/displayAdvisers;">
+                                  tal:define="advisers python: context.displayAdvisers();">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_optionalAdvisers"></span>:&nbsp;&nbsp;
                 <tal:displayAdvisers condition="advisers">
@@ -146,7 +145,7 @@
                                           class python: css_class + (copy_groups_have_access and ' green-colored' or '');">
                     </span>:&nbsp;&nbsp;
                     <tal:displayCopyGroups condition="copyGroups">
-                        <span tal:replace="structure context/displayCopyGroups">Copy groups</span>
+                        <span tal:replace="structure python: context.displayCopyGroups()">Copy groups</span>
                     </tal:displayCopyGroups>
                     <span tal:condition="not: copyGroups">-</span>
                 </div>
@@ -157,7 +156,7 @@
                  tal:condition="python: 'itemIsSigned' in usedAttrs">
               <span class="item_attribute_label"
                     i18n:translate="PloneMeeting_label_itemIsSigned"></span>:&nbsp;&nbsp;
-                <tal:itemIsSigned replace="structure context/@@item-is-signed" />
+                <tal:itemIsSigned replace="structure python: context.restrictedTraverse('@@item-is-signed')()" />
             </div>
             <tal:comment replace="nothing">Taken over by</tal:comment>
             <div class="discreet"
@@ -241,7 +240,7 @@
             </div>
 
             <tal:comment replace="nothing">Is acceptable out of meeting?</tal:comment>
-            <div class="discreet" tal:condition="context/showIsAcceptableOutOfMeeting">
+            <div class="discreet" tal:condition="python: context.showIsAcceptableOutOfMeeting()">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_isAcceptableOutOfMeeting"></span>:&nbsp;&nbsp;
                 <span metal:use-macro="python: here.widget('isAcceptableOutOfMeeting', mode='view')" />
@@ -249,12 +248,12 @@
 
             <tal:comment replace="nothing">Other MeetingConfigs Clonable To</tal:comment>
             <div class="discreet"
-                 tal:condition="context/showClonableToOtherMCs"
-                 tal:define="otherMCs context/getOtherMeetingConfigsClonableTo">
+                 tal:condition="python: context.showClonableToOtherMCs()"
+                 tal:define="otherMCs python: context.getOtherMeetingConfigsClonableTo()">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_otherMeetingConfigsClonableTo"></span>:&nbsp;&nbsp;
                 <tal:displayOtherMeetingConfigsClonableTo tal:condition="otherMCs">
-                    <span tal:replace="structure context/displayOtherMeetingConfigsClonableTo">Other mc clonable to (Emergency, privacy)</span>
+                    <span tal:replace="structure python: context.displayOtherMeetingConfigsClonableTo()">Other mc clonable to (Emergency, privacy)</span>
                 </tal:displayOtherMeetingConfigsClonableTo>
                 <span tal:condition="not: otherMCs">-</span>
                 <tal:details condition="showAdvancedClonableToOtherMCs"> — <a class="discreet"
@@ -264,7 +263,7 @@
             </div>
 
             <tal:comment replace="nothing">To discuss?</tal:comment>
-            <div class="discreet" tal:condition="context/showToDiscuss">
+            <div class="discreet" tal:condition="python: context.showToDiscuss()">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_toDiscuss"></span>:&nbsp;&nbsp;
                 <tal:to_discuss replace="structure python: context.restrictedTraverse('item-to-discuss')()" />
@@ -290,7 +289,7 @@
 
             <tal:comment replace="nothing">Oral question or item</tal:comment>
             <div class="discreet" tal:condition="python: 'oralQuestion' in usedAttrs">
-             <tal:defines define="oq context/getOralQuestion">
+             <tal:defines define="oq python: context.getOralQuestion()">
               <tal:oral_question condition="oq">
                <img src="#" tal:attributes="src string:${portal_url}/oralQuestion.png">&nbsp;<span class="item_attribute_label" i18n:translate="this_item_is_an_oral_question">This item is an oral question</span>
               </tal:oral_question>
@@ -302,7 +301,7 @@
 
             <tal:comment replace="nothing">Item initiator</tal:comment>
             <div class="discreet" tal:condition="python: 'itemInitiator' in usedAttrs">
-                <tal:defines define="itemInitiator context/getItemInitiator">
+                <tal:defines define="itemInitiator python: context.getItemInitiator()">
                     <span class="item_attribute_label" i18n:translate="PloneMeeting_label_itemInitiator"></span>:&nbsp;&nbsp;
                     <tal:block condition="itemInitiator">
                         <span metal:use-macro="python: here.widget('itemInitiator', mode='view')" />
@@ -315,7 +314,7 @@
             <div class="discreet" tal:condition="python: 'itemKeywords' in usedAttrs">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_itemKeywords"></span>:&nbsp;&nbsp;
-                <span tal:content="context/itemKeywords"></span>
+                <span tal:content="python: context.getItemKeywords()"></span>
             </div>
 
             <tal:comment replace="nothing">Item tags</tal:comment>
@@ -327,7 +326,7 @@
 
             <tal:comment replace="nothing">Privacy</tal:comment>
             <div class="item_attribute_label"
-                 tal:define="privacy context/getPrivacy"
+                 tal:define="privacy python: context.getPrivacy()"
                  tal:condition="python: ('privacy' in usedAttrs) and privacy">
               <span class="#" tal:attributes="class string:item_privacy_${privacy}" tal:content="privacy" i18n:translate="" />
             </div>
@@ -337,8 +336,8 @@
 
     <tal:comment replace="nothing">Assembly and signatures</tal:comment>
     <tal:assembly_and_signatures condition="nocall:meeting">
-      <tal:defines define="mayQuickEditItemAssembly context/mayQuickEditItemAssembly;
-                           mayQuickEditItemSignatures context/mayQuickEditItemSignatures;
+      <tal:defines define="mayQuickEditItemAssembly python: context.mayQuickEditItemAssembly();
+                           mayQuickEditItemSignatures python: context.mayQuickEditItemSignatures();
                            redefinedItemAssemblies python: context.redefinedItemAssemblies();
                            redefinedItemSignatures python: context.getItemSignatures(real=True) or context.get_item_signatories(real=True);
                            isUsingContacts python: not context.is_assembly_field_used('itemAssembly') and meetingConfig.isUsingContacts()">
@@ -498,7 +497,7 @@
 
     <tal:comment replace="nothing">Other meetingConfigs clonable to</tal:comment>
     <tal:block tal:condition="showAdvancedClonableToOtherMCs"
-               tal:define="otherMCs context/getOtherMeetingConfigsClonableTo">
+               tal:define="otherMCs python: context.getOtherMeetingConfigsClonableTo()">
     <fieldset >
       <legend>
         <div style="display: inline"
@@ -512,7 +511,7 @@
       </legend>
       <div id="clonable_to_other_mcs_content">
         <tal:displayOtherMeetingConfigsClonableTo tal:condition="otherMCs">
-            <span tal:replace="structure context/displayOtherMeetingConfigsClonableTo">Other mc clonable to (Emergency, privacy)</span>
+            <span tal:replace="structure python: context.displayOtherMeetingConfigsClonableTo()">Other mc clonable to (Emergency, privacy)</span>
         </tal:displayOtherMeetingConfigsClonableTo>
         <span tal:condition="not: otherMCs">-</span>
         <div tal:condition="otherMCs">
@@ -552,7 +551,7 @@
         <tr style="vertical-align: top;">
           <tal:annexes condition="showAnnexes">
             <td class="itemAnnexesCell" width="33%">
-              <tal:annexes replace="structure context/@@display-annexes" />
+              <tal:annexes replace="structure python: context.restrictedTraverse('@@display-annexes')()" />
             </td>
             <td width="33%" class="itemAnnexesCell">
               <tal:annexes replace="structure python: context.restrictedTraverse('@@display-annexes')(annex_portal_type='annexDecision', fieldset_legend='AnnexesDecisionShort')" />
@@ -562,7 +561,7 @@
           <td id="itemAdvicesCell" tal:condition="showAdvices">
               <fieldset class="section_advices" tal:define="meetingItem python: context">
               <legend><a name="advices" i18n:translate="PloneMeeting_label_advices">Advices</a></legend>
-                  <tal:advice replace="structure context/@@advices-icons" />
+                  <tal:advice replace="structure python: context.restrictedTraverse('@@advices-icons')()" />
               </fieldset>
           </td>
         </tr>
@@ -575,9 +574,9 @@
         </span>
       </div>
       <div id="collapsible-text-checklist" class="collapsible-content discreet"
-           tal:define="textCheckList context/getTextCheckList">
+           tal:define="textCheckList python: context.getTextCheckList()">
         <div class="collapsible-inner-content">
-          <span tal:condition="textCheckList" tal:replace="structure context/getTextCheckList">Text check list</span>
+          <span tal:condition="textCheckList" tal:replace="structure python: context.getTextCheckList()">Text check list</span>
           <span tal:condition="not:textCheckList" class="discreet" i18n:translate="">Nothing to display.</span>
         </div>
       </div>
@@ -639,13 +638,13 @@
     </tal:field>
 
     <tal:itemNavigation tal:condition="nocall:meeting">
-      <tal:itemNavigation replace="structure context/@@item-navigation-widget" />
+      <tal:itemNavigation replace="structure python: context.restrictedTraverse('@@item-navigation-widget')()" />
     </tal:itemNavigation>
 
     <metal:global_actions use-macro="context/@@pm-macros/global_actions" />
 
     <tal:comment replace="nothing">Fields that appear only if the item is defined in a configuration</tal:comment>
-    <tal:itemInConfig condition="context/isDefinedInTool">
+    <tal:itemInConfig condition="python: context.isDefinedInTool()">
       <tal:templateUsingGroups condition="python: context.isDefinedInTool(item_type='itemtemplate')">
         <div class="discreet itemtemplate-infos">
          <span class="item_attribute_label" i18n:translate="PloneMeeting_label_templateUsingGroups">Template using groups</span>:&nbsp;&nbsp;

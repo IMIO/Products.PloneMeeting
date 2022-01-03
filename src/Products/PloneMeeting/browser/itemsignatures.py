@@ -176,7 +176,7 @@ class ManageItemSignaturesForm(form.Form):
 
         # invalidate assembly async load on item
         invalidate_cachekey_volatile_for(
-            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignatures',
+            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignaturesRawFields',
             get_again=True)
 
         api.portal.show_message(_("Item signatures have been updated."), request=self.request)

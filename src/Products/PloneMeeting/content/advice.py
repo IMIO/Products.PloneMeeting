@@ -134,11 +134,10 @@ class MeetingAdvice(Container):
         if self.advice_group in parent.adviceIndex and parent.adviceIndex[self.advice_group]['isConfidential']:
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
-            user_power_observer_types = [po_infos['row_id'] for po_infos in cfg.getPowerObservers()
-                                         if tool.isPowerObserverForCfg(cfg, power_observer_type=po_infos['row_id'])]
-            if not parent._adviceIsViewableForCurrentUser(cfg,
-                                                          user_power_observer_types,
-                                                          parent.adviceIndex[self.advice_group]):
+            is_confidential_power_observer = tool.isPowerObserverForCfg(
+                cfg, cfg.getAdviceConfidentialFor())
+            if not parent._adviceIsViewableForCurrentUser(
+               cfg, is_confidential_power_observer, parent.adviceIndex[self.advice_group]):
                 raise Unauthorized
 
         # we can not return a translated msg using _ so translate it
@@ -224,7 +223,7 @@ class MeetingAdvice(Container):
 
     # def attribute_is_used_cachekey(method, self, name):
     #     '''cachekey method for self.attribute_is_used.'''
-    #     return "{0}.{1}".format(self.__class__.__name__, name)
+    #     return "{0}.{1}".format(self.portal_type, name)
 
     security.declarePublic('attribute_is_used')
 
@@ -233,6 +232,18 @@ class MeetingAdvice(Container):
         '''Necessary for utils._addManagedPermissions for advice for now
            any attribute is used ?'''
         return True
+
+    def getIndexesRelatedTo(self, related_to='annex', check_deferred=True):
+        '''See doc in interfaces.py.'''
+        idxs = ['SearchableText']
+        return idxs
+
+    security.declarePublic('adapted')
+
+    def adapted(self):
+        '''Make adapted method available on advice, but actually no adapter
+           can be defined, just return self.'''
+        return self
 
 
 class MeetingAdviceSchemaPolicy(DexteritySchemaPolicy):
@@ -255,12 +266,10 @@ class AdviceGroupVocabulary(object):
         # while adding an advice, the context is his parent, aka a MeetingItem
         alterable_advice_org_uids = []
         if context.meta_type == 'MeetingItem':
-            alterable_advice_org_uids = [org_uid for org_uid, org_title in
-                                         context.getAdvicesGroupsInfosForUser(compute_to_edit=False)[0]]
+            alterable_advice_org_uids = context.getAdvicesGroupsInfosForUser(compute_to_edit=False)[0]
         # take into account groups for which user can edit an advice
         elif context.portal_type in advicePortalTypeIds:
-            alterable_advice_org_uids = [org_uid for org_uid, org_title in
-                                         context.getAdvicesGroupsInfosForUser(compute_to_add=False)[1]]
+            alterable_advice_org_uids = context.getAdvicesGroupsInfosForUser(compute_to_add=False)[1]
             # make sure advice_group selected on advice is in the vocabulary
             if context.advice_group not in alterable_advice_org_uids:
                 alterable_advice_org_uids.append(context.advice_group)

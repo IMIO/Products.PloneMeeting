@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from collective.iconifiedcategory.utils import _modified as iconified_modified
 from collective.messagesviewlet.utils import get_messages_to_show
 from DateTime import DateTime
 from imio.helpers.cache import get_cachekey_volatile
@@ -13,11 +14,12 @@ from zope.interface import Interface
 import zlib
 
 
-def _modified(obj):
-    """Returns max value between obj.modified() and obj._p_mtime,
-       in case an annotation is changed on obj, obj._p_mtime is changed,
-       not obj.modified()."""
-    return str(max(int(obj.modified()), obj._p_mtime))
+def _modified(obj=None, date=None):
+    if not date:
+        res = iconified_modified(obj, asdatetime=False)
+    else:
+        res = float(DateTime(date))
+    return str(res)
 
 
 class UserGroups(object):
@@ -108,8 +110,8 @@ class LinkedMeetingModified(object):
             if cfg and cfg.getRedirectToNextMeeting():
                 # this changes when meeting added/removed/date changed
                 meeting_date_last_modified = get_cachekey_volatile(
-                    'Products.PloneMeeting.vocabularies.meetingdatesvocabulary')
-                res = 'lm_' + str(int(DateTime(meeting_date_last_modified)))
+                    'Products.PloneMeeting.Meeting.date')
+                res = 'lm_' + _modified(date=meeting_date_last_modified)
         return res
 
 

@@ -63,13 +63,15 @@ class testPortlets(PloneMeetingTestCase):
         pmFolder1 = self.getMeetingFolder()
         itemsCategory = pmFolder1.restrictedTraverse('@@render_collection_widget_category')
         itemsCategory(widget=None)
-        self.assertTrue(itemsCategory.templateItems())
+        self.assertTrue(itemsCategory.hasTemplateItems())
         # pmCreator2 is member of 'vendors'
         self.changeUser('pmCreator2')
         pmFolder2 = self.getMeetingFolder()
         itemsCategory = pmFolder2.restrictedTraverse('@@render_collection_widget_category')
         itemsCategory(widget=None)
-        self.assertTrue(itemsCategory.templateItems())
+        # clean ram.cache even if cache is still correct because the same for every users
+        notify(ObjectModifiedEvent(cfg))
+        self.assertTrue(itemsCategory.hasTemplateItems())
         # no matter actually there are no itemTemplates available for him...
         self.assertFalse(cfg.getItemTemplates(as_brains=True, onlyActive=True, filtered=True))
 

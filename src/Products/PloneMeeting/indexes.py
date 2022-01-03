@@ -10,6 +10,8 @@ from collective.iconifiedcategory.indexes import content_category_uid
 from datetime import datetime
 from imio.annex.content.annex import IAnnex
 from imio.helpers.content import _contained_objects
+from imio.helpers.content import base_getattr
+from imio.helpers.content import safe_delattr
 from imio.helpers.content import safe_encode
 from imio.history.utils import getLastWFAction
 from OFS.interfaces import IItem
@@ -20,6 +22,7 @@ from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.interfaces import IMeetingItem
@@ -88,6 +91,19 @@ def previous_review_state(obj):
     if event:
         previous_action = event['review_state']
     return previous_action or _marker
+
+
+@indexer(IMeetingContent)
+def pm_technical_index(obj):
+    """
+    This index is made to hold various technical informations:
+    - "reindex_needed" is used to know if a reindex must occurs during night tasks;
+    - ...
+    """
+    res = []
+    if base_getattr(obj, REINDEX_NEEDED_MARKER, False):
+        res.append(REINDEX_NEEDED_MARKER)
+    return res or _marker
 
 
 @indexer(IMeetingItem)
@@ -226,6 +242,8 @@ def SearchableText(obj):
 
 @indexer(IMeetingItem)
 def SearchableText_item(obj):
+    # remove reindex needed marker
+    safe_delattr(obj, REINDEX_NEEDED_MARKER)
     return SearchableText(obj)
 
 

@@ -3,13 +3,13 @@
                      userIsReviewer view/userIsReviewer;
                      isManager python: view.tool.isManager(view.cfg);
                      useToggleDiscuss view/useToggleDiscuss;
-                     UID context/UID;
+                     UID string:[uid];
                      portal_url view/portal_url" >
   <tal:forMeetingManagers condition="python: isManager and mayEdit">
   <span id="marker_toggle_todiscuss_UID#"
         tal:attributes="id string:marker_toggle_todiscuss_$UID;"
         tal:define="onclick_action python: useToggleDiscuss
-                                           and ('asyncToggleIcon(\''+UID+'\', baseUrl=\'' + context.absolute_url() + '\', viewName=\'@@toggle_to_discuss\', baseSelector=\'#marker_toggle_todiscuss_\')')
+                                           and ('asyncToggleIcon(\''+UID+'\', baseUrl=\'[baseUrl]\', viewName=\'@@toggle_to_discuss\', baseSelector=\'#marker_toggle_todiscuss_\')')
                                            or ('synchronousToggleToDiscuss(\'' + context.absolute_url() + '/@@synchronous_toggle_to_discuss?itemUid=%s&discussAction=toggle\')' % UID);">
         <img class="toDiscussEditable"
              tal:condition="context/getToDiscuss" name="discussNo" style="cursor:pointer"

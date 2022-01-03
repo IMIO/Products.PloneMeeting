@@ -15,10 +15,10 @@ to use <fieldset> in the edit form.
                    errors options/state/getErrors | nothing;
                    schematas context/Schemata;
                    allow_tabbing python: False;
-                   fieldsets python: [fieldset for fieldset in view.fieldsets() if fieldset not in ['metadata', 'settings']];
+                   fieldsets python: [fieldset for fieldset in schematas.keys() if fieldset not in ['metadata', 'settings']];
                    default_fieldset python:'default' in fieldsets and 'default' or fieldsets and fieldsets[0] or None;
                    fieldset request/fieldset|options/fieldset|default_fieldset;
-                   fields python: view.fields(fieldsets);
+                   fields python: context.Schemata()['default'].fields();
                    dummy python:context.at_isEditable(fields);
                    portal_type python:context.meta_type in ['MeetingItem',] and context.meta_type.lower() or context.getPortalTypeName().lower().replace(' ', '_');
                    portal_url nocall:context/portal_url;

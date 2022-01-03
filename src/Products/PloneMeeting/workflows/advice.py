@@ -84,4 +84,5 @@ class MeetingAdviceWorkflowActions(object):
         parent.adviceIndex[self.context.advice_group]['advice_given_on'] = advice_given_on
         parent.adviceIndex[self.context.advice_group]['advice_given_on_localized'] = toLocalizedTime(advice_given_on)
 
+
 InitializeClass(MeetingAdviceWorkflowActions)

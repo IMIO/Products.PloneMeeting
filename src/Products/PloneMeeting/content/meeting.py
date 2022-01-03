@@ -44,6 +44,7 @@ from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import READER_USECASES
+from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
 from Products.PloneMeeting.interfaces import IDXMeetingContent
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
@@ -730,8 +731,8 @@ def get_all_used_held_positions(obj, include_new=False, the_objects=True):
         new_selectable_contacts = [c for c in selectable_contacts if c not in contacts]
         contacts = contacts + new_selectable_contacts
 
-    if the_objects:
-        contacts = uuidsToObjects(uuids=contacts, ordered=True)
+    if contacts and the_objects:
+        contacts = uuidsToObjects(uuids=contacts, ordered=True, unrestricted=True)
 
     return tuple(contacts)
 
@@ -896,7 +897,8 @@ class Meeting(Container):
                         notViewableHelpMessage=None,
                         appendToUrl='',
                         link_pattern=None,
-                        with_hour=True):
+                        with_hour=True,
+                        with_number_of_items=False):
         """Return the IPrettyLink version of the title."""
         adapted = IPrettyLink(self)
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -904,6 +906,9 @@ class Meeting(Container):
                                                 with_hour=with_hour,
                                                 prefixed=prefixed,
                                                 short=short)
+        if with_number_of_items:
+            adapted.contentValue = u"{0} <span class='meeting-number-items'>[{1}]</span>".format(
+                adapted.contentValue, self.number_of_items())
         adapted.isViewable = adapted.isViewable and isViewable
         if notViewableHelpMessage is not None:
             adapted.notViewableHelpMessage = notViewableHelpMessage
@@ -1182,15 +1187,8 @@ class Meeting(Container):
             contact_uids = uids
 
         res = contact_uids
-        if the_objects:
-            catalog = api.portal.get_tool('portal_catalog')
-            brains = catalog(UID=contact_uids)
-            res = [brain.getObject() for brain in brains]
-
-            # keep correct order that was lost by catalog query
-            def get_key(item):
-                return contact_uids.index(item.UID())
-            res = sorted(res, key=get_key)
+        if res and the_objects:
+            res = uuidsToObjects(contact_uids, ordered=True, unrestricted=True)
         return tuple(res)
 
     security.declarePublic('get_attendees')
@@ -1525,22 +1523,18 @@ class Meeting(Container):
 
     def get_raw_items(self):
         """Simply get linked items."""
-        catalog = api.portal.get_tool('portal_catalog')
-        collection_behavior = ICollection(self)
-        catalog_query = collection_behavior._get_query(force_linked_items_query=True)
-        query = queryparser.parseFormquery(self, catalog_query)
-        res = [brain.UID for brain in catalog.unrestrictedSearchResults(**query)]
-        return res
+        return self.get_items(the_objects=False, unrestricted=True)
 
     security.declarePublic('get_item_by_number')
 
     def get_item_by_number(self, number):
         '''Gets the item thas has number p_number.'''
         catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(meeting_uid=self.UID(), getItemNumber=number)
+        brains = catalog.unrestrictedSearchResults(
+            meeting_uid=self.UID(), getItemNumber=number)
         if not brains:
             return None
-        return brains[0].getObject()
+        return brains[0]._unrestrictedGetObject()
 
     def get_late_state(self):
         '''See doc in interfaces.py.'''
@@ -1624,7 +1618,7 @@ class Meeting(Container):
         else:
             item.setListType(item.adapted().getListTypeNormalValue(self))
             to_discuss_value = cfg.getToDiscussDefault()
-        items = self.get_items(ordered=True)
+        items = self.get_items(ordered=True, unrestricted=True)
         # Set the correct value for the 'toDiscuss' field if required
         if cfg.getToDiscussSetOnItemInsert():
             item.setToDiscuss(to_discuss_value)
@@ -1679,8 +1673,9 @@ class Meeting(Container):
                 # first added item
                 item.setItemNumber(100)
 
-        # Add the item at the end of the items list
         item._update_meeting_link(self)
+        # store number of items
+        self._number_of_items = len(items) + 1
         self._finalize_item_insert(items_to_update=[item])
 
     def _finalize_item_insert(self, items_to_update=[]):
@@ -1712,7 +1707,7 @@ class Meeting(Container):
         # Remember the item number now; once the item will not be in the meeting
         # anymore, it will loose its number.
         item_number = item.getItemNumber()
-        items = self.get_items()
+        items = self.get_items(unrestricted=True)
         try:
             item._update_meeting_link(None)
             items.remove(item)
@@ -1764,8 +1759,13 @@ class Meeting(Container):
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
 
         # reindex relevant indexes now that item is removed
-        item.reindexObject(idxs=['listType', 'meeting_uid', 'meeting_date'])
+        item.reindexObject(idxs=['getItemNumber',
+                                 'listType',
+                                 'meeting_uid',
+                                 'meeting_date'])
 
+        # store number of items
+        self._number_of_items = len(items)
         # meeting is considered modified, do this before update_item_references
         self.notifyModified()
 
@@ -1775,7 +1775,14 @@ class Meeting(Container):
         item.update_item_reference()
         self.update_item_references(start_number=item_number)
 
-    def update_item_references(self, start_number=0, check_needed=False):
+    def _may_update_item_references(self):
+        '''See docstring in interfaces.py.'''
+        may_update = False
+        meeting = self.getSelf()
+        may_update = meeting.is_late()
+        return may_update
+
+    def update_item_references(self, start_number=0, check_needed=False, clear=False):
         """Update reference of every contained items, if p_start_number is given,
            we update items starting from p_start_number itemNumber.
            By default, if p_start_number=0, every linked items will be updated.
@@ -1786,21 +1793,23 @@ class Meeting(Container):
             return
         if check_needed and not self.REQUEST.get('need_Meeting_update_item_references', False):
             return
+
         # force disable 'need_Meeting_update_item_references' from REQUEST
         self.REQUEST.set('need_Meeting_update_item_references', False)
 
-        # we query items from start_number to last item of the meeting
-        # moreover we get_items unrestricted to be sure we have every elements
-        brains = self.get_items(
-            ordered=True,
-            the_objects=False,
-            unrestricted=True,
-            additional_catalog_query={
-                'getItemNumber': {'query': start_number,
-                                  'range': 'min'}, })
-        for brain in brains:
-            item = brain._unrestrictedGetObject()
-            item.update_item_reference()
+        if clear or self.adapted()._may_update_item_references():
+            # we query items from start_number to last item of the meeting
+            # moreover we get_items unrestricted to be sure we have every elements
+            brains = self.get_items(
+                ordered=True,
+                the_objects=False,
+                unrestricted=True,
+                additional_catalog_query={
+                    'getItemNumber': {'query': start_number,
+                                      'range': 'min'}, })
+            for brain in brains:
+                item = brain._unrestrictedGetObject()
+                item.update_item_reference(clear=clear)
 
     security.declarePrivate('update_title')
 
@@ -1969,6 +1978,18 @@ class Meeting(Container):
            (not avoid_reindex or old_local_roles != self.__ac_local_roles__):
             self.reindexObjectSecurity()
 
+    def getIndexesRelatedTo(self, related_to='annex', check_deferred=True):
+        '''See doc in interfaces.py.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if related_to == 'annex':
+            idxs = ['SearchableText']
+        if check_deferred and related_to in tool.getDeferParentReindex():
+            # mark meeting reindex deferred so it can be updated at right moment
+            meeting = self.getSelf()
+            setattr(meeting, REINDEX_NEEDED_MARKER, True)
+            idxs.remove('SearchableText')
+        return idxs
+
     def _update_power_observers_local_roles(self):
         '''Give local roles to the groups defined in MeetingConfig.powerObservers.'''
         extra_expr_ctx = _base_extra_expr_ctx(self)
@@ -2010,7 +2031,7 @@ class Meeting(Container):
 
     def attribute_is_used_cachekey(method, self, name):
         '''cachekey method for self.attribute_is_used.'''
-        return "{0}.{1}".format(self.__class__.__name__, name)
+        return "{0}.{1}".format(self.portal_type, name)
 
     security.declarePublic('attribute_is_used')
 
@@ -2018,8 +2039,8 @@ class Meeting(Container):
     def attribute_is_used(self, name):
         '''Is the attribute named p_name used in this meeting config ?'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        meetingConfig = tool.getMeetingConfig(self)
-        return (name in meetingConfig.getUsedMeetingAttributes())
+        cfg = tool.getMeetingConfig(self)
+        return (name in cfg.getUsedMeetingAttributes())
 
     def query_state_cachekey(method, self):
         '''cachekey method for self.query_state.'''
@@ -2027,7 +2048,9 @@ class Meeting(Container):
 
     security.declarePublic('query_state')
 
-    @ram.cache(query_state_cachekey)
+    # not ramcached perf tests says it does not change anything
+    # and this avoid useless entry in cache
+    # @ram.cache(query_state_cachekey)
     def query_state(self):
         '''In what state am I ?'''
         wfTool = api.portal.get_tool('portal_workflow')
@@ -2085,13 +2108,12 @@ class Meeting(Container):
             error = adapted.addRecurringItemToMeeting(self)
             if not error:
                 notify(ItemDuplicatedFromConfigEvent(new_item, 'as_recurring_item'))
-                new_item.reindexObject()
 
     security.declarePublic('number_of_items')
 
     def number_of_items(self, as_int=False):
         '''How much items in this meeting ?'''
-        total = len(self.get_raw_items())
+        total = getattr(self, "_number_of_items")
         if not as_int:
             total = str(total)
         return total

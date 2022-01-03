@@ -305,6 +305,7 @@ class EncodeVotesForm(BaseAttendeeForm):
             request=self.request)
         self._finished = True
 
+
 EncodeVotesFormWrapper = wrap_form(EncodeVotesForm)
 
 
@@ -489,6 +490,7 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
             _("Votes have been encoded for current item."),
             request=self.request)
         self._finished = True
+
 
 EncodeSecretVotesFormWrapper = wrap_form(EncodeSecretVotesForm)
 
