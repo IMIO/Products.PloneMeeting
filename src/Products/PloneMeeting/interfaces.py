@@ -331,8 +331,6 @@ class IMeetingItemDocumentation:
            value that is used in the @@display-inserting-methods-helper-msg view."""
     def showAdvices(self):
         """This controls if advices need to be shown on the item view."""
-    def showObservations(self):
-        """This controls if field MeetingItem.observations must be shown."""
     def _may_update_item_reference(self):
         """Condition to update item reference.  By default the item reference
            will be updated if item is in a meeting and meeting review_state is

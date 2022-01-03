@@ -4669,7 +4669,6 @@ class testMeetingItem(PloneMeetingTestCase):
             item_actions()
             return item_actions
 
-
         def _sum_entries(call_actions_panel=True):
             if call_actions_panel:
                 _call_actions_panel()
@@ -7347,12 +7346,12 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         widget = item.getField('observations').widget
         self.assertFalse(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
-        self.assertFalse(item.adapted().showObservations())
+        self.assertFalse(item.showObservations())
         cfg.setUsedItemAttributes(('observations', ))
         # MeetingItem.attribute_is_used is RAMCached
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
         self.assertTrue(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
-        self.assertTrue(item.adapted().showObservations())
+        self.assertTrue(item.showObservations())
 
     def test_pm_DefaultItemTemplateNotRemovable(self):
         """The default item template may not be removed."""

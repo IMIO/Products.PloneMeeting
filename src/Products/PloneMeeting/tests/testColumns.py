@@ -16,6 +16,7 @@ from Products.PloneMeeting.columns import PMPrettyLinkColumn
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from zope.i18n import translate
 
 
 class testColumns(PloneMeetingTestCase):
@@ -89,15 +90,17 @@ class testColumns(PloneMeetingTestCase):
         # annexes
         self.assertTrue(' class="pmMoreInfo">' in publicBrainPrettyLinkColumn)
         # the secret item is not accessible
+        item_portal_type_title = translate(
+            self.portal.portal_types[secretItem.portal_type].Title())
         self.assertEqual(
             secretBrainPrettyLinkColumn,
             u"<div class='pretty_link' title='Secret item title'>"
             u"<span class='pretty_link_icons'>"
-            u"<img title='Item' src='http://nohost/plone/MeetingItem.png' "
+            u"<img title='{0}' src='http://nohost/plone/MeetingItem.png' "
             u"style=\"width: 16px; height: 16px;\" /></span>"
             u"<span class='pretty_link_content state-itemcreated'>Secret item title "
             u"<span class='discreet no_access'>(You can not access this element)</span>"
-            u"</span></div>")
+            u"</span></div>".format(item_portal_type_title))
 
     def test_pm_AnnexActionsColumnShowArrows(self):
         """Arrows are only shown if annex or annexDecision are orderable.

@@ -128,6 +128,7 @@ class PloneMeetingTestingHelpers:
         item1.setPollType('secret_separated')
         item1.setCategory('research')
         item1.setClassifier('classifier3')
+        item1.reindexObject()
         # id=item-2
         item2 = self.create('MeetingItem', title='Item 2')
         _set_proposing_group(item2, self.developers)
@@ -135,6 +136,7 @@ class PloneMeetingTestingHelpers:
         item2.setPollType('no_vote')
         item2.setCategory('development')
         item2.setClassifier('classifier2')
+        item2.reindexObject()
         # id=item-3
         item3 = self.create('MeetingItem', title='Item 3')
         _set_proposing_group(item3, self.vendors)
@@ -142,6 +144,7 @@ class PloneMeetingTestingHelpers:
         item3.setPollType('freehand')
         item3.setCategory('development')
         item3.setClassifier('classifier2')
+        item3.reindexObject()
         # id=item-4
         item4 = self.create('MeetingItem', title='Item 4')
         _set_proposing_group(item4, self.developers)
@@ -149,6 +152,7 @@ class PloneMeetingTestingHelpers:
         item4.setPollType('freehand')
         item4.setCategory('events')
         item4.setClassifier('classifier1')
+        item4.reindexObject()
         # id=item-5
         item5 = self.create('MeetingItem', title='Item 5')
         _set_proposing_group(item5, self.vendors)
@@ -156,6 +160,7 @@ class PloneMeetingTestingHelpers:
         item5.setPollType('secret')
         item5.setCategory('events')
         item5.setClassifier('classifier1')
+        item5.reindexObject()
         for item in (item1, item2, item3, item4, item5):
             item.setDecision('<p>A decision</p>')
             self.presentItem(item)
