@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2b22 (unreleased)
+4.2b22 (2022-01-03)
 -------------------
 
 - Adapted `PMCategoryVocabulary` to take into account new parameter
