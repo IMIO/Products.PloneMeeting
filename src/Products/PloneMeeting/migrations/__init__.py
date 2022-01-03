@@ -446,22 +446,27 @@ class Migrator(BaseMigrator):
                     dc._p_changed = True
         logger.info('Done.')
 
-    def addCKEditorStyle(self, style_name, style_element):
+    def addCKEditorStyle(self, style_name, style_element, style_type="class", style_value=None):
         """Helper for adding a new style to the CKeditor styles.
            The rules:
            - p_style_name may use "-" or "_";
            - p_style_element is the tag name, so "p" or "span";
            - the corresponding translation is "ckeditor_style_" +
-             style_name where "-" are replaced by "_". """
+             style_name where "-" are replaced by "_";
+           - p_style_type is the type of style, by default "class", could be "style" also;
+           - p_style_value is the style value (class name or style definition)."""
         logger.info("Adding style '%s' to CKEditor styles..." % style_name)
         cke_props = self.portal.portal_properties.ckeditor_properties
         if cke_props.menuStyles.find(style_name) == -1:
-            msg_style_name = translate('ckeditor_style_%s' % style_name.replace("-", "_"),
-                                       domain='PloneMeeting',
-                                       context=self.request)
+            # msgid always starts with ckeditor_style_ and ends with style_name
+            msg_style_name = translate(
+                'ckeditor_style_{0}'.format(style_name),
+                domain='PloneMeeting',
+                context=self.request)
             menuStyles = cke_props.menuStyles
             style = u"{{ name : '{0}'\t\t, element : '{1}', attributes : " \
-                u"{{ 'class' : '{2}' }} }},\n]".format(msg_style_name, style_element, style_name)
+                u"{{ '{2}' : '{3}' }} }},\n]".format(
+                    msg_style_name, style_element, style_type, style_value)
             # last element, check if we need a ',' before or not...
             strippedMenuStyles = menuStyles.replace(u' ', u'').replace(u'\n', u'').replace(u'\r', u'')
             if u',]' not in strippedMenuStyles:

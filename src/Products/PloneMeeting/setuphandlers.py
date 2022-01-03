@@ -305,7 +305,7 @@ def postInstall(context):
 
     # collective.documentgenerator : change some default values
     set_oo_server()
-    set_column_modifier('disabled')
+    set_column_modifier('nothing')
     set_raiseOnError_for_non_managers(True)
     set_use_stream(False)
 
@@ -447,6 +447,9 @@ def _configureCKeditor(site):
         msg_x_large = translate('ckeditor_style_x_large',
                                 domain='PloneMeeting',
                                 context=site.REQUEST).encode('utf-8')
+        msg_table_optimization = translate('ckeditor_style_table_optimization',
+                                           domain='PloneMeeting',
+                                           context=site.REQUEST).encode('utf-8')
         msg_table_no_optimization = translate('ckeditor_style_table_no_optimization',
                                               domain='PloneMeeting',
                                               context=site.REQUEST).encode('utf-8')
@@ -466,9 +469,10 @@ def _configureCKeditor(site):
             "{{ name : '{6}'\t\t, element : 'p', attributes : {{ 'class' : 'smallText' }} }},\n"
             "{{ name : '{7}'\t\t, element : 'p', attributes : {{ 'class' : 'largeText' }} }},\n"
             "{{ name : '{8}'\t\t, element : 'p', attributes : {{ 'class' : 'xLargeText' }} }},\n"
-            "{{ name : '{9}'\t\t, element : 'table', styles : {{ 'table-layout' : 'fixed' }} }},\n"
-            "{{ name : '{10}'\t\t, element : 'p', attributes : {{ 'style' : 'text-indent: 40px;' }} }},\n"
-            "{{ name : '{11}'\t\t, element : 'p', attributes : {{ 'class' : 'page-break' }} }},\n]\n".
+            "{{ name : '{9}'\t\t, element : 'table', styles : {{ 'table-layout' : 'auto' }} }},\n"
+            "{{ name : '{10}'\t\t, element : 'table', styles : {{ 'table-layout' : 'fixed' }} }},\n"
+            "{{ name : '{11}'\t\t, element : 'p', attributes : {{ 'style' : 'text-indent: 40px;' }} }},\n"
+            "{{ name : '{12}'\t\t, element : 'p', attributes : {{ 'class' : 'page-break' }} }},\n]\n".
             format(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG,
                    msg_highlight_red,
                    msg_highlight_blue,
@@ -478,6 +482,7 @@ def _configureCKeditor(site):
                    msg_small,
                    msg_large,
                    msg_x_large,
+                   msg_table_optimization,
                    msg_table_no_optimization,
                    msg_indent,
                    msg_page_break), enc)

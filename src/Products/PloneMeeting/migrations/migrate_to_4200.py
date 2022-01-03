@@ -855,6 +855,9 @@ class Migrate_To_4200(Migrator):
         # adviser role able to add advice is now MeetingAdviser
         self._fixItemAddAdvicePermission()
 
+        # add the Optimizate columns CKeditor style
+        self.addCKEditorStyle("table_optimization", "table", "style", "table-layout:auto;")
+
         # update local_roles, workflow mappings and catalogs
         self.tool.update_all_local_roles()
         self.refreshDatabase(workflows=True, catalogsToUpdate=[])

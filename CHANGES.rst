@@ -53,6 +53,7 @@ Changelog
   label to "Connected" and a distinctive icon is shown with imio.prettylink.
   [aduchene]
 - Optimized `ram.cache` configuration:
+
   - Monkeypatched `zope.ramcache.Storage.getEntry` to update timestamp while
     getting an existing entry;
   - Adapted ToolPloneMeeting.get_orgs_for_user to no more return objects as
@@ -74,8 +75,16 @@ Changelog
   - Adapted item navigation widget to not compute available item number on
     display but only when asking first/previous/next/last item.
   - Make cache more shared on dashboards (prettylink, annexes, advices, actions panel).
+
   [gbastien]
 - Now that the meeting number of items is stored, display it in the dashboards.
+  [gbastien]
+- Changed default behavior for CKeditor tables management:
+
+  - set `collective.documentgenerator` column modifier to `nothing` by default;
+  - added a style `Otpimize column width` to be able to enable LO column width
+    optimization on a per table basis.
+
   [gbastien]
 
 4.2b21 (2021-11-26)
