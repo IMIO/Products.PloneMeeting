@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2b23 (unreleased)
+4.2b23 (2022-01-04)
 -------------------
 
 - Fixed order of upgrade steps in `Migrate_To_4200`, make sure item WF is correct
