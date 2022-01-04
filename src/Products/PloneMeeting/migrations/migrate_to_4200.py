@@ -731,7 +731,6 @@ class Migrate_To_4200(Migrator):
 
         self._fixPODTemplatesInstructions()
         self._fixFacetedFilters()
-        self._removeBrokenAnnexes()
 
         # apply correct batch actions marker on searches_* folders
         self._updateSearchedFolderBatchActionsMarkerInterface()
@@ -770,6 +769,10 @@ class Migrate_To_4200(Migrator):
         self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'typeinfo')
         # configure wfAdaptations before reinstall
         self._configureItemWFValidationLevels()
+
+        # remove broken annexes after item WF update
+        # because we need item.query_state and it will only work if item WF ready
+        self._removeBrokenAnnexes()
 
         # init MeetingConfig.itemInternalNotesEditableBy after _configureItemWFValidationLevels
         self._initMeetingConfigItemInternalNotesEditableBy()

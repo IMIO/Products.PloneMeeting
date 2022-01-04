@@ -5,8 +5,11 @@ Changelog
 4.2b23 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Fixed order of upgrade steps in `Migrate_To_4200`, make sure item WF is correct
+  before executing `_removeBrokenAnnexes` that needs the item `review_state`.
+  [gbastien]
+- Make sure advice title and actions are correctly displayed in advice popup.
+  [gbastien]
 
 4.2b22 (2022-01-03)
 -------------------

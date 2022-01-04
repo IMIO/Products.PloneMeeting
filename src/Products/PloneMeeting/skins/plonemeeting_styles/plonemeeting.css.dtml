@@ -1464,7 +1464,7 @@ div.advice_popup_label span.advice-label {
 }
 div.advice_popup_actions {
     float: right;
-    max-width: 150px;
+    /* max-width: 150px; */
     height: 18px;
 }
 div.advice_popup_actions span.pmHelp {
