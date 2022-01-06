@@ -811,7 +811,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             obj = self.unrestrictedTraverse(value.getPath())
         return _checkPermission(View, obj)
 
-    def isManager_cachekey(method, self, context, realManagers=False):
+    def isManager_cachekey(method, self, context=None, realManagers=False):
         '''cachekey method for self.isManager.'''
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
         # check also user id to avoid problems between Zope admin and anonymous
