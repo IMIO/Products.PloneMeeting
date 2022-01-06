@@ -2502,9 +2502,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # do this as previousUser
                 # remove AUTHENTICATED_USER during adopt_user to avoid
                 # breaking utils.get_current_user_id
-                auth_user = self.REQUEST.get("AUTHENTICATED_USER")
+                auth_user = item.REQUEST.get("AUTHENTICATED_USER")
                 if auth_user:
-                    self.REQUEST["AUTHENTICATED_USER"] = None
+                    item.REQUEST["AUTHENTICATED_USER"] = None
                 with api.env.adopt_user(user=previousUser):
                     try:
                         mayTakeOver = item.adapted().mayTakeOver()
@@ -2513,7 +2513,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                             "An error occured in 'setHistorizedTakenOverBy' "
                             "while evaluating 'mayTakeOver'")
                 if auth_user:
-                    self.REQUEST["AUTHENTICATED_USER"] = auth_user
+                    item.REQUEST["AUTHENTICATED_USER"] = auth_user
             if not mayTakeOver:
                 item.setTakenOverBy('')
             else:
