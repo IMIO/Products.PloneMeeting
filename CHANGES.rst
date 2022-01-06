@@ -13,6 +13,9 @@ Changelog
   passed anymore when using `realManagers=True`, so turned every
   `tool.isManager(tool, realManagers=True)` to `tool.isManager(realManagers=True)`.
   [gbastien]
+- Fixed `utils.get_current_user_id` that was simply not working,
+  now that it works, we must ensure to protect places where we use `adopt_user`.
+  [gbastien]
 
 4.2b23 (2022-01-04)
 -------------------

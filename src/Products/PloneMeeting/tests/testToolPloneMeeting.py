@@ -1058,6 +1058,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # works also when using api.env.adopt_user like it is the case
         # in MeetingItem.setHistorizedTakenOverBy
         pmCreator1 = api.user.get('pmCreator1')
+        # make sure we do not mess utils.get_current_user_id
+        self.request.set("AUTHENTICATED_USER", None)
         with api.env.adopt_user(user=pmCreator1):
             self.assertEqual(self.tool.get_plone_groups_for_user(),
                              sorted(pmcreator1_groups))

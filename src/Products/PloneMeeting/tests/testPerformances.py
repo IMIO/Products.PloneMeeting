@@ -19,6 +19,7 @@ from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import down_or_up_wf
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_current_user_id
 from profilehooks import timecall
 
 
@@ -463,6 +464,13 @@ class testPerformances(PloneMeetingTestCase):
         self._plonePortalStateMember(2000)
         # call api.user.get_current() 2000 times
         self._apiUserGetCurrent(2000)
+        # call utils.get_current_user_id() 2000 times with
+        # AUTHENTICATED_USER set
+        self._utilsGetCurrentUserId(2000)
+        self.request.set("AUTHENTICATED_USER", None)
+        # call utils.get_current_user_id() 2000 times with
+        # AUTHENTICATED_USER not set, will use api.user.get_current()
+        self._utilsGetCurrentUserId(2000)
 
     @timecall
     def _portalMembershipGetAuthenticatedMember(self, times=1):
@@ -481,6 +489,12 @@ class testPerformances(PloneMeetingTestCase):
         ''' '''
         for time in range(times):
             api.user.get_current()
+
+    @timecall
+    def _utilsGetCurrentUserId(self, times=1):
+        ''' '''
+        for time in range(times):
+            get_current_user_id()
 
     def _setupForMeetingCategories(self, number_of_categories, withUsingGroups=False):
         self.changeUser('admin')
