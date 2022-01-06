@@ -459,7 +459,7 @@ class MeetingFacetedView(BaseMeetingFacetedView):
 
     def show_page(self):
         """Display page to current user?"""
-        return self.tool.showMeetingView()
+        return self.tool.showMeetingView(self.context)
 
     def _display_available_items_to(self):
         """Check if current user profile is selected in MeetingConfig.displayAvailableItemsTo."""

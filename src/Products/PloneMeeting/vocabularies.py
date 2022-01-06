@@ -305,7 +305,7 @@ class UserProposingGroupsVocabulary(object):
         isDefinedInTool = context.isDefinedInTool()
         # bypass for Managers, pass isDefinedInTool to True so Managers
         # can select any available organizations
-        isManager = tool.isManager(tool, realManagers=True)
+        isManager = tool.isManager(realManagers=True)
         # show every groups for Managers or when isDefinedInTool
         only_selectable = not bool(isDefinedInTool or isManager)
         orgs = tool.get_selectable_orgs(

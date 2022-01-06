@@ -135,7 +135,7 @@ class MeetingCategory(Item):
         # If we have using_groups make sure userId is creator for one of it
         selectable = self.enabled
         cfg = tool.getMeetingConfig(self)
-        if selectable and self.get_using_groups() and not tool.isManager(tool, realManagers=True):
+        if selectable and self.get_using_groups() and not tool.isManager(realManagers=True):
             selectable_org_uids = tool.get_selectable_orgs(cfg, user_id=userId, the_objects=False)
             # Check intersection between self.usingGroups and org uids for which
             # the current user is creator

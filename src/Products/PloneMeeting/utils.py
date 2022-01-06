@@ -1761,7 +1761,7 @@ def checkMayQuickEdit(obj,
        (not (not bypassMeetingClosedCheck and
         meeting and
         meeting.query_state() in Meeting.MEETINGCLOSEDSTATES) or
-            tool.isManager(tool, realManagers=True)):
+            tool.isManager(realManagers=True)):
         res = True
     return res
 

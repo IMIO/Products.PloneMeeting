@@ -826,16 +826,16 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     # not ramcached see perf test
     # @ram.cache(isManager_cachekey)
-    def isManager(self, context, realManagers=False):
+    def isManager(self, context=None, realManagers=False):
         '''Is the current user a 'MeetingManager' on context?  If p_realManagers is True,
            only returns True if user has role Manager/Site Administrator, either
            (by default) MeetingManager is also considered as a 'Manager'?'''
         if api.user.is_anonymous():
             return False
 
-        if realManagers and context.__class__.__name__ != "ToolPloneMeeting":
+        if realManagers and context:
             raise Exception(
-                "For caching reasons, please pass \"tool\" as \"context\" "
+                "For caching reasons, please do not pass a \"context\" "
                 "when calling \"tool.isManager\" with \"realManagers=True\"")
         elif not realManagers and context.__class__.__name__ != "MeetingConfig":
             raise Exception(
@@ -1048,7 +1048,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('showMeetingView')
 
-    def showMeetingView(self):
+    def showMeetingView(self, meeting):
         '''If PloneMeeting is in "Restrict users" mode, the "Meeting view" page
            must not be shown to some users: users that do not have role
            MeetingManager and are not listed in a specific list
@@ -1056,7 +1056,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         restrictMode = self.getRestrictUsers()
         res = True
         if restrictMode:
-            if not self.isManager(self):
+            cfg = self.getMeetingConfig(meeting)
+            if not self.isManager(cfg):
                 user_id = get_current_user_id(self.REQUEST)
                 # Check if the user is in specific list
                 if user_id not in [u.strip() for u in self.getUnrestrictedUsers().split('\n')]:
@@ -1400,7 +1401,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def convertAnnexes(self):
         '''Convert all annexes using collective.documentviewer.'''
-        if not self.isManager(self, realManagers=True):
+        if not self.isManager(realManagers=True):
             raise Unauthorized
 
         catalog = api.portal.get_tool('portal_catalog')
@@ -1433,7 +1434,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def removeAnnexesPreviews(self, query={}):
         '''Remove every annexes previews of items presented to closed meetings.'''
-        if not self.isManager(self, realManagers=True):
+        if not self.isManager(realManagers=True):
             raise Unauthorized
 
         if not query:

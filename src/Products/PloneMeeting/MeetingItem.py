@@ -433,7 +433,7 @@ class MeetingItemWorkflowConditions(object):
                 break
         return res
 
-    def _currentUserIsAdviserAbleToSendItemBackExtraCondition(self, org, destinationState):
+    def _currentUserIsAdviserAbleToSendItemBackExtraCondition(self, org_uid, destinationState):
         ''' '''
         return True
 
@@ -2104,7 +2104,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             tool = api.portal.get_tool('portal_plonemeeting')
             if value not in tool.get_orgs_for_user(
                     only_selected=False, suffixes=["creators"]):
-                if not tool.isManager(tool, realManagers=True):
+                if not tool.isManager(realManagers=True):
                     return translate(
                         'proposing_group_not_available',
                         domain='PloneMeeting',
@@ -2425,7 +2425,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(item)
 
         # bypass for the Manager role
-        if tool.isManager(tool, realManagers=True):
+        if tool.isManager(realManagers=True):
             return True
 
         # Only MeetingManagers can sign an item if it is decided

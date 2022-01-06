@@ -796,17 +796,17 @@ class Migrate_To_4200(Migrator):
         self.updateTALConditions("isManager(here)", "isManager(cfg)")
         self.updateTALConditions("isManager(obj)", "isManager(cfg)")
         self.updateTALConditions("isManager(context, realManagers=True)",
-                                 "isManager(tool, realManagers=True)")
+                                 "isManager(realManagers=True)")
         self.updateTALConditions("isManager(here, realManagers=True)",
-                                 "isManager(tool, realManagers=True)")
+                                 "isManager(realManagers=True)")
         self.updateTALConditions("isManager(obj, realManagers=True)",
-                                 "isManager(tool, realManagers=True)")
+                                 "isManager(realManagers=True)")
         self.updateTALConditions("isManager(context,realManagers=True)",
-                                 "isManager(tool, realManagers=True)")
+                                 "isManager(realManagers=True)")
         self.updateTALConditions("isManager(here,realManagers=True)",
-                                 "isManager(tool, realManagers=True)")
+                                 "isManager(realManagers=True)")
         self.updateTALConditions("isManager(obj,realManagers=True)",
-                                 "isManager(tool, realManagers=True)")
+                                 "isManager(realManagers=True)")
         self.updateTALConditions(
             "'pre_validation' in cfg.getWorkflowAdaptations()",
             "'pre_validated' in cfg.getItemWFValidationLevels(data='state', only_enabled=True)")

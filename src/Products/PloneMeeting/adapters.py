@@ -130,7 +130,7 @@ class AdviceContentDeletableAdapter(APContentDeletableAdapter):
         if mayDelete:
             tool = api.portal.get_tool('portal_plonemeeting')
             pr = api.portal.get_tool('portal_repository')
-            if not tool.isManager(tool, realManagers=True) and \
+            if not tool.isManager(realManagers=True) and \
                pr.getHistoryMetadata(self.context):
                 return False
         return mayDelete
