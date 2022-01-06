@@ -28,6 +28,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
+from Products.PloneMeeting.config import ITEM_INITIATOR_INDEX_PATTERN
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
@@ -36,6 +37,7 @@ from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.utils import _addManagedPermissions
@@ -342,19 +344,27 @@ def onOrgWillBeRemoved(current_org, event):
     # In the application
     # most of times, the org UID is stored, but for MeetingItem.copyGroups, we
     # store suffixed elements of the org
-    suffixedGroups = set()
+    suffixedGroups = []
     for suffix in get_all_suffixes():
         plone_group_id = get_plone_group_id(current_org_uid, suffix)
-        suffixedGroups.add(plone_group_id)
-    for brain in catalog(meta_type="MeetingItem"):
-        item = brain.getObject()
-        if (item.getProposingGroup() == current_org_uid) or \
-           (current_org_uid in item.getAssociatedGroups()) or \
-           (current_org_uid in item.getItemInitiator()) or \
-           (current_org_uid in item.getGroupsInCharge()) or \
-           (current_org_uid in item.adviceIndex) or \
-           (current_org_uid in item.getTemplateUsingGroups()) or \
-           set(item.getCopyGroups()).intersection(suffixedGroups):
+        suffixedGroups.append(plone_group_id)
+    # make various searches and stop if a brain is found
+    searches_data = {
+        'getProposingGroup': current_org_uid,
+        'getAssociatedGroups': current_org_uid,
+        'getGroupsInCharge': current_org_uid,
+        'templateUsingGroups': current_org_uid,
+        'getCopyGroups': suffixedGroups,
+        'indexAdvisers': REAL_ORG_UID_PATTERN.format(current_org_uid),
+        'pm_technical_index': ITEM_INITIATOR_INDEX_PATTERN.format(current_org_uid)}
+    for index_name, index_value in searches_data.items():
+        if index_name not in catalog.indexes():
+            raise Exception("Can not search on unexisting index (%s)!" % index_name)
+        brains = catalog.unrestrictedSearchResults(
+            {"meta_type": "MeetingItem",
+             index_name: index_value})
+        if brains:
+            item = brains[0].getObject()
             # The organization is linked to an existing item, we can not delete it.
             if item.isDefinedInTool():
                 msg = "can_not_delete_organization_config_meetingitem"
@@ -1275,9 +1285,6 @@ def _is_held_pos_uid_used_by(held_pos_uid, obj):
         ordered_contacts = getattr(obj, 'ordered_contacts', {})
         if held_pos_uid in ordered_contacts:
             res = True
-    elif obj.getTagName() == 'MeetingItem':
-        if held_pos_uid in obj.getItemInitiator():
-            res = True
     return res
 
 
@@ -1288,6 +1295,7 @@ def onHeldPositionWillBeRemoved(held_pos, event):
     if event.object.meta_type == 'Plone Site':
         return
 
+    catalog = api.portal.get_tool('portal_catalog')
     held_pos_uid = held_pos.UID()
     # first check MeetingConfigs
     tool = api.portal.get_tool('portal_plonemeeting')
@@ -1298,8 +1306,8 @@ def onHeldPositionWillBeRemoved(held_pos, event):
             break
     # check meetings
     if not using_obj:
-        catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(object_provides=IMeeting.__identifier__)
+        brains = catalog.unrestrictedSearchResults(
+            object_provides=IMeeting.__identifier__)
         for brain in brains:
             meeting = brain.getObject()
             if _is_held_pos_uid_used_by(held_pos_uid, meeting):
@@ -1307,13 +1315,12 @@ def onHeldPositionWillBeRemoved(held_pos, event):
                 break
     # check items
     if not using_obj:
-        catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(meta_type='MeetingItem')
-        for brain in brains:
-            item = brain.getObject()
-            if _is_held_pos_uid_used_by(held_pos_uid, item):
-                using_obj = item
-                break
+        brains = catalog.unrestrictedSearchResults(
+            meta_type='MeetingItem',
+            pm_technical_index=[
+                ITEM_INITIATOR_INDEX_PATTERN.format(held_pos_uid)])
+        if brains:
+            using_obj = brains[0].getObject()
 
     if using_obj:
         msg = translate(
@@ -1389,13 +1396,13 @@ def onCategoryWillBeRemoved(category, event):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(category)
     catalog = api.portal.get_tool('portal_catalog')
-    brains = catalog(
+    brains = catalog.unrestrictedSearchResults(
         portal_type=(
             cfg.getItemTypeName(),
             cfg.getItemTypeName(configType='MeetingItemRecurring'),
             cfg.getItemTypeName(configType='MeetingItemTemplate')),
         getCategory=category.getId())
-    brains += catalog(
+    brains += catalog.unrestrictedSearchResults(
         portal_type=(
             cfg.getItemTypeName(),
             cfg.getItemTypeName(configType='MeetingItemRecurring'),

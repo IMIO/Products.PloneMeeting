@@ -5,8 +5,10 @@ Changelog
 4.2b24 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Use `pm_technical_index` to store item initiators to speed up removal of
+  unused `held_position` or `organization` (before it was necessary to walk
+  and wake up every items).
+  [gbastien]
 
 4.2b23 (2022-01-04)
 -------------------

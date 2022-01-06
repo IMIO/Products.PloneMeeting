@@ -8,6 +8,7 @@ from collective.eeafaceted.batchactions.browser.viewlets import BatchActionsView
 from plone import api
 from plone.app.layout.viewlets import ViewletBase
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
+from Products.PloneMeeting.config import ITEM_INITIATOR_INDEX_PATTERN
 from Products.PloneMeeting.events import _is_held_pos_uid_used_by
 from Products.PloneMeeting.utils import displaying_available_items
 from zope.component import getMultiAdapter
@@ -105,6 +106,28 @@ class HeldPositionBackRefs(ViewletBase):
                     res[cfg].append(meeting)
                     if len(res[cfg]) >= limit:
                         break
+        return res
+
+    def using_items(self, limit=10):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        catalog = api.portal.get_tool('portal_catalog')
+        hp_uid = self.context.UID()
+        res = OrderedDict()
+        for cfg in tool.objectValues('MeetingConfig'):
+            item_type_name = cfg.getItemTypeName()
+            brains = catalog(
+                portal_type=item_type_name,
+                pm_technical_index=[
+                    ITEM_INITIATOR_INDEX_PATTERN.format(hp_uid)],
+                sort_on='meeting_date',
+                sort_order='reverse')
+            for brain in brains:
+                if cfg not in res:
+                    res[cfg] = []
+                res[cfg].append(brain)
+                if len(res[cfg]) >= limit:
+                    break
         return res
 
     index = ViewPageTemplateFile("templates/viewlet_held_position_back_refs.pt")

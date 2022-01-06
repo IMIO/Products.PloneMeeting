@@ -20,6 +20,7 @@ from plone.indexer import indexer
 from Products.PloneMeeting.config import ALL_ADVISERS_GROUP_VALUE
 from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
+from Products.PloneMeeting.config import ITEM_INITIATOR_INDEX_PATTERN
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
@@ -98,11 +99,16 @@ def pm_technical_index(obj):
     """
     This index is made to hold various technical informations:
     - "reindex_needed" is used to know if a reindex must occurs during night tasks;
+    - "item_initiator_..." will hold MeetingItem.itemInititors values to ease
+      removing a held_position that is not used;
     - ...
     """
     res = []
     if base_getattr(obj, REINDEX_NEEDED_MARKER, False):
         res.append(REINDEX_NEEDED_MARKER)
+    if obj.__class__.__name__ == "MeetingItem":
+        for hp_uid in obj.getItemInitiator():
+            res.append(ITEM_INITIATOR_INDEX_PATTERN.format(hp_uid))
     return res or _marker
 
 
