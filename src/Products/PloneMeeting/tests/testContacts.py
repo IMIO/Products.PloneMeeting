@@ -134,6 +134,7 @@ class testContacts(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.presentItem(item)
         item.setItemInitiator((hp_uid,))
+        item._update_after_edit()
 
         # hp not deletable because used in MC and meeting item
         self.changeUser('siteadmin')
@@ -148,6 +149,7 @@ class testContacts(PloneMeetingTestCase):
 
         # unselect hp from meeting item, now it is deletable
         item.setItemInitiator(())
+        item._update_after_edit()
 
         # assert held position can be properly deleted
         api.content.delete(hp)
@@ -1683,17 +1685,20 @@ class testContacts(PloneMeetingTestCase):
 
         # 6) then fails because used by an item present in the configuration
         transaction.commit()
+        item_template = cfg.itemtemplates.template2
+        item_template_url = item_template.absolute_url()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.vendors_uid, catch_before_delete_exception=False)
         self.assertEqual(cm.exception.message,
                          translate('can_not_delete_organization_config_meetingitem',
                                    domain='plone',
-                                   mapping={'item_url': cfg.itemtemplates.template2.absolute_url()},
+                                   mapping={'item_url': item_template_url},
                                    context=self.portal.REQUEST))
         # change proposingGroup but use org in templateUsingGroups
-        cfg.itemtemplates.template2.setProposingGroup(self.developers_uid)
-        cfg.itemtemplates.template2.setTemplateUsingGroups((self.vendors_uid, ))
+        item_template.setProposingGroup(self.developers_uid)
+        item_template.setTemplateUsingGroups((self.vendors_uid, ))
+        item_template._update_after_edit()
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
@@ -1701,10 +1706,12 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(cm.exception.message,
                          translate('can_not_delete_organization_config_meetingitem',
                                    domain='plone',
-                                   mapping={'item_url': cfg.itemtemplates.template2.absolute_url()},
+                                   mapping={'item_url': item_template_url},
                                    context=self.portal.REQUEST))
         # unselect organizations from plonegroup configuration so it works...
-        cfg.itemtemplates.template2.setTemplateUsingGroups(())
+        item_template.setTemplateUsingGroups(())
+        item_template._update_after_edit()
+
         self._select_organization(self.vendors_uid, remove=True)
         # now it works...
         self.portal.restrictedTraverse('@@delete_givenuid')(

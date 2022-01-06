@@ -381,6 +381,8 @@ FACETED_ANNEXES_CRITERION_ID = 'c20'
 
 # name of marker specifyng that a reindex is required
 REINDEX_NEEDED_MARKER = "_catalog_reindex_needed"
+# prefix used in pm_technical_index to store item initiators
+ITEM_INITIATOR_INDEX_PATTERN = "item_initiator_{0}"
 
 
 def registerClasses():

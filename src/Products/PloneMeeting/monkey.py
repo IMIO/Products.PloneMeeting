@@ -1,5 +1,6 @@
 
 from Acquisition import aq_base
+from cPickle import dumps
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.security import fplog
 from plone import api
@@ -23,7 +24,6 @@ from types import StringType
 from z3c.form import interfaces
 from z3c.form.widget import SequenceWidget
 from zope.ramcache.ram import Storage
-from cPickle import dumps
 
 
 def _patched_equal(context, row):
