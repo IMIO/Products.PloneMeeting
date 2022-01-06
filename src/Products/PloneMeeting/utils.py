@@ -2310,7 +2310,7 @@ def get_current_user_id(request=None):
     try:
         if request is None:
             request = getRequest()
-        user_id = request["AUTHENTICATED_USER "].getId()
+        user_id = request["AUTHENTICATED_USER"].getId()
     except Exception:
         user_id = api.user.get_current().getId()
     return user_id
