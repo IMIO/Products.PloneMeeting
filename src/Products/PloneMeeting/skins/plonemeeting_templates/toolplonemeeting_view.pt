@@ -14,7 +14,7 @@
   </metal:title>
   <metal:fill fill-slot="content-core">
     <metal:body_macro define-macro="body"
-       tal:define="isRealManager python: context.isManager(context, True);
+       tal:define="isRealManager python: context.isManager(realManagers=True);
                    mode string:view;">
 
     <tal:hideToNonManagers condition="python: isRealManager or user.has_role('MeetingManager', context)">

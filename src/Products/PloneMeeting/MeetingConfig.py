@@ -7146,7 +7146,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Update the confidentiality of existing annexes regarding default value
            for confidentiality defined in the corresponding annex type.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        if not self.isManager(tool, realManagers=True):
+        if not tool.isManager(realManagers=True):
             raise Unauthorized
 
         # update every annexes of items, meeting and advices of this MeetingConfig
@@ -7211,7 +7211,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Update the given p_personal_labels on items of this MeetingConfig
            for which modified is older than given p_modified_since_days number of days.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        if not self.isManager(tool, realManagers=True):
+        if not tool.isManager(realManagers=True):
             raise Unauthorized
         # remove empty strings from personal_labels
         personal_labels = [label for label in personal_labels if label]
@@ -7285,7 +7285,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Update the confidentiality of existing advices regarding default value
            in MeetingConfig.adviceConfidentialityDefault.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        if not self.isManager(tool, realManagers=True):
+        if not tool.isManager(realManagers=True):
             raise Unauthorized
         # update every advices of items of this MeetingConfig
         catalog = api.portal.get_tool('portal_catalog')
@@ -7309,7 +7309,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def checkPodTemplates(self):
         '''Check Pod templates.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        if not self.isManager(tool, realManagers=True):
+        if not tool.isManager(realManagers=True):
             raise Unauthorized
         return self.REQUEST.RESPONSE.redirect(self.absolute_url() + '/@@check-pod-templates')
 
@@ -7524,7 +7524,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def render_editform_errors(self, errors):
         """Render errors in the edit form in case it comes from another fieldset."""
         tool = api.portal.get_tool('portal_plonemeeting')
-        if not tool.isManager(tool, realManagers=True):
+        if not tool.isManager(realManagers=True):
             return
         error_pattern = u"<dl class=\"portalMessage error\"><dt>{0}</dt><dd>{1}</dd></dl>"
         res = []

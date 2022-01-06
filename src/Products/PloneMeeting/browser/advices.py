@@ -182,7 +182,7 @@ class AdvicesIconsInfos(BrowserView):
         org_uid = self.context.getProposingGroup()
         self.userIsInProposingGroup = self.tool.user_is_in_org(org_uid=org_uid)
         self.isManager = self.tool.isManager(self.cfg)
-        self.isRealManager = self.tool.isManager(self.tool, realManagers=True)
+        self.isRealManager = self.tool.isManager(realManagers=True)
         # edit proposingGroup comment, only compute if item not decided
         # by default editable by Managers only
         self.userIsProposingGroupCommentEditor = False

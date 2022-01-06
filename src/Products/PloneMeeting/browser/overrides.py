@@ -634,7 +634,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         isRealManager = isManager = isEditorUser = advicesIndexModified = \
             userAbleToCorrectItemWaitingAdvices = isPowerObserverHiddenHistory = None
         # Manager
-        isRealManager = self.tool.isManager(self.tool, realManagers=True)
+        isRealManager = self.tool.isManager(realManagers=True)
         # MeetingManager, necessary for MeetingConfig.itemActionsColumnConfig for example
         isManager = self.tool.isManager(self.cfg)
         if not isRealManager:
@@ -704,7 +704,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             # hide 'duplicate' actions when showing icons if not in cfg.itemActionsColumnConfig
             itemActionsColumnConfig = self.cfg.getItemActionsColumnConfig()
             isMeetingManager = self.tool.isManager(self.cfg)
-            isManager = self.tool.isManager(self.tool, realManagers=True)
+            isManager = self.tool.isManager(realManagers=True)
             if not (
                 (isMeetingManager and 'meetingmanager_duplicate' in itemActionsColumnConfig) or
                 (isManager and 'manager_duplicate' in itemActionsColumnConfig) or
@@ -777,7 +777,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
            - cfg modified;
            - different item or user;
            - user groups changed.'''
-        isRealManager = self.tool.isManager(self.tool, realManagers=True)
+        isRealManager = self.tool.isManager(realManagers=True)
         isManager = not isRealManager and self.tool.isManager(self.cfg)
         # check also portal_url in case application is accessed thru different URI
         return (repr(self.context), self.context.query_state(),
@@ -953,7 +953,7 @@ class ConfigActionsPanelView(ActionsPanelView):
         """
           Add a link to linked Plone groups for an organization.
         """
-        if self.tool.isManager(self.tool, True) and self.context.getId() != PLONEGROUP_ORG:
+        if self.tool.isManager(realManagers=True) and self.context.getId() != PLONEGROUP_ORG:
             return ViewPageTemplateFile("templates/actions_panel_config_linkedplonegroups.pt")(self)
         return ''
 
@@ -1391,7 +1391,7 @@ class PMCatalogNavigationTabs(CatalogNavigationTabs):
                     'data-config_full_label': config_group[2]}
                 mc_tabs.append(data)
         # insert a tab for contacts directory for Managers
-        if tool.isManager(tool, realManagers=True):
+        if tool.isManager(realManagers=True):
             data = {
                 'name': 'Contacts',
                 'id': 'contacts',

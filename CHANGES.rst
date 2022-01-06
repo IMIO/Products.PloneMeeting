@@ -9,6 +9,10 @@ Changelog
   unused `held_position` or `organization` (before it was necessary to walk
   and wake up every items).
   [gbastien]
+- Simplified use of `ToolPloneMeeting.isManager`, a `context` must not be
+  passed anymore when using `realManagers=True`, so turned every
+  `tool.isManager(tool, realManagers=True)` to `tool.isManager(realManagers=True)`.
+  [gbastien]
 
 4.2b23 (2022-01-04)
 -------------------
