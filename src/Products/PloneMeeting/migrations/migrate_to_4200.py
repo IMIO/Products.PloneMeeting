@@ -801,11 +801,15 @@ class Migrate_To_4200(Migrator):
                                  "isManager(realManagers=True)")
         self.updateTALConditions("isManager(obj, realManagers=True)",
                                  "isManager(realManagers=True)")
+        self.updateTALConditions("isManager(tool, realManagers=True)",
+                                 "isManager(realManagers=True)")
         self.updateTALConditions("isManager(context,realManagers=True)",
                                  "isManager(realManagers=True)")
         self.updateTALConditions("isManager(here,realManagers=True)",
                                  "isManager(realManagers=True)")
         self.updateTALConditions("isManager(obj,realManagers=True)",
+                                 "isManager(realManagers=True)")
+        self.updateTALConditions("isManager(tool,realManagers=True)",
                                  "isManager(realManagers=True)")
         self.updateTALConditions(
             "'pre_validation' in cfg.getWorkflowAdaptations()",
