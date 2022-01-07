@@ -5,8 +5,9 @@ Changelog
 4.2b25 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Fixed when going to meeting from item, the faceted orphan mechanism was not
+  respected making user redirected to an additional page containing only orphans.
+  [gbastien]
 
 4.2b24 (2022-01-07)
 -------------------
