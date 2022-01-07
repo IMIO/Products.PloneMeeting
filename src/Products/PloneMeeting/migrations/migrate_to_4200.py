@@ -624,6 +624,9 @@ class Migrate_To_4200(Migrator):
                         '.getSignatories(theObjects=': '.get_signatories(the_objects=',
                         '.getSignatories(': '.get_signatories(',
                         '.getItems(': '.get_items(',
+                        '.getItemsInOrder(': '.get_items(ordered=True, ',
+                        'self.adapted().getPrintableItems(itemUids)':
+                            'self.get_items(uids=uids, ordered=True)',
                         '.getItemSignatories(theObjects=': '.get_item_signatories(the_objects=',
                         '.getItemSignatories(': '.get_item_signatories(',
                         '.getNextMeeting(cfgId=': '.get_next_meeting(cfg_id=',
@@ -650,6 +653,9 @@ class Migrate_To_4200(Migrator):
                         # formatMeetingDate to format_date
                         'withHour=': "with_hour=",
                         'withWeekDayName=': "with_week_day_name=",
+                        # meeting date month name without accents
+                        ".replace('é','e').replace('û','u').upper()":
+                            ".replace(u'é',u'e').replace(u'û',u'u').upper()",
                         }
         # specific for Meeting POD Templates
         meeting_replacements = {
@@ -668,13 +674,16 @@ class Migrate_To_4200(Migrator):
             'self.Title()': "view.print_value('date')",
             # formatMeetingDate to format_date
             'tool.formatMeetingDate(self': "tool.format_date(self.date",
-
+            # get_assembly, striked=True by default
+            '.displayStrikedItemAssembly()': '.get_assembly()',
         }
         # specific for MeetingItem POD Templates
         item_replacements = {
             'meeting.Title()': "view.getDGHV(meeting).print_value('date')",
             # formatMeetingDate to format_date
             'tool.formatMeetingDate(meeting': "tool.format_date(meeting.date",
+            # getItemAssembly, striked=True by default
+            '.displayStrikedItemAssembly()': '.getItemAssembly()',
         }
 
         self.updatePODTemplatesCode(replacements, meeting_replacements, item_replacements)
@@ -798,6 +807,7 @@ class Migrate_To_4200(Migrator):
                                  "isManager(cfg)")
         self.updateTALConditions("isManager(obj)",
                                  "isManager(cfg)")
+
         self.updateTALConditions("isManager(context, realManagers=True)",
                                  "isManager(realManagers=True)")
         self.updateTALConditions("isManager(here, realManagers=True)",
@@ -806,6 +816,15 @@ class Migrate_To_4200(Migrator):
                                  "isManager(realManagers=True)")
         self.updateTALConditions("isManager(tool, realManagers=True)",
                                  "isManager(realManagers=True)")
+        self.updateTALConditions("isManager(context, True)",
+                                 "isManager(realManagers=True)")
+        self.updateTALConditions("isManager(here, True)",
+                                 "isManager(realManagers=True)")
+        self.updateTALConditions("isManager(obj, True)",
+                                 "isManager(realManagers=True)")
+        self.updateTALConditions("isManager(tool, True)",
+                                 "isManager(realManagers=True)")
+
         self.updateTALConditions("isManager(context,realManagers=True)",
                                  "isManager(realManagers=True)")
         self.updateTALConditions("isManager(here,realManagers=True)",
@@ -814,6 +833,15 @@ class Migrate_To_4200(Migrator):
                                  "isManager(realManagers=True)")
         self.updateTALConditions("isManager(tool,realManagers=True)",
                                  "isManager(realManagers=True)")
+        self.updateTALConditions("isManager(context,True)",
+                                 "isManager(realManagers=True)")
+        self.updateTALConditions("isManager(here,True)",
+                                 "isManager(realManagers=True)")
+        self.updateTALConditions("isManager(obj,True)",
+                                 "isManager(realManagers=True)")
+        self.updateTALConditions("isManager(tool,True)",
+                                 "isManager(realManagers=True)")
+
         self.updateTALConditions(
             "'pre_validation' in cfg.getWorkflowAdaptations()",
             "'pre_validated' in cfg.getItemWFValidationLevels(data='state', only_enabled=True)")
