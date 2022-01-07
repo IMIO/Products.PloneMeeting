@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2b24 (unreleased)
+4.2b24 (2022-01-07)
 -------------------
 
 - Use `pm_technical_index` to store item initiators to speed up removal of
