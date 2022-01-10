@@ -42,6 +42,7 @@ from operator import attrgetter
 from plone import api
 from plone.app.vocabularies.users import UsersFactory
 from plone.memoize import ram
+from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
@@ -2045,14 +2046,18 @@ class SelectableCommitteeAttendeesVocabulary(BaseSimplifiedHeldPositionsVocabula
             context = get_context_with_request(context)
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        # manage missing terms manually as used in a datagridfield...
-        current_values = set(
-            itertools.chain.from_iterable(
-                [data.get('attendees') or []
-                 for data in context.committees or []]))
-        cfg_values = list(cfg.getOrderedCommitteeContacts())
-        missing_values = list(current_values.difference(cfg_values))
-        uids = cfg_values + missing_values
+        uids = []
+        if cfg:
+            # manage missing terms manually as used in a datagridfield...
+            current_values = set()
+            if base_hasattr(context, "committees"):
+                current_values = set(
+                    itertools.chain.from_iterable(
+                        [data.get('attendees') or []
+                         for data in context.committees or []]))
+            cfg_values = list(cfg.getOrderedCommitteeContacts())
+            missing_values = list(current_values.difference(cfg_values))
+            uids = cfg_values + missing_values
         return super(SelectableCommitteeAttendeesVocabulary, self).__call__(
             context=context,
             uids=uids)
@@ -2396,6 +2401,8 @@ class SelectableCommitteesVocabulary(object):
         if not hasattr(context, "getTagName"):
             context = get_context_with_request(context)
         cfg = tool.getMeetingConfig(context)
+        if cfg is None:
+            return None
         # if current context is an item, cache by stored committees
         # so we avoid cache by context
         committees = []

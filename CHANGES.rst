@@ -9,6 +9,9 @@ Changelog
   `_updatePortletTodoTitleLength` migration step in migration to `4200`).
   Also fixed `portlet_todo.render_cachekey` to have a per `MeetingConfig` cache.
   [gbastien]
+- Fixed `SelectableCommitteeAttendeesVocabulary.__call__` that was failing when
+  `Meeting.committes` enabled and adding a new meeting because context is the parent.
+  [gbastien]
 
 4.2b24 (2022-01-07)
 -------------------
