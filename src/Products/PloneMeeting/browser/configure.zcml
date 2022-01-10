@@ -54,6 +54,12 @@
         class=".viewlets.HeldPositionBackRefs"
         for="Products.PloneMeeting.content.held_position.IPMHeldPosition"
         permission="zope2.View" />
+    <browser:page
+        name="load_held_position_back_refs"
+        class=".viewlets.HeldPositionBackRefsView"
+        for="Products.PloneMeeting.content.held_position.IPMHeldPosition"
+        template="templates/held_position_back_refs.pt"
+        permission="zope2.View" />
 
     <!-- Change some Plone viewlets from viewlet container -->
     <browser:viewlet

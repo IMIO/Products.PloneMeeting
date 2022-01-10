@@ -27,7 +27,6 @@ from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.statusmessages.interfaces import IStatusMessage
 from z3c.relationfield.relation import RelationValue
-from zExceptions import Redirect
 from zope.component import getUtility
 from zope.event import notify
 from zope.i18n import translate
@@ -115,14 +114,14 @@ class testContacts(PloneMeetingTestCase):
         self.assertTrue(hp_uid in meeting.get_attendees())
         # hp not deletable because used in MC and meeting
         self.changeUser('siteadmin')
-        self.assertRaises(Redirect, api.content.delete, hp)
+        self.assertRaises(BeforeDeleteException, api.content.delete, hp)
 
         # unselect from MeetingConfig.orderedContacts,
         # still not deletable because used by a meeting
         orderedContacts = list(cfg.getOrderedContacts())
         orderedContacts.remove(hp_uid)
         cfg.setOrderedContacts(orderedContacts)
-        self.assertRaises(Redirect, api.content.delete, hp)
+        self.assertRaises(BeforeDeleteException, api.content.delete, hp)
 
         # unselect hp from meeting, now it is deletable
         del meeting.ordered_contacts[hp.UID()]
@@ -138,14 +137,14 @@ class testContacts(PloneMeetingTestCase):
 
         # hp not deletable because used in MC and meeting item
         self.changeUser('siteadmin')
-        self.assertRaises(Redirect, api.content.delete, hp)
+        self.assertRaises(BeforeDeleteException, api.content.delete, hp)
 
         # unselect from MeetingConfig.orderedItemInitiators,
         # still not deletable because used by a meeting item
         orderedItemInitiators = list(cfg.getOrderedItemInitiators())
         orderedItemInitiators.remove(hp_uid)
         cfg.setOrderedItemInitiators(orderedItemInitiators)
-        self.assertRaises(Redirect, api.content.delete, hp)
+        self.assertRaises(BeforeDeleteException, api.content.delete, hp)
 
         # unselect hp from meeting item, now it is deletable
         item.setItemInitiator(())

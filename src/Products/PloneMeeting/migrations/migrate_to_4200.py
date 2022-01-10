@@ -10,6 +10,7 @@ from imio.helpers.content import get_vocab
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_delattr
 from imio.pyutils.utils import replace_in_list
+from OFS.ObjectManager import BeforeDeleteException
 from persistent.mapping import PersistentMapping
 from plone.app.contenttypes.migration.migration import migrate as pac_migrate
 from plone.app.textfield.value import RichTextValue
@@ -573,6 +574,25 @@ class Migrate_To_4200(Migrator):
         portlet_todo.title_length = 100
         logger.info('Done.')
 
+    def _cleanUnusedPersonsAndHeldPositions(self):
+        """Persons and HeldPositions migrated from old MeetingUsers and not
+           used will be removed."""
+        logger.info('Cleaning up unused "Persons" and "HeldPositions"...')
+        for brain in self.catalog.unrestrictedSearchResults(portal_type="held_position"):
+            hp = brain.getObject()
+            person = hp.get_person()
+            if hp.getId().endswith('_hp1'):
+                try:
+                    # remove the held_position then the personperson,
+                    # that will remove the held_position as well
+                    # use @@delete_givenuid that manage delete abort correctly
+                    self.portal.restrictedTraverse('@@delete_givenuid')(person.UID())
+                    self.warn(logger, 'Directory person at "{0}" was removed!'.format(
+                        "/".join(person.getPhysicalPath())))
+                except BeforeDeleteException:
+                    continue
+        logger.info('Done.')
+
     def _updateMeetingsNumberOfItems(self):
         """Meeting number of items is now stored in Meeting._number_of_items."""
         logger.info('Updating "_number_of_items" for every meetings...')
@@ -927,6 +947,9 @@ class Migrate_To_4200(Migrator):
 
         # store meeting number of items
         self._updateMeetingsNumberOfItems()
+
+        # remove unused persons from contacts directory
+        self._cleanUnusedPersonsAndHeldPositions()
 
 
 def migrate(context):

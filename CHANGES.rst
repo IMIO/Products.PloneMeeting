@@ -12,6 +12,10 @@ Changelog
 - Fixed `SelectableCommitteeAttendeesVocabulary.__call__` that was failing when
   `Meeting.committes` enabled and adding a new meeting because context is the parent.
   [gbastien]
+- On `held_position` view, display back refs (elements using it) asynchronously.
+  Added upgrade step to remove unused `held_positions` that were migrated from
+  old `MeetingUsers` during migration from `4.0` to `4.1`.
+  [gbastien]
 
 4.2b24 (2022-01-07)
 -------------------

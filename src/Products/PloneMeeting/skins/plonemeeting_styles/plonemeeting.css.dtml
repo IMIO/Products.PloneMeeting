@@ -2477,6 +2477,12 @@ body.template-meeting_available_items_view div#content-core #faceted-form div#fa
     padding-top: 20px;
 }
 
+/* back refs viewlet on held_position */
+div#held-position-back-refs-container {
+    padding-bottom: 1em;
+    padding-top: 1em;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

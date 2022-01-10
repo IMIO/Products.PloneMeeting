@@ -7,6 +7,7 @@ from collections import OrderedDict
 from collective.eeafaceted.batchactions.browser.viewlets import BatchActionsViewlet
 from plone import api
 from plone.app.layout.viewlets import ViewletBase
+from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.config import ITEM_INITIATOR_INDEX_PATTERN
 from Products.PloneMeeting.events import _is_held_pos_uid_used_by
@@ -73,9 +74,19 @@ class AnnexesBatchActionsViewlet(BatchActionsViewlet):
 class HeldPositionBackRefs(ViewletBase):
     """Display elements using held_position."""
 
+    index = ViewPageTemplateFile("templates/viewlet_held_position_back_refs.pt")
+
+    def __init__(self, context, request, view, manager=None):
+        super(HeldPositionBackRefs, self).__init__(context, request, manager)
+        self.context_url = self.context.absolute_url()
+
     def available(self):
         """ """
         return True
+
+
+class HeldPositionBackRefsView(BrowserView):
+    """The asynch view that displays elements using held_position."""
 
     def using_configs(self):
         """ """
@@ -129,5 +140,3 @@ class HeldPositionBackRefs(ViewletBase):
                 if len(res[cfg]) >= limit:
                     break
         return res
-
-    index = ViewPageTemplateFile("templates/viewlet_held_position_back_refs.pt")

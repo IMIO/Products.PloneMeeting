@@ -1330,11 +1330,7 @@ def onHeldPositionWillBeRemoved(held_pos, event):
             mapping={'held_position_title': safe_unicode(held_pos.Title()),
                      'obj_url': using_obj.absolute_url()},
             context=held_pos.REQUEST)
-        api.portal.show_message(
-            message=msg,
-            request=held_pos.REQUEST,
-            type='error')
-        raise Redirect(held_pos.REQUEST.get('HTTP_REFERER'))
+        raise BeforeDeleteException(msg)
 
 
 def onOrgAddBegun(obj, event):
