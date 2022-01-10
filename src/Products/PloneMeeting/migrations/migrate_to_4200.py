@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from collective.contact.plonegroup.utils import get_organizations
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from copy import deepcopy
@@ -31,6 +32,7 @@ from Products.PloneMeeting.setuphandlers import columnInfos
 from Products.PloneMeeting.setuphandlers import indexInfos
 from Products.PloneMeeting.utils import cleanMemoize
 from Products.ZCatalog.ProgressHandler import ZLogHandler
+from zope.annotation import IAnnotations
 from zope.component import queryUtility
 from zope.interface import alsoProvides
 from zope.interface import noLongerProvides
@@ -560,6 +562,17 @@ class Migrate_To_4200(Migrator):
                 cfg.setDefaultAdviceType(defaultAdviceType)
         logger.info('Done.')
 
+    def _updatePortletTodoTitleLength(self):
+        """Set title_length in portlet_todo to "100" instead "60"."""
+        logger.info('Updating portlet_todo.title_length to "100"...')
+        portal_ann = IAnnotations(self.portal)
+        left_col = portal_ann["plone.portlets.contextassignments"]["plone.leftcolumn"]
+        if "portlet_todo" not in left_col:
+            self.warn(logger, 'Could not find "portlet_todo" at root of Plone Site!')
+        portlet_todo = left_col["portlet_todo"]
+        portlet_todo.title_length = 100
+        logger.info('Done.')
+
     def _updateMeetingsNumberOfItems(self):
         """Meeting number of items is now stored in Meeting._number_of_items."""
         logger.info('Updating "_number_of_items" for every meetings...')
@@ -684,6 +697,9 @@ class Migrate_To_4200(Migrator):
             'tool.formatMeetingDate(meeting': "tool.format_date(meeting.date",
             # getItemAssembly, striked=True by default
             '.displayStrikedItemAssembly()': '.getItemAssembly()',
+            # used in Avis DF
+            'self.displayValue(self.listProposingGroups(), self.getProposingGroup())':
+                "view.display('proposingGroup')",
         }
 
         self.updatePODTemplatesCode(replacements, meeting_replacements, item_replacements)
@@ -889,6 +905,9 @@ class Migrate_To_4200(Migrator):
             xml_filename='upgrade_step_4200_update_meeting_widgets.xml',
             related_to="decisions")
         self.updateFacetedFilters(reorder=False, to_delete=['c25'])
+
+        # set title_length=100 for portlet_todo
+        self._updatePortletTodoTitleLength()
 
         # update holidays
         self.updateHolidays()

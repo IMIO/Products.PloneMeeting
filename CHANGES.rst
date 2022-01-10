@@ -5,8 +5,10 @@ Changelog
 4.2b25 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Set `portlet_todo.title_length` to `100` instead `60` (added
+  `_updatePortletTodoTitleLength` migration step in migration to `4200`).
+  Also fixed `portlet_todo.render_cachekey` to have a per `MeetingConfig` cache.
+  [gbastien]
 
 4.2b24 (2022-01-07)
 -------------------

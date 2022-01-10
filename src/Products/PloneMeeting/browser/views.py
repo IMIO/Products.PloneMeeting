@@ -555,7 +555,6 @@ class DeleteHistoryEventView(BrowserView):
 
 
 class PortletTodoUpdateView(BrowserView):
-
     """Produce json to update portlet_todo."""
 
     def __call__(self):
@@ -567,7 +566,6 @@ class PortletTodoUpdateView(BrowserView):
 
         # self.context is sometimes a view, like when editing a Collection
         context = getContext(self.context)
-
         manager = getUtility(IPortletManager,
                              name='plone.leftcolumn',
                              context=context)
@@ -575,12 +573,10 @@ class PortletTodoUpdateView(BrowserView):
         # batch_size and title_length are taken into account
         renderer = queryMultiAdapter(
             (context, self.request, self, manager), IPortletManagerRenderer)
-
         for portlet in renderer.portletsToShow():
             if portlet['name'] == 'portlet_todo':
                 self.request.set('load_portlet_todo', True)
                 return portlet['renderer'].render()
-
         return ''
 
 
@@ -908,7 +904,6 @@ class BaseDGHV(object):
     def _update_patterns_for_videoconference(self, meeting, patterns, value):
         if hasattr(meeting, "videoconference") and meeting.videoconference:
             patterns.update(value)
-
 
     def print_attendees(self,
                         by_parent_org=False,
