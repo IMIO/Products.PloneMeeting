@@ -16,6 +16,8 @@ Changelog
   Added upgrade step to remove unused `held_positions` that were migrated from
   old `MeetingUsers` during migration from `4.0` to `4.1`.
   [gbastien]
+- Display POD template `UID` and `filename` in `MeetingConfig` POD templates page.
+  [gbastien]
 
 4.2b24 (2022-01-07)
 -------------------
