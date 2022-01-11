@@ -106,9 +106,10 @@ class HeldPositionBackRefsView(BrowserView):
         res = OrderedDict()
         for cfg in tool.objectValues('MeetingConfig'):
             meeting_type_name = cfg.getMeetingTypeName()
-            brains = catalog(portal_type=meeting_type_name,
-                             sort_on='meeting_date',
-                             sort_order='reverse')
+            brains = catalog.unrestrictedSearchResults(
+                portal_type=meeting_type_name,
+                sort_on='meeting_date',
+                sort_order='reverse')
             for brain in brains:
                 meeting = brain.getObject()
                 if _is_held_pos_uid_used_by(hp_uid, meeting):
@@ -127,7 +128,7 @@ class HeldPositionBackRefsView(BrowserView):
         res = OrderedDict()
         for cfg in tool.objectValues('MeetingConfig'):
             item_type_name = cfg.getItemTypeName()
-            brains = catalog(
+            brains = catalog.unrestrictedSearchResults(
                 portal_type=item_type_name,
                 pm_technical_index=[
                     ITEM_INITIATOR_INDEX_PATTERN.format(hp_uid)],

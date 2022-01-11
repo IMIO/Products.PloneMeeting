@@ -664,7 +664,6 @@ class RemoveSeveralItemsView(BrowserView):
 
     def __call__(self, uids):
         """ """
-        uid_catalog = api.portal.get_tool('uid_catalog')
         wfTool = api.portal.get_tool('portal_workflow')
         # make sure we have a list of uids, in some case, as it is called
         # by jQuery, we receive only one uid, as a string...
@@ -673,8 +672,9 @@ class RemoveSeveralItemsView(BrowserView):
         # defer call to Meeting.update_item_references
         self.request.set('defer_Meeting_update_item_references', True)
         lowest_itemNumber = 0
-        for uid in uids:
-            obj = uid_catalog(UID=uid)[0].getObject()
+        brains = uuidsToObjects(uids, ordered=True, unrestricted=True)
+        for brain in brains:
+            obj = brain.getObject()
             # save lowest_itemNumber for call to Meeting.update_item_references here under
             if not lowest_itemNumber or obj.getItemNumber() < lowest_itemNumber:
                 lowest_itemNumber = obj.getItemNumber()

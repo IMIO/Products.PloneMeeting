@@ -18,6 +18,8 @@ Changelog
   [gbastien]
 - Display POD template `UID` and `filename` in `MeetingConfig` POD templates page.
   [gbastien]
+- Use `catalog.unrestrictedSearchResults` everywhere possible.
+  [gbastien]
 
 4.2b24 (2022-01-07)
 -------------------

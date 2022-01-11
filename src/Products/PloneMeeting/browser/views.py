@@ -490,7 +490,7 @@ class UpdateDelayAwareAdvicesView(BrowserView):
         catalog = api.portal.get_tool('portal_catalog')
         if 'meta_type' not in query:
             query['meta_type'] = 'MeetingItem'
-        brains = catalog(**query)
+        brains = catalog.unrestrictedSearchResults(**query)
         numberOfBrains = len(brains)
         i = 1
         logger.info('Updating adviceIndex for %s items' % str(numberOfBrains))
@@ -516,7 +516,7 @@ class UpdateItemsToReindexView(BrowserView):
         """ """
         catalog = api.portal.get_tool('portal_catalog')
         query = {'pm_technical_index': [REINDEX_NEEDED_MARKER]}
-        brains = catalog(**query)
+        brains = catalog.unrestrictedSearchResults(**query)
         numberOfBrains = len(brains)
         i = 1
         logger.info('Reindexing %s items' % str(numberOfBrains))

@@ -741,9 +741,10 @@ class MeetingDatesVocabulary(object):
         catalog = api.portal.get_tool('portal_catalog')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        brains = catalog(portal_type=cfg.getMeetingTypeName(),
-                         sort_on='meeting_date',
-                         sort_order='reverse')
+        brains = catalog.unrestrictedSearchResults(
+            portal_type=cfg.getMeetingTypeName(),
+            sort_on='meeting_date',
+            sort_order='reverse')
         res = [
             SimpleTerm(ITEM_NO_PREFERRED_MEETING_VALUE,
                        ITEM_NO_PREFERRED_MEETING_VALUE,
@@ -1479,14 +1480,13 @@ class ItemTemplatesStorableAsAnnexVocabulary(object):
         """ """
         res = []
         # get every POD templates that have a defined 'store_as_annex'
-        catalog = api.portal.get_tool('portal_catalog')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         meetingItemTemplatesToStoreAsAnnex = cfg.getMeetingItemTemplatesToStoreAsAnnex()
         for pod_template in cfg.podtemplates.objectValues():
             store_as_annex = getattr(pod_template, 'store_as_annex', None)
             if store_as_annex:
-                annex_type = catalog(UID=store_as_annex)[0].getObject()
+                annex_type = uuidToObject(store_as_annex, unrestricted=True)
                 annex_group_title = annex_type.get_category_group().Title()
                 for output_format in pod_template.pod_formats:
                     term_id = '{0}__output_format__{1}'.format(
@@ -1600,7 +1600,7 @@ class PMDashboardCollectionsVocabulary(DashboardCollectionsVocabulary):
         else:
             # out of a MeetingConfig
             query['getConfigId'] = EMPTY_STRING
-        collection_brains = catalog(**query)
+        collection_brains = catalog.unrestrictedSearchResults(**query)
         vocabulary = SimpleVocabulary(
             [SimpleTerm(b.UID, b.UID, b.Title) for b in collection_brains]
         )
@@ -1969,7 +1969,7 @@ class BaseHeldPositionsVocabulary(object):
             query['review_state'] = review_state
         if uids:
             query['UID'] = uids
-        brains = catalog(**query)
+        brains = catalog.unrestrictedSearchResults(**query)
         res = []
         highlight = False
         is_item = False

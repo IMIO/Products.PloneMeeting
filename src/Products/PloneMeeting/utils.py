@@ -1999,7 +1999,7 @@ def get_person_from_userid(userid, only_active=True):
     query = {'portal_type': 'person'}
     if only_active:
         query['review_state'] = 'active'
-    brains = catalog(**query)
+    brains = catalog.unrestrictedSearchResults(**query)
     for brain in brains:
         person = brain.getObject()
         if person.userid == userid:
@@ -2105,13 +2105,14 @@ def get_next_meeting(meeting_date, cfg, date_gap=0):
     catalog = api.portal.get_tool('portal_catalog')
     # find every meetings after meetingDate
     meeting_date += timedelta(days=date_gap)
-    brains = catalog(portal_type=meetingTypeName,
-                     meeting_date={'query': meeting_date,
-                                   'range': 'min'},
-                     sort_on='meeting_date')
+    brains = catalog.unrestrictedSearchResults(
+        portal_type=meetingTypeName,
+        meeting_date={'query': meeting_date,
+                      'range': 'min'},
+        sort_on='meeting_date')
     res = None
     for brain in brains:
-        meeting = brain.getObject()
+        meeting = brain._unrestrictedGetObject()
         if meeting.date > meeting_date:
             res = meeting
             break

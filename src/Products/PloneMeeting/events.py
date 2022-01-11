@@ -463,11 +463,13 @@ def onConfigWillBeRemoved(config, event):
 
     # Check that no Meeting and no MeetingItem remains.
     catalog = api.portal.get_tool('portal_catalog')
-    brains = catalog(portal_type=config.getMeetingTypeName())
+    brains = catalog.unrestrictedSearchResults(
+        portal_type=config.getMeetingTypeName())
     if brains:
         # We found at least one Meeting.
         raise BeforeDeleteException(can_not_delete_meetingconfig_meeting)
-    brains = catalog(portal_type=config.getItemTypeName())
+    brains = catalog.unrestrictedSearchResults(
+        portal_type=config.getItemTypeName())
     if brains:
         # We found at least one MeetingItem.
         raise BeforeDeleteException(can_not_delete_meetingconfig_meetingitem)
@@ -1102,11 +1104,11 @@ def onMeetingModified(meeting, event):
             catalog = api.portal.get_tool('portal_catalog')
             # items linked to the meeting
             meeting_uid = meeting.UID()
-            brains = catalog(portal_type=cfg.getItemTypeName(),
-                             meeting_uid=meeting_uid)
+            brains = catalog.unrestrictedSearchResults(
+                portal_type=cfg.getItemTypeName(), meeting_uid=meeting_uid)
             # items having the meeting as the preferredMeeting
-            brains = brains + catalog(portal_type=cfg.getItemTypeName(),
-                                      preferred_meeting_uid=meeting_uid)
+            brains = brains + catalog.unrestrictedSearchResults(
+                portal_type=cfg.getItemTypeName(), preferred_meeting_uid=meeting_uid)
             for brain in brains:
                 item = brain.getObject()
                 item.reindexObject(idxs=['meeting_date', 'preferred_meeting_date'])

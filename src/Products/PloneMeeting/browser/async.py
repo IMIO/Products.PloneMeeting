@@ -81,7 +81,7 @@ class Discuss(BrowserView):
           Here, it manages for example the fact that a reviewer can ask
           an item to be discussed and that will display a portal_message to this user.
         """
-        item = self.context.uid_catalog(UID=itemUid)[0].getObject()
+        item = uuidToObject(itemUid, unrestricted=True)
         if discussAction == 'ask':
             # I must send a mail to MeetingManagers for notifying them that a reviewer
             # wants to discuss this item.

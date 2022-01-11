@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from collective.contact.plonegroup.utils import get_plone_group_id
+from imio.helpers.content import uuidToObject
 from plone import api
 from plone.app.layout.navigation.navtree import buildFolderTree
 from plone.app.layout.navigation.navtree import NavtreeStrategyBase
@@ -65,8 +66,7 @@ class ItemTemplateView(BrowserView):
     def createItemFromTemplate(self, templateUID):
         '''The user wants to create an item from a item template that lies in
            this meeting configuration. Item id is in the request.'''
-        catalog = api.portal.get_tool('portal_catalog')
-        templateItem = catalog(UID=templateUID)[0].getObject()
+        templateItem = uuidToObject(templateUID, unrestricted=True)
         # Create the new item by duplicating the template item
         member_id = get_current_user_id()
         template_path_and_title = safe_unicode(self._template_path_and_title(templateItem))

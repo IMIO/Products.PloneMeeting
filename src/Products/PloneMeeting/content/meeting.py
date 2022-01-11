@@ -478,7 +478,8 @@ class IMeeting(IDXMeetingContent):
         catalog = api.portal.get_tool('portal_catalog')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        brains = catalog(portal_type=cfg.getMeetingTypeName(), meeting_date=data.date)
+        brains = catalog.unrestrictedSearchResults(
+            portal_type=cfg.getMeetingTypeName(), meeting_date=data.date)
         if brains:
             found = False
             if not is_meeting:
@@ -1459,8 +1460,7 @@ class Meeting(Container):
                                  include_held_position_label=True,
                                  include_sub_organizations=True):
         '''Display the user remplacement from p_held_position_uid.'''
-        catalog = api.portal.get_tool('portal_catalog')
-        held_position = catalog(UID=held_position_uid)[0].getObject()
+        held_position = uuidToObject(held_position_uid, unrestricted=True)
         if include_held_position_label:
             return held_position.get_short_title(
                 include_sub_organizations=include_sub_organizations)
@@ -2141,14 +2141,15 @@ class Meeting(Container):
         meeting_type_name = cfg.getMeetingTypeName()
         catalog = api.portal.get_tool('portal_catalog')
         # find every meetings before searchMeetingsInterval days before self
-        brains = catalog(portal_type=meeting_type_name,
-                         meeting_date={'query': self.date - timedelta(days=interval),
-                                       'range': 'min'},
-                         sort_on='meeting_date',
-                         sort_order='reverse')
+        brains = catalog.unrestrictedSearchResults(
+            portal_type=meeting_type_name,
+            meeting_date={'query': self.date - timedelta(days=interval),
+                          'range': 'min'},
+            sort_on='meeting_date',
+            sort_order='reverse')
         res = None
         for brain in brains:
-            meeting = brain.getObject()
+            meeting = brain._unrestrictedGetObject()
             if meeting.date < self.date:
                 res = meeting
                 break

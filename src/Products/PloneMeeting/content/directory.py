@@ -23,7 +23,7 @@ class IPMDirectory(IDirectory):
         if removed_position_types:
             catalog = api.portal.get_tool('portal_catalog')
             # check if used by a held_position
-            hp_brains = catalog(portal_type='held_position')
+            hp_brains = catalog.unrestrictedSearchResults(portal_type='held_position')
             for hp_brain in hp_brains:
                 hp = hp_brain.getObject()
                 if hp.position_type in removed_position_types:
@@ -36,7 +36,8 @@ class IPMDirectory(IDirectory):
                     raise Invalid(msg)
             # check if used as a redefined position_type
             # for an attendee on an item, this information is stored on the meeting
-            meeting_brains = catalog(object_provides=IMeeting.__identifier__)
+            meeting_brains = catalog.unrestrictedSearchResults(
+                object_provides=IMeeting.__identifier__)
             for meeting_brain in meeting_brains:
                 meeting = meeting_brain.getObject()
                 redefined_positions = meeting._get_item_redefined_positions()

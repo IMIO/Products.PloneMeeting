@@ -272,7 +272,7 @@ def _itemsToUpdate(from_item_number, until_item_number, meeting):
     catalog = api.portal.get_tool('portal_catalog')
     if not until_item_number:
         until_item_number = from_item_number
-    brains = catalog(
+    brains = catalog.unrestrictedSearchResults(
         meeting_uid=meeting.UID(),
         getItemNumber={'query': (from_item_number,
                                  until_item_number),
