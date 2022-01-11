@@ -446,10 +446,11 @@ function actionsPanel() {
                        view_name='@@facade_actions_panel',
                        data_parameters=['showHistory:boolean', 'showActions'],
                        options={
-                        position: 'left',
+                        position: 'bottom',
                         trigger: 'click',
                         triggerClose: {
                           click: true,
                           tap: true, },
-                        functionReady_callback: initializeActionsPanel, });
+                        functionReady_callback: initializeActionsPanel,
+                        close_other_tips: true, });
 }

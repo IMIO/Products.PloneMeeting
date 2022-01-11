@@ -874,8 +874,7 @@ table.listing th.th_header_privacy {
 table.listing th.th_header_filesize-column {
     width: 115px;
 }
-table.listing tbody td.td_cell_filesize-column,
-td.td_cell_async_actions {
+table.listing tbody td.td_cell_filesize-column {
     text-align: right;
 }
 
@@ -1875,6 +1874,16 @@ table tbody tr td.td_cell_category-column {
     cursor: pointer;
 }
 
+div.async-actions-panel-icon-container {
+    width: 100%;
+}
+div.async-actions-panel-icon-container a {
+    float: right;
+}
+#content span.async-actions-panel-icon:before {
+    content: "\f013";
+    color: &dtml-linkColor;;
+}
 /* check in item people tables */
 #content span.people-checked:before,
 #content span.people-signatory-checked:before {

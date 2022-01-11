@@ -257,9 +257,10 @@ class PMAsyncActionsColumn(BaseColumn):
     sort_index = -1
 
     def renderCell(self, item):
-        tag = u"""<a href="#" title="Actions" onclick="event.preventDefault();;">""" \
-        """<span class="fa fa-cog tooltipster-actions-panel" data-base_url="{}" """ \
-        """data-showHistory:boolean="1" /></a>""".format(item.getURL())
+        tag = """<div class="async-actions-panel-icon-container">""" \
+        """<a href="#" title="Actions" onclick="event.preventDefault();;">""" \
+        """<span class="fa async-actions-panel-icon link-action tooltipster-actions-panel" data-base_url="{}" """ \
+        """data-showHistory:boolean="1" /></a></div>""".format(item.getURL())
         return tag
 
 
