@@ -266,6 +266,7 @@ function initializeDashboard(){
     duplicateItem();
     pmCommonOverlays();
     listTypeChange();
+    actionsPanel();
 }
 
 function initializeAdvicePopup(){
@@ -430,4 +431,25 @@ function groupedConfigs() {
     tooltipster_helper(selector='li[id*="portaltab-mc_config_group_"] a',
                        view_name='@@display-grouped-configs',
                        data_parameters=['config_group']);
+}
+
+function initializeActionsPanel() {
+
+    jQuery(function($) {
+        initializeOverlays();
+        preventDefaultClickTransition();
+    });
+}
+
+function actionsPanel() {
+    tooltipster_helper(selector='.tooltipster-actions-panel',
+                       view_name='@@facade_actions_panel',
+                       data_parameters=['showHistory:boolean', 'showActions'],
+                       options={
+                        position: 'left',
+                        trigger: 'click',
+                        triggerClose: {
+                          click: true,
+                          tap: true, },
+                        functionReady_callback: initializeActionsPanel, });
 }

@@ -20,6 +20,9 @@ Changelog
   [gbastien]
 - Use `catalog.unrestrictedSearchResults` everywhere possible.
   [gbastien]
+- Added a column displaying a control to display the `Actions panel`, this way the
+  `Actions panel` is only computed when relevant and it takes less place.
+  [gbastien]
 
 4.2b24 (2022-01-07)
 -------------------

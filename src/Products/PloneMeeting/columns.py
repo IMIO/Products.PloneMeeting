@@ -250,6 +250,19 @@ class PMActionsColumn(ActionsColumn):
         return super(ActionsColumn, self).renderCell(item)
 
 
+class PMAsyncActionsColumn(BaseColumn):
+    """A column that displays an icon that will on hover display a tooltipster
+       with actions availble to current user."""
+
+    sort_index = -1
+
+    def renderCell(self, item):
+        tag = u"""<a href="#" title="Actions" onclick="event.preventDefault();;">""" \
+        """<span class="fa fa-cog tooltipster-actions-panel" data-base_url="{}" """ \
+        """data-showHistory:boolean="1" /></a>""".format(item.getURL())
+        return tag
+
+
 class ItemLinkedMeetingColumn(BaseColumn):
     """
       Display the formatted date and a link to the linked meeting if any.

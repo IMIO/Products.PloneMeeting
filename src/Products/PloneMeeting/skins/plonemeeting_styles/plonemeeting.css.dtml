@@ -500,6 +500,9 @@ div.tooltipster-content div#content {
     padding-right: 0.5em;
 }
 
+div.tooltipster-content > table.actionspanel-no-style-table {
+    padding: 0.75em;
+}
 /* highlight error message when an error occured on an edit form */
 .fieldErrorBox {
     color: red;
@@ -871,7 +874,8 @@ table.listing th.th_header_privacy {
 table.listing th.th_header_filesize-column {
     width: 115px;
 }
-table.listing tbody td.td_cell_filesize-column {
+table.listing tbody td.td_cell_filesize-column,
+td.td_cell_async_actions {
     text-align: right;
 }
 

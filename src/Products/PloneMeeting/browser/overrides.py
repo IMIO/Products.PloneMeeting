@@ -68,6 +68,7 @@ from zope.component import queryUtility
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
 from zope.ramcache.interfaces.ram import IRAMCache
+from Products.Five import BrowserView
 
 import sys
 
@@ -587,6 +588,43 @@ class BaseActionsPanelView(ActionsPanelView):
         if self.cfg:
             toConfirm = self.cfg.getTransitionsToConfirm()
         return toConfirm
+
+
+class FacadeActionsPanelView(BrowserView):
+    """
+      As the ram.cache decorator prevent correct use of publisher parameters
+      (passing parameters from JS ajax call are not passed to __call__)
+      this view is just a frontend receiving the call and calling @@actions_panel.
+    """
+
+    def __call__(
+            self,
+            useIcons=True,
+            showTransitions=True,
+            appendTypeNameToTransitionLabel=False,
+            showEdit=True,
+            showOwnDelete=True,
+            showActions=True,
+            showAddContent=False,
+            showHistory=False,
+            showHistoryLastEventHasComments=True,
+            showArrows=False,
+            **kwargs):
+        """
+          Redefined to add ram.cache...
+        """
+        return self.context.unrestrictedTraverse('@@actions_panel')(
+            useIcons=useIcons,
+            showTransitions=showTransitions,
+            appendTypeNameToTransitionLabel=appendTypeNameToTransitionLabel,
+            showEdit=showEdit,
+            showOwnDelete=showOwnDelete,
+            showActions=showActions,
+            showAddContent=showAddContent,
+            showHistory=showHistory,
+            showHistoryLastEventHasComments=showHistoryLastEventHasComments,
+            showArrows=showArrows,
+            **kwargs)
 
 
 class MeetingItemActionsPanelView(BaseActionsPanelView):
