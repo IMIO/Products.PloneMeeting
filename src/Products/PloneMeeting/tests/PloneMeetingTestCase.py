@@ -606,6 +606,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         """ """
         viewlet_manager = self._get_viewlet_manager(context, manager_name)
         viewlet = viewlet_manager.get(viewlet_name)
+        viewlet.update()
         return viewlet
 
     def _addPrincipalToGroup(self, principal_id, group_id):

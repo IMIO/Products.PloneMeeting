@@ -2309,21 +2309,30 @@ class testContacts(PloneMeetingTestCase):
     def test_pm_HeldPositionBackRefs(self):
         """This will display back references on a held_position
            to see where it is used."""
-        self.changeUser('pmManager')
-        meeting = self.create('Meeting')
+        self._enableField("itemInitiator")
         person = self.portal.contacts.get('person1')
         hp = person.get_held_positions()[0]
         hp_uid = hp.UID()
+
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem', itemInitiator=(hp_uid, ))
+        meeting = self.create('Meeting')
         self.assertTrue(hp_uid in meeting.get_attendees())
         viewlet = self._get_viewlet(
             context=hp,
             manager_name='plone.belowcontentbody',
             viewlet_name='held_position_back_references')
-        rendered = viewlet.render()
+        rendered_viewlet = viewlet.render()
+        self.assertTrue(hp_uid in rendered_viewlet)
+        # back refs are loaded asynch by @@load_held_position_back_refs
+        view = hp.restrictedTraverse('@@load_held_position_back_refs')
+        rendered_view = view()
         # used in MeetingConfig
-        self.assertTrue(self.meetingConfig.absolute_url() in rendered)
+        self.assertTrue(self.meetingConfig.absolute_url() in rendered_view)
         # used in meeting
-        self.assertTrue(meeting.absolute_url() in rendered)
+        self.assertTrue(meeting.absolute_url() in rendered_view)
+        # used in item
+        self.assertTrue(item.absolute_url() in rendered_view)
 
     def test_pm_RedefineAttendeePositionForm(self):
         """Test the @@item_redefine_attendee_position_form and
