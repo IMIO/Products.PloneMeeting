@@ -1793,6 +1793,7 @@ class testContacts(PloneMeetingTestCase):
     def test_pm_RedefinedCertifiedSignatures(self):
         """organization.certified_signatures may override what is defined on a MeetingConfig,
            either partially (one signature, the other is taken from MeetingConfig) or completely."""
+        self.changeUser('siteadmin')
         cfg = self.meetingConfig
         certified = [
             {'signatureNumber': '1',

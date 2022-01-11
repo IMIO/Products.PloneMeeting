@@ -672,9 +672,8 @@ class RemoveSeveralItemsView(BrowserView):
         # defer call to Meeting.update_item_references
         self.request.set('defer_Meeting_update_item_references', True)
         lowest_itemNumber = 0
-        brains = uuidsToObjects(uids, ordered=True, unrestricted=True)
-        for brain in brains:
-            obj = brain.getObject()
+        objs = uuidsToObjects(uids, ordered=True, unrestricted=True)
+        for obj in objs:
             # save lowest_itemNumber for call to Meeting.update_item_references here under
             if not lowest_itemNumber or obj.getItemNumber() < lowest_itemNumber:
                 lowest_itemNumber = obj.getItemNumber()

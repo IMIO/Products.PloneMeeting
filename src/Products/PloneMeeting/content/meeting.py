@@ -2141,7 +2141,7 @@ class Meeting(Container):
         meeting_type_name = cfg.getMeetingTypeName()
         catalog = api.portal.get_tool('portal_catalog')
         # find every meetings before searchMeetingsInterval days before self
-        brains = catalog.unrestrictedSearchResults(
+        brains = catalog(
             portal_type=meeting_type_name,
             meeting_date={'query': self.date - timedelta(days=interval),
                           'range': 'min'},
@@ -2149,7 +2149,7 @@ class Meeting(Container):
             sort_order='reverse')
         res = None
         for brain in brains:
-            meeting = brain._unrestrictedGetObject()
+            meeting = brain.getObject()
             if meeting.date < self.date:
                 res = meeting
                 break

@@ -2105,14 +2105,14 @@ def get_next_meeting(meeting_date, cfg, date_gap=0):
     catalog = api.portal.get_tool('portal_catalog')
     # find every meetings after meetingDate
     meeting_date += timedelta(days=date_gap)
-    brains = catalog.unrestrictedSearchResults(
+    brains = catalog(
         portal_type=meetingTypeName,
         meeting_date={'query': meeting_date,
                       'range': 'min'},
         sort_on='meeting_date')
     res = None
     for brain in brains:
-        meeting = brain._unrestrictedGetObject()
+        meeting = brain.getObject()
         if meeting.date > meeting_date:
             res = meeting
             break
