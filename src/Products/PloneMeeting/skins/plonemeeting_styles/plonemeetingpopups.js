@@ -447,7 +447,6 @@ function actionsPanel() {
                        data_parameters=['showHistory:boolean', 'showActions'],
                        options={
                         position: 'bottom',
-                        trigger: 'click',
                         triggerClose: {
                           click: true,
                           tap: true, },
