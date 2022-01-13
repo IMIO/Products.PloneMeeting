@@ -20,6 +20,8 @@ Changelog
   [gbastien]
 - Use `catalog.unrestrictedSearchResults` everywhere possible.
   [gbastien]
+- Use a RadioFieldWidget for `IAdviceRemoveInheritance.inherited_advice_action`.
+  [gbastien]
 
 4.2b24 (2022-01-07)
 -------------------
