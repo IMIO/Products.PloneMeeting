@@ -992,7 +992,16 @@ const observer = new MutationObserver((mutations, obs) => {
 function start_meeting_scroll_to_item_observer(tag=null, row_id=null) {
     if (isMeeting()) {
         if (tag) {
-            localStorage.setItem("dashboardRowId", $(tag).parents("tr[id^='row_']")[0].id);
+            row_id = null;
+            /* tag comes from actions_panel, may be in tooltipster or not */
+            if ($(tag).parents("table[id^='actions-panel-identifier-']").length) {
+                actions_panel_table = $(tag).parents("table[id^='actions-panel-identifier-']")[0];
+                row_id = "row_" + actions_panel_table.id.split("-")[3];
+            }
+            if ($(tag).parents("tr[id^='row_']").length) {
+                row_id = $(tag).parents("tr[id^='row_']")[0].id;
+            }
+            localStorage.setItem("dashboardRowId", row_id);
         } else if (row_id) {
             localStorage.setItem("dashboardRowId", row_id);
         }
