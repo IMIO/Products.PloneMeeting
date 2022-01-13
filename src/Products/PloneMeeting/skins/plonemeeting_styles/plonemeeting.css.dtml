@@ -1880,6 +1880,9 @@ div.async-actions-panel-icon-container {
 div.async-actions-panel-icon-container a {
     float: right;
 }
+div.tooltipster-content table.actionspanel-no-style-table td.noPadding {
+    padding-right: 0.5em !important;
+}
 #content span.async-actions-panel-icon:before {
     content: "\f013";
     color: &dtml-linkColor;;
