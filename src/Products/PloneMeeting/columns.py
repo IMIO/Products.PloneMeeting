@@ -121,11 +121,13 @@ class ItemIsSignedColumn(BrowserViewCallColumn):
 class ItemPrivacyColumn(I18nColumn):
     """A column that display the translated MeetingItem.privacy."""
     i18n_domain = 'PloneMeeting'
+    header_help = u'header_privacy_help'
 
 
 class ItemPollTypeColumn(VocabularyColumn):
     """A column that display the MeetingItem.pollType."""
     vocabulary = u'Products.PloneMeeting.vocabularies.polltypesvocabulary'
+    header_help = u'header_pollType_help'
 
 
 def render_item_annexes(item, tool, show_nothing=False, check_can_view=False):
@@ -258,9 +260,9 @@ class PMAsyncActionsColumn(BaseColumn):
 
     def renderCell(self, item):
         tag = """<div class="async-actions-panel-icon-container">""" \
-        """<a href="#" title="Actions" onclick="event.preventDefault();;">""" \
-        """<span class="fa async-actions-panel-icon link-action tooltipster-actions-panel" data-base_url="{}" """ \
-        """data-showHistory:boolean="1" /></a></div>""".format(item.getURL())
+            """<a href="#" title="Actions" onclick="event.preventDefault();;">""" \
+            """<span class="fa async-actions-panel-icon link-action tooltipster-actions-panel" data-base_url="{}" """ \
+            """data-showHistory:boolean="1" /></a></div>""".format(item.getURL())
         return tag
 
 

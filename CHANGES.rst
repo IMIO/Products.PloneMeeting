@@ -5,8 +5,8 @@ Changelog
 4.2b26 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Added header help for `ItemPrivacyColumn` and `ItemPollTypeColumnNothing`.
+  [gbastien]
 
 4.2b25 (2022-01-14)
 -------------------
