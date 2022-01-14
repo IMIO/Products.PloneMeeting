@@ -266,7 +266,7 @@ function initializeDashboard(){
     duplicateItem();
     pmCommonOverlays();
     listTypeChange();
-    actionsPanel();
+    actionsPanelTooltipster();
 }
 
 function initializeAdvicePopup(){
@@ -433,23 +433,24 @@ function groupedConfigs() {
                        data_parameters=['config_group']);
 }
 
-function initializeActionsPanel() {
-
+function initializeActionsPanelTooltipster_callback() {
     jQuery(function($) {
         initializeOverlays();
         preventDefaultClickTransition();
+        duplicateItem();
     });
 }
 
-function actionsPanel() {
-    tooltipster_helper(selector='.tooltipster-actions-panel',
-                       view_name='@@facade_actions_panel',
-                       data_parameters=['showHistory:boolean', 'showActions'],
-                       options={
-                        position: 'bottom',
-                        triggerClose: {
-                          click: true,
-                          tap: true, },
-                        functionReady_callback: initializeActionsPanel,
-                        close_other_tips: true, });
+function actionsPanelTooltipster() {
+    tooltipster_helper(
+        selector='.tooltipster-actions-panel',
+        view_name='@@facade_actions_panel',
+        data_parameters=['showHistory:boolean', 'showActions'],
+        options={
+         position: 'bottom',
+         triggerClose: {
+           click: true,
+           tap: true, },
+         functionReady_callback: initializeActionsPanelTooltipster_callback,
+         close_other_tips: true, });
 }
