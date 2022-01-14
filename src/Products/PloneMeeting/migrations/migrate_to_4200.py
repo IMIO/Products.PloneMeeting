@@ -777,6 +777,21 @@ class Migrate_To_4200(Migrator):
             self.warn(logger, 'In _removeBrokenAnnexes, removed %s annexe(s)' % i)
         logger.info('Done.')
 
+    def _correctAccessToPODTemplates(self):
+        """Correct weird Unauthorized when accessing POD template file."""
+        logger.info('Correcting access to POD Templates file...')
+        brains = self.catalog.unrestrictedSearchResults(
+            object_provides=(
+                'collective.documentgenerator.content.pod_template.IPODTemplate',
+                'collective.documentgenerator.content.style_template.IStyleTemplate'))
+        for brain in brains:
+            pod_template = brain._unrestrictedGetObject()
+            logger.info('Updating access for POD template at {0}'.format(
+                '/'.join(pod_template.getPhysicalPath())))
+            pod_template.reindexObject()
+            pod_template.reindexObjectSecurity()
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
 
@@ -794,6 +809,7 @@ class Migrate_To_4200(Migrator):
         self._migrateItemPredecessorReference()
         self._updateConfigForAdviceAskedAgainNoMoreOptional()
         self._updateItemGroupsInCharge()
+        self._correctAccessToPODTemplates()
 
         # remove useless catalog indexes and columns, were renamed to snake case
         self.removeUnusedIndexes(

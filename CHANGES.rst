@@ -29,6 +29,10 @@ Changelog
   mechanism was not respected making user redirected to an additional page
   containing only orphans.
   [gbastien]
+- Added `Migrate_To_4200._correctAccessToPODTemplates` again...
+  [gbastien]
+- Turned annex preview format from `png` to `jpg`.
+  [gbastien]
 
 4.2b24 (2022-01-07)
 -------------------
