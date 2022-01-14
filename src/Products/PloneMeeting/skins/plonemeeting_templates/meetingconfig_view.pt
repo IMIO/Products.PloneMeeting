@@ -1320,7 +1320,6 @@
                     <span tal:content="obj/Title" />
                   </a>
                 </h5>
-                <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
                 <tal:additionalInformations
                     condition="show_details"
                     define="context python: obj;
@@ -1363,7 +1362,7 @@
             </td>
             <td>
                 <h5>
-                  <a tal:attributes="href obj/absolute_url;">
+                  <a tal:attributes="href python: obj.absolute_url();">
                     <img src="#"
                          i18n:attributes="title"
                          i18n:domain="collective.eeafaceted.dashboard"
@@ -1373,6 +1372,27 @@
                     <span tal:content="obj/Title" />
                   </a>
                 </h5>
+                <tal:baseInformations
+                    condition="not:show_details">
+                    <div class="discreet"
+                         tal:define="descr python: obj.Description()"
+                         tal:condition="descr" tal:content="descr"></div>
+                    <div class="discreet">
+                       <label class="horizontal">Uid</label>
+                       <div>
+                         <span class="text-widget textline-field"
+                               tal:content="python: obj.UID()">Uid</span>
+                       </div>
+                     </div>
+                    <div class="discreet">
+                       <label class="horizontal" i18n:domain="plone" i18n:translate="">File</label>
+                       <div>
+                         <span class="text-widget textline-field"
+                               tal:content="python: obj.get_filename()">Filename</span>
+                       </div>
+                     </div>
+
+                </tal:baseInformations>
                 <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
                 <tal:additionalInformations
                     condition="show_details"

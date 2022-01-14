@@ -502,7 +502,7 @@ class UpdateDelayAwareAdvicesView(BrowserView):
         catalog = api.portal.get_tool('portal_catalog')
         if 'meta_type' not in query:
             query['meta_type'] = 'MeetingItem'
-        brains = catalog(**query)
+        brains = catalog.unrestrictedSearchResults(**query)
         numberOfBrains = len(brains)
         i = 1
         logger.info('Updating adviceIndex for %s items' % str(numberOfBrains))
@@ -528,7 +528,7 @@ class UpdateItemsToReindexView(BrowserView):
         """ """
         catalog = api.portal.get_tool('portal_catalog')
         query = {'pm_technical_index': [REINDEX_NEEDED_MARKER]}
-        brains = catalog(**query)
+        brains = catalog.unrestrictedSearchResults(**query)
         numberOfBrains = len(brains)
         i = 1
         logger.info('Reindexing %s items' % str(numberOfBrains))
@@ -567,7 +567,6 @@ class DeleteHistoryEventView(BrowserView):
 
 
 class PortletTodoUpdateView(BrowserView):
-
     """Produce json to update portlet_todo."""
 
     def __call__(self):
@@ -579,7 +578,6 @@ class PortletTodoUpdateView(BrowserView):
 
         # self.context is sometimes a view, like when editing a Collection
         context = getContext(self.context)
-
         manager = getUtility(IPortletManager,
                              name='plone.leftcolumn',
                              context=context)
@@ -587,12 +585,10 @@ class PortletTodoUpdateView(BrowserView):
         # batch_size and title_length are taken into account
         renderer = queryMultiAdapter(
             (context, self.request, self, manager), IPortletManagerRenderer)
-
         for portlet in renderer.portletsToShow():
             if portlet['name'] == 'portlet_todo':
                 self.request.set('load_portlet_todo', True)
                 return portlet['renderer'].render()
-
         return ''
 
 

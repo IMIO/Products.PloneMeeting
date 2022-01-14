@@ -80,6 +80,13 @@
             template="browser/actions_panel.pt"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             permission="zope2.View" />
+        <!-- the facade view used for JS ajax calls -->
+        <browser:view
+            for="*"
+            name="facade_actions_panel"
+            class="Products.PloneMeeting.browser.overrides.FacadeActionsPanelView"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            permission="zope2.View" />
         <!-- Enable transition confirmation for transitions available on the meetingadvice -->
         <browser:page
             for="Products.PloneMeeting.content.advice.IMeetingAdvice"

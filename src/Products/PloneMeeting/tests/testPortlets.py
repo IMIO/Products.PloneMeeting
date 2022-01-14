@@ -136,6 +136,42 @@ class testPortlets(PloneMeetingTestCase):
         self.assertTrue(searchAllItemsUID in self.portlet_todo_renderer.render())
         self.assertTrue(item_url in self.portlet_todo_renderer.render())
 
+    def test_pm_PortletTodoCaching(self):
+        """Results updated when item modified or MeetingConfig changed."""
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        self._setup_portlets()
+        # select 'searchallitems' in the MeetingConfig.toDoListSearches
+        searchAllItemsUID = cfg.searches.searches_items.searchallitems.UID()
+        cfg.setToDoListSearches([searchAllItemsUID])
+        searchAllItemsUID = cfg2.searches.searches_items.searchallitems.UID()
+        cfg2.setToDoListSearches([searchAllItemsUID])
+        # enable rendering of portlet_todo, updated thru external view
+        self.request.set('load_portlet_todo', True)
+
+        # create items, one in each MeetingConfig
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item_url = item.absolute_url()
+        self.setMeetingConfig(cfg2.getId())
+        item2 = self.create('MeetingItem')
+        item2_url = item2.absolute_url()
+
+        # MeetingConfig1
+        self.assertTrue(item_url in self.portlet_todo_renderer.render())
+        self.assertTrue(item.query_state() in self.portlet_todo_renderer.render())
+        self.proposeItem(item)
+        self.assertTrue(item_url in self.portlet_todo_renderer.render())
+        self.assertTrue(item.query_state() in self.portlet_todo_renderer.render())
+
+        # MeetingConfig1
+        self.portlet_todo_renderer.cfg = cfg2
+        self.assertTrue(item2_url in self.portlet_todo_renderer.render())
+        self.assertTrue(item2.query_state() in self.portlet_todo_renderer.render())
+        self.proposeItem(item2)
+        self.assertTrue(item2_url in self.portlet_todo_renderer.render())
+        self.assertTrue(item2.query_state() in self.portlet_todo_renderer.render())
+
 
 def test_suite():
     from unittest import makeSuite

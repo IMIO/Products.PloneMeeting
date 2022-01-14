@@ -1,0 +1,31 @@
+<div i18n:domain="PloneMeeting"
+     tal:define="using_configs python: view.using_configs();
+                 using_meetings python: view.using_meetings();
+                 using_items python: view.using_items();">
+  <h5><span i18n:translate="">Filled in the "Ordered contacts" for meeting configurations</span>&nbsp;:</h5>
+  <ul tal:repeat="cfg using_configs">
+    <li><a tal:attributes="href string:${cfg/absolute_url}/?pageName=assembly_and_signatures;" tal:content="python: cfg.Title(include_config_group=True)">Meeting config title</a></li>
+  </ul>
+  <span class="discreet" i18n:translate="None" tal:condition="not:nocall:using_configs">None</span>
+  <h5><span i18n:translate="">Used in the assembly for meetings</span>&nbsp;:</h5>
+  <ul tal:repeat="infos python: using_meetings.items()">
+    <li><h5 tal:content="python: infos[0].Title(include_config_group=True)">Meeting config title</h5></li>
+    <ul>
+     <li tal:repeat="meeting python: infos[1]">
+        <a tal:attributes="href meeting/absolute_url;" tal:content="meeting/Title">Meeting title</a></li>
+     <li>...</li>
+    </ul>
+  </ul>
+  <span class="discreet" i18n:translate="None" tal:condition="not:nocall:using_meetings">None</span>
+  <h5><span i18n:translate="">Used as item initiator for items</span>&nbsp;:</h5>
+  <ul tal:repeat="infos python: using_items.items()">
+    <li><h5 tal:content="python: infos[0].Title(include_config_group=True)">Meeting config title</h5></li>
+    <ul>
+     <li tal:repeat="item_brain python: infos[1]">
+        <a tal:attributes="href python: item_brain.getURL();"
+           tal:content="python: item_brain.Title">Item title</a></li>
+     <li>...</li>
+    </ul>
+  </ul>
+  <span class="discreet" i18n:translate="None" tal:condition="not:nocall:using_items">None</span>
+</div>

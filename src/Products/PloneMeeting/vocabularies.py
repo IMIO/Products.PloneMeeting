@@ -42,6 +42,7 @@ from operator import attrgetter
 from plone import api
 from plone.app.vocabularies.users import UsersFactory
 from plone.memoize import ram
+from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
@@ -740,9 +741,10 @@ class MeetingDatesVocabulary(object):
         catalog = api.portal.get_tool('portal_catalog')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        brains = catalog(portal_type=cfg.getMeetingTypeName(),
-                         sort_on='meeting_date',
-                         sort_order='reverse')
+        brains = catalog.unrestrictedSearchResults(
+            portal_type=cfg.getMeetingTypeName(),
+            sort_on='meeting_date',
+            sort_order='reverse')
         res = [
             SimpleTerm(ITEM_NO_PREFERRED_MEETING_VALUE,
                        ITEM_NO_PREFERRED_MEETING_VALUE,
@@ -1478,14 +1480,13 @@ class ItemTemplatesStorableAsAnnexVocabulary(object):
         """ """
         res = []
         # get every POD templates that have a defined 'store_as_annex'
-        catalog = api.portal.get_tool('portal_catalog')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         meetingItemTemplatesToStoreAsAnnex = cfg.getMeetingItemTemplatesToStoreAsAnnex()
         for pod_template in cfg.podtemplates.objectValues():
             store_as_annex = getattr(pod_template, 'store_as_annex', None)
             if store_as_annex:
-                annex_type = catalog(UID=store_as_annex)[0].getObject()
+                annex_type = uuidToObject(store_as_annex, unrestricted=True)
                 annex_group_title = annex_type.get_category_group().Title()
                 for output_format in pod_template.pod_formats:
                     term_id = '{0}__output_format__{1}'.format(
@@ -1599,7 +1600,7 @@ class PMDashboardCollectionsVocabulary(DashboardCollectionsVocabulary):
         else:
             # out of a MeetingConfig
             query['getConfigId'] = EMPTY_STRING
-        collection_brains = catalog(**query)
+        collection_brains = catalog.unrestrictedSearchResults(**query)
         vocabulary = SimpleVocabulary(
             [SimpleTerm(b.UID, b.UID, b.Title) for b in collection_brains]
         )
@@ -1968,7 +1969,7 @@ class BaseHeldPositionsVocabulary(object):
             query['review_state'] = review_state
         if uids:
             query['UID'] = uids
-        brains = catalog(**query)
+        brains = catalog.unrestrictedSearchResults(**query)
         res = []
         highlight = False
         is_item = False
@@ -2045,14 +2046,18 @@ class SelectableCommitteeAttendeesVocabulary(BaseSimplifiedHeldPositionsVocabula
             context = get_context_with_request(context)
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        # manage missing terms manually as used in a datagridfield...
-        current_values = set(
-            itertools.chain.from_iterable(
-                [data.get('attendees') or []
-                 for data in context.committees or []]))
-        cfg_values = list(cfg.getOrderedCommitteeContacts())
-        missing_values = list(current_values.difference(cfg_values))
-        uids = cfg_values + missing_values
+        uids = []
+        if cfg:
+            # manage missing terms manually as used in a datagridfield...
+            current_values = set()
+            if base_hasattr(context, "committees"):
+                current_values = set(
+                    itertools.chain.from_iterable(
+                        [data.get('attendees') or []
+                         for data in context.committees or []]))
+            cfg_values = list(cfg.getOrderedCommitteeContacts())
+            missing_values = list(current_values.difference(cfg_values))
+            uids = cfg_values + missing_values
         return super(SelectableCommitteeAttendeesVocabulary, self).__call__(
             context=context,
             uids=uids)
@@ -2396,6 +2401,8 @@ class SelectableCommitteesVocabulary(object):
         if not hasattr(context, "getTagName"):
             context = get_context_with_request(context)
         cfg = tool.getMeetingConfig(context)
+        if cfg is None:
+            return None
         # if current context is an item, cache by stored committees
         # so we avoid cache by context
         committees = []

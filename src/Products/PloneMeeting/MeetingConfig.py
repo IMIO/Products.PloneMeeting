@@ -5212,6 +5212,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate('header_toDiscuss', domain=d, context=self.REQUEST))),
             ("actions", u"{0} (actions)".format(
                 translate("header_actions", domain=d, context=self.REQUEST))),
+            ("async_actions", u"{0} (async_actions)".format(
+                translate("header_async_actions", domain=d, context=self.REQUEST))),
         ]
         res = res + self._extraItemRelatedColumns()
         return res
@@ -5225,7 +5227,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listAvailableItemsListVisibleColumns(self):
         '''Vocabulary for the 'availableItemsListVisibleColumns' field.'''
         res = self.listItemRelatedColumns()
-        res.insert(-1, ('preferred_meeting_date', u"{0} (preferred_meeting_date)".format(
+        res.insert(-2, ('preferred_meeting_date', u"{0} (preferred_meeting_date)".format(
             translate('header_preferred_meeting_date',
                       domain='collective.eeafaceted.z3ctable',
                       context=self.REQUEST))))
@@ -5239,7 +5241,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemsListVisibleColumns(self):
         '''Vocabulary for the 'itemsListVisibleColumns' field.'''
         res = self.listItemRelatedColumns()
-        res.insert(-1, ('preferred_meeting_date', u"{0} (preferred_meeting_date)".format(
+        res.insert(-2, ('preferred_meeting_date', u"{0} (preferred_meeting_date)".format(
             translate('header_preferred_meeting_date',
                       domain='collective.eeafaceted.z3ctable',
                       context=self.REQUEST))))
@@ -5304,11 +5306,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listItemColumns(self):
         res = self.listItemRelatedColumns()
-        res.insert(-1, ('meeting_date', u"{0} (meeting_date)".format(
+        res.insert(-2, ('meeting_date', u"{0} (meeting_date)".format(
             translate('header_meeting_date',
                       domain='collective.eeafaceted.z3ctable',
                       context=self.REQUEST))))
-        res.insert(-1, ('preferred_meeting_date', u"{0} (preferred_meeting_date)".format(
+        res.insert(-2, ('preferred_meeting_date', u"{0} (preferred_meeting_date)".format(
             translate('header_preferred_meeting_date',
                       domain='collective.eeafaceted.z3ctable',
                       context=self.REQUEST))))

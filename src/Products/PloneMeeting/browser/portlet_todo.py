@@ -43,9 +43,9 @@ class Assignment(base.Assignment):
 
     # this needs to be done for old portlets that did not have the new batch_size attribute
     batch_size = 3
-    title_length = 45
+    title_length = 100
 
-    def __init__(self, batch_size=3, title_length=45):
+    def __init__(self, batch_size=3, title_length=100):
         self.batch_size = batch_size
         self.title_length = title_length
 
@@ -70,7 +70,8 @@ class Renderer(base.Renderer, FacetedRenderer):
         """
           Defines if the portlet is available in the context
         """
-        available = FacetedRenderer(self.context, self.request, self.view, self.manager, self.data).available
+        available = FacetedRenderer(
+            self.context, self.request, self.view, self.manager, self.data).available
         return available and self.showTodoPortlet(self.context)
 
     def render_cachekey(method, self):
@@ -81,7 +82,8 @@ class Renderer(base.Renderer, FacetedRenderer):
         # cache until an item is modified
         date = get_cachekey_volatile('Products.PloneMeeting.MeetingItem.modified')
         load_portlet_todo = self.request.get('load_portlet_todo', False)
-        return (userGroups,
+        return (repr(self.cfg),
+                userGroups,
                 server_url,
                 date,
                 load_portlet_todo)
@@ -131,7 +133,8 @@ class Renderer(base.Renderer, FacetedRenderer):
         collection = self.portal.unrestrictedTraverse(collection_path)
         # get the sorting, either faceted sorting criterion is used
         # or we will use sort_on and sort_reversed defined on collection
-        sorting_criterion = _get_criterion(self.cfg.searches.searches_items, SortingWidget.widget_type)
+        sorting_criterion = _get_criterion(
+            self.cfg.searches.searches_items, SortingWidget.widget_type)
         if sorting_criterion and sorting_criterion.default:
             sort_on = sorting_criterion.default.split('(reverse)')[0]
         else:
@@ -148,7 +151,8 @@ class Renderer(base.Renderer, FacetedRenderer):
         # received brain is a plone.app.contentlisting.catalog.CatalogContentListingObject instance
         brain = getattr(brain, '_brain', brain)
         item = brain.getObject()
-        return self.tool.getColoredLink(item, showColors=True, maxLength=self.data.title_length)
+        return self.tool.getColoredLink(
+            item, showColors=True, showContentIcon=True, maxLength=self.data.title_length)
 
     def getCollectionWidgetId(self):
         """Returns the collection widget id to be used in the URL generated on the collection link."""

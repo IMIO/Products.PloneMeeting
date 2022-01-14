@@ -3660,7 +3660,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(first_transition['id'], 'freeze')
         self.assertTrue(first_transition['confirm'])
 
-    def test_pm_MeetingEditAndView(self):
+    def test_pm_MeetingAddEditAndView(self):
         """Just call the edit and view to check it is displayed correctly."""
         cfg = self.meetingConfig
         # enable as much field as possible
@@ -3669,6 +3669,14 @@ class testMeetingType(PloneMeetingTestCase):
                  if "assembly" not in attr and "signatures" not in attr]
         cfg.setUsedMeetingAttributes(attrs)
         self.changeUser('pmManager')
+        # add
+        meeting_type_name = cfg.getMeetingTypeName()
+        pm_folder = self.getMeetingFolder()
+        add_form = pm_folder.restrictedTraverse('++add++{0}'.format(meeting_type_name))
+        add_form.update()
+        self.assertTrue(add_form())
+
+        # edit
         meeting = self.create('Meeting')
         edit = meeting.restrictedTraverse('@@edit')
         edit.update()
@@ -3676,6 +3684,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(
             [grp.__name__ for grp in edit.groups],
             ['dates_and_data', 'assembly', 'committees', 'informations', 'parameters'])
+        # view
         view = meeting.restrictedTraverse('@@meeting_view')
         self.assertTrue(view())
 

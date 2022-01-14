@@ -5,6 +5,26 @@ Changelog
 4.2b25 (unreleased)
 -------------------
 
+- Set `portlet_todo.title_length` to `100` instead `60` (added
+  `_updatePortletTodoTitleLength` migration step in migration to `4200`).
+  Also fixed `portlet_todo.render_cachekey` to have a per `MeetingConfig` cache.
+  [gbastien]
+- Fixed `SelectableCommitteeAttendeesVocabulary.__call__` that was failing when
+  `Meeting.committes` enabled and adding a new meeting because context is the parent.
+  [gbastien]
+- On `held_position` view, display back refs (elements using it) asynchronously.
+  Added upgrade step to remove unused `held_positions` that were migrated from
+  old `MeetingUsers` during migration from `4.0` to `4.1`.
+  [gbastien]
+- Display POD template `UID` and `filename` in `MeetingConfig` POD templates page.
+  [gbastien]
+- Use `catalog.unrestrictedSearchResults` everywhere possible.
+  [gbastien]
+- Use a RadioFieldWidget for `IAdviceRemoveInheritance.inherited_advice_action`.
+  [gbastien]
+- Added a column displaying a control to display the `Actions panel`, this way the
+  `Actions panel` is only computed when relevant and it takes less place.
+  [gbastien]
 - Fixed when going to meeting from item, the faceted orphan mechanism was not
   respected making user redirected to an additional page containing only orphans.
   [gbastien]

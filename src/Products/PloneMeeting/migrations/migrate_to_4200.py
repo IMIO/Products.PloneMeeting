@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from collective.contact.plonegroup.utils import get_organizations
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from copy import deepcopy
@@ -9,6 +10,7 @@ from imio.helpers.content import get_vocab
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_delattr
 from imio.pyutils.utils import replace_in_list
+from OFS.ObjectManager import BeforeDeleteException
 from persistent.mapping import PersistentMapping
 from plone.app.contenttypes.migration.migration import migrate as pac_migrate
 from plone.app.textfield.value import RichTextValue
@@ -31,6 +33,7 @@ from Products.PloneMeeting.setuphandlers import columnInfos
 from Products.PloneMeeting.setuphandlers import indexInfos
 from Products.PloneMeeting.utils import cleanMemoize
 from Products.ZCatalog.ProgressHandler import ZLogHandler
+from zope.annotation import IAnnotations
 from zope.component import queryUtility
 from zope.interface import alsoProvides
 from zope.interface import noLongerProvides
@@ -560,6 +563,36 @@ class Migrate_To_4200(Migrator):
                 cfg.setDefaultAdviceType(defaultAdviceType)
         logger.info('Done.')
 
+    def _updatePortletTodoTitleLength(self):
+        """Set title_length in portlet_todo to "100" instead "60"."""
+        logger.info('Updating portlet_todo.title_length to "100"...')
+        portal_ann = IAnnotations(self.portal)
+        left_col = portal_ann["plone.portlets.contextassignments"]["plone.leftcolumn"]
+        if "portlet_todo" not in left_col:
+            self.warn(logger, 'Could not find "portlet_todo" at root of Plone Site!')
+        portlet_todo = left_col["portlet_todo"]
+        portlet_todo.title_length = 100
+        logger.info('Done.')
+
+    def _cleanUnusedPersonsAndHeldPositions(self):
+        """Persons and HeldPositions migrated from old MeetingUsers and not
+           used will be removed."""
+        logger.info('Cleaning up unused "Persons" and "HeldPositions"...')
+        for brain in self.catalog.unrestrictedSearchResults(portal_type="held_position"):
+            hp = brain.getObject()
+            person = hp.get_person()
+            if hp.getId().endswith('_hp1'):
+                try:
+                    # remove the held_position then the personperson,
+                    # that will remove the held_position as well
+                    # use @@delete_givenuid that manage delete abort correctly
+                    self.portal.restrictedTraverse('@@delete_givenuid')(person.UID())
+                    self.warn(logger, 'Directory person at "{0}" was removed!'.format(
+                        "/".join(person.getPhysicalPath())))
+                except BeforeDeleteException:
+                    continue
+        logger.info('Done.')
+
     def _updateMeetingsNumberOfItems(self):
         """Meeting number of items is now stored in Meeting._number_of_items."""
         logger.info('Updating "_number_of_items" for every meetings...')
@@ -684,6 +717,9 @@ class Migrate_To_4200(Migrator):
             'tool.formatMeetingDate(meeting': "tool.format_date(meeting.date",
             # getItemAssembly, striked=True by default
             '.displayStrikedItemAssembly()': '.getItemAssembly()',
+            # used in Avis DF
+            'self.displayValue(self.listProposingGroups(), self.getProposingGroup())':
+                "view.display('proposingGroup')",
         }
 
         self.updatePODTemplatesCode(replacements, meeting_replacements, item_replacements)
@@ -890,6 +926,9 @@ class Migrate_To_4200(Migrator):
             related_to="decisions")
         self.updateFacetedFilters(reorder=False, to_delete=['c25'])
 
+        # set title_length=100 for portlet_todo
+        self._updatePortletTodoTitleLength()
+
         # update holidays
         self.updateHolidays()
 
@@ -908,6 +947,9 @@ class Migrate_To_4200(Migrator):
 
         # store meeting number of items
         self._updateMeetingsNumberOfItems()
+
+        # remove unused persons from contacts directory
+        self._cleanUnusedPersonsAndHeldPositions()
 
 
 def migrate(context):

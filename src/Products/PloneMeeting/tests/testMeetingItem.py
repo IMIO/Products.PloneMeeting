@@ -4665,7 +4665,7 @@ class testMeetingItem(PloneMeetingTestCase):
         def _call_actions_panel():
             item_actions = item.restrictedTraverse('@@actions_panel')
             # there is cache in request in imio.actionspanel
-            item_actions.member = self.member
+            self.request.set('actionspanel_member_cachekey', None)
             item_actions()
             return item_actions
 

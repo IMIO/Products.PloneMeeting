@@ -5,12 +5,14 @@ from imio.actionspanel.utils import findViewableURL
 from imio.helpers.content import get_vocab
 from imio.helpers.security import fplog
 from plone import api
+from plone.directives import form
 from plone.z3cform.layout import wrap_form
 from Products.PloneMeeting.browser.advices import BaseAdviceInfoForm
 from Products.PloneMeeting.browser.advices import IBaseAdviceInfoSchema
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import cleanMemoize
 from z3c.form import button
+from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.i18n import translate
 from zope.schema.vocabulary import SimpleTerm
@@ -19,6 +21,7 @@ from zope.schema.vocabulary import SimpleVocabulary
 
 class IAdviceRemoveInheritance(IBaseAdviceInfoSchema):
 
+    form.widget('inherited_advice_action', RadioFieldWidget)
     inherited_advice_action = schema.Choice(
         title=_(u"Inherited advice action"),
         description=_(u""),
@@ -29,6 +32,7 @@ class IAdviceRemoveInheritance(IBaseAdviceInfoSchema):
              SimpleTerm('remove',
                         'remove',
                         _(u"Remove inherited advice"))]),
+        default="ask_locally",
         required=True)
 
 

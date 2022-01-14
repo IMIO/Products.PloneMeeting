@@ -376,8 +376,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                            if ca['delay']]
                 indexAdvisers = [DELAYAWARE_ROW_ID_PATTERN.format(row_id)
                                  for row_id in row_ids]
-                brains = catalog(portal_type=cfg.getItemTypeName(),
-                                 indexAdvisers=indexAdvisers)
+                brains = catalog.unrestrictedSearchResults(
+                    portal_type=cfg.getItemTypeName(),
+                    indexAdvisers=indexAdvisers)
                 for brain in brains:
                     item = brain.getObject()
                     for adviser in item.adviceIndex.values():
@@ -1274,8 +1275,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if annex_category.other_mc_correspondences:
             annex_cfg_id = tool.getMeetingConfig(annex).getId()
             other_mc_correspondences = [
-                brain.getObject() for brain in catalog(UID=tuple(annex_category.other_mc_correspondences),
-                                                       enabled=True)
+                brain._unrestrictedGetObject() for brain in catalog.unrestrictedSearchResults(
+                    UID=tuple(annex_category.other_mc_correspondences),
+                    enabled=True)
                 if "/portal_plonemeeting/{0}".format(annex_cfg_id) in brain.getPath()]
         if other_mc_correspondences:
             other_mc_correspondence = other_mc_correspondences[0]
@@ -1406,8 +1408,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         catalog = api.portal.get_tool('portal_catalog')
         # update annexes in items and advices
-        brains = catalog(meta_type='MeetingItem') + \
-            catalog(object_provides='Products.PloneMeeting.content.advice.IMeetingAdvice')
+        brains = catalog.unrestrictedSearchResults(meta_type='MeetingItem') + \
+            catalog.unrestrictedSearchResults(
+                object_provides='Products.PloneMeeting.content.advice.IMeetingAdvice')
         for brain in brains:
             obj = brain.getObject()
             annexes = get_categorized_elements(obj, result_type='objects')
@@ -1443,7 +1446,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                      'sort_on': 'meeting_date'}
         catalog = api.portal.get_tool('portal_catalog')
         # remove annexes previews of items of closed Meetings
-        brains = catalog(**query)
+        brains = catalog.unrestrictedSearchResults(**query)
         numberOfBrains = len(brains)
         i = 1
         for brain in brains:
@@ -1495,7 +1498,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if portal_type:
             query['portal_type'] = portal_type
         query.update(kw)
-        brains = catalog(**query)
+        brains = catalog.unrestrictedSearchResults(**query)
         numberOfBrains = len(brains)
         i = 1
         if log:

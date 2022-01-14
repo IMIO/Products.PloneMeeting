@@ -239,10 +239,10 @@ class PloneGroupSettingsValidator(validator.SimpleFieldValidator):
         if removed_plonegroups:
             catalog = api.portal.get_tool('portal_catalog')
             # copy_groups
-            brains = catalog(
+            brains = catalog.unrestrictedSearchResults(
                 meta_type="MeetingItem", getCopyGroups=tuple(removed_plonegroups))
             if not brains:
-                brains = catalog(
+                brains = catalog.unrestrictedSearchResults(
                     meta_type="MeetingItem", indexAdvisers=tuple(advisers_removed_plonegroups))
             for brain in brains:
                 item = brain.getObject()
