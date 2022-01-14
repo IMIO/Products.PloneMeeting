@@ -12,6 +12,7 @@ from imio.helpers.content import safe_delattr
 from imio.pyutils.utils import replace_in_list
 from OFS.ObjectManager import BeforeDeleteException
 from persistent.mapping import PersistentMapping
+from plone import api
 from plone.app.contenttypes.migration.migration import migrate as pac_migrate
 from plone.app.textfield.value import RichTextValue
 from Products.CMFPlone.utils import base_hasattr
@@ -23,6 +24,7 @@ from Products.PloneMeeting.browser.itemattendee import position_type_default
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.content.advice import IMeetingAdvice
 from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.events import onHeldPositionWillBeRemoved
 from Products.PloneMeeting.interfaces import IMeetingDashboardBatchActionsMarker
 from Products.PloneMeeting.interfaces import IMeetingItemDashboardBatchActionsMarker
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
@@ -577,8 +579,12 @@ class Migrate_To_4200(Migrator):
     def _cleanUnusedPersonsAndHeldPositions(self):
         """Persons and HeldPositions migrated from old MeetingUsers and not
            used will be removed."""
+
+        class DummyEvent(object):
+            def __init__(self, obj):
+                self.object = obj
+
         logger.info('Cleaning up unused "Persons" and "HeldPositions"...')
-        delete_view = self.portal.restrictedTraverse('@@delete_givenuid')
         # as we could remove objects, use an intermediate list of paths
         # because we can not iterate a list in which an element was deleted
         # (list of brains of objects)
@@ -586,15 +592,20 @@ class Migrate_To_4200(Migrator):
                  self.catalog.unrestrictedSearchResults(portal_type="held_position")]
         for path in paths:
             hp = self.portal.restrictedTraverse(path)
-            person = hp.get_person()
             if hp.getId().endswith('_hp1'):
+                dummy_event = DummyEvent(hp)
                 try:
-                    # remove the held_position then the personperson,
-                    # that will remove the held_position as well
-                    # use @@delete_givenuid that manage delete abort correctly
-                    delete_view(person.UID(), catch_before_delete_exception=False)
-                    self.warn(logger, 'Directory person at "{0}" was removed!'.format(
-                        "/".join(person.getPhysicalPath())))
+                    onHeldPositionWillBeRemoved(hp, dummy_event)
+                    person = hp.get_person()
+                    # remove the person if it only contains this hp
+                    if len(person.objectIds()) == 1:
+                        api.content.delete(person)
+                    else:
+                        api.content.delete(hp)
+                    self.warn(
+                        logger,
+                        'Directory person or held_position at "{0}" was removed!'.format(
+                            "/".join(person.getPhysicalPath())))
                 except BeforeDeleteException:
                     continue
         logger.info('Done.')

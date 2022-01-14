@@ -26,5 +26,7 @@
  <object name="held_position" meta_type="Dexterity FTI"/>
  <object name="organization" meta_type="Dexterity FTI"/>
  <object name="meetingcategory" meta_type="Dexterity FTI"/>
- <object name="Meeting" meta_type="Dexterity FTI" purge="True" />
+ <!-- migrate Meeting portal_type (AT to DX), remove it and add it just under -->
+ <object name="Meeting" meta_type="Dexterity FTI" remove="True" />
+ <object name="Meeting" meta_type="Dexterity FTI" />
 </object>
