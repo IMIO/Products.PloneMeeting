@@ -363,7 +363,7 @@ class ObjectGoToView(BrowserView):
             # when displayed by 20, item number 10 is on page 1
             # item number 20 is on page 1, item number 22 is on page 2
             # but page 1 b_start is 0...
-            # XXX warning, item number 22 is on page 2 if more than 24 items
+            # warning, item number 22 is on page 2 if more than 24 items
             # (batch_size + 20%) so take it into account also...
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
@@ -626,7 +626,7 @@ class BaseDGHV(object):
                 value = self.display_voc(field_name, **kwargs)
 
         # if a p_empty_marker is given and no value, use it
-        # it may be "???" or "xxx" for example
+        # it may be "???" or "-" for example
         if not value:
             value = empty_marker
         return value
