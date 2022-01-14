@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2b27 (unreleased)
+4.2rc1 (unreleased)
 -------------------
 
 - Fixed `Migrate_To_4200._cleanUnusedPersonsAndHeldPositions`, can not remove
