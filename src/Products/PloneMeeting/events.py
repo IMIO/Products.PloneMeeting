@@ -1329,7 +1329,7 @@ def onHeldPositionWillBeRemoved(held_pos, event):
             u"You cannot delete the held position \"${held_position_title}\", because "
             u"it is used by element at \"${obj_url}\" !",
             domain='PloneMeeting',
-            mapping={'held_position_title': safe_unicode(held_pos.Title()),
+            mapping={'held_position_title': safe_unicode(held_pos.get_full_title()),
                      'obj_url': using_obj.absolute_url()},
             context=held_pos.REQUEST)
         raise BeforeDeleteException(msg)

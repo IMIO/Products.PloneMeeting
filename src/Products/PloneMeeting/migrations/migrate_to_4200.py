@@ -578,15 +578,21 @@ class Migrate_To_4200(Migrator):
         """Persons and HeldPositions migrated from old MeetingUsers and not
            used will be removed."""
         logger.info('Cleaning up unused "Persons" and "HeldPositions"...')
-        for brain in self.catalog.unrestrictedSearchResults(portal_type="held_position"):
-            hp = brain.getObject()
+        delete_view = self.portal.restrictedTraverse('@@delete_givenuid')
+        # as we could remove objects, use an intermediate list of paths
+        # because we can not iterate a list in which an element was deleted
+        # (list of brains of objects)
+        paths = [brain.getPath() for brain in
+                 self.catalog.unrestrictedSearchResults(portal_type="held_position")]
+        for path in paths:
+            hp = self.portal.restrictedTraverse(path)
             person = hp.get_person()
             if hp.getId().endswith('_hp1'):
                 try:
                     # remove the held_position then the personperson,
                     # that will remove the held_position as well
                     # use @@delete_givenuid that manage delete abort correctly
-                    self.portal.restrictedTraverse('@@delete_givenuid')(person.UID())
+                    delete_view(person.UID(), catch_before_delete_exception=False)
                     self.warn(logger, 'Directory person at "{0}" was removed!'.format(
                         "/".join(person.getPhysicalPath())))
                 except BeforeDeleteException:

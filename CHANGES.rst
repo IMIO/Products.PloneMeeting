@@ -5,8 +5,14 @@ Changelog
 4.2b27 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Fixed `Migrate_To_4200._cleanUnusedPersonsAndHeldPositions`, can not remove
+  elements of the list of brains we are itering on.  Call `@@delete_givenuid`
+  with `catch_before_delete_exception=False` so `BeforeDeleteException` is raised.
+  [gbastien]
+- In `events.onHeldPositionWillBeRemoved` use `held_position.get_full_title`
+  instead `held_position.Title` that does not include the person title or the
+  `portal_message` is somewhat useless.
+  [gbastien]
 
 4.2b26 (2022-01-14)
 -------------------
