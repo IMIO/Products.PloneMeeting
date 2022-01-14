@@ -871,8 +871,8 @@ class testAnnexes(PloneMeetingTestCase):
         path = '@@dvpdffiles/%s/%s/%s/small/dump_1.%s' % (
             annex_uid[0], annex_uid[1], annex_uid, gsettings.pdf_image_format)
         image_dump = self.portal.unrestrictedTraverse(path)
-        # we get an image
-        self.assertEqual(image_dump.context.content_type, 'image/%s' % gsettings.pdf_image_format)
+        # we get a 'jpeg' image
+        self.assertEqual(image_dump.context.content_type, 'image/jpeg')
 
     def test_pm_AnnexesConvertedDependingOnAnnexToPrintMode(self):
         """If collective.documentviewer 'auto_convert' is disabled,
