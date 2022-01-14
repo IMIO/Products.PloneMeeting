@@ -886,7 +886,7 @@ function onScrollMeetingView() {
   if (iframe.length) {
     iframe_top = $("iframe")[0].getBoundingClientRect().top;
     if ((iframe_top ) < 0) {
-      table = $("iframe").contents().find('table');
+      table = $("iframe").contents().find('table#faceted_table');
       header = $("iframe").contents().find('table thead');
       if (table.length && header.length) {
         table_top = table.offset().top;
@@ -894,6 +894,11 @@ function onScrollMeetingView() {
         $("th", header).css("top",
                             (table_top - iframe_top - (table_top - portal_header_height)).toString() + "px");
       }
+    } else {
+        th = $("iframe").contents().find('table thead th');
+        if (th.length) {
+            $(th).css("top", null);
+        }
     }
   }
 }
