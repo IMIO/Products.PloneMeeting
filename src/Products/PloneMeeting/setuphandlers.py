@@ -254,6 +254,7 @@ def postInstall(context):
     _configure_zamqp(site)
 
     # configure collective.documentviewer
+    import ipdb; ipdb.set_trace()
     from collective.documentviewer.settings import GlobalSettings
     viewer_settings = GlobalSettings(site)._metadata
     viewer_settings['auto_layout_file_types'] = ['pdf', 'photoshop', 'image',

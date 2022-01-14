@@ -20,6 +20,8 @@ Changelog
   [gbastien]
 - Use `catalog.unrestrictedSearchResults` everywhere possible.
   [gbastien]
+- Use a RadioFieldWidget for `IAdviceRemoveInheritance.inherited_advice_action`.
+  [gbastien]
 - Added a column displaying a control to display the `Actions panel`, this way the
   `Actions panel` is only computed when relevant and it takes less place.
   [gbastien]
