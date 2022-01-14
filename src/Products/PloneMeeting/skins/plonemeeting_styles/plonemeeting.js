@@ -895,9 +895,11 @@ function onScrollMeetingView() {
                             (table_top - iframe_top - (table_top - portal_header_height)).toString() + "px");
       }
     } else {
+        /* reset the th top when outside iframe so header
+           does not end lost in the middle of the table */
         th = $("iframe").contents().find('table thead th');
         if (th.length) {
-            $(th).css("top", null);
+            $(th).css("top", "0px");
         }
     }
   }
