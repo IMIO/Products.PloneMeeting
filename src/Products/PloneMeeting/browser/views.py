@@ -363,6 +363,8 @@ class ObjectGoToView(BrowserView):
             # when displayed by 20, item number 10 is on page 1
             # item number 20 is on page 1, item number 22 is on page 2
             # but page 1 b_start is 0...
+            # warning, item number 22 is on page 2 if more than 24 items
+            # (batch_size + 20%) so take it into account also...
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
             context_uid = self.context.UID()
@@ -372,10 +374,20 @@ class ObjectGoToView(BrowserView):
             page_num = float(item_pos) / items_by_page
             # round 0.85 to 0 or 1.05 to 1
             int_page_num = int(page_num)
-            # we pass b_start as URL parameter and retrieve it
+            # if item_pos on last page, then we remove 20% of batch size to the item_post
+            real_item_pos = item_pos + 1
+            # over this, the 20% are not used
+            tot_num_items = len(item_uids)
+            tot_num_of_pages = int(tot_num_items / items_by_page)
+            treshold = (tot_num_of_pages * items_by_page) + items_by_page * 0.2
+            if tot_num_items <= treshold and \
+                real_item_pos > tot_num_of_pages * items_by_page and \
+                    real_item_pos <= treshold:
+                int_page_num -= 1
+            # we pass a custom_b_start as URL parameter and retrieve it
             # in Faceted.Query JS on the meeting view
-            # this way parameters are computed like numer of elements by page
-            url = "{0}?b_start={1}".format(
+            # this way parameters are computed like number of elements by page
+            url = "{0}?custom_b_start={1}".format(
                 meeting.absolute_url(), int_page_num * items_by_page)
             return self.request.RESPONSE.redirect(url)
 
@@ -614,7 +626,7 @@ class BaseDGHV(object):
                 value = self.display_voc(field_name, **kwargs)
 
         # if a p_empty_marker is given and no value, use it
-        # it may be "???" or "xxx" for example
+        # it may be "???" or "-" for example
         if not value:
             value = empty_marker
         return value

@@ -2226,35 +2226,58 @@ class testViews(PloneMeetingTestCase):
         self._removeConfigObjectsFor(cfg)
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
                                            'reverse': '0'},))
-        # create a meeting with 3 items and display
+        # create a meeting with 6 items and display
         # items presented on meeting by batch of 2
         self.changeUser('pmManager')
         item1 = self.create('MeetingItem')
         item2 = self.create('MeetingItem')
         item3 = self.create('MeetingItem')
+        item4 = self.create('MeetingItem')
+        item5 = self.create('MeetingItem')
+        item6 = self.create('MeetingItem')
         meeting = self.create('Meeting')
         meeting_url = meeting.absolute_url()
         self.presentItem(item1)
         self.presentItem(item2)
         self.presentItem(item3)
+        self.presentItem(item4)
+        self.presentItem(item5)
+        self.presentItem(item6)
         # from item1, page 1 of meeting
         self.assertEqual(item1.getItemNumber(), 100)
         view = item1.restrictedTraverse('@@object_goto')
         view(itemNumber=None, way='meeting')
         self.assertEqual(self.request.response.getHeader('location'),
-                         "{0}?b_start=0".format(meeting_url))
+                         "{0}?custom_b_start=0".format(meeting_url))
         # from item2, page 1 of meeting
         self.assertEqual(item2.getItemNumber(), 200)
         view = item2.restrictedTraverse('@@object_goto')
         view(itemNumber=None, way='meeting')
         self.assertEqual(self.request.response.getHeader('location'),
-                         "{0}?b_start=0".format(meeting_url))
+                         "{0}?custom_b_start=0".format(meeting_url))
         # from item3, page 2 of meeting
         self.assertEqual(item3.getItemNumber(), 300)
         view = item3.restrictedTraverse('@@object_goto')
         view(itemNumber=None, way='meeting')
         self.assertEqual(self.request.response.getHeader('location'),
-                         "{0}?b_start=2".format(meeting_url))
+                         "{0}?custom_b_start=2".format(meeting_url))
+
+        # check faceted orphans mecanism
+        # items presented on meeting by batch of 5
+        # accessing item6 should send us to first page
+        cfg.setMaxShownMeetingItems(5)
+        self.assertEqual(item6.getItemNumber(), 600)
+        view = item6.restrictedTraverse('@@object_goto')
+        view(itemNumber=None, way='meeting')
+        self.assertEqual(self.request.response.getHeader('location'),
+                         "{0}?custom_b_start=0".format(meeting_url))
+        # with bach of 4, accessing item5 will send us to page 2
+        cfg.setMaxShownMeetingItems(4)
+        self.assertEqual(item5.getItemNumber(), 500)
+        view = item5.restrictedTraverse('@@object_goto')
+        view(itemNumber=None, way='meeting')
+        self.assertEqual(self.request.response.getHeader('location'),
+                         "{0}?custom_b_start=4".format(meeting_url))
 
     def test_pm_ETags(self):
         """Test that correct ETags are used for :
