@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2b25 (unreleased)
+4.2b25 (2022-01-14)
 -------------------
 
 - Set `portlet_todo.title_length` to `100` instead `60` (added
