@@ -993,7 +993,9 @@ function start_meeting_scroll_to_item_observer(tag=null, row_id=null) {
     if (isMeeting()) {
         if (tag) {
             row_id = null;
-            /* tag comes from actions_panel, may be in tooltipster or not */
+            /* tag comes from actions_panel, may be in tooltipster or not,
+               this does not work when using actions_panel in tooltipster
+               and adding a comment when a transition is triggered */
             if ($(tag).parents("table[id^='actions-panel-identifier-']").length) {
                 actions_panel_table = $(tag).parents("table[id^='actions-panel-identifier-']")[0];
                 row_id = "row_" + actions_panel_table.id.split("-")[3];
