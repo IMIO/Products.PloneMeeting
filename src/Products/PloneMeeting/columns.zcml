@@ -156,6 +156,14 @@
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
      name="listType" />
 
+  <adapter
+     for="zope.interface.Interface
+          zope.publisher.interfaces.browser.IBrowserRequest
+          collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
+     factory=".columns.PMAsyncActionsColumn"
+     provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
+     name="async_actions" />
+
   <!-- Action column for the annexes table -->
   <adapter
     name="action-column"

@@ -500,6 +500,9 @@ div.tooltipster-content div#content {
     padding-right: 0.5em;
 }
 
+div.tooltipster-content > table.actionspanel-no-style-table {
+    padding: 0.75em;
+}
 /* highlight error message when an error occured on an edit form */
 .fieldErrorBox {
     color: red;
@@ -1871,6 +1874,19 @@ table tbody tr td.td_cell_category-column {
     cursor: pointer;
 }
 
+div.async-actions-panel-icon-container {
+    width: 100%;
+}
+div.async-actions-panel-icon-container a {
+    float: right;
+}
+div.tooltipster-content table.actionspanel-no-style-table td.noPadding {
+    padding-right: 0.5em !important;
+}
+#content span.async-actions-panel-icon:before {
+    content: "\f013";
+    color: &dtml-linkColor;;
+}
 /* check in item people tables */
 #content span.people-checked:before,
 #content span.people-signatory-checked:before {
