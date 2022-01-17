@@ -8,6 +8,8 @@ Changelog
 - Fixed `Migrate_To_4200._cleanUnusedPersonsAndHeldPositions`, do not use
   `@@delete_givenuid` that aborts transition!
   [gbastien]
+- Set `Meeting.title` to `required=False` as it is omitted from edit and generated.
+  [gbastien]
 
 4.2rc1 (2022-01-14)
 -------------------

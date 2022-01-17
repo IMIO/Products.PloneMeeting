@@ -165,7 +165,7 @@ class IMeeting(IDXMeetingContent):
     form.omitted('title')
     title = schema.TextLine(
         title=_(u'title_title'),
-        required=True)
+        required=False)
 
     form.widget('date', DatetimeFieldWidget, show_today_link=True, show_time=True)
     date = schema.Datetime(
