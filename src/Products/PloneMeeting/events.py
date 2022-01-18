@@ -1175,7 +1175,6 @@ def onMeetingRemoved(meeting, event):
 
     # update items for which current meeting is selected as preferred meeting
     # do this unrestricted so we are sure that every items are updated
-    import ipdb; ipdb.set_trace()
     catalog = api.portal.get_tool('portal_catalog')
     brains = catalog.unrestrictedSearchResults(preferred_meeting_uid=meeting.UID())
     # we do not reindex in the loop on brains or it mess things because
