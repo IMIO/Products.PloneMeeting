@@ -3937,6 +3937,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = self.getField('itemAssembly').getRaw(self, **kwargs)
         if not real and not res and self.hasMeeting():
             res = self.getMeeting().get_assembly(for_display=False)
+        # make sure we always have unicode,
+        # Meeting stored unicode and MeetingItem stores utf-8
+        res = safe_unicode(res)
         if res and for_display:
             res = render_textarea(
                 res, self, striked=striked, mark_empty_tags=mark_empty_tags)
@@ -3955,6 +3958,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = self.getField('itemAssemblyExcused').getRaw(self, **kwargs)
         if not real and not res and self.hasMeeting():
             res = self.getMeeting().get_assembly_excused(for_display=False)
+        # make sure we always have unicode,
+        # Meeting stored unicode and MeetingItem stores utf-8
+        res = safe_unicode(res)
         if res and for_display:
             res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
         return res
@@ -3972,6 +3978,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = self.getField('itemAssemblyAbsents').getRaw(self, **kwargs)
         if not real and not res and self.hasMeeting():
             res = self.getMeeting().get_assembly_absents(for_display=False)
+        # make sure we always have unicode,
+        # Meeting stored unicode and MeetingItem stores utf-8
+        res = safe_unicode(res)
         if res and for_display:
             res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
         return res
@@ -3989,6 +3998,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = self.getField('itemAssemblyGuests').getRaw(self, **kwargs)
         if not real and not res and self.hasMeeting():
             res = self.getMeeting().get_assembly_guests(for_display=False)
+        # make sure we always have unicode,
+        # Meeting stored unicode and MeetingItem stores utf-8
+        res = safe_unicode(res)
         if res and for_display:
             res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
         return res
@@ -4006,6 +4018,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = self.getField('itemSignatures').getRaw(self, **kwargs)
         if not real and not res and self.hasMeeting():
             res = self.getMeeting().get_signatures(for_display=False)
+        # make sure we always have unicode,
+        # Meeting stored unicode and MeetingItem stores utf-8
+        res = safe_unicode(res)
         if res and for_display:
             res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
         return res
