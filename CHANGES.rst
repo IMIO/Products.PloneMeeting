@@ -2,6 +2,12 @@ Changelog
 =========
 
 
+4.2rc3 (unreleased)
+-------------------
+
+- Nothing changed yet.
+
+
 4.2rc2 (2022-01-18)
 -------------------
 
