@@ -6,7 +6,7 @@
       <tal:comment replace="nothing">Icon</tal:comment>
       <img tal:condition="useIcons" i18n:attributes="title" title="Delete meeting including items"
            tal:attributes="src string:${view/portal_url}/delete_many.gif;
-                           onClick string:javascript:confirmDeleteObject(base_url='${context/absolute_url}', object_uid='${objectUID}', this, msgName=null,, view_name='@@delete_givenuid', redirect=true);;"
+                           onClick string:javascript:confirmDeleteObject(base_url='${context/absolute_url}', object_uid='${objectUID}', this, msgName=null, view_name='@@delete_givenuid', redirect=true);;"
            onClick="#" style="cursor:pointer"/>
 
       <tal:comment replace="nothing">Button</tal:comment>
