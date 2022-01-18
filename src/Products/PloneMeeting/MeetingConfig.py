@@ -6912,6 +6912,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return []
 
+    security.declarePublic('getTransitionsForPresentingAnItem')
+
+    def getTransitionsForPresentingAnItem(self, org_uid=None, **kwargs):
+        '''Overrides field 'transitionsForPresentingAnItem' accessor to be able
+           to pass a p_org_uid, if given, the transitions will be filtered out
+           regarding suffixed Plone groups enabled for it.'''
+        transitions = self.getField('transitionsForPresentingAnItem').get(self, **kwargs)
+        if org_uid:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            item_wf_val_levels = self.getItemWFValidationLevels(only_enabled=True)
+            tr_suffixes = {v['leading_transition']: v['suffix'] for v in item_wf_val_levels
+                           if v['leading_transition'] != '-'}
+            res = []
+            for transition in transitions:
+                if transition in tr_suffixes and \
+                   not transition == "present" and \
+                   not tool.group_is_not_empty(org_uid, tr_suffixes[transition]):
+                    continue
+                res.append(transition)
+            transitions = res
+        return transitions
+
     security.declarePublic('getCertifiedSignatures')
 
     def getCertifiedSignatures(self, computed=False, listify=False, **kwargs):

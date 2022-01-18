@@ -5,8 +5,16 @@ Changelog
 4.2rc3 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- As transitions for presenting an item may vary from an `organization` to another
+  (if some suffixes are disabled or some suffixed Plone groups are empty), take it
+  into account in `MeetingConfig.getTransitionsForPresentingAnItem` and everywhere
+  it is called.
+  [gbastien]
+- Added possibility to set arbitrary when cloning an item by adding a new parameter
+  `item_attrs={}` to `MeetingItem.clone`.
+  It is used to set the `preferredMeeting` on the new item when adding recurring
+  items to a meeting value is set before the item is reindexed.
+  [gbastien]
 
 4.2rc2 (2022-01-18)
 -------------------

@@ -168,7 +168,7 @@ AS_COPYGROUP_RES_ERROR = "While setting automatically added copyGroups, the Plon
 WRONG_TRANSITION = 'Transition "%s" is inappropriate for adding recurring ' \
     'items.'
 REC_ITEM_ERROR = 'There was an error while trying to generate recurring ' \
-    'item with id "%s". %s'
+    'item with id "%s". Unable to trigger transition "%s".  Original error message is "%s".'
 BEFOREDELETE_ERROR = 'A BeforeDeleteException was raised by "%s" while ' \
     'trying to delete an item with id "%s"'
 WRONG_ADVICE_TYPE_ERROR = 'The given adviceType "%s" does not exist!'
@@ -845,7 +845,8 @@ class MeetingItemWorkflowActions(object):
             # trigger transitions until 'validated', aka one step before 'presented'
             # set a special value in the REQUEST so guards may use it if necessary
             self.context.REQUEST.set('duplicating_and_validating_item', True)
-            for tr in self.cfg.getTransitionsForPresentingAnItem()[0:-1]:
+            for tr in self.cfg.getTransitionsForPresentingAnItem(
+                    org_uid=clonedItem.getProposingGroup())[0:-1]:
                 wfTool.doActionFor(clonedItem, tr, comment=wf_comment)
             self.context.REQUEST.set('duplicating_and_validating_item', False)
         return clonedItem
@@ -4325,13 +4326,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         wfTool = api.portal.get_tool('portal_workflow')
         tool = api.portal.get_tool('portal_plonemeeting')
         try:
-            # Hmm... the currently published object is p_meeting, right?
             item.REQUEST.set('PUBLISHED', meeting)
-            item.setPreferredMeeting(meeting.UID())  # This way it will
-            # be considered as "late item" for this meeting if relevant.
-            # Ok, now let's present the item in the meeting.
-            # to avoid being stopped by mandatory advices not given, we add
-            # a flag that specify that the current item is a recurring item
             item.isRecurringItem = True
             # we use the wf path defined in the cfg.transitionsForPresentingAnItem
             # to present the item to the meeting
@@ -4339,14 +4334,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # give 'Manager' role to current user to bypass transitions guard
             # and avoid permission problems when transitions are triggered
             with api.env.adopt_roles(['Manager', ]):
-                for tr in cfg.getTransitionsForPresentingAnItem():
+                for tr in cfg.getTransitionsForPresentingAnItem(
+                        org_uid=item.getProposingGroup()):
                     wfTool.doActionFor(item, tr)
             # the item must be at least presented to a meeting, either we raise
             if not item.hasMeeting():
                 raise WorkflowException
             del item.isRecurringItem
         except WorkflowException, wfe:
-            msg = REC_ITEM_ERROR % (item.id, str(wfe))
+            msg = REC_ITEM_ERROR % (item.id, tr, str(wfe))
             logger.warn(msg)
             api.portal.show_message(msg, request=item.REQUEST, type='error')
             sendMail(None, item, 'recurringItemWorkflowError')
@@ -6802,7 +6798,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
               copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None, keepProposingGroup=False,
               setCurrentAsPredecessor=False, manualLinkToPredecessor=False,
               inheritAdvices=False, inheritedAdviceUids=[], keep_ftw_labels=False,
-              keptAnnexIds=[], keptDecisionAnnexIds=[]):
+              keptAnnexIds=[], keptDecisionAnnexIds=[], item_attrs={}):
         '''Clones me in the PloneMeetingFolder of the current user, or
            p_newOwnerId if given (this guy will also become owner of this
            item). If there is a p_cloneEventAction, an event will be included
@@ -6822,7 +6818,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            this also needs p_setCurrentAsPredecessor=True and p_manualLinkToPredecessor=False.
            When p_copyAnnexes=True, we may give a p_keptAnnexIds, if so, only annexes
            with those ids are kept, if not, every annexes are kept.
-           Same for p_copyDecisionAnnexes/p_keptDecisionAnnexIds.'''
+           Same for p_copyDecisionAnnexes/p_keptDecisionAnnexIds.
+           The given p_item_attrs will be arbitrary set on new item before it is reindexed.'''
 
         # check if may clone
         self._mayClone(cloneEventAction)
@@ -6907,6 +6904,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     inheritedAdviserUids = [org_uid for org_uid in self.adviceIndex.keys()
                                             if (not inheritedAdviceUids or org_uid in inheritedAdviceUids) and
                                             newItem.couldInheritAdvice(org_uid)]
+
+        # set arbitrary attrs before reindexing
+        for attr_id, attr_value in item_attrs.items():
+            field = newItem.getField(attr_id)
+            field.getMutator(newItem)(attr_value)
 
         if cloneEventAction:
             # We are sure that there is only one key in the workflow_history
@@ -7088,7 +7090,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # we will warn user if some transitions may not be triggered and
                 # triggerUntil is not reached
                 need_to_warn = False
-                for tr in destMeetingConfig.getTransitionsForPresentingAnItem():
+                for tr in destMeetingConfig.getTransitionsForPresentingAnItem(
+                        org_uid=newItem.getProposingGroup()):
                     try:
                         # special handling for the 'present' transition
                         # that needs a meeting as 'PUBLISHED' object to work
