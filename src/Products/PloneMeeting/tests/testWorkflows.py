@@ -8,6 +8,7 @@
 from AccessControl import Unauthorized
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import cleanRamCacheFor
+from imio.history.utils import getLastWFAction
 from OFS.ObjectManager import BeforeDeleteException
 from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import AddPortalContent
@@ -19,6 +20,7 @@ from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
 from Products.PloneMeeting.config import WriteItemMeetingManagerFields
 from Products.PloneMeeting.MeetingItem import MeetingItem
+from Products.PloneMeeting.MeetingItem import REC_ITEM_ERROR
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.statusmessages.interfaces import IStatusMessage
 from zExceptions import Redirect
@@ -405,11 +407,34 @@ class testWorkflows(PloneMeetingTestCase):
 
     def test_pm_RecurringItems(self):
         '''Tests the recurring items system.'''
-        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
-                                                          'reverse': '0'}, ))
+        cfg = self.meetingConfig
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
+                                           'reverse': '0'}, ))
+        item_type_name = cfg.getItemTypeName()
         self._setupRecurringItems()
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
+        meeting_uid = meeting.UID()
+        # relevant indexes were reindexed
+        meeting_item_uids = sorted(item.UID for item in meeting.get_items(the_objects=False))
+        # meeting_uid
+        self.assertEqual(
+            sorted(item.UID for item in self.catalog(portal_type=item_type_name,
+                                                     meeting_uid=meeting_uid)),
+            meeting_item_uids)
+        # meeting_date
+        self.assertEqual(
+            sorted(item.UID for item in self.catalog(portal_type=item_type_name,
+                                                     meeting_date=meeting.date)),
+            meeting_item_uids)
+        # preferred_meeting_uid
+        self.assertEqual(
+            sorted(item.UID for item in self.catalog(preferred_meeting_uid=meeting_uid)),
+            meeting_item_uids)
+        # preferred_meeting_date
+        self.assertEqual(
+            sorted(item.UID for item in self.catalog(preferred_meeting_date=meeting.date)),
+            meeting_item_uids)
         # The recurring items must have as owner the meeting creator
         # Moreover, _at_rename_after_creation is correct
         for item in meeting.get_items():
@@ -541,8 +566,10 @@ class testWorkflows(PloneMeetingTestCase):
         messages = statusMessages.show()
         self.assertEqual(
             messages[-1].message,
-            u'There was an error while trying to generate recurring item with id "rec-item-developers". '
-            u'No workflow provides the \'${action_id}\' action.')
+            REC_ITEM_ERROR % (
+                "rec-item-developers",
+                "present",
+                "No workflow provides the '${action_id}' action."))
 
     def test_pm_RecurringItemsRespectSortingMethodOnAddItemPrivacy(self):
         '''Tests the recurring items system when items are inserted
@@ -567,7 +594,9 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertEqual(meeting.get_items(ordered=True)[-1].getPrivacy(), 'secret')
 
     def test_pm_RecurringItemsWithWrongTransitionsForPresentingAnItem(self):
-        '''Tests the recurring items system when using a wrong MeetingConfig.transitionsForPresentingAnItem.'''
+        '''Tests the recurring items system when using a wrong
+           MeetingConfig.transitionsForPresentingAnItem.'''
+        cfg = self.meetingConfig
         self._setupRecurringItems()
         self.changeUser('pmManager')
         # now test with hardcoded transitions
@@ -577,12 +606,31 @@ class testWorkflows(PloneMeetingTestCase):
         # if transitions for presenting an item are not correct
         # the item will no be inserted in the meeting
         # remove the last step 'present' from self.meetingConfig.transitionsForPresentingItem
-        self.assertTrue('present' in self.meetingConfig.getTransitionsForPresentingAnItem())
-        transitionsForPresentingAnItemWithoutPresent = list(self.meetingConfig.getTransitionsForPresentingAnItem())
+        self.assertTrue('present' in cfg.getTransitionsForPresentingAnItem())
+        transitionsForPresentingAnItemWithoutPresent = list(cfg.getTransitionsForPresentingAnItem())
         transitionsForPresentingAnItemWithoutPresent.remove('present')
-        self.meetingConfig.setTransitionsForPresentingAnItem(transitionsForPresentingAnItemWithoutPresent)
+        cfg.setTransitionsForPresentingAnItem(transitionsForPresentingAnItemWithoutPresent)
         meeting2 = self.create('Meeting')
         self.failIf(len(meeting2.get_items()) != 0)
+
+    def test_pm_RecurringItemsWithEmptySuffixInItemValidationLevels(self):
+        '''Tests the recurring items system when an intermediate proposingGroup suffix
+           ("reviewers" for example) is empty.'''
+        cfg = self.meetingConfig
+        self._setupRecurringItems()
+        self.changeUser('pmManager')
+        # remove every users from "vendors_reviewers"
+        self._removePrincipalFromGroups("pmReviewer2", [self.vendors_reviewers])
+        self.assertFalse(self.tool.group_is_not_empty(self.vendors_uid, "reviewers"))
+        meeting = self.create('Meeting')
+        # the 3 recurring items were added
+        self.assertEqual(len(meeting.get_items()), 3)
+        # items were added without the "propose" transition
+        self.assertIsNone(getLastWFAction(meeting.get_items()[0], "propose"))
+        # however the "propose" transition is enabled
+        self.assertEqual(
+            cfg.getItemWFValidationLevels(only_enabled=True, states=["proposed"])["leading_transition"],
+            "propose")
 
     def test_pm_MeetingExecuteActionOnLinkedItemsCaseTransition(self):
         '''Test the MeetingConfig.onMeetingTransitionItemActionToExecute parameter :

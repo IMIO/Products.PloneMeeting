@@ -2096,12 +2096,16 @@ class Meeting(Container):
         new_items = []
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
+        meeting_uid = self.UID()
         for recurring_item in recurring_items:
+            # Set current meeting as preffered meeting, this way it will
+            # be considered as "late item" for this meeting if relevant.
             new_items.append(recurring_item.clone(
                 cloneEventAction='Add recurring item',
                 destFolder=dest_folder,
                 keepProposingGroup=True,
-                newPortalType=cfg.getItemTypeName()))
+                newPortalType=cfg.getItemTypeName(),
+                item_attrs={'preferredMeeting': meeting_uid}))
         for new_item in new_items:
             # Put the new item in the correct state
             adapted = new_item.adapted()
