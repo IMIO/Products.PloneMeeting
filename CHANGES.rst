@@ -15,6 +15,13 @@ Changelog
   It is used to set the `preferredMeeting` on the new item when adding recurring
   items to a meeting value is set before the item is reindexed.
   [gbastien]
+- Fixed JS error in `deletewholemeeting` action when called from dashboard.
+  [gbastien]
+- Fixed `MeetingItem.validate_pollType`, do not validate if value did not change,
+  this solves `Unauthorized` raised by item editor when item in state
+  `returned_to_proposing_group` because AT validates every fields and it is only
+  editable by `MeetingManagers` when item is linked to a meeting.
+  [gbastien]
 
 4.2rc2 (2022-01-18)
 -------------------

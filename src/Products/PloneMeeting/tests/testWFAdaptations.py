@@ -875,7 +875,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Tests the workflow functionality of using the 'return_to_proposing_group' wfAdaptation.'''
         # while it is active, the creators of the item can edit the item as well as the MeetingManagers
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
+        item = self.create('MeetingItem', title="Item title")
         self.proposeItem(item)
         self.changeUser('pmReviewer1')
         self.validateItem(item)
@@ -897,6 +897,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'return_to_proposing_group')
         self.changeUser('pmCreator1')
         self.failUnless(self.hasPermission(ModifyPortalContent, item))
+        # make sure if user edit item, it would pass validation
+        # this checks especially MeetingItem.validate_pollType
+        self.assertEqual(self.validate_at_fields(item), {})
         # the item creator may not be able to delete the item
         self.failIf(self.hasPermission(DeleteObjects, item))
         # MeetingManagers can still edit it also

@@ -759,3 +759,11 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                     self._testMethodName, wfa))
                 break
         return available
+
+    def validate_at_fields(self, obj):
+        """ """
+        errors = {}
+        for field_name in obj.Schema().keys():
+            field = obj.getField(field_name)
+            field.validate(field.getAccessor(obj)(), obj, errors)
+        return errors

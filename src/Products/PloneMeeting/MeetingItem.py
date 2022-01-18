@@ -1584,7 +1584,8 @@ schema = Schema((
     StringField(
         name='pollType',
         widget=SelectionWidget(
-            condition="python: here.attribute_is_used('pollType') or here.isVotesEnabled()",
+            condition="python: (here.attribute_is_used('pollType') or "
+            "here.isVotesEnabled()) and here.adapted().mayChangePollType()",
             label='Polltype',
             label_msgid='PloneMeeting_label_pollType',
             i18n_domain='PloneMeeting',
@@ -2079,10 +2080,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def validate_pollType(self, value):
         '''Validate the pollType field.'''
-        view = self.restrictedTraverse("@@change-item-polltype")
-        # validation_msg is None is it passed
-        validation_msg = view.validate_new_poll_type(self.getPollType(), value)
-        return validation_msg
+        old_pollType = self.getPollType()
+        if old_pollType != value:
+            view = self.restrictedTraverse("@@change-item-polltype")
+            # validation_msg is None if it passed
+            validation_msg = view.validate_new_poll_type(old_pollType, value)
+            return validation_msg
 
     security.declarePrivate('validate_proposingGroup')
 
@@ -3345,9 +3348,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            config as this item.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        res = cfg.listEveryMeetingTransitions()
-        res.add('_init_',
-                translate('_init_', domain="plone", context=self.REQUEST))
+        res = DisplayList(
+            tuple((
+                ('_init_',
+                 translate('_init_', domain="plone", context=self.REQUEST)), ))
+        )
+        res += cfg.listEveryMeetingTransitions()
         return res
 
     security.declarePrivate('listOtherMeetingConfigsClonableTo')
