@@ -14,7 +14,6 @@ from OFS.ObjectManager import BeforeDeleteException
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.app.contenttypes.migration.migration import migrate as pac_migrate
-from plone.app.textfield.value import RichTextValue
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.contentmigration.basemigrator.migrator import CMFFolderMigrator
@@ -87,24 +86,25 @@ class MeetingMigrator(CMFFolderMigrator):
         if deadline_freeze:
             deadline_freeze._timezone_naive = True
             self.new.freeze_deadline = deadline_freeze.asdatetime()
-        self.new.assembly = self.old.getRawAssembly() and RichTextValue(self.old.getRawAssembly()) or None
+        self.new.assembly = self.old.getRawAssembly() and \
+            richtextval(self.old.getRawAssembly()) or None
         self.new.assembly_excused = self.old.getRawAssemblyExcused() and \
-            RichTextValue(self.old.getRawAssemblyExcused()) or None
+            richtextval(self.old.getRawAssemblyExcused()) or None
         self.new.assembly_absents = self.old.getRawAssemblyAbsents() and \
-            RichTextValue(self.old.getRawAssemblyAbsents()) or None
+            richtextval(self.old.getRawAssemblyAbsents()) or None
         self.new.assembly_guests = self.old.getRawAssemblyGuests() and \
-            RichTextValue(self.old.getRawAssemblyGuests()) or None
+            richtextval(self.old.getRawAssemblyGuests()) or None
         self.new.assembly_proxies = self.old.getRawAssemblyProxies() and \
-            RichTextValue(self.old.getRawAssemblyProxies()) or None
+            richtextval(self.old.getRawAssemblyProxies()) or None
         self.new.assembly_staves = self.old.getRawAssemblyStaves() and \
-            RichTextValue(self.old.getRawAssemblyStaves()) or None
+            richtextval(self.old.getRawAssemblyStaves()) or None
         self.new.signatures = self.old.getRawSignatures() and \
-            RichTextValue(self.old.getRawSignatures()) or None
+            richtextval(self.old.getRawSignatures()) or None
         # place is moved to place/place_other
         if 'place' in self.used_meeting_attrs:
             place = safe_unicode(self.old.getPlace().strip())
-            vocab = get_vocab(self.new,
-                              "Products.PloneMeeting.content.meeting.places_vocabulary")
+            vocab = get_vocab(
+                self.new, "Products.PloneMeeting.content.meeting.places_vocabulary")
             if not place or place not in vocab:
                 self.new.place = u'other'
                 self.new.place_other = place or None
@@ -117,22 +117,22 @@ class MeetingMigrator(CMFFolderMigrator):
             self.new.pre_meeting_date = pre_meeting_date.asdatetime()
         self.new.extraordinary_session = self.old.getExtraordinarySession()
         self.new.in_and_out_moves = self.old.getRawInAndOutMoves() and \
-            RichTextValue(self.old.getRawInAndOutMoves()) or None
-        self.new.notes = self.old.getRawNotes() and RichTextValue(self.old.getRawNotes()) or None
+            richtextval(self.old.getRawInAndOutMoves()) or None
+        self.new.notes = self.old.getRawNotes() and richtextval(self.old.getRawNotes()) or None
         self.new.observations = self.old.getRawObservations() and \
-            RichTextValue(self.old.getRawObservations()) or None
+            richtextval(self.old.getRawObservations()) or None
         self.new.pre_observations = self.old.getRawPreObservations() and \
-            RichTextValue(self.old.getRawPreObservations()) or None
+            richtextval(self.old.getRawPreObservations()) or None
         self.new.committees_observations = self.old.getRawCommitteeObservations() and \
-            RichTextValue(self.old.getRawCommitteeObservations()) or None
+            richtextval(self.old.getRawCommitteeObservations()) or None
         self.new.votes_observations = self.old.getRawVotesObservations() and \
-            RichTextValue(self.old.getRawVotesObservations()) or None
+            richtextval(self.old.getRawVotesObservations()) or None
         self.new.public_meeting_observations = self.old.getRawPublicMeetingObservations() and \
-            RichTextValue(self.old.getRawPublicMeetingObservations()) or None
+            richtextval(self.old.getRawPublicMeetingObservations()) or None
         self.new.secret_meeting_observations = self.old.getRawSecretMeetingObservations() and \
-            RichTextValue(self.old.getRawSecretMeetingObservations()) or None
+            richtextval(self.old.getRawSecretMeetingObservations()) or None
         self.new.authority_notice = self.old.getRawAuthorityNotice() and \
-            RichTextValue(self.old.getRawAuthorityNotice()) or None
+            richtextval(self.old.getRawAuthorityNotice()) or None
         self.new.meeting_number = self.old.getMeetingNumber()
         self.new.first_item_number = self.old.getFirstItemNumber()
         # custom attributes
@@ -438,25 +438,27 @@ class Migrate_To_4200(Migrator):
             item._update_preferred_meeting(item.getPreferredMeeting())
         logger.info('Done.')
 
-    def _fixRichTextValueMimeType(self):
+    def _fixRichTextValueMimeType(self,
+                                  object_provides=IMeetingAdvice.__identifier__,
+                                  field_names=['advice_comment', 'advice_observations']):
         """Make sure RichTextValue stored on DX content (advices) have
            a correct mimeType and outputMimeType."""
-        brains = self.catalog(object_provides=IMeetingAdvice.__identifier__)
-        logger.info('Fixing mimeType/outputMimeType for every advices...')
+        brains = self.catalog(object_provides=object_provides)
+        logger.info('Fixing mimeType/outputMimeType for every %s...' % object_provides)
         pghandler = ZLogHandler(steps=1000)
-        pghandler.init('Updating RichText fields for advices...', len(brains))
+        pghandler.init('Updating RichText fields for elements...', len(brains))
         i = 0
         for brain in brains:
             i += 1
             pghandler.report(i)
             try:
-                advice = brain.getObject()
+                obj = brain.getObject()
             except AttributeError:
                 continue
-            for field_name in ['advice_comment', 'advice_observations']:
-                field_value = getattr(advice, field_name)
+            for field_name in field_names:
+                field_value = getattr(obj, field_name)
                 if field_value:
-                    setattr(advice, field_name, richtextval(field_value.raw))
+                    setattr(obj, field_name, richtextval(field_value.raw))
         pghandler.finish()
         logger.info('Done.')
 

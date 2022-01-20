@@ -22,6 +22,9 @@ Changelog
   `returned_to_proposing_group` because AT validates every fields and it is only
   editable by `MeetingManagers` when item is linked to a meeting.
   [gbastien]
+- Fixed `migrate_to_4200.MeetingMigrator`, make sure `RichTextValue` is unicode.
+  Make sure assembly related methods on meeting and item all return unicode.
+  [gbastien]
 
 4.2rc2 (2022-01-18)
 -------------------
