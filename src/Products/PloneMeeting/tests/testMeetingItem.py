@@ -21,6 +21,7 @@ from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import get_vocab
+from imio.helpers.content import richtextval
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
@@ -29,7 +30,6 @@ from persistent.mapping import PersistentMapping
 from plone import api
 from plone.app.testing import logout
 from plone.app.testing.bbb import _createMemberarea
-from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from plone.memoize.instance import Memojito
 from Products import PloneMeeting as products_plonemeeting
@@ -694,13 +694,13 @@ class testMeetingItem(PloneMeetingTestCase):
                 'meetingadvice',
                 **{'advice_group': self.developers_uid,
                    'advice_type': u'positive',
-                   'advice_comment': RichTextValue(u'My comment')})
+                   'advice_comment': richtextval(u'My comment')})
             vendors_advice = createContentInContainer(
                 item,
                 'meetingadvice',
                 **{'advice_group': self.vendors_uid,
                    'advice_type': u'negative',
-                   'advice_comment': RichTextValue(u'My comment')})
+                   'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmReviewer1')
         self.validateItem(item)
         self.changeUser('pmManager')
@@ -1654,14 +1654,14 @@ class testMeetingItem(PloneMeetingTestCase):
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmReviewer2')
         createContentInContainer(item,
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # clone item
         self.changeUser('pmCreator1')
         clonedItem = item.clone()
@@ -1744,21 +1744,21 @@ class testMeetingItem(PloneMeetingTestCase):
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmReviewer2')
         createContentInContainer(item,
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmAdviser1')
         createContentInContainer(item,
                                  'meetingadvice',
                                  **{'advice_group': org3_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
 
         # clone and keep advices
         self.changeUser('pmCreator1')
@@ -3085,10 +3085,10 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setUsedMeetingAttributes(())
         # Meeting.attribute_is_used is ram.cached
         cfg.at_post_edit_script()
-        meeting.assembly = RichTextValue('Meeting assembly')
-        meeting.assembly_absents = RichTextValue('Meeting assembly absents')
-        meeting.assembly_excused = RichTextValue('Meeting assembly excused')
-        meeting.signatures = RichTextValue('Meeting signatures')
+        meeting.assembly = richtextval('Meeting assembly')
+        meeting.assembly_absents = richtextval('Meeting assembly absents')
+        meeting.assembly_excused = richtextval('Meeting assembly excused')
+        meeting.signatures = richtextval('Meeting signatures')
         self.assertIsNone(formSignatures.update())
         self.assertIsNone(formAssembly.update())
         # now when fields enabled, current user must be at least MeetingManager to use this
@@ -3244,6 +3244,27 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(lateItem2.getItemSignatures(), 'Meeting signatures')
         self.assertEqual(lateItem3.getItemSignatures(), 'Meeting signatures')
 
+        # redefined or not, values are all unicode
+        # in DX, values are unicode, in AT it is str...
+        # redefined
+        self.assertTrue(isinstance(lateItem1.getItemAssembly(), unicode))
+        self.assertTrue(isinstance(lateItem1.getItemAssemblyAbsents(), unicode))
+        self.assertTrue(isinstance(lateItem1.getItemAssemblyExcused(), unicode))
+        self.assertTrue(isinstance(lateItem1.getItemAssemblyGuests(), unicode))
+        self.assertTrue(isinstance(lateItem1.getItemSignatures(), unicode))
+        # not redefined
+        self.assertTrue(isinstance(lateItem2.getItemAssembly(), unicode))
+        self.assertTrue(isinstance(lateItem2.getItemAssemblyAbsents(), unicode))
+        self.assertTrue(isinstance(lateItem2.getItemAssemblyExcused(), unicode))
+        self.assertTrue(isinstance(lateItem2.getItemAssemblyGuests(), unicode))
+        self.assertTrue(isinstance(lateItem2.getItemSignatures(), unicode))
+        # directly from meeting
+        self.assertTrue(isinstance(meeting.get_assembly(), unicode))
+        self.assertTrue(isinstance(meeting.get_assembly_absents(), unicode))
+        self.assertTrue(isinstance(meeting.get_assembly_excused(), unicode))
+        self.assertTrue(isinstance(meeting.get_assembly_guests(), unicode))
+        self.assertTrue(isinstance(meeting.get_signatures(), unicode))
+
         # Apply an empty value will fall back to meeting's value
         self.assertTrue(formAssembly.context.getItemAssembly(real=True))
         self.assertTrue(formAssembly.context.getItemSignatures(real=True))
@@ -3327,8 +3348,8 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.at_post_edit_script()
         _checkOnlyEditableByManagers(item)
         # empty fields
-        meeting.assembly = RichTextValue('')
-        meeting.signatures = RichTextValue('')
+        meeting.assembly = richtextval('')
+        meeting.signatures = richtextval('')
         _checkOnlyEditableByManagers(item,
                                      may_edit=[],
                                      may_not_edit=['pmManager', 'pmCreator1', 'pmReviewer1'])
@@ -4049,7 +4070,7 @@ class testMeetingItem(PloneMeetingTestCase):
             'meetingadvice',
             **{'advice_group': self.developers_uid,
                'advice_type': u'positive',
-               'advice_comment': RichTextValue(u'My comment')})
+               'advice_comment': richtextval(u'My comment')})
         # now we can not unselect the 'developers' anymore as advice was given
         self.assertEqual(item.validate_optionalAdvisers(()), can_not_unselect_msg)
 
@@ -4077,7 +4098,7 @@ class testMeetingItem(PloneMeetingTestCase):
             'meetingadvice',
             **{'advice_group': self.developers_uid,
                'advice_type': u'positive',
-               'advice_comment': RichTextValue(u'My comment')})
+               'advice_comment': richtextval(u'My comment')})
         # now we can not unselect the 'developers' anymore as advice was given
         can_not_unselect_msg = translate('can_not_unselect_already_given_advice',
                                          mapping={'removedAdviser': "Developers - 10 day(s) (Delay label)"},
@@ -4108,7 +4129,7 @@ class testMeetingItem(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # the given advice is not considered as an optional advice
         self.assertEqual(item.adviceIndex[self.developers_uid]['optional'], False)
         self.failIf(item.validate_optionalAdvisers(()))
@@ -6253,7 +6274,7 @@ class testMeetingItem(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # now he does not have anymore
         self.assertFalse(self.hasPermission(AddPortalContent, item))
 
@@ -7319,7 +7340,7 @@ class testMeetingItem(PloneMeetingTestCase):
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # an item containing inherited advices may be deleted
         self.changeUser('pmCreator1')
         itemWithInheritedGivenAdvices = itemWithGivenAdvice.clone(

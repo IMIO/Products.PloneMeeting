@@ -87,24 +87,24 @@ class MeetingMigrator(CMFFolderMigrator):
             deadline_freeze._timezone_naive = True
             self.new.freeze_deadline = deadline_freeze.asdatetime()
         self.new.assembly = self.old.getRawAssembly() and \
-            richtextval(self.old.getRawAssembly(), mimeType='text/plain') or None
+            richtextval(self.old.getRawAssembly()) or None
         self.new.assembly_excused = self.old.getRawAssemblyExcused() and \
-            richtextval(self.old.getRawAssemblyExcused(), mimeType='text/plain') or None
+            richtextval(self.old.getRawAssemblyExcused()) or None
         self.new.assembly_absents = self.old.getRawAssemblyAbsents() and \
-            richtextval(self.old.getRawAssemblyAbsents(), mimeType='text/plain') or None
+            richtextval(self.old.getRawAssemblyAbsents()) or None
         self.new.assembly_guests = self.old.getRawAssemblyGuests() and \
-            richtextval(self.old.getRawAssemblyGuests(), mimeType='text/plain') or None
+            richtextval(self.old.getRawAssemblyGuests()) or None
         self.new.assembly_proxies = self.old.getRawAssemblyProxies() and \
-            richtextval(self.old.getRawAssemblyProxies(), mimeType='text/plain') or None
+            richtextval(self.old.getRawAssemblyProxies()) or None
         self.new.assembly_staves = self.old.getRawAssemblyStaves() and \
-            richtextval(self.old.getRawAssemblyStaves(), mimeType='text/plain') or None
+            richtextval(self.old.getRawAssemblyStaves()) or None
         self.new.signatures = self.old.getRawSignatures() and \
-            richtextval(self.old.getRawSignatures(), mimeType='text/plain') or None
+            richtextval(self.old.getRawSignatures()) or None
         # place is moved to place/place_other
         if 'place' in self.used_meeting_attrs:
             place = safe_unicode(self.old.getPlace().strip())
-            vocab = get_vocab(self.new,
-                              "Products.PloneMeeting.content.meeting.places_vocabulary")
+            vocab = get_vocab(
+                self.new, "Products.PloneMeeting.content.meeting.places_vocabulary")
             if not place or place not in vocab:
                 self.new.place = u'other'
                 self.new.place_other = place or None

@@ -16,7 +16,7 @@ class IPMTextAreaWidget(ITextAreaWidget):
 
 def get_textarea_value(value, obj, for_display=True, striked=True, mark_empty_tags=False, raw=True):
     """ """
-    res = ''
+    res = u''
     if value is not None:
         if raw:
             res = value.raw
