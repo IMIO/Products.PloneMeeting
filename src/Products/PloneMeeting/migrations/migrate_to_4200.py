@@ -438,25 +438,27 @@ class Migrate_To_4200(Migrator):
             item._update_preferred_meeting(item.getPreferredMeeting())
         logger.info('Done.')
 
-    def _fixRichTextValueMimeType(self):
+    def _fixRichTextValueMimeType(self,
+                                  object_provides=IMeetingAdvice.__identifier__,
+                                  field_names=['advice_comment', 'advice_observations']):
         """Make sure RichTextValue stored on DX content (advices) have
            a correct mimeType and outputMimeType."""
-        brains = self.catalog(object_provides=IMeetingAdvice.__identifier__)
-        logger.info('Fixing mimeType/outputMimeType for every advices...')
+        brains = self.catalog(object_provides=object_provides)
+        logger.info('Fixing mimeType/outputMimeType for every %s...' % object_provides)
         pghandler = ZLogHandler(steps=1000)
-        pghandler.init('Updating RichText fields for advices...', len(brains))
+        pghandler.init('Updating RichText fields for elements...', len(brains))
         i = 0
         for brain in brains:
             i += 1
             pghandler.report(i)
             try:
-                advice = brain.getObject()
+                obj = brain.getObject()
             except AttributeError:
                 continue
-            for field_name in ['advice_comment', 'advice_observations']:
-                field_value = getattr(advice, field_name)
+            for field_name in field_names:
+                field_value = getattr(obj, field_name)
                 if field_value:
-                    setattr(advice, field_name, richtextval(field_value.raw))
+                    setattr(obj, field_name, richtextval(field_value.raw))
         pghandler.finish()
         logger.info('Done.')
 
