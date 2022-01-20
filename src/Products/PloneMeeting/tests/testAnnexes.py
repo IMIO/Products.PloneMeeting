@@ -18,6 +18,7 @@ from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.annex.columns import ActionsColumn
+from imio.annex.utils import get_annexes_to_print
 from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
@@ -979,6 +980,31 @@ class testAnnexes(PloneMeetingTestCase):
         notify(ObjectModifiedEvent(annex))
         self.assertNotEqual(initial_conversion_date,
                             IAnnotations(annex)['collective.documentviewer']['last_updated'])
+
+    def test_pm_Get_annexes_to_print(self):
+        """Test this from imio.annex.utils.
+           Will return printable annexes with path to blob."""
+        gsettings = self._enableAutoConvert()
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self._enable_annex_config(item, param="to_be_printed")
+        annex1 = self.addAnnex(item, annexTitle="Annex 1")
+        annex2 = self.addAnnex(item, annexTitle="Annex 2")
+        annex3 = self.addAnnex(item, annexTitle="Annex 3")
+        annex1.to_print = True
+        annex2.to_print = True
+        self.assertFalse(annex3.to_print)
+        update_all_categorized_elements(item)
+        annexes_to_print = get_annexes_to_print(item, caching=False)
+        self.assertEqual(len(annexes_to_print), 2)
+        self.assertEqual(annexes_to_print[0]['UID'], annex1.UID())
+        self.assertEqual(annexes_to_print[1]['UID'], annex2.UID())
+        # change global config image format will still work
+        gsettings.pdf_image_format = 'png'
+        # same result
+        annexes_to_print2 = get_annexes_to_print(item, caching=False)
+        self.assertEqual(annexes_to_print, annexes_to_print2)
 
     def test_pm_ChangeAnnexPosition(self):
         """Annexes are orderable by the user able to add annexes."""

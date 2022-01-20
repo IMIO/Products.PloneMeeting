@@ -25,6 +25,9 @@ Changelog
 - Fixed `migrate_to_4200.MeetingMigrator`, make sure `RichTextValue` is unicode.
   Make sure assembly related methods on meeting and item all return unicode.
   [gbastien]
+- Added test for `imio.annex.utils.get_annexes_to_print`, make sure it still work
+  even if image format (`png`, `jpg`, ...) changed in global settings.
+  [gbastien]
 
 4.2rc2 (2022-01-18)
 -------------------
