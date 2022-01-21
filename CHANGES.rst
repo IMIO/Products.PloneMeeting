@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc3 (unreleased)
+4.2rc3 (2022-01-21)
 -------------------
 
 - As transitions for presenting an item may vary from an `organization` to another
