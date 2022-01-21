@@ -7,6 +7,8 @@ Changelog
 
 - Completed `Migrate_To_4200._fixPODTemplatesInstructions`.
   [gbastien]
+- Added `Download` icon to annex and annexDecision.
+  [gbastien]
 
 4.2rc3 (2022-01-21)
 -------------------
