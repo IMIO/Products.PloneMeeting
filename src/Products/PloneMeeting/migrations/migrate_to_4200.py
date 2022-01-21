@@ -708,6 +708,8 @@ class Migrate_To_4200(Migrator):
                         # meeting date month name without accents
                         ".replace('é','e').replace('û','u').upper()":
                             ".replace(u'é',u'e').replace(u'û',u'u').upper()",
+                        # uid_catalog can no more be used to get DX Meeting
+                        ".uid_catalog(": ".portal_catalog",
                         }
         # specific for Meeting POD Templates
         meeting_replacements = {
