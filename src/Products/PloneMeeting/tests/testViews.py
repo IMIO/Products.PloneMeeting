@@ -684,19 +684,23 @@ class testViews(PloneMeetingTestCase):
         """The @@update-items-to-reindex called by @@pm-night-tasks."""
         # create item with annexes, annexes not found in catalog
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem', title="Classic item title")
+        item1 = self.create('MeetingItem', title="Classic item1 title")
+        item2 = self.create('MeetingItem', title="Classic item2 title")
+        item3 = self.create('MeetingItem', title="Classic item3 title")
         self.tool.setDeferParentReindex(['annex'])
-        self.addAnnex(item, annexTitle="Special annex title")
-        self.assertTrue(self.catalog(SearchableText="Classic"))
+        self.addAnnex(item1, annexTitle="Special annex1 title")
+        self.addAnnex(item2, annexTitle="Special annex2 title")
+        self.addAnnex(item3, annexTitle="Special annex3 title")
+        self.assertEqual(len(self.catalog(SearchableText="Classic")), 3)
         self.assertFalse(self.catalog(SearchableText="Special"))
         self.changeUser('siteadmin')
         # @@update-items-to-reindex is called by @@pm-night-tasks
         self.portal.restrictedTraverse('@@pm-night-tasks')()
-        self.assertTrue(self.catalog(SearchableText="Classic"))
-        self.assertTrue(self.catalog(SearchableText="Special"))
+        self.assertEqual(len(self.catalog(SearchableText="Classic")), 3)
+        self.assertEqual(len(self.catalog(SearchableText="Special")), 3)
         self.changeUser('pmCreator1')
-        self.assertTrue(self.catalog(SearchableText="Classic"))
-        self.assertTrue(self.catalog(SearchableText="Special"))
+        self.assertEqual(len(self.catalog(SearchableText="Classic")), 3)
+        self.assertEqual(len(self.catalog(SearchableText="Special")), 3)
 
     def test_pm_SendPodTemplateToMailingList(self):
         """Send a Pod template to a mailing list."""

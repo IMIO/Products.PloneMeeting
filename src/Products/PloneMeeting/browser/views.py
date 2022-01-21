@@ -528,7 +528,10 @@ class UpdateItemsToReindexView(BrowserView):
         """ """
         catalog = api.portal.get_tool('portal_catalog')
         query = {'pm_technical_index': [REINDEX_NEEDED_MARKER]}
-        brains = catalog.unrestrictedSearchResults(**query)
+        # make a new list out of brains because reindexObject would modify
+        # the result, a bit the same like when we delete elements  of a list
+        # we are iterating on
+        brains = list(catalog.unrestrictedSearchResults(**query))
         numberOfBrains = len(brains)
         i = 1
         logger.info('Reindexing %s items' % str(numberOfBrains))

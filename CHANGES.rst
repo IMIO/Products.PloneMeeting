@@ -9,6 +9,10 @@ Changelog
   [gbastien]
 - Added `Download` icon to annex and annexDecision.
   [gbastien]
+- Fixed `UpdateItemsToReindexView`, iterating on a `LazyMap` of `brains` into
+  which we `reindexObject` lead to incomplete loop (like when deleting
+  elements in a loop).
+  [gbastien]
 
 4.2rc3 (2022-01-21)
 -------------------
