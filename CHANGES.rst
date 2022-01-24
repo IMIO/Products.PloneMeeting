@@ -8,6 +8,10 @@ Changelog
 - Display item number before item title on item view when item in a meeting, before,
   the item number was only displayed if item had a reference (meeting at least frozen).
   [gbastien]
+- Changed order of reindex in `MeetingItem.cloneToOtherMeetingConfig`, call
+  `reindexObject` on new and current item after call to `ItemDuplicatedToOtherMCEvent`
+  (was done done before).
+  [gbastien]
 
 4.2rc5 (2022-01-24)
 -------------------

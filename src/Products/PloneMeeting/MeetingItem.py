@@ -7152,11 +7152,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         ann = IAnnotations(self)
         ann[annotation_key] = newItem.UID()
 
-        # reindex, everything but ZCTextIndexes for newItem
-        # and 'sentToInfos' for self
-        reindex_object(newItem, no_idxs=['SearchableText', 'Title', 'Description'])
-        reindex_object(self, idxs=['sentToInfos'], update_metadata=False)
-
         # When an item is duplicated, if it was sent from a MeetingConfig to
         # another, we will add a line in the original item history specifying that
         # it was sent to another meetingConfig.  The 'new item' already have
@@ -7188,6 +7183,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # notify that item has been duplicated to another meetingConfig
         # so subproducts may interact if necessary
         notify(ItemDuplicatedToOtherMCEvent(self, newItem))
+
+        # reindex, everything but ZCTextIndexes for newItem
+        # and 'sentToInfos' for self
+        # reindex after call to ItemDuplicatedToOtherMCEvent so we avoid double reindex
+        reindex_object(newItem, no_idxs=['SearchableText', 'Title', 'Description'])
+        reindex_object(self, idxs=['sentToInfos'], update_metadata=False)
 
         return newItem
 
