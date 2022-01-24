@@ -5364,6 +5364,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("actions",
                 u"{0} (actions)".format(
                     translate("header_actions", domain=d, context=self.REQUEST))),
+            ("async_actions", u"{0} (async_actions)".format(
+                translate("header_async_actions", domain=d, context=self.REQUEST))),
         ]
         res = res + self._extraMeetingRelatedColumns()
         return DisplayList(tuple(res))

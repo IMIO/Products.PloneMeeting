@@ -837,6 +837,7 @@ table.listing th td {
 /* TH of the table listing items are stylable th by th */
 /* using 1% limit the width as much as possible... */
 table.listing th.th_header_actions,
+table.listing th.th_header_async_actions,
 table.listing th.th_header_draggable,
 table.listing th.th_header_itemIsSigned,
 table.listing th.th_header_toDiscuss,

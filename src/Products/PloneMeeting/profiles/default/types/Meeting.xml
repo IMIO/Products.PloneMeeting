@@ -66,7 +66,7 @@
          action_id="update_item_references"
          category="object_buttons"
          condition_expr=""
-         icon_expr=""
+         icon_expr="string:$portal_url/++resource++collective.eeafaceted.z3ctable/refresh.gif"
          url_expr="string:javascript:callViewAndReload(base_url='${object_url}', view_name='@@update-item-references');"
          visible="True">
   <permission value="Modify portal content"/>
@@ -76,7 +76,7 @@
          action_id="reorder_items"
          category="object_buttons"
          condition_expr=""
-         icon_expr=""
+         icon_expr="string:$portal_url/reorder.png"
          url_expr="string:javascript:callViewAndReload(base_url='${object_url}', view_name='@@reorder-items');"
          visible="True">
   <permission value="Modify portal content"/>

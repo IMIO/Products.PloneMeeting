@@ -5,8 +5,11 @@ Changelog
 4.2rc5 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Fixed `MeetingItem.internalNotes` access when item in a `_waiting_advices` state.
+  [gbastien]
+- Make the async actions column available on meetings lists.
+  Added icons to meetings related actions so it takes less place in actions_panel.
+  [gbastien]
 
 4.2rc4 (2022-01-24)
 -------------------

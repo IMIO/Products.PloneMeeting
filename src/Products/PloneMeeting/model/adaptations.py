@@ -822,11 +822,14 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                     perm_cloned_state = wf.states['validated']
                     for permission, roles in perm_cloned_state.permission_roles.iteritems():
                         if WAITING_ADVICES_REMOVE_MODIFY_ACCESS and permission in edit_permissions:
-                            # remove every roles but 'Manager', 'MeetingManager' and
-                            # 'MeetingBudgetImpactEditor', the intersection takes care of keeping
-                            # the relevant roles
+                            # remove every roles but 'Manager', 'MeetingManager',
+                            # 'MeetingBudgetImpactEditor' and 'MeetingInternalNotesEditor'
+                            # the intersection takes care of keeping the relevant roles
                             edit_roles = set(roles).intersection(
-                                set(('Manager', 'MeetingManager', 'MeetingBudgetImpactEditor')))
+                                set(('Manager',
+                                     'MeetingManager',
+                                     'MeetingBudgetImpactEditor',
+                                     'MeetingInternalNotesEditor')))
                             new_state.setPermission(permission, 0, edit_roles)
                         else:
                             new_state.setPermission(permission, 0, roles)

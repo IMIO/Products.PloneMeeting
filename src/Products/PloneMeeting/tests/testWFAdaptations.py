@@ -19,6 +19,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import WriteBudgetInfos
+from Products.PloneMeeting.config import WriteInternalNotes
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
@@ -1321,10 +1322,17 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         # the budget impact editors functionnality still works even if 'remove_modify_access': True
         cfg.setItemBudgetInfosStates((waiting_state_name, ))
+        # check that the internalNotes functionnality works as well
+        # enable field internalNotes
+        self._enableField('internalNotes', reload=True)
+        # make internal notes editable by copyGroups
+        self._activate_config('itemInternalNotesEditableBy',
+                              'reader_copy_groups')
+        cfg.setItemCopyGroupsStates((waiting_state_name, ))
 
         # right, create an item and set it to 'waiting_advices'
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
+        item = self.create('MeetingItem', copyGroups=[self.vendors_reviewers])
         self.proposeItem(item, first_level=True)
         # 'pmCreator1' is not able to set item to 'waiting_advices'
         self.assertFalse(self.transitions(item))
@@ -1368,6 +1376,15 @@ class testWFAdaptations(PloneMeetingTestCase):
         # budget impact editors access are correct even when 'remove_modify_access': True
         self.changeUser('budgetimpacteditor')
         self.assertTrue(self.hasPermission(WriteBudgetInfos, item))
+
+        # check internalNotes editable by copyGroups
+        self.changeUser('pmReviewer2')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(WriteInternalNotes, item))
+        # change text and add image
+        text = '<p>Internal note with image <img src="%s"/>.</p>' % self.external_image1
+        item.setInternalNotes(text)
+        item.at_post_edit_script()
 
         # right come back to 'proposed'
         self.changeUser('pmReviewer1')

@@ -742,7 +742,6 @@ class Migrate_To_4200(Migrator):
             'self.displayValue(self.listProposingGroups(), self.getProposingGroup())':
                 "view.display('proposingGroup')",
         }
-
         self.updatePODTemplatesCode(replacements, meeting_replacements, item_replacements)
 
     def _fixItemAddAdvicePermission(self):
@@ -769,7 +768,9 @@ class Migrate_To_4200(Migrator):
         """By default, make proposingGroup editors able to use MeetingItem.internalNotes."""
         logger.info("Updating every MeetingConfig.ItemInternalNotesEditableBy...")
         for cfg in self.tool.objectValues('MeetingConfig'):
-            if "internalNotes" in cfg.getUsedItemAttributes():
+            # update if used and if not already migrated
+            if "internalNotes" in cfg.getUsedItemAttributes() and \
+                    not cfg.getItemInternalNotesEditableBy():
                 suffixes = cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
                 values = ['{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix)
                           for suffix in suffixes]
