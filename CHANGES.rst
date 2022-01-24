@@ -5,8 +5,9 @@ Changelog
 4.2rc6 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Display item number before item title on item view when item in a meeting, before,
+  the item number was only displayed if item had a reference (meeting at least frozen).
+  [gbastien]
 
 4.2rc5 (2022-01-24)
 -------------------
