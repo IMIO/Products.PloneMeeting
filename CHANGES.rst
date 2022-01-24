@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc5 (unreleased)
+4.2rc5 (2022-01-24)
 -------------------
 
 - Fixed `MeetingItem.internalNotes` access when item in a `_waiting_advices` state.
