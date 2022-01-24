@@ -2734,6 +2734,8 @@ class PMPositionTypesVocabulary(PositionTypesVocabulary):
                     continue
                 gender_and_numbers = split_gender_and_number(term.title)
                 term.title = gender_and_numbers['{0}S'.format(gender)]
+        # sort alphabetically but keep first value (default) in first position
+        res._terms[1:] = humansorted(res._terms[1:], key=attrgetter('title'))
         return res
 
 

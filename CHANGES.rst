@@ -10,6 +10,8 @@ Changelog
 - Make the async actions column available on meetings lists.
   Added icons to meetings related actions so it takes less place in actions_panel.
   [gbastien]
+- Sort `PMPositionTypesVocabulary` alphabetically.
+  [gbastien]
 
 4.2rc4 (2022-01-24)
 -------------------
