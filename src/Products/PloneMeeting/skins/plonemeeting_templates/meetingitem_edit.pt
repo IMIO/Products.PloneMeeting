@@ -108,12 +108,6 @@
     <tal:field define="fieldName python: 'votesObservations'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
-    <tal:field define="fieldName python: 'marginalNotes'">
-      <metal:f use-macro="context/@@pm-macros/editContentField"/>
-    </tal:field>
-    <tal:field define="fieldName python: 'internalNotes'">
-      <metal:f use-macro="context/@@pm-macros/editContentField"/>
-    </tal:field>
     <tal:field define="fieldName python: 'meetingManagersNotes'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
@@ -124,6 +118,12 @@
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
     <tal:field define="fieldName python: 'observations'">
+      <metal:f use-macro="context/@@pm-macros/editContentField"/>
+    </tal:field>
+    <tal:field define="fieldName python: 'marginalNotes'">
+      <metal:f use-macro="context/@@pm-macros/editContentField"/>
+    </tal:field>
+    <tal:field define="fieldName python: 'internalNotes'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
 

@@ -12,6 +12,8 @@ Changelog
   `reindexObject` on new and current item after call to `ItemDuplicatedToOtherMCEvent`
   (was done done before).
   [gbastien]
+- Moved fields `internalNotes` and `marginalNotes` at the bottom of item edit/view forms.
+  [gbastien]
 
 4.2rc5 (2022-01-24)
 -------------------

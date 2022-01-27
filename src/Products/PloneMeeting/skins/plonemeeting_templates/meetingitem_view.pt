@@ -602,16 +602,6 @@
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
-    <tal:comment replace="nothing">Marginal notes</tal:comment>
-    <tal:field define="fieldName python: 'marginalNotes'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
-    </tal:field>
-
-    <tal:comment replace="nothing">Internal notes</tal:comment>
-    <tal:field define="fieldName python: 'internalNotes'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
-    </tal:field>
-
     <tal:comment replace="nothing">Meeting managers notes</tal:comment>
     <tal:field define="fieldName python: 'meetingManagersNotes'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
@@ -634,6 +624,16 @@
 
     <tal:comment replace="nothing">Observations</tal:comment>
     <tal:field define="fieldName python: 'observations'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
+    <tal:comment replace="nothing">Marginal notes</tal:comment>
+    <tal:field define="fieldName python: 'marginalNotes'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
+    <tal:comment replace="nothing">Internal notes</tal:comment>
+    <tal:field define="fieldName python: 'internalNotes'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
