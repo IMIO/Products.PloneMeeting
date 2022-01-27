@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc6 (unreleased)
+4.2rc6 (2022-01-27)
 -------------------
 
 - Display item number before item title on item view when item in a meeting, before,
