@@ -38,6 +38,7 @@
   <include package="plone.directives.form" file="meta.zcml" />
   <include package="plone.directives.form" />
   <include package="plone.memoize" />
+  <include package="plonemeeting.restapi" />
   <include package="Products.CMFPlacefulWorkflow"/>
   <include package="Products.cron4plone" />
   <include package="Products.DataGridField" />
