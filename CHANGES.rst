@@ -14,6 +14,9 @@ Changelog
   [gbastien]
 - Moved fields `internalNotes` and `marginalNotes` at the bottom of item edit/view forms.
   [gbastien]
+- Set `plonemeeting.restapi` as a direct dependency in `metadata.xml`
+  so it is installed by default.
+  [gbastien]
 
 4.2rc5 (2022-01-24)
 -------------------
