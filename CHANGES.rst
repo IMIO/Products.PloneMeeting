@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc7 (unreleased)
+4.2rc7 (2022-01-28)
 -------------------
 
 - Added adaptable method `MeetingItem._bypass_meeting_closed_check_for` that
