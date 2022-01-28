@@ -5,8 +5,12 @@ Changelog
 4.2rc7 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Added adaptable method `MeetingItem._bypass_meeting_closed_check_for` that
+  will make it possible to control the `MeetingItem.mayQuickEdit`
+  `bypassMeetingClosedCheck=False` parameter for a given `fieldName`.
+  This solves the `MeetingItem.internalNotes` editable forever that was no more
+  editable when meeting was closed.
+  [gbastien]
 
 4.2rc6 (2022-01-27)
 -------------------

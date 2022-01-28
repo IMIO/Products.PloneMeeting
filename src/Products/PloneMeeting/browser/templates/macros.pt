@@ -173,7 +173,7 @@ document.location.reload(true);
                  isOptional field/optional|python:False;
                  isUsed python: not isOptional or (isOptional and fieldName in usedAttrs);
                  ajaxEdit ajaxEdit|nothing;
-                 mayEdit python: ajaxEdit and member.has_permission(field.write_permission, context) and not context.restrictedTraverse('@@plone_lock_info').is_locked_for_current_user()"
+                 mayEdit python: ajaxEdit and context.mayQuickEdit(fieldName) and not context.restrictedTraverse('@@plone_lock_info').is_locked_for_current_user()"
      tal:condition="python: isUsed and field.widget.visible and field.widget.visible and field.widget.testCondition(context.getParentNode(), context.getParentNode(), context) and member.has_permission(field.read_permission, context)">
   <tal:rich condition="python: isRich">
     <metal:view use-macro="context/@@pm-macros/viewField"/>

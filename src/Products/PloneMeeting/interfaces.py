@@ -357,6 +357,9 @@ class IMeetingItemDocumentation:
     def show_votesObservations():
         '''Votes observations field is only viewable by MeetingManagers and
            power observers until item is decided, in this case everybody may see it.'''
+    def _bypass_meeting_closed_check_for(self, fieldName):
+        """Adaptable method that let bypass the
+           mayQuickEdit.bypassMeetingClosedCheck for given p_fieldName."""
 
 
 class IMeetingItemWorkflowConditions(Interface):

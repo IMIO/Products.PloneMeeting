@@ -4370,6 +4370,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             unrestrictedRemoveGivenObject(item)
             return True
 
+    def _bypass_meeting_closed_check_for(self, fieldName):
+        """See docstring in interfaces.py"""
+        if fieldName in ['internalNotes']:
+            return True
+
     security.declarePublic('mayQuickEdit')
 
     def mayQuickEdit(self,
@@ -4387,6 +4392,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            If p_bypassMeetingClosedCheck is True, we will not check if meeting is closed but
            only for permission and condition.'''
         field = self.Schema()[fieldName]
+        bypassMeetingClosedCheck = bypassMeetingClosedCheck or \
+            self.adapted()._bypass_meeting_closed_check_for(fieldName)
         res = checkMayQuickEdit(
             self,
             bypassWritePermissionCheck=bypassWritePermissionCheck,

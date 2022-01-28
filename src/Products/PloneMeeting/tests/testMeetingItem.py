@@ -6691,8 +6691,7 @@ class testMeetingItem(PloneMeetingTestCase):
                 self.assertTrue(self.hasPermission(View, item))
                 view = item.restrictedTraverse('base_view')
                 self.assertTrue("Internal notes" in view())
-                self.assertTrue(item.mayQuickEdit('internalNotes',
-                                                  bypassMeetingClosedCheck=True))
+                self.assertTrue(item.mayQuickEdit('internalNotes'))
 
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
@@ -6702,6 +6701,7 @@ class testMeetingItem(PloneMeetingTestCase):
         _check_editable(item)
         self.decideMeeting(meeting)
         _check_editable(item)
+        # even in a closed meeting
         self.closeMeeting(meeting)
         self.assertEqual(item.query_state(), 'accepted')
         _check_editable(item)
