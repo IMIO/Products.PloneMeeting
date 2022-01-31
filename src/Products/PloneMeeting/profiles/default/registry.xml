@@ -5,6 +5,12 @@
     <record name="collective.contact.core.interfaces.IContactCoreParameters.display_contact_photo_on_organization_view">
         <value>False</value>
     </record>
+    <record name="collective.contact.core.interfaces.IContactCoreParameters.display_below_content_title_on_views">
+        <value>True</value>
+    </record>
+    <record name="collective.contact.core.interfaces.IContactCoreParameters.display_photo_label_on_views">
+        <value>True</value>
+    </record>
 
     <records interface="plone.app.querystring.interfaces.IQueryField"
              prefix="plone.app.querystring.field.meeting_date">

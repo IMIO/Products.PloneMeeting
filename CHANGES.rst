@@ -17,6 +17,9 @@ Changelog
   This solves the `MeetingItem.internalNotes` editable forever that was no more
   editable when meeting was closed.
   [gbastien]
+- Enable `display_below_content_title_on_views` and `display_photo_label_on_views`
+  in `collective.contact.core` registry parameters.
+  [gbastien]
 
 4.2rc6 (2022-01-27)
 -------------------
