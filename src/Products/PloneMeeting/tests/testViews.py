@@ -32,6 +32,7 @@ from Products.PloneMeeting.browser.views import SEVERAL_SAME_BARCODE_ERROR
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
+from Products.PloneMeeting.content.meeting import PLACE_OTHER
 from Products.PloneMeeting.etags import ConfigModified
 from Products.PloneMeeting.etags import ContextModified
 from Products.PloneMeeting.etags import LinkedMeetingModified
@@ -1399,11 +1400,11 @@ class testViews(PloneMeetingTestCase):
         text = text.replace(self.external_image1, img_path)
         self.assertEqual(helper.print_value("observations", use_appy_pod_preprocessor=True),
                          text)
-        # special case for place
-        self.assertEqual(helper.print_value("place"), u'')
+        # special case for place, default value is u"other"
+        self.assertEqual(helper.print_value("place"), PLACE_OTHER)
         meeting.place = u'Place1'
         self.assertEqual(helper.print_value("place"), u'Place1')
-        meeting.place = u'other'
+        meeting.place = PLACE_OTHER
         meeting.place_other = unicode('Spécial place', 'utf-8')
         self.assertEqual(helper.print_value("place"), u'Sp\xe9cial place')
 

@@ -221,13 +221,13 @@ class IMeeting(IDXMeetingContent):
             {'name': 'place_other',
              'slaveID': '#form-widgets-place_other',
              'action': 'enable',
-             'hide_values': (u'other'),
+             'hide_values': (PLACE_OTHER, ),
              'siblings': True,
              },
             {'name': 'place_other',
              'slaveID': '#form-widgets-place_other',
              'action': 'show',
-             'hide_values': (u'other'),
+             'hide_values': (PLACE_OTHER, ),
              'siblings': True,
              },
         ),
@@ -1023,7 +1023,7 @@ class Meeting(Container):
     def get_place(self, real=False):
         """ """
         place = self.place
-        if not real and self.place == u'other':
+        if not real and self.place == PLACE_OTHER:
             place = self.place_other
         return place
 
@@ -2280,7 +2280,7 @@ class PlacesVocabulary(object):
         if context.getTagName() == "Meeting" and \
            context.place and \
            context.place not in places and \
-           context.place != u'other':
+           context.place != PLACE_OTHER:
             places.append(context.place)
 
         for place in places:
