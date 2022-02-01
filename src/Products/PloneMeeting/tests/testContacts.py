@@ -6,6 +6,7 @@
 #
 
 from AccessControl import Unauthorized
+from collections import OrderedDict
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_groups
@@ -486,6 +487,11 @@ class testContacts(PloneMeetingTestCase):
         meeting_item_signatories = meeting.get_item_signatories()
         self.assertTrue(item1_uid in meeting_item_signatories)
         self.assertFalse(item2_uid in meeting_item_signatories)
+
+        # Meeting.get_item_signatories may also be used
+        # to get every item signatories hp objects
+        self.assertEqual(meeting.get_item_signatories(by_signature_number=True),
+                         OrderedDict([('1', [hp])]))
 
         # trying to define a forbidden signatory (already signatory on meeting or not present)
         # will raise Unauthorized

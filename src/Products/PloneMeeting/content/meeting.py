@@ -1300,12 +1300,19 @@ class Meeting(Container):
 
     security.declarePublic('get_item_signatories')
 
-    def get_item_signatories(self, by_signatories=False, include_position_type=False):
-        '''Return itemSignatories, by default the itemSignatories dict has the item UID as key and list
-           of signatories as values but if 'p_by_signatories' is True, the informations are returned with
+    def get_item_signatories(self,
+                             by_signatories=False,
+                             include_position_type=False,
+                             by_signature_number=False):
+        '''Return itemSignatories, by default the itemSignatories dict has the
+           item UID as key and list of signatories as values, this is done to
+           make data more easy to use.
+           If 'p_by_signatories' is True, the informations are returned with
            signatory as key and list of items as value.
-           p_include_position_type=True is only relevant when p_by_signatories=False.'''
-        signatories = {}
+           If p_by_signature_number, we return a dict with signature number as
+           key and list of item signatories as values.
+           The parameters are mutually exclusive.'''
+        signatories = OrderedDict()
         if by_signatories:
             for item_uid, signatories_infos in self.item_signatories.items():
                 for signature_number, signatory_infos in signatories_infos.items():
@@ -1314,13 +1321,19 @@ class Meeting(Container):
                     if signatory_uid not in signatories:
                         signatories[signatory_uid] = []
                     signatories[signatory_uid].append(item_uid)
+        elif by_signature_number:
+            for item_uid, signatories_infos in self.item_signatories.items():
+                for signature_number, signatory_infos in signatories_infos.items():
+                    if signature_number not in signatories:
+                        signatories[signature_number] = []
+                    signatory = uuidToObject(signatory_infos['hp_uid'], unrestricted=True)
+                    signatories[signature_number].append(signatory)
         else:
             for item_uid, signatory_infos in self.item_signatories.data.items():
                 if include_position_type:
                     signatories[item_uid] = signatory_infos.copy()
                 else:
                     signatories[item_uid] = {k: v['hp_uid'] for k, v in signatory_infos.items()}
-
         return signatories
 
     def _get_item_redefined_positions(self):

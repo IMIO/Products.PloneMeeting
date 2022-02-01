@@ -15,6 +15,10 @@ Changelog
     does not fail with not found attributes added during ObjectCreated event.
 
   [gbastien]
+- Added new parameter `by_signature_number=False` to
+  `Meeting.get_item_signatories`, this will return an ordered dict where key is
+  the signature number and values are list of item signatories.
+  [gbastien]
 
 4.2rc7 (2022-01-28)
 -------------------
