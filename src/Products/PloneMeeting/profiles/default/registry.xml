@@ -119,8 +119,21 @@
 
     <!-- plone.app.caching templateRulesetMapping -->
     <record name="plone.app.caching.interfaces.IPloneCacheSettings.templateRulesetMapping">
-        <value purge="False">
+        <!-- purge to be able to remove the image_view_fullscreen that have security advisory
+             See https://github.com/plone/Products.CMFPlone/security/advisories/GHSA-8w54-22w9-3g8f -->
+        <value purge="True">
+          <!-- added our @@categorized-annexes view -->
           <element key="categorized-annexes">plone.content.folderView</element>
+          <element key="search_rss">plone.content.feed</element>
+          <element key="RSS">plone.content.feed</element>
+          <element key="atom.xml">plone.content.feed</element>
+          <element key="rss.xml">plone.content.feed</element>
+          <element key="itunes.xml">plone.content.feed</element>
+          <element key="sitemap">plone.content.itemView</element>
+          <element key="accessibility-info">plone.content.itemView</element>
+          <element key="file_view">plone.content.itemView</element>
+          <element key="image_view">plone.content.itemView</element>
+          <!-- element key="image_view_fullscreen">plone.content.itemView</element-->
         </value>
     </record>
 

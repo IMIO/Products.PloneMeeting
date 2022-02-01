@@ -5,8 +5,9 @@ Changelog
 4.2rc8 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- For security reason, do no more cache the `image_view_fullscreen` view.
+  See https://github.com/plone/Products.CMFPlone/security/advisories/GHSA-8w54-22w9-3g8f.
+  [gbastien]
 
 4.2rc7 (2022-01-28)
 -------------------
