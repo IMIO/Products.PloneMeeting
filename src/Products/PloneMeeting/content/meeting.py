@@ -89,6 +89,8 @@ import logging
 
 logger = logging.getLogger('PloneMeeting')
 
+PLACE_OTHER = u"other"
+
 
 def assembly_constraint(value):
     """Check that opening [[ has it's closing ]]."""
@@ -98,7 +100,8 @@ def assembly_constraint(value):
         msg = translate('Please check that opening "[[" have corresponding closing "]]".',
                         domain='PloneMeeting',
                         context=request)
-        raise Invalid(msg)
+        # encode msg in utf-8 for restapi
+        raise Invalid(msg.encode('utf-8'))
     return True
 
 
@@ -213,6 +216,7 @@ class IMeeting(IDXMeetingContent):
         vocabulary="Products.PloneMeeting.content.meeting.places_vocabulary",
         # avoid a "No value" entry
         required=True,
+        default=PLACE_OTHER,
         slave_fields=(
             {'name': 'place_other',
              'slaveID': '#form-widgets-place_other',
@@ -486,8 +490,9 @@ class IMeeting(IDXMeetingContent):
                 found = True
             else:
                 for brain in brains:
-                    # ignore current meeting
-                    if brain.UID != context.UID():
+                    # ignore current meeting, use path, available when creating
+                    # a meeting using restapi, the UID is still not ready
+                    if brain.getPath() != "/".join(context.getPhysicalPath()):
                         found = True
             if found:
                 msg = translate('meeting_with_same_date_exists',
@@ -495,7 +500,8 @@ class IMeeting(IDXMeetingContent):
                                 context=context.REQUEST)
                 # avoid multiple call to this invariant
                 context.REQUEST.set("validate_dates_done", True)
-                raise Invalid(msg)
+                # encode msg in utf-8 for restapi
+                raise Invalid(msg.encode('utf-8'))
 
         # check pre_meeting_date
         if data.pre_meeting_date and (data.pre_meeting_date > data.date):
@@ -504,7 +510,8 @@ class IMeeting(IDXMeetingContent):
                             context=context.REQUEST)
             # avoid multiple call to this invariant
             context.REQUEST.set("validate_dates_done", True)
-            raise Invalid(msg)
+            # encode msg in utf-8 for restapi
+            raise Invalid(msg.encode('utf-8'))
 
         # check start_date/end_date
         # start_date can not be before date
@@ -514,7 +521,8 @@ class IMeeting(IDXMeetingContent):
                             context=context.REQUEST)
             # avoid multiple call to this invariant
             context.REQUEST.set("validate_dates_done", True)
-            raise Invalid(msg)
+            # encode msg in utf-8 for restapi
+            raise Invalid(msg.encode('utf-8'))
         # end_date can not be before date
         if data.end_date and (data.end_date < data.date):
             msg = translate("end_date_before_meeting_date",
@@ -522,7 +530,8 @@ class IMeeting(IDXMeetingContent):
                             context=context.REQUEST)
             # avoid multiple call to this invariant
             context.REQUEST.set("validate_dates_done", True)
-            raise Invalid(msg)
+            # encode msg in utf-8 for restapi
+            raise Invalid(msg.encode('utf-8'))
         # start_date must be before end_date
         if data.start_date and data.end_date and data.start_date > data.end_date:
             msg = translate("start_date_after_end_date",
@@ -530,7 +539,8 @@ class IMeeting(IDXMeetingContent):
                             context=context.REQUEST)
             # avoid multiple call to this invariant
             context.REQUEST.set("validate_dates_done", True)
-            raise Invalid(msg)
+            # encode msg in utf-8 for restapi
+            raise Invalid(msg.encode('utf-8'))
         # avoid multiple call to this invariant
         context.REQUEST.set("validate_dates_done", True)
 
@@ -562,21 +572,27 @@ class IMeeting(IDXMeetingContent):
                                  in request.form.get('meeting_attendees', [])
                                  if attendee.split('_')[2] == 'attendee']
             removed_meeting_attendees = set(stored_attendees).difference(meeting_attendees)
-            # attendees redefined on items
-            redefined_item_attendees = context._get_all_redefined_attendees(by_persons=True)
-            conflict_attendees = removed_meeting_attendees.intersection(
-                redefined_item_attendees)
-            if conflict_attendees:
-                attendee_uid = tuple(conflict_attendees)[0]
-                attendee_brain = uuidToCatalogBrain(attendee_uid)
-                msg = translate(
-                    'can_not_remove_attendee_redefined_on_items',
-                    mapping={'attendee_title': attendee_brain.get_full_title},
-                    domain='PloneMeeting',
-                    context=request)
-                # avoid multiple call to this invariant
-                context.REQUEST.set("validate_attendees_done", True)
-                raise Invalid(msg)
+            # do not go further if not removed attendees
+            # this is useful when creating a new meeting from restapi call
+            # where ObjectCreated event is triggered after validation
+            if removed_meeting_attendees:
+                # attendees redefined on items
+                redefined_item_attendees = context._get_all_redefined_attendees(
+                    by_persons=True)
+                conflict_attendees = removed_meeting_attendees.intersection(
+                    redefined_item_attendees)
+                if conflict_attendees:
+                    attendee_uid = tuple(conflict_attendees)[0]
+                    attendee_brain = uuidToCatalogBrain(attendee_uid)
+                    msg = translate(
+                        'can_not_remove_attendee_redefined_on_items',
+                        mapping={'attendee_title': attendee_brain.get_full_title},
+                        domain='PloneMeeting',
+                        context=request)
+                    # avoid multiple call to this invariant
+                    context.REQUEST.set("validate_attendees_done", True)
+                    # encode msg in utf-8 for restapi
+                    raise Invalid(msg.encode('utf-8'))
 
             # removed voters?
             stored_voters = context.get_voters()
@@ -612,7 +628,8 @@ class IMeeting(IDXMeetingContent):
                         context=request)
                     # avoid multiple call to this invariant
                     context.REQUEST.set("validate_attendees_done", True)
-                    raise Invalid(msg)
+                    # encode msg in utf-8 for restapi
+                    raise Invalid(msg.encode('utf-8'))
                 elif highest_secret_votes > len(meeting_voters):
                     msg = translate(
                         'can_not_remove_secret_voter_voted_on_items',
@@ -620,7 +637,8 @@ class IMeeting(IDXMeetingContent):
                         context=request)
                     # avoid multiple call to this invariant
                     context.REQUEST.set("validate_attendees_done", True)
-                    raise Invalid(msg)
+                    # encode msg in utf-8 for restapi
+                    raise Invalid(msg.encode('utf-8'))
 
             # there can not be 2 same signatories
             signatories = [signatory for signatory in
@@ -636,7 +654,8 @@ class IMeeting(IDXMeetingContent):
                         context=request)
                     # avoid multiple call to this invariant
                     context.REQUEST.set("validate_attendees_done", True)
-                    raise Invalid(msg)
+                    # encode msg in utf-8 for restapi
+                    raise Invalid(msg.encode('utf-8'))
 
         # avoid multiple call to this invariant
         context.REQUEST.set("validate_attendees_done", True)
@@ -676,9 +695,9 @@ def default_signatures(data):
 def default_place(data):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(data.context)
-    res = u""
-    if "place" in cfg.getUsedMeetingAttributes():
-        res = safe_unicode(cfg.getPlaces())
+    res = PLACE_OTHER
+    if cfg.getPlaces():
+        res = safe_unicode(cfg.getPlaces().split('\r\n')[0].strip())
     return res
 
 
@@ -2267,10 +2286,10 @@ class PlacesVocabulary(object):
         for place in places:
             terms.append(UnicodeSimpleTerm(place, place, place))
         terms.append(UnicodeSimpleTerm(
-            u'other', u'other', translate('other_place',
-                                          domain='PloneMeeting',
-                                          context=context.REQUEST,
-                                          default=u"Other")))
+            PLACE_OTHER, PLACE_OTHER, translate('other_place',
+                                                domain='PloneMeeting',
+                                                context=context.REQUEST,
+                                                default=u"Other")))
         return SimpleVocabulary(terms)
 
 

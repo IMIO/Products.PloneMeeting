@@ -8,6 +8,13 @@ Changelog
 - For security reason, do no more cache the `image_view_fullscreen` view.
   See https://github.com/plone/Products.CMFPlone/security/advisories/GHSA-8w54-22w9-3g8f.
   [gbastien]
+- Some fixes for meeting created using restapi:
+
+  - validation error messages must not be returned as unicode;
+  - as the `ObjectCreated` event is called after validation, make sure validation
+    does not fail with not found attributes added during ObjectCreated event.
+
+  [gbastien]
 
 4.2rc7 (2022-01-28)
 -------------------

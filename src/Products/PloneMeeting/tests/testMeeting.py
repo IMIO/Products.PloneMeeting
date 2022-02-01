@@ -32,6 +32,7 @@ from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.content.meeting import assembly_constraint
 from Products.PloneMeeting.content.meeting import default_committees
 from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.content.meeting import PLACE_OTHER
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DefaultData
@@ -3233,11 +3234,18 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertFalse('signatures' in add_form_instance.w)
         # test place widget as it use unicode values with MasterSelect widget
         place_widget = add_form_instance.w['place']
+        # default value is correctly set
+        self.assertEqual(place_widget.value, [u'Place1'])
         self.assertEqual(place_widget.items[3]['value'], u'Sp\xe9cial place')
         self.request.form['form.widgets.place'] = place_widget.items[3]['value']
         # unicode is kept
         self.assertEqual(place_widget.extract(), (u'Sp\xe9cial place',))
-
+        # disable places
+        cfg.setPlaces('')
+        add_form = pm_folder.restrictedTraverse('++add++{0}'.format(meeting_type_name))
+        add_form.update()
+        add_form_instance = add_form.form_instance
+        self.assertEqual(add_form_instance.w['place'].value, [PLACE_OTHER])
         # enable fields and test
         cfg.setUsedMeetingAttributes(('assembly', 'assembly_staves', 'signatures'))
         add_form = pm_folder.restrictedTraverse('++add++{0}'.format(meeting_type_name))
