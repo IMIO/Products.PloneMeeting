@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc8 (unreleased)
+4.2rc8 (2022-02-03)
 -------------------
 
 - For security reason, do no more cache the `image_view_fullscreen` view.
