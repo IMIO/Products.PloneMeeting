@@ -899,22 +899,26 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             meeting_attendees = [attendee.split('_')[1] for attendee
                                  in REQUEST.form.get('meeting_attendees', [])]
             removed_meeting_attendees = set(stored_attendees).difference(meeting_attendees)
-            # attendees redefined on items
-            itemNonAttendees = self.getItemNonAttendees(by_persons=True)
-            itemAbsents = self.getItemAbsents(by_persons=True)
-            itemExcused = self.getItemExcused(by_persons=True)
-            itemSignatories = self.getItemSignatories(by_signatories=True)
-            redefined_item_attendees = itemNonAttendees.keys() + \
-                itemAbsents.keys() + itemExcused.keys() + itemSignatories.keys()
-            conflict_attendees = removed_meeting_attendees.intersection(redefined_item_attendees)
-            if conflict_attendees:
-                attendee_uid = tuple(removed_meeting_attendees)[0]
-                attendee_brain = uuidToCatalogBrain(attendee_uid)
-                errors['meeting_attendees'] = translate(
-                    'can_not_remove_attendee_redefined_on_items',
-                    mapping={'attendee_title': attendee_brain.get_full_title},
-                    domain='PloneMeeting',
-                    context=REQUEST)
+            # do not go further if not removed attendees
+            # this is useful when creating a new meeting from restapi call
+            # where ObjectCreated event is triggered after validation
+            if removed_meeting_attendees:
+                # attendees redefined on items
+                itemNonAttendees = self.getItemNonAttendees(by_persons=True)
+                itemAbsents = self.getItemAbsents(by_persons=True)
+                itemExcused = self.getItemExcused(by_persons=True)
+                itemSignatories = self.getItemSignatories(by_signatories=True)
+                redefined_item_attendees = itemNonAttendees.keys() + \
+                    itemAbsents.keys() + itemExcused.keys() + itemSignatories.keys()
+                conflict_attendees = removed_meeting_attendees.intersection(redefined_item_attendees)
+                if conflict_attendees:
+                    attendee_uid = tuple(removed_meeting_attendees)[0]
+                    attendee_brain = uuidToCatalogBrain(attendee_uid)
+                    errors['meeting_attendees'] = translate(
+                        'can_not_remove_attendee_redefined_on_items',
+                        mapping={'attendee_title': attendee_brain.get_full_title},
+                        domain='PloneMeeting',
+                        context=REQUEST)
         return errors
 
     security.declarePrivate('validate_date')
@@ -924,11 +928,14 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         catalog = api.portal.get_tool('portal_catalog')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        # DateTime('2020-05-28 11:00') will result in DateTime('2020/05/28 11:00:00 GMT+0')
-        # DateTime('2020/05/28 11:00') will result in DateTime('2020/05/28 11:00:00 GMT+2')
-        # so make sure value uses "/" instead "-"
-        value = value.replace("-", "/")
-        otherMeetings = catalog(portal_type=cfg.getMeetingTypeName(), getDate=DateTime(value))
+        # when created from restapi, value is a DateTime
+        if not isinstance(value, DateTime):
+            # DateTime('2020-05-28 11:00') will result in DateTime('2020/05/28 11:00:00 GMT+0')
+            # DateTime('2020/05/28 11:00') will result in DateTime('2020/05/28 11:00:00 GMT+2')
+            # so make sure value uses "/" instead "-"
+            value = value.replace("-", "/")
+            value = DateTime(value)
+        otherMeetings = catalog(portal_type=cfg.getMeetingTypeName(), getDate=value)
         if otherMeetings:
             for m in otherMeetings:
                 if m.getObject() != self:

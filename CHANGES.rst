@@ -5,8 +5,8 @@ Changelog
 4.1.28.35 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Adapted code to be compatible with last version of `plonemeting.restapi`.
+  [gbastien]
 
 4.1.28.34 (2021-11-09)
 ----------------------

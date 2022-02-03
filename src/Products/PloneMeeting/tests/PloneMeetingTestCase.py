@@ -56,6 +56,7 @@ from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.traversing.interfaces import BeforeTraverseEvent
 from zope.viewlet.interfaces import IViewletManager
+from collective.iconifiedcategory.utils import get_group
 
 import os.path
 import Products.PloneMeeting
@@ -642,3 +643,23 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             # manage cache
             notify(ObjectModifiedEvent(obj))
         self.cleanMemoize()
+
+    def _enable_annex_config(self,
+                             obj,
+                             param="confidentiality",
+                             related_to=None,
+                             enable=True):
+        """p_fct possible values are :
+           - confidentiality (default);
+           - to_be_printed;
+           - signed;
+           - publishable."""
+        if related_to == 'item_decision':
+            self.request.set('force_use_item_decision_annexes_group', True)
+        annexes_config_root = get_config_root(obj)
+        if related_to == 'item_decision':
+            self.request.set('force_use_item_decision_annexes_group', False)
+
+        annex_group = get_group(annexes_config_root, obj)
+        attr_name = "{0}_activated".format(param)
+        setattr(annex_group, attr_name, enable)

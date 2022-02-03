@@ -1938,6 +1938,21 @@ def get_annexes_config(context, portal_type="annex", annex_group=False):
     return config
 
 
+def get_dx_schema(obj=None, portal_type=None):
+    """ """
+    portal_types = api.portal.get_tool('portal_types')
+    fti = portal_types[portal_type or obj.portal_type]
+    schema = fti.lookupSchema()
+    return schema
+
+
+def get_dx_field(obj, field_name):
+    """ """
+    schema = get_dx_schema(obj)
+    field = schema[field_name]
+    return field
+
+
 class AdvicesUpdatedEvent(ObjectEvent):
     implements(IAdvicesUpdatedEvent)
 
