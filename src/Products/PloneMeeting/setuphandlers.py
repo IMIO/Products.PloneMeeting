@@ -24,6 +24,7 @@ from Products.CPUtils.Extensions.utils import configure_ckeditor
 from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
 from Products.PloneMeeting.config import CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG
+from Products.PloneMeeting.config import HAS_LDAP
 from Products.PloneMeeting.config import HAS_SOLR
 from Products.PloneMeeting.config import HAS_ZAMQP
 from Products.PloneMeeting.config import ManageOwnOrganizationFields
@@ -212,8 +213,11 @@ def postInstall(context):
         disable_folder_sections=True)
 
     # Display the search box for groups and users
+    many_users = False
+    if HAS_LDAP:
+        many_users = True
     site.portal_properties.site_properties.manage_changeProperties(
-        many_users=True)
+        many_users=many_users)
     site.portal_properties.site_properties.manage_changeProperties(
         many_groups=True)
 

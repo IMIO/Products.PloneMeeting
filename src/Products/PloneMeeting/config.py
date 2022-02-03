@@ -33,6 +33,12 @@ except pkg_resources.DistributionNotFound:
     HAS_RESTAPI = False
 
 
+HAS_LDAP = True
+try:
+    pkg_resources.get_distribution('plone.app.ldap')
+except pkg_resources.DistributionNotFound:
+    HAS_LDAP = False
+
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
 __docformat__ = 'plaintext'

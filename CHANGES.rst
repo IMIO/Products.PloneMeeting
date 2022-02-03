@@ -19,6 +19,9 @@ Changelog
   `Meeting.get_item_signatories`, this will return an ordered dict where key is
   the signature number and values are list of item signatories.
   [gbastien]
+- Changed default value for `many_users` and `many_groups`, set it to `False` by
+  default except when LDAP is available, in this case, many_users is set to `True`.
+  [gbastien]
 
 4.2rc7 (2022-01-28)
 -------------------
