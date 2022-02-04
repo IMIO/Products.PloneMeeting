@@ -837,10 +837,13 @@ class MeetingActionsPanelView(BaseActionsPanelView):
             showHistory=False,
             showHistoryLastEventHasComments=True,
             showArrows=False,
+            forceRedirectAfterTransition=False,
             **kwargs):
         """
           Redefined to add ram.cache...
         """
+        if not useIcons:
+            forceRedirectAfterTransition = True
         return super(MeetingActionsPanelView, self).\
             __call__(useIcons=useIcons,
                      showTransitions=showTransitions,
@@ -852,6 +855,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
                      showHistory=showHistory,
                      showHistoryLastEventHasComments=showHistoryLastEventHasComments,
                      showArrows=showArrows,
+                     forceRedirectAfterTransition=forceRedirectAfterTransition,
                      **kwargs)
 
     # do ram.cache have a different key name
