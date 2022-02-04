@@ -814,6 +814,17 @@ class Migrate_To_4200(Migrator):
             pod_template.reindexObjectSecurity()
         logger.info('Done.')
 
+    def _fixMeetingConfigRelatedPloneGroupsLocalRoles(self):
+        '''When a MeetingConfig is created, some local_roles are set,
+           especially on contacts, make sure it is correct, it could happen
+           with old code that there were missing local_roles.'''
+        logger.info("Updating MeetingConfig related Plone groups access...")
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            logger.info('Migrating config {0}...'.format(cfg.getId()))
+            # give local_roles to relevant groups on contacts
+            cfg._createOrUpdateAllPloneGroups(force_update_access=True)
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
 
@@ -988,6 +999,9 @@ class Migrate_To_4200(Migrator):
 
         # remove unused persons from contacts directory
         self._cleanUnusedPersonsAndHeldPositions()
+
+        # make sure MeetingConfig related Plone groups local_roles are correct
+        self._fixMeetingConfigRelatedPloneGroupsLocalRoles()
 
 
 def migrate(context):

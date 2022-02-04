@@ -6286,7 +6286,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Make sure we have 'text/html' for every Rich fields
         forceHTMLContentTypeForEmptyRichFields(self)
         # Create every linked Plone groups
-        self._createOrUpdateAllPloneGroups()
+        # call it with force_update_access=True
+        # so we manage rare case where the Plone group already exist
+        # before, in this case it is not created but we must set local_roles
+        self._createOrUpdateAllPloneGroups(force_update_access=True)
         # Call sub-product code if any
         self.adapted().onEdit(isCreated=True)
 

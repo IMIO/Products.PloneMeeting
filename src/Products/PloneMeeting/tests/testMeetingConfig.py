@@ -48,6 +48,7 @@ from Products.PloneMeeting.MeetingConfig import DUPLICATE_SHORT_NAME
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DefaultData
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
+from Products.PloneMeeting.utils import createOrUpdatePloneGroup
 from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import ObjectModifiedEvent
@@ -2399,6 +2400,25 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(cfg2_cat_ids,
                          ['deployment', 'maintenance', 'development',
                           'events', 'research', 'projects', 'marketing', 'subproducts'])
+
+    def test_pm_ConfigRelatedPloneGroupsLocalRoles(self):
+        """Some local_roles are given to Plone groups related to the MeetingConfig
+           (_meetingmanagers, _powerobservers, ...)."""
+        self.changeUser('siteadmin')
+        cfg_id = "newcfg1"
+        # check also that if a Plone group already exists, it's local_roles are set
+        plone_group_id = "{0}_{1}".format(cfg_id, MEETINGMANAGERS_GROUP_SUFFIX)
+        was_created = createOrUpdatePloneGroup(
+            groupId=plone_group_id,
+            groupTitle="Cfg1 (Meeting managers)",
+            groupSuffix=MEETINGMANAGERS_GROUP_SUFFIX)
+        self.assertTrue(was_created)
+        self.assertTrue(plone_group_id in self.portal.portal_groups.listGroupIds())
+        new_cfg = self.create('MeetingConfig', id=cfg_id, shortName=cfg_id)
+        new_cfg_id = new_cfg.getId()
+        self.assertEqual(new_cfg_id, cfg_id)
+        self.assertTrue(plone_group_id in self.portal.contacts.__ac_local_roles__)
+        self.assertTrue(plone_group_id in self.tool.__ac_local_roles__)
 
 
 def test_suite():

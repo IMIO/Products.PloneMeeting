@@ -12,6 +12,10 @@ Changelog
   `MeetingItem._send_proposing_group_suffix_if_relevant` to be selected together,
   the second notification will be send only of the first was not sent.
   [gbastien]
+- Fixed rare case where `local_roles` for `MeetingConfig` related Plone groups
+  (`_meetingmanagers`, `_powerobservers`, ...) were not correctly set on contacts,
+  this could happen if Plone group already existed (MeetingConfig created/removed/created).
+  [gbastien]
 
 4.2rc9 (2022-02-04)
 -------------------
