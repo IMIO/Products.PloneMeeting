@@ -5,8 +5,13 @@ Changelog
 4.2rc10 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Fixed `MeetingItem._send_history_aware_mail_if_relevant` when item transition back to
+  itemcreated from presented (when using WFAdaptation `presented_item_back_to_itemcreated`).
+  More over make it possible for item notifications sent by
+  `MeetingItem._send_history_aware_mail_if_relevant` and
+  `MeetingItem._send_proposing_group_suffix_if_relevant` to be selected together,
+  the second notification will be send only of the first was not sent.
+  [gbastien]
 
 4.2rc9 (2022-02-04)
 -------------------

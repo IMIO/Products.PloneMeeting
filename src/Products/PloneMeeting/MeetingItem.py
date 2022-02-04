@@ -4632,10 +4632,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """Send notifications that depends on old/new review_state."""
         self._sendAdviceToGiveMailIfRelevant(old_review_state, new_review_state)
         self._sendCopyGroupsMailIfRelevant(old_review_state, new_review_state)
-        self._send_proposing_group_suffix_if_relevant(
-            old_review_state, transition_id, new_review_state)
-        self._send_history_aware_mail_if_relevant(
-            old_review_state, transition_id, new_review_state)
+        # send e-mail to group suffix
+        # both notitifications may be enabled in configuration to manage when item
+        # back to itemcreated from presented (when using WFA
+        # presented_item_back_to_itemcreated), in this case the history_aware
+        # notification is not sent but the group_suffix notification will be
+        if not self._send_history_aware_mail_if_relevant(
+                old_review_state, transition_id, new_review_state):
+            self._send_proposing_group_suffix_if_relevant(
+                old_review_state, transition_id, new_review_state)
 
     def _sendAdviceToGiveMailIfRelevant(self,
                                         old_review_state,
@@ -4798,7 +4803,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         mail_event_id = "item_state_changed_{}__history_aware".format(transition_id)
-        if mail_event_id not in cfg.getMailItemEvents():
+        # we only consider the item validation process, if old_review_state is
+        # outside, like for example when using the 'presented_item_back_to_itemcreated'
+        # WFAdaptation, we bypass
+        if mail_event_id not in cfg.getMailItemEvents() or \
+           old_review_state not in cfg.getItemWFValidationLevels(data="state") + ["validated"]:
             return
 
         wf_direction = down_or_up_wf(self)

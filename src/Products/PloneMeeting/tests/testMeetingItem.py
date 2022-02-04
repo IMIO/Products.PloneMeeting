@@ -7632,16 +7632,17 @@ class testMeetingItem(PloneMeetingTestCase):
         self.request['debug_sendMailIfRelevant'] = True
         cfg = self.meetingConfig
         cfg.setMailMode("activated")
+        self._activate_wfas(('presented_item_back_to_itemcreated',
+                             'presented_item_back_to_proposed'))
+        self._removeConfigObjectsFor(cfg)
         self.changeUser('pmCreator1')
         item = self.create("MeetingItem", title="My item")
-        self.assertIsNone(item._send_proposing_group_suffix_if_relevant('itemcreated',
-                                                                        'propose',
-                                                                        'proposed'))
+        self.assertIsNone(item._send_proposing_group_suffix_if_relevant(
+            'itemcreated', 'propose', 'proposed'))
 
         cfg.setMailItemEvents(("item_state_changed_propose__proposing_group_suffix",))
-        recipients, subject, body = item._send_proposing_group_suffix_if_relevant('itemcreated',
-                                                                                  'propose',
-                                                                                  'proposed')
+        recipients, subject, body = item._send_proposing_group_suffix_if_relevant(
+            'itemcreated', 'propose', 'proposed')
         self.assertEqual(sorted(recipients), [
             u'M. PMManager <pmmanager@plonemeeting.org>',
             u'M. PMReviewer Level Two <pmreviewerlevel2@plonemeeting.org>',
@@ -7650,9 +7651,8 @@ class testMeetingItem(PloneMeetingTestCase):
 
         cfg.setMailItemEvents(
             ("item_state_changed_propose__proposing_group_suffix_except_manager",))
-        recipients, subject, body = item._send_proposing_group_suffix_if_relevant('itemcreated',
-                                                                                  'propose',
-                                                                                  'proposed')
+        recipients, subject, body = item._send_proposing_group_suffix_if_relevant(
+            'itemcreated', 'propose', 'proposed')
         self.assertEqual(sorted(recipients), [
             u'M. PMReviewer Level Two <pmreviewerlevel2@plonemeeting.org>',
             u'M. PMReviewer One <pmreviewer1@plonemeeting.org>'
@@ -7660,9 +7660,8 @@ class testMeetingItem(PloneMeetingTestCase):
 
         cfg.setMailItemEvents(
             ("item_state_changed_backToItemCreated__proposing_group_suffix",))
-        recipients, subject, body = item._send_proposing_group_suffix_if_relevant('proposed',
-                                                                                  'backToItemCreated',
-                                                                                  'itemcreated')
+        recipients, subject, body = item._send_proposing_group_suffix_if_relevant(
+            'proposed', 'backToItemCreated', 'itemcreated')
         self.assertEqual(sorted(recipients), [
             u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
             u'M. PMManager <pmmanager@plonemeeting.org>'
@@ -7671,9 +7670,23 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setMailItemEvents(
             ("item_state_changed_backToItemCreated__proposing_group_suffix_except_manager",))
 
-        recipients, subject, body = item._send_proposing_group_suffix_if_relevant('proposed',
-                                                                                  'backToItemCreated',
-                                                                                  'itemcreated')
+        recipients, subject, body = item._send_proposing_group_suffix_if_relevant(
+            'proposed', 'backToItemCreated', 'itemcreated')
+        self.assertEqual(sorted(recipients), [
+            u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>'
+        ])
+
+        # now check that back to itemcreated from presented sends the notification
+        self.changeUser("pmManager")
+        self.create('Meeting')
+        self.presentItem(item)
+        self.assertEqual(item.query_state(), 'presented')
+        self.do(item, 'backToItemCreated')
+        self.assertEqual(item.query_state(), 'itemcreated')
+        # in this case, the notification is sent
+        self.changeUser('pmCreator1')
+        recipients, subject, body = item._send_proposing_group_suffix_if_relevant(
+            'presented', 'backToItemCreated', 'itemcreated')
         self.assertEqual(sorted(recipients), [
             u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>'
         ])
@@ -7684,17 +7697,18 @@ class testMeetingItem(PloneMeetingTestCase):
         self.request['debug_sendMailIfRelevant'] = True
         cfg = self.meetingConfig
         cfg.setMailMode("activated")
+        self._activate_wfas(('presented_item_back_to_itemcreated',
+                             'presented_item_back_to_proposed'))
+        self._removeConfigObjectsFor(cfg)
         self.changeUser('pmCreator1')
         item = self.create("MeetingItem", title="My item that notify when propose")
-        self.assertIsNone(item._send_history_aware_mail_if_relevant('itemcreated',
-                                                                    'propose',
-                                                                    'proposed'))
+        self.assertIsNone(item._send_history_aware_mail_if_relevant(
+            'itemcreated', 'propose', 'proposed'))
 
         cfg.setMailItemEvents(("item_state_changed_propose__history_aware",))
         self.proposeItem(item, as_manager=False)
-        recipients, subject, body = item._send_history_aware_mail_if_relevant('itemcreated',
-                                                                              'propose',
-                                                                              'proposed')
+        recipients, subject, body = item._send_history_aware_mail_if_relevant(
+            'itemcreated', 'propose', 'proposed')
         # First time to state 'proposed' so appropriate proposing group suffix is notified
         self.assertEqual(sorted(recipients), [
             u'M. PMReviewer Level Two <pmreviewerlevel2@plonemeeting.org>',
@@ -7704,14 +7718,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser("pmReviewer1")
         self.backToState(item, 'itemcreated', as_manager=False)
         # No notification configured for back transition to itemcreated
-        self.assertIsNone(item._send_history_aware_mail_if_relevant('proposed',
-                                                                    'backToItemCreated',
-                                                                    'itemcreated'))
+        self.assertIsNone(item._send_history_aware_mail_if_relevant(
+            'proposed', 'backToItemCreated', 'itemcreated'))
         self.changeUser('pmCreator1')
         self.proposeItem(item, as_manager=False)
-        recipients, subject, body = item._send_history_aware_mail_if_relevant('itemcreated',
-                                                                              'propose',
-                                                                              'proposed')
+        recipients, subject, body = item._send_history_aware_mail_if_relevant(
+            'itemcreated', 'propose', 'proposed')
         # Notify pmReviewer1 as this is him that sent back the item before
         self.assertEqual(sorted(recipients), [
             u'M. PMReviewer One <pmreviewer1@plonemeeting.org>'
@@ -7722,9 +7734,8 @@ class testMeetingItem(PloneMeetingTestCase):
 
         self.changeUser('pmCreator1')
         self.proposeItem(item, as_manager=False)
-        recipients, subject, body = item._send_history_aware_mail_if_relevant('itemcreated',
-                                                                              'propose',
-                                                                              'proposed')
+        recipients, subject, body = item._send_history_aware_mail_if_relevant(
+            'itemcreated', 'propose', 'proposed')
         # Notify PMManager as this is him that sent back the item before
         self.assertEqual(sorted(recipients), [
             u'M. PMManager <pmmanager@plonemeeting.org>'
@@ -7736,9 +7747,8 @@ class testMeetingItem(PloneMeetingTestCase):
 
         self.changeUser("pmManager")
         self.backToState(item, 'itemcreated', as_manager=False)
-        recipients, subject, body = item._send_history_aware_mail_if_relevant('proposed',
-                                                                              'backToItemCreated',
-                                                                              'itemcreated')
+        recipients, subject, body = item._send_history_aware_mail_if_relevant(
+            'proposed', 'backToItemCreated', 'itemcreated')
         # Notify PMCreator as this is him that proposed the item.
         self.assertEqual(sorted(recipients), [
             u'M. PMCreator One <pmcreator1@plonemeeting.org>'
@@ -7751,9 +7761,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.validateItem(item, as_manager=False)
         self.changeUser("pmManager")
         self.backToState(item, 'proposed', as_manager=False, comment="Héhé")
-        recipients, subject, body = item._send_history_aware_mail_if_relevant('validated',
-                                                                              'backToProposed',
-                                                                              'proposed')
+        recipients, subject, body = item._send_history_aware_mail_if_relevant(
+            'validated', 'backToProposed', 'proposed')
         # Notify pmReviewer1 as this is him that valdated the item this time.
         self.assertEqual(sorted(recipients),
                          [u'M. PMReviewer One <pmreviewer1@plonemeeting.org>'])
@@ -7773,12 +7782,25 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # back to itemcreated
         self.backToState(item, 'itemcreated', as_manager=False)
-        recipients, subject, body = item._send_history_aware_mail_if_relevant('proposed',
-                                                                              'backToItemCreated',
-                                                                              'itemcreated')
+        recipients, subject, body = item._send_history_aware_mail_if_relevant(
+            'proposed', 'backToItemCreated', 'itemcreated')
         # Notify pmCreator1b as this is him that proposed the item this time.
         self.assertEqual(sorted(recipients),
                          [u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>'])
+
+        # now check that back to itemcreated or proposed from presented does nothing
+        self.create('Meeting')
+        self.presentItem(item)
+        self.assertEqual(item.query_state(), 'presented')
+        self.do(item, 'backToItemCreated')
+        self.assertEqual(item.query_state(), 'itemcreated')
+        # in this case, nothing is sent
+        self.assertIsNone(
+            item._send_history_aware_mail_if_relevant(
+                'presented', 'backToItemCreated', 'itemcreated'))
+        self.assertIsNone(
+            item._send_history_aware_mail_if_relevant(
+                'presented', 'backToProposed', 'proposed'))
 
     def test_pm_ItemEditAndView(self):
         """Just call the edit and view to check it is displayed correctly."""
