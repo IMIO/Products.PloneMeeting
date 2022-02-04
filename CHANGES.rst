@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc9 (unreleased)
+4.2rc9 (2022-02-04)
 -------------------
 
 - Fixed bug where a meeting was not correctly reloaded after transition from actions_panel.
