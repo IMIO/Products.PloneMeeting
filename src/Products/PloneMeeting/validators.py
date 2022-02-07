@@ -164,6 +164,7 @@ class WorkflowInterfacesValidator:
 class PloneGroupSettingsValidator(validator.SimpleFieldValidator):
 
     def validate(self, value):
+        import ipdb; ipdb.set_trace()
         # check that if a suffix is removed, it is not used in MeetingConfig or MeetingItems
         stored_suffixes = get_all_suffixes(only_enabled=True)
         # get removed suffixes...

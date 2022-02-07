@@ -43,9 +43,13 @@ WF_ITEM_VALIDATION_LEVELS_DISABLED = 'No enabled item validation levels found fo
 WAITING_ADVICES_FROM_STATES = (
     {'from_states': ('itemcreated', ),
      'back_states': ('itemcreated', ),
+     # must end with _waiting_advices
+     'new_state_id': None,
      },
     {'from_states': ('proposed', 'prevalidated'),
      'back_states': ('proposed', 'prevalidated'),
+     # must end with _waiting_advices
+     'new_state_id': None,
      },
 )
 WAITING_ADVICES_REMOVE_MODIFY_ACCESS = True
@@ -244,6 +248,98 @@ def clone_permissions(wf_id, base_state_id, new_state_id):
         new_state.setPermission(permission, isinstance(roles, list) and 1 or 0, roles)
 
 
+def _addDecidedState(new_state_id,
+                     transition_id,
+                     itemWorkflow,
+                     base_state_id='accepted'):
+    """Helper method for adding a decided state, base work will be done using the
+       p_base_state (cloning permission, transition start/end points)."""
+    wf = itemWorkflow
+
+    # create new state
+    wf.states.addState(new_state_id)
+
+    # create transitions, for the 'back' transition, take the same as
+    # when coming back from base_state_id
+    wf.transitions.addTransition(transition_id)
+    transition = wf.transitions[transition_id]
+    transition.setProperties(
+        title=transition_id,
+        new_state_id=new_state_id, trigger_type=1, script_name='',
+        actbox_name=transition_id, actbox_url='',
+        actbox_icon='%(portal_url)s/{0}.png'.format(transition_id), actbox_category='workflow',
+        props={'guard_expr': 'python:here.wfConditions().mayDecide()'})
+
+    # use same transitions as state base_state_id
+    back_transition_ids = wf.states[base_state_id].transitions
+    # link state and transitions
+    wf.states[new_state_id].setProperties(
+        title=new_state_id, description='',
+        transitions=back_transition_ids)
+
+    # add state to possible transitions of same origin state as for base_state
+    # get the transition leading to base_state then get the state it is going from
+    tr_leading_to_base_state = [tr for tr in wf.transitions.values()
+                                if tr.new_state_id == base_state_id][0].id
+    # get the state, the transition 'delay' is going from
+    origin_state_id = [state for state in wf.states.values()
+                       if tr_leading_to_base_state in state.transitions][0].id
+    wf.states[origin_state_id].transitions = \
+        wf.states[origin_state_id].transitions + (transition_id, )
+
+    # use same permissions as used by the base_state
+    base_state = wf.states[base_state_id]
+    new_state = wf.states[new_state_id]
+    for permission, roles in base_state.permission_roles.iteritems():
+        new_state.setPermission(permission, 0, roles)
+
+
+def _addIsolatedState(new_state_id,
+                      origin_state_id,
+                      origin_transition_id,
+                      origin_transition_guard_expr_name,
+                      back_transition_id,
+                      itemWorkflow,
+                      back_transition_guard_expr_name='mayCorrect()',
+                      base_state_id='accepted'):
+    """Add an isolated state with transitions go and back from/to another state."""
+    wf = itemWorkflow
+    # create new state
+    wf.states.addState(new_state_id)
+    new_state = wf.states[new_state_id]
+    # use same permissions as used by the base_state_id state (default 'accepted')
+    base_state = wf.states[base_state_id]
+    for permission, roles in base_state.permission_roles.iteritems():
+        new_state.setPermission(permission, 0, roles)
+
+    # transitions
+    for transition_id, destination_state_id, guard_expr_name in (
+            (origin_transition_id, new_state_id, origin_transition_guard_expr_name),
+            (back_transition_id, origin_state_id, back_transition_guard_expr_name)):
+        if transition_id not in wf.transitions:
+            wf.transitions.addTransition(transition_id)
+            transition = wf.transitions[transition_id]
+            transition.setProperties(
+                title=transition_id,
+                new_state_id=destination_state_id, trigger_type=1, script_name='',
+                actbox_name=transition_id, actbox_url='',
+                actbox_icon='%(portal_url)s/{0}.png'.format(transition_id),
+                actbox_category='workflow',
+                props={'guard_expr': 'python:here.wfConditions().{0}'.format(guard_expr_name)})
+
+    # link states and transitions
+    # new_state
+    new_state.setProperties(
+        title=new_state_id, description='',
+        transitions=[back_transition_id])
+    # validate_state
+    origin_state = wf.states[origin_state_id]
+    origin_state.setProperties(
+        title=origin_state.title, description=origin_state.description,
+        transitions=origin_state.transitions + (origin_transition_id, ))
+    return new_state
+
+
 def _performWorkflowAdaptations(meetingConfig, logger=logger):
     '''This function applies workflow adaptations as specified by the p_meetingConfig.'''
 
@@ -265,94 +361,6 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
 
     itemWorkflow = meetingConfig.getItemWorkflow(True)
     meetingWorkflow = meetingConfig.getMeetingWorkflow(True)
-
-    def _addDecidedState(new_state_id,
-                         transition_id,
-                         base_state_id='accepted'):
-        """Helper method for adding a decided state, base work will be done using the
-           p_base_state (cloning permission, transition start/end points)."""
-        wf = itemWorkflow
-
-        # create new state
-        wf.states.addState(new_state_id)
-
-        # create transitions, for the 'back' transition, take the same as
-        # when coming back from base_state_id
-        wf.transitions.addTransition(transition_id)
-        transition = wf.transitions[transition_id]
-        transition.setProperties(
-            title=transition_id,
-            new_state_id=new_state_id, trigger_type=1, script_name='',
-            actbox_name=transition_id, actbox_url='',
-            actbox_icon='%(portal_url)s/{0}.png'.format(transition_id), actbox_category='workflow',
-            props={'guard_expr': 'python:here.wfConditions().mayDecide()'})
-
-        # use same transitions as state base_state_id
-        back_transition_ids = wf.states[base_state_id].transitions
-        # link state and transitions
-        wf.states[new_state_id].setProperties(
-            title=new_state_id, description='',
-            transitions=back_transition_ids)
-
-        # add state to possible transitions of same origin state as for base_state
-        # get the transition leading to base_state then get the state it is going from
-        tr_leading_to_base_state = [tr for tr in wf.transitions.values()
-                                    if tr.new_state_id == base_state_id][0].id
-        # get the state, the transition 'delay' is going from
-        origin_state_id = [state for state in wf.states.values()
-                           if tr_leading_to_base_state in state.transitions][0].id
-        wf.states[origin_state_id].transitions = \
-            wf.states[origin_state_id].transitions + (transition_id, )
-
-        # use same permissions as used by the base_state
-        base_state = wf.states[base_state_id]
-        new_state = wf.states[new_state_id]
-        for permission, roles in base_state.permission_roles.iteritems():
-            new_state.setPermission(permission, 0, roles)
-
-    def _addIsolatedState(new_state_id,
-                          origin_state_id,
-                          origin_transition_id,
-                          origin_transition_guard_expr_name,
-                          back_transition_id,
-                          back_transition_guard_expr_name='mayCorrect()',
-                          base_state_id='accepted'):
-        """Add an isolated state with transitions go and back from/to another state."""
-        wf = itemWorkflow
-        # create new state
-        wf.states.addState(new_state_id)
-        new_state = wf.states[new_state_id]
-        # use same permissions as used by the base_state_id state (default 'accepted')
-        base_state = wf.states[base_state_id]
-        for permission, roles in base_state.permission_roles.iteritems():
-            new_state.setPermission(permission, 0, roles)
-
-        # transitions
-        for transition_id, destination_state_id, guard_expr_name in (
-                (origin_transition_id, new_state_id, origin_transition_guard_expr_name),
-                (back_transition_id, origin_state_id, back_transition_guard_expr_name)):
-            if transition_id not in wf.transitions:
-                wf.transitions.addTransition(transition_id)
-                transition = wf.transitions[transition_id]
-                transition.setProperties(
-                    title=transition_id,
-                    new_state_id=destination_state_id, trigger_type=1, script_name='',
-                    actbox_name=transition_id, actbox_url='',
-                    actbox_icon='%(portal_url)s/{0}.png'.format(transition_id),
-                    actbox_category='workflow',
-                    props={'guard_expr': 'python:here.wfConditions().{0}'.format(guard_expr_name)})
-
-        # link states and transitions
-        # new_state
-        new_state.setProperties(
-            title=new_state_id, description='',
-            transitions=[back_transition_id])
-        # validate_state
-        origin_state = wf.states[origin_state_id]
-        origin_state.setProperties(
-            title=origin_state.title, description=origin_state.description,
-            transitions=origin_state.transitions + (origin_transition_id, ))
-        return new_state
 
     def _doWichValidationWithReturnedToProposingGroup(new_state_id,
                                                       base_state_id,
@@ -748,7 +756,8 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 if 'waiting_advices_from_every_val_levels' in wfAdaptations or \
                    'waiting_advices_from_before_last_val_level' in wfAdaptations or \
                    'waiting_advices_from_last_val_level' in wfAdaptations:
-                    item_validation_states = meetingConfig.getItemWFValidationLevels(data='state', only_enabled=True)
+                    item_validation_states = meetingConfig.getItemWFValidationLevels(
+                        data='state', only_enabled=True)
                     from_states = list(item_validation_states)
                     back_states = list(item_validation_states)
                 else:
@@ -763,7 +772,8 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 # if nothing left, continue
                 if not from_state_ids or not back_state_ids:
                     continue
-                new_state_id = NEW_STATE_ID_PATTERN.format('__or__'.join(from_state_ids))
+                new_state_id = infos['new_state_id'] or \
+                    NEW_STATE_ID_PATTERN.format('__or__'.join(from_state_ids))
                 back_transition_ids = []
                 if new_state_id not in wf.states:
                     wf.states.addState(new_state_id)
@@ -839,32 +849,38 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         # for a next meeting thru the doPostpone_next_meeting method
         elif wfAdaptation == 'postpone_next_meeting':
             _addDecidedState(new_state_id='postponed_next_meeting',
-                             transition_id='postpone_next_meeting')
+                             transition_id='postpone_next_meeting',
+                             itemWorkflow=itemWorkflow)
 
         # "mark_not_applicable" add state 'marked_not_applicable' in the item workflow
         elif wfAdaptation == 'mark_not_applicable':
             _addDecidedState(new_state_id='marked_not_applicable',
-                             transition_id='mark_not_applicable')
+                             transition_id='mark_not_applicable',
+                             itemWorkflow=itemWorkflow)
 
         # "delayed" add state 'delayed' in the item workflow
         elif wfAdaptation == 'delayed':
             _addDecidedState(new_state_id='delayed',
-                             transition_id='delay')
+                             transition_id='delay',
+                             itemWorkflow=itemWorkflow)
 
         # "removed" and "removed_and_duplicated" add state 'removed' in the item workflow
         elif wfAdaptation in ('removed', 'removed_and_duplicated'):
             _addDecidedState(new_state_id='removed',
-                             transition_id='remove')
+                             transition_id='remove',
+                             itemWorkflow=itemWorkflow)
 
         # "refused" add state 'refused' in the item workflow
         elif wfAdaptation == 'refused':
             _addDecidedState(new_state_id='refused',
-                             transition_id='refuse')
+                             transition_id='refuse',
+                             itemWorkflow=itemWorkflow)
 
         # "accepted_but_modified" add state 'accepted_but_modified' in the item workflow
         elif wfAdaptation == 'accepted_but_modified':
             _addDecidedState(new_state_id='accepted_but_modified',
-                             transition_id='accept_but_modify')
+                             transition_id='accept_but_modify',
+                             itemWorkflow=itemWorkflow)
 
         # "pre_accepted" add state 'pre_accepted'
         # from 'itemfrozen' in the item WF
@@ -876,7 +892,8 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 origin_transition_id='pre_accept',
                 origin_transition_guard_expr_name='mayDecide()',
                 back_transition_guard_expr_name="mayCorrect('itempublished')",
-                back_transition_id='backToItemPublished')
+                back_transition_id='backToItemPublished',
+                itemWorkflow=itemWorkflow)
             # ... then add output transitions to 'accepted' and 'accepted_but_modified'
             out_transitions = ['backToItemPublished', 'accept']
             if 'accepted_but_modified' in wfAdaptations:
@@ -893,7 +910,8 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 origin_transition_id='accept_out_of_meeting',
                 origin_transition_guard_expr_name='mayAccept_out_of_meeting()',
                 back_transition_guard_expr_name="mayCorrect('validated')",
-                back_transition_id='backToValidatedFromAcceptedOutOfMeeting')
+                back_transition_id='backToValidatedFromAcceptedOutOfMeeting',
+                itemWorkflow=itemWorkflow)
 
         # "accepted_out_of_meeting_emergency" add state 'accepted_out_of_meeting_emergency'
         # from 'validated' in the item WF
@@ -905,7 +923,8 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 origin_transition_id='accept_out_of_meeting_emergency',
                 origin_transition_guard_expr_name='mayAccept_out_of_meeting_emergency()',
                 back_transition_guard_expr_name="mayCorrect('validated')",
-                back_transition_id='backToValidatedFromAcceptedOutOfMeetingEmergency')
+                back_transition_id='backToValidatedFromAcceptedOutOfMeetingEmergency',
+                itemWorkflow=itemWorkflow)
 
         # "presented_item_back_to_XXX" allows the MeetingManagers to send a presented
         # item directly back to "XXX" item validation state in addition to back to "validated"
@@ -934,7 +953,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             # double check if applied is True or False, we need that boolean
             if not isinstance(applied, bool):
                 raise Exception('ToolPloneMeeting.performCustomAdviceWFAdaptations must return a boolean value!')
-            # if performCustomWFAdaptations managed wfAdaptation, continue with next one
+            # if performCustomAdviceWFAdaptations managed wfAdaptation, continue with next one
             if applied:
                 logger.info(ADVICE_WF_APPLIED_CUSTOM % (wfAdaptation,
                                                         advice_wf_id,

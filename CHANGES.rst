@@ -16,6 +16,12 @@ Changelog
   (`_meetingmanagers`, `_powerobservers`, ...) were not correctly set on contacts,
   this could happen if Plone group already existed (MeetingConfig created/removed/created).
   [gbastien]
+- Moved `_addDecidedState` and `_addIsolatedState` out of
+  `adaptations._performWorkflowAdaptations` so it can be imported from outside.
+  [gbastien]
+- Added `new_state_id` to `adaptations.WAITING_ADVICES_FROM_STATES` to be able
+  to set an arbitrary new state id instead the generated one.
+  [gbastien]
 
 4.2rc9 (2022-02-04)
 -------------------

@@ -2647,8 +2647,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             org_uid = self._getGroupManagingItem(item_state)
             # get the "back" states, item_state is like "proposed_waiting_advices"
             # of "itemcreated__or__proposed_waiting_advices"
+            # or when using WAITING_ADVICES_FROM_STATES 'new_state_id',
+            # we use the "from_states"
             states = item_state.replace("_waiting_advices", "")
-            states = states.split("__or__")
+            if "__or__" in states:
+                states = states.split("__or__")
+            else:
+                from Products.PloneMeeting.model.adaptations import WAITING_ADVICES_FROM_STATES
+                found = False
+                for infos in WAITING_ADVICES_FROM_STATES:
+                    if infos['new_state_id'] == states:
+                        states = infos['new_state_id']
+                        break
+                if not found:
+                    # make sure we have a list
+                    states = [states]
             suffixes = cfg.getItemWFValidationLevels(
                 states=states, data='suffix', only_enabled=True, return_state_singleton=False)
             if tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes):
