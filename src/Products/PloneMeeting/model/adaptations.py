@@ -39,7 +39,7 @@ WF_ITEM_VALIDATION_LEVELS_DISABLED = 'No enabled item validation levels found fo
 # list of dict containing infos about 'waiting_advices' state(s) to add
 # a state will be added by "dict", 'from_states' are list of states leading to the new state
 # 'back_states' are states to come back from the new state and 'perm_cloned_state' is the state
-# to use to define permissions of the new state minus every 'edit' permissions.
+# to use to define permissions of the new state minus every 'edit' permissions
 WAITING_ADVICES_FROM_STATES = (
     {'from_states': ('itemcreated', ),
      'back_states': ('itemcreated', ),
@@ -48,6 +48,7 @@ WAITING_ADVICES_FROM_STATES = (
      'use_custom_back_transition_title_for': (),
      'use_custom_state_title': True,
      'use_custom_transition_title_for': (),
+     'remove_modify_access': True,
      # must end with _waiting_advices
      'new_state_id': None,
      },
@@ -58,6 +59,7 @@ WAITING_ADVICES_FROM_STATES = (
      'use_custom_back_transition_title_for': (),
      'use_custom_state_title': True,
      'use_custom_transition_title_for': (),
+     'remove_modify_access': True,
      # must end with _waiting_advices
      'new_state_id': None,
      },
