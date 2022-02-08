@@ -593,32 +593,9 @@ class MeetingItemWorkflowConditions(object):
                 break
         return hasAdvicesToGive
 
-    def _mayWaitAdvices(self, destination_state):
-        """Helper method used in every mayWait_advices_from_ guards."""
-        res = False
-        if _checkPermission(ReviewPortalContent, self.context):
-            res = True
-        msg = self._check_required_data(destination_state)
-        if msg is not None:
-            res = msg
-        elif not self._hasAdvicesToGive(destination_state):
-            # check if there are advices to give in destination state
-            res = No(_('advice_required_to_ask_advices'))
-        return res
+    security.declarePublic('mayWait_advices')
 
-    def _getWaitingAdvicesStateFrom(self, originStateId):
-        """Get the xxx_waiting_advices state from originState,
-           this will manage the fact that state can be 'itemcreated_waiting_advices' or
-           'itemcreated__or__proposed_waiting_advices'."""
-        itemWF = self.cfg.getItemWorkflow(theObject=True)
-        originState = itemWF.states[originStateId]
-        waiting_advices_transition = [tr for tr in originState.transitions
-                                      if tr.startswith('wait_advices_from')][0]
-        return itemWF.transitions[waiting_advices_transition].new_state_id
-
-    security.declarePublic('mayWait_advices_from')
-
-    def mayWait_advices_from(self, fromState=None):
+    def mayWait_advices(self, from_state, destination_state):
         """ """
         # when using the 'waiting_advices_from_XXX' WFAdaptation
         # either from last_level, or from every levels
@@ -627,26 +604,33 @@ class MeetingItemWorkflowConditions(object):
         # bypass for Manager
         if _checkPermission(ManagePortal, self.context):
             res = True
-        else:
-            wfas = self.cfg.getWorkflowAdaptations()
-            from_states = []
-            if 'waiting_advices' in wfas:
-                if 'waiting_advices_from_last_val_level' in wfas:
-                    from_states.append(self._getLastValidationState())
-                if 'waiting_advices_from_before_last_val_level' in wfas:
-                    from_states.append(self._getLastValidationState(before_last=True))
-                if 'waiting_advices_from_every_val_levels' in wfas:
-                    item_validation_states = self.cfg.getItemWFValidationLevels(
-                        data='state', only_enabled=True)
-                    from_states = list(item_validation_states)
-                if not from_states:
-                    # use custom values from WAITING_ADVICES_FROM_STATES
-                    from Products.PloneMeeting.model import adaptations
-                    for waiting_advice_config in adaptations.WAITING_ADVICES_FROM_STATES:
-                        from_states += list(waiting_advice_config['from_states'])
-                if fromState in from_states:
-                    res = True
-        return res and self._mayWaitAdvices(self._getWaitingAdvicesStateFrom(fromState))
+        elif _checkPermission(ReviewPortalContent, self.context):
+            msg = self._check_required_data(destination_state)
+            if msg is not None:
+                res = msg
+            else:
+                wfas = self.cfg.getWorkflowAdaptations()
+                from_states = []
+                if 'waiting_advices' in wfas:
+                    if 'waiting_advices_from_last_val_level' in wfas:
+                        from_states.append(self._getLastValidationState())
+                    if 'waiting_advices_from_before_last_val_level' in wfas:
+                        from_states.append(self._getLastValidationState(before_last=True))
+                    if 'waiting_advices_from_every_val_levels' in wfas:
+                        item_validation_states = self.cfg.getItemWFValidationLevels(
+                            data='state', only_enabled=True)
+                        from_states = list(item_validation_states)
+                    if not from_states:
+                        # use custom values from WAITING_ADVICES_FROM_STATES
+                        from Products.PloneMeeting.model import adaptations
+                        for waiting_advice_config in adaptations.WAITING_ADVICES_FROM_STATES:
+                            from_states += list(waiting_advice_config['from_states'])
+                    if from_state in from_states:
+                        res = True
+                if res and not self._hasAdvicesToGive(destination_state):
+                    # check if there are advices to give in destination state
+                    res = No(_('advice_required_to_ask_advices'))
+        return res
 
     security.declarePublic('mayAccept_out_of_meeting')
 
@@ -689,7 +673,8 @@ class MeetingItemWorkflowActions(object):
     def _getCustomActionName(self, transitionId):
         """ """
         action = None
-        if transitionId in self.cfg.getItemWFValidationLevels(data='leading_transition', only_enabled=True):
+        if transitionId in self.cfg.getItemWFValidationLevels(
+                data='leading_transition', only_enabled=True):
             action = 'doProposeToNextValidationLevel'
         elif transitionId.startswith('wait_advices_from'):
             action = 'doWait_advices_from'

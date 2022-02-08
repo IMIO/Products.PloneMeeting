@@ -38,24 +38,32 @@ WF_ITEM_VALIDATION_LEVELS_DISABLED = 'No enabled item validation levels found fo
 
 # list of dict containing infos about 'waiting_advices' state(s) to add
 # a state will be added by "dict", 'from_states' are list of states leading to the new state
-# 'back_states' are states to come back from the new state and 'perm_cloned_states' are states
+# 'back_states' are states to come back from the new state and 'perm_cloned_state' is the state
 # to use to define permissions of the new state minus every 'edit' permissions.
 WAITING_ADVICES_FROM_STATES = (
     {'from_states': ('itemcreated', ),
      'back_states': ('itemcreated', ),
+     'perm_cloned_state': 'validated',
+     'use_custom_icon': False,
+     'use_custom_back_transition_title_for': (),
+     'use_custom_state_title': True,
+     'use_custom_transition_title_for': (),
      # must end with _waiting_advices
      'new_state_id': None,
      },
     {'from_states': ('proposed', 'prevalidated'),
      'back_states': ('proposed', 'prevalidated'),
+     'perm_cloned_state': 'validated',
+     'use_custom_icon': False,
+     'use_custom_back_transition_title_for': (),
+     'use_custom_state_title': True,
+     'use_custom_transition_title_for': (),
      # must end with _waiting_advices
      'new_state_id': None,
      },
 )
-WAITING_ADVICES_REMOVE_MODIFY_ACCESS = True
-WAITING_ADVICES_USE_CUSTOM_ICON = True
-WAITING_ADVICES_USE_CUSTOM_BACK_TR_TITLE_FOR = ()
-WAITING_ADVICES_USE_CUSTOM_STATE_TITLE = True
+# defined here to be importable
+WAITING_ADVICES_FROM_TRANSITION_ID_PATTERN = 'wait_advices_from_{0}__to__{1}'
 
 
 def grantPermission(state, perm, role):
@@ -746,7 +754,6 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                     edit_permissions.append(field.write_permission)
             NEW_STATE_ID_PATTERN = '{0}_waiting_advices'
             # for transition to 'xxx_waiting_advices', we need to know where we are coming from
-            FROM_TRANSITION_ID_PATTERN = 'wait_advices_from_{0}'
             for infos in WAITING_ADVICES_FROM_STATES:
                 # while using WFAs 'waiting_advices_from_before_last_val_level'
                 # or 'waiting_advices_from_last_val_level', infos['from_states']/infos['back_states']
@@ -772,7 +779,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 # if nothing left, continue
                 if not from_state_ids or not back_state_ids:
                     continue
-                new_state_id = infos['new_state_id'] or \
+                new_state_id = infos.get('new_state_id', None) or \
                     NEW_STATE_ID_PATTERN.format('__or__'.join(from_state_ids))
                 back_transition_ids = []
                 if new_state_id not in wf.states:
@@ -780,42 +787,52 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                     new_state = wf.states[new_state_id]
                     # Create new transitions to and from new_state
                     for from_state_id in from_state_ids:
-                        from_transition_id = FROM_TRANSITION_ID_PATTERN.format(from_state_id)
-                        wf.transitions.addTransition(from_transition_id)
-                        transition = wf.transitions[from_transition_id]
-                        icon_name = 'wait_advices_from'
-                        if WAITING_ADVICES_USE_CUSTOM_ICON:
-                            icon_name = from_transition_id
-                        transition.setProperties(
-                            title='wait_advices_from',
-                            new_state_id=new_state_id, trigger_type=1, script_name='',
-                            actbox_name=from_transition_id, actbox_url='',
-                            actbox_icon='%(portal_url)s/{0}.png'.format(icon_name),
-                            actbox_category='workflow',
-                            props={'guard_expr': 'python:here.wfConditions().mayWait_advices_from("{0}")'.format(
-                                from_state_id)})
+                        from_transition_id = WAITING_ADVICES_FROM_TRANSITION_ID_PATTERN.format(
+                            from_state_id, new_state_id)
+                        if from_transition_id not in wf.transitions:
+                            wf.transitions.addTransition(from_transition_id)
+                            transition = wf.transitions[from_transition_id]
+                            icon_name = 'wait_advices_from'
+                            if infos.get('use_custom_icon', False):
+                                icon_name = from_transition_id
+                            tr_title = 'wait_advices_from'
+                            if from_transition_id in infos.get('use_custom_transition_title_for', ()):
+                                tr_title = from_transition_id
+                            transition.setProperties(
+                                title=tr_title,
+                                new_state_id=new_state_id, trigger_type=1, script_name='',
+                                actbox_name=from_transition_id, actbox_url='',
+                                actbox_icon='%(portal_url)s/{0}.png'.format(icon_name),
+                                actbox_category='workflow',
+                                props={
+                                    'guard_expr':
+                                    'python:here.wfConditions().mayWait_advices("{0}", "{1}")'.format(
+                                        from_state_id, new_state_id)})
                     for back_state_id in back_state_ids:
                         back_transition_id = 'backTo_{0}_from_waiting_advices'.format(back_state_id)
                         back_transition_ids.append(back_transition_id)
-                        wf.transitions.addTransition(back_transition_id)
-                        transition = wf.transitions[back_transition_id]
-                        back_transition_title = back_transition_id
-                        if back_state_id not in WAITING_ADVICES_USE_CUSTOM_BACK_TR_TITLE_FOR:
-                            # reuse the existing back transition for title
-                            existing_back_transition_id = 'backTo%s%s' % (back_state_id[0].upper(), back_state_id[1:])
-                            if existing_back_transition_id in wf.transitions:
-                                back_transition_title = wf.transitions[existing_back_transition_id].title
-                        transition.setProperties(
-                            title=back_transition_title,
-                            new_state_id=back_state_id, trigger_type=1, script_name='',
-                            actbox_name=back_transition_id, actbox_url='',
-                            actbox_icon='%(portal_url)s/{0}.png'.format(back_transition_id),
-                            actbox_category='workflow',
-                            props={'guard_expr': 'python:here.wfConditions().mayCorrect("%s")' % back_state_id})
+                        if back_transition_id not in wf.transitions:
+                            wf.transitions.addTransition(back_transition_id)
+                            transition = wf.transitions[back_transition_id]
+                            back_transition_title = back_transition_id
+                            if back_state_id not in infos.get('use_custom_back_transition_title_for', ()):
+                                # reuse the existing back transition for title
+                                existing_back_transition_id = 'backTo%s%s' % (
+                                    back_state_id[0].upper(), back_state_id[1:])
+                                if existing_back_transition_id in wf.transitions:
+                                    back_transition_title = wf.transitions[existing_back_transition_id].title
+                            transition.setProperties(
+                                title=back_transition_title,
+                                new_state_id=back_state_id, trigger_type=1, script_name='',
+                                actbox_name=back_transition_id, actbox_url='',
+                                actbox_icon='%(portal_url)s/{0}.png'.format(back_transition_id),
+                                actbox_category='workflow',
+                                props={'guard_expr': 'python:here.wfConditions().mayCorrect("%s")'
+                                       % back_state_id})
 
                     # Update connections between states and transitions
                     new_state_title = new_state_id
-                    if not WAITING_ADVICES_USE_CUSTOM_STATE_TITLE:
+                    if not infos.get('use_custom_state_title', True):
                         new_state_title = 'waiting_advices'
                     new_state.setProperties(title=new_state_title,
                                             description='',
@@ -823,15 +840,16 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                     for from_state_id in from_state_ids:
                         from_state = wf.states[from_state_id]
                         existing_transitions = from_state.transitions
-                        from_transition_id = FROM_TRANSITION_ID_PATTERN.format(from_state_id)
+                        from_transition_id = WAITING_ADVICES_FROM_TRANSITION_ID_PATTERN.format(
+                            from_state_id, new_state_id)
                         from_state.setProperties(title=from_state_id, description='',
                                                  transitions=existing_transitions + (from_transition_id, ))
 
                     # Initialize permission->roles mapping for new state "to_transition",
                     # which is the same as state 'validated'
-                    perm_cloned_state = wf.states['validated']
+                    perm_cloned_state = wf.states[infos.get('perm_cloned_state', 'validated')]
                     for permission, roles in perm_cloned_state.permission_roles.iteritems():
-                        if WAITING_ADVICES_REMOVE_MODIFY_ACCESS and permission in edit_permissions:
+                        if infos.get('remove_modify_access', True) and permission in edit_permissions:
                             # remove every roles but 'Manager', 'MeetingManager',
                             # 'MeetingBudgetImpactEditor' and 'MeetingInternalNotesEditor'
                             # the intersection takes care of keeping the relevant roles

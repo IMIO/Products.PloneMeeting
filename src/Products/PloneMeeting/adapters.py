@@ -303,23 +303,6 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         """
           Manage icons to display before the icons managed by PrettyLink._icons.
         """
-
-        def _icon_waiting_advices(res):
-            """Manage the waiting_advices icon :
-               - if some MeetingItem.get_waiting_advices_icon_advices,
-                 then check if some are giveable here, if one found,
-                 then return relevant icon :
-                 - red if down WF;
-                 - green if up WF again;
-                 - blue otherwise.
-               - else return blue icon."""
-            icon_name, msgid = self.context.wfConditions().get_waiting_advices_icon_infos()
-            res.append((icon_name,
-                        translate(msgid,
-                                  domain="PloneMeeting",
-                                  context=self.request)))
-            return res
-
         res = []
 
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -416,26 +399,6 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         elif itemState == 'removed':
             res.append(('removed.png',
                         translate('icon_help_removed',
-                                  domain="PloneMeeting",
-                                  context=self.request)))
-        elif itemState == 'waiting_advices':
-            res.append(('wait_advices_from.png',
-                        translate('icon_help_waiting_advices',
-                                  domain="PloneMeeting",
-                                  context=self.request)))
-        elif itemState == 'itemcreated_waiting_advices':
-            res.append(('wait_advices_from_itemcreated.png',
-                        translate('icon_help_waiting_advices_from_itemcreated',
-                                  domain="PloneMeeting",
-                                  context=self.request)))
-        elif itemState == 'proposed_waiting_advices':
-            res.append(('wait_advices_from_proposed.png',
-                        translate('icon_help_waiting_advices_from_proposed',
-                                  domain="PloneMeeting",
-                                  context=self.request)))
-        elif itemState == 'prevalidated_waiting_advices':
-            res.append(('wait_advices_from_prevalidated.png',
-                        translate('icon_help_waiting_advices_from_prevalidated',
                                   domain="PloneMeeting",
                                   context=self.request)))
         elif itemState.endswith('_waiting_advices'):
