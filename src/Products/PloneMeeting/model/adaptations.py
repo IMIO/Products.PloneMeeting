@@ -772,7 +772,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 # if nothing left, continue
                 if not from_state_ids or not back_state_ids:
                     continue
-                new_state_id = infos['new_state_id'] or \
+                new_state_id = infos.get('new_state_id', None) or \
                     NEW_STATE_ID_PATTERN.format('__or__'.join(from_state_ids))
                 back_transition_ids = []
                 if new_state_id not in wf.states:
