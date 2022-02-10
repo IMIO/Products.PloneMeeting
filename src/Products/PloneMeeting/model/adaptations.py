@@ -45,10 +45,13 @@ WAITING_ADVICES_FROM_STATES = (
      'back_states': ('itemcreated', ),
      'perm_cloned_state': 'validated',
      'use_custom_icon': False,
-     'use_custom_back_transition_title_for': (),
+     # default to "validated", this avoid using the backToValidated title that
+     # is translated to "Remove from meeting"
+     'use_custom_back_transition_title_for': ("validated", ),
      'use_custom_state_title': True,
      'use_custom_transition_title_for': (),
      'remove_modify_access': True,
+     'adviser_may_validate': False,
      # must end with _waiting_advices
      'new_state_id': None,
      },
@@ -56,10 +59,12 @@ WAITING_ADVICES_FROM_STATES = (
      'back_states': ('proposed', 'prevalidated'),
      'perm_cloned_state': 'validated',
      'use_custom_icon': False,
-     'use_custom_back_transition_title_for': (),
+     # is translated to "Remove from meeting"
+     'use_custom_back_transition_title_for': ("validated", ),
      'use_custom_state_title': True,
      'use_custom_transition_title_for': (),
      'remove_modify_access': True,
+     'adviser_may_validate': False,
      # must end with _waiting_advices
      'new_state_id': None,
      },
@@ -782,7 +787,8 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 else:
                     from_states = list(infos['from_states'])
                     back_states = list(infos['back_states'])
-                if 'waiting_advices_adviser_may_validate' in wfAdaptations:
+                if 'waiting_advices_adviser_may_validate' in wfAdaptations or \
+                   infos.get('adviser_may_validate', False):
                     back_states.append('validated')
 
                 # wipeout 'from_states' and 'back_states' to remove unexisting ones
@@ -810,7 +816,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                             icon_name = from_transition_id
                         tr_title = 'wait_advices_from'
                         if from_transition_id in infos.get('use_custom_transition_title_for', ()):
-                            tr_title = "{0}_{1}".format(tr_title, new_state_id)
+                            tr_title = from_transition_id
                         transition.setProperties(
                             title=tr_title,
                             new_state_id=new_state_id, trigger_type=1, script_name='',
