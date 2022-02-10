@@ -712,8 +712,12 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         if self.context.query_state() == 'validated':
             isPresentable = self.context.wfConditions().mayPresent()
 
+        # this volatile is invalidated when user/groups changed
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+
         # check also portal_url in case application is accessed thru different URI
-        return (repr(self.context), self.context.modified(), advicesIndexModified,
+        return (repr(self.context), self.context.modified(), advicesIndexModified, date,
                 sent_to,
                 isRealManager, isManager, isEditorUser,
                 userAbleToCorrectItemWaitingAdvices, isPowerObserverHiddenHistory,
@@ -795,7 +799,8 @@ class MeetingActionsPanelView(BaseActionsPanelView):
                                    'renderTransitions',
                                    'renderOwnDelete',
                                    'renderDeleteWholeMeeting',
-                                   'renderActions', ]
+                                   'renderActions',
+                                   'renderHistory']
 
     def __call___cachekey(method,
                           self,

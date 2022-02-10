@@ -4509,13 +4509,14 @@ class testMeetingItem(PloneMeetingTestCase):
         originalCategory = item.getCategory()
         item.setCategory('')
         self.changeUser('pmManager')
-        self.assertFalse('propose' in self.transitions(item))
+        first_tr = self.get_transitions_for_proposing_item(first_level=True)[0]
+        self.assertFalse(first_tr in self.transitions(item))
         actions_panel._transitions = None
         no_category_rendered_actions_panel = actions_panel()
         self.assertNotEqual(no_category_rendered_actions_panel, rendered_actions_panel)
         item.setCategory(originalCategory)
         item._update_after_edit()
-        self.assertTrue('propose' in self.transitions(item))
+        self.assertTrue(first_tr in self.transitions(item))
         # changed again, this time we get same result as originally
         actions_panel._transitions = None
         category_rendered_actions_panel = actions_panel()
@@ -4659,6 +4660,25 @@ class testMeetingItem(PloneMeetingTestCase):
         self.cleanMemoize()
         afterMCEdit_rendered_actions_panel = actions_panel()
         self.assertNotEqual(beforeMCEdit_rendered_actions_panel, afterMCEdit_rendered_actions_panel)
+
+    def test_pm_ItemActionsPanelCachingInvalidatedWhenUserGroupsChanged(self):
+        """Actions panel cache is invalidated when the the groups of a user changed.
+           Here we will make a creator be a reviewer."""
+        item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
+        # user not able to validate
+        self.assertFalse("validate" in self.transitions(item))
+        actions_panel = item.restrictedTraverse('@@actions_panel')
+        beforeUserGroupsEdit_rendered_actions_panel = actions_panel()
+        # remove every reviewers so creators may validate
+        rev_group = self.portal.portal_groups.getGroupById(self.developers_reviewers)
+        rev_users = rev_group.getMemberIds()
+        self._removeAllMembers(rev_group, rev_users)
+        # now user able to validate
+        self.assertTrue("validate" in self.transitions(item))
+        actions_panel = item.restrictedTraverse('@@actions_panel')
+        afterUserGroupsEdit_rendered_actions_panel = actions_panel()
+        self.assertNotEqual(beforeUserGroupsEdit_rendered_actions_panel,
+                            afterUserGroupsEdit_rendered_actions_panel)
 
     def test_pm_ItemActionsPanelCachingProfiles(self):
         """Actions panel cache is generated for various profiles, check

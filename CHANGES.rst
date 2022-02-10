@@ -25,6 +25,8 @@ Changelog
 - Fixed link to create a new item not displayed even when default item template
   not restricted to groups.
   [gbastien]
+- Invalidate item `actions_panel` caching when some user/groups changed.
+  [gbastien]
 
 4.2rc9 (2022-02-04)
 -------------------
