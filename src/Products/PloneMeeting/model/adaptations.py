@@ -793,6 +793,8 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                     continue
                 new_state_id = infos.get('new_state_id', None) or \
                     NEW_STATE_ID_PATTERN.format('__or__'.join(from_state_ids))
+                if not new_state_id.endswith('_waiting_advices'):
+                    raise Exception('Waiting advices "new_state_id" must end with "_waiting_advices" !')
                 back_transition_ids = []
                 if new_state_id not in wf.states:
                     wf.states.addState(new_state_id)
