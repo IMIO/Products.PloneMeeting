@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc10 (unreleased)
+4.2rc10 (2022-02-10)
 --------------------
 
 - Fixed `MeetingItem._send_history_aware_mail_if_relevant` when item transition back to
