@@ -80,21 +80,30 @@ class testPortlets(PloneMeetingTestCase):
            to some groups, this let's make the link "Create empty item" available
            to only some groups.'''
         cfg = self.meetingConfig
-        self.changeUser('siteadmin')
         empty_item_template = cfg.itemtemplates.get(ITEM_DEFAULT_TEMPLATE_ID)
         empty_item_template_uid = empty_item_template.UID()
-        empty_item_template.setTemplateUsingGroups([self.developers_uid])
-        empty_item_template.reindexObject(idxs=['templateUsingGroups', ])
-        # available for pmCreator1 that is member of developers
+        # by default template is not restricted so available to everybody
         self.changeUser('pmCreator1')
         pmFolder1 = self.getMeetingFolder()
         itemsCategory = pmFolder1.restrictedTraverse('@@render_collection_widget_category')
         itemsCategory(widget=None)
-        self.assertEqual(itemsCategory._get_default_item_template_UID(),
-                         empty_item_template_uid)
-        # not available for pmCreator2 that is not member of developers
+        self.assertEqual(itemsCategory._get_default_item_template_UID(), empty_item_template_uid)
         self.changeUser('pmCreator2')
         pmFolder2 = self.getMeetingFolder()
+        itemsCategory = pmFolder2.restrictedTraverse('@@render_collection_widget_category')
+        itemsCategory(widget=None)
+        self.assertEqual(itemsCategory._get_default_item_template_UID(), empty_item_template_uid)
+        # restrict it to developers
+        self.changeUser('siteadmin')
+        empty_item_template.setTemplateUsingGroups([self.developers_uid])
+        empty_item_template.reindexObject(idxs=['templateUsingGroups', ])
+        # available for pmCreator1 that is member of developers
+        self.changeUser('pmCreator1')
+        itemsCategory = pmFolder1.restrictedTraverse('@@render_collection_widget_category')
+        itemsCategory(widget=None)
+        self.assertEqual(itemsCategory._get_default_item_template_UID(), empty_item_template_uid)
+        # not available for pmCreator2 that is not member of developers
+        self.changeUser('pmCreator2')
         itemsCategory = pmFolder2.restrictedTraverse('@@render_collection_widget_category')
         itemsCategory(widget=None)
         self.assertIsNone(itemsCategory._get_default_item_template_UID())

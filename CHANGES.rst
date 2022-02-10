@@ -22,6 +22,9 @@ Changelog
 - Added `new_state_id` to `adaptations.WAITING_ADVICES_FROM_STATES` to be able
   to set an arbitrary new state id instead the generated one.
   [gbastien]
+- Fixed link to create a new item not displayed even when default item template
+  not restricted to groups.
+  [gbastien]
 
 4.2rc9 (2022-02-04)
 -------------------

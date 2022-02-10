@@ -528,8 +528,9 @@ class PMRenderCategoryView(IDRenderCategoryView):
         default_template = self.cfg.get_default_item_template()
         default_template_uid = None
         if default_template and \
-           set(self.tool.get_orgs_for_user()).intersection(
-                default_template.getTemplateUsingGroups()):
+           (not default_template.getTemplateUsingGroups() or
+            set(self.tool.get_orgs_for_user()).intersection(
+                default_template.getTemplateUsingGroups())):
             default_template_uid = default_template.UID()
         return default_template_uid
 
