@@ -859,6 +859,7 @@ class Migrate_To_4200(Migrator):
             columns=['toDiscuss',
                      'getDate',
                      'getItemNumber',
+                     'getGroupInCharge',
                      'linkedMeetingUID',
                      'linkedMeetingDate'])
 

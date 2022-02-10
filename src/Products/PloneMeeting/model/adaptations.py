@@ -65,7 +65,8 @@ WAITING_ADVICES_FROM_STATES = (
      },
 )
 # defined here to be importable
-WAITING_ADVICES_FROM_TRANSITION_ID_PATTERN = 'wait_advices_from_{0}__to__{1}'
+WAITING_ADVICES_FROM_TRANSITION_ID_PATTERN = 'wait_advices_from_{0}'
+WAITING_ADVICES_FROM_TO_TRANSITION_ID_PATTERN = 'wait_advices_from_{0}__to__{1}'
 
 
 def grantPermission(state, perm, role):
@@ -747,6 +748,15 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         # if we have several 'xxx_waiting_advices' states added,
         # it is prefixed with originState1__or__originState2 like 'proposed__or__prevalidated_waiting_advices'
         elif wfAdaptation == 'waiting_advices':
+
+            def _compute_from_transition_id(wf, from_state_id, new_state_id):
+                from_transition_id = WAITING_ADVICES_FROM_TRANSITION_ID_PATTERN.format(
+                    from_state_id)
+                if from_transition_id in wf.transitions:
+                    from_transition_id = WAITING_ADVICES_FROM_TO_TRANSITION_ID_PATTERN.format(
+                        from_state_id, new_state_id)
+                return from_transition_id
+
             wf = itemWorkflow
             # compute edit permissions existing on MeetingItem schema
             from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -789,30 +799,36 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                     new_state = wf.states[new_state_id]
                     # Create new transitions to and from new_state
                     for from_state_id in from_state_ids:
-                        from_transition_id = WAITING_ADVICES_FROM_TRANSITION_ID_PATTERN.format(
-                            from_state_id, new_state_id)
-                        if from_transition_id not in wf.transitions:
-                            wf.transitions.addTransition(from_transition_id)
-                            transition = wf.transitions[from_transition_id]
-                            icon_name = 'wait_advices_from'
-                            if infos.get('use_custom_icon', False):
-                                icon_name = from_transition_id
-                            tr_title = 'wait_advices_from'
-                            if from_transition_id in infos.get('use_custom_transition_title_for', ()):
-                                tr_title = from_transition_id
-                            transition.setProperties(
-                                title=tr_title,
-                                new_state_id=new_state_id, trigger_type=1, script_name='',
-                                actbox_name=from_transition_id, actbox_url='',
-                                actbox_icon='%(portal_url)s/{0}.png'.format(icon_name),
-                                actbox_category='workflow',
-                                props={
-                                    'guard_expr':
-                                    'python:here.wfConditions().mayWait_advices("{0}", "{1}")'.format(
-                                        from_state_id, new_state_id)})
+                        from_transition_id = _compute_from_transition_id(
+                            wf, from_state_id, new_state_id)
+                        wf.transitions.addTransition(from_transition_id)
+                        transition = wf.transitions[from_transition_id]
+                        icon_name = 'wait_advices_from'
+                        if infos.get('use_custom_icon', False):
+                            icon_name = from_transition_id
+                        tr_title = 'wait_advices_from'
+                        if from_transition_id in infos.get('use_custom_transition_title_for', ()):
+                            tr_title = "{0}_{1}".format(tr_title, new_state_id)
+                        transition.setProperties(
+                            title=tr_title,
+                            new_state_id=new_state_id, trigger_type=1, script_name='',
+                            actbox_name=from_transition_id, actbox_url='',
+                            actbox_icon='%(portal_url)s/{0}.png'.format(icon_name),
+                            actbox_category='workflow',
+                            props={
+                                'guard_expr':
+                                'python:here.wfConditions().mayWait_advices("{0}", "{1}")'.format(
+                                    from_state_id, new_state_id)})
+                        # update from_state
+                        from_state = wf.states[from_state_id]
+                        existing_transitions = from_state.transitions
+                        from_state.setProperties(title=from_state_id, description='',
+                                                 transitions=existing_transitions + (from_transition_id, ))
+
                     for back_state_id in back_state_ids:
                         back_transition_id = 'backTo_{0}_from_waiting_advices'.format(back_state_id)
                         back_transition_ids.append(back_transition_id)
+                        # we try to avoid creating too much back transitions
                         if back_transition_id not in wf.transitions:
                             wf.transitions.addTransition(back_transition_id)
                             transition = wf.transitions[back_transition_id]
@@ -839,13 +855,6 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                     new_state.setProperties(title=new_state_title,
                                             description='',
                                             transitions=back_transition_ids)
-                    for from_state_id in from_state_ids:
-                        from_state = wf.states[from_state_id]
-                        existing_transitions = from_state.transitions
-                        from_transition_id = WAITING_ADVICES_FROM_TRANSITION_ID_PATTERN.format(
-                            from_state_id, new_state_id)
-                        from_state.setProperties(title=from_state_id, description='',
-                                                 transitions=existing_transitions + (from_transition_id, ))
 
                     # Initialize permission->roles mapping for new state "to_transition",
                     # which is the same as state 'validated'
