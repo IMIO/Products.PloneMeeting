@@ -3508,7 +3508,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
              either a list of dict);
            - data : return every values defined for a given datagrid column name;
            - only_enabled : make sure to return rows having enabled '1'.'''
-        res = value is None and self.getField('itemWFValidationLevels').get(self, **kwargs) or value
+        res = value if value is not None else self.getField('itemWFValidationLevels').get(self, **kwargs)
         enabled = ['0', '1']
         if only_enabled:
             enabled = ['1']
@@ -4736,9 +4736,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # that is ignored by the workflowAdaptation
         # because leading_transition is "-"
         leading_transition_values = leading_transition_values and leading_transition_values[1:]
-        if [sv for sv in state_values if not sv.isalnum()] or \
-           [ltv for ltv in leading_transition_values if not ltv.isalnum()] or \
-           [btv for btv in back_transition_values if not btv.isalnum()]:
+        # we accept also "_"
+        if [sv for sv in state_values if not sv.replace("_", "").isalnum()] or \
+           [ltv for ltv in leading_transition_values if not ltv.replace("_", "").isalnum()] or \
+           [btv for btv in back_transition_values if not btv.replace("_", "").isalnum()]:
             return translate('item_wf_val_states_wrong_identifier_format',
                              domain='PloneMeeting',
                              context=self.REQUEST)

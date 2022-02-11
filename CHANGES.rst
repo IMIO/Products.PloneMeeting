@@ -5,8 +5,20 @@ Changelog
 4.2rc11 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Refactored the `waiting_advices` workflowAdaptation:
 
+  - Moved constants to the dict of `waiting_advices` infos so we have per new
+    added state parameters;
+  - Manage `crossed` transitions, when several `waiting_advices` states are
+    reachable from same origin state, in this case, additional transitions are
+    added with a `__to__` suffix;
+  - Added parameter `new_state_id` to avoid having a very long id
+    (`...__or__...__or__...`).
+
+  [gbastien]
+- Optimized advices tooltipster opening, the popup was opened even when hovering
+  quickly, now this behaves like the annexes tooltipster.
+  [gbastien]
 
 4.2rc10 (2022-02-10)
 --------------------
@@ -24,9 +36,6 @@ Changelog
   [gbastien]
 - Moved `_addDecidedState` and `_addIsolatedState` out of
   `adaptations._performWorkflowAdaptations` so it can be imported from outside.
-  [gbastien]
-- Added `new_state_id` to `adaptations.WAITING_ADVICES_FROM_STATES` to be able
-  to set an arbitrary new state id instead the generated one.
   [gbastien]
 - Fixed link to create a new item not displayed even when default item template
   not restricted to groups.

@@ -445,9 +445,5 @@
             </fieldset>
           </tal:loop>
 
-  <script type="text/javascript" language="javascript">
-      initializeAdvicePopup();
-  </script>
-
   </tal:defines>
 </div>

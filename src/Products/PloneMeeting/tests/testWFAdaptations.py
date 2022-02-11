@@ -8,6 +8,7 @@
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import select_org_for_function
+from copy import deepcopy
 from datetime import datetime
 from datetime import timedelta
 from DateTime import DateTime
@@ -1344,9 +1345,10 @@ class testWFAdaptations(PloneMeetingTestCase):
                                                    domain='PloneMeeting',
                                                    context=self.request)
         proposed_state = self._stateMappingFor('proposed_first_level')
-        self.assertEqual(translate(item.wfConditions().mayWait_advices_from(proposed_state).msg,
-                                   context=self.request),
-                         advice_required_to_ask_advices)
+        self.assertEqual(
+            translate(item.wfConditions().mayWait_advices(
+                proposed_state, waiting_state_name).msg, context=self.request),
+            advice_required_to_ask_advices)
         # ask an advice so transition is available
         item.setOptionalAdvisers((self.vendors_uid, ))
         item._update_after_edit()
@@ -1405,7 +1407,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             ['waiting_advices', 'waiting_advices_proposing_group_send_back'],
             keep_existing=True)
         from Products.PloneMeeting.model import adaptations
-        original_WAITING_ADVICES_FROM_STATES = adaptations.WAITING_ADVICES_FROM_STATES
+        original_WAITING_ADVICES_FROM_STATES = deepcopy(adaptations.WAITING_ADVICES_FROM_STATES)
         adaptations.WAITING_ADVICES_FROM_STATES = (
             {'from_states': (self._stateMappingFor('proposed_first_level'),
                              'prevalidated', ),
@@ -1485,7 +1487,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             return
 
         from Products.PloneMeeting.model import adaptations
-        original_WAITING_ADVICES_FROM_STATES = adaptations.WAITING_ADVICES_FROM_STATES
+        original_WAITING_ADVICES_FROM_STATES = deepcopy(adaptations.WAITING_ADVICES_FROM_STATES)
         adaptations.WAITING_ADVICES_FROM_STATES = (
             {'from_states': ('itemcreated', ),
              'back_states': ('itemcreated', ),
@@ -1554,9 +1556,9 @@ class testWFAdaptations(PloneMeetingTestCase):
             return
 
         from Products.PloneMeeting.model import adaptations
-        original_WAITING_ADVICES_REMOVE_MODIFY_ACCESS = \
-            adaptations.WAITING_ADVICES_REMOVE_MODIFY_ACCESS
-        adaptations.WAITING_ADVICES_REMOVE_MODIFY_ACCESS = False
+        original_WAITING_ADVICES_FROM_STATES = \
+            deepcopy(adaptations.WAITING_ADVICES_FROM_STATES)
+        adaptations.WAITING_ADVICES_FROM_STATES[0]['remove_modify_access'] = False
         self._activate_wfas(('waiting_advices', 'waiting_advices_proposing_group_send_back'))
         self.vendors.item_advice_states = ("{0}__state__{1}".format(
             cfg.getId(), 'itemcreated_waiting_advices'), )
@@ -1577,8 +1579,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(item.query_state(), 'itemcreated')
 
         # back to original configuration
-        adaptations.WAITING_ADVICES_REMOVE_MODIFY_ACCESS = \
-            original_WAITING_ADVICES_REMOVE_MODIFY_ACCESS
+        adaptations.WAITING_ADVICES_FROM_STATES = \
+            original_WAITING_ADVICES_FROM_STATES
 
     def test_pm_WFA_waiting_advices_unknown_state(self):
         '''Does not fail to be activated if a from/back state does not exist.'''
@@ -1588,7 +1590,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             return
 
         from Products.PloneMeeting.model import adaptations
-        original_WAITING_ADVICES_FROM_STATES = adaptations.WAITING_ADVICES_FROM_STATES
+        original_WAITING_ADVICES_FROM_STATES = deepcopy(adaptations.WAITING_ADVICES_FROM_STATES)
         adaptations.WAITING_ADVICES_FROM_STATES = original_WAITING_ADVICES_FROM_STATES + (
             {'from_states': ('unknown', ),
              'back_states': ('unknown', ), }, )
@@ -1869,6 +1871,71 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.assertEqual(self.transitions(item),
                          ['backToItemCreated', 'validate'])
+
+    def test_pm_WFA_waiting_advices_crossed_states(self):
+        '''Test when several waiting advices states may be reached from same states:
+           - itemcreated >>> itemcreated_waiting_advices;
+           - itemcreated >>> proposed_waiting_advices;
+           - proposed >>> itemcreated_waiting_advices;
+           - proposed >>> proposed_waiting_advices.
+           '''
+        cfg = self.meetingConfig
+        # ease override by subproducts
+        if not self._check_wfa_available(['waiting_advices']):
+            return
+
+        from Products.PloneMeeting.model import adaptations
+        original_WAITING_ADVICES_FROM_STATES = deepcopy(adaptations.WAITING_ADVICES_FROM_STATES)
+        adaptations.WAITING_ADVICES_FROM_STATES = (
+            {'from_states': ('itemcreated', 'proposed', ),
+             'back_states': ('itemcreated', 'proposed', ),
+             'new_state_id': 'itemcreated_waiting_advices',
+             },
+            {'from_states': ('itemcreated', 'proposed', ),
+             'back_states': ('itemcreated', 'proposed', ),
+             'new_state_id': 'proposed_waiting_advices',
+             },
+            )
+        self._activate_wfas(('waiting_advices', 'waiting_advices_proposing_group_send_back'))
+        cfg.setItemAdviceStates(
+            ('itemcreated_waiting_advices', 'proposed_waiting_advices', ))
+        # clean MeetingConfig.getItemAdviceStatesForOrg
+        notify(ObjectModifiedEvent(self.vendors))
+
+        itemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
+        # crossed states and transitions are created
+        self.assertTrue('itemcreated_waiting_advices' in itemWF.states)
+        self.assertTrue('proposed_waiting_advices' in itemWF.states)
+        self.assertEqual(itemWF.transitions['wait_advices_from_itemcreated'].new_state_id,
+                         'itemcreated_waiting_advices')
+        self.assertEqual(itemWF.transitions['wait_advices_from_proposed'].new_state_id,
+                         'itemcreated_waiting_advices')
+        self.assertEqual(
+            itemWF.transitions['wait_advices_from_itemcreated__to__proposed_waiting_advices'].new_state_id,
+            'proposed_waiting_advices')
+        self.assertEqual(
+            itemWF.transitions['wait_advices_from_proposed__to__proposed_waiting_advices'].new_state_id,
+            'proposed_waiting_advices')
+        # create item and try
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
+        # when itemcreated
+        self.do(item, 'wait_advices_from_itemcreated')
+        self.assertEqual(item.query_state(), 'itemcreated_waiting_advices')
+        self.do(item, 'backTo_itemcreated_from_waiting_advices')
+        self.do(item, 'wait_advices_from_itemcreated__to__proposed_waiting_advices')
+        self.assertEqual(item.query_state(), 'proposed_waiting_advices')
+        # when proposed
+        self.changeUser('pmReviewer1')
+        self.do(item, 'backTo_proposed_from_waiting_advices')
+        self.do(item, 'wait_advices_from_proposed')
+        self.assertEqual(item.query_state(), 'itemcreated_waiting_advices')
+        self.do(item, 'backTo_proposed_from_waiting_advices')
+        self.do(item, 'wait_advices_from_proposed__to__proposed_waiting_advices')
+        self.assertEqual(item.query_state(), 'proposed_waiting_advices')
+        self.do(item, 'backTo_itemcreated_from_waiting_advices')
+        self.assertEqual(item.query_state(), 'itemcreated')
+        adaptations.WAITING_ADVICES_FROM_STATES = original_WAITING_ADVICES_FROM_STATES
 
     def test_pm_WFA_postpone_next_meeting(self):
         '''Test the workflowAdaptation 'postpone_next_meeting'.'''
