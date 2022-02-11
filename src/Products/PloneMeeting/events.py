@@ -270,8 +270,8 @@ def _invalidateOrgRelatedCachedVocabularies():
         'Products.PloneMeeting.ToolPloneMeeting._users_groups_value', get_again=True)
 
 
-def _invalidateUsersAndGroupsRelatedCachedVocabularies():
-    '''Clean cache for vocabularies using Plone users and groups.'''
+def _invalidateUsersAndGroupsRelatedCache():
+    '''Clean cache for vocabularies and caching methods using Plone users and groups.'''
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.ToolPloneMeeting._users_groups_value', get_again=True)
 
@@ -399,7 +399,7 @@ def onRegistryModified(event):
     if IRecordModifiedEvent.providedBy(event):  # and event.record.interface == IContactPlonegroupConfig:
         if event.record.fieldName == 'organizations' and event.oldValue:
             _invalidateOrgRelatedCachedVocabularies()
-            _invalidateUsersAndGroupsRelatedCachedVocabularies()
+            _invalidateUsersAndGroupsRelatedCache()
 
             old_set = set(event.oldValue)
             new_set = set(event.newValue)
@@ -1455,9 +1455,9 @@ def onMeetingWillBeRemoved(meeting, event):
 
 def onPrincipalAddedToGroup(event):
     """ """
-    _invalidateUsersAndGroupsRelatedCachedVocabularies()
+    _invalidateUsersAndGroupsRelatedCache()
 
 
 def onPrincipalRemovedFromGroup(event):
     """ """
-    _invalidateUsersAndGroupsRelatedCachedVocabularies()
+    _invalidateUsersAndGroupsRelatedCache()

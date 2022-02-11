@@ -858,6 +858,7 @@ class Migrate_To_4200(Migrator):
         self.removeUnusedColumns(
             columns=['toDiscuss',
                      'getDate',
+                     'getGroupInCharge',
                      'getItemNumber',
                      'getGroupInCharge',
                      'linkedMeetingUID',

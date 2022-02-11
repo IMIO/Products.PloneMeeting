@@ -2,7 +2,13 @@ Changelog
 =========
 
 
-4.2rc10 (unreleased)
+4.2rc11 (unreleased)
+--------------------
+
+- Nothing changed yet.
+
+
+4.2rc10 (2022-02-10)
 --------------------
 
 - Fixed `MeetingItem._send_history_aware_mail_if_relevant` when item transition back to
@@ -29,6 +35,11 @@ Changelog
   - Added parameter `new_state_id` to avoid having a very long id
     (`...__or__...__or__...`).
 
+  [gbastien]
+- Fixed link to create a new item not displayed even when default item template
+  not restricted to groups.
+  [gbastien]
+- Invalidate item `actions_panel` caching when some user/groups changed.
   [gbastien]
 
 4.2rc9 (2022-02-04)

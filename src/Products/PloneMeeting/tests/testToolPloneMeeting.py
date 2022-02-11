@@ -1152,7 +1152,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
     def test_pm_Group_is_not_empty(self):
         '''Test the group_is_not_empty method.'''
         pg = self.portal.portal_groups
-        dcGroup = pg.getGroupById('{0}_creators'.format(self.developers_uid))
+        dcGroup = pg.getGroupById(self.developers_creators)
         dcMembers = dcGroup.getMemberIds()
         self.changeUser('pmCreator1')
         self.assertTrue(self.tool.group_is_not_empty(self.developers_uid, 'creators'))
