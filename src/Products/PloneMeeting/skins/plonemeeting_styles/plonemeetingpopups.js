@@ -447,9 +447,6 @@ function actionsPanelTooltipster() {
         data_parameters=['showHistory:boolean', 'showActions'],
         options={
          position: 'bottom',
-         triggerClose: {
-           click: true,
-           tap: true, },
          functionReady_callback: initializeActionsPanelTooltipster_callback,
          close_other_tips: true, });
 }
