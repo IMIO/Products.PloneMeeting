@@ -269,7 +269,12 @@ function initializeDashboard(){
     actionsPanelTooltipster();
 }
 
-function initializeAdvicePopup(){
+function initializeAdvicePopup(instance) {
+    // configure the triggerClose options after popup has been opened
+    // this avoid weird behavior where in this case, just quickly hovering
+    // the tooltipster would open it
+    instance.__options.triggerClose = {click: true, tap: true, };
+
     // when an advice popup tooltipster is opened, we need to init JS on it
     categorizedChildsInfos({selector: 'td.advice_annexes .tooltipster-childs-infos', });
     adviceAddEdit();
@@ -403,13 +408,10 @@ function advicesInfos() {
       data_parameters=['adviceType'],
       options={zIndex: 5000,
                position: 'left',
-                // do not close on mouseleave
-               triggerClose: {
-                  click: true,
-                  tap: true, },
                functionReady_callback: initializeAdvicePopup,
-               minWidth: 600,
-               maxWidth: 800,
+               passInstanceToCallback: true,
+               minWidth: 750,
+               maxWidth: 750,
                close_other_tips: true});
     tooltipster_helper(
       selector='a.tooltipster-advices-infos',
@@ -417,11 +419,8 @@ function advicesInfos() {
       data_parameters=['adviceType'],
       options={zIndex: 1,
                position: 'bottom',
-                // do not close on mouseleave
-               triggerClose: {
-                  click: true,
-                  tap: true, },
                functionReady_callback: initializeAdvicePopup,
+               passInstanceToCallback: true,
                minWidth: 750,
                maxWidth: 750,
                close_other_tips: true});

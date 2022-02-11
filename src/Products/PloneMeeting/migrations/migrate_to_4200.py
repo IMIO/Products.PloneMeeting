@@ -709,7 +709,7 @@ class Migrate_To_4200(Migrator):
                         ".replace('é','e').replace('û','u').upper()":
                             ".replace(u'é',u'e').replace(u'û',u'u').upper()",
                         # uid_catalog can no more be used to get DX Meeting
-                        ".uid_catalog(": ".portal_catalog",
+                        ".uid_catalog(": ".portal_catalog(",
                         }
         # specific for Meeting POD Templates
         meeting_replacements = {
@@ -860,7 +860,6 @@ class Migrate_To_4200(Migrator):
                      'getDate',
                      'getGroupInCharge',
                      'getItemNumber',
-                     'getGroupInCharge',
                      'linkedMeetingUID',
                      'linkedMeetingDate'])
 
