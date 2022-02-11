@@ -893,6 +893,8 @@ class Migrate_To_4200(Migrator):
                                  "isManager(cfg)")
         self.updateTALConditions("isManager(obj)",
                                  "isManager(cfg)")
+        self.updateTALConditions("isManager(item)",
+                                 "isManager(cfg)")
 
         self.updateTALConditions("isManager(context, realManagers=True)",
                                  "isManager(realManagers=True)")
@@ -902,6 +904,9 @@ class Migrate_To_4200(Migrator):
                                  "isManager(realManagers=True)")
         self.updateTALConditions("isManager(tool, realManagers=True)",
                                  "isManager(realManagers=True)")
+        self.updateTALConditions("isManager(item, realManagers=True)",
+                                 "isManager(realManagers=True)")
+
         self.updateTALConditions("isManager(context, True)",
                                  "isManager(realManagers=True)")
         self.updateTALConditions("isManager(here, True)",
@@ -909,6 +914,8 @@ class Migrate_To_4200(Migrator):
         self.updateTALConditions("isManager(obj, True)",
                                  "isManager(realManagers=True)")
         self.updateTALConditions("isManager(tool, True)",
+                                 "isManager(realManagers=True)")
+        self.updateTALConditions("isManager(item, True)",
                                  "isManager(realManagers=True)")
 
         self.updateTALConditions("isManager(context,realManagers=True)",
