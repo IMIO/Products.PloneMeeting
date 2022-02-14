@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc11 (unreleased)
+4.2rc11 (2022-02-14)
 --------------------
 
 - Refactored the `waiting_advices` workflowAdaptation:
