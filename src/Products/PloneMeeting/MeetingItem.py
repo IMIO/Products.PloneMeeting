@@ -417,12 +417,13 @@ class MeetingItemWorkflowConditions(object):
             # not able to evaluate completeness but completeness evaluation not required
             # but advice not editable, this means also advice still not added
             # this last case is "not using completeness"
-            may_eval_completeness = self.context.adapted().mayEvaluateCompleteness()
+            adapted = self.context.adapted()
+            may_eval_completeness = adapted.mayEvaluateCompleteness()
             if item_state in self.cfg.getItemAdviceStatesForOrg(org_uid) and \
                get_plone_group_id(org_uid, 'advisers') in user_plone_groups and \
                (self.context._advice_is_given(org_uid) or
                 (may_eval_completeness and
-                 not self.context.adapted()._is_complete()) or
+                 not adapted._is_complete()) or
                 (not may_eval_completeness and
                  self.context.getCompleteness() in ['completeness_evaluation_not_required',
                                                     'completeness_not_yet_evaluated']) and
@@ -5160,13 +5161,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for user_org_uid in user_org_uids:
             if user_org_uid in self.adviceIndex:
                 advice = self.adviceIndex[user_org_uid]
+                adapted = self.adapted()
                 if compute_to_add and advice['type'] == NOT_GIVEN_ADVICE_VALUE and \
                    advice['advice_addable'] and \
-                   self.adapted()._adviceIsAddableByCurrentUser(user_org_uid):
+                   adapted._adviceIsAddableByCurrentUser(user_org_uid):
                     toAdd.append(user_org_uid)
                 if compute_to_edit and advice['type'] != NOT_GIVEN_ADVICE_VALUE and \
                    advice['advice_editable'] and \
-                   self.adapted()._adviceIsEditableByCurrentUser(user_org_uid):
+                   adapted._adviceIsEditableByCurrentUser(user_org_uid):
                     toEdit.append(user_org_uid)
             # if not in self.adviceIndex, aka not already given
             # check if group is a power adviser and if he is allowed
@@ -5809,9 +5811,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # 'delay_stopped_on'
         # 'delay_for_automatic_adviser_changed_manually'
         saved_stored_data = {}
+        adapted = self.adapted()
         for org_uid, adviceInfo in self.adviceIndex.iteritems():
             saved_stored_data[org_uid] = {}
-            reinit_delay = self.adapted()._adviceDelayWillBeReinitialized(
+            reinit_delay = adapted._adviceDelayWillBeReinitialized(
                 org_uid, adviceInfo, isTransitionReinitializingDelays)
             if reinit_delay or org_uid in inheritedAdviserUids:
                 saved_stored_data[org_uid]['delay_started_on'] = None
@@ -5898,7 +5901,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # manage the 'delay_started_on' data that was saved prior
                 if adviceInfo['delay'] and \
                    org_uid in saved_stored_data and \
-                   self.adapted()._adviceDelayMayBeStarted(org_uid):
+                   adapted._adviceDelayMayBeStarted(org_uid):
                     d['delay_started_on'] = saved_stored_data[org_uid]['delay_started_on']
                 else:
                     d['delay_started_on'] = None
@@ -5950,7 +5953,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     adviceInfo['not_asked'] = True
                 if adviceInfo['delay'] and \
                    org_uid in saved_stored_data and \
-                   self.adapted()._adviceDelayMayBeStarted(org_uid):
+                   adapted._adviceDelayMayBeStarted(org_uid):
                     # an automatic advice was given but because something changed on the item
                     # for example switched from budgetRelated to not budgetRelated, the automatic
                     # advice should not be asked, but as already given, we keep it
@@ -6039,7 +6042,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                             get_all_history_attr(self, attr_name='review_state'))):
                     giveReaderAccess = True
 
-            if self.adapted()._itemToAdviceIsViewable(org_uid) and giveReaderAccess:
+            if adapted._itemToAdviceIsViewable(org_uid) and giveReaderAccess:
                 # give access to the item if adviser can see it
                 self.manage_addLocalRoles(plone_group_id, (READER_USECASES['advices'],))
                 self.adviceIndex[org_uid]['item_viewable_by_advisers'] = True
@@ -6050,7 +6053,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if item_state in itemAdviceStates and \
                    self.adviceIndex[org_uid]['delay'] and not \
                    self.adviceIndex[org_uid]['delay_started_on'] and \
-                   self.adapted()._adviceDelayMayBeStarted(org_uid):
+                   adapted._adviceDelayMayBeStarted(org_uid):
                     self.adviceIndex[org_uid]['delay_started_on'] = datetime.now()
 
                 # check if user must be able to add an advice, if not already given
@@ -6061,7 +6064,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if item_state in itemAdviceStates and \
                    not adviceObj and \
                    delayIsNotExceeded and \
-                   self.adapted()._adviceIsAddable(org_uid):
+                   adapted._adviceIsAddable(org_uid):
                     # advisers must be able to add a 'meetingadvice', give
                     # relevant permissions to 'MeetingAdviser' role
                     # the 'Add portal content' permission is given by default to 'MeetingAdviser',
@@ -6076,7 +6079,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if item_state in itemAdviceEditStates and \
                    delayIsNotExceeded and \
                    adviceObj and \
-                   self.adapted()._adviceIsEditable(org_uid):
+                   adapted._adviceIsEditable(org_uid):
                     # make sure the advice given by groupId is no more in state 'advice_given'
                     # if it is the case, we set it back to the advice initial_state
                     if adviceObj.query_state() == 'advice_given':
@@ -6133,6 +6136,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # send delay expiration warning notification if relevant
             self.sendAdviceDelayWarningMailIfRelevant(
                 org_uid, old_adviceIndex)
+            # update advice review_state
+            if adviceObj is not None:
+                self.adviceIndex[org_uid]['advice_review_state'] = adviceObj.query_state()
+            else:
+                self.adviceIndex[org_uid]['advice_review_state'] = None
 
         # update adviceIndex of every items for which I am the predecessor
         # this way inherited advices are correct if any
@@ -6157,7 +6165,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.REQUEST.set('currentlyUpdatingAdvice', False)
         indexes = []
         if self.adviceIndex != old_adviceIndex:
-            indexes.append('indexAdvisers')
+            indexes += adapted.getAdviceRelatedIndexes()
         return indexes
 
     def _itemToAdviceIsViewable(self, org_uid):

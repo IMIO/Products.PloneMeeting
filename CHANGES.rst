@@ -5,8 +5,12 @@ Changelog
 4.2rc12 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Fixed bug where item `indexAdvisers` index was not reindexed when advice
+  review_state state changed (advice with specific functional workflow) because
+  `item.adviceIndex` was unchanged.  Added advice `review_state` to
+  `MeetingItem.adviceIndex` so it changes when advice `review_state` changes
+  and so `MeetingItem._updateAdvices` returns `indexAdvisers` as index to update.
+  [gbastien]
 
 4.2rc11 (2022-02-14)
 --------------------
