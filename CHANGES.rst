@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.28.35 (unreleased)
+4.1.28.35 (2022-02-14)
 ----------------------
 
 - Adapted code to be compatible with last version of `plonemeting.restapi`.
