@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc12 (unreleased)
+4.2rc12 (2022-02-15)
 --------------------
 
 - Fixed behavior of functional advice workflow (when advice has a real WF with several states):
