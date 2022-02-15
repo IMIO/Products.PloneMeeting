@@ -194,21 +194,31 @@ def onMeetingTransition(meeting, event):
 
 def onAdviceTransition(advice, event):
     '''Called whenever a transition has been fired on an advice.'''
-    if event.transition and advice == event.object:
+    # pass if we are pasting items as advices are not kept
+    # this is also called when advice created (event.transition is None)
+    if event.transition and \
+       advice == event.object and \
+       not advice.REQUEST.get('currentlyPastingItems', False):
+
         transitionId = event.transition.id
         if transitionId.startswith('backTo'):
             action = 'doCorrect'
-        elif transitionId.startswith('advice'):
-            action = 'doItem%s%s' % (transitionId[6].upper(), transitionId[7:])
         else:
             action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
         do(action, event)
 
-    # notify an AdviceAfterTransitionEvent for subplugins so we are sure
-    # that it is called after PloneMeeting advice transition
-    notify(AdviceAfterTransitionEvent(
-        event.object, event.workflow, event.old_state, event.new_state,
-        event.transition, event.status, event.kwargs))
+        # notify an AdviceAfterTransitionEvent for subplugins so we are sure
+        # that it is called after PloneMeeting advice transition
+        notify(AdviceAfterTransitionEvent(
+            event.object, event.workflow, event.old_state, event.new_state,
+            event.transition, event.status, event.kwargs))
+
+        # update item if transition is not triggered in the MeetingItem._updatedAdvices
+        # aka we are already updating the item
+        item = advice.getParentNode()
+        if event.transition and not item._is_currently_updating_advices():
+            item.update_local_roles()
+            _advice_update_item(item)
 
 
 def onItemBeforeTransition(item, event):
@@ -740,11 +750,11 @@ def storeImagesLocallyDexterity(obj):
 
 def _advice_update_item(item):
     ''' '''
-    # reindex advice related indexes
-    advice_related_indexes = item.adapted().getAdviceRelatedIndexes()
-    notifyModifiedAndReindex(item, extra_idxs=advice_related_indexes)
+    # reindex advice related indexes is done by a prior MeetingItem.update_local_roles
+    notifyModifiedAndReindex(item)
     # invalidate portlet_todo cachekey
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def onAdviceAdded(advice, event):

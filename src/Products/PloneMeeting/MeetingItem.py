@@ -5729,6 +5729,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return delay_infos['delay_status'] == 'timed_out' or \
             delay_infos['delay_status_when_stopped'] == 'stopped_timed_out'
 
+    def _is_currently_updating_advices(self):
+        """ """
+        return self.REQUEST.get('currentlyUpdatingAdvice', False)
+
     def _updateAdvices(self,
                        cfg,
                        item_state,

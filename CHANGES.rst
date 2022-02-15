@@ -5,11 +5,19 @@ Changelog
 4.2rc12 (unreleased)
 --------------------
 
-- Fixed bug where item `indexAdvisers` index was not reindexed when advice
-  review_state state changed (advice with specific functional workflow) because
-  `item.adviceIndex` was unchanged.  Added advice `review_state` to
-  `MeetingItem.adviceIndex` so it changes when advice `review_state` changes
-  and so `MeetingItem._updateAdvices` returns `indexAdvisers` as index to update.
+- Fixed behavior of functional advice workflow (when advice has a real WF with several states):
+
+  - item `indexAdvisers` index was not reindexed when advice review_state state
+    changed because `item.adviceIndex` was unchanged.  Added advice `review_state`
+    to `MeetingItem.adviceIndex` so it changes when advice `review_state` changes
+    and so `MeetingItem._updateAdvices` returns `indexAdvisers` as index to update;
+  - notify modified item when advice state changed so caching is invalidated for
+    collections counter and item modified date is updated;
+  - in `events.onAdviceTransition`, only call `AdviceAfterTransitionEvent` if relevant.
+
+  [gbastien]
+- Added `MeetingItem._is_currently_updating_advices` to formalize item period in
+  which it is updating advices.
   [gbastien]
 
 4.2rc11 (2022-02-14)
