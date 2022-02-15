@@ -5,7 +5,6 @@
                      UID string:[uid];
                      portal_url python: view.portal_url;
                      reviewerMayAskDiscussion python: view.reviewerMayAskDiscussion();
-                     userIsReviewer python: reviewerMayAskDiscussion and view.userIsReviewer();
                      toDiscuss python: context.getToDiscuss()">
   <tal:forMeetingManagers condition="python: mayEdit and (isManager or not reviewerMayAskDiscussion)">
   <span id="marker_toggle_todiscuss_UID#"
@@ -29,17 +28,16 @@
   <tal:comment replace="nothing">For reviewers: they may ask to discuss the item if "toDiscuss" is
       False. A mail will be sent to MeetingManagers that will themselves update the "toDiscuss"
       field (or not).</tal:comment>
-  <tal:forReviewers condition="python: not toDiscuss and reviewerMayAskDiscussion and userIsReviewer and not isManager">
+  <tal:forReviewers condition="python: reviewerMayAskDiscussion and not isManager">
     <img name="discussAsk" style="cursor:pointer"
          title="to_discuss_no_ask_edit" i18n:attributes="title"
          tal:attributes="src string:$portal_url/toDiscussNo.png;
                          onClick python: 'location.href=\'' + context.absolute_url() + '/@@synchronous_toggle_to_discuss?itemUid=%s&discussAction=ask\'' % UID"/>
   </tal:forReviewers>
-  <tal:forTheOthers condition="python: (not mayEdit and (not reviewerMayAskDiscussion or not userIsReviewer))
-                               or (mayEdit and reviewerMayAskDiscussion and not userIsReviewer and not isManager and brol)">
-    <img tal:condition="toDiscuss" title="to_discuss_yes" i18n:attributes="title"
+  <tal:forTheOthers condition="python: not mayEdit and not reviewerMayAskDiscussion">
+    <img tal:condition="toDiscuss" title="to_discuss_yes" i18n:attributes="title" style="cursor:help"
          tal:attributes="src string:$portal_url/toDiscussYes.png"/>
-    <img tal:condition="not:toDiscuss" title="to_discuss_no" i18n:attributes="title"
+    <img tal:condition="not:toDiscuss" title="to_discuss_no" i18n:attributes="title" style="cursor:help"
          tal:attributes="src string:$portal_url/toDiscussNo.png"/>
   </tal:forTheOthers>
 

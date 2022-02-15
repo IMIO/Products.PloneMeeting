@@ -301,8 +301,11 @@ class ItemToDiscussView(BrowserView):
 
     def reviewerMayAskDiscussion(self):
         """Do we use the "reviewer may ask item discussion" ?"""
-        return "askDiscussItem" in self.cfg.getMailItemEvents() and \
-            not self.context.is_decided(self.cfg)
+        return not self.context.getToDiscuss() and \
+            "askDiscussItem" in self.cfg.getMailItemEvents() and \
+            self.context.hasMeeting() and \
+            not self.context.is_decided(self.cfg) and \
+            self.userIsReviewer()
 
     @memoize_contextless
     def userIsReviewer(self):
