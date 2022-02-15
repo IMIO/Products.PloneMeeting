@@ -8,6 +8,7 @@ from collective.contact.plonegroup.browser.tables import DisplayGroupUsersView
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.utils import get_plone_groups
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from collective.eeafaceted.batchactions import _ as _CEBA
@@ -266,17 +267,17 @@ class ItemToDiscussView(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
+        self.portal_url = api.portal.get().absolute_url()
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
 
     def __call__parent_cachekey(method, self):
         '''cachekey method for self.__call__.'''
-        return self.context.getToDiscuss(), self.mayEdit()
+        return self.context.getToDiscuss(), self.mayEdit(), self.reviewerMayAskDiscussion()
 
     @ram.cache(__call__parent_cachekey)
     def ItemToDiscussView__call__parent(self):
         """ """
-        self.portal_url = api.portal.get().absolute_url()
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.tool.getMeetingConfig(self.context)
         return super(ItemToDiscussView, self).__call__()
 
     def __call__(self):
@@ -298,10 +299,17 @@ class ItemToDiscussView(BrowserView):
         return _checkPermission(toDiscuss_write_perm, self.context) and \
             self.context.showToDiscuss()
 
+    def reviewerMayAskDiscussion(self):
+        """Do we use the "reviewer may ask item discussion" ?"""
+        return "askDiscussItem" in self.cfg.getMailItemEvents() and \
+            not self.context.is_decided(self.cfg)
+
     @memoize_contextless
     def userIsReviewer(self):
         """ """
-        return self.tool.userIsAmong(['reviewers'], cfg=self.cfg)
+        plone_groups = get_plone_groups(self.context.getProposingGroup(), ids_only=True)
+        highest_reviewer_level = self.cfg._highestReviewerLevel(plone_groups)
+        return self.tool.userIsAmong([highest_reviewer_level], cfg=self.cfg)
 
     @memoize_contextless
     def useToggleDiscuss(self):

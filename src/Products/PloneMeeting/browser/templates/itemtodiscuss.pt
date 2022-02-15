@@ -1,23 +1,25 @@
 <tal:defines i18n:domain="PloneMeeting"
-             define="mayEdit view/mayEdit;
-                     userIsReviewer view/userIsReviewer;
+             define="mayEdit python: view.mayEdit();
                      isManager python: view.tool.isManager(view.cfg);
-                     useToggleDiscuss view/useToggleDiscuss;
+                     useToggleDiscuss python: view.useToggleDiscuss();
                      UID string:[uid];
-                     portal_url view/portal_url" >
-  <tal:forMeetingManagers condition="python: isManager and mayEdit">
+                     portal_url python: view.portal_url;
+                     reviewerMayAskDiscussion python: view.reviewerMayAskDiscussion();
+                     userIsReviewer python: reviewerMayAskDiscussion and view.userIsReviewer();
+                     toDiscuss python: context.getToDiscuss()">
+  <tal:forMeetingManagers condition="python: mayEdit and (isManager or not reviewerMayAskDiscussion)">
   <span id="marker_toggle_todiscuss_UID#"
         tal:attributes="id string:marker_toggle_todiscuss_$UID;"
         tal:define="onclick_action python: useToggleDiscuss
                                            and ('asyncToggleIcon(\''+UID+'\', baseUrl=\'[baseUrl]\', viewName=\'@@toggle_to_discuss\', baseSelector=\'#marker_toggle_todiscuss_\')')
                                            or ('synchronousToggleToDiscuss(\'' + context.absolute_url() + '/@@synchronous_toggle_to_discuss?itemUid=%s&discussAction=toggle\')' % UID);">
         <img class="toDiscussEditable"
-             tal:condition="context/getToDiscuss" name="discussNo" style="cursor:pointer"
+             tal:condition="toDiscuss" name="discussNo" style="cursor:pointer"
              title="to_discuss_yes_edit" i18n:attributes="title"
              tal:attributes="src string:$portal_url/toDiscussYes.png;
                              onClick string:${onclick_action};"/>
         <img class="toDiscussEditable"
-             tal:condition="not: context/getToDiscuss" name="discussYes" style="cursor:pointer"
+             tal:condition="not: toDiscuss" name="discussYes" style="cursor:pointer"
              title="to_discuss_no_edit" i18n:attributes="title"
              tal:attributes="src string:$portal_url/toDiscussNo.png;
                              onClick string:${onclick_action};"/>
@@ -27,18 +29,17 @@
   <tal:comment replace="nothing">For reviewers: they may ask to discuss the item if "toDiscuss" is
       False. A mail will be sent to MeetingManagers that will themselves update the "toDiscuss"
       field (or not).</tal:comment>
-  <tal:forReviewers condition="python: userIsReviewer and not isManager">
-    <img tal:condition="context/getToDiscuss" title="to_discuss_yes" i18n:attributes="title"
-         tal:attributes="src string:$portal_url/toDiscussYes.png"/>
-    <img tal:condition="not: context/getToDiscuss" name="discussAsk" style="cursor:pointer"
+  <tal:forReviewers condition="python: not toDiscuss and reviewerMayAskDiscussion and userIsReviewer and not isManager">
+    <img name="discussAsk" style="cursor:pointer"
          title="to_discuss_no_ask_edit" i18n:attributes="title"
          tal:attributes="src string:$portal_url/toDiscussNo.png;
-                         onClick python: ('synchronousToggleToDiscuss(\'' + context.absolute_url() + '/@@synchronous_toggle_to_discuss?itemUid=%s&discussAction=ask\')' % UID)"/>
+                         onClick python: 'location.href=\'' + context.absolute_url() + '/@@synchronous_toggle_to_discuss?itemUid=%s&discussAction=ask\'' % UID"/>
   </tal:forReviewers>
-  <tal:forTheOthers condition="python: not mayEdit and not (userIsReviewer and not isManager)">
-    <img tal:condition="context/getToDiscuss" title="to_discuss_yes" i18n:attributes="title"
+  <tal:forTheOthers condition="python: (not mayEdit and (not reviewerMayAskDiscussion or not userIsReviewer))
+                               or (mayEdit and reviewerMayAskDiscussion and not userIsReviewer and not isManager and brol)">
+    <img tal:condition="toDiscuss" title="to_discuss_yes" i18n:attributes="title"
          tal:attributes="src string:$portal_url/toDiscussYes.png"/>
-    <img tal:condition="not: context/getToDiscuss" title="to_discuss_no" i18n:attributes="title"
+    <img tal:condition="not:toDiscuss" title="to_discuss_no" i18n:attributes="title"
          tal:attributes="src string:$portal_url/toDiscussNo.png"/>
   </tal:forTheOthers>
 

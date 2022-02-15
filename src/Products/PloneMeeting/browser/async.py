@@ -98,7 +98,7 @@ class Discuss(BrowserView):
             item.setToDiscuss(toDiscuss)
             item.adapted().onDiscussChanged(toDiscuss)
         self.context._update_after_edit(idxs=['to_discuss'])
-        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
+        return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
 
 class TakenOverBy(BrowserView):

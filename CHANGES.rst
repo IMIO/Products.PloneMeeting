@@ -19,6 +19,8 @@ Changelog
 - Added `MeetingItem._is_currently_updating_advices` to formalize item period in
   which it is updating advices.
   [gbastien]
+- Fixed item to discuss toggle functionnality on item view.
+  [gbastien]
 
 4.2rc11 (2022-02-14)
 --------------------
