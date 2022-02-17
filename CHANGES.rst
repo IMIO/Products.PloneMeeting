@@ -8,6 +8,9 @@ Changelog
 - Changed default position of advice tooltipster on item view so it is
   displayed `bottom` to deal with `readmorable`.
   [gbastien]
+- Changed default value for `many_users`, set it to `True` if more than 400 users
+  or using `LDAP`, `False` otherwise.
+  [gbastien]
 
 4.2rc12 (2022-02-15)
 --------------------

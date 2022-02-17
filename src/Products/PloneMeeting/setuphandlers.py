@@ -213,8 +213,9 @@ def postInstall(context):
         disable_folder_sections=True)
 
     # Display the search box for groups and users
+    # when using LDPA or having more that 400 users, we set many_users=True
     many_users = False
-    if HAS_LDAP:
+    if HAS_LDAP or len(site.acl_users.source_users.listUserIds()) > 400:
         many_users = True
     site.portal_properties.site_properties.manage_changeProperties(
         many_users=many_users)
