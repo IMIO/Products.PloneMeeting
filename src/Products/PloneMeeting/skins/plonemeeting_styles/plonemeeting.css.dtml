@@ -167,33 +167,45 @@ dl.portlet .ploneMeetingSelectDropdownIcon {
 #content div[id^='hook_'] table[style*='border:medium none'] tr td,
 #content div[id^='hook_'] table[style*='border-collapse:collapse; border:none'] tr th,
 #content div[id^='hook_'] table[style*='border-collapse:collapse; border:none'] tr td,
+body.cke_editable.cke_show_borders table[border='0'] tr th,
+body.cke_editable.cke_show_borders table[border='0'] tr td,
+#content div.static-infos table[border='0'] tr th,
+#content div.static-infos table[border='0'] tr td,
 #content div.pmMoreInfo table[border='0'] tr th,
 #content div.pmMoreInfo table[border='0'] tr td {
-    border: 1px dotted darkgrey !important;
+    border: 1px dotted black !important;
 }
 /* table for which attribute "border" is not given will be rendered with borders by appy.pod */
 /* make sure table borders in pmMoreInfo (when using the "more infos" icon) are displayed */
 /* make sure nested tables under a table using no-style-table displays border */
 #content div[id^='hook_'] table:not([border]):not([style*="border"]) tr th,
 #content div[id^='hook_'] table:not([border]):not([style*="border"]) tr td,
+#content div.static-infos table:not([border]):not([style*="border"])  tr th,
+#content div.static-infos table:not([border]):not([style*="border"])  tr td,
 #content div.pmMoreInfo table:not([border]):not([style*="border"])  tr th,
 #content div.pmMoreInfo table:not([border]):not([style*="border"])  tr td,
 body.cke_editable table:not([border='0']):not([style*="border"])  tr td,
 body.cke_editable table.cke_show_border:not([border='0']):not([style*="border"])  tr td,
 #content table.no-style-table table tr td,
+#content div.static-infos table[border='1'] tr th,
+#content div.static-infos table[border='1'] tr td,
 #content div.pmMoreInfo table[border='1'] tr th,
 #content div.pmMoreInfo table[border='1'] tr td {
     border: 1px solid black;
 }
 
+#content div.static-infos,
+#content div.static-infos table td,
 #content div.pmMoreInfo,
 #content div.pmMoreInfo table td {
     padding-top: 0.5em;
     line-height: 1.25em;
 }
+#content div.static-infos table th,
 #content div.pmMoreInfo table th {
     background: none;
 }
+div.static-infos table td,
 div.pmMoreInfo table td {
    vertical-align: inherit;
 }
@@ -201,6 +213,7 @@ div.pmMoreInfo table td {
 /* no margin under table in content */
 #content div[id^='hook_'] table,
 body.cke_editable table,
+#content div.static-infos table,
 #content div.pmMoreInfo table {
    margin-bottom: 0em !important;
 }
@@ -456,6 +469,7 @@ table td div.field {
 td.td_cell_advices div.categorized-elements {
     padding-bottom: 0.25em;
     width: 100%;
+    white-space: nowrap;
 }
 
 div.add_advice_icon {
@@ -858,7 +872,9 @@ table.listing th.th_header_Creator,
 table.listing th.th_header_getProposingGroup {
     width: 100px;
 }
-table.listing th.th_header_advices,
+table.listing th.th_header_advices {
+        width: 60px;
+}
 table.listing th.th_header_review_state,
 table.listing th.th_header_meeting_date,
 table.listing th.th_header_preferred_meeting_date,
@@ -867,7 +883,7 @@ table.listing th.th_header_ModificationDate,
 table.listing th.th_header_CreationDate,
 table.listing th.th_header_creation-date-column,
 table.listing th.th_header_last-modification-column {
-    width: 90px;
+    width: 80px;
 }
 table.listing th.th_header_privacy {
     width: 63px;
@@ -1365,6 +1381,7 @@ p.page-break {
 
 body.cke_editable p.page-break:after,
 div[id^='hook_'] p.page-break:after,
+div.static-infos p.page-break:after,
 div.pmMoreInfo p.page-break:after {
     font-weight: bold;
     content: 'Saut de page';
@@ -1507,8 +1524,10 @@ body.portaltype-dashboardcollection.section-portal_plonemeeting div#formfield-fo
 #content-history p.historized_advice-advice_comment,
 #content-history p.historized_advice-advice_observations {
     color: &dtml-discreetColor;;
-    font-style: italic;
     text-decoration: underline;
+    font-size: 110%;
+    font-weight: bold;
+    padding-top: 0.5em;
 }
 
 div.item-send-to-other-mc {
@@ -1676,6 +1695,8 @@ body.cke_editable table:not([cellpadding='0']) tr td,
 body.cke_editable table:not([cellpadding='0']) tr th,
 div[id^='hook_'] table:not([cellpadding='0']) tr td,
 div[id^='hook_'] table:not([cellpadding='0']) tr th,
+div.static-infos table:not([cellpadding='0']) tr td,
+div.static-infos table:not([cellpadding='0']) tr th,
 div.pmMoreInfo table:not([cellpadding='0']) tr td,
 div.pmMoreInfo table:not([cellpadding='0']) tr th,
 table.no-style-table table tr td {
@@ -1686,6 +1707,8 @@ body.cke_editable table[cellpadding='0'] tr td,
 body.cke_editable table[cellpadding='0'] tr th,
 div[id^='hook_'] table[cellpadding='0'] tr td,
 div[id^='hook_'] table[cellpadding='0'] tr th,
+div.static-infos table[cellpadding='0'] tr td,
+div.static-infos table[cellpadding='0'] tr th,
 div.pmMoreInfo table[cellpadding='0'] tr td,
 div.pmMoreInfo table[cellpadding='0'] tr th {
     padding: 0em !important;
@@ -2202,6 +2225,7 @@ div.itemtemplate-infos, div.recurringitem-infos {
 
 /* space under paragraphs in rich text zones */
 #content div.pmMoreInfo div p,
+#content div.static-infos div p,
 #content div[id^='hook_'] p,
 body#content.cke_editable div p {
     line-height: 1.5em;

@@ -11,6 +11,13 @@ Changelog
 - Changed default value for `many_users`, set it to `True` if more than 400 users
   or using `LDAP`, `False` otherwise.
   [gbastien]
+- Some styles fixes:
+
+  - Display of static-infos in dashboard the same way as on the item view;
+  - Display of table with no border in CKeditor in black;
+  - Display advice field name in historized advice popup more clearly.
+
+  [gbastien]
 
 4.2rc12 (2022-02-15)
 --------------------
