@@ -402,6 +402,7 @@ function adviceChangeDelay() {
 }
 
 function advicesInfos() {
+    // displayed in faceted dashboard
     tooltipster_helper(
       selector='div#faceted-form a.tooltipster-advices-infos',
       view_name='@@advices-icons-infos',
@@ -413,6 +414,7 @@ function advicesInfos() {
                minWidth: 750,
                maxWidth: 750,
                close_other_tips: true});
+    // displayed on item view, displayed bottom to deal with readmorable
     tooltipster_helper(
       selector='a.tooltipster-advices-infos',
       view_name='@@advices-icons-infos',

@@ -5,8 +5,9 @@ Changelog
 4.2rc13 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Changed default position of advice tooltipster on item view so it is
+  displayed `bottom` to deal with `readmorable`.
+  [gbastien]
 
 4.2rc12 (2022-02-15)
 --------------------

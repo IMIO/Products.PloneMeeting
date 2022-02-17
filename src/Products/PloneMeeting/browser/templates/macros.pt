@@ -1061,13 +1061,13 @@ Need to receive element "readmore_text".</tal:comment>
 <metal:readmorable define-macro="readmorable" i18n:domain="PloneMeeting">
  <div class="readmorable">
    <tal:comment tal:replace="structure python: readmore_text" />
-   <p class="readmore">
+   <p class="readmore" tal:condition="readmore_text">
     <a href="#">
       <span class="fa show-more"></span>
       <span i18n:translate="read_more">Read more</span>
     </a>
    </p>
-   <p class="readless" style="display: none">
+   <p class="readless" tal:condition="readmore_text" style="display: none">
     <a href="#">
       <span class="fa show-less"></span>
       <span i18n:translate="read_less">Read less</span>
