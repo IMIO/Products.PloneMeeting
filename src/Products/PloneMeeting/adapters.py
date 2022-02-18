@@ -358,10 +358,6 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                         translate('icon_help_returned_to_proposing_group',
                                   domain="PloneMeeting",
                                   context=self.request)))
-        elif itemState == 'prevalidated':
-            res.append(('prevalidate.png', translate('icon_help_prevalidated',
-                                                     domain="PloneMeeting",
-                                                     context=self.request)))
         elif itemState == 'accepted_but_modified':
             res.append(('accepted_but_modified.png', translate('icon_help_accepted_but_modified',
                                                                domain="PloneMeeting",
@@ -427,7 +423,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             item_validation_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
             if itemState in item_validation_states:
                 level = cfg.getItemWFValidationLevels(states=[itemState], only_enabled=True)
-                res.append(('{0}.png'.format(itemState),
+                res.append(('{0}.png'.format(level['leading_transition']),
                             translate('icon_help_{0}'.format(itemState),
                                       domain="PloneMeeting",
                                       context=self.request,

@@ -1216,6 +1216,19 @@ schema = Schema((
                  'enabled'),
         allow_empty_rows=False,
     ),
+    BooleanField(
+        name='enableItemWFShortcuts',
+        default=defValues.enableItemWFShortcuts,
+        widget=BooleanField._properties['widget'](
+            description="EnableItemWFShortcuts",
+            description_msgid="enable_item_wf_shortcuts_descr",
+            label='enableitemwfshortcuts',
+            label_msgid='PloneMeeting_label_enableItemWFShortcuts',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="workflow",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     LinesField(
         name='transitionsToConfirm',
         widget=MultiSelectionWidget(

@@ -4,6 +4,7 @@
    PloneMeeting data structures and workflows.'''
 
 from imio.helpers.content import object_values
+from imio.pyutils.utils import merge_dicts
 from plone import api
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -48,6 +49,8 @@ WAITING_ADVICES_FROM_STATES = (
      # default to "validated", this avoid using the backToValidated title that
      # is translated to "Remove from meeting"
      'use_custom_back_transition_title_for': ("validated", ),
+     # if () given, a custom transition icon is used for every back transitions
+     'only_use_custom_back_transition_icon_for': ("validated", ),
      'use_custom_state_title': True,
      'use_custom_transition_title_for': (),
      'remove_modify_access': True,
@@ -61,6 +64,8 @@ WAITING_ADVICES_FROM_STATES = (
      'use_custom_icon': False,
      # is translated to "Remove from meeting"
      'use_custom_back_transition_title_for': ("validated", ),
+     # if () given, a custom transition icon is used for every back transitions
+     'only_use_custom_back_transition_icon_for': ("validated", ),
      'use_custom_state_title': True,
      'use_custom_transition_title_for': (),
      'remove_modify_access': True,
@@ -572,6 +577,31 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             level.pop('back_transition_title')
             addState(itemWorkflow.id, **level)
 
+        # manage MeetingConfig.enableItemWFShortcuts when every states and transitions are created
+        if meetingConfig.getEnableItemWFShortcuts():
+            # every transitions exist, we just need to add it to every item validation states
+            back_shortcuts = {}
+            # add back transitions
+            for level in levels:
+                back_shortcuts[level['new_state_id']] = []
+                for back_shortcut_state in back_shortcuts:
+                    if back_shortcut_state != level['new_state_id']:
+                        back_shortcuts[back_shortcut_state].append(
+                            level['back_transitions'][1]['back_transition_id'])
+            levels.reverse()
+            shortcuts = {}
+            for level in levels:
+                shortcuts[level['new_state_id']] = []
+                for shortcut_state in shortcuts:
+                    if shortcut_state != level['new_state_id']:
+                        shortcuts[shortcut_state].append(
+                            level['leading_transition_id'])
+            # now update list of transitions leaving item validation states
+            shortcuts = merge_dicts((shortcuts, back_shortcuts))
+            for state_id, transition_ids in shortcuts.items():
+                itemWorkflow.states[state_id].transitions = tuple(
+                    set(itemWorkflow.states[state_id].transitions).union(transition_ids))
+
         # change permission for PloneMeeting: add annex for state "validated"
         # replace "Contributor" by "MeetingManager"
         validated = itemWorkflow.states["validated"]
@@ -847,11 +877,17 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                                     back_state_id[0].upper(), back_state_id[1:])
                                 if existing_back_transition_id in wf.transitions:
                                     back_transition_title = wf.transitions[existing_back_transition_id].title
+                            icon_name = 'backTo_from_waiting_advices'
+                            only_use_custom_back_transition_icon_for = \
+                                infos.get('only_use_custom_back_transition_icon_for', ())
+                            if not only_use_custom_back_transition_icon_for or \
+                               back_state_id in only_use_custom_back_transition_icon_for:
+                                icon_name = back_transition_id
                             transition.setProperties(
                                 title=back_transition_title,
                                 new_state_id=back_state_id, trigger_type=1, script_name='',
                                 actbox_name=back_transition_id, actbox_url='',
-                                actbox_icon='%(portal_url)s/{0}.png'.format(back_transition_id),
+                                actbox_icon='%(portal_url)s/{0}.png'.format(icon_name),
                                 actbox_category='workflow',
                                 props={'guard_expr': 'python:here.wfConditions().mayCorrect("%s")'
                                        % back_state_id})

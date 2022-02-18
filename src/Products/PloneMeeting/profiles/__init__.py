@@ -679,7 +679,7 @@ class MeetingConfigDescriptor(Descriptor):
              'enabled': '0',
              },
         )
-
+        self.enableItemWFShortcuts = False
         # "Transitions to confirm" are Meeting or Item-related transitions for
         # which, in the user interface, a click on the corresponding icon or
         # button will show a confirmation popup. In this popup, the user will
