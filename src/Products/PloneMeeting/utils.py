@@ -49,7 +49,6 @@ from plone.locking.events import unlockAfterModification
 from plone.memoize import ram
 from plone.supermodel.utils import mergedTaggedValueDict
 from Products.Archetypes.atapi import DisplayList
-from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ManageProperties
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -100,6 +99,7 @@ from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import alsoProvides
 from zope.interface import implements
+from zope.lifecycleevent import ObjectModifiedEvent
 from zope.location import locate
 from zope.schema import getFieldsInOrder
 from zope.security.interfaces import IPermission
@@ -1051,7 +1051,7 @@ def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False, update_meta
     """Ease notifyModified and reindex of a given p_obj.
        If p_extra_idxs contains '*', a full reindex is done, if not
        only 'modified' related indexes are updated.
-       If p_notify_event is True, the ObjectEditedEvent is notified."""
+       If p_notify_event is True, the ObjectModifiedEvent is notified."""
 
     obj.notifyModified()
 
@@ -1063,7 +1063,7 @@ def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False, update_meta
     reindex_object(obj, idxs, update_metadata=update_metadata)
 
     if notify_event:
-        notify(ObjectEditedEvent(obj))
+        notify(ObjectModifiedEvent(obj))
 
 
 def reindex_object(obj, idxs=[], no_idxs=[], update_metadata=1):

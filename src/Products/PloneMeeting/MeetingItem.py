@@ -185,6 +185,7 @@ class MeetingItemWorkflowConditions(object):
         self.context = item
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+        self.review_state = self.context.query_state()
 
     def _publishedObjectIsMeeting(self):
         '''Is the object currently published in Plone a Meeting ?'''
@@ -257,10 +258,9 @@ class MeetingItemWorkflowConditions(object):
         res = False
         if 'waiting_advices_given_advices_required_to_validate' in \
            self.cfg.getWorkflowAdaptations():
-            review_state = self.context.query_state()
             wf_tool = api.portal.get_tool('portal_workflow')
             item_wf = wf_tool.getWorkflowsFor(self.context)[0]
-            transitions = item_wf.states[review_state].transitions
+            transitions = item_wf.states[self.review_state].transitions
             wait_advices_transitions = [tr for tr in transitions
                                         if tr.startswith('wait_advices_')]
             for wait_advices_tr in wait_advices_transitions:
@@ -302,9 +302,8 @@ class MeetingItemWorkflowConditions(object):
             if _checkPermission(ManagePortal, self.context):
                 res = True
             else:
-                item_state = self.context.query_state()
                 last_validation_state = self._getLastValidationState()
-                if item_state == last_validation_state:
+                if self.review_state == last_validation_state:
                     res = True
                     if self._has_waiting_advices_transitions():
                         res = No(_('has_required_waiting_advices'))
@@ -408,7 +407,6 @@ class MeetingItemWorkflowConditions(object):
            - every advices that should be given have to be given;
            - user must be adviser for advice;
            - if advice not given, user must be able to evaluate completeness and item must be incomplete.'''
-        item_state = self.context.query_state()
         user_plone_groups = self.tool.get_plone_groups_for_user()
         res = False
         for org_uid in self.context.adviceIndex:
@@ -419,7 +417,7 @@ class MeetingItemWorkflowConditions(object):
             # this last case is "not using completeness"
             adapted = self.context.adapted()
             may_eval_completeness = adapted.mayEvaluateCompleteness()
-            if item_state in self.cfg.getItemAdviceStatesForOrg(org_uid) and \
+            if self.review_state in self.cfg.getItemAdviceStatesForOrg(org_uid) and \
                get_plone_group_id(org_uid, 'advisers') in user_plone_groups and \
                (self.context._advice_is_given(org_uid) or
                 (may_eval_completeness and
@@ -447,9 +445,8 @@ class MeetingItemWorkflowConditions(object):
         if not meeting or (meeting and meeting.query_state() != 'closed'):
             proposingGroup = self.context.getProposingGroup()
             # when item is validated, we may eventually send back to last validation state
-            item_state = self.context.query_state()
             wfas = self.cfg.getWorkflowAdaptations()
-            if item_state == 'validated':
+            if self.review_state == 'validated':
                 last_val_state = self._getLastValidationState()
                 if destinationState == last_val_state:
                     # MeetingManager probably
@@ -462,7 +459,7 @@ class MeetingItemWorkflowConditions(object):
                         res = self.tool.group_is_not_empty(
                             proposingGroup, suffix, user_id=get_current_user_id())
             # using 'waiting_advices_XXX_send_back' WFAdaptations,
-            elif item_state.endswith('_waiting_advices'):
+            elif self.review_state.endswith('_waiting_advices'):
                 item_validation_states = self.cfg.getItemWFValidationLevels(data='state', only_enabled=True)
                 # compute sendable back states
                 sendable_back_states = []

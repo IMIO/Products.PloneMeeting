@@ -49,6 +49,10 @@ WAITING_ADVICES_FROM_STATES = (
      # default to "validated", this avoid using the backToValidated title that
      # is translated to "Remove from meeting"
      'use_custom_back_transition_title_for': ("validated", ),
+     # we can define some back transition id for some back_to_state
+     # if not, a generated transition is used, here we could have for example
+     # 'defined_back_transition_ids': {"validated": "validate"}
+     'defined_back_transition_ids': {},
      # if () given, a custom transition icon is used for every back transitions
      'only_use_custom_back_transition_icon_for': ("validated", ),
      'use_custom_state_title': True,
@@ -64,6 +68,10 @@ WAITING_ADVICES_FROM_STATES = (
      'use_custom_icon': False,
      # is translated to "Remove from meeting"
      'use_custom_back_transition_title_for': ("validated", ),
+     # we can define some back transition id for some back_to_state
+     # if not, a generated transition is used, here we could have for example
+     # 'defined_back_transition_ids': {"validated": "validate"}
+     'defined_back_transition_ids': {},
      # if () given, a custom transition icon is used for every back transitions
      'only_use_custom_back_transition_icon_for': ("validated", ),
      'use_custom_state_title': True,
@@ -577,8 +585,8 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             level.pop('back_transition_title')
             addState(itemWorkflow.id, **level)
 
-        # manage MeetingConfig.enableItemWFShortcuts when every states and transitions are created
-        if meetingConfig.getEnableItemWFShortcuts():
+        # manage item_validation_shortcuts when every states and transitions are created
+        if 'item_validation_shortcuts' in meetingConfig.getWorkflowAdaptations():
             # every transitions exist, we just need to add it to every item validation states
             back_shortcuts = {}
             # add back transitions
@@ -864,7 +872,11 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                                                  transitions=existing_transitions + (from_transition_id, ))
 
                     for back_state_id in back_state_ids:
-                        back_transition_id = 'backTo_{0}_from_waiting_advices'.format(back_state_id)
+                        defined_back_transition_ids = infos.get('defined_back_transition_ids', {})
+                        if back_state_id in defined_back_transition_ids:
+                            back_transition_id = defined_back_transition_ids[back_state_id]
+                        else:
+                            back_transition_id = 'backTo_{0}_from_waiting_advices'.format(back_state_id)
                         back_transition_ids.append(back_transition_id)
                         # we try to avoid creating too much back transitions
                         if back_transition_id not in wf.transitions:

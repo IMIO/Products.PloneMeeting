@@ -204,7 +204,8 @@ class PloneGroupSettingsValidator(validator.SimpleFieldValidator):
         # advisers
         advisers_removed_plonegroups = [
             REAL_ORG_UID_PATTERN.format(removed_plonegroup_id.split('_')[0])
-            for removed_plonegroup_id in removed_plonegroups]
+            for removed_plonegroup_id in removed_plonegroups
+            if removed_plonegroup_id.endswith('_advisers')]
         for cfg in tool.objectValues('MeetingConfig'):
             msg = _("can_not_delete_plone_group_meetingconfig",
                     mapping={'cfg_title': safe_unicode(cfg.Title())})

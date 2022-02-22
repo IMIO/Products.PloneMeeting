@@ -1216,19 +1216,6 @@ schema = Schema((
                  'enabled'),
         allow_empty_rows=False,
     ),
-    BooleanField(
-        name='enableItemWFShortcuts',
-        default=defValues.enableItemWFShortcuts,
-        widget=BooleanField._properties['widget'](
-            description="EnableItemWFShortcuts",
-            description_msgid="enable_item_wf_shortcuts_descr",
-            label='enableitemwfshortcuts',
-            label_msgid='PloneMeeting_label_enableItemWFShortcuts',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="workflow",
-        write_permission="PloneMeeting: Write risky config",
-    ),
     LinesField(
         name='transitionsToConfirm',
         widget=MultiSelectionWidget(
@@ -1873,17 +1860,19 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
-        name='enforceAdviceMandatoriness',
-        default=defValues.enforceAdviceMandatoriness,
-        widget=BooleanField._properties['widget'](
-            description="EnforceAdviceMandatoriness",
-            description_msgid="enforce_advice_mandatoriness_descr",
-            label='Enforceadvicemandatoriness',
-            label_msgid='PloneMeeting_label_enforceAdviceMandatoriness',
+    StringField(
+        name='keepAccessToItemWhenAdvice',
+        default=defValues.keepAccessToItemWhenAdvice,
+        widget=SelectionWidget(
+            description="KeepAccessToItemWhenAdvice",
+            description_msgid="keep_access_to_item_when_advice_descr",
+            label='Keepaccesstoitemwhenadvice',
+            label_msgid='PloneMeeting_label_keepAccessToItemWhenAdvice',
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
+        vocabulary_factory='Products.PloneMeeting.vocabularies.keep_access_to_item_when_advice_vocabulary',
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
@@ -1944,6 +1933,19 @@ schema = Schema((
         schemata="advices",
         write_permission="PloneMeeting: Write risky config",
     ),
+    BooleanField(
+        name='enforceAdviceMandatoriness',
+        default=defValues.enforceAdviceMandatoriness,
+        widget=BooleanField._properties['widget'](
+            description="EnforceAdviceMandatoriness",
+            description_msgid="enforce_advice_mandatoriness_descr",
+            label='Enforceadvicemandatoriness',
+            label_msgid='PloneMeeting_label_enforceAdviceMandatoriness',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     LinesField(
         name='defaultAdviceHiddenDuringRedaction',
         default=defValues.defaultAdviceHiddenDuringRedaction,
@@ -1987,21 +1989,6 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    StringField(
-        name='keepAccessToItemWhenAdvice',
-        default=defValues.keepAccessToItemWhenAdvice,
-        widget=SelectionWidget(
-            description="KeepAccessToItemWhenAdvice",
-            description_msgid="keep_access_to_item_when_advice_descr",
-            label='Keepaccesstoitemwhenadvice',
-            label_msgid='PloneMeeting_label_keepAccessToItemWhenAdvice',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="advices",
-        vocabulary_factory='Products.PloneMeeting.vocabularies.keep_access_to_item_when_advice_vocabulary',
-        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
@@ -2782,7 +2769,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     defaultWorkflows = ('meetingitem_workflow', 'meeting_workflow')
 
     # Names of workflow adaptations, ORDER IS IMPORTANT!
-    wfAdaptations = ('only_creator_may_delete',
+    wfAdaptations = ('item_validation_shortcuts',
+                     'only_creator_may_delete',
                      'accepted_but_modified',
                      'postpone_next_meeting',
                      'mark_not_applicable',

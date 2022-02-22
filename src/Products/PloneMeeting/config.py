@@ -104,8 +104,8 @@ ADD_SUBCONTENT_PERMISSIONS = [
     AddAnnexDecision,
     'ATContentTypes: Add Image']
 
-# base suffixes, THIS IS NOT INTENDED TO BE OVERRIDED or monkeypatched,
-# if necessary, use EXTRA_GROUP_SUFFIXES to extend it
+# base suffixes, if necessary, use EXTRA_GROUP_SUFFIXES to extend it
+# or monkeypatch it if base values are not correct
 MEETING_GROUP_SUFFIXES = [
     {'fct_title': u'advisers',
      'fct_id': u'advisers',
@@ -126,7 +126,7 @@ MEETING_GROUP_SUFFIXES = [
      'fct_id': u'prereviewers',
      'fct_orgs': [],
      'fct_management': False,
-     'enabled': True},
+     'enabled': False},
     {'fct_title': u'reviewers',
      'fct_id': u'reviewers',
      'fct_orgs': [],
@@ -136,27 +136,27 @@ MEETING_GROUP_SUFFIXES = [
      'fct_id': u'level1reviewers',
      'fct_orgs': [],
      'fct_management': False,
-     'enabled': True},
+     'enabled': False},
     {'fct_title': u'level2reviewers',
      'fct_id': u'level2reviewers',
      'fct_orgs': [],
      'fct_management': False,
-     'enabled': True},
+     'enabled': False},
     {'fct_title': u'level3reviewers',
      'fct_id': u'level3reviewers',
      'fct_orgs': [],
      'fct_management': False,
-     'enabled': True},
+     'enabled': False},
     {'fct_title': u'level4reviewers',
      'fct_id': u'level4reviewers',
      'fct_orgs': [],
      'fct_management': False,
-     'enabled': True},
+     'enabled': False},
     {'fct_title': u'level5reviewers',
      'fct_id': u'level5reviewers',
      'fct_orgs': [],
      'fct_management': False,
-     'enabled': True},
+     'enabled': False},
 ]
 
 # this is made to manage specific suffixes for a particular profile

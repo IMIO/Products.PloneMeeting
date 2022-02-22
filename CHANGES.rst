@@ -19,6 +19,11 @@ Changelog
 
   [gbastien]
 
+- Added WFAdaptation `item_validation_shortcuts` that will let users to change
+  item state to any other item validation state (so between itemcreated
+  and validated) depending on their groups.
+  [gbastien]
+
 4.2rc12 (2022-02-15)
 --------------------
 

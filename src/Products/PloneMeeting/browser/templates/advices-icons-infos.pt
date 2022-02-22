@@ -225,7 +225,7 @@
                                  i18n:attributes="title" title=""/>
                             <span tal:content="string:${advice/type}" i18n:translate="">Advice type</span>
                             <tal:comment replace="nothing">Display previous advice value if advice asked again.</tal:comment>
-                            <tal:previousAdviceType condition="python: adviceType == 'asked_again'">
+                            <tal:previousAdviceType condition="python: advice['type'] == 'asked_again'">
                               <tal:defines define="previous python: context.portal_repository.retrieve(obj, (context.portal_repository.getHistoryMetadata(obj).nextVersionId -1)).object">
                                 (<img tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_${previous/advice_type}.png;
                                                  title string:${previous/advice_type};"
