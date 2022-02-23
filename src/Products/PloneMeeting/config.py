@@ -126,7 +126,7 @@ MEETING_GROUP_SUFFIXES = [
      'fct_id': u'prereviewers',
      'fct_orgs': [],
      'fct_management': False,
-     'enabled': False},
+     'enabled': True},
     {'fct_title': u'reviewers',
      'fct_id': u'reviewers',
      'fct_orgs': [],
