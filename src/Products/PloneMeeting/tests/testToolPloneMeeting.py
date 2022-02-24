@@ -129,7 +129,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue(cfg2.getIsDefault())
         self.assertEqual(self.tool.getDefaultMeetingConfig().getId(), cfg2.getId())
 
-    def test_pm_CloneItem(self):
+    def test_pm_CloneItemDefaultFunctionnality(self):
         '''Clones a given item in parent item folder.'''
         self.changeUser('pmManager')
         item1 = self.create('MeetingItem')
@@ -161,6 +161,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # so every things that need to be done on it are done, make sure at the end
         # the role is no more given...
         self.failIf(self.hasPermission(ManagePortal, clonedItem))
+        # created and modified are updated
+        self.assertNotEqual(item1.created(), clonedItem.created())
+        self.assertNotEqual(item1.modified(), clonedItem.modified())
 
     def test_pm_CloneItemWithAnnexes(self):
         '''Clones a given item containing annexes in parent item folder.'''
