@@ -234,18 +234,45 @@ class MeetingItemWorkflowConditions(object):
                 msg = No(_('required_groupsInCharge_ko'))
         return msg
 
+    def _mayShortcutToValidationLevel(self, destinationState, proposing_group_uid):
+        '''When using WFAdaptation 'item_validation_shortcuts',
+           is current user able to use the shortcut to p_destinationState?'''
+        res = False
+        if 'item_validation_shortcuts' in self.cfg.getWorkflowAdaptations():
+            # get previous item validation state and check what suffixes may manage
+            item_val_levels_states = self.cfg.getItemWFValidationLevels(
+                data='state', only_enabled=True)
+            previous_val_state = item_val_levels_states[
+                item_val_levels_states.index(destinationState)-1]
+            suffixes = self.cfg.getItemWFValidationLevels(
+                states=[previous_val_state], data='extra_suffixes', only_enabled=True)
+            main_suffix = self.cfg.getItemWFValidationLevels(
+                states=[previous_val_state], data='suffix', only_enabled=True)
+            suffixes.append(main_suffix)
+            suffixes = tuple(set(suffixes))
+            res = bool(self.tool.get_filtered_plone_groups_for_user(
+                org_uids=[proposing_group_uid], suffixes=suffixes))
+        else:
+            res = True
+        return res
+
     security.declarePublic('mayProposeToNextValidationLevel')
 
-    def mayProposeToNextValidationLevel(self, destinationState=None):
+    def mayProposeToNextValidationLevel(self, destinationState):
         '''Check if able to propose to next validation level.'''
         res = False
         if _checkPermission(ReviewPortalContent, self.context):
-            # check if next validation level suffixed Plone group is not empty
             suffix = self.cfg.getItemWFValidationLevels(
                 states=[destinationState], data='suffix', only_enabled=True)
-            res = self.tool.group_is_not_empty(self.context.getProposingGroup(), suffix)
-        # check category after transition as transition could not be doable
-        # at all and in this case, we would display a No button for a transition not doable...
+            proposing_group_uid = self.context.getProposingGroup()
+            # check if next validation level suffixed Plone group is not empty
+            res = self.tool.group_is_not_empty(proposing_group_uid, suffix)
+            if res:
+                # check that when using shortcuts, this is available
+                res = self._mayShortcutToValidationLevel(
+                    destinationState, proposing_group_uid)
+        # check required data only if transition is doable or we would display
+        # a No button for a transition that is actually not triggerable...
         if res:
             msg = self._check_required_data(destinationState)
             if msg is not None:
@@ -2434,10 +2461,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def mayTakeOver(self):
         '''Check doc in interfaces.py.'''
         item = self.getSelf()
-        wfTool = api.portal.get_tool('portal_workflow')
         res = False
         # user have WF transitions to trigger
-        if bool(wfTool.getTransitionsFor(item)):
+        if _checkPermission(ReviewPortalContent, item):
             res = True
         else:
             # item is decided and user is member of the proposingGroup

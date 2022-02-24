@@ -490,7 +490,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             user_groups = user.getGroups()
         return sorted(user_groups)
 
-    def get_filtered_plone_groups_for_user(self, org_uids, userId=None, the_objects=False):
+    def get_filtered_plone_groups_for_user(self, org_uids, userId=None, suffixes=[], the_objects=False):
         """For caching reasons, we only use ram.cache on get_plone_groups_for_user
            to avoid too much entries when using p_org_uids.
            Use this when needing to filter on org_uids."""
@@ -498,10 +498,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             userId=userId, the_objects=the_objects)
         if the_objects:
             user_groups = [plone_group for plone_group in user_groups
-                           if plone_group.id.split('_')[0] in org_uids]
+                           if plone_group.id.split('_')[0] in org_uids and
+                           (not suffixes or plone_group.id.split('_')[1] in suffixes)]
         else:
             user_groups = [plone_group_id for plone_group_id in user_groups
-                           if plone_group_id.split('_')[0] in org_uids]
+                           if plone_group_id.split('_')[0] in org_uids and
+                           (not suffixes or plone_group_id.split('_')[1] in suffixes)]
         return sorted(user_groups)
 
     def group_is_not_empty_cachekey(method, self, org_uid, suffix, user_id=None):
@@ -521,7 +523,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         plone_group_id = get_plone_group_id(org_uid, suffix)
         # for performance reasons, check directly in source_groups stored data
         group_users = portal.acl_users.source_groups._group_principal_map.get(plone_group_id, [])
-        return len(group_users) and not user_id or user_id in group_users
+        return len(group_users) and (not user_id or user_id in group_users)
 
     def _get_org_uids_for_user_cachekey(method,
                                         self,

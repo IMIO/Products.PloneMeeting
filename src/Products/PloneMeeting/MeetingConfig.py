@@ -139,6 +139,7 @@ from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleVocabulary
 
+import copy
 import logging
 import os
 
@@ -3538,7 +3539,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     line[translated_title] = u"{0} ({1})".format(
                         translated_value, line_translated_title)
             res = translated_res
-        return res
+        # when returning for example extra_suffixes as list, avoid it modified
+        return copy.deepcopy(res)
 
     security.declarePublic('getOrderedItemInitiators')
 
