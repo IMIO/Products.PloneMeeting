@@ -162,8 +162,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # the role is no more given...
         self.failIf(self.hasPermission(ManagePortal, clonedItem))
         # created and modified are updated
-        self.assertNotEqual(item1.created(), clonedItem.created())
-        self.assertNotEqual(item1.modified(), clonedItem.modified())
+        self.assertTrue(item1.created() < clonedItem.created())
+        self.assertTrue(item1.modified() < clonedItem.modified())
 
     def test_pm_CloneItemWithAnnexes(self):
         '''Clones a given item containing annexes in parent item folder.'''

@@ -6973,7 +6973,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # while self.reindexObject() is called without indexes
         # a notifyModified is done, do it also or the modified of cloned item is not updated
-        self.notifyModified()
+        newItem.notifyModified()
         # cloned item is originally reindexed but as we changed things after we reindex here
         # regarding everything that may have changed, including things done in the ItemDuplicatedEvent
         # excepted heavy indexes, so ZCTextIndexes

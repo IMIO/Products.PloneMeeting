@@ -5,8 +5,8 @@ Changelog
 4.2rc14 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Fixed `MeetingItem.modified` not updated when item cloned.
+  [gbastien]
 
 4.2rc13 (2022-02-25)
 --------------------
