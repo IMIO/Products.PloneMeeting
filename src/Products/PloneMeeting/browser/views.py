@@ -56,6 +56,7 @@ from Products.PloneMeeting.utils import get_dx_field
 from Products.PloneMeeting.utils import get_dx_widget
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import get_person_from_userid
+from Products.PloneMeeting.utils import reindex_object
 from z3c.form.field import Fields
 from z3c.form.interfaces import DISPLAY_MODE
 from zope import schema
@@ -530,7 +531,8 @@ class UpdateDelayAwareAdvicesView(BrowserView):
 
 class UpdateItemsToReindexView(BrowserView):
     """
-      When adding annexes, we avoid reindexing the SearchableText.
+      In some cases (defined in ToolPloneMeeting.deferParentReindex),
+      we avoid reindexing the SearchableText.
       It will be nevertheless most of times updated by another reindex
       made on item (modified rich text).  But if any are still to reindex, we
       do this during the night.
@@ -540,7 +542,7 @@ class UpdateItemsToReindexView(BrowserView):
         catalog = api.portal.get_tool('portal_catalog')
         query = {'pm_technical_index': [REINDEX_NEEDED_MARKER]}
         # make a new list out of brains because reindexObject would modify
-        # the result, a bit the same like when we delete elements  of a list
+        # the result, a bit the same like when we delete elements of a list
         # we are iterating on
         brains = list(catalog.unrestrictedSearchResults(**query))
         numberOfBrains = len(brains)
@@ -554,7 +556,8 @@ class UpdateItemsToReindexView(BrowserView):
                 '/'.join(item.getPhysicalPath())))
             i = i + 1
             setattr(item, REINDEX_NEEDED_MARKER, False)
-            item.reindexObject()
+            # do not use item.reindexObject because it calls notifyModified when idxs=[]
+            reindex_object(item)
         logger.info('Done.')
 
 

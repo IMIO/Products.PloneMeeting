@@ -1066,16 +1066,21 @@ def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False, update_meta
         notify(ObjectModifiedEvent(obj))
 
 
-def reindex_object(obj, idxs=[], no_idxs=[], update_metadata=1):
+def reindex_object(obj, idxs=[], no_idxs=[], update_metadata=1, mark_to_reindex=False):
     """Reimplement self.reindexObject for AT as p_update_metadata is not available.
        p_idxs and p_no_idxs are mutually exclusive, passing indexes in p_no_idxs
-       means every indexes excepted these indexes."""
+       means every indexes excepted these indexes.
+       If p_mark_to_reindex=True then we enable the REINDEX_NEEDED_MARKER."""
     catalog = api.portal.get_tool('portal_catalog')
     indexes = catalog.indexes()
     if no_idxs:
         idxs = [i for i in indexes if i not in no_idxs]
     else:
         idxs = [i for i in idxs if i in indexes]
+    if mark_to_reindex:
+        if 'pm_technical_index' not in idxs:
+            idxs.append('pm_technical_index')
+        setattr(obj, REINDEX_NEEDED_MARKER, True)
     catalog.catalog_object(obj, idxs=list(set(idxs)), update_metadata=update_metadata)
 
 

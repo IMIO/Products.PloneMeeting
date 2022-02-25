@@ -2,7 +2,19 @@ Changelog
 =========
 
 
-4.2rc13 (unreleased)
+4.2rc15 (unreleased)
+--------------------
+
+- Make sure item `modified` date is not updated by the `UpdateItemsToReindexView`.
+  [gbastien]
+
+4.2rc14 (2022-02-25)
+--------------------
+
+- Fixed `MeetingItem.modified` not updated when item cloned.
+  [gbastien]
+
+4.2rc13 (2022-02-25)
 --------------------
 
 - Changed default position of advice tooltipster on item view so it is
@@ -17,6 +29,8 @@ Changelog
   - Display of table with no border in CKeditor in black;
   - Display advice field name in historized advice popup more clearly.
 
+  [gbastien]
+- Fixed `MeetingItem.modified` not updated when item cloned.
   [gbastien]
 
 - Added WFAdaptation `item_validation_shortcuts` that will let users to change

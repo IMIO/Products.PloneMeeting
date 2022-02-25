@@ -6868,7 +6868,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
               copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None, keepProposingGroup=False,
               setCurrentAsPredecessor=False, manualLinkToPredecessor=False,
               inheritAdvices=False, inheritedAdviceUids=[], keep_ftw_labels=False,
-              keptAnnexIds=[], keptDecisionAnnexIds=[], item_attrs={}):
+              keptAnnexIds=[], keptDecisionAnnexIds=[], item_attrs={}, reindexNewItem=True):
         '''Clones me in the PloneMeetingFolder of the current user, or
            p_newOwnerId if given (this guy will also become owner of this
            item). If there is a p_cloneEventAction, an event will be included
@@ -6935,7 +6935,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                  keep_ftw_labels=keep_ftw_labels,
                                  keptAnnexIds=keptAnnexIds,
                                  keptDecisionAnnexIds=keptDecisionAnnexIds)
-
         # special handling for some fields kept when cloned_to_same_mc
         # we check that used values on original item are still useable for cloned item
         # in case configuration changed since original item was created
@@ -6995,9 +6994,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # notify that item has been duplicated so subproducts may interact if necessary
         notify(ItemDuplicatedEvent(self, newItem))
 
-        # at_post_create_script does not reindex, reindex here
-        # regarding everything that may have changed, excepted ZCTextIndexes
-        reindex_object(newItem, no_idxs=['SearchableText', 'Title', 'Description'])
+        # while self.reindexObject() is called without indexes
+        # a notifyModified is done, do it also or the modified of cloned item is not updated
+        newItem.notifyModified()
+        # cloned item is originally reindexed but as we changed things after we reindex here
+        # regarding everything that may have changed, including things done in the ItemDuplicatedEvent
+        # excepted heavy indexes, so ZCTextIndexes
+        if reindexNewItem:
+            reindex_object(newItem, no_idxs=['SearchableText', 'Title', 'Description'])
 
         # add logging message to fingerpointing log
         extras = 'object={0} clone_event={1}'.format(
@@ -7095,20 +7099,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              destFolder=destFolder, copyFields=fieldsToCopy,
                              newPortalType=destMeetingConfig.getItemTypeName(),
                              keepProposingGroup=True, setCurrentAsPredecessor=True,
-                             inheritAdvices=keepAdvices, inheritedAdviceUids=keptAdvices)
+                             inheritAdvices=keepAdvices, inheritedAdviceUids=keptAdvices,
+                             reindexNewItem=False)
         # manage categories mapping, if original and new items use
         # categories, we check if a mapping is defined in the configuration of the original item
         if not cfg.getUseGroupsAsCategories() and \
            not destMeetingConfig.getUseGroupsAsCategories():
             originalCategory = self.getCategory(theObject=True)
             # find out if something is defined when sending an item to destMeetingConfig
-            for destCat in originalCategory.category_mapping_when_cloning_to_other_mc:
-                if destCat.split('.')[0] == destMeetingConfigId:
-                    # we found a mapping defined for the new category, apply it
-                    # get the category so it fails if it does not exist (that should not be possible...)
-                    newCat = getattr(destMeetingConfig.categories, destCat.split('.')[1])
-                    newItem.setCategory(newCat.getId())
-                    break
+            if originalCategory:
+                for destCat in originalCategory.category_mapping_when_cloning_to_other_mc:
+                    if destCat.split('.')[0] == destMeetingConfigId:
+                        # we found a mapping defined for the new category, apply it
+                        # get the category so it fails if it does not exist (that should not be possible...)
+                        newCat = getattr(destMeetingConfig.categories, destCat.split('.')[1])
+                        newItem.setCategory(newCat.getId())
+                        break
 
         # find meeting to present the item in and set it as preferred
         # this way if newItem needs to be presented in a frozen meeting, it works
