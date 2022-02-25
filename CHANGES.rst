@@ -18,6 +18,8 @@ Changelog
   - Display advice field name in historized advice popup more clearly.
 
   [gbastien]
+- Fixed `MeetingItem.modified` not updated when item cloned.
+  [gbastien]
 
 4.2rc12 (2022-02-15)
 --------------------
