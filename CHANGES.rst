@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc15 (unreleased)
+4.2rc15 (2022-02-25)
 --------------------
 
 - Make sure item `modified` date is not updated by the `UpdateItemsToReindexView`.
