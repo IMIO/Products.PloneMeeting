@@ -5,8 +5,8 @@ Changelog
 4.2rc15 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Make sure item `modified` date is not updated by the `UpdateItemsToReindexView`.
+  [gbastien]
 
 4.2rc14 (2022-02-25)
 --------------------

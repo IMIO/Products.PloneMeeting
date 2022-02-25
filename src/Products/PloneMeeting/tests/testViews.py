@@ -694,6 +694,10 @@ class testViews(PloneMeetingTestCase):
         self.addAnnex(item3, annexTitle="Special annex3 title")
         self.assertEqual(len(self.catalog(SearchableText="Classic")), 3)
         self.assertFalse(self.catalog(SearchableText="Special"))
+        # will check that modified is not changed
+        item1_modified = item1.modified()
+        item2_modified = item2.modified()
+        item3_modified = item3.modified()
         self.changeUser('siteadmin')
         # @@update-items-to-reindex is called by @@pm-night-tasks
         self.portal.restrictedTraverse('@@pm-night-tasks')()
@@ -702,6 +706,10 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertEqual(len(self.catalog(SearchableText="Classic")), 3)
         self.assertEqual(len(self.catalog(SearchableText="Special")), 3)
+        # items are not modified
+        self.assertEqual(item1.modified(), item1_modified)
+        self.assertEqual(item2.modified(), item2_modified)
+        self.assertEqual(item3.modified(), item3_modified)
 
     def test_pm_SendPodTemplateToMailingList(self):
         """Send a Pod template to a mailing list."""
