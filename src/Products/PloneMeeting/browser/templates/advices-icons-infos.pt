@@ -100,7 +100,7 @@
                         </a>
                      </acronym>
                      <span tal:attributes="title python: context.getAdviceHelpMessageFor(**advice)" class="fa fa-question-circle help-doc pmHelp" />
-                     <tal:confidentiality condition="displayAdviceConfidentiality" replace="structure python: context.restrictedTraverse('@@advice-confidentiality')(advice)" />
+                     <tal:confidentiality condition="displayAdviceConfidentiality" replace="structure python: context.unrestrictedTraverse('@@advice-confidentiality')(advice)" />
                      <acronym tal:condition="python: obj and context.adapted().mayAskAdviceAgain(obj)">
                         <img tal:condition="python: not advice['type'] == 'asked_again'"
                              class="askAdviceAgainEditable"
@@ -294,7 +294,7 @@
                 <td colspan="5"
                     align="right"
                     class="advice_annexes table_widget_value">
-                    <tal:annexes replace="structure python: obj.restrictedTraverse('@@categorized-childs')()" />
+                    <tal:annexes replace="structure python: obj.unrestrictedTraverse('@@categorized-childs')()" />
                 </td>
               </tr>
             </table>

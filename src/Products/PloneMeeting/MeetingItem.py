@@ -244,14 +244,19 @@ class MeetingItemWorkflowConditions(object):
                 data='state', only_enabled=True)
             previous_val_state = item_val_levels_states[
                 item_val_levels_states.index(destinationState)-1]
-            suffixes = self.cfg.getItemWFValidationLevels(
+            previous_suffixes = self.cfg.getItemWFValidationLevels(
                 states=[previous_val_state], data='extra_suffixes', only_enabled=True)
-            main_suffix = self.cfg.getItemWFValidationLevels(
+            previous_main_suffix = self.cfg.getItemWFValidationLevels(
                 states=[previous_val_state], data='suffix', only_enabled=True)
-            suffixes.append(main_suffix)
-            suffixes = tuple(set(suffixes))
+            previous_suffixes.append(previous_main_suffix)
+            previous_suffixes = tuple(set(previous_suffixes))
             res = bool(self.tool.get_filtered_plone_groups_for_user(
-                org_uids=[proposing_group_uid], suffixes=suffixes))
+                org_uids=[proposing_group_uid], suffixes=previous_suffixes))
+            # when previous_val_state group suffix is empty, we replay _mayShortcutToValidationLevel
+            # but with this previous state as destinationState
+            # XXX TO BE CONFIRMED
+            if not res and not self.tool.group_is_not_empty(proposing_group_uid, previous_main_suffix):
+                return self._mayShortcutToValidationLevel(previous_val_state, proposing_group_uid)
         else:
             res = True
         return res
@@ -267,7 +272,8 @@ class MeetingItemWorkflowConditions(object):
             proposing_group_uid = self.context.getProposingGroup()
             # check if next validation level suffixed Plone group is not empty
             res = self.tool.group_is_not_empty(proposing_group_uid, suffix)
-            if res:
+            # shortcuts are available to (Meeting)Managers
+            if res and not self.tool.isManager(self.cfg):
                 # check that when using shortcuts, this is available
                 res = self._mayShortcutToValidationLevel(
                     destinationState, proposing_group_uid)
@@ -473,18 +479,17 @@ class MeetingItemWorkflowConditions(object):
             proposingGroup = self.context.getProposingGroup()
             # when item is validated, we may eventually send back to last validation state
             wfas = self.cfg.getWorkflowAdaptations()
-            if self.review_state == 'validated':
-                last_val_state = self._getLastValidationState()
-                if destinationState == last_val_state:
-                    # MeetingManager probably
-                    if _checkPermission(ReviewPortalContent, self.context):
-                        res = True
-                    # manage the reviewers_take_back_validated_item WFAdaptation
-                    elif 'reviewers_take_back_validated_item' in self.cfg.getWorkflowAdaptations():
-                        # is current user member of last validation level?
-                        suffix = self.cfg.getItemWFValidationLevels(states=[last_val_state], data='suffix')
-                        res = self.tool.group_is_not_empty(
-                            proposingGroup, suffix, user_id=get_current_user_id())
+            last_val_state = self._getLastValidationState()
+            if self.review_state == 'validated' and destinationState == last_val_state:
+                # MeetingManager probably
+                if _checkPermission(ReviewPortalContent, self.context):
+                    res = True
+                # manage the reviewers_take_back_validated_item WFAdaptation
+                elif 'reviewers_take_back_validated_item' in self.cfg.getWorkflowAdaptations():
+                    # is current user member of last validation level?
+                    suffix = self.cfg.getItemWFValidationLevels(states=[last_val_state], data='suffix')
+                    res = self.tool.group_is_not_empty(
+                        proposingGroup, suffix, user_id=get_current_user_id())
             # using 'waiting_advices_XXX_send_back' WFAdaptations,
             elif self.review_state.endswith('_waiting_advices'):
                 item_validation_states = self.cfg.getItemWFValidationLevels(data='state', only_enabled=True)

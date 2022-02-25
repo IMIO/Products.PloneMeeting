@@ -121,7 +121,7 @@ class ItemEmergencyChangeForm(form.Form):
         # check that given 'new_emergency_value' is available in the field vocabulary
         # if not available, just raise Unauthorized
         new_emergency_value = data.get('new_emergency_value')
-        itemEmergencyView = self.context.restrictedTraverse('@@item-emergency')
+        itemEmergencyView = self.context.unrestrictedTraverse('@@item-emergency')
         if new_emergency_value not in itemEmergencyView.listSelectableEmergencies():
             raise Unauthorized
         self.context.setEmergency(new_emergency_value)
