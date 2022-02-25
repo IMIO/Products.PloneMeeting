@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc13 (unreleased)
+4.2rc13 (2022-02-25)
 --------------------
 
 - Changed default position of advice tooltipster on item view so it is
