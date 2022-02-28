@@ -236,8 +236,12 @@ def onMeetingBeforeTransition(meeting, event):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(meeting)
         if 'return_to_proposing_group' in cfg.getWorkflowAdaptations():
-            # raise a WorkflowException in case there are items still in state 'returned_to_proposing_group'
-            additional_catalog_query = {'review_state': 'returned_to_proposing_group'}
+            # raise a WorkflowException in case there are items still in a
+            # 'returned_to_proposing_group' state
+            returned_to_pg_state_ids = [
+                state for state in cfg.getItemWorkflow(True).states
+                if state.startswith('returned_to_proposing_group')]
+            additional_catalog_query = {'review_state': returned_to_pg_state_ids}
             if meeting.get_items(the_objects=False, additional_catalog_query=additional_catalog_query):
                 msg = _('Can not close a meeting containing items returned to proposing group!')
                 raise WorkflowException(msg)

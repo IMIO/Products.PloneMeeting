@@ -234,7 +234,7 @@ class MeetingItemWorkflowConditions(object):
                 msg = No(_('required_groupsInCharge_ko'))
         return msg
 
-    def _mayShortcutToValidationLevel(self, destinationState, proposing_group_uid):
+    def _mayShortcutToValidationLevel(self, proposing_group_uid, destinationState):
         '''When using WFAdaptation 'item_validation_shortcuts',
            is current user able to use the shortcut to p_destinationState?'''
         res = False
@@ -256,7 +256,7 @@ class MeetingItemWorkflowConditions(object):
             # but with this previous state as destinationState
             # XXX TO BE CONFIRMED
             if not res and not self.tool.group_is_not_empty(proposing_group_uid, previous_main_suffix):
-                return self._mayShortcutToValidationLevel(previous_val_state, proposing_group_uid)
+                return self._mayShortcutToValidationLevel(proposing_group_uid, previous_val_state)
         else:
             res = True
         return res
@@ -276,7 +276,7 @@ class MeetingItemWorkflowConditions(object):
             if res and not self.tool.isManager(self.cfg):
                 # check that when using shortcuts, this is available
                 res = self._mayShortcutToValidationLevel(
-                    destinationState, proposing_group_uid)
+                    proposing_group_uid, destinationState)
         # check required data only if transition is doable or we would display
         # a No button for a transition that is actually not triggerable...
         if res:
@@ -411,16 +411,24 @@ class MeetingItemWorkflowConditions(object):
            self.context.getMeeting().query_state() in ('decided', 'decisions_published', 'closed'):
             return True
 
-    def _userIsPGMemberAbleToSendItemBack(self, proposingGroup, destinationState):
-        '''Is current user member of destinationState level?'''
+    def _userIsPGMemberAbleToSendItemBack(self, proposing_group_uid, destinationState):
+        ''' '''
         suffix = self.cfg.getItemWFValidationLevels(
             states=[destinationState], data='suffix')
-        return self.tool.group_is_not_empty(
-            proposingGroup,
-            suffix,
-            user_id=get_current_user_id(self.context.REQUEST)) and \
+        # first case, is user member of destinationState level?
+        res = self.tool.group_is_not_empty(
+            proposing_group_uid, suffix, user_id=get_current_user_id(self.context.REQUEST))
+        # in case we use shortcuts, we also check if able to go to destinationState
+        # if it was the classic item validation workflow
+        # so a creator could send back to "itemcreated" and to "proposed"
+        if not res and \
+           self.tool.group_is_not_empty(proposing_group_uid, suffix) and \
+           'item_validation_shortcuts' in self.cfg.getWorkflowAdaptations():
+            res = self._mayShortcutToValidationLevel(proposing_group_uid, destinationState)
+
+        return res and \
             self._userIsPGMemberAbleToSendItemBackExtraCondition(
-                proposingGroup, destinationState)
+                proposing_group_uid, destinationState)
 
     def _userIsPGMemberAbleToSendItemBackExtraCondition(
             self, proposingGroup, destinationState):
@@ -508,16 +516,18 @@ class MeetingItemWorkflowConditions(object):
                     for waiting_advice_config in adaptations.WAITING_ADVICES_FROM_STATES:
                         sendable_back_states += list(waiting_advice_config['back_states'])
 
+                # remove duplicates
+                sendable_back_states = list(set(sendable_back_states))
                 if destinationState in sendable_back_states or \
                    destinationState not in item_validation_states:
-                    # bypass for Manager
-                    if _checkPermission(ReviewPortalContent, self.context):
+                    # bypass for Manager, do not check on ReviewPortalContent
+                    # as also given to proposingGroup
+                    if self.tool.isManager(self.cfg):
                         res = True
-                    else:
-                        if 'waiting_advices_proposing_group_send_back' in wfas:
-                            # is current user proposingGroup member able to trigger transition?
-                            res = self._userIsPGMemberAbleToSendItemBack(
-                                proposingGroup, destinationState)
+                    elif 'waiting_advices_proposing_group_send_back' in wfas:
+                        # is current user proposingGroup member able to trigger transition?
+                        res = self._userIsPGMemberAbleToSendItemBack(
+                            proposingGroup, destinationState)
 
                         # if not, maybe it is an adviser able to give an advice?
                         if not res and 'waiting_advices_adviser_send_back' in wfas:

@@ -626,11 +626,11 @@ class testWorkflows(PloneMeetingTestCase):
         # the 3 recurring items were added
         self.assertEqual(len(meeting.get_items()), 3)
         # items were added without the "propose" transition
-        self.assertIsNone(getLastWFAction(meeting.get_items()[0], "propose"))
-        # however the "propose" transition is enabled
-        self.assertEqual(
-            cfg.getItemWFValidationLevels(only_enabled=True, states=["proposed"])["leading_transition"],
-            "propose")
+        # the transition is enabled
+        leading_transition = cfg.getItemWFValidationLevels(
+            only_enabled=True, states=[self._stateMappingFor('proposed')])["leading_transition"]
+        # but it was not triggered to present the item
+        self.assertIsNone(getLastWFAction(meeting.get_items()[0], leading_transition))
 
     def test_pm_MeetingExecuteActionOnLinkedItemsCaseTransition(self):
         '''Test the MeetingConfig.onMeetingTransitionItemActionToExecute parameter :
