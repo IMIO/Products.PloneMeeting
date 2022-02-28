@@ -5,17 +5,15 @@ Changelog
 4.2rc16 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Added WFAdaptation `item_validation_shortcuts` that will let users change item
+  state to any other item validation state (so between itemcreated and validated)
+  depending on their groups.
+  [gbastien]
 
 4.2rc15 (2022-02-25)
 --------------------
 
 - Make sure item `modified` date is not updated by the `UpdateItemsToReindexView`.
-  [gbastien]
-- Added WFAdaptation `item_validation_shortcuts` that will let users to change
-  item state to any other item validation state (so between itemcreated
-  and validated) depending on their groups.
   [gbastien]
 
 4.2rc14 (2022-02-25)
