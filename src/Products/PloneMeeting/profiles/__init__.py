@@ -57,12 +57,13 @@ class Descriptor(object):
 class RecurringItemDescriptor(Descriptor):
     excludedFields = ['title']
 
-    def __init__(self, id, title, proposingGroup, proposingGroupWithGroupInCharge='',
+    def __init__(self, id, title, proposingGroup, groupsInCharge=(), proposingGroupWithGroupInCharge='',
                  description='', category='', associatedGroups=(), decision='',
                  itemKeywords='', itemTags=(), meetingTransitionInsertingMe='_init_'):
         self.id = id
         self.title = title
         self.proposingGroup = proposingGroup
+        self.groupsInCharge = groupsInCharge
         self.proposingGroupWithGroupInCharge = proposingGroupWithGroupInCharge
         self.description = description
         self.category = category
@@ -76,13 +77,14 @@ class RecurringItemDescriptor(Descriptor):
 class ItemTemplateDescriptor(Descriptor):
     excludedFields = ['title']
 
-    def __init__(self, id, title, proposingGroup, proposingGroupWithGroupInCharge='',
+    def __init__(self, id, title, proposingGroup, groupsInCharge=(), proposingGroupWithGroupInCharge='',
                  description='', category='', associatedGroups=(), decision='',
                  itemKeywords='', itemTags=(), templateUsingGroups=[]):
         self.id = id
         self.title = title
         # the proposingGroup can be empty ('') for itemtemplate
         self.proposingGroup = proposingGroup
+        self.groupsInCharge = groupsInCharge
         self.proposingGroupWithGroupInCharge = proposingGroupWithGroupInCharge
         self.description = description
         self.category = category
