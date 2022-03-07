@@ -9,9 +9,9 @@ from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import select_org_for_function
 from copy import deepcopy
+from DateTime import DateTime
 from datetime import datetime
 from datetime import timedelta
-from DateTime import DateTime
 from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer

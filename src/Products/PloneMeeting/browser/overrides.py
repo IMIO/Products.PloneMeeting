@@ -48,6 +48,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.browser.navigation import CatalogNavigationTabs
 from Products.CMFPlone.browser.ploneview import Plone
 from Products.CMFPlone.utils import safe_unicode
+from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting import utils as pm_utils
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
@@ -68,7 +69,6 @@ from zope.component import queryUtility
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
 from zope.ramcache.interfaces.ram import IRAMCache
-from Products.Five import BrowserView
 
 import sys
 
