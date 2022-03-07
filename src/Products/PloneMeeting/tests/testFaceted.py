@@ -749,6 +749,33 @@ class testFaceted(PloneMeetingTestCase):
                           'not_given',
                           'positive'])
 
+    def test_pm_PMConditionAwareCollectionVocabulary(self):
+        """Test the 'conditionawarecollectionvocabulary'
+           essentially because it is cached. """
+        # test with 2 members having same groups
+        # as pmCreator1
+        self.changeUser('pmCreator1')
+        creator1_groups = self.member.getGroups()
+        pmFolder = self.getMeetingFolder()
+        searches = self.meetingConfig.searches
+        searchAllItems = searches.searches_items.searchallitems
+        vocab = get_vocab(pmFolder,
+                          "Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary",
+                          only_factory=True)
+        self.assertTrue("/pmCreator1/" in vocab(searchAllItems, pmFolder)._terms[0].title[1])
+        # as pmCreator1b
+        self.changeUser('pmCreator1b')
+        creator1_groups = self.member.getGroups()
+        creator1b_groups = self.member.getGroups()
+        self.assertEqual(creator1_groups, creator1b_groups)
+        self.assertTrue("/pmCreator1b/" in vocab(searchAllItems, pmFolder)._terms[0].title[1])
+        # invalidated if a collection is edited
+        self.assertEqual(vocab(searchAllItems, pmFolder)._terms[0].title[0], u'My items')
+        searchMyItems = searches.searches_items.searchmyitems
+        searchMyItems.setTitle(u'My items edited')
+        notify(ObjectModifiedEvent(searchMyItems))
+        self.assertEqual(vocab(searchAllItems, pmFolder)._terms[0].title[0], u'My items edited')
+
     def test_pm_AdviceTypesVocabularyMCAware(self):
         '''Test the "Products.PloneMeeting.vocabularies.advicetypesvocabulary"
            vocabulary, is MeetingConfig aware, especially because it is cached.'''
