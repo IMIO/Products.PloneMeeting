@@ -6524,6 +6524,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append(proposingGroup)
         return res
 
+    def _assign_roles_to_group_suffixes(self, org_uid, suffix_roles):
+        """Helper that applies local_roles for org_uid to p_sufix_roles.
+           p_suffixes_roles is like:
+           {'observers': ['Reader'], 'creators': ['Reader']}
+        """
+        # apply local roles to computed suffixes
+        for suffix, roles in suffix_roles.items():
+            # suffix_roles keep only existing suffixes
+            plone_group_id = get_plone_group_id(org_uid, suffix)
+            self.manage_addLocalRoles(plone_group_id, tuple(roles))
+
     def assign_roles_to_group_suffixes(self, cfg, item_state):
         """Method that do the work of assigning relevant roles to
            suffixed groups of an organization depending on current state :
@@ -6544,10 +6555,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             cfg, item_state, org_uid)
 
         # apply local roles to computed suffixes
-        for suffix, roles in suffix_roles.items():
-            # suffix_roles keep only existing suffixes
-            plone_group_id = get_plone_group_id(org_uid, suffix)
-            self.manage_addLocalRoles(plone_group_id, tuple(roles))
+        self._assign_roles_to_group_suffixes(org_uid, suffix_roles)
 
         # MeetingManagers get access if item at least validated or decided
         # decided will include states "decided out of meeting"

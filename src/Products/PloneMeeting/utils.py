@@ -1982,7 +1982,7 @@ def org_id_to_uid(org_info, raise_on_error=True, ignore_underscore=False):
     try:
         # use get or unrestrictedTraverse depending on fact that
         # org_path is a path or a single str
-        getter = "/" in org_info and own_org.restrictedTraverse or own_org.get
+        getter = "/" in org_info and own_org.unrestrictedTraverse or own_org.get
         if '_' in org_info and not ignore_underscore:
             org_path, suffix = org_info.split('_')
             org = getter(org_path.encode('utf-8'))

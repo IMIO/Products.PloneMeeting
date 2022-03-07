@@ -15,6 +15,8 @@ Changelog
 - Added WFAdaptation `item_validation_shortcuts` that will let users change item
   state to any other item validation state (so between itemcreated and validated)
   depending on their groups.
+  Added `MeetingItem._assign_roles_to_group_suffixes` to ease assigning roles
+  to suffixes for an organization.
   [gbastien]
 
 4.2rc15 (2022-02-25)
