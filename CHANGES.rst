@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc16 (unreleased)
+4.2rc16 (2022-03-07)
 --------------------
 
 - Fixed `searchitemstoprevalidate` collection TAL condition,
