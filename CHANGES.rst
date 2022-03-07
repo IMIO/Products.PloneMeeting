@@ -8,6 +8,10 @@ Changelog
 - Fixed `searchitemstoprevalidate` collection TAL condition,
   state is `prevalidated` not `pre_validated`.
   [gbastien]
+- Fixed `PMConditionAwareCollectionVocabulary`, do no more override cachekey
+  to cache by groups of user as the url contains the user id or cached value
+  would contain another user id.
+  [gbastien]
 - Added WFAdaptation `item_validation_shortcuts` that will let users change item
   state to any other item validation state (so between itemcreated and validated)
   depending on their groups.
