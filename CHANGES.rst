@@ -5,8 +5,8 @@ Changelog
 4.2rc17 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Redo release not found on pypi.
+  [gbastien]
 
 4.2rc16 (2022-03-07)
 --------------------
