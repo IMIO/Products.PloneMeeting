@@ -5,8 +5,9 @@ Changelog
 4.2rc16 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Fixed `searchitemstoprevalidate` collection TAL condition,
+  state is `prevalidated` not `pre_validated`.
+  [gbastien]
 
 4.2rc15 (2022-02-25)
 --------------------
