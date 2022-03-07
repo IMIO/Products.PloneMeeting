@@ -1529,7 +1529,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         cleanVocabularyCacheFor()
         self.notifyModified()
         logger.info('All cache was invalidated.')
-        api.portal.show_message('Done.', request=self.REQUEST)
+        api.portal.show_message(_('All cache was invalidated'), request=self.REQUEST)
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     security.declarePublic('deleteHistoryEvent')

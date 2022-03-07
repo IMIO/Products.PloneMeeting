@@ -831,9 +831,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('admin')
         self._removeConfigObjectsFor(cfg2, folders=['annexes_types/item_annexes', ])
         self.assertTrue(not cfg2.annexes_types.item_annexes.objectValues())
-        # a portal message will be added, for now there is no message
-        messages = IStatusMessage(self.request).show()
-        self.assertTrue(not messages)
+        # a portal message will be added, clean messages
+        del IAnnotations(self.request)['statusmessages']
         # now create an item, add an annex and clone it to the other meetingConfig
         data = self._setupSendItemToOtherMC(with_annexes=True)
         originalItem = data['originalItem']
