@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc17 (unreleased)
+4.2rc17 (2022-03-07)
 --------------------
 
 - Redo release not found on pypi.
