@@ -25,6 +25,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 from Products.statusmessages.interfaces import IStatusMessage
 from zExceptions import Redirect
 from zope.i18n import translate
+from zope.annotation.interfaces import IAnnotations
 
 import transaction
 
@@ -122,6 +123,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertEqual(messages[0].message, u'All cache was invalidated')
         self.assertEqual(messages[1].message, u'Faceted navigation enabled')
         self.assertEqual(messages[2].message, u'Configuration imported')
+        del IAnnotations(self.request)['statusmessages']
         # @@delete_givenuid added one statusMessage about BeforeDeleteException
         transaction.commit()
         self.portal.restrictedTraverse('@@delete_givenuid')(pmManagerFolder.UID())
