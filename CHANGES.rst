@@ -9,6 +9,9 @@ Changelog
   state to any other item validation state (so between itemcreated and validated)
   depending on their groups.
   [gbastien]
+- Fixed `searchitemstoprevalidate` collection TAL condition,
+  state is `prevalidated` not `pre_validated`.
+  [gbastien]
 
 4.2rc15 (2022-02-25)
 --------------------

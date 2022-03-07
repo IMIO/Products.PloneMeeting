@@ -2956,7 +2956,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': True,
                     'tal_condition': "python: tool.userIsAmong(['prereviewers'], cfg=cfg) and "
-                                     "'pre_validated' in "
+                                     "'prevalidated' in "
                                      "cfg.getItemWFValidationLevels(data='state', only_enabled=True)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),

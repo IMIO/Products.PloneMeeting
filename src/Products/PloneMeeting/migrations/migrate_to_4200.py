@@ -937,7 +937,7 @@ class Migrate_To_4200(Migrator):
 
         self.updateTALConditions(
             "'pre_validation' in cfg.getWorkflowAdaptations()",
-            "'pre_validated' in cfg.getItemWFValidationLevels(data='state', only_enabled=True)")
+            "'prevalidated' in cfg.getItemWFValidationLevels(data='state', only_enabled=True)")
         self.updateTALConditions(".showHolidaysWarning(context)", ".showHolidaysWarning(cfg)")
 
         # replacements MeetingConfig item columns
