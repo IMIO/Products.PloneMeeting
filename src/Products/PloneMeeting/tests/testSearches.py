@@ -917,6 +917,12 @@ class testSearches(PloneMeetingTestCase):
         self.failUnless(len(res) == 1)
         self.failUnless(res[0].UID == vendorsItem.UID())
 
+        # when an item is corrected, it appears in the correcteditems search
+        collection = cfg.searches.searches_items.searchcorrecteditems
+        self.assertEqual(len(collection.results()), 0)
+        self.do(vendorsItem, 'backTo_presented_from_returned_to_proposing_group')
+        self.assertEqual(len(collection.results()), 1)
+
     def test_pm_SearchItemsToCorrectToValidateOfHighestHierarchicLevel(self):
         '''Test the 'items-to-correct-to-validate-of-highest-hierarchic-level'
            CompoundCriterion adapter. This should return a list of items in state

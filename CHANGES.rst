@@ -10,6 +10,9 @@ Changelog
   [gbastien]
 - Limit width of tooltipster showing advice inherited from informations.
   [gbastien]
+- On item WF transition, reindex the `previous_review_state` index.
+  This fixes the `searchcorrecteditems` collection no more working.
+  [gbastien]
 
 4.2rc17 (2022-03-07)
 --------------------

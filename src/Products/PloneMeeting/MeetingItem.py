@@ -7553,7 +7553,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getReviewStateRelatedIndexes(self):
         '''See doc in interfaces.py.'''
-        return ['downOrUpWorkflowAgain', 'getTakenOverBy', 'reviewProcessInfo']
+        return ['downOrUpWorkflowAgain', 'getTakenOverBy',
+                'reviewProcessInfo', 'previous_review_state']
 
     def getIndexesRelatedTo(self, related_to='annex', check_deferred=True):
         '''See doc in interfaces.py.'''
