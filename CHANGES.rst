@@ -2,11 +2,26 @@ Changelog
 =========
 
 
-4.2rc17 (unreleased)
+4.2rc18 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Do not fail in `ToolPloneMeeting.update_all_local_roles` if brain is an orphan,
+  just log and continue.
+  [gbastien]
+- Limit width of tooltipster showing advice inherited from informations.
+  [gbastien]
+- Added WFAdaptation `item_validation_shortcuts` that will let users change item
+  state to any other item validation state (so between itemcreated and validated)
+  depending on their groups.
+  Added `MeetingItem._assign_roles_to_group_suffixes` to ease assigning roles
+  to suffixes for an organization.
+  [gbastien]
 
+4.2rc17 (2022-03-07)
+--------------------
+
+- Redo release not found on pypi.
+  [gbastien]
 
 4.2rc16 (2022-03-07)
 --------------------
@@ -18,11 +33,16 @@ Changelog
   to cache by groups of user as the url contains the user id or cached value
   would contain another user id.
   [gbastien]
-- Added WFAdaptation `item_validation_shortcuts` that will let users change item
-  state to any other item validation state (so between itemcreated and validated)
-  depending on their groups.
-  Added `MeetingItem._assign_roles_to_group_suffixes` to ease assigning roles
-  to suffixes for an organization.
+
+4.2rc16 (2022-03-07)
+--------------------
+
+- Fixed `searchitemstoprevalidate` collection TAL condition,
+  state is `prevalidated` not `pre_validated`.
+  [gbastien]
+- Fixed `PMConditionAwareCollectionVocabulary`, do no more override cachekey
+  to cache by groups of user as the url contains the user id or cached value
+  would contain another user id.
   [gbastien]
 
 4.2rc15 (2022-02-25)

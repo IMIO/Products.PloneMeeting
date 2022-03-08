@@ -384,7 +384,8 @@ function availableMailingLists() {
 function inheritedItemInfos() {
     tooltipster_helper(selector='.tooltipster-inherited-advice',
                        view_name='@@display-inherited-item-infos',
-                       data_parameters=['advice_id']);
+                       data_parameters=['advice_id'],
+                       options={maxWidth: 750});
 }
 
 function usersGroupInfos() {

@@ -654,6 +654,7 @@ class Migrate_To_4200(Migrator):
                         '.getEndDate()': '.end_date',
                         '.getApprovalDate()': '.approval_date',
                         '.getConvocationDate()': '.convocation_date',
+                        '.getPreMeetingDate()': '.pre_meeting_date',
                         '.getPlace()': '.get_place()',
                         '.getAttendees(theObjects': '.get_attendees(the_objects',
                         '.getAttendees(': '.get_attendees(',
@@ -999,7 +1000,8 @@ class Migrate_To_4200(Migrator):
         self.addCKEditorStyle("table_optimization", "table", "style", "table-layout:auto;")
 
         # update local_roles, workflow mappings and catalogs
-        self.tool.update_all_local_roles()
+        self.warnings += self.tool.update_all_local_roles(redirect=False)
+
         self.refreshDatabase(workflows=True, catalogsToUpdate=[])
 
         # store meeting number of items

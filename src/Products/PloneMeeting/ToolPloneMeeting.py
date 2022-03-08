@@ -1486,6 +1486,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                meta_type=('Meeting', 'MeetingItem'),
                                portal_type=(),
                                log=True,
+                               redirect=True,
                                **kw):
         '''Update local_roles on Meeting and MeetingItem,
            this is used to reflect configuration changes regarding access.'''
@@ -1503,11 +1504,18 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         brains = catalog.unrestrictedSearchResults(**query)
         numberOfBrains = len(brains)
         i = 1
+        warnings = []
         if log:
             extras = 'number_of_elements={0}'.format(numberOfBrains)
             fplog('update_all_localroles', extras=extras)
         for brain in brains:
-            itemOrMeeting = brain.getObject()
+            try:
+                itemOrMeeting = brain.getObject()
+            except AttributeError:
+                warning = 'Could not getObject() element at %s' % brain.getPath()
+                warnings.append(warning)
+                logger.warn(warning)
+                continue
             logger.info('%d/%d Updating local roles of %s at %s' %
                         (i,
                          numberOfBrains,
@@ -1521,7 +1529,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             base_msg="update_all_local_roles finished in ",
             total_number=numberOfBrains))
         api.portal.show_message('Done.', request=self.REQUEST)
-        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
+        if redirect:
+            return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
+        else:
+            return warnings
 
     security.declareProtected(ModifyPortalContent, 'invalidateAllCache')
 
