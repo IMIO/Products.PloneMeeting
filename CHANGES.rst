@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc18 (unreleased)
+4.2rc18 (2022-03-08)
 --------------------
 
 - Do not fail in `ToolPloneMeeting.update_all_local_roles` if brain is an orphan,
