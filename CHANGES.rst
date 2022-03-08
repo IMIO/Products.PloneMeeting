@@ -5,8 +5,11 @@ Changelog
 4.2rc18 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Do not fail in `ToolPloneMeeting.update_all_local_roles` if brain is an orphan,
+  just log and continue.
+  [gbastien]
+- Limit width of tooltipster showing advice inherited from informations.
+  [gbastien]
 
 4.2rc17 (2022-03-07)
 --------------------
