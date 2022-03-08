@@ -398,19 +398,6 @@ class MeetingItemWorkflowConditions(object):
                                mapping={'itemNumber': itemNumber}))
         return res
 
-    security.declarePublic('mayDelay')
-
-    def mayDelay(self):
-        if _checkPermission(ReviewPortalContent, self.context):
-            return True
-
-    security.declarePublic('mayConfirm')
-
-    def mayConfirm(self):
-        if _checkPermission(ReviewPortalContent, self.context) and \
-           self.context.getMeeting().query_state() in ('decided', 'decisions_published', 'closed'):
-            return True
-
     def _userIsPGMemberAbleToSendItemBack(self, proposing_group_uid, destinationState):
         ''' '''
         suffix = self.cfg.getItemWFValidationLevels(
@@ -6533,6 +6520,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for suffix, roles in suffix_roles.items():
             # suffix_roles keep only existing suffixes
             plone_group_id = get_plone_group_id(org_uid, suffix)
+            if not isinstance(roles, (list, tuple)):
+                raise Exception(
+                    "Parameter suffix_roles values must be of type tuple or list!")
             self.manage_addLocalRoles(plone_group_id, tuple(roles))
 
     def assign_roles_to_group_suffixes(self, cfg, item_state):

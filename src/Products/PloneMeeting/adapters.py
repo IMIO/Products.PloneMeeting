@@ -305,10 +305,10 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         """
         res = []
 
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        usedItemAttributes = cfg.getUsedItemAttributes()
-        usedMeetingAttributes = cfg.getUsedMeetingAttributes()
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+        usedItemAttributes = self.cfg.getUsedItemAttributes()
+        usedMeetingAttributes = self.cfg.getUsedMeetingAttributes()
 
         if displaying_available_items(self.context):
             meeting = getCurrentMeetingObject(self.context)
@@ -341,28 +341,28 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                           domain="PloneMeeting",
                                           context=self.request)))
 
-        itemState = self.context.query_state()
+        self.itemState = self.context.query_state()
         # specifically manage states without leading icons to speed up things
-        if itemState in ('itemcreated', 'proposed', 'validated'):
+        if self.itemState in ('itemcreated', 'proposed', 'validated'):
             pass
-        elif itemState == 'delayed':
+        elif self.itemState == 'delayed':
             res.append(('delayed.png', translate('icon_help_delayed',
                                                  domain="PloneMeeting",
                                                  context=self.request)))
-        elif itemState == 'refused':
+        elif self.itemState == 'refused':
             res.append(('refused.png', translate('icon_help_refused',
                                                  domain="PloneMeeting",
                                                  context=self.request)))
-        elif itemState == 'returned_to_proposing_group':
+        elif self.itemState == 'returned_to_proposing_group':
             res.append(('return_to_proposing_group.png',
                         translate('icon_help_returned_to_proposing_group',
                                   domain="PloneMeeting",
                                   context=self.request)))
-        elif itemState == 'accepted_but_modified':
+        elif self.itemState == 'accepted_but_modified':
             res.append(('accepted_but_modified.png', translate('icon_help_accepted_but_modified',
                                                                domain="PloneMeeting",
                                                                context=self.request)))
-        elif itemState == 'accepted_out_of_meeting':
+        elif self.itemState == 'accepted_out_of_meeting':
             res.append(('accept_out_of_meeting.png',
                         translate('icon_help_accepted_out_of_meeting',
                                   domain="PloneMeeting",
@@ -370,7 +370,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                   default=translate('accepted_out_of_meeting',
                                                     domain="plone",
                                                     context=self.request))))
-        elif itemState == 'accepted_out_of_meeting_emergency':
+        elif self.itemState == 'accepted_out_of_meeting_emergency':
             res.append(('accept_out_of_meeting_emergency.png',
                         translate('icon_help_accepted_out_of_meeting_emergency',
                                   domain="PloneMeeting",
@@ -378,38 +378,38 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                   default=translate('accepted_out_of_meeting_emergency',
                                                     domain="plone",
                                                     context=self.request))))
-        elif itemState == 'pre_accepted':
+        elif self.itemState == 'pre_accepted':
             res.append(('pre_accepted.png', translate('icon_help_pre_accepted',
                                                       domain="PloneMeeting",
                                                       context=self.request)))
-        elif itemState == 'postponed_next_meeting':
+        elif self.itemState == 'postponed_next_meeting':
             res.append(('postponed_next_meeting.png',
                         translate('icon_help_postponed_next_meeting',
                                   domain="PloneMeeting",
                                   context=self.request)))
-        elif itemState == 'marked_not_applicable':
+        elif self.itemState == 'marked_not_applicable':
             res.append(('marked_not_applicable.png',
                         translate('icon_help_marked_not_applicable',
                                   domain="PloneMeeting",
                                   context=self.request)))
-        elif itemState == 'removed':
+        elif self.itemState == 'removed':
             res.append(('removed.png',
                         translate('icon_help_removed',
                                   domain="PloneMeeting",
                                   context=self.request)))
-        elif itemState.endswith('_waiting_advices'):
+        elif self.itemState.endswith('_waiting_advices'):
             icon_name, msgid = self.context.wfConditions().get_waiting_advices_icon_infos()
             res.append((icon_name,
                         translate(msgid,
                                   domain="PloneMeeting",
                                   context=self.request)))
-        elif itemState.startswith('returned_to_proposing_group_'):
+        elif self.itemState.startswith('returned_to_proposing_group_'):
             # get info about return_to_proposing_group validation
             # level in MeetingConfig.itemWFValidationLevels
-            validation_state = itemState.replace('returned_to_proposing_group_', '')
-            level = cfg.getItemWFValidationLevels(states=[validation_state])
+            validation_state = self.itemState.replace('returned_to_proposing_group_', '')
+            level = self.cfg.getItemWFValidationLevels(states=[validation_state])
             res.append(
-                ('goTo_{0}.png'.format(itemState),
+                ('goTo_{0}.png'.format(self.itemState),
                  translate('icon_help_returned_to_proposing_group_with_validation_state',
                            domain="PloneMeeting",
                            mapping={"validation_state":
@@ -420,11 +420,11 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                            context=self.request)))
         else:
             # manage MeetingConfig.itemWFValidationLevels states
-            item_validation_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
-            if itemState in item_validation_states:
-                level = cfg.getItemWFValidationLevels(states=[itemState], only_enabled=True)
+            item_validation_states = self.cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+            if self.itemState in item_validation_states:
+                level = self.cfg.getItemWFValidationLevels(states=[self.itemState], only_enabled=True)
                 res.append(('{0}.png'.format(level['leading_transition']),
-                            translate('icon_help_{0}'.format(itemState),
+                            translate('icon_help_{0}'.format(self.itemState),
                                       domain="PloneMeeting",
                                       context=self.request,
                                       default=translate(safe_unicode(level['state_title']),
@@ -440,7 +440,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             # if item sent to the other mc is inserted into a meeting,
             # we display the meeting date
             emergency = clonedToOtherMCId in self.context.getOtherMeetingConfigsClonableToEmergency()
-            clonedToOtherMC = getattr(tool, clonedToOtherMCId)
+            clonedToOtherMC = self.tool.get(clonedToOtherMCId)
             msgid = emergency and 'sentto_othermeetingconfig_emergency' or 'sentto_othermeetingconfig'
             msg = translate(msgid,
                             mapping={'meetingConfigTitle': safe_unicode(clonedToOtherMC.Title())},
@@ -475,7 +475,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
 
             # Append a tuple with name of the icon and a list containing
             # the msgid and the mapping as a dict
-            otherMeetingConfigClonableTo = getattr(tool, otherMeetingConfigClonableToId)
+            otherMeetingConfigClonableTo = self.tool.get(otherMeetingConfigClonableToId)
             emergency = otherMeetingConfigClonableToId in self.context.getOtherMeetingConfigsClonableToEmergency()
             msgid = emergency and 'will_be_sentto_othermeetingconfig_emergency' or \
                 'will_be_sentto_othermeetingconfig'
@@ -502,7 +502,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         # display an icon if item is sent from another mc
         predecessor = self._predecessorFromOtherMC()
         if predecessor:
-            predecessorCfg = tool.getMeetingConfig(predecessor)
+            predecessorCfg = self.tool.getMeetingConfig(predecessor)
             predecessorMeeting = predecessor.getMeeting()
             predecessor_state = predecessor.query_state()
             translated_state = translate(predecessor_state, domain='plone', context=self.request)
@@ -520,7 +520,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                     res.append(('cloned_and_decided.png',
                                 translate(
                                     'icon_help_cloned_and_decided',
-                                    mapping={'meetingDate': tool.format_date(predecessorMeeting.date),
+                                    mapping={'meetingDate': self.tool.format_date(predecessorMeeting.date),
                                              'meetingConfigTitle': safe_unicode(predecessorCfg.Title()),
                                              'predecessorState': translated_state},
                                     domain="PloneMeeting",
@@ -530,7 +530,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                 else:
                     res.append(('cloned_not_decided.png',
                                 translate('icon_help_cloned_not_decided',
-                                          mapping={'meetingDate': tool.format_date(predecessorMeeting.date),
+                                          mapping={'meetingDate': self.tool.format_date(predecessorMeeting.date),
                                                    'meetingConfigTitle': safe_unicode(predecessorCfg.Title()),
                                                    'predecessorState': translated_state},
                                           domain="PloneMeeting",
@@ -580,7 +580,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                 iconName = takenOverByCurrentUser and 'takenOverByCurrentUser.png' or 'takenOverByOtherUser.png'
                 res.append((iconName, translate(u'Taken over by ${fullname}',
                                                 domain="PloneMeeting",
-                                                mapping={'fullname': safe_unicode(tool.getUserName(takenOverBy))},
+                                                mapping={'fullname': safe_unicode(self.tool.getUserName(takenOverBy))},
                                                 context=self.request)))
 
         if self.context.getIsAcceptableOutOfMeeting():

@@ -377,9 +377,7 @@ class IMeetingItemWorkflowConditions(Interface):
     def mayPresent():
         '''May this item be presented in a meeting ?'''
     def mayDecide():
-        '''May a decision take place on this item (accept, reject...)?'''
-    def mayDelay():
-        '''May this item be delayed to another meeting ?'''
+        '''May a decision take place on this item (accept, refuse, delay, ...)?'''
     def mayCorrect(destinationState=None):
         '''Used for 'back' transitions.  p_destinationState is useful when there are
            several 'back' transitions from the same state.'''

@@ -5,6 +5,7 @@
 
 from imio.helpers.content import object_values
 from imio.pyutils.utils import merge_dicts
+from imio.pyutils.utils import replace_in_list
 from plone import api
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -227,43 +228,30 @@ def addState(wf_id,
         existing_back_transition.new_state_id = new_state_id
 
 
-def removeState(wf_id,
-                state_id,
-                old_leaving_transitions={},
-                old_leading_transitions={},
-                transitions_to_remove=[],
-                new_initial_state=None):
-    '''Remove given p_state, if p_remove_arriving_transitions=True (default),
-       we remove every transitions leading to p_state.
-       - old_leaving_transitions : list of dicts, key: leaving_transition, value: leaving_from_state_id.
-       - old_leading_transitions : list of dicts, key: leading_transition, value: leading_to_state_id.'''
-    wfTool = api.portal.get_tool('portal_workflow')
-    wf = wfTool.getWorkflowById(wf_id)
-    # state does not exist?
-    if state_id not in wf.states:
-        logger.error('State "{0}" does not exist in WF "{1}"!'.format(state_id, wf_id))
-        return
-    # state is initial_state and no new_initial_state provided?
-    if wf.initial_state == state_id and (not new_initial_state or new_initial_state not in wf.states):
-        logger.error('State "{0}" is the initial state of WF "{1}", '
-                     'please provide a correct new_initial_state!'.format(state_id, wf_id))
-        return
-
-    if transitions_to_remove:
-        wf.transitions.deleteTransitions(transitions_to_remove)
-
-    for leaving_transition, leaving_from_state_id in old_leaving_transitions.items():
-        leaving_from_state = wf.states[leaving_from_state_id]
-        leaving_from_state.transitions = leaving_from_state.transitions + ('leaving_transition', )
-
-    for leading_transition_id, leading_to_state_id in old_leading_transitions.items():
-        leading_transition = wf.states[leading_transition_id]
-        leading_transition.new_state_id = leading_to_state_id
-
-    if wf.initial_state == state_id:
-        wf.initial_state = new_initial_state
-
-    wf.states.deleteStates([state_id])
+def removeState(wf, state_id, transition_id, back_transition_id):
+    '''Made to handle removing a state from/to which only
+       one transition is leaving/coming.'''
+    # compute replacements transitions
+    transition_id_repl = [tr for tr in wf.states[state_id].transitions
+                          if not tr.startswith('backTo')][0]
+    back_transition_id_repl = [tr for tr in wf.states[state_id].transitions
+                               if tr.startswith('backTo')][0]
+    # could be:
+    # {'itemfreeze': 'itempublish', 'backToItemFrozen': 'backToPresented'}
+    replacements = {transition_id: transition_id_repl,
+                    back_transition_id: back_transition_id_repl}
+    for state in wf.states.values():
+        transitions = state.transitions
+        for value, replacement in replacements.items():
+            transitions = tuple(replace_in_list(transitions, value, replacement))
+        state.transitions = transitions
+    # Delete replaced transitions
+    for tr in (transition_id, back_transition_id):
+        if tr in wf.transitions:
+            wf.transitions.deleteTransitions([tr])
+    # Delete state 'itemfrozen'
+    if state_id in wf.states:
+        wf.states.deleteStates([state_id])
 
 
 def clone_permissions(wf_id, base_state_id, new_state_id):
@@ -633,55 +621,31 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             logger.info(WF_APPLIED_CUSTOM % (wfAdaptation, meetingConfig.getId()))
             continue
 
+        # "no_freeze" removes state 'frozen' in the meeting workflow and
+        # corresponding state 'itemfrozen' in the item workflow.
+        if wfAdaptation == 'no_freeze':
+            # First, update the meeting workflow
+            wf = meetingWorkflow
+            removeState(wf, 'frozen', 'freeze', 'backToFrozen')
+            # Then, update the item workflow.
+            wf = itemWorkflow
+            removeState(wf, 'itemfrozen', 'itemfreeze', 'backToItemFrozen')
+
         # "no_publication" removes state 'published' in the meeting workflow and
-        # corresponding state 'itempublished' in the item workflow. The standard
-        # meeting publication process has 2 steps: (1) publish (2) freeze.
-        # The idea is to let people "finalize" the meeting even after is has been
-        # published, and re-publish (=freeze) a finalized version, ie, some hours
-        # or minutes before the meeting begins. This adaptation is for people that
-        # do not like this idea.
+        # corresponding state 'itempublished' in the item workflow.
         if wfAdaptation == 'no_publication':
             # First, update the meeting workflow
             wf = meetingWorkflow
-            # Delete transitions 'publish' and 'backToPublished'
-            for tr in ('publish', 'backToPublished'):
-                if tr in wf.transitions:
-                    wf.transitions.deleteTransitions([tr])
-            # Update connections between states and transitions
-            wf.states['frozen'].setProperties(
-                title='frozen', description='',
-                transitions=['backToCreated', 'decide'])
-            wf.states['decided'].setProperties(
-                title='decided', description='', transitions=['backToFrozen', 'close'])
-            # Delete state 'published'
-            if 'published' in wf.states:
-                wf.states.deleteStates(['published'])
+            removeState(wf, 'published', 'publish', 'backToPublished')
             # Then, update the item workflow.
             wf = itemWorkflow
-            # Delete transitions 'itempublish' and 'backToItemPublished'
-            for tr in ('itempublish', 'backToItemPublished'):
-                if tr in wf.transitions:
-                    wf.transitions.deleteTransitions([tr])
-            # Update connections between states and transitions
-            tr_leaving_itempublished = list(wf.states['itempublished'].transitions)
-            tr_leaving_itempublished.remove('backToItemFrozen')
-            tr_leaving_itempublished.append('backToPresented')
-            wf.states['itemfrozen'].setProperties(
-                title='itemfrozen', description='',
-                transitions=tr_leaving_itempublished)
-            for tr_leaving_itempublished in wf.states['itempublished'].transitions:
-                if tr_leaving_itempublished.startswith('back'):
-                    continue
-                leading_to_state = wf.transitions[tr_leaving_itempublished].new_state_id
-                patched_transitions = list(wf.states[leading_to_state].transitions)
-                patched_transitions.remove('backToItemPublished')
-                patched_transitions.append('backToItemFrozen')
-                wf.states[leading_to_state].setProperties(
-                    title=leading_to_state, description='',
-                    transitions=patched_transitions)
-            # Delete state 'published'
-            if 'itempublished' in wf.states:
-                wf.states.deleteStates(['itempublished'])
+            removeState(wf, 'itempublished', 'itempublish', 'backToItemPublished')
+
+        # "no_decide" removes state 'decided' in the meeting workflow.
+        if wfAdaptation == 'no_decide':
+            # Update the meeting workflow
+            wf = meetingWorkflow
+            removeState(wf, 'decided', 'decide', 'backToDecided')
 
         # "reviewers_take_back_validated_item" give the ability to reviewers to
         # take back an item that is validated.
