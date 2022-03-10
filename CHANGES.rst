@@ -8,6 +8,9 @@ Changelog
 - Manage some more POD templates instructions replacements in `Migrate_To_4200`,
   replace `meeting.Title()` by `tool.format_date(meeting.date)` and manage various variants.
   [gbastien]
+- Added `meeting` to the POD template default generation context, make also the
+  `MeetingConfig` available as `cfg`, was already available as `meetingConfig`.
+  [gbastien]
 
 4.2rc18 (2022-03-08)
 --------------------
