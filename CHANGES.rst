@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc19 (unreleased)
+4.2rc19 (2022-03-10)
 --------------------
 
 - Manage some more POD templates instructions replacements in `Migrate_To_4200`,
