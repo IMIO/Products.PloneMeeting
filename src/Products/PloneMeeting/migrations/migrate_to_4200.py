@@ -726,7 +726,7 @@ class Migrate_To_4200(Migrator):
             'self.getPublicMeetingObservations()': "view.print_value('public_meeting_observations')",
             'self.getSecretMeetingObservations()': "view.print_value('secret_meeting_observations')",
             'self.getSignatures()': "self.get_signatures()",
-            'self.Title()': "view.print_value('date')",
+            'self.Title()': "tool.format_date(self.date)",
             # formatMeetingDate to format_date
             'tool.formatMeetingDate(self': "tool.format_date(self.date",
             # get_assembly, striked=True by default
@@ -734,9 +734,11 @@ class Migrate_To_4200(Migrator):
         }
         # specific for MeetingItem POD Templates
         item_replacements = {
-            'meeting.Title()': "view.getDGHV(meeting).print_value('date')",
+            'meeting.Title()': "tool.format_date(meeting.date)",
+            'self.getMeeting().Title()': "tool.format_date(self.getMeeting().date)",
             # formatMeetingDate to format_date
             'tool.formatMeetingDate(meeting': "tool.format_date(meeting.date",
+            'tool.formatMeetingDate(self.getMeeting()': "tool.format_date(self.getMeeting().date",
             # getItemAssembly, striked=True by default
             '.displayStrikedItemAssembly()': '.getItemAssembly()',
             # used in Avis DF

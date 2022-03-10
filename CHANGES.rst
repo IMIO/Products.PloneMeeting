@@ -5,8 +5,9 @@ Changelog
 4.2rc19 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Manage some more POD templates instructions replacements in `Migrate_To_4200`,
+  replace `meeting.Title()` by `tool.format_date(meeting.date)` and manage various variants.
+  [gbastien]
 
 4.2rc18 (2022-03-08)
 --------------------
