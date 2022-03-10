@@ -11,6 +11,9 @@ Changelog
 - Added `meeting` to the POD template default generation context, make also the
   `MeetingConfig` available as `cfg`, was already available as `meetingConfig`.
   [gbastien]
+- Fixed possible not persisted `categorized_elements` in `utils.updateAnnexesAccess`,
+  as it is an `OrderedDict`, we must set `parent._p_changed = True` manually.
+  [gbastien]
 - Added WFAdaptation `item_validation_shortcuts` that will let users change item
   state to any other item validation state (so between itemcreated and validated)
   depending on their groups.
