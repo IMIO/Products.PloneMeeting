@@ -3522,7 +3522,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if states:
             res = [level for level in res if level['state'] in states]
         if data:
-            res = [level[data] for level in res]
+            res = [level[data] for level in res if level[data]]
         if return_state_singleton and len(states) == 1:
             res = res and res[0] or res
         # when displayed, append translated values to elements title

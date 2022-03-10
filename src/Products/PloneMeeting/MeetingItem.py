@@ -475,16 +475,17 @@ class MeetingItemWorkflowConditions(object):
             # when item is validated, we may eventually send back to last validation state
             wfas = self.cfg.getWorkflowAdaptations()
             last_val_state = self._getLastValidationState()
-            if self.review_state == 'validated' and destinationState == last_val_state:
-                # MeetingManager probably
-                if _checkPermission(ReviewPortalContent, self.context):
-                    res = True
-                # manage the reviewers_take_back_validated_item WFAdaptation
-                elif 'reviewers_take_back_validated_item' in self.cfg.getWorkflowAdaptations():
-                    # is current user member of last validation level?
-                    suffix = self.cfg.getItemWFValidationLevels(states=[last_val_state], data='suffix')
-                    res = self.tool.group_is_not_empty(
-                        proposingGroup, suffix, user_id=get_current_user_id())
+            if self.review_state == 'validated':
+                if destinationState == last_val_state:
+                    # MeetingManager probably
+                    if _checkPermission(ReviewPortalContent, self.context):
+                        res = True
+                    # manage the reviewers_take_back_validated_item WFAdaptation
+                    elif 'reviewers_take_back_validated_item' in self.cfg.getWorkflowAdaptations():
+                        # is current user member of last validation level?
+                        suffix = self.cfg.getItemWFValidationLevels(states=[last_val_state], data='suffix')
+                        res = self.tool.group_is_not_empty(
+                            proposingGroup, suffix, user_id=get_current_user_id())
             # using 'waiting_advices_XXX_send_back' WFAdaptations,
             elif self.review_state.endswith('_waiting_advices'):
                 item_validation_states = self.cfg.getItemWFValidationLevels(data='state', only_enabled=True)
@@ -494,7 +495,7 @@ class MeetingItemWorkflowConditions(object):
                 if 'waiting_advices_from_before_last_val_level' in wfas:
                     sendable_back_states.append(self._getLastValidationState(before_last=True))
                 if 'waiting_advices_from_last_val_level' in wfas:
-                    sendable_back_states.append(self._getLastValidationState())
+                    sendable_back_states.append(last_val_state)
                 if 'waiting_advices_from_every_val_levels' in wfas:
                     sendable_back_states = list(item_validation_states)
                 if not sendable_back_states:
