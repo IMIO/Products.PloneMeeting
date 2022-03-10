@@ -464,9 +464,13 @@ class ToolInitializer:
         if item.groupsInCharge:
             item.setGroupsInCharge([org_id_to_uid(grp_in_charge) for grp_in_charge in item.groupsInCharge])
         if item.proposingGroupWithGroupInCharge:
-            proposingGroupId, groupInChargeId = item.proposingGroupWithGroupInCharge.split('__groupincharge__')
+            proposing_group_id, group_in_charge_id = item.proposingGroupWithGroupInCharge.split('__groupincharge__')
+            proposing_group_uid = org_id_to_uid(proposing_group_id)
+            group_in_charge_uid = org_id_to_uid(group_in_charge_id)
+            item.setProposingGroup(proposing_group_uid)
+            item.setGroupsInCharge((group_in_charge_uid, ))
             item.proposingGroupWithGroupInCharge = '{0}__groupincharge__{1}'.format(
-                org_id_to_uid(proposingGroupId), org_id_to_uid(groupInChargeId))
+                proposing_group_uid, group_in_charge_uid)
         if item.associatedGroups:
             item.setAssociatedGroups(
                 [org_id_to_uid(associated_group)

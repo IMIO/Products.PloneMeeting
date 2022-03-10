@@ -10,6 +10,8 @@ from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 
 import copy
 
+from plone.api.validation import at_least_one_of
+
 
 def patch_pod_templates(templates, new_path, cfg1_id=None):
     """
@@ -57,9 +59,9 @@ class Descriptor(object):
 class RecurringItemDescriptor(Descriptor):
     excludedFields = ['title']
 
-    def __init__(self, id, title, proposingGroup, groupsInCharge=(), proposingGroupWithGroupInCharge='',
+    def __init__(self, id, title, proposingGroup='', groupsInCharge=(), proposingGroupWithGroupInCharge='',
                  description='', category='', associatedGroups=(), decision='',
-                 itemKeywords='', itemTags=(), meetingTransitionInsertingMe='_init_'):
+                 itemKeywords='', itemTags=(), meetingTransitionInsertingMe='_init_', privacy='public'):
         self.id = id
         self.title = title
         self.proposingGroup = proposingGroup
@@ -72,14 +74,16 @@ class RecurringItemDescriptor(Descriptor):
         self.itemKeywords = itemKeywords
         self.itemTags = itemTags
         self.meetingTransitionInsertingMe = meetingTransitionInsertingMe
+        self.privacy = privacy
 
 
 class ItemTemplateDescriptor(Descriptor):
     excludedFields = ['title']
 
-    def __init__(self, id, title, proposingGroup, groupsInCharge=(), proposingGroupWithGroupInCharge='',
+    @at_least_one_of('proposingGroup', 'proposingGroupWithGroupInCharge')
+    def __init__(self, id, title, proposingGroup='', groupsInCharge=(), proposingGroupWithGroupInCharge='',
                  description='', category='', associatedGroups=(), decision='',
-                 itemKeywords='', itemTags=(), templateUsingGroups=[]):
+                 itemKeywords='', itemTags=(), templateUsingGroups=[], privacy='public'):
         self.id = id
         self.title = title
         # the proposingGroup can be empty ('') for itemtemplate
@@ -93,6 +97,7 @@ class ItemTemplateDescriptor(Descriptor):
         self.itemKeywords = itemKeywords
         self.itemTags = itemTags
         self.templateUsingGroups = templateUsingGroups
+        self.privacy = privacy
 
 
 class CategoryDescriptor(Descriptor):
