@@ -2641,6 +2641,38 @@ class testViews(PloneMeetingTestCase):
         helper = view.get_generation_context_helper()
         self.assertEqual(helper.printed_scan_id_barcode, [])
 
+    def test_pm_DocumentGenerationContext(self):
+        """We added some specific values to the generation
+           context when generating POD templates."""
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        meeting = self.create('Meeting')
+        # MeetingItem
+        view = item.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        data = view.get_base_generation_context(helper, None)
+        from Products.PloneMeeting import utils
+        self.assertEqual(data['pm_utils'], utils)
+        self.assertEqual(data['self'], item)
+        self.assertEqual(data['tool'], self.tool)
+        self.assertEqual(data['cfg'], cfg)
+        self.assertEqual(data['meetingConfig'], cfg)
+        self.assertEqual(data['meeting'], None)
+        self.presentItem(item)
+        data = view.get_base_generation_context(helper, None)
+        self.assertEqual(data['meeting'], meeting)
+        # Meeting
+        view = meeting.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        data = view.get_base_generation_context(helper, None)
+        self.assertEqual(data['self'], meeting)
+        self.assertEqual(data['tool'], self.tool)
+        self.assertEqual(data['cfg'], cfg)
+        self.assertEqual(data['meetingConfig'], cfg)
+        self.assertEqual(data['meeting'], None)
+
     def test_pm_print_signatures_by_position(self):
         """
         See testContacts.test_pm_print_signatories_by_position for

@@ -2,7 +2,23 @@ Changelog
 =========
 
 
-4.2rc18 (unreleased)
+4.2rc19 (unreleased)
+--------------------
+
+- Manage some more POD templates instructions replacements in `Migrate_To_4200`,
+  replace `meeting.Title()` by `tool.format_date(meeting.date)` and manage various variants.
+  [gbastien]
+- Added `meeting` to the POD template default generation context, make also the
+  `MeetingConfig` available as `cfg`, was already available as `meetingConfig`.
+  [gbastien]
+- Added WFAdaptation `item_validation_shortcuts` that will let users change item
+  state to any other item validation state (so between itemcreated and validated)
+  depending on their groups.
+  Added `MeetingItem._assign_roles_to_group_suffixes` to ease assigning roles
+  to suffixes for an organization.
+  [gbastien]
+
+4.2rc18 (2022-03-08)
 --------------------
 
 - Do not fail in `ToolPloneMeeting.update_all_local_roles` if brain is an orphan,
@@ -10,11 +26,8 @@ Changelog
   [gbastien]
 - Limit width of tooltipster showing advice inherited from informations.
   [gbastien]
-- Added WFAdaptation `item_validation_shortcuts` that will let users change item
-  state to any other item validation state (so between itemcreated and validated)
-  depending on their groups.
-  Added `MeetingItem._assign_roles_to_group_suffixes` to ease assigning roles
-  to suffixes for an organization.
+- On item WF transition, reindex the `previous_review_state` index.
+  This fixes the `searchcorrecteditems` collection no more working.
   [gbastien]
 
 4.2rc17 (2022-03-07)

@@ -1020,7 +1020,10 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             'self': self.context,
             'adap': hasattr(self.context, 'adapted') and self.context.adapted() or None,
             'tool': tool,
+            'cfg': cfg,
             'meetingConfig': cfg,
+            'meeting': self.context.getMeeting()
+                if self.context.__class__.__name__ == 'MeetingItem' else None,
             'itemUids': {},
             'user': api.user.get_current(),
             'podTemplate': pod_template,
