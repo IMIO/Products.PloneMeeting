@@ -744,6 +744,8 @@ class Migrate_To_4200(Migrator):
             # used in Avis DF
             'self.displayValue(self.listProposingGroups(), self.getProposingGroup())':
                 "view.display('proposingGroup')",
+            # meeting is now available in default generation context
+            'self.getMeeting()': 'meeting',
         }
         self.updatePODTemplatesCode(replacements, meeting_replacements, item_replacements)
 
