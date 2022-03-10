@@ -1691,6 +1691,7 @@ def updateAnnexesAccess(container):
         v['visible_for_groups'] = adapter._visible_for_groups()
         v['allowedRolesAndUsers'] = adapter._allowedRolesAndUsers
         v['last_updated'] = datetime.now()
+    container._p_changed = True
 
 
 def validate_item_assembly_value(value):

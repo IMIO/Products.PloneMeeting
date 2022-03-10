@@ -11,6 +11,9 @@ Changelog
 - Added `meeting` to the POD template default generation context, make also the
   `MeetingConfig` available as `cfg`, was already available as `meetingConfig`.
   [gbastien]
+- Fixed possible not persisted `categorized_elements` in `utils.updateAnnexesAccess`,
+  as it is an `OrderedDict`, we must set `parent._p_changed = True` manually.
+  [gbastien]
 
 4.2rc18 (2022-03-08)
 --------------------

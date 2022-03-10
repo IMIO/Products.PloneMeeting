@@ -283,9 +283,9 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.validateItem(item)
         self.changeUser('pmReviewer2')
-        self.assertTrue(not self.hasPermission(ModifyPortalContent, advice))
-        self.assertTrue(not self.hasPermission(DeleteObjects, advice))
-        self.assertTrue(not self.hasPermission(DeleteObjects, annex))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, advice))
+        self.assertFalse(self.hasPermission(DeleteObjects, advice))
+        self.assertFalse(self.hasPermission(DeleteObjects, annex))
 
     def test_pm_CanNotEditAnotherGroupAdvice(self):
         '''
