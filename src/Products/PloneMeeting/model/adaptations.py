@@ -42,50 +42,59 @@ WF_ITEM_VALIDATION_LEVELS_DISABLED = 'No enabled item validation levels found fo
 # a state will be added by "dict", 'from_states' are list of states leading to the new state
 # 'back_states' are states to come back from the new state and 'perm_cloned_state' is the state
 # to use to define permissions of the new state minus every 'edit' permissions
-WAITING_ADVICES_FROM_STATES = (
-    {'from_states': ('itemcreated', ),
-     'back_states': ('itemcreated', ),
-     'perm_cloned_state': 'validated',
-     'use_custom_icon': False,
-     # default to "validated", this avoid using the backToValidated title that
-     # is translated to "Remove from meeting"
-     'use_custom_back_transition_title_for': ("validated", ),
-     # we can define some back transition id for some back_to_state
-     # if not, a generated transition is used, here we could have for example
-     # 'defined_back_transition_ids': {"validated": "validate"}
-     'defined_back_transition_ids': {},
-     # if () given, a custom transition icon is used for every back transitions
-     'only_use_custom_back_transition_icon_for': ("validated", ),
-     'use_custom_state_title': True,
-     'use_custom_transition_title_for': (),
-     'remove_modify_access': True,
-     'adviser_may_validate': False,
-     # must end with _waiting_advices
-     'new_state_id': None,
-     },
-    {'from_states': ('proposed', 'prevalidated'),
-     'back_states': ('proposed', 'prevalidated'),
-     'perm_cloned_state': 'validated',
-     'use_custom_icon': False,
-     # is translated to "Remove from meeting"
-     'use_custom_back_transition_title_for': ("validated", ),
-     # we can define some back transition id for some back_to_state
-     # if not, a generated transition is used, here we could have for example
-     # 'defined_back_transition_ids': {"validated": "validate"}
-     'defined_back_transition_ids': {},
-     # if () given, a custom transition icon is used for every back transitions
-     'only_use_custom_back_transition_icon_for': ("validated", ),
-     'use_custom_state_title': True,
-     'use_custom_transition_title_for': (),
-     'remove_modify_access': True,
-     'adviser_may_validate': False,
-     # must end with _waiting_advices
-     'new_state_id': None,
-     },
-)
+WAITING_ADVICES_FROM_STATES = {
+    '*':
+    (
+        {'from_states': ('itemcreated', ),
+         'back_states': ('itemcreated', ),
+         'perm_cloned_state': 'validated',
+         'use_custom_icon': False,
+         # default to "validated", this avoid using the backToValidated title that
+         # is translated to "Remove from meeting"
+         'use_custom_back_transition_title_for': ("validated", ),
+         # we can define some back transition id for some back_to_state
+         # if not, a generated transition is used, here we could have for example
+         # 'defined_back_transition_ids': {"validated": "validate"}
+         'defined_back_transition_ids': {},
+         # if () given, a custom transition icon is used for every back transitions
+         'only_use_custom_back_transition_icon_for': ("validated", ),
+         'use_custom_state_title': True,
+         'use_custom_transition_title_for': (),
+         'remove_modify_access': True,
+         'adviser_may_validate': False,
+         # must end with _waiting_advices
+         'new_state_id': None,
+         },
+        {'from_states': ('proposed', 'prevalidated'),
+         'back_states': ('proposed', 'prevalidated'),
+         'perm_cloned_state': 'validated',
+         'use_custom_icon': False,
+         # is translated to "Remove from meeting"
+         'use_custom_back_transition_title_for': ("validated", ),
+         # we can define some back transition id for some back_to_state
+         # if not, a generated transition is used, here we could have for example
+         # 'defined_back_transition_ids': {"validated": "validate"}
+         'defined_back_transition_ids': {},
+         # if () given, a custom transition icon is used for every back transitions
+         'only_use_custom_back_transition_icon_for': ("validated", ),
+         'use_custom_state_title': True,
+         'use_custom_transition_title_for': (),
+         'remove_modify_access': True,
+         'adviser_may_validate': False,
+         # must end with _waiting_advices
+         'new_state_id': None,
+         },
+    )
+}
 # defined here to be importable
 WAITING_ADVICES_FROM_TRANSITION_ID_PATTERN = 'wait_advices_from_{0}'
 WAITING_ADVICES_FROM_TO_TRANSITION_ID_PATTERN = 'wait_advices_from_{0}__to__{1}'
+
+
+def get_waiting_advices_infos(cfg_id):
+    """ """
+    return WAITING_ADVICES_FROM_STATES.get(
+        cfg_id, WAITING_ADVICES_FROM_STATES.get('*', ()))
 
 
 def grantPermission(state, perm, role):
@@ -772,8 +781,11 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 if field.write_permission and field.write_permission not in edit_permissions:
                     edit_permissions.append(field.write_permission)
             NEW_STATE_ID_PATTERN = '{0}_waiting_advices'
+            # try to get meetingConfig id in WAITING_ADVICES_FROM_STATES
+            # if not found, look for a "*" that is applied to every meetingConfigs
+            # else nothing is done
             # for transition to 'xxx_waiting_advices', we need to know where we are coming from
-            for infos in WAITING_ADVICES_FROM_STATES:
+            for infos in get_waiting_advices_infos(meetingConfig.getId()):
                 # while using WFAs 'waiting_advices_from_before_last_val_level'
                 # or 'waiting_advices_from_last_val_level', infos['from_states']/infos['back_states']
                 # are ignored ad we use validation states
@@ -934,19 +946,25 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         # "pre_accepted" add state 'pre_accepted'
         # from 'itemfrozen' in the item WF
         elif wfAdaptation == 'pre_accepted':
-            # add state from itemfrozen ...
+            # add state from itemfrozen? itempublished? presented? ...
+            # same origin as mandatory transition 'accept'
+            origin_state_id = [state.id for state in wf.states.values()
+                               if 'accept' in state.transitions][0]
+            back_transition_id = [tr for tr in wf.states['accepted'].transitions
+                                  if tr.startswith('backTo')][0]
             new_state = _addIsolatedState(
                 new_state_id='pre_accepted',
-                origin_state_id='itempublished',
+                origin_state_id=origin_state_id,
                 origin_transition_id='pre_accept',
                 origin_transition_guard_expr_name='mayDecide()',
-                back_transition_guard_expr_name="mayCorrect('itempublished')",
-                back_transition_id='backToItemPublished',
+                back_transition_guard_expr_name="mayCorrect('%s')" % origin_state_id,
+                back_transition_id=back_transition_id,
                 itemWorkflow=itemWorkflow)
             # ... then add output transitions to 'accepted' and 'accepted_but_modified'
-            out_transitions = ['backToItemPublished', 'accept']
+            out_transitions = new_state.transitions
+            out_transitions += ('accept', )
             if 'accepted_but_modified' in wfAdaptations:
-                out_transitions.append('accept_but_modify')
+                out_transitions += ('accept_but_modify', )
             new_state.transitions = out_transitions
 
         # "accepted_out_of_meeting" add state 'accepted_out_of_meeting'

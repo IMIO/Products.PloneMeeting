@@ -94,6 +94,7 @@ from Products.PloneMeeting.events import item_added_or_initialized
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
+from Products.PloneMeeting.model.adaptations import get_waiting_advices_infos
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
@@ -234,7 +235,7 @@ class MeetingItemWorkflowConditions(object):
                 msg = No(_('required_groupsInCharge_ko'))
         return msg
 
-    def _mayShortcutToValidationLevel(self, proposing_group_uid, destinationState):
+    def _mayShortcutToValidationLevel(self, destinationState):
         '''When using WFAdaptation 'item_validation_shortcuts',
            is current user able to use the shortcut to p_destinationState?'''
         res = False
@@ -250,13 +251,16 @@ class MeetingItemWorkflowConditions(object):
                 states=[previous_val_state], data='suffix', only_enabled=True)
             previous_suffixes.append(previous_main_suffix)
             previous_suffixes = tuple(set(previous_suffixes))
+            previous_group_managing_item_uid = self.context.adapted()._getGroupManagingItem(
+                previous_val_state)
             res = bool(self.tool.get_filtered_plone_groups_for_user(
-                org_uids=[proposing_group_uid], suffixes=previous_suffixes))
+                org_uids=[previous_group_managing_item_uid], suffixes=previous_suffixes))
             # when previous_val_state group suffix is empty, we replay _mayShortcutToValidationLevel
             # but with this previous state as destinationState
             # XXX TO BE CONFIRMED
-            if not res and not self.tool.group_is_not_empty(proposing_group_uid, previous_main_suffix):
-                return self._mayShortcutToValidationLevel(proposing_group_uid, previous_val_state)
+            if not res and not self.tool.group_is_not_empty(
+               previous_group_managing_item_uid, previous_main_suffix):
+                return self._mayShortcutToValidationLevel(previous_val_state)
         else:
             res = True
         return res
@@ -269,14 +273,13 @@ class MeetingItemWorkflowConditions(object):
         if _checkPermission(ReviewPortalContent, self.context):
             suffix = self.cfg.getItemWFValidationLevels(
                 states=[destinationState], data='suffix', only_enabled=True)
-            proposing_group_uid = self.context.getProposingGroup()
+            group_managing_item_uid = self.context.adapted()._getGroupManagingItem(destinationState)
             # check if next validation level suffixed Plone group is not empty
-            res = self.tool.group_is_not_empty(proposing_group_uid, suffix)
+            res = self.tool.group_is_not_empty(group_managing_item_uid, suffix)
             # shortcuts are available to (Meeting)Managers
             if res and not self.tool.isManager(self.cfg):
                 # check that when using shortcuts, this is available
-                res = self._mayShortcutToValidationLevel(
-                    proposing_group_uid, destinationState)
+                res = self._mayShortcutToValidationLevel(destinationState)
         # check required data only if transition is doable or we would display
         # a No button for a transition that is actually not triggerable...
         if res:
@@ -411,7 +414,7 @@ class MeetingItemWorkflowConditions(object):
         if not res and \
            self.tool.group_is_not_empty(proposing_group_uid, suffix) and \
            'item_validation_shortcuts' in self.cfg.getWorkflowAdaptations():
-            res = self._mayShortcutToValidationLevel(proposing_group_uid, destinationState)
+            res = self._mayShortcutToValidationLevel(destinationState)
 
         return res and \
             self._userIsPGMemberAbleToSendItemBackExtraCondition(
@@ -475,17 +478,16 @@ class MeetingItemWorkflowConditions(object):
             # when item is validated, we may eventually send back to last validation state
             wfas = self.cfg.getWorkflowAdaptations()
             last_val_state = self._getLastValidationState()
-            if self.review_state == 'validated':
-                if destinationState == last_val_state:
-                    # MeetingManager probably
-                    if _checkPermission(ReviewPortalContent, self.context):
-                        res = True
-                    # manage the reviewers_take_back_validated_item WFAdaptation
-                    elif 'reviewers_take_back_validated_item' in self.cfg.getWorkflowAdaptations():
-                        # is current user member of last validation level?
-                        suffix = self.cfg.getItemWFValidationLevels(states=[last_val_state], data='suffix')
-                        res = self.tool.group_is_not_empty(
-                            proposingGroup, suffix, user_id=get_current_user_id())
+            if self.review_state == 'validated' and destinationState == last_val_state:
+                # MeetingManager probably
+                if _checkPermission(ReviewPortalContent, self.context):
+                    res = True
+                # manage the reviewers_take_back_validated_item WFAdaptation
+                elif 'reviewers_take_back_validated_item' in self.cfg.getWorkflowAdaptations():
+                    # is current user member of last validation level?
+                    suffix = self.cfg.getItemWFValidationLevels(states=[last_val_state], data='suffix')
+                    res = self.tool.group_is_not_empty(
+                        proposingGroup, suffix, user_id=get_current_user_id())
             # using 'waiting_advices_XXX_send_back' WFAdaptations,
             elif self.review_state.endswith('_waiting_advices'):
                 item_validation_states = self.cfg.getItemWFValidationLevels(data='state', only_enabled=True)
@@ -500,8 +502,7 @@ class MeetingItemWorkflowConditions(object):
                     sendable_back_states = list(item_validation_states)
                 if not sendable_back_states:
                     # use custom values from WAITING_ADVICES_FROM_STATES
-                    from Products.PloneMeeting.model import adaptations
-                    for waiting_advice_config in adaptations.WAITING_ADVICES_FROM_STATES:
+                    for waiting_advice_config in get_waiting_advices_infos(self.cfg.getId()):
                         sendable_back_states += list(waiting_advice_config['back_states'])
 
                 # remove duplicates
@@ -650,8 +651,7 @@ class MeetingItemWorkflowConditions(object):
                         from_states = list(item_validation_states)
                     if not from_states:
                         # use custom values from WAITING_ADVICES_FROM_STATES
-                        from Products.PloneMeeting.model import adaptations
-                        for waiting_advice_config in adaptations.WAITING_ADVICES_FROM_STATES:
+                        for waiting_advice_config in get_waiting_advices_infos(self.cfg.getId()):
                             from_states += list(waiting_advice_config['from_states'])
                     if from_state in from_states:
                         res = True
@@ -2665,9 +2665,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if "__or__" in states:
                 states = states.split("__or__")
             else:
-                from Products.PloneMeeting.model.adaptations import WAITING_ADVICES_FROM_STATES
                 found = False
-                for infos in WAITING_ADVICES_FROM_STATES:
+                for infos in get_waiting_advices_infos(cfg.getId()):
                     if infos['new_state_id'] == states:
                         states = infos['new_state_id']
                         break

@@ -2772,9 +2772,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     # Names of workflow adaptations, ORDER IS IMPORTANT!
     wfAdaptations = ('item_validation_shortcuts',
                      'only_creator_may_delete',
+                     # first define meeting workflow state removal
                      'no_freeze',
                      'no_publication',
                      'no_decide',
+                     # then define added item decided states
                      'accepted_but_modified',
                      'postpone_next_meeting',
                      'mark_not_applicable',
@@ -2783,6 +2785,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'refused',
                      'delayed',
                      'pre_accepted',
+                     # then other adaptations
                      'reviewers_take_back_validated_item',
                      'presented_item_back_to_validation_state',
                      'return_to_proposing_group',
