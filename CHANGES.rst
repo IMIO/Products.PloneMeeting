@@ -13,6 +13,12 @@ Changelog
 - Fixed `PloneGroupSettingsValidator` that was failing to remove an unused
   suffix because wrong check with _advisers suffix.
   [gbastien]
+- Added WFAdaptation `item_validation_shortcuts` that will let users change item
+  state to any other item validation state (so between itemcreated and validated)
+  depending on their groups.
+  Added `MeetingItem._assign_roles_to_group_suffixes` to ease assigning roles
+  to suffixes for an organization.
+  [gbastien]
 
 4.2rc19 (2022-03-10)
 --------------------
@@ -25,12 +31,6 @@ Changelog
   [gbastien]
 - Fixed possible not persisted `categorized_elements` in `utils.updateAnnexesAccess`,
   as it is an `OrderedDict`, we must set `parent._p_changed = True` manually.
-  [gbastien]
-- Added WFAdaptation `item_validation_shortcuts` that will let users change item
-  state to any other item validation state (so between itemcreated and validated)
-  depending on their groups.
-  Added `MeetingItem._assign_roles_to_group_suffixes` to ease assigning roles
-  to suffixes for an organization.
   [gbastien]
 
 4.2rc18 (2022-03-08)
