@@ -5,8 +5,11 @@ Changelog
 4.2rc20 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Added `catalog` to the POD template default generation context.
+  [gbastien]
+- Completed POD templates instructions replacements in `Migrate_To_4200`,
+  manage `displayStrikedAssembly` and new default context value `catalog`.
+  [gbastien]
 
 4.2rc19 (2022-03-10)
 --------------------

@@ -1027,6 +1027,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             'itemUids': {},
             'user': api.user.get_current(),
             'podTemplate': pod_template,
+            'catalog': api.portal.get_tool('portal_catalog'),
             # give ability to access annexes related methods
             'collective_iconifiedcategory_utils': collective_iconifiedcategory_utils,
             # collective.contact.core.utils
