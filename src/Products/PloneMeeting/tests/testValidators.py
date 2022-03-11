@@ -351,6 +351,12 @@ class testValidators(PloneMeetingTestCase):
         with self.assertRaises(Invalid) as cm:
             validator.validate(functions_with_fct_orgs_advisers)
         self.assertEqual(cm.exception.message, validation_error_msg)
+        # but if disabling another level it is correct
+        # disable level prereviewers for vendors
+        functions_with_fct_orgs_prereviewers = deepcopy(functions)
+        self.assertEqual(functions_with_fct_orgs_advisers[3]['fct_id'], u'prereviewers')
+        functions_with_fct_orgs_prereviewers[3]['fct_orgs'] = [self.vendors_uid]
+        self.assertIsNone(validator.validate(functions_with_fct_orgs_prereviewers))
         # remove adviser so it validates
         item.setOptionalAdvisers(())
         item._update_after_edit(idxs=['indexAdvisers'])

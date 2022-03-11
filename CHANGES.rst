@@ -2,7 +2,19 @@ Changelog
 =========
 
 
-4.2rc19 (unreleased)
+4.2rc20 (unreleased)
+--------------------
+
+- Added `catalog` to the POD template default generation context.
+  [gbastien]
+- Completed POD templates instructions replacements in `Migrate_To_4200`,
+  manage `displayStrikedAssembly` and new default context value `catalog`.
+  [gbastien]
+- Fixed `PloneGroupSettingsValidator` that was failing to remove an unused
+  suffix because wrong check with _advisers suffix.
+  [gbastien]
+
+4.2rc19 (2022-03-10)
 --------------------
 
 - Manage some more POD templates instructions replacements in `Migrate_To_4200`,

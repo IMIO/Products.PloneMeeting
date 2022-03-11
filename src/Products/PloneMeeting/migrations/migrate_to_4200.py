@@ -711,6 +711,11 @@ class Migrate_To_4200(Migrator):
                             ".replace(u'é',u'e').replace(u'û',u'u').upper()",
                         # uid_catalog can no more be used to get DX Meeting
                         ".uid_catalog(": ".portal_catalog(",
+                        # catalog is now available in default context
+                        "self.portal_catalog(": "catalog(",
+                        # get_assembly, striked=True by default
+                        # also used in some dashboard POD templates
+                        '.displayStrikedAssembly()': '.get_assembly()',
                         }
         # specific for Meeting POD Templates
         meeting_replacements = {
@@ -729,8 +734,6 @@ class Migrate_To_4200(Migrator):
             'self.Title()': "tool.format_date(self.date)",
             # formatMeetingDate to format_date
             'tool.formatMeetingDate(self': "tool.format_date(self.date",
-            # get_assembly, striked=True by default
-            '.displayStrikedItemAssembly()': '.get_assembly()',
         }
         # specific for MeetingItem POD Templates
         item_replacements = {
@@ -744,6 +747,8 @@ class Migrate_To_4200(Migrator):
             # used in Avis DF
             'self.displayValue(self.listProposingGroups(), self.getProposingGroup())':
                 "view.display('proposingGroup')",
+            # meeting is now available in default generation context
+            'self.getMeeting()': 'meeting',
         }
         self.updatePODTemplatesCode(replacements, meeting_replacements, item_replacements)
 
