@@ -1471,9 +1471,13 @@ def onMeetingWillBeRemoved(meeting, event):
 
 def onPrincipalAddedToGroup(event):
     """ """
+    tool = api.portal.get_tool('portal_plonemeeting')
+    tool.invalidateAllCache()
     _invalidateUsersAndGroupsRelatedCache()
 
 
 def onPrincipalRemovedFromGroup(event):
     """ """
+    tool = api.portal.get_tool('portal_plonemeeting')
+    tool.invalidateAllCache()
     _invalidateUsersAndGroupsRelatedCache()
