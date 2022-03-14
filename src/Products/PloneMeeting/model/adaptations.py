@@ -90,6 +90,25 @@ WAITING_ADVICES_FROM_STATES = {
 WAITING_ADVICES_FROM_TRANSITION_ID_PATTERN = 'wait_advices_from_{0}'
 WAITING_ADVICES_FROM_TO_TRANSITION_ID_PATTERN = 'wait_advices_from_{0}__to__{1}'
 
+# restrict item validation back shortcuts
+# if not empty, we will permit back shortcuts from given item states
+RESTRICT_ITEM_BACK_SHORTCUTS = {
+    '*':
+    {
+        # this means we enable every shortcuts if not defined in other values
+        # removing '*': '*' would mean nothing by default
+        '*': '*',
+    },
+}
+
+
+def get_allowed_back_shortcut_from(cfg_id, state_id):
+    """ """
+    infos = RESTRICT_ITEM_BACK_SHORTCUTS.get(
+        cfg_id, RESTRICT_ITEM_BACK_SHORTCUTS.get('*'))
+    allowed_from = infos.get(state_id, infos.get('*'))
+    return allowed_from
+
 
 def get_waiting_advices_infos(cfg_id):
     """ """
@@ -590,7 +609,10 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             for level in levels:
                 back_shortcuts[level['new_state_id']] = []
                 for back_shortcut_state in back_shortcuts:
-                    if back_shortcut_state != level['new_state_id']:
+                    allowed = get_allowed_back_shortcut_from(
+                        meetingConfig.getId(), back_shortcut_state)
+                    if back_shortcut_state != level['new_state_id'] and \
+                       (allowed == '*' or level['new_state_id'] in allowed):
                         back_shortcuts[back_shortcut_state].append(
                             level['back_transitions'][1]['back_transition_id'])
             levels.reverse()

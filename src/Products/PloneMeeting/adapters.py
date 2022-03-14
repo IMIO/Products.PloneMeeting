@@ -1078,14 +1078,10 @@ class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCrit
         if not self.cfg:
             return {}
         # search every highest reviewer level for each group of the user
-        userOrgUids = self.tool.get_orgs_for_user()
-        userPloneGroups = self.tool.get_plone_groups_for_user()
+        user_org_uids = self.tool.get_orgs_for_user()
         reviewProcessInfos = []
-        for org_uid in userOrgUids:
-            ploneGroups = []
-            # find Plone groups of the organization the user is in
-            ploneGroups = [userPloneGroupId for userPloneGroupId in userPloneGroups
-                           if userPloneGroupId.startswith('%s_' % org_uid)]
+        for org_uid in user_org_uids:
+            ploneGroups = self.tool.get_filtered_plone_groups_for_user(org_uids=[org_uid])
             # now that we have Plone groups of the organization
             # we can get highest hierarchic level and find sub levels
             highestReviewerLevel = self.cfg._highestReviewerLevel(ploneGroups)
