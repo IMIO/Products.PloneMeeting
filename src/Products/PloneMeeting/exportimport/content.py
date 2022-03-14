@@ -597,7 +597,7 @@ class ToolInitializer:
         if data['is_style']:
             podType = 'StyleTemplate'
         else:
-            podType = data['dashboard'] and 'DashboardPODTemplate' or 'ConfigurablePODTemplate'
+            podType = pt.dashboard and 'DashboardPODTemplate' or 'ConfigurablePODTemplate'
 
             # turn the pod_portal_types from MeetingItem to MeetingItemShortname
             adapted_pod_portal_types = []
@@ -682,7 +682,10 @@ class ToolInitializer:
                 data['item_advice_view_states'] = []
                 data['groups_in_charge'] = []
 
-            org = api.content.create(container=container, type='organization', **data)
+            try:
+                org = api.content.create(container=container, type='organization', **data)
+            except:
+                import ipdb; ipdb.set_trace()
 
             if defer_data:
                 # finalize savedOrgsData, store org uid instead 'dummy'
