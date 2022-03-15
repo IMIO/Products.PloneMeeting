@@ -499,6 +499,8 @@ def _configureCKeditor(site):
     # disable folder creation thru CKeditor to avoid
     # having the add folder icon when adding an image
     cke_props.allow_folder_creation = False
+    # remove the wsc plugin to remove the "Check spell" from Scayt menu that is broken
+    cke_props.removePlugins = (u'wsc',)
     # set 500px for editor height everywhere
     cke_props.height = '500px'
     # do not use 'rows' of the field widget for editor height

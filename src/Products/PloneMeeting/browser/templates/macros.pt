@@ -28,7 +28,7 @@
        i18n:attributes="title fastedit_cancel"
        title="Cancel edit."
        tal:attributes="src string:$portal_url/cancel_edit.png;
-                       onClick python:'if (confirm(sure_to_cancel_edit)) {askAjaxChunk(\'hook_%s\', \'GET\', \'%s\', \'@@pm-macros\', \'simplyViewField\', {}, getRichTextContent)};;' % (fieldName, context.absolute_url())" />
+                       onClick python:'if (confirm(sure_to_cancel_edit)) {askAjaxChunk(\'hook_%s\', \'POST\', \'%s\', \'@@pm-macros\', \'simplyViewField\', {}, getRichTextContent)};;' % (fieldName, context.absolute_url())" />
 
   <form tal:attributes="id string:ajax_edit_$fieldName;" class="enableUnloadProtection enableAutoFocus enableUnlockProtection">
 

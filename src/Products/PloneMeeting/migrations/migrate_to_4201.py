@@ -25,16 +25,25 @@ class Migrate_To_4201(Migrator):
                     logger.info('Updating WF role mappings for item at %s' % brain.getPath())
         logger.info('Done.')
 
+    def _disableWscForCKeditor(self):
+        '''The link 'Check spell' in Scayt button is broken, hide it.'''
+        logger.info('CKeditir, adding "wsc" to the removePlugins property...')
+        cke_props = self.portal.portal_properties.ckeditor_properties
+        cke_props.removePlugins = (u'wsc',)
+        logger.info('Done.')
+
     def run(self, extra_omitted=[], from_migration_to_42=False):
         logger.info('Migrating to PloneMeeting 4201...')
 
         self._fixWFsUsingReturnedToProposingGroupWFAdaptation()
+        self._disableWscForCKeditor()
 
 
 def migrate(context):
     '''This migration function will:
 
-       1) Fix permissions for items in state 'returned_to_proposing_group'.
+       1) Fix permissions for items in state 'returned_to_proposing_group';
+       2) Remove the 'wsc' plugin from CKeditor.
     '''
     migrator = Migrate_To_4201(context)
     migrator.run()
