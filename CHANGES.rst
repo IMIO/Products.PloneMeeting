@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc20 (unreleased)
+4.2rc20 (2022-03-15)
 --------------------
 
 - Added `catalog` to the POD template default generation context.
