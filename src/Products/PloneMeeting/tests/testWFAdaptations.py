@@ -1304,14 +1304,14 @@ class testWFAdaptations(PloneMeetingTestCase):
         # activate the wfAdaptation and check
         from Products.PloneMeeting.model import adaptations
         original_WAITING_ADVICES_FROM_STATES = adaptations.WAITING_ADVICES_FROM_STATES
-        adaptations.WAITING_ADVICES_FROM_STATES = (
+        adaptations.WAITING_ADVICES_FROM_STATES = {'*': (
             {'from_states': (self._stateMappingFor('proposed_first_level'), ),
              'back_states': (self._stateMappingFor('proposed_first_level'), ),
              'perm_cloned_states': (self._stateMappingFor('proposed_first_level'), ),
              'remove_modify_access': True,
              'use_custom_icon': False,
              'use_custom_back_transition_title_for': (),
-             'use_custom_state_title': True, },)
+             'use_custom_state_title': True, },), }
         self._activate_wfas(
             ('waiting_advices', 'waiting_advices_proposing_group_send_back'),
             keep_existing=True)
@@ -1422,11 +1422,11 @@ class testWFAdaptations(PloneMeetingTestCase):
             keep_existing=True)
         from Products.PloneMeeting.model import adaptations
         original_WAITING_ADVICES_FROM_STATES = deepcopy(adaptations.WAITING_ADVICES_FROM_STATES)
-        adaptations.WAITING_ADVICES_FROM_STATES = (
+        adaptations.WAITING_ADVICES_FROM_STATES = {'*': (
             {'from_states': (self._stateMappingFor('proposed_first_level'),
                              'prevalidated', ),
              'back_states': (self._stateMappingFor('proposed_first_level'),
-                             'prevalidated', ), }, )
+                             'prevalidated', ), }, ), }
         waiting_advices_state = '{0}__or__prevalidated_waiting_advices'.format(
             self._stateMappingFor('proposed_first_level'))
         self.vendors.item_advice_states = ("{0}__state__{1}".format(cfg.getId(), waiting_advices_state), )
@@ -1502,7 +1502,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         from Products.PloneMeeting.model import adaptations
         original_WAITING_ADVICES_FROM_STATES = deepcopy(adaptations.WAITING_ADVICES_FROM_STATES)
-        adaptations.WAITING_ADVICES_FROM_STATES = (
+        adaptations.WAITING_ADVICES_FROM_STATES = {'*': (
             {'from_states': ('itemcreated', ),
              'back_states': ('itemcreated', ),
              'perm_cloned_states': ('itemcreated', ),
@@ -1516,7 +1516,7 @@ class testWFAdaptations(PloneMeetingTestCase):
              'remove_modify_access': True,
              'use_custom_icon': False,
              'use_custom_back_transition_title_for': (),
-             'use_custom_state_title': True, },)
+             'use_custom_state_title': True, },), }
         self._activate_wfas(
             ('waiting_advices', 'waiting_advices_proposing_group_send_back'), keep_existing=True)
         waiting_advices_itemcreated_state = 'itemcreated_waiting_advices'
@@ -1900,7 +1900,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         from Products.PloneMeeting.model import adaptations
         original_WAITING_ADVICES_FROM_STATES = deepcopy(adaptations.WAITING_ADVICES_FROM_STATES)
-        adaptations.WAITING_ADVICES_FROM_STATES = (
+        adaptations.WAITING_ADVICES_FROM_STATES = {'*': (
             {'from_states': ('itemcreated', 'proposed', ),
              'back_states': ('itemcreated', 'proposed', ),
              'new_state_id': 'itemcreated_waiting_advices',
@@ -1909,7 +1909,7 @@ class testWFAdaptations(PloneMeetingTestCase):
              'back_states': ('itemcreated', 'proposed', ),
              'new_state_id': 'proposed_waiting_advices',
              },
-            )
+            ), }
         self._activate_wfas(('waiting_advices', 'waiting_advices_proposing_group_send_back'))
         cfg.setItemAdviceStates(
             ('itemcreated_waiting_advices', 'proposed_waiting_advices', ))
