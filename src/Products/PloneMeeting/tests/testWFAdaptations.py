@@ -1303,7 +1303,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         # activate the wfAdaptation and check
         from Products.PloneMeeting.model import adaptations
-        original_WAITING_ADVICES_FROM_STATES = adaptations.WAITING_ADVICES_FROM_STATES
+        original_WAITING_ADVICES_FROM_STATES = deepcopy(adaptations.WAITING_ADVICES_FROM_STATES)
         adaptations.WAITING_ADVICES_FROM_STATES = {'*': (
             {'from_states': (self._stateMappingFor('proposed_first_level'), ),
              'back_states': (self._stateMappingFor('proposed_first_level'), ),
@@ -1605,7 +1605,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         from Products.PloneMeeting.model import adaptations
         original_WAITING_ADVICES_FROM_STATES = deepcopy(adaptations.WAITING_ADVICES_FROM_STATES)
-        adaptations.WAITING_ADVICES_FROM_STATES = original_WAITING_ADVICES_FROM_STATES + (
+        adaptations.WAITING_ADVICES_FROM_STATES['*'] = adaptations.WAITING_ADVICES_FROM_STATES['*'] + (
             {'from_states': ('unknown', ),
              'back_states': ('unknown', ), }, )
         self._activate_wfas(('waiting_advices', 'waiting_advices_proposing_group_send_back'))
