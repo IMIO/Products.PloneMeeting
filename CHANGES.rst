@@ -13,6 +13,10 @@ Changelog
 - Fixed `PloneGroupSettingsValidator` that was failing to remove an unused
   suffix because wrong check with _advisers suffix.
   [gbastien]
+- Fixed WFAdaptation `returned_to_proposing_group`, proposingGroup member was
+  not able to add annexes. Added upgrade step to `4201` to fix item WF
+  and update existing items WF role mappings.
+  [gbastien]
 
 4.2rc19 (2022-03-10)
 --------------------
