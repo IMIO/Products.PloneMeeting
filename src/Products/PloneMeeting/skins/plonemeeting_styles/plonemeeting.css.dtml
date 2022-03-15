@@ -2140,6 +2140,10 @@ body.template-edit.subsection-plonegroup-organization.icons-on:not([class*='subs
 td.pretty_link.plonegroup-organization fieldset#form-groups-app_parameters {
    display: none;
 }
+/* add some margin top to avoid problems with the below content title viewlet */
+#content fieldset#form-groups-app_parameters {
+    margin-top: 0.75em;
+}
 
 div.organization_level:not([class*='organization_level_0']),
 div.config_sub_categories {

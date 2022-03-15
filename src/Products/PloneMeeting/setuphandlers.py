@@ -423,7 +423,7 @@ def _configureCKeditor(site):
        CKeditor custom styles are kept during migrations using the _before_reinstall/_after_reinstall hooks.'''
     logger.info('Defining CKeditor as the new default editor for every users and configuring it (styles)...')
     # this will install collective.ckeditor if it is not already the case...
-    configure_ckeditor(site, custom='plonemeeting', forceTextPaste=0, scayt=1)
+    configure_ckeditor(site, custom='plonemeeting', forceTextPaste=0, scayt=1, removeWsc=1)
     # remove every styles defined by default and add the custom styles if not already done...
     cke_props = site.portal_properties.ckeditor_properties
     if cke_props.menuStyles.find(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG) == -1:
@@ -499,8 +499,6 @@ def _configureCKeditor(site):
     # disable folder creation thru CKeditor to avoid
     # having the add folder icon when adding an image
     cke_props.allow_folder_creation = False
-    # remove the wsc plugin to remove the "Check spell" from Scayt menu that is broken
-    cke_props.removePlugins = (u'wsc',)
     # set 500px for editor height everywhere
     cke_props.height = '500px'
     # do not use 'rows' of the field widget for editor height

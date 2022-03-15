@@ -18,10 +18,13 @@ Changelog
   and update existing items WF role mappings.
   [gbastien]
 - Disable the `wsc` plugin in `CKeditor` (add it to `removePlugins`) as the link
-  to it does not work anymore in the scayt menu of CKeditor.
+  to it does not work anymore in the `scayt` menu of `CKeditor`.
   [gbastien]
 - Fixed canceling inline change on an item was failing with continuous spinner
   due to use of GET instead POST method to fetch original data.
+  [gbastien]
+- Minor CSS fix on person view now that we display the `below-content-title`
+  viewlet, the app_parameters fieldset was shifted to the right.
   [gbastien]
 
 4.2rc19 (2022-03-10)
