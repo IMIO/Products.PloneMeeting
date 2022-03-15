@@ -4,13 +4,12 @@
 #
 
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
+from plone.api.validation import at_least_one_of
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 
 import copy
-
-from plone.api.validation import at_least_one_of
 
 
 def patch_pod_templates(templates, new_path, cfg1_id=None):

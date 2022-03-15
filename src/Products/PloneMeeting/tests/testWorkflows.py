@@ -24,8 +24,8 @@ from Products.PloneMeeting.MeetingItem import REC_ITEM_ERROR
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.statusmessages.interfaces import IStatusMessage
 from zExceptions import Redirect
-from zope.i18n import translate
 from zope.annotation.interfaces import IAnnotations
+from zope.i18n import translate
 
 import transaction
 
