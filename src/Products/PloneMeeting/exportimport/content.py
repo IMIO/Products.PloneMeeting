@@ -682,10 +682,7 @@ class ToolInitializer:
                 data['item_advice_view_states'] = []
                 data['groups_in_charge'] = []
 
-            try:
-                org = api.content.create(container=container, type='organization', **data)
-            except:
-                import ipdb; ipdb.set_trace()
+            org = api.content.create(container=container, type='organization', **data)
 
             if defer_data:
                 # finalize savedOrgsData, store org uid instead 'dummy'

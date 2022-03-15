@@ -87,6 +87,7 @@ from Products.PloneMeeting.utils import get_current_user_id
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import monthsIds
+from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import workday
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
@@ -1540,7 +1541,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         """Invalidate RAM cache and just notifyModified so etag toolmodified invalidate all brower cache."""
         cleanRamCache()
         cleanVocabularyCacheFor()
-        self.notifyModified()
+        notifyModifiedAndReindex(self)
         logger.info('All cache was invalidated.')
         api.portal.show_message(_('All cache was invalidated'), request=self.REQUEST)
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])

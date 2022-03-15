@@ -84,7 +84,7 @@ WAITING_ADVICES_FROM_STATES = {
          # must end with _waiting_advices
          'new_state_id': None,
          },
-    )
+    ),
 }
 # defined here to be importable
 WAITING_ADVICES_FROM_TRANSITION_ID_PATTERN = 'wait_advices_from_{0}'
@@ -557,13 +557,15 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         previous = None
         first = True
         item_validation_levels = list(meetingConfig.getItemWFValidationLevels(only_enabled=True))
+        cfg_id = meetingConfig.getId()
         if not item_validation_levels:
-            logger.info(WF_ITEM_VALIDATION_LEVELS_DISABLED % (meetingConfig.getId()))
+            logger.info(WF_ITEM_VALIDATION_LEVELS_DISABLED % cfg_id)
             return
 
         # build thing reversed as workflows work with leading transitions
         # so we need to create transitions leading to a new state
         item_validation_levels.reverse()
+        allowed_back_from_validated = get_allowed_back_shortcut_from(cfg_id, 'validated')
         for level in item_validation_levels:
             data = {}
             data['new_state_id'] = level['state']
@@ -575,10 +577,14 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             data['back_transition_title'] = level['back_transition_title']
             data['guard_name'] = \
                 'mayProposeToNextValidationLevel(destinationState="{0}")'.format(level['state'])
-            # add transition from validated to every validation levels
-            data['back_transitions'] = [{'back_transition_id': data['back_transition'],
-                                         'back_transition_title': data['back_transition_title'],
-                                         'back_from_state_id': 'validated'}]
+            # add transition from validated to every validation levels if allowed
+            data['back_transitions'] = []
+            if allowed_back_from_validated == '*' or \
+               data['new_state_id'] in allowed_back_from_validated:
+                data['back_transitions'].append(
+                    {'back_transition_id': data['back_transition'],
+                     'back_transition_title': data['back_transition_title'],
+                     'back_from_state_id': 'validated'})
             if first:
                 first = False
                 data['leaving_to_state_id'] = 'validated'
@@ -618,8 +624,9 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                         meetingConfig.getId(), back_shortcut_state)
                     if back_shortcut_state != level['new_state_id'] and \
                        (allowed == '*' or level['new_state_id'] in allowed):
+                        # take last back_transition, the first is the one to validated if allowed
                         back_shortcuts[back_shortcut_state].append(
-                            level['back_transitions'][1]['back_transition_id'])
+                            level['back_transitions'][-1]['back_transition_id'])
             levels.reverse()
             shortcuts = {}
             for level in levels:
@@ -978,7 +985,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         elif wfAdaptation == 'pre_accepted':
             # add state from itemfrozen? itempublished? presented? ...
             # same origin as mandatory transition 'accept'
-            origin_state_id = [state.id for state in wf.states.values()
+            origin_state_id = [state.id for state in itemWorkflow.states.values()
                                if 'accept' in state.transitions][0]
             back_transition_id = [tr for tr in wf.states['accepted'].transitions
                                   if tr.startswith('backTo')][0]

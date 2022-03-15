@@ -1789,8 +1789,11 @@ def reviewersFor(cfg):
     tuples = zip(suffixes, states)
 
     res = OrderedDict()
+    # a reviewer level could interact at different states
     for suffix, state in tuples:
-        res[suffix] = [state]
+        if suffix not in res:
+            res[suffix] = []
+        res[suffix].append(state)
     return res
 
 
