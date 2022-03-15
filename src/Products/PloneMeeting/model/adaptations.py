@@ -482,11 +482,16 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         if 'returned_to_proposing_group' not in itemWorkflow.states:
             itemWorkflow.states.addState('returned_to_proposing_group')
             newState = getattr(itemWorkflow.states, 'returned_to_proposing_group')
-            # stateToCloneInfos is like 'meetingitem_workflow.itemcreated'
-            stateToClone = itemWorkflow.states['validated']
+            # stateToCloneInfos is like 'meetingitem_workflow.validated'
+            # we use it from the base item WF because it manages
+            # the 'Add annex' permission correctly, the 'validated' state
+            # in itemWF is patched by '_apply_item_validation_levels'
+            wfTool = api.portal.get_tool('portal_workflow')
+            base_item_wf = wfTool.get('meetingitem_workflow')
+            stateToClone = base_item_wf.states['validated']
             # remove DeleteObjects permission
             cloned_permissions = dict(stateToClone.permission_roles)
-            cloned_permissions[DeleteObjects] = ('Manager')
+            cloned_permissions[DeleteObjects] = ('Manager', )
             newState.permission_roles = cloned_permissions
 
             # now create the necessary transitions : one to go to 'returned_to_proposing_group' state
@@ -631,6 +636,9 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
 
         # change permission for PloneMeeting: add annex for state "validated"
         # replace "Contributor" by "MeetingManager"
+        # we use "validated" as base state this is why 'Add annex' permission
+        # is given to ('Manager', 'Editor'), but finally we must change this
+        # for the final 'validated' state
         validated = itemWorkflow.states["validated"]
         assert(validated.permission_roles[AddAnnex] == ('Manager', 'Editor'))
         validated.permission_roles[AddAnnex] = ('Manager', 'MeetingManager')

@@ -2,7 +2,17 @@ Changelog
 =========
 
 
-4.2rc20 (unreleased)
+4.2rc21 (unreleased)
+--------------------
+
+- Added WFAdaptation `item_validation_shortcuts` that will let users change item
+  state to any other item validation state (so between itemcreated and validated)
+  depending on their groups.
+  Added `MeetingItem._assign_roles_to_group_suffixes` to ease assigning roles
+  to suffixes for an organization.
+  [gbastien]
+
+4.2rc20 (2022-03-15)
 --------------------
 
 - Added `catalog` to the POD template default generation context.
@@ -13,11 +23,19 @@ Changelog
 - Fixed `PloneGroupSettingsValidator` that was failing to remove an unused
   suffix because wrong check with _advisers suffix.
   [gbastien]
-- Added WFAdaptation `item_validation_shortcuts` that will let users change item
-  state to any other item validation state (so between itemcreated and validated)
-  depending on their groups.
-  Added `MeetingItem._assign_roles_to_group_suffixes` to ease assigning roles
-  to suffixes for an organization.
+- Fixed WFAdaptation `returned_to_proposing_group`, proposingGroup member was
+  not able to add annexes. Added upgrade step to `4201` to fix item WF
+  and update existing items WF role mappings.
+  [gbastien]
+- Disable the `wsc` plugin in `CKeditor` (add it to `removePlugins`) as the link
+  to it does not work anymore in the `scayt` menu of `CKeditor`.
+  [gbastien]
+- Fixed canceling inline change on an item was failing with continuous spinner
+  due to use of GET instead POST method to fetch original data.
+  [gbastien]
+- Minor CSS fix on person view now that we display the `below-content-title`
+  viewlet, the app_parameters fieldset was shifted to the right.
+>>>>>>> origin/master
   [gbastien]
 
 4.2rc19 (2022-03-10)

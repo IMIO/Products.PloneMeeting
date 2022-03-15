@@ -18,6 +18,8 @@ from plone.dexterity.utils import createContentInContainer
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
+from Products.PloneMeeting.config import AddAnnex
+from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.config import WriteInternalNotes
@@ -875,6 +877,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def _return_to_proposing_group_active_wf_functionality(self):
         '''Tests the workflow functionality of using the 'return_to_proposing_group' wfAdaptation.'''
+        cfg = self.meetingConfig
         # while it is active, the creators of the item can edit the item as well as the MeetingManagers
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', title="Item title")
@@ -894,11 +897,14 @@ class testWFAdaptations(PloneMeetingTestCase):
             self.changeUser(userId)
             self.failIf(self.wfTool.getTransitionsFor(item))
         self.changeUser('pmManager')
-        self.failUnless('return_to_proposing_group' in [tr['name'] for tr in self.wfTool.getTransitionsFor(item)])
+        self.failUnless('return_to_proposing_group' in [
+            tr['name'] for tr in self.wfTool.getTransitionsFor(item)])
         # send the item back to the proposing group so the proposing group as an edit access to it
         self.do(item, 'return_to_proposing_group')
         self.changeUser('pmCreator1')
         self.failUnless(self.hasPermission(ModifyPortalContent, item))
+        self.failUnless(self.hasPermission(AddAnnex, item))
+        self.failUnless(self.hasPermission(AddAnnexDecision, item))
         # make sure if user edit item, it would pass validation
         # this checks especially MeetingItem.validate_pollType
         self.assertEqual(self.validate_at_fields(item), {})
@@ -922,6 +928,14 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.freezeMeeting(meeting)
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
         self.assertEqual(item.query_state(), 'itemfrozen')
+        # only Manager may delete
+        self.do(item, 'return_to_proposing_group')
+        self.changeUser('siteadmin')
+        self.assertEqual(
+            cfg.getItemWorkflow(True).states[item.query_state()].permission_roles[DeleteObjects],
+            ('Manager', ))
+        self.failUnless(self.hasPermission(DeleteObjects, item))
+        self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
 
     def test_pm_WFA_return_to_proposing_group_with_last_validation(self):
         '''Test the workflowAdaptation 'return_to_proposing_group_with_last_validation'.'''
