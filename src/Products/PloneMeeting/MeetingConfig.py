@@ -7541,7 +7541,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # return_to_proposing_group WFAdaptation
         if item_state.startswith('returned_to_proposing_group'):
             if item_state == 'returned_to_proposing_group':
-                corresponding_item_state = item_val_levels_states[0]
+                corresponding_item_state = item_val_levels_states[0] if item_val_levels_states else 'itemcreated'
             else:
                 corresponding_item_state = item_state.split('returned_to_proposing_group_')[1]
         # waiting_advices WFAdaptation

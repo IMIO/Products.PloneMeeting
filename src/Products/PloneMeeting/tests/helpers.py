@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
 from collective.contact.plonegroup.utils import select_organization
+from copy import deepcopy
 from plone import api
 from plone.app.testing import logout
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
+from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 
 
 class PloneMeetingTestingHelpers:
@@ -537,3 +539,12 @@ class PloneMeetingTestingHelpers:
         cfg.setCommittees(cfg_committees)
         meeting = self.create('Meeting', committees=default_committees(DefaultData(cfg)))
         return meeting
+
+    def _setUpDefaultItemWFValidationLevels(self, cfg):
+        """Setup default itemWFValidationLevels for given p_cfg,
+           used to avoid a custom profile breaking the tests."""
+        # make sure we use default itemWFValidationLevels,
+        # useful when test executed with custom profile
+        defValues = MeetingConfigDescriptor.get()
+        cfg.setItemWFValidationLevels(deepcopy(defValues.itemWFValidationLevels))
+        cfg.at_post_edit_script()

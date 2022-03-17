@@ -385,6 +385,14 @@ def _addIsolatedState(new_state_id,
     return new_state
 
 
+def get_base_item_validation_state():
+    """The base item validation state is the state "validated" in the meetingitem_workflow.
+       We use it from the base item WF because it manages the 'Add annex' permission correctly,
+       the real final 'validated' state in itemWF is patched by '_apply_item_validation_levels'."""
+    wfTool = api.portal.get_tool('portal_workflow')
+    return wfTool.get('meetingitem_workflow').states['validated']
+
+
 def _performWorkflowAdaptations(meetingConfig, logger=logger):
     '''This function applies workflow adaptations as specified by the p_meetingConfig.'''
 
@@ -482,13 +490,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         if 'returned_to_proposing_group' not in itemWorkflow.states:
             itemWorkflow.states.addState('returned_to_proposing_group')
             newState = getattr(itemWorkflow.states, 'returned_to_proposing_group')
-            # stateToCloneInfos is like 'meetingitem_workflow.validated'
-            # we use it from the base item WF because it manages
-            # the 'Add annex' permission correctly, the 'validated' state
-            # in itemWF is patched by '_apply_item_validation_levels'
-            wfTool = api.portal.get_tool('portal_workflow')
-            base_item_wf = wfTool.get('meetingitem_workflow')
-            stateToClone = base_item_wf.states['validated']
+            stateToClone = get_base_item_validation_state()
             # remove DeleteObjects permission
             cloned_permissions = dict(stateToClone.permission_roles)
             cloned_permissions[DeleteObjects] = ('Manager', )

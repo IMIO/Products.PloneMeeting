@@ -1921,7 +1921,10 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org_uid=None):
     if suffix_roles:
         return apply_meetingmanagers_access, suffix_roles
 
-    item_val_levels_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+    # we get every states, including disabled ones so for example we may use
+    # "itemcreated" even if it is disabled
+    item_val_levels_states = cfg.getItemWFValidationLevels(
+        data='state', only_enabled=False)
 
     # by default, observers may View in every states as well as creators
     # this way observers have access or it is never the case
@@ -1935,7 +1938,7 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org_uid=None):
         # find Editor suffixes
         # walk every defined validation levels so we give 'Reader'
         # to levels already behind us
-        for level in cfg.getItemWFValidationLevels(only_enabled=True):
+        for level in cfg.getItemWFValidationLevels(only_enabled=False):
             suffixes = [level['suffix']] + list(level['extra_suffixes'])
             for suffix in suffixes:
                 if suffix not in suffix_roles:
@@ -2324,6 +2327,15 @@ def get_current_user_id(request=None):
     except Exception:
         user_id = api.user.get_current().getId()
     return user_id
+
+
+def get_enabled_ordered_wfas(tool):
+    """Return a list of ordered WFAdaptations currently enabled in every MeetingConfigs."""
+    from Products.PloneMeeting.MeetingConfig import MeetingConfig
+    return tuple(
+        [wfa for wfa in MeetingConfig.wfAdaptations
+         if wfa in itertools.chain.from_iterable(
+             [cfg.getWorkflowAdaptations() for cfg in tool.objectValues('MeetingConfig')])])
 
 
 class AdvicesUpdatedEvent(ObjectEvent):
