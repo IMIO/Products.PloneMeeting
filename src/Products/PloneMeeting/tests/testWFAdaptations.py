@@ -1568,11 +1568,10 @@ class testWFAdaptations(PloneMeetingTestCase):
         # ease override by subproducts
         if not self._check_wfa_available(['waiting_advices']):
             return
-
         from Products.PloneMeeting.model import adaptations
         original_WAITING_ADVICES_FROM_STATES = \
             deepcopy(adaptations.WAITING_ADVICES_FROM_STATES)
-        adaptations.WAITING_ADVICES_FROM_STATES[0]['remove_modify_access'] = False
+        adaptations.WAITING_ADVICES_FROM_STATES['*'][0]['remove_modify_access'] = False
         self._activate_wfas(('waiting_advices', 'waiting_advices_proposing_group_send_back'))
         self.vendors.item_advice_states = ("{0}__state__{1}".format(
             cfg.getId(), 'itemcreated_waiting_advices'), )
@@ -1947,6 +1946,11 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'backTo_proposed_from_waiting_advices')
         self.do(item, 'wait_advices_from_proposed__to__proposed_waiting_advices')
         self.assertEqual(item.query_state(), 'proposed_waiting_advices')
+        # pmReviewer1 may only send back to groups he is member of
+        self.assertEqual(self.transitions(item), ['backTo_proposed_from_waiting_advices'])
+        # pmCreator1 may only send back to groups he is member of
+        self.changeUser('pmCreator1')
+        self.assertEqual(self.transitions(item), ['backTo_itemcreated_from_waiting_advices'])
         self.do(item, 'backTo_itemcreated_from_waiting_advices')
         self.assertEqual(item.query_state(), 'itemcreated')
         adaptations.WAITING_ADVICES_FROM_STATES = original_WAITING_ADVICES_FROM_STATES

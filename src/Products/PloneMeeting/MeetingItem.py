@@ -513,18 +513,19 @@ class MeetingItemWorkflowConditions(object):
                     # as also given to proposingGroup
                     if self.tool.isManager(self.cfg):
                         res = True
-                    # is current user proposingGroup member able to trigger transition?
-                    elif 'waiting_advices_proposing_group_send_back' in wfas and \
-                         self._userIsPGMemberAbleToSendItemBack(proposingGroup, destinationState):
-                        res = True
-                    # if not, maybe it is an adviser able to give an advice?
-                    elif 'waiting_advices_adviser_send_back' in wfas:
-                        # adviser may send back to validated when using
-                        # 'waiting_advices_adviser_may_validate'
-                        if 'waiting_advices_adviser_may_validate' in wfas:
-                            sendable_back_states.append('validated')
-                        # is current user adviser able to trigger transition?
-                        res = self._currentUserIsAdviserAbleToSendItemBack(destinationState)
+                    else:
+                        # is current user proposingGroup member able to trigger transition?
+                        if 'waiting_advices_proposing_group_send_back' in wfas:
+                            res = self._userIsPGMemberAbleToSendItemBack(
+                                proposingGroup, destinationState)
+                        # if not, maybe it is an adviser able to give an advice?
+                        if not res and 'waiting_advices_adviser_send_back' in wfas:
+                            # adviser may send back to validated when using
+                            # 'waiting_advices_adviser_may_validate'
+                            if 'waiting_advices_adviser_may_validate' in wfas:
+                                sendable_back_states.append('validated')
+                            # is current user adviser able to trigger transition?
+                            res = self._currentUserIsAdviserAbleToSendItemBack(destinationState)
             else:
                 # maybe destinationState is a validation state?
                 # in this case return True only if group not empty
@@ -6500,7 +6501,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         return item.getProposingGroup(theObject=theObject)
 
-    def _getAllGroupsManagingItem(self, theObjects=False):
+    def _getAllGroupsManagingItem(self, review_state, theObjects=False):
         '''See doc in interfaces.py.'''
         res = []
         item = self.getSelf()

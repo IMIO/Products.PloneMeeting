@@ -671,27 +671,22 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         # corresponding state 'itemfrozen' in the item workflow.
         if wfAdaptation == 'no_freeze':
             # First, update the meeting workflow
-            wf = meetingWorkflow
-            removeState(wf, 'frozen', 'freeze', 'backToFrozen')
+            removeState(meetingWorkflow, 'frozen', 'freeze', 'backToFrozen')
             # Then, update the item workflow.
-            wf = itemWorkflow
-            removeState(wf, 'itemfrozen', 'itemfreeze', 'backToItemFrozen')
+            removeState(itemWorkflow, 'itemfrozen', 'itemfreeze', 'backToItemFrozen')
 
         # "no_publication" removes state 'published' in the meeting workflow and
         # corresponding state 'itempublished' in the item workflow.
         if wfAdaptation == 'no_publication':
             # First, update the meeting workflow
-            wf = meetingWorkflow
-            removeState(wf, 'published', 'publish', 'backToPublished')
+            removeState(meetingWorkflow, 'published', 'publish', 'backToPublished')
             # Then, update the item workflow.
-            wf = itemWorkflow
-            removeState(wf, 'itempublished', 'itempublish', 'backToItemPublished')
+            removeState(itemWorkflow, 'itempublished', 'itempublish', 'backToItemPublished')
 
         # "no_decide" removes state 'decided' in the meeting workflow.
         if wfAdaptation == 'no_decide':
             # Update the meeting workflow
-            wf = meetingWorkflow
-            removeState(wf, 'decided', 'decide', 'backToDecided')
+            removeState(meetingWorkflow, 'decided', 'decide', 'backToDecided')
 
         # "reviewers_take_back_validated_item" give the ability to reviewers to
         # take back an item that is validated.
@@ -713,9 +708,8 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         # have the delete permission.  In states where MeetingMember could not delete,
         # nobody will be able to delete at all (except God Itself obviously)
         elif wfAdaptation == 'only_creator_may_delete':
-            wf = itemWorkflow
-            for state in wf.states.values():
-                if state.id != wf.initial_state:
+            for state in itemWorkflow.states.values():
+                if state.id != itemWorkflow.initial_state:
                     state.setPermission(DeleteObjects, 0, ['Manager'])
 
         # when an item is linked to a meeting, most of times, creators lose modify rights on it
@@ -841,7 +835,6 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 if 'waiting_advices_adviser_may_validate' in wfAdaptations or \
                    infos.get('adviser_may_validate', False):
                     back_states.append('validated')
-
                 # wipeout 'from_states' and 'back_states' to remove unexisting ones
                 from_state_ids = [state for state in from_states if state in wf.states]
                 back_state_ids = [state for state in back_states if state in wf.states]
@@ -987,7 +980,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             # same origin as mandatory transition 'accept'
             origin_state_id = [state.id for state in itemWorkflow.states.values()
                                if 'accept' in state.transitions][0]
-            back_transition_id = [tr for tr in wf.states['accepted'].transitions
+            back_transition_id = [tr for tr in itemWorkflow.states['accepted'].transitions
                                   if tr.startswith('backTo')][0]
             new_state = _addIsolatedState(
                 new_state_id='pre_accepted',
@@ -1033,8 +1026,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         # "presented_item_back_to_XXX" allows the MeetingManagers to send a presented
         # item directly back to "XXX" item validation state in addition to back to "validated"
         elif wfAdaptation.startswith('presented_item_back_to_'):
-            wf = itemWorkflow
-            presented = wf.states.presented
+            presented = itemWorkflow.states.presented
             item_validation_state = wfAdaptation.replace('presented_item_back_to_', '')
             # find back transition that leads to item_validation_state
             validation_state_infos = meetingConfig.getItemWFValidationLevels(

@@ -369,7 +369,8 @@ class PloneMeetingTestingHelpers:
         membershipTool.deleteMembers((user_id, ))
         # now we have a 'not found' user in developers_creators
         self.assertTrue((user_id, '<{0}: not found>'.format(user_id)) in
-                        self.portal.acl_users.source_groups.listAssignedPrincipals(self.developers_creators))
+                        self.portal.acl_users.source_groups.listAssignedPrincipals(
+                            self.developers_creators))
         # groupData.getGroupMembers/groupData.getGroupMemberIds ignore not found
         self.assertFalse(user_id in api.group.get(self.developers_creators).getGroupMemberIds())
         self.changeUser(currentUser)
@@ -383,13 +384,17 @@ class PloneMeetingTestingHelpers:
         for userId in userIds:
             self.changeUser(userId)
             if read:
-                self.assertTrue(self.hasPermission(View, obj))
+                self.assertTrue(self.hasPermission(View, obj),
+                                'Should have "View" on obj')
             else:
-                self.assertFalse(self.hasPermission(View, obj))
+                self.assertFalse(self.hasPermission(View, obj),
+                                 'Should not "View" on obj')
             if write:
-                self.assertTrue(self.hasPermission(ModifyPortalContent, obj))
+                self.assertTrue(self.hasPermission(ModifyPortalContent, obj),
+                                'Should have "Modify" on obj')
             else:
-                self.assertFalse(self.hasPermission(ModifyPortalContent, obj))
+                self.assertFalse(self.hasPermission(ModifyPortalContent, obj),
+                                 'Should not "Modify" on obj')
         self.changeUser(original_user_id)
 
     def _setupStorePodAsAnnex(self):

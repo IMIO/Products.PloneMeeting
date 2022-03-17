@@ -1671,7 +1671,8 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
     def _suffix_proposinggroup(self, visible_fors, item):
         """ """
         res = []
-        groups_managing_item_uids = item.adapted()._getAllGroupsManagingItem()
+        groups_managing_item_uids = item.adapted()._getAllGroupsManagingItem(
+            item.query_state())
         for visible_for in visible_fors:
             if visible_for.startswith(PROPOSINGGROUPPREFIX):
                 suffix = visible_for.replace(PROPOSINGGROUPPREFIX, '')
