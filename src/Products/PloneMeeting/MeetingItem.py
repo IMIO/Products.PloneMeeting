@@ -2862,6 +2862,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self._update_preferred_meeting(value)
             field.set(self, value, **kwargs)
 
+    def _mark_need_update(self, update_item_references=True, update_committees=True, extra_markers=[]):
+        '''See docstring in interfaces.py.'''
+        if update_item_references:
+            # add a value in the REQUEST to specify that update_item_references is needed
+            self.REQUEST.set('need_Meeting_update_item_references', True)
+        if update_committees:
+            # add a value in the REQUEST to specify that update_committees is needed
+            self.REQUEST.set('need_MeetingItem_update_committees', True)
+        for extra_marker in extra_markers:
+            self.REQUEST.set(extra_marker, True)
+
     security.declareProtected(ModifyPortalContent, 'setCategory')
 
     def setCategory(self, value, **kwargs):
@@ -2870,12 +2881,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         field = self.getField('category')
         current_value = field.get(self, **kwargs)
         if value != current_value:
-            # add a value in the REQUEST to specify that update_item_references is needed
-            self.REQUEST.set('need_Meeting_update_item_references', True)
-            # add a value in the REQUEST to specify that update_committees is needed
-            self.REQUEST.set('need_MeetingItem_update_committees', True)
             # add a value in the REQUEST to specify that update_groups_in_charge is needed
-            self.REQUEST.set('need_MeetingItem_update_groups_in_charge_category', True)
+            self._mark_need_update(extra_markers=['need_MeetingItem_update_groups_in_charge_category'])
             field.set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setClassifier')
@@ -2886,12 +2893,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         field = self.getField('classifier')
         current_value = field.get(self, **kwargs)
         if value != current_value:
-            # add a value in the REQUEST to specify that update_item_references is needed
-            self.REQUEST.set('need_Meeting_update_item_references', True)
-            # add a value in the REQUEST to specify that update_committees is needed
-            self.REQUEST.set('need_MeetingItem_update_committees', True)
             # add a value in the REQUEST to specify that update_groups_in_charge is needed
-            self.REQUEST.set('need_MeetingItem_update_groups_in_charge_classifier', True)
+            self._mark_need_update(extra_markers=['need_MeetingItem_update_groups_in_charge_classifier'])
             field.set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setProposingGroup')
@@ -2902,12 +2905,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         field = self.getField('proposingGroup')
         current_value = field.get(self, **kwargs)
         if value != current_value:
-            # add a value in the REQUEST to specify that update_item_references is needed
-            self.REQUEST.set('need_Meeting_update_item_references', True)
-            # add a value in the REQUEST to specify that update_committees is needed
-            self.REQUEST.set('need_MeetingItem_update_committees', True)
             # add a value in the REQUEST to specify that update_groups_in_charge is needed
-            self.REQUEST.set('need_MeetingItem_update_groups_in_charge_proposing_group', True)
+            self._mark_need_update(extra_markers=['need_MeetingItem_update_groups_in_charge_proposing_group'])
             field.set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setProposingGroupWithGroupInCharge')
@@ -2945,7 +2944,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         current_value = field.get(self, **kwargs)
         if self._adaptLinesValueToBeCompared(value) != current_value:
             # add a value in the REQUEST to specify that update_item_references is needed
-            self.REQUEST.set('need_Meeting_update_item_references', True)
+            self._mark_need_update(update_committees=False)
             field.set(self, value, **kwargs)
 
     security.declareProtected(View, 'getManuallyLinkedItems')

@@ -1952,6 +1952,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         """Test MeetingConfig.validate_itemWFValidationLevels, if we remove a validation
            level state that is used by an item."""
         cfg = self.meetingConfig
+        # make sure we use default itemWFValidationLevels,
+        # useful when test executed with custom profile
+        self._setUpDefaultItemWFValidationLevels(cfg)
         # make sure not used in config
         cfg.setItemAdviceStates(())
         cfg.setItemAdviceEditStates(())
@@ -2040,26 +2043,28 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.setItemAdviceEditStates(())
 
         # itemcreated level is mandatory
+        proposed_state = cfg.getItemWorkflow(True).states[self._stateMappingFor('proposed')]
+        translated_proposed_state = translate(proposed_state.title, domain="plone")
         level_removed_config_error = \
             translate('item_wf_val_states_can_not_be_removed_in_use_config',
-                      mapping={'state_or_transition': 'Proposed',
+                      mapping={'state_or_transition': translated_proposed_state,
                                'cfg_field_name': 'Item states allowing to define advices', },
                       domain='PloneMeeting',
                       context=self.request)
         # values_disabled_proposed
-        self._disableItemValidationLevel(cfg, level='proposed')
+        self._disableItemValidationLevel(cfg, level=self._stateMappingFor('proposed'))
         values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
-        self._enableItemValidationLevel(cfg, level='proposed')
+        self._enableItemValidationLevel(cfg, level=self._stateMappingFor('proposed'))
         # used in itemAdviceStates, as state
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
                          level_removed_config_error)
         cfg.setItemAdviceStates(())
         cfg.at_post_edit_script()
         # used in transitionsToConfirm, as transition
-        cfg.setTransitionsToConfirm(('MeetingItem.propose', 'MeetingItem.validate'))
+        cfg.setTransitionsToConfirm(('MeetingItem.%s' % proposed_state.id, 'MeetingItem.validate'))
         level_removed_config_error = \
             translate('item_wf_val_states_can_not_be_removed_in_use_config',
-                      mapping={'state_or_transition': 'Propose',
+                      mapping={'state_or_transition': translated_proposed_state,
                                'cfg_field_name': 'Transitions to confirm', },
                       domain='PloneMeeting',
                       context=self.request)

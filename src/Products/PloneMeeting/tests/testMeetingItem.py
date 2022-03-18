@@ -4517,6 +4517,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item._update_after_edit()
         self.assertTrue(first_tr in self.transitions(item))
         # changed again, this time we get same result as originally
+        self.changeUser('pmCreator1')
         actions_panel._transitions = None
         category_rendered_actions_panel = actions_panel()
         self.assertEqual(category_rendered_actions_panel, rendered_actions_panel)
@@ -4663,6 +4664,9 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_ItemActionsPanelCachingInvalidatedWhenUserGroupsChanged(self):
         """Actions panel cache is invalidated when the the groups of a user changed.
            Here we will make a creator be a reviewer."""
+        # make sure we use default itemWFValidationLevels,
+        # useful when test executed with custom profile
+        self._setUpDefaultItemWFValidationLevels(self.meetingConfig)
         item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
         # user not able to validate
         self.assertFalse("validate" in self.transitions(item))
@@ -4689,11 +4693,11 @@ class testMeetingItem(PloneMeetingTestCase):
            - powerobserver."""
         cfg = self.meetingConfig
         # enable everything
-        cfg.setItemCopyGroupsStates(('itemcreated', 'proposed', 'validated'))
-        self._setPowerObserverStates(states=('itemcreated', 'proposed', 'validated'))
-        cfg.setItemAdviceStates(('itemcreated', 'proposed', 'validated'))
-        cfg.setItemAdviceEditStates(('itemcreated', 'proposed', 'validated'))
-        cfg.setItemAdviceViewStates(('itemcreated', 'proposed', 'validated'))
+        cfg.setItemCopyGroupsStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
+        self._setPowerObserverStates(states=('itemcreated', self._stateMappingFor('proposed'), 'validated'))
+        cfg.setItemAdviceStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
+        cfg.setItemAdviceEditStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
+        cfg.setItemAdviceViewStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
 
         # create item
         self.changeUser('pmCreator1')
@@ -7823,6 +7827,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemEditAndView(self):
         """Just call the edit and view to check it is displayed correctly."""
+        self._removeConfigObjectsFor(self.meetingConfig)
         cfg = self.meetingConfig
         # enable as much field as possible
         self.changeUser('siteadmin')
