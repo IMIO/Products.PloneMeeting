@@ -271,6 +271,11 @@ class testValidators(PloneMeetingTestCase):
              'suffix_proposing_group_level1reviewers',
              in MeetingConfig.itemAnnexConfidentialVisibleFor for example;
            - can not remove a suffix used by MeetingConfig.itemWFValidationLevels."""
+        # make sure we use default itemWFValidationLevels,
+        # useful when test executed with custom profile
+        cfg = self.meetingConfig
+        self._setUpDefaultItemWFValidationLevels(cfg)
+
         def _check(validation_error_msg, checks=['without', 'disabled', 'fct_orgs']):
             """ """
             values = []
@@ -287,7 +292,6 @@ class testValidators(PloneMeetingTestCase):
 
         self.changeUser('siteadmin')
         # add a new suffix and play with it
-        cfg = self.meetingConfig
         functions = get_registry_functions()
         functions_without_samplers = deepcopy(functions)
         functions.append({'enabled': True,

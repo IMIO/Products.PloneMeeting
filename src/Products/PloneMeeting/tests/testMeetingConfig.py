@@ -2008,8 +2008,10 @@ class testMeetingConfig(PloneMeetingTestCase):
         if not self._check_wfa_available(['waiting_advices']):
             return
 
+        # make sure we use default itemWFValidationLevels,
+        # useful when test executed with custom profile
+        self._setUpDefaultItemWFValidationLevels(cfg)
         # config
-        cfg = self.meetingConfig
         waiting_advices_proposed_state = '{0}_waiting_advices'.format(
             self._stateMappingFor('proposed'))
         cfg.setItemAdviceStates((waiting_advices_proposed_state, ))
@@ -2024,13 +2026,15 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.proposeItem(item)
         self._setItemToWaitingAdvices(item, 'wait_advices_from_proposed')
         # values_disabled_proposed
-        self._disableItemValidationLevel(cfg, level='proposed')
+        self._disableItemValidationLevel(cfg, level=self._stateMappingFor('proposed'))
         values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
-        self._enableItemValidationLevel(cfg, level='proposed')
+        self._enableItemValidationLevel(cfg, level=self._stateMappingFor('proposed'))
+        proposed_state = cfg.getItemWorkflow(True).states[self._stateMappingFor('proposed')]
+        translated_proposed_state = translate(proposed_state.title, domain="plone")
         level_removed_error = \
             translate('item_wf_val_states_can_not_be_removed_in_use',
                       domain='PloneMeeting',
-                      mapping={'item_state': "Waiting advices (proposed)",
+                      mapping={'item_state': translated_proposed_state,
                                'item_url': item.absolute_url()},
                       context=self.request)
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),

@@ -650,7 +650,7 @@ class testSearches(PloneMeetingTestCase):
         cfg.setUseCopies(True)
         review_states = reviewers[reviewers.keys()[0]]
         if 'prereviewers' in reviewers:
-            review_states = ('prevalidated',)
+            review_states += ('prevalidated',)
         cfg.setItemCopyGroupsStates(review_states)
         item.setCopyGroups((self.vendors_reviewers, ))
         item._update_after_edit()
@@ -692,9 +692,11 @@ class testSearches(PloneMeetingTestCase):
                              name='items-to-validate-of-highest-hierarchic-level')
         query = adapter.query
         self.assertEqual(len(query['reviewProcessInfo']['query']), 2)
-        self.assertTrue('{0}__reviewprocess__prevalidated'.format(self.developers_uid)
+        self.assertTrue('{0}__reviewprocess__{1}'.format(self.developers_uid,
+                                                         self._stateMappingFor('proposed'))
                         in query['reviewProcessInfo']['query'])
-        self.assertTrue('{0}__reviewprocess__proposed'.format(self.vendors_uid)
+        self.assertTrue('{0}__reviewprocess__{1}'.format(self.vendors_uid,
+                                                         self._stateMappingFor('prevalidated'))
                         in query['reviewProcessInfo']['query'])
 
     def test_pm_SearchItemsToValidateOfMyReviewerGroups(self):
@@ -805,7 +807,7 @@ class testSearches(PloneMeetingTestCase):
             pm_logger.info(
                 "Test 'test_pm_SearchItemsToValidateOfEveryReviewerLevelsAndLowerLevels' was bypassed.")
             return
-        self._enablePrevalidation(self, cfg, enable_extra_suffixes=True)
+        self._enablePrevalidation(cfg, enable_extra_suffixes=True)
         itemTypeName = cfg.getItemTypeName()
         # create 2 items
         self.changeUser('pmCreator1')

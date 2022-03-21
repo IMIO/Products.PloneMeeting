@@ -7568,9 +7568,12 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm__sendCopyGroupsMailIfRelevant(self):
         """Check mail sent to copyGroups when they have access to item.
            Mail is not sent twice to same email address."""
+        cfg = self.meetingConfig
+        # make sure we use default itemWFValidationLevels,
+        # useful when test executed with custom profile
+        self._setUpDefaultItemWFValidationLevels(cfg)
         # make utils.sendMailIfRelevant return details
         self.request['debug_sendMailIfRelevant'] = True
-        cfg = self.meetingConfig
         cfg.setUseCopies(True)
         cfg.setSelectableCopyGroups(cfg.listSelectableCopyGroups().keys())
         cfg.setItemCopyGroupsStates(['validated'])
@@ -7650,6 +7653,9 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm__send_proposing_group_suffix_if_relevant(self):
         """Check mail sent to relevant proposing group suffix."""
+        if not self._check_wfa_available(['presented_item_back_to_itemcreated']) or \
+           not self._check_wfa_available(['presented_item_back_to_proposed']):
+            return
         # make utils.sendMailIfRelevant return details
         self.changeUser('siteadmin')
         self.request['debug_sendMailIfRelevant'] = True
@@ -7716,6 +7722,9 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm__send_history_aware_mail_if_relevant(self):
         """Check history aware mail notifications."""
+        if not self._check_wfa_available(['presented_item_back_to_itemcreated']) or \
+           not self._check_wfa_available(['presented_item_back_to_proposed']):
+            return
         self.changeUser('siteadmin')
         self.request['debug_sendMailIfRelevant'] = True
         cfg = self.meetingConfig

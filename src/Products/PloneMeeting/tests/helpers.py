@@ -63,12 +63,14 @@ class PloneMeetingTestingHelpers:
     WF_ITEM_STATE_NAME_MAPPINGS_1 = {'itemcreated': 'itemcreated',
                                      'proposed_first_level': 'proposed',
                                      'proposed': 'proposed',
+                                     'prevalidated': 'prevalidated',
                                      'validated': 'validated',
                                      'presented': 'presented',
                                      'itemfrozen': 'itemfrozen'}
     WF_ITEM_STATE_NAME_MAPPINGS_2 = {'itemcreated': 'itemcreated',
                                      'proposed_first_level': 'proposed',
                                      'proposed': 'proposed',
+                                     'prevalidated': 'prevalidated',
                                      'validated': 'validated',
                                      'presented': 'presented',
                                      'itemfrozen': 'itemfrozen'}
