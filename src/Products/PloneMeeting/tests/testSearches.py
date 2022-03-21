@@ -672,6 +672,9 @@ class testSearches(PloneMeetingTestCase):
            both groups must be queried.'''
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
+        # make sure we use default itemWFValidationLevels,
+        # useful when test executed with custom profile
+        self._setUpDefaultItemWFValidationLevels(cfg)
         self._enablePrevalidation(cfg)
 
         # make pmReviewer2 is vendors_prereviewers and developers_reviewers
@@ -692,11 +695,9 @@ class testSearches(PloneMeetingTestCase):
                              name='items-to-validate-of-highest-hierarchic-level')
         query = adapter.query
         self.assertEqual(len(query['reviewProcessInfo']['query']), 2)
-        self.assertTrue('{0}__reviewprocess__{1}'.format(self.developers_uid,
-                                                         self._stateMappingFor('proposed'))
+        self.assertTrue('{0}__reviewprocess__prevalidated'.format(self.developers_uid)
                         in query['reviewProcessInfo']['query'])
-        self.assertTrue('{0}__reviewprocess__{1}'.format(self.vendors_uid,
-                                                         self._stateMappingFor('prevalidated'))
+        self.assertTrue('{0}__reviewprocess__proposed'.format(self.vendors_uid)
                         in query['reviewProcessInfo']['query'])
 
     def test_pm_SearchItemsToValidateOfMyReviewerGroups(self):

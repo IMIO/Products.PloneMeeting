@@ -2034,7 +2034,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         level_removed_error = \
             translate('item_wf_val_states_can_not_be_removed_in_use',
                       domain='PloneMeeting',
-                      mapping={'item_state': translated_proposed_state,
+                      mapping={'item_state': "Waiting advices ({0})".format(
+                        translated_proposed_state.lower()),
                                'item_url': item.absolute_url()},
                       context=self.request)
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),

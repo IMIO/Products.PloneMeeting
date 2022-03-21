@@ -753,9 +753,9 @@ class testWFAdaptations(PloneMeetingTestCase):
     def test_pm_WFA_pre_validation(self):
         '''Test when using prevalidation.
            Check the addition of a 'prevalidated' state in the item WF.'''
+        cfg = self.meetingConfig
         # make sure we use default itemWFValidationLevels,
         # useful when test executed with custom profile
-        cfg = self.meetingConfig
         self._setUpDefaultItemWFValidationLevels(cfg)
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
