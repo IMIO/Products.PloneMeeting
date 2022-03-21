@@ -1600,9 +1600,9 @@ div.item-linkeditems div.collapsible:before {
 
 /* limit left space on the faceted form of items to present,
    define width so we do not have the width scrollbar */
-body.template-meeting_available_items_view div#faceted-form {
+body.template-meeting_available_items_view {
     margin-left: -0.5em;
-    width: 99.5%;
+    width: 99%;
 }
 body.template-meeting_available_items_view #portal-column-content.cell.width-full.position-0 {
    width: 100%;

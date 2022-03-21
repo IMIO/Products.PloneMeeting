@@ -165,7 +165,7 @@
     </iframe>
     
     <script>
-        $('iframe.auto-height').iFrameResize({log:false, scrolling:false})
+        $('iframe.auto-height').iFrameResize({log:false, scrolling:false, heightCalculationMethod:'lowestElement'})
     </script>
   </tal:availableItems>
 

@@ -5,8 +5,10 @@ Changelog
 4.2rc21 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Fixed display of `overlays` and `tooltipsters` on meeting view in the `iframe`
+  displaying available items.
+  It was sometimes not completelly displayed, now the iframe will resize correctly.
+  [gbastien]
 
 4.2rc20 (2022-03-15)
 --------------------

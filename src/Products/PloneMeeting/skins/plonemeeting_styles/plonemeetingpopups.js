@@ -402,16 +402,32 @@ function adviceChangeDelay() {
                        options={functionReady_callback: pmCommonOverlays});
 }
 
+function positionAdvicePopup(instance, helper, position) {
+    // position to 50px of the top
+    if (position.coord.top < 0) {
+        position.coord.top = 0;
+    }
+    return position;
+}
+
 function advicesInfos() {
+    // values are adapted when used in the available items dashboard
+    dashboard_position = 'left';
+    position_callback = null;
+    if ($('body.template-meeting_available_items_view').length) {
+        dashboard_position = ['left'];
+        position_callback = positionAdvicePopup;
+    }
     // displayed in faceted dashboard
     tooltipster_helper(
       selector='div#faceted-form a.tooltipster-advices-infos',
       view_name='@@advices-icons-infos',
       data_parameters=['adviceType'],
       options={zIndex: 5000,
-               position: 'left',
+               position: dashboard_position,
                functionReady_callback: initializeAdvicePopup,
                passInstanceToCallback: true,
+               functionPosition_callback: position_callback,
                minWidth: 750,
                maxWidth: 750,
                close_other_tips: true});
