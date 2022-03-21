@@ -29,6 +29,8 @@ def getProfileData(self):
        successively"""
     data = old__getProfileData(self)
     for mc in data.meetingConfigs:
+        # save original if so we may use it when necessary
+        mc.__real_id__ = mc.id
         # shuffle MC id
         mc_id = list(mc.id)
         random.shuffle(mc_id)

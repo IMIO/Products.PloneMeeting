@@ -11,6 +11,9 @@ Changelog
   Added `MeetingItem._assign_roles_to_group_suffixes` to ease assigning roles
   to suffixes for an organization.
   [gbastien]
+- Added `MeetingConfig.getId` with `real_id=False` parameter, this will let get
+  the real id when used in some tests where we shuffle the id.
+  [gbastien]
 
 4.2rc20 (2022-03-15)
 --------------------
@@ -35,7 +38,6 @@ Changelog
   [gbastien]
 - Minor CSS fix on person view now that we display the `below-content-title`
   viewlet, the app_parameters fieldset was shifted to the right.
->>>>>>> origin/master
   [gbastien]
 
 4.2rc19 (2022-03-10)

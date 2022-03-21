@@ -559,7 +559,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         previous = None
         first = True
         item_validation_levels = list(meetingConfig.getItemWFValidationLevels(only_enabled=True))
-        cfg_id = meetingConfig.getId()
+        cfg_id = meetingConfig.getId(real_id=True)
         if not item_validation_levels:
             logger.info(WF_ITEM_VALIDATION_LEVELS_DISABLED % cfg_id)
             return
@@ -623,7 +623,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 back_shortcuts[level['new_state_id']] = []
                 for back_shortcut_state in back_shortcuts:
                     allowed = get_allowed_back_shortcut_from(
-                        meetingConfig.getId(), back_shortcut_state)
+                        meetingConfig.getId(real_id=True), back_shortcut_state)
                     if back_shortcut_state != level['new_state_id'] and \
                        (allowed == '*' or level['new_state_id'] in allowed):
                         # take last back_transition, the first is the one to validated if allowed
@@ -818,7 +818,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             # if not found, look for a "*" that is applied to every meetingConfigs
             # else nothing is done
             # for transition to 'xxx_waiting_advices', we need to know where we are coming from
-            for infos in get_waiting_advices_infos(meetingConfig.getId()):
+            for infos in get_waiting_advices_infos(meetingConfig.getId(real_id=True)):
                 # while using WFAs 'waiting_advices_from_before_last_val_level'
                 # or 'waiting_advices_from_last_val_level', infos['from_states']/infos['back_states']
                 # are ignored ad we use validation states

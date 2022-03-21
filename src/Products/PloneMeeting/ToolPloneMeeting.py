@@ -106,10 +106,6 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
 __docformat__ = 'plaintext'
 
-# Some constants ---------------------------------------------------------------
-MEETING_CONFIG_ERROR = 'A validation error occurred while instantiating ' \
-                       'meeting configuration with id "%s". %s'
-
 defValues = PloneMeetingConfiguration.get()
 # This way, I get the default values for some MeetingConfig fields,
 # that are defined in a unique place: the MeetingConfigDescriptor class, used

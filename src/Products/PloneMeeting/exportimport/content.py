@@ -37,7 +37,6 @@ from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
 from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
-from Products.PloneMeeting.ToolPloneMeeting import MEETING_CONFIG_ERROR
 from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import updateCollectionCriterion
 from z3c.relationfield.relation import RelationValue
@@ -51,6 +50,8 @@ import transaction
 
 
 # PloneMeeting-Error related constants -----------------------------------------
+MEETING_CONFIG_ERROR = 'A validation error occurred while instantiating ' \
+                       'meeting configuration "%s" with id "%s". %s'
 MEETINGCONFIG_BADREQUEST_ERROR = 'There was an error during creation of MeetingConfig with id "%s". ' \
                                  'Original error : "%s"'
 
@@ -249,7 +250,7 @@ class ToolInitializer:
             cfg._set_default_faceted_search(meetingAppDefaultView)
         else:
             error = 'meetingAppDefaultView : No DashboardCollection with id %s' % meetingAppDefaultView
-            raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), error))
+            raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.Title(), cfg.getId(), error))
 
         # now we can set values for dashboard...Filters fields as the 'searches' folder has been created
         for fieldName in ('dashboardItemsListingsFilters',
@@ -364,6 +365,9 @@ class ToolInitializer:
         cfgId = configData.id
         cfg = getattr(self.tool, cfgId)
         cfg._at_creation_flag = True
+        # for tests where config id is shuffled, save the real id
+        if "__real_id__" in cData:
+            cfg.__real_id__ = cData["__real_id__"]
         # TextArea fields are not set properly.
         for field in cfg.Schema().fields():
             fieldName = field.getName()

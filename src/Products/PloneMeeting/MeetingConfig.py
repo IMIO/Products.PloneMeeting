@@ -2807,6 +2807,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'accepted_out_of_meeting_emergency_and_duplicated',
                      'meetingmanager_correct_closed_meeting')
 
+    def getId(self, real_id=False):
+        """Override to take __real_id__ into account (used in some tests)."""
+        if real_id and base_hasattr(self, "__real_id__"):
+            return self.__real_id__
+        return super(MeetingConfig, self).getId()
+
     def _searchesInfo(self):
         """Informations used to create DashboardCollections in the searches."""
         itemType = self.getItemTypeName()
