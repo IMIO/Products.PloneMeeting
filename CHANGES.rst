@@ -9,6 +9,8 @@ Changelog
   displaying available items.
   It was sometimes not completelly displayed, now the iframe will resize correctly.
   [gbastien]
+- Make `actionspanel` always visible on `DashboardCollection` and `ConfigurablePODTemplate`.
+  [gbastien]
 
 4.2rc20 (2022-03-15)
 --------------------
