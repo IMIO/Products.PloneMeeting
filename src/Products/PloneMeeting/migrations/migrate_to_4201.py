@@ -32,11 +32,15 @@ class Migrate_To_4201(Migrator):
         cke_props.removePlugins = (u'wsc',)
         logger.info('Done.')
 
-    def run(self, extra_omitted=[], from_migration_to_42=False):
+    def run(self, extra_omitted=[], from_migration_to_4200=False):
         logger.info('Migrating to PloneMeeting 4201...')
 
-        self._fixWFsUsingReturnedToProposingGroupWFAdaptation()
         self._disableWscForCKeditor()
+
+        # refresh if we are not coming from migration to 4200,
+        # in this case it was already refreshed
+        if not from_migration_to_4200:
+            self._fixWFsUsingReturnedToProposingGroupWFAdaptation()
 
 
 def migrate(context):

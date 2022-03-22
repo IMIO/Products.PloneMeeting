@@ -11,6 +11,10 @@ Changelog
   [gbastien]
 - Make `actionspanel` always visible on `DashboardCollection` and `ConfigurablePODTemplate`.
   [gbastien]
+- Update `collective.documentgenerator oo_port` on install and in every migrations.
+  [gbastien]
+- Handle the `from_migration_to_4200=False` parameter when calling `Migrate_To_4201`.
+  [gbastien]
 
 4.2rc20 (2022-03-15)
 --------------------

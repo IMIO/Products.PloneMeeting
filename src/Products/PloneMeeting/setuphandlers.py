@@ -7,6 +7,7 @@
 
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.documentgenerator.config import set_column_modifier
+from collective.documentgenerator.config import set_oo_port
 from collective.documentgenerator.config import set_oo_server
 from collective.documentgenerator.config import set_raiseOnError_for_non_managers
 from collective.documentgenerator.config import set_use_stream
@@ -310,6 +311,7 @@ def postInstall(context):
 
     # collective.documentgenerator : change some default values
     set_oo_server()
+    set_oo_port()
     set_column_modifier('nothing')
     set_raiseOnError_for_non_managers(True)
     set_use_stream(False)
