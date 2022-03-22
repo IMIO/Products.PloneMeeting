@@ -27,7 +27,7 @@ class Migrate_To_4201(Migrator):
 
     def _disableWscForCKeditor(self):
         '''The link 'Check spell' in Scayt button is broken, hide it.'''
-        logger.info('CKeditir, adding "wsc" to the removePlugins property...')
+        logger.info('CKeditor, adding "wsc" to the removePlugins property...')
         cke_props = self.portal.portal_properties.ckeditor_properties
         cke_props.removePlugins = (u'wsc',)
         logger.info('Done.')
