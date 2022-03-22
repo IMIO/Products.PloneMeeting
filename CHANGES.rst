@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc21 (unreleased)
+4.2rc22 (unreleased)
 --------------------
 
 - Added WFAdaptation `item_validation_shortcuts` that will let users change item
@@ -13,6 +13,20 @@ Changelog
   [gbastien]
 - Added `MeetingConfig.getId` with `real_id=False` parameter, this will let get
   the real id when used in some tests where we shuffle the id.
+  [gbastien]
+
+4.2rc21 (2022-03-22)
+--------------------
+
+- Fixed display of `overlays` and `tooltipsters` on meeting view in the `iframe`
+  displaying available items.
+  It was sometimes not completelly displayed, now the iframe will resize correctly.
+  [gbastien]
+- Make `actionspanel` always visible on `DashboardCollection` and `ConfigurablePODTemplate`.
+  [gbastien]
+- Update `collective.documentgenerator oo_port` on install and in every migrations.
+  [gbastien]
+- Handle the `from_migration_to_4200=False` parameter when calling `Migrate_To_4201`.
   [gbastien]
 
 4.2rc20 (2022-03-15)
