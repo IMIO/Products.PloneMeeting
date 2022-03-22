@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc21 (unreleased)
+4.2rc21 (2022-03-22)
 --------------------
 
 - Fixed display of `overlays` and `tooltipsters` on meeting view in the `iframe`
