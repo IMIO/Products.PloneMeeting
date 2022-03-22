@@ -19,10 +19,10 @@
     <metal:body_macro define-macro="body"
                       tal:define="tool python: context.portal_plonemeeting;
                                   member context/@@plone_portal_state/member;
-                                  meetingConfig python:tool.getMeetingConfig(context);
+                                  cfg python:tool.getMeetingConfig(context);
                                   meeting python: context.getMeeting();
-                                  usedAttrs python: meetingConfig.getUsedItemAttributes();
-                                  usedMeetingAttrs python: meetingConfig.getUsedMeetingAttributes();
+                                  usedAttrs python: cfg.getUsedItemAttributes();
+                                  usedMeetingAttrs python: cfg.getUsedMeetingAttributes();
                                   context_url python: context.absolute_url();
                                   isVotesEnabled python: context.isVotesEnabled();
                                   showAdvices python: context.adapted().showAdvices();
@@ -87,11 +87,10 @@
             </div>
 
             <tal:comment replace="nothing">Category</tal:comment>
-            <tal:category condition="not:meetingConfig/getUseGroupsAsCategories">
+            <tal:category condition="python: not cfg.getUseGroupsAsCategories()">
             <div class="discreet"
                  tal:define="cat python: context.getCategory(True)">
                 <span class="item_attribute_label"
-                      tal:condition="not: meetingConfig/getUseGroupsAsCategories"
                       i18n:translate="PloneMeeting_label_category"></span>:&nbsp;&nbsp;
                 <span tal:condition="nocall:cat" tal:content="cat/Title"></span>
                 <span tal:condition="not:nocall:cat">-</span>
@@ -141,7 +140,7 @@
                           i18n:translate="PloneMeeting_label_copyGroups"></span>
                     <span tal:define="css_class string:fa fa-question-circle help-doc pmHelp"
                           i18n:attributes="title"
-                          tal:attributes="title python: context.getCopyGroupsHelpMsg(meetingConfig);
+                          tal:attributes="title python: context.getCopyGroupsHelpMsg(cfg);
                                           class python: css_class + (copy_groups_have_access and ' green-colored' or '');">
                     </span>:&nbsp;&nbsp;
                     <tal:displayCopyGroups condition="copyGroups">
@@ -340,7 +339,7 @@
                            mayQuickEditItemSignatures python: context.mayQuickEditItemSignatures();
                            redefinedItemAssemblies python: context.redefinedItemAssemblies();
                            redefinedItemSignatures python: context.getItemSignatures(real=True) or context.get_item_signatories(real=True);
-                           isUsingContacts python: not context.is_assembly_field_used('itemAssembly') and meetingConfig.isUsingContacts()">
+                           isUsingContacts python: not context.is_assembly_field_used('itemAssembly') and cfg.isUsingContacts()">
       <div id="assembly-and-signatures"
            tal:define="toggle_type python:isUsingContacts and 'fade' or 'slide';"
            tal:attributes="onclick string:togglePersonsCookie();;toggleDetails('collapsible-assembly-and-signatures',
@@ -448,7 +447,7 @@
     </tal:field>
 
     <tal:comment replace="nothing">Budgetary informations, manage fields budgetRelated and budgetInfos</tal:comment>
-    <tal:block condition="python: 'budgetInfos' in usedAttrs and member.has_permission('PloneMeeting: Read budget infos', context)">
+    <tal:block condition="python: context.show_budget_infos()">
     <fieldset>
       <legend>
         <div style="display: inline"
@@ -522,21 +521,11 @@
                     i18n:translate="PloneMeeting_label_itemTitle"></span>:&nbsp;&nbsp;
               <span metal:use-macro="python: here.widget('otherMeetingConfigsClonableToFieldTitle', mode='view')" />
             </tal:otherMeetingConfigsClonableToFieldTitle>
-            <tal:field define="fieldName python: 'otherMeetingConfigsClonableToFieldDescription'; ajaxEdit python:True">
-              <metal:f use-macro="context/@@pm-macros/viewContentField"/>
-            </tal:field>
-            <tal:field define="fieldName python: 'otherMeetingConfigsClonableToFieldMotivation'; ajaxEdit python:True">
-              <metal:f use-macro="context/@@pm-macros/viewContentField"/>
-            </tal:field>
-            <tal:field define="fieldName python: 'otherMeetingConfigsClonableToFieldDecision'; ajaxEdit python:True">
-              <metal:f use-macro="context/@@pm-macros/viewContentField"/>
-            </tal:field>
-            <tal:field define="fieldName python: 'otherMeetingConfigsClonableToFieldDecisionSuite'; ajaxEdit python:True">
-              <metal:f use-macro="context/@@pm-macros/viewContentField"/>
-            </tal:field>
-            <tal:field define="fieldName python: 'otherMeetingConfigsClonableToFieldDecisionEnd'; ajaxEdit python:True">
-              <metal:f use-macro="context/@@pm-macros/viewContentField"/>
-            </tal:field>
+            <tal:loop tal:repeat="other_mc_field_name python: context.get_enable_clone_to_other_mc_fields(cfg, ignored_field_names=['otherMeetingConfigsClonableToFieldTitle'])">
+                <tal:field define="fieldName python: other_mc_field_name; ajaxEdit python:True">
+                  <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+                </tal:field>
+            </tal:loop>
           </fieldset>
         </div>
       </div>

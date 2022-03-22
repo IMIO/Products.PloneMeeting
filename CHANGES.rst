@@ -17,6 +17,14 @@ Changelog
 - Added `MeetingConfig.getId` with `real_id=False` parameter, this will let get
   the real id when used in some tests where we shuffle the id.
   [gbastien]
+- Added new field `MeetingItem.otherMeetingConfigsClonableToFieldDetailedDescription`
+  that will fill the `detailedDescription` field when sent to another `MeetingConfig`.
+  Adapted templates so adding a new `MeetingItem.otherMeetingConfigsClonableToFieldXXX`
+  field is managed automatically.
+  [gbastien]
+- Moved the MeetingItem `budgetRelated/budgetInfos` fields condition logic to
+  `MeetingItem.show_budget_infos` so it is easier to override.
+  [gbastien]
 
 4.2rc21 (2022-03-22)
 --------------------

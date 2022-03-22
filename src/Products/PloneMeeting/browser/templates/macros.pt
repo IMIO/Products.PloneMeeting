@@ -1044,12 +1044,9 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
                  tal:attributes="style python: context.getOtherMeetingConfigsClonableTo() and 'display: block' or 'display: none';">
                 <fieldset>
                   <legend i18n:translate="">Data that will be used on new item</legend>
-                  <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldTitle', mode='edit')"/>
-                  <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldDescription', mode='edit')"/>
-                  <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldMotivation', mode='edit')"/>
-                  <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldDecision', mode='edit')"/>
-                  <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldDecisionSuite', mode='edit')"/>
-                  <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldDecisionEnd', mode='edit')"/>
+                  <tal:loop tal:repeat="other_mc_field_name python: context.get_enable_clone_to_other_mc_fields(cfg)">
+                    <metal:field use-macro="python:here.widget(other_mc_field_name, mode='edit')"/>
+                  </tal:loop>
                 </fieldset>
             </div>
         </tal:otherMeetingConfigsClonableToFields>

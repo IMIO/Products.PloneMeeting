@@ -1023,7 +1023,7 @@ schema = Schema((
     BooleanField(
         name='budgetRelated',
         widget=BooleanField._properties['widget'](
-            condition="python: here.attribute_is_used('budgetInfos')",
+            condition="python: here.show_budget_infos()",
             description="BudgetRelated",
             description_msgid="item_budget_related_descr",
             label='Budgetrelated',
@@ -1036,7 +1036,7 @@ schema = Schema((
     TextField(
         name='budgetInfos',
         widget=RichWidget(
-            condition="python: here.attribute_is_used('budgetInfos')",
+            condition="python: here.show_budget_infos()",
             description="BudgetInfos",
             description_msgid="item_budgetinfos_descr",
             label='Budgetinfos',
@@ -1746,6 +1746,20 @@ schema = Schema((
         optional=True,
     ),
     TextField(
+        name='otherMeetingConfigsClonableToFieldDetailedDescription',
+        widget=RichWidget(
+            condition="python: here.attribute_is_used('otherMeetingConfigsClonableToFieldDetailedDescription')",
+            label_msgid="PloneMeeting_label_detailedDescription",
+            label='Detaileddescription',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=True,
+    ),
+    TextField(
         name='otherMeetingConfigsClonableToFieldMotivation',
         widget=RichWidget(
             condition="python: here.attribute_is_used('otherMeetingConfigsClonableToFieldMotivation')",
@@ -2264,6 +2278,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def showObservations(self):
         '''See doc in interfaces.py.'''
         return self.attribute_is_used('observations')
+
+    security.declarePublic('show_budget_infos')
+
+    def show_budget_infos(self):
+        '''Condition for showing budgetRelated/budgetInfos fields.'''
+        # using field, viewable/editable
+        if self.attribute_is_used("budgetInfos") and \
+           api.user.get_current().has_permission('PloneMeeting: Read budget infos', self):
+            return True
 
     security.declarePublic('show_groups_in_charge')
 
@@ -3009,9 +3032,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if showClonableToOtherMCs:
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(item)
-            usedAttrs = [usedAttr for usedAttr in cfg.getUsedItemAttributes()
-                         if usedAttr.startswith('otherMeetingConfigsClonableToField')]
-            res = bool(usedAttrs)
+            res = bool(self.get_enable_clone_to_other_mc_fields(cfg))
         return res
 
     security.declarePublic('getItemNumber')
@@ -7020,6 +7041,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         fplog('clone_item', extras=extras)
         return newItem
 
+    def get_enable_clone_to_other_mc_fields(self, cfg, ignored_field_names=[]):
+        """Return the ids of 'otherMeetingConfigsClonableToFieldXXX' that are enabled."""
+        return [field_name for field_name in cfg.getUsedItemAttributes()
+                if field_name.startswith('otherMeetingConfigsClonableToField')
+                and field_name not in ignored_field_names]
+
     security.declarePublic('doCloneToOtherMeetingConfig')
 
     def doCloneToOtherMeetingConfig(self, destMeetingConfigId):
@@ -7139,9 +7166,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             newItem.setPrivacy('secret')
 
         # handle 'otherMeetingConfigsClonableToFieldXXX' of original item
-        other_mc_field_names = [field_name for field_name in cfg.getUsedItemAttributes()
-                                if field_name.startswith('otherMeetingConfigsClonableToField')]
-        for other_mc_field_name in other_mc_field_names:
+        for other_mc_field_name in self.get_enable_clone_to_other_mc_fields(cfg):
             # first check if original field not empty
             if self.fieldIsEmpty(other_mc_field_name):
                 continue
