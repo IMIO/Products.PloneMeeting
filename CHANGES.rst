@@ -5,6 +5,9 @@ Changelog
 4.2rc22 (unreleased)
 --------------------
 
+- Adapted `Migrate_To_4200._removeBrokenAnnexes`, check that annex UID is in
+  his parent's `categorized_elements`, removes it otherwise.
+  [gbastien]
 - Added WFAdaptation `item_validation_shortcuts` that will let users change item
   state to any other item validation state (so between itemcreated and validated)
   depending on their groups.
