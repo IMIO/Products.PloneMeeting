@@ -8,6 +8,8 @@ Changelog
 - Adapted `Migrate_To_4200._removeBrokenAnnexes`, check that annex UID is in
   his parent's `categorized_elements`, removes it otherwise.
   [gbastien]
+- Added new field `Meeting.adopts_next_agenda_of`.
+  [gbastien]
 
 4.2rc21 (2022-03-22)
 --------------------

@@ -64,6 +64,7 @@ from Products.PloneMeeting.widgets.pm_orderedselect import PMOrderedSelectFieldW
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
 from Products.PloneMeeting.widgets.pm_textarea import get_textarea_value
 from Products.PloneMeeting.widgets.pm_textarea import PMTextAreaFieldWidget
+from z3c.form.browser.checkbox import CheckBoxFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.component import adapts
@@ -260,6 +261,13 @@ class IMeeting(IDXMeetingContent):
         default=False,
         required=False)
 
+    form.widget('adopts_next_agenda_of', CheckBoxFieldWidget, multiple='multiple')
+    adopts_next_agenda_of = schema.List(
+        title=_("title_adopts_next_agenda_of"),
+        value_type=schema.Choice(
+            vocabulary="Products.PloneMeeting.vocabularies.other_mcs_clonable_to_vocabulary"),
+        required=False)
+
     form.widget('assembly', PMTextAreaFieldWidget)
     assembly = RichText(
         title=_(u"title_assembly"),
@@ -435,7 +443,8 @@ class IMeeting(IDXMeetingContent):
                    fields=['date', 'start_date', 'mid_date', 'end_date',
                            'approval_date', 'convocation_date',
                            'validation_deadline', 'freeze_deadline',
-                           'place', 'place_other', 'videoconference',
+                           'place', 'place_other',
+                           'videoconference', 'adopts_next_agenda_of',
                            'pre_meeting_date', 'pre_meeting_place',
                            'extraordinary_session'])
 
@@ -828,6 +837,9 @@ class Meeting(Container):
              'condition': "python:view.show_field('place') and "
                 "(view.mode != 'display' or context.place == u'other')"},
         'videoconference':
+            {'optional': True,
+             'condition': ""},
+        'adopts_next_agenda_of':
             {'optional': True,
              'condition': ""},
         'extraordinary_session':
