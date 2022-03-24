@@ -443,9 +443,10 @@ input#otherMeetingConfigsClonableToFieldTitle {
     width: 99%;
 }
 /* add right margin when field displayed in table so table cells are not sticked togheter,
-   moreover, especially on MeetingConfig view,
+   moreover, especially on MeetingConfig view and contacts dashboards,
    avoid too large values overflowing the screen horizontally */
-table td div.field {
+table td div.field,
+table td div.additional-infos {
    margin-right: 1em;
    word-break: break-word;
 }
