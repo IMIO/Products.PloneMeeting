@@ -925,7 +925,7 @@ def query_meeting_config_modified_cachekey(method, self):
 
 
 def forever_cachekey(method, self):
-    '''cachekey method for caching for the time of a request.'''
+    '''cachekey method for caching forever until cache is invalidated.'''
     return True
 
 
