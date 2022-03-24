@@ -1214,8 +1214,6 @@ def _notifyContainerModified(child):
            not IMeetingContent.providedBy(container)):
         notifyModifiedAndReindex(container)
         container = container.aq_parent
-        if container.portal_type == 'ToolPloneMeeting':
-            container.invalidateAllCache()
 
 
 def onConfigOrPloneElementAdded(element, event):

@@ -8,6 +8,9 @@ Changelog
 - Adapted `Migrate_To_4200._removeBrokenAnnexes`, check that annex UID is in
   his parent's `categorized_elements`, removes it otherwise.
   [gbastien]
+- Reintroduced `PMConditionAwareCollectionVocabulary._cache_invalidation_key`
+  override to take user groups into account so cache is invalidated when user groups changed.
+  [gbastien]
 
 4.2rc21 (2022-03-22)
 --------------------

@@ -76,6 +76,17 @@ import itertools
 class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
     implements(IVocabularyFactory)
 
+    def _cache_invalidation_key(self, context, real_context):
+        """Take also into account current user groups,
+           this will make cache invalidated when user groups changed.
+           We keep original check on user_id because the vocabulary contains links
+           to the user personal folder."""
+        original_checks = super(PMConditionAwareCollectionVocabulary, self)._cache_invalidation_key(
+            context, real_context)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        user_plone_groups = tool.get_plone_groups_for_user()
+        return original_checks + (user_plone_groups, )
+
     def _brains(self, context):
         """We override the method because Meetings also provides the ICollection interface..."""
         root = context
