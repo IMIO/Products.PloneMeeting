@@ -2601,7 +2601,18 @@ class OtherMCsClonableToVocabulary(object):
         '''cachekey method for self.__call__.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return repr(cfg), term_title
+        # cache per context values, this way a missing value would create another cachekey
+        values = self._get_stored_values(context)
+        return repr(cfg), term_title, values
+
+    def _get_stored_values(self, context):
+        """ """
+        values = []
+        if context.__class__.__name__ == 'MeetingItem':
+            values = context.getOtherMeetingConfigsClonableTo()
+        elif context.__class__.__name__ == 'Meeting':
+            values = context.adopts_next_agenda_of
+        return values
 
     @ram.cache(__call___cachekey)
     def OtherMCsClonableToVocabulary__call__(self, context, term_title=None):
@@ -2609,16 +2620,12 @@ class OtherMCsClonableToVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         terms = []
-        import logging
-        logging.getLogger('gna').info('OtherMCsClonableToVocabulary')
-        # XXX not a real usecase, disabled value on an item?  Would complicate caching
-        # cfg_ids = [mc['meeting_config'] for mc in cfg.getMeetingConfigsToCloneTo()]
-        # if context.__class__.__name__ == 'MeetingItem':
-        #     cfg_ids = list(set(cfg_ids).union(context.getOtherMeetingConfigsClonableTo()))
-        for mctct in cfg.getMeetingConfigsToCloneTo():
-            terms.append(SimpleTerm(mctct['meeting_config'],
-                                    mctct['meeting_config'],
-                                    term_title or getattr(tool, mctct['meeting_config']).Title()))
+        cfg_ids = [mc['meeting_config'] for mc in cfg.getMeetingConfigsToCloneTo()]
+        cfg_ids = list(set(cfg_ids).union(self._get_stored_values(context)))
+        for cfg_id in cfg_ids:
+            terms.append(SimpleTerm(cfg_id,
+                                    cfg_id,
+                                    term_title or getattr(tool, cfg_id).Title()))
         return SimpleVocabulary(terms)
 
     # do ram.cache have a different key name
