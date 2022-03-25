@@ -11,6 +11,8 @@ Changelog
 - Reintroduced `PMConditionAwareCollectionVocabulary._cache_invalidation_key`
   override to take user groups into account so cache is invalidated when user groups changed.
   [gbastien]
+- Added new field `Meeting.adopts_next_agenda_of`.
+  [gbastien]
 
 4.2rc21 (2022-03-22)
 --------------------

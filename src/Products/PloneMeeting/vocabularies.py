@@ -2536,7 +2536,6 @@ SelectableCommitteesVocabularyFactory = SelectableCommitteesVocabulary()
 
 
 class SelectableCommitteesAcronymsVocabulary(SelectableCommitteesVocabulary):
-    implements(IVocabularyFactory)
 
     def __call__(self, context, term_title_attr="acronym"):
         """ """
@@ -2548,7 +2547,6 @@ SelectableCommitteesAcronymsVocabularyFactory = SelectableCommitteesAcronymsVoca
 
 
 class ItemSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
-    implements(IVocabularyFactory)
 
     def _get_stored_values(self):
         """ """
@@ -2573,7 +2571,6 @@ ItemSelectableCommitteesVocabularyFactory = ItemSelectableCommitteesVocabulary()
 
 
 class MeetingSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
-    implements(IVocabularyFactory)
 
     def _get_stored_values(self):
         """ """
@@ -2593,6 +2590,82 @@ class MeetingSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
 
 
 MeetingSelectableCommitteesVocabularyFactory = MeetingSelectableCommitteesVocabulary()
+
+
+class OtherMCsClonableToVocabulary(object):
+    """Vocabulary listing other MeetingConfigs clonable to."""
+
+    implements(IVocabularyFactory)
+
+    def __call___cachekey(method, self, context, term_title=None):
+        '''cachekey method for self.__call__.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        # cache per context values, this way a missing value would create another cachekey
+        values = self._get_stored_values(context)
+        return repr(cfg), term_title, values
+
+    def _get_stored_values(self, context):
+        """ """
+        values = []
+        if context.__class__.__name__ == 'MeetingItem':
+            values = context.getOtherMeetingConfigsClonableTo()
+        elif context.__class__.__name__ == 'Meeting':
+            values = context.adopts_next_agenda_of
+        # avoid returning None
+        return values or []
+
+    @ram.cache(__call___cachekey)
+    def OtherMCsClonableToVocabulary__call__(self, context, term_title=None):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        terms = []
+        cfg_ids = [mc['meeting_config'] for mc in cfg.getMeetingConfigsToCloneTo()]
+        cfg_ids = list(set(cfg_ids).union(self._get_stored_values(context)))
+        for cfg_id in cfg_ids:
+            terms.append(SimpleTerm(cfg_id,
+                                    cfg_id,
+                                    term_title or getattr(tool, cfg_id).Title()))
+        return SimpleVocabulary(terms)
+
+    # do ram.cache have a different key name
+    __call__ = OtherMCsClonableToVocabulary__call__
+
+
+OtherMCsClonableToVocabularyFactory = OtherMCsClonableToVocabulary()
+
+
+class OtherMCsClonableToEmergencyVocabulary(OtherMCsClonableToVocabulary):
+    """Vocabulary listing other MeetingConfigs clonable to emergency."""
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context, term_title=None):
+        """ """
+        term_title = translate('Emergency while presenting in other MC',
+                               domain='PloneMeeting',
+                               context=context.REQUEST)
+        return super(OtherMCsClonableToEmergencyVocabulary, self).__call__(context, term_title)
+
+
+OtherMCsClonableToEmergencyVocabularyFactory = OtherMCsClonableToEmergencyVocabulary()
+
+
+class OtherMCsClonableToPrivacyVocabulary(OtherMCsClonableToVocabulary):
+    """Vocabulary listing other MeetingConfigs clonable to privacy."""
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context, term_title=None):
+        """ """
+        term_title = translate('Secret while presenting in other MC?',
+                               domain='PloneMeeting',
+                               context=context.REQUEST)
+        return super(OtherMCsClonableToPrivacyVocabulary, self).__call__(context, term_title)
+
+
+OtherMCsClonableToPrivacyVocabularyFactory = OtherMCsClonableToPrivacyVocabulary()
 
 
 class ContainedAnnexesVocabulary(object):
