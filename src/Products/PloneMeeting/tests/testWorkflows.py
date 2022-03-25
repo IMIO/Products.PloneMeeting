@@ -119,10 +119,9 @@ class testWorkflows(PloneMeetingTestCase):
         statusMessages = IStatusMessage(self.portal.REQUEST)
         # for now, just the faceted related messages
         messages = statusMessages.show()
-        self.assertEqual(len(messages), 3)
-        self.assertEqual(messages[0].message, u'All cache was invalidated')
-        self.assertEqual(messages[1].message, u'Faceted navigation enabled')
-        self.assertEqual(messages[2].message, u'Configuration imported')
+        self.assertEqual(len(messages), 2)
+        self.assertEqual(messages[0].message, u'Faceted navigation enabled')
+        self.assertEqual(messages[1].message, u'Configuration imported')
         del IAnnotations(self.request)['statusmessages']
         # @@delete_givenuid added one statusMessage about BeforeDeleteException
         transaction.commit()
