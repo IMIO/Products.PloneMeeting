@@ -89,6 +89,12 @@
            component=".vocabularies.ItemSelectableCommitteesVocabularyFactory" />
   <utility name="Products.PloneMeeting.vocabularies.meeting_selectable_committees_vocabulary"
            component=".vocabularies.MeetingSelectableCommitteesVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.other_mcs_clonable_to_vocabulary"
+           component=".vocabularies.OtherMCsClonableToVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.other_mcs_clonable_to_emergency_vocabulary"
+           component=".vocabularies.OtherMCsClonableToEmergencyVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.other_mcs_clonable_to_privacy_vocabulary"
+           component=".vocabularies.OtherMCsClonableToPrivacyVocabularyFactory" />
   <utility component=".vocabularies.SelectableAssemblyMembersVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary" />
   <utility component=".vocabularies.SelectableItemInitiatorsVocabularyFactory"
@@ -107,7 +113,6 @@
            component=".vocabularies.PMPositionTypesVocabularyFactory" />
   <utility name="PMAttendeeRedefinePositionTypes"
            component=".vocabularies.PMAttendeeRedefinePositionTypesVocabularyFactory" />
-
 
   <!-- PMHeldPosition vocabularies -->
   <utility component=".vocabularies.HeldPositionUsagesVocabularyFactory"

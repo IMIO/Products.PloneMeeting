@@ -8,6 +8,11 @@ Changelog
 - Adapted `Migrate_To_4200._removeBrokenAnnexes`, check that annex UID is in
   his parent's `categorized_elements`, removes it otherwise.
   [gbastien]
+- Reintroduced `PMConditionAwareCollectionVocabulary._cache_invalidation_key`
+  override to take user groups into account so cache is invalidated when user groups changed.
+  [gbastien]
+- Added new field `Meeting.adopts_next_agenda_of`.
+  [gbastien]
 - Added WFAdaptation `item_validation_shortcuts` that will let users change item
   state to any other item validation state (so between itemcreated and validated)
   depending on their groups.
