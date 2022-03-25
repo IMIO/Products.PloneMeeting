@@ -2612,7 +2612,8 @@ class OtherMCsClonableToVocabulary(object):
             values = context.getOtherMeetingConfigsClonableTo()
         elif context.__class__.__name__ == 'Meeting':
             values = context.adopts_next_agenda_of
-        return values
+        # avoid returning None
+        return values or []
 
     @ram.cache(__call___cachekey)
     def OtherMCsClonableToVocabulary__call__(self, context, term_title=None):
