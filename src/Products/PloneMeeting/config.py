@@ -246,6 +246,7 @@ EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'category', 'classifier', 'co
                                'toDiscuss', 'privacy', 'pollType', 'textCheckList',
                                'otherMeetingConfigsClonableToFieldTitle',
                                'otherMeetingConfigsClonableToFieldDescription',
+                               'otherMeetingConfigsClonableToFieldDetailedDescription',
                                'otherMeetingConfigsClonableToFieldMotivation',
                                'otherMeetingConfigsClonableToFieldDecision',
                                'otherMeetingConfigsClonableToFieldDecisionSuite',
