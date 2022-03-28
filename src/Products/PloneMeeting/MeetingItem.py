@@ -7606,20 +7606,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             return _('PloneMeeting_label_itemAssembly')
 
-    def get_representatives_in_charge(self):
+    def get_representatives_in_charge(self, check_is_attendee=True):
         '''Return the representative in charge of this item depending on
-           selected MeetingItem.groupsInCharge.'''
+           selected MeetingItem.groupsInCharge.
+           Default use is when item in a meeting so we can check meeting date
+           and if representative is attendee for the meeting.'''
         groups_in_charge = self.getGroupsInCharge(theObjects=True)
         meeting = self.getMeeting()
-        attendees = self.get_attendees()
-
+        meeting_date = meeting.date if meeting else None
+        attendees = self.get_attendees(the_objects=True)
         res = []
         for gic in groups_in_charge:
-            repr_uids = [representative.UID() for representative in
-                         gic.get_representatives(at_date=meeting.date)]
-            intersection = [i for i in repr_uids if i in attendees]
-            if intersection:
-                res.append(gic)
+            # when p_check_is_attendee=True,
+            # only keep held_positions that are also attendees for self
+            intersection = [hp for hp in gic.get_representatives(at_date=meeting_date)
+                            if not check_is_attendee or hp in attendees]
+            for hp in intersection:
+                if hp not in res:
+                    res.append(hp)
         return res
 
     def is_decided(self, cfg, item_state=None, positive_only=False):
