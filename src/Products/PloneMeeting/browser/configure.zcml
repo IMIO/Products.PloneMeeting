@@ -885,6 +885,12 @@
         class=".advices.AdvicesIconsInfos"
         template="templates/advices-icons-infos.pt"
         permission="zope2.Public" />
+    <browser:page
+        name="advice-infos"
+        for="*"
+        class=".advices.AdviceInfos"
+        template="templates/advice-infos.pt"
+        permission="zope2.Public" />
     <browser:view
         name="pm-notify-event"
         class=".notify.NotifyEvent"

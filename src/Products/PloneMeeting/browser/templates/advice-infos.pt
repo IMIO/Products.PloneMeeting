@@ -1,0 +1,58 @@
+<tal:defines i18n:domain="PloneMeeting"
+    define="displayedReviewState python: view.displayedReviewState;
+            obj python: view.obj;
+            advice python: view.advice;
+            adviceType python: view.adviceType;
+            displayDefaultComplementaryMessage python: view.customMessageInfos['displayDefaultComplementaryMessage'];
+            displayAdviceReviewState python: view.customMessageInfos['displayAdviceReviewState'];">
+    <tal:displayAdviceReviewState condition="python: not displayedReviewState and displayAdviceReviewState and obj">
+      <tal:comment replace="nothing">This is a copy/paste of code here above, change both places when necessary...</tal:comment>
+      <div class="viewlet_workflowstate" i18n:domain="plone">
+        <span i18n:translate="label_state"></span>&nbsp;
+        <span tal:define="advice_state_infos python: view.state_infos(obj)"
+              tal:content="advice_state_infos/state_title"
+              tal:attributes="class string:state-${advice_state_infos/state_name}"></span>
+      </div>
+      <div style="clear: both;">&nbsp;</div>
+    </tal:displayAdviceReviewState>
+
+    <tal:complementaryInfoMessage condition="displayDefaultComplementaryMessage">
+        <tal:hiddenUnderRedaction condition="python: advice['advice_editable'] and adviceType == 'hidden_during_redaction'">
+            <p>
+                <span class="advice_hidden_during_redaction discreet" i18n:translate="advice_hidden_during_redaction_help">This advice is currently under redaction by the advisers of the group and is not visible to other groups.</span>
+                &nbsp;<span tal:condition="advice/delay_infos"
+                            class="advice_hidden_during_redaction discreet"
+                            i18n:translate="">This advice must not be 'hidden during redaction' anymore before <span i18n:name="limit_date" tal:content="advice/delay_infos/limit_date_localized">limit date</span> or it will be considered not given.
+                </span>
+            </p>
+        </tal:hiddenUnderRedaction>
+
+        <tal:underRedactionNoMoreEditable condition="python: adviceType == 'considered_not_given_hidden_during_redaction'">
+          <p class="discreet" style="color: red;" i18n:translate="advice_hidden_during_redaction_considered_not_given_help">This advice is considered 'Not given' because it was still under redaction when the ability to write the advice was removed to advisers of the group. If you need this advice to be considered, contact relevant meeting managers.</p>
+        </tal:underRedactionNoMoreEditable>
+    </tal:complementaryInfoMessage>
+
+    <tal:customAdviceMessage condition="python: view.customMessageInfos['customAdviceMessage']">
+        <div class="customAdviceMessage" tal:content="structure python: view.customMessageInfos['customAdviceMessage']" />
+    </tal:customAdviceMessage>
+
+    <div class="discreet advice_additional_infos" style="text-align: right;">
+      <div tal:condition="python: advice['userids']" class="advice-asked-to">
+        <span i18n:translate="">Advice asked to</span>
+        <span tal:content="structure python: view.adviser_users(advice)">User ids</span>
+      </div>
+
+      <tal:author condition="nocall:obj">
+        <tal:i18n i18n:domain="plone" i18n:translate="label_by_author">
+        by
+        <span tal:content="python: view.authorname(obj)"
+              i18n:name="author">Roland Barthes</span>
+        </tal:i18n>
+      </tal:author>
+      <tal:delayinfos condition="python: advice['delay'] and advice['delay_started_on']">
+        <span tal:condition="nocall:obj"> - </span><span i18n:translate="">Asked on <span i18n:name="advice_asked_on_date" tal:content="python: advice['delay_infos']['delay_started_on_localized']">2013/05/08</span></span>
+        <span tal:condition="python: advice['type'] != 'not_given' and not advice['hidden_during_redaction']"> - <span i18n:translate="">Given on <span i18n:name="advice_given_on_date" tal:content="python: advice['advice_given_on_localized']">2013/05/08</span></span><span class="fa show-help" style="margin-left: 2px; cursor: help;" title="help_given_on_before_started_on" i18n:attributes="title" tal:condition="python: advice['advice_given_on'].asdatetime().date() < advice['delay_started_on'].date()"></span></span>
+        <span> - <span i18n:translate="">Limit date <span i18n:name="advice_limit_date" tal:content="advice/delay_infos/limit_date_localized">2013/05/08</span></span></span>
+      </tal:delayinfos>
+    </div>
+</tal:defines>

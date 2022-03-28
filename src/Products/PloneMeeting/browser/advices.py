@@ -311,6 +311,25 @@ class AdvicesIconsInfos(BrowserView):
         return res
 
 
+class AdviceInfos(BrowserView):
+    """Main infos shared between advice popup and advice view."""
+
+    def __call__(self, advice_uid, displayedReviewState, customMessageInfos):
+        """ """
+        self.advice = self.context.adviceIndex.get(advice_uid)
+        self.adviceType = self.advice['type']
+        self.adviceHolder = self.advice.get('adviceHolder', None) or self.context
+        self.obj = self.adviceHolder.get(self.advice['advice_id']) if \
+            self.advice.get('advice_id', None) else None
+        self.displayedReviewState = displayedReviewState
+        self.customMessageInfos = customMessageInfos
+        return self.index()
+
+    def authorname(self, advice):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return tool.getUserName(advice.Creator())
+
+
 class ChangeAdviceHiddenDuringRedactionView(BrowserView):
     """View that toggle the advice.advice_hide_during_redaction attribute."""
 
