@@ -13,6 +13,8 @@ Changelog
   [gbastien]
 - Added new field `Meeting.adopts_next_agenda_of`.
   [gbastien]
+- Added new field `Meeting.mid_start_date`.
+  [gbastien]
 - Added WFAdaptation `item_validation_shortcuts` that will let users change item
   state to any other item validation state (so between itemcreated and validated)
   depending on their groups.

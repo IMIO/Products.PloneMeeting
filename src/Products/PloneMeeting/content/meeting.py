@@ -186,6 +186,11 @@ class IMeeting(IDXMeetingContent):
         title=_(u'title_mid_date'),
         required=False)
 
+    form.widget('mid_start_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
+    mid_start_date = schema.Datetime(
+        title=_(u'title_mid_start_date'),
+        required=False)
+
     form.widget('end_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
     end_date = schema.Datetime(
         title=_(u'title_end_date'),
@@ -440,7 +445,8 @@ class IMeeting(IDXMeetingContent):
 
     model.fieldset('dates_and_data',
                    label=_(u"fieldset_dates_and_data"),
-                   fields=['date', 'start_date', 'mid_date', 'end_date',
+                   fields=['date', 'start_date', 'mid_date',
+                           'mid_start_date', 'end_date',
                            'approval_date', 'convocation_date',
                            'validation_deadline', 'freeze_deadline',
                            'place', 'place_other',
@@ -810,6 +816,9 @@ class Meeting(Container):
             {'optional': True,
              'condition': ""},
         'mid_date':
+            {'optional': True,
+             'condition': ""},
+        'mid_start_date':
             {'optional': True,
              'condition': ""},
         'end_date':
@@ -1880,6 +1889,9 @@ class Meeting(Container):
         # Set, by default, mid date to start date + 1 hour.
         if 'mid_date' in used_attrs and not self.mid_date:
             self.mid_date = self.date + timedelta(hours=1)
+        # Set, by default, mid_start_date to start date + 1 hour.
+        if 'mid_start_date' in used_attrs and not self.mid_start_date:
+            self.mid_start_date = self.date + timedelta(hours=1)
         # Set, by default, end date to start date + 2 hours.
         if 'end_date' in used_attrs and not self.end_date:
             self.end_date = self.date + timedelta(hours=2)
