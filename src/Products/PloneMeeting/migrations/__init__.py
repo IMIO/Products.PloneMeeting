@@ -121,6 +121,29 @@ class Migrator(BaseMigrator):
                   for portal_type in portal_types]
         return wf_ids
 
+    def updateWFHistory(self,
+                        query={'meta_type': 'MeetingItem'},
+                        review_state_mappings={},
+                        action_mappings={}):
+        """Update for given p_brains the workflow_history keys 'review_state' and 'action'
+           depending on given p_review_state_mappings and p_action_mappings."""
+        logger.info('Updating workflow_history...')
+        brains = self.portal.portal_catalog(**query)
+        pghandler = ZLogHandler(steps=1000)
+        pghandler.init('Updating workflow_history', len(brains))
+        i = 0
+        for brain in brains:
+            i += 1
+            itemOrMeeting = brain.getObject()
+            for wf_name, events in itemOrMeeting.workflow_history.items():
+                for event in events:
+                    if event['review_state'] in review_state_mappings:
+                        event['review_state'] = review_state_mappings[event['review_state']]
+                        itemOrMeeting._p_changed = True
+                    if event['action'] in action_mappings:
+                        event['action'] = action_mappings[event['action']]
+                        itemOrMeeting._p_changed = True
+
     def addCatalogIndexesAndColumns(self, indexes=True, columns=True, update_metadata=True):
         """ """
         if indexes:
