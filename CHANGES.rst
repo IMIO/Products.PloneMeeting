@@ -13,6 +13,8 @@ Changelog
   [gbastien]
 - Added new field `Meeting.adopts_next_agenda_of`.
   [gbastien]
+- Added new field `Meeting.mid_start_date`.
+  [gbastien]
 
 4.2rc21 (2022-03-22)
 --------------------
