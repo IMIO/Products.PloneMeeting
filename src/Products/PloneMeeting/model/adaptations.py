@@ -891,13 +891,14 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                             wf.transitions.addTransition(back_transition_id)
                             transition = wf.transitions[back_transition_id]
                             back_transition_title = back_transition_id
+                            icon_name = 'backTo_from_waiting_advices'
                             if back_state_id not in infos.get('use_custom_back_transition_title_for', ()):
-                                # reuse the existing back transition for title
-                                existing_back_transition_id = 'backTo%s%s' % (
-                                    back_state_id[0].upper(), back_state_id[1:])
+                                # reuse the existing back transition for title and iconname
+                                existing_back_transition_id = meetingConfig.getItemWFValidationLevels(
+                                    states=[back_state_id], data='back_transition')
                                 if existing_back_transition_id in wf.transitions:
                                     back_transition_title = wf.transitions[existing_back_transition_id].title
-                            icon_name = 'backTo_from_waiting_advices'
+                                    icon_name = existing_back_transition_id
                             only_use_custom_back_transition_icon_for = \
                                 infos.get('only_use_custom_back_transition_icon_for', ())
                             if not only_use_custom_back_transition_icon_for or \
