@@ -228,11 +228,8 @@ class AdvicePrettyLinkAdapter(PrettyLinkAdapter):
         if item_state.endswith('_waiting_advices'):
             item_wf_conditions = item.wfConditions()
             if self.context.advice_group in item_wf_conditions._get_waiting_advices_icon_advisers():
-                icon_name, msgid = item.wfConditions().get_waiting_advices_icon_infos()
-                res.append((icon_name,
-                            translate(msgid,
-                                      domain="PloneMeeting",
-                                      context=self.request)))
+                icon_name, msg = item_wf_conditions.get_waiting_advices_icon_infos()
+                res.append((icon_name, msg))
         return res
 
 
@@ -401,11 +398,8 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                   domain="PloneMeeting",
                                   context=self.request)))
         elif self.itemState.endswith('_waiting_advices'):
-            icon_name, msgid = self.context.wfConditions().get_waiting_advices_icon_infos()
-            res.append((icon_name,
-                        translate(msgid,
-                                  domain="PloneMeeting",
-                                  context=self.request)))
+            icon_name, msg = self.context.wfConditions().get_waiting_advices_icon_infos()
+            res.append((icon_name, msg))
         elif self.itemState.startswith('returned_to_proposing_group_'):
             # get info about return_to_proposing_group validation
             # level in MeetingConfig.itemWFValidationLevels

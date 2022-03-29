@@ -317,7 +317,8 @@ class MeetingItemWorkflowConditions(object):
            If some _get_waiting_advices_icon_advisers, check if one of these advice
            is giveable in current state, if it is the case, then compute icon color.
            Return icon name and translation msgid.'''
-        res = 'wait_advices_from.png', 'icon_help_waiting_advices'
+        res = 'wait_advices_from.png', translate(
+            self.review_state, domain="plone", context=self.context.REQUEST)
         for adviser_uid in self._get_waiting_advices_icon_advisers():
             if adviser_uid in self.context.adviceIndex and \
                self.context.adviceIndex[adviser_uid]['advice_editable']:
