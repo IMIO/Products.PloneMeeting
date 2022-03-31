@@ -250,17 +250,6 @@ class AdvicesIconsInfos(BrowserView):
         """Makes it callable in the template."""
         return _delay_icon(self.memberIsAdviserForGroup, advice_info)
 
-    def authorname(self, advice):
-        return self.tool.getUserName(advice.Creator())
-
-    def adviser_users(self, advice_info):
-        """ """
-        res = u''
-        if advice_info['userids']:
-            res = self.context._displayAdviserUsers(
-                advice_info['userids'], self.portal_url, self.tool)
-        return res
-
     def state_infos(self, advice):
         return get_state_infos(advice)
 
@@ -316,6 +305,9 @@ class AdviceInfos(BrowserView):
 
     def __call__(self, advice_uid, displayedReviewState, customMessageInfos):
         """ """
+        self.portal = api.portal.get()
+        self.portal_url = self.portal.absolute_url()
+        self.tool = api.portal.get_tool('portal_plonemeeting')
         self.advice = self.context.adviceIndex.get(advice_uid)
         self.adviceType = self.advice['type']
         self.adviceHolder = self.advice.get('adviceHolder', None) or self.context
@@ -326,8 +318,15 @@ class AdviceInfos(BrowserView):
         return self.index()
 
     def authorname(self, advice):
-        tool = api.portal.get_tool('portal_plonemeeting')
-        return tool.getUserName(advice.Creator())
+        return self.tool.getUserName(advice.Creator())
+
+    def adviser_users(self, advice_info):
+        """ """
+        res = u''
+        if advice_info['userids']:
+            res = self.context._displayAdviserUsers(
+                advice_info['userids'], self.portal_url, self.tool)
+        return res
 
 
 class ChangeAdviceHiddenDuringRedactionView(BrowserView):
