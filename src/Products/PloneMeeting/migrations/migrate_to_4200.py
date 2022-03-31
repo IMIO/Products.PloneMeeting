@@ -450,9 +450,17 @@ class Migrate_To_4200(Migrator):
     def _updateItemPreferredMeetingLink(self):
         """Update MeetingItem.preferred_meeting_path for every items."""
         logger.info("Updating MeetingItem.preferred_meeting_path for every items...")
-        for brain in self.catalog(meta_type='MeetingItem'):
+        pghandler = ZLogHandler(steps=1000)
+        brains = self.catalog(meta_type='MeetingItem')
+        pghandler.init('Updating MeetingItem.preferred_meeting_path for every items...',
+                       len(brains))
+        i = 0
+        for brain in brains:
+            i += 1
+            pghandler.report(i)
             item = brain.getObject()
             item._update_preferred_meeting(item.getPreferredMeeting())
+        pghandler.finish()
         logger.info('Done.')
 
     def _fixRichTextValueMimeType(self,
