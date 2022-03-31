@@ -18,6 +18,9 @@ Changelog
 - Completed POD templates instructions replacements in `Migrate_To_4200`.
   getExtraordinarySession() -> extraordinary_session
   [aduchene]
+- Factorized advice custom informations displayed in the advice popup in the
+  `@@advice-infos` view so it can be displayed on the advice object view as well.
+  [gbastien]
 
 4.2rc21 (2022-03-22)
 --------------------
