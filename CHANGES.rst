@@ -15,6 +15,9 @@ Changelog
   [gbastien]
 - Added new field `Meeting.mid_start_date`.
   [gbastien]
+- Completed POD templates instructions replacements in `Migrate_To_4200`.
+  getExtraordinarySession() -> extraordinary_session
+  [aduchene]
 
 4.2rc21 (2022-03-22)
 --------------------
