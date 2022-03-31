@@ -4519,6 +4519,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if 'accepted_out_of_meeting_emergency' in values and \
            'accepted_out_of_meeting_emergency_and_duplicated' in values:
             return msg
+        if 'no_decide' in values and 'hide_decisions_when_under_writing' in values:
+            return msg
+
         # several 'return_to_proposing_group' values may not be selected together
         return_to_prop_group_wf_adaptations = [
             v for v in values if v.startswith('return_to_proposing_group')]
@@ -4571,6 +4574,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                catalog.unrestrictedSearchResults(
                     portal_type=self.getMeetingTypeName(), review_state='published'):
                 return translate('wa_added_no_publication_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'no_freeze' in added:
+            # this will remove the 'frozen' state for Meeting and 'itemfrozen' for MeetingItem
+            # check that no more elements are in these states
+            if catalog.unrestrictedSearchResults(
+                portal_type=self.getItemTypeName(), review_state='itemfrozen') or \
+               catalog.unrestrictedSearchResults(
+                    portal_type=self.getMeetingTypeName(), review_state='frozen'):
+                return translate('wa_added_no_freeze_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'no_decide' in added:
+            # this will remove the 'decided' state for Meeting
+            # check that no more elements are in these states
+            if catalog.unrestrictedSearchResults(
+                    portal_type=self.getMeetingTypeName(), review_state='decided'):
+                return translate('wa_added_no_decide_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
 

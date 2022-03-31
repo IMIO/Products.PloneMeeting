@@ -60,8 +60,11 @@ class testWFAdaptations(PloneMeetingTestCase):
                           'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
                           'delayed',
                           'hide_decisions_when_under_writing',
+                          'item_validation_shortcuts',
                           'mark_not_applicable',
                           'meetingmanager_correct_closed_meeting',
+                          'no_decide',
+                          'no_freeze',
                           'no_publication',
                           'only_creator_may_delete',
                           'postpone_next_meeting',
@@ -228,6 +231,13 @@ class testWFAdaptations(PloneMeetingTestCase):
                  'accepted_out_of_meeting_emergency_and_duplicated')),
             wa_conflicts)
 
+        # no_decide and hide_decisions_when_under_writing may not be used together
+        self.assertEqual(
+            cfg.validate_workflowAdaptations(
+                ('no_decide',
+                 'hide_decisions_when_under_writing')),
+            wa_conflicts)
+
     def test_pm_Validate_workflowAdaptations_item_validation_levels_dependency(self):
         """Test MeetingConfig.validate_workflowAdaptations where some wfAdaptations
            depend on MeetingConfig.itemWFValidationLevels (that must be activated)."""
@@ -334,6 +344,90 @@ class testWFAdaptations(PloneMeetingTestCase):
             no_publication_added_error)
         self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
         self.failIf(cfg.validate_workflowAdaptations(('no_publication', )))
+
+    def test_pm_Validate_workflowAdaptations_added_no_freeze(self):
+        """Test MeetingConfig.validate_workflowAdaptations that manage addition
+           of wfAdaptations 'no_freeze' that is not possible if some meeting
+           or items are 'frozen'."""
+        # ease override by subproducts
+        if not self._check_wfa_available(['no_freeze']):
+            return
+        cfg = self.meetingConfig
+
+        # make sure no wfas activated
+        self._activate_wfas([])
+
+        no_freeze_added_error = translate('wa_added_no_freeze_error',
+                                          domain='PloneMeeting',
+                                          context=self.request)
+        cfg = self.meetingConfig
+        # make sure we do not have recurring items
+        self.changeUser('pmManager')
+        # create a meeting with an item and freeze it
+        meeting = self.create('Meeting')
+        item = self.create('MeetingItem')
+        self.presentItem(item)
+        self.freezeMeeting(meeting)
+        self.assertEqual(meeting.query_state(), 'frozen')
+        self.assertEqual(item.query_state(), 'itemfrozen')
+        self.assertEqual(
+            cfg.validate_workflowAdaptations(('no_freeze', )),
+            no_freeze_added_error)
+
+        # it can not be selected because item or meeting is 'frozen'
+        # delete meeting and create an item at set it in state 'itemfrozen'
+        self.deleteAsManager(meeting.UID())  # this will delete every linked item
+
+        newItem = self.create('MeetingItem')
+        itemWF = self.wfTool.getWorkflowsFor(newItem)[0]
+        self.wfTool.setStatusOf(itemWF.getId(),
+                                newItem,
+                                {'action': None,
+                                 'review_state': 'itemfrozen',
+                                 'actor': self.member.getId(),
+                                 'comments': '',
+                                 'time': DateTime()})
+        newItem.reindexObject()
+        self.assertEqual(newItem.query_state(),
+                         'itemfrozen')
+        self.assertEqual(
+            cfg.validate_workflowAdaptations(('no_freeze', )),
+            no_freeze_added_error)
+        self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
+        self.failIf(cfg.validate_workflowAdaptations(('no_freeze', )))
+
+    def test_pm_Validate_workflowAdaptations_added_no_decide(self):
+        """Test MeetingConfig.validate_workflowAdaptations that manage addition
+           of wfAdaptations 'no_decide' that is not possible if some meetings
+           are 'decided'."""
+        # ease override by subproducts
+        if not self._check_wfa_available(['no_decide']):
+            return
+        cfg = self.meetingConfig
+
+        # make sure no wfas activated
+        self._activate_wfas([])
+
+        no_decide_added_error = translate('wa_added_no_decide_error',
+                                          domain='PloneMeeting',
+                                          context=self.request)
+        cfg = self.meetingConfig
+        # make sure we do not have recurring items
+        self.changeUser('pmManager')
+        # create a meeting with an item and decide it
+        meeting = self.create('Meeting')
+        item = self.create('MeetingItem')
+        self.presentItem(item)
+        self.decideMeeting(meeting)
+        self.assertEqual(meeting.query_state(), 'decided')
+        self.assertEqual(item.query_state(), 'itempublished')
+        self.assertEqual(
+            cfg.validate_workflowAdaptations(('no_decide', )),
+            no_decide_added_error)
+
+        # it can not be selected because meeting is 'decided', delete meeting
+        self.deleteAsManager(meeting.UID())  # this will delete every linked item
+        self.failIf(cfg.validate_workflowAdaptations(('no_decide', )))
 
     def test_pm_Validate_workflowAdaptations_removed_postpone_next_meeting(self):
         """Test MeetingConfig.validate_workflowAdaptations that manage removal
@@ -749,6 +843,169 @@ class testWFAdaptations(PloneMeetingTestCase):
         itemWF = cfg.getItemWorkflow(True)
         self.assertTrue('accept' in itemWF.states['pre_accepted'].transitions)
         self.assertTrue('backToItemFrozen' in itemWF.states['pre_accepted'].transitions)
+
+    def test_pm_WFA_no_freeze(self):
+        '''Test the workflowAdaptation 'no_freeze'.
+           This test check the removal of the 'frozen' state in the meeting/item WF.'''
+        # ease override by subproducts
+        if not self._check_wfa_available(['no_freeze']):
+            return
+        self.changeUser('pmManager')
+        # check while the wfAdaptation is not activated
+        self._activate_wfas([])
+        self._no_freeze_inactive()
+        # activate the wfAdaptation and check
+        self._activate_wfas(('no_freeze', ))
+        self._no_freeze_active()
+
+    def _no_freeze_inactive(self):
+        '''Tests while 'no_freeze' wfAdaptation is inactive.'''
+        cfg = self.meetingConfig
+        meetingWF = cfg.getMeetingWorkflow(True)
+        self.assertTrue('freeze' in meetingWF.transitions)
+        self.assertTrue('backToFrozen' in meetingWF.transitions)
+        itemWF = cfg.getItemWorkflow(True)
+        self.assertTrue('itemfreeze' in itemWF.transitions)
+        self.assertTrue('backToItemFrozen' in itemWF.transitions)
+        # check with a meeting
+        meeting = self._createMeetingWithItems()
+        item = meeting.get_items()[0]
+        self.freezeMeeting(meeting)
+        self.assertEqual(item.query_state(), 'itemfrozen')
+        # itempublished points back to itemfrozen
+        cfg = self.meetingConfig
+        itemWF = cfg.getItemWorkflow(True)
+        itempublished = itemWF.states['itempublished']
+        self.assertTrue('backToItemFrozen' in itempublished.transitions)
+        self.closeMeeting(meeting)
+        self.assertEqual(meeting.query_state(), 'closed')
+
+    def _no_freeze_active(self):
+        '''Tests while 'no_freeze' wfAdaptation is active.'''
+        cfg = self.meetingConfig
+        meetingWF = cfg.getMeetingWorkflow(True)
+        self.assertFalse('freeze' in meetingWF.transitions)
+        self.assertFalse('backToFrozen' in meetingWF.transitions)
+        itemWF = cfg.getItemWorkflow(True)
+        self.assertFalse('itemfreeze' in itemWF.transitions)
+        self.assertFalse('backToItemFrozen' in itemWF.transitions)
+        # create a meeting and check it can reach the 'closed' state
+        meeting = self._createMeetingWithItems()
+        self.closeMeeting(meeting)
+        self.assertEqual(meeting.query_state(), 'closed')
+
+    def test_pm_WFA_no_decide(self):
+        '''Test the workflowAdaptation 'no_decide'.
+           This test check the removal of the 'decided' state in the meeting WF.'''
+        # ease override by subproducts
+        if not self._check_wfa_available(['no_decide']):
+            return
+        self.changeUser('pmManager')
+        # check while the wfAdaptation is not activated
+        self._activate_wfas([])
+        self._no_decide_inactive()
+        # activate the wfAdaptation and check
+        self._activate_wfas(('no_decide', ))
+        self._no_decide_active()
+
+    def _no_decide_inactive(self):
+        '''Tests while 'no_decide' wfAdaptation is inactive.'''
+        cfg = self.meetingConfig
+        meetingWF = cfg.getMeetingWorkflow(True)
+        self.assertTrue('decide' in meetingWF.transitions)
+        self.assertTrue('backToDecided' in meetingWF.transitions)
+        # check with a meeting
+        meeting = self._createMeetingWithItems()
+        self.decideMeeting(meeting)
+        self.assertEqual(meeting.query_state(), 'decided')
+        self.closeMeeting(meeting)
+        self.assertEqual(meeting.query_state(), 'closed')
+
+    def _no_decide_active(self):
+        '''Tests while 'no_decide' wfAdaptation is active.'''
+        cfg = self.meetingConfig
+        meetingWF = cfg.getMeetingWorkflow(True)
+        self.assertFalse('decide' in meetingWF.transitions)
+        self.assertFalse('backToDecided' in meetingWF.transitions)
+        # create a meeting and check it can reach the 'closed' state
+        meeting = self._createMeetingWithItems()
+        self.closeMeeting(meeting)
+        self.assertEqual(meeting.query_state(), 'closed')
+
+    def test_pm_WFA_no_publication_and_no_decide_and_no_freeze_and_pre_accepted(self):
+        '''Test the workflowAdaptation 'no_publication/no_decide/no_freeze/pre_accepted'
+           togheter.'''
+        # ease override by subproducts
+        if not self._check_wfa_available(
+                ['no_publication', 'no_decide', 'no_freeze', 'pre_accepted']):
+            return
+
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        self.changeUser('pmManager')
+        self._activate_wfas(('no_publication', 'no_decide', 'no_freeze', 'pre_accepted', ))
+        itemWF = cfg.getItemWorkflow(True)
+        # 'presented' to 'pre_accepted' and 'pre_accepted' back to 'presented'
+        self.assertTrue('accept' in itemWF.states['pre_accepted'].transitions)
+        self.assertTrue('backToPresented' in itemWF.states['pre_accepted'].transitions)
+        self.assertTrue('pre_accept' in itemWF.states['presented'].transitions)
+        meeting = self.create('Meeting')
+        item = self.create('MeetingItem', decision=self.decisionText)
+        self.presentItem(item)
+        self.closeMeeting(meeting)
+        self.assertEqual(meeting.query_state(), 'closed')
+        self.assertEqual(meeting.get_items()[0].query_state(), 'accepted')
+
+    def test_pm_WFA_item_validation_shortcuts(self):
+        '''Test the 'item_validation_shortcuts' WFAdaptation.'''
+        cfg = self.meetingConfig
+        # make sure we use default itemWFValidationLevels,
+        # useful when test executed with custom profile
+        self._setUpDefaultItemWFValidationLevels(cfg)
+        self._enablePrevalidation(cfg)
+        self.changeUser('pmManager')
+        self._turnUserIntoPrereviewer(self.member)
+        # check while the wfAdaptation is not activated
+        self._item_validation_shortcuts_inactive()
+        # activate the wfAdaptation and check
+        self._activate_wfas(('item_validation_shortcuts', ))
+        self._item_validation_shortcuts_active()
+
+    def _item_validation_shortcuts_inactive(self):
+        '''Test when 'item_validation_shortcuts' is inactive.'''
+        item = self.create('MeetingItem')
+        # by default a 'propose' transition exists but we can not 'validate'
+        # 'pmManager' is creator and reviewer
+        self.assertEqual(self.transitions(item), ['propose'])
+        self.do(item, 'propose')
+        self.assertEqual(self.transitions(item), ['backToItemCreated', 'prevalidate'])
+        self.do(item, 'prevalidate')
+        self.assertEqual(self.transitions(item), ['backToProposed', 'validate'])
+        self.do(item, 'validate')
+        # with a user only creator
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(self.transitions(item), ['propose'])
+        self.do(item, 'propose')
+        self.failIf(self.transitions(item))
+
+    def _item_validation_shortcuts_active(self):
+        '''Test when 'item_validation_shortcuts' is active.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        # user will be able to validate an item that is "itemcreated"
+        # 'pmManager' is creator and reviewer
+        self.assertEqual(self.transitions(item), ['prevalidate', 'propose'])
+        self.do(item, 'prevalidate')
+        self.assertEqual(item.query_state(), 'prevalidated')
+        self.assertEqual(self.transitions(item),
+                         ['backToItemCreated', 'backToProposed', 'validate'])
+        # with a user only creator
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(self.transitions(item), ['propose'])
+        self.do(item, 'propose')
+        self.failIf(self.transitions(item))
 
     def test_pm_WFA_pre_validation(self):
         '''Test when using prevalidation.
