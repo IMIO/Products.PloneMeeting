@@ -161,7 +161,6 @@ class Migrator(BaseMigrator):
                         event['action'] = transition_mappings[event['action']]
                         itemOrMeeting._p_changed = True
         # MeetingConfigs
-        import ipdb; ipdb.set_trace()
         state_attrs = ITEM_WF_STATE_ATTRS if related_to == 'MeetingItem' else MEETING_WF_STATE_ATTRS
         tr_attrs = ITEM_WF_TRANSITION_ATTRS if related_to == 'MeetingItem' else MEETING_WF_TRANSITION_ATTRS
         for cfg in self.tool.objectValues('MeetingConfig'):
