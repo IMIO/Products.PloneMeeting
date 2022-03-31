@@ -15,6 +15,13 @@ Changelog
   [gbastien]
 - Added new field `Meeting.mid_start_date`.
   [gbastien]
+- Completed POD templates instructions replacements in `Migrate_To_4200`.
+  getExtraordinarySession() -> extraordinary_session
+  [aduchene]
+
+4.2rc21 (2022-03-22)
+--------------------
+
 - Fixed display of `overlays` and `tooltipsters` on meeting view in the `iframe`
   displaying available items.
   It was sometimes not completelly displayed, now the iframe will resize correctly.
@@ -25,9 +32,6 @@ Changelog
   [gbastien]
 - Handle the `from_migration_to_4200=False` parameter when calling `Migrate_To_4201`.
   [gbastien]
-- Completed POD templates instructions replacements in `Migrate_To_4200`.
-  getExtraordinarySession() -> extraordinary_session
-  [aduchene]
 
 4.2rc20 (2022-03-15)
 --------------------
