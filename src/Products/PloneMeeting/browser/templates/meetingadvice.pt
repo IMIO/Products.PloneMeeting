@@ -82,6 +82,9 @@
           <tal:annexes replace="structure context/@@display-annexes" />
         </div>
 
+        <tal:comment replace="nothing">Advice infos</tal:comment>
+        <tal:advice-infos replace="structure python: view.parent.unrestrictedTraverse('@@advice-infos')(context.advice_group, displayedReviewState=False, customMessageInfos=view.parent.adapted().getCustomAdviceMessageFor(view.parent.adviceIndex[context.advice_group]))" />
+
         <tal:close_button condition="python: 'ajax_load' in context.REQUEST">
           <div class="visualClear"></div>
           <metal:closeButton use-macro="here/@@pm-macros/closeButtonMacro" />
