@@ -731,6 +731,7 @@ class Migrate_To_4200(Migrator):
             'self.getPublicMeetingObservations()': "view.print_value('public_meeting_observations')",
             'self.getSecretMeetingObservations()': "view.print_value('secret_meeting_observations')",
             'self.getSignatures()': "self.get_signatures()",
+            'self.getExtraordinarySession()': "self.extraordinary_session",
             'self.Title()': "tool.format_date(self.date)",
             # formatMeetingDate to format_date
             'tool.formatMeetingDate(self': "tool.format_date(self.date",

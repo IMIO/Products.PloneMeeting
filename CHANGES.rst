@@ -5,8 +5,9 @@ Changelog
 4.2rc21 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Completed POD templates instructions replacements in `Migrate_To_4200`.
+  getExtraordinarySession() -> extraordinary_session
+  [aduchene]
 
 4.2rc20 (2022-03-15)
 --------------------
