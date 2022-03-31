@@ -15,6 +15,9 @@ Changelog
   [gbastien]
 - Added new field `Meeting.mid_start_date`.
   [gbastien]
+- Completed POD templates instructions replacements in `Migrate_To_4200`.
+  getExtraordinarySession() -> extraordinary_session
+  [aduchene]
 - Added WFAdaptation `item_validation_shortcuts` that will let users change item
   state to any other item validation state (so between itemcreated and validated)
   depending on their groups.

@@ -673,6 +673,7 @@ class Migrate_To_4200(Migrator):
                         '.getConvocationDate()': '.convocation_date',
                         '.getPreMeetingDate()': '.pre_meeting_date',
                         '.getPlace()': '.get_place()',
+                        '.getExtraordinarySession()': ".extraordinary_session",
                         '.getAttendees(theObjects': '.get_attendees(the_objects',
                         '.getAttendees(': '.get_attendees(',
                         '.getAbsents(theObjects': '.get_absents(the_objects',
