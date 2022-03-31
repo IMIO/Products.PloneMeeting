@@ -162,6 +162,30 @@ READERPREFIX = 'reader_'
 SUFFIXPROFILEPREFIX = 'suffix_profile_'
 POWEROBSERVERPREFIX = 'powerobserver__'
 
+ITEM_WF_STATE_ATTRS = [
+    # states
+    'itemAdviceStates',
+    'itemAdviceEditStates',
+    'itemAdviceViewStates',
+    'itemAdviceInvalidateStates',
+    'itemAutoSentToOtherMCStates',
+    'itemBudgetInfosStates',
+    'itemGroupsInChargeStates',
+    'itemCopyGroupsStates',
+    'itemManualSentToOtherMCStates',
+    'recordItemHistoryStates']
+ITEM_WF_TRANSITION_ATTRS = [
+    'transitionsForPresentingAnItem',
+    'transitionsReinitializingDelays',
+    'transitionsToConfirm',
+    'mailItemEvents']
+
+MEETING_WF_STATE_ATTRS = [
+    'itemPreferredMeetingStates',
+    'meetingPresentItemWhenNoCurrentMeetingStates']
+MEETING_WF_TRANSITION_ATTRS = [
+    'transitionsToConfirm',
+    'mailMeetingEvents']
 
 schema = Schema((
 
@@ -4789,22 +4813,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # make sure the MeetingConfig does not use a state that was removed or disabled
         # either using state or transition
         # states
-        cfg_item_wf_attributes = [
-            # states
-            'recordItemHistoryStates',
-            'itemAutoSentToOtherMCStates',
-            'itemManualSentToOtherMCStates',
-            'itemAdviceStates',
-            'itemAdviceEditStates',
-            'itemAdviceViewStates',
-            'itemAdviceInvalidateStates',
-            'itemBudgetInfosStates',
-            'itemGroupsInChargeStates',
-            'itemCopyGroupsStates',
-            # transitions
-            'transitionsReinitializingDelays',
-            'transitionsToConfirm',
-            'mailItemEvents', ]
+        cfg_item_wf_attrs = list(ITEM_WF_STATE_ATTRS) + list(ITEM_WF_TRANSITION_ATTRS)
+        cfg_item_wf_attrs.remove('transitionsForPresentingAnItem')
         # transitions
         enabled_stored_transitions = self.getItemWFValidationLevels(
             data='leading_transition',
@@ -4816,7 +4826,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         removed_or_disabled_transitions = tuple(set(enabled_stored_transitions).difference(
             set(enabled_values_transitions)))
 
-        for attr in cfg_item_wf_attributes:
+        for attr in cfg_item_wf_attrs:
             field = self.getField(attr)
             # manage case where item state direclty equal value
             # of value contains item state, like 'suffix_profile_prereviewers'
@@ -4843,7 +4853,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         # XXX to be managed when moving MeetingConfig to DX
         # some datagridfield attributes
-        # powerObservers, meetingConfigsToCloneTo
+        # powerObservers, meetingConfigsToCloneTo, onTransitionFieldTransforms
 
     security.declarePrivate('validate_mailItemEvents')
 

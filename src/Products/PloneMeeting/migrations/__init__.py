@@ -23,6 +23,11 @@ from natsort import humansorted
 from operator import attrgetter
 from plone import api
 from Products.CMFPlone.utils import base_hasattr
+from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.MeetingConfig import ITEM_WF_STATE_ATTRS
+from Products.PloneMeeting.MeetingConfig import ITEM_WF_TRANSITION_ATTRS
+from Products.PloneMeeting.MeetingConfig import MEETING_WF_STATE_ATTRS
+from Products.PloneMeeting.MeetingConfig import MEETING_WF_TRANSITION_ATTRS
 from Products.PloneMeeting.setuphandlers import columnInfos
 from Products.PloneMeeting.setuphandlers import indexInfos
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
@@ -121,13 +126,25 @@ class Migrator(BaseMigrator):
                   for portal_type in portal_types]
         return wf_ids
 
-    def updateWFHistory(self,
-                        query={'meta_type': 'MeetingItem'},
-                        review_state_mappings={},
-                        action_mappings={}):
+    def updateWFStatesAndTransitions(self,
+                                     related_to='MeetingItem',
+                                     query={},
+                                     review_state_mappings={},
+                                     transition_mappings={}):
         """Update for given p_brains the workflow_history keys 'review_state' and 'action'
-           depending on given p_review_state_mappings and p_action_mappings."""
-        logger.info('Updating workflow_history...')
+           depending on given p_review_state_mappings and p_action_mappings.
+           Update also various parameters of the MeetingConfig
+           that are using states and transitions."""
+        logger.info(
+            'Updating workflow states/transitions changes for elements of type "%s"...'
+            % query or related_to)
+        # workflow_history
+        # manage query if not given
+        if not query:
+            if related_to == 'MeetingItem':
+                query = {'meta_type': 'MeetingItem'}
+            else:
+                query = {'object_provides': IMeeting.__identifier__}
         brains = self.portal.portal_catalog(**query)
         pghandler = ZLogHandler(steps=1000)
         pghandler.init('Updating workflow_history', len(brains))
@@ -140,9 +157,34 @@ class Migrator(BaseMigrator):
                     if event['review_state'] in review_state_mappings:
                         event['review_state'] = review_state_mappings[event['review_state']]
                         itemOrMeeting._p_changed = True
-                    if event['action'] in action_mappings:
-                        event['action'] = action_mappings[event['action']]
+                    if event['action'] in transition_mappings:
+                        event['action'] = transition_mappings[event['action']]
                         itemOrMeeting._p_changed = True
+        # MeetingConfigs
+        import ipdb; ipdb.set_trace()
+        state_attrs = ITEM_WF_STATE_ATTRS if related_to == 'MeetingItem' else MEETING_WF_STATE_ATTRS
+        tr_attrs = ITEM_WF_TRANSITION_ATTRS if related_to == 'MeetingItem' else MEETING_WF_TRANSITION_ATTRS
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            # state_attrs
+            for state_attr in state_attrs:
+                values = getattr(cfg, state_attr)
+                for original, replacement in review_state_mappings.items():
+                    values = replace_in_list(values, original, replacement)
+                    # try also to replace a value like 'Meeting.frozen'
+                    original = '%s.%s' % (related_to, original)
+                    replacement = '%s.%s' % (related_to, replacement)
+                    values = replace_in_list(values, original, replacement)
+                setattr(cfg, state_attr, tuple(values))
+            # transition_attrs
+            for tr_attr in tr_attrs:
+                values = getattr(cfg, tr_attr)
+                for original, replacement in transition_mappings.items():
+                    values = replace_in_list(values, original, replacement)
+                    # try also to replace a value like 'Meeting.freeze'
+                    original = '%s.%s' % (related_to, original)
+                    replacement = '%s.%s' % (related_to, replacement)
+                    values = replace_in_list(values, original, replacement)
+                setattr(cfg, tr_attr, tuple(values))
 
     def addCatalogIndexesAndColumns(self, indexes=True, columns=True, update_metadata=True):
         """ """

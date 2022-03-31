@@ -1612,13 +1612,13 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
     def _visible_for_groups(self):
         """ """
         groups = []
-        if self.context.confidential:
+        confidential = getattr(self.context, 'confidential', False)
+        if confidential:
             groups = self._compute_visible_for_groups()
 
         # apply security if confidential or going from confidential to not confidential
         # in this case, the 'View' permission was not acquired
-        if self.context.confidential or \
-           not self.context.acquiredRolesAreUsedBy('View'):
+        if confidential or not self.context.acquiredRolesAreUsedBy('View'):
             self._apply_visible_groups_security(groups)
         return groups
 

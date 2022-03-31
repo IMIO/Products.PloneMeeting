@@ -346,7 +346,11 @@ def _addIsolatedState(new_state_id,
                       back_transition_id,
                       itemWorkflow,
                       back_transition_guard_expr_name='mayCorrect()',
-                      base_state_id='accepted'):
+                      base_state_id='accepted',
+                      origin_transition_title=None,
+                      origin_transition_icon=None,
+                      back_transition_title=None,
+                      back_transition_icon=None):
     """Add an isolated state with transitions go and back from/to another state."""
     wf = itemWorkflow
     # create new state
@@ -358,17 +362,29 @@ def _addIsolatedState(new_state_id,
         new_state.setPermission(permission, 0, roles)
 
     # transitions
-    for transition_id, destination_state_id, guard_expr_name in (
-            (origin_transition_id, new_state_id, origin_transition_guard_expr_name),
-            (back_transition_id, origin_state_id, back_transition_guard_expr_name)):
+    # manage title if not given
+    if origin_transition_title is None:
+        origin_transition_title = origin_transition_id
+    if back_transition_title is None:
+        back_transition_title = back_transition_id
+    # manage iconif not given
+    if not origin_transition_icon:
+        origin_transition_icon = origin_transition_id
+    if not back_transition_icon:
+        back_transition_icon = back_transition_id
+    for transition_id, transition_title, destination_state_id, guard_expr_name, transition_icon in (
+            (origin_transition_id, origin_transition_title, new_state_id,
+             origin_transition_guard_expr_name, origin_transition_icon),
+            (back_transition_id, back_transition_title, origin_state_id,
+             back_transition_guard_expr_name, back_transition_icon)):
         if transition_id not in wf.transitions:
             wf.transitions.addTransition(transition_id)
             transition = wf.transitions[transition_id]
             transition.setProperties(
-                title=transition_id,
+                title=transition_title,
                 new_state_id=destination_state_id, trigger_type=1, script_name='',
                 actbox_name=transition_id, actbox_url='',
-                actbox_icon='%(portal_url)s/{0}.png'.format(transition_id),
+                actbox_icon='%(portal_url)s/{0}.png'.format(transition_icon),
                 actbox_category='workflow',
                 props={'guard_expr': 'python:here.wfConditions().{0}'.format(guard_expr_name)})
 
