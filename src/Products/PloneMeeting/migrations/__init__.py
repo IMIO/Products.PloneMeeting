@@ -400,21 +400,31 @@ class Migrator(BaseMigrator):
         pghandler.finish()
         logger.info('Done.')
 
-    def cleanItemColumns(self, to_remove=[], to_replace={}):
+    def updateItemColumns(self,
+                          field_names=('itemColumns',
+                                       'availableItemsListVisibleColumns',
+                                       'itemsListVisibleColumns'),
+                          to_remove=[],
+                          to_replace={},
+                          to_add=[]):
         '''When a column is no more available.'''
         logger.info('Cleaning MeetingConfig columns related fields, '
-                    'removing columns "%s" and replacing "%s"...'
-                    % (', '.join(to_remove), ', '.join(to_replace.keys())))
+                    'removing columns "%s", replacing "%s" and adding "%s"...'
+                    % (', '.join(to_remove),
+                       ', '.join(to_replace.keys()),
+                       ', '.join(to_add)))
         for cfg in self.tool.objectValues('MeetingConfig'):
-            for field_name in ('itemColumns',
-                               'availableItemsListVisibleColumns',
-                               'itemsListVisibleColumns'):
+            for field_name in field_names:
                 field = cfg.getField(field_name)
                 keys = field.get(cfg)
                 adapted_keys = [k for k in keys if k not in to_remove]
                 for orignal_value, new_value in to_replace.items():
                     adapted_keys = replace_in_list(adapted_keys, orignal_value, new_value)
+                for col_to_add in to_add:
+                    if col_to_add not in adapted_keys:
+                        adapted_keys.append(col_to_add)
                 field.set(cfg, adapted_keys)
+            cfg.updateCollectionColumns()
         logger.info('Done.')
 
     def cleanItemFilters(self, to_remove=[], to_add=[]):
