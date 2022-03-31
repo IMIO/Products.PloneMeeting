@@ -443,9 +443,10 @@ input#otherMeetingConfigsClonableToFieldTitle {
     width: 99%;
 }
 /* add right margin when field displayed in table so table cells are not sticked togheter,
-   moreover, especially on MeetingConfig view,
+   moreover, especially on MeetingConfig view and contacts dashboards,
    avoid too large values overflowing the screen horizontally */
-table td div.field {
+table td div.field,
+table td div.additional-infos {
    margin-right: 1em;
    word-break: break-word;
 }
@@ -788,6 +789,7 @@ body[class^='template-view portaltype-content'] div#viewlet-below-content-body,
 body[class^='template-view portaltype-meetingadvice'] div#viewlet-below-content-body,
 body[class^='template-view portaltype-meetingcategory'] div#viewlet-below-content-body,
 /* MeetingConfig */
+body.template-listing_view div#viewlet-below-content-body,
 body.template-documentviewer div#viewlet-below-content-body,
 body.template-base_view div#viewlet-below-content-body,
 body.template-meeting_view div#viewlet-below-content-body,
@@ -812,6 +814,7 @@ body.template-edit div.formControls,
 body.template-meeting div.formControls,
 div.overlay div.formControls,
 body[class^='template-view portaltype-meetingadvice'] div#viewlet-below-content-body,
+body[class^='template-documentviewer portaltype-configurablepodtemplate'] div#viewlet-below-content-body,
 body.template-meetingitem_view div#viewlet-below-content-body {
     position: sticky;
     bottom: 10px;
@@ -1600,9 +1603,9 @@ div.item-linkeditems div.collapsible:before {
 
 /* limit left space on the faceted form of items to present,
    define width so we do not have the width scrollbar */
-body.template-meeting_available_items_view div#faceted-form {
+body.template-meeting_available_items_view {
     margin-left: -0.5em;
-    width: 99.5%;
+    width: 99%;
 }
 body.template-meeting_available_items_view #portal-column-content.cell.width-full.position-0 {
    width: 100%;

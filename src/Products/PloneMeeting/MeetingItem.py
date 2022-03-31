@@ -19,6 +19,7 @@ from DateTime import DateTime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import get_vocab
+from imio.helpers.content import get_vocab_values
 from imio.helpers.content import safe_delattr
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToCatalogBrain
@@ -1662,7 +1663,7 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         multiValued=1,
-        vocabulary='listOtherMeetingConfigsClonableTo',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.other_mcs_clonable_to_vocabulary',
     ),
     LinesField(
         name='otherMeetingConfigsClonableToEmergency',
@@ -1676,7 +1677,7 @@ schema = Schema((
         optional=True,
         enforceVocabulary=True,
         multiValued=1,
-        vocabulary='listOtherMeetingConfigsClonableToEmergency',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.other_mcs_clonable_to_emergency_vocabulary',
     ),
     LinesField(
         name='otherMeetingConfigsClonableToPrivacy',
@@ -1690,7 +1691,7 @@ schema = Schema((
         optional=True,
         enforceVocabulary=True,
         multiValued=1,
-        vocabulary='listOtherMeetingConfigsClonableToPrivacy',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.other_mcs_clonable_to_privacy_vocabulary',
     ),
     StringField(
         name='otherMeetingConfigsClonableToFieldTitle',
@@ -4506,7 +4507,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res = 1
         elif insertMethod == 'on_other_mc_to_clone_to':
             toCloneTo = self.getOtherMeetingConfigsClonableTo()
-            values = self.listOtherMeetingConfigsClonableTo().keys()
+            values = get_vocab_values(
+                self,
+                'Products.PloneMeeting.vocabularies.other_mcs_clonable_to_vocabulary')
             if not toCloneTo:
                 res = len(values) + 1
             else:
@@ -5351,7 +5354,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Display otherMeetingConfigsClonableTo with eventual
            emergency and privacy informations.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        vocab = self.listOtherMeetingConfigsClonableTo()
+        vocab = get_vocab(self, 'Products.PloneMeeting.vocabularies.other_mcs_clonable_to_vocabulary')
 
         # emergency
         emergency_msg = translate('Emergency while presenting in other MC',
@@ -5380,7 +5383,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         for otherMC in self.getOtherMeetingConfigsClonableTo():
             isSecret = otherMC in self.getOtherMeetingConfigsClonableToPrivacy()
-            cfgTitle = safe_unicode(vocab.getValue(otherMC))
+            cfgTitle = safe_unicode(vocab.getTermByToken(otherMC).title)
             displayEmergency = False
             displayPrivacy = False
             if otherMC in self.getOtherMeetingConfigsClonableToEmergency():

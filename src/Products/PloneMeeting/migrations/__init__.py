@@ -9,6 +9,7 @@
 from collections import OrderedDict
 from collective.behavior.talcondition.behavior import ITALCondition
 from collective.documentgenerator.search_replace.pod_template import SearchAndReplacePODTemplates
+from collective.documentgenerator.utils import update_oo_config
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import ICriteria
 from imio.helpers.cache import cleanRamCacheFor
@@ -56,6 +57,8 @@ class Migrator(BaseMigrator):
             self.cfgsAdvicesInvalidation[cfg.getId()] = cfg.getEnableAdviceInvalidation()
             cfg.setEnableAdviceInvalidation(False)
         self.profile_name = u'profile-Products.PloneMeeting:default'
+        # update oo port for collective.documentgenerator
+        update_oo_config()
 
     def reorderSkinsLayers(self):
         """Reapply skins of Products.PloneMeeting + self.profile_name."""

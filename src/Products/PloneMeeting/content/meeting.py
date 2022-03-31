@@ -64,6 +64,7 @@ from Products.PloneMeeting.widgets.pm_orderedselect import PMOrderedSelectFieldW
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
 from Products.PloneMeeting.widgets.pm_textarea import get_textarea_value
 from Products.PloneMeeting.widgets.pm_textarea import PMTextAreaFieldWidget
+from z3c.form.browser.checkbox import CheckBoxFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.component import adapts
@@ -185,6 +186,11 @@ class IMeeting(IDXMeetingContent):
         title=_(u'title_mid_date'),
         required=False)
 
+    form.widget('mid_start_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
+    mid_start_date = schema.Datetime(
+        title=_(u'title_mid_start_date'),
+        required=False)
+
     form.widget('end_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
     end_date = schema.Datetime(
         title=_(u'title_end_date'),
@@ -258,6 +264,13 @@ class IMeeting(IDXMeetingContent):
     videoconference = schema.Bool(
         title=_(u'title_videoconference'),
         default=False,
+        required=False)
+
+    form.widget('adopts_next_agenda_of', CheckBoxFieldWidget, multiple='multiple')
+    adopts_next_agenda_of = schema.List(
+        title=_("title_adopts_next_agenda_of"),
+        value_type=schema.Choice(
+            vocabulary="Products.PloneMeeting.vocabularies.other_mcs_clonable_to_vocabulary"),
         required=False)
 
     form.widget('assembly', PMTextAreaFieldWidget)
@@ -432,10 +445,12 @@ class IMeeting(IDXMeetingContent):
 
     model.fieldset('dates_and_data',
                    label=_(u"fieldset_dates_and_data"),
-                   fields=['date', 'start_date', 'mid_date', 'end_date',
+                   fields=['date', 'start_date', 'mid_date',
+                           'mid_start_date', 'end_date',
                            'approval_date', 'convocation_date',
                            'validation_deadline', 'freeze_deadline',
-                           'place', 'place_other', 'videoconference',
+                           'place', 'place_other',
+                           'videoconference', 'adopts_next_agenda_of',
                            'pre_meeting_date', 'pre_meeting_place',
                            'extraordinary_session'])
 
@@ -803,6 +818,9 @@ class Meeting(Container):
         'mid_date':
             {'optional': True,
              'condition': ""},
+        'mid_start_date':
+            {'optional': True,
+             'condition': ""},
         'end_date':
             {'optional': True,
              'condition': ""},
@@ -828,6 +846,9 @@ class Meeting(Container):
              'condition': "python:view.show_field('place') and "
                 "(view.mode != 'display' or context.place == u'other')"},
         'videoconference':
+            {'optional': True,
+             'condition': ""},
+        'adopts_next_agenda_of':
             {'optional': True,
              'condition': ""},
         'extraordinary_session':
@@ -1868,6 +1889,9 @@ class Meeting(Container):
         # Set, by default, mid date to start date + 1 hour.
         if 'mid_date' in used_attrs and not self.mid_date:
             self.mid_date = self.date + timedelta(hours=1)
+        # Set, by default, mid_start_date to start date + 1 hour.
+        if 'mid_start_date' in used_attrs and not self.mid_start_date:
+            self.mid_start_date = self.date + timedelta(hours=1)
         # Set, by default, end date to start date + 2 hours.
         if 'end_date' in used_attrs and not self.end_date:
             self.end_date = self.date + timedelta(hours=2)

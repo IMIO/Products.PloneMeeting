@@ -10,6 +10,7 @@ from collective.contact.plonegroup.utils import get_organizations
 from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedLayout
 from imio.helpers.content import get_vocab
+from imio.helpers.content import get_vocab_values
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from zope.event import notify
@@ -759,9 +760,8 @@ class testFaceted(PloneMeetingTestCase):
         pmFolder = self.getMeetingFolder()
         searches = self.meetingConfig.searches
         searchAllItems = searches.searches_items.searchallitems
-        vocab = get_vocab(pmFolder,
-                          "Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary",
-                          only_factory=True)
+        vocab_name = "Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary"
+        vocab = get_vocab(pmFolder, vocab_name, only_factory=True)
         self.assertTrue("/pmCreator1/" in vocab(searchAllItems, pmFolder)._terms[0].title[1])
         # as pmCreator1b
         self.changeUser('pmCreator1b')
@@ -775,6 +775,15 @@ class testFaceted(PloneMeetingTestCase):
         searchMyItems.setTitle(u'My items edited')
         notify(ObjectModifiedEvent(searchMyItems))
         self.assertEqual(vocab(searchAllItems, pmFolder)._terms[0].title[0], u'My items edited')
+        # invalidated when user groups changed
+        # make pmCreator1b no more a creator
+        vocab_values = get_vocab_values(searchAllItems, vocab_name, **{'real_context': pmFolder})
+        self._removePrincipalFromGroups(self.member.id, [self.developers_creators])
+        no_group_vocab_values = get_vocab_values(searchAllItems, vocab_name, **{'real_context': pmFolder})
+        self.assertNotEqual(vocab_values, no_group_vocab_values)
+        self._addPrincipalToGroup(self.member.id, self.developers_observers)
+        observer_vocab_values = get_vocab_values(searchAllItems, vocab_name, **{'real_context': pmFolder})
+        self.assertNotEqual(no_group_vocab_values, observer_vocab_values)
 
     def test_pm_AdviceTypesVocabularyMCAware(self):
         '''Test the "Products.PloneMeeting.vocabularies.advicetypesvocabulary"

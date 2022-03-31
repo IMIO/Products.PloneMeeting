@@ -2,9 +2,29 @@ Changelog
 =========
 
 
-4.2rc21 (unreleased)
+4.2rc22 (unreleased)
 --------------------
 
+- Adapted `Migrate_To_4200._removeBrokenAnnexes`, check that annex UID is in
+  his parent's `categorized_elements`, removes it otherwise.
+  [gbastien]
+- Reintroduced `PMConditionAwareCollectionVocabulary._cache_invalidation_key`
+  override to take user groups into account so cache is invalidated when user groups changed.
+  [gbastien]
+- Added new field `Meeting.adopts_next_agenda_of`.
+  [gbastien]
+- Added new field `Meeting.mid_start_date`.
+  [gbastien]
+- Fixed display of `overlays` and `tooltipsters` on meeting view in the `iframe`
+  displaying available items.
+  It was sometimes not completelly displayed, now the iframe will resize correctly.
+  [gbastien]
+- Make `actionspanel` always visible on `DashboardCollection` and `ConfigurablePODTemplate`.
+  [gbastien]
+- Update `collective.documentgenerator oo_port` on install and in every migrations.
+  [gbastien]
+- Handle the `from_migration_to_4200=False` parameter when calling `Migrate_To_4201`.
+  [gbastien]
 - Completed POD templates instructions replacements in `Migrate_To_4200`.
   getExtraordinarySession() -> extraordinary_session
   [aduchene]

@@ -23,6 +23,7 @@ from imio.annex.adapters import AnnexPrettyLinkAdapter
 from imio.helpers.adapters import MissingTerms
 from imio.helpers.catalog import merge_queries
 from imio.helpers.content import get_vocab
+from imio.helpers.content import get_vocab_values
 from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.adapters import BaseImioHistoryAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
@@ -267,8 +268,10 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         ann = IAnnotations(self.context)
         other_mc_to_clone_to = [
             destMeetingConfigId for destMeetingConfigId in self.context.getOtherMeetingConfigsClonableTo()]
+        destMeetingConfigIds = get_vocab_values(
+            self.context, 'Products.PloneMeeting.vocabularies.other_mcs_clonable_to_vocabulary')
         other_mc_cloned_to_ann_keys = [
-            destMeetingConfigId for destMeetingConfigId in self.context.listOtherMeetingConfigsClonableTo().keys()
+            destMeetingConfigId for destMeetingConfigId in destMeetingConfigIds
             if self.context._getSentToOtherMCAnnotationKey(destMeetingConfigId) in ann]
 
         # an advice WF state changed, this is useful for the waiting_advices icon
@@ -608,10 +611,10 @@ class MeetingPrettyLinkAdapter(PrettyLinkAdapter):
         res = list(res)
         del res[1]
         res.append(meeting_date)
-        # check also on 2 usecases adding an icon,
-        # extraordinary_session/videoconference
+        # check also on usecases adding an icon,
         res.append(self.context.extraordinary_session)
         res.append(self.context.videoconference)
+        res.append(self.context.adopts_next_agenda_of)
         return tuple(res)
 
     @ram.cache(getLink_cachekey)
@@ -632,6 +635,15 @@ class MeetingPrettyLinkAdapter(PrettyLinkAdapter):
         if self.context.videoconference:
             res.append(('videoconference.png',
                         translate('this_meeting_is_videoconference',
+                                  domain="PloneMeeting",
+                                  context=self.request)))
+        if self.context.adopts_next_agenda_of:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            res.append(('adopts_next_agenda_of.png',
+                        translate('this_meeting_adopts_next_agenda_of',
+                                  mapping={'cfg_titles': u", ".join([
+                                    safe_unicode(tool.get(cfg_id).Title()) for cfg_id
+                                    in self.context.adopts_next_agenda_of])},
                                   domain="PloneMeeting",
                                   context=self.request)))
         return res
@@ -913,7 +925,7 @@ def query_meeting_config_modified_cachekey(method, self):
 
 
 def forever_cachekey(method, self):
-    '''cachekey method for caching for the time of a request.'''
+    '''cachekey method for caching forever until cache is invalidated.'''
     return True
 
 
