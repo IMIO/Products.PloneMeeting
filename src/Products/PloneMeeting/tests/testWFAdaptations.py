@@ -966,6 +966,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self._turnUserIntoPrereviewer(self.member)
         # check while the wfAdaptation is not activated
+        self._activate_wfas(())
         self._item_validation_shortcuts_inactive()
         # activate the wfAdaptation and check
         self._activate_wfas(('item_validation_shortcuts', ))
