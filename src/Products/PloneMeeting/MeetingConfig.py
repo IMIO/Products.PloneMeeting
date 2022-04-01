@@ -2795,6 +2795,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     # Names of workflow adaptations, ORDER IS IMPORTANT!
     wfAdaptations = ('item_validation_shortcuts',
+                     'item_validation_validate_shortcuts',
                      'only_creator_may_delete',
                      # first define meeting workflow state removal
                      'no_freeze',

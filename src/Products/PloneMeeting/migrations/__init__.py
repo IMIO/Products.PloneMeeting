@@ -34,6 +34,7 @@ from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.i18n import translate
 
+import itertools
 import logging
 import os
 
@@ -449,6 +450,21 @@ class Migrator(BaseMigrator):
             usedItemAttrs = list(cfg.getUsedItemAttributes())
             adapted_usedItemAttrs = [k for k in usedItemAttrs if k not in to_remove]
             cfg.setUsedItemAttributes(adapted_usedItemAttrs)
+        logger.info('Done.')
+
+    def removeUnusedWorkflows(self):
+        '''Check used workflows and remove workflows containing '__' that are not used.'''
+        logger.info('Cleaning unused workflows...')
+        used_workflows = [wf_ids for portal_type_id, wf_ids in
+                          self.wfTool._chains_by_type.items() if wf_ids]
+        pm_workflows = tuple(set(sorted([wf_id for wf_id in
+                                         itertools.chain.from_iterable(used_workflows)
+                                         if '__' in wf_id])))
+        to_delete = [wf_id for wf_id in self.wfTool.getWorkflowIds()
+                     if '__' in wf_id and wf_id not in pm_workflows]
+        if to_delete:
+            logger.warning('Removing following workflows: "%s"' % ', '.join(to_delete))
+            self.wfTool.manage_delObjects(to_delete)
         logger.info('Done.')
 
     def reloadMeetingConfigs(self, full=False):
