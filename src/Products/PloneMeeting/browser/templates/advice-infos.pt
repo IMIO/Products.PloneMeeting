@@ -1,20 +1,9 @@
 <tal:defines i18n:domain="PloneMeeting"
-    define="displayedReviewState python: view.displayedReviewState;
-            obj python: view.obj;
+    define="obj python: view.obj;
             advice python: view.advice;
             adviceType python: view.adviceType;
-            displayDefaultComplementaryMessage python: view.customMessageInfos['displayDefaultComplementaryMessage'];
-            displayAdviceReviewState python: view.customMessageInfos['displayAdviceReviewState'];">
-    <tal:displayAdviceReviewState condition="python: not displayedReviewState and displayAdviceReviewState and obj">
-      <tal:comment replace="nothing">This is a copy/paste of code here above, change both places when necessary...</tal:comment>
-      <div class="viewlet_workflowstate" i18n:domain="plone">
-        <span i18n:translate="label_state"></span>&nbsp;
-        <span tal:define="advice_state_infos python: view.state_infos(obj)"
-              tal:content="advice_state_infos/state_title"
-              tal:attributes="class string:state-${advice_state_infos/state_name}"></span>
-      </div>
-      <div style="clear: both;">&nbsp;</div>
-    </tal:displayAdviceReviewState>
+            displayDefaultComplementaryMessage python: view.customMessageInfos['displayDefaultComplementaryMessage'];">
+
 
     <tal:complementaryInfoMessage condition="displayDefaultComplementaryMessage">
         <tal:hiddenUnderRedaction condition="python: advice['advice_editable'] and adviceType == 'hidden_during_redaction'">
