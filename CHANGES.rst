@@ -21,6 +21,10 @@ Changelog
 - Factorized advice custom informations displayed in the advice popup in the
   `@@advice-infos` view so it can be displayed on the advice object view as well.
   [gbastien]
+- Avoid `UnicodeDecodeError` in `MeetingItem._updateAdvices` when comparing old
+  and new `adviceIndex`, this may happen with old `adviceIndex` containing the
+  `comment` as `str` whereas new value is stored as `unicode`.
+  [gbastien]
 - Added WFAdaptation `item_validation_shortcuts` that will let users change item
   state to any other item validation state (so between itemcreated and validated)
   depending on their groups.

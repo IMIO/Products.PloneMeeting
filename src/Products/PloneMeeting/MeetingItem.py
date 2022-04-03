@@ -6224,7 +6224,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                    old_adviceIndex=old_adviceIndex))
         self.REQUEST.set('currentlyUpdatingAdvice', False)
         indexes = []
-        if self.adviceIndex != old_adviceIndex:
+        try:
+            if self.adviceIndex != old_adviceIndex:
+                indexes += adapted.getAdviceRelatedIndexes()
+        except UnicodeDecodeError:
             indexes += adapted.getAdviceRelatedIndexes()
         return indexes
 
