@@ -21,6 +21,10 @@ Changelog
 - Factorized advice custom informations displayed in the advice popup in the
   `@@advice-infos` view so it can be displayed on the advice object view as well.
   [gbastien]
+- Avoid `UnicodeDecodeError` in `MeetingItem._updateAdvices` when comparing old
+  and new `adviceIndex`, this may happen with old `adviceIndex` containing the
+  `comment` as `str` whereas new value is stored as `unicode`.
+  [gbastien]
 
 4.2rc21 (2022-03-22)
 --------------------
