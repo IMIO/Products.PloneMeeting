@@ -240,7 +240,7 @@ class AdvicesIconsInfos(BrowserView):
         """ """
         res = False
         if self.context.adviceIndex[self.advice_id]['delay'] and not self.adviceIsInherited:
-            view = self.context.restrictedTraverse('@@advice-available-delays')
+            view = self.context.unrestrictedTraverse('@@advice-available-delays')
             view._initAttributes(self.advice_id)
             res = view.listSelectableDelays() or \
                 view._mayAccessDelayChangesHistory() or view._mayReinitializeDelay()
@@ -431,7 +431,7 @@ class AdviceView(DefaultView):
     def __call__(self):
         """Check if viewable by current user in case smart guy call the right url."""
         parent = self.context.aq_inner.aq_parent
-        self.advice_icons_infos = parent.restrictedTraverse('@@advices-icons-infos')
+        self.advice_icons_infos = parent.unrestrictedTraverse('@@advices-icons-infos')
         advice_type = parent._shownAdviceTypeFor(parent.adviceIndex[self.context.advice_group])
         self.advice_icons_infos._initAdvicesInfos(advice_type)
         self.advice_icons_infos._initAdviceInfos(self.context.advice_group)
@@ -495,7 +495,7 @@ class BaseAdviceInfoForm(AutoExtensibleForm, form.EditForm):
         '''Init @@advices-icons-infos and returns it.'''
         context = context or self.context
         # check if may remove inherited advice
-        advice_infos = context.restrictedTraverse('@@advices-icons-infos')
+        advice_infos = context.unrestrictedTraverse('@@advices-icons-infos')
         # initialize advice_infos
         advice_data = context.getAdviceDataFor(context, data['advice_uid'])
         advice_infos(context._shownAdviceTypeFor(advice_data))
