@@ -152,15 +152,16 @@ class Migrator(BaseMigrator):
         i = 0
         for brain in brains:
             i += 1
+            pghandler.report(i)
             itemOrMeeting = brain.getObject()
             for wf_name, events in itemOrMeeting.workflow_history.items():
                 for event in events:
                     if event['review_state'] in review_state_mappings:
                         event['review_state'] = review_state_mappings[event['review_state']]
-                        itemOrMeeting._p_changed = True
+                        itemOrMeeting.workflow_history._p_changed = True
                     if event['action'] in transition_mappings:
                         event['action'] = transition_mappings[event['action']]
-                        itemOrMeeting._p_changed = True
+                        itemOrMeeting.workflow_history._p_changed = True
         # MeetingConfigs
         state_attrs = ITEM_WF_STATE_ATTRS if related_to == 'MeetingItem' else MEETING_WF_STATE_ATTRS
         tr_attrs = ITEM_WF_TRANSITION_ATTRS if related_to == 'MeetingItem' else MEETING_WF_TRANSITION_ATTRS
