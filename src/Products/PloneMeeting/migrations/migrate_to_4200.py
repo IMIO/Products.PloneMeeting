@@ -916,7 +916,7 @@ class Migrate_To_4200(Migrator):
 
             # need to reindex new indexes before migrating Meeting to DX
             addOrUpdateIndexes(self.portal, indexInfos)
-            addOrUpdateColumns(self.portal, columnInfos)
+            addOrUpdateColumns(self.portal, columnInfos, update_metadata=False)
 
             # update various TAL expressions
             self.updateTALConditions("queryState", "query_state")
