@@ -61,6 +61,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                           'delayed',
                           'hide_decisions_when_under_writing',
                           'item_validation_shortcuts',
+                          'item_validation_validate_shortcuts',
                           'mark_not_applicable',
                           'meetingmanager_correct_closed_meeting',
                           'no_decide',
