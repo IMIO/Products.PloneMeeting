@@ -207,6 +207,7 @@ class MeetingItemWorkflowConditions(object):
         levels.reverse()
         found_last = False
         found_before_last = False
+        level = {}
         for level in levels:
             if self.tool.group_is_not_empty(self.context.getProposingGroup(), level['suffix']):
                 res = level['state']
