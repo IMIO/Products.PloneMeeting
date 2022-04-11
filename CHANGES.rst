@@ -25,6 +25,10 @@ Changelog
   and new `adviceIndex`, this may happen with old `adviceIndex` containing the
   `comment` as `str` whereas new value is stored as `unicode`.
   [gbastien]
+- Added possibility to execute migrations in several parts.
+  Migration to 4200 is adapted to be executed in 3 parts (
+  `main`, `update_local_roles`, `update workflow mappings/rebuild catalog`).
+  [gbastien]
 
 4.2rc21 (2022-03-22)
 --------------------
