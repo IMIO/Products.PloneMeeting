@@ -33,6 +33,7 @@ from Products.PloneMeeting.MeetingConfig import MEETING_WF_TRANSITION_ATTRS
 from Products.PloneMeeting.setuphandlers import columnInfos
 from Products.PloneMeeting.setuphandlers import indexInfos
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
+from Products.PloneMeeting.utils import reindex_object
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.i18n import translate
 
@@ -185,7 +186,9 @@ class Migrator(BaseMigrator):
         # update fixed objects
         for obj in objsToUpdate:
             obj.update_local_roles()
-            obj.reindexObject()
+            # use reindex_object and pass some no_idxs because
+            # calling reindexObject will update modified
+            reindex_object(obj, no_idxs=['SearchableText', 'Title', 'Description'])
         # MeetingConfigs
         state_attrs = ITEM_WF_STATE_ATTRS if related_to == 'MeetingItem' else MEETING_WF_STATE_ATTRS
         tr_attrs = ITEM_WF_TRANSITION_ATTRS if related_to == 'MeetingItem' else MEETING_WF_TRANSITION_ATTRS

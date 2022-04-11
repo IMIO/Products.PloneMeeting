@@ -90,6 +90,7 @@ from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import monthsIds
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import org_id_to_uid
+from Products.PloneMeeting.utils import reindex_object
 from Products.PloneMeeting.utils import workday
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from ZODB.POSException import ConflictError
@@ -1303,7 +1304,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 annex.portal_type = 'annexDecision'
             else:
                 annex.portal_type = 'annex'
-            annex.reindexObject()
+            # reindexObject without idxs would update modified
+            reindex_object(annex, no_idxs=['SearchableText'])
             # now it should not fail anymore
             get_category_object(annex, annex.content_category)
 
