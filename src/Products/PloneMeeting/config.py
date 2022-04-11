@@ -191,25 +191,6 @@ READER_USECASES = {
     'confidentialannex': 'AnnexReader',
 }
 
-ploneMeetingRoles = (
-    # The standard Plone 'Manager'
-    'Manager',
-    # The important guy that creates and manages meetings (global role)
-    'MeetingManager',
-    # Guys that may create or update items (local role: they can only update
-    # items created by people belonging to some group)
-    'MeetingMember',
-    # Guys that may pre-review items (local role) [Only relevant when workflow
-    # adaptation "pre-validation" is enabled]
-    'MeetingPreReviewer',
-    # Guys that may review meeting items (local role)
-    'MeetingReviewer',
-    # Guys who may see items of people from their group (local role)
-    'MeetingObserverLocal',
-    # Guy who may see meetings and items once published (global role).
-    'MeetingObserverGlobal',
-)
-
 # Suffixes that may evaluate MeetingItem.completeness
 ITEM_COMPLETENESS_EVALUATORS = ('reviewers', 'prereviewers', )
 # Suffixes that can ask new evaluation of MeetingItem.completeness if set to 'incomplete'
