@@ -166,6 +166,7 @@ class Migrator(BaseMigrator):
         pghandler = ZLogHandler(steps=1000)
         pghandler.init('Updating workflow_history', len(brains))
         i = 0
+        objsToUpdate = []
         for brain in brains:
             i += 1
             pghandler.report(i)
@@ -175,9 +176,16 @@ class Migrator(BaseMigrator):
                     if event['review_state'] in review_state_mappings:
                         event['review_state'] = review_state_mappings[event['review_state']]
                         itemOrMeeting.workflow_history._p_changed = True
+                        objsToUpdate.append(itemOrMeeting)
                     if event['action'] in transition_mappings:
                         event['action'] = transition_mappings[event['action']]
                         itemOrMeeting.workflow_history._p_changed = True
+                        # not necessary if just an action changed?
+                        # objsToUpdate.append(itemOrMeeting)
+        # update fixed objects
+        for obj in objsToUpdate:
+            obj.update_local_roles()
+            obj.reindexObject()
         # MeetingConfigs
         state_attrs = ITEM_WF_STATE_ATTRS if related_to == 'MeetingItem' else MEETING_WF_STATE_ATTRS
         tr_attrs = ITEM_WF_TRANSITION_ATTRS if related_to == 'MeetingItem' else MEETING_WF_TRANSITION_ATTRS
