@@ -25,6 +25,10 @@ Changelog
   and new `adviceIndex`, this may happen with old `adviceIndex` containing the
   `comment` as `str` whereas new value is stored as `unicode`.
   [gbastien]
+- Added possibility to execute migrations in several parts.
+  Migration to 4200 is adapted to be executed in 3 parts (
+  `main`, `update_local_roles`, `update workflow mappings/rebuild catalog`).
+  [gbastien]
 - Added WFAdaptation `item_validation_shortcuts` that will let users change item
   state to any other item validation state (so between itemcreated and validated)
   depending on their groups.

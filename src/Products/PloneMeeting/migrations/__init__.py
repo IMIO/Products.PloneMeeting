@@ -18,6 +18,8 @@ from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.content import object_values
 from imio.helpers.content import uuidToObject
 from imio.migrator.migrator import Migrator as BaseMigrator
+from imio.pyutils.system import memory
+from imio.pyutils.system import process_memory
 from imio.pyutils.utils import replace_in_list
 from natsort import humansorted
 from operator import attrgetter
@@ -65,6 +67,20 @@ class Migrator(BaseMigrator):
         self.profile_name = u'profile-Products.PloneMeeting:default'
         # update oo port for collective.documentgenerator
         update_oo_config()
+        self.run_part = os.getenv('FUNC_PART', '')
+
+    def is_in_part(self, part):
+        if self.run_part == part:
+            logger.info("DOING PART '{}'".format(part))
+            return True
+        elif self.run_part == '':
+            self.log_mem("PART {}".format(part))  # print intermediate part memory info if run in one step
+            return True
+        return False
+
+    def log_mem(self, tag=''):
+        if self.display_mem:
+            logger.info('Mem used {} at {}, ({})'.format(process_memory(), tag, memory()))
 
     def reorderSkinsLayers(self):
         """Reapply skins of Products.PloneMeeting + self.profile_name."""

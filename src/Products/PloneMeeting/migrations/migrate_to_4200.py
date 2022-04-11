@@ -863,189 +863,192 @@ class Migrate_To_4200(Migrator):
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
 
-        self._fixPODTemplatesInstructions()
-        self._fixFacetedFilters()
+        if self.is_in_part('a'):  # main step, everything but update local roles and refresh catalog
+            self._fixPODTemplatesInstructions()
+            self._fixFacetedFilters()
 
-        # apply correct batch actions marker on searches_* folders
-        self._updateSearchedFolderBatchActionsMarkerInterface()
+            # apply correct batch actions marker on searches_* folders
+            self._updateSearchedFolderBatchActionsMarkerInterface()
 
-        # update cron4plone
-        self._updateCron4Plone()
+            # update cron4plone
+            self._updateCron4Plone()
 
-        # update preferred meeting path on items
-        self._updateItemPreferredMeetingLink()
-        self._migrateItemPredecessorReference()
-        self._updateConfigForAdviceAskedAgainNoMoreOptional()
-        self._updateItemGroupsInCharge()
-        self._correctAccessToPODTemplates()
+            # update preferred meeting path on items
+            self._updateItemPreferredMeetingLink()
+            self._migrateItemPredecessorReference()
+            self._updateConfigForAdviceAskedAgainNoMoreOptional()
+            self._updateItemGroupsInCharge()
+            self._correctAccessToPODTemplates()
 
-        # remove useless catalog indexes and columns, were renamed to snake case
-        self.removeUnusedIndexes(
-            indexes=['getItemIsSigned',
-                     'sendToAuthority',
-                     'toDiscuss',
-                     'getDate',
-                     'linkedMeetingUID',
-                     'linkedMeetingDate',
-                     'hasAnnexesToPrint',
-                     'hasAnnexesToSign',
-                     'item_boolean_indexes'])
-        self.removeUnusedColumns(
-            columns=['toDiscuss',
-                     'getDate',
-                     'getGroupInCharge',
-                     'getItemNumber',
-                     'linkedMeetingUID',
-                     'linkedMeetingDate'])
+            # remove useless catalog indexes and columns, were renamed to snake case
+            self.removeUnusedIndexes(
+                indexes=['getItemIsSigned',
+                         'sendToAuthority',
+                         'toDiscuss',
+                         'getDate',
+                         'linkedMeetingUID',
+                         'linkedMeetingDate',
+                         'hasAnnexesToPrint',
+                         'hasAnnexesToSign',
+                         'item_boolean_indexes'])
+            self.removeUnusedColumns(
+                columns=['toDiscuss',
+                         'getDate',
+                         'getGroupInCharge',
+                         'getItemNumber',
+                         'linkedMeetingUID',
+                         'linkedMeetingDate'])
 
-        # reinstall workflows before updating workflowAdaptations
-        self.runProfileSteps('Products.PloneMeeting', steps=['workflow'], profile='default')
-        # make sure new portal_type Meeting is installed
-        self.removeUnusedPortalTypes(portal_types=['Meeting'])
-        self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'typeinfo')
-        # configure wfAdaptations before reinstall
-        self._configureItemWFValidationLevels()
+            # reinstall workflows before updating workflowAdaptations
+            self.runProfileSteps('Products.PloneMeeting', steps=['workflow'], profile='default')
+            # make sure new portal_type Meeting is installed
+            self.removeUnusedPortalTypes(portal_types=['Meeting'])
+            self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'typeinfo')
+            # configure wfAdaptations before reinstall
+            self._configureItemWFValidationLevels()
 
-        # remove broken annexes after item WF update
-        # because we need item.query_state and it will only work if item WF ready
-        self._removeBrokenAnnexes()
+            # remove broken annexes after item WF update
+            # because we need item.query_state and it will only work if item WF ready
+            self._removeBrokenAnnexes()
 
-        # init MeetingConfig.itemInternalNotesEditableBy after _configureItemWFValidationLevels
-        self._initMeetingConfigItemInternalNotesEditableBy()
+            # init MeetingConfig.itemInternalNotesEditableBy after _configureItemWFValidationLevels
+            self._initMeetingConfigItemInternalNotesEditableBy()
 
-        # need to reindex new indexes before migrating Meeting to DX
-        addOrUpdateIndexes(self.portal, indexInfos)
-        addOrUpdateColumns(self.portal, columnInfos)
+            # need to reindex new indexes before migrating Meeting to DX
+            addOrUpdateIndexes(self.portal, indexInfos)
+            addOrUpdateColumns(self.portal, columnInfos)
 
-        # update various TAL expressions
-        self.updateTALConditions("queryState", "query_state")
-        self.updateTALConditions("getDate()", "date")
-        self.updateTALConditions("getStartDate()", "start_date")
-        self.updateTALConditions("getEndDate()", "end_date")
-        self.updateTALConditions("isManager(context)",
-                                 "isManager(cfg")
-        self.updateTALConditions("isManager(here)",
-                                 "isManager(cfg)")
-        self.updateTALConditions("isManager(obj)",
-                                 "isManager(cfg)")
-        self.updateTALConditions("isManager(item)",
-                                 "isManager(cfg)")
+            # update various TAL expressions
+            self.updateTALConditions("queryState", "query_state")
+            self.updateTALConditions("getDate()", "date")
+            self.updateTALConditions("getStartDate()", "start_date")
+            self.updateTALConditions("getEndDate()", "end_date")
+            self.updateTALConditions("isManager(context)",
+                                     "isManager(cfg")
+            self.updateTALConditions("isManager(here)",
+                                     "isManager(cfg)")
+            self.updateTALConditions("isManager(obj)",
+                                     "isManager(cfg)")
+            self.updateTALConditions("isManager(item)",
+                                     "isManager(cfg)")
 
-        self.updateTALConditions("isManager(context, realManagers=True)",
-                                 "isManager(realManagers=True)")
-        self.updateTALConditions("isManager(here, realManagers=True)",
-                                 "isManager(realManagers=True)")
-        self.updateTALConditions("isManager(obj, realManagers=True)",
-                                 "isManager(realManagers=True)")
-        self.updateTALConditions("isManager(tool, realManagers=True)",
-                                 "isManager(realManagers=True)")
-        self.updateTALConditions("isManager(item, realManagers=True)",
-                                 "isManager(realManagers=True)")
+            self.updateTALConditions("isManager(context, realManagers=True)",
+                                     "isManager(realManagers=True)")
+            self.updateTALConditions("isManager(here, realManagers=True)",
+                                     "isManager(realManagers=True)")
+            self.updateTALConditions("isManager(obj, realManagers=True)",
+                                     "isManager(realManagers=True)")
+            self.updateTALConditions("isManager(tool, realManagers=True)",
+                                     "isManager(realManagers=True)")
+            self.updateTALConditions("isManager(item, realManagers=True)",
+                                     "isManager(realManagers=True)")
 
-        self.updateTALConditions("isManager(context, True)",
-                                 "isManager(realManagers=True)")
-        self.updateTALConditions("isManager(here, True)",
-                                 "isManager(realManagers=True)")
-        self.updateTALConditions("isManager(obj, True)",
-                                 "isManager(realManagers=True)")
-        self.updateTALConditions("isManager(tool, True)",
-                                 "isManager(realManagers=True)")
-        self.updateTALConditions("isManager(item, True)",
-                                 "isManager(realManagers=True)")
+            self.updateTALConditions("isManager(context, True)",
+                                     "isManager(realManagers=True)")
+            self.updateTALConditions("isManager(here, True)",
+                                     "isManager(realManagers=True)")
+            self.updateTALConditions("isManager(obj, True)",
+                                     "isManager(realManagers=True)")
+            self.updateTALConditions("isManager(tool, True)",
+                                     "isManager(realManagers=True)")
+            self.updateTALConditions("isManager(item, True)",
+                                     "isManager(realManagers=True)")
 
-        self.updateTALConditions("isManager(context,realManagers=True)",
-                                 "isManager(realManagers=True)")
-        self.updateTALConditions("isManager(here,realManagers=True)",
-                                 "isManager(realManagers=True)")
-        self.updateTALConditions("isManager(obj,realManagers=True)",
-                                 "isManager(realManagers=True)")
-        self.updateTALConditions("isManager(tool,realManagers=True)",
-                                 "isManager(realManagers=True)")
-        self.updateTALConditions("isManager(context,True)",
-                                 "isManager(realManagers=True)")
-        self.updateTALConditions("isManager(here,True)",
-                                 "isManager(realManagers=True)")
-        self.updateTALConditions("isManager(obj,True)",
-                                 "isManager(realManagers=True)")
-        self.updateTALConditions("isManager(tool,True)",
-                                 "isManager(realManagers=True)")
+            self.updateTALConditions("isManager(context,realManagers=True)",
+                                     "isManager(realManagers=True)")
+            self.updateTALConditions("isManager(here,realManagers=True)",
+                                     "isManager(realManagers=True)")
+            self.updateTALConditions("isManager(obj,realManagers=True)",
+                                     "isManager(realManagers=True)")
+            self.updateTALConditions("isManager(tool,realManagers=True)",
+                                     "isManager(realManagers=True)")
+            self.updateTALConditions("isManager(context,True)",
+                                     "isManager(realManagers=True)")
+            self.updateTALConditions("isManager(here,True)",
+                                     "isManager(realManagers=True)")
+            self.updateTALConditions("isManager(obj,True)",
+                                     "isManager(realManagers=True)")
+            self.updateTALConditions("isManager(tool,True)",
+                                     "isManager(realManagers=True)")
 
-        self.updateTALConditions(
-            "'pre_validation' in cfg.getWorkflowAdaptations()",
-            "'prevalidated' in cfg.getItemWFValidationLevels(data='state', only_enabled=True)")
-        self.updateTALConditions(".showHolidaysWarning(context)", ".showHolidaysWarning(cfg)")
+            self.updateTALConditions(
+                "'pre_validation' in cfg.getWorkflowAdaptations()",
+                "'prevalidated' in cfg.getItemWFValidationLevels(data='state', only_enabled=True)")
+            self.updateTALConditions(".showHolidaysWarning(context)", ".showHolidaysWarning(cfg)")
 
-        # replacements MeetingConfig item columns
-        self.updateItemColumns(
-            to_replace={'getPreferredMeetingDate': 'preferred_meeting_date',
-                        'linkedMeetingDate': 'meeting_date'})
+            # replacements MeetingConfig item columns
+            self.updateItemColumns(
+                to_replace={'getPreferredMeetingDate': 'preferred_meeting_date',
+                            'linkedMeetingDate': 'meeting_date'})
 
-        self._migrateKeepAccessToItemWhenAdviceIsGiven()
+            self._migrateKeepAccessToItemWhenAdviceIsGiven()
 
-        # MEETING TO DX
-        self._hook_before_meeting_to_dx()
-        self._migrateMeetingToDX()
-        self._hook_after_meeting_to_dx()
+            # MEETING TO DX
+            self._hook_before_meeting_to_dx()
+            self._migrateMeetingToDX()
+            self._hook_after_meeting_to_dx()
 
-        # update RichTextValue stored on DX types (advices)
-        self._fixRichTextValueMimeType()
+            # update RichTextValue stored on DX types (advices)
+            self._fixRichTextValueMimeType()
 
-        self.upgradeAll(omit=['Products.PloneMeeting:default',
-                              self.profile_name.replace('profile-', '')] + extra_omitted)
+            self.upgradeAll(omit=['Products.PloneMeeting:default',
+                                  self.profile_name.replace('profile-', '')] + extra_omitted)
 
-        # reinstall so versions are correctly shown in portal_quickinstaller
-        self.reinstall(profiles=['profile-Products.PloneMeeting:default', ],
-                       ignore_dependencies=False,
-                       dependency_strategy=DEPENDENCY_STRATEGY_NEW)
-        if self.profile_name != 'profile-Products.PloneMeeting:default':
-            self.reinstall(profiles=[self.profile_name, ],
+            # reinstall so versions are correctly shown in portal_quickinstaller
+            self.reinstall(profiles=['profile-Products.PloneMeeting:default', ],
                            ignore_dependencies=False,
                            dependency_strategy=DEPENDENCY_STRATEGY_NEW)
+            if self.profile_name != 'profile-Products.PloneMeeting:default':
+                self.reinstall(profiles=[self.profile_name, ],
+                               ignore_dependencies=False,
+                               dependency_strategy=DEPENDENCY_STRATEGY_NEW)
 
-        # configure new WFs
-        self.cleanMeetingConfigs(field_names=['itemDecidedStates', 'itemPositiveDecidedStates'])
+            # configure new WFs
+            self.cleanMeetingConfigs(field_names=['itemDecidedStates', 'itemPositiveDecidedStates'])
 
-        # init otherMeetingConfigsClonableToFieldXXX and XXXSuite/XXXEnd new fields
-        self.initNewHTMLFields(query={'meta_type': ('MeetingItem')})
+            # init otherMeetingConfigsClonableToFieldXXX and XXXSuite/XXXEnd new fields
+            self.initNewHTMLFields(query={'meta_type': ('MeetingItem')})
 
-        # reimport every advanced widgets (so except c0/c1/c2/c3)
-        self.updateFacetedFilters(xml_filename='upgrade_step_4200_add_item_widgets.xml')
-        self.updateFacetedFilters(
-            xml_filename='upgrade_step_4200_update_meeting_widgets.xml',
-            related_to="meetings")
-        self.updateFacetedFilters(
-            xml_filename='upgrade_step_4200_update_meeting_widgets.xml',
-            related_to="decisions")
-        self.updateFacetedFilters(reorder=False, to_delete=['c25'])
+            # reimport every advanced widgets (so except c0/c1/c2/c3)
+            self.updateFacetedFilters(xml_filename='upgrade_step_4200_add_item_widgets.xml')
+            self.updateFacetedFilters(
+                xml_filename='upgrade_step_4200_update_meeting_widgets.xml',
+                related_to="meetings")
+            self.updateFacetedFilters(
+                xml_filename='upgrade_step_4200_update_meeting_widgets.xml',
+                related_to="decisions")
+            self.updateFacetedFilters(reorder=False, to_delete=['c25'])
 
-        # set title_length=100 for portlet_todo
-        self._updatePortletTodoTitleLength()
+            # set title_length=100 for portlet_todo
+            self._updatePortletTodoTitleLength()
 
-        # update holidays
-        self.updateHolidays()
+            # update holidays
+            self.updateHolidays()
 
-        # add new collections, the "searchmyitemstoadvice" for example
-        self.addNewSearches()
+            # add new collections, the "searchmyitemstoadvice" for example
+            self.addNewSearches()
 
-        # adviser role able to add advice is now MeetingAdviser
-        self._fixItemAddAdvicePermission()
+            # adviser role able to add advice is now MeetingAdviser
+            self._fixItemAddAdvicePermission()
 
-        # add the Optimizate columns CKeditor style
-        self.addCKEditorStyle("table_optimization", "table", "style", "table-layout:auto;")
+            # add the Optimizate columns CKeditor style
+            self.addCKEditorStyle("table_optimization", "table", "style", "table-layout:auto;")
 
-        # update local_roles, workflow mappings and catalogs
-        self.warnings += self.tool.update_all_local_roles(redirect=False)
+        if self.is_in_part('b'):  # update_all_local_roles
+            # update local_roles, workflow mappings and catalogs
+            self.warnings += self.tool.update_all_local_roles(redirect=False)
 
-        self.refreshDatabase(workflows=True, catalogsToUpdate=[])
+        if self.is_in_part('c'):  # refresh catalog and workflow mappings
+            self.refreshDatabase(workflows=True, catalogsToUpdate=[])
 
-        # store meeting number of items
-        self._updateMeetingsNumberOfItems()
+            # store meeting number of items
+            self._updateMeetingsNumberOfItems()
 
-        # remove unused persons from contacts directory
-        self._cleanUnusedPersonsAndHeldPositions()
+            # remove unused persons from contacts directory
+            self._cleanUnusedPersonsAndHeldPositions()
 
-        # make sure MeetingConfig related Plone groups local_roles are correct
-        self._fixMeetingConfigRelatedPloneGroupsLocalRoles()
+            # make sure MeetingConfig related Plone groups local_roles are correct
+            self._fixMeetingConfigRelatedPloneGroupsLocalRoles()
 
 
 def migrate(context):
