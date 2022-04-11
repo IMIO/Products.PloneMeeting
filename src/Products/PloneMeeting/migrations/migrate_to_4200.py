@@ -923,6 +923,10 @@ class Migrate_To_4200(Migrator):
             self.updateTALConditions("getDate()", "date")
             self.updateTALConditions("getStartDate()", "start_date")
             self.updateTALConditions("getEndDate()", "end_date")
+            self.updateTALConditions("power_observer_type='restrictedpowerobservers')",
+                                     "power_observer_types=['restrictedpowerobservers'])")
+            self.updateTALConditions("power_observer_type='powerobservers')",
+                                     "power_observer_types=['powerobservers'])")
             self.updateTALConditions("isManager(context)",
                                      "isManager(cfg")
             self.updateTALConditions("isManager(here)",

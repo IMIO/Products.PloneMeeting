@@ -346,6 +346,7 @@ class MeetingItemWorkflowConditions(object):
             if _checkPermission(ManagePortal, self.context):
                 res = True
             else:
+                # user may validate if he is member of the last validation level suffixed group
                 last_validation_state, last_level = self._getLastValidationState(return_level=True)
                 if self.review_state == last_validation_state or \
                    ('item_validation_validate_shortcuts' in self.cfg.getWorkflowAdaptations() and
