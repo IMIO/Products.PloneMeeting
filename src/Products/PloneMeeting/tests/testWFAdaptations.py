@@ -1505,7 +1505,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def _hide_decisions_when_under_writing_active(self):
         '''Tests while 'hide_decisions_when_under_writing' wfAdaptation is active.'''
-        meetingWF = self.meetingconfig.getMeetingWorkflow(True)
+        meetingWF = self.meetingConfig.getMeetingWorkflow(True)
         self.failUnless('decisions_published' in meetingWF.states)
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
