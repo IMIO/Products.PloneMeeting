@@ -742,6 +742,8 @@ class Migrate_To_4200(Migrator):
                         # get_assembly, striked=True by default
                         # also used in some dashboard POD templates
                         '.displayStrikedAssembly()': '.get_assembly()',
+                        # called on a MeetingCategory
+                        '.getCategoryId()': '.category_id',
                         }
         # specific for Meeting POD Templates
         meeting_replacements = {
