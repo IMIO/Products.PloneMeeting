@@ -29,6 +29,9 @@ Changelog
   Migration to 4200 is adapted to be executed in 3 parts (
   `main`, `update_local_roles`, `update workflow mappings/rebuild catalog`).
   [gbastien]
+- Fixed `MeetingItem.validate_proposingGroupWithGroupInCharge` to not let select
+  a value for which no group in charge is selected (wrong configuration).
+  [gbastien]
 
 4.2rc21 (2022-03-22)
 --------------------

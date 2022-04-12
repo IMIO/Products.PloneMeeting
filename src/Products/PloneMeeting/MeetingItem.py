@@ -2109,8 +2109,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.isDefinedInTool(item_type='itemtemplate'):
             return
 
-        if not value and self.attribute_is_used('proposingGroupWithGroupInCharge'):
-            return translate('proposing_group_required', domain='PloneMeeting', context=self.REQUEST)
+        # make sure we have a proposingGroup and a groupInCharge in case configuration is not correct
+        # we would have "Proposing group ()"
+        if self.attribute_is_used('proposingGroupWithGroupInCharge'):
+            proposingGroupUid = groupInChargeUid = ''
+            if value:
+                proposingGroupUid, groupInChargeUid = value.split('__groupincharge__')
+            if not proposingGroupUid or not groupInChargeUid:
+                return translate('proposing_group_with_group_in_charge_required',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
 
     security.declarePrivate('validate_optionalAdvisers')
 
