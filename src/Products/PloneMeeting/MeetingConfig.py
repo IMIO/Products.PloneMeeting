@@ -1052,23 +1052,6 @@ schema = Schema((
         schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
-    LinesField(
-        name='enabledAnnexesBatchActions',
-        default=defValues.enabledAnnexesBatchActions,
-        widget=MultiSelectionWidget(
-            description="EnabledAnnexesBatchActions",
-            description_msgid="enabled_annexes_batch_actions_descr",
-            format="checkbox",
-            label='enabledannexesbatchactions',
-            label_msgid='PloneMeeting_label_enabledAnnexesBatchActions',
-            i18n_domain='PloneMeeting',
-        ),
-        multiValued=1,
-        vocabulary='listAnnexesBatchActions',
-        enforceVocabulary=True,
-        schemata="data",
-        write_permission="PloneMeeting: Write risky config",
-    ),
     StringField(
         name='itemWorkflow',
         widget=SelectionWidget(
@@ -1447,6 +1430,23 @@ schema = Schema((
         vocabulary='listMeetingColumns',
         default=defValues.meetingColumns,
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='enabledAnnexesBatchActions',
+        default=defValues.enabledAnnexesBatchActions,
+        widget=MultiSelectionWidget(
+            description="EnabledAnnexesBatchActions",
+            description_msgid="enabled_annexes_batch_actions_descr",
+            format="checkbox",
+            label='enabledannexesbatchactions',
+            label_msgid='PloneMeeting_label_enabledAnnexesBatchActions',
+            i18n_domain='PloneMeeting',
+        ),
+        multiValued=1,
+        vocabulary='listAnnexesBatchActions',
+        enforceVocabulary=True,
+        schemata="gui",
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
