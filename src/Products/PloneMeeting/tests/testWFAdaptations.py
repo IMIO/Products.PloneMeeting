@@ -1208,13 +1208,15 @@ class testWFAdaptations(PloneMeetingTestCase):
             self._return_to_proposing_group_active()
             # test the functionnality of returning an item to the proposing group
             self._return_to_proposing_group_active_wf_functionality()
+            # test when no itemWFValidationLevels defined
+            self._return_to_proposing_group_with_no_validation_levels()
             # disable WFA so test with cfg2 while inactive works
             self._activate_wfas(())
 
     def _return_to_proposing_group_inactive(self):
         '''Tests while 'return_to_proposing_group' wfAdaptation is inactive.'''
         # make sure the 'return_to_proposing_group' state does not exist in the item WF
-        itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
+        itemWF = self.meetingConfig.getItemWorkflow(True)
         self.failIf('returned_to_proposing_group' in itemWF.states)
 
     def _return_to_proposing_group_active(self):
@@ -1242,6 +1244,41 @@ class testWFAdaptations(PloneMeetingTestCase):
     def _beforeValidateItemFields(self, item):
         """Hook for plugins before item validation."""
         return
+
+    def _return_to_proposing_group_with_no_validation_levels(self):
+        '''Test 'return_to_proposing_group' wfAdaptation when no validation levels exists,
+           so items come validated directly but we want to be able to return to proposing group.'''
+        cfg = self.meetingConfig
+        # disable every item validation levels
+        self._disableItemValidationLevel(cfg)
+        # only MeetingManagers may create
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem', title="Item title")
+        self.assertEqual(item.query_state(), 'validated')
+        self.create('Meeting')
+        self.presentItem(item)
+        self.assertEqual(self.transitions(item), ['backToValidated', 'return_to_proposing_group'])
+        self.do(item, 'return_to_proposing_group')
+        self.changeUser('pmCreator1')
+        self.failUnless(self.hasPermission(ModifyPortalContent, item))
+        self.failUnless(self.hasPermission(AddAnnex, item))
+        self.failUnless(self.hasPermission(AddAnnexDecision, item))
+        # make sure if user edit item, it would pass validation
+        # this checks especially MeetingItem.validate_pollType
+        # call hook for plugins
+        self._beforeValidateItemFields(item)
+        self.assertEqual(self.validate_at_fields(item), {})
+        # the item creator may not be able to delete the item
+        self.failIf(self.hasPermission(DeleteObjects, item))
+        # MeetingManagers can still edit it also
+        self.changeUser('pmManager')
+        self.failUnless(self.hasPermission(ModifyPortalContent, item))
+        # the creator can send the item back to the meeting managers, as the meeting managers
+        for userId in ('pmCreator1', 'pmManager'):
+            self.changeUser(userId)
+            self.failUnless('backTo_presented_from_returned_to_proposing_group' in self.transitions(item))
+        self.do(item, 'backTo_presented_from_returned_to_proposing_group')
+        self.assertEqual(item.query_state(), 'presented')
 
     def _return_to_proposing_group_active_wf_functionality(self):
         '''Tests the workflow functionality of using the 'return_to_proposing_group' wfAdaptation.'''
