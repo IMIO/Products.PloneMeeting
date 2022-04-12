@@ -145,8 +145,11 @@ class testWFAdaptations(PloneMeetingTestCase):
         # ease override by subproducts
         if not self._check_wfa_available(['return_to_proposing_group']):
             return
+        # make sure we are clean from any WFA
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
+        self._activate_wfas([], cfg)
+        self._activate_wfas([], cfg2)
         # use same WF
         cfg2.setItemWorkflow(cfg.getItemWorkflow())
         cfg2.setMeetingWorkflow(cfg.getMeetingWorkflow())
@@ -154,7 +157,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(cfg.getItemWorkflow(), cfg2.getItemWorkflow())
         self.assertEqual(cfg.getMeetingWorkflow(), cfg2.getMeetingWorkflow())
         # apply the 'return_to_proposing_group' WFAdaptation for cfg
-        # activate
         self._activate_wfas(('return_to_proposing_group', ))
         originalWF = self.wfTool.get(cfg.getItemWorkflow())
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
