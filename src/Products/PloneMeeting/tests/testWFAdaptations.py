@@ -12,7 +12,6 @@ from copy import deepcopy
 from DateTime import DateTime
 from datetime import datetime
 from datetime import timedelta
-from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.CMFCore.permissions import DeleteObjects
@@ -60,8 +59,8 @@ class testWFAdaptations(PloneMeetingTestCase):
                           'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
                           'delayed',
                           'hide_decisions_when_under_writing',
+                          'item_validation_no_validate_shortcuts',
                           'item_validation_shortcuts',
-                          'item_validation_validate_shortcuts',
                           'mark_not_applicable',
                           'meetingmanager_correct_closed_meeting',
                           'no_decide',
@@ -238,6 +237,40 @@ class testWFAdaptations(PloneMeetingTestCase):
                 ('no_decide',
                  'hide_decisions_when_under_writing')),
             wa_conflicts)
+
+    def test_pm_Validate_workflowAdaptations_dependencies(self):
+        """Test MeetingConfig.validate_workflowAdaptations that manage dependencies
+           between wfAdaptations, a base WFA must be selected and other will complete it."""
+        wa_dependencies = translate('wa_dependencies', domain='PloneMeeting', context=self.request)
+        cfg = self.meetingConfig
+
+        # waiting_advices alone is ok
+        self.failIf(cfg.validate_workflowAdaptations(('waiting_advices', )))
+        # but other may not be selected without it
+        self.assertEqual(
+            cfg.validate_workflowAdaptations(
+                ('waiting_advices_from_every_val_levels', )),
+            wa_dependencies)
+        self.assertEqual(
+            cfg.validate_workflowAdaptations(
+                ('waiting_advices_adviser_send_back', )),
+            wa_dependencies)
+        self.assertEqual(
+            cfg.validate_workflowAdaptations(
+                ('waiting_advices_proposing_group_send_back', )),
+            wa_dependencies)
+        self.assertEqual(
+            cfg.validate_workflowAdaptations(
+                ('waiting_advices_adviser_may_validate', )),
+            wa_dependencies)
+
+        # item_validation_shortcuts alone is ok
+        self.failIf(cfg.validate_workflowAdaptations(('item_validation_shortcuts', )))
+        # but item_validation_no_validate_shortcuts depends on it
+        self.assertEqual(
+            cfg.validate_workflowAdaptations(
+                ('item_validation_no_validate_shortcuts', )),
+            wa_dependencies)
 
     def test_pm_Validate_workflowAdaptations_item_validation_levels_dependency(self):
         """Test MeetingConfig.validate_workflowAdaptations where some wfAdaptations
@@ -1001,8 +1034,50 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Test when 'item_validation_shortcuts' is active.'''
         self.changeUser('pmReviewer1')
         item = self.create('MeetingItem')
-        # user will be able to validate an item that is "itemcreated"
-        # 'pmManager' is creator and reviewer
+        self.assertEqual(self.transitions(item), ['prevalidate', 'propose', 'validate'])
+        self.do(item, 'propose')
+        self.assertEqual(self.transitions(item), ['backToItemCreated', 'prevalidate', 'validate'])
+        self.do(item, 'prevalidate')
+        self.assertEqual(self.transitions(item), ['backToItemCreated', 'backToProposed', 'validate'])
+        self.do(item, 'validate')
+        self.failIf(self.transitions(item))
+        # enable to 'reviewers_take_back_validated_item' as well
+        if not self._check_wfa_available(['reviewers_take_back_validated_item']):
+            return
+        self._activate_wfas(('item_validation_shortcuts',
+                             'item_validation_no_validate_shortcuts',
+                             'reviewers_take_back_validated_item'))
+        self.assertEqual(self.transitions(item), ['backToPrevalidated'])
+
+    def test_pm_WFA_item_validation_no_validate_shortcuts(self):
+        '''Test the 'item_validation_no_validate_shortcuts' WFAdaptation.'''
+        # ease override by subproducts
+        if not self._check_wfa_available(['item_validation_no_validate_shortcuts']):
+            return
+        cfg = self.meetingConfig
+        # make sure we use default itemWFValidationLevels,
+        # useful when test executed with custom profile
+        self._setUpDefaultItemWFValidationLevels(cfg)
+        self._enablePrevalidation(cfg)
+        # configure 'pmReviewer1' as creator/prereviewer/reviewer
+        self._addPrincipalToGroup('pmReviewer1', get_plone_group_id(self.developers_uid, 'creators'))
+        self._addPrincipalToGroup('pmReviewer1', get_plone_group_id(self.developers_uid, 'prereviewers'))
+        # check while the wfAdaptation is not activated
+        self._activate_wfas(())
+        self._item_validation_no_validate_shortcuts_inactive()
+        # activate the wfAdaptation and check
+        self._activate_wfas(('item_validation_shortcuts', 'item_validation_no_validate_shortcuts', ))
+        self._item_validation_no_validate_shortcuts_active()
+
+    def _item_validation_no_validate_shortcuts_inactive(self):
+        '''Test when 'item_validation_no_validate_shortcuts' is inactive.'''
+        # same behavior when 'item_validation_shortcuts' inactive
+        self._item_validation_shortcuts_inactive()
+
+    def _item_validation_no_validate_shortcuts_active(self):
+        '''Test when 'item_validation_no_validate_shortcuts' is active.'''
+        self.changeUser('pmReviewer1')
+        item = self.create('MeetingItem')
         self.assertEqual(self.transitions(item), ['prevalidate', 'propose'])
         self.do(item, 'prevalidate')
         self.assertEqual(item.query_state(), 'prevalidated')
@@ -1016,88 +1091,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(self.transitions(item), ['propose'])
         self.do(item, 'propose')
         self.failIf(self.transitions(item))
-
-    def test_pm_WFA_item_validation_validate_shortcuts(self):
-        '''Test the 'item_validation_validate_shortcuts' WFAdaptation.'''
-        # ease override by subproducts
-        if not self._check_wfa_available(['item_validation_validate_shortcuts']):
-            return
-        cfg = self.meetingConfig
-        # make sure we use default itemWFValidationLevels,
-        # useful when test executed with custom profile
-        self._setUpDefaultItemWFValidationLevels(cfg)
-        self._enablePrevalidation(cfg)
-        # configure 'pmReviewer1' as creator/prereviewer/reviewer
-        self._addPrincipalToGroup('pmReviewer1', get_plone_group_id(self.developers_uid, 'creators'))
-        self._addPrincipalToGroup('pmReviewer1', get_plone_group_id(self.developers_uid, 'prereviewers'))
-        # check while the wfAdaptation is not activated
-        self._activate_wfas(())
-        self._item_validation_validate_shortcuts_inactive()
-        # activate the wfAdaptation and check
-        self._activate_wfas(('item_validation_validate_shortcuts', ))
-        self._item_validation_validate_shortcuts_active()
-
-    def _item_validation_validate_shortcuts_inactive(self):
-        '''Test when 'item_validation_validate_shortcuts' is inactive.'''
-        self.changeUser('pmReviewer1')
-        item = self.create('MeetingItem')
-        # by default a 'propose' transition exists but we can not 'prevalidate'
-        self.assertEqual(self.transitions(item), ['propose'])
-        self.do(item, 'propose')
-        self.assertEqual(self.transitions(item), ['backToItemCreated', 'prevalidate'])
-        self.do(item, 'prevalidate')
-        self.assertEqual(self.transitions(item), ['backToProposed', 'validate'])
-        self.do(item, 'validate')
-        self.failIf(self.transitions(item))
-        # with a user only creator
-        self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        self.assertEqual(self.transitions(item), ['propose'])
-        self.do(item, 'propose')
-        self.failIf(self.transitions(item))
-
-    def _item_validation_validate_shortcuts_active(self):
-        '''Test when 'item_validation_validate_shortcuts' is active.'''
-        self.changeUser('pmReviewer1')
-        item = self.create('MeetingItem')
-        # user will be able to validate an item that is "itemcreated"
-        # 'pmManager' is creator and reviewer
-        self.assertEqual(self.transitions(item), ['propose', 'validate'])
-        self.do(item, 'propose')
-        self.assertEqual(self.transitions(item),
-                         ['backToItemCreated', 'prevalidate', 'validate'])
-        self.do(item, 'prevalidate')
-        self.assertEqual(self.transitions(item), ['backToProposed', 'validate'])
-        self.do(item, 'validate')
-        self.failIf(self.transitions(item))
-        # with a user only creator
-        self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        self.assertEqual(self.transitions(item), ['propose'])
-        self.do(item, 'propose')
-        self.failIf(self.transitions(item))
-        # enable both 'item_validation_shortcuts' and
-        # 'item_validation_validate_shortcuts' if available
-        if not self._check_wfa_available(
-                ['item_validation_shortcuts', 'item_validation_validate_shortcuts']):
-            return
-        self._activate_wfas(('item_validation_shortcuts', 'item_validation_validate_shortcuts', ))
-        self.changeUser('pmReviewer1')
-        item = self.create('MeetingItem')
-        self.assertEqual(self.transitions(item), ['prevalidate', 'propose', 'validate'])
-        self.do(item, 'propose')
-        self.assertEqual(self.transitions(item), ['backToItemCreated', 'prevalidate', 'validate'])
-        self.do(item, 'prevalidate')
-        self.assertEqual(self.transitions(item), ['backToItemCreated', 'backToProposed', 'validate'])
-        self.do(item, 'validate')
-        self.failIf(self.transitions(item))
-        # enable to 'reviewers_take_back_validated_item' as well
-        if not self._check_wfa_available(['reviewers_take_back_validated_item']):
-            return
-        self._activate_wfas(('item_validation_shortcuts',
-                             'item_validation_validate_shortcuts',
-                             'reviewers_take_back_validated_item'))
-        self.assertEqual(self.transitions(item), ['backToPrevalidated'])
 
     def test_pm_WFA_pre_validation(self):
         '''Test when using prevalidation.

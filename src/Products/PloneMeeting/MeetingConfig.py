@@ -2795,7 +2795,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     # Names of workflow adaptations, ORDER IS IMPORTANT!
     wfAdaptations = ('item_validation_shortcuts',
-                     'item_validation_validate_shortcuts',
+                     'item_validation_no_validate_shortcuts',
                      'only_creator_may_delete',
                      # first define meeting workflow state removal
                      'no_freeze',
@@ -4522,12 +4522,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             return msg
         if 'no_decide' in values and 'hide_decisions_when_under_writing' in values:
             return msg
-
         # several 'return_to_proposing_group' values may not be selected together
         return_to_prop_group_wf_adaptations = [
             v for v in values if v.startswith('return_to_proposing_group')]
         if len(return_to_prop_group_wf_adaptations) > 1:
             return msg
+
+        msg = translate('wa_dependencies', domain='PloneMeeting', context=self.REQUEST)
+        # dependecies, some adaptations will complete already select ones
+        dependencies = {'waiting_advices': [v for v in self.wfAdaptations
+                                            if v.startswith('waiting_advices_')],
+                        'item_validation_shortcuts': ['item_validation_no_validate_shortcuts']}
+        for base_wfa, dependents in dependencies.items():
+            if set(values).intersection(dependents) and base_wfa not in values:
+                return msg
 
         # dependency on 'MeetingConfig.itemWFValidationLevels'
         msg = translate('wa_item_validation_levels_dependency',

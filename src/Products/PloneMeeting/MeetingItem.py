@@ -194,6 +194,13 @@ class MeetingItemWorkflowConditions(object):
         obj = getCurrentMeetingObject(self.context)
         return isinstance(obj, Meeting)
 
+    def _getLastValidationState_cachekey(method, self, before_last=False, return_level=False):
+        '''cachekey method for self._getLastValidationState.'''
+        return self.context.getProposingGroup(), before_last, return_level
+
+    # not ramcached perf tests says it does not change much
+    # and this avoid useless entry in cache
+    # @ram.cache(_getLastValidationState_cachekey)
     def _getLastValidationState(self, before_last=False, return_level=False):
         '''Last validation state is validation level state defined in
            MeetingConfig.itemWFValidationLevels for which the linked
@@ -349,7 +356,8 @@ class MeetingItemWorkflowConditions(object):
                 # user may validate if he is member of the last validation level suffixed group
                 last_validation_state, last_level = self._getLastValidationState(return_level=True)
                 if self.review_state == last_validation_state or \
-                   ('item_validation_validate_shortcuts' in self.cfg.getWorkflowAdaptations() and
+                   ('item_validation_shortcuts' in self.cfg.getWorkflowAdaptations() and
+                    'item_validation_no_validate_shortcuts' not in self.cfg.getWorkflowAdaptations() and
                         get_plone_group_id(
                             self.context.getProposingGroup(),
                             last_level['suffix']) in self.tool.get_plone_groups_for_user()):
