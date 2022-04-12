@@ -415,13 +415,17 @@ class UserProposingGroupsWithGroupsInChargeVocabulary(UserProposingGroupsVocabul
         if current_value and current_value not in term_values:
             current_proposingGroupUid, current_groupInChargeUid = \
                 current_value.split('__groupincharge__')
+            # current_groupInChargeUid may be empty in case configuration was
+            # wrong (no selected groups in charge) and it was updated
+            gic_title = u''
+            if current_groupInChargeUid:
+                gic_title = get_organization(current_groupInChargeUid).get_full_title()
             terms.append(
                 SimpleTerm(
                     current_value,
                     current_value,
                     u'{0} ({1})'.format(
-                        get_organization(current_proposingGroupUid).get_full_title(),
-                        get_organization(current_groupInChargeUid).get_full_title())))
+                        get_organization(current_proposingGroupUid).get_full_title(), gic_title)))
         return terms
 
 

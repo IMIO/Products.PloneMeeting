@@ -240,7 +240,7 @@ class AdvicesIconsInfos(BrowserView):
         """ """
         res = False
         if self.context.adviceIndex[self.advice_id]['delay'] and not self.adviceIsInherited:
-            view = self.context.restrictedTraverse('@@advice-available-delays')
+            view = self.context.unrestrictedTraverse('@@advice-available-delays')
             view._initAttributes(self.advice_id)
             res = view.listSelectableDelays() or \
                 view._mayAccessDelayChangesHistory() or view._mayReinitializeDelay()
@@ -249,17 +249,6 @@ class AdvicesIconsInfos(BrowserView):
     def delay_icon(self, advice_info):
         """Makes it callable in the template."""
         return _delay_icon(self.memberIsAdviserForGroup, advice_info)
-
-    def authorname(self, advice):
-        return self.tool.getUserName(advice.Creator())
-
-    def adviser_users(self, advice_info):
-        """ """
-        res = u''
-        if advice_info['userids']:
-            res = self.context._displayAdviserUsers(
-                advice_info['userids'], self.portal_url, self.tool)
-        return res
 
     def state_infos(self, advice):
         return get_state_infos(advice)
@@ -308,6 +297,35 @@ class AdvicesIconsInfos(BrowserView):
                self.memberIsAdviserForGroup or \
                self.userIsInProposingGroup:
                 res = True
+        return res
+
+
+class AdviceInfos(BrowserView):
+    """Main infos shared between advice popup and advice view."""
+
+    def __call__(self, advice_uid, displayedReviewState, customMessageInfos):
+        """ """
+        self.portal = api.portal.get()
+        self.portal_url = self.portal.absolute_url()
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.advice = self.context.adviceIndex.get(advice_uid)
+        self.adviceType = self.advice['type']
+        self.adviceHolder = self.advice.get('adviceHolder', None) or self.context
+        self.obj = self.adviceHolder.get(self.advice['advice_id']) if \
+            self.advice.get('advice_id', None) else None
+        self.displayedReviewState = displayedReviewState
+        self.customMessageInfos = customMessageInfos
+        return self.index()
+
+    def authorname(self, advice):
+        return self.tool.getUserName(advice.Creator())
+
+    def adviser_users(self, advice_info):
+        """ """
+        res = u''
+        if advice_info['userids']:
+            res = self.context._displayAdviserUsers(
+                advice_info['userids'], self.portal_url, self.tool)
         return res
 
 
@@ -413,7 +431,7 @@ class AdviceView(DefaultView):
     def __call__(self):
         """Check if viewable by current user in case smart guy call the right url."""
         parent = self.context.aq_inner.aq_parent
-        self.advice_icons_infos = parent.restrictedTraverse('@@advices-icons-infos')
+        self.advice_icons_infos = parent.unrestrictedTraverse('@@advices-icons-infos')
         advice_type = parent._shownAdviceTypeFor(parent.adviceIndex[self.context.advice_group])
         self.advice_icons_infos._initAdvicesInfos(advice_type)
         self.advice_icons_infos._initAdviceInfos(self.context.advice_group)
@@ -477,7 +495,7 @@ class BaseAdviceInfoForm(AutoExtensibleForm, form.EditForm):
         '''Init @@advices-icons-infos and returns it.'''
         context = context or self.context
         # check if may remove inherited advice
-        advice_infos = context.restrictedTraverse('@@advices-icons-infos')
+        advice_infos = context.unrestrictedTraverse('@@advices-icons-infos')
         # initialize advice_infos
         advice_data = context.getAdviceDataFor(context, data['advice_uid'])
         advice_infos(context._shownAdviceTypeFor(advice_data))

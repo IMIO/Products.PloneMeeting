@@ -232,6 +232,7 @@ class testMeetingItem(PloneMeetingTestCase):
            It will evolve regarding groupInCharge, old value are kept and new values
            take groupsInCharge review_state into account.'''
         self.changeUser('siteadmin')
+        self._enableField('proposingGroupWithGroupInCharge')
         org1 = self.create('organization', id='org1', title='Org 1', acronym='O1')
         org1_uid = org1.UID()
         org2 = self.create('organization', id='org2', title='Org 2', acronym='O2')
@@ -299,6 +300,19 @@ class testMeetingItem(PloneMeetingTestCase):
                          [(developers_gic3, 'Developers (Org 3)'),
                           (vendors_gic2, 'Vendors (Org 2)'),
                           (vendors_gic3, 'Vendors (Org 3)')])
+        # case that was broken, when configuration changed from no group in charge
+        # selected to a group in charge selected on an organization, the vocabulary was broken,
+        # this is no more possible now as MeetingItem.validate_proposingGroupWithGroupInCharge avoid this
+        original_value = item1.getProposingGroupWithGroupInCharge()
+        wrong_value = '{0}__groupincharge__'.format(item1.getProposingGroup())
+        item1.setProposingGroupWithGroupInCharge(wrong_value)
+        self.assertTrue(wrong_value in vocab(item1))
+        # that would not pass validation though
+        required_msg = translate('proposing_group_with_group_in_charge_required',
+                                 domain='PloneMeeting',
+                                 context=self.portal.REQUEST)
+        self.assertEqual(item1.validate_proposingGroupWithGroupInCharge(wrong_value), required_msg)
+        self.failIf(item1.validate_proposingGroupWithGroupInCharge(original_value))
 
     def test_pm_CloneItemRemovesAnnotations(self):
         '''Annotations relative to item sent to other MC are correctly cleaned.'''

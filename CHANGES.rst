@@ -13,6 +13,25 @@ Changelog
   [gbastien]
 - Added new field `Meeting.adopts_next_agenda_of`.
   [gbastien]
+- Added new field `Meeting.mid_start_date`.
+  [gbastien]
+- Completed POD templates instructions replacements in `Migrate_To_4200`.
+  getExtraordinarySession() -> extraordinary_session
+  [aduchene]
+- Factorized advice custom informations displayed in the advice popup in the
+  `@@advice-infos` view so it can be displayed on the advice object view as well.
+  [gbastien]
+- Avoid `UnicodeDecodeError` in `MeetingItem._updateAdvices` when comparing old
+  and new `adviceIndex`, this may happen with old `adviceIndex` containing the
+  `comment` as `str` whereas new value is stored as `unicode`.
+  [gbastien]
+- Added possibility to execute migrations in several parts.
+  Migration to 4200 is adapted to be executed in 3 parts (
+  `main`, `update_local_roles`, `update workflow mappings/rebuild catalog`).
+  [gbastien]
+- Fixed `MeetingItem.validate_proposingGroupWithGroupInCharge` to not let select
+  a value for which no group in charge is selected (wrong configuration).
+  [gbastien]
 - Changed behavior of `MeetingItem.get_representatives_in_charge`, it will return
   `held_position objects`, no more the `MeetingItem.groupsInCharge organizations`.
   [gbastien]
