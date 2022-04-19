@@ -2294,6 +2294,45 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(org1.get_representatives(at_date=datetime(2020, 6, 6)), [])
         self.assertEqual(org2.get_representatives(at_date=datetime(2020, 6, 6)), [])
 
+    def test_pm_Get_representatives_in_charge(self):
+        """Test the MeetingItem.get_representatives_in_charge method."""
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        org1 = self.developers
+        org2 = self.vendors
+        hp1 = self.portal.contacts.person1.held_pos1
+        hp2 = self.portal.contacts.person2.held_pos2
+        intids = getUtility(IIntIds)
+        # hp1 is representative for one org1
+        hp1.represented_organizations = [RelationValue(intids.getId(org1))]
+        # hp2 is representative for two org1 and org2
+        hp2.represented_organizations = [RelationValue(intids.getId(org1)),
+                                         RelationValue(intids.getId(org2))]
+        # update relations
+        notify(ObjectModifiedEvent(hp1))
+        notify(ObjectModifiedEvent(hp2))
+        # now enable groupsInCharge
+        self._enableField('groupsInCharge')
+
+        # create item without groupsInCharge
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # by default, check_is_attendee=True, item must be in a meeting
+        self.assertEqual(item.get_representatives_in_charge(), [])
+        self.assertEqual(item.get_representatives_in_charge(False), [])
+        item.setGroupsInCharge((self.developers_uid, ))
+        self.assertEqual(item.get_representatives_in_charge(), [])
+        self.assertEqual(item.get_representatives_in_charge(False), [hp1, hp2])
+        self.changeUser('pmManager')
+        self.create('Meeting')
+        self.presentItem(item)
+        self.assertEqual(item.get_representatives_in_charge(), [hp1, hp2])
+        self.assertEqual(item.get_representatives_in_charge(False), [hp1, hp2])
+        # works also when one representative (will be the case most of time)
+        item.setGroupsInCharge((self.vendors_uid, ))
+        self.assertEqual(item.get_representatives_in_charge(), [hp2])
+        self.assertEqual(item.get_representatives_in_charge(False), [hp2])
+
     def test_pm_Create_contacts(self):
         """Check that creating contacts work and elements are correctly initialized."""
         self.changeUser("siteadmin")
