@@ -626,6 +626,7 @@ def sendMailIfRelevant(obj,
     # Ok, send a mail. Who are the recipients ?
     recipients = []
     userIds = []
+    membershipTool = api.portal.get_tool('portal_membership')
     if isSuffix:
         org_uid = obj.adapted()._getGroupManagingItem(obj.query_state(), theObject=False)
         plone_group = get_plone_group(org_uid, value)
@@ -647,13 +648,15 @@ def sendMailIfRelevant(obj,
             plone_group = api.group.get(plone_group_id)
             if plone_group:
                 userIds += plone_group.getMemberIds()
-    else:
+    elif isUserIds:
         # isUserIds
         userIds = value
+    else:
+        # isPermission
+        userIds = membershipTool.listMemberIds()
 
     # remove duplicate
     userIds = list(set(userIds))
-    membershipTool = api.portal.get_tool('portal_membership')
     currentUser = membershipTool.getAuthenticatedMember()
     for userId in userIds:
         user = membershipTool.getMemberById(userId)

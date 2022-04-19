@@ -32,6 +32,8 @@ Changelog
 - Fixed `MeetingItem.validate_proposingGroupWithGroupInCharge` to not let select
   a value for which no group in charge is selected (wrong configuration).
   [gbastien]
+- Fixed `utils.sendMailIfRelevant` when `isPermission=True` that was simply broken.
+  [gbastien]
 - Changed behavior of `MeetingItem.get_representatives_in_charge`, it will return
   `held_position objects`, no more the `MeetingItem.groupsInCharge organizations`.
   [gbastien]
