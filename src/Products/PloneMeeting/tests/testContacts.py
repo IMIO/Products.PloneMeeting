@@ -2321,6 +2321,8 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(item.get_representatives_in_charge(), [])
         self.assertEqual(item.get_representatives_in_charge(False), [])
         item.setGroupsInCharge((self.developers_uid, ))
+        import ipdb; ipdb.set_trace()
+        self.assertEqual(item.get_representatives_in_charge(False), [])
         self.assertEqual(item.get_representatives_in_charge(False), [hp1, hp2])
         self.changeUser('pmManager')
         self.create('Meeting')

@@ -7630,11 +7630,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for gic in groups_in_charge:
             # when p_check_is_attendee=True,
             # only keep held_positions that are also attendees for self
-            intersection = [hp for hp in gic.get_representatives(at_date=meeting_date)
-                            if not check_is_attendee or hp in attendees]
-            for hp in intersection:
-                if hp not in res:
-                    res.append(hp)
+            res += [hp for hp in gic.get_representatives(at_date=meeting_date)
+                    if (not check_is_attendee or hp in attendees)
+                    and hp not in res]
         return res
 
     def is_decided(self, cfg, item_state=None, positive_only=False):
