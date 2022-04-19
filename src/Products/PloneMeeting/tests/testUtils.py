@@ -7,6 +7,8 @@
 
 from collective.contact.plonegroup.utils import get_plone_group
 from plone.app.controlpanel.events import ConfigurationChangedEvent
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import duplicate_portal_type
 from Products.PloneMeeting.utils import escape
@@ -169,6 +171,38 @@ class testUtils(PloneMeetingTestCase):
         self.assertEqual(recipients,
                          [u'M. PMObserver One <pmobserver1@plonemeeting.org>',
                           u'M. PMCreator Two <pmcreator2@plonemeeting.org>'])
+
+    def test_pm_SendMailIfRelevantIsPermission(self):
+        """ """
+        cfg = self.meetingConfig
+        cfg.setMailMode("activated")
+        cfg.setMailItemEvents(("item_state_changed_validate", ))
+
+        self.changeUser('pmManager')
+        item = self.create("MeetingItem", title="My item")
+        params = {"obj": item,
+                  "event": "item_state_changed_validate",
+                  "value": View,
+                  "isPermission": True,
+                  "debug": True}
+
+        recipients, subject, body = sendMailIfRelevant(**params)
+        # not sent to action triggerer
+        self.assertEqual(sorted(recipients),
+                         [u'M. Budget Impact Editor <budgetimpacteditor@plonemeeting.org>',
+                          u'M. PMCreator One <pmcreator1@plonemeeting.org>',
+                          u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
+                          u'M. PMObserver One <pmobserver1@plonemeeting.org>',
+                          u'M. PMReviewer One <pmreviewer1@plonemeeting.org>',
+                          u'M. Power Observer1 <powerobserver1@plonemeeting.org>',
+                          u'Site administrator <siteadmin@plonemeeting.org>'])
+        # check for editors
+        params["value"] = ModifyPortalContent
+        recipients, subject, body = sendMailIfRelevant(**params)
+        self.assertEqual(sorted(recipients),
+                         [u'M. PMCreator One <pmcreator1@plonemeeting.org>',
+                          u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
+                          u'Site administrator <siteadmin@plonemeeting.org>'])
 
     def test_pm_org_id_to_uid(self):
         """Test the utils.org_id_to_uid function."""

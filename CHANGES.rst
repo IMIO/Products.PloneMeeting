@@ -32,6 +32,8 @@ Changelog
 - Fixed `MeetingItem.validate_proposingGroupWithGroupInCharge` to not let select
   a value for which no group in charge is selected (wrong configuration).
   [gbastien]
+- Fixed `utils.sendMailIfRelevant` when `isPermission=True` that was simply broken.
+  [gbastien]
 
 4.2rc21 (2022-03-22)
 --------------------
