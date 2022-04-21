@@ -37,6 +37,8 @@ Changelog
 - Changed behavior of `MeetingItem.get_representatives_in_charge`, it will return
   `held_position objects`, no more the `MeetingItem.groupsInCharge organizations`.
   [gbastien]
+- Set first day of calendar widget on `Meeting` to monday instead sunday (default).
+  [gbastien]
 
 4.2rc21 (2022-03-22)
 --------------------

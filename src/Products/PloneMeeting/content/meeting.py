@@ -114,7 +114,7 @@ class ICommitteesRowSchema(Interface):
         vocabulary='Products.PloneMeeting.vocabularies.meeting_selectable_committees_vocabulary',
         required=True)
 
-    form.widget('date', DatetimeFieldWidget, show_today_link=True, show_time=True)
+    form.widget('date', DatetimeFieldWidget, show_today_link=True, show_time=True, first_day=1)
     date = schema.Datetime(
         title=_("title_committees_date"),
         required=False)
@@ -171,47 +171,47 @@ class IMeeting(IDXMeetingContent):
         title=_(u'title_title'),
         required=False)
 
-    form.widget('date', DatetimeFieldWidget, show_today_link=True, show_time=True)
+    form.widget('date', DatetimeFieldWidget, show_today_link=True, show_time=True, first_day=1)
     date = schema.Datetime(
         title=_(u'title_date'),
         required=True)
 
-    form.widget('start_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
+    form.widget('start_date', DatetimeFieldWidget, show_today_link=True, show_time=True, first_day=1)
     start_date = schema.Datetime(
         title=_(u'title_start_date'),
         required=False)
 
-    form.widget('mid_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
+    form.widget('mid_date', DatetimeFieldWidget, show_today_link=True, show_time=True, first_day=1)
     mid_date = schema.Datetime(
         title=_(u'title_mid_date'),
         required=False)
 
-    form.widget('mid_start_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
+    form.widget('mid_start_date', DatetimeFieldWidget, show_today_link=True, show_time=True, first_day=1)
     mid_start_date = schema.Datetime(
         title=_(u'title_mid_start_date'),
         required=False)
 
-    form.widget('end_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
+    form.widget('end_date', DatetimeFieldWidget, show_today_link=True, show_time=True, first_day=1)
     end_date = schema.Datetime(
         title=_(u'title_end_date'),
         required=False)
 
-    form.widget('approval_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
+    form.widget('approval_date', DatetimeFieldWidget, show_today_link=True, show_time=True, first_day=1)
     approval_date = schema.Datetime(
         title=_(u'title_approval_date'),
         required=False)
 
-    form.widget('convocation_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
+    form.widget('convocation_date', DatetimeFieldWidget, show_today_link=True, show_time=True, first_day=1)
     convocation_date = schema.Datetime(
         title=_(u'title_convocation_date'),
         required=False)
 
-    form.widget('validation_deadline', DatetimeFieldWidget, show_today_link=True, show_time=True)
+    form.widget('validation_deadline', DatetimeFieldWidget, show_today_link=True, show_time=True, first_day=1)
     validation_deadline = schema.Datetime(
         title=_(u'title_validation_deadline'),
         required=False)
 
-    form.widget('freeze_deadline', DatetimeFieldWidget, show_today_link=True, show_time=True)
+    form.widget('freeze_deadline', DatetimeFieldWidget, show_today_link=True, show_time=True, first_day=1)
     freeze_deadline = schema.Datetime(
         title=_(u'title_freeze_deadline'),
         required=False)
@@ -244,7 +244,7 @@ class IMeeting(IDXMeetingContent):
         title=_(u"title_place_other"),
         required=False)
 
-    form.widget('pre_meeting_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
+    form.widget('pre_meeting_date', DatetimeFieldWidget, show_today_link=True, show_time=True, first_day=1)
     pre_meeting_date = schema.Datetime(
         title=_(u'title_pre_meeting_date'),
         required=False)
