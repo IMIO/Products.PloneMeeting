@@ -39,6 +39,9 @@ Changelog
   [gbastien]
 - Set first day of calendar widget on `Meeting` to monday instead sunday (default).
   [gbastien]
+- Make sure the advice tooltipster does not overflow the top of the screen,
+  this could occur when the browser screen is zoomed.
+  [gbastien]
 
 4.2rc21 (2022-03-22)
 --------------------

@@ -411,10 +411,11 @@ function positionAdvicePopup(instance, helper, position) {
 }
 
 function advicesInfos() {
-    // values are adapted when used in the available items dashboard
+    // values are adapted when used in a dashboard to avoid negative top position
+    // may occur with the available items dashboard or when screen zoomed to much
     dashboard_position = 'left';
     position_callback = null;
-    if ($('body.template-meeting_available_items_view').length) {
+    if ($('table#faceted_table').length) {
         dashboard_position = ['left'];
         position_callback = positionAdvicePopup;
     }
