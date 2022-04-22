@@ -42,6 +42,9 @@ Changelog
 - Make sure the advice tooltipster does not overflow the top of the screen,
   this could occur when the browser screen is zoomed.
   [gbastien]
+- When `debug=true` is passed as parameter during a `restapi` call, or env var
+  `RESTAPI_DEBUG` is set to `True`, the result is fully displayed in the event log.
+  [gbastien]
 
 4.2rc21 (2022-03-22)
 --------------------
