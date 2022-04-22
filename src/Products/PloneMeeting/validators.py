@@ -271,7 +271,7 @@ class PloneGroupSettingsOrganizationsValidator(validator.SimpleFieldValidator):
         orgs = get_organizations(only_selected=False, the_objects=True)
         for org in orgs:
             if removed_orgs_uids.intersection(org.groups_in_charge):
-                msgid = "can_not_unselected_plone_group_org"
+                msgid = "can_not_unselect_plone_group_org"
                 msg = _(msgid, mapping={'org_url': org.absolute_url()})
                 raise Invalid(msg)
 

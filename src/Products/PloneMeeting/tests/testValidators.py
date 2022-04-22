@@ -379,7 +379,7 @@ class testValidators(PloneMeetingTestCase):
         orgs[0].groups_in_charge = [orgs[1].UID()]
         with self.assertRaises(Invalid) as cm:
             validator.validate([organizations[0]])
-        validation_error_msg = _('can_not_unselected_plone_group_org',
+        validation_error_msg = _('can_not_unselect_plone_group_org',
                                  mapping={'item_url': orgs[0].absolute_url()})
         self.assertEqual(cm.exception.message, validation_error_msg)
         # but other could be unselected
