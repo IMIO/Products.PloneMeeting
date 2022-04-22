@@ -45,6 +45,11 @@ Changelog
 - When `debug=true` is passed as parameter during a `restapi` call, or env var
   `RESTAPI_DEBUG` is set to `True`, the result is fully displayed in the event log.
   [gbastien]
+- Added `PloneGroupSettingsOrganizationsValidator` that will check that an
+  organization unselected from plonegroup settings is not used as group in charge
+  of another organization.
+  Renamed `PloneGroupSettingsValidator` to `PloneGroupSettingsFunctionsValidator`.
+  [gbastien]
 
 4.2rc21 (2022-03-22)
 --------------------

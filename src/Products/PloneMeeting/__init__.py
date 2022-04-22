@@ -49,7 +49,7 @@ validation.register(ATCertifiedSignaturesValidator('isValidCertifiedSignatures',
 
 
 # this is necessary to be able to register custom validator for datagridfield
-# we use it for validators.PloneGroupSettingsValidator,
+# we use it for validators.PloneGroupSettings validators,
 # see https://github.com/collective/collective.z3cform.datagridfield/issues/14
 DisallowedProperty('__provides__')
 

@@ -160,8 +160,8 @@ class WorkflowInterfacesValidator:
                                        self._getPackageName(self.baseInterface))
 
 
-# Complete validation of collective.contact.plonegroup settings
-class PloneGroupSettingsValidator(validator.SimpleFieldValidator):
+# Complete validation of collective.contact.plonegroup settings "functions"
+class PloneGroupSettingsFunctionsValidator(validator.SimpleFieldValidator):
 
     def validate(self, value):
         # check that if a suffix is removed, it is not used in MeetingConfig or MeetingItems
@@ -171,9 +171,10 @@ class PloneGroupSettingsValidator(validator.SimpleFieldValidator):
         saved_enabled_suffixes = [func['fct_id'] for func in value if func['enabled']]
         removed_suffixes = list(set(stored_suffixes) - set(saved_enabled_suffixes))
         really_removed_suffixes = list(set(stored_suffixes) - set(saved_suffixes))
+        org_uids = get_organizations(only_selected=False, the_objects=False)
         removed_plonegroups = [
             get_plone_group_id(org_uid, removed_suffix)
-            for org_uid in get_organizations(only_selected=False, the_objects=False)
+            for org_uid in org_uids
             for removed_suffix in removed_suffixes]
         # ... and new defined fct_orgs as it will remove some suffixed groups
         stored_functions = get_registry_functions()
@@ -189,13 +190,13 @@ class PloneGroupSettingsValidator(validator.SimpleFieldValidator):
             if new_function_infos['fct_orgs'] and \
                old_functions[new_function]['fct_orgs'] != new_function_infos['fct_orgs']:
                 # check that Plone group is empty for not selected fct_orgs
-                for org_uid in get_organizations(only_selected=False, the_objects=False):
+                for org_uid in org_uids:
                     if org_uid in new_function_infos['fct_orgs']:
                         continue
                     removed_plonegroups.append(get_plone_group_id(org_uid, new_function))
             elif new_function_infos['enabled'] is False:
                 # check that Plone groups are all empty
-                for org_uid in get_organizations(only_selected=False, the_objects=False):
+                for org_uid in org_uids:
                     removed_plonegroups.append(get_plone_group_id(org_uid, new_function))
 
         # check that plonegroups and suffixes not used in MeetingConfigs
@@ -256,5 +257,25 @@ class PloneGroupSettingsValidator(validator.SimpleFieldValidator):
 
 
 validator.WidgetValidatorDiscriminators(
-    PloneGroupSettingsValidator, field=IContactPlonegroupConfig['functions'])
-provideAdapter(PloneGroupSettingsValidator)
+    PloneGroupSettingsFunctionsValidator, field=IContactPlonegroupConfig['functions'])
+provideAdapter(PloneGroupSettingsFunctionsValidator)
+
+
+# Complete validation of collective.contact.plonegroup settings "organizations"
+class PloneGroupSettingsOrganizationsValidator(validator.SimpleFieldValidator):
+
+    def validate(self, value):
+        selected_org_uids = get_organizations(only_selected=True, the_objects=False)
+        removed_orgs_uids = set(selected_org_uids).difference(value)
+        # check that removed orgs are not used as groups_in_charge of an organization
+        orgs = get_organizations(only_selected=False, the_objects=True)
+        for org in orgs:
+            if removed_orgs_uids.intersection(org.groups_in_charge):
+                msgid = "can_not_unselected_plone_group_org"
+                msg = _(msgid, mapping={'org_url': org.absolute_url()})
+                raise Invalid(msg)
+
+
+validator.WidgetValidatorDiscriminators(
+    PloneGroupSettingsOrganizationsValidator, field=IContactPlonegroupConfig['organizations'])
+provideAdapter(PloneGroupSettingsOrganizationsValidator)
