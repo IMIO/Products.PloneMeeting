@@ -6542,7 +6542,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declareProtected(ModifyPortalContent, 'update_local_roles')
 
-    def update_local_roles(self, reindex=True, **kwargs):
+    def update_local_roles(self, reindex=True, avoid_reindex=False, **kwargs):
         '''Updates the local roles of this item, regarding :
            - the proposing group;
            - copyGroups;
@@ -6611,7 +6611,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # reindex object security except if avoid_reindex=True and localroles are the same
         # or if we are here after transition as WorkflowTool._reindexWorkflowVariables
         # will reindexObjectSecurity
-        avoid_reindex = kwargs.get('avoid_reindex', False)
         if not avoid_reindex or old_local_roles != self.__ac_local_roles__:
             # triggering transition will reindexObjectSecurity
             if not triggered_by_transition:
