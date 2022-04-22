@@ -62,6 +62,7 @@ class Migrator(BaseMigrator):
         # update oo port for collective.documentgenerator
         update_oo_config()
         self.run_part = os.getenv('FUNC_PART', '')
+        self.display_mem = False
 
     def is_in_part(self, part):
         if self.run_part == part:
