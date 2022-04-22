@@ -6616,7 +6616,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declareProtected(ModifyPortalContent, 'update_local_roles')
 
-    def update_local_roles(self, reindex=True, **kwargs):
+    def update_local_roles(self, reindex=True, avoid_reindex=False, **kwargs):
         '''Updates the local roles of this item, regarding :
            - the proposing group;
            - copyGroups;
@@ -6685,7 +6685,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # reindex object security except if avoid_reindex=True and localroles are the same
         # or if we are here after transition as WorkflowTool._reindexWorkflowVariables
         # will reindexObjectSecurity
-        avoid_reindex = kwargs.get('avoid_reindex', False)
         if not avoid_reindex or old_local_roles != self.__ac_local_roles__:
             # triggering transition will reindexObjectSecurity
             if not triggered_by_transition:
@@ -7695,20 +7694,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             return _('PloneMeeting_label_itemAssembly')
 
-    def get_representatives_in_charge(self):
+    def get_representatives_in_charge(self, check_is_attendee=True):
         '''Return the representative in charge of this item depending on
-           selected MeetingItem.groupsInCharge.'''
+           selected MeetingItem.groupsInCharge.
+           Default use is when item in a meeting so we can check meeting date
+           and if representative is attendee for the meeting.'''
         groups_in_charge = self.getGroupsInCharge(theObjects=True)
         meeting = self.getMeeting()
-        attendees = self.get_attendees()
-
+        meeting_date = meeting.date if meeting else None
+        attendees = self.get_attendees(the_objects=True)
         res = []
         for gic in groups_in_charge:
-            repr_uids = [representative.UID() for representative in
-                         gic.get_representatives(at_date=meeting.date)]
-            intersection = [i for i in repr_uids if i in attendees]
-            if intersection:
-                res.append(gic)
+            # when p_check_is_attendee=True,
+            # only keep held_positions that are also attendees for self
+            res += [hp for hp in gic.get_representatives(at_date=meeting_date)
+                    if (not check_is_attendee or hp in attendees)
+                    and hp not in res]
         return res
 
     def is_decided(self, cfg, item_state=None, positive_only=False):

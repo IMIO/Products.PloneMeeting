@@ -32,6 +32,24 @@ Changelog
 - Fixed `MeetingItem.validate_proposingGroupWithGroupInCharge` to not let select
   a value for which no group in charge is selected (wrong configuration).
   [gbastien]
+- Fixed `utils.sendMailIfRelevant` when `isPermission=True` that was simply broken.
+  [gbastien]
+- Changed behavior of `MeetingItem.get_representatives_in_charge`, it will return
+  `held_position objects`, no more the `MeetingItem.groupsInCharge organizations`.
+  [gbastien]
+- Set first day of calendar widget on `Meeting` to monday instead sunday (default).
+  [gbastien]
+- Make sure the advice tooltipster does not overflow the top of the screen,
+  this could occur when the browser screen is zoomed.
+  [gbastien]
+- When `debug=true` is passed as parameter during a `restapi` call, or env var
+  `RESTAPI_DEBUG` is set to `True`, the result is fully displayed in the event log.
+  [gbastien]
+- Added `PloneGroupSettingsOrganizationsValidator` that will check that an
+  organization unselected from plonegroup settings is not used as group in charge
+  of another organization.
+  Renamed `PloneGroupSettingsValidator` to `PloneGroupSettingsFunctionsValidator`.
+  [gbastien]
 - Added WFAdaptation `item_validation_shortcuts` that will let users change item
   state to any other item validation state (so between itemcreated and validated)
   depending on their groups.
