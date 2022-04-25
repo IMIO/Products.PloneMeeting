@@ -50,6 +50,14 @@ Changelog
   of another organization.
   Renamed `PloneGroupSettingsValidator` to `PloneGroupSettingsFunctionsValidator`.
   [gbastien]
+- Fixed the WFAdaptations `return_to_proposing_group_with_last_validation` and
+  `return_to_proposing_group_with_all_validations` when there was no user in the
+  `_reviewers`, the item could not be sent back to the meeting, now the
+  `return_to_proposing_group validation WF` takes the last validation state into account.
+  [gbastien]
+- In the `@@categorized-annexes`, display a clear message when no annex is
+  addable because the `MeetingConfig` is not setup.
+  [gbastien]
 - Added WFAdaptation `item_validation_shortcuts` that will let users change item
   state to any other item validation state (so between itemcreated and validated)
   depending on their groups.
