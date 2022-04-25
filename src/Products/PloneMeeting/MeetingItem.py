@@ -566,10 +566,9 @@ class MeetingItemWorkflowConditions(object):
             return
         # when using validation states, may return when in last validation state
         if 'return_to_proposing_group' not in self.cfg.getWorkflowAdaptations():
-            item_state = self.context.query_state()
             current_validation_state = 'itemcreated' \
-                if item_state == 'returned_to_proposing_group' \
-                else item_state.replace('returned_to_proposing_group_', '')
+                if self.review_state == 'returned_to_proposing_group' \
+                else self.review_state.replace('returned_to_proposing_group_', '')
             last_val_state = self._getLastValidationState()
             # we are in last validation state, or we are in state 'returned_to_proposing_group'
             # and there is no last validation state, aka it is "itemcreated"
