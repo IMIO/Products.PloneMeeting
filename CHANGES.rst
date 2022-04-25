@@ -55,6 +55,9 @@ Changelog
   `_reviewers`, the item could not be sent back to the meeting, now the
   `return_to_proposing_group validation WF` takes the last validation state into account.
   [gbastien]
+- In the `@@categorized-annexes`, display a clear message when no annex is
+  addable because the `MeetingConfig` is not setup.
+  [gbastien]
 
 4.2rc21 (2022-03-22)
 --------------------

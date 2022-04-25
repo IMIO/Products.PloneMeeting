@@ -11,26 +11,25 @@
 
       <p class="discreet" i18n:translate="annexes_descr">Annexes description</p>
 
-      <fieldset tal:condition="view/showAnnexesSection">
+      <fieldset tal:condition="python: view.showAnnexesSection()">
         <legend>
           <a name="annexes"><span i18n:translate="">Annexes</span></a>
+          <tal:links condition="python: view._showAddAnnex">
             <a href="++add++annex"
-               class="link-overlay-pm-annex"
-               tal:condition="view/showAddAnnex">
+               class="link-overlay-pm-annex">
               <img i18n:attributes="title"
                    title="#"
                    tal:attributes="src string:${view/portal_url}/new.png;
                                    title string:add_annex" />
             </a>
             <a href="@@quick_upload?typeupload=annex"
-               class="link-overlay-pm-annex"
-               tal:condition="view/showAddAnnex">
+               class="link-overlay-pm-annex">
               <img i18n:attributes="title"
                    title="#"
                    tal:attributes="src string:${view/portal_url}/new_multiple.png;
                                    title string:add_several_annexes" />
             </a>
-
+          </tal:links>
         </legend>
 
         <div class="content" tal:content="structure python: view.table_render(portal_type='annex')"></div>
@@ -50,22 +49,22 @@
       <fieldset tal:condition="view/showDecisionAnnexesSection">
         <legend>
           <a name="annexes_decision"><span i18n:translate="">AnnexesDecisionShort</span></a>
+          <tal:links condition="python: view._showAddAnnexDecision">
             <a href="++add++annexDecision"
-               class="link-overlay-pm-annex"
-               tal:condition="view/showAddAnnexDecision">
+               class="link-overlay-pm-annex">
               <img i18n:attributes="title"
                    title="#"
                    tal:attributes="src string:${view/portal_url}/new.png;
                                    title string:add_decision_annex" />
             </a>
             <a href="@@quick_upload?typeupload=annexDecision"
-               class="link-overlay-pm-annex"
-               tal:condition="view/showAddAnnexDecision">
+               class="link-overlay-pm-annex">
               <img i18n:attributes="title"
                    title="#"
                    tal:attributes="src string:${view/portal_url}/new_multiple.png;
                                    title string:add_several_decision_annexes" />
             </a>
+          </tal:links>
         </legend>
 
         <div class="content" tal:content="structure python: view.table_render(portal_type='annexDecision')"></div>
