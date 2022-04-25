@@ -465,7 +465,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             title=new_state_id, description='',
             transitions=wf.states[new_state_id].transitions+back_transition_ids)
 
-        # create transition between last_returned_state_id and new_state (it's not a back transition)
+        # create transition between last_returned_state_id and new_state
         transition_id = 'goTo_%s' % (new_state_id)
         wf.transitions.addTransition(transition_id)
         transition = wf.transitions[transition_id]

@@ -59,13 +59,17 @@ class CategorizedAnnexesView(CategorizedTabView):
 
     def __call__(self):
         """ """
+        self._update()
+        return super(CategorizedAnnexesView, self).__call__()
+
+    def _update(self):
+        """ """
         self.portal_url = api.portal.get().absolute_url()
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         # compute it here so portal messages are displayed
         self._showAddAnnex = self.showAddAnnex()
         self._showAddAnnexDecision = self.showAddAnnexDecision()
-        return super(CategorizedAnnexesView, self).__call__()
 
     def _config(self):
         """ """
