@@ -24,6 +24,7 @@ from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from z3c.form import validator
 from zope import schema
 from zope.interface import Interface
+from plone.memoize import ram
 
 
 class ICertifiedSignaturesRowSchema(Interface):
@@ -192,6 +193,13 @@ class PMOrganization(Organization):
             res = uuidsToObjects(res, ordered=True, unrestricted=True)
         return res
 
+    def get_full_title_cachekey(method, self, separator=u' / ', first_index=0, force_separator=False):
+        '''cachekey method for self.get_full_title.'''
+        return repr(self), self.modified(), separator, first_index, force_separator
+
+    # not ramcached perf tests says it does not change much
+    # and this avoid useless entry in cache
+    # @ram.cache(get_full_title_cachekey)
     def get_full_title(self, separator=u' / ', first_index=0, force_separator=False):
         """Override to change default first_index from 0 to 1 for IPloneGroupContact,
            so we do not display the 'My organization' level for elements displayed in the

@@ -6023,7 +6023,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # - in case an advice was asked automatically and condition that was True at the time
             #   is not True anymore (item/getBudgetRelated for example) but the advice was given in between
             #   However, in this case we have a 'row_id' stored in the given advice
-            # - in case we have a not asked advice given by a PowerAdviser, in thus case, we have no 'row_id'
+            # - in case we have a not asked advice given by a PowerAdviser, in this case, we have no 'row_id'
             if org_uid not in self.adviceIndex:
                 self.adviceIndex[org_uid] = PersistentMapping()
                 if not adviceInfo['row_id']:

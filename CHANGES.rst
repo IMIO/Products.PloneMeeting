@@ -149,17 +149,6 @@ Changelog
   would contain another user id.
   [gbastien]
 
-4.2rc16 (2022-03-07)
---------------------
-
-- Fixed `searchitemstoprevalidate` collection TAL condition,
-  state is `prevalidated` not `pre_validated`.
-  [gbastien]
-- Fixed `PMConditionAwareCollectionVocabulary`, do no more override cachekey
-  to cache by groups of user as the url contains the user id or cached value
-  would contain another user id.
-  [gbastien]
-
 4.2rc15 (2022-02-25)
 --------------------
 
