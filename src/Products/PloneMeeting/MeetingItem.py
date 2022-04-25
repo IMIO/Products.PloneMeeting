@@ -377,8 +377,7 @@ class MeetingItemWorkflowConditions(object):
         # only MeetingManagers may present an item, the 'Review portal content'
         # permission is not enough as MeetingReviewer may have the 'Review portal content'
         # when using the 'reviewers_take_back_validated_item' wfAdaptation
-        if not _checkPermission(ReviewPortalContent, self.context) or \
-           not self.tool.isManager(self.cfg):
+        if not self.tool.isManager(self.cfg):
             return False
 
         # if item initial_state is "validated", an item could miss it's category

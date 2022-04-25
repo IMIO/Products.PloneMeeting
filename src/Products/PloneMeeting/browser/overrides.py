@@ -676,12 +676,13 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         isRealManager = self.tool.isManager(realManagers=True)
         # MeetingManager, necessary for MeetingConfig.itemActionsColumnConfig for example
         isManager = self.tool.isManager(self.cfg)
+        item_state = None
         if not isRealManager:
-            self.item_state = self.context.query_state()
+            item_state = self.context.query_state()
             # member able to edit item, manage isEditorUser/userAbleToCorrectItemWaitingAdvices
             if _checkPermission(ModifyPortalContent, self.context):
                 isEditorUser = True
-            elif self.item_state.endswith('_waiting_advices'):
+            elif item_state.endswith('_waiting_advices'):
                 advicesIndexModified = self.context.adviceIndex._p_mtime
                 wfas = self.cfg.getWorkflowAdaptations()
                 userAbleToCorrectItemWaitingAdvices = []
@@ -694,7 +695,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                     # convenience, return every user proposingGroup suffixes
                     # user able to do this depends on state to go to
                     group_managing_item_uid = self.context.adapted()._getGroupManagingItem(
-                        self.item_state, theObject=False)
+                        item_state, theObject=False)
                     userAbleToCorrectItemWaitingAdvices += \
                         self.tool.get_filtered_plone_groups_for_user(
                             org_uids=[group_managing_item_uid])
@@ -709,7 +710,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         # if item is validated, the 'present' action could appear if a meeting
         # is now available for the item to be inserted into
         isPresentable = False
-        if self.context.query_state() == 'validated':
+        if isManager and (item_state or self.context.query_state()) == 'validated':
             isPresentable = self.context.wfConditions().mayPresent()
 
         # this volatile is invalidated when user/groups changed

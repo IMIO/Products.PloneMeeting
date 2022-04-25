@@ -222,7 +222,7 @@ class ItemAnnexSubTypeDescriptor(AnnexSubTypeDescriptor):
 
 
 class StyleTemplateDescriptor(Descriptor):
-    
+
     def __init__(self, id, title, description='', enabled=True):
         self.id = id
         self.title = title
