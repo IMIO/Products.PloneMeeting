@@ -670,6 +670,7 @@ class testAnnexes(PloneMeetingTestCase):
         annex = self.addAnnex(item)
         annex_decision = self.addAnnex(item, relatedTo='item_decision')
         annexes_table = item.restrictedTraverse('@@iconifiedcategory')
+        annexes_table._update()
         # everything displayed/editable by user
         self.assertEqual(cfg.getAnnexRestrictShownAndEditableAttributes(), ())
         _check(annexes_table, annex, annex_decision)
