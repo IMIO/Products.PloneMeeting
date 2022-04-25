@@ -50,6 +50,11 @@ Changelog
   of another organization.
   Renamed `PloneGroupSettingsValidator` to `PloneGroupSettingsFunctionsValidator`.
   [gbastien]
+- Fixed the WFAdaptations `return_to_proposing_group_with_last_validation` and
+  `return_to_proposing_group_with_all_validations` when there was no user in the
+  `_reviewers`, the item could not be sent back to the meeting, now the
+  `return_to_proposing_group validation WF` takes the last validation state into account.
+  [gbastien]
 
 4.2rc21 (2022-03-22)
 --------------------

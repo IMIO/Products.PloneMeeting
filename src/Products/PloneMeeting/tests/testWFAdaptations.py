@@ -1016,6 +1016,19 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
         self.assertEqual(item.query_state(), 'itemfrozen')
 
+        # test when there is reviewers so item may be returned directly to meeting by the creator
+        self._removeAllMembers(
+            api.group.get(self.developers_reviewers),
+            api.group.get(self.developers_reviewers).getMemberIds())
+        self.changeUser('pmManager')
+        self.do(item, 'return_to_proposing_group')
+        self.changeUser('pmCreator1')
+        # item may be directly returned to the meeting as itemcreated is the last validation level
+        self.assertEqual(self.transitions(item), ['backTo_itemfrozen_from_returned_to_proposing_group'])
+        self.failUnless(self.hasPermission(ModifyPortalContent, item))
+        self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
+        self.assertEqual(item.query_state(), 'itemfrozen')
+
     def test_pm_WFA_return_to_proposing_group_with_all_validations(self):
         '''Test the workflowAdaptation 'return_to_proposing_group_with_all_validations'.'''
         # ease override by subproducts

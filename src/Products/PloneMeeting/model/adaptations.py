@@ -410,7 +410,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         # link state and transitions
         wf.states[new_state_id].setProperties(
             title=new_state_id, description='',
-            transitions=back_transition_ids)
+            transitions=wf.states[new_state_id].transitions+back_transition_ids)
 
         # create transition between last_returned_state_id and new_state (it's not a back transition)
         transition_id = 'goTo_%s' % (new_state_id)
@@ -427,16 +427,9 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 '.mayProposeToNextValidationLevel(destinationState="{0}")'.format(
                     transition_id.replace('goTo_returned_to_proposing_group_', ''))})
 
-        # link state and transition (keep backTo_returned_... if not firstLevel)
-        transition_ids = ()
-        if last_returned_state_id != 'returned_to_proposing_group':
-            transition_ids = [tr for tr in wf.states[last_returned_state_id].transitions
-                              if tr.startswith('backTo_returned_')]
-        transition_ids += (transition_id, )
-
         wf.states[last_returned_state_id].setProperties(
             title=last_returned_state_id, description='',
-            transitions=transition_ids)
+            transitions=wf.states[last_returned_state_id].transitions+(transition_id, ))
 
         # use same permissions as used by the base_state
         base_state = wf.states[base_state_id]
@@ -510,6 +503,9 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         elif whichValidation is None:
             validation_returned_states = ()
         last_returned_state_id = 'returned_to_proposing_group'
+        # as we may have groups without validation states, include the
+        # 'returned_to_proposing_group' as state from which the item may be
+        # sent back to the meeting, the mayBackToMeeting guard will handle this
 
         for validation_state in validation_returned_states:
             base_state_id = validation_state.replace('returned_to_proposing_group_', '')
