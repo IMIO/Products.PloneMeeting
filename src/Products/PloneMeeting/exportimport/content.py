@@ -388,7 +388,7 @@ class ToolInitializer:
                 errors.append("'%s': %s" % (field.getName(), error))
         if errors:
             raise PloneMeetingError(MEETING_CONFIG_ERROR % (
-                cfg.Title(), cfg.getId(), '\n'.join(errors)))
+                safe_unicode(cfg.Title()), cfg.getId(), u'\n'.join(errors)))
 
         if not configData.active:
             self.portal.portal_wokflow.doActionFor(cfg, 'deactivate')
