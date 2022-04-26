@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from collective.contact.plonegroup.utils import get_plone_group_id
-from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import uuidToObject
 from plone import api
 from plone.app.layout.navigation.navtree import buildFolderTree
@@ -12,7 +11,6 @@ from Products.Five.browser import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
 from Products.PloneMeeting.utils import get_current_user_id
-from zope.component import getMultiAdapter
 from zope.i18n import translate
 
 
@@ -24,8 +22,6 @@ class ItemTemplateView(BrowserView):
         super(BrowserView, self).__init__(context, request)
         self.context = context
         self.request = request
-        portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
-        self.portal = portal_state.portal()
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.request.set('disable_border', 1)
@@ -154,6 +150,6 @@ class ItemTemplateView(BrowserView):
         templatesTree = self.getTemplatesTree()
         atMostOneElementAtRoot = len(templatesTree['children']) < 2
         return self.recurse(children=templatesTree.get('children', []),
-            expandRootLevel=atMostOneElementAtRoot).strip()
+                            expandRootLevel=atMostOneElementAtRoot).strip()
 
     recurse = ViewPageTemplateFile('templates/itemtemplates_tree_recurse.pt')
