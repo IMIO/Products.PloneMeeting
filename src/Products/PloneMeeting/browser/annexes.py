@@ -13,9 +13,9 @@ from collective.iconifiedcategory.utils import _categorized_elements
 from imio.helpers.content import get_vocab
 from plone import api
 from plone.memoize import ram
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.browser.overrides import BaseActionsPanelView
 from Products.PloneMeeting.config import FACETED_ANNEXES_CRITERION_ID
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_annexes_config
 

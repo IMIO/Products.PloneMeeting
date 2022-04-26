@@ -75,6 +75,9 @@ Changelog
 - Moved the MeetingItem `budgetRelated/budgetInfos` fields condition logic to
   `MeetingItem.show_budget_infos` so it is easier to override.
   [gbastien]
+- Added `ram.cache` for the `@@createitemfromtemplate` view that is responsible
+  for calculating the item templates fancy tree.
+  [gbastien]
 
 4.2rc21 (2022-03-22)
 --------------------

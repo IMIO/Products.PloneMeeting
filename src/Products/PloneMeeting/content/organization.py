@@ -14,6 +14,7 @@ from imio.helpers.content import get_back_relations
 from imio.helpers.content import uuidsToObjects
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
+from plone.memoize import ram
 from plone.supermodel import model
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.events import _invalidateOrgRelatedCachedVocabularies
@@ -24,7 +25,6 @@ from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from z3c.form import validator
 from zope import schema
 from zope.interface import Interface
-from plone.memoize import ram
 
 
 class ICertifiedSignaturesRowSchema(Interface):

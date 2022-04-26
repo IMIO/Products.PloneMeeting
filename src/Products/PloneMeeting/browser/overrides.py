@@ -546,7 +546,7 @@ class PMRenderCategoryView(IDRenderCategoryView):
     def hasTemplateItems_cachekey(method, self, init=False):
         '''cachekey method for self.hasTemplateItems.'''
         # when an itemTemplate is added/removed/edited/state changed, cfg is modified
-        return self.cfg.modified()
+        return repr(self.cfg), self.cfg.modified(), self.tool.get_plone_groups_for_user()
 
     @ram.cache(hasTemplateItems_cachekey)
     def hasTemplateItems(self):
