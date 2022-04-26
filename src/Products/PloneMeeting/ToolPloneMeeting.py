@@ -346,7 +346,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     raise Exception
                 year, month, day = row['date'].split('/')
                 dates.append(datetime(int(year), int(month), int(day)))
-            except:
+            except Exception:
                 return _('holidays_wrong_date_format_error')
         if dates:
             # now check that dates are encoded ascending
@@ -1118,7 +1118,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             copiedItem = m.bind(destFolder.getPhysicalRoot())
         except ConflictError:
             raise
-        except:
+        except Exception:
             raise PloneMeetingError('Could not copy.')
 
         # Let the logged user do everything on the newly created item

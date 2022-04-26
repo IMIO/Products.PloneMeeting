@@ -83,9 +83,9 @@ class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
            to the user personal folder."""
         original_checks = super(PMConditionAwareCollectionVocabulary, self)._cache_invalidation_key(
             context, real_context)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        user_plone_groups = tool.get_plone_groups_for_user()
-        return original_checks + (user_plone_groups, )
+        date = get_cachekey_volatile(
+                'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+        return original_checks + (date, )
 
     def _brains(self, context):
         """We override the method because Meetings also provides the ICollection interface..."""
@@ -2437,10 +2437,11 @@ class SelectableCommitteesVocabulary(object):
         # check_is_manager_for_suppl depend on isManager
         isManager = tool.isManager(cfg)
         # cache by user_plone_groups if using committees "using_groups"
-        user_plone_groups = []
+        users_groups_date = None
         if cfg.is_committees_using("using_groups"):
-            user_plone_groups = tool.get_plone_groups_for_user()
-        return date, repr(cfg), committees, user_plone_groups, isManager, \
+            users_groups_date = get_cachekey_volatile(
+                'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+        return date, repr(cfg), committees, users_groups_date, isManager, \
             term_title_attr, include_suppl, \
             check_is_manager_for_suppl, include_all_disabled, \
             cfg_committees, add_no_committee_value, \

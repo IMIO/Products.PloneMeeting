@@ -282,7 +282,8 @@ class AsyncRenderSearchTerm(BrowserView):
     def __call___cachekey(method, self):
         '''cachekey method for self.__call__.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        userGroups = tool.get_plone_groups_for_user()
+        users_groups_date = get_cachekey_volatile(
+                'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
         cfg = tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
         # URL to the annex_type can change if server URL changed
@@ -293,7 +294,7 @@ class AsyncRenderSearchTerm(BrowserView):
         # as portlet is highlighting the meeting we are on
         meeting_uid = self.context.__class__.__name__ == 'Meeting' and self.context.UID() or None
         collection_uid = self.request.get('collection_uid')
-        return (userGroups,
+        return (users_groups_date,
                 cfg_modified,
                 server_url,
                 date,
