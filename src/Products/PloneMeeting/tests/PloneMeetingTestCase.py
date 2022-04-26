@@ -649,9 +649,23 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if not keep_existing:
             cfg.setWorkflowAdaptations(())
             cfg.at_post_edit_script()
+        else:
+            wfas = tuple(set(tuple(wfas) + cfg.getWorkflowAdaptations()))
         if wfas:
             cfg.setWorkflowAdaptations(wfas)
             cfg.at_post_edit_script()
+        self.changeUser(currentUser)
+
+    def _deactivate_wfas(self, wfas, cfg=None):
+        """Deactivate given p_wfas."""
+        currentUser = self.member.getId()
+        self.changeUser('siteadmin')
+        if cfg is None:
+            cfg = self.meetingConfig
+        wfas = [wfa for wfa in cfg.getWorkflowAdaptations()
+                if wfa not in wfas]
+        cfg.setWorkflowAdaptations(wfas)
+        cfg.at_post_edit_script()
         self.changeUser(currentUser)
 
     def _activate_config(self,

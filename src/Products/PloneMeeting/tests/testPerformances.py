@@ -909,6 +909,35 @@ class testPerformances(PloneMeetingTestCase):
         for time in range(times):
             self.member.has_permission("ModifyPortalContent", item)
 
+    def test_pm_Speed_getLastValidationState(self):
+        '''Test MeetingItemWorkflowConditions._getLastValidationState.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        wf_conditions = item.wfConditions()
+        # call _getLastValidationState 1000 times
+        self._check__getLastValidationState(wf_conditions, times=1000)
+
+    @timecall
+    def _check__getLastValidationState(self, wf_conditions, times=1):
+        ''' '''
+        pm_logger.info('Call _getLastValidationState {0} times'.format(times))
+        for time in range(times):
+            wf_conditions._getLastValidationState()
+
+    def test_pm_Speed_get_full_title(self):
+        '''Test organization.get_full_title.'''
+        self.changeUser('pmManager')
+        org = get_organizations()[0]
+        # call get_full_title 1000 times
+        self._check_get_full_title(org, times=1000)
+
+    @timecall
+    def _check_get_full_title(self, org, times=1):
+        ''' '''
+        pm_logger.info('Call organization.get_full_title {0} times'.format(times))
+        for time in range(times):
+            org.get_full_title()
+
 
 def test_suite():
     from unittest import makeSuite

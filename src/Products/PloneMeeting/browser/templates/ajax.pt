@@ -20,5 +20,5 @@
   <tal:executeAction condition="action">
     <tal:do define="dummy python: getattr(context, 'on'+action)()" omit-tag=""/>
   </tal:executeAction>
-  <metal:callMacro use-macro="python: context.restrictedTraverse('@@pm-macros').callMacro(page, macro)"/>
+  <metal:callMacro use-macro="python: context.unrestrictedTraverse('@@pm-macros').callMacro(page, macro)"/>
 </tal:ajax>

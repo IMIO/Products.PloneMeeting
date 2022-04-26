@@ -207,18 +207,18 @@ def onAdviceTransition(advice, event):
             action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
         do(action, event)
 
-        # notify an AdviceAfterTransitionEvent for subplugins so we are sure
-        # that it is called after PloneMeeting advice transition
-        notify(AdviceAfterTransitionEvent(
-            event.object, event.workflow, event.old_state, event.new_state,
-            event.transition, event.status, event.kwargs))
+    # notify an AdviceAfterTransitionEvent for subplugins so we are sure
+    # that it is called after PloneMeeting advice transition
+    notify(AdviceAfterTransitionEvent(
+        event.object, event.workflow, event.old_state, event.new_state,
+        event.transition, event.status, event.kwargs))
 
-        # update item if transition is not triggered in the MeetingItem._updatedAdvices
-        # aka we are already updating the item
-        item = advice.getParentNode()
-        if event.transition and not item._is_currently_updating_advices():
-            item.update_local_roles()
-            _advice_update_item(item)
+    # update item if transition is not triggered in the MeetingItem._updatedAdvices
+    # aka we are already updating the item
+    item = advice.getParentNode()
+    if event.transition and not item._is_currently_updating_advices():
+        item.update_local_roles()
+        _advice_update_item(item)
 
 
 def onItemBeforeTransition(item, event):
@@ -236,8 +236,12 @@ def onMeetingBeforeTransition(meeting, event):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(meeting)
         if 'return_to_proposing_group' in cfg.getWorkflowAdaptations():
-            # raise a WorkflowException in case there are items still in state 'returned_to_proposing_group'
-            additional_catalog_query = {'review_state': 'returned_to_proposing_group'}
+            # raise a WorkflowException in case there are items still in a
+            # 'returned_to_proposing_group' state
+            returned_to_pg_state_ids = [
+                state for state in cfg.getItemWorkflow(True).states
+                if state.startswith('returned_to_proposing_group')]
+            additional_catalog_query = {'review_state': returned_to_pg_state_ids}
             if meeting.get_items(the_objects=False, additional_catalog_query=additional_catalog_query):
                 msg = _('Can not close a meeting containing items returned to proposing group!')
                 raise WorkflowException(msg)
@@ -1465,9 +1469,13 @@ def onMeetingWillBeRemoved(meeting, event):
 
 def onPrincipalAddedToGroup(event):
     """ """
+    tool = api.portal.get_tool('portal_plonemeeting')
+    tool.invalidateAllCache()
     _invalidateUsersAndGroupsRelatedCache()
 
 
 def onPrincipalRemovedFromGroup(event):
     """ """
+    tool = api.portal.get_tool('portal_plonemeeting')
+    tool.invalidateAllCache()
     _invalidateUsersAndGroupsRelatedCache()

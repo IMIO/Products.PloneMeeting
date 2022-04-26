@@ -58,6 +58,23 @@ Changelog
 - In the `@@categorized-annexes`, display a clear message when no annex is
   addable because the `MeetingConfig` is not setup.
   [gbastien]
+- Added WFAdaptation `item_validation_shortcuts` that will let users change item
+  state to any other item validation state (so between itemcreated and validated)
+  depending on their groups.
+  Added `MeetingItem._assign_roles_to_group_suffixes` to ease assigning roles
+  to suffixes for an organization.
+  [gbastien]
+- Added `MeetingConfig.getId` with `real_id=False` parameter, this will let get
+  the real id when used in some tests where we shuffle the id.
+  [gbastien]
+- Added new field `MeetingItem.otherMeetingConfigsClonableToFieldDetailedDescription`
+  that will fill the `detailedDescription` field when sent to another `MeetingConfig`.
+  Adapted templates so adding a new `MeetingItem.otherMeetingConfigsClonableToFieldXXX`
+  field is managed automatically.
+  [gbastien]
+- Moved the MeetingItem `budgetRelated/budgetInfos` fields condition logic to
+  `MeetingItem.show_budget_infos` so it is easier to override.
+  [gbastien]
 
 4.2rc21 (2022-03-22)
 --------------------

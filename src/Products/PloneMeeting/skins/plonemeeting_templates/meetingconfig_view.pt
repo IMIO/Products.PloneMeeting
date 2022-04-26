@@ -728,11 +728,9 @@
           </td>
         </tr>
         <tr valign="top">
-          <td tal:define="field python:here.getField('workflowAdaptations')">
+          <td colspan="3" tal:define="field python:here.getField('workflowAdaptations')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
-          <td></td>
         </tr>
         <tr>
           <td colspan="3" tal:define="field python:here.getField('itemWFValidationLevels');
@@ -786,8 +784,9 @@
           <td tal:define="field python:here.getField('meetingColumns')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-
-          <td></td>
+          <td tal:define="field python:here.getField('enabledAnnexesBatchActions')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('dashboardItemsListingsFilters')">
@@ -1057,7 +1056,7 @@
           </td>
         </tr>
         <tr valign="top">
-          <td tal:define="field python:here.getField('enforceAdviceMandatoriness')">
+          <td tal:define="field python:here.getField('keepAccessToItemWhenAdvice')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('enableAdviceInvalidation')">
@@ -1074,7 +1073,9 @@
           <td tal:define="field python:here.getField('enableAdviceProposingGroupComment')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
+          <td tal:define="field python:here.getField('enforceAdviceMandatoriness')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('defaultAdviceHiddenDuringRedaction')">
@@ -1087,9 +1088,6 @@
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('historizeItemDataWhenAdviceIsGiven')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('keepAccessToItemWhenAdvice')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('versionateAdviceIfGivenAndItemModified')">

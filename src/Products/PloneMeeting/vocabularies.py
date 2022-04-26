@@ -622,7 +622,14 @@ PMSortedSelectedOrganizationsElephantVocabularyFactory = PMSortedSelectedOrganiz
 class MeetingReviewStatesVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call__(self, context):
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        return repr(cfg)
+
+    @ram.cache(__call___cachekey)
+    def MeetingReviewStatesVocabulary__call__(self, context):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
@@ -636,6 +643,9 @@ class MeetingReviewStatesVocabulary(object):
         res = humansorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
+    # do ram.cache have a different key name
+    __call__ = MeetingReviewStatesVocabulary__call__
+
 
 MeetingReviewStatesVocabularyFactory = MeetingReviewStatesVocabulary()
 
@@ -643,7 +653,14 @@ MeetingReviewStatesVocabularyFactory = MeetingReviewStatesVocabulary()
 class ItemReviewStatesVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call__(self, context):
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        return repr(cfg)
+
+    @ram.cache(__call___cachekey)
+    def ItemReviewStatesVocabulary__call__(self, context):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
@@ -656,6 +673,9 @@ class ItemReviewStatesVocabulary(object):
                        )
         res = humansorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
+
+    # do ram.cache have a different key name
+    __call__ = ItemReviewStatesVocabulary__call__
 
 
 ItemReviewStatesVocabularyFactory = ItemReviewStatesVocabulary()

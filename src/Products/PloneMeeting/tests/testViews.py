@@ -1808,6 +1808,7 @@ class testViews(PloneMeetingTestCase):
         """This batch action will delete annexes."""
         cfg = self.meetingConfig
         cfg.setEnabledAnnexesBatchActions([])
+        self._deactivate_wfas(['only_creator_may_delete'])
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         annex1 = self.addAnnex(item)

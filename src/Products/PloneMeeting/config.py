@@ -104,8 +104,8 @@ ADD_SUBCONTENT_PERMISSIONS = [
     AddAnnexDecision,
     'ATContentTypes: Add Image']
 
-# base suffixes, THIS IS NOT INTENDED TO BE OVERRIDED or monkeypatched,
-# if necessary, use EXTRA_GROUP_SUFFIXES to extend it
+# base suffixes, if necessary, use EXTRA_GROUP_SUFFIXES to extend it
+# or monkeypatch it if base values are not correct
 MEETING_GROUP_SUFFIXES = [
     {'fct_title': u'advisers',
      'fct_id': u'advisers',
@@ -136,27 +136,27 @@ MEETING_GROUP_SUFFIXES = [
      'fct_id': u'level1reviewers',
      'fct_orgs': [],
      'fct_management': False,
-     'enabled': True},
+     'enabled': False},
     {'fct_title': u'level2reviewers',
      'fct_id': u'level2reviewers',
      'fct_orgs': [],
      'fct_management': False,
-     'enabled': True},
+     'enabled': False},
     {'fct_title': u'level3reviewers',
      'fct_id': u'level3reviewers',
      'fct_orgs': [],
      'fct_management': False,
-     'enabled': True},
+     'enabled': False},
     {'fct_title': u'level4reviewers',
      'fct_id': u'level4reviewers',
      'fct_orgs': [],
      'fct_management': False,
-     'enabled': True},
+     'enabled': False},
     {'fct_title': u'level5reviewers',
      'fct_id': u'level5reviewers',
      'fct_orgs': [],
      'fct_management': False,
-     'enabled': True},
+     'enabled': False},
 ]
 
 # this is made to manage specific suffixes for a particular profile
@@ -190,25 +190,6 @@ READER_USECASES = {
     'groupsincharge': 'Reader',
     'confidentialannex': 'AnnexReader',
 }
-
-ploneMeetingRoles = (
-    # The standard Plone 'Manager'
-    'Manager',
-    # The important guy that creates and manages meetings (global role)
-    'MeetingManager',
-    # Guys that may create or update items (local role: they can only update
-    # items created by people belonging to some group)
-    'MeetingMember',
-    # Guys that may pre-review items (local role) [Only relevant when workflow
-    # adaptation "pre-validation" is enabled]
-    'MeetingPreReviewer',
-    # Guys that may review meeting items (local role)
-    'MeetingReviewer',
-    # Guys who may see items of people from their group (local role)
-    'MeetingObserverLocal',
-    # Guy who may see meetings and items once published (global role).
-    'MeetingObserverGlobal',
-)
 
 # Suffixes that may evaluate MeetingItem.completeness
 ITEM_COMPLETENESS_EVALUATORS = ('reviewers', 'prereviewers', )
@@ -246,6 +227,7 @@ EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'category', 'classifier', 'co
                                'toDiscuss', 'privacy', 'pollType', 'textCheckList',
                                'otherMeetingConfigsClonableToFieldTitle',
                                'otherMeetingConfigsClonableToFieldDescription',
+                               'otherMeetingConfigsClonableToFieldDetailedDescription',
                                'otherMeetingConfigsClonableToFieldMotivation',
                                'otherMeetingConfigsClonableToFieldDecision',
                                'otherMeetingConfigsClonableToFieldDecisionSuite',

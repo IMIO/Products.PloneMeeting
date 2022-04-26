@@ -25,12 +25,19 @@ from natsort import humansorted
 from operator import attrgetter
 from plone import api
 from Products.CMFPlone.utils import base_hasattr
+from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.MeetingConfig import ITEM_WF_STATE_ATTRS
+from Products.PloneMeeting.MeetingConfig import ITEM_WF_TRANSITION_ATTRS
+from Products.PloneMeeting.MeetingConfig import MEETING_WF_STATE_ATTRS
+from Products.PloneMeeting.MeetingConfig import MEETING_WF_TRANSITION_ATTRS
 from Products.PloneMeeting.setuphandlers import columnInfos
 from Products.PloneMeeting.setuphandlers import indexInfos
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
+from Products.PloneMeeting.utils import reindex_object
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.i18n import translate
 
+import itertools
 import logging
 import os
 
@@ -137,6 +144,76 @@ class Migrator(BaseMigrator):
         wf_ids = [self.wfTool.getWorkflowsFor(portal_type)[0].getId()
                   for portal_type in portal_types]
         return wf_ids
+
+    def updateWFStatesAndTransitions(self,
+                                     related_to='MeetingItem',
+                                     query={},
+                                     review_state_mappings={},
+                                     transition_mappings={}):
+        """Update for given p_brains the workflow_history keys 'review_state' and 'action'
+           depending on given p_review_state_mappings and p_action_mappings.
+           Update also various parameters of the MeetingConfig
+           that are using states and transitions."""
+        logger.info(
+            'Updating workflow states/transitions changes for elements of type "%s"...'
+            % query or related_to)
+        # workflow_history
+        # manage query if not given
+        if not query:
+            if related_to == 'MeetingItem':
+                query = {'meta_type': 'MeetingItem'}
+            else:
+                query = {'object_provides': IMeeting.__identifier__}
+        brains = self.portal.portal_catalog(**query)
+        pghandler = ZLogHandler(steps=1000)
+        pghandler.init('Updating workflow_history', len(brains))
+        i = 0
+        objsToUpdate = []
+        for brain in brains:
+            i += 1
+            pghandler.report(i)
+            itemOrMeeting = brain.getObject()
+            for wf_name, events in itemOrMeeting.workflow_history.items():
+                for event in events:
+                    if event['review_state'] in review_state_mappings:
+                        event['review_state'] = review_state_mappings[event['review_state']]
+                        itemOrMeeting.workflow_history._p_changed = True
+                        objsToUpdate.append(itemOrMeeting)
+                    if event['action'] in transition_mappings:
+                        event['action'] = transition_mappings[event['action']]
+                        itemOrMeeting.workflow_history._p_changed = True
+                        # not necessary if just an action changed?
+                        # objsToUpdate.append(itemOrMeeting)
+        # update fixed objects
+        for obj in objsToUpdate:
+            obj.update_local_roles()
+            # use reindex_object and pass some no_idxs because
+            # calling reindexObject will update modified
+            reindex_object(obj, no_idxs=['SearchableText', 'Title', 'Description'])
+        # MeetingConfigs
+        state_attrs = ITEM_WF_STATE_ATTRS if related_to == 'MeetingItem' else MEETING_WF_STATE_ATTRS
+        tr_attrs = ITEM_WF_TRANSITION_ATTRS if related_to == 'MeetingItem' else MEETING_WF_TRANSITION_ATTRS
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            # state_attrs
+            for state_attr in state_attrs:
+                values = getattr(cfg, state_attr)
+                for original, replacement in review_state_mappings.items():
+                    values = replace_in_list(values, original, replacement)
+                    # try also to replace a value like 'Meeting.frozen'
+                    original = '%s.%s' % (related_to, original)
+                    replacement = '%s.%s' % (related_to, replacement)
+                    values = replace_in_list(values, original, replacement)
+                setattr(cfg, state_attr, tuple(values))
+            # transition_attrs
+            for tr_attr in tr_attrs:
+                values = getattr(cfg, tr_attr)
+                for original, replacement in transition_mappings.items():
+                    values = replace_in_list(values, original, replacement)
+                    # try also to replace a value like 'Meeting.freeze'
+                    original = '%s.%s' % (related_to, original)
+                    replacement = '%s.%s' % (related_to, replacement)
+                    values = replace_in_list(values, original, replacement)
+                setattr(cfg, tr_attr, tuple(values))
 
     def addCatalogIndexesAndColumns(self, indexes=True, columns=True, update_metadata=True):
         """ """
@@ -353,21 +430,31 @@ class Migrator(BaseMigrator):
         pghandler.finish()
         logger.info('Done.')
 
-    def cleanItemColumns(self, to_remove=[], to_replace={}):
+    def updateItemColumns(self,
+                          field_names=('itemColumns',
+                                       'availableItemsListVisibleColumns',
+                                       'itemsListVisibleColumns'),
+                          to_remove=[],
+                          to_replace={},
+                          to_add=[]):
         '''When a column is no more available.'''
         logger.info('Cleaning MeetingConfig columns related fields, '
-                    'removing columns "%s" and replacing "%s"...'
-                    % (', '.join(to_remove), ', '.join(to_replace.keys())))
+                    'removing columns "%s", replacing "%s" and adding "%s"...'
+                    % (', '.join(to_remove),
+                       ', '.join(to_replace.keys()),
+                       ', '.join(to_add)))
         for cfg in self.tool.objectValues('MeetingConfig'):
-            for field_name in ('itemColumns',
-                               'availableItemsListVisibleColumns',
-                               'itemsListVisibleColumns'):
+            for field_name in field_names:
                 field = cfg.getField(field_name)
                 keys = field.get(cfg)
                 adapted_keys = [k for k in keys if k not in to_remove]
                 for orignal_value, new_value in to_replace.items():
                     adapted_keys = replace_in_list(adapted_keys, orignal_value, new_value)
+                for col_to_add in to_add:
+                    if col_to_add not in adapted_keys:
+                        adapted_keys.append(col_to_add)
                 field.set(cfg, adapted_keys)
+            cfg.updateCollectionColumns()
         logger.info('Done.')
 
     def cleanItemFilters(self, to_remove=[], to_add=[]):
@@ -392,6 +479,21 @@ class Migrator(BaseMigrator):
             usedItemAttrs = list(cfg.getUsedItemAttributes())
             adapted_usedItemAttrs = [k for k in usedItemAttrs if k not in to_remove]
             cfg.setUsedItemAttributes(adapted_usedItemAttrs)
+        logger.info('Done.')
+
+    def removeUnusedWorkflows(self):
+        '''Check used workflows and remove workflows containing '__' that are not used.'''
+        logger.info('Cleaning unused workflows...')
+        used_workflows = [wf_ids for portal_type_id, wf_ids in
+                          self.wfTool._chains_by_type.items() if wf_ids]
+        pm_workflows = tuple(set(sorted([wf_id for wf_id in
+                                         itertools.chain.from_iterable(used_workflows)
+                                         if '__' in wf_id])))
+        to_delete = [wf_id for wf_id in self.wfTool.getWorkflowIds()
+                     if '__' in wf_id and wf_id not in pm_workflows]
+        if to_delete:
+            logger.warning('Removing following workflows: "%s"' % ', '.join(to_delete))
+            self.wfTool.manage_delObjects(to_delete)
         logger.info('Done.')
 
     def reloadMeetingConfigs(self, full=False):

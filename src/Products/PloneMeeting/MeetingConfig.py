@@ -139,6 +139,7 @@ from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleVocabulary
 
+import copy
 import logging
 import os
 
@@ -161,6 +162,30 @@ READERPREFIX = 'reader_'
 SUFFIXPROFILEPREFIX = 'suffix_profile_'
 POWEROBSERVERPREFIX = 'powerobserver__'
 
+ITEM_WF_STATE_ATTRS = [
+    # states
+    'itemAdviceStates',
+    'itemAdviceEditStates',
+    'itemAdviceViewStates',
+    'itemAdviceInvalidateStates',
+    'itemAutoSentToOtherMCStates',
+    'itemBudgetInfosStates',
+    'itemGroupsInChargeStates',
+    'itemCopyGroupsStates',
+    'itemManualSentToOtherMCStates',
+    'recordItemHistoryStates']
+ITEM_WF_TRANSITION_ATTRS = [
+    'transitionsForPresentingAnItem',
+    'transitionsReinitializingDelays',
+    'transitionsToConfirm',
+    'mailItemEvents']
+
+MEETING_WF_STATE_ATTRS = [
+    'itemPreferredMeetingStates',
+    'meetingPresentItemWhenNoCurrentMeetingStates']
+MEETING_WF_TRANSITION_ATTRS = [
+    'transitionsToConfirm',
+    'mailMeetingEvents']
 
 schema = Schema((
 
@@ -1027,23 +1052,6 @@ schema = Schema((
         schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
-    LinesField(
-        name='enabledAnnexesBatchActions',
-        default=defValues.enabledAnnexesBatchActions,
-        widget=MultiSelectionWidget(
-            description="EnabledAnnexesBatchActions",
-            description_msgid="enabled_annexes_batch_actions_descr",
-            format="checkbox",
-            label='enabledannexesbatchactions',
-            label_msgid='PloneMeeting_label_enabledAnnexesBatchActions',
-            i18n_domain='PloneMeeting',
-        ),
-        multiValued=1,
-        vocabulary='listAnnexesBatchActions',
-        enforceVocabulary=True,
-        schemata="data",
-        write_permission="PloneMeeting: Write risky config",
-    ),
     StringField(
         name='itemWorkflow',
         widget=SelectionWidget(
@@ -1422,6 +1430,23 @@ schema = Schema((
         vocabulary='listMeetingColumns',
         default=defValues.meetingColumns,
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='enabledAnnexesBatchActions',
+        default=defValues.enabledAnnexesBatchActions,
+        widget=MultiSelectionWidget(
+            description="EnabledAnnexesBatchActions",
+            description_msgid="enabled_annexes_batch_actions_descr",
+            format="checkbox",
+            label='enabledannexesbatchactions',
+            label_msgid='PloneMeeting_label_enabledAnnexesBatchActions',
+            i18n_domain='PloneMeeting',
+        ),
+        multiValued=1,
+        vocabulary='listAnnexesBatchActions',
+        enforceVocabulary=True,
+        schemata="gui",
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1860,17 +1885,19 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
-        name='enforceAdviceMandatoriness',
-        default=defValues.enforceAdviceMandatoriness,
-        widget=BooleanField._properties['widget'](
-            description="EnforceAdviceMandatoriness",
-            description_msgid="enforce_advice_mandatoriness_descr",
-            label='Enforceadvicemandatoriness',
-            label_msgid='PloneMeeting_label_enforceAdviceMandatoriness',
+    StringField(
+        name='keepAccessToItemWhenAdvice',
+        default=defValues.keepAccessToItemWhenAdvice,
+        widget=SelectionWidget(
+            description="KeepAccessToItemWhenAdvice",
+            description_msgid="keep_access_to_item_when_advice_descr",
+            label='Keepaccesstoitemwhenadvice',
+            label_msgid='PloneMeeting_label_keepAccessToItemWhenAdvice',
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
+        vocabulary_factory='Products.PloneMeeting.vocabularies.keep_access_to_item_when_advice_vocabulary',
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
@@ -1931,6 +1958,19 @@ schema = Schema((
         schemata="advices",
         write_permission="PloneMeeting: Write risky config",
     ),
+    BooleanField(
+        name='enforceAdviceMandatoriness',
+        default=defValues.enforceAdviceMandatoriness,
+        widget=BooleanField._properties['widget'](
+            description="EnforceAdviceMandatoriness",
+            description_msgid="enforce_advice_mandatoriness_descr",
+            label='Enforceadvicemandatoriness',
+            label_msgid='PloneMeeting_label_enforceAdviceMandatoriness',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     LinesField(
         name='defaultAdviceHiddenDuringRedaction',
         default=defValues.defaultAdviceHiddenDuringRedaction,
@@ -1974,21 +2014,6 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    StringField(
-        name='keepAccessToItemWhenAdvice',
-        default=defValues.keepAccessToItemWhenAdvice,
-        widget=SelectionWidget(
-            description="KeepAccessToItemWhenAdvice",
-            description_msgid="keep_access_to_item_when_advice_descr",
-            label='Keepaccesstoitemwhenadvice',
-            label_msgid='PloneMeeting_label_keepAccessToItemWhenAdvice',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="advices",
-        vocabulary_factory='Products.PloneMeeting.vocabularies.keep_access_to_item_when_advice_vocabulary',
-        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
@@ -2769,7 +2794,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     defaultWorkflows = ('meetingitem_workflow', 'meeting_workflow')
 
     # Names of workflow adaptations, ORDER IS IMPORTANT!
-    wfAdaptations = ('only_creator_may_delete',
+    wfAdaptations = ('item_validation_shortcuts',
+                     'item_validation_no_validate_shortcuts',
+                     'only_creator_may_delete',
+                     # first define meeting workflow state removal
+                     'no_freeze',
+                     'no_publication',
+                     'no_decide',
+                     # then define added item decided states
                      'accepted_but_modified',
                      'postpone_next_meeting',
                      'mark_not_applicable',
@@ -2778,7 +2810,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'refused',
                      'delayed',
                      'pre_accepted',
-                     'no_publication',
+                     # then other adaptations
                      'reviewers_take_back_validated_item',
                      'presented_item_back_to_validation_state',
                      'return_to_proposing_group',
@@ -2799,6 +2831,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'accepted_out_of_meeting_emergency',
                      'accepted_out_of_meeting_emergency_and_duplicated',
                      'meetingmanager_correct_closed_meeting')
+
+    def getId(self, real_id=False):
+        """Override to take __real_id__ into account (used in some tests)."""
+        if real_id and base_hasattr(self, "__real_id__"):
+            return self.__real_id__
+        return super(MeetingConfig, self).getId()
 
     def _searchesInfo(self):
         """Informations used to create DashboardCollections in the searches."""
@@ -3518,7 +3556,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if states:
             res = [level for level in res if level['state'] in states]
         if data:
-            res = [level[data] for level in res]
+            res = [level[data] for level in res if level[data]]
         if return_state_singleton and len(states) == 1:
             res = res and res[0] or res
         # when displayed, append translated values to elements title
@@ -3537,7 +3575,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     line[translated_title] = u"{0} ({1})".format(
                         translated_value, line_translated_title)
             res = translated_res
-        return res
+        # when returning for example extra_suffixes as list, avoid it modified
+        return copy.deepcopy(res)
 
     security.declarePublic('getOrderedItemInitiators')
 
@@ -4481,11 +4520,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if 'accepted_out_of_meeting_emergency' in values and \
            'accepted_out_of_meeting_emergency_and_duplicated' in values:
             return msg
+        if 'no_decide' in values and 'hide_decisions_when_under_writing' in values:
+            return msg
         # several 'return_to_proposing_group' values may not be selected together
         return_to_prop_group_wf_adaptations = [
             v for v in values if v.startswith('return_to_proposing_group')]
         if len(return_to_prop_group_wf_adaptations) > 1:
             return msg
+
+        msg = translate('wa_dependencies', domain='PloneMeeting', context=self.REQUEST)
+        # dependecies, some adaptations will complete already select ones
+        dependencies = {'waiting_advices': [v for v in self.wfAdaptations
+                                            if v.startswith('waiting_advices_')],
+                        'item_validation_shortcuts': ['item_validation_no_validate_shortcuts']}
+        for base_wfa, dependents in dependencies.items():
+            if set(values).intersection(dependents) and base_wfa not in values:
+                return msg
 
         # dependency on 'MeetingConfig.itemWFValidationLevels'
         msg = translate('wa_item_validation_levels_dependency',
@@ -4533,6 +4583,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                catalog.unrestrictedSearchResults(
                     portal_type=self.getMeetingTypeName(), review_state='published'):
                 return translate('wa_added_no_publication_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'no_freeze' in added:
+            # this will remove the 'frozen' state for Meeting and 'itemfrozen' for MeetingItem
+            # check that no more elements are in these states
+            if catalog.unrestrictedSearchResults(
+                portal_type=self.getItemTypeName(), review_state='itemfrozen') or \
+               catalog.unrestrictedSearchResults(
+                    portal_type=self.getMeetingTypeName(), review_state='frozen'):
+                return translate('wa_added_no_freeze_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'no_decide' in added:
+            # this will remove the 'decided' state for Meeting
+            # check that no more elements are in these states
+            if catalog.unrestrictedSearchResults(
+                    portal_type=self.getMeetingTypeName(), review_state='decided'):
+                return translate('wa_added_no_decide_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
 
@@ -4775,22 +4843,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # make sure the MeetingConfig does not use a state that was removed or disabled
         # either using state or transition
         # states
-        cfg_item_wf_attributes = [
-            # states
-            'recordItemHistoryStates',
-            'itemAutoSentToOtherMCStates',
-            'itemManualSentToOtherMCStates',
-            'itemAdviceStates',
-            'itemAdviceEditStates',
-            'itemAdviceViewStates',
-            'itemAdviceInvalidateStates',
-            'itemBudgetInfosStates',
-            'itemGroupsInChargeStates',
-            'itemCopyGroupsStates',
-            # transitions
-            'transitionsReinitializingDelays',
-            'transitionsToConfirm',
-            'mailItemEvents', ]
+        cfg_item_wf_attrs = list(ITEM_WF_STATE_ATTRS) + list(ITEM_WF_TRANSITION_ATTRS)
+        cfg_item_wf_attrs.remove('transitionsForPresentingAnItem')
         # transitions
         enabled_stored_transitions = self.getItemWFValidationLevels(
             data='leading_transition',
@@ -4802,7 +4856,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         removed_or_disabled_transitions = tuple(set(enabled_stored_transitions).difference(
             set(enabled_values_transitions)))
 
-        for attr in cfg_item_wf_attributes:
+        for attr in cfg_item_wf_attrs:
             field = self.getField(attr)
             # manage case where item state direclty equal value
             # of value contains item state, like 'suffix_profile_prereviewers'
@@ -4829,7 +4883,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         # XXX to be managed when moving MeetingConfig to DX
         # some datagridfield attributes
-        # powerObservers, meetingConfigsToCloneTo
+        # powerObservers, meetingConfigsToCloneTo, onTransitionFieldTransforms
 
     security.declarePrivate('validate_mailItemEvents')
 
@@ -7533,7 +7587,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # return_to_proposing_group WFAdaptation
         if item_state.startswith('returned_to_proposing_group'):
             if item_state == 'returned_to_proposing_group':
-                corresponding_item_state = item_val_levels_states[0]
+                corresponding_item_state = item_val_levels_states[0] if item_val_levels_states else 'itemcreated'
             else:
                 corresponding_item_state = item_state.split('returned_to_proposing_group_')[1]
         # waiting_advices WFAdaptation

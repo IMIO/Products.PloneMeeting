@@ -34,7 +34,7 @@
 
   <div tal:define="errors python:{};
                    dummy python: context.mayQuickEdit(fieldName, raiseOnError=True);
-                   dummyNotifyEditBegunEvent python: context.restrictedTraverse('@@pm-notify-event').notifyEditBegunEvent();
+                   dummyNotifyEditBegunEvent python: context.unrestrictedTraverse('@@pm-notify-event').notifyEditBegunEvent();
                    portal_type context/portal_type;
                    type_name portal_type;
                    lockable python:hasattr(context, 'wl_isLocked');
@@ -98,7 +98,7 @@
 <metal:field define-macro="simplyViewField" i18n:domain="PloneMeeting"
  tal:define="fieldName request/fieldName;
              field python: context.getField(fieldName);
-             dummyNotifyEditCancelledEvent python: context.restrictedTraverse('@@pm-notify-event').notifyEditCancelledEvent();
+             dummyNotifyEditCancelledEvent python: context.unrestrictedTraverse('@@pm-notify-event').notifyEditCancelledEvent();
              mayEdit python: member.has_permission(field.write_permission, context)">
  <metal:view use-macro="context/@@pm-macros/viewField"/>
 </metal:field>
@@ -173,7 +173,7 @@ document.location.reload(true);
                  isOptional field/optional|python:False;
                  isUsed python: not isOptional or (isOptional and fieldName in usedAttrs);
                  ajaxEdit ajaxEdit|nothing;
-                 mayEdit python: ajaxEdit and context.mayQuickEdit(fieldName) and not context.restrictedTraverse('@@plone_lock_info').is_locked_for_current_user()"
+                 mayEdit python: ajaxEdit and context.mayQuickEdit(fieldName) and not context.unrestrictedTraverse('@@plone_lock_info').is_locked_for_current_user()"
      tal:condition="python: isUsed and field.widget.visible and field.widget.visible and field.widget.testCondition(context.getParentNode(), context.getParentNode(), context) and member.has_permission(field.read_permission, context)">
   <tal:rich condition="python: isRich">
     <metal:view use-macro="context/@@pm-macros/viewField"/>
@@ -924,7 +924,7 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
       <span tal:condition="not: isActive" i18n:translate="">No</span>
     </td>
     <td align="right">
-      <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+      <tal:actions replace="structure python: obj.unrestrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
     </td>
   </tr>
   </tal:loop>
@@ -1044,12 +1044,9 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
                  tal:attributes="style python: context.getOtherMeetingConfigsClonableTo() and 'display: block' or 'display: none';">
                 <fieldset>
                   <legend i18n:translate="">Data that will be used on new item</legend>
-                  <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldTitle', mode='edit')"/>
-                  <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldDescription', mode='edit')"/>
-                  <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldMotivation', mode='edit')"/>
-                  <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldDecision', mode='edit')"/>
-                  <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldDecisionSuite', mode='edit')"/>
-                  <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldDecisionEnd', mode='edit')"/>
+                  <tal:loop tal:repeat="other_mc_field_name python: context.get_enable_clone_to_other_mc_fields(cfg)">
+                    <metal:field use-macro="python:here.widget(other_mc_field_name, mode='edit')"/>
+                  </tal:loop>
                 </fieldset>
             </div>
         </tal:otherMeetingConfigsClonableToFields>

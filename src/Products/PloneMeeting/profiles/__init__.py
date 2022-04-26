@@ -28,7 +28,7 @@ def patch_pod_templates(templates, new_path, cfg1_id=None):
 class Descriptor(object):
     '''This abstract class represents Python data that will be used for
        initializing an Archetypes object.'''
-    multiSelectFields = []
+
     excludedFields = ['active']
 
     def getData(self, **kw):
@@ -43,11 +43,7 @@ class Descriptor(object):
                 continue
             if k in kw:
                 v = kw[k]
-            if type(v) not in (list, tuple):
-                res[k] = v
-            else:
-                if k in self.multiSelectFields:
-                    res[k] = v
+            res[k] = v
         # Add elements from kw that do not correspond to a field on self
         for k, v in kw.iteritems():
             if k not in data:
@@ -100,9 +96,6 @@ class ItemTemplateDescriptor(Descriptor):
 
 
 class CategoryDescriptor(Descriptor):
-    multiSelectFields = ['using_groups',
-                         'category_mapping_when_cloning_to_other_mc',
-                         'groups_in_charge']
 
     def __init__(self, id, title, description='', category_id='',
                  using_groups=[], category_mapping_when_cloning_to_other_mc=[],
@@ -118,7 +111,7 @@ class CategoryDescriptor(Descriptor):
 
 
 class AnnexTypeDescriptor(Descriptor):
-    multiSelectFields = ('subTypes', )
+    excludedFields = ['relatedTo', 'subTypes']
 
     def __init__(self,
                  id,
@@ -137,8 +130,9 @@ class AnnexTypeDescriptor(Descriptor):
         self.title = title
         self.icon = icon
         self.predefined_title = predefined_title
+        # non stored field used to know which type of annex type it is
         self.relatedTo = relatedTo
-        # a list of AnnexSubTypeDescriptors
+        # non stored list of AnnexSubTypeDescriptors
         self.subTypes = subTypes
         self.confidential = confidential
         self.to_print = to_print
@@ -149,8 +143,6 @@ class AnnexTypeDescriptor(Descriptor):
 
 
 class ItemAnnexTypeDescriptor(AnnexTypeDescriptor):
-
-    multiSelectFields = ('other_mc_correspondences', 'subTypes', )
 
     def __init__(self,
                  id,
@@ -204,7 +196,6 @@ class AnnexSubTypeDescriptor(Descriptor):
 
 
 class ItemAnnexSubTypeDescriptor(AnnexSubTypeDescriptor):
-    multiSelectFields = ('other_mc_correspondences', )
 
     def __init__(self,
                  id,
@@ -244,24 +235,18 @@ class StyleTemplateDescriptor(Descriptor):
 
 
 class PodTemplateDescriptor(StyleTemplateDescriptor):
-    multiSelectFields = ('pod_formats',
-                         'pod_portal_types',
-                         'dashboard_collections_ids',
-                         'context_variables',
-                         'style_template',
-                         'roles_bypassing_talcondition',
-                         'merge_templates')
 
-    excludedFields = ['dashboard_collections_ids', 'use_objects']
+    excludedFields = ['dashboard_collections_ids', 'use_objects', 'dashboard']
 
     def __init__(self, id, title, description='', enabled=True, dashboard=False):
         super(PodTemplateDescriptor, self).__init__(id, title, description, enabled)
         self.pod_formats = ['odt', ]
         self.pod_portal_types = []
-        # ids of DashboardCollections to restrict the DashboardPODTemplate to
+        # non stored ids of DashboardCollections to restrict the DashboardPODTemplate to
         self.dashboard_collections_ids = []
         self.tal_condition = u''
         self.mailing_lists = u''
+        # non stored bool to add a dashboard POD template
         self.dashboard = dashboard
         self.context_variables = []
         self.style_template = []
@@ -278,6 +263,7 @@ class PodTemplateDescriptor(StyleTemplateDescriptor):
 
 
 class PloneGroupDescriptor(Descriptor):
+
     def __init__(self, id, title, roles):
         self.id = id
         self.title = title
@@ -286,6 +272,7 @@ class PloneGroupDescriptor(Descriptor):
 
 class UserDescriptor(Descriptor):
     '''Plone user descriptor, useful to create Plone users in tests.'''
+
     def __init__(self, id, globalRoles=[], email='user AT plonemeeting.org',
                  password=DEFAULT_USER_PASSWORD, fullname=None):
         self.id = id
@@ -329,8 +316,6 @@ class PersonDescriptor(Descriptor):
 
 class HeldPositionDescriptor(Descriptor):
 
-    multiSelectFields = ('usages', 'defaults', )
-
     def __init__(self, id, label, usages=['assemblyMember'], defaults=['present'],
                  signature_number=None, position=PLONEGROUP_ORG, position_type='default'):
         self.id = id
@@ -362,9 +347,9 @@ class HeldPositionDescriptor(Descriptor):
 
 
 class OrgDescriptor(Descriptor):
-    multiSelectFields = ('certified_signatures', 'item_advice_states',
-                         'item_advice_edit_states', 'item_advice_view_states',
-                         'groups_in_charge')
+
+    excludedFields = ['parent_path', ]
+
     # The 'instance' static attribute stores an instance used for assigning
     # default values to a meeting config being created through-the-web.
     instance = None
@@ -382,6 +367,7 @@ class OrgDescriptor(Descriptor):
         self.title = title
         self.acronym = acronym
         self.description = description
+        # non stored field used to get parent
         self.parent_path = ''
         self.item_advice_states = []
         self.item_advice_edit_states = []
@@ -393,11 +379,13 @@ class OrgDescriptor(Descriptor):
         # Add lists of users (observers, reviewers, etc) ~[UserDescriptor]~
         for suffix in suffixes:
             setattr(self, suffix['fct_id'], [])
+            self.excludedFields.append(suffix['fct_id'])
         # add extra suffixes if relevant
         from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
         for extra_suffix in EXTRA_GROUP_SUFFIXES:
             if id in extra_suffix['fct_orgs'] or not extra_suffix['fct_orgs']:
                 setattr(self, extra_suffix['fct_id'], [])
+                self.excludedFields.append(extra_suffix['fct_id'])
         self.active = active
 
     def getUsers(self):
@@ -414,39 +402,6 @@ class OrgDescriptor(Descriptor):
 
 
 class MeetingConfigDescriptor(Descriptor):
-    multiSelectFields = ('certifiedSignatures', 'usedItemAttributes', 'historizedItemAttributes',
-                         'recordItemHistoryStates', 'usedMeetingAttributes',
-                         'availableItemsListVisibleColumns', 'itemsListVisibleColumns',
-                         'itemsVisibleFields', 'itemsNotViewableVisibleFields', 'itemsListVisibleFields',
-                         'itemColumns', 'itemActionsColumnConfig', 'meetingColumns',
-                         'displayAvailableItemsTo', 'redirectToNextMeeting', 'toDoListSearches',
-                         'dashboardItemsListingsFilters', 'dashboardMeetingAvailableItemsFilters',
-                         'dashboardMeetingLinkedItemsFilters', 'groupsHiddenInDashboardFilter',
-                         'usersHiddenInDashboardFilter', 'workflowAdaptations',
-                         'itemWFValidationLevels', 'transitionsToConfirm',
-                         'transitionsForPresentingAnItem', 'onTransitionFieldTransforms',
-                         'onMeetingTransitionItemActionToExecute', 'meetingPresentItemWhenNoCurrentMeetingStates',
-                         'itemAutoSentToOtherMCStates', 'itemManualSentToOtherMCStates', 'advicesKeptOnSentToOtherMC',
-                         'mailItemEvents', 'mailMeetingEvents',
-                         'usedAdviceTypes', 'selectableAdvisers', 'selectableAdviserUsers',
-                         'itemAdviceStates', 'itemAdviceEditStates',
-                         'itemAdviceViewStates', 'itemBudgetInfosStates',
-                         'powerAdvisersGroups', 'powerObservers',
-                         'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates',
-                         'defaultAdviceHiddenDuringRedaction', 'transitionsReinitializingDelays',
-                         'customAdvisers', 'selectableCopyGroups', 'itemCopyGroupsStates', 'votesEncoder',
-                         'meetingTopicStates', 'decisionTopicStates', 'itemFieldsToKeepConfigSortingFor',
-                         'listTypes', 'selectablePrivacies', 'xhtmlTransformFields', 'xhtmlTransformTypes',
-                         'usedVoteValues', 'firstLinkedVoteUsedVoteValues', 'nextLinkedVotesUsedVoteValues',
-                         'usedPollTypes', 'insertingMethodsOnAddItem',
-                         'annexRestrictShownAndEditableAttributes', 'itemAnnexConfidentialVisibleFor',
-                         'adviceAnnexConfidentialVisibleFor', 'meetingAnnexConfidentialVisibleFor',
-                         'enableAdviceConfidentiality', 'adviceConfidentialityDefault', 'adviceConfidentialFor',
-                         'hideNotViewableLinkedItemsTo', 'itemInternalNotesEditableBy',
-                         'inheritedAdviceRemoveableByAdviser', 'usingGroups',
-                         'hideHistoryTo', 'orderedAssociatedOrganizations',
-                         'orderedGroupsInCharge', 'orderedItemInitiators', 'selectableRedefinedPositionTypes',
-                         'orderedCommitteeContacts', 'committees')
 
     excludedFields = ['addContactsCSV',
                       'defaultLabels',
@@ -685,7 +640,6 @@ class MeetingConfigDescriptor(Descriptor):
              'enabled': '0',
              },
         )
-
         # "Transitions to confirm" are Meeting or Item-related transitions for
         # which, in the user interface, a click on the corresponding icon or
         # button will show a confirmation popup. In this popup, the user will
@@ -873,15 +827,15 @@ class PloneMeetingConfiguration(Descriptor):
     # through a profile.
     instance = None
 
-    excludedFields = ['directory_position_types', 'forceAddUsersAndGroups', 'contactsTemplates']
+    excludedFields = ['directory_position_types', 'forceAddUsersAndGroups',
+                      'contactsTemplates', 'usersOutsideGroups', 'meetingConfigs',
+                      'persons', 'orgs']
 
     def get(klass):
         if not klass.instance:
             klass.instance = PloneMeetingConfiguration('My meetings', [], [])
         return klass.instance
     get = classmethod(get)
-
-    multiSelectFields = ('workingDays', 'configGroups', 'deferParentReindex')
 
     def __init__(self, meetingFolderTitle, meetingConfigs, orgs):
         self.meetingFolderTitle = meetingFolderTitle
@@ -921,6 +875,8 @@ class PloneMeetingConfiguration(Descriptor):
         ]
         self.delayUnavailableEndDays = ()
         self.configGroups = ()
+
+        # non stored values
         self.meetingConfigs = meetingConfigs  # ~[MeetingConfigDescriptor]~
         self.orgs = orgs  # ~[OrgDescriptor]~
         self.forceAddUsersAndGroups = False

@@ -198,7 +198,7 @@ class AdviceChangeDelayForm(form.EditForm):
         cfg = tool.getMeetingConfig(self.context)
         newAdviceData = self.getDataForRowId(data['new_delay_row_id'])
         currentAdviceData = self.getDataForRowId(data['current_delay_row_id'])
-        listAvailableDelaysView = self.context.restrictedTraverse('@@advice-available-delays')
+        listAvailableDelaysView = self.context.unrestrictedTraverse('@@advice-available-delays')
         listAvailableDelaysView._initAttributes(currentAdviceData['org'])
         isAutomatic, linkedRows = cfg._findLinkedRowsFor(data['current_delay_row_id'])
         selectableDelays = listAvailableDelaysView.listSelectableDelays()
@@ -295,7 +295,7 @@ class AdviceChangeDelayHistoryView(BrowserView):
         '''
           Return history of delay changes for an advice.
         '''
-        delayChangesView = self.context.restrictedTraverse('@@advice-available-delays')
+        delayChangesView = self.context.unrestrictedTraverse('@@advice-available-delays')
         advice_uid = self.request.get('advice')
         if not delayChangesView._mayAccessDelayChangesHistory():
             raise Unauthorized
@@ -319,7 +319,7 @@ class AdviceReinitializeDelayView(BrowserView):
 
     def __call__(self):
         ''' '''
-        delayChangesView = self.context.restrictedTraverse('@@advice-available-delays')
+        delayChangesView = self.context.unrestrictedTraverse('@@advice-available-delays')
         advice_uid = self.request.get('advice')
         if not delayChangesView._mayReinitializeDelay(advice_uid):
             raise Unauthorized

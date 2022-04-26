@@ -37,7 +37,6 @@ from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
 from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
-from Products.PloneMeeting.ToolPloneMeeting import MEETING_CONFIG_ERROR
 from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import updateCollectionCriterion
 from z3c.relationfield.relation import RelationValue
@@ -51,8 +50,10 @@ import transaction
 
 
 # PloneMeeting-Error related constants -----------------------------------------
-MEETINGCONFIG_BADREQUEST_ERROR = 'There was an error during creation of MeetingConfig with id "%s". ' \
-                                 'Original error : "%s"'
+MEETING_CONFIG_ERROR = 'A validation error occurred while instantiating ' \
+                       'meeting configuration "%s" with id "%s". %s'
+MEETINGCONFIG_BADREQUEST_ERROR = 'There was an error during creation of ' \
+    'MeetingConfig with id "%s". Original error : "%s"'
 
 
 def update_labels_jar(jar, values):
@@ -198,7 +199,7 @@ class ToolInitializer:
                 cfgToCloneTo['meeting_config'] = self.cfg_num_to_id(cfgToCloneTo['meeting_config'])
             error = cfg.validate_meetingConfigsToCloneTo(adapted_cfgsToCloneTo)
             if error:
-                raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), error))
+                raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.Title(), cfg.getId(), error))
             cfg.setMeetingConfigsToCloneTo(adapted_cfgsToCloneTo)
             cfg._updateCloneToOtherMCActions()
         for org_uid, values in savedOrgsData.items():
@@ -249,7 +250,7 @@ class ToolInitializer:
             cfg._set_default_faceted_search(meetingAppDefaultView)
         else:
             error = 'meetingAppDefaultView : No DashboardCollection with id %s' % meetingAppDefaultView
-            raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), error))
+            raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.Title(), cfg.getId(), error))
 
         # now we can set values for dashboard...Filters fields as the 'searches' folder has been created
         for fieldName in ('dashboardItemsListingsFilters',
@@ -259,7 +260,7 @@ class ToolInitializer:
             # we want to validate the vocabulay, as if enforceVocabulary was True
             error = field.validate_vocabulary(cfg, cfg.getField(field.getName()).get(cfg), {})
             if error:
-                raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), error))
+                raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.Title(), cfg.getId(), error))
 
         if data.addContactsCSV:
             output = import_contacts(self.portal, path=self.profilePath)
@@ -343,7 +344,9 @@ class ToolInitializer:
                 data = [org_id_to_uid(suffixed_group_id) for suffixed_group_id in data
                         if org_id_to_uid(suffixed_group_id, raise_on_error=False)]
             except KeyError:
-                logger.warning('Error while turning org ids to org uids for field_name {0}'.format(field_name))
+                logger.warning(
+                    'Error while turning org ids to org uids for field_name {0}'.format(
+                        field_name))
                 data = []
             cData[field_name] = data
         # manage customAdvisers, turn 'org' value from org id to uid
@@ -364,6 +367,9 @@ class ToolInitializer:
         cfgId = configData.id
         cfg = getattr(self.tool, cfgId)
         cfg._at_creation_flag = True
+        # for tests where config id is shuffled, save the real id
+        if "__real_id__" in cData:
+            cfg.__real_id__ = cData["__real_id__"]
         # TextArea fields are not set properly.
         for field in cfg.Schema().fields():
             fieldName = field.getName()
@@ -380,7 +386,8 @@ class ToolInitializer:
             if error:
                 errors.append("'%s': %s" % (field.getName(), error))
         if errors:
-            raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), '\n'.join(errors)))
+            raise PloneMeetingError(MEETING_CONFIG_ERROR % (
+                cfg.Title(), cfg.getId(), '\n'.join(errors)))
 
         if not configData.active:
             self.portal.portal_wokflow.doActionFor(cfg, 'deactivate')
@@ -462,9 +469,11 @@ class ToolInitializer:
         if item.proposingGroup:
             item.setProposingGroup(org_id_to_uid(item.proposingGroup))
         if item.groupsInCharge:
-            item.setGroupsInCharge([org_id_to_uid(grp_in_charge) for grp_in_charge in item.groupsInCharge])
+            item.setGroupsInCharge([org_id_to_uid(grp_in_charge)
+                                    for grp_in_charge in item.groupsInCharge])
         if item.proposingGroupWithGroupInCharge:
-            proposing_group_id, group_in_charge_id = item.proposingGroupWithGroupInCharge.split('__groupincharge__')
+            proposing_group_id, group_in_charge_id = item.proposingGroupWithGroupInCharge.split(
+                '__groupincharge__')
             proposing_group_uid = org_id_to_uid(proposing_group_id)
             group_in_charge_uid = org_id_to_uid(group_in_charge_id)
             item.setProposingGroup(proposing_group_uid)
@@ -569,7 +578,8 @@ class ToolInitializer:
         pod_template_to_use = None
         if pt.odt_file:
             # pt.odt_file may be a full path or a relative path
-            filePath = pt.odt_file.startswith('/') and pt.odt_file or '%s/templates/%s' % (source, pt.odt_file)
+            filePath = pt.odt_file.startswith('/') and pt.odt_file or '%s/templates/%s' % (
+                source, pt.odt_file)
             data = self.find_binary(filePath)
             odt_file = NamedBlobFile(
                 data=data,
@@ -580,12 +590,14 @@ class ToolInitializer:
         elif pt.pod_template_to_use['cfg_id']:
             pod_template_to_use_cfg = self.tool.get(pt.pod_template_to_use['cfg_id'])
             if not pod_template_to_use_cfg:
-                logger.warning('Cfg with id {0} not found when adding Pod template {1}, template was not added'.format(
+                logger.warning(
+                    'Cfg with id {0} not found when adding Pod template {1}, template was not added'.format(
                     pt.pod_template_to_use['cfg_id'], pt.pod_template_to_use['template_id']))
                 return
             pod_template = pod_template_to_use_cfg.podtemplates.get(pt.pod_template_to_use['template_id'])
             if not pod_template:
-                logger.warning('Pod template with id {0} not found in cfg with id {1}, template was not added'.format(
+                logger.warning(
+                    'Pod template with id {0} not found in cfg with id {1}, template was not added'.format(
                     pt.pod_template_to_use['template_id'], pt.pod_template_to_use['cfg_id']))
                 return
             pod_template_to_use = pod_template.UID()
@@ -597,7 +609,7 @@ class ToolInitializer:
         if data['is_style']:
             podType = 'StyleTemplate'
         else:
-            podType = data['dashboard'] and 'DashboardPODTemplate' or 'ConfigurablePODTemplate'
+            podType = pt.dashboard and 'DashboardPODTemplate' or 'ConfigurablePODTemplate'
 
             # turn the pod_portal_types from MeetingItem to MeetingItemShortname
             adapted_pod_portal_types = []

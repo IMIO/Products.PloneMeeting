@@ -95,6 +95,7 @@ from Products.PloneMeeting.events import item_added_or_initialized
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
+from Products.PloneMeeting.model.adaptations import get_waiting_advices_infos
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
@@ -186,23 +187,34 @@ class MeetingItemWorkflowConditions(object):
         self.context = item
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+        self.review_state = self.context.query_state()
 
     def _publishedObjectIsMeeting(self):
         '''Is the object currently published in Plone a Meeting ?'''
         obj = getCurrentMeetingObject(self.context)
         return isinstance(obj, Meeting)
 
-    def _getLastValidationState(self, before_last=False):
+    def _getLastValidationState_cachekey(method, self, before_last=False, return_level=False):
+        '''cachekey method for self._getLastValidationState.'''
+        return self.context.getProposingGroup(), before_last, return_level
+
+    # not ramcached perf tests says it does not change much
+    # and this avoid useless entry in cache
+    # @ram.cache(_getLastValidationState_cachekey)
+    def _getLastValidationState(self, before_last=False, return_level=False):
         '''Last validation state is validation level state defined in
            MeetingConfig.itemWFValidationLevels for which the linked
            suffixed Plone group is not empty.
-           If p_before_last=True, then we return before_last level.'''
+           If p_before_last=True, then we return before_last level.
+           If p_return_level=True we return the last validation state and
+           the full validation level from cfg.getItemWFValidationLevels.'''
         levels = list(self.cfg.getItemWFValidationLevels(only_enabled=True))
         res = 'itemcreated'
         # get suffixed Plone group in reverse order of defined validation levels
         levels.reverse()
         found_last = False
         found_before_last = False
+        level = {}
         for level in levels:
             if self.tool.group_is_not_empty(self.context.getProposingGroup(), level['suffix']):
                 res = level['state']
@@ -212,7 +224,10 @@ class MeetingItemWorkflowConditions(object):
                     found_last = True
                 if (found_last and not before_last) or found_before_last:
                     break
-        return res
+        if return_level:
+            return res, level
+        else:
+            return res
 
     def _check_required_data(self, destination_state):
         '''Make sure required data are encoded when necessary.'''
@@ -234,18 +249,53 @@ class MeetingItemWorkflowConditions(object):
                 msg = No(_('required_groupsInCharge_ko'))
         return msg
 
+    def _mayShortcutToValidationLevel(self, destinationState):
+        '''When using WFAdaptation 'item_validation_shortcuts',
+           is current user able to use the shortcut to p_destinationState?'''
+        res = False
+        if 'item_validation_shortcuts' in self.cfg.getWorkflowAdaptations():
+            # get previous item validation state and check what suffixes may manage
+            item_val_levels_states = self.cfg.getItemWFValidationLevels(
+                data='state', only_enabled=True)
+            previous_val_state = item_val_levels_states[
+                item_val_levels_states.index(destinationState)-1]
+            previous_suffixes = self.cfg.getItemWFValidationLevels(
+                states=[previous_val_state], data='extra_suffixes', only_enabled=True)
+            previous_main_suffix = self.cfg.getItemWFValidationLevels(
+                states=[previous_val_state], data='suffix', only_enabled=True)
+            previous_suffixes.append(previous_main_suffix)
+            previous_suffixes = tuple(set(previous_suffixes))
+            previous_group_managing_item_uid = self.context.adapted()._getGroupManagingItem(
+                previous_val_state)
+            res = bool(self.tool.get_filtered_plone_groups_for_user(
+                org_uids=[previous_group_managing_item_uid], suffixes=previous_suffixes))
+            # when previous_val_state group suffix is empty, we replay _mayShortcutToValidationLevel
+            # but with this previous state as destinationState
+            # XXX TO BE CONFIRMED
+            if not res and not self.tool.group_is_not_empty(
+               previous_group_managing_item_uid, previous_main_suffix):
+                return self._mayShortcutToValidationLevel(previous_val_state)
+        else:
+            res = True
+        return res
+
     security.declarePublic('mayProposeToNextValidationLevel')
 
-    def mayProposeToNextValidationLevel(self, destinationState=None):
+    def mayProposeToNextValidationLevel(self, destinationState):
         '''Check if able to propose to next validation level.'''
         res = False
         if _checkPermission(ReviewPortalContent, self.context):
-            # check if next validation level suffixed Plone group is not empty
             suffix = self.cfg.getItemWFValidationLevels(
                 states=[destinationState], data='suffix', only_enabled=True)
-            res = self.tool.group_is_not_empty(self.context.getProposingGroup(), suffix)
-        # check category after transition as transition could not be doable
-        # at all and in this case, we would display a No button for a transition not doable...
+            group_managing_item_uid = self.context.adapted()._getGroupManagingItem(destinationState)
+            # check if next validation level suffixed Plone group is not empty
+            res = self.tool.group_is_not_empty(group_managing_item_uid, suffix)
+            # shortcuts are available to (Meeting)Managers
+            if res and not self.tool.isManager(self.cfg):
+                # check that when using shortcuts, this is available
+                res = self._mayShortcutToValidationLevel(destinationState)
+        # check required data only if transition is doable or we would display
+        # a No button for a transition that is actually not triggerable...
         if res:
             msg = self._check_required_data(destinationState)
             if msg is not None:
@@ -258,10 +308,9 @@ class MeetingItemWorkflowConditions(object):
         res = False
         if 'waiting_advices_given_advices_required_to_validate' in \
            self.cfg.getWorkflowAdaptations():
-            review_state = self.context.query_state()
             wf_tool = api.portal.get_tool('portal_workflow')
             item_wf = wf_tool.getWorkflowsFor(self.context)[0]
-            transitions = item_wf.states[review_state].transitions
+            transitions = item_wf.states[self.review_state].transitions
             wait_advices_transitions = [tr for tr in transitions
                                         if tr.startswith('wait_advices_')]
             for wait_advices_tr in wait_advices_transitions:
@@ -281,7 +330,8 @@ class MeetingItemWorkflowConditions(object):
            If some _get_waiting_advices_icon_advisers, check if one of these advice
            is giveable in current state, if it is the case, then compute icon color.
            Return icon name and translation msgid.'''
-        res = 'wait_advices_from.png', 'icon_help_waiting_advices'
+        res = 'wait_advices_from.png', translate(
+            self.review_state, domain="plone", context=self.context.REQUEST)
         for adviser_uid in self._get_waiting_advices_icon_advisers():
             if adviser_uid in self.context.adviceIndex and \
                self.context.adviceIndex[adviser_uid]['advice_editable']:
@@ -303,9 +353,14 @@ class MeetingItemWorkflowConditions(object):
             if _checkPermission(ManagePortal, self.context):
                 res = True
             else:
-                item_state = self.context.query_state()
-                last_validation_state = self._getLastValidationState()
-                if item_state == last_validation_state:
+                # user may validate if he is member of the last validation level suffixed group
+                last_validation_state, last_level = self._getLastValidationState(return_level=True)
+                if self.review_state == last_validation_state or \
+                   ('item_validation_shortcuts' in self.cfg.getWorkflowAdaptations() and
+                    'item_validation_no_validate_shortcuts' not in self.cfg.getWorkflowAdaptations() and
+                        get_plone_group_id(
+                            self.context.getProposingGroup(),
+                            last_level['suffix']) in self.tool.get_plone_groups_for_user()):
                     res = True
                     if self._has_waiting_advices_transitions():
                         res = No(_('has_required_waiting_advices'))
@@ -322,8 +377,7 @@ class MeetingItemWorkflowConditions(object):
         # only MeetingManagers may present an item, the 'Review portal content'
         # permission is not enough as MeetingReviewer may have the 'Review portal content'
         # when using the 'reviewers_take_back_validated_item' wfAdaptation
-        if not _checkPermission(ReviewPortalContent, self.context) or \
-           not self.tool.isManager(self.cfg):
+        if not self.tool.isManager(self.cfg):
             return False
 
         # if item initial_state is "validated", an item could miss it's category
@@ -367,29 +421,24 @@ class MeetingItemWorkflowConditions(object):
                                mapping={'itemNumber': itemNumber}))
         return res
 
-    security.declarePublic('mayDelay')
-
-    def mayDelay(self):
-        if _checkPermission(ReviewPortalContent, self.context):
-            return True
-
-    security.declarePublic('mayConfirm')
-
-    def mayConfirm(self):
-        if _checkPermission(ReviewPortalContent, self.context) and \
-           self.context.getMeeting().query_state() in ('decided', 'decisions_published', 'closed'):
-            return True
-
-    def _userIsPGMemberAbleToSendItemBack(self, proposingGroup, destinationState):
-        '''Is current user member of destinationState level?'''
+    def _userIsPGMemberAbleToSendItemBack(self, proposing_group_uid, destinationState):
+        ''' '''
         suffix = self.cfg.getItemWFValidationLevels(
             states=[destinationState], data='suffix')
-        return self.tool.group_is_not_empty(
-            proposingGroup,
-            suffix,
-            user_id=get_current_user_id(self.context.REQUEST)) and \
+        # first case, is user member of destinationState level?
+        res = self.tool.group_is_not_empty(
+            proposing_group_uid, suffix, user_id=get_current_user_id(self.context.REQUEST))
+        # in case we use shortcuts, we also check if able to go to destinationState
+        # if it was the classic item validation workflow
+        # so a creator could send back to "itemcreated" and to "proposed"
+        if not res and \
+           self.tool.group_is_not_empty(proposing_group_uid, suffix) and \
+           'item_validation_shortcuts' in self.cfg.getWorkflowAdaptations():
+            res = self._mayShortcutToValidationLevel(destinationState)
+
+        return res and \
             self._userIsPGMemberAbleToSendItemBackExtraCondition(
-                proposingGroup, destinationState)
+                proposing_group_uid, destinationState)
 
     def _userIsPGMemberAbleToSendItemBackExtraCondition(
             self, proposingGroup, destinationState):
@@ -409,7 +458,6 @@ class MeetingItemWorkflowConditions(object):
            - every advices that should be given have to be given;
            - user must be adviser for advice;
            - if advice not given, user must be able to evaluate completeness and item must be incomplete.'''
-        item_state = self.context.query_state()
         user_plone_groups = self.tool.get_plone_groups_for_user()
         res = False
         for org_uid in self.context.adviceIndex:
@@ -420,7 +468,7 @@ class MeetingItemWorkflowConditions(object):
             # this last case is "not using completeness"
             adapted = self.context.adapted()
             may_eval_completeness = adapted.mayEvaluateCompleteness()
-            if item_state in self.cfg.getItemAdviceStatesForOrg(org_uid) and \
+            if self.review_state in self.cfg.getItemAdviceStatesForOrg(org_uid) and \
                get_plone_group_id(org_uid, 'advisers') in user_plone_groups and \
                (self.context._advice_is_given(org_uid) or
                 (may_eval_completeness and
@@ -448,22 +496,19 @@ class MeetingItemWorkflowConditions(object):
         if not meeting or (meeting and meeting.query_state() != 'closed'):
             proposingGroup = self.context.getProposingGroup()
             # when item is validated, we may eventually send back to last validation state
-            item_state = self.context.query_state()
             wfas = self.cfg.getWorkflowAdaptations()
-            if item_state == 'validated':
-                last_val_state = self._getLastValidationState()
-                if destinationState == last_val_state:
-                    # MeetingManager probably
-                    if _checkPermission(ReviewPortalContent, self.context):
-                        res = True
-                    # manage the reviewers_take_back_validated_item WFAdaptation
-                    elif 'reviewers_take_back_validated_item' in self.cfg.getWorkflowAdaptations():
-                        # is current user member of last validation level?
-                        suffix = self.cfg.getItemWFValidationLevels(states=[last_val_state], data='suffix')
-                        res = self.tool.group_is_not_empty(
-                            proposingGroup, suffix, user_id=get_current_user_id())
+            last_val_state, last_level = self._getLastValidationState(return_level=True)
+            if self.review_state == 'validated' and destinationState == last_val_state:
+                # MeetingManager probably
+                if _checkPermission(ReviewPortalContent, self.context):
+                    res = True
+                # manage the reviewers_take_back_validated_item WFAdaptation
+                elif 'reviewers_take_back_validated_item' in self.cfg.getWorkflowAdaptations():
+                    # is current user member of last validation level?
+                    res = self.tool.group_is_not_empty(
+                        proposingGroup, last_level['suffix'], user_id=get_current_user_id())
             # using 'waiting_advices_XXX_send_back' WFAdaptations,
-            elif item_state.endswith('_waiting_advices'):
+            elif self.review_state.endswith('_waiting_advices'):
                 item_validation_states = self.cfg.getItemWFValidationLevels(data='state', only_enabled=True)
                 # compute sendable back states
                 sendable_back_states = []
@@ -471,33 +516,33 @@ class MeetingItemWorkflowConditions(object):
                 if 'waiting_advices_from_before_last_val_level' in wfas:
                     sendable_back_states.append(self._getLastValidationState(before_last=True))
                 if 'waiting_advices_from_last_val_level' in wfas:
-                    sendable_back_states.append(self._getLastValidationState())
+                    sendable_back_states.append(last_val_state)
                 if 'waiting_advices_from_every_val_levels' in wfas:
                     sendable_back_states = list(item_validation_states)
                 if not sendable_back_states:
                     # use custom values from WAITING_ADVICES_FROM_STATES
-                    from Products.PloneMeeting.model import adaptations
-                    for waiting_advice_config in adaptations.WAITING_ADVICES_FROM_STATES:
+                    for waiting_advice_config in get_waiting_advices_infos(self.cfg.getId()):
                         sendable_back_states += list(waiting_advice_config['back_states'])
 
+                # remove duplicates
+                sendable_back_states = list(set(sendable_back_states))
                 if destinationState in sendable_back_states or \
                    destinationState not in item_validation_states:
-                    # bypass for Manager
-                    if _checkPermission(ReviewPortalContent, self.context):
+                    # bypass for Manager, do not check on ReviewPortalContent
+                    # as also given to proposingGroup
+                    if self.tool.isManager(self.cfg):
                         res = True
                     else:
+                        # is current user proposingGroup member able to trigger transition?
                         if 'waiting_advices_proposing_group_send_back' in wfas:
-                            # is current user proposingGroup member able to trigger transition?
                             res = self._userIsPGMemberAbleToSendItemBack(
                                 proposingGroup, destinationState)
-
                         # if not, maybe it is an adviser able to give an advice?
                         if not res and 'waiting_advices_adviser_send_back' in wfas:
                             # adviser may send back to validated when using
                             # 'waiting_advices_adviser_may_validate'
                             if 'waiting_advices_adviser_may_validate' in wfas:
                                 sendable_back_states.append('validated')
-
                             # is current user adviser able to trigger transition?
                             res = self._currentUserIsAdviserAbleToSendItemBack(destinationState)
             else:
@@ -520,10 +565,9 @@ class MeetingItemWorkflowConditions(object):
             return
         # when using validation states, may return when in last validation state
         if 'return_to_proposing_group' not in self.cfg.getWorkflowAdaptations():
-            item_state = self.context.query_state()
             current_validation_state = 'itemcreated' \
-                if item_state == 'returned_to_proposing_group' \
-                else item_state.replace('returned_to_proposing_group_', '')
+                if self.review_state == 'returned_to_proposing_group' \
+                else self.review_state.replace('returned_to_proposing_group_', '')
             last_val_state = self._getLastValidationState()
             # we are in last validation state, or we are in state 'returned_to_proposing_group'
             # and there is no last validation state, aka it is "itemcreated"
@@ -635,8 +679,7 @@ class MeetingItemWorkflowConditions(object):
                         from_states = list(item_validation_states)
                     if not from_states:
                         # use custom values from WAITING_ADVICES_FROM_STATES
-                        from Products.PloneMeeting.model import adaptations
-                        for waiting_advice_config in adaptations.WAITING_ADVICES_FROM_STATES:
+                        for waiting_advice_config in get_waiting_advices_infos(self.cfg.getId()):
                             from_states += list(waiting_advice_config['from_states'])
                     if from_state in from_states:
                         res = True
@@ -1009,7 +1052,7 @@ schema = Schema((
     BooleanField(
         name='budgetRelated',
         widget=BooleanField._properties['widget'](
-            condition="python: here.attribute_is_used('budgetInfos')",
+            condition="python: here.show_budget_infos()",
             description="BudgetRelated",
             description_msgid="item_budget_related_descr",
             label='Budgetrelated',
@@ -1022,7 +1065,7 @@ schema = Schema((
     TextField(
         name='budgetInfos',
         widget=RichWidget(
-            condition="python: here.attribute_is_used('budgetInfos')",
+            condition="python: here.show_budget_infos()",
             description="BudgetInfos",
             description_msgid="item_budgetinfos_descr",
             label='Budgetinfos',
@@ -1732,6 +1775,20 @@ schema = Schema((
         optional=True,
     ),
     TextField(
+        name='otherMeetingConfigsClonableToFieldDetailedDescription',
+        widget=RichWidget(
+            condition="python: here.attribute_is_used('otherMeetingConfigsClonableToFieldDetailedDescription')",
+            label_msgid="PloneMeeting_label_detailedDescription",
+            label='Detaileddescription',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=True,
+    ),
+    TextField(
         name='otherMeetingConfigsClonableToFieldMotivation',
         widget=RichWidget(
             condition="python: here.attribute_is_used('otherMeetingConfigsClonableToFieldMotivation')",
@@ -2259,6 +2316,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return self.attribute_is_used('observations')
 
+    security.declarePublic('show_budget_infos')
+
+    def show_budget_infos(self):
+        '''Condition for showing budgetRelated/budgetInfos fields.'''
+        # using field, viewable/editable
+        if self.attribute_is_used("budgetInfos") and \
+           api.user.get_current().has_permission('PloneMeeting: Read budget infos', self):
+            return True
+
     security.declarePublic('show_groups_in_charge')
 
     def show_groups_in_charge(self):
@@ -2457,10 +2523,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def mayTakeOver(self):
         '''Check doc in interfaces.py.'''
         item = self.getSelf()
-        wfTool = api.portal.get_tool('portal_workflow')
         res = False
         # user have WF transitions to trigger
-        if bool(wfTool.getTransitionsFor(item)):
+        if _checkPermission(ReviewPortalContent, item):
             res = True
         else:
             # item is decided and user is member of the proposingGroup
@@ -2659,9 +2724,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if "__or__" in states:
                 states = states.split("__or__")
             else:
-                from Products.PloneMeeting.model.adaptations import WAITING_ADVICES_FROM_STATES
                 found = False
-                for infos in WAITING_ADVICES_FROM_STATES:
+                for infos in get_waiting_advices_infos(cfg.getId()):
                     if infos['new_state_id'] == states:
                         states = infos['new_state_id']
                         break
@@ -2858,6 +2922,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self._update_preferred_meeting(value)
             field.set(self, value, **kwargs)
 
+    def _mark_need_update(self, update_item_references=True, update_committees=True, extra_markers=[]):
+        '''See docstring in interfaces.py.'''
+        if update_item_references:
+            # add a value in the REQUEST to specify that update_item_references is needed
+            self.REQUEST.set('need_Meeting_update_item_references', True)
+        if update_committees:
+            # add a value in the REQUEST to specify that update_committees is needed
+            self.REQUEST.set('need_MeetingItem_update_committees', True)
+        for extra_marker in extra_markers:
+            self.REQUEST.set(extra_marker, True)
+
     security.declareProtected(ModifyPortalContent, 'setCategory')
 
     def setCategory(self, value, **kwargs):
@@ -2866,12 +2941,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         field = self.getField('category')
         current_value = field.get(self, **kwargs)
         if value != current_value:
-            # add a value in the REQUEST to specify that update_item_references is needed
-            self.REQUEST.set('need_Meeting_update_item_references', True)
-            # add a value in the REQUEST to specify that update_committees is needed
-            self.REQUEST.set('need_MeetingItem_update_committees', True)
             # add a value in the REQUEST to specify that update_groups_in_charge is needed
-            self.REQUEST.set('need_MeetingItem_update_groups_in_charge_category', True)
+            self._mark_need_update(extra_markers=['need_MeetingItem_update_groups_in_charge_category'])
             field.set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setClassifier')
@@ -2882,12 +2953,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         field = self.getField('classifier')
         current_value = field.get(self, **kwargs)
         if value != current_value:
-            # add a value in the REQUEST to specify that update_item_references is needed
-            self.REQUEST.set('need_Meeting_update_item_references', True)
-            # add a value in the REQUEST to specify that update_committees is needed
-            self.REQUEST.set('need_MeetingItem_update_committees', True)
             # add a value in the REQUEST to specify that update_groups_in_charge is needed
-            self.REQUEST.set('need_MeetingItem_update_groups_in_charge_classifier', True)
+            self._mark_need_update(extra_markers=['need_MeetingItem_update_groups_in_charge_classifier'])
             field.set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setProposingGroup')
@@ -2898,12 +2965,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         field = self.getField('proposingGroup')
         current_value = field.get(self, **kwargs)
         if value != current_value:
-            # add a value in the REQUEST to specify that update_item_references is needed
-            self.REQUEST.set('need_Meeting_update_item_references', True)
-            # add a value in the REQUEST to specify that update_committees is needed
-            self.REQUEST.set('need_MeetingItem_update_committees', True)
             # add a value in the REQUEST to specify that update_groups_in_charge is needed
-            self.REQUEST.set('need_MeetingItem_update_groups_in_charge_proposing_group', True)
+            self._mark_need_update(extra_markers=['need_MeetingItem_update_groups_in_charge_proposing_group'])
             field.set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setProposingGroupWithGroupInCharge')
@@ -2941,7 +3004,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         current_value = field.get(self, **kwargs)
         if self._adaptLinesValueToBeCompared(value) != current_value:
             # add a value in the REQUEST to specify that update_item_references is needed
-            self.REQUEST.set('need_Meeting_update_item_references', True)
+            self._mark_need_update(update_committees=False)
             field.set(self, value, **kwargs)
 
     security.declareProtected(View, 'getManuallyLinkedItems')
@@ -3006,9 +3069,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if showClonableToOtherMCs:
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(item)
-            usedAttrs = [usedAttr for usedAttr in cfg.getUsedItemAttributes()
-                         if usedAttr.startswith('otherMeetingConfigsClonableToField')]
-            res = bool(usedAttrs)
+            res = bool(self.get_enable_clone_to_other_mc_fields(cfg))
         return res
 
     security.declarePublic('getItemNumber')
@@ -5971,7 +6032,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # - in case an advice was asked automatically and condition that was True at the time
             #   is not True anymore (item/getBudgetRelated for example) but the advice was given in between
             #   However, in this case we have a 'row_id' stored in the given advice
-            # - in case we have a not asked advice given by a PowerAdviser, in thus case, we have no 'row_id'
+            # - in case we have a not asked advice given by a PowerAdviser, in this case, we have no 'row_id'
             if org_uid not in self.adviceIndex:
                 self.adviceIndex[org_uid] = PersistentMapping()
                 if not adviceInfo['row_id']:
@@ -6502,7 +6563,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         return item.getProposingGroup(theObject=theObject)
 
-    def _getAllGroupsManagingItem(self, theObjects=False):
+    def _getAllGroupsManagingItem(self, review_state, theObjects=False):
         '''See doc in interfaces.py.'''
         res = []
         item = self.getSelf()
@@ -6510,6 +6571,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if proposingGroup:
             res.append(proposingGroup)
         return res
+
+    def _assign_roles_to_group_suffixes(self, org_uid, suffix_roles):
+        """Helper that applies local_roles for org_uid to p_sufix_roles.
+           p_suffixes_roles is like:
+           {'observers': ['Reader'], 'creators': ['Reader']}
+        """
+        # apply local roles to computed suffixes
+        for suffix, roles in suffix_roles.items():
+            # suffix_roles keep only existing suffixes
+            plone_group_id = get_plone_group_id(org_uid, suffix)
+            if not isinstance(roles, (list, tuple)):
+                raise Exception(
+                    "Parameter suffix_roles values must be of type tuple or list!")
+            self.manage_addLocalRoles(plone_group_id, tuple(roles))
 
     def assign_roles_to_group_suffixes(self, cfg, item_state):
         """Method that do the work of assigning relevant roles to
@@ -6531,10 +6606,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             cfg, item_state, org_uid)
 
         # apply local roles to computed suffixes
-        for suffix, roles in suffix_roles.items():
-            # suffix_roles keep only existing suffixes
-            plone_group_id = get_plone_group_id(org_uid, suffix)
-            self.manage_addLocalRoles(plone_group_id, tuple(roles))
+        self._assign_roles_to_group_suffixes(org_uid, suffix_roles)
 
         # MeetingManagers get access if item at least validated or decided
         # decided will include states "decided out of meeting"
@@ -7010,6 +7082,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         fplog('clone_item', extras=extras)
         return newItem
 
+    def get_enable_clone_to_other_mc_fields(self, cfg, ignored_field_names=[]):
+        """Return the ids of 'otherMeetingConfigsClonableToFieldXXX' that are enabled."""
+        return [field_name for field_name in cfg.getUsedItemAttributes()
+                if field_name.startswith('otherMeetingConfigsClonableToField')
+                and field_name not in ignored_field_names]
+
     security.declarePublic('doCloneToOtherMeetingConfig')
 
     def doCloneToOtherMeetingConfig(self, destMeetingConfigId):
@@ -7129,9 +7207,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             newItem.setPrivacy('secret')
 
         # handle 'otherMeetingConfigsClonableToFieldXXX' of original item
-        other_mc_field_names = [field_name for field_name in cfg.getUsedItemAttributes()
-                                if field_name.startswith('otherMeetingConfigsClonableToField')]
-        for other_mc_field_name in other_mc_field_names:
+        for other_mc_field_name in self.get_enable_clone_to_other_mc_fields(cfg):
             # first check if original field not empty
             if self.fieldIsEmpty(other_mc_field_name):
                 continue
