@@ -76,15 +76,14 @@ class Renderer(base.Renderer, FacetedRenderer):
 
     def render_cachekey(method, self):
         '''cachekey method for self.__call__.'''
-        users_groups_date = get_cachekey_volatile(
-            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+        userGroups = self.tool.get_plone_groups_for_user()
         # URL to the item can change if server URL changed
         server_url = self.request.get('SERVER_URL', None)
         # cache until an item is modified
         date = get_cachekey_volatile('Products.PloneMeeting.MeetingItem.modified')
         load_portlet_todo = self.request.get('load_portlet_todo', False)
         return (repr(self.cfg),
-                users_groups_date,
+                userGroups,
                 server_url,
                 date,
                 load_portlet_todo)
@@ -103,8 +102,9 @@ class Renderer(base.Renderer, FacetedRenderer):
 
     def getSearches_cachekey(method, self):
         '''cachekey method for self.getSearches.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
-        return date, self.cfg.modified()
+        userGroups = self.tool.get_plone_groups_for_user()
+        cfg_modified = self.cfg.modified()
+        return userGroups, cfg_modified
 
     @ram.cache(getSearches_cachekey)
     def getSearches(self):

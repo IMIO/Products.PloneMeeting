@@ -483,12 +483,11 @@ class PMRenderTermView(RenderTermPortletView):
 
     def number_of_items_cachekey(method, self, init=False):
         '''cachekey method for self.number_of_items.'''
-        users_groups_date = get_cachekey_volatile(
-            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        userGroups = tool.get_plone_groups_for_user()
         # cache until an item is modified
         date = get_cachekey_volatile('Products.PloneMeeting.MeetingItem.modified', method)
-        # self.context is the Collection
-        return (repr(self.context), users_groups_date, date, init)
+        return (repr(self.context), userGroups, date, init)
 
     @ram.cache(number_of_items_cachekey)
     def number_of_items(self, init=False):
