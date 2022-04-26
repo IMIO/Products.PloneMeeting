@@ -332,13 +332,14 @@ class ToolInitializer:
            sub-objects of the meeting config will be searched there.'''
         cData = configData.getData()
         # turn org ids into org uids
-        for field_name in ['selectableCopyGroups',
-                           'selectableAdvisers',
-                           'powerAdvisersGroups',
-                           'usingGroups',
+        for field_name in ['orderedAssociatedOrganizations',
+                           'orderedContacts',
+                           'orderedGroupsInCharge',
                            'orderedItemInitiators',
-                           'orderedAssociatedOrganizations',
-                           'orderedGroupsInCharge']:
+                           'powerAdvisersGroups',
+                           'selectableCopyGroups',
+                           'selectableAdvisers',
+                           'usingGroups']:
             data = cData.get(field_name)
             try:
                 data = [org_id_to_uid(suffixed_group_id) for suffixed_group_id in data
