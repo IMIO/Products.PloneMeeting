@@ -312,17 +312,11 @@ class testContacts(PloneMeetingTestCase):
         item_view = item1.restrictedTraverse('@@display-meeting-item-not-present')
         meeting_view = meeting.restrictedTraverse('@@display-meeting-item-not-present')
         for view in (item_view, meeting_view):
-            view.not_present_uid = hp1_uid
-            view.not_present_type = "absent"
-            self.assertTrue(view.index())
+            self.assertTrue(view(hp1_uid, "absent"))
             self.assertEqual(view.getItemsForNotPresent(), [item1, item2])
-            view.not_present_uid = hp2_uid
-            view.not_present_type = "excused"
-            self.assertTrue(view.index())
+            self.assertTrue(view(hp2_uid, "excused"))
             self.assertEqual(view.getItemsForNotPresent(), [item1])
-            view.not_present_uid = hp1_uid
-            view.not_present_type = "non_attendee"
-            self.assertTrue(view.index())
+            self.assertTrue(view(hp1_uid, "non_attendee"))
             self.assertEqual(view.getItemsForNotPresent(), [item1, item2])
 
         # welcome hp1 on item2

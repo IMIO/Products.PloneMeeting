@@ -21,6 +21,7 @@ from imio.actionspanel.interfaces import IContentDeletable
 from imio.annex.browser.views import DownloadAnnexesBatchActionForm
 from imio.helpers.content import uuidToObject
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
+from imio.pyutils.utils import get_clusters
 from imio.zamqp.core.utils import scan_id_barcode
 from plone import api
 from plone.app.caching.operations.utils import getContext
@@ -2358,6 +2359,7 @@ class DisplayMeetingItemNotPresent(BrowserView):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.not_present_uid = not_present_uid
         self.not_present_type = not_present_type
+        self.items_for_not_present = self.getItemsForNotPresent()
         return self.index()
 
     def getItemsForNotPresent(self):
@@ -2373,6 +2375,12 @@ class DisplayMeetingItemNotPresent(BrowserView):
         brains = catalog(UID=item_uids, sort_on='getItemNumber')
         objs = [brain.getObject() for brain in brains]
         return objs
+
+    def display_clusters(self):
+        """Display item numbers as clusters."""
+        numbers = [item.getItemNumber(for_display=True) for item in self.items_for_not_present]
+        numbers = [int(number) if '.' not in number else float(number) for number in numbers]
+        return get_clusters(numbers)
 
 
 class DisplayMeetingItemSignatories(BrowserView):

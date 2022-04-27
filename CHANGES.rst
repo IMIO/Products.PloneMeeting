@@ -78,6 +78,10 @@ Changelog
 - Added `ram.cache` for the `@@createitemfromtemplate` view that is responsible
   for calculating the item templates fancy tree.
   [gbastien]
+- In the `@@display-meeting-item-not-present` on the meeting displaying items an
+  attendee was not present for, display clusters of items numbers to ease reading
+  when an attendee is not present for many items.
+  [gbastien]
 
 4.2rc21 (2022-03-22)
 --------------------
