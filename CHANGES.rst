@@ -88,7 +88,7 @@ Changelog
   attendee was not present for, display clusters of items numbers to ease reading
   when an attendee is not present for many items.
   [gbastien]
-- Add a no_vote_marker parameter to `BaseDGHV.print_votes`
+- Add a no_votes_marker parameter to `BaseDGHV.print_votes`
   [aduchene]
 
 4.2rc21 (2022-03-22)
