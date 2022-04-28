@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc22 (unreleased)
+4.2rc22 (2022-04-28)
 --------------------
 
 - Adapted `Migrate_To_4200._removeBrokenAnnexes`, check that annex UID is in
