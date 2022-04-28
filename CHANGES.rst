@@ -2,7 +2,13 @@ Changelog
 =========
 
 
-4.2rc22 (unreleased)
+4.2rc23 (unreleased)
+--------------------
+
+- Nothing changed yet.
+
+
+4.2rc22 (2022-04-28)
 --------------------
 
 - Adapted `Migrate_To_4200._removeBrokenAnnexes`, check that annex UID is in
@@ -28,6 +34,59 @@ Changelog
 - Added possibility to execute migrations in several parts.
   Migration to 4200 is adapted to be executed in 3 parts (
   `main`, `update_local_roles`, `update workflow mappings/rebuild catalog`).
+  [gbastien]
+- Fixed `MeetingItem.validate_proposingGroupWithGroupInCharge` to not let select
+  a value for which no group in charge is selected (wrong configuration).
+  [gbastien]
+- Fixed `utils.sendMailIfRelevant` when `isPermission=True` that was simply broken.
+  [gbastien]
+- Changed behavior of `MeetingItem.get_representatives_in_charge`, it will return
+  `held_position objects`, no more the `MeetingItem.groupsInCharge organizations`.
+  [gbastien]
+- Set first day of calendar widget on `Meeting` to monday instead sunday (default).
+  [gbastien]
+- Make sure the advice tooltipster does not overflow the top of the screen,
+  this could occur when the browser screen is zoomed.
+  [gbastien]
+- When `debug=true` is passed as parameter during a `restapi` call, or env var
+  `RESTAPI_DEBUG` is set to `True`, the result is fully displayed in the event log.
+  [gbastien]
+- Added `PloneGroupSettingsOrganizationsValidator` that will check that an
+  organization unselected from plonegroup settings is not used as group in charge
+  of another organization.
+  Renamed `PloneGroupSettingsValidator` to `PloneGroupSettingsFunctionsValidator`.
+  [gbastien]
+- Fixed the WFAdaptations `return_to_proposing_group_with_last_validation` and
+  `return_to_proposing_group_with_all_validations` when there was no user in the
+  `_reviewers`, the item could not be sent back to the meeting, now the
+  `return_to_proposing_group validation WF` takes the last validation state into account.
+  [gbastien]
+- In the `@@categorized-annexes`, display a clear message when no annex is
+  addable because the `MeetingConfig` is not setup.
+  [gbastien]
+- Added WFAdaptation `item_validation_shortcuts` that will let users change item
+  state to any other item validation state (so between itemcreated and validated)
+  depending on their groups.
+  Added `MeetingItem._assign_roles_to_group_suffixes` to ease assigning roles
+  to suffixes for an organization.
+  [gbastien]
+- Added `MeetingConfig.getId` with `real_id=False` parameter, this will let get
+  the real id when used in some tests where we shuffle the id.
+  [gbastien]
+- Added new field `MeetingItem.otherMeetingConfigsClonableToFieldDetailedDescription`
+  that will fill the `detailedDescription` field when sent to another `MeetingConfig`.
+  Adapted templates so adding a new `MeetingItem.otherMeetingConfigsClonableToFieldXXX`
+  field is managed automatically.
+  [gbastien]
+- Moved the MeetingItem `budgetRelated/budgetInfos` fields condition logic to
+  `MeetingItem.show_budget_infos` so it is easier to override.
+  [gbastien]
+- Added `ram.cache` for the `@@createitemfromtemplate` view that is responsible
+  for calculating the item templates fancy tree.
+  [gbastien]
+- In the `@@display-meeting-item-not-present` on the meeting displaying items an
+  attendee was not present for, display clusters of items numbers to ease reading
+  when an attendee is not present for many items.
   [gbastien]
 - Add a no_vote_marker parameter to `BaseDGHV.print_votes`
   [aduchene]

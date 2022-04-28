@@ -2,13 +2,16 @@
 
 from collective.contact.plonegroup.browser.settings import IContactPlonegroupConfig
 from collective.contact.plonegroup.config import get_registry_functions
+from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.config import set_registry_functions
+from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group
 from copy import deepcopy
 from plone import api
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
-from Products.PloneMeeting.validators import PloneGroupSettingsValidator
+from Products.PloneMeeting.validators import PloneGroupSettingsFunctionsValidator
+from Products.PloneMeeting.validators import PloneGroupSettingsOrganizationsValidator
 from Products.validation import validation
 from zope.i18n import translate
 from zope.interface import Invalid
@@ -263,7 +266,7 @@ class testValidators(PloneMeetingTestCase):
         self.assertEquals(v(certified),
                           duplicated_entries_error_msg2)
 
-    def test_pm_PloneGroupSettingsValidator(self):
+    def test_pm_PloneGroupSettingsFunctionsValidator(self):
         """Completed plonegroup settings validation with our use cases :
            - can not remove a suffix if used in MeetingConfig.selectableCopyGroups;
            - can not remove a suffix if used in MeetingItem.copyGroups;
@@ -271,6 +274,11 @@ class testValidators(PloneMeetingTestCase):
              'suffix_proposing_group_level1reviewers',
              in MeetingConfig.itemAnnexConfidentialVisibleFor for example;
            - can not remove a suffix used by MeetingConfig.itemWFValidationLevels."""
+        # make sure we use default itemWFValidationLevels,
+        # useful when test executed with custom profile
+        cfg = self.meetingConfig
+        self._setUpDefaultItemWFValidationLevels(cfg)
+
         def _check(validation_error_msg, checks=['without', 'disabled', 'fct_orgs']):
             """ """
             values = []
@@ -287,7 +295,6 @@ class testValidators(PloneMeetingTestCase):
 
         self.changeUser('siteadmin')
         # add a new suffix and play with it
-        cfg = self.meetingConfig
         functions = get_registry_functions()
         functions_without_samplers = deepcopy(functions)
         functions.append({'enabled': True,
@@ -300,11 +307,8 @@ class testValidators(PloneMeetingTestCase):
         functions_with_fct_orgs_samplers = deepcopy(functions)
         functions_with_fct_orgs_samplers[-1]['fct_orgs'] = [self.vendors_uid]
 
-        validator = PloneGroupSettingsValidator(self.portal,
-                                                self.request,
-                                                None,
-                                                IContactPlonegroupConfig['functions'],
-                                                None)
+        validator = PloneGroupSettingsFunctionsValidator(
+            self.portal, self.request, None, IContactPlonegroupConfig['functions'], None)
         self.assertIsNone(validator.validate(functions))
         set_registry_functions(functions)
         # use samplers suffix
@@ -363,6 +367,30 @@ class testValidators(PloneMeetingTestCase):
         self.assertIsNone(validator.validate(functions_with_fct_orgs_advisers))
         set_registry_functions(functions_with_fct_orgs_advisers)
         self.assertFalse(self.developers_advisers in api.group.get_groups())
+
+    def test_pm_PloneGroupSettingsOrganizationsValidator(self):
+        """Can not unselected an organization if used as groups_in_charge
+           of another organziations."""
+
+        self.changeUser('siteadmin')
+        validator = PloneGroupSettingsOrganizationsValidator(
+            self.portal, self.request, None, IContactPlonegroupConfig['organizations'], None)
+        organizations = get_registry_organizations()
+        self.assertIsNone(validator.validate(organizations))
+
+        # org can not be unselected if used in another org.groups_in_charge
+        orgs = get_organizations()
+        orgs[0].groups_in_charge = [orgs[1].UID()]
+        with self.assertRaises(Invalid) as cm:
+            validator.validate([organizations[0]])
+        validation_error_msg = _('can_not_unselect_plone_group_org',
+                                 mapping={'item_url': orgs[0].absolute_url()})
+        self.assertEqual(cm.exception.message, validation_error_msg)
+        # but other could be unselected
+        self.assertIsNone(validator.validate([organizations[1]]))
+        # remove groups_in_charge so org may be unselected
+        orgs[0].groups_in_charge = []
+        self.assertIsNone(validator.validate([organizations[0]]))
 
 
 def test_suite():

@@ -17,7 +17,7 @@
 
     <tal:comment replace="nothing">Many meetings, show a combo box</tal:comment>
     <div class="manyMeetings" tal:condition="python: nbOfMeetings > maxShownMeetings">
-      <tal:go_to_meeting_select_box replace="structure python: context.restrictedTraverse('@@go_to_meeting_img_select_box')(**{'brains': brains, 'select_box_name_suffix': view.collection_uid})" />
+      <tal:go_to_meeting_select_box replace="structure python: context.unrestrictedTraverse('@@go_to_meeting_img_select_box')(**{'brains': brains, 'select_box_name_suffix': view.collection_uid})" />
     </div>
 
     <tal:comment replace="nothing">No available meeting visible, show a help message</tal:comment>

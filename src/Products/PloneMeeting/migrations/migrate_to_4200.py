@@ -47,6 +47,9 @@ class MeetingMigrator(CMFFolderMigrator):
     src_meta_type = 'Meeting'
     dst_portal_type = None
     dst_meta_type = None  # not used
+    # will store the Migrate_To_4200 migrator instance
+    # so we can use it to manage custom migration
+    pm_migrator = None
 
     def migrate_atctmetadata(self):
         """Override to not migrate exclude_from_nav because it does not exist by default
@@ -147,6 +150,7 @@ class MeetingMigrator(CMFFolderMigrator):
         """ """
         super(MeetingMigrator, self).migrate()
         self.new.update_title()
+        self.pm_migrator._hook_custom_meeting_to_dx(self.old, self.new)
         # we use idxs=() because when passing nothing (so idxs=[])
         # then notifyModified is called and the element is modified
         self.new.reindexObject(idxs=())
@@ -226,6 +230,7 @@ class Migrate_To_4200(Migrator):
             MeetingMigrator.src_portal_type = meeting_type_name
             MeetingMigrator.dst_portal_type = meeting_type_name
             MeetingMigrator.used_meeting_attrs = cfg.getUsedMeetingAttributes()
+            MeetingMigrator.pm_migrator = self
             pac_migrate(self.portal, MeetingMigrator)
 
             # some parameters were renamed
@@ -249,6 +254,11 @@ class Migrate_To_4200(Migrator):
         self.changeCollectionIndex('getPreferredMeetingDate', 'preferred_meeting_date')
         logger.info('Done.')
 
+    def _hook_custom_meeting_to_dx(self, old, new):
+        """Hook for plugins that need to do things
+           during the Meeting is migrated to DX."""
+        pass
+
     def _hook_before_meeting_to_dx(self):
         """Hook for plugins that need to do things just
            before Meeting is migrated to DX."""
@@ -259,6 +269,43 @@ class Migrate_To_4200(Migrator):
            after Meeting is migrated to DX."""
         pass
 
+    def _doConfigureItemWFValidationLevels(self, cfg):
+        """Method that handles MeetingConfig.itemWFValidationLevels,
+           overridable by subplugins if necessary."""
+        wfas = cfg.getWorkflowAdaptations()
+        stored_itemWFValidationLevels = getattr(cfg, 'itemWFValidationLevels', [])
+        # necessary for profile inbetween (4.2beta...)
+        if not stored_itemWFValidationLevels:
+            itemWFValidationLevels = cfg.getItemWFValidationLevels()
+            # a default value exist defining configuration for states
+            # itemcreated/proposed/prevalidated/proposedToValidationLevel1/.../proposedToValidationLevel5
+            # disable not used states.
+            adapted_itemWFValidationLevels = []
+            for level in itemWFValidationLevels:
+                adapted_level = deepcopy(level)
+                # proposedToValidationLevel1-5 are new, disable it by default
+                if adapted_level['state'].startswith('proposedToValidationLevel'):
+                    adapted_level['enabled'] = '0'
+                # itemcreated, enabled by default
+                if adapted_level['state'] == 'itemcreated' and 'items_come_validated' in wfas:
+                    adapted_level['enabled'] = '0'
+                # proposed, enabled by default
+                if adapted_level['state'] == 'proposed':
+                    if 'items_come_validated' in wfas or 'no_proposal' in wfas:
+                        adapted_level['enabled'] = '0'
+                    elif ('pre_validation_keep_reviewer_permissions' in wfas or
+                          'pre_validation' in wfas):
+                        adapted_level['suffix'] = 'prereviewers'
+                        if 'pre_validation_keep_reviewer_permissions' in wfas:
+                            adapted_level['extra_suffixes'] = ['reviewers']
+                # prevalidated, disabled by default
+                if adapted_level['state'] == 'prevalidated' and \
+                   ('pre_validation' in wfas or
+                        'pre_validation_keep_reviewer_permissions' in wfas):
+                    adapted_level['enabled'] = '1'
+                adapted_itemWFValidationLevels.append(adapted_level)
+                cfg.setItemWFValidationLevels(adapted_itemWFValidationLevels)
+
     def _configureItemWFValidationLevels(self):
         """Item WF validation levels (states itemcreated, proposed, pre-validated, ...)
            are now defined in MeetingConfig.itemWFValidationLevels."""
@@ -267,42 +314,11 @@ class Migrate_To_4200(Migrator):
             if not base_hasattr(cfg, 'historizedMeetingAttributes'):
                 # historizedMeetingAttributes is removed during migration of Meeting to DX
                 return self._already_migrated()
-            stored_itemWFValidationLevels = getattr(cfg, 'itemWFValidationLevels', [])
-            stored_wfas = cfg.getWorkflowAdaptations()
-            # necessary for profile inbetween (4.2beta...)
-            if not stored_itemWFValidationLevels:
-                itemWFValidationLevels = cfg.getItemWFValidationLevels()
-                # a default value exist defining configuration for states
-                # itemcreated/proposed/prevalidated/proposedToValidationLevel1/.../proposedToValidationLevel5
-                # disable not used states.
-                adapted_itemWFValidationLevels = []
-                for level in itemWFValidationLevels:
-                    adapted_level = deepcopy(level)
-                    # proposedToValidationLevel1-5 are new, disable it by default
-                    if adapted_level['state'].startswith('proposedToValidationLevel'):
-                        adapted_level['enabled'] = '0'
-                    # itemcreated, enabled by default
-                    if adapted_level['state'] == 'itemcreated' and 'items_come_validated' in stored_wfas:
-                        adapted_level['enabled'] = '0'
-                    # proposed, enabled by default
-                    if adapted_level['state'] == 'proposed':
-                        if 'items_come_validated' in stored_wfas or 'no_proposal' in stored_wfas:
-                            adapted_level['enabled'] = '0'
-                        elif ('pre_validation_keep_reviewer_permissions' in stored_wfas or
-                              'pre_validation' in stored_wfas):
-                            adapted_level['suffix'] = 'prereviewers'
-                            if 'pre_validation_keep_reviewer_permissions' in stored_wfas:
-                                adapted_level['extra_suffixes'] = ['reviewers']
-                    # prevalidated, disabled by default
-                    if adapted_level['state'] == 'prevalidated' and \
-                       ('pre_validation' in stored_wfas or
-                            'pre_validation_keep_reviewer_permissions' in stored_wfas):
-                        adapted_level['enabled'] = '1'
-                    adapted_itemWFValidationLevels.append(adapted_level)
-                    cfg.setItemWFValidationLevels(adapted_itemWFValidationLevels)
-
+            # do apply itemWFValidation levels
+            self._doConfigureItemWFValidationLevels(cfg)
             # clean stored workflowAdaptations
-            cleaned_wfas = [wfa for wfa in stored_wfas if wfa in cfg.listWorkflowAdaptations()]
+            cleaned_wfas = [wfa for wfa in cfg.getWorkflowAdaptations()
+                            if wfa in cfg.listWorkflowAdaptations()]
             # make sure new wfAdaptations are enabled (were default, now optional)
             cleaned_wfas += [wfa for wfa in ('pre_accepted', 'delayed', 'accepted_but_modified', )
                              if wfa in cfg.listWorkflowAdaptations()]
@@ -434,9 +450,17 @@ class Migrate_To_4200(Migrator):
     def _updateItemPreferredMeetingLink(self):
         """Update MeetingItem.preferred_meeting_path for every items."""
         logger.info("Updating MeetingItem.preferred_meeting_path for every items...")
-        for brain in self.catalog(meta_type='MeetingItem'):
+        pghandler = ZLogHandler(steps=1000)
+        brains = self.catalog(meta_type='MeetingItem')
+        pghandler.init('Updating MeetingItem.preferred_meeting_path for every items...',
+                       len(brains))
+        i = 0
+        for brain in brains:
+            i += 1
+            pghandler.report(i)
             item = brain.getObject()
             item._update_preferred_meeting(item.getPreferredMeeting())
+        pghandler.finish()
         logger.info('Done.')
 
     def _fixRichTextValueMimeType(self,
@@ -718,6 +742,8 @@ class Migrate_To_4200(Migrator):
                         # get_assembly, striked=True by default
                         # also used in some dashboard POD templates
                         '.displayStrikedAssembly()': '.get_assembly()',
+                        # called on a MeetingCategory
+                        '.getCategoryId()': '.category_id',
                         }
         # specific for Meeting POD Templates
         meeting_replacements = {
@@ -892,13 +918,17 @@ class Migrate_To_4200(Migrator):
 
             # need to reindex new indexes before migrating Meeting to DX
             addOrUpdateIndexes(self.portal, indexInfos)
-            addOrUpdateColumns(self.portal, columnInfos)
+            addOrUpdateColumns(self.portal, columnInfos, update_metadata=False)
 
             # update various TAL expressions
             self.updateTALConditions("queryState", "query_state")
             self.updateTALConditions("getDate()", "date")
             self.updateTALConditions("getStartDate()", "start_date")
             self.updateTALConditions("getEndDate()", "end_date")
+            self.updateTALConditions("power_observer_type='restrictedpowerobservers')",
+                                     "power_observer_types=['restrictedpowerobservers'])")
+            self.updateTALConditions("power_observer_type='powerobservers')",
+                                     "power_observer_types=['powerobservers'])")
             self.updateTALConditions("isManager(context)",
                                      "isManager(cfg")
             self.updateTALConditions("isManager(here)",
@@ -953,7 +983,7 @@ class Migrate_To_4200(Migrator):
             self.updateTALConditions(".showHolidaysWarning(context)", ".showHolidaysWarning(cfg)")
 
             # replacements MeetingConfig item columns
-            self.cleanItemColumns(
+            self.updateItemColumns(
                 to_replace={'getPreferredMeetingDate': 'preferred_meeting_date',
                             'linkedMeetingDate': 'meeting_date'})
 

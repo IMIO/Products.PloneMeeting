@@ -6,8 +6,8 @@
              i18n:domain="PloneMeeting">
     <div class="portlet_add_icons"
          tal:condition="python: userIsAmongCreators">
-    <tal:global_defines define="is_editing view/_is_editing;">
-        <tal:defines define="defaultUID view/_get_default_item_template_UID;">
+    <tal:global_defines define="is_editing python: view._is_editing();">
+        <tal:defines define="defaultUID python: view._get_default_item_template_UID();">
             <a id="newItemCreation" href="#"
                tal:condition="python: defaultUID and not is_editing"
                onclick="if (!this.clicked){this.clicked = true; setTimeout(function(){this.clicked = false;} ,10000); this.children[0].src=this.children[0].src.replace('new.png', 'new_greyed.png');return true;} return false"
@@ -22,7 +22,7 @@
             </span>
         </tal:defines>
         <tal:comment replace="nothing">Create a new item from a template</tal:comment>
-        <tal:create_from_template condition="view/hasTemplateItems">
+        <tal:create_from_template condition="python: view.hasTemplateItems()">
             <a id="newTemplateItemCreation"
                class="link-overlay-pm"
                tal:condition="not:is_editing"
@@ -42,5 +42,5 @@
         </tal:create_from_template>
     </tal:global_defines>
     </div>
-    <div class="title" tal:content="context/Title">Category title</div>
+    <div class="title" tal:content="python: context.Title()">Category title</div>
 </tal:defines>

@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
 from collective.contact.plonegroup.utils import select_organization
+from copy import deepcopy
 from plone import api
 from plone.app.testing import logout
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
+from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 
 
 class PloneMeetingTestingHelpers:
@@ -61,12 +63,14 @@ class PloneMeetingTestingHelpers:
     WF_ITEM_STATE_NAME_MAPPINGS_1 = {'itemcreated': 'itemcreated',
                                      'proposed_first_level': 'proposed',
                                      'proposed': 'proposed',
+                                     'prevalidated': 'prevalidated',
                                      'validated': 'validated',
                                      'presented': 'presented',
                                      'itemfrozen': 'itemfrozen'}
     WF_ITEM_STATE_NAME_MAPPINGS_2 = {'itemcreated': 'itemcreated',
                                      'proposed_first_level': 'proposed',
                                      'proposed': 'proposed',
+                                     'prevalidated': 'prevalidated',
                                      'validated': 'validated',
                                      'presented': 'presented',
                                      'itemfrozen': 'itemfrozen'}
@@ -369,7 +373,8 @@ class PloneMeetingTestingHelpers:
         membershipTool.deleteMembers((user_id, ))
         # now we have a 'not found' user in developers_creators
         self.assertTrue((user_id, '<{0}: not found>'.format(user_id)) in
-                        self.portal.acl_users.source_groups.listAssignedPrincipals(self.developers_creators))
+                        self.portal.acl_users.source_groups.listAssignedPrincipals(
+                            self.developers_creators))
         # groupData.getGroupMembers/groupData.getGroupMemberIds ignore not found
         self.assertFalse(user_id in api.group.get(self.developers_creators).getGroupMemberIds())
         self.changeUser(currentUser)
@@ -383,13 +388,17 @@ class PloneMeetingTestingHelpers:
         for userId in userIds:
             self.changeUser(userId)
             if read:
-                self.assertTrue(self.hasPermission(View, obj))
+                self.assertTrue(self.hasPermission(View, obj),
+                                'Should have "View" on obj')
             else:
-                self.assertFalse(self.hasPermission(View, obj))
+                self.assertFalse(self.hasPermission(View, obj),
+                                 'Should not "View" on obj')
             if write:
-                self.assertTrue(self.hasPermission(ModifyPortalContent, obj))
+                self.assertTrue(self.hasPermission(ModifyPortalContent, obj),
+                                'Should have "Modify" on obj')
             else:
-                self.assertFalse(self.hasPermission(ModifyPortalContent, obj))
+                self.assertFalse(self.hasPermission(ModifyPortalContent, obj),
+                                 'Should not "Modify" on obj')
         self.changeUser(original_user_id)
 
     def _setupStorePodAsAnnex(self):
@@ -532,3 +541,12 @@ class PloneMeetingTestingHelpers:
         cfg.setCommittees(cfg_committees)
         meeting = self.create('Meeting', committees=default_committees(DefaultData(cfg)))
         return meeting
+
+    def _setUpDefaultItemWFValidationLevels(self, cfg):
+        """Setup default itemWFValidationLevels for given p_cfg,
+           used to avoid a custom profile breaking the tests."""
+        # make sure we use default itemWFValidationLevels,
+        # useful when test executed with custom profile
+        defValues = MeetingConfigDescriptor.get()
+        cfg.setItemWFValidationLevels(deepcopy(defValues.itemWFValidationLevels))
+        cfg.at_post_edit_script()

@@ -15,6 +15,7 @@ from plone import api
 from plone.memoize import ram
 from Products.PloneMeeting.browser.overrides import BaseActionsPanelView
 from Products.PloneMeeting.config import FACETED_ANNEXES_CRITERION_ID
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_annexes_config
 
@@ -56,12 +57,19 @@ class CategorizedAnnexesTable(CategorizedTable):
 class CategorizedAnnexesView(CategorizedTabView):
     """ """
 
-    def __init__(self, context, request):
+    def __call__(self):
         """ """
-        super(CategorizedAnnexesView, self).__init__(context, request)
+        self._update()
+        return super(CategorizedAnnexesView, self).__call__()
+
+    def _update(self):
+        """ """
         self.portal_url = api.portal.get().absolute_url()
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+        # compute it here so portal messages are displayed
+        self._showAddAnnex = self.showAddAnnex()
+        self._showAddAnnexDecision = self.showAddAnnexDecision()
 
     def _config(self):
         """ """
@@ -78,6 +86,11 @@ class CategorizedAnnexesView(CategorizedTabView):
         portal_types = api.portal.get_tool('portal_types')
         annexTypeInfo = portal_types['annex']
         vocab = get_vocab(self.context, 'collective.iconifiedcategory.categories')
+        if not len(vocab):
+            api.portal.show_message(
+                _('The configuration does not let you add annexes.'),
+                request=self.request,
+                type='warning')
         return annexTypeInfo in self.context.allowedContentTypes() and len(vocab)
 
     def showAddAnnexDecision(self):
@@ -87,6 +100,11 @@ class CategorizedAnnexesView(CategorizedTabView):
         self.request.set('force_use_item_decision_annexes_group', True)
         vocab = get_vocab(self.context, 'collective.iconifiedcategory.categories')
         self.request.set('force_use_item_decision_annexes_group', False)
+        if not len(vocab):
+            api.portal.show_message(
+                _('The configuration does not let you add annexes.'),
+                request=self.request,
+                type='warning')
         return annexTypeInfo in self.context.allowedContentTypes() and len(vocab)
 
     def showAnnexesSection(self):

@@ -232,6 +232,7 @@ class testMeetingItem(PloneMeetingTestCase):
            It will evolve regarding groupInCharge, old value are kept and new values
            take groupsInCharge review_state into account.'''
         self.changeUser('siteadmin')
+        self._enableField('proposingGroupWithGroupInCharge')
         org1 = self.create('organization', id='org1', title='Org 1', acronym='O1')
         org1_uid = org1.UID()
         org2 = self.create('organization', id='org2', title='Org 2', acronym='O2')
@@ -299,6 +300,19 @@ class testMeetingItem(PloneMeetingTestCase):
                          [(developers_gic3, 'Developers (Org 3)'),
                           (vendors_gic2, 'Vendors (Org 2)'),
                           (vendors_gic3, 'Vendors (Org 3)')])
+        # case that was broken, when configuration changed from no group in charge
+        # selected to a group in charge selected on an organization, the vocabulary was broken,
+        # this is no more possible now as MeetingItem.validate_proposingGroupWithGroupInCharge avoid this
+        original_value = item1.getProposingGroupWithGroupInCharge()
+        wrong_value = '{0}__groupincharge__'.format(item1.getProposingGroup())
+        item1.setProposingGroupWithGroupInCharge(wrong_value)
+        self.assertTrue(wrong_value in vocab(item1))
+        # that would not pass validation though
+        required_msg = translate('proposing_group_with_group_in_charge_required',
+                                 domain='PloneMeeting',
+                                 context=self.portal.REQUEST)
+        self.assertEqual(item1.validate_proposingGroupWithGroupInCharge(wrong_value), required_msg)
+        self.failIf(item1.validate_proposingGroupWithGroupInCharge(original_value))
 
     def test_pm_CloneItemRemovesAnnotations(self):
         '''Annotations relative to item sent to other MC are correctly cleaned.'''
@@ -4515,6 +4529,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item._update_after_edit()
         self.assertTrue(first_tr in self.transitions(item))
         # changed again, this time we get same result as originally
+        self.changeUser('pmCreator1')
         actions_panel._transitions = None
         category_rendered_actions_panel = actions_panel()
         self.assertEqual(category_rendered_actions_panel, rendered_actions_panel)
@@ -4661,6 +4676,9 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_ItemActionsPanelCachingInvalidatedWhenUserGroupsChanged(self):
         """Actions panel cache is invalidated when the the groups of a user changed.
            Here we will make a creator be a reviewer."""
+        # make sure we use default itemWFValidationLevels,
+        # useful when test executed with custom profile
+        self._setUpDefaultItemWFValidationLevels(self.meetingConfig)
         item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
         # user not able to validate
         self.assertFalse("validate" in self.transitions(item))
@@ -4687,11 +4705,11 @@ class testMeetingItem(PloneMeetingTestCase):
            - powerobserver."""
         cfg = self.meetingConfig
         # enable everything
-        cfg.setItemCopyGroupsStates(('itemcreated', 'proposed', 'validated'))
-        self._setPowerObserverStates(states=('itemcreated', 'proposed', 'validated'))
-        cfg.setItemAdviceStates(('itemcreated', 'proposed', 'validated'))
-        cfg.setItemAdviceEditStates(('itemcreated', 'proposed', 'validated'))
-        cfg.setItemAdviceViewStates(('itemcreated', 'proposed', 'validated'))
+        cfg.setItemCopyGroupsStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
+        self._setPowerObserverStates(states=('itemcreated', self._stateMappingFor('proposed'), 'validated'))
+        cfg.setItemAdviceStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
+        cfg.setItemAdviceEditStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
+        cfg.setItemAdviceViewStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
 
         # create item
         self.changeUser('pmCreator1')
@@ -7562,9 +7580,12 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm__sendCopyGroupsMailIfRelevant(self):
         """Check mail sent to copyGroups when they have access to item.
            Mail is not sent twice to same email address."""
+        cfg = self.meetingConfig
+        # make sure we use default itemWFValidationLevels,
+        # useful when test executed with custom profile
+        self._setUpDefaultItemWFValidationLevels(cfg)
         # make utils.sendMailIfRelevant return details
         self.request['debug_sendMailIfRelevant'] = True
-        cfg = self.meetingConfig
         cfg.setUseCopies(True)
         cfg.setSelectableCopyGroups(cfg.listSelectableCopyGroups().keys())
         cfg.setItemCopyGroupsStates(['validated'])
@@ -7644,6 +7665,9 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm__send_proposing_group_suffix_if_relevant(self):
         """Check mail sent to relevant proposing group suffix."""
+        if not self._check_wfa_available(['presented_item_back_to_itemcreated']) or \
+           not self._check_wfa_available(['presented_item_back_to_proposed']):
+            return
         # make utils.sendMailIfRelevant return details
         self.changeUser('siteadmin')
         self.request['debug_sendMailIfRelevant'] = True
@@ -7710,6 +7734,9 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm__send_history_aware_mail_if_relevant(self):
         """Check history aware mail notifications."""
+        if not self._check_wfa_available(['presented_item_back_to_itemcreated']) or \
+           not self._check_wfa_available(['presented_item_back_to_proposed']):
+            return
         self.changeUser('siteadmin')
         self.request['debug_sendMailIfRelevant'] = True
         cfg = self.meetingConfig
@@ -7821,6 +7848,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemEditAndView(self):
         """Just call the edit and view to check it is displayed correctly."""
+        self._removeConfigObjectsFor(self.meetingConfig)
         cfg = self.meetingConfig
         # enable as much field as possible
         self.changeUser('siteadmin')

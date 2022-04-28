@@ -49,7 +49,6 @@ from plone.locking.events import unlockAfterModification
 from plone.memoize import ram
 from plone.supermodel.utils import mergedTaggedValueDict
 from Products.Archetypes.atapi import DisplayList
-from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ManageProperties
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -100,6 +99,7 @@ from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import alsoProvides
 from zope.interface import implements
+from zope.lifecycleevent import ObjectModifiedEvent
 from zope.location import locate
 from zope.schema import getFieldsInOrder
 from zope.security.interfaces import IPermission
@@ -626,6 +626,7 @@ def sendMailIfRelevant(obj,
     # Ok, send a mail. Who are the recipients ?
     recipients = []
     userIds = []
+    membershipTool = api.portal.get_tool('portal_membership')
     if isSuffix:
         org_uid = obj.adapted()._getGroupManagingItem(obj.query_state(), theObject=False)
         plone_group = get_plone_group(org_uid, value)
@@ -647,13 +648,15 @@ def sendMailIfRelevant(obj,
             plone_group = api.group.get(plone_group_id)
             if plone_group:
                 userIds += plone_group.getMemberIds()
-    else:
+    elif isUserIds:
         # isUserIds
         userIds = value
+    else:
+        # isPermission
+        userIds = membershipTool.listMemberIds()
 
     # remove duplicate
     userIds = list(set(userIds))
-    membershipTool = api.portal.get_tool('portal_membership')
     currentUser = membershipTool.getAuthenticatedMember()
     for userId in userIds:
         user = membershipTool.getMemberById(userId)
@@ -1051,7 +1054,7 @@ def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False, update_meta
     """Ease notifyModified and reindex of a given p_obj.
        If p_extra_idxs contains '*', a full reindex is done, if not
        only 'modified' related indexes are updated.
-       If p_notify_event is True, the ObjectEditedEvent is notified."""
+       If p_notify_event is True, the ObjectModifiedEvent is notified."""
 
     obj.notifyModified()
 
@@ -1063,7 +1066,7 @@ def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False, update_meta
     reindex_object(obj, idxs, update_metadata=update_metadata)
 
     if notify_event:
-        notify(ObjectEditedEvent(obj))
+        notify(ObjectModifiedEvent(obj))
 
 
 def reindex_object(obj, idxs=[], no_idxs=[], update_metadata=1, mark_to_reindex=False):
@@ -1789,8 +1792,11 @@ def reviewersFor(cfg):
     tuples = zip(suffixes, states)
 
     res = OrderedDict()
+    # a reviewer level could interact at different states
     for suffix, state in tuples:
-        res[suffix] = [state]
+        if suffix not in res:
+            res[suffix] = []
+        res[suffix].append(state)
     return res
 
 
@@ -1918,7 +1924,10 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org_uid=None):
     if suffix_roles:
         return apply_meetingmanagers_access, suffix_roles
 
-    item_val_levels_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+    # we get every states, including disabled ones so for example we may use
+    # "itemcreated" even if it is disabled
+    item_val_levels_states = cfg.getItemWFValidationLevels(
+        data='state', only_enabled=False)
 
     # by default, observers may View in every states as well as creators
     # this way observers have access or it is never the case
@@ -1932,7 +1941,7 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org_uid=None):
         # find Editor suffixes
         # walk every defined validation levels so we give 'Reader'
         # to levels already behind us
-        for level in cfg.getItemWFValidationLevels(only_enabled=True):
+        for level in cfg.getItemWFValidationLevels(only_enabled=False):
             suffixes = [level['suffix']] + list(level['extra_suffixes'])
             for suffix in suffixes:
                 if suffix not in suffix_roles:
@@ -1983,7 +1992,7 @@ def org_id_to_uid(org_info, raise_on_error=True, ignore_underscore=False):
     try:
         # use get or unrestrictedTraverse depending on fact that
         # org_path is a path or a single str
-        getter = "/" in org_info and own_org.restrictedTraverse or own_org.get
+        getter = "/" in org_info and own_org.unrestrictedTraverse or own_org.get
         if '_' in org_info and not ignore_underscore:
             org_path, suffix = org_info.split('_')
             org = getter(org_path.encode('utf-8'))
@@ -2321,6 +2330,15 @@ def get_current_user_id(request=None):
     except Exception:
         user_id = api.user.get_current().getId()
     return user_id
+
+
+def get_enabled_ordered_wfas(tool):
+    """Return a list of ordered WFAdaptations currently enabled in every MeetingConfigs."""
+    from Products.PloneMeeting.MeetingConfig import MeetingConfig
+    return tuple(
+        [wfa for wfa in MeetingConfig.wfAdaptations
+         if wfa in itertools.chain.from_iterable(
+             [cfg.getWorkflowAdaptations() for cfg in tool.objectValues('MeetingConfig')])])
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

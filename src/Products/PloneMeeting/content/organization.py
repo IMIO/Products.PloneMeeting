@@ -14,6 +14,7 @@ from imio.helpers.content import get_back_relations
 from imio.helpers.content import uuidsToObjects
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
+from plone.memoize import ram
 from plone.supermodel import model
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.events import _invalidateOrgRelatedCachedVocabularies
@@ -192,6 +193,13 @@ class PMOrganization(Organization):
             res = uuidsToObjects(res, ordered=True, unrestricted=True)
         return res
 
+    def get_full_title_cachekey(method, self, separator=u' / ', first_index=0, force_separator=False):
+        '''cachekey method for self.get_full_title.'''
+        return repr(self), self.modified(), separator, first_index, force_separator
+
+    # not ramcached perf tests says it does not change much
+    # and this avoid useless entry in cache
+    # @ram.cache(get_full_title_cachekey)
     def get_full_title(self, separator=u' / ', first_index=0, force_separator=False):
         """Override to change default first_index from 0 to 1 for IPloneGroupContact,
            so we do not display the 'My organization' level for elements displayed in the

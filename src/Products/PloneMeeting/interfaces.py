@@ -335,13 +335,14 @@ class IMeetingItemDocumentation:
         """Condition to update item reference.  By default the item reference
            will be updated if item is in a meeting and meeting review_state is
            not 'before frozen'."""
-    def _getGroupManagingItem(self, review_state=None, theObject=False):
+    def _getGroupManagingItem(self, review_state, theObject=False):
         """Returns the group managing the item.
            By default this will be the proposingGroup.
            Given p_review_state may be used to know what group manage item in which review_state.
            This method must return an organization UID (or organization when theObject=True)."""
-    def _getAllGroupsManagingItem(self):
-        """Returns the list of groups that manages the item during the entire item life.
+    def _getAllGroupsManagingItem(self, review_state, theObjects=False):
+        """Returns the list of groups that manages the item until given p_review_state.
+           This method must return a list of organizations UID (or organizations when theObjects=True).
            See _getGroupManagingItem docstring for more informations."""
     def custom_validate_optionalAdvisers(value, storedOptionalAdvisers, removedAdvisers):
         '''This is called by MeetingItem.validate_optionalAdvisers and let
@@ -377,9 +378,7 @@ class IMeetingItemWorkflowConditions(Interface):
     def mayPresent():
         '''May this item be presented in a meeting ?'''
     def mayDecide():
-        '''May a decision take place on this item (accept, reject...)?'''
-    def mayDelay():
-        '''May this item be delayed to another meeting ?'''
+        '''May a decision take place on this item (accept, refuse, delay, ...)?'''
     def mayCorrect(destinationState=None):
         '''Used for 'back' transitions.  p_destinationState is useful when there are
            several 'back' transitions from the same state.'''

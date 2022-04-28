@@ -650,7 +650,7 @@ class testSearches(PloneMeetingTestCase):
         cfg.setUseCopies(True)
         review_states = reviewers[reviewers.keys()[0]]
         if 'prereviewers' in reviewers:
-            review_states = ('prevalidated',)
+            review_states += ('prevalidated',)
         cfg.setItemCopyGroupsStates(review_states)
         item.setCopyGroups((self.vendors_reviewers, ))
         item._update_after_edit()
@@ -672,6 +672,9 @@ class testSearches(PloneMeetingTestCase):
            both groups must be queried.'''
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
+        # make sure we use default itemWFValidationLevels,
+        # useful when test executed with custom profile
+        self._setUpDefaultItemWFValidationLevels(cfg)
         self._enablePrevalidation(cfg)
 
         # make pmReviewer2 is vendors_prereviewers and developers_reviewers
@@ -805,7 +808,7 @@ class testSearches(PloneMeetingTestCase):
             pm_logger.info(
                 "Test 'test_pm_SearchItemsToValidateOfEveryReviewerLevelsAndLowerLevels' was bypassed.")
             return
-        self._enablePrevalidation(self, cfg, enable_extra_suffixes=True)
+        self._enablePrevalidation(cfg, enable_extra_suffixes=True)
         itemTypeName = cfg.getItemTypeName()
         # create 2 items
         self.changeUser('pmCreator1')

@@ -75,7 +75,7 @@ class ChangeItemCompletenessView(BrowserView):
             raise KeyError("New value %s does not correspond to a value of MeetingItem.listCompleteness")
 
         if not bypassSecurityCheck and new_completeness_value not in \
-           self.context.restrictedTraverse('@@item-completeness').listSelectableCompleteness():
+           self.context.unrestrictedTraverse('@@item-completeness').listSelectableCompleteness():
             raise Unauthorized
         self.context.setCompleteness(new_completeness_value)
         # add a line to the item's completeness_changes_history

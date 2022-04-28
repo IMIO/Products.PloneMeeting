@@ -415,13 +415,17 @@ class UserProposingGroupsWithGroupsInChargeVocabulary(UserProposingGroupsVocabul
         if current_value and current_value not in term_values:
             current_proposingGroupUid, current_groupInChargeUid = \
                 current_value.split('__groupincharge__')
+            # current_groupInChargeUid may be empty in case configuration was
+            # wrong (no selected groups in charge) and it was updated
+            gic_title = u''
+            if current_groupInChargeUid:
+                gic_title = get_organization(current_groupInChargeUid).get_full_title()
             terms.append(
                 SimpleTerm(
                     current_value,
                     current_value,
                     u'{0} ({1})'.format(
-                        get_organization(current_proposingGroupUid).get_full_title(),
-                        get_organization(current_groupInChargeUid).get_full_title())))
+                        get_organization(current_proposingGroupUid).get_full_title(), gic_title)))
         return terms
 
 
@@ -618,7 +622,14 @@ PMSortedSelectedOrganizationsElephantVocabularyFactory = PMSortedSelectedOrganiz
 class MeetingReviewStatesVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call__(self, context):
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        return repr(cfg)
+
+    @ram.cache(__call___cachekey)
+    def MeetingReviewStatesVocabulary__call__(self, context):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
@@ -632,6 +643,9 @@ class MeetingReviewStatesVocabulary(object):
         res = humansorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
+    # do ram.cache have a different key name
+    __call__ = MeetingReviewStatesVocabulary__call__
+
 
 MeetingReviewStatesVocabularyFactory = MeetingReviewStatesVocabulary()
 
@@ -639,7 +653,14 @@ MeetingReviewStatesVocabularyFactory = MeetingReviewStatesVocabulary()
 class ItemReviewStatesVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call__(self, context):
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        return repr(cfg)
+
+    @ram.cache(__call___cachekey)
+    def ItemReviewStatesVocabulary__call__(self, context):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
@@ -652,6 +673,9 @@ class ItemReviewStatesVocabulary(object):
                        )
         res = humansorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
+
+    # do ram.cache have a different key name
+    __call__ = ItemReviewStatesVocabulary__call__
 
 
 ItemReviewStatesVocabularyFactory = ItemReviewStatesVocabulary()

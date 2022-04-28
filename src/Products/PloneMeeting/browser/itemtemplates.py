@@ -5,12 +5,12 @@ from imio.helpers.content import uuidToObject
 from plone import api
 from plone.app.layout.navigation.navtree import buildFolderTree
 from plone.app.layout.navigation.navtree import NavtreeStrategyBase
+from plone.memoize import ram
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five.browser import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
 from Products.PloneMeeting.utils import get_current_user_id
-from zope.component import getMultiAdapter
 from zope.i18n import translate
 
 
@@ -22,8 +22,6 @@ class ItemTemplateView(BrowserView):
         super(BrowserView, self).__init__(context, request)
         self.context = context
         self.request = request
-        portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
-        self.portal = portal_state.portal()
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.request.set('disable_border', 1)
@@ -50,7 +48,7 @@ class ItemTemplateView(BrowserView):
             # compute and store templates tree so it can be used in several places
             # this is not done in the __init__ because the user is "Anonymous" in the __init__
             # and as we filter on "templateUsingGroup", we need a valid user...
-            self.templatesTree = self.getTemplatesTree()
+            self.renderedTemplatesTree = self.createTemplatesTree()
             return self.index()
 
     def _template_path_and_title(self, templateItem):
@@ -140,17 +138,18 @@ class ItemTemplateView(BrowserView):
            it possible to 'expand' or 'collapse' the entire tree, this is only relevant
            if at least one folder to expand/collapse...
         '''
-        displayShowHideAllLinks = False
-        for elt in self.templatesTree['children']:
-            if elt['item'].portal_type == 'Folder':
-                displayShowHideAllLinks = True
-                break
-        return displayShowHideAllLinks
+        return self.renderedTemplatesTree.count('class="folder"')
 
+    def createTemplatesTree_cachekey(method, self):
+        '''cachekey method for self.createTemplatesTree.'''
+        return repr(self.cfg), self.cfg.modified(), self.tool.get_plone_groups_for_user()
+
+    @ram.cache(createTemplatesTree_cachekey)
     def createTemplatesTree(self):
         # if only one folder at root, we expand it by default
-        atMostOneElementAtRoot = len(self.templatesTree['children']) < 2
-        return self.recurse(children=self.templatesTree.get('children', []),
+        templatesTree = self.getTemplatesTree()
+        atMostOneElementAtRoot = len(templatesTree['children']) < 2
+        return self.recurse(children=templatesTree.get('children', []),
                             expandRootLevel=atMostOneElementAtRoot).strip()
 
     recurse = ViewPageTemplateFile('templates/itemtemplates_tree_recurse.pt')

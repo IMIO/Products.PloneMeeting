@@ -73,9 +73,10 @@ class testViews(PloneMeetingTestCase):
         view()
         # only 2 itemTemplates available to 'pmCreator1'
         self.assertEqual(len(cfg.getItemTemplates(filtered=True)), 2)
-        self.assertEqual(len(view.templatesTree['children']), 2)
+        templatesTree = view.getTemplatesTree()
+        self.assertEqual(len(templatesTree['children']), 2)
         # no sub children
-        self.assertFalse(view.templatesTree['children'][0]['children'])
+        self.assertFalse(templatesTree['children'][0]['children'])
         self.assertFalse(view.displayShowHideAllLinks())
         # as pmCreator2, 3 templates available
         self.changeUser('pmCreator2')
@@ -83,11 +84,12 @@ class testViews(PloneMeetingTestCase):
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
         view()
         self.assertEqual(len(cfg.getItemTemplates(filtered=True)), 3)
-        self.assertEqual(len(view.templatesTree['children']), 3)
+        self.assertEqual(len(view.getTemplatesTree()['children']), 3)
         # no sub children
-        self.assertFalse(view.templatesTree['children'][0]['children'])
-        self.assertFalse(view.templatesTree['children'][1]['children'])
-        self.assertFalse(view.templatesTree['children'][2]['children'])
+        templatesTree = view.getTemplatesTree()
+        self.assertFalse(templatesTree['children'][0]['children'])
+        self.assertFalse(templatesTree['children'][1]['children'])
+        self.assertFalse(templatesTree['children'][2]['children'])
         self.assertFalse(view.displayShowHideAllLinks())
 
         # user may cancel action
@@ -104,7 +106,8 @@ class testViews(PloneMeetingTestCase):
         self.request.RESPONSE.setHeader('location', '')
         self.assertEqual(self.request.RESPONSE.status, 200)
         # the default item template
-        itemTemplate = view.templatesTree['children'][0]['item']
+        templatesTree = view.getTemplatesTree()
+        itemTemplate = templatesTree['children'][0]['item']
         self.request.form['templateUID'] = itemTemplate.UID
         view()
         # user was redirected to the new created item edit form
@@ -117,7 +120,8 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(len(pmFolder.objectValues('MeetingItem')), 1)
         self.assertEqual(pmFolder.objectValues('MeetingItem')[-1].getId(), itemTemplate.getId)
         # with another template
-        itemTemplate = view.templatesTree['children'][1]['item']
+        templatesTree = view.getTemplatesTree()
+        itemTemplate = templatesTree['children'][1]['item']
         self.request.form['templateUID'] = itemTemplate.UID
         view()
         # user was redirected to the new created item edit form
@@ -309,9 +313,10 @@ class testViews(PloneMeetingTestCase):
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
         view()
         # 2 elements, and it is items
-        self.assertEqual(len(view.templatesTree['children']), 2)
-        self.assertEqual(view.templatesTree['children'][0]['item'].meta_type, 'MeetingItem')
-        self.assertEqual(view.templatesTree['children'][1]['item'].meta_type, 'MeetingItem')
+        templatesTree = view.getTemplatesTree()
+        self.assertEqual(len(templatesTree['children']), 2)
+        self.assertEqual(templatesTree['children'][0]['item'].meta_type, 'MeetingItem')
+        self.assertEqual(templatesTree['children'][1]['item'].meta_type, 'MeetingItem')
         self.assertFalse(view.displayShowHideAllLinks())
 
         # add an itemTemplate in a subFolder
@@ -323,11 +328,12 @@ class testViews(PloneMeetingTestCase):
         # we have the subfolder and item under it
         self.changeUser('pmCreator1')
         view()
-        self.assertEqual(len(view.templatesTree['children']), 3)
-        self.assertEqual(view.templatesTree['children'][0]['item'].meta_type, 'MeetingItem')
-        self.assertEqual(view.templatesTree['children'][1]['item'].meta_type, 'MeetingItem')
-        self.assertEqual(view.templatesTree['children'][2]['item'].meta_type, 'ATFolder')
-        self.assertEqual(view.templatesTree['children'][2]['children'][0]['item'].meta_type, 'MeetingItem')
+        templatesTree = view.getTemplatesTree()
+        self.assertEqual(len(templatesTree['children']), 3)
+        self.assertEqual(templatesTree['children'][0]['item'].meta_type, 'MeetingItem')
+        self.assertEqual(templatesTree['children'][1]['item'].meta_type, 'MeetingItem')
+        self.assertEqual(templatesTree['children'][2]['item'].meta_type, 'ATFolder')
+        self.assertEqual(templatesTree['children'][2]['children'][0]['item'].meta_type, 'MeetingItem')
         self.assertTrue(view.displayShowHideAllLinks())
 
         # an empty folder is not shown
@@ -340,14 +346,16 @@ class testViews(PloneMeetingTestCase):
         newItemTemplate.reindexObject()
         self.changeUser('pmCreator1')
         view()
-        self.assertEqual(len(view.templatesTree['children']), 3)
+        templatesTree = view.getTemplatesTree()
+        self.assertEqual(len(templatesTree['children']), 3)
         # but available to 'pmCreator2'
         self.changeUser('pmCreator2')
         pmFolder = self.getMeetingFolder()
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
         view()
-        self.assertEqual(len(view.templatesTree['children']), 5)
-        self.assertEqual(view.templatesTree['children'][4]['item'].id, 'subfolder1')
+        templatesTree = view.getTemplatesTree()
+        self.assertEqual(len(templatesTree['children']), 5)
+        self.assertEqual(templatesTree['children'][4]['item'].id, 'subfolder1')
 
     def test_pm_ItemTemplatesWithSubFoldersContainedInEmptyFolders(self):
         """This test that if a template is in a sub/subFolder and no other template in parent folders,
@@ -368,12 +376,13 @@ class testViews(PloneMeetingTestCase):
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
         view()
         # we have one isolated itemtemplate and complete path the itemtemplate in subsubfolder
-        self.assertEqual(len(view.templatesTree['children']), 3)
-        self.assertEqual(view.templatesTree['children'][0]['item'].id, ITEM_DEFAULT_TEMPLATE_ID)
-        self.assertEqual(view.templatesTree['children'][1]['item'].id, 'template1')
-        self.assertEqual(view.templatesTree['children'][2]['item'].id, 'subfolder')
-        self.assertEqual(view.templatesTree['children'][2]['children'][0]['item'].id, 'subsubfolder')
-        self.assertEqual(view.templatesTree['children'][2]['children'][0]['children'][0]['item'].id, 'o1')
+        templatesTree = view.getTemplatesTree()
+        self.assertEqual(len(templatesTree['children']), 3)
+        self.assertEqual(templatesTree['children'][0]['item'].id, ITEM_DEFAULT_TEMPLATE_ID)
+        self.assertEqual(templatesTree['children'][1]['item'].id, 'template1')
+        self.assertEqual(templatesTree['children'][2]['item'].id, 'subfolder')
+        self.assertEqual(templatesTree['children'][2]['children'][0]['item'].id, 'subsubfolder')
+        self.assertEqual(templatesTree['children'][2]['children'][0]['children'][0]['item'].id, 'o1')
         self.assertTrue(view.displayShowHideAllLinks())
 
     def test_pm_JSVariables(self):
@@ -1808,6 +1817,7 @@ class testViews(PloneMeetingTestCase):
         """This batch action will delete annexes."""
         cfg = self.meetingConfig
         cfg.setEnabledAnnexesBatchActions([])
+        self._deactivate_wfas(['only_creator_may_delete'])
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         annex1 = self.addAnnex(item)

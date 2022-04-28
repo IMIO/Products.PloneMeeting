@@ -7,6 +7,7 @@ from plone import api
 from plone.api.exc import InvalidParameterError
 from plone.app.querystring import queryparser
 from plone.memoize import ram
+from plone.restapi.deserializer import boolean_value
 from plone.restapi.services import Service
 from plonemeeting.restapi import logger as pmrestapi_logger
 from Products.Archetypes.BaseObject import BaseObject
@@ -24,6 +25,8 @@ from types import StringType
 from z3c.form import interfaces
 from z3c.form.widget import SequenceWidget
 from zope.ramcache.ram import Storage
+
+import os
 
 
 def _patched_equal(context, row):
@@ -241,7 +244,13 @@ def render(self):
         query_string and " query_string={0}".format(query_string) or '')
     fplog("restapi_call", extras=extras)
 
-    return self.__old_pm_render()
+    res = self.__old_pm_render()
+    # debug may be enabled by passing debug=true as parameter to the restapi call
+    # or when setting the RESTAPI_DEBUG environment variable
+    if boolean_value(self.request.form.get('debug', False)) or \
+       boolean_value(os.environ.get('RESTAPI_DEBUG', False)):
+        fplog("restapi_call_debug", extras="\n" + res)
+    return res
 
 
 Service.render = render
