@@ -29,6 +29,8 @@ Changelog
   Migration to 4200 is adapted to be executed in 3 parts (
   `main`, `update_local_roles`, `update workflow mappings/rebuild catalog`).
   [gbastien]
+- Add a no_vote_marker parameter to `BaseDGHV.print_votes`
+  [aduchene]
 
 4.2rc21 (2022-03-22)
 --------------------

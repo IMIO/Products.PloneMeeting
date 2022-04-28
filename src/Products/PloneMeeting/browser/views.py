@@ -1525,6 +1525,7 @@ class BaseDGHV(object):
                     voters_pattern=u"<p>{0}</p>",
                     voter_separator=u", ",
                     voter_pattern=u"{0}",
+                    no_votes_marker=u"-",
                     keep_vote_numbers=[],
                     render_as_html=True,
                     escape_for_html=True):
@@ -1649,7 +1650,7 @@ class BaseDGHV(object):
                         all.insert(0, begin_rendered_values)
                     rendered += main_pattern.format(separator.join(all))
 
-        return render_as_html and (rendered or u"-") or vote_infos
+        return render_as_html and (rendered or no_votes_marker) or vote_infos
 
 
 class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
