@@ -2112,8 +2112,10 @@ class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
                 stored_held_positions = tuple(set(
                     [elt['held_position'] for elt in data if elt['held_position']]))
                 stored_terms = stored_held_positions
-        # add missing terms
-        missing_term_uids = [uid for uid in stored_terms if uid not in terms]
+        # add missing terms, do not use by_token or by_value,
+        # it is not completed, maybe because of cached call?
+        term_uids = [term.token for term in terms]
+        missing_term_uids = [uid for uid in stored_terms if uid not in term_uids]
         terms = terms._terms
         if missing_term_uids:
             missing_terms = super(SelectableAssemblyMembersVocabulary, self).__call__(
@@ -2141,7 +2143,9 @@ class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
             # MeetingItem, XXX not used for now
             stored_terms = context.getItemInitiator()
         # add missing terms as inactive held_positions are not in the vocabulary
-        missing_term_uids = [uid for uid in stored_terms if uid not in terms]
+        # do not use by_token or by_value, it is not completed, maybe because of cached call?
+        term_uids = [term.token for term in terms]
+        missing_term_uids = [uid for uid in stored_terms if uid not in term_uids]
         # do not modify original terms
         terms = list(terms._terms)
         if missing_term_uids:

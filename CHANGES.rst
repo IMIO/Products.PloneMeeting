@@ -9,6 +9,10 @@ Changelog
   `The configuration does not let you add annexes.` only if not configured
   both `annex` and `annexDecision` annex types.
   [gbastien]
+- Fixed `SelectableAssemblyMembersVocabulary` and `SelectableItemInitiatorsVocabulary`
+  vocabulary missing terms management that was not handled correctly and added
+  double values that broke the SimpleVocabulary.
+  [gbastien]
 
 4.2rc22 (2022-04-28)
 --------------------
