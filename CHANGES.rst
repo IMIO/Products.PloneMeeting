@@ -5,8 +5,10 @@ Changelog
 4.2rc23 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Fixed `@@categorized-annexes`, display message
+  `The configuration does not let you add annexes.` only if not configured
+  both `annex` and `annexDecision` annex types.
+  [gbastien]
 
 4.2rc22 (2022-04-28)
 --------------------
