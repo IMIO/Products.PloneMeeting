@@ -1326,6 +1326,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         view = item.restrictedTraverse('@@categorized-annexes')
+        view._update()
         # both annex and annexDecision are displayed and addable
         self.assertTrue(view.showAddAnnex())
         self.assertTrue(view.showAddAnnexDecision())
@@ -1333,20 +1334,26 @@ class testAnnexes(PloneMeetingTestCase):
         # add an annex and an annexDecision
         self.addAnnex(item)
         annexDecision = self.addAnnex(item, relatedTo='item_decision')
-        self.assertTrue(view.showAddAnnex())
-        self.assertTrue(view.showAddAnnexDecision())
+        terms, show = view.showAddAnnex()
+        self.assertTrue(show)
+        terms, show = view.showAddAnnexDecision()
+        self.assertTrue(show)
         self.assertTrue(view.showAnnexesSection())
         self.assertTrue(view.showDecisionAnnexesSection())
         # propose item, annex sections are still shown but only decision annex is addable
         self.proposeItem(item)
-        self.assertFalse(view.showAddAnnex())
-        self.assertTrue(view.showAddAnnexDecision())
+        terms, show = view.showAddAnnex()
+        self.assertFalse(show)
+        terms, show = view.showAddAnnexDecision()
+        self.assertTrue(show)
         self.assertTrue(view.showAnnexesSection())
         self.assertTrue(view.showDecisionAnnexesSection())
         # ok for reviewer
         self.changeUser('pmReviewer1')
-        self.assertTrue(view.showAddAnnex())
-        self.assertTrue(view.showAddAnnexDecision())
+        terms, show = view.showAddAnnex()
+        self.assertTrue(show)
+        terms, show = view.showAddAnnexDecision()
+        self.assertTrue(show)
         self.assertTrue(view.showAnnexesSection())
         self.assertTrue(view.showDecisionAnnexesSection())
 
@@ -1355,12 +1362,16 @@ class testAnnexes(PloneMeetingTestCase):
         for annex_type in cfg.annexes_types.item_decision_annexes.objectValues():
             self._disableObj(annex_type, notify_event=True)
         view = item.restrictedTraverse('@@categorized-annexes')
+        view._update()
         # showDecisionAnnexesSection still True because annexDecision exists
         self.assertTrue(view.showDecisionAnnexesSection())
-        self.assertTrue(view.showAddAnnex())
-        self.assertFalse(view.showAddAnnexDecision())
+        terms, show = view.showAddAnnex()
+        self.assertTrue(show)
+        terms, show = view.showAddAnnexDecision()
+        self.assertFalse(show)
         self.deleteAsManager(annexDecision.UID())
         view = item.restrictedTraverse('@@categorized-annexes')
+        view._update()
         self.assertFalse(view.showDecisionAnnexesSection())
 
     def test_pm_Other_mc_correspondences_vocabulary(self):
@@ -1398,6 +1409,7 @@ class testAnnexes(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
         view = item.restrictedTraverse('@@categorized-annexes')
+        view._update()
 
         # we will make 'only_for_meeting_managers' the 'overhead-analysis' category
         # and the 'budget-analysis_-_budget-analysis-sub-annex' subcategory
@@ -1460,12 +1472,16 @@ class testAnnexes(PloneMeetingTestCase):
             # manage cache
             notify(ObjectModifiedEvent(annex_type))
             annex_type.only_for_meeting_managers = True
-        self.assertFalse(view.showAddAnnex())
-        self.assertFalse(view.showAddAnnexDecision())
+        terms, show = view.showAddAnnex()
+        self.assertFalse(show)
+        terms, show = view.showAddAnnexDecision()
+        self.assertFalse(show)
         self.assertFalse(vocab(item))
         self.changeUser('pmManager')
-        self.assertTrue(view.showAddAnnex())
-        self.assertTrue(view.showAddAnnexDecision())
+        terms, show = view.showAddAnnex()
+        self.assertTrue(show)
+        terms, show = view.showAddAnnexDecision()
+        self.assertTrue(show)
         self.assertTrue(vocab(item))
 
     def test_pm_Actions_panel_history_only_for_managers(self):

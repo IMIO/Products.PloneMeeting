@@ -105,16 +105,16 @@ class CategorizedAnnexesView(CategorizedTabView):
         return vocab, show
 
     def showAnnexesSection(self):
-        """ """
+        """Always show this section, a message is displayed in case configuration
+           is not correct, this invite Managers to use annexes."""
         return True
 
     def showDecisionAnnexesSection(self):
-        """ """
-        # check if context contains decisionAnnexes or if there
-        # are some decisionAnnex annex types available in the configuration
+        """Check if context contains decisionAnnexes or if there
+           are some decisionAnnex annex types available in the configuration."""
         if self.context.__class__.__name__ == 'MeetingItem' and \
             (get_annexes(self.context, portal_types=['annexDecision']) or
-             self.showAddAnnexDecision()):
+             self._showAddAnnexDecision):
             return True
         return False
 
