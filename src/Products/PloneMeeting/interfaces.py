@@ -604,6 +604,13 @@ class IMeetingConfigDocumentation:
         """Returns additional item decided states."""
     def extra_item_positive_decided_states(self):
         """Returns additional item positive decided states."""
+    def _custom_reviewersFor(self):
+        """Return an OrderedDict were key is the reviewer suffix and
+           value the corresponding item state, from highest level to lower level.
+           For example :
+           OrderedDict([('reviewers', ['prevalidated']), ('prereviewers', ['proposed'])]).
+           This must only be provided if the MeetingConfig.reviewersFor
+           automatic computation is not correct."""
 
 
 class IMeetingConfigCustom(IMeetingConfig):

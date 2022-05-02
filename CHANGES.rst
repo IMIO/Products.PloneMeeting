@@ -16,7 +16,6 @@ Changelog
 - Fixed width of item number input on meeting (so when editable) so numbers like
   `238.21` are entirely viewable.
   [gbastien]
-<<<<<<< HEAD
 - Adapted `utils.get_item_validation_wf_suffixes`, that returns group suffixes
   to give access to when item is at least `validated`, to handle a special usecase:
   when no item WF validation levels are enabled (so item is created in state `validated`)
@@ -25,8 +24,15 @@ Changelog
   `reviewers` because by default, as not used in the workflow, they would not
   get access to the `validated` item.
   [gbastien]
-=======
->>>>>>> Fixed width of item number input on meeting (so when editable) so numbers like `238.21` are entirely viewable.
+- Moved `utils.reviewersFor` to `MeetingConfig.reviewersFor`, was done before
+  because it was using `config.MEETINGREVIEWERS` constant that could be monkeypatched
+  by an external profile, now it auto determinates the values from
+  `MeetingConfig.itemWFValidationLevels`.
+  Added `MeetingConfig._custom_reviewersFor` to be able to manage
+  `MeetingConfig.reviewersFor` manually when `MeetingConfig.itemWFValidationLevels`
+  is too complex or when same suffix is used several times at differents steps
+  of the item validation WF.
+  [gbastien]
 
 4.2rc22 (2022-04-28)
 --------------------
