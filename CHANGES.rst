@@ -13,6 +13,17 @@ Changelog
   vocabulary missing terms management that was not handled correctly and added
   double values that broke the SimpleVocabulary.
   [gbastien]
+- Fixed width of item number input on meeting (so when editable) so numbers like
+  `238.21` are entirely viewable.
+  [gbastien]
+- Adapted `utils.get_item_validation_wf_suffixes`, that returns group suffixes
+  to give access to when item is at least `validated`, to handle a special usecase:
+  when no item WF validation levels are enabled (so item is created in state `validated`)
+  the `extra_suffixes` defined on the `itemcreated` level will have read access
+  to the item, this let's give read access to suffixes such as `prereviewers` or
+  `reviewers` because by default, as not used in the workflow, they would not
+  get access to the `validated` item.
+  [gbastien]
 
 4.2rc22 (2022-04-28)
 --------------------
