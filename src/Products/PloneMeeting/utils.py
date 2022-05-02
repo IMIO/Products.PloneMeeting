@@ -1775,31 +1775,6 @@ def checkMayQuickEdit(obj,
     return res
 
 
-def reviewersFor(cfg):
-    """Return an OrderedDict were key is the reviewer suffix and
-       value the corresponding item state, from highest level to lower level.
-       For example :
-       OrderedDict([('reviewers', ['prevalidated']), ('prereviewers', ['proposed'])])
-    """
-    suffixes = list(cfg.getItemWFValidationLevels(data='suffix', only_enabled=True))[1:]
-    # we need from highest level to lowest
-    suffixes.reverse()
-    states = list(cfg.getItemWFValidationLevels(data='state', only_enabled=True))[1:]
-    # we need from highest level to lowest
-    states.reverse()
-
-    # group suffix to state
-    tuples = zip(suffixes, states)
-
-    res = OrderedDict()
-    # a reviewer level could interact at different states
-    for suffix, state in tuples:
-        if suffix not in res:
-            res[suffix] = []
-        res[suffix].append(state)
-    return res
-
-
 def get_states_before_cachekey(method, obj, review_state):
     '''cachekey method for get_states_before.'''
     # do only re-compute if cfg changed or params changed

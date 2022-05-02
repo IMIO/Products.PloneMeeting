@@ -123,7 +123,6 @@ from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.utils import reindex_object
-from Products.PloneMeeting.utils import reviewersFor
 from Products.PloneMeeting.utils import translate_list
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator
@@ -6572,17 +6571,52 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            config.'''
         return 'Meeting%s' % self.getShortName()
 
+    security.declarePrivate('_custom_reviewersFor')
+
+    def _custom_reviewersFor(self):
+        '''See doc in interfaces.py.'''
+        return
+
+    security.declarePublic('reviewersFor')
+
+    def reviewersFor(self):
+        """Return an OrderedDict were key is the reviewer suffix and
+           value the corresponding item state, from highest level to lower level.
+           For example :
+           OrderedDict([('reviewers', ['prevalidated']), ('prereviewers', ['proposed'])])
+        """
+        # try to get custom reviewersFor, necessary for too complex workflows
+        res = self.adapted()._custom_reviewersFor()
+        if res is None:
+            suffixes = list(self.getItemWFValidationLevels(data='suffix', only_enabled=True))[1:]
+            # we need from highest level to lowest
+            suffixes.reverse()
+            states = list(self.getItemWFValidationLevels(data='state', only_enabled=True))[1:]
+            # we need from highest level to lowest
+            states.reverse()
+
+            # group suffix to state
+            tuples = zip(suffixes, states)
+
+            res = OrderedDict()
+            # a reviewer level could interact at different states
+            for suffix, state in tuples:
+                if suffix not in res:
+                    res[suffix] = []
+                res[suffix].append(state)
+        return res
+
     security.declarePublic('userIsAReviewer')
 
     def userIsAReviewer(self):
         '''Is current user a reviewer?  So is current user among groups of reviewers?'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        return bool(tool.get_orgs_for_user(suffixes=reviewersFor(self).keys()))
+        return bool(tool.get_orgs_for_user(suffixes=self.reviewersFor().keys()))
 
     def _highestReviewerLevel(self, groupIds):
         '''Return highest reviewer level found in given p_groupIds.'''
         groupIds = str(groupIds)
-        for reviewSuffix in reviewersFor(self).keys():
+        for reviewSuffix in self.reviewersFor().keys():
             if "_%s'" % reviewSuffix in groupIds:
                 return reviewSuffix
 
