@@ -13,6 +13,9 @@ Changelog
   vocabulary missing terms management that was not handled correctly and added
   double values that broke the SimpleVocabulary.
   [gbastien]
+- Fixed width of item number input on meeting (so when editable) so numbers like
+  `238.21` are entirely viewable.
+  [gbastien]
 
 4.2rc22 (2022-04-28)
 --------------------
