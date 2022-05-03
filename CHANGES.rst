@@ -33,6 +33,9 @@ Changelog
   is too complex or when same suffix is used several times at differents steps
   of the item validation WF.
   [gbastien]
+- Fixed previous `advice_type` was not displayed when advice is `asked_again`
+  and `hidden_during_redaction`.
+  [gbastien]
 
 4.2rc22 (2022-04-28)
 --------------------
