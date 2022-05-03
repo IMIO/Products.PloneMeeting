@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc23 (unreleased)
+4.2rc23 (2022-05-03)
 --------------------
 
 - Fixed `@@categorized-annexes`, display message
