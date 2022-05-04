@@ -151,7 +151,7 @@ class testVotes(PloneMeetingTestCase):
         # public vote
         self.assertEqual(helper_public.print_votes(),
                          u'<p>Par 2 voix pour, une voix contre et une abstention,</p>')
-        self.assertEqual(helper_public.print_votes(single_vote_value=u"1"),
+        self.assertEqual(helper_public.print_votes(single_vote_value=u"1", no_votes_marker="<!>"),
                          u'<p>Par 2 voix pour, 1 voix contre et 1 abstention,</p>')
         # public vote all yes
         self.assertEqual(helper_yes_public.print_votes(),
@@ -164,6 +164,11 @@ class testVotes(PloneMeetingTestCase):
         self.assertEqual(helper_yes_secret.print_votes(secret_intro=u"<p>À bulletin secret,</p>"),
                          u"<p>\xc0 bulletin secret,</p>"
                          u"<p>\xc0 l'unanimit\xe9,</p>")
+
+        # no votes
+        meeting.item_votes[public_item.UID()] = []
+        self.assertEqual(helper_public.print_votes(no_votes_marker="-"), "-")
+        self.assertEqual(helper_public.print_votes(no_votes_marker="There is no votes"), "There is no votes")
 
     def test_pm_ItemDeleteVoteView(self):
         """This view will remove a vote, only doable by MeetingManagers."""
