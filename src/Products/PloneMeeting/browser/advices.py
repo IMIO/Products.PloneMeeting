@@ -362,11 +362,13 @@ class ChangeAdviceAskedAgainView(BrowserView):
             # now we may change advice_type to 'asked_again'
             self.context.advice_type = 'asked_again'
             # and we may also set 'advice_hide_during_redaction' to the default
+            # XXX for now we do not manage MeetingConfig.defaultAdviceHiddenDuringRedaction
+            # when advice is "asked_again", see https://support.imio.be/browse/PM-3883
             # value defined in the MeetingConfig
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self.context)
-            self.context.advice_hide_during_redaction = \
-                bool(self.context.portal_type in cfg.getDefaultAdviceHiddenDuringRedaction())
+            # tool = api.portal.get_tool('portal_plonemeeting')
+            # cfg = tool.getMeetingConfig(self.context)
+            # self.context.advice_hide_during_redaction = \
+            #     bool(self.context.portal_type in cfg.getDefaultAdviceHiddenDuringRedaction())
             # reinitialize advice delay if relevant
             advice_uid = self.context.advice_group
             if parent.adviceIndex[advice_uid]['delay']:

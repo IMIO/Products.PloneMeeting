@@ -5,8 +5,11 @@ Changelog
 4.2rc24 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Manage `MeetingConfig.defaultAdviceHiddenDuringRedaction` only when a new advice is added,
+  not when advice is asked_again, see https://support.imio.be/browse/PM-3883.
+  [gbastien]
+- Display `global_actions` on the advice view.
+  [gbastien]
 
 4.2rc23 (2022-05-03)
 --------------------
