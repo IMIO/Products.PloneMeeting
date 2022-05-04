@@ -5,8 +5,9 @@ Changelog
 4.2rc23 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Changed from 90° to 270° image rotation in `BaseDGHV.image_orientation` because it is
+  rotated clockwise with imagemagick, in pod templates including annexes.
+  [aduchene]
 
 4.2rc22 (2022-04-28)
 --------------------
