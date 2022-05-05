@@ -1132,6 +1132,51 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(i1, 'prevalidate')
         self.do(i1, 'validate')
 
+    def test_pm_WFA_no_validation(self):
+        '''Test when using no validation levels (items will be created "validated").'''
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        # check while the are validation levels
+        self._no_validation_inactive()
+        # disable every item validation levels
+        self._disableItemValidationLevel(cfg)
+        # check while the are validation levels
+        self._no_validation_active()
+        # if some extra_suffixes defined on the "itemcreated" level
+        # then the corresponding suffixes have access to the validated item
+        self._no_validation_extra_suffixes()
+
+    def _no_validation_inactive(self):
+        '''Test when some item validation levels are enabled.'''
+        item = self.create('MeetingItem')
+        self.assertEqual(item.query_state(), 'itemcreated')
+
+    def _no_validation_active(self):
+        '''Test when no item validation levels are enabled,
+           item is created in state "validated".'''
+        item = self.create('MeetingItem')
+        self.assertEqual(item.query_state(), 'validated')
+        # disabled item validation levels does not have access
+        self.assertEqual(item.__ac_local_roles__[self.developers_creators], ['Reader'])
+        self.assertEqual(item.__ac_local_roles__[self.developers_observers], ['Reader'])
+        self.assertFalse(self.developers_reviewers in item.__ac_local_roles__)
+
+    def _no_validation_extra_suffixes(self):
+        '''By default, when using no validation (items are created "validated")
+           validation suffixes have no access except if some extra_suffixes
+           are defined on the "itemcreated" item WF validation leve.'''
+        self._updateItemValidationLevel(
+            self.meetingConfig, "itemcreated", extra_suffixes=["reviewers"], enable=False)
+        item = self.create('MeetingItem')
+        self.assertEqual(item.query_state(), 'validated')
+        # creators always have access
+        self.assertEqual(item.__ac_local_roles__[self.developers_creators], ['Reader'])
+        self.assertEqual(item.__ac_local_roles__[self.developers_observers], ['Reader'])
+        # extra_suffixes have access
+        self.assertEqual(item.__ac_local_roles__[self.developers_reviewers], ['Reader'])
+        # other suffixes do not have access
+        self.assertFalse(self.developers_prereviewers in item.__ac_local_roles__)
+
     def test_pm_WFA_only_creator_may_delete(self):
         '''Test the workflowAdaptation 'only_creator_may_delete'.'''
         # ease override by subproducts

@@ -67,9 +67,14 @@ class CategorizedAnnexesView(CategorizedTabView):
         self.portal_url = api.portal.get().absolute_url()
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-        # compute it here so portal messages are displayed
-        self._showAddAnnex = self.showAddAnnex()
-        self._showAddAnnexDecision = self.showAddAnnexDecision()
+        # compute show annexes here and display a message to the (Meeting)Managers
+        # if not able to add annexes because nothing found in annex vocab nor annexDecision vocab
+        annex_vocab, self._showAddAnnex = self.showAddAnnex()
+        annexDecision_vocab, self._showAddAnnexDecision = self.showAddAnnexDecision()
+        if not len(annex_vocab) and not len(annexDecision_vocab) and self.tool.isManager(self.cfg):
+            api.portal.show_message(
+                _('The configuration does not let you add annexes.'),
+                request=self.request)
 
     def _config(self):
         """ """
@@ -86,12 +91,8 @@ class CategorizedAnnexesView(CategorizedTabView):
         portal_types = api.portal.get_tool('portal_types')
         annexTypeInfo = portal_types['annex']
         vocab = get_vocab(self.context, 'collective.iconifiedcategory.categories')
-        if not len(vocab):
-            api.portal.show_message(
-                _('The configuration does not let you add annexes.'),
-                request=self.request,
-                type='warning')
-        return annexTypeInfo in self.context.allowedContentTypes() and len(vocab)
+        show = annexTypeInfo in self.context.allowedContentTypes() and len(vocab)
+        return vocab, show
 
     def showAddAnnexDecision(self):
         """ """
@@ -100,24 +101,20 @@ class CategorizedAnnexesView(CategorizedTabView):
         self.request.set('force_use_item_decision_annexes_group', True)
         vocab = get_vocab(self.context, 'collective.iconifiedcategory.categories')
         self.request.set('force_use_item_decision_annexes_group', False)
-        if not len(vocab):
-            api.portal.show_message(
-                _('The configuration does not let you add annexes.'),
-                request=self.request,
-                type='warning')
-        return annexTypeInfo in self.context.allowedContentTypes() and len(vocab)
+        show = annexTypeInfo in self.context.allowedContentTypes() and len(vocab)
+        return vocab, show
 
     def showAnnexesSection(self):
-        """ """
+        """Always show this section, a message is displayed in case configuration
+           is not correct, this invite Managers to use annexes."""
         return True
 
     def showDecisionAnnexesSection(self):
-        """ """
-        # check if context contains decisionAnnexes or if there
-        # are some decisionAnnex annex types available in the configuration
+        """Check if context contains decisionAnnexes or if there
+           are some decisionAnnex annex types available in the configuration."""
         if self.context.__class__.__name__ == 'MeetingItem' and \
             (get_annexes(self.context, portal_types=['annexDecision']) or
-             self.showAddAnnexDecision()):
+             self._showAddAnnexDecision):
             return True
         return False
 

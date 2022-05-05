@@ -1914,6 +1914,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # Use the 'meetingConfig2' where copies are enabled
         self.setMeetingConfig(self.meetingConfig2.getId())
         cfg = self.meetingConfig
+        # make sure to use default itemWFValidationLevels
+        self._setUpDefaultItemWFValidationLevels(cfg)
         self.changeUser('pmManager')
         # By default, adding an item does not add any copyGroup
         i1 = self.create('MeetingItem')

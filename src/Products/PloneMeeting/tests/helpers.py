@@ -468,7 +468,7 @@ class PloneMeetingTestingHelpers:
         cfg.at_post_edit_script()
         self.changeUser(currentUser)
 
-    def _updateItemValidationLevel(self, cfg, level=None, suffix=None, enable=True):
+    def _updateItemValidationLevel(self, cfg, level=None, suffix=None, extra_suffixes=None, enable=True):
         """Utility method that enable/disable item validation levels."""
         currentUser = self.member.getId()
         self.changeUser('admin')
@@ -478,6 +478,8 @@ class PloneMeetingTestingHelpers:
                 itemValLevel['enabled'] = enable and '1' or '0'
                 if suffix:
                     itemValLevel['suffix'] = suffix
+                if extra_suffixes:
+                    itemValLevel['extra_suffixes'] = extra_suffixes
         cfg.setItemWFValidationLevels(itemValLevels)
         cfg.at_post_edit_script()
         self.changeUser(currentUser)

@@ -63,7 +63,6 @@ from Products.PloneMeeting.utils import get_referer_obj
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getHistoryTexts
 from Products.PloneMeeting.utils import is_transition_before_date
-from Products.PloneMeeting.utils import reviewersFor
 from z3c.form.term import MissingChoiceTermsVocabulary
 from zope.annotation import IAnnotations
 from zope.i18n import translate
@@ -1003,7 +1002,7 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
         # now get highest hierarchic level for every user groups
         org_uids = self.tool.get_orgs_for_user()
         userPloneGroupIds = self.tool.get_plone_groups_for_user()
-        reviewers = reviewersFor(self.cfg)
+        reviewers = self.cfg.reviewersFor()
         userReviewerPloneGroupIds = []
         for org_uid in org_uids:
             for reviewer_level in reviewers:
@@ -1094,7 +1093,7 @@ class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCrit
             if not highestReviewerLevel:
                 continue
             foundLevel = False
-            reviewers = reviewersFor(self.cfg)
+            reviewers = self.cfg.reviewersFor()
             for reviewer_suffix, review_states in reviewers.items():
                 if not foundLevel and not reviewer_suffix == highestReviewerLevel:
                     continue
@@ -1161,7 +1160,7 @@ class BaseItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter)
             return {}
         userPloneGroups = self.tool.get_plone_groups_for_user()
         reviewProcessInfos = []
-        reviewers = reviewersFor(self.cfg)
+        reviewers = self.cfg.reviewersFor()
         for userPloneGroupId in userPloneGroups:
             for reviewer_suffix, review_states in reviewers.items():
                 # current user may be able to validate at at least

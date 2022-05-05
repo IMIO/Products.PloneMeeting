@@ -21,7 +21,6 @@ from Products.CMFCore.permissions import View
 from Products.PloneMeeting.adapters import _find_nothing_query
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
-from Products.PloneMeeting.utils import reviewersFor
 from zope.component import getAdapter
 from zope.component import getAdapters
 
@@ -610,11 +609,11 @@ class testSearches(PloneMeetingTestCase):
                 {'query': reviewProcessInfo},
              'portal_type': {'query': itemTypeName}})
 
-        reviewers = reviewersFor(cfg)
+        reviewers = cfg.reviewersFor()
         # activate 'prevalidation' if necessary
         if 'prereviewers' not in reviewers:
             self._enablePrevalidation(cfg)
-        reviewers = reviewersFor(cfg)
+        reviewers = cfg.reviewersFor()
         self.assertTrue('prereviewers' in reviewers)
         # now do the query
         # this adapter is used by the "searchitemstovalidate"
@@ -710,7 +709,7 @@ class testSearches(PloneMeetingTestCase):
 
         # activate the 'pre_validation' wfAdaptation if it exists in current profile...
         # if not, then reviewers must be at least 2 elements long
-        reviewers = reviewersFor(cfg)
+        reviewers = cfg.reviewersFor()
         if not len(reviewers) > 1:
             self._enablePrevalidation(cfg)
         if not len(reviewers) > 1:
@@ -728,7 +727,7 @@ class testSearches(PloneMeetingTestCase):
         # for a reviewer, query is correct
         self.changeUser('pmReviewer1')
         # only reviewer for highest level
-        reviewers = reviewersFor(cfg)
+        reviewers = cfg.reviewersFor()
         self.assertTrue(self.tool.userIsAmong([reviewers.keys()[0]]))
         self.assertFalse(self.tool.userIsAmong([reviewers.keys()[1]]))
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofmyreviewergroups')
@@ -793,7 +792,7 @@ class testSearches(PloneMeetingTestCase):
 
     def _searchItemsToValidateOfEveryReviewerLevelsAndLowerLevelsReviewerInfo(self, cfg):
         """ """
-        reviewers = reviewersFor(cfg)
+        reviewers = cfg.reviewersFor()
         reviewer_states = reviewers[cfg._highestReviewerLevel(self.member.getGroups())]
         return ['{0}__reviewprocess__{1}'.format(self.developers_uid, reviewer_state)
                 for reviewer_state in reviewer_states]
