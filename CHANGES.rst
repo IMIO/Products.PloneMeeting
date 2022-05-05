@@ -10,6 +10,10 @@ Changelog
   [gbastien]
 - Display `global_actions` on the advice view.
   [gbastien]
+- Fixed annex type icon wronlgy displayed on meeting view to users not able to
+  access confidential annexes. The confidential annexes were not downloadable
+  but the annex type icon was display and on hover, the `tooltipster` was empty.
+  [gbastien]
 
 4.2rc23 (2022-05-03)
 --------------------
