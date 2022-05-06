@@ -651,11 +651,11 @@ class BaseDGHV(object):
 
     def image_orientation(self, image):
         """Compute image orientation, if orientation is landscape, we rotate
-           the image from 90° so it is displayed on the full page.
+           the image from 270° clockwise so it is displayed on the full page.
            This is used by the appy.pod 'import from document' method
            as 'convertOptions' parameter."""
         if image.width > image.height:
-            return '-rotate 90'
+            return '-rotate 270'
 
     def is_not_empty(self, field_name):
         """Check if given field_name is not empty."""

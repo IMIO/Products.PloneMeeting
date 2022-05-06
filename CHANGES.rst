@@ -5,6 +5,9 @@ Changelog
 4.2rc24 (unreleased)
 --------------------
 
+- Changed from 90° to 270° image rotation in `BaseDGHV.image_orientation` because it is
+  rotated clockwise with imagemagick, in pod templates including annexes.
+  [aduchene]
 - Manage `MeetingConfig.defaultAdviceHiddenDuringRedaction` only when a new advice is added,
   not when advice is asked_again, see https://support.imio.be/browse/PM-3883.
   [gbastien]
