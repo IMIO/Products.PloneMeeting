@@ -2,11 +2,59 @@ Changelog
 =========
 
 
-4.2rc23 (unreleased)
+4.2rc24 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Manage `MeetingConfig.defaultAdviceHiddenDuringRedaction` only when a new advice is added,
+  not when advice is asked_again, see https://support.imio.be/browse/PM-3883.
+  [gbastien]
+- Display `global_actions` on the advice view.
+  [gbastien]
+- Fixed annex type icon wronlgy displayed on meeting view to users not able to
+  access confidential annexes. The confidential annexes were not downloadable
+  but the annex type icon was display and on hover, the `tooltipster` was empty.
+  [gbastien]
+- Turned `adaptations.WAITING_ADVICES_FROM_STATES` value
+  `use_custom_transition_title_for` from a tuple of transitions ids to a dict
+  so it is possible to define an arbitrary new custom title for the transition,
+  before it was taking the transition id, now it is possible to override several
+  different transition title for same transition id in different workflows.
+  [gbastien]
 
+4.2rc23 (2022-05-03)
+--------------------
+
+- Fixed `@@categorized-annexes`, display message
+  `The configuration does not let you add annexes.` only if not configured
+  both `annex` and `annexDecision` annex types.
+  [gbastien]
+- Fixed `SelectableAssemblyMembersVocabulary` and `SelectableItemInitiatorsVocabulary`
+  vocabulary missing terms management that was not handled correctly and added
+  double values that broke the SimpleVocabulary.
+  [gbastien]
+- Fixed width of item number input on meeting (so when editable) so numbers like
+  `238.21` are entirely viewable.
+  [gbastien]
+- Adapted `utils.get_item_validation_wf_suffixes`, that returns group suffixes
+  to give access to when item is at least `validated`, to handle a special usecase:
+  when no item WF validation levels are enabled (so item is created in state `validated`)
+  the `extra_suffixes` defined on the `itemcreated` level will have read access
+  to the item, this let's give read access to suffixes such as `prereviewers` or
+  `reviewers` because by default, as not used in the workflow, they would not
+  get access to the `validated` item.
+  [gbastien]
+- Moved `utils.reviewersFor` to `MeetingConfig.reviewersFor`, was done before
+  because it was using `config.MEETINGREVIEWERS` constant that could be monkeypatched
+  by an external profile, now it auto determinates the values from
+  `MeetingConfig.itemWFValidationLevels`.
+  Added `MeetingConfig._custom_reviewersFor` to be able to manage
+  `MeetingConfig.reviewersFor` manually when `MeetingConfig.itemWFValidationLevels`
+  is too complex or when same suffix is used several times at differents steps
+  of the item validation WF.
+  [gbastien]
+- Fixed previous `advice_type` was not displayed when advice is `asked_again`
+  and `hidden_during_redaction`.
+  [gbastien]
 
 4.2rc22 (2022-04-28)
 --------------------

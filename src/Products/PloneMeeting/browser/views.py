@@ -2141,10 +2141,14 @@ class DisplayAnnexesView(BrowserView):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.portal_url = api.portal.get().absolute_url()
 
-    def __call__(self, annex_portal_type='annex', fieldset_legend="annexes"):
+    def __call__(self,
+                 annex_portal_type='annex',
+                 fieldset_legend="annexes",
+                 check_can_view=False):
         """ """
         self.annex_portal_type = annex_portal_type
         self.fieldset_legend = fieldset_legend
+        self.check_can_view = check_can_view
         return self.index()
 
     def show(self):

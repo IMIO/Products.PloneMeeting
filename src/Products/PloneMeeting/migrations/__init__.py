@@ -149,7 +149,8 @@ class Migrator(BaseMigrator):
                                      related_to='MeetingItem',
                                      query={},
                                      review_state_mappings={},
-                                     transition_mappings={}):
+                                     transition_mappings={},
+                                     update_local_roles=False):
         """Update for given p_brains the workflow_history keys 'review_state' and 'action'
            depending on given p_review_state_mappings and p_action_mappings.
            Update also various parameters of the MeetingConfig
@@ -157,6 +158,32 @@ class Migrator(BaseMigrator):
         logger.info(
             'Updating workflow states/transitions changes for elements of type "%s"...'
             % query or related_to)
+
+        # MeetingConfigs
+        state_attrs = ITEM_WF_STATE_ATTRS if related_to == 'MeetingItem' else MEETING_WF_STATE_ATTRS
+        tr_attrs = ITEM_WF_TRANSITION_ATTRS if related_to == 'MeetingItem' else MEETING_WF_TRANSITION_ATTRS
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            # state_attrs
+            for state_attr in state_attrs:
+                values = getattr(cfg, state_attr)
+                for original, replacement in review_state_mappings.items():
+                    values = replace_in_list(values, original, replacement)
+                    # try also to replace a value like 'Meeting.frozen'
+                    original = '%s.%s' % (related_to, original)
+                    replacement = '%s.%s' % (related_to, replacement)
+                    values = replace_in_list(values, original, replacement)
+                setattr(cfg, state_attr, tuple(values))
+            # transition_attrs
+            for tr_attr in tr_attrs:
+                values = getattr(cfg, tr_attr)
+                for original, replacement in transition_mappings.items():
+                    values = replace_in_list(values, original, replacement)
+                    # try also to replace a value like 'Meeting.freeze'
+                    original = '%s.%s' % (related_to, original)
+                    replacement = '%s.%s' % (related_to, replacement)
+                    values = replace_in_list(values, original, replacement)
+                setattr(cfg, tr_attr, tuple(values))
+
         # workflow_history
         # manage query if not given
         if not query:
@@ -185,35 +212,12 @@ class Migrator(BaseMigrator):
                         # not necessary if just an action changed?
                         # objsToUpdate.append(itemOrMeeting)
         # update fixed objects
-        for obj in objsToUpdate:
-            obj.update_local_roles()
-            # use reindex_object and pass some no_idxs because
-            # calling reindexObject will update modified
-            reindex_object(obj, no_idxs=['SearchableText', 'Title', 'Description'])
-        # MeetingConfigs
-        state_attrs = ITEM_WF_STATE_ATTRS if related_to == 'MeetingItem' else MEETING_WF_STATE_ATTRS
-        tr_attrs = ITEM_WF_TRANSITION_ATTRS if related_to == 'MeetingItem' else MEETING_WF_TRANSITION_ATTRS
-        for cfg in self.tool.objectValues('MeetingConfig'):
-            # state_attrs
-            for state_attr in state_attrs:
-                values = getattr(cfg, state_attr)
-                for original, replacement in review_state_mappings.items():
-                    values = replace_in_list(values, original, replacement)
-                    # try also to replace a value like 'Meeting.frozen'
-                    original = '%s.%s' % (related_to, original)
-                    replacement = '%s.%s' % (related_to, replacement)
-                    values = replace_in_list(values, original, replacement)
-                setattr(cfg, state_attr, tuple(values))
-            # transition_attrs
-            for tr_attr in tr_attrs:
-                values = getattr(cfg, tr_attr)
-                for original, replacement in transition_mappings.items():
-                    values = replace_in_list(values, original, replacement)
-                    # try also to replace a value like 'Meeting.freeze'
-                    original = '%s.%s' % (related_to, original)
-                    replacement = '%s.%s' % (related_to, replacement)
-                    values = replace_in_list(values, original, replacement)
-                setattr(cfg, tr_attr, tuple(values))
+        if update_local_roles:
+            for obj in objsToUpdate:
+                obj.update_local_roles()
+                # use reindex_object and pass some no_idxs because
+                # calling reindexObject will update modified
+                reindex_object(obj, no_idxs=['SearchableText', 'Title', 'Description'])
 
     def addCatalogIndexesAndColumns(self, indexes=True, columns=True, update_metadata=True):
         """ """

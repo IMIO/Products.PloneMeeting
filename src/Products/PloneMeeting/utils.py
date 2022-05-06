@@ -1775,31 +1775,6 @@ def checkMayQuickEdit(obj,
     return res
 
 
-def reviewersFor(cfg):
-    """Return an OrderedDict were key is the reviewer suffix and
-       value the corresponding item state, from highest level to lower level.
-       For example :
-       OrderedDict([('reviewers', ['prevalidated']), ('prereviewers', ['proposed'])])
-    """
-    suffixes = list(cfg.getItemWFValidationLevels(data='suffix', only_enabled=True))[1:]
-    # we need from highest level to lowest
-    suffixes.reverse()
-    states = list(cfg.getItemWFValidationLevels(data='state', only_enabled=True))[1:]
-    # we need from highest level to lowest
-    states.reverse()
-
-    # group suffix to state
-    tuples = zip(suffixes, states)
-
-    res = OrderedDict()
-    # a reviewer level could interact at different states
-    for suffix, state in tuples:
-        if suffix not in res:
-            res[suffix] = []
-        res[suffix].append(state)
-    return res
-
-
 def get_states_before_cachekey(method, obj, review_state):
     '''cachekey method for get_states_before.'''
     # do only re-compute if cfg changed or params changed
@@ -1883,13 +1858,23 @@ def get_item_validation_wf_suffixes(cfg, org_uid=None, only_enabled=True):
     base_suffixes = [u'creators', u'observers']
     # we get the principal suffix from level['suffix'] then level['extra_suffixes']
     # is containing suffixes that will also get Editor access in relevant state
-    config_suffix = cfg.getItemWFValidationLevels(
+    config_suffixes = cfg.getItemWFValidationLevels(
         data='suffix', only_enabled=only_enabled)
-    config_extra_suffixes = cfg.getItemWFValidationLevels(
-        data='extra_suffixes', only_enabled=only_enabled)
-    config_suffixes = [config_suffix] + list(config_extra_suffixes)
-    config_suffixes = list(itertools.chain.from_iterable(config_suffixes))
-    suffixes = base_suffixes + config_suffixes
+    # special case when using no item WF validation at all, so items are created "validated"
+    # we use the extra_suffixes to give access to the item as by default for example
+    # as "reviewers" not in the workflow, they do not get access to the "validated" item
+    if not config_suffixes:
+        config_extra_suffixes = cfg.getItemWFValidationLevels(
+            states=['itemcreated'],
+            data='extra_suffixes',
+            only_enabled=False,
+            return_state_singleton=False)
+    else:
+        config_extra_suffixes = cfg.getItemWFValidationLevels(
+            data='extra_suffixes', only_enabled=only_enabled)
+    # flatten, config_extra_suffixes is a list of lists
+    config_extra_suffixes = list(itertools.chain.from_iterable(config_extra_suffixes))
+    suffixes = list(set(base_suffixes + config_suffixes + config_extra_suffixes))
     if org_uid:
         # only return suffixes that are available for p_org
         available_suffixes = set(get_all_suffixes(org_uid))
