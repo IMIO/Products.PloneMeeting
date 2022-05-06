@@ -23,6 +23,8 @@ Changelog
   before it was taking the transition id, now it is possible to override several
   different transition title for same transition id in different workflows.
   [gbastien]
+- Completed the `restapi_call` debug mode, log the request `BODY` when request is a `POST`.
+  [gbastien]
 
 4.2rc23 (2022-05-03)
 --------------------

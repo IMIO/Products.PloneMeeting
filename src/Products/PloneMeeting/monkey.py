@@ -8,6 +8,7 @@ from plone.api.exc import InvalidParameterError
 from plone.app.querystring import queryparser
 from plone.memoize import ram
 from plone.restapi.deserializer import boolean_value
+from plone.restapi.deserializer import json_body
 from plone.restapi.services import Service
 from plonemeeting.restapi import logger as pmrestapi_logger
 from Products.Archetypes.BaseObject import BaseObject
@@ -26,6 +27,7 @@ from z3c.form import interfaces
 from z3c.form.widget import SequenceWidget
 from zope.ramcache.ram import Storage
 
+import json
 import os
 
 
@@ -237,19 +239,29 @@ Service.__old_pm_render = Service.render
 
 def render(self):
     """Monkeypatched to add fplog."""
-    query_string = self.request.get('QUERY_STRING')
+    query_string = self.request.get('QUERY_STRING', '')
     extras = 'name={0} url={1}{2}'.format(
         self.__name__,
         self.request.get('ACTUAL_URL'),
         query_string and " query_string={0}".format(query_string) or '')
     fplog("restapi_call", extras=extras)
 
-    res = self.__old_pm_render()
     # debug may be enabled by passing debug=true as parameter to the restapi call
     # or when setting the RESTAPI_DEBUG environment variable
-    if boolean_value(self.request.form.get('debug', False)) or \
-       boolean_value(os.environ.get('RESTAPI_DEBUG', False)):
-        fplog("restapi_call_debug", extras="\n" + res)
+    debug = boolean_value(self.request.form.get('debug', False)) or \
+       boolean_value(os.environ.get('RESTAPI_DEBUG', False)) or \
+       "debug=true" in query_string  # with POST, URL parameters are not in self.request.form
+    # log the input when debug is enabled
+    if debug:
+        # with POST, data is in the body
+        if self.request.get('method', 'GET') != 'GET':
+            data = json_body(self.request)
+            fplog("restapi_call_debug",
+                  extras="INPUT: \n" + json.dumps(data, indent=4, sort_keys=True))
+    res = self.__old_pm_render()
+    # log the output when debug is enabled
+    if debug:
+        fplog("restapi_call_debug", extras="OUTPUT: \n" + res)
     return res
 
 
