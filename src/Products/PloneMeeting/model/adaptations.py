@@ -59,7 +59,7 @@ WAITING_ADVICES_FROM_STATES = {
          # if () given, a custom transition icon is used for every back transitions
          'only_use_custom_back_transition_icon_for': ("validated", ),
          'use_custom_state_title': True,
-         'use_custom_transition_title_for': (),
+         'use_custom_transition_title_for': {},
          'remove_modify_access': True,
          'adviser_may_validate': False,
          # must end with _waiting_advices
@@ -78,7 +78,7 @@ WAITING_ADVICES_FROM_STATES = {
          # if () given, a custom transition icon is used for every back transitions
          'only_use_custom_back_transition_icon_for': ("validated", ),
          'use_custom_state_title': True,
-         'use_custom_transition_title_for': (),
+         'use_custom_transition_title_for': {},
          'remove_modify_access': True,
          'adviser_may_validate': False,
          # must end with _waiting_advices
@@ -873,8 +873,8 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                         if infos.get('use_custom_icon', False):
                             icon_name = from_transition_id
                         tr_title = 'wait_advices_from'
-                        if from_transition_id in infos.get('use_custom_transition_title_for', ()):
-                            tr_title = from_transition_id
+                        if from_transition_id in infos.get('use_custom_transition_title_for', {}):
+                            tr_title = infos['use_custom_transition_title_for'][from_transition_id]
                         transition.setProperties(
                             title=tr_title,
                             new_state_id=new_state_id, trigger_type=1, script_name='',
