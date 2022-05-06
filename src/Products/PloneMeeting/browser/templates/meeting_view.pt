@@ -163,7 +163,7 @@
             class="auto-height"
             style="width: 100%; padding-bottom: 1em;">
     </iframe>
-    
+
     <script>
         $('iframe.auto-height').iFrameResize({log:false, scrolling:false, heightCalculationMethod:'lowestElement'})
     </script>
@@ -202,7 +202,7 @@
   </div>
 
   <tal:comment replace="nothing">Annexes</tal:comment>
-  <tal:annexes replace="structure context/@@display-annexes" />
+  <tal:annexes replace="structure python: context.restrictedTraverse('@@display-annexes')(check_can_view=True)" />
   <div class="separator"></div>
 
   <tal:comment replace="nothing">Parameters</tal:comment>

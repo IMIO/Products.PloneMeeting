@@ -281,6 +281,23 @@ class testAnnexes(PloneMeetingTestCase):
         self._checkMayAccessConfidentialAnnexes(obj, annexNotConfidential, annexConfidential,
                                                 annexes_table, categorized_child)
 
+    def _checkNumberOfAnnexesOnView(self, obj, number):
+        """Check number next to annex type icon."""
+        # avoid cache on views
+        self.tool.invalidateAllCache()
+        if obj.__class__.__name__ == 'MeetingAdvice':
+            rendered_view = obj.restrictedTraverse('@@view')()
+            term_check = 'title="Adviceannex(es)"><span>{0}</span>'
+        elif obj.__class__.__name__ == 'Meeting':
+            rendered_view = obj.restrictedTraverse('@@meeting_view')()
+            term_check = 'title="Meetingannex(es)"><span>{0}</span>'
+        else:
+            # MeetingItem
+            rendered_view = obj.restrictedTraverse('meetingitem_view')()
+            term_check = 'title="Financialanalysis"><span>{0}</span>'
+        rendered_view = rendered_view.replace(' ', '').replace('\n', '')
+        self.assertTrue(term_check.format(number) in rendered_view)
+
     def _checkMayAccessConfidentialAnnexes(self,
                                            obj,
                                            annexNotConfidential,
@@ -297,16 +314,18 @@ class testAnnexes(PloneMeetingTestCase):
         result = categorized_child.index()
         self.assertTrue('<span title="">Annex not confidential</span>' in result)
         self.assertTrue('<span title="">Annex confidential</span>' in result)
+        # check that we have 2 annexes displayed on view
+        self._checkNumberOfAnnexesOnView(obj, 2)
 
     def _checkMayNotAccessConfidentialAnnexes(self,
-                                              item,
+                                              obj,
                                               annexNotConfidential,
                                               annexConfidential,
                                               annexes_table,
                                               categorized_child):
         """ """
         # confidential annexes not viewable
-        self.assertEqual([elt['UID'] for elt in get_categorized_elements(item)],
+        self.assertEqual([elt['UID'] for elt in get_categorized_elements(obj)],
                          [annexNotConfidential.UID()])
         self.assertTrue('Annex not confidential' in annexes_table())
         self.assertFalse('Annex confidential' in annexes_table())
@@ -314,6 +333,8 @@ class testAnnexes(PloneMeetingTestCase):
         result = categorized_child.index()
         self.assertTrue('<span title="">Annex not confidential</span>' in result)
         self.assertFalse('<span title="">Annex confidential</span>' in result)
+        # check that we have 1 annex displayed on view
+        self._checkNumberOfAnnexesOnView(obj, 1)
 
     def _setupConfidentialityOnAdviceAnnexes(self):
         """ """
@@ -566,6 +587,7 @@ class testAnnexes(PloneMeetingTestCase):
             # every users of a Plone subgroup profileSuffix will have access
             for org in (self.developers, self.vendors):
                 cfg.setMeetingAnnexConfidentialVisibleFor((profileSuffix, ))
+                cfg.at_post_edit_script()
                 update_all_categorized_elements(meeting)
                 group_suffix = profileSuffix.replace(SUFFIXPROFILEPREFIX, '')
                 # get a user from the right 'developers/vendors' subgroup
