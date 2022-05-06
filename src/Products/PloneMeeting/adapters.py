@@ -1582,7 +1582,10 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
     def _apply_visible_groups_security(self, group_ids):
         """Compute 'View' permission if annex is confidential,
            apply local_roles and give 'View' to 'AnnexReader' either,
-           remove every local_roles and acquire 'View'."""
+           remove every local_roles and acquire 'View'.
+           WE DO NOT apply this on Meeting because of the possibility to select
+           "every _creators groups" and it is not possible to give the
+           'AnnexReader' role to all these _creators groups."""
         if self.parent.getTagName() == 'MeetingItem' or \
            self.parent.portal_type in self.tool.getAdvicePortalTypeIds():
             # reinitialize permissions in case no more confidential
