@@ -14,6 +14,12 @@ Changelog
   access confidential annexes. The confidential annexes were not downloadable
   but the annex type icon was display and on hover, the `tooltipster` was empty.
   [gbastien]
+- Turned `adaptations.WAITING_ADVICES_FROM_STATES` value
+  `use_custom_transition_title_for` from a tuple of transitions ids to a dict
+  so it is possible to define an arbitrary new custom title for the transition,
+  before it was taking the transition id, now it is possible to override several
+  different transition title for same transition id in different workflows.
+  [gbastien]
 
 4.2rc23 (2022-05-03)
 --------------------

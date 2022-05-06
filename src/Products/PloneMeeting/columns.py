@@ -212,6 +212,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         elif obj.getTagName() == 'Meeting':
             visibleColumns = cfg.getMeetingColumns()
             staticInfos = obj.restrictedTraverse('@@static-infos')(visibleColumns=visibleColumns)
+            # check_can_view=True because permission check is not enough
             annexes += obj.restrictedTraverse('@@categorized-childs')(
                 portal_type='annex', check_can_view=True)
             # display number of items in meeting title
