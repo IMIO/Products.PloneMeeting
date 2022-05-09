@@ -25,6 +25,8 @@ Changelog
   [gbastien]
 - Completed the `restapi_call` debug mode, log the request `BODY` when request is a `POST`.
   [gbastien]
+- Removed `livesearch` override, now overrided and unified in `plonetheme.imioapps`.
+  [gbastien]
 
 4.2rc23 (2022-05-03)
 --------------------

@@ -164,8 +164,9 @@ else:
         full_title, display_title, display_description = None, None, None
 
     write('''<li class="LSRow">''')
+    searchquery = '/@@search?SearchableText=%s&path=%s' % (searchterms.rstrip('%2A'), params['path'])
     write('<a href="%s" class="advancedsearchlink advanced-search">%s</a>' %
-           (portal_url + '/@@search',
+           (portal_url + searchquery,
             ts.translate(label_advanced_search, context=REQUEST)))
     write('''</li>''')
 
