@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc25 (unreleased)
+4.2rc25 (2022-05-10)
 --------------------
 
 - Completed fix about annex type icon wronlgy displayed in meeting
