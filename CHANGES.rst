@@ -28,6 +28,9 @@ Changelog
   [gbastien]
 - Fixed item number input `width` on meeting view, `Chrome` does not hanle `auto` as `FF`.
   [gbastien]
+- In `@@load_held_position_back_refs`, the view that show where a hed_position is used,
+  do display the `...` only when more than 10 elements found.
+  [gbastien]
 
 4.2rc23 (2022-05-03)
 --------------------
