@@ -5,8 +5,9 @@ Changelog
 4.2rc25 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Completed fix about annex type icon wronlgy displayed in meeting
+  `@@categorized-annexes` to users not able to access confidential annexes.
+  [gbastien]
 
 4.2rc24 (2022-05-10)
 --------------------
