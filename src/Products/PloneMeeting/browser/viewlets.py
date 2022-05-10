@@ -114,9 +114,10 @@ class HeldPositionBackRefsView(BrowserView):
                 meeting = brain.getObject()
                 if _is_held_pos_uid_used_by(hp_uid, meeting):
                     if cfg not in res:
-                        res[cfg] = []
-                    res[cfg].append(meeting)
-                    if len(res[cfg]) >= limit:
+                        res[cfg] = {'meetings': [], 'overlimit': False}
+                    res[cfg]['meetings'].append(meeting)
+                    if not limit or len(res[cfg]['meetings']) >= limit:
+                        res[cfg]['overlimit'] = True
                         break
         return res
 
@@ -136,8 +137,9 @@ class HeldPositionBackRefsView(BrowserView):
                 sort_order='reverse')
             for brain in brains:
                 if cfg not in res:
-                    res[cfg] = []
-                res[cfg].append(brain)
-                if len(res[cfg]) >= limit:
+                    res[cfg] = {'items': [], 'overlimit': False}
+                res[cfg]['items'].append(brain)
+                if not limit or len(res[cfg]['items']) >= limit:
+                    res[cfg]['overlimit'] = True
                     break
         return res
