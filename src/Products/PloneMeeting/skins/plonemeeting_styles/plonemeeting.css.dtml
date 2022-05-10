@@ -1670,7 +1670,7 @@ input[id^='value_moveAction_'] {
     width: auto;
 }
 
-div.dashboard_annexes {
+div.dashboard-annexes {
     width: 100%;
     text-align: right;
 }
@@ -1932,13 +1932,15 @@ div.tooltipster-content table.actionspanel-no-style-table td.noPadding {
 }
 #content span.people-edit-itemabsent,
 #content span.people-edit-element,
-#content span.people-edit-signatory {
+#content span.people-edit-signatory,
+#content span.manage-categorized-elements {
     color: &dtml-linkColor;;
     opacity: 0.3;
 }
 #content span.people-edit-itemabsent:hover,
 #content span.people-edit-element:hover,
-#content span.people-edit-signatory:hover {
+#content span.people-edit-signatory:hover,
+#content span.manage-categorized-elements:hover {
     opacity: 1;
 }
 #content span.link-action {
@@ -2027,6 +2029,11 @@ div.tooltipster-content table.actionspanel-no-style-table td.noPadding {
 #content span.show-less:before {
    content: "\f102";
    color: &dtml-linkColor;;
+}
+/* manage annexes icon */
+#content span.manage-categorized-elements:before {
+    content: "\f013";
+    font-size: 120%;
 }
 
 /* icon colors */

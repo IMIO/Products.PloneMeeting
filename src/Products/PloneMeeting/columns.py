@@ -133,9 +133,9 @@ class ItemPollTypeColumn(VocabularyColumn):
 def render_item_annexes(item, tool, show_nothing=False, check_can_view=False):
     """ """
     annexes = ''
-    annexes += item.restrictedTraverse('@@categorized-childs')(
+    annexes += item.unrestrictedTraverse('@@categorized-childs')(
         portal_type='annex', show_nothing=show_nothing, check_can_view=check_can_view)
-    decision_annexes = item.restrictedTraverse('@@categorized-childs')(
+    decision_annexes = item.unrestrictedTraverse('@@categorized-childs')(
         portal_type='annexDecision', show_nothing=show_nothing, check_can_view=check_can_view)
     if decision_annexes.strip():
         decision_term = translate("AnnexesDecisionShort",
@@ -220,8 +220,11 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                 obj.Title(), obj.number_of_items())
             prettyLinker.contentValue = contentValue
 
+        # manage annexes icon
+        manage_annexes = obj.unrestrictedTraverse('@@categorized-childs-manage')()
+
         if annexes:
-            annexes = u"<div class='dashboard_annexes'>{0}</div>".format(annexes)
+            annexes = u"<div class='dashboard-annexes'>{0}</div>".format(annexes + manage_annexes)
 
         pretty_link = prettyLinker.getLink()
         return pretty_link + staticInfos + moreInfos + annexes
