@@ -2305,7 +2305,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setItemAdviceStates([self._stateMappingFor('proposed'), ])
         cfg.setItemAdviceEditStates([self._stateMappingFor('proposed'), ])
         cfg.setItemAdviceViewStates([self._stateMappingFor('proposed'), ])
-        # set that default value of field 'advice_hide_during_redaction' will be True
+        # default value of field 'advice_hide_during_redaction' will be True
         cfg.setDefaultAdviceHiddenDuringRedaction(['meetingadvice'])
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
@@ -2337,7 +2337,6 @@ class testAdvices(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, changeView)
 
         # send advice back to creator so advice may be asked_again
-        self.changeUser('pmCreator1')
         # never historized
         pr = api.portal.get_tool('portal_repository')
         self.assertFalse(pr.getHistoryMetadata(advice))
@@ -2371,9 +2370,8 @@ class testAdvices(PloneMeetingTestCase):
         # when an advice is 'asked_again', the field hidden_during_redaction
         # is set to the default defined in the MeetingConfig
         self.assertTrue('meetingadvice' in cfg.getDefaultAdviceHiddenDuringRedaction())
-        # XXX for now MeetingConfig.defaultAdviceHiddenDuringRedaction
-        # does not interact with "asked_again", so still False
-        # see https://support.imio.be/browse/PM-3883
+        # when "asked_again", advice_hide_during_redaction is set to True on edit
+        # so for now it is still False
         self.assertFalse(advice.advice_hide_during_redaction)
         changeView()
         # when going back to previous version, a new version is done
@@ -2391,7 +2389,10 @@ class testAdvices(PloneMeetingTestCase):
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
         self.assertTrue(self.hasPermission(ModifyPortalContent, advice))
-
+        # when editing, the advice_hide_during_redaction is set to True
+        advice_edit = advice.restrictedTraverse('@@edit')
+        advice_edit.update()
+        self.assertEqual(advice_edit.widgets['advice_hide_during_redaction'].value, ['true'])
         # when an advice is 'asked_again', it is not versioned twice even
         # if advice was edited in between, an advice 'asked_again' is like 'never given'
         # this will avoid that previous advice of an advice 'asked_again' is also
@@ -2404,6 +2405,11 @@ class testAdvices(PloneMeetingTestCase):
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
         advice.advice_type = 'positive'
+        # editing an advice that is no more asked_again will not set 'advice_hide_during_redaction'
+        self.assertFalse(advice.advice_hide_during_redaction)
+        advice_edit = advice.restrictedTraverse('@@edit')
+        advice_edit.update()
+        self.assertEqual(advice_edit.widgets['advice_hide_during_redaction'].value, ['false'])
         notify(ObjectModifiedEvent(advice))
         self.changeUser('pmReviewer1')
         self.backToState(item, 'itemcreated')
