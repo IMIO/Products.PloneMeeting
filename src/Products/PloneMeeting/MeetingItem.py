@@ -18,6 +18,7 @@ from datetime import datetime
 from DateTime import DateTime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.content import get_transitions
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import safe_delattr
@@ -886,9 +887,14 @@ class MeetingItemWorkflowActions(object):
             # trigger transitions until 'validated', aka one step before 'presented'
             # set a special value in the REQUEST so guards may use it if necessary
             self.context.REQUEST.set('duplicating_and_validating_item', True)
-            for tr in self.cfg.getTransitionsForPresentingAnItem(
-                    org_uid=clonedItem.getProposingGroup())[0:-1]:
-                wfTool.doActionFor(clonedItem, tr, comment=wf_comment)
+            # try to bypass by using the "validate" shortcut
+            if "validate" in get_transitions(clonedItem):
+                wfTool.doActionFor(clonedItem, "validate")
+            else:
+                for tr in self.cfg.getTransitionsForPresentingAnItem(
+                        org_uid=clonedItem.getProposingGroup())[0:-1]:
+                    if tr in get_transitions(clonedItem):
+                        wfTool.doActionFor(clonedItem, tr, comment=wf_comment)
             self.context.REQUEST.set('duplicating_and_validating_item', False)
         return clonedItem
 
@@ -4434,9 +4440,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # give 'Manager' role to current user to bypass transitions guard
             # and avoid permission problems when transitions are triggered
             with api.env.adopt_roles(['Manager', ]):
+                # try to bypass by using the "validate" shortcut
+                if "validate" in get_transitions(item):
+                    wfTool.doActionFor(item, "validate")
                 for tr in cfg.getTransitionsForPresentingAnItem(
                         org_uid=item.getProposingGroup()):
-                    wfTool.doActionFor(item, tr)
+                    if tr in get_transitions(item):
+                        wfTool.doActionFor(item, tr)
             # the item must be at least presented to a meeting, either we raise
             if not item.hasMeeting():
                 raise WorkflowException
@@ -7242,6 +7252,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # we will warn user if some transitions may not be triggered and
                 # triggerUntil is not reached
                 need_to_warn = False
+                # try to bypass by using the "validate" shortcut
+                if "validate" in get_transitions(newItem):
+                    wfTool.doActionFor(newItem, "validate")
                 for tr in destMeetingConfig.getTransitionsForPresentingAnItem(
                         org_uid=newItem.getProposingGroup()):
                     try:
@@ -7256,7 +7269,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                     'warning')
                                 break
                             newItem.REQUEST['PUBLISHED'] = meeting
-                        wfTool.doActionFor(newItem, tr, comment=wf_comment)
+                        if tr in get_transitions(newItem):
+                            wfTool.doActionFor(newItem, tr, comment=wf_comment)
                     except WorkflowException:
                         # in case something goes wrong, only warn the user by adding a portal message
                         need_to_warn = True
