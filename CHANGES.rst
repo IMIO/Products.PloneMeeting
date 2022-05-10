@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc24 (unreleased)
+4.2rc24 (2022-05-10)
 --------------------
 
 - Changed from 90° to 270° image rotation in `BaseDGHV.image_orientation` because it is
