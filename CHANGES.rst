@@ -12,6 +12,10 @@ Changelog
   [gbastien]
 - Fixed `MeetingItem.showObservations` that is an adaptable method.
   [gbastien]
+- Fixed `present` transition sometimes not available in `@@meeting_available_items_view`
+  when using the `async_actions` because `MeetingItemWorkflowConditions._publishedObjectIsMeeting`
+  was returning `False` even when on a `Meeting`.
+  [gbastien]
 
 4.2rc25 (2022-05-10)
 --------------------

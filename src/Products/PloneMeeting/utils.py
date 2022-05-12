@@ -254,7 +254,9 @@ def getCurrentMeetingObject(context):
 
     if not (className in ('Meeting', 'MeetingItem')):
         # check if we are on a Script or so or calling a BrowserView
-        if className in methodTypes or 'SimpleViewClass' in className:
+        if className in methodTypes or \
+           'SimpleViewClass' in className or \
+           'facade_actions_panel' in className:  # async_actions panel
             obj = get_referer_obj(context.REQUEST)
         else:
             # Check the parent (if it has sense)
