@@ -258,7 +258,7 @@ class MeetingItemWorkflowConditions(object):
             item_val_levels_states = self.cfg.getItemWFValidationLevels(
                 data='state', only_enabled=True)
             previous_val_state = item_val_levels_states[
-                item_val_levels_states.index(destinationState)-1]
+                item_val_levels_states.index(destinationState) - 1]
             previous_suffixes = self.cfg.getItemWFValidationLevels(
                 states=[previous_val_state], data='extra_suffixes', only_enabled=True)
             previous_main_suffix = self.cfg.getItemWFValidationLevels(
@@ -7085,8 +7085,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def get_enable_clone_to_other_mc_fields(self, cfg, ignored_field_names=[]):
         """Return the ids of 'otherMeetingConfigsClonableToFieldXXX' that are enabled."""
         return [field_name for field_name in cfg.getUsedItemAttributes()
-                if field_name.startswith('otherMeetingConfigsClonableToField')
-                and field_name not in ignored_field_names]
+                if field_name.startswith('otherMeetingConfigsClonableToField') and
+                field_name not in ignored_field_names]
 
     security.declarePublic('doCloneToOtherMeetingConfig')
 
@@ -7717,8 +7717,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # when p_check_is_attendee=True,
             # only keep held_positions that are also attendees for self
             res += [hp for hp in gic.get_representatives(at_date=meeting_date)
-                    if (not check_is_attendee or hp in attendees)
-                    and hp not in res]
+                    if (not check_is_attendee or hp in attendees) and
+                    hp not in res]
         return res
 
     def is_decided(self, cfg, item_state=None, positive_only=False):
