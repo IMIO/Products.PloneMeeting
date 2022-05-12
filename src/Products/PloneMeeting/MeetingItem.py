@@ -1488,7 +1488,7 @@ schema = Schema((
         name='observations',
         widget=RichWidget(
             label_msgid="PloneMeeting_itemObservations",
-            condition="python: here.showObservations()",
+            condition="python: here.adapted().showObservations()",
             description_msgid="descr_field_vieawable_by_everyone",
             label='Observations',
             i18n_domain='PloneMeeting',
@@ -2314,7 +2314,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def showObservations(self):
         '''See doc in interfaces.py.'''
-        return self.attribute_is_used('observations')
+        item = self.getSelf()
+        return item.attribute_is_used('observations')
 
     security.declarePublic('show_budget_infos')
 

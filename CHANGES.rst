@@ -10,6 +10,8 @@ Changelog
 - Fixed `portlet quickupload` when used on a `Folder` outside the application
   (like a `Documents` folder managed manually at the root of the site).
   [gbastien]
+- Fixed `MeetingItem.showObservations` that is an adaptable method.
+  [gbastien]
 
 4.2rc25 (2022-05-10)
 --------------------
