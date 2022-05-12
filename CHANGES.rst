@@ -7,6 +7,9 @@ Changelog
 
 - Moved `IRAMCache` configuration to a cleaner place, the `ZopeProcessStarting` event.
   [gbastien]
+- Fixed `portlet quickupload` when used on a `Folder` outside the application
+  (like a `Documents` folder managed manually at the root of the site).
+  [gbastien]
 
 4.2rc25 (2022-05-10)
 --------------------

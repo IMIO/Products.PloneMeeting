@@ -1646,9 +1646,14 @@ class PMCategoryVocabulary(CategoryVocabulary):
         annex_group = get_group(annex_config, context)
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        isManager = tool.isManager(cfg)
-        # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
-        cfg_modified = cfg.modified()
+        # cfg may be None when using the quickupload portlet outside of PloneMeeting
+        # like in a "Documents" folder at the root of the site, but the quickupload
+        # form is initialized with content_category field
+        cfg_modified = isManager = None
+        if cfg is not None:
+            isManager = tool.isManager(cfg)
+            # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
+            cfg_modified = cfg.modified()
         # we do not cache per context as we manage missing terms using an adapter
         return annex_group.getId(), isManager, use_category_uid_as_token, cfg_modified, only_enabled
 
@@ -1711,9 +1716,14 @@ class PMCategoryTitleVocabulary(CategoryTitleVocabulary, PMCategoryVocabulary):
         annex_group = get_group(annex_config, context)
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        isManager = tool.isManager(cfg)
-        # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
-        cfg_modified = cfg.modified()
+        # cfg may be None when using the quickupload portlet outside of PloneMeeting
+        # like in a "Documents" folder at the root of the site, but the quickupload
+        # form is initialized with content_category field
+        cfg_modified = isManager = None
+        if cfg is not None:
+            isManager = tool.isManager(cfg)
+            # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
+            cfg_modified = cfg.modified()
         # we do not cache per context as we manage missing terms using an adapter
         return annex_group.getId(), isManager, cfg_modified, only_enabled
 
