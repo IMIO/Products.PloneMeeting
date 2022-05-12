@@ -249,8 +249,8 @@ def render(self):
     # debug may be enabled by passing debug=true as parameter to the restapi call
     # or when setting the RESTAPI_DEBUG environment variable
     debug = boolean_value(self.request.form.get('debug', False)) or \
-       boolean_value(os.environ.get('RESTAPI_DEBUG', False)) or \
-       "debug=true" in query_string  # with POST, URL parameters are not in self.request.form
+        boolean_value(os.environ.get('RESTAPI_DEBUG', False)) or \
+        "debug=true" in query_string  # with POST, URL parameters are not in self.request.form
     # log the input when debug is enabled
     if debug:
         # with POST, data is in the body

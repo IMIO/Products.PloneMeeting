@@ -5,8 +5,8 @@ Changelog
 4.2rc26 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Moved `IRAMCache` configuration to a cleaner place, the `ZopeProcessStarting` event.
+  [gbastien]
 
 4.2rc25 (2022-05-10)
 --------------------
