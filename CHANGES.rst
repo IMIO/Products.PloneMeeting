@@ -21,6 +21,8 @@ Changelog
 - Fixed vocabulary used by the `Taken over by` faceted filter to be able to
   select a value `Nobody` to get items taken over by nobody.
   [gbastien]
+- Removed `livesearch` override, now overrided and unified in `plonetheme.imioapps`.
+  [gbastien]
 
 4.2rc25 (2022-05-10)
 --------------------
