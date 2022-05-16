@@ -997,6 +997,8 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                                if 'accept' in state.transitions][0]
             back_transition_id = [tr for tr in itemWorkflow.states['accepted'].transitions
                                   if tr.startswith('backTo')][0]
+            # we use the origin_state_id as base_state_id because
+            # MeetingManager must be able to edit the item
             new_state = _addIsolatedState(
                 new_state_id='pre_accepted',
                 origin_state_id=origin_state_id,
@@ -1004,7 +1006,8 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 origin_transition_guard_expr_name='mayDecide()',
                 back_transition_guard_expr_name="mayCorrect('%s')" % origin_state_id,
                 back_transition_id=back_transition_id,
-                itemWorkflow=itemWorkflow)
+                itemWorkflow=itemWorkflow,
+                base_state_id=origin_state_id, )
             # ... then add output transitions to 'accepted' and 'accepted_but_modified'
             out_transitions = new_state.transitions
             out_transitions += ('accept', )

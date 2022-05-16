@@ -88,7 +88,9 @@ from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.config import WriteBudgetInfos
+from Products.PloneMeeting.config import WriteDecision
 from Products.PloneMeeting.config import WriteInternalNotes
+from Products.PloneMeeting.config import WriteItemMeetingManagerFields
 from Products.PloneMeeting.config import WriteMarginalNotes
 from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.events import item_added_or_initialized
@@ -1281,7 +1283,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write decision",
+        write_permission=WriteDecision,
     ),
     TextField(
         name='decision',
@@ -1296,7 +1298,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=False,
-        write_permission="PloneMeeting: Write decision",
+        write_permission=WriteDecision,
     ),
     TextField(
         name='decisionSuite',
@@ -1312,7 +1314,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write decision",
+        write_permission=WriteDecision,
     ),
     TextField(
         name='decisionEnd',
@@ -1328,7 +1330,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write decision",
+        write_permission=WriteDecision,
     ),
     BooleanField(
         name='oralQuestion',
@@ -1384,7 +1386,7 @@ schema = Schema((
         default_content_type="text/html",
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        write_permission=WriteItemMeetingManagerFields,
     ),
     TextField(
         name='notes',
@@ -1400,7 +1402,7 @@ schema = Schema((
         default_content_type="text/html",
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        write_permission=WriteItemMeetingManagerFields,
     ),
     TextField(
         name='meetingManagersNotes',
@@ -1416,7 +1418,7 @@ schema = Schema((
         default_content_type="text/html",
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        write_permission=WriteItemMeetingManagerFields,
     ),
     TextField(
         name='meetingManagersNotesSuite',
@@ -1432,7 +1434,7 @@ schema = Schema((
         default_content_type="text/html",
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        write_permission=WriteItemMeetingManagerFields,
     ),
     TextField(
         name='meetingManagersNotesEnd',
@@ -1448,7 +1450,7 @@ schema = Schema((
         default_content_type="text/html",
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        write_permission=WriteItemMeetingManagerFields,
     ),
     TextField(
         name='internalNotes',
@@ -1499,7 +1501,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        write_permission=WriteItemMeetingManagerFields,
     ),
     LinesField(
         name='templateUsingGroups',
@@ -1650,7 +1652,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        write_permission=WriteItemMeetingManagerFields,
     ),
     TextField(
         name='committeeObservations',
@@ -1666,7 +1668,7 @@ schema = Schema((
         default_output_type="text/x-html-safe",
         searchable=True,
         optional=True,
-        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        write_permission=WriteItemMeetingManagerFields,
     ),
     TextField(
         name='votesObservations',
@@ -1682,7 +1684,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        write_permission=WriteItemMeetingManagerFields,
     ),
     ReferenceField(
         name='manuallyLinkedItems',
@@ -1802,7 +1804,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write decision",
+        write_permission=WriteDecision,
     ),
     TextField(
         name='otherMeetingConfigsClonableToFieldDecision',
@@ -1818,7 +1820,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write decision",
+        write_permission=WriteDecision,
     ),
     TextField(
         name='otherMeetingConfigsClonableToFieldDecisionSuite',
@@ -1834,7 +1836,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write decision",
+        write_permission=WriteDecision,
     ),
     TextField(
         name='otherMeetingConfigsClonableToFieldDecisionEnd',
@@ -1850,7 +1852,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write decision",
+        write_permission=WriteDecision,
     ),
     BooleanField(
         name='isAcceptableOutOfMeeting',
@@ -1939,7 +1941,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         optional=True,
-        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        write_permission=WriteItemMeetingManagerFields,
         default_output_type="text/x-html-safe",
         default_content_type="text/plain",
     ),

@@ -16,6 +16,10 @@ Changelog
   when using the `async_actions` because `MeetingItemWorkflowConditions._publishedObjectIsMeeting`
   was returning `False` even when on a `Meeting`.
   [gbastien]
+- Fixed the `pre_accepted WFAdaptation` that was acting like a decided state
+  but actually must behaves like an editable item in a meeting (like `presented`
+  or `itemfrozen`) and must be fully editable by `MeetingManagers`.
+  [gbastien]
 
 4.2rc25 (2022-05-10)
 --------------------
