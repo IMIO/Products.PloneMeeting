@@ -83,6 +83,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                           'return_to_proposing_group_with_last_validation',
                           'reviewers_take_back_validated_item',
                           'transfered',
+                          'transfered_and_duplicated',
                           'waiting_advices',
                           'waiting_advices_adviser_may_validate',
                           'waiting_advices_adviser_send_back',
