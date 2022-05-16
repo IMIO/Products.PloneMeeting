@@ -1806,7 +1806,7 @@ class testViews(PloneMeetingTestCase):
                          'attachment;filename=o1.zip')
         # we received a Zip file
         m = magic.Magic()
-        self.assertEqual(m.from_buffer(data), 'Zip archive data, at least v2.0 to extract')
+        self.assertTrue(m.from_buffer(data).startswith('Zip archive data, at least v2.0 to extract'))
         # annexes without a filename are ignored
         annex1.file.filename = None
         annex2.file.filename = None

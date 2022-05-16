@@ -183,6 +183,9 @@ class IMeetingItemDocumentation:
     '''Normally, the methods described here should be part of IMeetingItem.
        Because it is impossible to do so with an overengineered yet overrigid
        ArchGenXML 2, we document the provided methods in this absurd class.'''
+    def showObservations():
+        '''Condition to show field observations, by default shown if in
+           MeetingConfig.usedItemAttributes.'''
     def mustShowItemReference():
         '''When must I show the item reference ? In the default implementation,
            item references are shown as soon as a meeting is frozen or when

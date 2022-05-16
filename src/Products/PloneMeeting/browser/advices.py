@@ -456,6 +456,15 @@ class AdviceEdit(DefaultEditForm):
         super(AdviceEdit, self).update()
         if not self.actions.executedActions:
             _display_asked_again_warning(self.context, self.context.aq_inner.aq_parent)
+        # check if need to auto hide the advice if it is "asked_again"
+        if self.context.advice_type == 'asked_again' and \
+           self.context.advice_hide_during_redaction is False:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self.context)
+            if self.context.portal_type in cfg.getDefaultAdviceHiddenDuringRedaction():
+                api.portal.show_message(_("advice_hide_during_redaction_set_auto_to_true"),
+                                        request=self.request)
+                self.widgets['advice_hide_during_redaction'].value = ['true']
 
 
 def advice_uid_default():

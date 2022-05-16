@@ -13,6 +13,7 @@ from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.cache import setup_ram_cache
 from imio.helpers.content import get_modified_attrs
 from imio.helpers.content import richtextval
 from imio.helpers.security import fplog
@@ -66,6 +67,7 @@ from zope.lifecycleevent import IObjectRemovedEvent
 
 import logging
 import os
+import transaction
 
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
@@ -1479,3 +1481,9 @@ def onPrincipalRemovedFromGroup(event):
     tool = api.portal.get_tool('portal_plonemeeting')
     tool.invalidateAllCache()
     _invalidateUsersAndGroupsRelatedCache()
+
+
+def onZopeProcessStarting(event):
+    """ """
+    setup_ram_cache(max_entries=100000, max_age=2400, cleanup_interval=600)
+    transaction.commit()

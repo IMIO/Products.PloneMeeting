@@ -2,14 +2,44 @@ Changelog
 =========
 
 
-4.2rc24 (unreleased)
+4.2rc26 (unreleased)
+--------------------
+
+- Moved `IRAMCache` configuration to a cleaner place, the `ZopeProcessStarting` event.
+  [gbastien]
+- Fixed `portlet quickupload` when used on a `Folder` outside the application
+  (like a `Documents` folder managed manually at the root of the site).
+  [gbastien]
+- Fixed `MeetingItem.showObservations` that is an adaptable method.
+  [gbastien]
+- Fixed `present` transition sometimes not available in `@@meeting_available_items_view`
+  when using the `async_actions` because `MeetingItemWorkflowConditions._publishedObjectIsMeeting`
+  was returning `False` even when on a `Meeting`.
+  [gbastien]
+- Removed `is_in_part` management from `Migrator` as it was moved to `imio.migrator`.
+  [gbastien]
+- Fixed vocabulary used by the `Taken over by` faceted filter to be able to
+  select a value `Nobody` to get items taken over by nobody.
+  [gbastien]
+- Removed `livesearch` override, now overrided and unified in `plonetheme.imioapps`.
+  [gbastien]
+
+4.2rc25 (2022-05-10)
+--------------------
+
+- Completed fix about annex type icon wronlgy displayed in meeting
+  `@@categorized-annexes` to users not able to access confidential annexes.
+  [gbastien]
+
+4.2rc24 (2022-05-10)
 --------------------
 
 - Changed from 90° to 270° image rotation in `BaseDGHV.image_orientation` because it is
   rotated clockwise with imagemagick, in pod templates including annexes.
   [aduchene]
-- Manage `MeetingConfig.defaultAdviceHiddenDuringRedaction` only when a new advice is added,
-  not when advice is asked_again, see https://support.imio.be/browse/PM-3883.
+- Manage `MeetingConfig.defaultAdviceHiddenDuringRedaction` when a new advice is added,
+  and when advice is asked_again the same way (in the edit form) and display a message
+  to the adviser.
   [gbastien]
 - Display `global_actions` on the advice view.
   [gbastien]
@@ -25,7 +55,10 @@ Changelog
   [gbastien]
 - Completed the `restapi_call` debug mode, log the request `BODY` when request is a `POST`.
   [gbastien]
-- Removed `livesearch` override, now overrided and unified in `plonetheme.imioapps`.
+- Fixed item number input `width` on meeting view, `Chrome` does not hanle `auto` as `FF`.
+  [gbastien]
+- In `@@load_held_position_back_refs`, the view that show where a hed_position is used,
+  do display the `...` only when more than 10 elements found.
   [gbastien]
 
 4.2rc23 (2022-05-03)
