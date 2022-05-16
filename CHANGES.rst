@@ -16,6 +16,8 @@ Changelog
   when using the `async_actions` because `MeetingItemWorkflowConditions._publishedObjectIsMeeting`
   was returning `False` even when on a `Meeting`.
   [gbastien]
+- Removed `is_in_part` management from `Migrator` as it was moved to `imio.migrator`.
+  [gbastien]
 - Fixed the `pre_accepted WFAdaptation` that was acting like a decided state
   but actually must behaves like an editable item in a meeting (like `presented`
   or `itemfrozen`) and must be fully editable by `MeetingManagers`.
