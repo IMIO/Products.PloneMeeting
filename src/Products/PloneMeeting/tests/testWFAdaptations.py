@@ -46,7 +46,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         for wfa in wfas:
             if wfa not in available_wfas:
                 available = False
-                pm_logger.info('Bypassing {0} because WFAdaptation {1} is not available!'.format(
+                pm_logger.info('Bypassing "{0}" because WFAdaptation "{1}" is not available!'.format(
                     self._testMethodName, wfa))
                 break
         return available
@@ -615,6 +615,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         # ease override by subproducts
         cfg = self.meetingConfig
+        # accepted_out_of_meeting
         if 'accepted_out_of_meeting' in cfg.listWorkflowAdaptations():
             _check(wfa_name='accepted_out_of_meeting',
                    transition='accept_out_of_meeting',
@@ -625,6 +626,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                    transition='accept_out_of_meeting',
                    back_transition='backToValidatedFromAcceptedOutOfMeeting',
                    error_msg_id='wa_removed_accepted_out_of_meeting_error')
+        # accepted_out_of_meeting_emergency
         if 'accepted_out_of_meeting_emergency' in cfg.listWorkflowAdaptations():
             _check(wfa_name='accepted_out_of_meeting_emergency',
                    transition='accept_out_of_meeting_emergency',
@@ -635,6 +637,17 @@ class testWFAdaptations(PloneMeetingTestCase):
                    transition='accept_out_of_meeting_emergency',
                    back_transition='backToValidatedFromAcceptedOutOfMeetingEmergency',
                    error_msg_id='wa_removed_accepted_out_of_meeting_emergency_error')
+        # transfered
+        if 'transfered' in cfg.listWorkflowAdaptations():
+            _check(wfa_name='transfered',
+                   transition='transfer',
+                   back_transition='backToValidatedFromTransfered',
+                   error_msg_id='wa_removed_transfered_error')
+        if 'transfered_and_duplicated' in cfg.listWorkflowAdaptations():
+            _check(wfa_name='transfered_and_duplicated',
+                   transition='transfer',
+                   back_transition='backToValidatedFromTransfered',
+                   error_msg_id='wa_removed_transfered_error')
 
     def test_pm_Validate_workflowAdaptations_removed_waiting_advices(self):
         """Test MeetingConfig.validate_workflowAdaptations that manage removal
@@ -3034,6 +3047,70 @@ class testWFAdaptations(PloneMeetingTestCase):
             self.assertEqual(duplicated_item.query_state(), 'validated')
             # duplicated_item emergency is no more asked
             self.assertEqual(duplicated_item.getEmergency(), 'no_emergency')
+
+    def test_pm_WFA_transfered(self):
+        '''Test the workflowAdaptation 'transfered'.'''
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if not self._check_wfa_available(['transfered']):
+            return
+        self.changeUser('pmManager')
+        # check while the wfAdaptation is not activated
+        self._transfered_inactive()
+        # activate the wfAdaptation and check
+        # if 'reviewers_take_back_validated_item' WFA is available
+        # enables it as well as in this WFA, the Review portal content permission
+        # is given to reviewers on state 'validated'
+        wfas = ('transfered', )
+        if 'reviewers_take_back_validated_item' in cfg.listWorkflowAdaptations():
+            wfas = wfas + ('reviewers_take_back_validated_item', )
+        self._activate_wfas(wfas)
+        self._transfered_active()
+
+    def _transfered_inactive(self):
+        '''Tests while 'transfered' wfAdaptation is inactive.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.validateItem(item)
+        self.assertFalse('transfer' in self.transitions(item))
+        # in case 'reviewers_take_back_validated_item' is available
+        self.changeUser('pmReviewer1')
+        self.assertFalse('transfer' in self.transitions(item))
+
+    def _transfered_active(self):
+        '''Tests while 'transfered' wfAdaptation is active.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.validateItem(item)
+        # not available until MeetingItem.otherMeetingConfigsClonableTo is empty
+        self.assertFalse('transfer' in self.transitions(item))
+        item.setOtherMeetingConfigsClonableTo((self.meetingConfig2.getId(), ))
+        self.assertTrue('transfer' in self.transitions(item))
+        # in case 'reviewers_take_back_validated_item' is available
+        self.changeUser('pmReviewer1')
+        self.assertFalse('transfer' in self.transitions(item))
+
+        self.changeUser('pmManager')
+        self.do(item, 'transfer')
+        self.assertEqual(item.query_state(), 'transfered')
+        # not duplicated
+        self.assertFalse(item.getBRefs())
+        self.assertEqual(item.get_successors(the_objects=False), [])
+        # back transition
+        self.do(item, 'backToValidatedFromTransfered')
+        self.assertEqual(item.query_state(), 'validated')
+
+        # test 'transfered_and_duplicated' if available
+        cfg = self.meetingConfig
+        if 'transfered_and_duplicated' in cfg.listWorkflowAdaptations():
+            wfas = list(cfg.getWorkflowAdaptations())
+            wfas.remove('transfered')
+            wfas.append('transfered_and_duplicated')
+            self._activate_wfas(wfas)
+            self.do(item, 'transfer')
+            duplicated_item = item.get_successors()[0]
+            self.assertEqual(duplicated_item.get_predecessor(), item)
+            self.assertEqual(duplicated_item.query_state(), 'validated')
 
     def test_pm_WFA_MeetingManagerCorrectClosedMeeting(self):
         '''A closed meeting may be corrected by MeetingManagers
