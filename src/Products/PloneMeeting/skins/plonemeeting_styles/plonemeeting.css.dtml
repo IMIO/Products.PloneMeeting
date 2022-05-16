@@ -2,7 +2,7 @@
 /* <dtml-with imioapps_properties> */
 /* <dtml-call "REQUEST.set('portal_url', portal_url())"> */
 
-fieldset {
+#content fieldset {
    line-height: 1em;
    margin: 0.5em 0;
 }
@@ -936,10 +936,6 @@ div.meeting-before-faceted-infos {
     display: none;
 }
 
-/* plone.app.search, hide some elements while using the @@search until we use it, see ticket #5515 */
-#search-results-bar dl, #search-results-bar #searchResultsSort {
-    display: none;
-}
 .searchPage #rss-subscription, .searchPage h1 {
     display: none;
 }

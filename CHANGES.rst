@@ -18,6 +18,11 @@ Changelog
   [gbastien]
 - Removed `is_in_part` management from `Migrator` as it was moved to `imio.migrator`.
   [gbastien]
+- Fixed vocabulary used by the `Taken over by` faceted filter to be able to
+  select a value `Nobody` to get items taken over by nobody.
+  [gbastien]
+- Removed `livesearch` override, now overrided and unified in `plonetheme.imioapps`.
+  [gbastien]
 - Fixed the `pre_accepted WFAdaptation` that was acting like a decided state
   but actually must behaves like an editable item in a meeting (like `presented`
   or `itemfrozen`) and must be fully editable by `MeetingManagers`.
