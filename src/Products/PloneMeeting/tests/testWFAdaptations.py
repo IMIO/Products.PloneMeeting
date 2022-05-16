@@ -79,6 +79,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                           'return_to_proposing_group_with_all_validations',
                           'return_to_proposing_group_with_last_validation',
                           'reviewers_take_back_validated_item',
+                          'transfered',
                           'waiting_advices',
                           'waiting_advices_adviser_may_validate',
                           'waiting_advices_adviser_send_back',
@@ -233,6 +234,17 @@ class testWFAdaptations(PloneMeetingTestCase):
                 ('accepted_out_of_meeting_emergency',
                  'accepted_out_of_meeting_emergency_and_duplicated')),
             wa_conflicts)
+
+        # transfered and transfered_and_duplicated
+        # may not be used together
+        self.failIf(cfg.validate_workflowAdaptations(
+            ('transfered',)))
+        self.failIf(cfg.validate_workflowAdaptations(
+            ('transfered_and_duplicated',)))
+        self.assertEqual(
+            cfg.validate_workflowAdaptations(
+                ('transfered',
+                 'transfered_and_duplicated')), wa_conflicts)
 
         # no_decide and hide_decisions_when_under_writing may not be used together
         self.assertEqual(
@@ -2361,16 +2373,18 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._setUpDefaultItemWFValidationLevels(cfg)
         from Products.PloneMeeting.model import adaptations
         original_WAITING_ADVICES_FROM_STATES = deepcopy(adaptations.WAITING_ADVICES_FROM_STATES)
-        adaptations.WAITING_ADVICES_FROM_STATES = {'*': (
-            {'from_states': ('itemcreated', 'proposed', ),
-             'back_states': ('itemcreated', 'proposed', ),
-             'new_state_id': 'itemcreated_waiting_advices',
-             },
-            {'from_states': ('itemcreated', 'proposed', ),
-             'back_states': ('itemcreated', 'proposed', ),
-             'new_state_id': 'proposed_waiting_advices',
-             },
-            ), }
+        adaptations.WAITING_ADVICES_FROM_STATES = {
+            '*': (
+                {'from_states': ('itemcreated', 'proposed', ),
+                 'back_states': ('itemcreated', 'proposed', ),
+                 'new_state_id': 'itemcreated_waiting_advices',
+                 },
+                {'from_states': ('itemcreated', 'proposed', ),
+                 'back_states': ('itemcreated', 'proposed', ),
+                 'new_state_id': 'proposed_waiting_advices',
+                 },
+            ),
+        }
         self._activate_wfas(('waiting_advices', 'waiting_advices_proposing_group_send_back'))
         cfg.setItemAdviceStates(
             ('itemcreated_waiting_advices', 'proposed_waiting_advices', ))

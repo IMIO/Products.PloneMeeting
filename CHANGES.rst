@@ -16,6 +16,13 @@ Changelog
   when using the `async_actions` because `MeetingItemWorkflowConditions._publishedObjectIsMeeting`
   was returning `False` even when on a `Meeting`.
   [gbastien]
+- Removed `is_in_part` management from `Migrator` as it was moved to `imio.migrator`.
+  [gbastien]
+- Added WFAdaptations `transfered/transfered_and_duplicated` that will add a
+  `transfer` transition to the `transfered` state to the item workflow.
+  This is similar to `accepted_out_of_meeting` but is triggerable by
+  `MeetingManagers` if item is sendable to other `MeetingConfigs`.
+  [gbastien]
 
 4.2rc25 (2022-05-10)
 --------------------

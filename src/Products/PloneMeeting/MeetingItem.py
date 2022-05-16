@@ -712,6 +712,12 @@ class MeetingItemWorkflowConditions(object):
             res = No(_('emergency_accepted_required_to_accept_out_of_meeting_emergency'))
         return res
 
+    security.declarePublic('mayTransfer')
+
+    def mayTransfer(self):
+        """ """
+        return self.context.adapted().mayTransfer()
+
 
 InitializeClass(MeetingItemWorkflowConditions)
 
@@ -839,6 +845,15 @@ class MeetingItemWorkflowActions(object):
            'accepted_out_of_meeting_emergency_and_duplicated' is used."""
         if 'accepted_out_of_meeting_emergency_and_duplicated' in self.cfg.getWorkflowAdaptations():
             self._duplicateAndValidate(cloneEventAction='create_from_accepted_out_of_meeting_emergency')
+        self.context.update_item_reference()
+
+    security.declarePrivate('doTransfer')
+
+    def doTransfer(self, stateChange):
+        """Duplicate item to validated if WFAdaptation
+           'transfered_and_duplicated' is used."""
+        if 'transfered_and_duplicated' in self.cfg.getWorkflowAdaptations():
+            self._duplicateAndValidate(cloneEventAction='create_from_transfered')
         self.context.update_item_reference()
 
     security.declarePrivate('doAccept')
@@ -2596,6 +2611,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 item.setTakenOverBy(previousUserId)
         else:
             item.setTakenOverBy('')
+
+    security.declarePublic('mayTransfer')
+
+    def mayTransfer(self):
+        '''Check doc in interfaces.py.'''
+        item = self.getSelf()
+        res = False
+        if item.getOtherMeetingConfigsClonableTo():
+            tool = api.portal.get_tool('portal_plonemeeting')
+            res = tool.isManager(tool.getMeetingConfig(item))
+        return res
 
     security.declarePublic('mayAskEmergency')
 
