@@ -16,6 +16,8 @@ Changelog
   when using the `async_actions` because `MeetingItemWorkflowConditions._publishedObjectIsMeeting`
   was returning `False` even when on a `Meeting`.
   [gbastien]
+- Removed `is_in_part` management from `Migrator` as it was moved to `imio.migrator`.
+  [gbastien]
 
 4.2rc25 (2022-05-10)
 --------------------
