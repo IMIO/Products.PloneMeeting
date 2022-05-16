@@ -823,8 +823,8 @@ class testWorkflows(PloneMeetingTestCase):
         self.closeMeeting(meeting)
 
     def test_pm_WriteItemMeetingManagerReservedFieldsPermission(self):
-        """The permission 'PloneMeeting: Write item MeetingManager reserved fields' is
-           used to protect fields on the item that are only editable by MeetingManagers."""
+        """The permission WriteItemMeetingManagerFields is used to protect fields
+           on the item that are only editable by MeetingManagers."""
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         # find fields using the permission, it should not be editable by a MeetingMember

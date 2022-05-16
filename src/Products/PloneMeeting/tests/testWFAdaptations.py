@@ -22,7 +22,10 @@ from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import WriteBudgetInfos
+from Products.PloneMeeting.config import WriteDecision
 from Products.PloneMeeting.config import WriteInternalNotes
+from Products.PloneMeeting.config import WriteItemMeetingManagerFields
+from Products.PloneMeeting.config import WriteMarginalNotes
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
@@ -879,6 +882,48 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(meetingWF.transitions['backToFrozen'].new_state_id, 'frozen')
         self.assertEqual(meetingWF.transitions['backToFrozen'].guard.expr.text,
                          "python:here.wfConditions().mayCorrect('frozen')")
+
+    def test_pm_WFA_pre_accepted(self):
+        '''Test the workflowAdaptation 'pre_accepted'.
+           It is NOT a decision state, item is still
+           fully editable like in state "itemfrozen".'''
+        # ease override by subproducts
+        if not self._check_wfa_available(['pre_accepted']):
+            return
+        self.changeUser('pmManager')
+        # check while the wfAdaptation is not activated
+        self._activate_wfas([])
+        self._pre_accepted_inactive()
+        # activate the wfAdaptation and check
+        self._activate_wfas(('pre_accepted', ))
+        self._pre_accepted_active()
+
+    def _pre_accepted_inactive(self):
+        '''Tests while 'pre_accepted' wfAdaptation is inactive.'''
+        meeting = self._createMeetingWithItems()
+        item = meeting.get_items()[0]
+        self.decideMeeting(meeting)
+        self.assertEqual(self.transitions(item), ['accept', 'backToItemFrozen'])
+        self.closeMeeting(meeting)
+        self.assertEqual(item.query_state(), 'accepted')
+
+    def _pre_accepted_active(self):
+        '''Tests while 'pre_accepted' wfAdaptation is active.'''
+        meeting = self._createMeetingWithItems()
+        item = meeting.get_items()[0]
+        self.decideMeeting(meeting)
+        self.assertEqual(self.transitions(item), ['accept', 'backToItemFrozen', 'pre_accept'])
+        self.do(item, 'pre_accept')
+        self.assertEqual(item.query_state(), 'pre_accepted')
+        # a pre_accepted item is fully editable by MeetingManagers
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+        self.assertTrue(self.hasPermission(WriteBudgetInfos, item))
+        self.assertTrue(self.hasPermission(WriteDecision, item))
+        self.assertTrue(self.hasPermission(WriteItemMeetingManagerFields, item))
+        self.assertTrue(self.hasPermission(WriteMarginalNotes, item))
+        self.closeMeeting(meeting)
+        self.assertEqual(item.query_state(), 'accepted')
+        self.assertEqual(meeting.get_items()[1].query_state(), 'accepted')
 
     def test_pm_WFA_no_publication_and_pre_accepted(self):
         '''Test the workflowAdaptation 'no_publication/pre_accepted' togheter.'''
@@ -2696,14 +2741,6 @@ class testWFAdaptations(PloneMeetingTestCase):
             wf_adaptation_name='refused',
             item_state='refused',
             item_transition='refuse')
-
-    def test_pm_WFA_pre_accepted(self):
-        '''Test the workflowAdaptation 'pre_accepted'.'''
-        self._check_item_decision_state(
-            wf_adaptation_name='pre_accepted',
-            item_state='pre_accepted',
-            item_transition='pre_accept',
-            additional_wf_transitions=['accept'])
 
     def test_pm_WFA_reviewers_take_back_validated_item(self):
         '''Test the workflowAdaptation 'reviewers_take_back_validated_item'.'''

@@ -751,6 +751,27 @@ class CreatorsForFacetedFilterVocabulary(object):
 CreatorsForFacetedFilterVocabularyFactory = CreatorsForFacetedFilterVocabulary()
 
 
+class CreatorsWithNobodyForFacetedFilterVocabulary(CreatorsForFacetedFilterVocabulary):
+    """Add the 'Nobody' option.
+       Used by the 'Taken over by' faceted filter."""
+
+    def __call__(self, context):
+        """ """
+        res = super(CreatorsWithNobodyForFacetedFilterVocabulary, self).__call__(context)
+        # avoid to change original list of _terms
+        res = list(res._terms)
+        res.insert(0,
+                   SimpleTerm(EMPTY_STRING,
+                              EMPTY_STRING,
+                              translate('(Nobody)',
+                                        domain='PloneMeeting',
+                                        context=context.REQUEST)))
+        return SimpleVocabulary(res)
+
+
+CreatorsWithNobodyForFacetedFilterVocabularyFactory = CreatorsWithNobodyForFacetedFilterVocabulary()
+
+
 class MeetingDatesVocabulary(object):
     implements(IVocabularyFactory)
 
