@@ -23,6 +23,10 @@ Changelog
   [gbastien]
 - Removed `livesearch` override, now overrided and unified in `plonetheme.imioapps`.
   [gbastien]
+- Fixed the `pre_accepted WFAdaptation` that was acting like a decided state
+  but actually must behaves like an editable item in a meeting (like `presented`
+  or `itemfrozen`) and must be fully editable by `MeetingManagers`.
+  [gbastien]
 
 4.2rc25 (2022-05-10)
 --------------------
