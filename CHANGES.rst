@@ -18,6 +18,9 @@ Changelog
   [gbastien]
 - Removed `is_in_part` management from `Migrator` as it was moved to `imio.migrator`.
   [gbastien]
+- Fixed vocabulary used by the `Taken over by` faceted filter to be able to
+  select a value `Nobody` to get items taken over by nobody.
+  [gbastien]
 
 4.2rc25 (2022-05-10)
 --------------------
