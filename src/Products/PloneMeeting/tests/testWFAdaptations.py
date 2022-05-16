@@ -603,14 +603,18 @@ class testWFAdaptations(PloneMeetingTestCase):
             # do transition available
             if wfa_name.startswith('accepted_out_of_meeting_emergency'):
                 item.setEmergency('emergency_accepted')
+            elif wfa_name.startswith('transfered'):
+                item.setOtherMeetingConfigsClonableTo((
+                    self.meetingConfig2.getId(), ))
             else:
                 # accepted_out_of_meeting/accepted_out_of_meeting_and_duplicated
                 item.setIsAcceptableOutOfMeeting(True)
+            # transition
             self.do(item, transition)
             self.assertEqual(
                 cfg.validate_workflowAdaptations(()),
                 msg_removed_error)
-
+            # back_transition
             self.do(item, back_transition)
             self.failIf(cfg.validate_workflowAdaptations(()))
 
