@@ -5,8 +5,9 @@ Changelog
 4.2rc27 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Added `Migrate_To_4202._fixPreAcceptedWFA` necessary to fix applications using
+  the `pre_accepted WFAdaptation` that was fixed in previous version.
+  [gbastien]
 
 4.2rc26 (2022-05-16)
 --------------------

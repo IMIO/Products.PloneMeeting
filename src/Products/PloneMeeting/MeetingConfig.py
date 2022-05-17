@@ -3488,6 +3488,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getItemDecidedStates(self):
         '''Return list of item decided states.'''
+        # take care that "pre_accepted" is NOT a decided state
         item_decided_states = [
             'accepted',
             'accepted_but_modified',
