@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc27 (unreleased)
+4.2rc27 (2022-05-17)
 --------------------
 
 - Added `Migrate_To_4202._fixPreAcceptedWFA` necessary to fix applications using
