@@ -61,7 +61,9 @@ class Migrate_To_4202(Migrator):
         if not from_migration_to_4200:
             self._updateFacetedFilters()
             self._fixPreAcceptedWFA()
-            self._fixFacetedFoldersConstrainTypes()
+
+        # this is not managed by the main upgrade to 4200
+        self._fixFacetedFoldersConstrainTypes()
 
 
 def migrate(context):
