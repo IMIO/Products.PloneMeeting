@@ -1,0 +1,6 @@
+{
+    "python.analysis.extraPaths": [
+        "../../src",
+        "../../parts/omelette"
+    ]
+}
