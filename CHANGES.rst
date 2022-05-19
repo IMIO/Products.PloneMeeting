@@ -5,8 +5,10 @@ Changelog
 4.2rc28 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Optimize places where `MeetingConfig.getTransitionsForPresentingAnItem` is used
+  (recurrings items, duplicate and validate, send to other MC and present) to
+  bypass the entire item validation WF if transition `validate` is available directly.
+  [gbastien]
 
 4.2rc27 (2022-05-17)
 --------------------
@@ -82,10 +84,6 @@ Changelog
   [gbastien]
 - In `@@load_held_position_back_refs`, the view that show where a hed_position is used,
   do display the `...` only when more than 10 elements found.
-  [gbastien]
-- Optimize places where `MeetingConfig.getTransitionsForPresentingAnItem` is used
-  (recurrings items, duplicate and validate, send to other MC and present) to
-  bypass the entire item validation WF if transition `validate` is available directly.
   [gbastien]
 
 4.2rc23 (2022-05-03)

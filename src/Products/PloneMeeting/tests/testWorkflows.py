@@ -571,7 +571,7 @@ class testWorkflows(PloneMeetingTestCase):
             REC_ITEM_ERROR % (
                 "rec-item-developers",
                 "present",
-                "No workflow provides the '${action_id}' action."))
+                "WorkflowException()"))
 
     def test_pm_RecurringItemsRespectSortingMethodOnAddItemPrivacy(self):
         '''Tests the recurring items system when items are inserted
@@ -607,11 +607,8 @@ class testWorkflows(PloneMeetingTestCase):
         self.failIf(len(meeting.get_items()) != 3)
         # if transitions for presenting an item are not correct
         # the item will no be inserted in the meeting
-        # remove the last step 'present' from self.meetingConfig.transitionsForPresentingItem
-        self.assertTrue('present' in cfg.getTransitionsForPresentingAnItem())
-        transitionsForPresentingAnItemWithoutPresent = list(cfg.getTransitionsForPresentingAnItem())
-        transitionsForPresentingAnItemWithoutPresent.remove('present')
-        cfg.setTransitionsForPresentingAnItem(transitionsForPresentingAnItemWithoutPresent)
+        # enable categories so the recurring items are not presentable
+        cfg.setUseGroupsAsCategories(False)
         meeting2 = self.create('Meeting')
         self.failIf(len(meeting2.get_items()) != 0)
 

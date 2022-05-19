@@ -153,7 +153,7 @@
 
   <tal:availableItems condition="python:view.show_available_items()">
     <h2 class="collapsible active available-items"
-         onclick="toggleDetails('collapsible-available-items', toggle_parent_active=true, parent_tag=this)">
+         onclick="toggleDetails('collapsible-available-items', toggle_parent_active=true, parent_tag=this, toggle_type='fade')">
       <span i18n:translate='available_items'>Available items</span>
     </h2>
 
