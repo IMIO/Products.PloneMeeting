@@ -2,7 +2,26 @@ Changelog
 =========
 
 
-4.2rc26 (unreleased)
+4.2rc28 (unreleased)
+--------------------
+
+- Nothing changed yet.
+
+
+4.2rc27 (2022-05-17)
+--------------------
+
+- Added `Migrate_To_4202._fixPreAcceptedWFA` necessary to fix applications using
+  the `pre_accepted WFAdaptation` that was fixed in previous version.
+  [gbastien]
+- Fixed `@@createitemfromtemplate` that was raising an `Unhautorized` because
+  cached result holds the url including the member id and this was failing when
+  cache was shared between users having same groups.
+  Also fixed constrainTypes on `searches_...` folders of each users to not be able
+  to add anything to it.
+  [gbastien]
+
+4.2rc26 (2022-05-16)
 --------------------
 
 - Moved `IRAMCache` configuration to a cleaner place, the `ZopeProcessStarting` event.
