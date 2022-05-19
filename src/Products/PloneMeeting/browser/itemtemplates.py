@@ -41,14 +41,14 @@ class ItemTemplateView(BrowserView):
             return self.request.RESPONSE.redirect(newItemUrl)
         elif cancelled:
             # the only way to enter here is the popup overlay not to be shown
-            # because while using the popup overlay, the jQ function take care of hidding it
-            # while the Cancel button is hit
+            # because while using the popup overlay, the jQ function take care
+            # of hidding it while the Cancel button is hit
             return self.request.RESPONSE.redirect(form.get('form.HTTP_REFERER'))
         else:
             # compute and store templates tree so it can be used in several places
             # this is not done in the __init__ because the user is "Anonymous" in the __init__
             # and as we filter on "templateUsingGroup", we need a valid user...
-            self.renderedTemplatesTree = self.createTemplatesTree()
+            self.renderedTemplatesTree = self._patch_html_content(self._createTemplatesTree())
             return self.index()
 
     def _template_path_and_title(self, templateItem):
@@ -90,7 +90,7 @@ class ItemTemplateView(BrowserView):
         newItem._at_creation_flag = True
         return newItem
 
-    def getTemplatesTree(self):
+    def _getTemplatesTree(self):
         '''Create the structure of elements used to display the item templates tree to the item creators.
            We only want to show folders and items the current creator may use, so we do that in 2 steps :
            - a first catalog query that will find every items the creator may use,
@@ -140,16 +140,22 @@ class ItemTemplateView(BrowserView):
         '''
         return self.renderedTemplatesTree.count('class="folder"')
 
-    def createTemplatesTree_cachekey(method, self):
-        '''cachekey method for self.createTemplatesTree.'''
+    def _createTemplatesTree_cachekey(method, self):
+        '''cachekey method for self._createTemplatesTree.'''
         return repr(self.cfg), self.cfg.modified(), self.tool.get_plone_groups_for_user()
 
-    @ram.cache(createTemplatesTree_cachekey)
-    def createTemplatesTree(self):
+    @ram.cache(_createTemplatesTree_cachekey)
+    def _createTemplatesTree(self):
         # if only one folder at root, we expand it by default
-        templatesTree = self.getTemplatesTree()
+        templatesTree = self._getTemplatesTree()
         atMostOneElementAtRoot = len(templatesTree['children']) < 2
         return self.recurse(children=templatesTree.get('children', []),
                             expandRootLevel=atMostOneElementAtRoot).strip()
+
+    def _patch_html_content(self, html_content):
+        """To be able to use caching, we need to
+           change [baseUrl] after __call__ is rendered."""
+        html_content = html_content.replace("[baseUrl]", self.context.absolute_url())
+        return html_content
 
     recurse = ViewPageTemplateFile('templates/itemtemplates_tree_recurse.pt')

@@ -65,10 +65,8 @@ from Products.PloneMeeting.utils import is_editing
 from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import set_field_from_ajax
-from zope.component import queryUtility
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
-from zope.ramcache.interfaces.ram import IRAMCache
 
 import sys
 
@@ -96,12 +94,6 @@ class PMGlobalSectionsViewlet(GlobalSectionsViewlet):
     '''
 
     def selectedTabs(self, default_tab='index_html', portal_tabs=()):
-        # setup ram.cache utility
-        # change if default value still used
-        ramcache = queryUtility(IRAMCache)
-        if ramcache.maxEntries == 1000:
-            ramcache.update(maxEntries=100000, maxAge=2400, cleanupInterval=600)
-
         plone_url = api.portal.get_tool('portal_url')()
         plone_url_len = len(plone_url)
         request = self.request
@@ -1024,7 +1016,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             'cfg': cfg,
             'meetingConfig': cfg,
             'meeting': self.context.getMeeting()
-                if self.context.__class__.__name__ == 'MeetingItem' else None,
+            if self.context.__class__.__name__ == 'MeetingItem' else None,
             'itemUids': {},
             'user': api.user.get_current(),
             'podTemplate': pod_template,

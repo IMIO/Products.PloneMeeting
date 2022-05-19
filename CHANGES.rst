@@ -2,7 +2,59 @@ Changelog
 =========
 
 
-4.2rc24 (unreleased)
+4.2rc28 (unreleased)
+--------------------
+
+- Nothing changed yet.
+
+
+4.2rc27 (2022-05-17)
+--------------------
+
+- Added `Migrate_To_4202._fixPreAcceptedWFA` necessary to fix applications using
+  the `pre_accepted WFAdaptation` that was fixed in previous version.
+  [gbastien]
+- Fixed `@@createitemfromtemplate` that was raising an `Unhautorized` because
+  cached result holds the url including the member id and this was failing when
+  cache was shared between users having same groups.
+  Also fixed constrainTypes on `searches_...` folders of each users to not be able
+  to add anything to it.
+  [gbastien]
+
+4.2rc26 (2022-05-16)
+--------------------
+
+- Moved `IRAMCache` configuration to a cleaner place, the `ZopeProcessStarting` event.
+  [gbastien]
+- Fixed `portlet quickupload` when used on a `Folder` outside the application
+  (like a `Documents` folder managed manually at the root of the site).
+  [gbastien]
+- Fixed `MeetingItem.showObservations` that is an adaptable method.
+  [gbastien]
+- Fixed `present` transition sometimes not available in `@@meeting_available_items_view`
+  when using the `async_actions` because `MeetingItemWorkflowConditions._publishedObjectIsMeeting`
+  was returning `False` even when on a `Meeting`.
+  [gbastien]
+- Removed `is_in_part` management from `Migrator` as it was moved to `imio.migrator`.
+  [gbastien]
+- Fixed vocabulary used by the `Taken over by` faceted filter to be able to
+  select a value `Nobody` to get items taken over by nobody.
+  [gbastien]
+- Removed `livesearch` override, now overrided and unified in `plonetheme.imioapps`.
+  [gbastien]
+- Fixed the `pre_accepted WFAdaptation` that was acting like a decided state
+  but actually must behaves like an editable item in a meeting (like `presented`
+  or `itemfrozen`) and must be fully editable by `MeetingManagers`.
+  [gbastien]
+
+4.2rc25 (2022-05-10)
+--------------------
+
+- Completed fix about annex type icon wronlgy displayed in meeting
+  `@@categorized-annexes` to users not able to access confidential annexes.
+  [gbastien]
+
+4.2rc24 (2022-05-10)
 --------------------
 
 - Changed from 90° to 270° image rotation in `BaseDGHV.image_orientation` because it is

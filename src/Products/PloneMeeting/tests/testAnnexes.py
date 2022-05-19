@@ -1706,6 +1706,36 @@ class testAnnexes(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(meeting.UID())
         _check_catalog(step=-1)
 
+    def test_pm_QuickUploadForm(self):
+        """Test that the @@quickupload-form loads correctly."""
+        self._removeConfigObjectsFor(self.meetingConfig)
+        # MeetingItem
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.request.set('typeupload', 'annex')
+        rendered = item.restrictedTraverse('@@quickupload-form')()
+        self.assertTrue('form.widgets.content_category' in rendered)
+        self.assertTrue('annexes_types-item_annexes-financial-analysis' in rendered)
+        self.request.set('typeupload', 'annexDecision')
+        rendered = item.restrictedTraverse('@@quickupload-form')()
+        self.assertTrue('form.widgets.content_category' in rendered)
+        self.assertTrue('annexes_types-item_decision_annexes-decision-annex' in rendered)
+        # Meeting
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        self.request.set('typeupload', 'annex')
+        rendered = meeting.restrictedTraverse('@@quickupload-form')()
+        self.assertTrue('form.widgets.content_category' in rendered)
+        self.assertTrue('annexes_types-meeting_annexes-meeting-annex' in rendered)
+        # Folder
+        # when using portlet quickupload to manage a "Documents" folder
+        self.changeUser('siteadmin')
+        self.request.set('typeupload', '')
+        rendered = self.portal.restrictedTraverse('@@quickupload-form')()
+        self.assertFalse('form.widgets.content_category' in rendered)
+        self.assertTrue('form.widgets.title' in rendered)
+        self.assertTrue('form.widgets.description' in rendered)
+
 
 def test_suite():
     from unittest import makeSuite

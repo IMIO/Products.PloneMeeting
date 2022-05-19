@@ -76,6 +76,10 @@ class CategorizedAnnexesView(CategorizedTabView):
                 _('The configuration does not let you add annexes.'),
                 request=self.request)
 
+    def _check_can_view(self):
+        """ """
+        return self.context.__class__.__name__ == "Meeting"
+
     def _config(self):
         """ """
         return get_annexes_config(self.context, self.portal_type)
