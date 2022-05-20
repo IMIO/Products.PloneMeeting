@@ -5,8 +5,10 @@ from Acquisition import aq_base
 from appy.pod.xhtml2odt import XhtmlPreprocessor
 from appy.shared.diff import HtmlDiff
 from bs4 import BeautifulSoup
-from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.contact.core.utils import get_gender_and_number
+from collective.contact.core.utils import get_position_type_name
+from collective.contact.core.vocabulary import get_directory
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
@@ -113,6 +115,7 @@ import os.path
 import re
 import socket
 import unicodedata
+import unidecode
 import urlparse
 
 
@@ -1297,6 +1300,115 @@ def computeCertifiedSignatures(signatures):
             computedSignatures[validSignatureNumber]['function'] = signature['function']
 
     return computedSignatures
+
+
+def split_gender_and_number(value):
+    """ """
+    res = {}
+    values = value and value.split('|') or [u'', u'', u'', u'']
+    if len(values) > 1:
+        res = {'MS': values[0],
+               'MP': values[1],
+               'FS': values[2],
+               'FP': values[3]}
+    else:
+        res = {'MS': values[0],
+               'MP': values[0],
+               'FS': values[0],
+               'FP': values[0]}
+    return res
+
+
+def _prefixed_gn_position_name(gn,
+                               position_type_value,
+                               include_value=False,
+                               uncapitalize_position=False):
+    """ """
+    value_starting_vowel = {'MS': u'L\'',
+                            'MP': u'Les ',
+                            'FS': u'L\'',
+                            'FP': u'Les ',
+
+                            # by male singular
+                            'BMS': u'de l\'',
+                            # by male plural
+                            'BMP': u'des ',
+                            # by female singular
+                            'BFS': u'de l\'',
+                            # by female plural
+                            'BFP': u'des ',
+
+                            # to male singular
+                            'TMS': u'à l\'',
+                            # from male plural
+                            'TMP': u'aux ',
+                            # from female singular
+                            'TFS': u'à l\'',
+                            # from female plural
+                            'TFP': u'aux ',
+                            }
+    value_starting_consonant = {'MS': u'Le ',
+                                'MP': u'Les ',
+                                'FS': u'La ',
+                                'FP': u'Les ',
+
+                                # by male singular
+                                'BMS': u'du ',
+                                # by male plural
+                                'BMP': u'des ',
+                                # by female singular
+                                'BFS': u'de la ',
+                                # by female plural
+                                'BFP': u'des ',
+
+                                # to male singular
+                                'TMS': u'au ',
+                                # from male plural
+                                'TMP': u'aux ',
+                                # from female singular
+                                'TFS': u'à la ',
+                                # from female plural
+                                'TFP': u'aux ',
+                                }
+    # startswith vowel or consonant?
+    first_letter = safe_unicode(position_type_value[0])
+    # turn "é" to "e"
+    first_letter = unidecode.unidecode(first_letter)
+    if first_letter.lower() in ['a', 'e', 'i', 'o', 'u']:
+        mappings = value_starting_vowel
+    else:
+        mappings = value_starting_consonant
+    res = mappings.get(gn)
+    if include_value:
+        # we lowerize first letter of position_type_value
+        position_type_value = uncapitalize_position and \
+            uncapitalize(position_type_value) or position_type_value
+        res = u'{0}{1}'.format(res, position_type_value)
+    return res
+
+
+def get_prefixed_gn_position_name(contacts,
+                                  position_type,
+                                  include_value=True,
+                                  uncapitalize_position=False,
+                                  use_by=False,
+                                  use_to=False):
+    """This will generate an arbitraty prefixed gendered/numbered position_type."""
+    gn = get_gender_and_number(contacts, use_by=use_by, use_to=use_to)
+    position_type_value = get_gn_position_name(contacts, position_type)
+    return _prefixed_gn_position_name(
+        gn,
+        position_type_value,
+        include_value=include_value,
+        uncapitalize_position=uncapitalize_position)
+
+
+def get_gn_position_name(contacts, position_type):
+    """Get a gendered/numbered position_name from given list
+       of p_contacts and directory p_position_type."""
+    gn = get_gender_and_number(contacts)
+    position_name = get_position_type_name(get_directory(contacts[0]), position_type)
+    return split_gender_and_number(position_name)[gn]
 
 
 def listifySignatures(signatures):

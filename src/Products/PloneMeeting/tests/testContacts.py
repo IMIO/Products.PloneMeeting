@@ -26,6 +26,7 @@ from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.content.source import PMContactSourceBinder
 from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import get_prefixed_gn_position_name
 from Products.statusmessages.interfaces import IStatusMessage
 from z3c.relationfield.relation import RelationValue
 from zope.component import getUtility
@@ -2122,6 +2123,44 @@ class testContacts(PloneMeetingTestCase):
                                                 include_person_title=True,
                                                 position_type_attr='secondary_position_type'),
             u"Madame l'Administratrice")
+
+    def test_pm_Get_prefixed_gn_position_name(self):
+        """This let generate arbitrary sentences based on gender and number and a position_type."""
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        self.portal.contacts.position_types = [
+            {'token': u'default',
+             'name': u'D\xe9faut'},
+            {'token': u'admin',
+             'name': u'Administrateur|Administrateurs|Administratrice|Administratrices'},
+            {'token': u'alderman',
+             'name': u'\xc9chevin|\xc9chevins|\xc9chevine|\xc9chevines'}]
+        attendees = meeting.get_attendees(True)
+        man = [attendees[0]]
+        mens = [attendees[0], attendees[1]]
+        woman = [attendees[2]]
+        womens = [attendees[2], attendees[3]]
+        mix = [attendees[0], attendees[3]]
+        self.assertEqual(get_prefixed_gn_position_name(attendees, 'admin'), u'Les Administrateurs')
+        self.assertEqual(get_prefixed_gn_position_name(mens, 'admin'), u'Les Administrateurs')
+        self.assertEqual(get_prefixed_gn_position_name(womens, 'admin'), u'Les Administratrices')
+        self.assertEqual(get_prefixed_gn_position_name(mix, 'admin'), u'Les Administrateurs')
+        self.assertEqual(get_prefixed_gn_position_name(man, 'admin'), u"L'Administrateur")
+        self.assertEqual(get_prefixed_gn_position_name(woman, 'admin'), u"L'Administratrice")
+        # use_by
+        self.assertEqual(get_prefixed_gn_position_name(attendees, 'admin', use_by=True), u'des Administrateurs')
+        self.assertEqual(get_prefixed_gn_position_name(mens, 'admin', use_by=True), u'des Administrateurs')
+        self.assertEqual(get_prefixed_gn_position_name(womens, 'admin', use_by=True), u'des Administratrices')
+        self.assertEqual(get_prefixed_gn_position_name(mix, 'admin', use_by=True), u'des Administrateurs')
+        self.assertEqual(get_prefixed_gn_position_name(man, 'admin', use_by=True), u"de l'Administrateur")
+        self.assertEqual(get_prefixed_gn_position_name(woman, 'admin', use_by=True), u"de l'Administratrice")
+        # use_to
+        self.assertEqual(get_prefixed_gn_position_name(attendees, 'admin', use_to=True), u'aux Administrateurs')
+        self.assertEqual(get_prefixed_gn_position_name(mens, 'admin', use_to=True), u'aux Administrateurs')
+        self.assertEqual(get_prefixed_gn_position_name(womens, 'admin', use_to=True), u'aux Administratrices')
+        self.assertEqual(get_prefixed_gn_position_name(mix, 'admin', use_to=True), u'aux Administrateurs')
+        self.assertEqual(get_prefixed_gn_position_name(man, 'admin', use_to=True), u"à l'Administrateur")
+        self.assertEqual(get_prefixed_gn_position_name(woman, 'admin', use_to=True), u"à l'Administratrice")
 
     def test_pm_RemoveNotSelectedOrganization(self):
         """Check that removing a not selected organization works correctly."""

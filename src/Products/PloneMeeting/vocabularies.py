@@ -52,7 +52,6 @@ from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
-from Products.PloneMeeting.content.held_position import split_gender_and_number
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
@@ -61,6 +60,7 @@ from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import get_context_with_request
 from Products.PloneMeeting.utils import get_datagridfield_column_value
 from Products.PloneMeeting.utils import number_word
+from Products.PloneMeeting.utils import split_gender_and_number
 from z3c.form.interfaces import NO_VALUE
 from zope.annotation import IAnnotations
 from zope.globalrequest import getRequest

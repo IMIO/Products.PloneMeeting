@@ -5,8 +5,11 @@ Changelog
 4.2rc28 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Added `utils.get_prefixed_gn_position_name` to get a prefixed gendered/numbered
+  `position_type` from a list of `contacts` and a `position_type`.
+  Factorized code used by `PMHeldPosition.get_prefix_for_gender_and_number`
+  into `utils._prefixed_gn_position_name`.
+  [gbastien]
 
 4.2rc27 (2022-05-17)
 --------------------
