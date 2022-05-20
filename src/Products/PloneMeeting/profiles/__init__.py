@@ -288,12 +288,12 @@ class PersonDescriptor(Descriptor):
     excludedFields = ['held_positions']
 
     def __init__(self, id, lastname, firstname,
-                 gender=u'M', person_title=u'Monsieur', held_positions=[]):
+                 gender=u'M', held_positions=[]):
         self.id = id
         self.gender = gender
         self.lastname = lastname
         self.firstname = firstname
-        self.person_title = person_title
+        self.person_title = u'Monsieur' if gender == u'M' else u'Madame'
         self.held_positions = held_positions
         self.firstname_abbreviated = None
         self.photo = None

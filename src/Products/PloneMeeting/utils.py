@@ -1378,7 +1378,7 @@ def _prefixed_gn_position_name(gn,
         mappings = value_starting_vowel
     else:
         mappings = value_starting_consonant
-    res = mappings.get(gn)
+    res = mappings.get(gn, u'')
     if include_value:
         # we lowerize first letter of position_type_value
         position_type_value = uncapitalize_position and \

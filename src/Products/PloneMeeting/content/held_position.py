@@ -254,7 +254,7 @@ class PMHeldPosition(HeldPosition):
                   forced_position_type_value).items()
                   if v == value}
 
-        res = values and _prefixed_gn_position_name(
+        res = (values or include_value) and _prefixed_gn_position_name(
             get_gender_and_number([self.get_person()], use_by=use_by, use_to=use_to),
             value, include_value=include_value) or u''
 

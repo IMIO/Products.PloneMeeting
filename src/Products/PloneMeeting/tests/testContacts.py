@@ -728,7 +728,7 @@ class testContacts(PloneMeetingTestCase):
             {
                 0: u"La Directrice Générale,",
                 1: u"Jane Doe",
-                2: u"Signatory3,",
+                2: u"Le Signatory3,",
                 3: u"Person2FirstName Person2LastName",
             }
         )
@@ -791,9 +791,9 @@ class testContacts(PloneMeetingTestCase):
                 # label
                 1: u"Président",
                 # label
-                2: u"Signatory3",
+                2: u"Le Signatory3",
                 # position_type fallback from secondary_position_type
-                3: u"Le Super-héro"
+                3: u"La Super-héroine"
             }
         )
         # print_signatories_by_position is using Meeting.get_signature_infos_for
@@ -827,16 +827,16 @@ class testContacts(PloneMeetingTestCase):
         helper = view.get_generation_context_helper()
         self.assertEqual(
             helper.print_signatories_by_position(committee_id="committee_1"),
-            {0: u'Assembly member 2,',
+            {0: u"L'Assembly member 2,",
              1: u'Person2FirstName Person2LastName',
-             2: u'Assembly member 3,',
+             2: u"L'Assembly member 3,",
              3: u'Person3FirstName Person3LastName'})
         # same result when called from print_signatures_by_position
         self.assertEqual(
             helper.print_signatures_by_position(committee_id="committee_1"),
-            {0: u'Assembly member 2,',
+            {0: u"L'Assembly member 2,",
              1: u'Person2FirstName Person2LastName',
-             2: u'Assembly member 3,',
+             2: u"L'Assembly member 3,",
              3: u'Person3FirstName Person3LastName'})
 
     def _setupInAndOutAttendees(self):
@@ -934,14 +934,14 @@ class testContacts(PloneMeetingTestCase):
             {'attendee_again_after': u'<p>Monsieur Person2FirstName Person2LastName participe \xe0 la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
              'attendee_again_before': '',
-             'entered_after': u'<p>Monsieur Person3FirstName Person3LastName entre en s\xe9ance '
+             'entered_after': u'<p>Madame Person3FirstName Person3LastName entre en s\xe9ance '
                 u'apr\xe8s la discussion du point.</p>',
              'entered_before': '',
-             'left_after': u'<p>Monsieur Person4FirstName Person4LastName quitte la '
+             'left_after': u'<p>Madame Person4FirstName Person4LastName quitte la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
              'left_before': u'<p>Monsieur Person1FirstName Person1LastName quitte la s\xe9ance avant '
                 u'la discussion du point.</p>\n'
-                u'<p>Monsieur Person3FirstName Person3LastName quitte la s\xe9ance avant la '
+                u'<p>Madame Person3FirstName Person3LastName quitte la s\xe9ance avant la '
                 u'discussion du point.</p>',
              'non_attendee_after': '',
              'non_attendee_before': u'<p>Monsieur Person2FirstName Person2LastName ne participe plus '
@@ -953,13 +953,13 @@ class testContacts(PloneMeetingTestCase):
             {'attendee_again_after': '',
              'attendee_again_before': u'<p>Monsieur Person2FirstName Person2LastName participe '
                 u'\xe0 la s\xe9ance avant la discussion du point.</p>',
-             'entered_after': u'<p>Monsieur Person4FirstName Person4LastName entre en '
+             'entered_after': u'<p>Madame Person4FirstName Person4LastName entre en '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
-             'entered_before': u'<p>Monsieur Person3FirstName Person3LastName entre en '
+             'entered_before': u'<p>Madame Person3FirstName Person3LastName entre en '
                 u's\xe9ance avant la discussion du point.</p>',
-             'left_after': u'<p>Monsieur Person3FirstName Person3LastName quitte la '
+             'left_after': u'<p>Madame Person3FirstName Person3LastName quitte la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
-             'left_before': u'<p>Monsieur Person4FirstName Person4LastName quitte la '
+             'left_before': u'<p>Madame Person4FirstName Person4LastName quitte la '
                 u's\xe9ance avant la discussion du point.</p>',
              'non_attendee_after': '',
              'non_attendee_before': ''})
@@ -970,10 +970,10 @@ class testContacts(PloneMeetingTestCase):
             {'attendee_again_after': '',
              'attendee_again_before': '',
              'entered_after': '',
-             'entered_before': u'<p>Monsieur Person4FirstName Person4LastName entre en '
+             'entered_before': u'<p>Madame Person4FirstName Person4LastName entre en '
                 u's\xe9ance avant la discussion du point.</p>',
              'left_after': '',
-             'left_before': u'<p>Monsieur Person3FirstName Person3LastName quitte la '
+             'left_before': u'<p>Madame Person3FirstName Person3LastName quitte la '
                 u's\xe9ance avant la discussion du point.</p>',
              'non_attendee_after': '',
              'non_attendee_before': ''})
@@ -982,16 +982,16 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(
             helper.print_in_and_out_attendees(
                 ignore_before_first_item=False, merge_in_and_out_types=True),
-            {'entered_after': u'<p>Monsieur Person3FirstName Person3LastName entre en '
+            {'entered_after': u'<p>Madame Person3FirstName Person3LastName entre en '
                 u's\xe9ance apr\xe8s la discussion du point.</p>'
                 u'<p>Monsieur Person2FirstName Person2LastName participe \xe0 la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
              'entered_before': '',
-             'left_after': u'<p>Monsieur Person4FirstName Person4LastName quitte la s\xe9ance '
+             'left_after': u'<p>Madame Person4FirstName Person4LastName quitte la s\xe9ance '
                 u'apr\xe8s la discussion du point.</p>',
              'left_before': u'<p>Monsieur Person1FirstName Person1LastName quitte la '
                 u's\xe9ance avant la discussion du point.</p>\n'
-                u'<p>Monsieur Person3FirstName Person3LastName quitte la '
+                u'<p>Madame Person3FirstName Person3LastName quitte la '
                 u's\xe9ance avant la discussion du point.</p>'
                 u'<p>Monsieur Person2FirstName Person2LastName ne participe plus '
                 u'\xe0 la s\xe9ance avant la discussion du point.</p>'})
@@ -999,25 +999,25 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(
             helper.print_in_and_out_attendees(
                 ignore_before_first_item=False, merge_in_and_out_types=True),
-            {'entered_after': u'<p>Monsieur Person4FirstName Person4LastName entre en '
+            {'entered_after': u'<p>Madame Person4FirstName Person4LastName entre en '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
-             'entered_before': u'<p>Monsieur Person3FirstName Person3LastName entre en '
+             'entered_before': u'<p>Madame Person3FirstName Person3LastName entre en '
                 u's\xe9ance avant la discussion du point.</p>'
                 u'<p>Monsieur Person2FirstName Person2LastName participe \xe0 la '
                 u's\xe9ance avant la discussion du point.</p>',
-             'left_after': u'<p>Monsieur Person3FirstName Person3LastName quitte la '
+             'left_after': u'<p>Madame Person3FirstName Person3LastName quitte la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
-             'left_before': u'<p>Monsieur Person4FirstName Person4LastName quitte la '
+             'left_before': u'<p>Madame Person4FirstName Person4LastName quitte la '
                 u's\xe9ance avant la discussion du point.</p>'})
         helper.context = item3
         self.assertEqual(
             helper.print_in_and_out_attendees(
                 ignore_before_first_item=False, merge_in_and_out_types=True),
             {'entered_after': '',
-             'entered_before': u'<p>Monsieur Person4FirstName Person4LastName entre en '
+             'entered_before': u'<p>Madame Person4FirstName Person4LastName entre en '
                 u's\xe9ance avant la discussion du point.</p>',
              'left_after': '',
-             'left_before': u'<p>Monsieur Person3FirstName Person3LastName quitte la '
+             'left_before': u'<p>Madame Person3FirstName Person3LastName quitte la '
                 u's\xe9ance avant la discussion du point.</p>'})
 
     def test_pm_Print_in_and_out_attendees_include_hp(self):
@@ -1029,12 +1029,12 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(
             helper.print_in_and_out_attendees(
                 include_hp=True),
-            {'entered_after': u'<p>Monsieur Person3FirstName Person3LastName, '
+            {'entered_after': u'<p>Madame Person3FirstName Person3LastName, '
                 u'Assembly member 3 entre en s\xe9ance apr\xe8s la discussion du point.</p>'
                 u'<p>Monsieur Person2FirstName Person2LastName, Assembly member 2 participe \xe0 '
                 u'la s\xe9ance apr\xe8s la discussion du point.</p>',
              'entered_before': '',
-             'left_after': u'<p>Monsieur Person4FirstName Person4LastName, '
+             'left_after': u'<p>Madame Person4FirstName Person4LastName, '
                 u'Assembly member 4 & 5 quitte la s\xe9ance apr\xe8s la discussion du point.</p>',
              'left_before': ''})
         # abbreviate_firstname
@@ -1042,12 +1042,12 @@ class testContacts(PloneMeetingTestCase):
             helper.print_in_and_out_attendees(
                 include_hp=True,
                 abbreviate_firstname=True),
-            {'entered_after': u'<p>Monsieur P3 Person3LastName, '
+            {'entered_after': u'<p>Madame P3 Person3LastName, '
                 u'Assembly member 3 entre en s\xe9ance apr\xe8s la discussion du point.</p>'
                 u'<p>Monsieur P2 Person2LastName, Assembly member 2 participe \xe0 '
                 u'la s\xe9ance apr\xe8s la discussion du point.</p>',
              'entered_before': '',
-             'left_after': u'<p>Monsieur P4 Person4LastName, '
+             'left_after': u'<p>Madame P4 Person4LastName, '
                 u'Assembly member 4 & 5 quitte la s\xe9ance apr\xe8s la discussion du point.</p>',
              'left_before': ''})
 
@@ -1059,16 +1059,16 @@ class testContacts(PloneMeetingTestCase):
         # no custom_patterns
         self.assertEqual(
             helper.print_in_and_out_attendees(ignore_before_first_item=False),
-            {'entered_after': u'<p>Monsieur Person3FirstName Person3LastName entre en '
+            {'entered_after': u'<p>Madame Person3FirstName Person3LastName entre en '
                 u's\xe9ance apr\xe8s la discussion du point.</p>'
                 u'<p>Monsieur Person2FirstName Person2LastName participe \xe0 la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
              'entered_before': '',
-             'left_after': u'<p>Monsieur Person4FirstName Person4LastName quitte la '
+             'left_after': u'<p>Madame Person4FirstName Person4LastName quitte la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
              'left_before': u'<p>Monsieur Person1FirstName Person1LastName quitte la '
                 u's\xe9ance avant la discussion du point.</p>\n'
-                u'<p>Monsieur Person3FirstName Person3LastName quitte la s\xe9ance avant la '
+                u'<p>Madame Person3FirstName Person3LastName quitte la s\xe9ance avant la '
                 u'discussion du point.</p><p>Monsieur Person2FirstName Person2LastName ne '
                 u'participe plus \xe0 la s\xe9ance avant la discussion du point.</p>'})
         # custom_patterns, merge_in_and_out_types=True
@@ -1078,7 +1078,7 @@ class testContacts(PloneMeetingTestCase):
                 custom_patterns={'left_after': 'Custom pattern left_after',
                                  'non_attendee_after': 'Custom pattern non_attendee_after',
                                  'left_before': 'Custom pattern left_before'}),
-            {'entered_after': u'<p>Monsieur Person3FirstName Person3LastName entre en '
+            {'entered_after': u'<p>Madame Person3FirstName Person3LastName entre en '
                 u's\xe9ance apr\xe8s la discussion du point.</p>'
                 u'<p>Monsieur Person2FirstName Person2LastName participe \xe0 la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
@@ -1098,7 +1098,7 @@ class testContacts(PloneMeetingTestCase):
             {'attendee_again_after': u'<p>Monsieur Person2FirstName Person2LastName participe '
                 u'\xe0 la s\xe9ance apr\xe8s la discussion du point.</p>',
              'attendee_again_before': '',
-             'entered_after': u'<p>Monsieur Person3FirstName Person3LastName entre en s\xe9ance '
+             'entered_after': u'<p>Madame Person3FirstName Person3LastName entre en s\xe9ance '
                 u'apr\xe8s la discussion du point.</p>',
              'entered_before': '',
              'left_after': u'<p>Custom pattern left_after</p>',
@@ -1117,10 +1117,10 @@ class testContacts(PloneMeetingTestCase):
             {'attendee_again_after': u'<p>Monsieur Person2FirstName Person2LastName participe '
                 u'\xe0 la s\xe9ance apr\xe8s la discussion du point.</p>',
              'attendee_again_before': '',
-             'entered_after': u'<p>Monsieur Person3FirstName Person3LastName entre en '
+             'entered_after': u'<p>Madame Person3FirstName Person3LastName entre en '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
              'entered_before': '',
-             'left_after': u'<p>Monsieur Person4FirstName Person4LastName quitte la '
+             'left_after': u'<p>Madame Person4FirstName Person4LastName quitte la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
              'left_before': u'<p>Custom pattern left_before</p>\n<p>Custom pattern left_before</p>',
              'non_attendee_after': '',
@@ -1134,12 +1134,12 @@ class testContacts(PloneMeetingTestCase):
         # ignore_before_first_item=True (default), nominal case
         self.assertEqual(
             helper.print_in_and_out_attendees(),
-            {'entered_after': u'<p>Monsieur Person3FirstName Person3LastName entre en '
+            {'entered_after': u'<p>Madame Person3FirstName Person3LastName entre en '
                 u's\xe9ance apr\xe8s la discussion du point.</p>'
                 u'<p>Monsieur Person2FirstName Person2LastName participe \xe0 la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
              'entered_before': '',
-             'left_after': u'<p>Monsieur Person4FirstName Person4LastName quitte la '
+             'left_after': u'<p>Madame Person4FirstName Person4LastName quitte la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
              'left_before': ''})
         # ignore_before_first_item=True (default), merge_in_and_out_types=False
@@ -1148,10 +1148,10 @@ class testContacts(PloneMeetingTestCase):
             {'attendee_again_after': u'<p>Monsieur Person2FirstName Person2LastName participe '
                 u'\xe0 la s\xe9ance apr\xe8s la discussion du point.</p>',
              'attendee_again_before': '',
-             'entered_after': u'<p>Monsieur Person3FirstName Person3LastName entre en '
+             'entered_after': u'<p>Madame Person3FirstName Person3LastName entre en '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
              'entered_before': '',
-             'left_after': u'<p>Monsieur Person4FirstName Person4LastName quitte la '
+             'left_after': u'<p>Madame Person4FirstName Person4LastName quitte la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
              'left_before': '',
              'non_attendee_after': '',
@@ -1160,16 +1160,16 @@ class testContacts(PloneMeetingTestCase):
         # ignore_before_first_item=False
         self.assertEqual(
             helper.print_in_and_out_attendees(ignore_before_first_item=False),
-            {'entered_after': u'<p>Monsieur Person3FirstName Person3LastName entre en '
+            {'entered_after': u'<p>Madame Person3FirstName Person3LastName entre en '
                 u's\xe9ance apr\xe8s la discussion du point.</p>'
                 u'<p>Monsieur Person2FirstName Person2LastName participe \xe0 la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
              'entered_before': '',
-             'left_after': u'<p>Monsieur Person4FirstName Person4LastName quitte la '
+             'left_after': u'<p>Madame Person4FirstName Person4LastName quitte la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
              'left_before': u'<p>Monsieur Person1FirstName Person1LastName quitte la '
                 u's\xe9ance avant la discussion du point.</p>\n'
-                u'<p>Monsieur Person3FirstName Person3LastName quitte la '
+                u'<p>Madame Person3FirstName Person3LastName quitte la '
                 u's\xe9ance avant la discussion du point.</p>'
                 u'<p>Monsieur Person2FirstName Person2LastName ne participe plus '
                 u'\xe0 la s\xe9ance avant la discussion du point.</p>'})
@@ -1180,14 +1180,14 @@ class testContacts(PloneMeetingTestCase):
             {'attendee_again_after': u'<p>Monsieur Person2FirstName Person2LastName participe '
                 u'\xe0 la s\xe9ance apr\xe8s la discussion du point.</p>',
              'attendee_again_before': '',
-             'entered_after': u'<p>Monsieur Person3FirstName Person3LastName entre en '
+             'entered_after': u'<p>Madame Person3FirstName Person3LastName entre en '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
              'entered_before': '',
-             'left_after': u'<p>Monsieur Person4FirstName Person4LastName quitte la '
+             'left_after': u'<p>Madame Person4FirstName Person4LastName quitte la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
              'left_before': u'<p>Monsieur Person1FirstName Person1LastName quitte la '
                 u's\xe9ance avant la discussion du point.</p>\n'
-                u'<p>Monsieur Person3FirstName Person3LastName quitte la '
+                u'<p>Madame Person3FirstName Person3LastName quitte la '
                 u's\xe9ance avant la discussion du point.</p>',
              'non_attendee_after': '',
              'non_attendee_before': u'<p>Monsieur Person2FirstName Person2LastName ne participe plus '
@@ -1203,10 +1203,10 @@ class testContacts(PloneMeetingTestCase):
             helper.print_attendees(),
             u'Monsieur Person1FirstName Person1LastName, '
             u'Assembly member 1, <strong>absent pour ce point</strong><br />'
-            u'Monsieur Person3FirstName Person3LastName, '
-            u'Assembly member 3, <strong>excus\xe9 pour ce point</strong><br />'
-            u'Monsieur Person4FirstName Person4LastName, '
-            u'Assembly member 4 &amp; 5, <strong>pr\xe9sent</strong>')
+            u'Madame Person3FirstName Person3LastName, '
+            u'Assembly member 3, <strong>excus\xe9e pour ce point</strong><br />'
+            u'Madame Person4FirstName Person4LastName, '
+            u'Assembly member 4 &amp; 5, <strong>pr\xe9sente</strong>')
         # meeting
         view = meeting.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
@@ -1216,10 +1216,10 @@ class testContacts(PloneMeetingTestCase):
             u'<strong>pr\xe9sent</strong><br />'
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
             u'<strong>pr\xe9sent</strong><br />'
-            u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
-            u'<strong>pr\xe9sent</strong><br />'
-            u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5, '
-            u'<strong>pr\xe9sent</strong>')
+            u'Madame Person3FirstName Person3LastName, Assembly member 3, '
+            u'<strong>pr\xe9sente</strong><br />'
+            u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5, '
+            u'<strong>pr\xe9sente</strong>')
 
         meeting.videoconference = True
         view = meeting.restrictedTraverse('document-generation')
@@ -1230,20 +1230,20 @@ class testContacts(PloneMeetingTestCase):
             u'<strong>connect\xe9</strong><br />'
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
             u'<strong>connect\xe9</strong><br />'
-            u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
-            u'<strong>connect\xe9</strong><br />'
-            u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5, '
-            u'<strong>connect\xe9</strong>')
+            u'Madame Person3FirstName Person3LastName, Assembly member 3, '
+            u'<strong>connect\xe9e</strong><br />'
+            u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5, '
+            u'<strong>connect\xe9e</strong>')
         self.assertEqual(
             helper.print_attendees(adapt_for_videoconference=False),
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
             u'<strong>pr\xe9sent</strong><br />'
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
             u'<strong>pr\xe9sent</strong><br />'
-            u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
-            u'<strong>pr\xe9sent</strong><br />'
-            u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5, '
-            u'<strong>pr\xe9sent</strong>')
+            u'Madame Person3FirstName Person3LastName, Assembly member 3, '
+            u'<strong>pr\xe9sente</strong><br />'
+            u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5, '
+            u'<strong>pr\xe9sente</strong>')
 
     def test_pm_Print_attendees_committee_id(self):
         """Print Meeting committee attendees."""
@@ -1266,10 +1266,10 @@ class testContacts(PloneMeetingTestCase):
         helper = view.get_generation_context_helper()
         self.assertEqual(
             helper.print_attendees_by_type(),
-            u'<strong><u>Pr\xe9sent&nbsp;:</u></strong><br />'
-            u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5;<br />'
-            u'<strong><u>Excus\xe9 pour ce point&nbsp;:</u></strong><br />'
-            u'Monsieur Person3FirstName Person3LastName, Assembly member 3;<br />'
+            u'<strong><u>Pr\xe9sente&nbsp;:</u></strong><br />'
+            u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5;<br />'
+            u'<strong><u>Excus\xe9e pour ce point&nbsp;:</u></strong><br />'
+            u'Madame Person3FirstName Person3LastName, Assembly member 3;<br />'
             u'<strong><u>Absent pour ce point&nbsp;:</u></strong><br />'
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1;')
         # meeting
@@ -1280,8 +1280,8 @@ class testContacts(PloneMeetingTestCase):
             u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
-            u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
-            u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5;')
+            u'Madame Person3FirstName Person3LastName, Assembly member 3, '
+            u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5;')
         self.assertEqual(
             helper.print_attendees_by_type(
                 unbreakable_contact_value=True,
@@ -1290,8 +1290,8 @@ class testContacts(PloneMeetingTestCase):
             u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
             u'Monsieur&nbsp;Person1FirstName&nbsp;Person1LastName,&nbsp;Assembly&nbsp;member&nbsp;1, '
             u'Monsieur&nbsp;Person2FirstName&nbsp;Person2LastName,&nbsp;Assembly&nbsp;member&nbsp;2, '
-            u'Monsieur&nbsp;Person3FirstName&nbsp;Person3LastName,&nbsp;Assembly&nbsp;member&nbsp;3, '
-            u'Monsieur&nbsp;Person4FirstName&nbsp;Person4LastName,&nbsp;Assembly&nbsp;member&nbsp;4&nbsp;&amp;&nbsp;5.')
+            u'Madame&nbsp;Person3FirstName&nbsp;Person3LastName,&nbsp;Assembly&nbsp;member&nbsp;3, '
+            u'Madame&nbsp;Person4FirstName&nbsp;Person4LastName,&nbsp;Assembly&nbsp;member&nbsp;4&nbsp;&amp;&nbsp;5.')
 
         meeting.videoconference = True
         view = meeting.restrictedTraverse('document-generation')
@@ -1301,15 +1301,15 @@ class testContacts(PloneMeetingTestCase):
             u'<strong><u>Connect\xe9s&nbsp;:</u></strong><br />'
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
-            u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
-            u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5;')
+            u'Madame Person3FirstName Person3LastName, Assembly member 3, '
+            u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5;')
         self.assertEqual(
             helper.print_attendees_by_type(adapt_for_videoconference=False),
             u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
-            u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
-            u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5;')
+            u'Madame Person3FirstName Person3LastName, Assembly member 3, '
+            u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5;')
 
     def test_pm_Print_attendees_by_type_committee_id(self):
         """Print Meeting committee attendees by type."""
