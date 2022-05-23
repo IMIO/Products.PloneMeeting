@@ -1457,12 +1457,15 @@ class testMeetingItem(PloneMeetingTestCase):
            - if it is sent automatically;
            - or if current user isManager.'''
         cfg = self.meetingConfig
+        # make sure we use default itemWFValidationLevels,
+        # useful when test executed with custom profile
+        self._setUpDefaultItemWFValidationLevels(cfg)
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         cfg2.setUseGroupsAsCategories(True)
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
-                                         (cfg2Id, 'validate')},))
+                                         (cfg2Id, 'propose')},))
         cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
         cfg.setItemAutoSentToOtherMCStates(('validated', ))
 
@@ -1480,7 +1483,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(autoItem, 'validate')
         self.changeUser('pmCreator1')
         clonedAutoItem = autoItem.getItemClonedToOtherMC(cfg2Id)
-        self.assertEqual(clonedAutoItem.query_state(), 'validated')
+        self.assertEqual(clonedAutoItem.query_state(), 'proposed')
 
         # automatically
         # create an item and validate it as a MeetingManager
@@ -1494,7 +1497,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(autoItem2, 'validate')
         clonedAutoItem2 = autoItem2.getItemClonedToOtherMC(cfg2Id)
         # this time transitions were triggered
-        self.assertEqual(clonedAutoItem2.query_state(), 'validated')
+        self.assertEqual(clonedAutoItem2.query_state(), 'proposed')
 
         # manually
         # transitions not triggered as non MeetingManager
@@ -1516,7 +1519,7 @@ class testMeetingItem(PloneMeetingTestCase):
         manualItem2.setOtherMeetingConfigsClonableTo((cfg2Id,))
         clonedManualItem2 = manualItem2.cloneToOtherMeetingConfig(cfg2Id)
         # transitions were triggered, and manualItemLinkedToMeeting is 'validated'
-        self.assertEqual(clonedManualItem2.query_state(), 'validated')
+        self.assertEqual(clonedManualItem2.query_state(), 'proposed')
 
     def test_pm_SendItemToOtherMCTransitionsTriggeredUntilPresented(self):
         '''Test when an item is sent to another MC and transitions are triggered

@@ -18,6 +18,7 @@ from datetime import datetime
 from DateTime import DateTime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.content import get_transitions
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import safe_delattr
@@ -888,9 +889,14 @@ class MeetingItemWorkflowActions(object):
             # trigger transitions until 'validated', aka one step before 'presented'
             # set a special value in the REQUEST so guards may use it if necessary
             self.context.REQUEST.set('duplicating_and_validating_item', True)
-            for tr in self.cfg.getTransitionsForPresentingAnItem(
-                    org_uid=clonedItem.getProposingGroup())[0:-1]:
-                wfTool.doActionFor(clonedItem, tr, comment=wf_comment)
+            # try to bypass by using the "validate" shortcut
+            if "validate" in get_transitions(clonedItem):
+                wfTool.doActionFor(clonedItem, "validate")
+            else:
+                for tr in self.cfg.getTransitionsForPresentingAnItem(
+                        org_uid=clonedItem.getProposingGroup())[0:-1]:
+                    if tr in get_transitions(clonedItem):
+                        wfTool.doActionFor(clonedItem, tr, comment=wf_comment)
             self.context.REQUEST.set('duplicating_and_validating_item', False)
         return clonedItem
 
@@ -4438,15 +4444,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # give 'Manager' role to current user to bypass transitions guard
             # and avoid permission problems when transitions are triggered
             with api.env.adopt_roles(['Manager', ]):
-                for tr in cfg.getTransitionsForPresentingAnItem(
-                        org_uid=item.getProposingGroup()):
-                    wfTool.doActionFor(item, tr)
+                # try to bypass by using the "validate" shortcut
+                trs = cfg.getTransitionsForPresentingAnItem(
+                    org_uid=item.getProposingGroup())
+                if "validate" in get_transitions(item):
+                    wfTool.doActionFor(item, "validate")
+                    trs = ["present"]
+                for tr in trs:
+                    if tr in get_transitions(item):
+                        wfTool.doActionFor(item, tr)
             # the item must be at least presented to a meeting, either we raise
             if not item.hasMeeting():
                 raise WorkflowException
             del item.isRecurringItem
-        except WorkflowException, wfe:
-            msg = REC_ITEM_ERROR % (item.id, tr, str(wfe))
+        except WorkflowException as wfe:
+            msg = REC_ITEM_ERROR % (item.id, tr, str(wfe) or repr(wfe))
             logger.warn(msg)
             api.portal.show_message(msg, request=item.REQUEST, type='error')
             sendMail(None, item, 'recurringItemWorkflowError')
@@ -7245,32 +7257,33 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 destCfgTitle = safe_unicode(destMeetingConfig.Title())
                 # we will warn user if some transitions may not be triggered and
                 # triggerUntil is not reached
-                need_to_warn = False
+                need_to_warn = True
+                # try to bypass by using the "validate" shortcut
+                if triggerUntil in ["validate", "present"] and \
+                   "validate" in get_transitions(newItem):
+                    wfTool.doActionFor(newItem, "validate")
                 for tr in destMeetingConfig.getTransitionsForPresentingAnItem(
                         org_uid=newItem.getProposingGroup()):
-                    try:
-                        # special handling for the 'present' transition
-                        # that needs a meeting as 'PUBLISHED' object to work
-                        if tr == 'present' and \
-                           not isinstance(newItem.wfConditions()._check_required_data("presented"), No):
-                            if not meeting:
-                                plone_utils.addPortalMessage(
-                                    _('could_not_present_item_no_meeting_accepting_items',
-                                      mapping={'destMeetingConfigTitle': destCfgTitle}),
-                                    'warning')
-                                break
-                            newItem.REQUEST['PUBLISHED'] = meeting
+                    # special handling for the 'present' transition
+                    # that needs a meeting as 'PUBLISHED' object to work
+                    if tr == 'present' and \
+                       not isinstance(newItem.wfConditions()._check_required_data("presented"), No):
+                        if not meeting:
+                            plone_utils.addPortalMessage(
+                                _('could_not_present_item_no_meeting_accepting_items',
+                                  mapping={'destMeetingConfigTitle': destCfgTitle}),
+                                'warning')
+                            # avoid double warning message
+                            need_to_warn = False
+                            break
+                        newItem.REQUEST['PUBLISHED'] = meeting
+                    # trigger transition if available
+                    if tr in get_transitions(newItem):
                         wfTool.doActionFor(newItem, tr, comment=wf_comment)
-                    except WorkflowException:
-                        # in case something goes wrong, only warn the user by adding a portal message
-                        need_to_warn = True
-                        # we continue as transitions to present an item
-                        # may vary from a proposingGroup to another
-                        continue
-                    # if we are on the triggerUntil transition, we will stop at next loop
-                    if tr == triggerUntil:
-                        need_to_warn = False
-                        break
+                        # if we reach the triggerUntil transition, we will stop at next loop
+                        if tr == triggerUntil:
+                            need_to_warn = False
+                            break
                 # warn if triggerUntil was not reached
                 if need_to_warn:
                     plone_utils.addPortalMessage(

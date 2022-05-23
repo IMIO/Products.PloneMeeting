@@ -663,7 +663,7 @@
             <td><h5><a tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a></h5></td>
             <td><span tal:content="python: obj.getMeetingTransitionInsertingMe() or '-'" i18n:domain="plone" i18n:translate="">Transition inserting me</span></td>
             <td align="right">
-              <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+              <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=True, showArrows=True)" />
             </td>
           </tr>
           </tal:loop>

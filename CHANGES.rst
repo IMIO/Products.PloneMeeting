@@ -15,6 +15,10 @@ Changelog
   Factorized code used by `PMHeldPosition.get_prefix_for_gender_and_number`
   into `utils._prefixed_gn_position_name`.
   [gbastien]
+- Optimize places where `MeetingConfig.getTransitionsForPresentingAnItem` is used
+  (recurrings items, duplicate and validate, send to other MC and present) to
+  bypass the entire item validation WF if transition `validate` is available directly.
+  [gbastien]
 
 4.2rc27 (2022-05-17)
 --------------------
