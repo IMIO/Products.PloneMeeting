@@ -5,16 +5,19 @@ Changelog
 4.2rc28 (unreleased)
 --------------------
 
-<<<<<<< HEAD
-- Optimize places where `MeetingConfig.getTransitionsForPresentingAnItem` is used
-  (recurrings items, duplicate and validate, send to other MC and present) to
-  bypass the entire item validation WF if transition `validate` is available directly.
-=======
 - Back to previous behavior for `MeetingItem.mayTakeOver`, do not check
   `ReviewPortalContent` permission but if some WF transitions are triggerable, indeed
   some transitions may be triggerable even if user does not have the `ReviewPortalContent`
   permission, for example when using the `waiting_advices` WF adaptation.
->>>>>>> Back to previous behavior for `MeetingItem.mayTakeOver`, do not check `ReviewPortalContent` permission but if some WF transitions are triggerable, indeed some transitions may be triggerable even if user does not have the `ReviewPortalContent` permission, for example when using the `waiting_advices` WF adaptation.
+  [gbastien]
+- Added `utils.get_prefixed_gn_position_name` to get a prefixed gendered/numbered
+  `position_type` from a list of `contacts` and a `position_type`.
+  Factorized code used by `PMHeldPosition.get_prefix_for_gender_and_number`
+  into `utils._prefixed_gn_position_name`.
+  [gbastien]
+- Optimize places where `MeetingConfig.getTransitionsForPresentingAnItem` is used
+  (recurrings items, duplicate and validate, send to other MC and present) to
+  bypass the entire item validation WF if transition `validate` is available directly.
   [gbastien]
 
 4.2rc27 (2022-05-17)

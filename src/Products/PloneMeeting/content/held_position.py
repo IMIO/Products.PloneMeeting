@@ -13,9 +13,10 @@ from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form as directives_form
 from plone.supermodel import model
-from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.utils import _prefixed_gn_position_name
 from Products.PloneMeeting.utils import plain_render
+from Products.PloneMeeting.utils import split_gender_and_number
 from Products.PloneMeeting.utils import uncapitalize
 from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from z3c.relationfield.schema import RelationChoice
@@ -23,7 +24,6 @@ from z3c.relationfield.schema import RelationList
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 
-import unidecode
 import zope.schema
 
 
@@ -96,23 +96,6 @@ class IPMHeldPosition(IHeldPosition):
 @directives_form.default_value(field=IHeldPosition['position'])
 def position_default(data):
     return get_own_organization()
-
-
-def split_gender_and_number(value):
-    """ """
-    res = {}
-    values = value and value.split('|') or [u'', u'', u'', u'']
-    if len(values) > 1:
-        res = {'MS': values[0],
-               'MP': values[1],
-               'FS': values[2],
-               'FP': values[3]}
-    else:
-        res = {'MS': values[0],
-               'MP': values[0],
-               'FS': values[0],
-               'FP': values[0]}
-    return res
 
 
 class PMHeldPosition(HeldPosition):
@@ -258,53 +241,6 @@ class PMHeldPosition(HeldPosition):
                                          fallback_position_type_attr='position_type',
                                          forced_position_type_value=None):
         """Get prefix to use depending on given value."""
-        value_starting_vowel = {'MS': u'L\'',
-                                'MP': u'Les ',
-                                'FS': u'L\'',
-                                'FP': u'Les ',
-
-                                # by male singular
-                                'BMS': u'de l\' ',
-                                # by male plural
-                                'BMP': u'des ',
-                                # by female singular
-                                'BFS': u'de l\' ',
-                                # by female plural
-                                'BFP': u'des ',
-
-                                # to male singular
-                                'TMS': u'à l\' ',
-                                # from male plural
-                                'TMP': u'aux ',
-                                # from female singular
-                                'TFS': u'à l\' ',
-                                # from female plural
-                                'TFP': u'aux ',
-                                }
-        value_starting_consonant = {'MS': u'Le ',
-                                    'MP': u'Les ',
-                                    'FS': u'La ',
-                                    'FP': u'Les ',
-
-                                    # by male singular
-                                    'BMS': u'du ',
-                                    # by male plural
-                                    'BMP': u'des ',
-                                    # by female singular
-                                    'BFS': u'de la ',
-                                    # by female plural
-                                    'BFP': u'des ',
-
-                                    # to male singular
-                                    'TMS': u'au ',
-                                    # from male plural
-                                    'TMP': u'aux ',
-                                    # from female singular
-                                    'TFS': u'à la ',
-                                    # from female plural
-                                    'TFP': u'aux ',
-                                    }
-
         res = u''
         value = self.get_label(position_type_attr=position_type_attr,
                                fallback_position_type_attr=fallback_position_type_attr,
@@ -312,25 +248,18 @@ class PMHeldPosition(HeldPosition):
         if not value:
             return res
 
-        # startswith vowel or consonant?
-        first_letter = safe_unicode(value[0])
-        # turn "é" to "e"
-        first_letter = unidecode.unidecode(first_letter)
-        if first_letter.lower() in ['a', 'e', 'i', 'o', 'u']:
-            mappings = value_starting_vowel
-        else:
-            mappings = value_starting_consonant
         values = {k: v for k, v in self.gender_and_number_from_position_type(
                   position_type_attr,
                   fallback_position_type_attr,
                   forced_position_type_value).items()
                   if v == value}
-        res = values and mappings.get(get_gender_and_number(
-            [self.get_person()], use_by=use_by, use_to=use_to), u'') or u''
-        if include_value:
-            res = u'{0}{1}'.format(res, value)
+
+        res = (values or include_value) and _prefixed_gn_position_name(
+            get_gender_and_number([self.get_person()], use_by=use_by, use_to=use_to),
+            value, include_value=include_value) or u''
+
         if include_person_title:
-            # we lowerize first letter of res
+            # we lowerize first letter of res so we have "Madame la directrice"
             res = uncapitalize(res)
             res = u'{0} {1}'.format(self.person_title, res)
         return res
