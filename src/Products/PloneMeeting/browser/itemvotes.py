@@ -35,6 +35,21 @@ from zope.interface import Invalid
 from zope.interface import invariant
 from zope.interface import provider
 from zope.schema.interfaces import IContextAwareDefaultFactory
+from collections import OrderedDict
+
+
+def _build_groups(context):
+    """ """
+    res = OrderedDict({'all': {'title': 'All', 'uids': []}})
+    for voter in context.get_item_voters(theObjects=True):
+        position = voter.position
+        if position and not position.isBroken():
+            org = position.to_object
+            group_id = org.getId()
+            if group_id not in res:
+                res[group_id] = {'title': org.title, 'uids': []}
+            res[group_id]['uids'].append(voter.UID())
+    return res
 
 
 class DisplaySelectAllProvider(ContentProviderBase):
@@ -53,7 +68,8 @@ class DisplaySelectAllProvider(ContentProviderBase):
     def render(self):
         used_vote_terms = get_vocab(
             self.context, "Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary")
-        self.usedVoteValues = [term.token for term in used_vote_terms._terms]
+        self.used_vote_values = [term.token for term in used_vote_terms._terms]
+        self.groups = _build_groups(self.context)
         return self.template()
 
 
@@ -259,6 +275,8 @@ class EncodeVotesForm(BaseAttendeeForm):
     def updateWidgets(self):
         # hide vote_number field
         self.fields['vote_number'].mode = HIDDEN_MODE
+        # add a css class corresponding to group of held positions
+        groups = _build_groups(self.context)
         # do not hide it, when hidding it, value is always True???
         # this is hidden using CSS
         # self.fields['linked_to_previous'].mode = HIDDEN_MODE
@@ -269,6 +287,13 @@ class EncodeVotesForm(BaseAttendeeForm):
         self.widgets['votes'].auto_append = False
         self.widgets['votes'].columns[0]['mode'] = HIDDEN_MODE
         for row in self.widgets['votes'].widgets:
+            if row.subform.context is None:
+                continue
+            voter_uid = row.subform.context['voter_uid']
+            group_id = [group_id for group_id, values in groups.items()
+                        if voter_uid in values['uids']]
+            if group_id:
+                row.addClass(group_id[0])
             for wdt in row.subform.widgets.values():
                 if wdt.__name__ == 'voter_uid':
                     wdt.mode = HIDDEN_MODE
