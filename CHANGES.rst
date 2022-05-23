@@ -5,9 +5,16 @@ Changelog
 4.2rc28 (unreleased)
 --------------------
 
+<<<<<<< HEAD
 - Optimize places where `MeetingConfig.getTransitionsForPresentingAnItem` is used
   (recurrings items, duplicate and validate, send to other MC and present) to
   bypass the entire item validation WF if transition `validate` is available directly.
+=======
+- Back to previous behavior for `MeetingItem.mayTakeOver`, do not check
+  `ReviewPortalContent` permission but if some WF transitions are triggerable, indeed
+  some transitions may be triggerable even if user does not have the `ReviewPortalContent`
+  permission, for example when using the `waiting_advices` WF adaptation.
+>>>>>>> Back to previous behavior for `MeetingItem.mayTakeOver`, do not check `ReviewPortalContent` permission but if some WF transitions are triggerable, indeed some transitions may be triggerable even if user does not have the `ReviewPortalContent` permission, for example when using the `waiting_advices` WF adaptation.
   [gbastien]
 
 4.2rc27 (2022-05-17)

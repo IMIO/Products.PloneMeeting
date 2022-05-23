@@ -2531,10 +2531,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def mayTakeOver(self):
         '''Check doc in interfaces.py.'''
+        wfTool = api.portal.get_tool('portal_workflow')
         item = self.getSelf()
         res = False
         # user have WF transitions to trigger
-        if _checkPermission(ReviewPortalContent, item):
+        if wfTool.getTransitionsFor(item):
             res = True
         else:
             # item is decided and user is member of the proposingGroup
