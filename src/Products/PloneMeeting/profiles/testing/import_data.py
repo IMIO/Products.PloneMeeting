@@ -457,14 +457,28 @@ held_pos4 = HeldPositionDescriptor('held_pos4',
                                    signature_number='2')
 
 # Add persons
-person1 = PersonDescriptor('person1', u'Person1LastName', u'Person1FirstName', held_positions=[held_pos1])
+person1 = PersonDescriptor('person1',
+                           u'Person1LastName',
+                           u'Person1FirstName',
+                           held_positions=[held_pos1])
 person1.photo = u'person1.png'
 person1.firstname_abbreviated = u'P1'
-person2 = PersonDescriptor('person2', u'Person2LastName', u'Person2FirstName', held_positions=[held_pos2])
+person2 = PersonDescriptor('person2',
+                           u'Person2LastName',
+                           u'Person2FirstName',
+                           held_positions=[held_pos2])
 person2.firstname_abbreviated = u'P2'
-person3 = PersonDescriptor('person3', u'Person3LastName', u'Person3FirstName', held_positions=[held_pos3])
+person3 = PersonDescriptor('person3',
+                           u'Person3LastName',
+                           u'Person3FirstName',
+                           gender=u'F',
+                           held_positions=[held_pos3])
 person3.firstname_abbreviated = u'P3'
-person4 = PersonDescriptor('person4', u'Person4LastName', u'Person4FirstName', held_positions=[held_pos4])
+person4 = PersonDescriptor('person4',
+                           u'Person4LastName',
+                           u'Person4FirstName',
+                           gender=u'F',
+                           held_positions=[held_pos4])
 person4.firstname_abbreviated = u'P4'
 
 # The whole configuration object -----------------------------------------------

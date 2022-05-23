@@ -3512,6 +3512,9 @@ class testMeetingType(PloneMeetingTestCase):
             # error msg contains attendee name, ... manipulate it
             tmp_error_msg = error_msg.replace(
                 '1', str(index)).replace('member 4', 'member 4 & 5')
+            # replace Monsieur/Madame
+            tmp_error_msg = tmp_error_msg.replace('Monsieur Person3', 'Madame Person3')
+            tmp_error_msg = tmp_error_msg.replace('Monsieur Person4', 'Madame Person4')
             errors = invariants.validate(data)
             self.request.set('validate_attendees_done', False)
             self.assertEqual(len(errors), 1)
