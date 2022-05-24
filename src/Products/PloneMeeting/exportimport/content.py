@@ -721,6 +721,8 @@ class ToolInitializer:
         # add a portal_message so admin adding the Plone site knows password
         plone_utils.addPortalMessage(msg, 'warning')
 
+        member_tool = api.portal.get_tool('portal_membership')
+
         own_org = get_own_organization()
         plonegroup_org_uids = get_registry_organizations()
         for org_descr in org_descriptors:
@@ -747,6 +749,8 @@ class ToolInitializer:
                     for userDescr in getattr(org_descr, suffix, []):
                         if userDescr.id not in group_members:
                             api.group.add_user(group=plone_group, username=userDescr.id)
+                            if userDescr.create_member_area:
+                                member_tool.createMemberArea(userDescr.id)
 
     def addUser(self, userData):
         '''Adds a new Plone user from p_userData which is a UserDescriptor
