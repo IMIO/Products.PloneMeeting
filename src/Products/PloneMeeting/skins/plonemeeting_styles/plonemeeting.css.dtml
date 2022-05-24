@@ -399,14 +399,19 @@ div.viewlet_workflowstate span.state-pre_accepted {
    color: green !important;
 }
 div.viewlet_workflowstate span.state-transfered {
-    background-color: ;
+    background-color: #6471A6;
     border-color: #6471A6;
 }
 .state-transfered {
    color: #6471A6 !important;
 }
-
-
+div.viewlet_workflowstate span.state-refused {
+    background-color: violet;
+    border-color: violet;
+}
+.state-refused {
+   color: violet !important;
+}
 
 /* Colors on transitions, used in the item wf history */
 /* this correspond to the element creation */
