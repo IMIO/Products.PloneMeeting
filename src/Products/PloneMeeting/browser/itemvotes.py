@@ -11,7 +11,6 @@ from persistent.mapping import PersistentMapping
 from plone import api
 from plone.autoform.directives import widget
 from plone.restapi.deserializer import boolean_value
-from plone.z3cform.layout import wrap_form
 from Products.Five import BrowserView
 from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
 from Products.PloneMeeting.browser.itemattendee import BaseAttendeeForm
@@ -38,6 +37,7 @@ from zope.interface import Invalid
 from zope.interface import invariant
 from zope.interface import provider
 from zope.schema.interfaces import IContextAwareDefaultFactory
+from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
 
 
 def _build_groups(context, caching=True):
@@ -285,6 +285,17 @@ def next_vote_is_linked(itemVotes, vote_number=0):
     return res
 
 
+def _may_update_votes_for(context, item_to_update):
+    """ """
+    res = False
+    if context == item_to_update or \
+       (context.getPollType() == item_to_update.getPollType() and
+        context.get_item_voters() == item_to_update.get_item_voters() and
+            len(item_to_update.get_item_votes()) < 2):
+        res = True
+    return res
+
+
 class EncodeVotesForm(BaseAttendeeForm):
     """ """
     implements(IFieldsAndContentProvidersForm)
@@ -322,6 +333,11 @@ class EncodeVotesForm(BaseAttendeeForm):
             for wdt in row.subform.widgets.values():
                 if wdt.__name__ == 'voter_uid':
                     wdt.mode = HIDDEN_MODE
+        # disable apply_until_item_number when using several votes
+        if len(self.context.get_item_votes()) > 1 or self.request.get('vote_number', 0) > 0:
+            apply_until_item_number = self.widgets['apply_until_item_number']
+            apply_until_item_number.disabled = "disabled"
+            apply_until_item_number.title = _(u"Not available when using several votes on same item.")
 
     def _doApply(self):
         """ """
@@ -339,24 +355,53 @@ class EncodeVotesForm(BaseAttendeeForm):
         for vote in self.votes:
             data['voters'][vote['voter_uid']] = vote['vote_value']
 
-        # set item public votes
-        self.meeting.set_item_public_vote(self.context, data, self.vote_number)
+        items_to_update = _itemsToUpdate(
+            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
+            until_item_number=self.apply_until_item_number,
+            meeting=self.meeting)
+        updated = []
+        not_updated = []
+        for item_to_update in items_to_update:
+            # set item public votes
+            if _may_update_votes_for(self.context, item_to_update):
+                self.meeting.set_item_public_vote(item_to_update, data, self.vote_number)
+                updated.append(item_to_update.getItemNumber(for_display=True))
+            else:
+                not_updated.append(item_to_update.getItemNumber(for_display=True))
 
         # finish
         voter_uids = [vote['voter_uid'] for vote in self.votes]
         voter_uids = "__".join(voter_uids)
         vote_values = [vote['vote_value'] for vote in self.votes]
         vote_values = "__".join(vote_values)
-        extras = 'item={0} vote_number={1} voter_uids={2} vote_values={3}'.format(
-            repr(self.context), self.vote_number, voter_uids, vote_values)
+        first_item_number = items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        extras = 'item={0} vote_number={1} voter_uids={2} vote_values={3} ' \
+            'from_item_number={4} until_item_number={5}'.format(
+                repr(self.context),
+                self.vote_number,
+                voter_uids,
+                vote_values,
+                first_item_number,
+                last_item_number)
         fplog('encode_item_votes', extras=extras)
-        api.portal.show_message(
-            _("Votes have been encoded for current item."),
-            request=self.request)
+        if len(updated) == 1:
+            api.portal.show_message(
+                _("Votes have been encoded for current item."),
+                request=self.request)
+        else:
+            api.portal.show_message(
+                _("Votes have been encoded for items \"${item_numbers}\".",
+                  mapping={'item_numbers': ", ".join(updated[:-1]) + " & "+ updated[-1]}),
+                request=self.request)
+
+        # display items that could not be updated
+        if not_updated:
+            api.portal.show_message(
+                _("error_updating_votes_for_items",
+                  mapping={'item_numbers': ", ".join(not_updated[:-1]) + " & "+ not_updated[-1]}),
+                request=self.request, type="warning")
         self._finished = True
-
-
-EncodeVotesFormWrapper = wrap_form(EncodeVotesForm)
 
 
 @provider(IContextAwareDefaultFactory)
@@ -413,14 +458,6 @@ class IEncodeSecretVotes(Interface):
         defaultFactory=vote_number_default,
         required=False)
 
-    label = schema.TextLine(
-        title=_(u"Label"),
-        description=_(u"Free label that will identify the vote, "
-                      u"useful when several votes are defined on an item. "
-                      u"Leave empty if not used."),
-        defaultFactory=label_default,
-        required=False)
-
     linked_to_previous = schema.Bool(
         title=_(u"Linked to previous"),
         description=_(u"This will link this vote with the previous one, "
@@ -433,6 +470,21 @@ class IEncodeSecretVotes(Interface):
         value_type=DictRow(title=u'Votes', schema=ISecretVote),
         defaultFactory=secret_votes_default,
         required=True)
+
+    label = schema.TextLine(
+        title=_(u"Label"),
+        description=_(u"Free label that will identify the vote, "
+                      u"useful when several votes are defined on an item. "
+                      u"Leave empty if not used."),
+        defaultFactory=label_default,
+        required=False)
+
+    apply_until_item_number = schema.TextLine(
+        title=_(u"Apply until item number"),
+        description=_(u"If you specify a number, the values entered here above will be applied from current "
+                      u"item to the item number entered. Leave empty to only apply for current item."),
+        required=False,
+        constraint=validate_apply_until_item_number,)
 
     @invariant
     def validate_votes(data):
@@ -500,6 +552,11 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
                     wdt.mode = HIDDEN_MODE
                 elif wdt.__name__ == 'vote_value' and wdt.value:
                     wdt.klass += " {0}".format(wdt.context['vote_value'])
+        # disable apply_until_item_number when using several votes
+        if len(self.context.get_item_votes()) > 1 or self.request.get('vote_number', 0) > 0:
+            apply_until_item_number = self.widgets['apply_until_item_number']
+            apply_until_item_number.disabled = "disabled"
+            apply_until_item_number.title = _(u"Not available when using several votes on same item.")
 
     def max(self, widget):
         """ """
@@ -525,24 +582,53 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
         for vote in self.votes:
             data['votes'][vote['vote_value_id']] = vote['vote_count']
 
-        # set item secret vote
-        self.meeting.set_item_secret_vote(self.context, data, self.vote_number)
+        items_to_update = _itemsToUpdate(
+            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
+            until_item_number=self.apply_until_item_number,
+            meeting=self.meeting)
+        updated = []
+        not_updated = []
+        for item_to_update in items_to_update:
+            # set item secret vote
+            if _may_update_votes_for(self.context, item_to_update):
+                self.meeting.set_item_secret_vote(item_to_update, data, self.vote_number)
+                updated.append(item_to_update.getItemNumber(for_display=True))
+            else:
+                not_updated.append(item_to_update.getItemNumber(for_display=True))
 
         # finish
         vote_values = [vote['vote_value_id'] for vote in self.votes]
         vote_values = "__".join(vote_values)
         vote_count = [str(vote['vote_count']) for vote in self.votes]
         vote_count = "__".join(vote_count)
-        extras = 'item={0} vote_number={1} vote_values={2} vote_count={3}'.format(
-            repr(self.context), self.vote_number, vote_values, vote_count)
+        first_item_number = items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        extras = 'item={0} vote_number={1} vote_values={2} vote_count={3} ' \
+            'from_item_number={4} until_item_number={5}'.format(
+                repr(self.context),
+                self.vote_number,
+                vote_values,
+                vote_count,
+                first_item_number,
+                last_item_number)
         fplog('encode_item_secret_votes', extras=extras)
-        api.portal.show_message(
-            _("Votes have been encoded for current item."),
-            request=self.request)
+        if len(updated) == 1:
+            api.portal.show_message(
+                _("Votes have been encoded for current item."),
+                request=self.request)
+        else:
+            api.portal.show_message(
+                _("Votes have been encoded for items \"${item_numbers}\".",
+                  mapping={'item_numbers': ", ".join(updated[:-1]) + " & "+ updated[-1]}),
+                request=self.request)
+
+        # display items that could not be updated
+        if not_updated:
+            api.portal.show_message(
+                _("error_updating_votes_for_items",
+                  mapping={'item_numbers': ", ".join(not_updated[:-1]) + " & "+ not_updated[-1]}),
+                request=self.request, type="warning")
         self._finished = True
-
-
-EncodeSecretVotesFormWrapper = wrap_form(EncodeSecretVotesForm)
 
 
 class ItemDeleteVoteView(BrowserView):

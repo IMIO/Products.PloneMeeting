@@ -18,13 +18,16 @@ class PMNumberWidget(TextWidget):
 
     def max(self):
         """ """
-        form = self.request['PUBLISHED'].form_instance
+        form = self.request['PUBLISHED']
+        # depending on fact that form is wrapped, we get it immediately or not
+        form = form.form_instance if hasattr(form, "form_instance") else form
         max = form.max(self)
         return max
 
     def min(self):
         """ """
-        form = self.request['PUBLISHED'].form_instance
+        form = self.request['PUBLISHED']
+        form = form.form_instance if hasattr(form, "form_instance") else form
         min = form.min(self)
         return min
 

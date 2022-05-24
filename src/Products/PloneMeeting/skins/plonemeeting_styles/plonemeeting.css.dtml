@@ -704,6 +704,7 @@ div.portletPloneMeetingHeaderIcons {
     font-size: 120%;
 }
 
+input:disabled,
 .input_disabled,
 input[readonly=""] {
     color: lightgrey !important;
@@ -808,6 +809,11 @@ body.template-meetingitem_view div#viewlet-below-content-body {
     padding: 0.5em;
     border-radius: 3px;
     margin: 0em;
+    pointer-events: none;
+}
+div.formControls > *,
+div#viewlet-below-content-body > * {
+    pointer-events: all;
 }
 
 /* try to hide viewlet when empty just working on FF for now... */

@@ -366,7 +366,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
             # taking into account linked votes
             if self.votesAreSecret:
                 linked_vote_numbers = _get_linked_item_vote_numbers(
-                    self.context, self.meeting, vote_number)
+                    self.context, self.meeting, vote_number) or [0]
                 if not linked_vote_numbers or vote_number == min(linked_vote_numbers):
                     total_voted = 0
                     for linked_vote_number in linked_vote_numbers:
