@@ -36,11 +36,13 @@ from zope.interface import invariant
 from zope.interface import provider
 from zope.schema.interfaces import IContextAwareDefaultFactory
 from collections import OrderedDict
+from collective.contact.plonegroup.config import PLONEGROUP_ORG
 
 
 def _build_groups(context):
     """ """
-    res = OrderedDict({'all': {'title': 'All', 'uids': []}})
+    res = OrderedDict([('all', {'title': 'All', 'uids': []}),
+                       (PLONEGROUP_ORG, {'title': 'Others', 'uids': []})])
     for voter in context.get_item_voters(theObjects=True):
         position = voter.position
         if position and not position.isBroken():
@@ -49,6 +51,14 @@ def _build_groups(context):
             if group_id not in res:
                 res[group_id] = {'title': org.title, 'uids': []}
             res[group_id]['uids'].append(voter.UID())
+    # only keep PLONEGROUP_ORG if any other value than 'all'
+    if res.keys() == ['all', PLONEGROUP_ORG]:
+        res.pop(PLONEGROUP_ORG)
+    else:
+        # reorder so PLONEGROUP_ORG is at the end
+        ordered = res.keys()
+        ordered += [ordered.pop(1)]
+        res = OrderedDict((k, res[k]) for k in ordered)
     return res
 
 
@@ -173,14 +183,6 @@ class IEncodeVotes(Interface):
         defaultFactory=vote_number_default,
         required=False)
 
-    label = schema.TextLine(
-        title=_(u"Label"),
-        description=_(u"Free label that will identify the vote, "
-                      u"useful when several votes are defined on an item. "
-                      u"Leave empty if not used."),
-        defaultFactory=label_default,
-        required=False)
-
     linked_to_previous = schema.Bool(
         title=_(u"Linked to previous"),
         description=_(u"This will link this vote with the previous one, "
@@ -192,8 +194,15 @@ class IEncodeVotes(Interface):
         title=u'Votes',
         value_type=DictRow(title=u'Votes', schema=IVote),
         defaultFactory=votes_default,
-        required=True
-    )
+        required=True)
+
+    label = schema.TextLine(
+        title=_(u"Label"),
+        description=_(u"Free label that will identify the vote, "
+                      u"useful when several votes are defined on an item. "
+                      u"Leave empty if not used."),
+        defaultFactory=label_default,
+        required=False)
 
 
 def _get_linked_item_vote_numbers(context, meeting, vote_number=0):
@@ -265,7 +274,7 @@ class EncodeVotesForm(BaseAttendeeForm):
     implements(IFieldsAndContentProvidersForm)
     contentProviders = ContentProviders()
     contentProviders['select_all'] = DisplaySelectAllProvider
-    contentProviders['select_all'].position = 4
+    contentProviders['select_all'].position = 2
 
     label = _(u"Encode votes")
     schema = IEncodeVotes
