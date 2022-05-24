@@ -24,6 +24,8 @@ Changelog
   This is similar to `accepted_out_of_meeting` but is triggerable by
   `MeetingManagers` if item is sendable to other `MeetingConfigs`.
   [gbastien]
+- Added possibility to create user fs directly in content/addUsers.
+  [odelaere]
 
 4.2rc27 (2022-05-17)
 --------------------
