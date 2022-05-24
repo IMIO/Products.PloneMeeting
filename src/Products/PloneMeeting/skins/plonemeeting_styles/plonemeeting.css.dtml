@@ -2406,6 +2406,9 @@ div.select-all-vote-values {
    margin-bottom: 0.5em;
    margin-right: 0.5em;
 }
+div.select-all-vote-values span {
+    font-weight: bold;
+}
 div.select-all-vote-values span.option {
    display: inline;
 }

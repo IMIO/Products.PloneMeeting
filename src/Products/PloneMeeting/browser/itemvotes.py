@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
+from collections import OrderedDict
+from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.z3cform.datagridfield import DataGridFieldFactory
 from collective.z3cform.datagridfield import DictRow
 from imio.helpers.content import get_vocab
@@ -11,6 +13,7 @@ from plone.autoform.directives import widget
 from plone.restapi.deserializer import boolean_value
 from plone.z3cform.layout import wrap_form
 from Products.Five import BrowserView
+from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
 from Products.PloneMeeting.browser.itemattendee import BaseAttendeeForm
 from Products.PloneMeeting.browser.itemattendee import person_uid_default
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
@@ -35,30 +38,36 @@ from zope.interface import Invalid
 from zope.interface import invariant
 from zope.interface import provider
 from zope.schema.interfaces import IContextAwareDefaultFactory
-from collections import OrderedDict
-from collective.contact.plonegroup.config import PLONEGROUP_ORG
 
 
-def _build_groups(context):
+def _build_groups(context, caching=True):
     """ """
-    res = OrderedDict([('all', {'title': 'All', 'uids': []}),
-                       (PLONEGROUP_ORG, {'title': 'Others', 'uids': []})])
-    for voter in context.get_item_voters(theObjects=True):
-        position = voter.position
-        if position and not position.isBroken():
-            org = position.to_object
-            group_id = org.getId()
-            if group_id not in res:
-                res[group_id] = {'title': org.title, 'uids': []}
-            res[group_id]['uids'].append(voter.UID())
-    # only keep PLONEGROUP_ORG if any other value than 'all'
-    if res.keys() == ['all', PLONEGROUP_ORG]:
-        res.pop(PLONEGROUP_ORG)
-    else:
-        # reorder so PLONEGROUP_ORG is at the end
-        ordered = res.keys()
-        ordered += [ordered.pop(1)]
-        res = OrderedDict((k, res[k]) for k in ordered)
+    # caching
+    if caching and hasattr(context, "REQUEST"):
+        res = getattr(context, '_build_groups', None)
+
+    if res is None:
+        res = OrderedDict([('all', {'title': 'All', 'uids': []}),
+                           (PLONEGROUP_ORG, {'title': 'Others', 'uids': []})])
+        for voter in context.get_item_voters(theObjects=True):
+            position = voter.position
+            if position and not position.isBroken():
+                org = position.to_object
+                group_id = org.getId()
+                if group_id not in res:
+                    res[group_id] = {'title': org.title, 'uids': []}
+                res[group_id]['uids'].append(voter.UID())
+        # only keep PLONEGROUP_ORG if any other value than 'all'
+        if res.keys() == ['all', PLONEGROUP_ORG]:
+            res.pop(PLONEGROUP_ORG)
+        else:
+            # reorder so PLONEGROUP_ORG is at the end
+            ordered = res.keys()
+            ordered += [ordered.pop(1)]
+            res = OrderedDict((k, res[k]) for k in ordered)
+        # caching
+        if caching and hasattr(context, "REQUEST"):
+            context.REQUEST.set('_build_groups', res)
     return res
 
 
@@ -203,6 +212,13 @@ class IEncodeVotes(Interface):
                       u"Leave empty if not used."),
         defaultFactory=label_default,
         required=False)
+
+    apply_until_item_number = schema.TextLine(
+        title=_(u"Apply until item number"),
+        description=_(u"If you specify a number, the values entered here above will be applied from current "
+                      u"item to the item number entered. Leave empty to only apply for current item."),
+        required=False,
+        constraint=validate_apply_until_item_number,)
 
 
 def _get_linked_item_vote_numbers(context, meeting, vote_number=0):
