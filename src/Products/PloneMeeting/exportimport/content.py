@@ -17,6 +17,7 @@ from imio.helpers.content import validate_fields
 from imio.helpers.security import generate_password
 from imio.helpers.security import is_develop_environment
 from plone import api
+from plone.app.textfield import RichTextValue
 from plone.namedfile.file import NamedBlobFile
 from plone.namedfile.file import NamedBlobImage
 from plone.namedfile.file import NamedImage
@@ -37,7 +38,7 @@ from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
 from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
-from Products.PloneMeeting.utils import org_id_to_uid
+from Products.PloneMeeting.utils import org_id_to_uid, cleanMemoize
 from Products.PloneMeeting.utils import updateCollectionCriterion
 from z3c.relationfield.relation import RelationValue
 from zope.component import getUtility
@@ -48,12 +49,11 @@ from zope.intid.interfaces import IIntIds
 import os
 import transaction
 
-
 # PloneMeeting-Error related constants -----------------------------------------
 MEETING_CONFIG_ERROR = 'A validation error occurred while instantiating ' \
                        'meeting configuration "%s" with id "%s". %s'
 MEETINGCONFIG_BADREQUEST_ERROR = 'There was an error during creation of ' \
-    'MeetingConfig with id "%s". Original error : "%s"'
+                                 'MeetingConfig with id "%s". Original error : "%s"'
 
 
 def update_labels_jar(jar, values):
@@ -80,9 +80,14 @@ class ToolInitializer:
         self.tool = self.portal.portal_plonemeeting
         # set correct title
         self.tool.setTitle(translate('pm_configuration',
-                           domain='PloneMeeting',
-                           context=self.request))
+                                     domain='PloneMeeting',
+                                     context=self.request))
         self.profileData = self.getProfileData()
+
+        self.wfTool = api.portal.get_tool('portal_workflow')
+        self.pTool = api.portal.get_tool('plone_utils')
+        self.mTool = api.portal.get_tool('portal_membership')
+
         # Initialize the tool if we have data
         if not self.profileData:
             return
@@ -218,15 +223,78 @@ class ToolInitializer:
             # adapt userDescr.ploneGroups to turn cfg_num into cfg_id
             self.addUsersOutsideGroups(self.data.usersOutsideGroups)
 
+        # manage meeting and item creation
+        for cfg in self.data.meetingConfigs:
+            cleanMemoize(self.portal)
+            self._add_meeting_and_items(cfg)
+
         # commit before continuing so elements like scales on annex types are correctly saved
         transaction.commit()
         return self.successMessage
 
+    def _add_meeting_and_items(self, meeting_cfg):
+        cfg = getattr(self.tool, meeting_cfg.id)
+        if meeting_cfg.meetings:
+            for meeting in meeting_cfg.meetings:
+                self._create_meeting(meeting, cfg)
+
+        if meeting_cfg.items:
+            for item in meeting_cfg.items:
+                self._create_item(item, cfg)
+
+    def _create_item(self, item, cfg):
+        user_folder = self.tool.getPloneMeetingFolder(cfg.getId(), item.creator)
+        with api.env.adopt_user(username=item.creator):
+            self.tool.invalidateAllCache()
+            template = getattr(self.tool.getMeetingConfig(user_folder).itemtemplates, item.itemTemplate)
+            item_obj = template.clone(newOwnerId=item.creator,
+                                      destFolder=user_folder,
+                                      newPortalType=cfg.getItemTypeName())
+            item_obj.setTitle(item.title)
+            item_obj.setBudgetRelated(item.budget_related)
+            if item.to_state == 'proposed':
+                self.wfTool.doActionFor(item_obj, 'propose')
+
+        # todo handle asking advice
+        # todo handle annexes
+        if item.to_state in ('validated', 'presented'):
+            self.wfTool.doActionFor(item_obj, 'validate')
+            if item.to_state == 'presented':
+                self.wfTool.doActionFor(item_obj, 'present')
+        else:
+            for transaction in cfg.getTransitionsForPresentingAnItem():
+                if item_obj.query_state() == item.to_state:
+                    break
+                self.wfTool.doActionFor(item_obj, transaction)
+
+        return item_obj
+
+    def _create_meeting(self, meeting, cfg):
+        user_folder = self.tool.getPloneMeetingFolder(cfg.getId(), meeting.creator)
+
+        meeting_id = user_folder.invokeFactory(
+            cfg.getMeetingTypeName(),
+            id=meeting.date.strftime('%Y%m%d'),
+            date=meeting.date,
+            start_date=meeting.start_date,
+            end_date=meeting.end_date,
+        )
+        meeting_obj = getattr(user_folder, meeting_id)
+        if meeting.observations:
+            meeting_obj.observations = RichTextValue(meeting.observations)
+
+        self.pTool.changeOwnershipOf(meeting_obj, meeting.creator)
+        self.portal.REQUEST["PUBLISHED"] = meeting_obj
+        for item in meeting.items:
+            item.to_state = 'presented'
+            self._create_item(item, cfg)
+
+
     def _correct_advice_states(self, advice_states):
         """ """
         return ['{0}__state__{1}'.format(
-                self.cfg_num_to_id(v.split('__state__')[0]),
-                v.split('__state__')[1]) for v in advice_states]
+            self.cfg_num_to_id(v.split('__state__')[0]),
+            v.split('__state__')[1]) for v in advice_states]
 
     def _finishConfigFor(self, cfg, data):
         """When the MeetingConfig has been created, some parameters still need to be applied
@@ -269,7 +337,7 @@ class ToolInitializer:
             cfg.setOrderedContacts(selectableOrderedContacts)
 
         # turn contact path to uid
-        for org_storing_field in ('orderedContacts', ):
+        for org_storing_field in ('orderedContacts',):
             org_storing_data = getattr(data, org_storing_field, [])
             if org_storing_data:
                 contact_uids = []
@@ -462,8 +530,8 @@ class ToolInitializer:
             folder = getattr(cfg, TOOL_FOLDER_ITEM_TEMPLATES)
         data = descr.__dict__
         itemType = isRecurring and \
-            cfg.getItemTypeName(configType='MeetingItemRecurring') or \
-            cfg.getItemTypeName(configType='MeetingItemTemplate')
+                   cfg.getItemTypeName(configType='MeetingItemRecurring') or \
+                   cfg.getItemTypeName(configType='MeetingItemTemplate')
         folder.invokeFactory(itemType, **data)
         item = getattr(folder, descr.id)
         # adapt org related values as we have org id on descriptor and we need to set org UID
@@ -478,7 +546,7 @@ class ToolInitializer:
             proposing_group_uid = org_id_to_uid(proposing_group_id)
             group_in_charge_uid = org_id_to_uid(group_in_charge_id)
             item.setProposingGroup(proposing_group_uid)
-            item.setGroupsInCharge((group_in_charge_uid, ))
+            item.setGroupsInCharge((group_in_charge_uid,))
             item.proposingGroupWithGroupInCharge = '{0}__groupincharge__{1}'.format(
                 proposing_group_uid, group_in_charge_uid)
         if item.associatedGroups:
@@ -593,13 +661,13 @@ class ToolInitializer:
             if not pod_template_to_use_cfg:
                 logger.warning(
                     'Cfg with id {0} not found when adding Pod template {1}, template was not added'.format(
-                    pt.pod_template_to_use['cfg_id'], pt.pod_template_to_use['template_id']))
+                        pt.pod_template_to_use['cfg_id'], pt.pod_template_to_use['template_id']))
                 return
             pod_template = pod_template_to_use_cfg.podtemplates.get(pt.pod_template_to_use['template_id'])
             if not pod_template:
                 logger.warning(
                     'Pod template with id {0} not found in cfg with id {1}, template was not added'.format(
-                    pt.pod_template_to_use['template_id'], pt.pod_template_to_use['cfg_id']))
+                        pt.pod_template_to_use['template_id'], pt.pod_template_to_use['cfg_id']))
                 return
             pod_template_to_use = pod_template.UID()
         else:
