@@ -2829,6 +2829,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'accepted_out_of_meeting_and_duplicated',
                      'accepted_out_of_meeting_emergency',
                      'accepted_out_of_meeting_emergency_and_duplicated',
+                     'transfered',
+                     'transfered_and_duplicated',
                      'meetingmanager_correct_closed_meeting')
 
     def getId(self, real_id=False):
@@ -3499,7 +3501,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             'marked_not_applicable',
             'postponed_next_meeting',
             'refused',
-            'removed']
+            'removed',
+            'transfered']
         item_decided_states += self.adapted().extra_item_decided_states()
         return item_decided_states
 
@@ -3513,7 +3516,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             'accepted',
             'accepted_but_modified',
             'accepted_out_of_meeting',
-            'accepted_out_of_meeting_emergency']
+            'accepted_out_of_meeting_emergency',
+            'transfered']
         item_positive_decided_states += self.adapted().extra_item_positive_decided_states()
         return item_positive_decided_states
 
@@ -4520,6 +4524,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if 'accepted_out_of_meeting_emergency' in values and \
            'accepted_out_of_meeting_emergency_and_duplicated' in values:
             return msg
+        if 'transfered' in values and 'transfered_and_duplicated' in values:
+            return msg
         if 'no_decide' in values and 'hide_decisions_when_under_writing' in values:
             return msg
         # several 'return_to_proposing_group' values may not be selected together
@@ -4659,7 +4665,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # this will remove the 'decisions_published' state for Meeting
             # check that no more meetings are in this state
             if catalog.unrestrictedSearchResults(
-                    portal_type=self.getMeetingTypeName(), review_state='decisions_published'):
+                    portal_type=self.getMeetingTypeName(),
+                    review_state='decisions_published'):
                 return translate('wa_removed_hide_decisions_when_under_writing_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4668,7 +4675,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # this will remove the 'accepted_out_of_meeting' state for Item
             # check that no more items are in this state
             if catalog.unrestrictedSearchResults(
-                    portal_type=self.getItemTypeName(), review_state='accepted_out_of_meeting'):
+                    portal_type=self.getItemTypeName(),
+                    review_state='accepted_out_of_meeting'):
                 return translate('wa_removed_accepted_out_of_meeting_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4677,8 +4685,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # this will remove the 'accepted_out_of_meeting_emergency' state for Item
             # check that no more items are in this state
             if catalog.unrestrictedSearchResults(
-                    portal_type=self.getItemTypeName(), review_state='accepted_out_of_meeting_emergency'):
+                    portal_type=self.getItemTypeName(),
+                    review_state='accepted_out_of_meeting_emergency'):
                 return translate('wa_removed_accepted_out_of_meeting_emergency_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'transfered' in removed or 'transfered_and_duplicated' in removed:
+            # this will remove the 'transfered' state for Item
+            # check that no more items are in this state
+            if catalog.unrestrictedSearchResults(
+                    portal_type=self.getItemTypeName(),
+                    review_state='transfered'):
+                return translate('wa_removed_transfered_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
         if 'postpone_next_meeting' in removed:
