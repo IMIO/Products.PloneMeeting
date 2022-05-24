@@ -398,16 +398,16 @@ div.viewlet_workflowstate span.state-pre_accepted {
 .state-pre_accepted {
    color: green !important;
 }
-div.viewlet_workflowstate span.state-transfered {
-    background-color: #6471A6;
-    border-color: #6471A6;
-}
-.state-transfered {
-   color: #6471A6 !important;
-}
 div.viewlet_workflowstate span.state-refused {
     background-color: violet;
     border-color: violet;
+}
+.state-refused {
+   color: violet !important;
+}
+div.viewlet_workflowstate span.state-transfered {
+    background-color: #6471A6;
+    border-color: #6471A6;
 }
 .state-transfered {
    color: #6471A6 !important;
@@ -620,6 +620,7 @@ div.hsGrey {
 
 /* Highlight that a value has been modified, for example
    the itemAssembly is overriden on a MeetingItem */
+a.highlightValue,
 p.highlightValue,
 span.highlightValue,
 dt.highlightValue span {
@@ -2188,13 +2189,13 @@ div#formfield-form-widgets-certified_signatures td select.select-widget {
     width: 100%;
 }
 
-a.portlet_pm_dashboard_link:first-of-type {
+a.portlet-pm-dashboard-link:first-of-type {
     margin-top: 1em;
 }
-a.portlet_pm_dashboard_link {
-    line-height: 2em;
+a.portlet-pm-dashboard-link {
+    line-height: 1em;
+    margin-bottom: 0.75em;
 }
-
 /* add some margin under fieldsets displayed in forms */
 body.template-base_edit #content fieldset,
 form#form fieldset {
@@ -2398,14 +2399,19 @@ table#meeting_users th.header-attendee-signatory {
 }
 
 div.select-all-vote-values {
-   position: absolute;
-   right: 14px;
-   padding-top: 25px;
+   float: right;
    font-weight: normal;
-   display: inline;
+   text-align: right;
+   margin-top: -40px;
+   margin-bottom: 0.5em;
+   margin-right: 0.5em;
 }
 div.select-all-vote-values span.option {
    display: inline;
+}
+/* hide the "votes" label in the itemvotes overlay */
+div#formfield-form-widgets-votes label.horizontal {
+    display: none;
 }
 /* make sure radio button is displayed on one line */
 div#formfield-form-widgets-votes td.cell-3 {
@@ -2414,7 +2420,7 @@ div#formfield-form-widgets-votes td.cell-3 {
 }
 table#form-widgets-votes td,
 table#form-widgets-votes th {
-   padding: 0.5em;
+   padding: 0.35em;
 }
 div#formfield-form-widgets-linked_to_previous {
    display: none;
