@@ -2,6 +2,7 @@
 #
 # GNU General Public License (GPL)
 #
+from collections import OrderedDict
 
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from plone.api.validation import at_least_one_of
@@ -124,13 +125,16 @@ class ItemTemplateDescriptor(ItemDescriptor):
 
 
 class MeetingDescriptor(Descriptor):
-    def __init__(self, date, creator='dgen', start_date=None, end_date=None, observations=None, items=[], to_state='closed'):
+    def __init__(self, date, creator='dgen', start_date=None, end_date=None, observations=None, items=[],
+                 attendees=OrderedDict({}), signatories={}, to_state='closed'):
         self.date = date
         self.creator = creator
         self.start_date = start_date
         self.end_date = end_date
         self.observations = observations
         self.items = items
+        self.attendees = attendees
+        self.signatories = signatories
         self.to_state = to_state
 
 

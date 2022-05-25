@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from collections import OrderedDict
 
 from collective.contact.plonegroup.browser.settings import invalidate_soev_cache
 from collective.contact.plonegroup.browser.settings import invalidate_ssoev_cache
@@ -223,13 +224,14 @@ class ToolInitializer:
             # adapt userDescr.ploneGroups to turn cfg_num into cfg_id
             self.addUsersOutsideGroups(self.data.usersOutsideGroups)
 
+        # commit before continuing so elements like scales on annex types are correctly saved
+        transaction.commit()
+
         # manage meeting and item creation
         for cfg in self.data.meetingConfigs:
             cleanMemoize(self.portal)
             self._add_meeting_and_items(cfg)
 
-        # commit before continuing so elements like scales on annex types are correctly saved
-        transaction.commit()
         return self.successMessage
 
     def _add_meeting_and_items(self, meeting_cfg):
@@ -280,6 +282,24 @@ class ToolInitializer:
             end_date=meeting.end_date,
         )
         meeting_obj = getattr(user_folder, meeting_id)
+
+        attendees = OrderedDict({})
+        if meeting.attendees:
+            for attendee_id in meeting.attendees:
+                attendees[org_id_to_uid(attendee_id)] = meeting.attendees[attendee_id]
+        else:
+            for attendee_uid in cfg.getOrderedContacts():
+                attendees[attendee_uid] = 'attendee'
+
+        signatories = {}
+        # todo need a tool like held_position_id_to_uid or force static uids
+        for attendee_uid in attendees:
+            held_position = api.content.uuidToObject(attendee_uid)
+            if held_position.signature_number:
+                signatories[attendee_uid] = held_position.signature_number
+
+        meeting_obj._do_update_contacts(attendees=attendees, signatories=signatories)
+
         if meeting.observations:
             meeting_obj.observations = RichTextValue(meeting.observations)
 
@@ -289,6 +309,16 @@ class ToolInitializer:
             item.to_state = 'presented'
             self._create_item(item, cfg)
 
+        if meeting.to_state != 'created':
+            state_transactions = {
+                'frozen': 'freeze',
+                'decided': 'decide',
+                'closed': 'close',
+            }
+            for state in state_transactions:
+                if meeting.to_state == meeting_obj.query_state():
+                    break
+                self.wfTool.doActionFor(meeting_obj, state_transactions[state])
 
     def _correct_advice_states(self, advice_states):
         """ """
