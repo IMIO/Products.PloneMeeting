@@ -368,7 +368,7 @@ class testVotes(PloneMeetingTestCase):
         hp4 = person4.get_held_positions()[0]
         hp4_uid = hp4.UID()
         self.request['PUBLISHED'] = public_item
-        votes_form = public_item.restrictedTraverse('@@item_encode_votes_form').form_instance
+        votes_form = public_item.restrictedTraverse('@@item_encode_votes_form')
         votes_form.meeting = meeting
         # change vote to all 'no'
         votes_form.votes = [{'voter_uid': hp1_uid, 'vote_value': 'no'},
@@ -379,6 +379,7 @@ class testVotes(PloneMeetingTestCase):
         self.request.form['vote_number'] = 0
         votes_form.label = u"My label"
         votes_form.linked_to_previous = False
+        votes_form.apply_until_item_number = u'0'
         votes_form.update()
         # only for MeetingManagers
         self.changeUser('pmCreator1')
@@ -410,7 +411,7 @@ class testVotes(PloneMeetingTestCase):
         person4 = self.portal.contacts.get('person4')
         hp4 = person4.get_held_positions()[0]
         hp4_uid = hp4.UID()
-        votes_form = public_item.restrictedTraverse('@@item_encode_votes_form').form_instance
+        votes_form = public_item.restrictedTraverse('@@item_encode_votes_form')
         votes_form.meeting = meeting
         # there are 'yes' votes so not able to link to previous
         self.assertEqual(public_item.getVoteCount('yes'), 2)
@@ -426,6 +427,7 @@ class testVotes(PloneMeetingTestCase):
         votes_form.vote_number = 0
         votes_form.label = u"My label"
         votes_form.linked_to_previous = False
+        votes_form.apply_until_item_number = u'0'
         votes_form._doApply()
         load_view._update()
         self.assertTrue(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
@@ -446,6 +448,7 @@ class testVotes(PloneMeetingTestCase):
         votes_form.vote_number = 1
         votes_form.label = u"My label 1"
         votes_form.linked_to_previous = True
+        votes_form.apply_until_item_number = u'0'
         votes_form.votes = [{'voter_uid': hp3_uid, 'vote_value': 'yes'},
                             {'voter_uid': hp4_uid, 'vote_value': NOT_ENCODED_VOTE_VALUE}]
         votes_form._doApply()
@@ -475,7 +478,7 @@ class testVotes(PloneMeetingTestCase):
 
         # encode votes form
         votes_form = secret_item.restrictedTraverse(
-            '@@item_encode_secret_votes_form').form_instance
+            '@@item_encode_secret_votes_form')
         self.request['PUBLISHED'] = secret_item
         votes_form.meeting = meeting
         votes_form.votes = [
@@ -486,6 +489,7 @@ class testVotes(PloneMeetingTestCase):
         votes_form.vote_number = 0
         votes_form.label = u"My label"
         votes_form.linked_to_previous = False
+        votes_form.apply_until_item_number = u'0'
         # only for MeetingManagers
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, votes_form._doApply)
@@ -510,7 +514,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertFalse(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
 
         # make linked vote addable
-        votes_form = secret_item.restrictedTraverse('@@item_encode_secret_votes_form').form_instance
+        votes_form = secret_item.restrictedTraverse('@@item_encode_secret_votes_form')
         votes_form.meeting = meeting
         votes_form.votes = [
             {'vote_value': 'yes', 'vote_count': 0, 'vote_value_id': 'yes'},
@@ -519,6 +523,7 @@ class testVotes(PloneMeetingTestCase):
         votes_form.vote_number = 0
         votes_form.label = u"My label"
         votes_form.linked_to_previous = False
+        votes_form.apply_until_item_number = u'0'
         votes_form._doApply()
         load_view._update()
         self.assertTrue(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
@@ -534,6 +539,7 @@ class testVotes(PloneMeetingTestCase):
         votes_form.vote_number = 1
         votes_form.label = u"My label 1"
         votes_form.linked_to_previous = True
+        votes_form.apply_until_item_number = u'0'
         votes_form.votes = [{'vote_value': 'yes', 'vote_count': 1, 'vote_value_id': 'yes'}]
         votes_form._doApply()
         # 2 encoded votes
