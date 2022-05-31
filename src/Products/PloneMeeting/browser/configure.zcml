@@ -1200,7 +1200,7 @@
     <browser:page
         name="caching-controlpanel-ramcache"
         for="Products.CMFPlone.interfaces.IPloneSiteRoot"
-        class="plone.app.caching.browser.controlpanel.RAMCache"
+        class=".overrides.PMRAMCache"
         template="templates/ramcache.pt"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="cmf.ManagePortal" />

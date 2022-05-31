@@ -18,8 +18,6 @@ from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.content import object_values
 from imio.helpers.content import uuidToObject
 from imio.migrator.migrator import Migrator as BaseMigrator
-from imio.pyutils.system import memory
-from imio.pyutils.system import process_memory
 from imio.pyutils.utils import replace_in_list
 from natsort import humansorted
 from operator import attrgetter

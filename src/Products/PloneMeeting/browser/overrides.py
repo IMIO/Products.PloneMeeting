@@ -33,6 +33,7 @@ from imio.history.browser.views import IHContentHistoryView
 from imio.history.browser.views import IHDocumentBylineViewlet
 from plone import api
 from plone import namedfile
+from plone.app.caching.browser.controlpanel import RAMCache
 from plone.app.content.browser.foldercontents import FolderContentsView
 from plone.app.controlpanel.overview import OverviewControlPanel
 from plone.app.controlpanel.usergroups import GroupsOverviewControlPanel
@@ -1568,3 +1569,11 @@ class PMAjaxSave(AjaxSave):
             tranform=True,
             reindex=True,
             unlock=False)
+
+
+class PMRAMCache(RAMCache):
+    """ """
+
+    def update(self):
+        super(PMRAMCache, self).update()
+        self.stats = self.ramCache.getStatistics()

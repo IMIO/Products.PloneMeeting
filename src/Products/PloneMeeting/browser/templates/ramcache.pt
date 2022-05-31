@@ -66,7 +66,7 @@
                     clear the cache if you suspect there are stale items there.
                 </p>
 
-                <table tal:define="stats view/ramCache/getStatistics"
+                <table tal:define="stats view/stats"
                        class="listing faceted-table-results nosort" summary="RAM cache statistics"
                        i18n:attributes="summary heading_ramcache_stats;">
                   <thead>

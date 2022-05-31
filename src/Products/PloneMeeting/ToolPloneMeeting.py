@@ -448,23 +448,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(cfg)
         return res
 
-    def _users_groups_value_cachekey(method, self):
-        """Invalidated thru user added/removed from group events."""
-        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
-        return date
-
-    @ram.cache(_users_groups_value_cachekey)
-    def _users_groups_value(self):
-        """Return the byValue representation of the _principal_groups BTree
-           to check if it changed, meaning that users/groups associations changed.
-           This is to be used in cachekeys and does not return users/groups associations!"""
-        portal = self.aq_inner.aq_parent
-        source_groups = portal.acl_users.source_groups
-        # return md5 as this is used in several cachekey values
-        # cachekey is stored as md5 hash in ram.cache
-        # but the value is stored as is obviously
-        return md5.md5(str(source_groups._principal_groups.byValue(0))).hexdigest()
-
     def get_plone_groups_for_user_cachekey(method, self, userId=None, the_objects=False):
         '''cachekey method for self.get_plone_groups_for_user.'''
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')

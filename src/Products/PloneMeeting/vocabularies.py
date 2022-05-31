@@ -2355,8 +2355,7 @@ class CopyGroupsVocabulary(object):
 
     @ram.cache(__call___cachekey)
     def CopyGroupsVocabulary__call__(self, context):
-        '''Lists the groups that will be selectable to be in copy for this
-           item.  If p_include_auto is True, we add terms regarding self.autoCopyGroups.'''
+        '''Lists the groups that will be selectable to be in copy for this item.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         portal_groups = api.portal.get_tool('portal_groups')
