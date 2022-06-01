@@ -192,7 +192,7 @@ class ItemProposingGroupsVocabulary(object):
         '''cachekey method for self.__call__.'''
         # this volatile is invalidated when plonegroup config changed
         date = get_cachekey_volatile(
-            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+            '_users_groups_value')
         return date
 
     @ram.cache(__call___cachekey)
@@ -241,7 +241,7 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
         '''cachekey method for self.__call__.'''
         # this volatile is invalidated when plonegroup config changed
         date = get_cachekey_volatile(
-            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+            '_users_groups_value')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         return date, repr(cfg)
@@ -298,7 +298,7 @@ class UserProposingGroupsVocabulary(object):
 
     def _user_proposing_group_terms_cachekey(method, self, context, tool, cfg):
         '''cachekey method for self._user_proposing_group_terms.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+        date = get_cachekey_volatile('_users_groups_value')
         selectable_org_uids = self._get_selectable_orgs(context, tool, cfg, the_objects=False)
         # use self.__class__.__name__ to get different ram.cache keys
         return date, context.portal_type, selectable_org_uids, self.__class__.__name__
@@ -996,7 +996,7 @@ class ItemOptionalAdvicesVocabulary(object):
             '''cachekey method for self._getNonDelayAwareAdvisers.'''
             # this volatile is invalidated when plonegroup config changed
             date = get_cachekey_volatile(
-                'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+                '_users_groups_value')
             return date, repr(cfg), cfg.modified()
 
         @ram.cache(_getNonDelayAwareAdvisers_cachekey)
@@ -2269,7 +2269,7 @@ class AssociatedGroupsVocabulary(object):
         '''cachekey method for self.__call__.'''
         # this volatile is invalidated when plonegroup config changed
         date = get_cachekey_volatile(
-            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+            '_users_groups_value')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         return date, sort, repr(cfg)
@@ -2348,7 +2348,7 @@ class CopyGroupsVocabulary(object):
         '''cachekey method for self.__call__.'''
         # this volatile is invalidated when plonegroup config changed
         date = get_cachekey_volatile(
-            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+            '_users_groups_value')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         return date, repr(cfg)
@@ -2800,7 +2800,7 @@ class PMUsers(UsersFactory):
     def __call___cachekey(method, self, context, query=''):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile(
-            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+            '_users_groups_value')
         return date, query
 
     @ram.cache(__call___cachekey)

@@ -282,14 +282,7 @@ def _invalidateOrgRelatedCachedVocabularies():
     invalidate_cachekey_volatile_for(
         "Products.PloneMeeting.vocabularies.askedadvicesvocabulary", get_again=True)
     # also invalidated here, called from organization._invalidateCachedMethods
-    invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.ToolPloneMeeting._users_groups_value', get_again=True)
-
-
-def _invalidateUsersAndGroupsRelatedCache():
-    '''Clean cache for vocabularies and caching methods using Plone users and groups.'''
-    invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.ToolPloneMeeting._users_groups_value', get_again=True)
+    invalidate_cachekey_volatile_for('_users_groups_value', get_again=True)
 
 
 def onOrgWillBeRemoved(current_org, event):
@@ -415,7 +408,7 @@ def onRegistryModified(event):
     if IRecordModifiedEvent.providedBy(event):  # and event.record.interface == IContactPlonegroupConfig:
         if event.record.fieldName == 'organizations' and event.oldValue:
             _invalidateOrgRelatedCachedVocabularies()
-            _invalidateUsersAndGroupsRelatedCache()
+            invalidate_cachekey_volatile_for('_users_groups_value', get_again=True)
 
             old_set = set(event.oldValue)
             new_set = set(event.newValue)
@@ -1473,14 +1466,12 @@ def onPrincipalAddedToGroup(event):
     """ """
     tool = api.portal.get_tool('portal_plonemeeting')
     tool.invalidateAllCache()
-    _invalidateUsersAndGroupsRelatedCache()
 
 
 def onPrincipalRemovedFromGroup(event):
     """ """
     tool = api.portal.get_tool('portal_plonemeeting')
     tool.invalidateAllCache()
-    _invalidateUsersAndGroupsRelatedCache()
 
 
 def onZopeProcessStarting(event):

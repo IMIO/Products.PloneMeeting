@@ -33,6 +33,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 from Products.PloneMeeting.utils import get_annexes
 from zope.i18n import translate
 from zope.testing.testrunner.find import find_test_files
+from imio.helpers.cache import get_cachekey_volatile
 
 import os
 import transaction
@@ -1004,21 +1005,22 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         )), error_msg)
 
     def test_pm__users_groups_value(self):
-        """Test that this cached method behaves normally."""
-        hash1 = self.tool._users_groups_value()
+        """Test that the date is invalidated when required.
+           This rely on imio.helpers events."""
+        date1 = get_cachekey_volatile('_users_groups_value')
         self._removePrincipalFromGroups('pmManager', [self.developers_creators])
-        hash2 = self.tool._users_groups_value()
-        self.assertNotEqual(hash1, hash2)
+        date2 = get_cachekey_volatile('_users_groups_value')
+        self.assertNotEqual(date1, date2)
         self._addPrincipalToGroup('pmManager', self.developers_creators)
-        hash3 = self.tool._users_groups_value()
-        self.assertNotEqual(hash2, hash3)
+        date3 = get_cachekey_volatile('_users_groups_value')
+        self.assertNotEqual(date2, date3)
         # test use of plone.api remove_user
         self._removeUsersFromEveryGroups(['pmManager'])
-        hash4 = self.tool._users_groups_value()
-        self.assertNotEqual(hash3, hash4)
+        date4 = get_cachekey_volatile('_users_groups_value')
+        self.assertNotEqual(date3, date4)
         # cached
-        hash5 = self.tool._users_groups_value()
-        self.assertEqual(hash4, hash5)
+        date5 = get_cachekey_volatile('_users_groups_value')
+        self.assertEqual(date4, date5)
 
     def test_pm_Get_plone_groups_for_user(self):
         """Test that this cached method behaves normally."""

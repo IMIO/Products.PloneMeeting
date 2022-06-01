@@ -105,7 +105,7 @@ logger.info("Monkey patching Products.Archetypes.BaseObject.BaseObject (validate
 
 def _listAllowedRolesAndUsers_cachekey(method, self, user):
     '''cachekey method for self._listAllowedRolesAndUsers.'''
-    date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+    date = get_cachekey_volatile('_users_groups_value')
     return date, user.getId()
 
 

@@ -914,8 +914,7 @@ def query_user_groups_cachekey(method, self):
     # always check cfg.modified() as queries are portal_type aware
     cfg_modified = self.cfg and self.cfg.modified() or datetime.now()
     return self.context.modified(), get_current_user_id(self.request), \
-        get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value'), \
-        cfg_modified
+        get_cachekey_volatile('_users_groups_value'), cfg_modified
 
 
 def query_meeting_config_modified_cachekey(method, self):

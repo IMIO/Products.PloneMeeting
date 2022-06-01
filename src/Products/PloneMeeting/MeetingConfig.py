@@ -6518,10 +6518,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getItemAdviceStatesForOrg_cachekey(method, self, org_uid=None):
         '''cachekey method for self.getItemAdviceStatesForOrg.'''
-        # this volatile is invalidated when an organization changed
-        date = get_cachekey_volatile(
-            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
-        return repr(self), org_uid, date
+        # the volatile is invalidated when an organization changed
+        return repr(self), org_uid, get_cachekey_volatile('_users_groups_value')
 
     security.declarePublic('getItemAdviceStates')
 
@@ -7705,10 +7703,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def get_orgs_with_as_copy_group_on_expression_cachekey(method, self):
         '''cachekey method for self.get_orgs_with_as_copy_group_on_expression.
            MeetingConfig.modified is updated when an organization added/removed/edited.'''
-        # this volatile is invalidated when an organization changed
-        date = get_cachekey_volatile(
-            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
-        return repr(self), self.modified(), date
+        # the volatile is invalidated when an organization changed
+        return repr(self), self.modified(), get_cachekey_volatile('_users_groups_value')
 
     @ram.cache(get_orgs_with_as_copy_group_on_expression_cachekey)
     def get_orgs_with_as_copy_group_on_expression(self):

@@ -707,8 +707,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             isPresentable = self.context.wfConditions().mayPresent()
 
         # this volatile is invalidated when user/groups changed
-        date = get_cachekey_volatile(
-            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+        date = get_cachekey_volatile('_users_groups_value')
 
         # check also portal_url in case application is accessed thru different URI
         return (repr(self.context), self.context.modified(), advicesIndexModified, date,

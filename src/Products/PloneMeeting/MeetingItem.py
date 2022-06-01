@@ -3330,7 +3330,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             cfg = tool.getMeetingConfig(item)
             if not cfg.getRestrictAccessToSecretItems() or tool.isManager(cfg):
                 return True
-        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+        date = get_cachekey_volatile('_users_groups_value')
         return repr(item), item.modified(), tool.get_plone_groups_for_user(), date
 
     security.declarePublic('isPrivacyViewable')

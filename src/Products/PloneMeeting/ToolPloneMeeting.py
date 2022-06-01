@@ -450,8 +450,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def get_plone_groups_for_user_cachekey(method, self, userId=None, the_objects=False):
         '''cachekey method for self.get_plone_groups_for_user.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
-        return (date,
+        return (get_cachekey_volatile('_users_groups_value'),
                 userId or get_current_user_id(getattr(self, "REQUEST", None)),
                 the_objects)
 
@@ -490,8 +489,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def group_is_not_empty_cachekey(method, self, org_uid, suffix, user_id=None):
         '''cachekey method for self.group_is_not_empty.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
-        return (date,
+        return (get_cachekey_volatile('_users_groups_value'),
                 org_uid,
                 suffix,
                 user_id)
@@ -515,8 +513,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                         omitted_suffixes=[],
                                         using_groups=[]):
         '''cachekey method for self._get_orgs_for_user.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
-        return (date,
+        return (get_cachekey_volatile('_users_groups_value'),
                 (user_id or get_current_user_id(self.REQUEST)),
                 only_selected, list(suffixes), list(omitted_suffixes), list(using_groups))
 
@@ -608,8 +605,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def userIsAmong_cachekey(method, self, suffixes, cfg=None, using_groups=[]):
         '''cachekey method for self.userIsAmong.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
-        return (date,
+        return (get_cachekey_volatile('_users_groups_value'),
                 get_current_user_id(self.REQUEST),
                 suffixes,
                 cfg and cfg.getId(),
@@ -798,11 +794,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def isManager_cachekey(method, self, context=None, realManagers=False):
         '''cachekey method for self.isManager.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
         # check also user id to avoid problems between Zope admin and anonymous
         # as they have both no group when initializing portal, some requests
         # (first time viewlet initialization?) have sometims anonymous as user
-        return (date,
+        return (get_cachekey_volatile('_users_groups_value'),
                 get_current_user_id(self.REQUEST),
                 repr(context),
                 realManagers)
