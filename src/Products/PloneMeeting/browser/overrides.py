@@ -57,6 +57,7 @@ from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import get_annexes
@@ -68,6 +69,7 @@ from Products.PloneMeeting.utils import set_field_from_ajax
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
 
+import html
 import sys
 
 
@@ -1506,13 +1508,16 @@ class PMUtils(Utils):
             vocab_value = _(vocab_value)
             nvalues.append(vocab_value)
         # XXX begin changes by Products.PloneMeeting
-        # value = ', '.join(nvalues)
-        value = u'-'
-        if nvalues:
-            if len(nvalues) == 1:
-                value = nvalues[0]
-            else:
-                value = '- ' + '<br />- '.join(nvalues)
+        nvalues = [html.escape(val) for val in nvalues]
+        if IConfigElement.providedBy(self.context):
+            value = u'-'
+            if nvalues:
+                if len(nvalues) == 1:
+                    value = nvalues[0]
+                else:
+                    value = '- ' + '<br />- '.join(nvalues)
+        else:
+            value = ', '.join(nvalues)
         # XXX end changes by Products.PloneMeeting
         return value
 

@@ -106,7 +106,7 @@ from zope.location import locate
 from zope.schema import getFieldsInOrder
 from zope.security.interfaces import IPermission
 
-import cgi
+import html
 import itertools
 import logging
 import lxml
@@ -2297,7 +2297,7 @@ def number_word(number):
 
 
 def escape(text):
-    return cgi.escape(safe_unicode(text), quote=True)
+    return html.escape(safe_unicode(text), quote=True)
 
 
 def convert2xhtml(obj,
@@ -2438,6 +2438,11 @@ def get_enabled_ordered_wfas(tool):
         [wfa for wfa in MeetingConfig.wfAdaptations
          if wfa in itertools.chain.from_iterable(
              [cfg.getWorkflowAdaptations() for cfg in tool.objectValues('MeetingConfig')])])
+
+
+def get_escaped_plone_group_title(group):
+    """ """
+    return escape(group.getProperty('title'))
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

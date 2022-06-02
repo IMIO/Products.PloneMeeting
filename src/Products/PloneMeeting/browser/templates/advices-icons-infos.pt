@@ -78,7 +78,7 @@
                   </tal:inherited_advice>
                   <div class="advice_popup_label">
                     <span tal:condition="advice/optional">(</span>
-                    <span class="advice-name" tal:content="structure advice/name"></span>
+                    <span class="advice-name" tal:content="advice/name"></span>
                          <tal:showDelayLabel condition="python: advice['delay'] and advice['delay_label']">
                               - <span class="advice-label" tal:content="advice/delay_label"></span>
                          </tal:showDelayLabel><span tal:condition="advice/optional">)</span>

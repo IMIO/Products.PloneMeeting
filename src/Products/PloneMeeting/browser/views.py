@@ -2102,7 +2102,7 @@ class PMDisplayGroupUsersView(DisplayGroupUsersView):
 
     def _check_auth(self, group_id):
         """Only members of proposingGroup or (MeetingManagers)."""
-        if not self.context.displayProposingGroupUsers():
+        if not self.context.mayDisplayProposingGroupUsers():
             raise Unauthorized
 
     def _get_suffixes(self, group_id):
