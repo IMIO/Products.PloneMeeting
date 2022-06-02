@@ -1508,7 +1508,9 @@ class PMUtils(Utils):
             vocab_value = _(vocab_value)
             nvalues.append(vocab_value)
         # XXX begin changes by Products.PloneMeeting
-        nvalues = [html.escape(val) for val in nvalues]
+        # avoid escaping when generating POD templates
+        if not self.request.getURL().endswith('/document-generation'):
+            nvalues = [html.escape(val) for val in nvalues]
         if IConfigElement.providedBy(self.context):
             value = u'-'
             if nvalues:
