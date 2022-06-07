@@ -233,10 +233,12 @@ class ItemIsSignedView(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
+        self.portal_url = api.portal.get().absolute_url()
 
     def __call__parent_cachekey(method, self):
         '''cachekey method for self.__call__.'''
-        return self.context.getItemIsSigned(), \
+        # check also on portal_url as path to image is cached
+        return self.portal_url, self.context.getItemIsSigned(), \
             self.context.adapted().maySignItem(), self.context.showItemIsSigned()
 
     @ram.cache(__call__parent_cachekey)
@@ -275,7 +277,9 @@ class ItemToDiscussView(BrowserView):
 
     def __call__parent_cachekey(method, self):
         '''cachekey method for self.__call__.'''
-        return self.context.getToDiscuss(), self.mayEdit(), self.reviewerMayAskDiscussion()
+        # check also on portal_url as path to image is cached
+        return self.portal_url, self.context.getToDiscuss(), \
+            self.mayEdit(), self.reviewerMayAskDiscussion()
 
     @ram.cache(__call__parent_cachekey)
     def ItemToDiscussView__call__parent(self):
