@@ -166,7 +166,6 @@ class AdvicesIconsInfos(BrowserView):
 
     def _initAdvicesInfos(self, adviceType):
         """ """
-        self.pm_utils = SecureModuleImporter['Products.PloneMeeting.utils']
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.portal = api.portal.get()

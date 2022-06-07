@@ -94,6 +94,11 @@ def initialize(context):
                               constructors=(all_constructors[i],),
                               permission=ADD_CONTENT_PERMISSIONS[klassname])
 
-    allow_module('Products.PloneMeeting.utils')
+    allow_module('collective.iconifiedcategory.safe_utils')
+    allow_module('collective.contact.core')
+    allow_module('collective.contact.plonegroup.safe_utils')
+    allow_module('imio.annex.safe_utils')
+    allow_module('imio.history.safe_utils')
+    allow_module('Products.PloneMeeting.safe_utils')
     allow_module('Products.PloneMeeting.browser.meeting')
     allow_type(datetime)
