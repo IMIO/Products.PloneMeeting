@@ -26,6 +26,9 @@ Changelog
   [gbastien]
 - Added possibility to create user fs directly in content/addUsers.
   [odelaere]
+- Avoid having the full `utils.py` files available in POD templates,
+  select available functions in a `safe_utils.py` file.
+  [gbastien]
 
 4.2rc27 (2022-05-17)
 --------------------

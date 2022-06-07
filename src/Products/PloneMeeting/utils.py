@@ -2240,8 +2240,8 @@ def _base_extra_expr_ctx(obj):
     # member, context and portal are managed by collective.behavior.talcondition
     data = {'tool': tool,
             'cfg': cfg,
-            'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-            'imio_history_utils': SecureModuleImporter['imio.history.utils'], }
+            'pm_utils': SecureModuleImporter['Products.PloneMeeting.safe_utils'],
+            'imio_history_utils': SecureModuleImporter['imio.history.safe_utils'], }
     return data
 
 
