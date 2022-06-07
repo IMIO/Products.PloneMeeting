@@ -29,6 +29,9 @@ Changelog
 - Avoid having the full `utils.py` files available in POD templates,
   select available functions in a `safe_utils.py` file.
   [gbastien]
+- Fixed cachekeys for `ItemToDiscussView` and `ItemIsSignedView`, as path to
+  image is cached, we need to check the `portal_url` in the cachekey.
+  [gbastien]
 
 4.2rc27 (2022-05-17)
 --------------------
