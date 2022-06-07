@@ -322,6 +322,8 @@ class ItemListTypeColumn(VocabularyColumn, ColorColumn):
     i18n_domain = "PloneMeeting"
     cssClassPrefix = 'meeting_item'
     vocabulary = u'Products.PloneMeeting.vocabularies.listtypesvocabulary'
+    # VocabularyColumn and ColorColumn manage escape manually
+    escape = False
 
     def renderCell(self, item):
         """Display a message."""
@@ -343,6 +345,7 @@ class ItemNumberColumn(BrowserViewCallColumn):
     """
     view_name = 'item-number'
     header_js = u'<script type="text/javascript">initializeItemsDND();</script>'
+    escape = False
 
     @property
     def cssClasses(self):
