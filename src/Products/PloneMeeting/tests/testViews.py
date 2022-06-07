@@ -2699,8 +2699,11 @@ class testViews(PloneMeetingTestCase):
         view = item.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
         data = view.get_base_generation_context(helper, None)
+        # we do not have the complete utils.py but just the safe_utils.py
         from Products.PloneMeeting import utils
-        self.assertEqual(data['pm_utils'], utils)
+        from Products.PloneMeeting import safe_utils
+        self.assertNotEqual(data['pm_utils'], utils)
+        self.assertEqual(data['pm_utils'], safe_utils)
         self.assertEqual(data['self'], item)
         self.assertEqual(data['tool'], self.tool)
         self.assertEqual(data['cfg'], cfg)
