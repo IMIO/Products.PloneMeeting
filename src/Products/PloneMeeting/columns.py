@@ -250,7 +250,6 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
 
 class PMActionsColumn(ActionsColumn):
     """A column displaying available actions of the listed item."""
-    escape = False
 
     def renderCell(self, item):
         # dashboard displaying contacts
