@@ -6,6 +6,8 @@
 #
 
 from collective.contact.plonegroup.utils import get_plone_group
+from imio.helpers.content import richtextval
+from os import path
 from plone.app.controlpanel.events import ConfigurationChangedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
@@ -15,6 +17,7 @@ from Products.PloneMeeting.utils import escape
 from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import set_field_from_ajax
+from Products.PloneMeeting.utils import transformAllRichTextFields
 from Products.PloneMeeting.utils import validate_item_assembly_value
 from zope.event import notify
 
@@ -249,6 +252,46 @@ class testUtils(PloneMeetingTestCase):
         self.assertEqual(pm.getMemberInfo("pmManager")["fullname"], 'M. PMManager')
         notify(ConfigurationChangedEvent(self.portal, self.request))
         self.assertEqual(pm.getMemberInfo("pmManager")["fullname"], 'M. PMManager New')
+
+    def test_pm_TransformAllRichTextFields(self):
+        """Test that it does not alterate field content, especially
+           links to internal content or image that uses resolveuid."""
+
+        # MeetingItem AT
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # add image
+        file_path = path.join(path.dirname(__file__), 'dot.gif')
+        file_handler = open(file_path, 'r')
+        data = file_handler.read()
+        file_handler.close()
+        img_id = item.invokeFactory('Image', id='dot.gif', title='Image', file=data)
+        img = getattr(item, img_id)
+
+        # link to image using resolveuid
+        text = '<p>Internal image <img src="resolveuid/{0}" />.</p>'.format(img.UID())
+        item.setDescription(text)
+        self.assertEqual(item.objectIds(), ['dot.gif'])
+        transformAllRichTextFields(item)
+        self.assertEqual(item.getRawDescription(), text)
+        transformAllRichTextFields(item, onlyField="description")
+        self.assertEqual(item.getRawDescription(), text)
+
+        # Meeting DX
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        # add image
+        img_id = meeting.invokeFactory('Image', id='dot.gif', title='Image', file=data)
+        img = getattr(meeting, img_id)
+
+        # link to image using resolveuid
+        text = '<p>Internal image <img src="resolveuid/{0}" />.</p>'.format(img.UID())
+        meeting.observations = richtextval(text)
+        self.assertEqual(meeting.objectIds(), ['dot.gif'])
+        transformAllRichTextFields(meeting)
+        self.assertEqual(meeting.observations.raw, text)
+        transformAllRichTextFields(meeting, onlyField="observations")
+        self.assertEqual(meeting.observations.raw, text)
 
 
 def test_suite():

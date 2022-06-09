@@ -18,8 +18,6 @@ from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.content import object_values
 from imio.helpers.content import uuidToObject
 from imio.migrator.migrator import Migrator as BaseMigrator
-from imio.pyutils.system import memory
-from imio.pyutils.system import process_memory
 from imio.pyutils.utils import replace_in_list
 from natsort import humansorted
 from operator import attrgetter
@@ -329,8 +327,15 @@ class Migrator(BaseMigrator):
                 self.warnings.append('Replacements were done in POD template at %s'
                                      % pt_path_and_title)
             for info in infos:
-                data[pt_path_and_title].append("---- " + info.pod_expr)
-                data[pt_path_and_title].append("++++ " + info.new_pod_expr)
+                # collective.documentgenerator < 3.30 from which we use appy.pod S&R
+                # XXX to be removed when using collective.documentgenerator >= 3.30
+                if hasattr(info, 'pod_expr'):
+                    data[pt_path_and_title].append("---- " + info.pod_expr)
+                    data[pt_path_and_title].append("++++ " + info.new_pod_expr)
+                else:
+                    line = repr(info).replace('  These changes were done:', '>>>'). \
+                        replace('\n\n', '\n').rstrip('\n')
+                    data[pt_path_and_title].append(line)
         logger.info("REPLACEMENTS IN POD TEMPLATES")
         if not data:
             logger.info("=============================")

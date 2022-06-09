@@ -2427,6 +2427,10 @@ div.overlay div.qq-uploader li {
 #content td.table_widget_label {
     width: 200px;
 }
+span.itemReference {
+  margin-top: 0.25em;
+  display: block;
+}
 
 /* committees datagridfield edit on meeting */
 table.datagridwidget-table-view-block label {
