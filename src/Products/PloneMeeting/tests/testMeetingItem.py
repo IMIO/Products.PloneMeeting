@@ -25,6 +25,7 @@ from imio.helpers.content import richtextval
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
+from os import path
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.app.testing import logout
