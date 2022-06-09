@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from DateTime import DateTime
-from imio.helpers.content import object_values
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.utils import get_public_url
@@ -21,8 +20,8 @@ class Migrate_To_4203(Migrator):
         if ps_logs:
             install_time = ps_logs[0].bobobase_modification_time()
         # take only items modified since upgrade to 4200
-        brains = self.portal.portal_catalog(meta_type='MeetingItem', modified={'range': 'min',
-                                                                               'query': install_time})
+        brains = self.catalog(meta_type='MeetingItem',
+                              modified={'range': 'min', 'query': install_time})
         i = 1
         total = len(brains)
         number_of_migrated_links = 0
@@ -49,10 +48,10 @@ class Migrate_To_4203(Migrator):
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
-        logger.info('Migrating to PloneMeeting 4202...')
+        logger.info('Migrating to PloneMeeting 4203...')
 
         # not necessary if executing the full upgrade to 4200
-        # as problem was introduced in 4.2.x...
+        # as problem was introduced after 4200...
         if not from_migration_to_4200:
             self._adaptInternalImagesLinkToUseResolveUID()
 
