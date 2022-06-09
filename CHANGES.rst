@@ -35,6 +35,8 @@ Changelog
 - CSS, removed double definition of top margin for `static-infos` section that
   was leading to too much space at the top of item reference in dashboards.
   [gbastien]
+- Fixed an issue in `PMDataChangesHistoryAdapter`. The tooltip was mentioning the wrong actor.
+  [aduchene]
 
 4.2rc27 (2022-05-17)
 --------------------

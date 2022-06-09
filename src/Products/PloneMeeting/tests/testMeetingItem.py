@@ -73,6 +73,7 @@ from Products.statusmessages.interfaces import IStatusMessage
 from zExceptions import Redirect
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getAdapter
+from zope.component import getMultiAdapter
 from zope.component import queryUtility
 from zope.event import notify
 from zope.i18n import translate
@@ -1910,6 +1911,28 @@ class testMeetingItem(PloneMeetingTestCase):
         set_field_from_ajax(item, 'decision', self.decisionText)
         self.assertFalse('_datachange_' in [event['action'] for event in wf_adapter.getHistory()])
         self.assertTrue('_datachange_' in [event['action'] for event in datachanges_adapter.getHistory()])
+
+    def test_pm_DataChangesHistory(self):
+        """Test the datachanges history adapter."""
+        cfg = self.meetingConfig
+        cfg.setHistorizedItemAttributes(('decision', ))
+        cfg.setRecordItemHistoryStates((self._stateMappingFor('itemcreated'), ))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', decision="<p>test</p>")
+        set_field_from_ajax(item, 'decision', "<p>tralala</p>")
+        set_field_from_ajax(item, 'decision', "<p>abcedfgijklm</p>")
+        self.proposeItem(item)
+        self.changeUser('pmReviewer1')
+        self.do(item, 'validate')
+        # Test if it is in content history
+        view = getMultiAdapter((item, self.portal.REQUEST), name='contenthistory')
+        history = view.getHistory()
+        datachanges = [event for event in history if event["action"] == "_datachange_"]
+        self.assertEqual(len(datachanges), 2)
+        # Test if the values are correct
+        for event in datachanges:
+            self.assertEqual(event["actor"], "pmCreator1")
+            self.assertIn("M. PMCreator One", event["changes"]["decision"])
 
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
