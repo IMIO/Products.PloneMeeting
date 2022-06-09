@@ -1118,7 +1118,7 @@ def transformAllRichTextFields(obj, onlyField=None):
     else:
         if onlyField:
             field = obj.schema[onlyField]
-            fields[field.getName()] = field.getAccessor(obj)()
+            fields[field.getName()] = field.getRaw(obj)
         else:
             fields = {field.getName(): field.getRaw(obj).strip() for field in obj.schema.fields()
                       if field.widget.getName() == 'RichWidget' and
