@@ -2424,10 +2424,6 @@ div.overlay div.qq-uploader li {
     margin-left: 0.5em;
 }
 
-div.static-infos {
-   margin-top: 0.5em;
-}
-
 #content td.table_widget_label {
     width: 200px;
 }

@@ -32,6 +32,9 @@ Changelog
 - Fixed cachekeys for `ItemToDiscussView` and `ItemIsSignedView`, as path to
   image is cached, we need to check the `portal_url` in the cachekey.
   [gbastien]
+- CSS, removed double definition of top margin for `static-infos` section that
+  was leading to too much space at the top of item reference in dashboards.
+  [gbastien]
 
 4.2rc27 (2022-05-17)
 --------------------
