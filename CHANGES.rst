@@ -35,6 +35,9 @@ Changelog
 - CSS, removed double definition of top margin for `static-infos` section that
   was leading to too much space at the top of item reference in dashboards.
   [gbastien]
+- Make `Migrator.updatePODTemplatesCode` output format compatible with `collective.documentgenerator`
+  builtin `Search&Replace` or when using `appy.pod` S&R (`collective.documentgenerator>3.30`).
+  [gbastien]
 - Fixed `utils.transformAllRichTextFields` that was losing the `resolveuid` of
   images for AT types (`MeetingItem`) when parameter `onlyField` was used
   (called from quick edit). Added upgrade step to `4203` to fix this, every items
