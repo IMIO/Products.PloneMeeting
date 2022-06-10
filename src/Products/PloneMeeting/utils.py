@@ -2440,11 +2440,6 @@ def get_enabled_ordered_wfas(tool):
              [cfg.getWorkflowAdaptations() for cfg in tool.objectValues('MeetingConfig')])])
 
 
-def get_escaped_plone_group_title(group):
-    """ """
-    return escape(group.getProperty('title'))
-
-
 class AdvicesUpdatedEvent(ObjectEvent):
     implements(IAdvicesUpdatedEvent)
 
