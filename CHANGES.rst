@@ -47,6 +47,10 @@ Changelog
   [gbastien]
 - Fixed an issue in `PMDataChangesHistoryAdapter`. The tooltip was mentioning the wrong actor.
   [aduchene]
+- When handling `meeting.first_item_number` on meeting closure, only compute
+  number if it is still `-1`, in other cases, do nothing, this will manage the case
+  when reinitializing the first item number at the beginning of a new year.
+  [gbastien]
 - Added `events._invalidateAttendeesRelatedCache` to factorize invalidation of
   attendees related cache. Used by `person/held_position/meeting` to invalidate
   caches when necessary.
