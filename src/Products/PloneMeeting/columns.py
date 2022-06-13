@@ -221,7 +221,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
             annexes += obj.restrictedTraverse('@@categorized-childs')(
                 portal_type='annex', check_can_view=True)
             # display number of items in meeting title
-            contentValue = "{0} <span class='meeting-number-items'>[{1}]</span>".format(
+            contentValue = "{0} [{1}]".format(
                 obj.Title(), obj.number_of_items())
             prettyLinker.contentValue = contentValue
 
