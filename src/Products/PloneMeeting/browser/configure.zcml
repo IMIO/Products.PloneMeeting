@@ -1053,21 +1053,21 @@
     <!-- override the @@at_utils view to make it public so accessible
          when called from non accessible item, useful when using
          MeetingConfig.itemsNotViewableVisibleFields, for example showing
-         MeetingItem.category would raise Unauthorized because of access to @@at_utils -->
+         MeetingItem.category would raise Unauthorized because of access to @@at_utils
+         Override it also th display like list for MeetingConfig and to html.escape result -->
     <browser:page
-        for="Products.PloneMeeting.interfaces.IMeetingContent"
-        name="at_utils"
-        class="Products.Archetypes.browser.utils.Utils"
-        allowed_interface="Products.Archetypes.interfaces.utils.IUtils"
-        permission="zope2.Public" />
-
-    <!-- override the @@at_utils view for MeetingConfig -->
-    <browser:page
-        for="Products.PloneMeeting.interfaces.IMeetingConfig"
+        for="Products.PloneMeeting.interfaces.IConfigElement"
         name="at_utils"
         class=".overrides.PMUtils"
         allowed_interface="Products.Archetypes.interfaces.utils.IUtils"
-        permission="zope2.View" />
+        permission="zope2.Public" />
+
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingContent"
+        name="at_utils"
+        class=".overrides.PMUtils"
+        allowed_interface="Products.Archetypes.interfaces.utils.IUtils"
+        permission="zope2.Public" />
 
     <configure package="collective.iconifiedcategory">
         <browser:page

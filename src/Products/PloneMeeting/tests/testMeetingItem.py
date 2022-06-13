@@ -6485,28 +6485,6 @@ class testMeetingItem(PloneMeetingTestCase):
                 'resolveuid/{0}'.format(new_img1.UID()),
                 'resolveuid/{0}'.format(new_img2.UID())))
 
-    def test_pm_TransformAllRichTextFields(self):
-        """Test that it does not alterate field content, especially
-           links to internal content or image that uses resolveuid."""
-        self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        # add image
-        file_path = path.join(path.dirname(__file__), 'dot.gif')
-        file_handler = open(file_path, 'r')
-        data = file_handler.read()
-        file_handler.close()
-        img_id = item.invokeFactory('Image', id='dot.gif', title='Image', file=data)
-        img = getattr(item, img_id)
-
-        # link to image using resolveuid
-        text = '<p>Internal image <img src="resolveuid/{0}" />.</p>'.format(img.UID())
-        item.setDescription(text)
-        self.assertEqual(item.objectIds(), ['dot.gif'])
-        # transformAllRichTextFields is called by MeetingItem.at_post_edit_script
-        # that is called by MeetingItem._update_after_edit...
-        item._update_after_edit()
-        self.assertEqual(item.getRawDescription(), text)
-
     def test_pm_ItemLocalRolesUpdatedEvent(self):
         """Test this event that is triggered after the local_roles on the item have been updated."""
         # load a subscriber and check that it does what necessary each time

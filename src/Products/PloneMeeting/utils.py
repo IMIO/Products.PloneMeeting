@@ -106,7 +106,7 @@ from zope.location import locate
 from zope.schema import getFieldsInOrder
 from zope.security.interfaces import IPermission
 
-import cgi
+import html
 import itertools
 import logging
 import lxml
@@ -1118,7 +1118,7 @@ def transformAllRichTextFields(obj, onlyField=None):
     else:
         if onlyField:
             field = obj.schema[onlyField]
-            fields[field.getName()] = field.getAccessor(obj)()
+            fields[field.getName()] = field.getRaw(obj)
         else:
             fields = {field.getName(): field.getRaw(obj).strip() for field in obj.schema.fields()
                       if field.widget.getName() == 'RichWidget' and
@@ -2297,7 +2297,7 @@ def number_word(number):
 
 
 def escape(text):
-    return cgi.escape(safe_unicode(text), quote=True)
+    return html.escape(safe_unicode(text), quote=True)
 
 
 def convert2xhtml(obj,

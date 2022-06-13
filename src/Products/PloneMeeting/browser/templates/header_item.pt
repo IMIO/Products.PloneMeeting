@@ -11,7 +11,7 @@
                          itemReference python: context.getItemReference();"
                  condition="python: context.adapted().mustShowItemReference()">
         <br />
-        <span class="discreet"
+        <span class="discreet itemReference"
               tal:condition="nocall:itemReference"
               tal:content="python:itemReference"></span>
     </tal:itemRef>

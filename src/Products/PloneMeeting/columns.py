@@ -104,30 +104,35 @@ class ItemCommitteesAcronymColumn(AbbrColumn):
 class ItemAdvicesColumn(BrowserViewCallColumn):
     """A column that display the MeetingItem advices."""
     view_name = 'advices-icons'
+    escape = False
 
 
 class ItemToDiscussColumn(BrowserViewCallColumn):
     """A column that display the MeetingItem.toDiscuss as an icon."""
     view_name = 'item-to-discuss'
     header_image = 'toDiscussYes.png'
+    escape = False
 
 
 class ItemIsSignedColumn(BrowserViewCallColumn):
     """A column that display the MeetingItem.toDiscuss as an icon."""
     view_name = 'item-is-signed'
     header_image = 'itemIsSignedYes.png'
+    escape = False
 
 
 class ItemPrivacyColumn(I18nColumn):
     """A column that display the translated MeetingItem.privacy."""
     i18n_domain = 'PloneMeeting'
     header_help = u'header_privacy_help'
+    escape = False
 
 
 class ItemPollTypeColumn(VocabularyColumn):
     """A column that display the MeetingItem.pollType."""
     vocabulary = u'Products.PloneMeeting.vocabularies.polltypesvocabulary'
     header_help = u'header_pollType_help'
+    escape = False
 
 
 def render_item_annexes(item, tool, show_nothing=False, check_can_view=False):
@@ -258,6 +263,7 @@ class PMAsyncActionsColumn(BaseColumn):
        with actions availble to current user."""
 
     sort_index = -1
+    escape = False
 
     def renderCell(self, item):
         tag = """<div class="async-actions-panel-icon-container">""" \
@@ -274,6 +280,7 @@ class ItemLinkedMeetingColumn(BaseColumn):
     meeting_uid_attr = 'meeting_uid'
     attrName = 'meeting_date'
     use_caching = True
+    escape = False
 
     def renderCell(self, item):
         """ """
@@ -306,6 +313,7 @@ class ItemPreferredMeetingColumn(ItemLinkedMeetingColumn):
     meeting_uid_attr = 'preferred_meeting_uid'
     attrName = 'preferred_meeting_date'
     header_help = u'header_preferred_meeting_date_help'
+    escape = False
 
 
 class ItemListTypeColumn(VocabularyColumn, ColorColumn):
@@ -314,6 +322,8 @@ class ItemListTypeColumn(VocabularyColumn, ColorColumn):
     i18n_domain = "PloneMeeting"
     cssClassPrefix = 'meeting_item'
     vocabulary = u'Products.PloneMeeting.vocabularies.listtypesvocabulary'
+    # VocabularyColumn and ColorColumn manage escape manually
+    escape = False
 
     def renderCell(self, item):
         """Display a message."""
@@ -335,6 +345,7 @@ class ItemNumberColumn(BrowserViewCallColumn):
     """
     view_name = 'item-number'
     header_js = u'<script type="text/javascript">initializeItemsDND();</script>'
+    escape = False
 
     @property
     def cssClasses(self):
