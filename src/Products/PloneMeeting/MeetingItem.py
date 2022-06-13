@@ -149,6 +149,7 @@ from zope.i18n import translate
 from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
 
+import html
 import itertools
 import logging
 
@@ -5629,7 +5630,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         def _get_adviser_name(adviser):
             """Manage adviser name, will append selected __userid__ if any."""
-            name = adviser['name']
+            name = html.escape(adviser['name'])
             if adviser['userids']:
                 name += u" ({0})".format(
                     self._displayAdviserUsers(adviser['userids'], portal_url, tool))
@@ -7719,7 +7720,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return self.hasMeeting() and checkMayQuickEdit(
             self, bypassWritePermissionCheck=True, onlyForManagers=True)
 
-    def displayProposingGroupUsers(self):
+    def mayDisplayProposingGroupUsers(self):
         """ """
         res = False
         proposingGroup = self.getProposingGroup()
