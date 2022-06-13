@@ -18,6 +18,7 @@ from datetime import datetime
 from DateTime import DateTime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.content import get_transitions
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import safe_delattr
@@ -88,7 +89,9 @@ from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.config import WriteBudgetInfos
+from Products.PloneMeeting.config import WriteDecision
 from Products.PloneMeeting.config import WriteInternalNotes
+from Products.PloneMeeting.config import WriteItemMeetingManagerFields
 from Products.PloneMeeting.config import WriteMarginalNotes
 from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.events import item_added_or_initialized
@@ -146,6 +149,7 @@ from zope.i18n import translate
 from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
 
+import html
 import itertools
 import logging
 
@@ -258,7 +262,7 @@ class MeetingItemWorkflowConditions(object):
             item_val_levels_states = self.cfg.getItemWFValidationLevels(
                 data='state', only_enabled=True)
             previous_val_state = item_val_levels_states[
-                item_val_levels_states.index(destinationState)-1]
+                item_val_levels_states.index(destinationState) - 1]
             previous_suffixes = self.cfg.getItemWFValidationLevels(
                 states=[previous_val_state], data='extra_suffixes', only_enabled=True)
             previous_main_suffix = self.cfg.getItemWFValidationLevels(
@@ -712,6 +716,12 @@ class MeetingItemWorkflowConditions(object):
             res = No(_('emergency_accepted_required_to_accept_out_of_meeting_emergency'))
         return res
 
+    security.declarePublic('mayTransfer')
+
+    def mayTransfer(self):
+        """ """
+        return self.context.adapted().mayTransfer()
+
 
 InitializeClass(MeetingItemWorkflowConditions)
 
@@ -841,6 +851,15 @@ class MeetingItemWorkflowActions(object):
             self._duplicateAndValidate(cloneEventAction='create_from_accepted_out_of_meeting_emergency')
         self.context.update_item_reference()
 
+    security.declarePrivate('doTransfer')
+
+    def doTransfer(self, stateChange):
+        """Duplicate item to validated if WFAdaptation
+           'transfered_and_duplicated' is used."""
+        if 'transfered_and_duplicated' in self.cfg.getWorkflowAdaptations():
+            self._duplicateAndValidate(cloneEventAction='create_from_transfered')
+        self.context.update_item_reference()
+
     security.declarePrivate('doAccept')
 
     def doAccept(self, stateChange):
@@ -886,9 +905,14 @@ class MeetingItemWorkflowActions(object):
             # trigger transitions until 'validated', aka one step before 'presented'
             # set a special value in the REQUEST so guards may use it if necessary
             self.context.REQUEST.set('duplicating_and_validating_item', True)
-            for tr in self.cfg.getTransitionsForPresentingAnItem(
-                    org_uid=clonedItem.getProposingGroup())[0:-1]:
-                wfTool.doActionFor(clonedItem, tr, comment=wf_comment)
+            # try to bypass by using the "validate" shortcut
+            if "validate" in get_transitions(clonedItem):
+                wfTool.doActionFor(clonedItem, "validate")
+            else:
+                for tr in self.cfg.getTransitionsForPresentingAnItem(
+                        org_uid=clonedItem.getProposingGroup())[0:-1]:
+                    if tr in get_transitions(clonedItem):
+                        wfTool.doActionFor(clonedItem, tr, comment=wf_comment)
             self.context.REQUEST.set('duplicating_and_validating_item', False)
         return clonedItem
 
@@ -1281,7 +1305,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write decision",
+        write_permission=WriteDecision,
     ),
     TextField(
         name='decision',
@@ -1296,7 +1320,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=False,
-        write_permission="PloneMeeting: Write decision",
+        write_permission=WriteDecision,
     ),
     TextField(
         name='decisionSuite',
@@ -1312,7 +1336,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write decision",
+        write_permission=WriteDecision,
     ),
     TextField(
         name='decisionEnd',
@@ -1328,7 +1352,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write decision",
+        write_permission=WriteDecision,
     ),
     BooleanField(
         name='oralQuestion',
@@ -1384,7 +1408,7 @@ schema = Schema((
         default_content_type="text/html",
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        write_permission=WriteItemMeetingManagerFields,
     ),
     TextField(
         name='notes',
@@ -1400,7 +1424,7 @@ schema = Schema((
         default_content_type="text/html",
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        write_permission=WriteItemMeetingManagerFields,
     ),
     TextField(
         name='meetingManagersNotes',
@@ -1416,7 +1440,7 @@ schema = Schema((
         default_content_type="text/html",
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        write_permission=WriteItemMeetingManagerFields,
     ),
     TextField(
         name='meetingManagersNotesSuite',
@@ -1432,7 +1456,7 @@ schema = Schema((
         default_content_type="text/html",
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        write_permission=WriteItemMeetingManagerFields,
     ),
     TextField(
         name='meetingManagersNotesEnd',
@@ -1448,7 +1472,7 @@ schema = Schema((
         default_content_type="text/html",
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        write_permission=WriteItemMeetingManagerFields,
     ),
     TextField(
         name='internalNotes',
@@ -1488,7 +1512,7 @@ schema = Schema((
         name='observations',
         widget=RichWidget(
             label_msgid="PloneMeeting_itemObservations",
-            condition="python: here.showObservations()",
+            condition="python: here.adapted().showObservations()",
             description_msgid="descr_field_vieawable_by_everyone",
             label='Observations',
             i18n_domain='PloneMeeting',
@@ -1499,7 +1523,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        write_permission=WriteItemMeetingManagerFields,
     ),
     LinesField(
         name='templateUsingGroups',
@@ -1650,7 +1674,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        write_permission=WriteItemMeetingManagerFields,
     ),
     TextField(
         name='committeeObservations',
@@ -1666,7 +1690,7 @@ schema = Schema((
         default_output_type="text/x-html-safe",
         searchable=True,
         optional=True,
-        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        write_permission=WriteItemMeetingManagerFields,
     ),
     TextField(
         name='votesObservations',
@@ -1682,7 +1706,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        write_permission=WriteItemMeetingManagerFields,
     ),
     ReferenceField(
         name='manuallyLinkedItems',
@@ -1802,7 +1826,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write decision",
+        write_permission=WriteDecision,
     ),
     TextField(
         name='otherMeetingConfigsClonableToFieldDecision',
@@ -1818,7 +1842,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write decision",
+        write_permission=WriteDecision,
     ),
     TextField(
         name='otherMeetingConfigsClonableToFieldDecisionSuite',
@@ -1834,7 +1858,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write decision",
+        write_permission=WriteDecision,
     ),
     TextField(
         name='otherMeetingConfigsClonableToFieldDecisionEnd',
@@ -1850,7 +1874,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write decision",
+        write_permission=WriteDecision,
     ),
     BooleanField(
         name='isAcceptableOutOfMeeting',
@@ -1939,7 +1963,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         optional=True,
-        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        write_permission=WriteItemMeetingManagerFields,
         default_output_type="text/x-html-safe",
         default_content_type="text/plain",
     ),
@@ -2314,7 +2338,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def showObservations(self):
         '''See doc in interfaces.py.'''
-        return self.attribute_is_used('observations')
+        item = self.getSelf()
+        return item.attribute_is_used('observations')
 
     security.declarePublic('show_budget_infos')
 
@@ -2522,10 +2547,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def mayTakeOver(self):
         '''Check doc in interfaces.py.'''
+        wfTool = api.portal.get_tool('portal_workflow')
         item = self.getSelf()
         res = False
         # user have WF transitions to trigger
-        if _checkPermission(ReviewPortalContent, item):
+        if wfTool.getTransitionsFor(item):
             res = True
         else:
             # item is decided and user is member of the proposingGroup
@@ -2595,6 +2621,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 item.setTakenOverBy(previousUserId)
         else:
             item.setTakenOverBy('')
+
+    security.declarePublic('mayTransfer')
+
+    def mayTransfer(self):
+        '''Check doc in interfaces.py.'''
+        item = self.getSelf()
+        res = False
+        if item.getOtherMeetingConfigsClonableTo():
+            tool = api.portal.get_tool('portal_plonemeeting')
+            res = tool.isManager(tool.getMeetingConfig(item))
+        return res
 
     security.declarePublic('mayAskEmergency')
 
@@ -4434,15 +4471,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # give 'Manager' role to current user to bypass transitions guard
             # and avoid permission problems when transitions are triggered
             with api.env.adopt_roles(['Manager', ]):
-                for tr in cfg.getTransitionsForPresentingAnItem(
-                        org_uid=item.getProposingGroup()):
-                    wfTool.doActionFor(item, tr)
+                # try to bypass by using the "validate" shortcut
+                trs = cfg.getTransitionsForPresentingAnItem(
+                    org_uid=item.getProposingGroup())
+                if "validate" in get_transitions(item):
+                    wfTool.doActionFor(item, "validate")
+                    trs = ["present"]
+                for tr in trs:
+                    if tr in get_transitions(item):
+                        wfTool.doActionFor(item, tr)
             # the item must be at least presented to a meeting, either we raise
             if not item.hasMeeting():
                 raise WorkflowException
             del item.isRecurringItem
-        except WorkflowException, wfe:
-            msg = REC_ITEM_ERROR % (item.id, tr, str(wfe))
+        except WorkflowException as wfe:
+            msg = REC_ITEM_ERROR % (item.id, tr, str(wfe) or repr(wfe))
             logger.warn(msg)
             api.portal.show_message(msg, request=item.REQUEST, type='error')
             sendMail(None, item, 'recurringItemWorkflowError')
@@ -5587,7 +5630,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         def _get_adviser_name(adviser):
             """Manage adviser name, will append selected __userid__ if any."""
-            name = adviser['name']
+            name = html.escape(adviser['name'])
             if adviser['userids']:
                 name += u" ({0})".format(
                     self._displayAdviserUsers(adviser['userids'], portal_url, tool))
@@ -7084,8 +7127,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def get_enable_clone_to_other_mc_fields(self, cfg, ignored_field_names=[]):
         """Return the ids of 'otherMeetingConfigsClonableToFieldXXX' that are enabled."""
         return [field_name for field_name in cfg.getUsedItemAttributes()
-                if field_name.startswith('otherMeetingConfigsClonableToField')
-                and field_name not in ignored_field_names]
+                if field_name.startswith('otherMeetingConfigsClonableToField') and
+                field_name not in ignored_field_names]
 
     security.declarePublic('doCloneToOtherMeetingConfig')
 
@@ -7241,32 +7284,33 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 destCfgTitle = safe_unicode(destMeetingConfig.Title())
                 # we will warn user if some transitions may not be triggered and
                 # triggerUntil is not reached
-                need_to_warn = False
+                need_to_warn = True
+                # try to bypass by using the "validate" shortcut
+                if triggerUntil in ["validate", "present"] and \
+                   "validate" in get_transitions(newItem):
+                    wfTool.doActionFor(newItem, "validate")
                 for tr in destMeetingConfig.getTransitionsForPresentingAnItem(
                         org_uid=newItem.getProposingGroup()):
-                    try:
-                        # special handling for the 'present' transition
-                        # that needs a meeting as 'PUBLISHED' object to work
-                        if tr == 'present' and \
-                           not isinstance(newItem.wfConditions()._check_required_data("presented"), No):
-                            if not meeting:
-                                plone_utils.addPortalMessage(
-                                    _('could_not_present_item_no_meeting_accepting_items',
-                                      mapping={'destMeetingConfigTitle': destCfgTitle}),
-                                    'warning')
-                                break
-                            newItem.REQUEST['PUBLISHED'] = meeting
+                    # special handling for the 'present' transition
+                    # that needs a meeting as 'PUBLISHED' object to work
+                    if tr == 'present' and \
+                       not isinstance(newItem.wfConditions()._check_required_data("presented"), No):
+                        if not meeting:
+                            plone_utils.addPortalMessage(
+                                _('could_not_present_item_no_meeting_accepting_items',
+                                  mapping={'destMeetingConfigTitle': destCfgTitle}),
+                                'warning')
+                            # avoid double warning message
+                            need_to_warn = False
+                            break
+                        newItem.REQUEST['PUBLISHED'] = meeting
+                    # trigger transition if available
+                    if tr in get_transitions(newItem):
                         wfTool.doActionFor(newItem, tr, comment=wf_comment)
-                    except WorkflowException:
-                        # in case something goes wrong, only warn the user by adding a portal message
-                        need_to_warn = True
-                        # we continue as transitions to present an item
-                        # may vary from a proposingGroup to another
-                        continue
-                    # if we are on the triggerUntil transition, we will stop at next loop
-                    if tr == triggerUntil:
-                        need_to_warn = False
-                        break
+                        # if we reach the triggerUntil transition, we will stop at next loop
+                        if tr == triggerUntil:
+                            need_to_warn = False
+                            break
                 # warn if triggerUntil was not reached
                 if need_to_warn:
                     plone_utils.addPortalMessage(
@@ -7676,7 +7720,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return self.hasMeeting() and checkMayQuickEdit(
             self, bypassWritePermissionCheck=True, onlyForManagers=True)
 
-    def displayProposingGroupUsers(self):
+    def mayDisplayProposingGroupUsers(self):
         """ """
         res = False
         proposingGroup = self.getProposingGroup()
@@ -7716,8 +7760,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # when p_check_is_attendee=True,
             # only keep held_positions that are also attendees for self
             res += [hp for hp in gic.get_representatives(at_date=meeting_date)
-                    if (not check_is_attendee or hp in attendees)
-                    and hp not in res]
+                    if (not check_is_attendee or hp in attendees) and
+                    hp not in res]
         return res
 
     def is_decided(self, cfg, item_state=None, positive_only=False):

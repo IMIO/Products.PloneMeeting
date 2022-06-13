@@ -11,9 +11,11 @@
                             expandedClass    python: expandRootLevel and ' expanded' or ''"
                 tal:attributes="class python: isFolder and 'folder' + expandedClass or expandedClass">
 
+                    <tal:comment replace="nothing">We compute the [baseUrl] so we can ram.cache the result,
+                    because if the full URL is cached, it contains the userId (.../userid/mymeetings/...)</tal:comment>
                     <a href="#"
                        class="expanded"
-                       tal:attributes="href string:${view/context/absolute_url}/@@createitemfromtemplate?templateUID=${itemUID};">
+                       tal:attributes="href string:[baseUrl]/@@createitemfromtemplate?templateUID=${itemUID};">
                         <span tal:content="item_title">Item title</span>
                     </a>
                     <ul>

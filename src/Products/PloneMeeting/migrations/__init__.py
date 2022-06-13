@@ -18,8 +18,7 @@ from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.content import object_values
 from imio.helpers.content import uuidToObject
 from imio.migrator.migrator import Migrator as BaseMigrator
-from imio.pyutils.system import memory
-from imio.pyutils.system import process_memory
+from imio.migrator.utils import ensure_upgraded
 from imio.pyutils.utils import replace_in_list
 from natsort import humansorted
 from operator import attrgetter
@@ -66,23 +65,6 @@ class Migrator(BaseMigrator):
             self.cfgsAdvicesInvalidation[cfg.getId()] = cfg.getEnableAdviceInvalidation()
             cfg.setEnableAdviceInvalidation(False)
         self.profile_name = u'profile-Products.PloneMeeting:default'
-        # update oo port for collective.documentgenerator
-        update_oo_config()
-        self.run_part = os.getenv('FUNC_PART', '')
-        self.display_mem = False
-
-    def is_in_part(self, part):
-        if self.run_part == part:
-            logger.info("DOING PART '{}'".format(part))
-            return True
-        elif self.run_part == '':
-            self.log_mem("PART {}".format(part))  # print intermediate part memory info if run in one step
-            return True
-        return False
-
-    def log_mem(self, tag=''):
-        if self.display_mem:
-            logger.info('Mem used {} at {}, ({})'.format(process_memory(), tag, memory()))
 
     def reorderSkinsLayers(self):
         """Reapply skins of Products.PloneMeeting + self.profile_name."""
@@ -344,8 +326,15 @@ class Migrator(BaseMigrator):
                 self.warnings.append('Replacements were done in POD template at %s'
                                      % pt_path_and_title)
             for info in infos:
-                data[pt_path_and_title].append("---- " + info.pod_expr)
-                data[pt_path_and_title].append("++++ " + info.new_pod_expr)
+                # collective.documentgenerator < 3.30 from which we use appy.pod S&R
+                # XXX to be removed when using collective.documentgenerator >= 3.30
+                if hasattr(info, 'pod_expr'):
+                    data[pt_path_and_title].append("---- " + info.pod_expr)
+                    data[pt_path_and_title].append("++++ " + info.new_pod_expr)
+                else:
+                    line = repr(info).replace('  These changes were done:', '>>>'). \
+                        replace('\n\n', '\n').rstrip('\n')
+                    data[pt_path_and_title].append(line)
         logger.info("REPLACEMENTS IN POD TEMPLATES")
         if not data:
             logger.info("=============================")

@@ -52,7 +52,6 @@ from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
-from Products.PloneMeeting.content.held_position import split_gender_and_number
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
@@ -61,6 +60,7 @@ from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import get_context_with_request
 from Products.PloneMeeting.utils import get_datagridfield_column_value
 from Products.PloneMeeting.utils import number_word
+from Products.PloneMeeting.utils import split_gender_and_number
 from z3c.form.interfaces import NO_VALUE
 from zope.annotation import IAnnotations
 from zope.globalrequest import getRequest
@@ -749,6 +749,27 @@ class CreatorsForFacetedFilterVocabulary(object):
 
 
 CreatorsForFacetedFilterVocabularyFactory = CreatorsForFacetedFilterVocabulary()
+
+
+class CreatorsWithNobodyForFacetedFilterVocabulary(CreatorsForFacetedFilterVocabulary):
+    """Add the 'Nobody' option.
+       Used by the 'Taken over by' faceted filter."""
+
+    def __call__(self, context):
+        """ """
+        res = super(CreatorsWithNobodyForFacetedFilterVocabulary, self).__call__(context)
+        # avoid to change original list of _terms
+        res = list(res._terms)
+        res.insert(0,
+                   SimpleTerm(EMPTY_STRING,
+                              EMPTY_STRING,
+                              translate('(Nobody)',
+                                        domain='PloneMeeting',
+                                        context=context.REQUEST)))
+        return SimpleVocabulary(res)
+
+
+CreatorsWithNobodyForFacetedFilterVocabularyFactory = CreatorsWithNobodyForFacetedFilterVocabulary()
 
 
 class MeetingDatesVocabulary(object):
@@ -1646,9 +1667,14 @@ class PMCategoryVocabulary(CategoryVocabulary):
         annex_group = get_group(annex_config, context)
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        isManager = tool.isManager(cfg)
-        # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
-        cfg_modified = cfg.modified()
+        # cfg may be None when using the quickupload portlet outside of PloneMeeting
+        # like in a "Documents" folder at the root of the site, but the quickupload
+        # form is initialized with content_category field
+        cfg_modified = isManager = None
+        if cfg is not None:
+            isManager = tool.isManager(cfg)
+            # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
+            cfg_modified = cfg.modified()
         # we do not cache per context as we manage missing terms using an adapter
         return annex_group.getId(), isManager, use_category_uid_as_token, cfg_modified, only_enabled
 
@@ -1711,9 +1737,14 @@ class PMCategoryTitleVocabulary(CategoryTitleVocabulary, PMCategoryVocabulary):
         annex_group = get_group(annex_config, context)
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        isManager = tool.isManager(cfg)
-        # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
-        cfg_modified = cfg.modified()
+        # cfg may be None when using the quickupload portlet outside of PloneMeeting
+        # like in a "Documents" folder at the root of the site, but the quickupload
+        # form is initialized with content_category field
+        cfg_modified = isManager = None
+        if cfg is not None:
+            isManager = tool.isManager(cfg)
+            # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
+            cfg_modified = cfg.modified()
         # we do not cache per context as we manage missing terms using an adapter
         return annex_group.getId(), isManager, cfg_modified, only_enabled
 

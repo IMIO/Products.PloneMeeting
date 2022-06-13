@@ -898,7 +898,7 @@ class testPerformances(PloneMeetingTestCase):
     @timecall
     def _check_permission(self, item, times=1):
         ''' '''
-        pm_logger.info('Call _check_permission {0} times'.format(times))
+        pm_logger.info('Call _checkPermission {0} times'.format(times))
         for time in range(times):
             _checkPermission("ModifyPortalContent", item)
 

@@ -138,4 +138,20 @@
       handler="Products.PloneMeeting.migrations.migrate_to_4201.migrate"
       profile="Products.PloneMeeting:default" />
 
+  <genericsetup:upgradeStep
+      title="Go to PloneMeeting 4202"
+      description=""
+      source="4201"
+      destination="4202"
+      handler="Products.PloneMeeting.migrations.migrate_to_4202.migrate"
+      profile="Products.PloneMeeting:default" />
+
+  <genericsetup:upgradeStep
+      title="Go to PloneMeeting 4203"
+      description="Make sure images in content use resolveuid"
+      source="4202"
+      destination="4203"
+      handler="Products.PloneMeeting.migrations.migrate_to_4203.migrate"
+      profile="Products.PloneMeeting:default" />
+
 </configure>

@@ -571,7 +571,7 @@ class testWorkflows(PloneMeetingTestCase):
             REC_ITEM_ERROR % (
                 "rec-item-developers",
                 "present",
-                "No workflow provides the '${action_id}' action."))
+                "WorkflowException()"))
 
     def test_pm_RecurringItemsRespectSortingMethodOnAddItemPrivacy(self):
         '''Tests the recurring items system when items are inserted
@@ -607,11 +607,8 @@ class testWorkflows(PloneMeetingTestCase):
         self.failIf(len(meeting.get_items()) != 3)
         # if transitions for presenting an item are not correct
         # the item will no be inserted in the meeting
-        # remove the last step 'present' from self.meetingConfig.transitionsForPresentingItem
-        self.assertTrue('present' in cfg.getTransitionsForPresentingAnItem())
-        transitionsForPresentingAnItemWithoutPresent = list(cfg.getTransitionsForPresentingAnItem())
-        transitionsForPresentingAnItemWithoutPresent.remove('present')
-        cfg.setTransitionsForPresentingAnItem(transitionsForPresentingAnItemWithoutPresent)
+        # enable categories so the recurring items are not presentable
+        cfg.setUseGroupsAsCategories(False)
         meeting2 = self.create('Meeting')
         self.failIf(len(meeting2.get_items()) != 0)
 
@@ -823,8 +820,8 @@ class testWorkflows(PloneMeetingTestCase):
         self.closeMeeting(meeting)
 
     def test_pm_WriteItemMeetingManagerReservedFieldsPermission(self):
-        """The permission 'PloneMeeting: Write item MeetingManager reserved fields' is
-           used to protect fields on the item that are only editable by MeetingManagers."""
+        """The permission WriteItemMeetingManagerFields is used to protect fields
+           on the item that are only editable by MeetingManagers."""
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         # find fields using the permission, it should not be editable by a MeetingMember

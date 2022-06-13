@@ -44,7 +44,7 @@
     <tal:displayShowHideAllLinks condition="python: view.displayShowHideAllLinks()">
         <a href="#" id="treeToggleExpand" i18n:translate="tree_show_all">Show all</a>&nbsp;/&nbsp;<a href="#" id="treeToggleCollapse" i18n:translate="tree_hide_all">Hide all</a>
     </tal:displayShowHideAllLinks>
-    <div id="tree" tal:define="tree view/createTemplatesTree">
+    <div id="tree" tal:define="tree python: view.renderedTemplatesTree">
       <ul tal:condition="tree">
         <tal:block replace="structure tree" />
       </ul>

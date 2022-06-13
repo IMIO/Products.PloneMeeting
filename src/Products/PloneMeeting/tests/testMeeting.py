@@ -2972,6 +2972,25 @@ class testMeetingType(PloneMeetingTestCase):
         # now meeting1 last number is considered 5
         self.assertEqual(unrestricted_view.findFirstItemNumberForMeeting(meeting3), 13)
 
+    def test_pm_FirstItemNumberSetOnClose(self):
+        """First item number is set on closure if it was still -1,
+           either it is left unchanged."""
+        self.changeUser('pmManager')
+        meeting1 = self.create('Meeting')
+        self.assertEqual(meeting1.first_item_number, -1)
+        self.closeMeeting(meeting1)
+        self.assertEqual(meeting1.first_item_number, 1)
+        meeting2 = self.create('Meeting')
+        self.assertEqual(meeting2.first_item_number, -1)
+        self.closeMeeting(meeting2)
+        self.assertEqual(meeting2.first_item_number, 3)
+        # if first_item_number is set, like for example to reinitialize
+        # the first meeting of the year, it is left unchanged
+        meeting3 = self.create('Meeting', first_item_number=1)
+        self.assertEqual(meeting3.first_item_number, 1)
+        self.closeMeeting(meeting3)
+        self.assertEqual(meeting3.first_item_number, 1)
+
     def test_pm_MeetingAddImagePermission(self):
         """A user able to edit at least one RichText field must be able to add images."""
         # just check that MeetingManagers may add images to an editable meeting
@@ -3512,6 +3531,9 @@ class testMeetingType(PloneMeetingTestCase):
             # error msg contains attendee name, ... manipulate it
             tmp_error_msg = error_msg.replace(
                 '1', str(index)).replace('member 4', 'member 4 & 5')
+            # replace Monsieur/Madame
+            tmp_error_msg = tmp_error_msg.replace('Monsieur Person3', 'Madame Person3')
+            tmp_error_msg = tmp_error_msg.replace('Monsieur Person4', 'Madame Person4')
             errors = invariants.validate(data)
             self.request.set('validate_attendees_done', False)
             self.assertEqual(len(errors), 1)

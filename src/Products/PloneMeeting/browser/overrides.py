@@ -6,8 +6,8 @@ from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.ckeditor.browser.ckeditorfinder import CKFinder
 from collective.ckeditor.browser.ckeditorview import AjaxSave
-from collective.contact.core import utils as contact_core_utils
-from collective.contact.plonegroup import utils as contact_plonegroup_utils
+from collective.contact.core import safe_utils as contact_core_safe_utils
+from collective.contact.plonegroup import utils as contact_plonegroup_safe_utils
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_plone_group_id
@@ -18,17 +18,17 @@ from collective.eeafaceted.collectionwidget.browser.views import FacetedDashboar
 from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGenerationView
 from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGeneratorLinksViewlet
 from collective.eeafaceted.dashboard.browser.views import RenderTermPortletView
-from collective.iconifiedcategory import utils as collective_iconifiedcategory_utils
+from collective.iconifiedcategory import safe_utils as collective_iconifiedcategory_safe_utils
 from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
-from imio.annex import utils as imio_annex_utils
+from imio.annex import safe_utils as imio_annex_safe_utils
 from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import uuidToObject
-from imio.history import utils as imio_history_utils
+from imio.history import safe_utils as imio_history_safe_utils
 from imio.history.browser.views import IHContentHistoryView
 from imio.history.browser.views import IHDocumentBylineViewlet
 from plone import api
@@ -50,13 +50,14 @@ from Products.CMFPlone.browser.ploneview import Plone
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from Products.PloneMeeting import utils as pm_utils
+from Products.PloneMeeting import safe_utils as pm_safe_utils
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import HAS_RESTAPI
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import get_annexes
@@ -65,11 +66,10 @@ from Products.PloneMeeting.utils import is_editing
 from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import set_field_from_ajax
-from zope.component import queryUtility
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
-from zope.ramcache.interfaces.ram import IRAMCache
 
+import html
 import sys
 
 
@@ -96,12 +96,6 @@ class PMGlobalSectionsViewlet(GlobalSectionsViewlet):
     '''
 
     def selectedTabs(self, default_tab='index_html', portal_tabs=()):
-        # setup ram.cache utility
-        # change if default value still used
-        ramcache = queryUtility(IRAMCache)
-        if ramcache.maxEntries == 1000:
-            ramcache.update(maxEntries=100000, maxAge=2400, cleanupInterval=600)
-
         plone_url = api.portal.get_tool('portal_url')()
         plone_url_len = len(plone_url)
         request = self.request
@@ -1024,25 +1018,25 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             'cfg': cfg,
             'meetingConfig': cfg,
             'meeting': self.context.getMeeting()
-                if self.context.__class__.__name__ == 'MeetingItem' else None,
+            if self.context.__class__.__name__ == 'MeetingItem' else None,
             'itemUids': {},
             'user': api.user.get_current(),
             'podTemplate': pod_template,
             'catalog': api.portal.get_tool('portal_catalog'),
             # give ability to access annexes related methods
-            'collective_iconifiedcategory_utils': collective_iconifiedcategory_utils,
+            'collective_iconifiedcategory_utils': collective_iconifiedcategory_safe_utils,
             # collective.contact.core.utils
-            'contact_core_utils': contact_core_utils,
+            'contact_core_utils': contact_core_safe_utils,
             # collective.contact.plonegroup.utils
-            'contact_plonegroup_utils': contact_plonegroup_utils,
+            'contact_plonegroup_utils': contact_plonegroup_safe_utils,
             # imio.annex utils
-            'imio_annex_utils': imio_annex_utils,
+            'imio_annex_utils': imio_annex_safe_utils,
             # imio.history utils
-            'imio_history_utils': imio_history_utils,
+            'imio_history_utils': imio_history_safe_utils,
             # make methods defined in utils available
             # kept as 'utils' for backward compatibility, but we should use 'pm_utils'
-            'utils': pm_utils,
-            'pm_utils': pm_utils
+            'utils': pm_safe_utils,
+            'pm_utils': pm_safe_utils
         }
         return specific_context
 
@@ -1214,7 +1208,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         annex_file = namedfile.NamedBlobFile(
             generated_template_data,
             filename=filename)
-        annex_type_category_id = collective_iconifiedcategory_utils.calculate_category_id(annex_type)
+        annex_type_category_id = collective_iconifiedcategory_safe_utils.calculate_category_id(annex_type)
         annex_type_group = annex_type.get_category_group()
         to_print_default = annex_type_group.to_be_printed_activated and annex_type.to_print or False
         confidential_default = annex_type_group.confidentiality_activated and annex_type.confidential or False
@@ -1514,13 +1508,18 @@ class PMUtils(Utils):
             vocab_value = _(vocab_value)
             nvalues.append(vocab_value)
         # XXX begin changes by Products.PloneMeeting
-        # value = ', '.join(nvalues)
-        value = u'-'
-        if nvalues:
-            if len(nvalues) == 1:
-                value = nvalues[0]
-            else:
-                value = '- ' + '<br />- '.join(nvalues)
+        # avoid escaping when generating POD templates
+        if not self.request.getURL().endswith('/document-generation'):
+            nvalues = [html.escape(val) for val in nvalues]
+        if IConfigElement.providedBy(self.context):
+            value = u'-'
+            if nvalues:
+                if len(nvalues) == 1:
+                    value = nvalues[0]
+                else:
+                    value = '- ' + '<br />- '.join(nvalues)
+        else:
+            value = ', '.join(nvalues)
         # XXX end changes by Products.PloneMeeting
         return value
 

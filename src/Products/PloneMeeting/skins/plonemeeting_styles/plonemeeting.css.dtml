@@ -2,7 +2,7 @@
 /* <dtml-with imioapps_properties> */
 /* <dtml-call "REQUEST.set('portal_url', portal_url())"> */
 
-fieldset {
+#content fieldset {
    line-height: 1em;
    margin: 0.5em 0;
 }
@@ -397,6 +397,13 @@ div.viewlet_workflowstate span.state-pre_accepted {
 .state-accepted_out_of_meeting_emergency,
 .state-pre_accepted {
    color: green !important;
+}
+div.viewlet_workflowstate span.state-transfered {
+    background-color: #6471A6;
+    border-color: #6471A6;
+}
+.state-transfered {
+   color: #6471A6 !important;
 }
 div.viewlet_workflowstate span.state-refused {
     background-color: violet;
@@ -936,10 +943,6 @@ div.meeting-before-faceted-infos {
     display: none;
 }
 
-/* plone.app.search, hide some elements while using the @@search until we use it, see ticket #5515 */
-#search-results-bar dl, #search-results-bar #searchResultsSort {
-    display: none;
-}
 .searchPage #rss-subscription, .searchPage h1 {
     display: none;
 }
@@ -1665,9 +1668,12 @@ div.customAdviceMessage {
 }
 
 /* width of input used on the meeting_view to change item number,
-   set it to auto so it takes required width (we may have numbers like 239.24 */
+   "auto" does not work with Chrome... */
 input[id^='value_moveAction_'] {
-    width: auto;
+    width: 40px;
+}
+img[id^='moveAction_'] {
+    padding-top: 5px;
 }
 
 div.dashboard-annexes {
@@ -2425,12 +2431,12 @@ div.overlay div.qq-uploader li {
     margin-left: 0.5em;
 }
 
-div.static-infos {
-   margin-top: 0.5em;
-}
-
 #content td.table_widget_label {
     width: 200px;
+}
+span.itemReference {
+  margin-top: 0.25em;
+  display: block;
 }
 
 /* committees datagridfield edit on meeting */

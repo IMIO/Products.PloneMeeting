@@ -14,7 +14,6 @@ from imio.helpers.content import get_back_relations
 from imio.helpers.content import uuidsToObjects
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
-from plone.memoize import ram
 from plone.supermodel import model
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.events import _invalidateOrgRelatedCachedVocabularies

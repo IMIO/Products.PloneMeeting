@@ -73,7 +73,7 @@ class testViews(PloneMeetingTestCase):
         view()
         # only 2 itemTemplates available to 'pmCreator1'
         self.assertEqual(len(cfg.getItemTemplates(filtered=True)), 2)
-        templatesTree = view.getTemplatesTree()
+        templatesTree = view._getTemplatesTree()
         self.assertEqual(len(templatesTree['children']), 2)
         # no sub children
         self.assertFalse(templatesTree['children'][0]['children'])
@@ -84,9 +84,9 @@ class testViews(PloneMeetingTestCase):
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
         view()
         self.assertEqual(len(cfg.getItemTemplates(filtered=True)), 3)
-        self.assertEqual(len(view.getTemplatesTree()['children']), 3)
+        self.assertEqual(len(view._getTemplatesTree()['children']), 3)
         # no sub children
-        templatesTree = view.getTemplatesTree()
+        templatesTree = view._getTemplatesTree()
         self.assertFalse(templatesTree['children'][0]['children'])
         self.assertFalse(templatesTree['children'][1]['children'])
         self.assertFalse(templatesTree['children'][2]['children'])
@@ -106,7 +106,7 @@ class testViews(PloneMeetingTestCase):
         self.request.RESPONSE.setHeader('location', '')
         self.assertEqual(self.request.RESPONSE.status, 200)
         # the default item template
-        templatesTree = view.getTemplatesTree()
+        templatesTree = view._getTemplatesTree()
         itemTemplate = templatesTree['children'][0]['item']
         self.request.form['templateUID'] = itemTemplate.UID
         view()
@@ -120,7 +120,7 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(len(pmFolder.objectValues('MeetingItem')), 1)
         self.assertEqual(pmFolder.objectValues('MeetingItem')[-1].getId(), itemTemplate.getId)
         # with another template
-        templatesTree = view.getTemplatesTree()
+        templatesTree = view._getTemplatesTree()
         itemTemplate = templatesTree['children'][1]['item']
         self.request.form['templateUID'] = itemTemplate.UID
         view()
@@ -133,6 +133,42 @@ class testViews(PloneMeetingTestCase):
         # one item created in the user pmFolder
         self.assertEqual(len(pmFolder.objectValues('MeetingItem')), 2)
         self.assertEqual(pmFolder.objectValues('MeetingItem')[-1].getId(), itemTemplate.getId)
+
+    def test_pm_ItemTemplatesCaching(self):
+        '''ItemTemplateView.createTemplatesTree uses ram.cache.'''
+        # main_template is taking ajax_load into account
+        self.request['ajax_load'] = '123456789'
+        self.changeUser('pmCreator1')
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        pmCreator1_rendered_view = view()
+        pmCreator1_groups = self.member.getGroups()
+        self.assertTrue('/pmCreator1/' in pmCreator1_rendered_view)
+        self.assertFalse('/pmCreator1b/' in pmCreator1_rendered_view)
+        # template2 is restricted to vendors, it is not useable by developers creators
+        template2_uid = self.meetingConfig.itemtemplates.template2.UID()
+        self.assertFalse(template2_uid in pmCreator1_rendered_view)
+
+        # with a user with same groups, the cache is used but the result is patched
+        self.changeUser('pmCreator1b')
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        pmCreator1b_rendered_view = view()
+        self.assertEqual(pmCreator1_groups, self.member.getGroups())
+        self.assertNotEqual(pmCreator1_rendered_view, pmCreator1b_rendered_view)
+        self.assertFalse('/pmCreator1/' in pmCreator1b_rendered_view)
+        self.assertTrue('/pmCreator1b/' in pmCreator1b_rendered_view)
+        self.assertFalse(template2_uid in pmCreator1b_rendered_view)
+
+        # another user having other Plone groups
+        self.changeUser('pmCreator2')
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        pmCreator2_rendered_view = view()
+        self.assertNotEqual(pmCreator1_groups, self.member.getGroups())
+        self.assertNotEqual(pmCreator1_rendered_view, pmCreator2_rendered_view)
+        self.assertTrue('/pmCreator2/' in pmCreator2_rendered_view)
+        self.assertTrue(template2_uid in pmCreator2_rendered_view)
 
     def test_pm_ItemTemplateView(self):
         '''As some fields behaves differently on an item template,
@@ -313,7 +349,7 @@ class testViews(PloneMeetingTestCase):
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
         view()
         # 2 elements, and it is items
-        templatesTree = view.getTemplatesTree()
+        templatesTree = view._getTemplatesTree()
         self.assertEqual(len(templatesTree['children']), 2)
         self.assertEqual(templatesTree['children'][0]['item'].meta_type, 'MeetingItem')
         self.assertEqual(templatesTree['children'][1]['item'].meta_type, 'MeetingItem')
@@ -328,7 +364,7 @@ class testViews(PloneMeetingTestCase):
         # we have the subfolder and item under it
         self.changeUser('pmCreator1')
         view()
-        templatesTree = view.getTemplatesTree()
+        templatesTree = view._getTemplatesTree()
         self.assertEqual(len(templatesTree['children']), 3)
         self.assertEqual(templatesTree['children'][0]['item'].meta_type, 'MeetingItem')
         self.assertEqual(templatesTree['children'][1]['item'].meta_type, 'MeetingItem')
@@ -346,14 +382,14 @@ class testViews(PloneMeetingTestCase):
         newItemTemplate.reindexObject()
         self.changeUser('pmCreator1')
         view()
-        templatesTree = view.getTemplatesTree()
+        templatesTree = view._getTemplatesTree()
         self.assertEqual(len(templatesTree['children']), 3)
         # but available to 'pmCreator2'
         self.changeUser('pmCreator2')
         pmFolder = self.getMeetingFolder()
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
         view()
-        templatesTree = view.getTemplatesTree()
+        templatesTree = view._getTemplatesTree()
         self.assertEqual(len(templatesTree['children']), 5)
         self.assertEqual(templatesTree['children'][4]['item'].id, 'subfolder1')
 
@@ -376,7 +412,7 @@ class testViews(PloneMeetingTestCase):
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
         view()
         # we have one isolated itemtemplate and complete path the itemtemplate in subsubfolder
-        templatesTree = view.getTemplatesTree()
+        templatesTree = view._getTemplatesTree()
         self.assertEqual(len(templatesTree['children']), 3)
         self.assertEqual(templatesTree['children'][0]['item'].id, ITEM_DEFAULT_TEMPLATE_ID)
         self.assertEqual(templatesTree['children'][1]['item'].id, 'template1')
@@ -1806,7 +1842,7 @@ class testViews(PloneMeetingTestCase):
                          'attachment;filename=o1.zip')
         # we received a Zip file
         m = magic.Magic()
-        self.assertEqual(m.from_buffer(data), 'Zip archive data, at least v2.0 to extract')
+        self.assertTrue(m.from_buffer(data).startswith('Zip archive data, at least v2.0 to extract'))
         # annexes without a filename are ignored
         annex1.file.filename = None
         annex2.file.filename = None
@@ -2438,9 +2474,9 @@ class testViews(PloneMeetingTestCase):
             helper.get_contact_infos([], 'pmManager'),
             {'held_position': person.held_pos1,
              'held_position_label': u'Assembly member 1',
-             'held_position_prefixed_label': u'Assembly member 1',
-             'held_position_prefixed_label_by': u'Assembly member 1',
-             'held_position_prefixed_label_to': u'Assembly member 1',
+             'held_position_prefixed_label': u'L\'Assembly member 1',
+             'held_position_prefixed_label_by': u'de l\'Assembly member 1',
+             'held_position_prefixed_label_to': u'à l\'Assembly member 1',
              'label_prefix': '',
              'label_prefix_by': '',
              'label_prefix_to': '',
@@ -2452,9 +2488,9 @@ class testViews(PloneMeetingTestCase):
             helper.get_contact_infos(['default'], 'pmManager'),
             {'held_position': person.held_pos1,
              'held_position_label': u'Assembly member 1',
-             'held_position_prefixed_label': u'Assembly member 1',
-             'held_position_prefixed_label_by': u'Assembly member 1',
-             'held_position_prefixed_label_to': u'Assembly member 1',
+             'held_position_prefixed_label': u'L\'Assembly member 1',
+             'held_position_prefixed_label_by': u'de l\'Assembly member 1',
+             'held_position_prefixed_label_to': u'à l\'Assembly member 1',
              'label_prefix': '',
              'label_prefix_by': '',
              'label_prefix_to': '',
@@ -2465,9 +2501,9 @@ class testViews(PloneMeetingTestCase):
             helper.get_contact_infos(['default2'], 'pmManager'),
             {'held_position': newhp,
              'held_position_label': u'New held position',
-             'held_position_prefixed_label': u'New held position',
-             'held_position_prefixed_label_by': u'New held position',
-             'held_position_prefixed_label_to': u'New held position',
+             'held_position_prefixed_label': u'Le New held position',
+             'held_position_prefixed_label_by': u'du New held position',
+             'held_position_prefixed_label_to': u'au New held position',
              'label_prefix': '',
              'label_prefix_by': '',
              'label_prefix_to': '',
@@ -2663,8 +2699,11 @@ class testViews(PloneMeetingTestCase):
         view = item.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
         data = view.get_base_generation_context(helper, None)
+        # we do not have the complete utils.py but just the safe_utils.py
         from Products.PloneMeeting import utils
-        self.assertEqual(data['pm_utils'], utils)
+        from Products.PloneMeeting import safe_utils
+        self.assertNotEqual(data['pm_utils'], utils)
+        self.assertEqual(data['pm_utils'], safe_utils)
         self.assertEqual(data['self'], item)
         self.assertEqual(data['tool'], self.tool)
         self.assertEqual(data['cfg'], cfg)

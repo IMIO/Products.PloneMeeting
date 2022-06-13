@@ -940,7 +940,7 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
 
 <metal:proposingGroupUsers define-macro="proposingGroupUsers" i18n:domain="PloneMeeting">
 <tal:comment replace="nothing">Tooltipster displaying proposing group users.</tal:comment>
-  <acronym tal:condition="context/displayProposingGroupUsers">
+  <acronym tal:condition="python: context.mayDisplayProposingGroupUsers()">
     <a onclick="event.preventDefault();"
        class="tooltipster-group-users deactivated"
        style='display: inline-block; padding: 0'

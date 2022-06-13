@@ -2,14 +2,113 @@ Changelog
 =========
 
 
-4.2rc24 (unreleased)
+4.2rc28 (unreleased)
+--------------------
+
+- Back to previous behavior for `MeetingItem.mayTakeOver`, do not check
+  `ReviewPortalContent` permission but if some WF transitions are triggerable, indeed
+  some transitions may be triggerable even if user does not have the `ReviewPortalContent`
+  permission, for example when using the `waiting_advices` WF adaptation.
+  [gbastien]
+- Added `utils.get_prefixed_gn_position_name` to get a prefixed gendered/numbered
+  `position_type` from a list of `contacts` and a `position_type`.
+  Factorized code used by `PMHeldPosition.get_prefix_for_gender_and_number`
+  into `utils._prefixed_gn_position_name`.
+  [gbastien]
+- Optimize places where `MeetingConfig.getTransitionsForPresentingAnItem` is used
+  (recurrings items, duplicate and validate, send to other MC and present) to
+  bypass the entire item validation WF if transition `validate` is available directly.
+  [gbastien]
+- Added WFAdaptations `transfered/transfered_and_duplicated` that will add a
+  `transfer` transition to the `transfered` state to the item workflow.
+  This is similar to `accepted_out_of_meeting` but is triggerable by
+  `MeetingManagers` if item is sendable to other `MeetingConfigs`.
+  [gbastien]
+- Added possibility to create user fs directly in content/addUsers.
+  [odelaere]
+- Avoid having the full `utils.py` files available in POD templates,
+  select available functions in a `safe_utils.py` file.
+  [gbastien]
+- Fixed cachekeys for `ItemToDiscussView` and `ItemIsSignedView`, as path to
+  image is cached, we need to check the `portal_url` in the cachekey.
+  [gbastien]
+- CSS, removed double definition of top margin for `static-infos` section that
+  was leading to too much space at the top of item reference in dashboards.
+  [gbastien]
+- Make `Migrator.updatePODTemplatesCode` output format compatible with `collective.documentgenerator`
+  builtin `Search&Replace` or when using `appy.pod` S&R (`collective.documentgenerator>3.30`).
+  [gbastien]
+- Fixed `utils.transformAllRichTextFields` that was losing the `resolveuid` of
+  images for AT types (`MeetingItem`) when parameter `onlyField` was used
+  (called from quick edit). Added upgrade step to `4203` to fix this, every items
+  since migration to 4200 will be fixed as bug was introduced since version 4200...
+  [gbastien]
+- Avoid rendering malicious content by escaping places where HTML is rendered.
+  [gbastien]
+- Fixed an issue in `PMDataChangesHistoryAdapter`. The tooltip was mentioning the wrong actor.
+  [aduchene]
+- When handling `meeting.first_item_number` on meeting closure, only compute
+  number if it is still `-1`, in other cases, do nothing, this will manage the case
+  when reinitializing the first item number at the beginning of a new year.
+  [gbastien]
+- Added a direct link to the item annexes from the dashboards.
+  [gbastien]
+
+4.2rc27 (2022-05-17)
+--------------------
+
+- Added `Migrate_To_4202._fixPreAcceptedWFA` necessary to fix applications using
+  the `pre_accepted WFAdaptation` that was fixed in previous version.
+  [gbastien]
+- Fixed `@@createitemfromtemplate` that was raising an `Unhautorized` because
+  cached result holds the url including the member id and this was failing when
+  cache was shared between users having same groups.
+  Also fixed constrainTypes on `searches_...` folders of each users to not be able
+  to add anything to it.
+  [gbastien]
+
+4.2rc26 (2022-05-16)
+--------------------
+
+- Moved `IRAMCache` configuration to a cleaner place, the `ZopeProcessStarting` event.
+  [gbastien]
+- Fixed `portlet quickupload` when used on a `Folder` outside the application
+  (like a `Documents` folder managed manually at the root of the site).
+  [gbastien]
+- Fixed `MeetingItem.showObservations` that is an adaptable method.
+  [gbastien]
+- Fixed `present` transition sometimes not available in `@@meeting_available_items_view`
+  when using the `async_actions` because `MeetingItemWorkflowConditions._publishedObjectIsMeeting`
+  was returning `False` even when on a `Meeting`.
+  [gbastien]
+- Removed `is_in_part` management from `Migrator` as it was moved to `imio.migrator`.
+  [gbastien]
+- Fixed vocabulary used by the `Taken over by` faceted filter to be able to
+  select a value `Nobody` to get items taken over by nobody.
+  [gbastien]
+- Removed `livesearch` override, now overrided and unified in `plonetheme.imioapps`.
+  [gbastien]
+- Fixed the `pre_accepted WFAdaptation` that was acting like a decided state
+  but actually must behaves like an editable item in a meeting (like `presented`
+  or `itemfrozen`) and must be fully editable by `MeetingManagers`.
+  [gbastien]
+
+4.2rc25 (2022-05-10)
+--------------------
+
+- Completed fix about annex type icon wronlgy displayed in meeting
+  `@@categorized-annexes` to users not able to access confidential annexes.
+  [gbastien]
+
+4.2rc24 (2022-05-10)
 --------------------
 
 - Changed from 90° to 270° image rotation in `BaseDGHV.image_orientation` because it is
   rotated clockwise with imagemagick, in pod templates including annexes.
   [aduchene]
-- Manage `MeetingConfig.defaultAdviceHiddenDuringRedaction` only when a new advice is added,
-  not when advice is asked_again, see https://support.imio.be/browse/PM-3883.
+- Manage `MeetingConfig.defaultAdviceHiddenDuringRedaction` when a new advice is added,
+  and when advice is asked_again the same way (in the edit form) and display a message
+  to the adviser.
   [gbastien]
 - Display `global_actions` on the advice view.
   [gbastien]
@@ -25,7 +124,10 @@ Changelog
   [gbastien]
 - Completed the `restapi_call` debug mode, log the request `BODY` when request is a `POST`.
   [gbastien]
-- Added a direct link to the item annexes from the dashboards.
+- Fixed item number input `width` on meeting view, `Chrome` does not hanle `auto` as `FF`.
+  [gbastien]
+- In `@@load_held_position_back_refs`, the view that show where a hed_position is used,
+  do display the `...` only when more than 10 elements found.
   [gbastien]
 
 4.2rc23 (2022-05-03)

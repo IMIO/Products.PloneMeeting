@@ -2829,6 +2829,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'accepted_out_of_meeting_and_duplicated',
                      'accepted_out_of_meeting_emergency',
                      'accepted_out_of_meeting_emergency_and_duplicated',
+                     'transfered',
+                     'transfered_and_duplicated',
                      'meetingmanager_correct_closed_meeting')
 
     def getId(self, real_id=False):
@@ -3488,6 +3490,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getItemDecidedStates(self):
         '''Return list of item decided states.'''
+        # take care that "pre_accepted" is NOT a decided state
         item_decided_states = [
             'accepted',
             'accepted_but_modified',
@@ -3498,7 +3501,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             'marked_not_applicable',
             'postponed_next_meeting',
             'refused',
-            'removed']
+            'removed',
+            'transfered']
         item_decided_states += self.adapted().extra_item_decided_states()
         return item_decided_states
 
@@ -3512,7 +3516,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             'accepted',
             'accepted_but_modified',
             'accepted_out_of_meeting',
-            'accepted_out_of_meeting_emergency']
+            'accepted_out_of_meeting_emergency',
+            'transfered']
         item_positive_decided_states += self.adapted().extra_item_positive_decided_states()
         return item_positive_decided_states
 
@@ -4433,8 +4438,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         # if a committees_ field is selected, then committees must be selected as well
         # except the committees_observations field that may be used alone
-        committees_attr = [v for v in newValue if v.startswith('committees_')
-                           and v not in ('committees_observations', )]
+        committees_attr = [v for v in newValue if v.startswith('committees_') and
+                           v not in ('committees_observations', )]
         if committees_attr and "committees" not in newValue:
             return translate('committees_required', domain=pm, context=self.REQUEST)
 
@@ -4518,6 +4523,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             return msg
         if 'accepted_out_of_meeting_emergency' in values and \
            'accepted_out_of_meeting_emergency_and_duplicated' in values:
+            return msg
+        if 'transfered' in values and 'transfered_and_duplicated' in values:
             return msg
         if 'no_decide' in values and 'hide_decisions_when_under_writing' in values:
             return msg
@@ -4658,7 +4665,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # this will remove the 'decisions_published' state for Meeting
             # check that no more meetings are in this state
             if catalog.unrestrictedSearchResults(
-                    portal_type=self.getMeetingTypeName(), review_state='decisions_published'):
+                    portal_type=self.getMeetingTypeName(),
+                    review_state='decisions_published'):
                 return translate('wa_removed_hide_decisions_when_under_writing_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4667,7 +4675,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # this will remove the 'accepted_out_of_meeting' state for Item
             # check that no more items are in this state
             if catalog.unrestrictedSearchResults(
-                    portal_type=self.getItemTypeName(), review_state='accepted_out_of_meeting'):
+                    portal_type=self.getItemTypeName(),
+                    review_state='accepted_out_of_meeting'):
                 return translate('wa_removed_accepted_out_of_meeting_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4676,8 +4685,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # this will remove the 'accepted_out_of_meeting_emergency' state for Item
             # check that no more items are in this state
             if catalog.unrestrictedSearchResults(
-                    portal_type=self.getItemTypeName(), review_state='accepted_out_of_meeting_emergency'):
+                    portal_type=self.getItemTypeName(),
+                    review_state='accepted_out_of_meeting_emergency'):
                 return translate('wa_removed_accepted_out_of_meeting_emergency_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'transfered' in removed or 'transfered_and_duplicated' in removed:
+            # this will remove the 'transfered' state for Item
+            # check that no more items are in this state
+            if catalog.unrestrictedSearchResults(
+                    portal_type=self.getItemTypeName(),
+                    review_state='transfered'):
+                return translate('wa_removed_transfered_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
         if 'postpone_next_meeting' in removed:
@@ -7446,7 +7465,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return folders
 
     def _synchSearches(self, folder=None):
-        """Synchronize the searches for a givan meetingFolder p_folder, if it is not given,
+        """Synchronize the searches for a given meetingFolder p_folder, if it is not given,
            every user folder for this MeetingConfig will be synchronized.
            We will :
            - remove every relevant folders from the given p_folder (folders searches_items, ...);
@@ -7464,16 +7483,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             folders = self._get_all_meeting_folders()
 
         for folder in folders:
-            logger.info("Synchronizing searches with folder at '{0}'".format('/'.join(folder.getPhysicalPath())))
+            logger.info("Synchronizing searches with folder at '{0}'".format(
+                '/'.join(folder.getPhysicalPath())))
             enableFacetedDashboardFor(folder,
                                       xmlpath=os.path.dirname(__file__) +
                                       '/faceted_conf/default_dashboard_widgets.xml')
 
             # subFolders to create
             subFolderInfos = [(cfgFolder.getId(), cfgFolder.Title()) for cfgFolder in
-                              self.searches.objectValues() if cfgFolder.getId().startswith('searches_')]
+                              self.searches.objectValues()
+                              if cfgFolder.getId().startswith('searches_')]
             # remove searches_* folders from the given p_folder
-            toDelete = [folderId for folderId in folder.objectIds() if folderId.startswith('searches_')]
+            toDelete = [folderId for folderId in folder.objectIds()
+                        if folderId.startswith('searches_')]
             folder.manage_delObjects(toDelete)
 
             # create relevant folders and activate faceted on it
@@ -7491,6 +7513,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 else:
                     # meeting related searches
                     alsoProvides(subFolderObj, IMeetingDashboardBatchActionsMarker)
+                # disable possibility to add anything to this folder
+                constrain = IConstrainTypes(subFolderObj)
+                constrain.setConstrainTypesMode(1)
+                allowedTypes = []
+                constrain.setLocallyAllowedTypes(allowedTypes)
+                constrain.setImmediatelyAddableTypes(allowedTypes)
+                # reindex object
                 subFolderObj.reindexObject()
 
     def getMeetingStatesAcceptingItemsForMeetingManagers(self):

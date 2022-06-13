@@ -274,13 +274,14 @@ class UserDescriptor(Descriptor):
     '''Plone user descriptor, useful to create Plone users in tests.'''
 
     def __init__(self, id, globalRoles=[], email='user AT plonemeeting.org',
-                 password=DEFAULT_USER_PASSWORD, fullname=None):
+                 password=DEFAULT_USER_PASSWORD, fullname=None, create_member_area=False):
         self.id = id
         self.globalRoles = globalRoles
         self.email = email.replace(' AT ', '@')  # Anti-spam
         self.password = password
         self.fullname = fullname
         self.ploneGroups = []  # ~[PloneGroupDescriptor]~
+        self.create_member_area = create_member_area
 
 
 class PersonDescriptor(Descriptor):
@@ -288,12 +289,12 @@ class PersonDescriptor(Descriptor):
     excludedFields = ['held_positions']
 
     def __init__(self, id, lastname, firstname,
-                 gender=u'M', person_title=u'Monsieur', held_positions=[]):
+                 gender=u'M', held_positions=[]):
         self.id = id
         self.gender = gender
         self.lastname = lastname
         self.firstname = firstname
-        self.person_title = person_title
+        self.person_title = u'Monsieur' if gender == u'M' else u'Madame'
         self.held_positions = held_positions
         self.firstname_abbreviated = None
         self.photo = None

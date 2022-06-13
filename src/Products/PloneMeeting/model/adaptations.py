@@ -463,7 +463,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         # link state and transitions
         wf.states[new_state_id].setProperties(
             title=new_state_id, description='',
-            transitions=wf.states[new_state_id].transitions+back_transition_ids)
+            transitions=wf.states[new_state_id].transitions + back_transition_ids)
 
         # create transition between last_returned_state_id and new_state
         transition_id = 'goTo_%s' % (new_state_id)
@@ -482,7 +482,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
 
         wf.states[last_returned_state_id].setProperties(
             title=last_returned_state_id, description='',
-            transitions=wf.states[last_returned_state_id].transitions+(transition_id, ))
+            transitions=wf.states[last_returned_state_id].transitions + (transition_id, ))
 
         # use same permissions as used by the base_state
         base_state = wf.states[base_state_id]
@@ -997,6 +997,8 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                                if 'accept' in state.transitions][0]
             back_transition_id = [tr for tr in itemWorkflow.states['accepted'].transitions
                                   if tr.startswith('backTo')][0]
+            # we use the origin_state_id as base_state_id because
+            # MeetingManager must be able to edit the item
             new_state = _addIsolatedState(
                 new_state_id='pre_accepted',
                 origin_state_id=origin_state_id,
@@ -1004,7 +1006,8 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 origin_transition_guard_expr_name='mayDecide()',
                 back_transition_guard_expr_name="mayCorrect('%s')" % origin_state_id,
                 back_transition_id=back_transition_id,
-                itemWorkflow=itemWorkflow)
+                itemWorkflow=itemWorkflow,
+                base_state_id=origin_state_id, )
             # ... then add output transitions to 'accepted' and 'accepted_but_modified'
             out_transitions = new_state.transitions
             out_transitions += ('accept', )
@@ -1036,6 +1039,17 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 origin_transition_guard_expr_name='mayAccept_out_of_meeting_emergency()',
                 back_transition_guard_expr_name="mayCorrect('validated')",
                 back_transition_id='backToValidatedFromAcceptedOutOfMeetingEmergency',
+                itemWorkflow=itemWorkflow)
+
+        # "transfered" add state 'transfered' from 'validated' in the item WF
+        elif wfAdaptation in ['transfered', 'transfered_and_duplicated']:
+            _addIsolatedState(
+                new_state_id='transfered',
+                origin_state_id='validated',
+                origin_transition_id='transfer',
+                origin_transition_guard_expr_name='mayTransfer()',
+                back_transition_guard_expr_name="mayCorrect('validated')",
+                back_transition_id='backToValidatedFromTransfered',
                 itemWorkflow=itemWorkflow)
 
         # "presented_item_back_to_XXX" allows the MeetingManagers to send a presented

@@ -99,7 +99,11 @@ def advice_hide_during_redactionDefaultValue(data):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(data.context)
     # manage when portal_type accessed from the Dexterity types configuration
-    return cfg and published.ti.id in cfg.getDefaultAdviceHiddenDuringRedaction() or False
+    hidden = cfg and published.ti.id in cfg.getDefaultAdviceHiddenDuringRedaction() or False
+    if hidden:
+        api.portal.show_message(_("advice_hide_during_redaction_set_auto_to_true"),
+                                request=data.context.REQUEST)
+    return hidden
 
 
 class MeetingAdvice(Container):

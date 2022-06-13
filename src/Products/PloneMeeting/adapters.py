@@ -377,6 +377,14 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                   default=translate('accepted_out_of_meeting_emergency',
                                                     domain="plone",
                                                     context=self.request))))
+        elif self.itemState == 'transfered':
+            res.append(('transfer.png',
+                        translate('icon_help_transfered',
+                                  domain="PloneMeeting",
+                                  context=self.request,
+                                  default=translate('transfered',
+                                                    domain="plone",
+                                                    context=self.request))))
         elif self.itemState == 'pre_accepted':
             res.append(('pre_accepted.png', translate('icon_help_pre_accepted',
                                                       domain="PloneMeeting",
@@ -629,12 +637,13 @@ class MeetingPrettyLinkAdapter(PrettyLinkAdapter):
         if self.context.adopts_next_agenda_of:
             tool = api.portal.get_tool('portal_plonemeeting')
             res.append(('adopts_next_agenda_of.png',
-                        translate('this_meeting_adopts_next_agenda_of',
-                                  mapping={'cfg_titles': u", ".join([
-                                    safe_unicode(tool.get(cfg_id).Title()) for cfg_id
-                                    in self.context.adopts_next_agenda_of])},
-                                  domain="PloneMeeting",
-                                  context=self.request)))
+                        translate(
+                            'this_meeting_adopts_next_agenda_of',
+                            mapping={'cfg_titles': u", ".join([
+                                safe_unicode(tool.get(cfg_id).Title())
+                                for cfg_id in self.context.adopts_next_agenda_of])},
+                            domain="PloneMeeting",
+                            context=self.request)))
         return res
 
 
@@ -739,7 +748,7 @@ class PMDataChangesHistoryAdapter(ImioWfHistoryAdapter):
                     else:
                         newValue = findNewValue(self.context, name, full_datachanges_history, i - 1)
                         # Compute the diff between oldValue and newValue
-                        iMsg, dMsg = getHistoryTexts(self.context, event)
+                        iMsg, dMsg = getHistoryTexts(self.context, new_event)
                         comparator = HtmlDiff(oldValue, newValue, iMsg, dMsg)
                         val = comparator.get()
                     new_event['changes'][name] = val

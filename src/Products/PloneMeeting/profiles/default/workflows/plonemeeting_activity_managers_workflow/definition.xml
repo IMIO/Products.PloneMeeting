@@ -89,7 +89,7 @@
              before_script=""
              after_script=""
              i18n:attributes="title">
-  <action url="" icon="" category="workflow" i18n:translate="">activate</action>
+  <action url="" icon="%(portal_url)s/activate.png" category="workflow" i18n:translate="">activate</action>
   <guard>
     <guard-permission>Review portal content</guard-permission>
   </guard>
@@ -101,7 +101,7 @@
              before_script=""
              after_script=""
              i18n:attributes="title">
-  <action url="" icon="" category="workflow" i18n:translate="">deactivate</action>
+  <action url="" icon="%(portal_url)s/deactivate.png" category="workflow" i18n:translate="">deactivate</action>
   <guard>
     <guard-permission>Review portal content</guard-permission>
   </guard>

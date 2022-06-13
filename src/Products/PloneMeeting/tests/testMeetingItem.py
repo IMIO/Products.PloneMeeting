@@ -73,6 +73,7 @@ from Products.statusmessages.interfaces import IStatusMessage
 from zExceptions import Redirect
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getAdapter
+from zope.component import getMultiAdapter
 from zope.component import queryUtility
 from zope.event import notify
 from zope.i18n import translate
@@ -1457,12 +1458,15 @@ class testMeetingItem(PloneMeetingTestCase):
            - if it is sent automatically;
            - or if current user isManager.'''
         cfg = self.meetingConfig
+        # make sure we use default itemWFValidationLevels,
+        # useful when test executed with custom profile
+        self._setUpDefaultItemWFValidationLevels(cfg)
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         cfg2.setUseGroupsAsCategories(True)
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
-                                         (cfg2Id, 'validate')},))
+                                         (cfg2Id, 'propose')},))
         cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
         cfg.setItemAutoSentToOtherMCStates(('validated', ))
 
@@ -1480,7 +1484,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(autoItem, 'validate')
         self.changeUser('pmCreator1')
         clonedAutoItem = autoItem.getItemClonedToOtherMC(cfg2Id)
-        self.assertEqual(clonedAutoItem.query_state(), 'validated')
+        self.assertEqual(clonedAutoItem.query_state(), 'proposed')
 
         # automatically
         # create an item and validate it as a MeetingManager
@@ -1494,7 +1498,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(autoItem2, 'validate')
         clonedAutoItem2 = autoItem2.getItemClonedToOtherMC(cfg2Id)
         # this time transitions were triggered
-        self.assertEqual(clonedAutoItem2.query_state(), 'validated')
+        self.assertEqual(clonedAutoItem2.query_state(), 'proposed')
 
         # manually
         # transitions not triggered as non MeetingManager
@@ -1516,7 +1520,7 @@ class testMeetingItem(PloneMeetingTestCase):
         manualItem2.setOtherMeetingConfigsClonableTo((cfg2Id,))
         clonedManualItem2 = manualItem2.cloneToOtherMeetingConfig(cfg2Id)
         # transitions were triggered, and manualItemLinkedToMeeting is 'validated'
-        self.assertEqual(clonedManualItem2.query_state(), 'validated')
+        self.assertEqual(clonedManualItem2.query_state(), 'proposed')
 
     def test_pm_SendItemToOtherMCTransitionsTriggeredUntilPresented(self):
         '''Test when an item is sent to another MC and transitions are triggered
@@ -1907,6 +1911,28 @@ class testMeetingItem(PloneMeetingTestCase):
         set_field_from_ajax(item, 'decision', self.decisionText)
         self.assertFalse('_datachange_' in [event['action'] for event in wf_adapter.getHistory()])
         self.assertTrue('_datachange_' in [event['action'] for event in datachanges_adapter.getHistory()])
+
+    def test_pm_DataChangesHistory(self):
+        """Test the datachanges history adapter."""
+        cfg = self.meetingConfig
+        cfg.setHistorizedItemAttributes(('decision', ))
+        cfg.setRecordItemHistoryStates((self._stateMappingFor('itemcreated'), ))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', decision="<p>test</p>")
+        set_field_from_ajax(item, 'decision', "<p>tralala</p>")
+        set_field_from_ajax(item, 'decision', "<p>abcedfgijklm</p>")
+        self.proposeItem(item)
+        self.changeUser('pmReviewer1')
+        self.do(item, 'validate')
+        # Test if it is in content history
+        view = getMultiAdapter((item, self.portal.REQUEST), name='contenthistory')
+        history = view.getHistory()
+        datachanges = [event for event in history if event["action"] == "_datachange_"]
+        self.assertEqual(len(datachanges), 2)
+        # Test if the values are correct
+        for event in datachanges:
+            self.assertEqual(event["actor"], "pmCreator1")
+            self.assertIn("M. PMCreator One", event["changes"]["decision"])
 
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
@@ -6482,28 +6508,6 @@ class testMeetingItem(PloneMeetingTestCase):
                 'resolveuid/{0}'.format(new_img1.UID()),
                 'resolveuid/{0}'.format(new_img2.UID())))
 
-    def test_pm_TransformAllRichTextFields(self):
-        """Test that it does not alterate field content, especially
-           links to internal content or image that uses resolveuid."""
-        self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        # add image
-        file_path = path.join(path.dirname(__file__), 'dot.gif')
-        file_handler = open(file_path, 'r')
-        data = file_handler.read()
-        file_handler.close()
-        img_id = item.invokeFactory('Image', id='dot.gif', title='Image', file=data)
-        img = getattr(item, img_id)
-
-        # link to image using resolveuid
-        text = '<p>Internal image <img src="resolveuid/{0}" />.</p>'.format(img.UID())
-        item.setDescription(text)
-        self.assertEqual(item.objectIds(), ['dot.gif'])
-        # transformAllRichTextFields is called by MeetingItem.at_post_edit_script
-        # that is called by MeetingItem._update_after_edit...
-        item._update_after_edit()
-        self.assertEqual(item.getRawDescription(), text)
-
     def test_pm_ItemLocalRolesUpdatedEvent(self):
         """Test this event that is triggered after the local_roles on the item have been updated."""
         # load a subscriber and check that it does what necessary each time
@@ -7404,12 +7408,12 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         widget = item.getField('observations').widget
         self.assertFalse(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
-        self.assertFalse(item.showObservations())
+        self.assertFalse(item.adapted().showObservations())
         cfg.setUsedItemAttributes(('observations', ))
         # MeetingItem.attribute_is_used is RAMCached
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')
         self.assertTrue(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
-        self.assertTrue(item.showObservations())
+        self.assertTrue(item.adapted().showObservations())
 
     def test_pm_DefaultItemTemplateNotRemovable(self):
         """The default item template may not be removed."""

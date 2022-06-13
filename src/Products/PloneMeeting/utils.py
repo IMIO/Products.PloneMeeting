@@ -5,8 +5,10 @@ from Acquisition import aq_base
 from appy.pod.xhtml2odt import XhtmlPreprocessor
 from appy.shared.diff import HtmlDiff
 from bs4 import BeautifulSoup
-from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.contact.core.utils import get_gender_and_number
+from collective.contact.core.utils import get_position_type_name
+from collective.contact.core.vocabulary import get_directory
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
@@ -104,7 +106,7 @@ from zope.location import locate
 from zope.schema import getFieldsInOrder
 from zope.security.interfaces import IPermission
 
-import cgi
+import html
 import itertools
 import logging
 import lxml
@@ -113,6 +115,7 @@ import os.path
 import re
 import socket
 import unicodedata
+import unidecode
 import urlparse
 
 
@@ -254,7 +257,9 @@ def getCurrentMeetingObject(context):
 
     if not (className in ('Meeting', 'MeetingItem')):
         # check if we are on a Script or so or calling a BrowserView
-        if className in methodTypes or 'SimpleViewClass' in className:
+        if className in methodTypes or \
+           'SimpleViewClass' in className or \
+           'facade_actions_panel' in className:  # async_actions panel
             obj = get_referer_obj(context.REQUEST)
         else:
             # Check the parent (if it has sense)
@@ -1113,7 +1118,7 @@ def transformAllRichTextFields(obj, onlyField=None):
     else:
         if onlyField:
             field = obj.schema[onlyField]
-            fields[field.getName()] = field.getAccessor(obj)()
+            fields[field.getName()] = field.getRaw(obj)
         else:
             fields = {field.getName(): field.getRaw(obj).strip() for field in obj.schema.fields()
                       if field.widget.getName() == 'RichWidget' and
@@ -1295,6 +1300,115 @@ def computeCertifiedSignatures(signatures):
             computedSignatures[validSignatureNumber]['function'] = signature['function']
 
     return computedSignatures
+
+
+def split_gender_and_number(value):
+    """ """
+    res = {}
+    values = value and value.split('|') or [u'', u'', u'', u'']
+    if len(values) > 1:
+        res = {'MS': values[0],
+               'MP': values[1],
+               'FS': values[2],
+               'FP': values[3]}
+    else:
+        res = {'MS': values[0],
+               'MP': values[0],
+               'FS': values[0],
+               'FP': values[0]}
+    return res
+
+
+def _prefixed_gn_position_name(gn,
+                               position_type_value,
+                               include_value=False,
+                               uncapitalize_position=False):
+    """ """
+    value_starting_vowel = {'MS': u'L\'',
+                            'MP': u'Les ',
+                            'FS': u'L\'',
+                            'FP': u'Les ',
+
+                            # by male singular
+                            'BMS': u'de l\'',
+                            # by male plural
+                            'BMP': u'des ',
+                            # by female singular
+                            'BFS': u'de l\'',
+                            # by female plural
+                            'BFP': u'des ',
+
+                            # to male singular
+                            'TMS': u'à l\'',
+                            # from male plural
+                            'TMP': u'aux ',
+                            # from female singular
+                            'TFS': u'à l\'',
+                            # from female plural
+                            'TFP': u'aux ',
+                            }
+    value_starting_consonant = {'MS': u'Le ',
+                                'MP': u'Les ',
+                                'FS': u'La ',
+                                'FP': u'Les ',
+
+                                # by male singular
+                                'BMS': u'du ',
+                                # by male plural
+                                'BMP': u'des ',
+                                # by female singular
+                                'BFS': u'de la ',
+                                # by female plural
+                                'BFP': u'des ',
+
+                                # to male singular
+                                'TMS': u'au ',
+                                # from male plural
+                                'TMP': u'aux ',
+                                # from female singular
+                                'TFS': u'à la ',
+                                # from female plural
+                                'TFP': u'aux ',
+                                }
+    # startswith vowel or consonant?
+    first_letter = safe_unicode(position_type_value[0])
+    # turn "é" to "e"
+    first_letter = unidecode.unidecode(first_letter)
+    if first_letter.lower() in ['a', 'e', 'i', 'o', 'u']:
+        mappings = value_starting_vowel
+    else:
+        mappings = value_starting_consonant
+    res = mappings.get(gn, u'')
+    if include_value:
+        # we lowerize first letter of position_type_value
+        position_type_value = uncapitalize_position and \
+            uncapitalize(position_type_value) or position_type_value
+        res = u'{0}{1}'.format(res, position_type_value)
+    return res
+
+
+def get_prefixed_gn_position_name(contacts,
+                                  position_type,
+                                  include_value=True,
+                                  uncapitalize_position=False,
+                                  use_by=False,
+                                  use_to=False):
+    """This will generate an arbitraty prefixed gendered/numbered position_type."""
+    gn = get_gender_and_number(contacts, use_by=use_by, use_to=use_to)
+    position_type_value = get_gn_position_name(contacts, position_type)
+    return _prefixed_gn_position_name(
+        gn,
+        position_type_value,
+        include_value=include_value,
+        uncapitalize_position=uncapitalize_position)
+
+
+def get_gn_position_name(contacts, position_type):
+    """Get a gendered/numbered position_name from given list
+       of p_contacts and directory p_position_type."""
+    gn = get_gender_and_number(contacts)
+    position_name = get_position_type_name(get_directory(contacts[0]), position_type)
+    return split_gender_and_number(position_name)[gn]
 
 
 def listifySignatures(signatures):
@@ -2126,8 +2240,8 @@ def _base_extra_expr_ctx(obj):
     # member, context and portal are managed by collective.behavior.talcondition
     data = {'tool': tool,
             'cfg': cfg,
-            'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-            'imio_history_utils': SecureModuleImporter['imio.history.utils'], }
+            'pm_utils': SecureModuleImporter['Products.PloneMeeting.safe_utils'],
+            'imio_history_utils': SecureModuleImporter['imio.history.safe_utils'], }
     return data
 
 
@@ -2183,7 +2297,7 @@ def number_word(number):
 
 
 def escape(text):
-    return cgi.escape(safe_unicode(text), quote=True)
+    return html.escape(safe_unicode(text), quote=True)
 
 
 def convert2xhtml(obj,
