@@ -447,6 +447,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
+        # cache will be invalidated if something changed about attendees on meeting
         meeting = self.context.getMeeting()
         ordered_contacts = meeting.ordered_contacts.items()
         redefined_item_attendees = meeting._get_all_redefined_attendees(only_keys=False)

@@ -47,6 +47,10 @@ Changelog
   [gbastien]
 - Fixed an issue in `PMDataChangesHistoryAdapter`. The tooltip was mentioning the wrong actor.
   [aduchene]
+- Added `events._invalidateAttendeesRelatedCache` to factorize invalidation of
+  attendees related cache. Used by `person/held_position/meeting` to invalidate
+  caches when necessary.
+  [gbastien]
 
 4.2rc27 (2022-05-17)
 --------------------
