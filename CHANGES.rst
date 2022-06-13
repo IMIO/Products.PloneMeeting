@@ -43,8 +43,10 @@ Changelog
   (called from quick edit). Added upgrade step to `4203` to fix this, every items
   since migration to 4200 will be fixed as bug was introduced since version 4200...
   [gbastien]
-- Avoid rendring malicious content by escaping places where HTML is rendered.
+- Avoid rendering malicious content by escaping places where HTML is rendered.
   [gbastien]
+- Fixed an issue in `PMDataChangesHistoryAdapter`. The tooltip was mentioning the wrong actor.
+  [aduchene]
 
 4.2rc27 (2022-05-17)
 --------------------
