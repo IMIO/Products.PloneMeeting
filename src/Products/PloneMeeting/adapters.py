@@ -749,7 +749,7 @@ class PMDataChangesHistoryAdapter(ImioWfHistoryAdapter):
                     else:
                         newValue = findNewValue(self.context, name, full_datachanges_history, i - 1)
                         # Compute the diff between oldValue and newValue
-                        iMsg, dMsg = getHistoryTexts(self.context, event)
+                        iMsg, dMsg = getHistoryTexts(self.context, new_event)
                         comparator = HtmlDiff(oldValue, newValue, iMsg, dMsg)
                         val = comparator.get()
                     new_event['changes'][name] = val
