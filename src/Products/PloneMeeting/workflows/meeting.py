@@ -168,9 +168,10 @@ class MeetingWorkflowActions(object):
         # Set the firstItemNumber
         unrestricted_methods = getMultiAdapter((self.context, self.context.REQUEST),
                                                name='pm_unrestricted_methods')
-        self.context.first_item_number = \
-            unrestricted_methods.findFirstItemNumberForMeeting(self.context)
-        self.context.update_item_references()
+        if self.context.first_item_number == -1:
+            self.context.first_item_number = \
+                unrestricted_methods.findFirstItemNumberForMeeting(self.context)
+            self.context.update_item_references()
         # remove annex previews of every items if relevant
         if self.cfg.getRemoveAnnexesPreviewsOnMeetingClosure():
             # add logging message to fingerpointing log
