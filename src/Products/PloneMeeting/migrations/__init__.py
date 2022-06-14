@@ -9,7 +9,6 @@
 from collections import OrderedDict
 from collective.behavior.talcondition.behavior import ITALCondition
 from collective.documentgenerator.search_replace.pod_template import SearchAndReplacePODTemplates
-from collective.documentgenerator.utils import update_oo_config
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import ICriteria
 from imio.helpers.cache import cleanRamCacheFor
@@ -18,7 +17,6 @@ from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.content import object_values
 from imio.helpers.content import uuidToObject
 from imio.migrator.migrator import Migrator as BaseMigrator
-from imio.migrator.utils import ensure_upgraded
 from imio.pyutils.utils import replace_in_list
 from natsort import humansorted
 from operator import attrgetter

@@ -2,11 +2,11 @@
 
 from collective.contact.core.content.person import IPerson
 from collective.contact.core.content.person import Person
-from Products.PloneMeeting.events import _invalidateAttendeesRelatedCache
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.supermodel import model
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.events import _invalidateAttendeesRelatedCache
 from zope import schema
 
 
