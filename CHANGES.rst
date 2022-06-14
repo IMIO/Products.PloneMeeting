@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc28 (unreleased)
+4.2rc28 (2022-06-14)
 --------------------
 
 - Back to previous behavior for `MeetingItem.mayTakeOver`, do not check
