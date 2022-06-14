@@ -51,6 +51,10 @@ Changelog
   number if it is still `-1`, in other cases, do nothing, this will manage the case
   when reinitializing the first item number at the beginning of a new year.
   [gbastien]
+- Added `events._invalidateAttendeesRelatedCache` to factorize invalidation of
+  attendees related cache. Used by `person/held_position/meeting` to invalidate
+  caches when necessary.
+  [gbastien]
 
 4.2rc27 (2022-05-17)
 --------------------
