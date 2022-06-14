@@ -43,3 +43,5 @@ recursive-include src *.zargo
 recursive-include src *.zcml
 recursive-include src *.zip
 recursive-include templates *.conf
+exclude .vscode
+exclude .vscode/settings.json
