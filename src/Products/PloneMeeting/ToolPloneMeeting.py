@@ -1214,16 +1214,16 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if newItem.attribute_is_used('proposingGroupWithGroupInCharge'):
                     field = newItem.getField('proposingGroupWithGroupInCharge')
                     vocab = get_vocab(newItem, field.vocabulary_factory, only_factory=True)
-                    userProposingGroupUids = vocab(newItem, include_stored=False).by_value.keys()
-                    if userProposingGroupUids:
-                        newItem.setProposingGroupWithGroupInCharge(userProposingGroupUids[0])
+                    userProposingGroupTerms = vocab(newItem, include_stored=False)._terms
+                    if userProposingGroupTerms:
+                        newItem.setProposingGroupWithGroupInCharge(userProposingGroupTerms[0].token)
                 else:
                     # proposingGroup
                     field = newItem.getField('proposingGroup')
                     vocab = get_vocab(newItem, field.vocabulary_factory, only_factory=True)
-                    userProposingGroupUids = vocab(newItem, include_stored=False).by_value.keys()
-                    if userProposingGroupUids:
-                        newItem.setProposingGroup(userProposingGroupUids[0])
+                    userProposingGroupTerms = vocab(newItem, include_stored=False)._terms
+                    if userProposingGroupTerms:
+                        newItem.setProposingGroup(userProposingGroupTerms[0].token)
 
             if newOwnerId != loggedUserId:
                 plone_utils.changeOwnershipOf(newItem, newOwnerId)

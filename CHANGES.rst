@@ -13,6 +13,10 @@ Changelog
   [gbastien]
 - Make `organization.get_acronym` return an empty string u'' when acronym is `None`.
   [gbastien]
+- In `ToolPloneMeeting.pasteItem`, do not use `proposingGroup` vocab `by_value`
+  to get the first user group because `by_value` generates a dict that is not
+  ordered, use `_terms` that holds terms ordered.
+  [gbastien]
 
 4.2rc28 (2022-06-14)
 --------------------
