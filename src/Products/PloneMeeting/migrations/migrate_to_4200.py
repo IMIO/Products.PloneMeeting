@@ -922,6 +922,7 @@ class Migrate_To_4200(Migrator):
 
             # update various TAL expressions
             self.updateTALConditions("queryState", "query_state")
+            self.updateTALConditions("updateLocalRoles", "update_local_roles")
             self.updateTALConditions("getDate()", "date")
             self.updateTALConditions("getStartDate()", "start_date")
             self.updateTALConditions("getEndDate()", "end_date")

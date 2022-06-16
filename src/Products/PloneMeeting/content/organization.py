@@ -183,7 +183,7 @@ class PMOrganization(Organization):
 
     def get_acronym(self):
         """Accessor so it can be called in a TAL expression."""
-        return self.acronym
+        return self.acronym or u''
 
     def get_groups_in_charge(self, the_objects=False):
         """Accessor so it can be called in a TAL expression."""

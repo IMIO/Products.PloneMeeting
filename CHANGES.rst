@@ -5,8 +5,14 @@ Changelog
 4.2rc29 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- In `Migrate_To_4200`, update TAL expressions using
+  `updateLocalRoles` to `update_local_roles`.
+  [gbastien]
+- Import harmless functions from `utils.py` into `safe_utils.py` so it is
+  available on `pm_utils` in TAL expressions and POD templates.
+  [gbastien]
+- Make `organization.get_acronym` return an empty string u'' when acronym is `None`.
+  [gbastien]
 
 4.2rc28 (2022-06-14)
 --------------------

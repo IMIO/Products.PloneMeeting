@@ -7076,7 +7076,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setItemReferenceFormat(
             "python: here.getMeeting().date.strftime('%Y%m%d') + '/' + "
-            "str(here.getProposingGroup(True).get_acronym()) + '/' + "
+            "str(here.getProposingGroup(True).get_acronym().upper()) + '/' + "
             "str(here.getCategory()) + '/' + "
             "str(here.getRawClassifier() and here.getClassifier(theObject=True).getId() or '-') + '/' + "
             "('/'.join(here.getOtherMeetingConfigsClonableTo()) or '-') + '/' + "
@@ -7087,29 +7087,35 @@ class testMeetingItem(PloneMeetingTestCase):
         meeting = self.create('Meeting', date=datetime(2017, 3, 3, 0, 0))
         self.presentItem(item)
         self.freezeMeeting(meeting)
-        self.assertEqual(item.getItemReference(), '20170303/Devel/development/-/-/Title1/1')
+        self.assertEqual(item.getItemReference(), '20170303/DEVEL/development/-/-/Title1/1')
         # change category
         item.setCategory('research')
         item._update_after_edit()
-        self.assertEqual(item.getItemReference(), '20170303/Devel/research/-/-/Title1/1')
+        self.assertEqual(item.getItemReference(), '20170303/DEVEL/research/-/-/Title1/1')
         # change classifier
         item.setClassifier('classifier1')
         item._update_after_edit()
-        self.assertEqual(item.getItemReference(), '20170303/Devel/research/classifier1/-/Title1/1')
+        self.assertEqual(item.getItemReference(), '20170303/DEVEL/research/classifier1/-/Title1/1')
         # change proposingGroup
         item.setProposingGroup(self.vendors_uid)
         item._update_after_edit()
-        self.assertEqual(item.getItemReference(), '20170303/Devil/research/classifier1/-/Title1/1')
+        self.assertEqual(item.getItemReference(), '20170303/DEVIL/research/classifier1/-/Title1/1')
         # change otherMeetingConfigsClonableTo
         item.setOtherMeetingConfigsClonableTo((cfg2Id,))
         item._update_after_edit()
         self.assertEqual(item.getItemReference(),
-                         '20170303/Devil/research/classifier1/{0}/Title1/1'.format(cfg2Id))
+                         '20170303/DEVIL/research/classifier1/{0}/Title1/1'.format(cfg2Id))
         # changing the Title will not update the reference
         item.setTitle('Title2')
         item._update_after_edit()
         self.assertEqual(item.getItemReference(),
-                         '20170303/Devil/research/classifier1/{0}/Title1/1'.format(cfg2Id))
+                         '20170303/DEVIL/research/classifier1/{0}/Title1/1'.format(cfg2Id))
+        # check that it works as well when organization.acronym is None
+        org = item.getProposingGroup(theObject=True)
+        org.acronym = None
+        item.update_item_reference()
+        self.assertEqual(item.getItemReference(),
+                         '20170303//research/classifier1/{0}/Title2/1'.format(cfg2Id))
 
     def test_pm_ItemReferenceUpdateWhenItemPositionChangedOnMeeting(self):
         """When an item position changed in the meeting, the itemReference is updated."""
