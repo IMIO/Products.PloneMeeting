@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc29 (unreleased)
+4.2rc29 (2022-06-17)
 --------------------
 
 - In `Migrate_To_4200`, update TAL expressions using
