@@ -101,6 +101,9 @@ def pm_technical_index(obj):
     - "reindex_needed" is used to know if a reindex must occurs during night tasks;
     - "item_initiator_..." will hold MeetingItem.itemInititors values to ease
       removing a held_position that is not used;
+    - "item_linked_items_reorder_needed" is used to know if reordering linked items
+      is needed on some items, this is the case when items that were already linked
+      togheter are presented to a meeting as linked items are sorted by meeting date;
     - ...
     """
     res = []

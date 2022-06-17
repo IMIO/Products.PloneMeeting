@@ -5,8 +5,11 @@ Changelog
 4.2rc210 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Avoid wrong order in item manually linked items when an item was linked before
+  is it presented to a meeting, as items are sorted on meeting date.
+  Add items without a meeting date at the top of items so it will be at the top
+  when inserted into a meeting.
+  [gbastien]
 
 4.2rc29 (2022-06-17)
 --------------------
