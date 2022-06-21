@@ -6454,15 +6454,19 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # link to unknown external image, like during copy/paste of content
         # that has a link to an unexisting image or so
-        decision = '<p>Not working external image <img src="https://i.picsum.photos/id/449/400.png">.</p>'
+        decision = '<p>Not working external image <img width="100" height="100" ' \
+            'src="https://i.picsum.photos/id/449/400.png">.</p>'
         item.setDecision(decision)
         item.at_post_edit_script()
-        self.assertTrue('1035-600x400.jpg' in item.objectIds())
-        # nothing was done
+        img4 = item.get('imagenotfound.jpg')
+        expected = '<p>Not working external image <img width="100" height="100" ' \
+            'src="resolveuid/{0}">.</p>'.format(img4.UID())
+        self.assertTrue('imagenotfound.jpg' in item.objectIds())
+        # the not retrievable image was replaced with a "not found" image
         self.assertListEqual(
             sorted(item.objectIds()),
-            ['1025-400x300.jpg', '1035-600x400.jpg', '22-400x400.jpg'])
-        self.assertEqual(item.getRawDecision(), decision)
+            ['1025-400x300.jpg', '1035-600x400.jpg', '22-400x400.jpg', 'imagenotfound.jpg'])
+        self.assertEqual(item.getRawDecision(), expected)
 
     def test_pm_ItemInternalImagesStoredLocallyWhenItemDuplicated(self):
         """When an item is duplicated, images that were stored in original item
