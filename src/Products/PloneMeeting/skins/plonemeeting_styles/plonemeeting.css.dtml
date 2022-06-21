@@ -1072,7 +1072,7 @@ div#archetypes-fieldname-powerAdvisersGroups,
 div#archetypes-fieldname-selectableCopyGroups,
 div#archetypes-fieldname-templateUsingGroups,
 div#archetypes-fieldname-usingGroups {
-    max-height: 300px;
+    max-height: 500px;
     max-width: 500px;
     overflow-x: auto;
 }
