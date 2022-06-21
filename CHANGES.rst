@@ -5,8 +5,10 @@ Changelog
 4.2rc210 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Make the `Migrate_To_4200._fixPODTemplatesInstructions`
+  `getFirstItemNumber/first_item_number` replacement work for any cases,
+  not only for `Meeting` POD templates.
+  [gbastien]
 
 4.2rc29 (2022-06-17)
 --------------------
