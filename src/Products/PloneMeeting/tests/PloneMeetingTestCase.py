@@ -46,6 +46,9 @@ from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.traversing.interfaces import BeforeTraverseEvent
 from zope.viewlet.interfaces import IViewletManager
+from zope.component import getUtility
+from zope.intid.interfaces import IIntIds
+from z3c.relationfield.relation import RelationValue
 
 import os.path
 import Products.PloneMeeting
@@ -780,3 +783,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             field = obj.getField(field_name)
             field.validate(field.getAccessor(obj)(), obj, errors)
         return errors
+
+    def _relation(self, obj):
+        """ """
+        intids = getUtility(IIntIds)
+        return RelationValue(intids.getId(obj))

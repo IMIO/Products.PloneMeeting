@@ -8,6 +8,8 @@ from collective.contact.core.vocabulary import get_directory
 from collective.contact.core.vocabulary import NoDirectoryFound
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_own_organization
+from collective.contact.widget.schema import ContactChoice
+from collective.contact.widget.source import ContactSourceBinder
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form as directives_form
@@ -23,6 +25,7 @@ from z3c.relationfield.schema import RelationChoice
 from z3c.relationfield.schema import RelationList
 from zope.globalrequest import getRequest
 from zope.i18n import translate
+from plone.formwidget.masterselect import MasterSelectField
 
 import zope.schema
 
@@ -67,6 +70,13 @@ class IPMHeldPosition(IHeldPosition):
         default=[],
     )
 
+    voting_group = ContactChoice(
+        title=_("Voting group"),
+        description=_("Voting group descr"),
+        source=ContactSourceBinder(portal_type=("organization", "position")),
+        required=False,
+    )
+
     signature_number = zope.schema.Choice(
         title=_("Signature number"),
         description=_("If this contact is a default signer, select signature number."),
@@ -89,8 +99,8 @@ class IPMHeldPosition(IHeldPosition):
                    fields=['position', 'label', 'position_type',
                            'secondary_position_type',
                            'start_date', 'end_date',
-                           'usages', 'defaults', 'signature_number',
-                           'represented_organizations'])
+                           'usages', 'defaults', 'voting_group',
+                           'signature_number', 'represented_organizations'])
 
 
 @directives_form.default_value(field=IHeldPosition['position'])
@@ -125,6 +135,7 @@ class PMHeldPosition(HeldPosition):
                         include_defaults=False,
                         include_signature_number=False,
                         include_sub_organizations=True,
+                        include_voting_group=False,
                         include_person_title=True,
                         abbreviate_firstname=False,
                         highlight=False,
@@ -149,6 +160,9 @@ class PMHeldPosition(HeldPosition):
             while organization != root_organization:
                 sub_organizations.append(organization)
                 organization = organization.aq_parent
+        voting_group = None
+        if include_voting_group:
+            voting_group = self.voting_group and self.voting_group.to_object
         person_label = self.get_person_short_title(
             include_person_title=include_person_title,
             abbreviate_firstname=abbreviate_firstname)
@@ -172,6 +186,12 @@ class PMHeldPosition(HeldPosition):
                 person_label, held_position_label, sub_organizations_label)
         else:
             res = u"{0}, {1}".format(person_label, held_position_label)
+        if voting_group:
+            # do not include voting_group label if it is the same
+            # as the sub_organizations label
+            if not sub_organizations or sub_organizations_label != voting_group.title:
+                res = u"{0} ({1})".format(
+                    res, voting_group.title)
         if include_usages:
             res = res + u" ({0}: {1})".format(
                 translate("Usages", domain="PloneMeeting", context=self.REQUEST),

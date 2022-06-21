@@ -704,7 +704,7 @@ div.portletPloneMeetingHeaderIcons {
     font-size: 120%;
 }
 
-input:disabled,
+input:disabled:not(.notTriggerableTransitionButton),
 .input_disabled,
 input[readonly=""] {
     color: lightgrey !important;
@@ -1072,7 +1072,7 @@ div#archetypes-fieldname-powerAdvisersGroups,
 div#archetypes-fieldname-selectableCopyGroups,
 div#archetypes-fieldname-templateUsingGroups,
 div#archetypes-fieldname-usingGroups {
-    max-height: 500px;
+    max-height: 300px;
     max-width: 500px;
     overflow-x: auto;
 }

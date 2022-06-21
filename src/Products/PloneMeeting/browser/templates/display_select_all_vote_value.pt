@@ -6,8 +6,7 @@
                          class string:select-all-vote-values-${group_id}">
       <tal:loop repeat="usedVoteValue python: view.used_vote_values">
         <span class="option" tal:define="css_id string:${group_id}-${usedVoteValue}">
-          <label tal:define="css_id string:${group_id}-${usedVoteValue}"
-                 ta:attributes="for  string:${css_id}">
+          <label tal:define="css_id string:${group_id}-${usedVoteValue}">
             <input tal:attributes="value usedVoteValue;
                                    data-group_id string:${group_id};
                                    data-vote_value string:${usedVoteValue};

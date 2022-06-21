@@ -37,8 +37,10 @@
     <metal:field use-macro="python:here.widget('category', mode='edit')"/>
     <metal:field use-macro="python:here.widget('classifier', mode='edit')"/>
     <metal:field use-macro="python:here.widget('committees', mode='edit')"/>
+    <div class="together">
     <metal:field use-macro="python:here.widget('optionalAdvisers', mode='edit')"/>
     <metal:field use-macro="python:here.widget('copyGroups', mode='edit')"/>
+    </div>
 
     <metal:field use-macro="python:here.widget('preferredMeeting', mode='edit')"/>
     <metal:field use-macro="python:here.widget('sendToAuthority', mode='edit')"/>

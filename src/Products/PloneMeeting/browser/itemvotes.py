@@ -50,13 +50,16 @@ def _build_groups(context, caching=True):
         res = OrderedDict([('all', {'title': 'All', 'uids': []}),
                            (PLONEGROUP_ORG, {'title': 'Others', 'uids': []})])
         for voter in context.get_item_voters(theObjects=True):
-            position = voter.position
-            if position and not position.isBroken():
-                org = position.to_object
+            voting_group = voter.voting_group
+            # use a voting_group is selected, else use the PLONEGROUP_ORG
+            if voting_group and not voting_group.isBroken():
+                org = voting_group.to_object
                 group_id = org.getId()
                 if group_id not in res:
                     res[group_id] = {'title': org.title, 'uids': []}
-                res[group_id]['uids'].append(voter.UID())
+            else:
+                group_id = PLONEGROUP_ORG
+            res[group_id]['uids'].append(voter.UID())
         # only keep PLONEGROUP_ORG if any other value than 'all'
         if res.keys() == ['all', PLONEGROUP_ORG]:
             res.pop(PLONEGROUP_ORG)
@@ -296,6 +299,19 @@ def _may_update_votes_for(context, item_to_update):
     return res
 
 
+def display_item_numbers(numbers):
+    """Manage displaying given p_elements with following result:
+       - 1 numbers: "2";
+       - 2 numbers: "2 & 3";
+       - 5 numbers: "2, 3, 4, 5 & 6".
+    """
+    if len(numbers) > 1:
+        res = ", ".join(numbers[:-1]) + " & " + numbers[-1]
+    else:
+        res = numbers[0]
+    return res
+
+
 class EncodeVotesForm(BaseAttendeeForm):
     """ """
     implements(IFieldsAndContentProvidersForm)
@@ -392,14 +408,14 @@ class EncodeVotesForm(BaseAttendeeForm):
         else:
             api.portal.show_message(
                 _("Votes have been encoded for items \"${item_numbers}\".",
-                  mapping={'item_numbers': ", ".join(updated[:-1]) + " & "+ updated[-1]}),
+                  mapping={'item_numbers': display_item_numbers(updated)}),
                 request=self.request)
 
         # display items that could not be updated
         if not_updated:
             api.portal.show_message(
                 _("error_updating_votes_for_items",
-                  mapping={'item_numbers': ", ".join(not_updated[:-1]) + " & "+ not_updated[-1]}),
+                  mapping={'item_numbers': display_item_numbers(not_updated)}),
                 request=self.request, type="warning")
         self._finished = True
 
@@ -619,14 +635,14 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
         else:
             api.portal.show_message(
                 _("Votes have been encoded for items \"${item_numbers}\".",
-                  mapping={'item_numbers': ", ".join(updated[:-1]) + " & "+ updated[-1]}),
+                  mapping={'item_numbers': display_item_numbers(updated)}),
                 request=self.request)
 
         # display items that could not be updated
         if not_updated:
             api.portal.show_message(
                 _("error_updating_votes_for_items",
-                  mapping={'item_numbers': ", ".join(not_updated[:-1]) + " & "+ not_updated[-1]}),
+                  mapping={'item_numbers': display_item_numbers(not_updated)}),
                 request=self.request, type="warning")
         self._finished = True
 

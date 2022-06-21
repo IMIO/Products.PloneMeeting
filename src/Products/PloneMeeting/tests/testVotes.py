@@ -16,6 +16,8 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 from z3c.form import validator
 from zope.i18n import translate
 from zope.interface import Invalid
+from Products.statusmessages.interfaces import IStatusMessage
+from plone import api
 
 
 class testVotes(PloneMeetingTestCase):
@@ -746,6 +748,77 @@ class testVotes(PloneMeetingTestCase):
         self.assertFalse(manage_attendee_action in rendered)
         self.assertFalse(manage_signatory_action in rendered)
 
+    def test_pm_EncodeVotesForSeveralItems(self):
+        """Votes may be encoded for several items but only relevant items will be updated."""
+        self.changeUser('pmManager')
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
+        # for now public_item and yes_public_item votes are different
+        self.assertNotEqual(public_item.get_item_votes(), yes_public_item.get_item_votes())
+        secret_item_votes = secret_item.get_item_votes()
+        yes_secret_item_votes = yes_secret_item.get_item_votes()
+        self.request['PUBLISHED'] = public_item
+        votes_form = public_item.restrictedTraverse('@@item_encode_votes_form')
+        self.request.form['vote_number'] = 0
+        votes_form.meeting = public_item.getMeeting()
+        votes_form.update()
+        votes_form.votes = votes_form.widgets['votes'].value
+        votes_form.linked_to_previous = False
+        votes_form.vote_number = 0
+        votes_form.apply_until_item_number = u'400'
+        votes_form._doApply()
+        # votes were updated for yes_public_item but not for secret items
+        self.assertEqual(public_item.get_item_votes(), yes_public_item.get_item_votes())
+        self.assertEqual(secret_item_votes, secret_item.get_item_votes())
+        self.assertEqual(yes_secret_item_votes, yes_secret_item.get_item_votes())
+        # relevant messages are displayed to the user
+        messages = IStatusMessage(self.request).show()
+        self.assertEqual(messages[-2].message, u'Votes have been encoded for items "1 & 2".')
+        self.assertEqual(messages[-1].message, u'Votes could not be updated for items "3 & 4".')
+
+    def test_pm_EncodeVotesByVotingGroup(self):
+        """Just check that voting_group functionnality is working."""
+        # create an organization outside own_org
+        self.changeUser('siteadmin')
+        outside_org = api.content.create(
+            container=self.portal.contacts,
+            type='organization',
+            id='org-outside-own-org',
+            title='Organization outside own org')
+        # define voting_group for some voters
+        person1 = self.portal.contacts.get('person1')
+        hp1 = person1.get_held_positions()[0]
+        hp1.voting_group = self._relation(outside_org)
+
+        # display form and check that elements are there
+        self.changeUser('pmManager')
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
+        self.request['PUBLISHED'] = public_item
+        votes_form = public_item.restrictedTraverse('@@item_encode_votes_form')
+        self.request.form['vote_number'] = 0
+        votes_form.meeting = public_item.getMeeting()
+        votes_form.update()
+        self.request.form['ajax_load'] = 'dummy'
+        rendered_form = votes_form.render()
+        # select values are there
+        self.assertTrue("<span>All</span>:" in rendered_form)
+        self.assertTrue("<span>Organization outside own org</span>:" in rendered_form)
+        self.assertTrue("<span>Others</span>:" in rendered_form)
+        self.assertTrue(
+            '<tr class="datagridwidget-row required org-outside-own-org row-1" data-index="0">'
+            in rendered_form)
+        # when no voting_group defined for any voter, controls are not there
+        hp1.voting_group = None
+        votes_form.update()
+        rendered_form = votes_form.render()
+        # select values are there
+        self.assertTrue("<span>All</span>:" in rendered_form)
+        self.assertFalse("<span>Organization outside own org</span>:" in rendered_form)
+        self.assertFalse("<span>Others</span>:" in rendered_form)
+        self.assertFalse(
+            '<tr class="datagridwidget-row required org-outside-own-org row-1" data-index="0">'
+            in rendered_form)
 
 def test_suite():
     from unittest import makeSuite

@@ -1998,14 +1998,15 @@ class BaseHeldPositionsVocabulary(object):
                           include_usages=True,
                           include_defaults=True,
                           include_signature_number=True,
+                          include_voting_group=False,
                           pattern=u"{0}",
                           review_state=['active']):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile(
             'Products.PloneMeeting.vocabularies.allheldpositionsvocabularies')
         return date, repr(context), usage, uids, self._is_editing_config(context),
-        highlight_missing, include_usages, include_defaults, include_signature_number,
-        pattern, review_state
+        highlight_missing, include_usages, include_defaults,
+        include_signature_number, include_voting_group, pattern, review_state
 
     @ram.cache(__call___cachekey)
     def BaseHeldPositionsVocabulary__call__(
@@ -2017,6 +2018,7 @@ class BaseHeldPositionsVocabulary(object):
             include_usages=True,
             include_defaults=True,
             include_signature_number=True,
+            include_voting_group=False,
             pattern=u"{0}",
             review_state=['active']):
         catalog = api.portal.get_tool('portal_catalog')
@@ -2057,6 +2059,7 @@ class BaseHeldPositionsVocabulary(object):
                                 include_usages=include_usages,
                                 include_defaults=include_defaults,
                                 include_signature_number=include_signature_number,
+                                include_voting_group=include_voting_group,
                                 highlight=highlight,
                                 forced_position_type_value=forced_position_type_value))))
         return SimpleVocabulary(res)
@@ -2086,7 +2089,8 @@ class BaseSimplifiedHeldPositionsVocabulary(BaseHeldPositionsVocabulary):
             uids=uids,
             include_usages=False,
             include_defaults=False,
-            include_signature_number=False)
+            include_signature_number=False,
+            include_voting_group=False)
         return res
 
 
@@ -2210,6 +2214,8 @@ class ItemVotersVocabulary(BaseHeldPositionsVocabulary):
     @ram.cache(__call___cachekey)
     def ItemVotersVocabulary__call__(self, context):
         context = get_context_with_request(context)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
         item_voter_uids = context.get_item_voters()
         terms = super(ItemVotersVocabulary, self).__call__(
             context,
@@ -2217,6 +2223,7 @@ class ItemVotersVocabulary(BaseHeldPositionsVocabulary):
             include_usages=False,
             include_defaults=False,
             include_signature_number=False,
+            include_voting_group=cfg.getDisplayVotingGroup(),
             review_state=[], )
         # do not modify original terms
         terms = list(terms._terms)
