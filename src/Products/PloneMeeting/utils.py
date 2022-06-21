@@ -106,7 +106,7 @@ from zope.location import locate
 from zope.schema import getFieldsInOrder
 from zope.security.interfaces import IPermission
 
-import cgi
+import html
 import itertools
 import logging
 import lxml
@@ -1118,7 +1118,7 @@ def transformAllRichTextFields(obj, onlyField=None):
     else:
         if onlyField:
             field = obj.schema[onlyField]
-            fields[field.getName()] = field.getAccessor(obj)()
+            fields[field.getName()] = field.getRaw(obj)
         else:
             fields = {field.getName(): field.getRaw(obj).strip() for field in obj.schema.fields()
                       if field.widget.getName() == 'RichWidget' and
@@ -2240,8 +2240,8 @@ def _base_extra_expr_ctx(obj):
     # member, context and portal are managed by collective.behavior.talcondition
     data = {'tool': tool,
             'cfg': cfg,
-            'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-            'imio_history_utils': SecureModuleImporter['imio.history.utils'], }
+            'pm_utils': SecureModuleImporter['Products.PloneMeeting.safe_utils'],
+            'imio_history_utils': SecureModuleImporter['imio.history.safe_utils'], }
     return data
 
 
@@ -2297,7 +2297,7 @@ def number_word(number):
 
 
 def escape(text):
-    return cgi.escape(safe_unicode(text), quote=True)
+    return html.escape(safe_unicode(text), quote=True)
 
 
 def convert2xhtml(obj,

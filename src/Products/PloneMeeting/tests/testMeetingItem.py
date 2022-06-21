@@ -73,6 +73,7 @@ from Products.statusmessages.interfaces import IStatusMessage
 from zExceptions import Redirect
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getAdapter
+from zope.component import getMultiAdapter
 from zope.component import queryUtility
 from zope.event import notify
 from zope.i18n import translate
@@ -1910,6 +1911,28 @@ class testMeetingItem(PloneMeetingTestCase):
         set_field_from_ajax(item, 'decision', self.decisionText)
         self.assertFalse('_datachange_' in [event['action'] for event in wf_adapter.getHistory()])
         self.assertTrue('_datachange_' in [event['action'] for event in datachanges_adapter.getHistory()])
+
+    def test_pm_DataChangesHistory(self):
+        """Test the datachanges history adapter."""
+        cfg = self.meetingConfig
+        cfg.setHistorizedItemAttributes(('decision', ))
+        cfg.setRecordItemHistoryStates((self._stateMappingFor('itemcreated'), ))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', decision="<p>test</p>")
+        set_field_from_ajax(item, 'decision', "<p>tralala</p>")
+        set_field_from_ajax(item, 'decision', "<p>abcedfgijklm</p>")
+        self.proposeItem(item)
+        self.changeUser('pmReviewer1')
+        self.do(item, 'validate')
+        # Test if it is in content history
+        view = getMultiAdapter((item, self.portal.REQUEST), name='contenthistory')
+        history = view.getHistory()
+        datachanges = [event for event in history if event["action"] == "_datachange_"]
+        self.assertEqual(len(datachanges), 2)
+        # Test if the values are correct
+        for event in datachanges:
+            self.assertEqual(event["actor"], "pmCreator1")
+            self.assertIn("M. PMCreator One", event["changes"]["decision"])
 
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
@@ -6485,28 +6508,6 @@ class testMeetingItem(PloneMeetingTestCase):
                 'resolveuid/{0}'.format(new_img1.UID()),
                 'resolveuid/{0}'.format(new_img2.UID())))
 
-    def test_pm_TransformAllRichTextFields(self):
-        """Test that it does not alterate field content, especially
-           links to internal content or image that uses resolveuid."""
-        self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        # add image
-        file_path = path.join(path.dirname(__file__), 'dot.gif')
-        file_handler = open(file_path, 'r')
-        data = file_handler.read()
-        file_handler.close()
-        img_id = item.invokeFactory('Image', id='dot.gif', title='Image', file=data)
-        img = getattr(item, img_id)
-
-        # link to image using resolveuid
-        text = '<p>Internal image <img src="resolveuid/{0}" />.</p>'.format(img.UID())
-        item.setDescription(text)
-        self.assertEqual(item.objectIds(), ['dot.gif'])
-        # transformAllRichTextFields is called by MeetingItem.at_post_edit_script
-        # that is called by MeetingItem._update_after_edit...
-        item._update_after_edit()
-        self.assertEqual(item.getRawDescription(), text)
-
     def test_pm_ItemLocalRolesUpdatedEvent(self):
         """Test this event that is triggered after the local_roles on the item have been updated."""
         # load a subscriber and check that it does what necessary each time
@@ -7075,7 +7076,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setItemReferenceFormat(
             "python: here.getMeeting().date.strftime('%Y%m%d') + '/' + "
-            "str(here.getProposingGroup(True).get_acronym()) + '/' + "
+            "str(here.getProposingGroup(True).get_acronym().upper()) + '/' + "
             "str(here.getCategory()) + '/' + "
             "str(here.getRawClassifier() and here.getClassifier(theObject=True).getId() or '-') + '/' + "
             "('/'.join(here.getOtherMeetingConfigsClonableTo()) or '-') + '/' + "
@@ -7086,29 +7087,35 @@ class testMeetingItem(PloneMeetingTestCase):
         meeting = self.create('Meeting', date=datetime(2017, 3, 3, 0, 0))
         self.presentItem(item)
         self.freezeMeeting(meeting)
-        self.assertEqual(item.getItemReference(), '20170303/Devel/development/-/-/Title1/1')
+        self.assertEqual(item.getItemReference(), '20170303/DEVEL/development/-/-/Title1/1')
         # change category
         item.setCategory('research')
         item._update_after_edit()
-        self.assertEqual(item.getItemReference(), '20170303/Devel/research/-/-/Title1/1')
+        self.assertEqual(item.getItemReference(), '20170303/DEVEL/research/-/-/Title1/1')
         # change classifier
         item.setClassifier('classifier1')
         item._update_after_edit()
-        self.assertEqual(item.getItemReference(), '20170303/Devel/research/classifier1/-/Title1/1')
+        self.assertEqual(item.getItemReference(), '20170303/DEVEL/research/classifier1/-/Title1/1')
         # change proposingGroup
         item.setProposingGroup(self.vendors_uid)
         item._update_after_edit()
-        self.assertEqual(item.getItemReference(), '20170303/Devil/research/classifier1/-/Title1/1')
+        self.assertEqual(item.getItemReference(), '20170303/DEVIL/research/classifier1/-/Title1/1')
         # change otherMeetingConfigsClonableTo
         item.setOtherMeetingConfigsClonableTo((cfg2Id,))
         item._update_after_edit()
         self.assertEqual(item.getItemReference(),
-                         '20170303/Devil/research/classifier1/{0}/Title1/1'.format(cfg2Id))
+                         '20170303/DEVIL/research/classifier1/{0}/Title1/1'.format(cfg2Id))
         # changing the Title will not update the reference
         item.setTitle('Title2')
         item._update_after_edit()
         self.assertEqual(item.getItemReference(),
-                         '20170303/Devil/research/classifier1/{0}/Title1/1'.format(cfg2Id))
+                         '20170303/DEVIL/research/classifier1/{0}/Title1/1'.format(cfg2Id))
+        # check that it works as well when organization.acronym is None
+        org = item.getProposingGroup(theObject=True)
+        org.acronym = None
+        item.update_item_reference()
+        self.assertEqual(item.getItemReference(),
+                         '20170303//research/classifier1/{0}/Title2/1'.format(cfg2Id))
 
     def test_pm_ItemReferenceUpdateWhenItemPositionChangedOnMeeting(self):
         """When an item position changed in the meeting, the itemReference is updated."""

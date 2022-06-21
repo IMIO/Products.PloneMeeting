@@ -2,7 +2,31 @@ Changelog
 =========
 
 
-4.2rc28 (unreleased)
+4.2rc210 (unreleased)
+---------------------
+
+- Make the `Migrate_To_4200._fixPODTemplatesInstructions`
+  `getFirstItemNumber/first_item_number` replacement work for any cases,
+  not only for `Meeting` POD templates.
+  [gbastien]
+
+4.2rc29 (2022-06-17)
+--------------------
+
+- In `Migrate_To_4200`, update TAL expressions using
+  `updateLocalRoles` to `update_local_roles`.
+  [gbastien]
+- Import harmless functions from `utils.py` into `safe_utils.py` so it is
+  available on `pm_utils` in TAL expressions and POD templates.
+  [gbastien]
+- Make `organization.get_acronym` return an empty string u'' when acronym is `None`.
+  [gbastien]
+- In `ToolPloneMeeting.pasteItem`, do not use `proposingGroup` vocab `by_value`
+  to get the first user group because `by_value` generates a dict that is not
+  ordered, use `_terms` that holds terms ordered.
+  [gbastien]
+
+4.2rc28 (2022-06-14)
 --------------------
 
 - Back to previous behavior for `MeetingItem.mayTakeOver`, do not check
@@ -26,6 +50,35 @@ Changelog
   [gbastien]
 - Added possibility to create user fs directly in content/addUsers.
   [odelaere]
+- Avoid having the full `utils.py` files available in POD templates,
+  select available functions in a `safe_utils.py` file.
+  [gbastien]
+- Fixed cachekeys for `ItemToDiscussView` and `ItemIsSignedView`, as path to
+  image is cached, we need to check the `portal_url` in the cachekey.
+  [gbastien]
+- CSS, removed double definition of top margin for `static-infos` section that
+  was leading to too much space at the top of item reference in dashboards.
+  [gbastien]
+- Make `Migrator.updatePODTemplatesCode` output format compatible with `collective.documentgenerator`
+  builtin `Search&Replace` or when using `appy.pod` S&R (`collective.documentgenerator>3.30`).
+  [gbastien]
+- Fixed `utils.transformAllRichTextFields` that was losing the `resolveuid` of
+  images for AT types (`MeetingItem`) when parameter `onlyField` was used
+  (called from quick edit). Added upgrade step to `4203` to fix this, every items
+  since migration to 4200 will be fixed as bug was introduced since version 4200...
+  [gbastien]
+- Avoid rendering malicious content by escaping places where HTML is rendered.
+  [gbastien]
+- Fixed an issue in `PMDataChangesHistoryAdapter`. The tooltip was mentioning the wrong actor.
+  [aduchene]
+- When handling `meeting.first_item_number` on meeting closure, only compute
+  number if it is still `-1`, in other cases, do nothing, this will manage the case
+  when reinitializing the first item number at the beginning of a new year.
+  [gbastien]
+- Added `events._invalidateAttendeesRelatedCache` to factorize invalidation of
+  attendees related cache. Used by `person/held_position/meeting` to invalidate
+  caches when necessary.
+  [gbastien]
 
 4.2rc27 (2022-05-17)
 --------------------

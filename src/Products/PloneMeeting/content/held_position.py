@@ -8,12 +8,12 @@ from collective.contact.core.vocabulary import get_directory
 from collective.contact.core.vocabulary import NoDirectoryFound
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_own_organization
-from imio.helpers.cache import invalidate_cachekey_volatile_for
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form as directives_form
 from plone.supermodel import model
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.events import _invalidateAttendeesRelatedCache
 from Products.PloneMeeting.utils import _prefixed_gn_position_name
 from Products.PloneMeeting.utils import plain_render
 from Products.PloneMeeting.utils import split_gender_and_number
@@ -266,8 +266,7 @@ class PMHeldPosition(HeldPosition):
 
     def _invalidateCachedMethods(self):
         '''Clean cache for vocabularies using held_positions.'''
-        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.allheldpositionsvocabularies")
-        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.itemvotersvocabulary")
+        _invalidateAttendeesRelatedCache()
 
 
 class PMHeldPositionSchemaPolicy(DexteritySchemaPolicy):

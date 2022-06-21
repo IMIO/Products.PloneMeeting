@@ -292,6 +292,23 @@ def _invalidateUsersAndGroupsRelatedCache():
         'Products.PloneMeeting.ToolPloneMeeting._users_groups_value', get_again=True)
 
 
+def _invalidateAttendeesRelatedCache(all=True, get_agains=[]):
+    '''Clean caches using attendees (person/held_positions).'''
+    # necessary when changing person/held_position
+    if all:
+        invalidate_cachekey_volatile_for(
+            "Products.PloneMeeting.vocabularies.allheldpositionsvocabularies")
+        invalidate_cachekey_volatile_for(
+            "Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignaturesRawFields")
+
+    invalidate_cachekey_volatile_for(
+        "Products.PloneMeeting.vocabularies.itemvotersvocabulary",
+        get_again="itemvotersvocabulary" in get_agains)
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures',
+        get_again="AsyncLoadMeetingAssemblyAndSignatures" in get_agains)
+
+
 def onOrgWillBeRemoved(current_org, event):
     '''Checks if the organization can be deleted:
       - it can not be linked to an existing MeetingItem;
@@ -1137,17 +1154,14 @@ def onMeetingModified(meeting, event):
         # invalidate last meeting modified
         invalidate_cachekey_volatile_for(
             'Products.PloneMeeting.Meeting.modified', get_again=True)
-        # invalidate item voters vocabulary in case new voters (un)selected
-        invalidate_cachekey_volatile_for(
-            'Products.PloneMeeting.vocabularies.itemvotersvocabulary', get_again=True)
-        # invalidate assembly async load on meeting
-        invalidate_cachekey_volatile_for(
-            'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures',
-            get_again=True)
+        # invalidate item voters in case new voters (un)selected, assembly async load on meeting
+        _invalidateAttendeesRelatedCache(all=False,
+                                         get_agains=["itemvotersvocabulary",
+                                                     "AsyncLoadMeetingAssemblyAndSignatures"])
         # invalidate assembly async load on item when using raw fields
         if not cfg.isUsingContacts():
             invalidate_cachekey_volatile_for(
-                'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignaturesRawFields',
+                "Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignaturesRawFields",
                 get_again=True)
         if need_reindex:
             meeting.reindexObject()
