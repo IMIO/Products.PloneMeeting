@@ -2699,6 +2699,19 @@ schema = Schema((
         schemata="votes",
         write_permission="PloneMeeting: Write risky config",
     ),
+    BooleanField(
+        name='displayVotingGroup',
+        default=defValues.displayVotingGroup,
+        widget=BooleanField._properties['widget'](
+            description="DisplayVotingGroup",
+            description_msgid="display_voting_group_descr",
+            label='Displayvotinggroup',
+            label_msgid='PloneMeeting_label_displayVotingGroup',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="votes",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     LinesField(
         name='meetingItemTemplatesToStoreAsAnnex',
         widget=MultiSelectionWidget(

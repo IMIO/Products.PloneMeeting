@@ -41,8 +41,11 @@ from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
 from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
 from Products.PloneMeeting.utils import cleanMemoize
 from z3c.form.testing import TestRequest as z3c_form_TestRequest
+from z3c.relationfield.relation import RelationValue
 from zope.component import getMultiAdapter
+from zope.component import getUtility
 from zope.event import notify
+from zope.intid.interfaces import IIntIds
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.traversing.interfaces import BeforeTraverseEvent
 from zope.viewlet.interfaces import IViewletManager
@@ -780,3 +783,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             field = obj.getField(field_name)
             field.validate(field.getAccessor(obj)(), obj, errors)
         return errors
+
+    def _relation(self, obj):
+        """ """
+        intids = getUtility(IIntIds)
+        return RelationValue(intids.getId(obj))

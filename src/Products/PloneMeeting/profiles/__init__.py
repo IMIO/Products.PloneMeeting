@@ -804,6 +804,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.firstLinkedVoteUsedVoteValues = ('no', 'abstain')
         self.nextLinkedVotesUsedVoteValues = ('yes', )
         self.voteCondition = ''
+        self.displayVotingGroup = True
         # Committees parameters -----------------------------------------------
         self.orderedCommitteeContacts = []
         self.committees = []

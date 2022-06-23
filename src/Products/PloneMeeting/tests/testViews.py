@@ -47,12 +47,9 @@ from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.statusmessages.interfaces import IStatusMessage
 from z3c.form.interfaces import DISPLAY_MODE
 from z3c.form.interfaces import INPUT_MODE
-from z3c.relationfield.relation import RelationValue
 from zope.component import getAdapter
 from zope.component import getMultiAdapter
-from zope.component import getUtility
 from zope.i18n import translate
-from zope.intid.interfaces import IIntIds
 
 import magic
 import transaction
@@ -2456,11 +2453,10 @@ class testViews(PloneMeetingTestCase):
             {'token': 'default', 'name': u'DefaultA|DefaultB|DefaultC|DefaultD'},
             {'token': 'default2', 'name': u'Default2A|Default2B|Default2C|Default2D'}, ]
         person = self.portal.contacts.get('person1')
-        intids = getUtility(IIntIds)
         org = get_own_organization()
         newhp = api.content.create(
             container=person, type='held_position', label=u'New held position',
-            title='New held position', position=RelationValue(intids.getId(org)),
+            title='New held position', position=self._relation(org),
             usages=['assemblyMember'], position_type='default2')
         person.userid = 'pmManager'
         self.changeUser('pmCreator1')

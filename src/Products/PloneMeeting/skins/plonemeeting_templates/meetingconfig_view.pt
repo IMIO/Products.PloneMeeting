@@ -1259,7 +1259,9 @@
           <td tal:define="field python:here.getField('voteCondition')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
+          <td tal:define="field python:here.getField('displayVotingGroup')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
           <td></td>
         </tr>
       </table>
