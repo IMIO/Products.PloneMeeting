@@ -6,6 +6,7 @@
 #
 
 from AccessControl import Unauthorized
+from plone import api
 from Products.PloneMeeting.browser.itemvotes import IEncodeSecretVotes
 from Products.PloneMeeting.browser.itemvotes import secret_votes_default
 from Products.PloneMeeting.browser.itemvotes import votes_default
@@ -13,11 +14,10 @@ from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.statusmessages.interfaces import IStatusMessage
 from z3c.form import validator
 from zope.i18n import translate
 from zope.interface import Invalid
-from Products.statusmessages.interfaces import IStatusMessage
-from plone import api
 
 
 class testVotes(PloneMeetingTestCase):

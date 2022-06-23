@@ -12,6 +12,7 @@ from plone import api
 from plone.autoform.directives import widget
 from plone.restapi.deserializer import boolean_value
 from Products.Five import BrowserView
+from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
 from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
 from Products.PloneMeeting.browser.itemattendee import BaseAttendeeForm
 from Products.PloneMeeting.browser.itemattendee import person_uid_default
@@ -37,7 +38,6 @@ from zope.interface import Invalid
 from zope.interface import invariant
 from zope.interface import provider
 from zope.schema.interfaces import IContextAwareDefaultFactory
-from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
 
 
 def _build_groups(context, caching=True):
