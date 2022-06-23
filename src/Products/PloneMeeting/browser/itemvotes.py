@@ -2,7 +2,6 @@
 
 from AccessControl import Unauthorized
 from collections import OrderedDict
-from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.z3cform.datagridfield import DataGridFieldFactory
 from collective.z3cform.datagridfield import DictRow
 from imio.helpers.content import get_vocab
@@ -40,29 +39,29 @@ from zope.interface import provider
 from zope.schema.interfaces import IContextAwareDefaultFactory
 
 
-def _build_groups(context, caching=True):
-    """ """
-    # caching
+def _build_voting_groups(context, caching=True):
+    """Build voting groups informations that will be used to manage the votes by group."""
+
+    # caching is done in the REQUEST because this is called 2 times
     if caching and hasattr(context, "REQUEST"):
-        res = getattr(context, '_build_groups', None)
+        res = getattr(context.REQUEST, '_build_voting_groups', None)
 
     if res is None:
         res = OrderedDict([('all', {'title': 'All', 'uids': []}),
-                           (PLONEGROUP_ORG, {'title': 'Others', 'uids': []})])
+                           ('others', {'title': 'Others', 'uids': []})])
         for voter in context.get_item_voters(theObjects=True):
+            group_id = 'others'
             voting_group = voter.voting_group
-            # use a voting_group is selected, else use the PLONEGROUP_ORG
+            # use a voting_group if selected, else use 'others
             if voting_group and not voting_group.isBroken():
                 org = voting_group.to_object
                 group_id = org.getId()
                 if group_id not in res:
                     res[group_id] = {'title': org.title, 'uids': []}
-            else:
-                group_id = PLONEGROUP_ORG
             res[group_id]['uids'].append(voter.UID())
         # only keep PLONEGROUP_ORG if any other value than 'all'
-        if res.keys() == ['all', PLONEGROUP_ORG]:
-            res.pop(PLONEGROUP_ORG)
+        if res.keys() == ['all', 'others']:
+            res.pop('others')
         else:
             # reorder so PLONEGROUP_ORG is at the end
             ordered = res.keys()
@@ -70,7 +69,7 @@ def _build_groups(context, caching=True):
             res = OrderedDict((k, res[k]) for k in ordered)
         # caching
         if caching and hasattr(context, "REQUEST"):
-            context.REQUEST.set('_build_groups', res)
+            context.REQUEST.set('_build_voting_groups', res)
     return res
 
 
@@ -91,7 +90,7 @@ class DisplaySelectAllProvider(ContentProviderBase):
         used_vote_terms = get_vocab(
             self.context, "Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary")
         self.used_vote_values = [term.token for term in used_vote_terms._terms]
-        self.groups = _build_groups(self.context)
+        self.groups = _build_voting_groups(self.context)
         return self.template()
 
 
@@ -288,8 +287,9 @@ def next_vote_is_linked(itemVotes, vote_number=0):
     return res
 
 
-def _may_update_votes_for(context, item_to_update):
-    """ """
+def is_vote_updatable_for(context, item_to_update):
+    """Given p_item_to_update will be updatable if it is the context or
+       if using same pollType and same voters and not using several or linked votes."""
     res = False
     if context == item_to_update or \
        (context.getPollType() == item_to_update.getPollType() and
@@ -328,7 +328,7 @@ class EncodeVotesForm(BaseAttendeeForm):
         # hide vote_number field
         self.fields['vote_number'].mode = HIDDEN_MODE
         # add a css class corresponding to group of held positions
-        groups = _build_groups(self.context)
+        groups = _build_voting_groups(self.context)
         # do not hide it, when hidding it, value is always True???
         # this is hidden using CSS
         # self.fields['linked_to_previous'].mode = HIDDEN_MODE
@@ -379,7 +379,7 @@ class EncodeVotesForm(BaseAttendeeForm):
         not_updated = []
         for item_to_update in items_to_update:
             # set item public votes
-            if _may_update_votes_for(self.context, item_to_update):
+            if is_vote_updatable_for(self.context, item_to_update):
                 self.meeting.set_item_public_vote(item_to_update, data, self.vote_number)
                 updated.append(item_to_update.getItemNumber(for_display=True))
             else:
@@ -606,7 +606,7 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
         not_updated = []
         for item_to_update in items_to_update:
             # set item secret vote
-            if _may_update_votes_for(self.context, item_to_update):
+            if is_vote_updatable_for(self.context, item_to_update):
                 self.meeting.set_item_secret_vote(item_to_update, data, self.vote_number)
                 updated.append(item_to_update.getItemNumber(for_display=True))
             else:
