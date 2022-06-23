@@ -762,6 +762,14 @@ class Migrate_To_4200(Migrator):
             'self.Title()': "tool.format_date(self.date)",
             # formatMeetingDate to format_date
             'tool.formatMeetingDate(self': "tool.format_date(self.date",
+            # display_date
+            ".display_date('startDate'": ".display_date('start_date'",
+            ".display_date('midDate'": ".display_date('mid_date'",
+            ".display_date('endDate'": ".display_date('end_date'",
+            ".display_date('approvalDate'": ".display_date('approval_date'",
+            ".display_date('convocationDate'": ".display_date('convocation_date'",
+            ".display_date('preMeetingDate'": ".display_date('pre_meeting_date'",
+            ".display_date('approvalDate'": ".display_date('approval_date'",
         }
         # specific for MeetingItem POD Templates
         item_replacements = {
