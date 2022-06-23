@@ -810,6 +810,8 @@ class testVotes(PloneMeetingTestCase):
             in rendered_form)
         # when no voting_group defined for any voter, controls are not there
         hp1.voting_group = None
+        # clear cache
+        self.request['_build_voting_groups'] = None
         votes_form.update()
         rendered_form = votes_form.render()
         # select values are there
@@ -819,6 +821,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertFalse(
             '<tr class="datagridwidget-row required org-outside-own-org row-1" data-index="0">'
             in rendered_form)
+
 
 def test_suite():
     from unittest import makeSuite
