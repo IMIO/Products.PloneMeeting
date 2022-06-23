@@ -9,7 +9,18 @@ Changelog
   `getFirstItemNumber/first_item_number` replacement work for any cases,
   not only for `Meeting` POD templates.
   [gbastien]
-- In `Migrate_To_4200._fixPODTemplatesInstructions` manage `display_date` instructions.
+- In `Migrate_To_4200._fixPODTemplatesInstructions` manage `display_date`
+  instructions.
+  [gbastien]
+- In `MeetingConfig.getMeetingsAcceptingItems`, moved the `review_states`
+  computation logic from `MeetingItem.listMeetingsAcceptingItems` to
+  `MeetingConfig._getMeetingsAcceptingItemsQuery` so calling
+  `MeetingConfig.getMeetingsAcceptingItems` will always be correct when
+  `review_states=[]`.
+  This fixes a bug in `imio.pm.ws.soap.soapview.SOAPView._meetingsAcceptingItems`
+  that was returning the same meetings accepting items no matter user was
+  `MeetingManager` or not (was actually always returning meetings accepting items
+  as if user was a `MeetingManager`).
   [gbastien]
 
 4.2rc29 (2022-06-17)

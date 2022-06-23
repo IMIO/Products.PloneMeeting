@@ -7546,7 +7546,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # he is able to add a meetingitem to a 'decided' meeting.
         # except if we specifically restricted given p_review_states.
         if not review_states:
-            review_states = self.getMeetingStatesAcceptingItemsForMeetingManagers()
+            if self.aq_parent.isManager(self):
+                review_states = self.getMeetingStatesAcceptingItemsForMeetingManagers()
+            else:
+                review_states = self.getItemPreferredMeetingStates()
 
         query = {'portal_type': self.getMeetingTypeName(),
                  'review_state': review_states,
@@ -7559,15 +7562,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getMeetingsAcceptingItems(self, review_states=[], inTheFuture=False):
         '''Returns meetings accepting items.'''
+        # compute the query so when review_states=[], it is computed and we use
+        # the "review_state" value from the query
+        query = self._getMeetingsAcceptingItemsQuery(review_states, inTheFuture)
         req = self.REQUEST
         key = "PloneMeeting-MeetingConfig-getMeetingsAcceptingItems-{0}-{1}-{2}".format(
-            repr(self), review_states, inTheFuture)
+            self.id, tuple(query['review_state']), inTheFuture)
         cache = IAnnotations(req)
         brains = cache.get(key, None)
 
         if brains is None:
             catalog = api.portal.get_tool('portal_catalog')
-            query = self._getMeetingsAcceptingItemsQuery(review_states, inTheFuture)
             brains = catalog.unrestrictedSearchResults(**query)
             cache[key] = brains
         return brains
