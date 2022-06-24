@@ -1,16 +1,29 @@
 <div class="select-all-vote-values" i18n:domain="PloneMeeting">
-  <tal:loop repeat="usedVoteValue view/usedVoteValues">
-    <span class="option">
-      <label tal:define="css_id string:select-all-vote-value-${usedVoteValue}"
-             tal:attributes="for css_id">
-        <input tal:attributes="id css_id;
-                               value usedVoteValue;"
-               name="select-all-vote-values"
-               class="radio-widget required choice-field"
-               onclick="selectAllVoteValues(this);"
-               type="radio">
-          <span class="label" i18n:translate="" tal:content="string:vote_value_${usedVoteValue}">Vote value</span>
-      </label>
-    </span>
-  </tal:loop>
+  <tal:groups repeat="group python: view.groups.items()">
+    <span tal:content="python: group[1]['title']" i18n:translate="">Group title</span>:
+    <tal:defines define="group_id python: group[0];
+                         group_title python: group[1]['title'];
+                         class string:select-all-vote-values-${group_id}">
+      <tal:loop repeat="usedVoteValue python: view.used_vote_values">
+        <span class="option" tal:define="css_id string:${group_id}-${usedVoteValue}">
+          <label tal:define="css_id string:${group_id}-${usedVoteValue}">
+            <input tal:attributes="value usedVoteValue;
+                                   data-group_id string:${group_id};
+                                   data-vote_value string:${usedVoteValue};
+                                   name string:${name};
+                                   id string:${css_id}"
+                   tal:define="name string:select-all-vote-value-${group_id};"
+                   class="radio-widget required choice-field"
+                   onclick="selectAllVoteValues(this, this.dataset.group_id, this.dataset.vote_value);"
+                   type="radio">
+            <span i18n:translate="" class="label"
+                   tal:content="string:vote_value_${usedVoteValue}">
+              Vote value
+            </span>
+          </label>
+        </span>
+      </tal:loop>
+    </tal:defines>
+    <br />
+  </tal:groups>
 </div>

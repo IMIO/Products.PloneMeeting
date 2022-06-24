@@ -41,8 +41,11 @@ from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
 from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
 from Products.PloneMeeting.utils import cleanMemoize
 from z3c.form.testing import TestRequest as z3c_form_TestRequest
+from z3c.relationfield.relation import RelationValue
 from zope.component import getMultiAdapter
+from zope.component import getUtility
 from zope.event import notify
+from zope.intid.interfaces import IIntIds
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.traversing.interfaces import BeforeTraverseEvent
 from zope.viewlet.interfaces import IViewletManager
@@ -240,10 +243,11 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             res = sm.checkPermission(permission, obj)
         return res
 
-    def changeUser(self, loginName):
+    def changeUser(self, loginName, clean_memoize=True):
         '''Logs out currently logged user and logs in p_loginName.'''
         logout()
-        self.cleanMemoize()
+        if clean_memoize:
+            self.cleanMemoize()
         if loginName == 'admin':
             login(self.app, loginName)
         else:
@@ -581,10 +585,11 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             self._addPrincipalToGroup(member.getId(), group)
 
     # Workflow-related methods -------------------------------------------------
-    def do(self, obj, transition, comment=''):
+    def do(self, obj, transition, comment='', clean_memoize=True):
         '''Executes a workflow p_transition on a given p_obj.'''
         self.wfTool.doActionFor(obj, transition, comment=comment)
-        self.cleanMemoize()
+        if clean_memoize:
+            self.cleanMemoize()
 
     def transitions(self, obj):
         '''Returns the list of transition ids that the current user
@@ -780,3 +785,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             field = obj.getField(field_name)
             field.validate(field.getAccessor(obj)(), obj, errors)
         return errors
+
+    def _relation(self, obj):
+        """ """
+        intids = getUtility(IIntIds)
+        return RelationValue(intids.getId(obj))

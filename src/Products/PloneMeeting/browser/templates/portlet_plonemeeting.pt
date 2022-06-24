@@ -53,16 +53,20 @@
         <tal:block replace="structure view/widget_render" />
 
         <tal:contacts_link condition="not:nocall:cfg">
-    
-            <a class="portlet_pm_dashboard_link"
+
+            <a class="portlet-pm-dashboard-link to-own-org"
                tal:condition="not:nocall:cfg"
                tal:define="own_org view/get_own_org"
                tal:attributes="href string:${own_org/absolute_url}"
                i18n:translate="">To own organization</a>
-            <a class="portlet_pm_dashboard_link"
+            <a class="portlet-pm-dashboard-link to-edit-contacts"
                tal:define="contacts nocall:python:view.portal.contacts"
                tal:attributes="href string:${contacts/absolute_url}/edit"
                i18n:translate="">Edit contacts</a>
+            <a class="portlet-pm-dashboard-link to-add-contact-outside-my-org2 highlightValue"
+               tal:define="contacts nocall:python:view.portal.contacts"
+               tal:attributes="href string:${contacts/absolute_url}/++add++organization"
+               i18n:translate="">Add organization outside "My organization"</a>
 
         </tal:contacts_link>
       </div>

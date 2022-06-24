@@ -3421,12 +3421,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
 
-        if tool.isManager(cfg):
-            meeting_states_accepting_items = cfg.getMeetingStatesAcceptingItemsForMeetingManagers()
-        else:
-            meeting_states_accepting_items = cfg.getItemPreferredMeetingStates()
-
-        for meetingBrain in cfg.getMeetingsAcceptingItems(review_states=meeting_states_accepting_items):
+        # while passing empty review_states, it is computed depending
+        # on fact that current user isManager or not
+        for meetingBrain in cfg.getMeetingsAcceptingItems(review_states=[]):
             meetingDate = tool.format_date(meetingBrain.meeting_date, with_hour=True)
             meetingState = translate(meetingBrain.review_state,
                                      domain="plone",

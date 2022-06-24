@@ -873,11 +873,17 @@ function toggleAllDetails() {
   }
 }
 
-function selectAllVoteValues(tag) {
-  $('input[value='+tag.value+']').each(function() {
-    this.checked = true;
-    }
-  );
+function selectAllVoteValues(tag, group_id, vote_value) {
+  if (group_id == 'all') {
+    $('table#form-widgets-votes input[value='+vote_value+']').each(function() {
+      this.checked = true;
+      }
+    );
+  } else {
+        $('tr.'+group_id+' input[value='+vote_value+']').each(function() {
+      this.checked = true;
+      }
+    );}
 }
 
 /* while scrolling on meeting manage available items sticky table header */

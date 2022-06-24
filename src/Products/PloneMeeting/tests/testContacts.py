@@ -28,12 +28,9 @@ from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import get_prefixed_gn_position_name
 from Products.statusmessages.interfaces import IStatusMessage
-from z3c.relationfield.relation import RelationValue
-from zope.component import getUtility
 from zope.event import notify
 from zope.i18n import translate
 from zope.interface import Invalid
-from zope.intid.interfaces import IIntIds
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.security.management import endInteraction
 from zope.security.management import newInteraction
@@ -83,10 +80,9 @@ class testContacts(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         person = self.portal.contacts.get('person1')
         org = self.portal.contacts.get(PLONEGROUP_ORG)
-        intids = getUtility(IIntIds)
         new_hp = api.content.create(
             container=person, type='held_position', label='New held position',
-            title='New held position', position=RelationValue(intids.getId(org)),
+            title='New held position', position=self._relation(org),
             usages=['assemblyMember'])
         self.changeUser('pmManager')
         # still no new value as not selected in MeetingConfig.orderedContacts
@@ -2284,12 +2280,11 @@ class testContacts(PloneMeetingTestCase):
         self.assertIsNone(hp2.end_date)
         self.assertEqual(org1.get_representatives(), [])
         self.assertEqual(org2.get_representatives(), [])
-        intids = getUtility(IIntIds)
         # hp1 is representative for one org1
-        hp1.represented_organizations = [RelationValue(intids.getId(org1))]
+        hp1.represented_organizations = [self._relation(org1)]
         # hp2 is representative for two org1 and org2
-        hp2.represented_organizations = [RelationValue(intids.getId(org1)),
-                                         RelationValue(intids.getId(org2))]
+        hp2.represented_organizations = [self._relation(org1),
+                                         self._relation(org2)]
         # update relations
         notify(ObjectModifiedEvent(hp1))
         notify(ObjectModifiedEvent(hp2))
@@ -2335,12 +2330,11 @@ class testContacts(PloneMeetingTestCase):
         org2 = self.vendors
         hp1 = self.portal.contacts.person1.held_pos1
         hp2 = self.portal.contacts.person2.held_pos2
-        intids = getUtility(IIntIds)
         # hp1 is representative for one org1
-        hp1.represented_organizations = [RelationValue(intids.getId(org1))]
+        hp1.represented_organizations = [self._relation(org1)]
         # hp2 is representative for two org1 and org2
-        hp2.represented_organizations = [RelationValue(intids.getId(org1)),
-                                         RelationValue(intids.getId(org2))]
+        hp2.represented_organizations = [self._relation(org1),
+                                         self._relation(org2)]
         # update relations
         notify(ObjectModifiedEvent(hp1))
         notify(ObjectModifiedEvent(hp2))

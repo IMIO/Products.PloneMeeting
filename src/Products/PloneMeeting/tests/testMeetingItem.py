@@ -4255,6 +4255,32 @@ class testMeetingItem(PloneMeetingTestCase):
         self.closeMeeting(m4)
         # getMeetingsAcceptingItems should return all meetings excepted closed ones
         self.assertEqual([m.id for m in cfg.getMeetingsAcceptingItems()], [m1.id, m2.id, m3.id])
+        self.assertEqual(
+            [m.review_state for m in cfg.getMeetingsAcceptingItems()],
+            ['created', 'frozen', 'decided'])
+        # when connected as a non MeetingManager, we will get only created and frozen meetings
+        self.changeUser('pmCreator1')
+        self.assertEqual([m.id for m in cfg.getMeetingsAcceptingItems()], [m1.id, m2.id])
+        self.assertEqual(
+            [m.review_state for m in cfg.getMeetingsAcceptingItems()],
+            ['created', 'frozen'])
+        # can ask meetings accepting items of arbitrary review_state
+        self.assertEqual(
+            [m.id for m in cfg.getMeetingsAcceptingItems(review_states=['created', 'decided'])],
+            [m1.id, m3.id])
+        self.assertEqual(
+            [m.review_state for m in cfg.getMeetingsAcceptingItems(review_states=['created', 'decided'])],
+            ['created', 'decided'])
+        # check that cache is working, cached on request, if we change a meeting state
+        # we will still get same result
+        self.closeMeeting(m3, as_manager=True, clean_memoize=False)
+        self.assertEqual(
+            [m.id for m in cfg.getMeetingsAcceptingItems(review_states=['created', 'decided'])],
+            [m1.id, m3.id])
+        self.request.__annotations__.clear()
+        self.assertEqual(
+            [m.id for m in cfg.getMeetingsAcceptingItems(review_states=['created', 'decided'])],
+            [m1.id])
 
     def test_pm_GetMeetingsAcceptingItemsWithPublishDecisionsWFAdaptation(self):
         """Test that MeetingConfig.getMeetingsAcceptingItems also return meetings in state
@@ -6454,15 +6480,19 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # link to unknown external image, like during copy/paste of content
         # that has a link to an unexisting image or so
-        decision = '<p>Not working external image <img src="https://i.picsum.photos/id/449/400.png">.</p>'
+        decision = '<p>Not working external image <img width="100" height="100" ' \
+            'src="https://i.picsum.photos/id/449/400.png">.</p>'
         item.setDecision(decision)
         item.at_post_edit_script()
-        self.assertTrue('1035-600x400.jpg' in item.objectIds())
-        # nothing was done
+        img4 = item.get('imagenotfound.jpg')
+        expected = '<p>Not working external image <img width="100" height="100" ' \
+            'src="resolveuid/{0}">.</p>'.format(img4.UID())
+        self.assertTrue('imagenotfound.jpg' in item.objectIds())
+        # the not retrievable image was replaced with a "not found" image
         self.assertListEqual(
             sorted(item.objectIds()),
-            ['1025-400x300.jpg', '1035-600x400.jpg', '22-400x400.jpg'])
-        self.assertEqual(item.getRawDecision(), decision)
+            ['1025-400x300.jpg', '1035-600x400.jpg', '22-400x400.jpg', 'imagenotfound.jpg'])
+        self.assertEqual(item.getRawDecision(), expected)
 
     def test_pm_ItemInternalImagesStoredLocallyWhenItemDuplicated(self):
         """When an item is duplicated, images that were stored in original item

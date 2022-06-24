@@ -64,7 +64,7 @@
                       is_attendee_position_redefined python: context.is_attendee_position_redefined(aUid);"
           tal:attributes="class classOddEven">
         <td>
-          <span tal:content="python: mUser.get_short_title()"
+          <span tal:content="python: mUser.get_short_title(include_voting_group=view.cfg.getDisplayVotingGroup())"
                 tal:attributes="class python: is_attendee_position_redefined and 'tooltipster-meeting-item-redefined-position link-help item-attendee-title highlightValue' or 'item-attendee-title';
                                 data-base_url string:${context/absolute_url};
                                 data-attendee_uid string:${aUid};">

@@ -682,6 +682,7 @@ class Migrate_To_4200(Migrator):
                         '.getPreMeetingDate()': '.pre_meeting_date',
                         '.getPlace()': '.get_place()',
                         '.getExtraordinarySession()': ".extraordinary_session",
+                        '.getFirstItemNumber()': ".first_item_number",
                         '.getAttendees(theObjects': '.get_attendees(the_objects',
                         '.getAttendees(': '.get_attendees(',
                         '.getAbsents(theObjects': '.get_absents(the_objects',
@@ -749,7 +750,6 @@ class Migrate_To_4200(Migrator):
         meeting_replacements = {
             'self.getAuthorityNotice()': "view.print_value('authority_notice')",
             'self.getCommitteeObservations()': "view.print_value('committees_observations')",
-            'self.getFirstItemNumber()': "self.first_item_number",
             'self.getInAndOutMoves()': "view.print_value('in_and_out_moves')",
             'self.getMeetingNumber()': "self.meeting_number",
             'self.getNotes()': "view.print_value('notes')",
@@ -762,6 +762,14 @@ class Migrate_To_4200(Migrator):
             'self.Title()': "tool.format_date(self.date)",
             # formatMeetingDate to format_date
             'tool.formatMeetingDate(self': "tool.format_date(self.date",
+            # display_date
+            ".display_date('startDate'": ".display_date('start_date'",
+            ".display_date('midDate'": ".display_date('mid_date'",
+            ".display_date('endDate'": ".display_date('end_date'",
+            ".display_date('approvalDate'": ".display_date('approval_date'",
+            ".display_date('convocationDate'": ".display_date('convocation_date'",
+            ".display_date('preMeetingDate'": ".display_date('pre_meeting_date'",
+            ".display_date('approvalDate'": ".display_date('approval_date'",
         }
         # specific for MeetingItem POD Templates
         item_replacements = {

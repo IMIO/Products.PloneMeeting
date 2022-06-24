@@ -5,6 +5,23 @@ Changelog
 4.2rc210 (unreleased)
 ---------------------
 
+- Make the `Migrate_To_4200._fixPODTemplatesInstructions`
+  `getFirstItemNumber/first_item_number` replacement work for any cases,
+  not only for `Meeting` POD templates.
+  [gbastien]
+- In `Migrate_To_4200._fixPODTemplatesInstructions` manage `display_date`
+  instructions.
+  [gbastien]
+- In `MeetingConfig.getMeetingsAcceptingItems`, moved the `review_states`
+  computation logic from `MeetingItem.listMeetingsAcceptingItems` to
+  `MeetingConfig._getMeetingsAcceptingItemsQuery` so calling
+  `MeetingConfig.getMeetingsAcceptingItems` will always be correct when
+  `review_states=[]`.
+  This fixes a bug in `imio.pm.ws.soap.soapview.SOAPView._meetingsAcceptingItems`
+  that was returning the same meetings accepting items no matter user was
+  `MeetingManager` or not (was actually always returning meetings accepting items
+  as if user was a `MeetingManager`).
+  [gbastien]
 - Avoid wrong order in item manually linked items when an item was linked before
   is it presented to a meeting, as items are sorted on meeting date.
   Add items without a meeting date at the top of items so it will be at the top
