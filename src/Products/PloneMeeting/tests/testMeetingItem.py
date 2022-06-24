@@ -4255,6 +4255,32 @@ class testMeetingItem(PloneMeetingTestCase):
         self.closeMeeting(m4)
         # getMeetingsAcceptingItems should return all meetings excepted closed ones
         self.assertEqual([m.id for m in cfg.getMeetingsAcceptingItems()], [m1.id, m2.id, m3.id])
+        self.assertEqual(
+            [m.review_state for m in cfg.getMeetingsAcceptingItems()],
+            ['created', 'frozen', 'decided'])
+        # when connected as a non MeetingManager, we will get only created and frozen meetings
+        self.changeUser('pmCreator1')
+        self.assertEqual([m.id for m in cfg.getMeetingsAcceptingItems()], [m1.id, m2.id])
+        self.assertEqual(
+            [m.review_state for m in cfg.getMeetingsAcceptingItems()],
+            ['created', 'frozen'])
+        # can ask meetings accepting items of arbitrary review_state
+        self.assertEqual(
+            [m.id for m in cfg.getMeetingsAcceptingItems(review_states=['created', 'decided'])],
+            [m1.id, m3.id])
+        self.assertEqual(
+            [m.review_state for m in cfg.getMeetingsAcceptingItems(review_states=['created', 'decided'])],
+            ['created', 'decided'])
+        # check that cache is working, cached on request, if we change a meeting state
+        # we will still get same result
+        self.closeMeeting(m3, as_manager=True, clean_memoize=False)
+        self.assertEqual(
+            [m.id for m in cfg.getMeetingsAcceptingItems(review_states=['created', 'decided'])],
+            [m1.id, m3.id])
+        self.request.__annotations__.clear()
+        self.assertEqual(
+            [m.id for m in cfg.getMeetingsAcceptingItems(review_states=['created', 'decided'])],
+            [m1.id])
 
     def test_pm_GetMeetingsAcceptingItemsWithPublishDecisionsWFAdaptation(self):
         """Test that MeetingConfig.getMeetingsAcceptingItems also return meetings in state

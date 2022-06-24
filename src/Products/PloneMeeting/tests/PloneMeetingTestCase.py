@@ -243,10 +243,11 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             res = sm.checkPermission(permission, obj)
         return res
 
-    def changeUser(self, loginName):
+    def changeUser(self, loginName, clean_memoize=True):
         '''Logs out currently logged user and logs in p_loginName.'''
         logout()
-        self.cleanMemoize()
+        if clean_memoize:
+            self.cleanMemoize()
         if loginName == 'admin':
             login(self.app, loginName)
         else:
@@ -584,10 +585,11 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             self._addPrincipalToGroup(member.getId(), group)
 
     # Workflow-related methods -------------------------------------------------
-    def do(self, obj, transition, comment=''):
+    def do(self, obj, transition, comment='', clean_memoize=True):
         '''Executes a workflow p_transition on a given p_obj.'''
         self.wfTool.doActionFor(obj, transition, comment=comment)
-        self.cleanMemoize()
+        if clean_memoize:
+            self.cleanMemoize()
 
     def transitions(self, obj):
         '''Returns the list of transition ids that the current user
