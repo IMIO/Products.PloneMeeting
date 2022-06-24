@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-4.2rc210 (unreleased)
----------------------
+4.2rc30 (unreleased)
+--------------------
 
 - Make the `Migrate_To_4200._fixPODTemplatesInstructions`
   `getFirstItemNumber/first_item_number` replacement work for any cases,
