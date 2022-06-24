@@ -22,6 +22,14 @@ Changelog
   `MeetingManager` or not (was actually always returning meetings accepting items
   as if user was a `MeetingManager`).
   [gbastien]
+- Adaptations to display error message on the field and not at the top of the form:
+
+  - Use a `constraint` instead an `invariant` to validate
+    `IMeetingCategory.category_mapping_when_cloning_to_other_mc`;
+  - Raise a `WidgetActionExecutionError` instead a `Invalid` for
+    `IPMDirectory.validate_position_types`.
+
+  [gbastien]
 
 4.2rc29 (2022-06-17)
 --------------------

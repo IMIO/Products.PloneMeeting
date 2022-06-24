@@ -5,6 +5,7 @@ from imio.helpers.content import uuidToObject
 from plone import api
 from plone.dexterity.schema import DexteritySchemaPolicy
 from Products.PloneMeeting.content.meeting import IMeeting
+from z3c.form.interfaces import WidgetActionExecutionError
 from zope.i18n import translate
 from zope.interface import Invalid
 from zope.interface import invariant
@@ -33,7 +34,7 @@ class IPMDirectory(IDirectory):
                                  'hp_url': hp.absolute_url()},
                         domain='PloneMeeting',
                         context=directory.REQUEST)
-                    raise Invalid(msg)
+                    raise WidgetActionExecutionError('position_types', Invalid(msg))
             # check if used as a redefined position_type
             # for an attendee on an item, this information is stored on the meeting
             meeting_brains = catalog.unrestrictedSearchResults(
@@ -51,7 +52,7 @@ class IPMDirectory(IDirectory):
                                          'item_url': item.absolute_url()},
                                 domain='PloneMeeting',
                                 context=directory.REQUEST)
-                            raise Invalid(msg)
+                            raise WidgetActionExecutionError('position_types', Invalid(msg))
 
 
 class PMDirectorySchemaPolicy(DexteritySchemaPolicy):

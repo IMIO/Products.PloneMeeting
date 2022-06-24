@@ -159,40 +159,27 @@ class testMeetingCategory(PloneMeetingTestCase):
                           if cfg.getId() not in term.token])
 
     def test_pm_validate_category_mapping_when_cloning_to_other_mc(self):
-        '''Test the 'category_mapping_when_cloning_to_other_mc' invariant.
-           It just validate that we can not define more than one value for the same meetingConfig.'''
-        aCatInMC = self.meetingConfig.categories.development
-
-        class DummyData(object):
-            def __init__(self, context, category_mapping_when_cloning_to_other_mc):
-                self.__context__ = context
-                self.category_mapping_when_cloning_to_other_mc = category_mapping_when_cloning_to_other_mc
-
-        # if only passing one value, it works
-        catmc1_vocab = get_vocab(
-            aCatInMC, u"Products.PloneMeeting.content.category."
-            "category_mapping_when_cloning_to_other_mc_vocabulary")
-        values = catmc1_vocab.by_token.keys()
-        invariant = IMeetingCategory.getTaggedValue('invariants')[0]
-        data = DummyData(aCatInMC, category_mapping_when_cloning_to_other_mc=[values[0]])
-        self.assertIsNone(invariant(data))
+        '''Test the 'category_mapping_when_cloning_to_other_mc' constraint.
+           It just validates that we can not define more than one value for the same meetingConfig.'''
+        dev_cat = self.meetingConfig.categories.development
+        constraint = IMeetingCategory['category_mapping_when_cloning_to_other_mc'].constraint
+        dev_cat_vocab = get_vocab(
+            dev_cat,
+            u"Products.PloneMeeting.content.category."
+            u"category_mapping_when_cloning_to_other_mc_vocabulary")
+        values = dev_cat_vocab.by_token.keys()
+        # one value is ok
+        self.assertTrue(constraint([values[0]]))
         # but not 2 for the same meetingConfig...
         error_msg = translate('error_can_not_select_several_cat_for_same_mc',
                               domain='PloneMeeting',
                               context=self.request)
-        data = DummyData(aCatInMC,
-                         category_mapping_when_cloning_to_other_mc=[values[0], values[1]])
         with self.assertRaises(Invalid) as cm:
-            invariant(data)
+            constraint(values)
         self.assertEqual(cm.exception.message, error_msg)
-
         # simulate a third meetingConfig, select one single value of existing meetingConfig2 and
-        # one of unexisting meetingConfig3, the validate is ok...
-        data = DummyData(
-            aCatInMC,
-            category_mapping_when_cloning_to_other_mc=[
-                values[0], 'meeting-config-dummy.category_name'])
-        self.assertIsNone(invariant(data))
+        # one of unexisting meetingConfig3, the validation is ok...
+        self.assertTrue(constraint([values[0], 'meeting-config-dummy.category_name']))
 
     def test_pm_CategoryContainerModifiedOnAnyAction(self):
         """The MeetingCategory container (categories/classifiers) is modified
