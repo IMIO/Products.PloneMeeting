@@ -13,13 +13,28 @@ from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
+from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
 from zope.interface import Invalid
-from zope.interface import invariant
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
+
+
+def validate_category_mapping_when_cloning_to_other_mc(values):
+    '''This validates the 'category_mapping_when_cloning_to_other_mc'.
+       We can only select one single value (category) for a given MC.'''
+    previousMCValue = 'DummyFalseMCId'
+    for value in values:
+        MCValue = value.split('.')[0]
+        if MCValue.startswith(previousMCValue):
+            msg = translate(u'error_can_not_select_several_cat_for_same_mc',
+                            domain="PloneMeeting",
+                            context=getRequest())
+            raise Invalid(msg)
+        previousMCValue = MCValue
+    return True
 
 
 class IMeetingCategory(IConfigElement):
@@ -55,6 +70,7 @@ class IMeetingCategory(IConfigElement):
             "category_mapping_when_cloning_to_other_mc_vocabulary"),
         required=False,
         default=[],
+        constraint=validate_category_mapping_when_cloning_to_other_mc,
     )
 
     form.widget('groups_in_charge', PMCheckBoxFieldWidget, multiple='multiple')
@@ -73,20 +89,6 @@ class IMeetingCategory(IConfigElement):
         title=_(u'Enabled?'),
         default=True,
         required=False,)
-
-    @invariant
-    def validate_category_mapping_when_cloning_to_other_mc(data):
-        '''This method does validate the 'category_mapping_when_cloning_to_other_mc'.
-           We can only select one single value (category) for a given MC.'''
-        previousMCValue = 'DummyFalseMCId'
-        for value in data.category_mapping_when_cloning_to_other_mc:
-            MCValue = value.split('.')[0]
-            if MCValue.startswith(previousMCValue):
-                msg = translate(u'error_can_not_select_several_cat_for_same_mc',
-                                domain="PloneMeeting",
-                                context=data.__context__.REQUEST)
-                raise Invalid(msg)
-            previousMCValue = MCValue
 
 
 class MeetingCategory(Item):

@@ -28,6 +28,7 @@ from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import get_prefixed_gn_position_name
 from Products.statusmessages.interfaces import IStatusMessage
+from z3c.form.interfaces import WidgetActionExecutionError
 from zope.event import notify
 from zope.i18n import translate
 from zope.interface import Invalid
@@ -2221,15 +2222,16 @@ class testContacts(PloneMeetingTestCase):
         # can not remove used position_type
         invariant = IPMDirectory.getTaggedValue('invariants')[0]
         data = DummyData(self.portal.contacts, position_types=original_position_types)
-        with self.assertRaises(Invalid) as cm:
+        with self.assertRaises(WidgetActionExecutionError) as cm:
             invariant(data)
+        self.assertIsInstance(cm.exception.error, Invalid)
         error_msg = translate(
             msgid="removed_position_type_in_use_error",
             mapping={'removed_position_type': hp.position_type,
                      'hp_url': hp.absolute_url()},
             domain='PloneMeeting',
             context=self.request)
-        self.assertEqual(cm.exception.message, error_msg)
+        self.assertEqual(cm.exception.error.message, error_msg)
         # set back a value present in original_position_types
         hp.position_type = original_position_types[0]['token']
 
@@ -2250,15 +2252,16 @@ class testContacts(PloneMeetingTestCase):
         form._doApply()
         self.assertEqual(meeting.get_attendee_position_for(item_uid, hp_uid),
                          u"default3")
-        with self.assertRaises(Invalid) as cm:
+        with self.assertRaises(WidgetActionExecutionError) as cm:
             invariant(data)
+        self.assertIsInstance(cm.exception.error, Invalid)
         error_msg = translate(
             msgid="removed_redefined_position_type_in_use_error",
             mapping={'removed_position_type': form.position_type,
                      'item_url': item.absolute_url()},
             domain='PloneMeeting',
             context=self.request)
-        self.assertEqual(cm.exception.message, error_msg)
+        self.assertEqual(cm.exception.error.message, error_msg)
 
         # adding new value or removing an unused one is ok
         position_types2 = position_types + [{'token': 'default4', 'name': u'D\xe9faut4'}]

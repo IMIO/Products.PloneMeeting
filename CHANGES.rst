@@ -27,6 +27,14 @@ Changelog
   Add items without a meeting date at the top of items so it will be at the top
   when inserted into a meeting.
   [gbastien]
+- Adaptations to display error message on the field and not at the top of the form:
+
+  - Use a `constraint` instead an `invariant` to validate
+    `IMeetingCategory.category_mapping_when_cloning_to_other_mc`;
+  - Raise a `WidgetActionExecutionError` instead a `Invalid` for
+    `IPMDirectory.validate_position_types`.
+
+  [gbastien]
 
 4.2rc29 (2022-06-17)
 --------------------
