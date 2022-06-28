@@ -30,6 +30,10 @@ Changelog
     `IPMDirectory.validate_position_types`.
 
   [gbastien]
+- Reorganized MeetingItem predecessors/successors related methods, added parameter
+  `unrestricted=True` to methods missing it so it can be set to `False` when called
+  from `plonemeeting.restapi` to get linked items.
+  [gbastien]
 
 4.2rc29 (2022-06-17)
 --------------------
