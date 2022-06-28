@@ -34,6 +34,10 @@ Changelog
   `unrestricted=True` to methods missing it so it can be set to `False` when called
   from `plonemeeting.restapi` to get linked items.
   [gbastien]
+- Adapted `MeetingConfig.validate_customAdvisers` so it is possible to remove a
+  delay aware adviser config if it was never used and to change the
+  `for_item_created_from` if it is not an auto asked advice.
+  [gbastien]
 
 4.2rc29 (2022-06-17)
 --------------------
