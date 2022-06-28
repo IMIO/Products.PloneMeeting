@@ -3205,11 +3205,31 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.linked_predecessor_path = "/".join(predecessor.getPhysicalPath())
             if not getattr(predecessor, 'linked_successor_uids', None):
                 predecessor.linked_successor_uids = PersistentList()
+            # update successors for predecessor
             predecessor.linked_successor_uids.append(self.UID())
         else:
             safe_delattr(self, 'linked_predecessor_uid')
             safe_delattr(self, 'linked_predecessor_path')
             safe_delattr(self, 'linked_successor_uids')
+
+    def get_successors(self, the_objects=True, unrestricted=True):
+        ''' '''
+        res = getattr(self, 'linked_successor_uids', [])
+        if res and the_objects:
+            # res is a PersistentList, not working with catalog query
+            res = uuidsToObjects(uuids=tuple(res), unrestricted=unrestricted)
+        return res
+
+    def get_every_successors(obj, the_objects=True, unrestricted=True):
+        '''Loop recursievely thru every successors of p_obj and return it.'''
+        def recurse_successors(successors, res=[]):
+            for successor in successors:
+                res.append(successor)
+                recurse_successors(successor.get_successors())
+            return res
+        res = recurse_successors(obj.get_successors(
+            the_objects=the_objects, unrestricted=unrestricted))
+        return res
 
     def get_predecessor(self, the_object=True, unrestricted=True):
         ''' '''
@@ -3220,23 +3240,47 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = portal.unrestrictedTraverse(predecessor_path)
         return res
 
-    def get_successors(self, the_objects=True, unrestricted=True):
-        ''' '''
-        res = getattr(self, 'linked_successor_uids', [])
-        if res and the_objects:
-            # res is a PersistentList, not working with catalog query
-            res = uuidsToObjects(uuids=tuple(res), unrestricted=unrestricted)
-        return res
+    security.declarePublic('get_predecessors')
 
-    def get_every_successors(obj):
-        '''Loop recursievely thru every successors of p_obj and return it.'''
-        def recurse_successors(successors, res=[]):
-            for successor in successors:
-                res.append(successor)
-                recurse_successors(successor.get_successors())
-            return res
-        res = recurse_successors(obj.get_successors())
-        return res
+    def get_predecessors(self, only_viewable=False, include_successors=True):
+        '''See doc in interfaces.py.'''
+        item = self.getSelf()
+
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
+        predecessor = item.get_predecessor()
+        predecessors = []
+        # retrieve every predecessors
+        while predecessor:
+            if item._appendLinkedItem(predecessor, tool, cfg, only_viewable=only_viewable):
+                predecessors.append(predecessor)
+            predecessor = predecessor.get_predecessor()
+        # keep order
+        predecessors.reverse()
+        # retrieve successors too
+        if include_successors:
+            successors = item.get_every_successors()
+            successors = [successor for successor in successors
+                          if item._appendLinkedItem(successor, tool, cfg, only_viewable)]
+            predecessors += successors
+        return predecessors
+
+    security.declarePublic('displayLinkedItem')
+
+    def displayLinkedItem(self, item):
+        '''Return a HTML structure to display a linked item.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        meeting = item.hasMeeting()
+        # display the meeting date if the item is linked to a meeting
+        if meeting:
+            title = item.Title(withMeetingDate=True)
+            return tool.getColoredLink(item,
+                                       showColors=True,
+                                       showContentIcon=True,
+                                       contentValue=title)
+        else:
+            # try to share cache of getPrettyLink
+            return item.getPrettyLink()
 
     def getMeeting(self, only_uid=False, caching=True):
         '''Returns the linked meeting if it exists.'''
@@ -7522,46 +7566,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            not _checkPermission(View, item):
             return False
         return True
-
-    security.declarePublic('get_predecessors')
-
-    def get_predecessors(self, only_viewable=False):
-        '''See doc in interfaces.py.'''
-        item = self.getSelf()
-
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(item)
-        predecessor = item.get_predecessor()
-        predecessors = []
-        # retrieve every predecessors
-        while predecessor:
-            if item._appendLinkedItem(predecessor, tool, cfg, only_viewable=only_viewable):
-                predecessors.append(predecessor)
-            predecessor = predecessor.get_predecessor()
-        # keep order
-        predecessors.reverse()
-        # retrieve successors too
-        successors = item.get_every_successors()
-        successors = [successor for successor in successors
-                      if item._appendLinkedItem(successor, tool, cfg, only_viewable)]
-        return predecessors + successors
-
-    security.declarePublic('displayLinkedItem')
-
-    def displayLinkedItem(self, item):
-        '''Return a HTML structure to display a linked item.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        meeting = item.hasMeeting()
-        # display the meeting date if the item is linked to a meeting
-        if meeting:
-            title = item.Title(withMeetingDate=True)
-            return tool.getColoredLink(item,
-                                       showColors=True,
-                                       showContentIcon=True,
-                                       contentValue=title)
-        else:
-            # try to share cache of getPrettyLink
-            return item.getPrettyLink()
 
     def downOrUpWorkflowAgain_cachekey(method, self, brain=False):
         '''cachekey method for self.downOrUpWorkflowAgain.'''
