@@ -43,6 +43,12 @@ Changelog
   Add items without a meeting date at the top of items so it will be at the top
   when inserted into a meeting.
   [gbastien]
+- Cleaned `UnrestrictedMethodsView`, splitted it to `ItemUnrestrictedMethodsView`
+  and `MeetingUnrestrictedMethodsView` because the `findFirstItemNumberForMeeting`
+  method is the only one called with a `Meeting` as context and others need a
+  `MeetingItem` as context.
+  Renamed `findFirstItemNumberForMeeting` to `findFirstItemNumber`.
+  [gbastien]
 
 4.2rc29 (2022-06-17)
 --------------------
