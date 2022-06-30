@@ -38,6 +38,12 @@ Changelog
   delay aware adviser config if it was never used and to change the
   `for_item_created_from` if it is not an auto asked advice.
   [gbastien]
+- Cleaned `UnrestrictedMethodsView`, splitted it to `ItemUnrestrictedMethodsView`
+  and `MeetingUnrestrictedMethodsView` because the `findFirstItemNumberForMeeting`
+  method is the only one called with a `Meeting` as context and others need a
+  `MeetingItem` as context.
+  Renamed `findFirstItemNumberForMeeting` to `findFirstItemNumber`.
+  [gbastien]
 - Avoid wrong order in item manually linked items when an item was linked before
   it is presented to a meeting, as items are sorted on meeting date.
   Add items without a meeting date at the top of items so it will be at the top
