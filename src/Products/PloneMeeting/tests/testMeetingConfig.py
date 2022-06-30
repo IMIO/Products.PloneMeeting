@@ -454,6 +454,61 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.setCustomAdvisers([customAdvisersCreatedUntilSetAndPast, ])
         self.failIf(cfg.validate_customAdvisers([customAdvisersCreatedUntilSetAndPast, ]))
 
+        # the 'for_item_created_from' may be changed if it is not an 'auto' advice
+        customAdvisersNotAutoChangedCreatedFrom = \
+            {'row_id': 'unique_id_123',
+             'org': self.vendors_uid,
+             'gives_auto_advice_on': '',
+             'for_item_created_from': '2013/01/01',
+             'for_item_created_until': '2013/01/15',
+             'gives_auto_advice_on_help_message': 'Auto help message changed',
+             'delay': '20',
+             'delay_left_alert': '',
+             'delay_label': 'Delay label changed',
+             'available_on': '',
+             'is_linked_to_previous_row': '0', }
+        cfg.setCustomAdvisers([customAdvisersNotAutoChangedCreatedFrom, ])
+        customAdvisersNotAutoChangedCreatedFrom['for_item_created_from'] = '2010/01/01'
+        self.failIf(cfg.validate_customAdvisers([customAdvisersNotAutoChangedCreatedFrom, ]))
+        # but can not be changed for an "auto" adviser
+        customAdvisersNotAutoChangedCreatedFrom['gives_auto_advice_on'] = 'python: True'
+        cfg.setCustomAdvisers([customAdvisersNotAutoChangedCreatedFrom, ])
+        customAdvisersNotAutoChangedCreatedFrom['for_item_created_from'] = '2009/01/01'
+        # does not validate
+        self.failUnless(cfg.validate_customAdvisers([customAdvisersNotAutoChangedCreatedFrom, ]))
+
+    def test_pm_Validate_customAdvisersDelayAwareConfigRemovableIfNotUsed(self):
+        '''Test the MeetingConfig.customAdvisers validate method.'''
+        # first check that we can edit an unused configuration
+        self.changeUser('admin')
+        cfg = self.meetingConfig
+        customAdvisers = {'row_id': 'unique_id_123',
+                          'org': self.developers_uid,
+                          'gives_auto_advice_on': '',
+                          'for_item_created_from': '2012/01/01',
+                          'for_item_created_until': '',
+                          'gives_auto_advice_on_help_message': 'Help message',
+                          'delay': '10',
+                          'delay_left_alert': '',
+                          'delay_label': 'Delay label',
+                          'available_on': '',
+                          'is_linked_to_previous_row': '0', }
+        # validate returns nothing if validation was successful
+        self.failIf(cfg.validate_customAdvisers([customAdvisers, ]))
+        cfg.setCustomAdvisers([customAdvisers])
+
+        # create an item
+        self.changeUser('pmCreator1')
+        item = self.create(
+            'MeetingItem',
+            optionalAdvisers=['{0}__rowid__unique_id_123'.format(self.developers_uid)])
+        # can not remove configuration
+        self.failUnless(cfg.validate_customAdvisers([]))
+        item.setOptionalAdvisers([])
+        item._update_after_edit()
+        # now may be removed
+        self.failIf(cfg.validate_customAdvisers([]))
+
     def test_pm_Validate_customAdvisersAvailableOn(self):
         '''Test the MeetingConfig.customAdvisers validate method.
            This validates that available_on can only be used if nothing is defined
@@ -2032,12 +2087,13 @@ class testMeetingConfig(PloneMeetingTestCase):
         proposed_state = cfg.getItemWorkflow(True).states[self._stateMappingFor('proposed')]
         translated_proposed_state = translate(proposed_state.title, domain="plone")
         level_removed_error = \
-            translate('item_wf_val_states_can_not_be_removed_in_use',
-                      domain='PloneMeeting',
-                      mapping={'item_state': "Waiting advices ({0})".format(
-                        translated_proposed_state.lower()),
-                               'item_url': item.absolute_url()},
-                      context=self.request)
+            translate(
+                'item_wf_val_states_can_not_be_removed_in_use',
+                domain='PloneMeeting',
+                mapping={'item_state': "Waiting advices ({0})".format(
+                         translated_proposed_state.lower()),
+                         'item_url': item.absolute_url()},
+                context=self.request)
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
                          level_removed_error)
 

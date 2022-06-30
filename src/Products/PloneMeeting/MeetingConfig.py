@@ -4273,11 +4273,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # we are setting another field, it is not permitted if
             # the rule is in use, check every items if the rule is used
             catalog = api.portal.get_tool('portal_catalog')
-            org_uid = self._dataForCustomAdviserRowId(row_id)['org']
+            data = self._dataForCustomAdviserRowId(row_id)
+            # auto or not?
+            indexed_values = []
+            if data['gives_auto_advice_on']:
+                # XXX for now we check if org_uid used but it includes also
+                # "normal" advices, to be fixed by indexing a specific value
+                # for auto advices, see https://support.imio.be/browse/PM-3910
+                indexed_values.append(REAL_ORG_UID_PATTERN.format(data['org']))
+            if data['delay']:
+                indexed_values.append(DELAYAWARE_ROW_ID_PATTERN.format(row_id))
             brains = catalog.unrestrictedSearchResults(
                 portal_type=self.getItemTypeName(),
-                indexAdvisers=[DELAYAWARE_ROW_ID_PATTERN.format(row_id),
-                               REAL_ORG_UID_PATTERN.format(org_uid)])
+                indexAdvisers=indexed_values)
             if brains:
                 item = brains[0].getObject()
                 return item.absolute_url()
@@ -4358,6 +4366,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                             # 3) or if we disabled the 'is_linked_to_previous_row' of a used automatic adviser
                             # that is not permitted
                             if not (k == 'for_item_created_until' and not v) and \
+                               not (k == 'for_item_created_from' and
+                                    not storedCustomAdviser['gives_auto_advice_on']) and \
                                k not in ['gives_auto_advice_on_help_message',
                                          'delay_left_alert',
                                          'delay_label',

@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-4.2rc210 (unreleased)
----------------------
+4.2rc30 (unreleased)
+--------------------
 
 - Make the `Migrate_To_4200._fixPODTemplatesInstructions`
   `getFirstItemNumber/first_item_number` replacement work for any cases,
@@ -22,11 +22,6 @@ Changelog
   `MeetingManager` or not (was actually always returning meetings accepting items
   as if user was a `MeetingManager`).
   [gbastien]
-- Avoid wrong order in item manually linked items when an item was linked before
-  is it presented to a meeting, as items are sorted on meeting date.
-  Add items without a meeting date at the top of items so it will be at the top
-  when inserted into a meeting.
-  [gbastien]
 - Adaptations to display error message on the field and not at the top of the form:
 
   - Use a `constraint` instead an `invariant` to validate
@@ -34,6 +29,19 @@ Changelog
   - Raise a `WidgetActionExecutionError` instead a `Invalid` for
     `IPMDirectory.validate_position_types`.
 
+  [gbastien]
+- Reorganized MeetingItem predecessors/successors related methods, added parameter
+  `unrestricted=True` to methods missing it so it can be set to `False` when called
+  from `plonemeeting.restapi` to get linked items.
+  [gbastien]
+- Adapted `MeetingConfig.validate_customAdvisers` so it is possible to remove a
+  delay aware adviser config if it was never used and to change the
+  `for_item_created_from` if it is not an auto asked advice.
+  [gbastien]
+- Avoid wrong order in item manually linked items when an item was linked before
+  it is presented to a meeting, as items are sorted on meeting date.
+  Add items without a meeting date at the top of items so it will be at the top
+  when inserted into a meeting.
   [gbastien]
 
 4.2rc29 (2022-06-17)
