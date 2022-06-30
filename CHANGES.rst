@@ -47,6 +47,12 @@ Changelog
 - Fix to not fail to display advice tooltipster on `itemTemplate` when
   no `proposingGroup` is selected.
   [gbastien]
+- Make MeetingManager bypass `MeetingCategory.using_groups` check when cloning
+  an item, this way we avoid problems with category not selectable by
+  `MeetingManager` leading to items not cloned (recurring items, delayed items, ...).
+  Added `MeetingItem.get_successor` helper that will return the last
+  (and very often only) successor.
+  [gbastien]
 
 4.2rc29 (2022-06-17)
 --------------------

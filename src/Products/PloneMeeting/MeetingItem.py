@@ -3211,12 +3211,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             safe_delattr(self, 'linked_predecessor_path')
             safe_delattr(self, 'linked_successor_uids')
 
-    def get_successors(self, the_objects=True, unrestricted=True):
-        ''' '''
+    def get_successor(self, the_objects=True, unrestricted=True):
+        """Shortcut to get the last successors that should be the official successor."""
+        # we force ordered=True for get_successors to make sure the last successor
+        # is the last chronologically created
+        successors = self.get_successors(
+            the_objects=the_objects, ordered=True, unrestricted=unrestricted)
+        return successors and successors[-1] or None
+
+    def get_successors(self, the_objects=True, ordered=True, unrestricted=True):
+        '''Return the successors, so the items that were automatically linked to self.
+           Most of times, there will be one single successor, but it may happen
+           that several successors exist, for example when item delayed then corrected
+           then delayed again, most of time one of the 2 successors will be deleted
+           but it is not always the case...'''
         res = getattr(self, 'linked_successor_uids', [])
         if res and the_objects:
             # res is a PersistentList, not working with catalog query
-            res = uuidsToObjects(uuids=tuple(res), unrestricted=unrestricted)
+            # searching successors ordered will make sure that items are returned chronologically
+            res = uuidsToObjects(uuids=tuple(res), ordered=ordered, unrestricted=unrestricted)
         return res
 
     def get_every_successors(obj, the_objects=True, unrestricted=True):

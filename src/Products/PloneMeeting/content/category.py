@@ -129,7 +129,7 @@ class MeetingCategory(Item):
 
     security.declarePublic('is_selectable')
 
-    def is_selectable(self, userId):
+    def is_selectable(self, userId, ignore_using_groups=False):
         '''Check if category may be used :
            - enabled;
            - current user in using_groups or current user is Manager.'''
@@ -137,7 +137,10 @@ class MeetingCategory(Item):
         # If we have using_groups make sure userId is creator for one of it
         selectable = self.enabled
         cfg = tool.getMeetingConfig(self)
-        if selectable and self.get_using_groups() and not tool.isManager(realManagers=True):
+        # check using_groups if relevant
+        if selectable and \
+           (not ignore_using_groups and self.get_using_groups()) and \
+           not tool.isManager(realManagers=True):
             selectable_org_uids = tool.get_selectable_orgs(cfg, user_id=userId, the_objects=False)
             # Check intersection between self.usingGroups and org uids for which
             # the current user is creator

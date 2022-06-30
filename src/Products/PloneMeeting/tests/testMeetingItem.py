@@ -1412,7 +1412,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
         self.deleteAsManager(newItem.UID())
         originalItem.cloneToOtherMeetingConfig(self.meetingConfig2.getId())
-        newItem = originalItem.get_successors()[0]
+        newItem = originalItem.get_successor()
         self.assertEqual(newItem.getCategory(), catIdOfMC2Mapped)
 
     def test_pm_SendItemToOtherMCManually(self):
@@ -4335,7 +4335,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.catalog(SearchableText='delayed'))
         # if the item was duplicated (often the case when delaying an item), the duplicated
         # item keep the original decision
-        duplicatedItem = item2.get_successors()[0]
+        duplicatedItem = item2.get_successor()
         # right duplicated item
         self.assertEqual(duplicatedItem.get_predecessor(), item2)
         self.assertEqual(duplicatedItem.getDecision(), originalDecision)
@@ -8099,6 +8099,27 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setClassifier('classifier1')
         self.assertEqual(item.getClassifier(), 'classifier1')
         self.assertEqual(item.getClassifier(theObject=True), cfg.classifiers.classifier1)
+
+    def test_pm_GetSucessor(self):
+        """Test that MeetingItem.get_successor will always return the last successor."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        new_item1 = item.clone(setCurrentAsPredecessor=True)
+        new_item2 = item.clone(setCurrentAsPredecessor=True)
+        new_item3 = item.clone(setCurrentAsPredecessor=True)
+        new_item21 = new_item2.clone(setCurrentAsPredecessor=True)
+        new_item22 = new_item2.clone(setCurrentAsPredecessor=True)
+        new_item31 = new_item3.clone(setCurrentAsPredecessor=True)
+        self.assertEqual(item.get_successor(), new_item3)
+        self.assertEqual(new_item2.get_successor(), new_item22)
+        self.assertEqual(new_item3.get_successor(), new_item31)
+        self.assertIsNone(new_item21.get_successor())
+        self.assertIsNone(new_item22.get_successor())
+        self.assertIsNone(new_item31.get_successor())
+        # every successors will get successors of successors
+        self.assertEqual(item.get_every_successors(),
+                         [new_item1, new_item2, new_item21, new_item22,
+                          new_item3, new_item31])
 
 
 def test_suite():

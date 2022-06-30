@@ -1072,10 +1072,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                   copyAnnexes=False, copyDecisionAnnexes=False,
                   newOwnerId=None, copyFields=DEFAULT_COPIED_FIELDS,
                   newPortalType=None, keepProposingGroup=False, keep_ftw_labels=False,
-                  keptAnnexIds=[], keptDecisionAnnexIds=[]):
+                  keptAnnexIds=[], keptDecisionAnnexIds=[],
+                  ignoreUsingGroupsForMeetingManagers=True):
         '''Paste objects (previously copied) in destFolder. If p_newOwnerId
            is specified, it will become the new owner of the item.
-           This method does NOT manage after creation calls like at_post_create_script.'''
+           This method does NOT manage after creation calls like at_post_create_script.
+           If p_ignoreUsingGroupsForMeetingManagers=True and user is MeetingManager,
+           then we will set check_using_groups=False while verifying if category
+           is_selectable.'''
         # warn that we are pasting items
         # so it is not necessary to perform some methods
         # like updating advices as it will be removed here under
@@ -1121,6 +1125,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         except:
             raise PloneMeetingError('Could not copy.')
 
+        isManager = self.isManager(destMeetingConfig)
+
         # Let the logged user do everything on the newly created item
         with api.env.adopt_roles(['Manager']):
             newItem.setCreators((newOwnerId,))
@@ -1157,12 +1163,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # remove 'category' from fieldsToKeep if it is disabled
             if 'category' in fieldsToKeep:
                 category = copiedItem.getCategory(theObject=True)
-                if category and not category.is_selectable(userId=loggedUserId):
+                if category and not category.is_selectable(
+                        userId=loggedUserId, ignore_using_groups=isManager):
                     fieldsToKeep.remove('category')
             # remove 'classifier' from fieldsToKeep if it is disabled
             if 'classifier' in fieldsToKeep:
                 classifier = copiedItem.getClassifier(theObject=True)
-                if classifier and not classifier.is_selectable(userId=loggedUserId):
+                if classifier and not classifier.is_selectable(
+                        userId=loggedUserId, ignore_using_groups=isManager):
                     fieldsToKeep.remove('classifier')
 
             newItem._at_creation_flag = True
