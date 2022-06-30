@@ -170,7 +170,7 @@ class MeetingWorkflowActions(object):
                                                name='pm_unrestricted_methods')
         if self.context.first_item_number == -1:
             self.context.first_item_number = \
-                unrestricted_methods.findFirstItemNumberForMeeting(self.context)
+                unrestricted_methods.findFirstItemNumber()
             self.context.update_item_references()
         # remove annex previews of every items if relevant
         if self.cfg.getRemoveAnnexesPreviewsOnMeetingClosure():
