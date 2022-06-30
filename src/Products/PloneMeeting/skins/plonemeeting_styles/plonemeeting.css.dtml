@@ -7,6 +7,11 @@
    margin: 0.5em 0;
 }
 
+/* make padding/margin under label in overlays work */
+div.overlay label {
+    display: inline-block;
+}
+
 /* background of secret items when displayed on the meeting */
 table.listing tbody tr.odd.meeting_item_privacy_secret td {
     background-color: #fffacd;
