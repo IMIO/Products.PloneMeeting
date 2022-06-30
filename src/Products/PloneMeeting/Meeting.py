@@ -241,7 +241,7 @@ class MeetingWorkflowActions(object):
         # Set the firstItemNumber
         unrestrictedMethodsView = getMultiAdapter((self.context, self.context.REQUEST),
                                                   name='pm_unrestricted_methods')
-        self.context.setFirstItemNumber(unrestrictedMethodsView.findFirstItemNumber(self.context))
+        self.context.setFirstItemNumber(unrestrictedMethodsView.findFirstItemNumber())
         self.context.updateItemReferences()
         # remove annex previews of every items if relevant
         if self.cfg.getRemoveAnnexesPreviewsOnMeetingClosure():
