@@ -2636,7 +2636,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.decideMeeting(meeting)
         self.do(item, 'postpone_next_meeting')
         # duplicated and duplicated item is validated
-        clonedItem = item.get_successors()[0]
+        clonedItem = item.get_successor()
         self.assertEqual(clonedItem.get_predecessor(), item)
         self.assertEqual(clonedItem.query_state(), 'validated')
         # optional and automatic given advices were inherited
@@ -2666,7 +2666,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.decideMeeting(meeting)
         self.do(item, 'postpone_next_meeting')
         # duplicated and duplicated item is validated
-        clonedItem = item.get_successors()[0]
+        clonedItem = item.get_successor()
         self.assertEqual(clonedItem.get_predecessor(), item)
         self.assertEqual(clonedItem.query_state(), 'validated')
 
@@ -2721,7 +2721,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             self.assertEqual(item.get_successors(the_objects=False), [])
         else:
             # item was duplicated and new item is in it's initial state
-            linked_item = item.get_successors()[0]
+            linked_item = item.get_successor()
             self.assertEqual(linked_item.query_state(), self._initial_state(linked_item))
 
         if additional_wf_transitions:
@@ -2981,7 +2981,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             wfas.append('accepted_out_of_meeting_and_duplicated')
             self._activate_wfas(wfas)
             self.do(item, 'accept_out_of_meeting')
-            duplicated_item = item.get_successors()[0]
+            duplicated_item = item.get_successor()
             self.assertEqual(duplicated_item.get_predecessor(), item)
             self.assertEqual(duplicated_item.query_state(), 'validated')
             # duplicated_item is not more isAcceptableOutOfMeeting
@@ -3047,7 +3047,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             wfas.append('accepted_out_of_meeting_emergency_and_duplicated')
             self._activate_wfas(wfas)
             self.do(item, 'accept_out_of_meeting_emergency')
-            duplicated_item = item.get_successors()[0]
+            duplicated_item = item.get_successor()
             self.assertEqual(duplicated_item.get_predecessor(), item)
             self.assertEqual(duplicated_item.query_state(), 'validated')
             # duplicated_item emergency is no more asked
@@ -3113,7 +3113,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             wfas.append('transfered_and_duplicated')
             self._activate_wfas(wfas)
             self.do(item, 'transfer')
-            duplicated_item = item.get_successors()[0]
+            duplicated_item = item.get_successor()
             self.assertEqual(duplicated_item.get_predecessor(), item)
             self.assertEqual(duplicated_item.query_state(), 'validated')
 

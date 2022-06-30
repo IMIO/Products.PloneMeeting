@@ -262,7 +262,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertEqual(item3.get_successors(), [])
         self.do(item3, 'delay')
         # the duplicated item has item3 as predecessor
-        duplicatedItem = item3.get_successors()[0]
+        duplicatedItem = item3.get_successor()
         self.assertEqual(duplicatedItem.get_predecessor(the_object=False), item3.UID())
         # When a meeting is decided, items are at least set to 'itempublished'
         self.assertEquals(item1.query_state(), 'itempublished')
@@ -545,8 +545,10 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertEqual(meeting.get_items()[0].getProposingGroup(), self.developers_uid)
 
     def test_pm_RecurringItemsWithCategoryWithUnavailableUsingGroups(self):
-        '''Tests that recurring items are not added if it uses a category restricted
-           to some groups the MeetingManager is not member of.'''
+        '''Tests that recurring items are added if it uses a category restricted
+           to some groups the MeetingManager is not member of.
+           But when using a disabled category, then it does not work and
+           a message is displayed.'''
         self.changeUser('admin')
         cfg = self.meetingConfig
         self._removeConfigObjectsFor(cfg)
@@ -557,21 +559,48 @@ class testWorkflows(PloneMeetingTestCase):
                     title='Rec item developers',
                     proposingGroup=self.endUsers_uid,
                     meetingTransitionInsertingMe='_init_',
-                    category=research.getId())
+                    category=research.getId(),
+                    decision=self.decisionText)
 
         self.changeUser('pmManager')
-        meeting = self.create('Meeting')
-        # the item was not inserted
-        self.assertEqual(len(meeting.get_items()), 0)
+        meeting1 = self.create('Meeting')
+        # the item was presented
+        self.assertEqual(len(meeting1.get_items()), 1)
+
+        # with a not enabled category, item is not presented
+        research.enabled = False
+        meeting2 = self.create('Meeting')
+        # the item was presented
+        self.assertEqual(len(meeting2.get_items()), 0)
         # a portal_message is displayed to the user
         statusMessages = IStatusMessage(self.portal.REQUEST)
         messages = statusMessages.show()
         self.assertEqual(
             messages[-1].message,
             REC_ITEM_ERROR % (
-                "rec-item-developers",
+                "copy_of_rec-item-developers",
                 "present",
                 "WorkflowException()"))
+
+        # this is done at the ToolPloneMeeting.pasteItem level so delaying an item
+        # or postponing it will work as well
+        # ease override by subproducts
+        research.enabled = True
+        if not self._check_wfa_available(['delayed', 'postpone_next_meeting']):
+            return
+        self._activate_wfas(('delayed', 'postpone_next_meeting', ))
+        self.decideMeeting(meeting1)
+        item = meeting1.get_items()[0]
+        # delay
+        self.do(item, 'delay')
+        new_item = item.get_successor()
+        self.assertEqual(new_item.getCategory(True), research)
+        # postpone_next_meeting
+        self.do(item, 'backToItemPublished')
+        self.do(item, 'postpone_next_meeting')
+        new_item2 = item.get_successor()
+        self.assertNotEqual(new_item, new_item2)
+        self.assertEqual(new_item2.getCategory(True), research)
 
     def test_pm_RecurringItemsRespectSortingMethodOnAddItemPrivacy(self):
         '''Tests the recurring items system when items are inserted
