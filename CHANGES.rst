@@ -44,6 +44,9 @@ Changelog
   `MeetingItem` as context.
   Renamed `findFirstItemNumberForMeeting` to `findFirstItemNumber`.
   [gbastien]
+- Fix to not fail to display advice tooltipster on `itemTemplate` when
+  no `proposingGroup` is selected.
+  [gbastien]
 - Make MeetingManager bypass `MeetingCategory.using_groups` check when cloning
   an item, this way we avoid problems with category not selectable by
   `MeetingManager` leading to items not cloned (recurring items, delayed items, ...).
