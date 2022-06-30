@@ -44,6 +44,9 @@ Changelog
   `MeetingItem` as context.
   Renamed `findFirstItemNumberForMeeting` to `findFirstItemNumber`.
   [gbastien]
+- Fix to not fail to display advice tooltipster on `itemTemplate` when
+  no `proposingGroup` is selected.
+  [gbastien]
 
 4.2rc29 (2022-06-17)
 --------------------
