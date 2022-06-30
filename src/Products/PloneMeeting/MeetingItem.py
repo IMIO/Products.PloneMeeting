@@ -3141,9 +3141,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # we call findBaseNumberRelativeToMeetingConfig, see docstring there
                 # call the view on meeting because it is memoized and for example in meeting_view
                 # the meeting does not change but the item does
-                unrestrictedMethodsView = getMultiAdapter((meeting, self.REQUEST),
-                                                          name='pm_unrestricted_methods')
-                currentMeetingComputedFirstNumber = unrestrictedMethodsView.findFirstItemNumberForMeeting(meeting)
+                view = getMultiAdapter((meeting, self.REQUEST), name='pm_unrestricted_methods')
+                currentMeetingComputedFirstNumber = view.findFirstItemNumber()
                 # now that we have the currentMeetingComputedFirstNumber, that is
                 # the theorical current meeting first number, we can compute current item
                 # number that is this number + current item number relativeTo the meeting - 1

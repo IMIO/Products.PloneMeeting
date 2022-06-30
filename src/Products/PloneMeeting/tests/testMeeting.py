@@ -2956,7 +2956,7 @@ class testMeetingType(PloneMeetingTestCase):
 
         # all normal numbered items
         unrestricted_view = meeting3.restrictedTraverse('@@pm_unrestricted_methods')
-        self.assertEqual(unrestricted_view.findFirstItemNumberForMeeting(meeting3), 15)
+        self.assertEqual(unrestricted_view.findFirstItemNumber(), 15)
 
         # put some subnumbers for meeting1
         meeting1_item2 = meeting1.get_items(ordered=True)[1]
@@ -2967,10 +2967,10 @@ class testMeetingType(PloneMeetingTestCase):
         change_order_view('number', '5.1')
         self.assertEqual([item.getItemNumber() for item in meeting1.get_items(ordered=True)],
                          [100, 101, 200, 300, 400, 500, 501])
-        # call to 'findFirstItemNumberForMeeting' is memoized
+        # call to 'findFirstItemNumber' is memoized
         self.cleanMemoize()
         # now meeting1 last number is considered 5
-        self.assertEqual(unrestricted_view.findFirstItemNumberForMeeting(meeting3), 13)
+        self.assertEqual(unrestricted_view.findFirstItemNumber(), 13)
 
     def test_pm_FirstItemNumberSetOnClose(self):
         """First item number is set on closure if it was still -1,

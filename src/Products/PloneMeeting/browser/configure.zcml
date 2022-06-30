@@ -834,15 +834,22 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
-    <!-- this view will contains some methods doing unrestricted things.  It replaces Manager Proxy roled python Scripts -->
+    <!-- this view will contains some methods doing unrestricted things.
+         It replaces Manager Proxy roled python Scripts -->
     <browser:page
-        for="*"
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
         name="pm_unrestricted_methods"
-        class=".views_unrestricted.UnrestrictedMethodsView"
+        class=".views_unrestricted.ItemUnrestrictedMethodsView"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         allowed_attributes="getLinkedMeetingTitle
-                            getLinkedMeetingDate
-                            findFirstItemNumberForMeeting"
+                            getLinkedMeetingDate"
+        permission="zope2.View" />
+    <browser:page
+        for="Products.PloneMeeting.content.meeting.IMeeting"
+        name="pm_unrestricted_methods"
+        class=".views_unrestricted.MeetingUnrestrictedMethodsView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        allowed_attributes="findFirstItemNumber"
         permission="zope2.View" />
 
     <browser:page

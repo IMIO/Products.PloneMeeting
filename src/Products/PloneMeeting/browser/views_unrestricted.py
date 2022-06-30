@@ -7,7 +7,7 @@ from zope.component import getMultiAdapter
 from zope.i18n import translate
 
 
-class UnrestrictedMethodsView(BrowserView):
+class ItemUnrestrictedMethodsView(BrowserView):
     """
       This class contains every methods behaving as unrestricted.
       These methods were formerly Manager proxy roled python Scripts.
@@ -29,8 +29,11 @@ class UnrestrictedMethodsView(BrowserView):
         if meeting:
             return meeting.date
 
+
+class MeetingUnrestrictedMethodsView(BrowserView):
+
     @memoize
-    def findFirstItemNumberForMeeting(self, meeting):
+    def findFirstItemNumber(self):
         """
           Return the base number to take into account while computing an item number.
           This is used when given p_meeting firstItemNumber is -1, we need to look in previous
@@ -46,7 +49,7 @@ class UnrestrictedMethodsView(BrowserView):
         # could be unaccessible to the current user, for example by default a
         # meeting in state 'created' is not viewable by items creators
         brains = catalog.unrestrictedSearchResults(portal_type=cfg.getMeetingTypeName(),
-                                                   meeting_date={'query': meeting.date,
+                                                   meeting_date={'query': self.context.date,
                                                                  'range': 'max'},
                                                    sort_on='meeting_date',
                                                    sort_order='reverse')
