@@ -5876,32 +5876,32 @@ class testMeetingItem(PloneMeetingTestCase):
         # now link i3 to i2 and i4
         i3.setManuallyLinkedItems((i4UID, i2UID))
         # items will be sorted correctly on every items
-        self.assertEqual(i3.getRawManuallyLinkedItems(), [i2UID, i4UID])
-        self.assertEqual(i2.getRawManuallyLinkedItems(), [i3UID, i4UID])
+        self.assertEqual(i3.getRawManuallyLinkedItems(), [i4UID, i2UID])
+        self.assertEqual(i2.getRawManuallyLinkedItems(), [i4UID, i3UID])
         self.assertEqual(i4.getRawManuallyLinkedItems(), [i2UID, i3UID])
 
         # add link to i1 and i5 and remove link to i2, do this on i4
         i4.setManuallyLinkedItems((i5UID, i1UID, i3UID))
-        self.assertEqual(i1.getRawManuallyLinkedItems(), [i3UID, i4UID, i5UID])
-        self.assertEqual(i3.getRawManuallyLinkedItems(), [i1UID, i4UID, i5UID])
-        self.assertEqual(i4.getRawManuallyLinkedItems(), [i1UID, i3UID, i5UID])
-        self.assertEqual(i5.getRawManuallyLinkedItems(), [i1UID, i3UID, i4UID])
+        self.assertEqual(i1.getRawManuallyLinkedItems(), [i4UID, i5UID, i3UID])
+        self.assertEqual(i3.getRawManuallyLinkedItems(), [i4UID, i5UID, i1UID])
+        self.assertEqual(i4.getRawManuallyLinkedItems(), [i5UID, i1UID, i3UID])
+        self.assertEqual(i5.getRawManuallyLinkedItems(), [i4UID, i1UID, i3UID])
 
         # link all items together
         i1.setManuallyLinkedItems((i4UID, i2UID, i3UID, i5UID))
-        self.assertEqual(i1.getRawManuallyLinkedItems(), [i2UID, i3UID, i4UID, i5UID])
-        self.assertEqual(i2.getRawManuallyLinkedItems(), [i1UID, i3UID, i4UID, i5UID])
-        self.assertEqual(i3.getRawManuallyLinkedItems(), [i1UID, i2UID, i4UID, i5UID])
-        self.assertEqual(i4.getRawManuallyLinkedItems(), [i1UID, i2UID, i3UID, i5UID])
-        self.assertEqual(i5.getRawManuallyLinkedItems(), [i1UID, i2UID, i3UID, i4UID])
+        self.assertEqual(i1.getRawManuallyLinkedItems(), [i4UID, i5UID, i2UID, i3UID])
+        self.assertEqual(i2.getRawManuallyLinkedItems(), [i4UID, i5UID, i1UID, i3UID])
+        self.assertEqual(i3.getRawManuallyLinkedItems(), [i4UID, i5UID, i1UID, i2UID])
+        self.assertEqual(i4.getRawManuallyLinkedItems(), [i5UID, i1UID, i2UID, i3UID])
+        self.assertEqual(i5.getRawManuallyLinkedItems(), [i4UID, i1UID, i2UID, i3UID])
 
         # call this again with same parameters, mutator is supposed to not change anything
         i1.setManuallyLinkedItems(i1.getRawManuallyLinkedItems())
-        self.assertEqual(i1.getRawManuallyLinkedItems(), [i2UID, i3UID, i4UID, i5UID])
-        self.assertEqual(i2.getRawManuallyLinkedItems(), [i1UID, i3UID, i4UID, i5UID])
-        self.assertEqual(i3.getRawManuallyLinkedItems(), [i1UID, i2UID, i4UID, i5UID])
-        self.assertEqual(i4.getRawManuallyLinkedItems(), [i1UID, i2UID, i3UID, i5UID])
-        self.assertEqual(i5.getRawManuallyLinkedItems(), [i1UID, i2UID, i3UID, i4UID])
+        self.assertEqual(i1.getRawManuallyLinkedItems(), [i4UID, i5UID, i2UID, i3UID])
+        self.assertEqual(i2.getRawManuallyLinkedItems(), [i4UID, i5UID, i1UID, i3UID])
+        self.assertEqual(i3.getRawManuallyLinkedItems(), [i4UID, i5UID, i1UID, i2UID])
+        self.assertEqual(i4.getRawManuallyLinkedItems(), [i5UID, i1UID, i2UID, i3UID])
+        self.assertEqual(i5.getRawManuallyLinkedItems(), [i4UID, i1UID, i2UID, i3UID])
 
     def test_pm_ManuallyLinkedItemsDuplicatedAndKeepLinkWhenSomeLinkedItemsWereDeleted(self):
         '''In case a user duplicateAndKeepLink an item linked to another having manually

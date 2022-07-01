@@ -2881,11 +2881,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     # both items have a meeting, compare meeting dates
                     return cmp(item2_meeting_date, item1_meeting_date)
                 elif item1_meeting_date and not item2_meeting_date:
-                    # only item1 has a Meeting, it will be displayed before
-                    return -1
-                elif not item1_meeting_date and item2_meeting_date:
-                    # only item2 has a Meeting, it will be displayed before
+                    # only item1 has a Meeting, it will be displayed after
                     return 1
+                elif not item1_meeting_date and item2_meeting_date:
+                    # only item2 has a Meeting, it will be displayed after
+                    return -1
                 else:
                     # no meeting at all, sort by item creation date
                     return cmp(item1_created, item2_created)
