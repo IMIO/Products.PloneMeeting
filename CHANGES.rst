@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc30 (unreleased)
+4.2rc30 (2022-07-01)
 --------------------
 
 - Make the `Migrate_To_4200._fixPODTemplatesInstructions`
