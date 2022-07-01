@@ -67,6 +67,9 @@ Changelog
 - In `Meeting.validate_dates`, removed check for `start_date > date` and
   `end_date < date`, this could not be the cases sometimes...
   [gbastien]
+- Added possibility to encode votes by `voting group` and to encode same votes
+  for several items.  Added field `held_position.voting_group`.
+  [gbastien]
 
 4.2rc29 (2022-06-17)
 --------------------
