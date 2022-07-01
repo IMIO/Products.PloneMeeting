@@ -4012,6 +4012,30 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(advices_icons_content in advices_icons())
         self.assertFalse(add_advice_action in advices_icons())
 
+    def test_pm_AdvicesInfosOnItemTemplate(self):
+        """Test that the advices icons infos are correctly displayed in an
+           itemTemplate for which proposingGroup may be empty and adviceIndex
+           is partially computed."""
+        cfg = self.meetingConfig
+        cfg.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'org': self.vendors_uid,
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2016/08/08',
+              'delay': '5',
+              'delay_label': ''}, ])
+        self.changeUser('templatemanager1')
+        itemTemplate = cfg.getItemTemplates(as_brains=False)[0]
+        self.assertEqual(itemTemplate.getProposingGroup(), '')
+        itemTemplate.setOptionalAdvisers(
+            (self.developers_uid,
+             '{0}__rowid__unique_id_123'.format(self.vendors_uid)))
+        itemTemplate._update_after_edit()
+        advices_icons = itemTemplate.restrictedTraverse('@@advices-icons')
+        self.assertTrue(advices_icons())
+        advices_icons_infos = itemTemplate.restrictedTraverse('@@advices-icons-infos')
+        self.assertTrue(advices_icons_infos('not_given'))
+
 
 def test_suite():
     from unittest import makeSuite

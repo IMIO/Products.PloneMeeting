@@ -15,7 +15,6 @@ from plone.supermodel import model
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
-from Products.PageTemplates.Expressions import SecureModuleImporter
 from Products.PloneMeeting.browser.advicechangedelay import _reinit_advice_delay
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import is_proposing_group_editor
