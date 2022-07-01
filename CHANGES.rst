@@ -44,6 +44,14 @@ Changelog
   `MeetingItem` as context.
   Renamed `findFirstItemNumberForMeeting` to `findFirstItemNumber`.
   [gbastien]
+- Fix to not fail to display advice tooltipster on `itemTemplate` when
+  no `proposingGroup` is selected.
+  [gbastien]
+- Make MeetingManager bypass `MeetingCategory.using_groups` check when cloning
+  an item, this way we avoid problems with category not selectable by
+  `MeetingManager` leading to items not cloned (recurring items, delayed items, ...).
+  Added `MeetingItem.get_successor` helper that will return the last
+  (and very often only) successor.
 - Avoid wrong order in item manually linked items when an item was linked before
   it is presented to a meeting, as items are sorted on meeting date.
   Add items without a meeting date at the top of items so it will be at the top

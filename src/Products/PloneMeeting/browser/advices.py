@@ -179,14 +179,16 @@ class AdvicesIconsInfos(BrowserView):
         self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'])
         self.itemReviewState = self.context.query_state()
         org_uid = self.context.getProposingGroup()
-        self.userIsInProposingGroup = self.tool.user_is_in_org(org_uid=org_uid)
+        # when on an ItemTemplate, there may be no org_uid
+        self.userIsInProposingGroup = org_uid and self.tool.user_is_in_org(org_uid=org_uid) or False
         self.isManager = self.tool.isManager(self.cfg)
         self.isRealManager = self.tool.isManager(realManagers=True)
         # edit proposingGroup comment, only compute if item not decided
         # by default editable by Managers only
         self.userIsProposingGroupCommentEditor = False
         self.userMayEditItem = False
-        if self.cfg.getEnableAdviceProposingGroupComment():
+        # when on an ItemTemplate, there may be no org_uid
+        if org_uid and self.cfg.getEnableAdviceProposingGroupComment():
             self.userIsProposingGroupCommentEditor = self.isRealManager
             self.userMayEditItem = self.isRealManager
             if not self.context.is_decided(self.cfg, self.itemReviewState):
