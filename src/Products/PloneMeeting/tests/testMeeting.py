@@ -2455,28 +2455,6 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(len(errors), 1)
         self.assertEqual(errors[0].message, pre_meeting_date_error_msg)
         data['pre_meeting_date'] = data['date'] - timedelta(days=1)
-        # start_date must be > date
-        data['start_date'] = data['date'] - timedelta(days=1)
-        start_date_date_error_msg = translate(
-            'start_date_before_meeting_date',
-            domain='PloneMeeting',
-            context=self.request)
-        errors = invariants.validate(data)
-        self.request.set('validate_dates_done', False)
-        self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0].message, start_date_date_error_msg)
-        data['start_date'] = data['date'] + timedelta(days=1)
-        # end_date must be > date
-        data['end_date'] = data['date'] - timedelta(days=1)
-        end_date_date_error_msg = translate(
-            'end_date_before_meeting_date',
-            domain='PloneMeeting',
-            context=self.request)
-        errors = invariants.validate(data)
-        self.request.set('validate_dates_done', False)
-        self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0].message, end_date_date_error_msg)
-        data['end_date'] = data['date'] + timedelta(days=1)
         # end_date must be >= start_date
         data['start_date'] = data['date'] + timedelta(days=2)
         data['end_date'] = data['date'] + timedelta(days=1)

@@ -58,6 +58,9 @@ Changelog
   Add items without a meeting date at the top of items so it will be at the top
   when inserted into a meeting.
   [gbastien]
+- In `Meeting.validate_dates`, removed check for `start_date > date` and
+  `end_date < date`, this could not be the cases sometimes...
+  [gbastien]
 
 4.2rc29 (2022-06-17)
 --------------------
