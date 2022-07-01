@@ -52,6 +52,7 @@ Changelog
   `MeetingManager` leading to items not cloned (recurring items, delayed items, ...).
   Added `MeetingItem.get_successor` helper that will return the last
   (and very often only) successor.
+  [gbastien]
 - Avoid wrong order in item manually linked items when an item was linked before
   it is presented to a meeting, as items are sorted on meeting date.
   Add items without a meeting date at the top of items so it will be at the top

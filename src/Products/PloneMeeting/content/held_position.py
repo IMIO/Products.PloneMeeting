@@ -13,7 +13,6 @@ from collective.contact.widget.source import ContactSourceBinder
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form as directives_form
-from plone.formwidget.masterselect import MasterSelectField
 from plone.supermodel import model
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.events import _invalidateAttendeesRelatedCache
