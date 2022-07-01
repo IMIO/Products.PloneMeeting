@@ -650,31 +650,31 @@ class testAdvices(PloneMeetingTestCase):
         self.validateItem(item)
         self.assertEqual(
             sorted(indexAdvisers.callable(item)),
-            sorted(
-                ['considered_not_given_hidden_during_redaction',
-                 'delay__{0}_advice_not_giveable'.format(self.vendors_uid),
-                 'delay__{0}_advice_not_giveable__not_given'.format(self.vendors_uid),
-                 'delay__{0}_advice_not_giveable__not_given__userid__entireadvisersgroup'.format(
+            sorted([
+                'considered_not_given_hidden_during_redaction',
+                'delay__{0}_advice_not_giveable'.format(self.vendors_uid),
+                'delay__{0}_advice_not_giveable__not_given'.format(self.vendors_uid),
+                'delay__{0}_advice_not_giveable__not_given__userid__entireadvisersgroup'.format(
                     self.vendors_uid),
-                 'delay__{0}_advice_not_giveable__userid__entireadvisersgroup'.format(
+                'delay__{0}_advice_not_giveable__userid__entireadvisersgroup'.format(
                     self.vendors_uid),
-                 'delay_row_id__unique_id_123',
-                 'delay_row_id__unique_id_123__not_given',
-                 'delay_row_id__unique_id_123__not_given__userid__entireadvisersgroup',
-                 'delay_row_id__unique_id_123__userid__entireadvisersgroup',
-                 '{0}_advice_given'.format(self.developers_uid),
-                 '{0}_advice_given__considered_not_given_hidden_during_redaction'.format(
+                'delay_row_id__unique_id_123',
+                'delay_row_id__unique_id_123__not_given',
+                'delay_row_id__unique_id_123__not_given__userid__entireadvisersgroup',
+                'delay_row_id__unique_id_123__userid__entireadvisersgroup',
+                '{0}_advice_given'.format(self.developers_uid),
+                '{0}_advice_given__considered_not_given_hidden_during_redaction'.format(
                     self.developers_uid),
-                 '{0}_advice_given__considered_not_given_hidden_during_redaction'
-                 '__userid__entireadvisersgroup'.format(self.developers_uid),
-                 '{0}_advice_given__userid__entireadvisersgroup'.format(self.developers_uid),
-                 'not_given',
-                 'real_org_uid__{0}'.format(self.developers_uid),
-                 'real_org_uid__{0}__considered_not_given_hidden_during_redaction'.format(
+                '{0}_advice_given__considered_not_given_hidden_during_redaction'
+                '__userid__entireadvisersgroup'.format(self.developers_uid),
+                '{0}_advice_given__userid__entireadvisersgroup'.format(self.developers_uid),
+                'not_given',
+                'real_org_uid__{0}'.format(self.developers_uid),
+                'real_org_uid__{0}__considered_not_given_hidden_during_redaction'.format(
                     self.developers_uid),
-                 'real_org_uid__{0}__considered_not_given_hidden_during_redaction'
-                    '__userid__entireadvisersgroup'.format(self.developers_uid),
-                 'real_org_uid__{0}__userid__entireadvisersgroup'.format(self.developers_uid)])
+                'real_org_uid__{0}__considered_not_given_hidden_during_redaction'
+                '__userid__entireadvisersgroup'.format(self.developers_uid),
+                'real_org_uid__{0}__userid__entireadvisersgroup'.format(self.developers_uid)])
         )
         brains = self.catalog(
             indexAdvisers='real_org_uid__{0}__considered_not_given_hidden_during_redaction'.format(
@@ -761,35 +761,36 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(
             sorted(indexAdvisers.callable(item)),
             sorted(
-                ['asked_again',
-                 'delay__{0}_advice_given'.format(self.vendors_uid),
-                 'delay__{0}_advice_given__asked_again'.format(self.vendors_uid),
-                 'delay__{0}_advice_given__asked_again__userid__entireadvisersgroup'.format(
-                    self.vendors_uid),
-                 'delay__{0}_advice_given__userid__entireadvisersgroup'.format(
-                    self.vendors_uid),
-                 'delay__{0}_advice_not_giveable'.format(self.vendors_uid),
-                 'delay__{0}_advice_not_giveable__asked_again'.format(self.vendors_uid),
-                 'delay__{0}_advice_not_giveable__asked_again__userid__entireadvisersgroup'.format(
-                    self.vendors_uid),
-                 'delay__{0}_advice_not_giveable__userid__entireadvisersgroup'.format(
-                    self.vendors_uid),
-                 'delay_row_id__unique_id_123',
-                 'delay_row_id__unique_id_123__asked_again',
-                 'delay_row_id__unique_id_123__asked_again__userid__entireadvisersgroup',
-                 'delay_row_id__unique_id_123__userid__entireadvisersgroup',
-                 '{0}_advice_not_giveable'.format(self.developers_uid),
-                 '{0}_advice_not_giveable__not_given'.format(self.developers_uid),
-                 '{0}_advice_not_giveable__not_given__userid__entireadvisersgroup'.format(
-                    self.developers_uid),
-                 '{0}_advice_not_giveable__userid__entireadvisersgroup'.format(
-                    self.developers_uid),
-                 'not_given',
-                 'real_org_uid__{0}'.format(self.developers_uid),
-                 'real_org_uid__{0}__not_given'.format(self.developers_uid),
-                 'real_org_uid__{0}__not_given__userid__entireadvisersgroup'.format(
-                    self.developers_uid),
-                 'real_org_uid__{0}__userid__entireadvisersgroup'.format(self.developers_uid)])
+                [
+                    'asked_again',
+                    'delay__{0}_advice_given'.format(self.vendors_uid),
+                    'delay__{0}_advice_given__asked_again'.format(self.vendors_uid),
+                    'delay__{0}_advice_given__asked_again__userid__entireadvisersgroup'.format(
+                        self.vendors_uid),
+                    'delay__{0}_advice_given__userid__entireadvisersgroup'.format(
+                        self.vendors_uid),
+                    'delay__{0}_advice_not_giveable'.format(self.vendors_uid),
+                    'delay__{0}_advice_not_giveable__asked_again'.format(self.vendors_uid),
+                    'delay__{0}_advice_not_giveable__asked_again__userid__entireadvisersgroup'.format(
+                        self.vendors_uid),
+                    'delay__{0}_advice_not_giveable__userid__entireadvisersgroup'.format(
+                        self.vendors_uid),
+                    'delay_row_id__unique_id_123',
+                    'delay_row_id__unique_id_123__asked_again',
+                    'delay_row_id__unique_id_123__asked_again__userid__entireadvisersgroup',
+                    'delay_row_id__unique_id_123__userid__entireadvisersgroup',
+                    '{0}_advice_not_giveable'.format(self.developers_uid),
+                    '{0}_advice_not_giveable__not_given'.format(self.developers_uid),
+                    '{0}_advice_not_giveable__not_given__userid__entireadvisersgroup'.format(
+                        self.developers_uid),
+                    '{0}_advice_not_giveable__userid__entireadvisersgroup'.format(
+                        self.developers_uid),
+                    'not_given',
+                    'real_org_uid__{0}'.format(self.developers_uid),
+                    'real_org_uid__{0}__not_given'.format(self.developers_uid),
+                    'real_org_uid__{0}__not_given__userid__entireadvisersgroup'.format(
+                        self.developers_uid),
+                    'real_org_uid__{0}__userid__entireadvisersgroup'.format(self.developers_uid)])
         )
         # put it back to a state where it is editable
         self.proposeItem(item)
@@ -800,15 +801,15 @@ class testAdvices(PloneMeetingTestCase):
                  'delay__{0}_advice_asked_again'.format(self.vendors_uid),
                  'delay__{0}_advice_asked_again__asked_again'.format(self.vendors_uid),
                  'delay__{0}_advice_asked_again__asked_again__userid__entireadvisersgroup'.format(
-                    self.vendors_uid),
+                     self.vendors_uid),
                  'delay__{0}_advice_asked_again__userid__entireadvisersgroup'.format(
-                    self.vendors_uid),
+                     self.vendors_uid),
                  'delay__{0}_advice_under_edit'.format(self.vendors_uid),
                  'delay__{0}_advice_under_edit__asked_again'.format(self.vendors_uid),
                  'delay__{0}_advice_under_edit__asked_again__userid__entireadvisersgroup'.format(
-                    self.vendors_uid),
+                     self.vendors_uid),
                  'delay__{0}_advice_under_edit__userid__entireadvisersgroup'.format(
-                    self.vendors_uid),
+                     self.vendors_uid),
                  'delay_row_id__unique_id_123',
                  'delay_row_id__unique_id_123__asked_again',
                  'delay_row_id__unique_id_123__asked_again__userid__entireadvisersgroup',
@@ -816,13 +817,13 @@ class testAdvices(PloneMeetingTestCase):
                  '{0}_advice_not_given'.format(self.developers_uid),
                  '{0}_advice_not_given__not_given'.format(self.developers_uid),
                  '{0}_advice_not_given__not_given__userid__entireadvisersgroup'.format(
-                    self.developers_uid),
+                     self.developers_uid),
                  '{0}_advice_not_given__userid__entireadvisersgroup'.format(self.developers_uid),
                  'not_given',
                  'real_org_uid__{0}'.format(self.developers_uid),
                  'real_org_uid__{0}__not_given'.format(self.developers_uid),
                  'real_org_uid__{0}__not_given__userid__entireadvisersgroup'.format(
-                    self.developers_uid),
+                     self.developers_uid),
                  'real_org_uid__{0}__userid__entireadvisersgroup'.format(self.developers_uid)])
         )
         # delete the advice as Manager as it was historized
@@ -3896,8 +3897,8 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
-              'gives_auto_advice_on': 'python: item.query_state() == "{0}"'.format(
-                proposed_state_id),
+              'gives_auto_advice_on':
+                'python: item.query_state() == "{0}"'.format(proposed_state_id),
               'for_item_created_from': '2021/07/12',
               'delay': '',
               'delay_label': ''},
