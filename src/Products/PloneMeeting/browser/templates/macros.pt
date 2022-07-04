@@ -331,8 +331,7 @@ document.location.reload(true);
  <div metal:use-macro="context/global_statusmessage/macros/portal_message">
    Portal status message
  </div>
-<table tal:define="get_all_used_held_positions python: modules['Products.PloneMeeting.browser.meeting'].get_all_used_held_positions;
-                   allUsers python:get_all_used_held_positions(meeting);
+<table tal:define="allUsers python:context.get_used_held_positions(the_objects=True);
                    show_votes python:view.show_votes;
                    excused python:meeting.get_excused();
                    absents python:meeting.get_absents();
@@ -360,6 +359,8 @@ document.location.reload(true);
   <tal:comment replace="nothing">Column headers</tal:comment>
   <thead>
   <tr valign="top" class="nosort">
+    <th class="nosort"></th>
+    <th class="th_header_number-column"></th>
     <th class="header-attendee-item-specific">
      <span i18n:translate="item_specific">For this item</span>
      <div class="refresh-attendees-container"
@@ -448,8 +449,12 @@ document.location.reload(true);
                   isNonAttendee python: aUid in itemNonAttendees;
                   oddrow repeat/mUser/odd;
                   classOddEven python: oddrow and 'even' or 'odd';"
-      tal:attributes="class python: isNonAttendee and classOddEven + ' item-non-attendee' or classOddEven">
-     <td class="attendee-value attendee-title">
+      tal:attributes="class python: isNonAttendee and classOddEven + ' item-non-attendee' or classOddEven;
+                      id string:attendee_${repeat/mUser/number}">
+     <td class="draggable">⣿</td>
+     <td class="td_cell_number-column" tal:content="repeat/mUser/number">1</td>
+     <td class="attendee-value attendee-title"
+         tal:attributes="data-attendee_number string:${repeat/mUser/number}">
        <span tal:content="python: context.get_attendee_short_title(mUser, include_voting_group=meetingConfig.getDisplayVotingGroup())"
              tal:attributes="class python: is_attendee_position_redefined and 'tooltipster-meeting-item-redefined-position link-help item-attendee-title highlightValue' or 'item-attendee-title';
                              data-base_url string:${context/absolute_url};
@@ -671,6 +676,9 @@ document.location.reload(true);
   </tr>
   </tbody>
 </table>
+<script>
+  initializeItemAttendeesDND();
+</script>
 </div>
 
 <tal:comment replace="nothing">

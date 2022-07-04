@@ -2854,11 +2854,18 @@ class PMPositionTypesVocabulary(PositionTypesVocabulary):
             person = context.get_person()
         else:
             # used in attendees management forms
-            person_uid = context.REQUEST.get('person_uid', None)
-            if person_uid:
-                hp = uuidToObject(person_uid)
+            hp = self._get_current_hp(context)
+            if hp is not None:
                 person = hp.get_person()
         return person
+
+    def _get_current_hp(self, context):
+        """ """
+        hp = None
+        person_uid = context.REQUEST.get('person_uid', None)
+        if person_uid:
+            hp = uuidToObject(person_uid)
+        return hp
 
     def _get_base_terms(self, context):
         """ """
@@ -2891,9 +2898,11 @@ class PMAttendeeRedefinePositionTypesVocabulary(PMPositionTypesVocabulary):
         tool = api.portal.get_tool("portal_plonemeeting")
         cfg = tool.getMeetingConfig(context)
         selectableRedefinedPositionTypes = cfg.getSelectableRedefinedPositionTypes()
+        hp = self._get_current_hp(context)
         res._terms = [term for term in res._terms
                       if not selectableRedefinedPositionTypes or
-                      term.token in selectableRedefinedPositionTypes]
+                      term.token in selectableRedefinedPositionTypes or
+                      hp and term.token == hp.position_type]
         return res
 
 

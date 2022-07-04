@@ -72,11 +72,11 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(
             meeting.ordered_contacts.keys(),
             [hp_uid for hp_uid
-             in get_all_used_held_positions(pm_folder, include_new=True, the_objects=False)])
-        # include_new=True if context is meeting return same thing as meeting as well
+             in get_all_used_held_positions(pm_folder, the_objects=False)])
+        # every contacts are selected
         self.assertEqual(
-            get_all_used_held_positions(meeting, the_objects=False),
-            get_all_used_held_positions(meeting, include_new=True, the_objects=False))
+            meeting.get_used_held_positions(the_objects=False),
+            get_all_used_held_positions(meeting, the_objects=False))
         # add a new hp in configuration
         self.changeUser('siteadmin')
         person = self.portal.contacts.get('person1')
@@ -88,18 +88,19 @@ class testContacts(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # still no new value as not selected in MeetingConfig.orderedContacts
         self.assertEqual(
-            get_all_used_held_positions(meeting),
-            get_all_used_held_positions(meeting, include_new=True))
+            meeting.get_used_held_positions(the_objects=False),
+            get_all_used_held_positions(meeting, the_objects=False))
         # select new hp
         ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
         cfg.setOrderedContacts(ordered_contacts)
         self.assertEqual(
-            get_all_used_held_positions(meeting, include_new=False) + (new_hp, ),
-            get_all_used_held_positions(meeting, include_new=True))
+            meeting.get_used_held_positions(the_objects=True) + (new_hp, ),
+            get_all_used_held_positions(meeting))
         # unselect everything on MeetingConfig, all values still available on meeting
         cfg.setOrderedContacts(())
         self.assertEqual(
-            get_all_used_held_positions(meeting), meeting.get_attendees(the_objects=True))
+            meeting.get_used_held_positions(the_objects=True),
+            get_all_used_held_positions(meeting))
 
     def test_pm_CanNotRemoveUsedHeldPosition(self):
         ''' '''

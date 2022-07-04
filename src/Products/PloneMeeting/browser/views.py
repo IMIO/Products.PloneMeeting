@@ -45,7 +45,6 @@ from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
-from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.indexes import _to_coded_adviser_index
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
@@ -928,7 +927,7 @@ class BaseDGHV(object):
             if committee_id:
                 contacts = self.context.get_committee_attendees(committee_id, the_objects=True)
             else:
-                contacts = get_all_used_held_positions(meeting)
+                contacts = meeting.get_used_held_positions(the_objects=True)
             excused = meeting.get_excused()
             absents = meeting.get_absents()
             replaced = meeting.get_replacements()

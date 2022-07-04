@@ -14,7 +14,6 @@ from Products.PloneMeeting.browser.itemvotes import _get_linked_item_vote_number
 from Products.PloneMeeting.browser.meeting import BaseMeetingView
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import WriteBudgetInfos
-from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.utils import get_current_user_id
 from Products.PloneMeeting.utils import reindex_object
 from Products.PloneMeeting.utils import sendMailIfRelevant
@@ -510,10 +509,6 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
     # do ram.cache have a different key name
     __call__ = AsyncLoadItemAssemblyAndSignatures__call__
 
-    def get_all_used_held_positions(self):
-        """ """
-        return get_all_used_held_positions(self.meeting)
-
 
 class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
     """ """
@@ -545,10 +540,6 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
                 item_votes,
                 repr(self.context),
                 cache_date)
-
-    def get_all_used_held_positions(self):
-        """ """
-        return get_all_used_held_positions(self.context)
 
     def _update(self):
         """ """

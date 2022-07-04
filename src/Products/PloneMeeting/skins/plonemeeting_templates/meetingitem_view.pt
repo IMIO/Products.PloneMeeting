@@ -347,7 +347,8 @@
                               parent_tag=null,
                               load_view='@@load_item_assembly_and_signatures',
                               base_url=null,
-                              toggle_type='${toggle_type}');"
+                              toggle_type='${toggle_type}',
+                              sync=false);;initializeItemAttendeesDND();"
            class="collapsible discreet not-auto-collapsible-activable">
           <span class="meeting_attribute_label" i18n:translate="redefinable_assembly_and_signatures">
               <span i18n:name="assembly"

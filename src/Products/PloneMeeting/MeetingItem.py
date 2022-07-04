@@ -7561,6 +7561,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         attendees = meeting._get_contacts(uids=attendees, the_objects=the_objects)
         return attendees
 
+    def get_used_held_positions(self, the_objects=False):
+        '''Returns the every attendees for this item, including absents, excused, ...'''
+        if not self.hasMeeting():
+            return ()
+        return self.getMeeting().get_used_held_positions(the_objects=the_objects)
+
     def get_attendee_short_title(self, hp, **kwargs):
         '''Helper that return short title for given p_hp,
            taking into account that p_hp position may be redefined for self.'''

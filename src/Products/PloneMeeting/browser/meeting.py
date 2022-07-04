@@ -237,7 +237,7 @@ def _get_default_attendees(context):
     '''The default attendees are the active held_positions
        with 'present' in defaults.'''
     res = []
-    used_held_positions = get_all_used_held_positions(context, include_new=True)
+    used_held_positions = get_all_used_held_positions(context)
     res = [held_pos.UID() for held_pos in used_held_positions
            if held_pos.defaults and 'present' in held_pos.defaults]
     return res
@@ -247,7 +247,7 @@ def _get_default_signatories(context):
     '''The default signatories are the active held_positions
        with a defined signature_number.'''
     res = []
-    used_held_positions = get_all_used_held_positions(context, include_new=True)
+    used_held_positions = get_all_used_held_positions(context)
     res = [held_pos for held_pos in used_held_positions
            if held_pos.defaults and 'present' in held_pos.defaults and held_pos.signature_number]
     return {signer.UID(): signer.signature_number for signer in res}
@@ -257,7 +257,7 @@ def _get_default_voters(context):
     '''The default voters are the active held_positions
        with 'voter' in defaults.'''
     res = []
-    used_held_positions = get_all_used_held_positions(context, include_new=True)
+    used_held_positions = get_all_used_held_positions(context)
     res = [held_pos.UID() for held_pos in used_held_positions
            if held_pos.defaults and 'voter' in held_pos.defaults]
     return res
@@ -281,7 +281,7 @@ class AttendeesEditProvider(ContentProviderBase, BaseMeetingView):
 
     def get_all_users(self):
         """ """
-        return get_all_used_held_positions(self.context, include_new=True)
+        return get_all_used_held_positions(self.context)
 
     def get_attendees(self):
         """ """

@@ -291,7 +291,7 @@ class testColumns(PloneMeetingTestCase):
         self.assertEqual(
             column.renderHeadCell(),
             u'</th><th class="th_header_getItemNumber"><script '
-            u'type="text/javascript">initializeItemsDND();</script> ')
+            u'type="text/javascript">initializeMeetingItemsDND();</script> ')
 
         # simplified for non MeetingManagers
         self.changeUser('pmCreator1')

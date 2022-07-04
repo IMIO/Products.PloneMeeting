@@ -564,7 +564,7 @@ class IMeeting(IDXMeetingContent):
             # removed attendees?
             # REQUEST.form['meeting_attendees'] is like
             # ['muser_attendeeuid1_attendee', 'muser_attendeeuid2_excused']
-            stored_attendees = get_all_used_held_positions(context, the_objects=False)
+            stored_attendees = context.get_used_held_positions()
             meeting_attendees = [attendee.split('_')[1] for attendee
                                  in request.form.get('meeting_attendees', [])
                                  if attendee.split('_')[2] == 'attendee']
@@ -731,26 +731,21 @@ def default_committees(data):
     return res
 
 
-def get_all_used_held_positions(obj, include_new=False, the_objects=True):
-    '''This will return every currently stored held_positions.
-       If include_new=True, extra held_positions newly selected in the
-       configuration are added.
+def get_all_used_held_positions(obj, the_objects=True):
+    '''This will return every currently stored held_positions if p_obj is a Meeting,
+       and will include every selectable held_positions.
        If p_the_objects=True, we return held_position objects, UID otherwise.
        '''
     # used Persons are held_positions stored in orderedContacts
     contacts = hasattr(obj.aq_base, 'ordered_contacts') and list(obj.ordered_contacts) or []
-    if include_new:
-        # now getOrderedContacts from MeetingConfig and append new contacts at the end
-        # this is the case while adding new contact and editing existing meeting
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(obj)
-        selectable_contacts = cfg.getOrderedContacts()
-        new_selectable_contacts = [c for c in selectable_contacts if c not in contacts]
-        contacts = contacts + new_selectable_contacts
-
+    # append every selectable hp selected in MeetingConfig
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(obj)
+    selectable_contacts = cfg.getOrderedContacts()
+    new_selectable_contacts = [c for c in selectable_contacts if c not in contacts]
+    contacts = contacts + new_selectable_contacts
     if contacts and the_objects:
         contacts = uuidsToObjects(uuids=contacts, ordered=True, unrestricted=True)
-
     return tuple(contacts)
 
 
@@ -1121,6 +1116,14 @@ class Meeting(Container):
         additional_catalog_query.update({'committees_index': committees_index})
         kwargs["additional_catalog_query"] = additional_catalog_query
         return self.get_items(ordered=ordered, **kwargs)
+
+    def get_used_held_positions(self, the_objects=False):
+        '''This will return every currently stored held_positions.
+           If p_the_objects=True, we return held_position objects, UID otherwise.'''
+        contacts = list(self.ordered_contacts) or []
+        if contacts and the_objects:
+            contacts = uuidsToObjects(uuids=contacts, ordered=True, unrestricted=True)
+        return tuple(contacts)
 
     def is_late(self):
         '''Is meeting considered late?
