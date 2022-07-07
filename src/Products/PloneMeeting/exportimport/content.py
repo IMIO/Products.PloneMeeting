@@ -7,6 +7,7 @@ from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.config import set_registry_functions
 from collective.contact.plonegroup.config import set_registry_organizations
 from collective.contact.plonegroup.utils import get_all_suffixes
+from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.iconifiedcategory import CAT_SEPARATOR
@@ -157,7 +158,8 @@ class ToolInitializer:
             invalidate_soev_cache()
             invalidate_ssoev_cache()
             already_active_orgs = get_registry_organizations()
-            org_uids = [org.UID() for org in orgs]
+            org_uids = [org_uid for org_uid in get_organizations(only_selected=False, the_objects=False)
+                        if org_uid not in already_active_orgs]
             set_registry_organizations(org_uids)
             set_registry_functions(functions)
             active_org_uids = [org.UID() for org in active_orgs]

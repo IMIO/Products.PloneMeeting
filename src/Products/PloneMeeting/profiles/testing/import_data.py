@@ -235,6 +235,12 @@ vendors.advisers.append(pmManager)
 # Add a vintage group
 endUsers = OrgDescriptor('endUsers', 'End users', u'EndUsers', active=False)
 
+# Add 2 organizations outside "My org"
+org_outside1 = OrgDescriptor('orgOutside1', 'Org outside 1', u'OrgOutside1', active=False)
+org_outside1.parent_path = ".."
+org_outside2 = OrgDescriptor('orgOutside2', 'Org outside 2', u'OrgOutside2', active=False)
+org_outside2.parent_path = ".."
+
 # Add an external user
 cadranel = UserDescriptor('cadranel', [], fullname='M. Benjamin Cadranel')
 
@@ -483,7 +489,7 @@ person4.firstname_abbreviated = u'P4'
 
 # The whole configuration object -----------------------------------------------
 data = PloneMeetingConfiguration('My meetings', (meetingPma, meetingPga),
-                                 (developers, vendors, endUsers))
+                                 (developers, vendors, endUsers, org_outside1, org_outside2))
 # necessary for testSetup.test_pm_ToolAttributesAreOnlySetOnFirstImportData
 data.restrictUsers = False
 data.persons = [person1, person2, person3, person4]

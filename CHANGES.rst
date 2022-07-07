@@ -5,8 +5,9 @@ Changelog
 4.2rc31 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Fixed vocabularies using organizations to make sure we can use organizations
+  outside my organization, excepted for the `MeetingItem.associatedGroups` field.
+  [gbastien]
 
 4.2rc30 (2022-07-01)
 --------------------

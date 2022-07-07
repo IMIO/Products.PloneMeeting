@@ -146,7 +146,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         # make organizations easily available thru their id and store uid
         # for each organization, we will have self.developers, self.developers_uid
         # as well as every plone groups : self.vendors_creators, self.developers_reviewers, ...
-        for org in self.own_org.objectValues():
+        # include organizations outside own_org as well
+        orgs = object_values(self.own_org, 'PMOrganization') + \
+            object_values(self.own_org.aq_parent, 'PMOrganization')
+        for org in orgs:
             setattr(self, org.getId(), org)
             setattr(self, '{0}_uid'.format(org.getId()), org.UID())
             for plone_group_id in get_plone_groups(org.UID(), ids_only=True):
