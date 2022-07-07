@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from AccessControl import Unauthorized
 from AccessControl.Permission import Permission
 from Acquisition import aq_base
 from appy.pod.xhtml2odt import XhtmlPreprocessor
@@ -1007,6 +1008,21 @@ def get_dx_widget(obj, field_name, mode=DISPLAY_MODE):
     # this will set widget.__name__
     locate(widget, None, field_name)
     return widget
+
+
+def set_dx_value(obj, field_name, value, raise_unauthorized=True):
+    """Convenience method to be able to set an attribute on a DX content type."""
+    field = get_dx_field(obj, field_name)
+    if field is not None:
+        # will raise in case an error occurs
+        field.validate(value)
+        schema = get_dx_schema(obj)
+        write_permission = schema.queryTaggedValue(
+            WRITE_PERMISSIONS_KEY, {}).get(field_name, ModifyPortalContent)
+        if _checkPermission(write_permission, obj):
+            field.set(obj, value)
+        elif raise_unauthorized:
+            raise Unauthorized
 
 
 def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True, reindex=True, unlock=True):

@@ -25,5 +25,6 @@ from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import number_word
 from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import reindex_object
+from Products.PloneMeeting.utils import set_dx_value
 from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.utils import uncapitalize
