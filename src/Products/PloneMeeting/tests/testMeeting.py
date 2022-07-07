@@ -3893,6 +3893,32 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(meeting.validation_deadline, datetime(2021, 8, 5, 9, 30))
         self.assertEqual(meeting.freeze_deadline, datetime(2021, 8, 9, 14, 30))
 
+    def test_pm_Update_first_item_number(self):
+        """The the helper Meeting.update_first_item_number that will take in charge"""
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        self.changeUser('pmManager')
+        meeting1 = self._createMeetingWithItems(meetingDate=datetime(2022, 6, 6))
+        meeting2 = self._createMeetingWithItems()
+        self.assertEqual(meeting1.first_item_number, -1)
+        self.assertEqual(meeting2.first_item_number, -1)
+        self.assertEqual(len(meeting1.get_items()), 5)
+        # update meeting2 then meeting1
+        meeting2.update_first_item_number()
+        self.assertEqual(meeting2.first_item_number, 6)
+        meeting1.update_first_item_number()
+        self.assertEqual(meeting1.first_item_number, 1)
+        # now pass an arbitrary additional query to compute first_item_number
+        # no change for meeting1 as first meeting
+        meeting1.update_first_item_number(
+            get_items_additional_catalog_query={'getCategory': 'development'}, force=True)
+        self.assertEqual(meeting1.first_item_number, 1)
+        # but as there are 2 items using category 'development' for meeting1
+        # the first item number is 3
+        meeting2.update_first_item_number(
+            get_items_additional_catalog_query={'getCategory': 'development'}, force=True)
+        self.assertEqual(meeting2.first_item_number, 3)
+
 
 def test_suite():
     from unittest import makeSuite
