@@ -18,6 +18,9 @@ Changelog
 - Fixed vocabularies using organizations to make sure we can use organizations
   outside my organization, excepted for the `MeetingItem.associatedGroups` field.
   [gbastien]
+- Adapted overrided `generationlinks.pt` regarding changes in
+  `collective.documentgenerator` (POD templates grouped by title).
+  [gbastien]
 
 4.2rc30 (2022-07-01)
 --------------------

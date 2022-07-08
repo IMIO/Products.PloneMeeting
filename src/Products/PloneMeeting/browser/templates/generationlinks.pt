@@ -5,51 +5,53 @@
       method="POST"
       target="_blank"
       tal:attributes="action string:${context/absolute_url}/document-generation;">
-    <input type="hidden" name="template_uid"/>
-    <input type="hidden" name="output_format"/>
-    <input type="hidden" name="uids" value=""/>
-    <input type="hidden" name="facetedQuery" value=""/>
-    <input type="hidden" name="mailinglist_name" value=""/>
-    <input tal:condition="view/displayStoreAsAnnexSection" type="hidden" name="store_as_annex" value="0"/>
+      <input type="hidden" name="template_uid"/>
+      <input type="hidden" name="output_format"/>
+      <input type="hidden" name="uids" value=""/>
+      <input type="hidden" name="facetedQuery" value=""/>
+      <input type="hidden" name="mailinglist_name" value=""/>
+      <input tal:condition="view/displayStoreAsAnnexSection" type="hidden" name="store_as_annex" value="0"/>
 
-    <ul class="pod-template">
-        <li tal:repeat="infos view/get_links_info">
-        <a href="#"
-           tal:attributes="onclick string:event.preventDefault();;javascript:generatePodDocument('${infos/template_uid}','${infos/output_format}', this);
-                           title infos/description"
-           style="cursor: pointer">
-            <img src="#" class="svg-icon"
-             tal:attributes="src string:${view/portal_url}/++resource++collective.documentgenerator/${infos/output_format}.svg" />
-            <span tal:replace="infos/title">Template title</span>
-        </a>
-
-        <tal:comment replace="nothing">XXX Added by PloneMeting : send the document by email.</tal:comment>
-        <tal:mail condition="python: view.getAvailableMailingLists(infos['template'])">
-            <acronym i18n:attributes="title" title="available_mailing_lists_title"><img
-                tal:attributes="src string:${view/portal_url}/sendMail.gif;
-                                data-template_uid infos/template_uid;
-                                data-output_format infos/output_format;"
-                class="tooltipster-available-mailing-lists" /></acronym>
-        </tal:mail>
-
-        <tal:comment replace="nothing">XXX Added by PloneMeting : store generated document as annex.</tal:comment>
-        <tal:store_as_annex condition="view/displayStoreAsAnnexSection">
-            <tal:defines define="store_as_annex_uid infos/store_as_annex_uid"
-                         condition="python: store_as_annex_uid and view.may_store_as_annex(infos['template'])">
-                <acronym><a tal:attributes="onclick string:event.preventDefault();;
-                                            javascript:$(this).parents('form')[0].store_as_annex.value='1';;
-                                            javascript:$(this).parents('form')[0].target='_self';;
-                                            generatePodDocument('${infos/template_uid}','${infos/output_format}', this);;
-                                            javascript:$$(this).parents('form')[0].store_as_annex.value='0';;
-                                            javascript:$$(this).parents('form')[0].target='_blank';;">
-                    <img tal:attributes="src string:${view/portal_url}/store_as_annex.png;
-                                         title python: view.get_store_as_annex_title_msg(infos['store_as_annex_title'])" />
-                </a></acronym>
-            </tal:defines>
-        </tal:store_as_annex>
-
+      <ul class="pod-template"
+          tal:define="infos view/get_links_info;
+                      titles python:infos.keys();">
+        <li tal:repeat="title titles" class="template-link">
+          <span class="template-link-title" tal:content="title">Template title</span><span class="template-link-after-title"></span>
+          <span class="template-link-before-link"
+                tal:repeat="link python: infos[title]">
+            <a href="#"
+               tal:attributes="onclick string:event.preventDefault();;javascript:generatePodDocument('${link/template_uid}','${link/output_format}', this);
+                               title link/description"
+               style="cursor: pointer">
+                <img src="#" class="svg-icon"
+                 tal:attributes="src string:${view/portal_url}/++resource++collective.documentgenerator/${link/output_format}.svg" />
+            </a>
+            <tal:comment replace="nothing">XXX Added by PloneMeting : send the document by email.</tal:comment>
+            <tal:mail condition="python: view.getAvailableMailingLists(link['template'])">
+                <acronym i18n:attributes="title" title="available_mailing_lists_title"><img
+                    tal:attributes="src string:${view/portal_url}/sendMail.gif;
+                                    data-template_uid link/template_uid;
+                                    data-output_format link/output_format;"
+                    class="tooltipster-available-mailing-lists" /></acronym>
+            </tal:mail>
+            <tal:comment replace="nothing">XXX Added by PloneMeting : store generated document as annex.</tal:comment>
+            <tal:store_as_annex condition="view/displayStoreAsAnnexSection">
+                <tal:defines define="store_as_annex_uid link/store_as_annex_uid"
+                             condition="python: store_as_annex_uid and view.may_store_as_annex(link['template'])">
+                    <acronym><a tal:attributes="onclick string:event.preventDefault();;
+                                                javascript:$(this).parents('form')[0].store_as_annex.value='1';;
+                                                javascript:$(this).parents('form')[0].target='_self';;
+                                                generatePodDocument('${link/template_uid}','${link/output_format}', this);;
+                                                javascript:$$(this).parents('form')[0].store_as_annex.value='0';;
+                                                javascript:$$(this).parents('form')[0].target='_blank';;">
+                        <img tal:attributes="src string:${view/portal_url}/store_as_annex.png;
+                                             title python: view.get_store_as_annex_title_msg(link['store_as_annex_title'])" />
+                    </a></acronym>
+                </tal:defines>
+            </tal:store_as_annex>
+          </span>
+          <span class="link-separator" />
         </li>
-    </ul>
-
+      </ul>
     </form>
 </div>
