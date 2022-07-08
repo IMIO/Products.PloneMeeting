@@ -1658,7 +1658,8 @@ class testContacts(PloneMeetingTestCase):
         # initialy, we have 4 persons and 4 held_positions
         own_org = get_own_organization()
         self.assertIsNone(own_org.acronym)
-        self.assertEqual(len(api.content.find(context=contacts, portal_type='organization')), 4)
+        # 4 internal and 2 external organizations
+        self.assertEqual(len(api.content.find(context=contacts, portal_type='organization')), 6)
         self.assertEqual(len(api.content.find(context=contacts, portal_type='person')), 4)
         self.assertEqual(len(api.content.find(context=contacts, portal_type='held_position')), 4)
         path = os.path.join(os.path.dirname(Products.PloneMeeting.__file__), 'profiles/testing')
@@ -1672,7 +1673,7 @@ class testContacts(PloneMeetingTestCase):
         self.changeUser('admin')
         import_contacts(self.portal, path=path)
         # we imported 10 organizations and 15 persons/held_positions
-        self.assertEqual(len(api.content.find(context=contacts, portal_type='organization')), 13)
+        self.assertEqual(len(api.content.find(context=contacts, portal_type='organization')), 15)
         self.assertEqual(len(api.content.find(context=contacts, portal_type='person')), 19)
         self.assertEqual(len(api.content.find(context=contacts, portal_type='held_position')), 19)
         # organizations are imported with an acronym

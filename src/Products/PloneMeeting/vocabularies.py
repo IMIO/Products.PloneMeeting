@@ -338,10 +338,15 @@ class ItemGroupsInChargeVocabulary(GroupsInChargeVocabulary):
         missing_term_uids = [uid for uid in stored_terms
                              if uid not in term_uids]
         if missing_term_uids:
-            missing_terms = uuidsToObjects(missing_term_uids, ordered=False)
-            for org in missing_terms:
-                org_uid = org.UID()
-                terms.append(SimpleTerm(org_uid, org_uid, org.get_full_title()))
+            # make sure we only have organizations stored in own org
+            # this may be the case when creating item thru a restapi call
+            missing_term_uids = [uid for uid in missing_term_uids
+                                 if uid in get_organizations(only_selected=False, the_objects=False)]
+            if missing_term_uids:
+                missing_terms = uuidsToObjects(missing_term_uids, ordered=False, unrestricted=True)
+                for org in missing_terms:
+                    org_uid = org.UID()
+                    terms.append(SimpleTerm(org_uid, org_uid, org.get_full_title()))
 
         return SimpleVocabulary(terms)
 
@@ -1805,7 +1810,8 @@ class ItemAssociatedGroupsVocabulary(AssociatedGroupsVocabulary):
         missing_term_uids = [uid for uid in stored_terms
                              if uid not in term_uids]
         if missing_term_uids:
-            missing_terms = uuidsToObjects(missing_term_uids, ordered=False)
+            # we may query any org_uids as we accept org outside own organization
+            missing_terms = uuidsToObjects(missing_term_uids, ordered=False, unrestricted=True)
             for org in missing_terms:
                 org_uid = org.UID()
                 terms.append(SimpleTerm(org_uid, org_uid, org.get_full_title()))

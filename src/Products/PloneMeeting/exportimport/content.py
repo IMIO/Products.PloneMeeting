@@ -5,6 +5,7 @@ from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.config import set_registry_functions
 from collective.contact.plonegroup.config import set_registry_organizations
 from collective.contact.plonegroup.utils import get_all_suffixes
+from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.iconifiedcategory import CAT_SEPARATOR
@@ -153,7 +154,8 @@ class ToolInitializer:
             # 3) manage organizations, set every organizations so every Plone groups are created
             # then disable orgs that are not active
             already_active_orgs = get_registry_organizations()
-            org_uids = [org.UID() for org in orgs]
+            org_uids = [org_uid for org_uid in get_organizations(only_selected=False, the_objects=False)
+                        if org_uid not in already_active_orgs]
             set_registry_organizations(org_uids)
             active_org_uids = [org.UID() for org in active_orgs]
             set_registry_organizations(already_active_orgs + active_org_uids)
