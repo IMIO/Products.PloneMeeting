@@ -849,7 +849,7 @@ TD acronym {
     line-height: 1.25em;
 }
 
-acronym a {
+acronym a, acronym a img {
     cursor: help;
     padding: 0;
 }

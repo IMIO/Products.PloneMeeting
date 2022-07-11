@@ -41,15 +41,16 @@
             <tal:store_as_annex condition="view/displayStoreAsAnnexSection">
                 <tal:defines define="store_as_annex_uid link/store_as_annex_uid"
                              condition="python: store_as_annex_uid and view.may_store_as_annex(link['template'])">
-                    <acronym><a tal:attributes="onclick string:event.preventDefault();;
-                                                javascript:$(this).parents('form')[0].store_as_annex.value='1';;
-                                                javascript:$(this).parents('form')[0].target='_self';;
-                                                generatePodDocument('${link/template_uid}','${link/output_format}', this);;
-                                                javascript:$$(this).parents('form')[0].store_as_annex.value='0';;
-                                                javascript:$$(this).parents('form')[0].target='_blank';;">
+                    <a href="#"
+                       tal:attributes="onclick string:event.preventDefault();;
+                                       javascript:$(this).parents('form')[0].store_as_annex.value='1';;
+                                       javascript:$(this).parents('form')[0].target='_self';;
+                                       generatePodDocument('${link/template_uid}','${link/output_format}', this);;
+                                       javascript:$$(this).parents('form')[0].store_as_annex.value='0';;
+                                       javascript:$$(this).parents('form')[0].target='_blank';;">
                         <img tal:attributes="src string:${view/portal_url}/store_as_annex.png;
                                              title python: view.get_store_as_annex_title_msg(link['store_as_annex_title'])" />
-                    </a></acronym>
+                    </a>
                 </tal:defines>
             </tal:store_as_annex>
           </span>
