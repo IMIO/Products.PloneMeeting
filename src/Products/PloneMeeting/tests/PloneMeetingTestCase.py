@@ -301,7 +301,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         elif objectType == 'MeetingConfig':
             folder = self.tool
         elif objectType == 'organization':
-            folder = self.own_org
+            folder = folder or self.own_org
         elif objectType == 'person':
             folder = self.portal.contacts
         elif objectType == 'held_position':
