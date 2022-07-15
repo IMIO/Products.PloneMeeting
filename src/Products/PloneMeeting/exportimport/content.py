@@ -702,6 +702,8 @@ class ToolInitializer:
 
         own_org = get_own_organization()
         for org_descr in org_descriptors:
+            if not org_descr.getUsers():
+                continue
             if org_descr.parent_path:
                 # find parent organization following parent path from container
                 container = own_org.restrictedTraverse(org_descr.parent_path)

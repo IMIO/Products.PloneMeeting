@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 from collective.contact.plonegroup.browser.settings import EveryOrganizationsVocabulary
+from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
@@ -756,7 +757,8 @@ class ItemOptionalAdvicesVocabulary(object):
                 for optionalAdviser in optionalAdvisers:
                     if optionalAdviser not in optionalAdvisersInVocab:
                         org = get_organization(optionalAdviser)
-                        if not org:
+                        # XXX 4.1 do not accept org outside own_org
+                        if not org or org.aq_parent.getId() != PLONEGROUP_ORG:
                             continue
                         if '__rowid__' in optionalAdviser:
                             org_uid, row_id = decodeDelayAwareId(optionalAdviser)

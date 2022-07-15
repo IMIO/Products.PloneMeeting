@@ -31,6 +31,7 @@ from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_config_root
 from copy import deepcopy
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import object_values
 from imio.helpers.testing import testing_logger
 from plone import api
 from plone import namedfile

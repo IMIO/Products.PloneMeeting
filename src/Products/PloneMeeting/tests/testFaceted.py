@@ -26,6 +26,7 @@ from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organizations
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedLayout
+from imio.helpers.content import get_vocab
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from zope.component import queryUtility
