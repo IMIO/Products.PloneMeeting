@@ -21,6 +21,10 @@ Changelog
 - Adapted overrided `generationlinks.pt` regarding changes in
   `collective.documentgenerator` (POD templates grouped by title).
   [gbastien]
+- Added `_configurePortalRepository` in `setuphandlers.py` to remove default
+  Plone types that are versionable (`Document`, `Event`, ...).
+  Added upgrade step to 4204.
+  [gbastien]
 
 4.2rc30 (2022-07-01)
 --------------------
