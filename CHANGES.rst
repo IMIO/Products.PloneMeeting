@@ -25,6 +25,9 @@ Changelog
   Plone types that are versionable (`Document`, `Event`, ...).
   Added upgrade step to 4204.
   [gbastien]
+- Added possibility to add images to `MeetingItemTemplate/MeetingItemReccuring`.
+  Display the `folder_contents` tab on items of the `MeetingConfig`.
+  [gbastien]
 
 4.2rc30 (2022-07-01)
 --------------------

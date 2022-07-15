@@ -6307,6 +6307,27 @@ class testMeetingItem(PloneMeetingTestCase):
         newItem.processForm()
         self.assertEqual(newItem.getId(), 'my-new-item-title')
 
+    def test_pm_ItemTemplateImage(self):
+        """We can use an image in an item template and when used,
+           the image is correctly duplicated into the new item."""
+        # add an image to the default item template
+        cfg = self.meetingConfig
+        self.changeUser('templatemanager1')
+        default_template = cfg.itemtemplates.get(ITEM_DEFAULT_TEMPLATE_ID)
+        text_pattern = '<p>Text with external image <img src="%s">.</p>'
+        text = text_pattern % self.external_image1
+        set_field_from_ajax(default_template, "decision", text)
+        image_resolveuid = "resolveuid/%s" % default_template.objectValues()[0].UID()
+        self.assertEqual(default_template.getRawDecision(), text_pattern % image_resolveuid)
+
+        # create an item using the default_template
+        self.changeUser('pmCreator1')
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        newItem = view.createItemFromTemplate(default_template.UID())
+        image_resolveuid = "resolveuid/%s" % newItem.objectValues()[0].UID()
+        self.assertEqual(newItem.getRawDecision(), text_pattern % image_resolveuid)
+
     def _notAbleToAddSubContent(self, item):
         for add_subcontent_perm in ADD_SUBCONTENT_PERMISSIONS:
             self.assertFalse(self.hasPermission(add_subcontent_perm, item))
