@@ -6695,9 +6695,10 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setSelectableCopyGroups((self.developers_reviewers, self.vendors_reviewers))
         # make power observers able to see validated items
         self._setPowerObserverStates(states=('validated', ))
-        # by default internalNotes are editable by proposingGroup creators
+        # by default set internalNotes editable by proposingGroup creators
         self._activate_config('itemInternalNotesEditableBy',
-                              'suffix_proposing_group_creators')
+                              'suffix_proposing_group_creators',
+                              keep_existing=False)
 
         def _check(item, view_edit=False):
             view = item.restrictedTraverse('base_view')
