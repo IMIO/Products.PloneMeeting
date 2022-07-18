@@ -4196,7 +4196,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('get_item_absents')
 
-    def get_item_absents(self, the_objects=False, **kwargs):
+    def get_item_absents(self, the_objects=False, ordered=True, **kwargs):
         '''Gets the absents for this item.
            Absent for an item are stored in the Meeting.item_absents dict.'''
         res = []
@@ -4204,6 +4204,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return res
         meeting = self.getMeeting()
         meeting_item_absents = meeting.get_item_absents().get(self.UID(), [])
+        if ordered:
+            meeting_item_absents = self._order_contacts(meeting_item_absents)
         if the_objects:
             item_absents = meeting._get_contacts(uids=meeting_item_absents, the_objects=the_objects)
         else:
@@ -4212,7 +4214,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('get_item_excused')
 
-    def get_item_excused(self, the_objects=False, **kwargs):
+    def get_item_excused(self, the_objects=False, ordered=True, **kwargs):
         '''Gets the excused for this item.
            Excused for an item are stored in the Meeting.item_excused dict.'''
         res = []
@@ -4220,6 +4222,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return res
         meeting = self.getMeeting()
         meeting_item_excused = meeting.get_item_excused().get(self.UID(), [])
+        if ordered:
+            meeting_item_excused = self._order_contacts(meeting_item_excused)
         if the_objects:
             item_excused = meeting._get_contacts(uids=meeting_item_excused, the_objects=the_objects)
         else:
@@ -4228,7 +4232,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('get_item_non_attendees')
 
-    def get_item_non_attendees(self, the_objects=False, **kwargs):
+    def get_item_non_attendees(self, the_objects=False, ordered=True, **kwargs):
         '''Gets the non_attendees for this item.
            Non attendees for an item are stored in the Meeting.item_non_attendees dict.'''
         res = []
@@ -4236,6 +4240,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return res
         meeting = self.getMeeting()
         meeting_item_non_attendees = meeting.get_item_non_attendees().get(self.UID(), [])
+        if ordered:
+            meeting_item_non_attendees = self._order_contacts(meeting_item_non_attendees)
         if the_objects:
             item_non_attendees = meeting._get_contacts(
                 uids=meeting_item_non_attendees, the_objects=the_objects)
@@ -7545,7 +7551,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('get_attendees')
 
-    def get_attendees(self, the_objects=False):
+    def get_attendees(self, the_objects=False, ordered=True):
         '''Returns the attendees for this item.'''
         res = []
         if not self.hasMeeting():
@@ -7558,14 +7564,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         attendees = [attendee for attendee in attendees
                      if attendee not in item_absents + item_excused + item_non_attendees]
         # get really present attendees now
+        if ordered:
+            attendees = self._order_contacts(attendees)
         attendees = meeting._get_contacts(uids=attendees, the_objects=the_objects)
         return attendees
 
-    def get_used_held_positions(self, the_objects=False):
+    def _order_contacts(self, uids):
+        """ """
+        return [uid for uid in self.get_all_attendees(ordered=True)
+                if uid in uids]
+
+    def get_all_attendees(self, the_objects=False, ordered=True):
         '''Returns the every attendees for this item, including absents, excused, ...'''
         if not self.hasMeeting():
             return ()
-        return self.getMeeting().get_used_held_positions(the_objects=the_objects)
+        meeting = self.getMeeting()
+        all_uids = []
+        if ordered:
+            all_uids = meeting._get_item_attendees_order(self.UID())
+        return meeting.get_all_attendees(all_uids, the_objects=the_objects)
 
     def get_attendee_short_title(self, hp, **kwargs):
         '''Helper that return short title for given p_hp,

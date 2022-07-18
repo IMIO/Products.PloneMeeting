@@ -477,6 +477,19 @@
        name="item_remove_redefined_attendee_position_form"
        class=".itemattendee.RemoveRedefinedAttendeePositionForm"
        permission="zope2.View" />
+   <browser:view
+       for="Products.PloneMeeting.interfaces.IMeetingItem"
+       layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+       name="item-change-attendee-order"
+       class=".itemattendee.ChangeAttendeeOrderView"
+       permission="zope2.View" />
+   <browser:view
+       for="Products.PloneMeeting.interfaces.IMeetingItem"
+       layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+       name="item-reinit-attendees-order"
+       class=".itemattendee.ReinitAttendeesOrderView"
+       permission="zope2.View" />
+     <!-- Votes -->
      <browser:page
        for="Products.PloneMeeting.interfaces.IMeetingItem"
        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"

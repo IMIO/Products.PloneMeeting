@@ -331,7 +331,8 @@ document.location.reload(true);
  <div metal:use-macro="context/global_statusmessage/macros/portal_message">
    Portal status message
  </div>
-<table tal:define="allUsers python:context.get_used_held_positions(the_objects=True);
+<table tal:define="allUsers python:context.get_all_attendees(the_objects=True);
+                   meetingAllUsers python: meeting.get_all_attendees(the_objects=False);
                    show_votes python:view.show_votes;
                    excused python:meeting.get_excused();
                    absents python:meeting.get_absents();
@@ -350,6 +351,7 @@ document.location.reload(true);
                    voters python:view.voters;
                    voted_voters python:view.voted_voters;
                    mayChangeAttendees python: context._mayChangeAttendees();
+                   attendeesOrderIsRedefined python: meeting._get_item_attendees_order(view.context_uid, from_meeting_if_empty=False);
                    votesAreSecret python:view.votesAreSecret;
                    pollType python:context.getPollType();"
        id="meeting_users"
@@ -359,8 +361,17 @@ document.location.reload(true);
   <tal:comment replace="nothing">Column headers</tal:comment>
   <thead>
   <tr valign="top" class="nosort">
-    <th class="nosort"></th>
-    <th class="th_header_number-column"></th>
+    <th tal:condition="mayChangeAttendees" class="nosort"></th>
+    <th class="th_header_number-column">
+       <a href="#"
+          tal:condition="python: mayChangeAttendees and attendeesOrderIsRedefined"
+          title="Reinitialize attendees order from meeting"
+          id="reinit-attendees-order-action"
+          tal:attributes="onClick string:javascript:event.preventDefault();;confirmDeleteObject(base_url='${context/absolute_url}', object_uid=null, this, msgName='delete_confirm_message', view_name='@@item-reinit-attendees-order', redirect=null);;"
+          i18n:attributes="title">
+           <span class="fa delete-element"></span>
+       </a>
+    </th>
     <th class="header-attendee-item-specific">
      <span i18n:translate="item_specific">For this item</span>
      <div class="refresh-attendees-container"
@@ -450,11 +461,18 @@ document.location.reload(true);
                   oddrow repeat/mUser/odd;
                   classOddEven python: oddrow and 'even' or 'odd';"
       tal:attributes="class python: isNonAttendee and classOddEven + ' item-non-attendee' or classOddEven;
-                      id string:attendee_${repeat/mUser/number}">
-     <td class="draggable">⣿</td>
-     <td class="td_cell_number-column" tal:content="repeat/mUser/number">1</td>
+                      id string:attendee_${repeat/mUser/number};">
+     <td tal:condition="mayChangeAttendees" class="draggable">⣿</td>
+     <td class="td_cell_number-column"
+         tal:define="number repeat/mUser/number;
+                     orderChanged python: meetingAllUsers[number-1] != aUid"
+         tal:content="number"
+         i18n:attributes="title"
+         tal:attributes="style python: orderChanged and 'color:red;; cursor: help;;' or '';
+                         title python: orderChanged and 'attendee_order_changed_title'">1</td>
      <td class="attendee-value attendee-title"
-         tal:attributes="data-attendee_number string:${repeat/mUser/number}">
+         tal:attributes="data-attendee_uid aUid;
+                         data-attendee_number string:${repeat/mUser/number}">
        <span tal:content="python: context.get_attendee_short_title(mUser, include_voting_group=meetingConfig.getDisplayVotingGroup())"
              tal:attributes="class python: is_attendee_position_redefined and 'tooltipster-meeting-item-redefined-position link-help item-attendee-title highlightValue' or 'item-attendee-title';
                              data-base_url string:${context/absolute_url};
@@ -675,10 +693,10 @@ document.location.reload(true);
    </td>
   </tr>
   </tbody>
+  <script tal:condition="mayChangeAttendees">
+    initializeItemAttendeesDND();
+  </script>
 </table>
-<script>
-  initializeItemAttendeesDND();
-</script>
 </div>
 
 <tal:comment replace="nothing">

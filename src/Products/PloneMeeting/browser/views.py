@@ -927,7 +927,12 @@ class BaseDGHV(object):
             if committee_id:
                 contacts = self.context.get_committee_attendees(committee_id, the_objects=True)
             else:
-                contacts = meeting.get_used_held_positions(the_objects=True)
+                # when context is an item, make sure we have correct order in case
+                # attendees order was redefined
+                if self.context.getTagName() == 'MeetingItem':
+                    contacts = self.context.get_all_attendees(the_objects=True, ordered=True)
+                else:
+                    contacts = meeting.get_all_attendees(the_objects=True)
             excused = meeting.get_excused()
             absents = meeting.get_absents()
             replaced = meeting.get_replacements()

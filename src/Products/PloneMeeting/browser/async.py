@@ -453,6 +453,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         show_votes = self.context.show_votes()
         item_votes = self.context.get_item_votes(include_vote_number=False)
         context_uid = self.context.UID()
+        item_attendees_order = meeting._get_item_attendees_order(context_uid)
         # if something redefined for context or not
         if context_uid not in str(redefined_item_attendees):
             redefined_item_attendees = []
@@ -464,6 +465,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                 cfg_modified,
                 ordered_contacts,
                 redefined_item_attendees,
+                item_attendees_order,
                 show_votes,
                 item_votes,
                 may_change_attendees,

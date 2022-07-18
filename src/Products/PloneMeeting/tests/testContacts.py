@@ -22,12 +22,14 @@ from plone.namedfile import NamedImage
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.browser.itemattendee import set_meeting_item_signatory
 from Products.PloneMeeting.content.directory import IPMDirectory
-from Products.PloneMeeting.content.meeting import get_all_used_held_positions
+from Products.PloneMeeting.content.meeting import get_all_usable_held_positions
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.content.source import PMContactSourceBinder
 from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import get_prefixed_gn_position_name
 from Products.statusmessages.interfaces import IStatusMessage
+from z3c.form import validator
 from z3c.form.interfaces import WidgetActionExecutionError
 from zope.event import notify
 from zope.i18n import translate
@@ -61,7 +63,7 @@ class testContacts(PloneMeetingTestCase):
         # contacts are still in correct order
         self.assertEqual(cfg.getOrderedContacts(), meeting.get_attendees())
 
-    def test_pm_Get_all_used_held_positions(self):
+    def test_pm_Get_all_usable_held_positions(self):
         ''' '''
         cfg = self.meetingConfig
         self.changeUser('pmManager')
@@ -72,11 +74,11 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(
             meeting.ordered_contacts.keys(),
             [hp_uid for hp_uid
-             in get_all_used_held_positions(pm_folder, the_objects=False)])
+             in get_all_usable_held_positions(pm_folder, the_objects=False)])
         # every contacts are selected
         self.assertEqual(
-            meeting.get_used_held_positions(the_objects=False),
-            get_all_used_held_positions(meeting, the_objects=False))
+            meeting.get_all_attendees(the_objects=False),
+            get_all_usable_held_positions(meeting, the_objects=False))
         # add a new hp in configuration
         self.changeUser('siteadmin')
         person = self.portal.contacts.get('person1')
@@ -88,19 +90,19 @@ class testContacts(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # still no new value as not selected in MeetingConfig.orderedContacts
         self.assertEqual(
-            meeting.get_used_held_positions(the_objects=False),
-            get_all_used_held_positions(meeting, the_objects=False))
+            meeting.get_all_attendees(the_objects=False),
+            get_all_usable_held_positions(meeting, the_objects=False))
         # select new hp
         ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
         cfg.setOrderedContacts(ordered_contacts)
         self.assertEqual(
-            meeting.get_used_held_positions(the_objects=True) + (new_hp, ),
-            get_all_used_held_positions(meeting))
+            meeting.get_all_attendees(the_objects=True) + (new_hp, ),
+            get_all_usable_held_positions(meeting))
         # unselect everything on MeetingConfig, all values still available on meeting
         cfg.setOrderedContacts(())
         self.assertEqual(
-            meeting.get_used_held_positions(the_objects=True),
-            get_all_used_held_positions(meeting))
+            meeting.get_all_attendees(the_objects=True),
+            get_all_usable_held_positions(meeting))
 
     def test_pm_CanNotRemoveUsedHeldPosition(self):
         ''' '''
@@ -2487,6 +2489,61 @@ class testContacts(PloneMeetingTestCase):
         widget = add_form_instance.groups[0].widgets["position"]
         self.assertEqual(widget.value, ["/".join(own_org.getPhysicalPath())])
         endInteraction()
+
+    def test_pm_ChangeAttendeeOrderView(self):
+        """Let change attendees order on a meeting."""
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        item1 = meeting.get_items()[0]
+
+        # change item attendees order as MeetingManager
+        change_view = item1.restrictedTraverse('@@item-change-attendee-order')
+        hp1, hp2, hp3, hp4 = item1.get_all_attendees()
+        self.assertEqual(meeting.get_all_attendees(), item1.get_all_attendees())
+        change_view(attendee_uid=item1.get_all_attendees()[1], position=3)
+        self.assertEqual(item1.get_all_attendees(), (hp1, hp3, hp2, hp4))
+        # reinit item attendees order to meeting order
+        reinit_view = item1.restrictedTraverse('@@item-reinit-attendees-order')
+        reinit_view()
+        self.assertEqual(item1.get_all_attendees(), (hp1, hp2, hp3, hp4))
+
+        # a normal user can not change item attendees order
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, item1))
+        change_view = item1.restrictedTraverse('@@item-change-attendee-order')
+        self.assertRaises(Unauthorized, change_view, attendee_uid=item1.get_all_attendees()[1], position=3)
+        reinit_view = item1.restrictedTraverse('@@item-reinit-attendees-order')
+        self.assertRaises(Unauthorized, reinit_view)
+
+        # not possible to change unselect an attendee on the meeting
+        # for who order is redefined on an item
+        self.changeUser('pmManager')
+        attendee_uids = meeting.get_all_attendees()
+        # now while validating meeting_attendees, None may be unselected or added
+        meeting_attendees = ['muser_{0}_attendee'.format(attendee_uid)
+                             for attendee_uid in attendee_uids][:-1]
+        self.request.form['meeting_attendees'] = meeting_attendees
+        change_view = item1.restrictedTraverse('@@item-change-attendee-order')
+        change_view(attendee_uid=item1.get_all_attendees()[1], position=3)
+        invariants = validator.InvariantsValidator(None, None, None, IMeeting, None)
+        self.request.set('validate_dates_done', True)
+        error_msg = translate(
+            u'can_not_remove_or_add_attendee_item_attendees_reordered',
+            domain='PloneMeeting',
+            mapping={'item_url': item1.absolute_url()},
+            context=self.request)
+        data = {}
+        edit_form = meeting.restrictedTraverse('@@edit')
+        edit_form.update()
+        self.request['PUBLISHED'] = edit_form
+        errors = invariants.validate(data)
+        self.request.set('validate_attendees_done', False)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0].message, error_msg)
+        # reinit attendees order then attendees of meeting may be changed
+        reinit_view = item1.restrictedTraverse('@@item-reinit-attendees-order')
+        reinit_view()
+        self.assertEqual(invariants.validate(data), ())
 
 
 def test_suite():

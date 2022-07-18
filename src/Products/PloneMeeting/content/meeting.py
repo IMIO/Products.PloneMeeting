@@ -566,7 +566,7 @@ class IMeeting(IDXMeetingContent):
             # removed attendees?
             # REQUEST.form['meeting_attendees'] is like
             # ['muser_attendeeuid1_attendee', 'muser_attendeeuid2_excused']
-            stored_attendees = context.get_used_held_positions()
+            stored_attendees = context.get_all_attendees()
             meeting_attendees = [attendee.split('_')[1] for attendee
                                  in request.form.get('meeting_attendees', [])
                                  if attendee.split('_')[2] == 'attendee']
@@ -586,6 +586,27 @@ class IMeeting(IDXMeetingContent):
                     msg = translate(
                         'can_not_remove_attendee_redefined_on_items',
                         mapping={'attendee_title': attendee_brain.get_full_title},
+                        domain='PloneMeeting',
+                        context=request)
+                    # avoid multiple call to this invariant
+                    context.REQUEST.set("validate_attendees_done", True)
+                    # encode msg in utf-8 for restapi
+                    raise Invalid(msg.encode('utf-8'))
+
+            # can not remove or add attendees on meeting when attendees order
+            # was redefined on items
+            if context.item_attendees_order:
+                all_meeting_attendees = [attendee.split('_')[1] for attendee
+                                     in request.form.get('meeting_attendees', [])]
+                all_added_meeting_attendees = set(all_meeting_attendees).difference(stored_attendees)
+                all_removed_meeting_attendees = set(stored_attendees).difference(all_meeting_attendees)
+                all_changed_meeting_attendees = tuple(all_added_meeting_attendees) + \
+                    tuple(all_removed_meeting_attendees)
+                if all_changed_meeting_attendees:
+                    msg = translate(
+                        'can_not_remove_or_add_attendee_item_attendees_reordered',
+                        mapping={'item_url': uuidToObject(
+                            context.item_attendees_order.keys()[0]).absolute_url()},
                         domain='PloneMeeting',
                         context=request)
                     # avoid multiple call to this invariant
@@ -733,7 +754,7 @@ def default_committees(data):
     return res
 
 
-def get_all_used_held_positions(obj, the_objects=True):
+def get_all_usable_held_positions(obj, the_objects=True):
     '''This will return every currently stored held_positions if p_obj is a Meeting,
        and will include every selectable held_positions.
        If p_the_objects=True, we return held_position objects, UID otherwise.
@@ -1119,10 +1140,10 @@ class Meeting(Container):
         kwargs["additional_catalog_query"] = additional_catalog_query
         return self.get_items(ordered=ordered, **kwargs)
 
-    def get_used_held_positions(self, the_objects=False):
+    def get_all_attendees(self, ordered_uids=[], the_objects=False):
         '''This will return every currently stored held_positions.
            If p_the_objects=True, we return held_position objects, UID otherwise.'''
-        contacts = list(self.ordered_contacts) or []
+        contacts = ordered_uids or list(self.ordered_contacts)
         if contacts and the_objects:
             contacts = uuidsToObjects(uuids=contacts, ordered=True, unrestricted=True)
         return tuple(contacts)
@@ -1419,6 +1440,17 @@ class Meeting(Container):
                 position_type = hp.get_label(
                     forced_position_type_value=position_type)
         return position_type
+
+    def _get_item_attendees_order(self, item_uid, from_meeting_if_empty=True):
+        """ """
+        all_uids = self.item_attendees_order.get(item_uid)
+        if not all_uids and from_meeting_if_empty:
+            all_uids = self.get_all_attendees()
+        return all_uids
+
+    def _set_item_attendees_order(self, item_uid, values):
+        """ """
+        self.item_attendees_order[item_uid] = values
 
     security.declarePublic('get_item_votes')
 

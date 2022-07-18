@@ -813,9 +813,8 @@ $(document).ready(function () {
 });
 
 function tableDNDComputeNewValue(table, row, data_name) {
-    debugger
     row_index = row.rowIndex;
-    // id is like row_200
+    // data value will be something like 100 (item_number) or 2 (attendee position)
     row_number = parseInt(table.rows[row.rowIndex].cells[2].dataset[data_name]);
     // find if moving up or down
     move_type = 'up';
@@ -836,7 +835,10 @@ function tableDNDComputeNewValue(table, row, data_name) {
     return new_value;
 }
 
-function initializeMeetingItemsDND(data_name="item_number", view_name="@@change-item-order"){
+/* dnd for items position on a meeting */
+function initializeMeetingItemsDND(){
+    let data_name = "item_number";
+    let view_name = "@@change-item-order";
     $('table.faceted-table-results').tableDnD({
       onDrop: function(table, row) {
         row_id = row.id;
@@ -864,11 +866,29 @@ function initializeMeetingItemsDND(data_name="item_number", view_name="@@change-
     });
 }
 
-function initializeItemAttendeesDND(data_name="attendee_number") {
+/* dnd for attendees on an item */
+function initializeItemAttendeesDND() {
+    let data_name = "attendee_number";
+    let view_name = "@@item-change-attendee-order";
     $('table.faceted-table-results').tableDnD({
       onDrop: function(table, row) {
         row_id = row.id;
         new_value = tableDNDComputeNewValue(table, row, data_name);
+        base_url = canonical_url();
+        $.ajax({
+          url: base_url + "/" + view_name,
+          dataType: 'html',
+          data: {attendee_uid: row.cells[2].dataset.attendee_uid,
+                 'position:int': parseInt(new_value)},
+          cache: false,
+          success: function(data) {
+            refresh_attendees(highlight=['.td_cell_number-column', '.th_header_number-column']);
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+            /*console.log(textStatus);*/
+            window.location.href = window.location.href;
+            }
+          });
       },
       dragHandle: ".draggable",
       onDragClass: "dragindicator dragging"

@@ -471,7 +471,7 @@ table td div.additional-infos {
 
 /* the number displayed in the table of annexes */
 .td_cell_number-column {
-    font-size: 80%;
+    font-size: 90%;
     color: &dtml-tableHeaderTextColor;;
 }
 

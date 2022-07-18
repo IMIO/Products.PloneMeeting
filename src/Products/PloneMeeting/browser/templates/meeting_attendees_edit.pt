@@ -220,9 +220,7 @@
         $(document).ready(function() {
             // initialize drag and drop
             $('#meeting_users').tableDnD({
-                onDrop: function(table, row) {
-                   alert($.tableDnD.serialize());
-                  },
+                onDrop: function(table, row) {},
                   dragHandle: ".draggable",
                   onDragClass: "dragindicator dragging"
               });

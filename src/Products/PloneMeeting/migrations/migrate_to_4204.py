@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from imio.helpers.setup import load_type_from_package
+from persistent.mapping import PersistentMapping
+from Products.CMFPlone.utils import base_hasattr
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.setuphandlers import _configurePortalRepository
@@ -19,6 +22,18 @@ class Migrate_To_4204(Migrator):
             cfg.at_post_edit_script()
         logger.info('Done.')
 
+    def _initMeetingsItemAttendeesOrder(self):
+        """Initialize the item_attendees_order attribute for existing meetings."""
+        logger.info('Initializing "item_attendees_order" for every meetings...')
+        brains = self.catalog(object_provides=IMeeting.__identifier__)
+        for brain in brains:
+            meeting = brain.getObject()
+            if base_hasattr(meeting, "item_attendees_order"):
+                continue
+            meeting.item_attendees_order = PersistentMapping()
+            meeting._p_changed = True
+        logger.info('Done.')
+
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4204...')
@@ -27,6 +42,7 @@ class Migrate_To_4204(Migrator):
         if not from_migration_to_4200:
             _configurePortalRepository()
             self._reloadItemTemplateAndRecurringTypes()
+            self._initMeetingsItemAttendeesOrder()
         logger.info('Done.')
 
 
@@ -34,7 +50,8 @@ def migrate(context):
     '''This migration function will:
 
        1) Configure portal_repository;
-       2) Reload MeetingItemTemplate/Recurring portal_types.
+       2) Reload MeetingItemTemplate/Recurring portal_types;
+       3) Init attribute item_attendees_order for every meetings.
     '''
     migrator = Migrate_To_4204(context)
     migrator.run()

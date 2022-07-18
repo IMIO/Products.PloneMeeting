@@ -2,7 +2,7 @@
 <table id="meeting_users" class="listing discreet faceted-table-results" cellspacing="0" cellpadding="0"
        tal:condition="python: view.show_attendees_fields()"
        i18n:domain="PloneMeeting">
-  <tal:defines define="allUsers python: context.get_used_held_positions(the_objects=True);
+  <tal:defines define="allUsers python: context.get_all_attendees(the_objects=True);
                        attendees python: context.get_attendees();
                        excused python: context.get_excused();
                        absents python: context.get_absents();
