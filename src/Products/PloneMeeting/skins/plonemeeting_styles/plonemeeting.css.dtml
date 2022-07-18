@@ -851,7 +851,7 @@ TD acronym {
     line-height: 1.25em;
 }
 
-acronym a {
+acronym {
     cursor: help;
     padding: 0;
 }
@@ -2558,6 +2558,12 @@ body.template-meeting_available_items_view div#content-core #faceted-form div#fa
 div#held-position-back-refs-container {
     padding-bottom: 1em;
     padding-top: 1em;
+}
+
+span.link-separator::before {
+  content: "\7c";
+  font-family: "Font Awesome 5 Free";
+  color: &dtml-portletHeaderBackgroundColor;;
 }
 
 /* </dtml-with> */

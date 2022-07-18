@@ -11,8 +11,7 @@
 # XXX change by PloneMeeting, we do not show contents tab if current object layout
 # is 'folder_contents', it is the case for the MeetingConfig 'itemtemplates' folder
 # and for every folders added under it
-if context.getLayout() == 'folder_contents' or \
-   (context.meta_type == 'MeetingItem' and 'portal_plonemeeting' in context.absolute_url()):
+if context.getLayout() == 'folder_contents':
     return False
 
 

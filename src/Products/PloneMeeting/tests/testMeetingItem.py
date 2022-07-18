@@ -6307,6 +6307,27 @@ class testMeetingItem(PloneMeetingTestCase):
         newItem.processForm()
         self.assertEqual(newItem.getId(), 'my-new-item-title')
 
+    def test_pm_ItemTemplateImage(self):
+        """We can use an image in an item template and when used,
+           the image is correctly duplicated into the new item."""
+        # add an image to the default item template
+        cfg = self.meetingConfig
+        self.changeUser('templatemanager1')
+        default_template = cfg.itemtemplates.get(ITEM_DEFAULT_TEMPLATE_ID)
+        text_pattern = '<p>Text with external image <img src="%s">.</p>'
+        text = text_pattern % self.external_image1
+        set_field_from_ajax(default_template, "decision", text)
+        image_resolveuid = "resolveuid/%s" % default_template.objectValues()[0].UID()
+        self.assertEqual(default_template.getRawDecision(), text_pattern % image_resolveuid)
+
+        # create an item using the default_template
+        self.changeUser('pmCreator1')
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        newItem = view.createItemFromTemplate(default_template.UID())
+        image_resolveuid = "resolveuid/%s" % newItem.objectValues()[0].UID()
+        self.assertEqual(newItem.getRawDecision(), text_pattern % image_resolveuid)
+
     def _notAbleToAddSubContent(self, item):
         for add_subcontent_perm in ADD_SUBCONTENT_PERMISSIONS:
             self.assertFalse(self.hasPermission(add_subcontent_perm, item))
@@ -6695,9 +6716,10 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setSelectableCopyGroups((self.developers_reviewers, self.vendors_reviewers))
         # make power observers able to see validated items
         self._setPowerObserverStates(states=('validated', ))
-        # by default internalNotes are editable by proposingGroup creators
+        # by default set internalNotes editable by proposingGroup creators
         self._activate_config('itemInternalNotesEditableBy',
-                              'suffix_proposing_group_creators')
+                              'suffix_proposing_group_creators',
+                              keep_existing=False)
 
         def _check(item, view_edit=False):
             view = item.restrictedTraverse('base_view')

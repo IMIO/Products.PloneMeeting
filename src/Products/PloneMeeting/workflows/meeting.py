@@ -18,7 +18,6 @@ from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
 from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import get_annexes
-from zope.component import getMultiAdapter
 from zope.i18n import translate
 from zope.interface import implements
 
@@ -166,12 +165,7 @@ class MeetingWorkflowActions(object):
     def doClose(self, stateChange):
         ''' '''
         # Set the firstItemNumber
-        unrestricted_methods = getMultiAdapter((self.context, self.context.REQUEST),
-                                               name='pm_unrestricted_methods')
-        if self.context.first_item_number == -1:
-            self.context.first_item_number = \
-                unrestricted_methods.findFirstItemNumber()
-            self.context.update_item_references()
+        self.context.update_first_item_number()
         # remove annex previews of every items if relevant
         if self.cfg.getRemoveAnnexesPreviewsOnMeetingClosure():
             # add logging message to fingerpointing log

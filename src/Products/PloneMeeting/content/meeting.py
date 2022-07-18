@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import ClassSecurityInfo
+from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_organizations
@@ -68,6 +69,7 @@ from z3c.form.browser.checkbox import CheckBoxFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.component import adapts
+from zope.component import getMultiAdapter
 from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.i18n import translate
@@ -1889,6 +1891,27 @@ class Meeting(Container):
             delta = cfg.getFreezeDeadlineDefault()
             if not delta.strip() in ('', '0',):
                 self.freeze_deadline = getDateFromDelta(self.date, '-' + delta)
+
+    def update_first_item_number(self,
+                                 update_item_references=True,
+                                 get_items_additional_catalog_query={},
+                                 force=False):
+        """ """
+        # only update if still the initial value
+        if self.first_item_number == -1 or force:
+            # as this may be applied on a closed meeting, we can not protect the method
+            # with a permission, so we check if user isManager
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            if not tool.isManager(cfg):
+                raise Unauthorized
+            unrestricted_methods = getMultiAdapter(
+                (self, self.REQUEST), name='pm_unrestricted_methods')
+            self.first_item_number = \
+                unrestricted_methods.findFirstItemNumber(
+                    get_items_additional_catalog_query=get_items_additional_catalog_query)
+            if update_item_references:
+                self.update_item_references()
 
     security.declarePublic('get_user_replacements')
 

@@ -5,8 +5,29 @@ Changelog
 4.2rc31 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Added `Meeting.update_first_item_number` that will manage updating first item
+  number of the meeting.  This way the method is callable from a TAL expression
+  and we may use it when necessary.
+  Moreover, the parameter `get_items_additional_catalog_query={}` will let manage
+  cases where items to take into account are not every items but only a subset
+  of items.
+  [gbastien]
+- Added `safe_utils.set_dx_value` that will let set a value for a DX content
+  attribute from a `RestrictedPython` call.
+  [gbastien]
+- Fixed vocabularies using organizations to make sure we can use organizations
+  outside my organization, excepted for the `MeetingItem.associatedGroups` field.
+  [gbastien]
+- Adapted overrided `generationlinks.pt` regarding changes in
+  `collective.documentgenerator` (POD templates grouped by title).
+  [gbastien]
+- Added `_configurePortalRepository` in `setuphandlers.py` to remove default
+  Plone types that are versionable (`Document`, `Event`, ...).
+  Added upgrade step to 4204.
+  [gbastien]
+- Added possibility to add images to `MeetingItemTemplate/MeetingItemReccuring`.
+  Display the `folder_contents` tab on items of the `MeetingConfig`.
+  [gbastien]
 
 4.2rc30 (2022-07-01)
 --------------------
