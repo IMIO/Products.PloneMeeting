@@ -639,6 +639,7 @@ function init_tooltipsters(event) {
       pmCommonOverlays(selector_prefix='table#meeting_users ');
       attendeesInfos();
       manageAttendees();
+      initializeItemAttendeesDND();
     }
     if (css_id.startsWith('collapsible-text-linkeditem-')) {
       categorizedChildsInfos({selector: 'div.item-linkeditems .tooltipster-childs-infos', });
@@ -811,50 +812,87 @@ $(document).ready(function () {
   });
 });
 
-function initializeItemsDND(){
-$('table.faceted-table-results').tableDnD({
-  onDrop: function(table, row) {
-    row_id = row.id;
+function tableDNDComputeNewValue(table, row, data_name) {
     row_index = row.rowIndex;
-    // id is like row_200
-    row_item_number = parseInt(table.rows[row.rowIndex].cells[2].dataset.item_number);
+    // data value will be something like 100 (item_number) or 2 (attendee position)
+    row_number = parseInt(table.rows[row.rowIndex].cells[2].dataset[data_name]);
     // find if moving up or down
     move_type = 'up';
     if (table.tBodies[0].rows.length > row_index) {
          // we have a next row, compare with it
-         next_row_item_number = parseInt(table.rows[row.rowIndex + 1].cells[2].dataset.item_number);
-         if (row_item_number < next_row_item_number) {
+         next_row_number = parseInt(table.rows[row.rowIndex + 1].cells[2].dataset[data_name]);
+         if (row_number < next_row_number) {
              move_type = 'down';
          }
     } else {move_type = 'down';}
 
     // now that we know the move, we can determinate number to use
     if (move_type == 'down') {
-      new_value = parseInt(table.rows[row.rowIndex - 1].cells[2].dataset.item_number);
+      new_value = parseInt(table.rows[row.rowIndex - 1].cells[2].dataset[data_name]);
     } else {
-      new_value = parseInt(table.rows[row.rowIndex + 1].cells[2].dataset.item_number);
+      new_value = parseInt(table.rows[row.rowIndex + 1].cells[2].dataset[data_name]);
     }
-    base_url = row.cells[3].children.item('a').href;
-    $.ajax({
-      url: base_url + "/@@change-item-order",
-      dataType: 'html',
-      data: {moveType:'number',
-             wishedNumber:parseFloat(new_value)/100},
-      cache: false,
-      success: function(data) {
-        Faceted.URLHandler.hash_changed();
-        start_meeting_scroll_to_item_observer(tag=null, row_id=row_id);
-      },
-      error: function(jqXHR, textStatus, errorThrown) {
-        /*console.log(textStatus);*/
-        window.location.href = window.location.href;
-        }
-      });
-   },
-   dragHandle: ".draggable",
-   onDragClass: "dragindicator dragging",
+    return new_value;
+}
 
-});
+/* dnd for items position on a meeting */
+function initializeMeetingItemsDND(){
+    let data_name = "item_number";
+    let view_name = "@@change-item-order";
+    $('table.faceted-table-results').tableDnD({
+      onDrop: function(table, row) {
+        row_id = row.id;
+        new_value = tableDNDComputeNewValue(table, row, data_name);
+        base_url = row.cells[3].children.item('a').href;
+        $.ajax({
+          url: base_url + "/" + view_name,
+          dataType: 'html',
+          data: {moveType:'number',
+                 wishedNumber:parseFloat(new_value)/100},
+          cache: false,
+          success: function(data) {
+            Faceted.URLHandler.hash_changed();
+            start_meeting_scroll_to_item_observer(tag=null, row_id=row_id);
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+            /*console.log(textStatus);*/
+            window.location.href = window.location.href;
+            }
+          });
+       },
+       dragHandle: ".draggable",
+       onDragClass: "dragindicator dragging",
+
+    });
+}
+
+/* dnd for attendees on an item */
+function initializeItemAttendeesDND() {
+    let data_name = "attendee_number";
+    let view_name = "@@item-change-attendee-order";
+    $('table.faceted-table-results').tableDnD({
+      onDrop: function(table, row) {
+        row_id = row.id;
+        new_value = tableDNDComputeNewValue(table, row, data_name);
+        base_url = canonical_url();
+        $.ajax({
+          url: base_url + "/" + view_name,
+          dataType: 'html',
+          data: {attendee_uid: row.cells[2].dataset.attendee_uid,
+                 'position:int': parseInt(new_value)},
+          cache: false,
+          success: function(data) {
+            refresh_attendees(highlight=['.td_cell_number-column', '.th_header_number-column']);
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+            /*console.log(textStatus);*/
+            window.location.href = window.location.href;
+            }
+          });
+      },
+      dragHandle: ".draggable",
+      onDragClass: "dragindicator dragging"
+    });
 }
 
 // do not redefine window.onbeforeunload or it breaks form unload protection

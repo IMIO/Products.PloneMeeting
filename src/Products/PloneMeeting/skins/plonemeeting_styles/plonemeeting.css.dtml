@@ -172,6 +172,8 @@ dl.portlet .ploneMeetingSelectDropdownIcon {
 #content div[id^='hook_'] table[style*='border:medium none'] tr td,
 #content div[id^='hook_'] table[style*='border-collapse:collapse; border:none'] tr th,
 #content div[id^='hook_'] table[style*='border-collapse:collapse; border:none'] tr td,
+#content div[id^='hook_'] table[style*='border-bottom:none'] tr th,
+#content div[id^='hook_'] table[style*='border-bottom:none'] tr td,
 body.cke_editable.cke_show_borders table[border='0'] tr th,
 body.cke_editable.cke_show_borders table[border='0'] tr td,
 #content div.static-infos table[border='0'] tr th,
@@ -469,8 +471,9 @@ table td div.additional-infos {
 
 /* the number displayed in the table of annexes */
 .td_cell_number-column {
-    font-size: 80%;
+    font-size: 90%;
     color: &dtml-tableHeaderTextColor;;
+    text-align: right;
 }
 
 #faceted-form table.listing td.td_cell_advices {

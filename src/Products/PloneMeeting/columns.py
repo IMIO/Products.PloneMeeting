@@ -344,7 +344,7 @@ class ItemNumberColumn(BrowserViewCallColumn):
       Display the itemNumber column, used on meetings.
     """
     view_name = 'item-number'
-    header_js = u'<script type="text/javascript">initializeItemsDND();</script>'
+    header_js = u'<script type="text/javascript">initializeMeetingItemsDND();</script>'
     escape = False
 
     @property

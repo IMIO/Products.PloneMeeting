@@ -7,6 +7,7 @@ from imio.helpers.security import fplog
 from persistent.mapping import PersistentMapping
 from plone import api
 from Products.CMFPlone.utils import safe_unicode
+from Products.Five import BrowserView
 from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
 from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
@@ -627,3 +628,56 @@ class RemoveRedefinedAttendeePositionForm(BaseAttendeeForm):
         api.portal.show_message(_("Redefined attendee position was removed."),
                                 request=self.request)
         self._finished = True
+
+
+class ChangeAttendeeOrderView(BrowserView):
+    """ """
+
+    def __call__(self, attendee_uid, position):
+        """ """
+        if not self.context._mayChangeAttendees():
+            raise Unauthorized
+        # get attendee and move it to right position
+        meeting = self.context.getMeeting()
+        all_uids = list(self.context.get_all_attendees(the_objects=False))
+        attendee_uid_index = all_uids.index(attendee_uid)
+        all_uids.insert(position - 1, all_uids.pop(attendee_uid_index))
+        all_uids = tuple(all_uids)
+        context_uid = self.context.UID()
+        # if finally the order is back to the order of the meeting
+        # remove the item UID from item_attendees_order
+        if all_uids == meeting.get_all_attendees(the_objects=False):
+            meeting.item_attendees_order.pop(context_uid)
+        else:
+            meeting._set_item_attendees_order(context_uid, all_uids)
+
+        # log
+        extras = 'item={0} hp={1} position={2}'.format(
+            repr(self.context), attendee_uid, position)
+        fplog('change_item_attendees_order', extras=extras)
+        # message
+        api.portal.show_message(
+            _("Attendee position was changed."),
+            request=self.request)
+        return True
+
+
+class ReinitAttendeesOrderView(BrowserView):
+    """ """
+
+    def __call__(self):
+        """ """
+        if not self.context._mayChangeAttendees():
+            raise Unauthorized
+
+        meeting = self.context.getMeeting()
+        meeting.item_attendees_order.pop(self.context.UID())
+
+        # log
+        extras = 'item={0}'.format(repr(self.context))
+        fplog('reinit_item_attendees_order', extras=extras)
+        # message
+        api.portal.show_message(
+            _("Attendees order was reinitialized to meeting order for this item."),
+            request=self.request)
+        return redirect(self.request, self.context.absolute_url())

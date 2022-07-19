@@ -396,6 +396,13 @@
       class=".views.DisplayMeetingItemVoters"
       permission="zope2.View" />
 
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeetingContent"
+      name="display-meeting-item-changed-attendees-order"
+      template="templates/meeting_item_changed_attendees_order.pt"
+      class=".views.DisplayMeetingItemChangedAttendeesOrder"
+      permission="zope2.View" />
+
     <!-- Custom view for meetingadvice -->
     <browser:page
       for="Products.PloneMeeting.content.advice.IMeetingAdvice"
@@ -477,6 +484,19 @@
        name="item_remove_redefined_attendee_position_form"
        class=".itemattendee.RemoveRedefinedAttendeePositionForm"
        permission="zope2.View" />
+   <browser:view
+       for="Products.PloneMeeting.interfaces.IMeetingItem"
+       layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+       name="item-change-attendee-order"
+       class=".itemattendee.ChangeAttendeeOrderView"
+       permission="zope2.View" />
+   <browser:view
+       for="Products.PloneMeeting.interfaces.IMeetingItem"
+       layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+       name="item-reinit-attendees-order"
+       class=".itemattendee.ReinitAttendeesOrderView"
+       permission="zope2.View" />
+     <!-- Votes -->
      <browser:page
        for="Products.PloneMeeting.interfaces.IMeetingItem"
        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
