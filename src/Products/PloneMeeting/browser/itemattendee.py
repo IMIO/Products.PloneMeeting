@@ -642,7 +642,14 @@ class ChangeAttendeeOrderView(BrowserView):
         all_uids = list(self.context.get_all_attendees(the_objects=False))
         attendee_uid_index = all_uids.index(attendee_uid)
         all_uids.insert(position - 1, all_uids.pop(attendee_uid_index))
-        meeting._set_item_attendees_order(self.context.UID(), tuple(all_uids))
+        all_uids = tuple(all_uids)
+        context_uid = self.context.UID()
+        # if finally the order is back to the order of the meeting
+        # remove the item UID from item_attendees_order
+        if all_uids == meeting.get_all_attendees(the_objects=False):
+            meeting.item_attendees_order.pop(context_uid)
+        else:
+            meeting._set_item_attendees_order(context_uid, all_uids)
 
         # log
         extras = 'item={0} hp={1} position={2}'.format(

@@ -2502,7 +2502,17 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(meeting.get_all_attendees(), item1.get_all_attendees())
         change_view(attendee_uid=item1.get_all_attendees()[1], position=3)
         self.assertEqual(item1.get_all_attendees(), (hp1, hp3, hp2, hp4))
+        # when going back to meeting order, the redefinition is removed
+        item1_uid = item1.UID()
+        self.assertTrue(item1_uid in meeting.item_attendees_order)
+        change_view(attendee_uid=item1.get_all_attendees()[1], position=3)
+        self.assertFalse(item1_uid in meeting.item_attendees_order)
+        self.assertEqual(item1.get_all_attendees(), (hp1, hp2, hp3, hp4))
+
         # reinit item attendees order to meeting order
+        # change order to be able to test reinit
+        change_view(attendee_uid=item1.get_all_attendees()[1], position=3)
+        self.assertEqual(item1.get_all_attendees(), (hp1, hp3, hp2, hp4))
         reinit_view = item1.restrictedTraverse('@@item-reinit-attendees-order')
         reinit_view()
         self.assertEqual(item1.get_all_attendees(), (hp1, hp2, hp3, hp4))
