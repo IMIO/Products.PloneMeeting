@@ -473,6 +473,7 @@ table td div.additional-infos {
 .td_cell_number-column {
     font-size: 90%;
     color: &dtml-tableHeaderTextColor;;
+    text-align: right;
 }
 
 #faceted-form table.listing td.td_cell_advices {

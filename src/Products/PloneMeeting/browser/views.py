@@ -2357,6 +2357,20 @@ class DisplayMeetingItemRedefinedPosition(BrowserView):
         return objs
 
 
+class DisplayMeetingItemChangedAttendeesOrder(BrowserView):
+    """This view will display the items for which attendees order was changed."""
+
+    def _get_items(self):
+        """Returns the list of items the attendees were changed for."""
+        uids = self.context._get_item_attendees_order().keys()
+        ordered_items = []
+        if uids:
+            ordered_items = [
+                item for item in self.context.get_items(
+                    uids=uids, ordered=True, the_objects=True, unrestricted=True)]
+        return ordered_items
+
+
 class DisplayMeetingItemNotPresent(BrowserView):
     """This view will display the items a given attendee was defined
        as not present for (absent/excused)."""

@@ -396,6 +396,13 @@
       class=".views.DisplayMeetingItemVoters"
       permission="zope2.View" />
 
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeetingContent"
+      name="display-meeting-item-changed-attendees-order"
+      template="templates/meeting_item_changed_attendees_order.pt"
+      class=".views.DisplayMeetingItemChangedAttendeesOrder"
+      permission="zope2.View" />
+
     <!-- Custom view for meetingadvice -->
     <browser:page
       for="Products.PloneMeeting.content.advice.IMeetingAdvice"
