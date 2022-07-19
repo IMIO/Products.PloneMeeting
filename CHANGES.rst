@@ -28,6 +28,13 @@ Changelog
 - Added possibility to add images to `MeetingItemTemplate/MeetingItemReccuring`.
   Display the `folder_contents` tab on items of the `MeetingConfig`.
   [gbastien]
+- Added possibility to manage order of attendees by item, this is sometimes
+  necessary when attendee position changed on an item.
+  [gbastien]
+- Removed field `MeetingConfig.transitionsForPresentingAnItem` as information is
+  in `MeetingConfig.itemWFValidationLevels`, method
+  `MeetingConfig.getTransitionsForPresentingAnItem` is kept and does the job.
+  [gbastien]
 
 4.2rc30 (2022-07-01)
 --------------------

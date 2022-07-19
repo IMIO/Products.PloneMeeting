@@ -742,12 +742,10 @@
           <td tal:define="field python:here.getField('transitionsToConfirm')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('transitionsForPresentingAnItem')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
           <td tal:define="field python:here.getField('onTransitionFieldTransforms')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td></td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('onMeetingTransitionItemActionToExecute')">
