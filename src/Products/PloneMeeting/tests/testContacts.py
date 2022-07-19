@@ -1207,6 +1207,18 @@ class testContacts(PloneMeetingTestCase):
             u'Assembly member 3, <strong>excus\xe9e pour ce point</strong><br />'
             u'Madame Person4FirstName Person4LastName, '
             u'Assembly member 4 &amp; 5, <strong>pr\xe9sente</strong>')
+        # item attendees order is taken into account
+        change_view = item1.restrictedTraverse('@@item-change-attendee-order')
+        change_view(attendee_uid=item1.get_all_attendees()[0], position=3)
+        self.assertEqual(
+            helper.print_attendees(),
+            u'Madame Person3FirstName Person3LastName, '
+            u'Assembly member 3, <strong>excus\xe9e pour ce point</strong><br />'
+            u'Monsieur Person1FirstName Person1LastName, '
+            u'Assembly member 1, <strong>absent pour ce point</strong><br />'
+            u'Madame Person4FirstName Person4LastName, '
+            u'Assembly member 4 &amp; 5, <strong>pr\xe9sente</strong>')
+
         # meeting
         view = meeting.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
@@ -1272,6 +1284,30 @@ class testContacts(PloneMeetingTestCase):
             u'Madame Person3FirstName Person3LastName, Assembly member 3;<br />'
             u'<strong><u>Absent pour ce point&nbsp;:</u></strong><br />'
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1;')
+        # item attendees order is taken into account
+        # make Person2 present so we may check order
+        meeting.item_non_attendees.pop(item1.UID())
+        self.assertEqual(
+            helper.print_attendees_by_type(),
+            u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
+            u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
+            u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5;<br />'
+            u'<strong><u>Excus\xe9e pour ce point&nbsp;:</u></strong><br />'
+            u'Madame Person3FirstName Person3LastName, Assembly member 3;<br />'
+            u'<strong><u>Absent pour ce point&nbsp;:</u></strong><br />'
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1;')
+        change_view = item1.restrictedTraverse('@@item-change-attendee-order')
+        change_view(attendee_uid=item1.get_all_attendees()[1], position=4)
+        self.assertEqual(
+            helper.print_attendees_by_type(),
+            u'<strong><u>Pr\xe9sente&nbsp;:</u></strong><br />'
+            u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5;<br />'
+            u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
+            u'<strong><u>Excus\xe9e pour ce point&nbsp;:</u></strong><br />'
+            u'Madame Person3FirstName Person3LastName, Assembly member 3;<br />'
+            u'<strong><u>Absent pour ce point&nbsp;:</u></strong><br />'
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1;')
+
         # meeting
         view = meeting.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
