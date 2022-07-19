@@ -1300,9 +1300,9 @@ class testContacts(PloneMeetingTestCase):
         change_view(attendee_uid=item1.get_all_attendees()[1], position=4)
         self.assertEqual(
             helper.print_attendees_by_type(),
-            u'<strong><u>Pr\xe9sente&nbsp;:</u></strong><br />'
-            u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5;<br />'
-            u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
+            u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
+            u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5, '
+            u'Monsieur Person2FirstName Person2LastName, Assembly member 2;<br />'
             u'<strong><u>Excus\xe9e pour ce point&nbsp;:</u></strong><br />'
             u'Madame Person3FirstName Person3LastName, Assembly member 3;<br />'
             u'<strong><u>Absent pour ce point&nbsp;:</u></strong><br />'
