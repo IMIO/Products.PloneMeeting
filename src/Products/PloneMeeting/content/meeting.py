@@ -595,9 +595,11 @@ class IMeeting(IDXMeetingContent):
 
             # can not remove or add attendees on meeting when attendees order
             # was redefined on items
-            if context.item_attendees_order:
-                all_meeting_attendees = [attendee.split('_')[1] for attendee
-                                     in request.form.get('meeting_attendees', [])]
+            item_attendees_order = context._get_item_attendees_order(from_meeting_if_empty=False)
+            if item_attendees_order:
+                all_meeting_attendees = [
+                    attendee.split('_')[1] for attendee
+                    in request.form.get('meeting_attendees', [])]
                 all_added_meeting_attendees = set(all_meeting_attendees).difference(stored_attendees)
                 all_removed_meeting_attendees = set(stored_attendees).difference(all_meeting_attendees)
                 all_changed_meeting_attendees = tuple(all_added_meeting_attendees) + \
@@ -606,7 +608,7 @@ class IMeeting(IDXMeetingContent):
                     msg = translate(
                         'can_not_remove_or_add_attendee_item_attendees_reordered',
                         mapping={'item_url': uuidToObject(
-                            context.item_attendees_order.keys()[0]).absolute_url()},
+                            item_attendees_order.keys()[0]).absolute_url()},
                         domain='PloneMeeting',
                         context=request)
                     # avoid multiple call to this invariant
@@ -760,7 +762,7 @@ def get_all_usable_held_positions(obj, the_objects=True):
        If p_the_objects=True, we return held_position objects, UID otherwise.
        '''
     # used Persons are held_positions stored in orderedContacts
-    contacts = hasattr(obj.aq_base, 'ordered_contacts') and list(obj.ordered_contacts) or []
+    contacts = base_hasattr(obj, 'ordered_contacts') and list(obj.ordered_contacts) or []
     # append every selectable hp selected in MeetingConfig
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(obj)
@@ -1143,7 +1145,10 @@ class Meeting(Container):
     def get_all_attendees(self, ordered_uids=[], the_objects=False):
         '''This will return every currently stored held_positions.
            If p_the_objects=True, we return held_position objects, UID otherwise.'''
-        contacts = ordered_uids or list(self.ordered_contacts)
+        # in some case especially with pm.restapi, validators are called before
+        # created event and ordered_contacts may not be initialized
+        contacts = ordered_uids or (
+            base_hasattr(self, 'ordered_contacts') and list(self.ordered_contacts)) or []
         if contacts and the_objects:
             contacts = uuidsToObjects(uuids=contacts, ordered=True, unrestricted=True)
         return tuple(contacts)
@@ -1441,11 +1446,19 @@ class Meeting(Container):
                     forced_position_type_value=position_type)
         return position_type
 
-    def _get_item_attendees_order(self, item_uid, from_meeting_if_empty=True):
+    def _get_item_attendees_order(self, item_uid=None, from_meeting_if_empty=True):
         """ """
-        all_uids = self.item_attendees_order.get(item_uid)
-        if not all_uids and from_meeting_if_empty:
-            all_uids = self.get_all_attendees()
+        if not base_hasattr(self, 'item_attendees_order'):
+            return []
+
+        all_uids = []
+        if item_uid:
+            all_uids = self.item_attendees_order.get(item_uid)
+            if not all_uids and from_meeting_if_empty:
+                all_uids = self.get_all_attendees()
+        else:
+            # return the entire value
+            return deepcopy(self.item_attendees_order)
         return all_uids
 
     def _set_item_attendees_order(self, item_uid, values):
