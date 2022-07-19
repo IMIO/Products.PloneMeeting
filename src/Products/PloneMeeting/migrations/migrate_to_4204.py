@@ -34,8 +34,6 @@ class Migrate_To_4204(Migrator):
             meeting._p_changed = True
         logger.info('Done.')
 
-
-
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4204...')

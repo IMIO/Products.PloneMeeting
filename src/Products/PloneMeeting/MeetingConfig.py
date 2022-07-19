@@ -31,6 +31,8 @@ from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToObject
+from natsort import humansorted
+from operator import attrgetter
 from persistent.list import PersistentList
 from plone import api
 from plone.app.portlets.portlets import navigation
@@ -6711,7 +6713,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                           domain='PloneMeeting',
                           context=self.REQUEST)), ]
         tool = api.portal.get_tool('portal_plonemeeting')
-        for cfg in tool.getActiveConfigs():
+        # sort cfg by Title
+        for cfg in humansorted(tool.getActiveConfigs(), key=attrgetter('title')):
             # only show other meetingConfigs than self
             if cfg == self:
                 continue
@@ -6724,7 +6727,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 text = '%s -> %s' % (cfgTitle,
                                      availableItemTransitionTitles[availableItemTransitionIds.index(tr)])
                 res.append(('%s.%s' % (cfgId, tr), text))
-        return DisplayList(tuple(res)).sortedByValue()
+        return DisplayList(tuple(res))
 
     security.declarePrivate('listExecutableItemActions')
 
@@ -6998,7 +7001,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Return default transitions to present an item.'''
         item_wf_val_levels = self.getItemWFValidationLevels(only_enabled=True)
         transitions = [v['leading_transition'] for v in item_wf_val_levels
-                       if v['leading_transition'] != '-'] + ['validate', 'present']
+                       if v['leading_transition'] != '-']
+        # in case items are created "validated", there is no "validate" transition
+        if transitions:
+            transitions.append('validate')
+        transitions.append('present')
         if org_uid:
             tool = api.portal.get_tool('portal_plonemeeting')
             tr_suffixes = {v['leading_transition']: v['suffix'] for v in item_wf_val_levels
