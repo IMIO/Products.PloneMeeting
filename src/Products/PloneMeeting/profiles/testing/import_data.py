@@ -288,7 +288,6 @@ meetingPma.usedMeetingAttributes = ('assembly', 'assembly_excused', 'assembly_ab
 meetingPma.maxShownListings = '100'
 meetingPma.workflowAdaptations = ['delayed']
 meetingPma.itemPositiveDecidedStates = ['accepted']
-meetingPma.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
 meetingPma.onMeetingTransitionItemActionToExecute = (
     {'meeting_transition': 'freeze',
      'item_action': 'itemfreeze',
@@ -418,7 +417,6 @@ meetingPga.annexTypes = [financialAnalysis, legalAnalysis,
                          budgetAnalysisCfg2, itemAnnex, decisionAnnex,
                          adviceAnnex, adviceLegalAnalysis, meetingAnnex]
 meetingPga.usedItemAttributes = ('description', 'toDiscuss', 'associatedGroups', 'itemIsSigned',)
-meetingPga.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
 meetingPga.onMeetingTransitionItemActionToExecute = deepcopy(
     meetingPma.onMeetingTransitionItemActionToExecute)
 meetingPga.insertingMethodsOnAddItem = ({'insertingMethod': 'on_categories', 'reverse': '0'}, )

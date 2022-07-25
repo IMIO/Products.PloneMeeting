@@ -4524,7 +4524,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         try:
             item.REQUEST.set('PUBLISHED', meeting)
             item.isRecurringItem = True
-            # we use the wf path defined in the cfg.transitionsForPresentingAnItem
+            # we use the wf path defined in the cfg.getTransitionsForPresentingAnItem
             # to present the item to the meeting
             cfg = tool.getMeetingConfig(item)
             # give 'Manager' role to current user to bypass transitions guard

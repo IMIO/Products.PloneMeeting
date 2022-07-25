@@ -624,22 +624,21 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertEqual(len(meeting.get_items()), 3)
         self.assertEqual(meeting.get_items(ordered=True)[-1].getPrivacy(), 'secret')
 
-    def test_pm_RecurringItemsWithWrongTransitionsForPresentingAnItem(self):
-        '''Tests the recurring items system when using a wrong
-           MeetingConfig.transitionsForPresentingAnItem.'''
+    def test_pm_RecurringItemsWithUntriggerableTransitions(self):
+        '''Tests the recurring items system when some transitions could not be triggered.'''
         cfg = self.meetingConfig
         self._setupRecurringItems()
         self.changeUser('pmManager')
         # now test with hardcoded transitions
         meeting = self.create('Meeting')
         # this meeting should contains the 3 usual recurring items
-        self.failIf(len(meeting.get_items()) != 3)
-        # if transitions for presenting an item are not correct
+        self.assertEqual(len(meeting.get_items()), 3)
+        # if transitions for presenting an item can not be triggered
         # the item will no be inserted in the meeting
         # enable categories so the recurring items are not presentable
         cfg.setUseGroupsAsCategories(False)
         meeting2 = self.create('Meeting')
-        self.failIf(len(meeting2.get_items()) != 0)
+        self.assertEqual(len(meeting2.get_items()), 0)
 
     def test_pm_RecurringItemsWithEmptySuffixInItemValidationLevels(self):
         '''Tests the recurring items system when an intermediate proposingGroup suffix

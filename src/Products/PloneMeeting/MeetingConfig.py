@@ -31,6 +31,8 @@ from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToObject
+from natsort import humansorted
+from operator import attrgetter
 from persistent.list import PersistentList
 from plone import api
 from plone.app.portlets.portlets import navigation
@@ -57,7 +59,6 @@ from Products.CMFCore.Expression import Expression
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
-from Products.CMFPlone import PloneMessageFactory
 from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
@@ -174,7 +175,6 @@ ITEM_WF_STATE_ATTRS = [
     'itemManualSentToOtherMCStates',
     'recordItemHistoryStates']
 ITEM_WF_TRANSITION_ATTRS = [
-    'transitionsForPresentingAnItem',
     'transitionsReinitializingDelays',
     'transitionsToConfirm',
     'mailItemEvents']
@@ -1239,20 +1239,6 @@ schema = Schema((
         default=defValues.transitionsToConfirm,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='transitionsForPresentingAnItem',
-        default=defValues.transitionsForPresentingAnItem,
-        widget=InAndOutWidget(
-            description="TransitionsForPresentingAnItem",
-            description_msgid="transitions_for_presenting_an_item_descr",
-            label='Transitionsforpresentinganitem',
-            label_msgid='PloneMeeting_label_transitionsForPresentingAnItem',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="workflow",
-        write_permission="PloneMeeting: Write risky config",
-        vocabulary='listEveryItemTransitions',
     ),
     DataGridField(
         name='onTransitionFieldTransforms',
@@ -4050,46 +4036,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if set(values).difference(usedVoteValues):
             return _('error_next_linked_votes_used_vote_values_must_be_among_used_vote_values')
 
-    security.declarePrivate('validate_transitionsForPresentingAnItem')
-
-    def validate_transitionsForPresentingAnItem(self, values):
-        '''Validate the transitionsForPresentingAnItem field.
-           Check that the given sequence of transition if starting
-           from the item workflow initial_state and ends to the 'presented' state.'''
-        # bypass validation when we are adding a new MeetingConfig thru UI
-        # because some fields are required on different schematas and it does not work...
-        if self.isTemporary():
-            return
-        # we can not specify required=True in the Schema because of InAndOut widget
-        # weird behaviour, so manage required ourselves...
-        if not values or (len(values) == 1 and not values[0]):
-            label = self.Schema()['transitionsForPresentingAnItem'].widget.Label(self)
-            # take classic plone error_required msgid
-            return PloneMessageFactory(u'error_required',
-                                       default=u'${name} is required, please correct.',
-                                       mapping={'name': label})
-        wfTool = api.portal.get_tool('portal_workflow')
-        itemWorkflow = wfTool.getWorkflowsFor(self.getItemTypeName())[0]
-        # first value must be a transition leaving the wf initial_state
-        initialState = itemWorkflow.states[itemWorkflow.initial_state]
-        if not values[0] in initialState.transitions:
-            return _('first_transition_must_leave_wf_initial_state')
-        # now follow given path and check if it result in the 'presented' state
-        # start from the initial_state
-        currentState = initialState
-        for trId in values:
-            # sometimes, an empty '' is in the values?
-            if not trId:
-                continue
-            if trId not in currentState.transitions:
-                return _('given_wf_path_does_not_lead_to_present')
-            transition = itemWorkflow.transitions[trId]
-            # now set current state to the state the transition is resulting to
-            currentState = itemWorkflow.states[transition.new_state_id]
-        # at the end, the currentState must be "presented"
-        if not currentState.id == 'presented':
-            return _('last_transition_must_result_in_presented_state')
-
     security.declarePrivate('validate_powerObservers')
 
     def validate_powerObservers(self, value):
@@ -4885,7 +4831,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # either using state or transition
         # states
         cfg_item_wf_attrs = list(ITEM_WF_STATE_ATTRS) + list(ITEM_WF_TRANSITION_ATTRS)
-        cfg_item_wf_attrs.remove('transitionsForPresentingAnItem')
         # transitions
         enabled_stored_transitions = self.getItemWFValidationLevels(
             data='leading_transition',
@@ -6758,7 +6703,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listTransitionsUntilPresented(self):
         '''List available workflow transitions until the 'present' transition included.
-           We base this on the MeetingConfig.transitionsForPresentingAnItem field.
+           We base this on the MeetingConfig.getTransitionsForPresentingAnItem.
            This will let us set an item cloned to another meetingConfig to any state until 'presented'.
            We list every item transitions of every available meetingConfigs.'''
         # we do not use an empty '' but '__nothing__' because of a bug in DataGridField SelectColumn...
@@ -6767,7 +6712,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                           domain='PloneMeeting',
                           context=self.REQUEST)), ]
         tool = api.portal.get_tool('portal_plonemeeting')
-        for cfg in tool.getActiveConfigs():
+        # sort cfg by Title
+        for cfg in humansorted(tool.getActiveConfigs(), key=attrgetter('title')):
             # only show other meetingConfigs than self
             if cfg == self:
                 continue
@@ -6780,7 +6726,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 text = '%s -> %s' % (cfgTitle,
                                      availableItemTransitionTitles[availableItemTransitionIds.index(tr)])
                 res.append(('%s.%s' % (cfgId, tr), text))
-        return DisplayList(tuple(res)).sortedByValue()
+        return DisplayList(tuple(res))
 
     security.declarePrivate('listExecutableItemActions')
 
@@ -7050,14 +6996,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getTransitionsForPresentingAnItem')
 
-    def getTransitionsForPresentingAnItem(self, org_uid=None, **kwargs):
-        '''Overrides field 'transitionsForPresentingAnItem' accessor to be able
-           to pass a p_org_uid, if given, the transitions will be filtered out
-           regarding suffixed Plone groups enabled for it.'''
-        transitions = self.getField('transitionsForPresentingAnItem').get(self, **kwargs)
+    def getTransitionsForPresentingAnItem(self, org_uid=None):
+        '''Return default transitions to present an item.'''
+        item_wf_val_levels = self.getItemWFValidationLevels(only_enabled=True)
+        transitions = [v['leading_transition'] for v in item_wf_val_levels
+                       if v['leading_transition'] != '-']
+        # in case items are created "validated", there is no "validate" transition
+        if transitions:
+            transitions.append('validate')
+        transitions.append('present')
         if org_uid:
             tool = api.portal.get_tool('portal_plonemeeting')
-            item_wf_val_levels = self.getItemWFValidationLevels(only_enabled=True)
             tr_suffixes = {v['leading_transition']: v['suffix'] for v in item_wf_val_levels
                            if v['leading_transition'] != '-'}
             res = []

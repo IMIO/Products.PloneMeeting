@@ -43,6 +43,9 @@ class Migrate_To_4204(Migrator):
             _configurePortalRepository()
             self._reloadItemTemplateAndRecurringTypes()
             self._initMeetingsItemAttendeesOrder()
+
+        # remove field MeetingConfig.transitionsForPresentingAnItem
+        self.cleanMeetingConfigs(field_names=['transitionsForPresentingAnItem'])
         logger.info('Done.')
 
 
