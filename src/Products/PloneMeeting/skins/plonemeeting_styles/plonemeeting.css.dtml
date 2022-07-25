@@ -1974,6 +1974,11 @@ div.tooltipster-content table.actionspanel-no-style-table td.noPadding {
     padding-bottom: 2px;
     cursor: help;
 }
+
+#doc-generation-view img.tooltipster-available-mailing-lists {
+    cursor: pointer;
+}
+
 /* fix padding from 2px to px for attendee title when position redefined */
 #content span.tooltipster-meeting-item-redefined-position.link-help {
     padding-bottom: 1px;

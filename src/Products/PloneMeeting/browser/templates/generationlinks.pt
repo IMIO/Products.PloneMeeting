@@ -16,7 +16,7 @@
           tal:define="infos view/get_links_info;
                       titles python:infos.keys();">
         <li tal:repeat="title titles" class="template-link">
-          <span class="template-link-title" tal:content="title">Template title</span><span class="template-link-after-title"></span>
+          <span class="template-link-title" title="Please choose a format to generate here next" tal:content="title">Template title</span><span class="template-link-after-title"></span>
           <span class="template-link-before-link"
                 tal:repeat="link python: infos[title]">
             <a href="#"
@@ -31,11 +31,11 @@
             </a>
             <tal:comment replace="nothing">XXX Added by PloneMeting : send the document by email.</tal:comment>
             <tal:mail condition="python: view.getAvailableMailingLists(link['template'])">
-                <acronym i18n:attributes="title" title="available_mailing_lists_title"><img
+                <span i18n:attributes="title" title="available_mailing_lists_title"><img
                     tal:attributes="src string:${view/portal_url}/sendMail.gif;
                                     data-template_uid link/template_uid;
                                     data-output_format link/output_format;"
-                    class="tooltipster-available-mailing-lists" /></acronym>
+                    class="tooltipster-available-mailing-lists" /></span>
             </tal:mail>
             <tal:comment replace="nothing">XXX Added by PloneMeting : store generated document as annex.</tal:comment>
             <tal:store_as_annex condition="view/displayStoreAsAnnexSection">
