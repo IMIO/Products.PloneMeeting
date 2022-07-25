@@ -1957,6 +1957,9 @@ class Meeting(Container):
                     get_items_additional_catalog_query=get_items_additional_catalog_query)
             if update_item_references:
                 self.update_item_references()
+            api.portal.show_message(_("first_item_number_init",
+                                      mapping={"first_item_number": self.first_item_number}),
+                                    request=self.REQUEST)
 
     security.declarePublic('get_user_replacements')
 
@@ -2245,7 +2248,7 @@ class Meeting(Container):
 
     security.declarePublic('get_previous_meeting')
 
-    def get_previous_meeting(self, interval=60):
+    def get_previous_meeting(self, interval=180):
         '''Gets the previous meeting based on meeting date. We only search among
            meetings in the previous p_interval, which is a number
            of days. If no meeting is found, the method returns None.'''

@@ -35,6 +35,10 @@ Changelog
   in `MeetingConfig.itemWFValidationLevels`, method
   `MeetingConfig.getTransitionsForPresentingAnItem` is kept and does the job.
   [gbastien]
+- Display info and warning message when meeting `meeting_number/first_item_number`
+  fields are updated, especially when numbering logic is inconsistent because
+  the previous meeting numbers are not consistent or when a meeting was deleted.
+  [gbastien]
 
 4.2rc30 (2022-07-01)
 --------------------

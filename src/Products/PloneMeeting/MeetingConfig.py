@@ -278,7 +278,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_lastMeetingNumber',
             i18n_domain='PloneMeeting',
         ),
-        write_permission="PloneMeeting: Write risky config",
+        write_permission="PloneMeeting: Write harmless config",
     ),
     BooleanField(
         name='yearlyInitMeetingNumber',

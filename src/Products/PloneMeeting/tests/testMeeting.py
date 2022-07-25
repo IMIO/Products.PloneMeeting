@@ -45,6 +45,7 @@ from Products.PloneMeeting.utils import get_dx_attrs
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import set_field_from_ajax
+from Products.statusmessages.interfaces import IStatusMessage
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from z3c.form import validator
 from zope.event import notify
@@ -1910,6 +1911,16 @@ class testMeetingType(PloneMeetingTestCase):
         m2 = self._createMeetingWithItems()
         self.publishMeeting(m2)
         self.assertEqual(m2.meeting_number, 2)
+        self.assertEqual(cfg.getLastMeetingNumber(), 2)
+        # when deleting last meeting, cfg is updated
+        m3 = self._createMeetingWithItems()
+        self.publishMeeting(m3)
+        self.assertEqual(cfg.getLastMeetingNumber(), 3)
+        self.deleteAsManager(m3.UID())
+        self.assertEqual(cfg.getLastMeetingNumber(), 2)
+        # not updated when deleting a meeting in between
+        # but in this case, a warning message is displayed
+        self.deleteAsManager(m1.UID())
         self.assertEqual(cfg.getLastMeetingNumber(), 2)
 
     def test_pm_Number_of_items(self):

@@ -128,10 +128,10 @@ class MeetingWorkflowActions(object):
            adaptations), we attribute him a sequence number.'''
         if self.context.meeting_number != -1:
             return  # Already done.
+        prev = self.context.get_previous_meeting()
         if self.cfg.getYearlyInitMeetingNumber():
             # I must reinit the meeting number to 0 if it is the first
             # meeting of this year.
-            prev = self.context.get_previous_meeting()
             if prev and \
                (prev.date.year != self.context.date.year):
                 self.context.meeting_number = 1
@@ -141,6 +141,19 @@ class MeetingWorkflowActions(object):
         meeting_number = self.cfg.getLastMeetingNumber() + 1
         self.context.meeting_number = meeting_number
         self.cfg.setLastMeetingNumber(meeting_number)
+        api.portal.show_message(_("meeting_number_init",
+                                  mapping={"meeting_number": meeting_number}),
+                                request=self.context.REQUEST)
+        # show a warning if previous meeting number is not consistent
+        if prev and \
+           (prev.date.year == self.context.date.year) and \
+           prev.meeting_number != meeting_number - 1:
+            api.portal.show_message(
+                _("meeting_number_inconsistent",
+                  mapping={
+                      "previous_meeting_number": prev.meeting_number,
+                      "previous_meeting_date": self.tool.format_date(prev.date)}),
+                request=self.context.REQUEST, type="warning")
 
     security.declarePrivate('doPublish')
 
@@ -158,14 +171,17 @@ class MeetingWorkflowActions(object):
 
     def doDecide(self, stateChange):
         ''' '''
-        pass
+        self.init_sequence_number()
+        # Set the firstItemNumber
+        self.context.update_first_item_number()
 
     security.declarePrivate('doClose')
 
     def doClose(self, stateChange):
         ''' '''
+        self.init_sequence_number()
         # Set the firstItemNumber
-        self.context.update_first_item_number()
+        self.context.update_first_item_number(force=True)
         # remove annex previews of every items if relevant
         if self.cfg.getRemoveAnnexesPreviewsOnMeetingClosure():
             # add logging message to fingerpointing log
