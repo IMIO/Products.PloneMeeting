@@ -42,6 +42,8 @@ Changelog
   `MeetingConfig.yearlyInitMeetingNumbers` so we may yearly reinit meeting fields
   `meeting_number` and `first_item_number`.
   Fields `Meeting.meeting_number` and `Meeting.first_item_number` are now optional.
+  Changed `Meeting.get_previous_meeting` parameter `interval` default value
+  from `60` to `180` days.
   [gbastien]
 
 4.2rc30 (2022-07-01)

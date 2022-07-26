@@ -2878,11 +2878,11 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(meeting2.get_previous_meeting(), meeting3)
         self.assertFalse(meeting3.get_previous_meeting())
 
-        # very old meeting, previous meeting is searched by default with max 60 days
-        meeting4 = self.create('Meeting', date=meeting3.date - timedelta(days=61))
+        # very old meeting, previous meeting is searched by default with max 180 days
+        meeting4 = self.create('Meeting', date=meeting3.date - timedelta(days=181))
         # still no meeting
         self.assertFalse(meeting3.get_previous_meeting())
-        self.assertEqual(meeting3.get_previous_meeting(interval=61), meeting4)
+        self.assertEqual(meeting3.get_previous_meeting(interval=181), meeting4)
 
     def test_pm_MeetingStrikedAssembly(self):
         """Test use of utils.toHTMLStrikedContent for assembly."""
