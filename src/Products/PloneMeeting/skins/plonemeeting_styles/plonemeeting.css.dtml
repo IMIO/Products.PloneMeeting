@@ -1978,6 +1978,9 @@ div.tooltipster-content table.actionspanel-no-style-table td.noPadding {
 #content span.tooltipster-meeting-item-redefined-position.link-help {
     padding-bottom: 1px;
 }
+#doc-generation-view img.tooltipster-available-mailing-lists {
+    cursor: pointer;
+}
 
 #content span.people-edit-signatory:before {
     content: "\f5b7";

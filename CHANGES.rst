@@ -35,6 +35,9 @@ Changelog
   in `MeetingConfig.itemWFValidationLevels`, method
   `MeetingConfig.getTransitionsForPresentingAnItem` is kept and does the job.
   [gbastien]
+- Make sure dashboard cache is invlaidated (etags) when a meeting date changed,
+  this is necessary so meeting date faceted filters are correct.
+  [gbastien]
 
 4.2rc30 (2022-07-01)
 --------------------
