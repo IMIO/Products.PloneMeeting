@@ -3932,6 +3932,7 @@ class testMeetingType(PloneMeetingTestCase):
     def test_pm_Update_first_item_number(self):
         """The the helper Meeting.update_first_item_number that will take in charge"""
         cfg = self.meetingConfig
+        self._enableField('first_item_number', related_to='Meeting')
         cfg.setUseGroupsAsCategories(False)
         self.changeUser('pmManager')
         meeting1 = self._createMeetingWithItems(meetingDate=datetime(2022, 6, 6))

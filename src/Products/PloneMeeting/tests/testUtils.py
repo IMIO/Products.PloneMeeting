@@ -301,6 +301,7 @@ class testUtils(PloneMeetingTestCase):
         """utils.set_dx_value will set a value on a DX content and check if current
            user has the permission and if the value does validate."""
         cfg = self.meetingConfig
+        self._enableField('meeting_number', related_to='Meeting')
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
