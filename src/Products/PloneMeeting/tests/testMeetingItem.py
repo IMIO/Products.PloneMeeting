@@ -3459,6 +3459,7 @@ class testMeetingItem(PloneMeetingTestCase):
           call, so we need to cleanMemoize before calling it if the meeting firstItemNumber changed,
           so if the meeting as been closed.
         '''
+        self._enableField('first_item_number', related_to='Meeting')
         self.changeUser('pmManager')
         # create an item
         item = self.create('MeetingItem')
@@ -7225,6 +7226,7 @@ class testMeetingItem(PloneMeetingTestCase):
         """When a meeting is modified, if 'date', 'firstItemNumber' or 'meetingNumber' field
            is changed, every contained items itemReference is updated.  Other changes will
            not update item references."""
+        self._enableField(('meeting_number', 'first_item_number'), related_to='Meeting')
         # remove recurring items in self.meetingConfig
         cfg = self.meetingConfig
         self._removeConfigObjectsFor(cfg)

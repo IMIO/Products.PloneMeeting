@@ -35,6 +35,16 @@ Changelog
   in `MeetingConfig.itemWFValidationLevels`, method
   `MeetingConfig.getTransitionsForPresentingAnItem` is kept and does the job.
   [gbastien]
+- Display info and warning message when meeting `meeting_number/first_item_number`
+  fields are updated, especially when numbering logic is inconsistent because
+  the previous meeting numbers are not consistent or when a meeting was deleted.
+  Moved boolean field `MeetingConfig.yearlyInitMeetingNumber` to multi select field
+  `MeetingConfig.yearlyInitMeetingNumbers` so we may yearly reinit meeting fields
+  `meeting_number` and `first_item_number`.
+  Fields `Meeting.meeting_number` and `Meeting.first_item_number` are now optional.
+  Changed `Meeting.get_previous_meeting` parameter `interval` default value
+  from `60` to `180` days.
+  [gbastien]
 - Make sure dashboard cache is invlaidated (etags) when a meeting date changed,
   this is necessary so meeting date faceted filters are correct.
   [gbastien]

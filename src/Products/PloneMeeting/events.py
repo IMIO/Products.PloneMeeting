@@ -1219,6 +1219,18 @@ def onMeetingRemoved(meeting, event):
     for item_to_reindex in items_to_reindex:
         item_to_reindex.reindexObject(
             idxs=['preferred_meeting_uid', 'preferred_meeting_date'])
+    # update MeetingConfig.lastMeetingNumber if deleted meeting is the last
+    # anyway display a warning message if it was already set
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(meeting)
+    if cfg.getLastMeetingNumber() == meeting.meeting_number:
+        cfg.setLastMeetingNumber(cfg.getLastMeetingNumber() - 1)
+    if meeting.meeting_number or meeting.first_item_number:
+        api.portal.show_message(
+            _("meeting_removed_verify_numbers"),
+            request=meeting.REQUEST,
+            type="warning")
+
     # a Meeting date changed
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.Meeting.date', get_again=True)

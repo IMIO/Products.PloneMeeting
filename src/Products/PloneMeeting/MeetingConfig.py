@@ -278,19 +278,23 @@ schema = Schema((
             label_msgid='PloneMeeting_label_lastMeetingNumber',
             i18n_domain='PloneMeeting',
         ),
-        write_permission="PloneMeeting: Write risky config",
+        write_permission="PloneMeeting: Write harmless config",
     ),
-    BooleanField(
-        name='yearlyInitMeetingNumber',
-        default=defValues.yearlyInitMeetingNumber,
-        widget=BooleanField._properties['widget'](
-            description="YearlyInitMeetingNumber",
-            description_msgid="yearly_init_meeting_nb_descr",
-            label='Yearlyinitmeetingnumber',
-            label_msgid='PloneMeeting_label_yearlyInitMeetingNumber',
+    LinesField(
+        name='yearlyInitMeetingNumbers',
+        default=defValues.yearlyInitMeetingNumbers,
+        widget=MultiSelectionWidget(
+            description="YearlyInitMeetingNumbers",
+            description_msgid="yearly_init_meeting_numbers_descr",
+            label='Yearlyinitmeetingnumbers',
+            label_msgid='PloneMeeting_label_yearlyInitMeetingNumbers',
             i18n_domain='PloneMeeting',
+            format="checkbox",
         ),
+        enforceVocabulary=True,
+        multiValued=1,
         write_permission="PloneMeeting: Write risky config",
+        vocabulary_factory='Products.PloneMeeting.vocabularies.yearlyinitmeetingnumbersvocabulary',
     ),
     TextField(
         name='budgetDefault',

@@ -85,7 +85,7 @@
           <td tal:define="field python:here.getField('lastMeetingNumber')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('yearlyInitMeetingNumber')">
+          <td tal:define="field python:here.getField('yearlyInitMeetingNumbers')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td>

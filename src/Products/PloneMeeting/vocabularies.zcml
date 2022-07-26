@@ -61,6 +61,8 @@
            name="Products.PloneMeeting.vocabularies.faceted_annexes_vocabulary" />
   <utility component=".vocabularies.DownOrUpWorkflowAgainVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.downorupworkflowagainvocabulary" />
+  <utility component=".vocabularies.YearlyInitMeetingNumbersVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.yearlyinitmeetingnumbersvocabulary" />
   <utility component=".vocabularies.ListTypesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.listtypesvocabulary" />
   <utility component=".vocabularies.UsedVoteValuesVocabularyFactory"
