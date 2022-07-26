@@ -2359,6 +2359,8 @@ class testViews(PloneMeetingTestCase):
         browser.open(pmFolder.absolute_url() + '/searches_items')
         self.assertTrue(config_modified in browser.headers['etag'])
         self.assertTrue(tool_modified in browser.headers['etag'])
+        linked_meeting_modified = LinkedMeetingModified(pmFolder, self.request)()
+        self.assertNotEqual(linked_meeting_modified, 'lm_0')
         # item
         self.request['PUBLISHED'] = item
         context_modified = ContextModified(item, self.request)()

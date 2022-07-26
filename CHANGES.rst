@@ -45,6 +45,9 @@ Changelog
   Changed `Meeting.get_previous_meeting` parameter `interval` default value
   from `60` to `180` days.
   [gbastien]
+- Make sure dashboard cache is invlaidated (etags) when a meeting date changed,
+  this is necessary so meeting date faceted filters are correct.
+  [gbastien]
 
 4.2rc30 (2022-07-01)
 --------------------

@@ -85,7 +85,8 @@ class ParentModified(object):
 
 class LinkedMeetingModified(object):
     """The ``linkedmeetingmodified`` etag component, returning the modified
-       date of linked meeting for MeetingItem
+       date of linked meeting for MeetingItem or the date of the last time a
+       meeting date was edited (meeting created, meeting date modified).
     """
 
     implements(IETagValue)
@@ -103,11 +104,11 @@ class LinkedMeetingModified(object):
             if meeting:
                 res = 'lm_' + _modified(meeting)
         elif context.portal_type == 'Folder':
-            # in case this is a meeting folder
-            # we return last Meeting modified when using MeetingConfig.redirectToNextMeeting
+            # in case this is a meeting folder, we return last Meeting modified
+            # so faceted filters based on meeting date are correct
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(context)
-            if cfg and cfg.getRedirectToNextMeeting():
+            if cfg:
                 # this changes when meeting added/removed/date changed
                 meeting_date_last_modified = get_cachekey_volatile(
                     'Products.PloneMeeting.Meeting.date')
