@@ -121,16 +121,17 @@ class MeetingWorkflowActions(object):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
-    security.declarePrivate('init_sequence_number')
+    security.declarePrivate('update_meeting_number')
 
-    def init_sequence_number(self):
+    def update_meeting_number(self):
         '''When a meeting is published (or frozen, depending on workflow
            adaptations), we attribute him a sequence number.'''
-        if self.context.meeting_number != -1:
-            return  # Already done.
+        if not self.context.attribute_is_used('meeting_number') or \
+           self.context.meeting_number != -1:
+            return  # Not used or already computed.
         prev = self.context.get_previous_meeting()
-        if self.cfg.getYearlyInitMeetingNumber():
-            # I must reinit the meeting number to 0 if it is the first
+        if "meeting_number" in self.cfg.getYearlyInitMeetingNumbers():
+            # I must reinit the meeting number to 1 if it is the first
             # meeting of this year.
             if prev and \
                (prev.date.year != self.context.date.year):
@@ -159,19 +160,19 @@ class MeetingWorkflowActions(object):
 
     def doPublish(self, stateChange):
         '''When publishing the meeting, initialize the sequence number.'''
-        self.init_sequence_number()
+        self.update_meeting_number()
 
     security.declarePrivate('doFreeze')
 
     def doFreeze(self, stateChange):
         '''When freezing the meeting, we initialize sequence number.'''
-        self.init_sequence_number()
+        self.update_meeting_number()
 
     security.declarePrivate('doDecide')
 
     def doDecide(self, stateChange):
         ''' '''
-        self.init_sequence_number()
+        self.update_meeting_number()
         # Set the firstItemNumber
         self.context.update_first_item_number()
 
@@ -179,7 +180,7 @@ class MeetingWorkflowActions(object):
 
     def doClose(self, stateChange):
         ''' '''
-        self.init_sequence_number()
+        self.update_meeting_number()
         # Set the firstItemNumber
         self.context.update_first_item_number(force=True)
         # remove annex previews of every items if relevant

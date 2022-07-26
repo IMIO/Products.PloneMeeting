@@ -156,7 +156,7 @@
 
   <genericsetup:upgradeStep
       title="Go to PloneMeeting 4204"
-      description="Configure portal_repository and fix MeetingItemTemplate/Recurring allowed_cotnent_types"
+      description="Configure portal_repository, fix MeetingItemTemplate/Recurring allowed_content_types, migrate field MeetingConfig.yearlyInitMeetingNumber"
       source="4203"
       destination="4204"
       handler="Products.PloneMeeting.migrations.migrate_to_4204.migrate"

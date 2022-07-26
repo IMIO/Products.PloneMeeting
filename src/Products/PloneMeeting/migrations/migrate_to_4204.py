@@ -34,6 +34,24 @@ class Migrate_To_4204(Migrator):
             meeting._p_changed = True
         logger.info('Done.')
 
+    def _migrateMCYearlyInitMeetingNumber(self):
+        """Boolean field yearlyInitMeetingNumber is not a list of choices called
+           yearlyInitMeetingNumbers."""
+        logger.info('Migrating field "yearlyInitMeetingNumber" to '
+                    '"yearlyInitMeetingNumbers" for every meetings...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            if hasattr(cfg, "yearlyInitMeetingNumber"):
+                if cfg.yearlyInitMeetingNumber is True:
+                    cfg.setYearlyInitMeetingNumbers(("meeting_number", ))
+                delattr(cfg, "yearlyInitMeetingNumber")
+                # fields Meeting.meeting_number and Meeting.first_item_number
+                # are now optionnal so select it by default
+                used_attrs = list(cfg.getUsedMeetingAttributes())
+                used_attrs.append("meeting_number")
+                used_attrs.append("first_item_number")
+                cfg.setUsedMeetingAttributes(used_attrs)
+        logger.info('Done.')
+
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4204...')
@@ -43,6 +61,7 @@ class Migrate_To_4204(Migrator):
             _configurePortalRepository()
             self._reloadItemTemplateAndRecurringTypes()
             self._initMeetingsItemAttendeesOrder()
+        self._migrateMCYearlyInitMeetingNumber()
 
         # remove field MeetingConfig.transitionsForPresentingAnItem
         self.cleanMeetingConfigs(field_names=['transitionsForPresentingAnItem'])

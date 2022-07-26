@@ -38,6 +38,10 @@ Changelog
 - Display info and warning message when meeting `meeting_number/first_item_number`
   fields are updated, especially when numbering logic is inconsistent because
   the previous meeting numbers are not consistent or when a meeting was deleted.
+  Moved boolean field `MeetingConfig.yearlyInitMeetingNumber` to multi select field
+  `MeetingConfig.yearlyInitMeetingNumbers` so we may yearly reinit meeting fields
+  `meeting_number` and `first_item_number`.
+  Fields `Meeting.meeting_number` and `Meeting.first_item_number` are now optional.
   [gbastien]
 
 4.2rc30 (2022-07-01)

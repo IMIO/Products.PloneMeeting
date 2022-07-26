@@ -1277,6 +1277,31 @@ class DownOrUpWorkflowAgainVocabulary(object):
 DownOrUpWorkflowAgainVocabularyFactory = DownOrUpWorkflowAgainVocabulary()
 
 
+class YearlyInitMeetingNumbersVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        res = []
+        res.append(SimpleTerm('meeting_number',
+                              'meeting_number',
+                              safe_unicode(translate('title_meeting_number',
+                                                     domain='PloneMeeting',
+                                                     context=context.REQUEST)))
+                   )
+        res.append(SimpleTerm('first_item_number',
+                              'first_item_number',
+                              safe_unicode(translate('title_first_item_number',
+                                                     domain='PloneMeeting',
+                                                     context=context.REQUEST)))
+                   )
+
+        return SimpleVocabulary(res)
+
+
+YearlyInitMeetingNumbersVocabularyFactory = YearlyInitMeetingNumbersVocabulary()
+
+
 class ListTypesVocabulary(object):
     implements(IVocabularyFactory)
 

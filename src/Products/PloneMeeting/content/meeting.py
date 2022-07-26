@@ -923,10 +923,10 @@ class Meeting(Container):
             {'optional': True,
              'condition': "python:cfg.show_meeting_manager_reserved_field('meetingmanagers_notes')"},
         'meeting_number':
-            {'optional': False,
+            {'optional': True,
              'condition': "python:tool.isManager(cfg)"},
         'first_item_number':
-            {'optional': False,
+            {'optional': True,
              'condition': "python:tool.isManager(cfg)"},
     }
 
@@ -1943,18 +1943,29 @@ class Meeting(Container):
                                  force=False):
         """ """
         # only update if still the initial value
-        if self.first_item_number == -1 or force:
-            # as this may be applied on a closed meeting, we can not protect the method
-            # with a permission, so we check if user isManager
+        if self.attribute_is_used('first_item_number') and (self.first_item_number == -1 or force):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
+            # as this may be applied on a closed meeting, we can not protect the method
+            # with a permission, so we check if user isManager
             if not tool.isManager(cfg):
                 raise Unauthorized
-            unrestricted_methods = getMultiAdapter(
-                (self, self.REQUEST), name='pm_unrestricted_methods')
-            self.first_item_number = \
-                unrestricted_methods.findFirstItemNumber(
-                    get_items_additional_catalog_query=get_items_additional_catalog_query)
+            updated = False
+            if "first_item_number" in cfg.getYearlyInitMeetingNumbers():
+                # I must reinit the first_item_number to 1 if it is the first
+                # meeting of this year.
+                prev = self.get_previous_meeting()
+                if prev and \
+                   (prev.date.year != self.date.year):
+                    self.first_item_number = 1
+                    updated = True
+
+            if updated is False:
+                unrestricted_methods = getMultiAdapter(
+                    (self, self.REQUEST), name='pm_unrestricted_methods')
+                self.first_item_number = \
+                    unrestricted_methods.findFirstItemNumber(
+                        get_items_additional_catalog_query=get_items_additional_catalog_query)
             if update_item_references:
                 self.update_item_references()
             api.portal.show_message(_("first_item_number_init",

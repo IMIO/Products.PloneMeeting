@@ -166,7 +166,7 @@ class BaseMeetingView(object):
            Must be enabled or not empty.'''
         return field_name in self.used_attrs or \
             (self.context.__class__.__name__ == 'Meeting' and
-             getattr(self.context, field_name, None))
+             getattr(self.context, field_name, None) not in (None, -1))
 
     def show_datagrid_column(self, widget, field_name, column_name):
         '''Show the p_column_name or p_field_name DataGridField?
