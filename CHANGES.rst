@@ -53,6 +53,11 @@ Changelog
   `MeetingConfig._createOrUpdateAllPloneGroups` parameter `only_group_ids=False`
   was renamed to `dry_run_return_group_ids=False`.
   [gbastien]
+- Make `ToolPloneMeeting.get_filtered_plone_groups_for_user` org_uids parameter
+  optionnal so we may only filter on given suffixes.
+  [gbastien]
+- Added a user `pmManager2`, `MeetingManager` of `meetingConfig2` for tests.
+  [gbastien]
 
 4.2rc30 (2022-07-01)
 --------------------
