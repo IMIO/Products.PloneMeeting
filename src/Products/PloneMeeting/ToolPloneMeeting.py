@@ -432,17 +432,18 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getActiveConfigs')
 
-    def getActiveConfigs(self, check_using_groups=True):
+    def getActiveConfigs(self, check_using_groups=True, check_access=True):
         '''Gets the active meeting configurations.
            If check_using_groups is True, we check that current
            user is member of one of the cfg using_groups.'''
         res = []
         for cfg in self.objectValues('MeetingConfig'):
             if api.content.get_state(cfg) == 'active' and \
-               self.checkMayView(cfg) and \
-               (self.isManager(cfg) or self.isPowerObserverForCfg(cfg) or
-                    (check_using_groups and self.get_orgs_for_user(
-                        using_groups=cfg.getUsingGroups()))):
+               (not check_access or
+                (self.checkMayView(cfg) and
+                    (self.isManager(cfg) or self.isPowerObserverForCfg(cfg) or
+                        (check_using_groups and self.get_orgs_for_user(
+                            using_groups=cfg.getUsingGroups()))))):
                 res.append(cfg)
         return res
 
