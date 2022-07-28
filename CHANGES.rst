@@ -48,6 +48,11 @@ Changelog
 - Make sure dashboard cache is invlaidated (etags) when a meeting date changed,
   this is necessary so meeting date faceted filters are correct.
   [gbastien]
+- Added adaptable method `MeetingConfig._custom_createOrUpdateGroups` to ease
+  a profile adding a custom `MeetingConfig` related group.
+  `MeetingConfig._createOrUpdateAllPloneGroups` parameter `only_group_ids=False`
+  was renamed to `dry_run_return_group_ids=False`.
+  [gbastien]
 
 4.2rc30 (2022-07-01)
 --------------------

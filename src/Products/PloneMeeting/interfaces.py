@@ -614,6 +614,8 @@ class IMeetingConfigDocumentation:
            OrderedDict([('reviewers', ['prevalidated']), ('prereviewers', ['proposed'])]).
            This must only be provided if the MeetingConfig.reviewersFor
            automatic computation is not correct."""
+    def _custom_createOrUpdateGroups(self, force_update_access=False, dry_run_return_group_ids=False):
+        """Method that will add custom MeetingConfig related Plone groups."""
 
 
 class IMeetingConfigCustom(IMeetingConfig):
