@@ -7,6 +7,7 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.iconifiedcategory.utils import _categorized_elements
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categories
@@ -27,6 +28,7 @@ from plone.testing.z2 import Browser
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.etags import _modified
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -1062,9 +1064,12 @@ class testToolPloneMeeting(PloneMeetingTestCase):
             self.tool.get_filtered_plone_groups_for_user(suffixes=['creators']),
             [self.vendors_creators])
         self.changeUser('pmManager')
+        cfg_id = self.meetingConfig.getId()
+        cfg2_id = self.meetingConfig2.getId()
         self.assertEqual(
             sorted(self.tool.get_filtered_plone_groups_for_user(suffixes=['meetingmanagers'])),
-            sorted(self.meetingConfig.getId(), self.meetingConfig2.getId()))
+            sorted([get_plone_group_id(cfg_id, MEETINGMANAGERS_GROUP_SUFFIX),
+                    get_plone_group_id(cfg2_id, MEETINGMANAGERS_GROUP_SUFFIX)]))
 
         # works also when using api.env.adopt_user like it is the case
         # in MeetingItem.setHistorizedTakenOverBy
