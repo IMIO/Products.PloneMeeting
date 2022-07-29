@@ -58,6 +58,9 @@ Changelog
   [gbastien]
 - Added a user `pmManager2`, `MeetingManager` of `meetingConfig2` for tests.
   [gbastien]
+- Added possibility to make a committee selectable only on an item and
+  not on a meeting.
+  [gbastien]
 
 4.2rc30 (2022-07-01)
 --------------------

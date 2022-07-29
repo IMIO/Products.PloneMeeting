@@ -64,6 +64,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import TestRequest
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_CORRECT_VALUE
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_WRONG_VALUE
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_dx_field
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getTransitionToReachState
 from Products.PloneMeeting.utils import ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
@@ -8058,6 +8059,28 @@ class testMeetingItem(PloneMeetingTestCase):
         vendors_item = self.create('MeetingItem')
         self.assertEqual(vendors_item.Vocabulary('committees')[0].keys(),
                          [NO_COMMITTEE, 'committee_2'])
+
+    def test_pm_CommitteesItemOnly(self):
+        """It is possible to display a committee only on the item and not on the meeting,
+           some kind of false committee but necessary on item to use sort on committees
+           when inserting item in a meeting for example."""
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        self._enableField("committees", related_to="Meeting")
+        cfg.getCommittees()[1]['enabled'] = 'item_only'
+        # MeetingItem, item_only committee is selectable
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        vocab = item.Vocabulary('committees')[0]
+        self.assertTrue('committee_1' in vocab)
+        self.assertTrue('committee_2' in vocab)
+        # Meeting, item_only committee is not selectable
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        vocab_name = get_dx_field(meeting, 'committees').value_type.schema['row_id'].vocabularyName
+        vocab = get_vocab(meeting, vocab_name)
+        self.assertTrue('committee_1' in vocab)
+        self.assertFalse('committee_2' in vocab)
 
     def test_pm_Validate_committees(self):
         """Value NO_COMMITTEE can not be used together with another."""
