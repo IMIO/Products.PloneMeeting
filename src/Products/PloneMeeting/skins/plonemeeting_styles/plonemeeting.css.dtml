@@ -2575,6 +2575,10 @@ span.link-separator::before {
   color: &dtml-portletHeaderBackgroundColor;;
 }
 
+div#forceInsertNormalInput {
+    margin-bottom: 0.5em;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

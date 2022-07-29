@@ -154,7 +154,7 @@
   <tal:availableItems condition="python:view.show_available_items()">
     <h2 class="collapsible active available-items"
          onclick="toggleDetails('collapsible-available-items', toggle_parent_active=true, parent_tag=this, toggle_type='fade')">
-      <span i18n:translate='available_items'>Available items</span>
+      <span i18n:translate='available_items'>Available items</span> (<span class="meeting_number_of_available_items">?</span>)
     </h2>
 
     <iframe src="@@meeting_available_items_view"
