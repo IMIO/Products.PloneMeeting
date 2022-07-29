@@ -2545,7 +2545,8 @@ schema = Schema((
                                      default='0'),
                      'enabled':
                         SelectColumn("Committee enabled?",
-                                     vocabulary="listBooleanVocabulary",
+                                     col_description="committees_enabled_col_description",
+                                     vocabulary="listCommitteesEnabled",
                                      default='1'), },
             label='Committees',
             label_msgid='PloneMeeting_label_committees',
@@ -5654,6 +5655,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ('0', translate('boolean_value_false', domain=d, context=self.REQUEST)),
             ('1', translate('boolean_value_true', domain=d, context=self.REQUEST)),
         ))
+        return res
+
+    def listCommitteesEnabled(self):
+        '''Vocabulary for committees.enabled datagrid column.'''
+        d = "PloneMeeting"
+        res = self.listBooleanVocabulary()
+        res.add('item_only',
+                translate('enabled_item_only', domain=d, context=self.REQUEST))
         return res
 
     security.declarePrivate('listAllVoteValues')

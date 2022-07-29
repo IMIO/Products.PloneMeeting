@@ -2487,6 +2487,7 @@ class SelectableCommitteesVocabulary(object):
                           include_suppl=True,
                           check_is_manager_for_suppl=False,
                           include_all_disabled=True,
+                          include_item_only=True,
                           cfg_committees=None,
                           add_no_committee_value=True,
                           check_using_groups=False,
@@ -2515,7 +2516,7 @@ class SelectableCommitteesVocabulary(object):
             user_plone_groups = tool.get_plone_groups_for_user()
         return date, repr(cfg), committees, user_plone_groups, isManager, \
             term_title_attr, include_suppl, \
-            check_is_manager_for_suppl, include_all_disabled, \
+            check_is_manager_for_suppl, include_all_disabled, include_item_only, \
             cfg_committees, add_no_committee_value, \
             check_using_groups, include_empty_string
 
@@ -2527,6 +2528,7 @@ class SelectableCommitteesVocabulary(object):
             include_suppl=True,
             check_is_manager_for_suppl=False,
             include_all_disabled=True,
+            include_item_only=True,
             cfg_committees=None,
             add_no_committee_value=True,
             check_using_groups=False,
@@ -2594,6 +2596,7 @@ class SelectableCommitteesVocabulary(object):
         for committee in cfg_committees:
             # bypass new value still not having a valid row_id
             if (committee['enabled'] == '1' and committee['row_id']) or \
+               (include_item_only and committee['enabled'] == 'item_only' and committee['row_id']) or \
                committee['row_id'] in stored_values:
                 if check_using_groups and not is_manager and committee['using_groups']:
                     org_uids = tool.get_selectable_orgs(
@@ -2656,6 +2659,7 @@ class ItemSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
             context,
             check_is_manager_for_suppl=True,
             include_all_disabled=False,
+            include_item_only=True,
             check_using_groups=True,
             include_empty_string=False)
         # characters &nbsp; are shown when editing an item...
@@ -2682,6 +2686,7 @@ class MeetingSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
             context,
             include_suppl=False,
             include_all_disabled=False,
+            include_item_only=False,
             add_no_committee_value=False,
             include_empty_string=False)
 
