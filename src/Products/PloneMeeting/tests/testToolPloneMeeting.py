@@ -1057,6 +1057,14 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                         org_uids=[self.developers_uid], the_objects=True)]),
             sorted(self.tool.get_filtered_plone_groups_for_user(
                 org_uids=[self.developers_uid], the_objects=False)))
+        # get_filtered_plone_groups_for_user may also only filter on suffixes
+        self.assertEqual(
+            self.tool.get_filtered_plone_groups_for_user(suffixes=['creators']),
+            [self.vendors_creators])
+        self.changeUser('pmManager')
+        self.assertEqual(
+            sorted(self.tool.get_filtered_plone_groups_for_user(suffixes=['meetingmanagers'])),
+            sorted(self.meetingConfig.getId(), self.meetingConfig2.getId()))
 
         # works also when using api.env.adopt_user like it is the case
         # in MeetingItem.setHistorizedTakenOverBy
