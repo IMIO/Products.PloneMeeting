@@ -2545,6 +2545,7 @@ schema = Schema((
                                      default='0'),
                      'enabled':
                         SelectColumn("Committee enabled?",
+                                     col_description="committees_enabled_col_description",
                                      vocabulary="listCommitteesEnabled",
                                      default='1'), },
             label='Committees',
