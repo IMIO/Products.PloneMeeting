@@ -5,8 +5,8 @@ Changelog
 4.1.28.36 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Added `pmManager2` in `testing` profile so `plonemeeting.restapi` tests pass.
+  [gbastien]
 
 4.1.28.35 (2022-02-14)
 ----------------------
