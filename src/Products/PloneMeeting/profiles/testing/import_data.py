@@ -143,6 +143,7 @@ dashboardTemplate.tal_condition = u'python: context.absolute_url().endswith("/se
 # Test users and groups
 siteadmin = UserDescriptor('siteadmin', ['Manager'], email="siteadmin@plonemeeting.org", fullname='Site administrator')
 pmManager = UserDescriptor('pmManager', [], email="pmmanager@plonemeeting.org", fullname='M. PMManager')
+pmManager2 = UserDescriptor('pmManager2', [], email="pmmanager2@plonemeeting.org", fullname='M. PMManager2')
 pmCreator1 = UserDescriptor('pmCreator1', [], email="pmcreator1@plonemeeting.org", fullname='M. PMCreator One')
 pmCreator1b = UserDescriptor('pmCreator1b', [], email="pmcreator1b@plonemeeting.org", fullname='M. PMCreator One bee')
 pmObserver1 = UserDescriptor('pmObserver1', [], email="pmobserver1@plonemeeting.org", fullname='M. PMObserver One')
@@ -406,7 +407,7 @@ meetingPma.addContactsCSV = False
 # Plonegov-assembly
 meetingPga = MeetingConfigDescriptor(
     'plonegov-assembly', 'PloneGov assembly', 'PloneGov assembly')
-meetingPga.meetingManagers = ['pmManager']
+meetingPga.meetingManagers = ['pmManager', 'pmManager2']
 meetingPga.shortName = 'Pga'
 meetingPga.assembly = 'Bill Gates, Steve Jobs'
 meetingPga.signatures = 'Bill Gates, Steve Jobs'
@@ -494,7 +495,7 @@ data.persons = [person1, person2, person3, person4]
 data.usersOutsideGroups = [siteadmin, cadranel, voter1, voter2,
                            powerobserver1, powerobserver2,
                            restrictedpowerobserver1, restrictedpowerobserver2,
-                           budgetimpacteditor, templatemanager1]
+                           budgetimpacteditor, templatemanager1, pmManager2]
 contactsTemplate = PodTemplateDescriptor('contactsTemplate', 'Export organizations', dashboard=True)
 contactsTemplate.odt_file = 'organizations-export.ods'
 contactsTemplate.pod_formats = ['ods', 'xls']

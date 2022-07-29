@@ -432,19 +432,18 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getActiveConfigs')
 
-    def getActiveConfigs(self, check_using_groups=True):
+    def getActiveConfigs(self, check_using_groups=True, check_access=True):
         '''Gets the active meeting configurations.
            If check_using_groups is True, we check that current
            user is member of one of the cfg using_groups.'''
         res = []
         for cfg in self.objectValues('MeetingConfig'):
-            isManager = self.isManager(cfg)
-            isPowerObserver = self.isPowerObserverForCfg(cfg)
             if api.content.get_state(cfg) == 'active' and \
-               self.checkMayView(cfg) and \
-               (isManager or isPowerObserver or
-                    (check_using_groups and self.get_orgs_for_user(
-                        using_groups=cfg.getUsingGroups()))):
+               (not check_access or
+                (self.checkMayView(cfg) and
+                    (self.isManager(cfg) or self.isPowerObserverForCfg(cfg) or
+                        (check_using_groups and self.get_orgs_for_user(
+                            using_groups=cfg.getUsingGroups()))))):
                 res.append(cfg)
         return res
 
@@ -489,7 +488,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             user_groups = user.getGroups()
         return sorted(user_groups)
 
-    def get_filtered_plone_groups_for_user(self, org_uids, userId=None, suffixes=[], the_objects=False):
+    def get_filtered_plone_groups_for_user(self, org_uids=[], userId=None, suffixes=[], the_objects=False):
         """For caching reasons, we only use ram.cache on get_plone_groups_for_user
            to avoid too much entries when using p_org_uids.
            Use this when needing to filter on org_uids."""
@@ -497,12 +496,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             userId=userId, the_objects=the_objects)
         if the_objects:
             user_groups = [plone_group for plone_group in user_groups
-                           if plone_group.id.split('_')[0] in org_uids and
-                           (not suffixes or plone_group.id.split('_')[1] in suffixes)]
+                           if (not org_uids or plone_group.id.split('_')[0] in org_uids) and
+                           (not suffixes or '_' in plone_group.id and plone_group.id.split('_')[1] in suffixes)]
         else:
             user_groups = [plone_group_id for plone_group_id in user_groups
-                           if plone_group_id.split('_')[0] in org_uids and
-                           (not suffixes or plone_group_id.split('_')[1] in suffixes)]
+                           if (not org_uids or plone_group_id.split('_')[0] in org_uids) and
+                           (not suffixes or '_' in plone_group_id and plone_group_id.split('_')[1] in suffixes)]
         return sorted(user_groups)
 
     def group_is_not_empty_cachekey(method, self, org_uid, suffix, user_id=None):
