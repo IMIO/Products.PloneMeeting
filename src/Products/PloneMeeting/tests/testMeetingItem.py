@@ -1463,6 +1463,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # useful when test executed with custom profile
         self._setUpDefaultItemWFValidationLevels(cfg)
         cfg2 = self.meetingConfig2
+        self._setUpDefaultItemWFValidationLevels(cfg2)
         cfg2Id = cfg2.getId()
         cfg2.setUseGroupsAsCategories(True)
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
@@ -1480,7 +1481,7 @@ class testMeetingItem(PloneMeetingTestCase):
         autoItem.setDecision('<p>My decision</p>', mimetype='text/html')
         autoItem.setOtherMeetingConfigsClonableTo((cfg2Id,))
         # do not use validateItem or it is done as Manager and transitions are triggered
-        self.proposeItem(autoItem)
+        self.do(autoItem, 'propose')
         self.changeUser('pmReviewer1')
         self.do(autoItem, 'validate')
         self.changeUser('pmCreator1')
@@ -1494,7 +1495,7 @@ class testMeetingItem(PloneMeetingTestCase):
         autoItem2 = self.create('MeetingItem')
         autoItem2.setDecision('<p>My decision</p>', mimetype='text/html')
         autoItem2.setOtherMeetingConfigsClonableTo((cfg2Id,))
-        self.proposeItem(autoItem2)
+        self.do(autoItem2, 'propose')
         self.changeUser('pmManager')
         self.do(autoItem2, 'validate')
         clonedAutoItem2 = autoItem2.getItemClonedToOtherMC(cfg2Id)
