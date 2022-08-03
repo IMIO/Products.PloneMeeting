@@ -1969,21 +1969,20 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         # by default it is linked to the 'proposed' state
         itemWF = cfg.getItemWorkflow(True)
-        self.assertTrue(waiting_advices_state in itemWF.states)
+        self.assertIn(waiting_advices_state, itemWF.states)
 
         # suffixed transitions are not added
-        self.assertFalse('%s_waiting_advices' % self._stateMappingFor('proposed_first_level')
-                         in itemWF.states)
-        self.assertFalse('prevalidated_waiting_advices' in itemWF.states)
+        self.assertNotIn('%s_waiting_advices' % self._stateMappingFor('proposed_first_level'), itemWF.states)
+        self.assertNotIn('prevalidated_waiting_advices', itemWF.states)
         # transitions are created
         wait_advices_from_proposed_transition = 'wait_advices_from_%s' % \
             self._stateMappingFor('proposed_first_level')
-        self.assertTrue(wait_advices_from_proposed_transition in itemWF.transitions)
-        self.assertTrue('wait_advices_from_prevalidated' in itemWF.transitions)
+        self.assertIn(wait_advices_from_proposed_transition, itemWF.transitions)
+        self.assertIn('wait_advices_from_prevalidated', itemWF.transitions)
         # back transitions are created
-        self.assertTrue('backTo_%s_from_waiting_advices' % self._stateMappingFor('proposed_first_level')
-                        in itemWF.transitions)
-        self.assertTrue('backTo_prevalidated_from_waiting_advices' in itemWF.transitions)
+        self.assertIn('backTo_%s_from_waiting_advices' % self._stateMappingFor('proposed_first_level'),
+                      itemWF.transitions)
+        self.assertIn('backTo_prevalidated_from_waiting_advices', itemWF.transitions)
 
         # right, create an item and set it to 'proposed__or__prevalidated_waiting_advices'
         self.changeUser('pmCreator1')
@@ -1996,7 +1995,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse(self.transitions(item))
         # 'pmReviewerLevel1' may do it, it is a prereviewer
         self.changeUser('pmReviewerLevel1')
-        self.assertTrue(wait_advices_from_proposed_transition in self.transitions(item))
+        self.assertIn(wait_advices_from_proposed_transition, self.transitions(item))
         # trigger from 'prevalidated'
         self.do(item, 'prevalidate')
         self.assertEqual(item.query_state(), 'prevalidated')
