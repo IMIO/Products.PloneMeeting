@@ -2070,7 +2070,7 @@ class testMeetingType(PloneMeetingTestCase):
 
         # if a meeting is not in a state accepting items, it does not accept items anymore
         self.closeMeeting(m1)
-        self.assertTrue(m1.query_state() not in cfg.getMeetingStatesAcceptingItemsForMeetingManagers())
+        self.assertNotIn(m1.query_state(), cfg.getMeetingStatesAcceptingItemsForMeetingManagers())
         m1_query = queryparser.parseFormquery(m1, m1._available_items_query())
         self.assertFalse(self.catalog(m1_query))
 

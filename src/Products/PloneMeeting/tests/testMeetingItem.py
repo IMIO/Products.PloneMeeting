@@ -4577,13 +4577,13 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setCategory('')
         self.changeUser('pmManager')
         first_tr = self.get_transitions_for_proposing_item(first_level=True)[0]
-        self.assertFalse(first_tr in self.transitions(item))
+        self.assertNotIn(first_tr, self.transitions(item))
         actions_panel._transitions = None
         no_category_rendered_actions_panel = actions_panel()
         self.assertNotEqual(no_category_rendered_actions_panel, rendered_actions_panel)
         item.setCategory(originalCategory)
         item._update_after_edit()
-        self.assertTrue(first_tr in self.transitions(item))
+        self.assertIn(first_tr, self.transitions(item))
         # changed again, this time we get same result as originally
         self.changeUser('pmCreator1')
         actions_panel._transitions = None
