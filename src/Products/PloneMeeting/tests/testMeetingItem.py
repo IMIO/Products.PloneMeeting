@@ -4746,7 +4746,7 @@ class testMeetingItem(PloneMeetingTestCase):
         rev_users = rev_group.getMemberIds()
         self._removeAllMembers(rev_group, rev_users)
         # now user able to validate
-        self.assertTrue("validate" in self.transitions(item))
+        self.assertIn("validate", self.transitions(item))
         actions_panel = item.restrictedTraverse('@@actions_panel')
         afterUserGroupsEdit_rendered_actions_panel = actions_panel()
         self.assertNotEqual(beforeUserGroupsEdit_rendered_actions_panel,
