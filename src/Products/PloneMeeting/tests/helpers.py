@@ -267,6 +267,9 @@ class PloneMeetingTestingHelpers:
             as_manager=as_manager,
             clean_memoize=clean_memoize)
 
+    def apply_meeting_transition_to_late_state(self, meeting, as_manager=False, clean_memoize=True):
+        self.freezeMeeting(meeting, as_manager, clean_memoize)
+
     def closeMeeting(self, meeting, as_manager=False, clean_memoize=True):
         '''Close passed p_meeting using TRANSITIONS_FOR_CLOSING_MEETING_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
