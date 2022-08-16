@@ -2829,6 +2829,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'waiting_advices_proposing_group_send_back',
                      'waiting_advices_adviser_may_validate',
                      'waiting_advices_given_advices_required_to_validate',
+                     'waiting_advices_given_and_signed_advices_required_to_validate',
                      'accepted_out_of_meeting',
                      'accepted_out_of_meeting_and_duplicated',
                      'accepted_out_of_meeting_emergency',

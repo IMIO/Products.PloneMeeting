@@ -641,12 +641,30 @@ class MeetingItemWorkflowConditions(object):
                 return True
         return False
 
+    def _advice_is_to_give(self, adviceInfo):
+        """ """
+        res = False
+        if adviceInfo['type'] in (NOT_GIVEN_ADVICE_VALUE, 'asked_again', ):
+            res = True
+        elif "waiting_advices_given_and_signed_advices_required_to_validate" in \
+                self.cfg.getWorkflowAdaptations():
+            # check that the WF went to the last advice WF state
+            # and also if advice was asked again, that last time it was asked
+            # it went to the end as well
+            advice_obj = self.context.getAdviceObj(adviceInfo['id'])
+            # when using the advice WF with signed, the WF transition is "signFinancialAdvice"
+            last_step = getLastWFAction(advice_obj, 'signFinancialAdvice')
+            last_asked_again = getLastWFAction(advice_obj, 'backToAdviceInitialState')
+            if not last_step or (last_asked_again and last_step['time'] < last_asked_again['time']):
+                res = True
+        return res
+
     def _hasAdvicesToGive(self, destination_state):
         """Check if there are advice to give in p_destination_state."""
         hasAdvicesToGive = False
         for org_uid, adviceInfo in self.context.adviceIndex.items():
             # only consider advices to give
-            if adviceInfo['type'] not in (NOT_GIVEN_ADVICE_VALUE, 'asked_again', ):
+            if not self._advice_is_to_give(adviceInfo):
                 continue
             adviceStates = self.cfg.getItemAdviceStatesForOrg(org_uid)
             if destination_state in adviceStates:
