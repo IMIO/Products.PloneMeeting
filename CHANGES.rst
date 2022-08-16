@@ -61,6 +61,10 @@ Changelog
 - Added possibility to make a committee selectable only on an item and
   not on a meeting.
   [gbastien]
+- Added adaptable method `MeetingItem._annex_decision_addable_states_after_validation`
+  that will manage item states in which annex decision may be added after the
+  validation process so since the `validated` state until the end of the item WF.
+  [gbastien]
 
 4.2rc30 (2022-07-01)
 --------------------

@@ -2970,6 +2970,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for extra_marker in extra_markers:
             self.REQUEST.set(extra_marker, True)
 
+    def _annex_decision_addable_states_after_validation(self, cfg):
+        '''See doc in interfaces.py.'''
+        return cfg.getItemDecidedStates()
+
     security.declareProtected(ModifyPortalContent, 'setCategory')
 
     def setCategory(self, value, **kwargs):
@@ -6704,7 +6708,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not org_uid:
             return
         apply_meetingmanagers_access, suffix_roles = compute_item_roles_to_assign_to_suffixes(
-            cfg, item_state, org_uid)
+            cfg, self, item_state, org_uid)
 
         # apply local roles to computed suffixes
         self._assign_roles_to_group_suffixes(org_uid, suffix_roles)
