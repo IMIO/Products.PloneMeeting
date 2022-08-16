@@ -1242,7 +1242,8 @@ class BaseItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
                 # roles that may edit
                 edit_roles = itemWF.states[review_state].permission_roles[ModifyPortalContent]
                 # suffixes information for review_state
-                roles_of_suffixes = compute_item_roles_to_assign_to_suffixes(self.cfg, review_state)[1]
+                roles_of_suffixes = compute_item_roles_to_assign_to_suffixes(
+                    self.cfg, None, review_state)[1]
                 # keep suffixes having relevant roles
                 suffixes = []
                 for suffix, roles in roles_of_suffixes.items():

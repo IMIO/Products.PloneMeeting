@@ -2012,13 +2012,14 @@ def get_item_validation_wf_suffixes(cfg, org_uid=None, only_enabled=True):
     return suffixes
 
 
-def compute_item_roles_to_assign_to_suffixes_cachekey(method, cfg, item_state, org_uid=None):
+def compute_item_roles_to_assign_to_suffixes_cachekey(method, cfg, item, item_state, org_uid=None):
     '''cachekey method for compute_item_roles_to_assign_to_suffixes.'''
+    # we do not use item in the key, cfg and item_state is sufficient
     return cfg.getId(), cfg.modified(), item_state, org_uid
 
 
 @ram.cache(compute_item_roles_to_assign_to_suffixes_cachekey)
-def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org_uid=None):
+def compute_item_roles_to_assign_to_suffixes(cfg, item, item_state, org_uid=None):
     """ """
     apply_meetingmanagers_access = True
     suffix_roles = {}
@@ -2079,10 +2080,11 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org_uid=None):
         # we also give the Contributor except to 'observers'
         # so every editors roles get the "PloneMeeting: Add decision annex"
         # permission that let add decision annex
-        item_is_decided = item_state in cfg.getItemDecidedStates()
+        may_add_decision_annex = item_state in \
+            item.adapted()._annex_decision_addable_states_after_validation(cfg)
         for suffix in get_item_validation_wf_suffixes(cfg, org_uid):
             given_roles = ['Reader']
-            if item_is_decided and suffix != 'observers':
+            if may_add_decision_annex and suffix != 'observers':
                 given_roles.append('Contributor')
             suffix_roles[suffix] = given_roles
 
