@@ -70,8 +70,8 @@ class CategorizedAnnexesView(CategorizedTabView):
         # compute show annexes here and display a message to the (Meeting)Managers
         # if not able to add annexes because nothing found in annex vocab nor annexDecision vocab
         annex_vocab, self._showAddAnnex = self.showAddAnnex()
-        annexDecision_vocab, self._showAddAnnexDecision = self.showAddAnnexDecision()
-        if not len(annex_vocab) and not len(annexDecision_vocab) and self.tool.isManager(self.cfg):
+        self.annexDecision_vocab, self._showAddAnnexDecision = self.showAddAnnexDecision()
+        if not len(annex_vocab) and not len(self.annexDecision_vocab) and self.tool.isManager(self.cfg):
             api.portal.show_message(
                 _('The configuration does not let you add annexes.'),
                 request=self.request)
@@ -118,7 +118,7 @@ class CategorizedAnnexesView(CategorizedTabView):
            are some decisionAnnex annex types available in the configuration."""
         if self.context.__class__.__name__ == 'MeetingItem' and \
             (get_annexes(self.context, portal_types=['annexDecision']) or
-             self._showAddAnnexDecision):
+             self._showAddAnnexDecision or len(self.annexDecision_vocab)):
             return True
         return False
 

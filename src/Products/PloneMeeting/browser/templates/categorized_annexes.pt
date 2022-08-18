@@ -46,7 +46,7 @@
         </div>
       </fieldset>
 
-      <fieldset tal:condition="view/showDecisionAnnexesSection">
+      <fieldset tal:condition="python: view.showDecisionAnnexesSection()">
         <legend>
           <a name="annexes_decision"><span i18n:translate="">AnnexesDecisionShort</span></a>
           <tal:links condition="python: view._showAddAnnexDecision">
