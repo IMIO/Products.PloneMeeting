@@ -344,7 +344,9 @@ class MeetingItemWorkflowConditions(object):
                 down_or_up = down_or_up_wf(advice_obj)
                 if down_or_up:
                     res = 'wait_advices_{0}_from.png'.format(down_or_up), \
-                        'icon_help_waiting_advices_{0}'.format(down_or_up)
+                        translate('icon_help_waiting_advices_{0}'.format(down_or_up),
+                                  domain="PloneMeeting",
+                                  context=self.context.REQUEST)
         return res
 
     security.declarePublic('mayValidate')
@@ -653,9 +655,10 @@ class MeetingItemWorkflowConditions(object):
             # it went to the end as well
             advice_obj = self.context.getAdviceObj(adviceInfo['id'])
             # when using the advice WF with signed, the WF transition is "signFinancialAdvice"
-            last_step = getLastWFAction(advice_obj, 'signFinancialAdvice')
-            last_asked_again = getLastWFAction(advice_obj, 'backToAdviceInitialState')
-            if not last_step or (last_asked_again and last_step['time'] < last_asked_again['time']):
+            # we will get the last step signed or asked again if exist
+            last_step = getLastWFAction(
+                advice_obj, ['signFinancialAdvice', 'backToAdviceInitialState'])
+            if not last_step or last_step['action'] != 'signFinancialAdvice':
                 res = True
         return res
 
