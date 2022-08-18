@@ -65,6 +65,12 @@ Changelog
   that will manage item states in which annex decision may be added after the
   validation process so since the `validated` state until the end of the item WF.
   [gbastien]
+- Added WF adaptation `waiting_advices_given_and_signed_advices_required_to_validate`
+  that will check if necessary advice reached their WF last step.
+  This is an answer to rare case where advice is not given `completely` and item was
+  validated, now if advice WF last step was no reached, it will not be possible to
+  validate the item.
+  [gbastien]
 
 4.2rc30 (2022-07-01)
 --------------------

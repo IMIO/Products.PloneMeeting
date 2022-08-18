@@ -91,6 +91,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                           'waiting_advices_from_every_val_levels',
                           'waiting_advices_from_last_val_level',
                           'waiting_advices_given_advices_required_to_validate',
+                          'waiting_advices_given_and_signed_advices_required_to_validate',
                           'waiting_advices_proposing_group_send_back'])
 
     def test_pm_WFA_appliedOnMeetingConfigEdit(self):

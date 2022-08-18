@@ -649,6 +649,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     def _activate_wfas(self, wfas, cfg=None, keep_existing=False):
         """Activate given p_wfas, we clean wfas, apply,
            then set given p_wfas and apply again."""
+        if isinstance(wfas, basestring):
+            wfas = [wfas]
         currentUser = self.member.getId()
         self.changeUser('siteadmin')
         if cfg is None:
@@ -665,6 +667,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
 
     def _deactivate_wfas(self, wfas, cfg=None):
         """Deactivate given p_wfas."""
+        if isinstance(wfas, basestring):
+            wfas = [wfas]
         currentUser = self.member.getId()
         self.changeUser('siteadmin')
         if cfg is None:
