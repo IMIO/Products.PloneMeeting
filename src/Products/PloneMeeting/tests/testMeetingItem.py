@@ -1463,6 +1463,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # useful when test executed with custom profile
         self._setUpDefaultItemWFValidationLevels(cfg)
         cfg2 = self.meetingConfig2
+        self._setUpDefaultItemWFValidationLevels(cfg2)
         cfg2Id = cfg2.getId()
         cfg2.setUseGroupsAsCategories(True)
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
@@ -1480,7 +1481,7 @@ class testMeetingItem(PloneMeetingTestCase):
         autoItem.setDecision('<p>My decision</p>', mimetype='text/html')
         autoItem.setOtherMeetingConfigsClonableTo((cfg2Id,))
         # do not use validateItem or it is done as Manager and transitions are triggered
-        self.proposeItem(autoItem)
+        self.do(autoItem, 'propose')
         self.changeUser('pmReviewer1')
         self.do(autoItem, 'validate')
         self.changeUser('pmCreator1')
@@ -1494,7 +1495,7 @@ class testMeetingItem(PloneMeetingTestCase):
         autoItem2 = self.create('MeetingItem')
         autoItem2.setDecision('<p>My decision</p>', mimetype='text/html')
         autoItem2.setOtherMeetingConfigsClonableTo((cfg2Id,))
-        self.proposeItem(autoItem2)
+        self.do(autoItem2, 'propose')
         self.changeUser('pmManager')
         self.do(autoItem2, 'validate')
         clonedAutoItem2 = autoItem2.getItemClonedToOtherMC(cfg2Id)
@@ -4577,13 +4578,13 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setCategory('')
         self.changeUser('pmManager')
         first_tr = self.get_transitions_for_proposing_item(first_level=True)[0]
-        self.assertFalse(first_tr in self.transitions(item))
+        self.assertNotIn(first_tr, self.transitions(item))
         actions_panel._transitions = None
         no_category_rendered_actions_panel = actions_panel()
         self.assertNotEqual(no_category_rendered_actions_panel, rendered_actions_panel)
         item.setCategory(originalCategory)
         item._update_after_edit()
-        self.assertTrue(first_tr in self.transitions(item))
+        self.assertIn(first_tr, self.transitions(item))
         # changed again, this time we get same result as originally
         self.changeUser('pmCreator1')
         actions_panel._transitions = None
@@ -4745,7 +4746,7 @@ class testMeetingItem(PloneMeetingTestCase):
         rev_users = rev_group.getMemberIds()
         self._removeAllMembers(rev_group, rev_users)
         # now user able to validate
-        self.assertTrue("validate" in self.transitions(item))
+        self.assertIn("validate", self.transitions(item))
         actions_panel = item.restrictedTraverse('@@actions_panel')
         afterUserGroupsEdit_rendered_actions_panel = actions_panel()
         self.assertNotEqual(beforeUserGroupsEdit_rendered_actions_panel,

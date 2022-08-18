@@ -1066,10 +1066,17 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.changeUser('pmManager')
         cfg_id = self.meetingConfig.getId()
         cfg2_id = self.meetingConfig2.getId()
+        mmanagers_group_ids = [
+            get_plone_group_id(cfg_id, MEETINGMANAGERS_GROUP_SUFFIX),
+            get_plone_group_id(cfg2_id, MEETINGMANAGERS_GROUP_SUFFIX)]
+        # in some setup we have 3 MeetingConfigs
+        if hasattr(self, "meetingConfig3"):
+            mmanagers_group_ids.append(
+                get_plone_group_id(self.meetingConfig3.getId(), MEETINGMANAGERS_GROUP_SUFFIX))
+
         self.assertEqual(
             sorted(self.tool.get_filtered_plone_groups_for_user(suffixes=['meetingmanagers'])),
-            sorted([get_plone_group_id(cfg_id, MEETINGMANAGERS_GROUP_SUFFIX),
-                    get_plone_group_id(cfg2_id, MEETINGMANAGERS_GROUP_SUFFIX)]))
+            sorted(mmanagers_group_ids))
 
         # works also when using api.env.adopt_user like it is the case
         # in MeetingItem.setHistorizedTakenOverBy

@@ -364,6 +364,10 @@ class IMeetingItemDocumentation:
     def _bypass_meeting_closed_check_for(self, fieldName):
         """Adaptable method that let bypass the
            mayQuickEdit.bypassMeetingClosedCheck for given p_fieldName."""
+    def _annex_decision_addable_states_after_validation(self, cfg):
+        """Return states in which annex decision are addable in the WF states after
+           the validation process (so when item is validated and after).
+           By default this will be when item is decided."""
 
 
 class IMeetingItemWorkflowConditions(Interface):

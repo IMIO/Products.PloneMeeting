@@ -225,10 +225,10 @@ class testSetup(PloneMeetingTestCase):
     def test_pm_VersionableTypes(self):
         """Make sure every Plone default types are not more versionable."""
         portal_repository = api.portal.get_tool('portal_repository')
-        self.assertEqual(portal_repository.getVersionableContentTypes(),
-                         [u'annex', u'annexDecision', u'meetingadvice'])
-        self.assertEqual(sorted(portal_repository._version_policy_mapping.keys()),
-                         [u'annex', u'annexDecision', u'meetingadvice'])
+        # there could be several meetingadvice types, all must be versionable
+        versioned = sorted([u'annex', u'annexDecision'] + self.tool.getAdvicePortalTypeIds())
+        self.assertEqual(sorted(portal_repository.getVersionableContentTypes()), versioned)
+        self.assertEqual(sorted(portal_repository._version_policy_mapping.keys()), versioned)
 
     def test_pm_EnsureSolrActivated(self):
         """ """

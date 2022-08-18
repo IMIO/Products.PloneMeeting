@@ -344,7 +344,9 @@ class MeetingItemWorkflowConditions(object):
                 down_or_up = down_or_up_wf(advice_obj)
                 if down_or_up:
                     res = 'wait_advices_{0}_from.png'.format(down_or_up), \
-                        'icon_help_waiting_advices_{0}'.format(down_or_up)
+                        translate('icon_help_waiting_advices_{0}'.format(down_or_up),
+                                  domain="PloneMeeting",
+                                  context=self.context.REQUEST)
         return res
 
     security.declarePublic('mayValidate')
@@ -641,12 +643,31 @@ class MeetingItemWorkflowConditions(object):
                 return True
         return False
 
+    def _advice_is_to_give(self, adviceInfo):
+        """ """
+        res = False
+        if adviceInfo['type'] in (NOT_GIVEN_ADVICE_VALUE, 'asked_again', ):
+            res = True
+        elif "waiting_advices_given_and_signed_advices_required_to_validate" in \
+                self.cfg.getWorkflowAdaptations():
+            # check that the WF went to the last advice WF state
+            # and also if advice was asked again, that last time it was asked
+            # it went to the end as well
+            advice_obj = self.context.getAdviceObj(adviceInfo['id'])
+            # when using the advice WF with signed, the WF transition is "signFinancialAdvice"
+            # we will get the last step signed or asked again if exist
+            last_step = getLastWFAction(
+                advice_obj, ['signFinancialAdvice', 'backToAdviceInitialState'])
+            if not last_step or last_step['action'] != 'signFinancialAdvice':
+                res = True
+        return res
+
     def _hasAdvicesToGive(self, destination_state):
         """Check if there are advice to give in p_destination_state."""
         hasAdvicesToGive = False
         for org_uid, adviceInfo in self.context.adviceIndex.items():
             # only consider advices to give
-            if adviceInfo['type'] not in (NOT_GIVEN_ADVICE_VALUE, 'asked_again', ):
+            if not self._advice_is_to_give(adviceInfo):
                 continue
             adviceStates = self.cfg.getItemAdviceStatesForOrg(org_uid)
             if destination_state in adviceStates:
@@ -2969,6 +2990,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('need_MeetingItem_update_committees', True)
         for extra_marker in extra_markers:
             self.REQUEST.set(extra_marker, True)
+
+    def _annex_decision_addable_states_after_validation(self, cfg):
+        '''See doc in interfaces.py.'''
+        return cfg.getItemDecidedStates()
 
     security.declareProtected(ModifyPortalContent, 'setCategory')
 
@@ -6704,7 +6729,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not org_uid:
             return
         apply_meetingmanagers_access, suffix_roles = compute_item_roles_to_assign_to_suffixes(
-            cfg, item_state, org_uid)
+            cfg, self, item_state, org_uid)
 
         # apply local roles to computed suffixes
         self._assign_roles_to_group_suffixes(org_uid, suffix_roles)
