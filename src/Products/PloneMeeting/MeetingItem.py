@@ -2991,9 +2991,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for extra_marker in extra_markers:
             self.REQUEST.set(extra_marker, True)
 
-    def _annex_decision_addable_states_after_validation(self, cfg):
+    def _annex_decision_addable_states_after_validation(self, cfg, item_state):
         '''See doc in interfaces.py.'''
         return cfg.getItemDecidedStates()
+
+    def may_add_annex_decision(self, cfg, item_state):
+        """ """
+        addable_states = self.adapted()._annex_decision_addable_states_after_validation(cfg, item_state)
+        return addable_states == "*" or item_state in addable_states
 
     security.declareProtected(ModifyPortalContent, 'setCategory')
 

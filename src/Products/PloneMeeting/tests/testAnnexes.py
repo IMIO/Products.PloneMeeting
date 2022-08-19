@@ -1031,7 +1031,8 @@ class testAnnexes(PloneMeetingTestCase):
 
     def test_pm_ChangeAnnexPosition(self):
         """Annexes are orderable by the user able to add annexes."""
-        self._removeConfigObjectsFor(self.meetingConfig)
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', decision=self.decisionText)
         annex1 = self.addAnnex(item)
@@ -1050,11 +1051,15 @@ class testAnnexes(PloneMeetingTestCase):
         self.validateItem(item)
         self.assertEqual(item.query_state(), 'validated')
         self.assertFalse(self.hasPermission(AddAnnex, item))
-        self.assertFalse(self.hasPermission(AddAnnexDecision, item))
-        self.assertRaises(Unauthorized,
-                          item.folder_position_typeaware,
-                          position='up',
-                          id=annex1.getId())
+        # adding decision annex may be adapted
+        if item.may_add_annex_decision(cfg, item.query_state()):
+            self.assertTrue(self.hasPermission(AddAnnexDecision, item))
+        else:
+            self.assertFalse(self.hasPermission(AddAnnexDecision, item))
+            self.assertRaises(Unauthorized,
+                              item.folder_position_typeaware,
+                              position='up',
+                              id=annex1.getId())
         # creators may manage decision annexes on decided item
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
