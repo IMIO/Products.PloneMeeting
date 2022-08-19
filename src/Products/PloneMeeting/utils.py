@@ -2080,11 +2080,9 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item, item_state, org_uid=None
         # we also give the Contributor except to 'observers'
         # so every editors roles get the "PloneMeeting: Add decision annex"
         # permission that let add decision annex
-        addable_states = item.adapted()._annex_decision_addable_states_after_validation(cfg)
-        may_add_decision_annex = "*" in addable_states or item_state in addable_states
         for suffix in get_item_validation_wf_suffixes(cfg, org_uid):
             given_roles = ['Reader']
-            if may_add_decision_annex and suffix != 'observers':
+            if item.may_add_annex_decision(cfg, item_state) and suffix != 'observers':
                 given_roles.append('Contributor')
             suffix_roles[suffix] = given_roles
 

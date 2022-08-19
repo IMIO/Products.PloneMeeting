@@ -1233,7 +1233,11 @@ class testWFAdaptations(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.assertEqual(item.query_state(), 'validated')
         # disabled item validation levels does not have access
-        self.assertEqual(item.__ac_local_roles__[self.developers_creators], ['Reader'])
+        # adding decision annex may be adapted
+        creators_roles = ['Reader']
+        if item.may_add_annex_decision(self.meetingConfig, item.query_state()):
+            creators_roles.append('Contributor')
+        self.assertEqual(item.__ac_local_roles__[self.developers_creators], creators_roles)
         self.assertEqual(item.__ac_local_roles__[self.developers_observers], ['Reader'])
         self.assertFalse(self.developers_reviewers in item.__ac_local_roles__)
 
@@ -1246,10 +1250,14 @@ class testWFAdaptations(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.assertEqual(item.query_state(), 'validated')
         # creators always have access
-        self.assertEqual(item.__ac_local_roles__[self.developers_creators], ['Reader'])
+        # adding decision annex may be adapted
+        creators_roles = ['Reader']
+        if item.may_add_annex_decision(self.meetingConfig, item.query_state()):
+            creators_roles.append('Contributor')
+        self.assertEqual(item.__ac_local_roles__[self.developers_creators], creators_roles)
         self.assertEqual(item.__ac_local_roles__[self.developers_observers], ['Reader'])
         # extra_suffixes have access
-        self.assertEqual(item.__ac_local_roles__[self.developers_reviewers], ['Reader'])
+        self.assertEqual(item.__ac_local_roles__[self.developers_reviewers], creators_roles)
         # other suffixes do not have access
         self.assertFalse(self.developers_prereviewers in item.__ac_local_roles__)
 
