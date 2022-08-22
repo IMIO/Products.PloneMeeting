@@ -1,5 +1,8 @@
 <!-- Force insert normal checkbox -->
-<div id="forceInsertNormalInput" style="float: right" i18n:domain="PloneMeeting">
+<div id="forceInsertNormalInput"
+     tal:condition="python: view.show()"
+     style="float: right"
+     i18n:domain="PloneMeeting">
   <script type="text/javascript">
     createCookie('pmForceInsertNormal', false);
   </script>
@@ -13,4 +16,7 @@
          class="blurrable">
   <label for="forceInsertNormal" i18n:translate="">Insert items among normal items</label>
 </div>
+<script type="text/javascript">
+  updateNumberOfAvailableItems();
+</script>
 <div style="clear: both" />

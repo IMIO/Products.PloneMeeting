@@ -569,7 +569,7 @@ function moveItem(baseUrl, moveType, tag) {
 }
 
 function isMeeting() {
-    if ($("body.template-meeting_view").length) {
+    if ($("body.template-meeting_view").length || $("body.template-meeting_available_items_view").length) {
         return true;
     }
     return false;
@@ -581,11 +581,16 @@ $(document).on('ap_transition_triggered', synchronizeMeetingFaceteds);
 // synchronize faceted displayed on the meeting_view, available items and presented items
 function synchronizeMeetingFaceteds(infos) {
 
-    if (isMeeting) {
+    if (isMeeting()) {
 
         // refresh iframe 'available items' while removing an item
         if ((infos.transition === 'backToValidated') &&
             ((window.frames[0]) && (window.frames[0] != window))) {
+          /* if available collapsible closed, open it, this avoids problem
+             with iframeresizer not correctly resized */
+          if ($('h2.available-items.active').length == 0) {
+            $('h2.available-items', parent.document).click();
+          }
           window.frames[0].Faceted.URLHandler.hash_changed();
           updateNumberOfItems();
         } else if ((infos.transition === 'present') && (window != parent)) {
@@ -628,6 +633,18 @@ function refreshAfterDelete(event) {
   css_id = event.tag.id;
   if (css_id == 'delete-vote-action') {
     refresh_attendees(highlight='.vote-value');
+  }
+}
+
+function updateNumberOfAvailableItems() {
+  // update the number of available items displayed on the meeting_view when
+  // available items ajax query is successfull, we may get the search-results-number
+  results = $('#search-results-number');
+  if (results.length) {
+    $('span.meeting_number_of_available_items', parent.document)[0].innerHTML = results.text();
+  } else {
+    $('span.meeting_number_of_available_items', parent.document)[0].innerHTML = "0";
+    $('h2.available-items', parent.document).click();
   }
 }
 

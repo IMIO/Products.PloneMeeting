@@ -20,8 +20,13 @@ class ForceInsertNormal(ViewletBase):
        items to present in a meeting on the meeting view.'''
 
     def available(self):
+        """Always available on available items because we have there JS
+           computing number of available items, we rely on the show method."""
+        return displaying_available_items(self.context)
+
+    def show(self):
         """ """
-        return displaying_available_items(self.context) and self.view.brains
+        return  self.view.brains
 
     def enabled(self):
         """Is the checkbox enabled?  Only necessary if meeting is in a late state."""

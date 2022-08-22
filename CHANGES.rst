@@ -71,6 +71,11 @@ Changelog
   validated, now if advice WF last step was no reached, it will not be possible to
   validate the item.
   [gbastien]
+- On the meeting view, when no available items, close the `available-items`
+  collapsible so it takes less place and display the number of available items
+  like it is already the case for presented items so it is clear why the
+  collpasible is closed.
+  [gbastien]
 
 4.2rc30 (2022-07-01)
 --------------------
