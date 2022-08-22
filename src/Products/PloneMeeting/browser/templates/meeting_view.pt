@@ -164,8 +164,10 @@
             style="width: 100%; padding-bottom: 1em;">
     </iframe>
 
+    <tal:comment replace="nothing">Options are tested so tooltipsters and overlays are correctly displayed in the iframe and it works
+    with Firefox and Chrome also when collapsible is closed/opened several times</tal:comment>
     <script>
-        $('iframe.auto-height').iFrameResize({log:false, scrolling:false, heightCalculationMethod:'lowestElement'})
+        $('iframe.auto-height').iFrameResize({log:false, scrolling:false, heightCalculationMethod:'lowestElement', minHeight: '120px'})
     </script>
   </tal:availableItems>
 
