@@ -1905,12 +1905,36 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(cfg.getLastMeetingNumber(), 0)
         self.assertEqual(m1.meeting_number, -1)
         self.publishMeeting(m1)
+        # field not used so not initialized
+        self.assertEqual(m1.meeting_number, -1)
+        self.assertEqual(cfg.getLastMeetingNumber(), 0)
+        # now use the field
+        self._enableField('meeting_number', related_to='Meeting')
+        self.backToState(m1, "created")
+        self.publishMeeting(m1)
         self.assertEqual(m1.meeting_number, 1)
         self.assertEqual(cfg.getLastMeetingNumber(), 1)
         m2 = self._createMeetingWithItems()
         self.publishMeeting(m2)
         self.assertEqual(m2.meeting_number, 2)
         self.assertEqual(cfg.getLastMeetingNumber(), 2)
+        # when deleting last meeting, cfg is updated
+        m3 = self._createMeetingWithItems()
+        self.publishMeeting(m3)
+        self.assertEqual(cfg.getLastMeetingNumber(), 3)
+        self.deleteAsManager(m3.UID())
+        self.assertEqual(cfg.getLastMeetingNumber(), 2)
+        # not updated when deleting a meeting in between
+        # but in this case, a warning message is displayed
+        self.deleteAsManager(m1.UID())
+        self.assertEqual(cfg.getLastMeetingNumber(), 2)
+        # when activated, a new year meeting_number is reinit to 1
+        cfg.setYearlyInitMeetingNumbers(('meeting_number', ))
+        next_year = datetime.now().year + 1
+        m4 = self.create('Meeting', date=datetime(next_year, 1, 2))
+        self.publishMeeting(m4)
+        self.assertEqual(m4.meeting_number, 1)
+        self.assertEqual(cfg.getLastMeetingNumber(), 1)
 
     def test_pm_Number_of_items(self):
         '''Tests that number of items returns number of normal and late items.'''
@@ -2046,7 +2070,7 @@ class testMeetingType(PloneMeetingTestCase):
 
         # if a meeting is not in a state accepting items, it does not accept items anymore
         self.closeMeeting(m1)
-        self.assertTrue(m1.query_state() not in cfg.getMeetingStatesAcceptingItemsForMeetingManagers())
+        self.assertNotIn(m1.query_state(), cfg.getMeetingStatesAcceptingItemsForMeetingManagers())
         m1_query = queryparser.parseFormquery(m1, m1._available_items_query())
         self.assertFalse(self.catalog(m1_query))
 
@@ -2455,28 +2479,6 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(len(errors), 1)
         self.assertEqual(errors[0].message, pre_meeting_date_error_msg)
         data['pre_meeting_date'] = data['date'] - timedelta(days=1)
-        # start_date must be > date
-        data['start_date'] = data['date'] - timedelta(days=1)
-        start_date_date_error_msg = translate(
-            'start_date_before_meeting_date',
-            domain='PloneMeeting',
-            context=self.request)
-        errors = invariants.validate(data)
-        self.request.set('validate_dates_done', False)
-        self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0].message, start_date_date_error_msg)
-        data['start_date'] = data['date'] + timedelta(days=1)
-        # end_date must be > date
-        data['end_date'] = data['date'] - timedelta(days=1)
-        end_date_date_error_msg = translate(
-            'end_date_before_meeting_date',
-            domain='PloneMeeting',
-            context=self.request)
-        errors = invariants.validate(data)
-        self.request.set('validate_dates_done', False)
-        self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0].message, end_date_date_error_msg)
-        data['end_date'] = data['date'] + timedelta(days=1)
         # end_date must be >= start_date
         data['start_date'] = data['date'] + timedelta(days=2)
         data['end_date'] = data['date'] + timedelta(days=1)
@@ -2876,11 +2878,11 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(meeting2.get_previous_meeting(), meeting3)
         self.assertFalse(meeting3.get_previous_meeting())
 
-        # very old meeting, previous meeting is searched by default with max 60 days
-        meeting4 = self.create('Meeting', date=meeting3.date - timedelta(days=61))
+        # very old meeting, previous meeting is searched by default with max 180 days
+        meeting4 = self.create('Meeting', date=meeting3.date - timedelta(days=181))
         # still no meeting
         self.assertFalse(meeting3.get_previous_meeting())
-        self.assertEqual(meeting3.get_previous_meeting(interval=61), meeting4)
+        self.assertEqual(meeting3.get_previous_meeting(interval=181), meeting4)
 
     def test_pm_MeetingStrikedAssembly(self):
         """Test use of utils.toHTMLStrikedContent for assembly."""
@@ -2956,7 +2958,7 @@ class testMeetingType(PloneMeetingTestCase):
 
         # all normal numbered items
         unrestricted_view = meeting3.restrictedTraverse('@@pm_unrestricted_methods')
-        self.assertEqual(unrestricted_view.findFirstItemNumberForMeeting(meeting3), 15)
+        self.assertEqual(unrestricted_view.findFirstItemNumber(), 15)
 
         # put some subnumbers for meeting1
         meeting1_item2 = meeting1.get_items(ordered=True)[1]
@@ -2967,10 +2969,41 @@ class testMeetingType(PloneMeetingTestCase):
         change_order_view('number', '5.1')
         self.assertEqual([item.getItemNumber() for item in meeting1.get_items(ordered=True)],
                          [100, 101, 200, 300, 400, 500, 501])
-        # call to 'findFirstItemNumberForMeeting' is memoized
+        # call to 'findFirstItemNumber' is memoized
         self.cleanMemoize()
         # now meeting1 last number is considered 5
-        self.assertEqual(unrestricted_view.findFirstItemNumberForMeeting(meeting3), 13)
+        self.assertEqual(unrestricted_view.findFirstItemNumber(), 13)
+
+    def test_pm_FirstItemNumberSetOnDecide(self):
+        """First item number is set when meeting is decided if it was still -1,
+           either it is left unchanged."""
+        self.changeUser('pmManager')
+        m1 = self.create('Meeting')
+        self.assertEqual(m1.first_item_number, -1)
+        self.decideMeeting(m1)
+        # not computed if not used
+        self.assertEqual(m1.first_item_number, -1)
+        # now use the field
+        self._enableField('first_item_number', related_to='Meeting')
+        self.backToState(m1, "created")
+        self.decideMeeting(m1)
+        self.assertEqual(m1.first_item_number, 1)
+        m2 = self.create('Meeting')
+        self.assertEqual(m2.first_item_number, -1)
+        self.decideMeeting(m2)
+        self.assertEqual(m2.first_item_number, 3)
+        # if first_item_number is set it is left unchanged
+        m3 = self.create('Meeting', first_item_number=135)
+        self.assertEqual(m3.first_item_number, 135)
+        self.decideMeeting(m3)
+        self.assertEqual(m3.first_item_number, 135)
+        # first meeting of the year first_item_number may be auto reinit
+        self.meetingConfig.setYearlyInitMeetingNumbers(('first_item_number', ))
+        next_year = datetime.now().year + 1
+        m4 = self.create('Meeting', date=datetime(next_year, 1, 2))
+        self.assertEqual(m4.first_item_number, -1)
+        self.decideMeeting(m4)
+        self.assertEqual(m4.first_item_number, 1)
 
     def test_pm_MeetingAddImagePermission(self):
         """A user able to edit at least one RichText field must be able to add images."""
@@ -3895,6 +3928,33 @@ class testMeetingType(PloneMeetingTestCase):
         meeting = self.create('Meeting', date=datetime(2021, 8, 10))
         self.assertEqual(meeting.validation_deadline, datetime(2021, 8, 5, 9, 30))
         self.assertEqual(meeting.freeze_deadline, datetime(2021, 8, 9, 14, 30))
+
+    def test_pm_Update_first_item_number(self):
+        """The the helper Meeting.update_first_item_number that will take in charge"""
+        cfg = self.meetingConfig
+        self._enableField('first_item_number', related_to='Meeting')
+        cfg.setUseGroupsAsCategories(False)
+        self.changeUser('pmManager')
+        meeting1 = self._createMeetingWithItems(meetingDate=datetime(2022, 6, 6))
+        meeting2 = self._createMeetingWithItems()
+        self.assertEqual(meeting1.first_item_number, -1)
+        self.assertEqual(meeting2.first_item_number, -1)
+        self.assertEqual(len(meeting1.get_items()), 5)
+        # update meeting2 then meeting1
+        meeting2.update_first_item_number()
+        self.assertEqual(meeting2.first_item_number, 6)
+        meeting1.update_first_item_number()
+        self.assertEqual(meeting1.first_item_number, 1)
+        # now pass an arbitrary additional query to compute first_item_number
+        # no change for meeting1 as first meeting
+        meeting1.update_first_item_number(
+            get_items_additional_catalog_query={'getCategory': 'development'}, force=True)
+        self.assertEqual(meeting1.first_item_number, 1)
+        # but as there are 2 items using category 'development' for meeting1
+        # the first item number is 3
+        meeting2.update_first_item_number(
+            get_items_additional_catalog_query={'getCategory': 'development'}, force=True)
+        self.assertEqual(meeting2.first_item_number, 3)
 
 
 def test_suite():

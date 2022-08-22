@@ -6,6 +6,7 @@ from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.supermodel import model
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.events import _invalidateAttendeesRelatedCache
 from zope import schema
 
 
@@ -44,6 +45,10 @@ class PMPerson(Person):
         for held_position in held_positions:
             if not position_type or held_position.position_type == position_type:
                 return held_position
+
+    def _invalidateCachedMethods(self):
+        '''Clean cache for vocabularies using held_positions.'''
+        _invalidateAttendeesRelatedCache()
 
 
 class PMPersonSchemaPolicy(DexteritySchemaPolicy):

@@ -7,6 +7,11 @@
    margin: 0.5em 0;
 }
 
+/* make padding/margin under label in overlays work */
+div.overlay label {
+    display: inline-block;
+}
+
 /* background of secret items when displayed on the meeting */
 table.listing tbody tr.odd.meeting_item_privacy_secret td {
     background-color: #fffacd;
@@ -167,6 +172,8 @@ dl.portlet .ploneMeetingSelectDropdownIcon {
 #content div[id^='hook_'] table[style*='border:medium none'] tr td,
 #content div[id^='hook_'] table[style*='border-collapse:collapse; border:none'] tr th,
 #content div[id^='hook_'] table[style*='border-collapse:collapse; border:none'] tr td,
+#content div[id^='hook_'] table[style*='border-bottom:none'] tr th,
+#content div[id^='hook_'] table[style*='border-bottom:none'] tr td,
 body.cke_editable.cke_show_borders table[border='0'] tr th,
 body.cke_editable.cke_show_borders table[border='0'] tr td,
 #content div.static-infos table[border='0'] tr th,
@@ -398,19 +405,19 @@ div.viewlet_workflowstate span.state-pre_accepted {
 .state-pre_accepted {
    color: green !important;
 }
-div.viewlet_workflowstate span.state-transfered {
-    background-color: #6471A6;
-    border-color: #6471A6;
-}
-.state-transfered {
-   color: #6471A6 !important;
-}
 div.viewlet_workflowstate span.state-refused {
     background-color: violet;
     border-color: violet;
 }
 .state-refused {
    color: violet !important;
+}
+div.viewlet_workflowstate span.state-transfered {
+    background-color: #6471A6;
+    border-color: #6471A6;
+}
+.state-transfered {
+   color: #6471A6 !important;
 }
 
 /* Colors on transitions, used in the item wf history */
@@ -464,8 +471,9 @@ table td div.additional-infos {
 
 /* the number displayed in the table of annexes */
 .td_cell_number-column {
-    font-size: 80%;
+    font-size: 90%;
     color: &dtml-tableHeaderTextColor;;
+    text-align: right;
 }
 
 #faceted-form table.listing td.td_cell_advices {
@@ -620,6 +628,7 @@ div.hsGrey {
 
 /* Highlight that a value has been modified, for example
    the itemAssembly is overriden on a MeetingItem */
+a.highlightValue,
 p.highlightValue,
 span.highlightValue,
 dt.highlightValue span {
@@ -703,6 +712,7 @@ div.portletPloneMeetingHeaderIcons {
     font-size: 120%;
 }
 
+input:disabled:not(.notTriggerableTransitionButton),
 .input_disabled,
 input[readonly=""] {
     color: lightgrey !important;
@@ -807,6 +817,11 @@ body.template-meetingitem_view div#viewlet-below-content-body {
     padding: 0.5em;
     border-radius: 3px;
     margin: 0em;
+    pointer-events: none;
+}
+div.formControls > *,
+div#viewlet-below-content-body > * {
+    pointer-events: all;
 }
 
 /* try to hide viewlet when empty just working on FF for now... */
@@ -837,7 +852,7 @@ TD acronym {
     line-height: 1.25em;
 }
 
-acronym a {
+acronym {
     cursor: help;
     padding: 0;
 }
@@ -1959,9 +1974,17 @@ div.tooltipster-content table.actionspanel-no-style-table td.noPadding {
     padding-bottom: 2px;
     cursor: help;
 }
+
+#doc-generation-view img.tooltipster-available-mailing-lists {
+    cursor: pointer;
+}
+
 /* fix padding from 2px to px for attendee title when position redefined */
 #content span.tooltipster-meeting-item-redefined-position.link-help {
     padding-bottom: 1px;
+}
+#doc-generation-view img.tooltipster-available-mailing-lists {
+    cursor: pointer;
 }
 
 #content span.people-edit-signatory:before {
@@ -2188,13 +2211,13 @@ div#formfield-form-widgets-certified_signatures td select.select-widget {
     width: 100%;
 }
 
-a.portlet_pm_dashboard_link:first-of-type {
+a.portlet-pm-dashboard-link:first-of-type {
     margin-top: 1em;
 }
-a.portlet_pm_dashboard_link {
-    line-height: 2em;
+a.portlet-pm-dashboard-link {
+    line-height: 1em;
+    margin-bottom: 0.75em;
 }
-
 /* add some margin under fieldsets displayed in forms */
 body.template-base_edit #content fieldset,
 form#form fieldset {
@@ -2398,14 +2421,22 @@ table#meeting_users th.header-attendee-signatory {
 }
 
 div.select-all-vote-values {
-   position: absolute;
-   right: 14px;
-   padding-top: 25px;
+   float: right;
    font-weight: normal;
-   display: inline;
+   text-align: right;
+   margin-top: -40px;
+   margin-bottom: 0.5em;
+   margin-right: 0.5em;
+}
+div.select-all-vote-values span {
+    font-weight: bold;
 }
 div.select-all-vote-values span.option {
    display: inline;
+}
+/* hide the "votes" label in the itemvotes overlay */
+div#formfield-form-widgets-votes label.horizontal {
+    display: none;
 }
 /* make sure radio button is displayed on one line */
 div#formfield-form-widgets-votes td.cell-3 {
@@ -2414,7 +2445,7 @@ div#formfield-form-widgets-votes td.cell-3 {
 }
 table#form-widgets-votes td,
 table#form-widgets-votes th {
-   padding: 0.5em;
+   padding: 0.35em;
 }
 div#formfield-form-widgets-linked_to_previous {
    display: none;
@@ -2536,6 +2567,16 @@ body.template-meeting_available_items_view div#content-core #faceted-form div#fa
 div#held-position-back-refs-container {
     padding-bottom: 1em;
     padding-top: 1em;
+}
+
+span.link-separator::before {
+  content: "\7c";
+  font-family: "Font Awesome 5 Free";
+  color: &dtml-portletHeaderBackgroundColor;;
+}
+
+div#forceInsertNormalInput {
+    margin-bottom: 0.5em;
 }
 
 /* </dtml-with> */

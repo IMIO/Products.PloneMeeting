@@ -7,8 +7,7 @@
 # GNU General Public License (GPL)
 #
 
-import monkey  # noqa
-
+import monkey  # flake8: noqa
 from plone import api
 from plone.app.robotframework.testing import REMOTE_LIBRARY_BUNDLE_FIXTURE
 from plone.app.testing import FunctionalTesting

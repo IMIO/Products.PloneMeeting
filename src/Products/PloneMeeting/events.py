@@ -285,6 +285,23 @@ def _invalidateOrgRelatedCachedVocabularies():
     invalidate_cachekey_volatile_for('_users_groups_value', get_again=True)
 
 
+def _invalidateAttendeesRelatedCache(all=True, get_agains=[]):
+    '''Clean caches using attendees (person/held_positions).'''
+    # necessary when changing person/held_position
+    if all:
+        invalidate_cachekey_volatile_for(
+            "Products.PloneMeeting.vocabularies.allheldpositionsvocabularies")
+        invalidate_cachekey_volatile_for(
+            "Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignaturesRawFields")
+
+    invalidate_cachekey_volatile_for(
+        "Products.PloneMeeting.vocabularies.itemvotersvocabulary",
+        get_again="itemvotersvocabulary" in get_agains)
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures',
+        get_again="AsyncLoadMeetingAssemblyAndSignatures" in get_agains)
+
+
 def onOrgWillBeRemoved(current_org, event):
     '''Checks if the organization can be deleted:
       - it can not be linked to an existing MeetingItem;
@@ -1081,6 +1098,8 @@ def onMeetingCreated(meeting, event):
     meeting.item_signatories = PersistentMapping()
     # place to store item attendees changed position
     meeting.item_attendees_positions = PersistentMapping()
+    # place to store item attendees changed order
+    meeting.item_attendees_order = PersistentMapping()
     # place to store item votes
     meeting.item_votes = PersistentMapping()
     # place to store attendees when using contacts
@@ -1130,17 +1149,14 @@ def onMeetingModified(meeting, event):
         # invalidate last meeting modified
         invalidate_cachekey_volatile_for(
             'Products.PloneMeeting.Meeting.modified', get_again=True)
-        # invalidate item voters vocabulary in case new voters (un)selected
-        invalidate_cachekey_volatile_for(
-            'Products.PloneMeeting.vocabularies.itemvotersvocabulary', get_again=True)
-        # invalidate assembly async load on meeting
-        invalidate_cachekey_volatile_for(
-            'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures',
-            get_again=True)
+        # invalidate item voters in case new voters (un)selected, assembly async load on meeting
+        _invalidateAttendeesRelatedCache(all=False,
+                                         get_agains=["itemvotersvocabulary",
+                                                     "AsyncLoadMeetingAssemblyAndSignatures"])
         # invalidate assembly async load on item when using raw fields
         if not cfg.isUsingContacts():
             invalidate_cachekey_volatile_for(
-                'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignaturesRawFields',
+                "Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignaturesRawFields",
                 get_again=True)
         if need_reindex:
             meeting.reindexObject()
@@ -1196,6 +1212,18 @@ def onMeetingRemoved(meeting, event):
     for item_to_reindex in items_to_reindex:
         item_to_reindex.reindexObject(
             idxs=['preferred_meeting_uid', 'preferred_meeting_date'])
+    # update MeetingConfig.lastMeetingNumber if deleted meeting is the last
+    # anyway display a warning message if it was already set
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(meeting)
+    if cfg.getLastMeetingNumber() == meeting.meeting_number:
+        cfg.setLastMeetingNumber(cfg.getLastMeetingNumber() - 1)
+    if meeting.meeting_number or meeting.first_item_number:
+        api.portal.show_message(
+            _("meeting_removed_verify_numbers"),
+            request=meeting.REQUEST,
+            type="warning")
+
     # a Meeting date changed
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.Meeting.date', get_again=True)

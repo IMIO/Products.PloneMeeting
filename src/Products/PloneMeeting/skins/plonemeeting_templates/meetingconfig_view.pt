@@ -85,7 +85,7 @@
           <td tal:define="field python:here.getField('lastMeetingNumber')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('yearlyInitMeetingNumber')">
+          <td tal:define="field python:here.getField('yearlyInitMeetingNumbers')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td>
@@ -742,12 +742,10 @@
           <td tal:define="field python:here.getField('transitionsToConfirm')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('transitionsForPresentingAnItem')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
           <td tal:define="field python:here.getField('onTransitionFieldTransforms')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td></td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('onMeetingTransitionItemActionToExecute')">
@@ -1259,7 +1257,9 @@
           <td tal:define="field python:here.getField('voteCondition')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
+          <td tal:define="field python:here.getField('displayVotingGroup')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
           <td></td>
         </tr>
       </table>

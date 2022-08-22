@@ -31,6 +31,8 @@ from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToObject
+from natsort import humansorted
+from operator import attrgetter
 from persistent.list import PersistentList
 from plone import api
 from plone.app.portlets.portlets import navigation
@@ -57,7 +59,6 @@ from Products.CMFCore.Expression import Expression
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
-from Products.CMFPlone import PloneMessageFactory
 from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
@@ -174,7 +175,6 @@ ITEM_WF_STATE_ATTRS = [
     'itemManualSentToOtherMCStates',
     'recordItemHistoryStates']
 ITEM_WF_TRANSITION_ATTRS = [
-    'transitionsForPresentingAnItem',
     'transitionsReinitializingDelays',
     'transitionsToConfirm',
     'mailItemEvents']
@@ -278,19 +278,23 @@ schema = Schema((
             label_msgid='PloneMeeting_label_lastMeetingNumber',
             i18n_domain='PloneMeeting',
         ),
-        write_permission="PloneMeeting: Write risky config",
+        write_permission="PloneMeeting: Write harmless config",
     ),
-    BooleanField(
-        name='yearlyInitMeetingNumber',
-        default=defValues.yearlyInitMeetingNumber,
-        widget=BooleanField._properties['widget'](
-            description="YearlyInitMeetingNumber",
-            description_msgid="yearly_init_meeting_nb_descr",
-            label='Yearlyinitmeetingnumber',
-            label_msgid='PloneMeeting_label_yearlyInitMeetingNumber',
+    LinesField(
+        name='yearlyInitMeetingNumbers',
+        default=defValues.yearlyInitMeetingNumbers,
+        widget=MultiSelectionWidget(
+            description="YearlyInitMeetingNumbers",
+            description_msgid="yearly_init_meeting_numbers_descr",
+            label='Yearlyinitmeetingnumbers',
+            label_msgid='PloneMeeting_label_yearlyInitMeetingNumbers',
             i18n_domain='PloneMeeting',
+            format="checkbox",
         ),
+        enforceVocabulary=True,
+        multiValued=1,
         write_permission="PloneMeeting: Write risky config",
+        vocabulary_factory='Products.PloneMeeting.vocabularies.yearlyinitmeetingnumbersvocabulary',
     ),
     TextField(
         name='budgetDefault',
@@ -1239,20 +1243,6 @@ schema = Schema((
         default=defValues.transitionsToConfirm,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='transitionsForPresentingAnItem',
-        default=defValues.transitionsForPresentingAnItem,
-        widget=InAndOutWidget(
-            description="TransitionsForPresentingAnItem",
-            description_msgid="transitions_for_presenting_an_item_descr",
-            label='Transitionsforpresentinganitem',
-            label_msgid='PloneMeeting_label_transitionsForPresentingAnItem',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="workflow",
-        write_permission="PloneMeeting: Write risky config",
-        vocabulary='listEveryItemTransitions',
     ),
     DataGridField(
         name='onTransitionFieldTransforms',
@@ -2555,7 +2545,8 @@ schema = Schema((
                                      default='0'),
                      'enabled':
                         SelectColumn("Committee enabled?",
-                                     vocabulary="listBooleanVocabulary",
+                                     col_description="committees_enabled_col_description",
+                                     vocabulary="listCommitteesEnabled",
                                      default='1'), },
             label='Committees',
             label_msgid='PloneMeeting_label_committees',
@@ -2699,6 +2690,19 @@ schema = Schema((
         schemata="votes",
         write_permission="PloneMeeting: Write risky config",
     ),
+    BooleanField(
+        name='displayVotingGroup',
+        default=defValues.displayVotingGroup,
+        widget=BooleanField._properties['widget'](
+            description="DisplayVotingGroup",
+            description_msgid="display_voting_group_descr",
+            label='Displayvotinggroup',
+            label_msgid='PloneMeeting_label_displayVotingGroup',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="votes",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     LinesField(
         name='meetingItemTemplatesToStoreAsAnnex',
         widget=MultiSelectionWidget(
@@ -2825,6 +2829,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'waiting_advices_proposing_group_send_back',
                      'waiting_advices_adviser_may_validate',
                      'waiting_advices_given_advices_required_to_validate',
+                     'waiting_advices_given_and_signed_advices_required_to_validate',
                      'accepted_out_of_meeting',
                      'accepted_out_of_meeting_and_duplicated',
                      'accepted_out_of_meeting_emergency',
@@ -4037,46 +4042,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if set(values).difference(usedVoteValues):
             return _('error_next_linked_votes_used_vote_values_must_be_among_used_vote_values')
 
-    security.declarePrivate('validate_transitionsForPresentingAnItem')
-
-    def validate_transitionsForPresentingAnItem(self, values):
-        '''Validate the transitionsForPresentingAnItem field.
-           Check that the given sequence of transition if starting
-           from the item workflow initial_state and ends to the 'presented' state.'''
-        # bypass validation when we are adding a new MeetingConfig thru UI
-        # because some fields are required on different schematas and it does not work...
-        if self.isTemporary():
-            return
-        # we can not specify required=True in the Schema because of InAndOut widget
-        # weird behaviour, so manage required ourselves...
-        if not values or (len(values) == 1 and not values[0]):
-            label = self.Schema()['transitionsForPresentingAnItem'].widget.Label(self)
-            # take classic plone error_required msgid
-            return PloneMessageFactory(u'error_required',
-                                       default=u'${name} is required, please correct.',
-                                       mapping={'name': label})
-        wfTool = api.portal.get_tool('portal_workflow')
-        itemWorkflow = wfTool.getWorkflowsFor(self.getItemTypeName())[0]
-        # first value must be a transition leaving the wf initial_state
-        initialState = itemWorkflow.states[itemWorkflow.initial_state]
-        if not values[0] in initialState.transitions:
-            return _('first_transition_must_leave_wf_initial_state')
-        # now follow given path and check if it result in the 'presented' state
-        # start from the initial_state
-        currentState = initialState
-        for trId in values:
-            # sometimes, an empty '' is in the values?
-            if not trId:
-                continue
-            if trId not in currentState.transitions:
-                return _('given_wf_path_does_not_lead_to_present')
-            transition = itemWorkflow.transitions[trId]
-            # now set current state to the state the transition is resulting to
-            currentState = itemWorkflow.states[transition.new_state_id]
-        # at the end, the currentState must be "presented"
-        if not currentState.id == 'presented':
-            return _('last_transition_must_result_in_presented_state')
-
     security.declarePrivate('validate_powerObservers')
 
     def validate_powerObservers(self, value):
@@ -4260,11 +4225,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # we are setting another field, it is not permitted if
             # the rule is in use, check every items if the rule is used
             catalog = api.portal.get_tool('portal_catalog')
-            org_uid = self._dataForCustomAdviserRowId(row_id)['org']
+            data = self._dataForCustomAdviserRowId(row_id)
+            # auto or not?
+            indexed_values = []
+            if data['gives_auto_advice_on']:
+                # XXX for now we check if org_uid used but it includes also
+                # "normal" advices, to be fixed by indexing a specific value
+                # for auto advices, see https://support.imio.be/browse/PM-3910
+                indexed_values.append(REAL_ORG_UID_PATTERN.format(data['org']))
+            if data['delay']:
+                indexed_values.append(DELAYAWARE_ROW_ID_PATTERN.format(row_id))
             brains = catalog.unrestrictedSearchResults(
                 portal_type=self.getItemTypeName(),
-                indexAdvisers=[DELAYAWARE_ROW_ID_PATTERN.format(row_id),
-                               REAL_ORG_UID_PATTERN.format(org_uid)])
+                indexAdvisers=indexed_values)
             if brains:
                 item = brains[0].getObject()
                 return item.absolute_url()
@@ -4345,6 +4318,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                             # 3) or if we disabled the 'is_linked_to_previous_row' of a used automatic adviser
                             # that is not permitted
                             if not (k == 'for_item_created_until' and not v) and \
+                               not (k == 'for_item_created_from' and
+                                    not storedCustomAdviser['gives_auto_advice_on']) and \
                                k not in ['gives_auto_advice_on_help_message',
                                          'delay_left_alert',
                                          'delay_label',
@@ -4862,7 +4837,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # either using state or transition
         # states
         cfg_item_wf_attrs = list(ITEM_WF_STATE_ATTRS) + list(ITEM_WF_TRANSITION_ATTRS)
-        cfg_item_wf_attrs.remove('transitionsForPresentingAnItem')
         # transitions
         enabled_stored_transitions = self.getItemWFValidationLevels(
             data='leading_transition',
@@ -5684,6 +5658,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         ))
         return res
 
+    def listCommitteesEnabled(self):
+        '''Vocabulary for committees.enabled datagrid column.'''
+        d = "PloneMeeting"
+        res = self.listBooleanVocabulary()
+        res.add('item_only',
+                translate('enabled_item_only', domain=d, context=self.REQUEST))
+        return res
+
     security.declarePrivate('listAllVoteValues')
 
     def listAllVoteValues(self):
@@ -6212,29 +6194,31 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                 context=self.REQUEST)
                 self.plone_utils.addPortalMessage(msg)
 
-    def _createOrUpdatePloneGroup(self, groupSuffix, groupTitleSuffix=None, only_group_ids=False):
+    def _createOrUpdatePloneGroup(self, groupSuffix, groupTitleSuffix=None, dry_run_return_group_ids=False):
         '''Create a group for this MeetingConfig using given p_groupSuffix to manage group id and group title.
            This will return groupId and True if group was added, False otherwise.'''
         groupId = "{0}_{1}".format(self.getId(), groupSuffix)
-        if only_group_ids:
+        if dry_run_return_group_ids:
             return groupId, False
         groupTitle = self.Title(include_config_group=True)
         if groupTitleSuffix:
             groupSuffix = safe_unicode(groupTitleSuffix)
-        wasCreated = createOrUpdatePloneGroup(groupId=groupId, groupTitle=groupTitle, groupSuffix=groupSuffix)
+        wasCreated = createOrUpdatePloneGroup(
+            groupId=groupId, groupTitle=groupTitle, groupSuffix=groupSuffix)
         return groupId, wasCreated
 
     security.declarePrivate('createPowerObserversGroups')
 
-    def createPowerObserversGroups(self, force_update_access=False, only_group_ids=False):
+    def createPowerObserversGroups(self, force_update_access=False, dry_run_return_group_ids=False):
         '''Creates Plone groups to manage power observers.'''
         groupIds = []
         tool = api.portal.get_tool('portal_plonemeeting')
         for po_infos in self.getPowerObservers():
             groupSuffix = po_infos['row_id']
-            groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix,
-                                                                 groupTitleSuffix=po_infos['label'],
-                                                                 only_group_ids=only_group_ids)
+            groupId, wasCreated = self._createOrUpdatePloneGroup(
+                groupSuffix,
+                groupTitleSuffix=po_infos['label'],
+                dry_run_return_group_ids=dry_run_return_group_ids)
             groupIds.append(groupId)
             if wasCreated or force_update_access:
                 # now define local_roles on the tool so it is accessible by this group
@@ -6252,25 +6236,27 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('createBudgetImpactEditorsGroup')
 
-    def createBudgetImpactEditorsGroup(self, only_group_ids=False):
+    def createBudgetImpactEditorsGroup(self, dry_run_return_group_ids=False):
         '''Creates a Plone group that will be used to apply the 'MeetingBudgetImpactEditor'
            local role on every items of this MeetingConfig regarding self.itemBudgetInfosStates.'''
         groupIds = []
-        groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=BUDGETIMPACTEDITORS_GROUP_SUFFIX,
-                                                             only_group_ids=only_group_ids)
+        groupId, wasCreated = self._createOrUpdatePloneGroup(
+            groupSuffix=BUDGETIMPACTEDITORS_GROUP_SUFFIX,
+            dry_run_return_group_ids=dry_run_return_group_ids)
         groupIds.append(groupId)
         return groupIds
 
     security.declarePrivate('createMeetingManagersGroup')
 
-    def createMeetingManagersGroup(self, force_update_access=False, only_group_ids=False):
+    def createMeetingManagersGroup(self, force_update_access=False, dry_run_return_group_ids=False):
         '''Creates a Plone group that will be used to apply the 'MeetingManager'
            local role on every plonemeeting folders of this MeetingConfig and on this MeetingConfig.'''
         groupIds = []
-        groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=MEETINGMANAGERS_GROUP_SUFFIX,
-                                                             only_group_ids=only_group_ids)
+        groupId, wasCreated = self._createOrUpdatePloneGroup(
+            groupSuffix=MEETINGMANAGERS_GROUP_SUFFIX,
+            dry_run_return_group_ids=dry_run_return_group_ids)
         groupIds.append(groupId)
-        if not only_group_ids and wasCreated or force_update_access:
+        if not dry_run_return_group_ids and wasCreated or force_update_access:
             # now define local_roles on the tool so it is accessible by this group
             tool = api.portal.get_tool('portal_plonemeeting')
             tool.manage_addLocalRoles(groupId, ('MeetingManager',))
@@ -6286,13 +6272,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('createItemTemplateManagersGroup')
 
-    def createItemTemplateManagersGroup(self, force_update_access=False, only_group_ids=False):
+    def createItemTemplateManagersGroup(self, force_update_access=False, dry_run_return_group_ids=False):
         '''Creates a Plone group that will be used to store users able to manage item templates.'''
         groupIds = []
-        groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=ITEMTEMPLATESMANAGERS_GROUP_SUFFIX,
-                                                             only_group_ids=only_group_ids)
+        groupId, wasCreated = self._createOrUpdatePloneGroup(
+            groupSuffix=ITEMTEMPLATESMANAGERS_GROUP_SUFFIX,
+            dry_run_return_group_ids=dry_run_return_group_ids)
         groupIds.append(groupId)
-        if not only_group_ids and wasCreated or force_update_access:
+        if not dry_run_return_group_ids and wasCreated or force_update_access:
             # now define local_roles on the tool so it is accessible by this group
             tool = api.portal.get_tool('portal_plonemeeting')
             tool.manage_addLocalRoles(groupId, (READER_USECASES[ITEMTEMPLATESMANAGERS_GROUP_SUFFIX],))
@@ -6305,26 +6292,34 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             self.itemtemplates.manage_addLocalRoles(groupId, ('Manager', ))
         return groupIds
 
-    def _createOrUpdateAllPloneGroups(self, force_update_access=False, only_group_ids=False):
+    def _createOrUpdateAllPloneGroups(self, force_update_access=False, dry_run_return_group_ids=False):
         """Create or update every linked Plone groups.
            If p_force_update_access this will force update of access given to created group.
-           If p_only_group_ids, this will not create groups but return group ids that would be created."""
+           If p_dry_run_return_group_ids=True, this will not create groups but return
+           group ids that would be created."""
         group_ids = []
         # Create the corresponding group that will contain MeetingManagers
         group_ids += self.createMeetingManagersGroup(
             force_update_access=force_update_access,
-            only_group_ids=only_group_ids)
+            dry_run_return_group_ids=dry_run_return_group_ids)
         # Create the corresponding group that will contain item templates Managers
         group_ids += self.createItemTemplateManagersGroup(
             force_update_access=force_update_access,
-            only_group_ids=only_group_ids)
+            dry_run_return_group_ids=dry_run_return_group_ids)
         # Create the corresponding group that will contain MeetingBudgetImpactEditors
-        group_ids += self.createBudgetImpactEditorsGroup(only_group_ids=only_group_ids)
+        group_ids += self.createBudgetImpactEditorsGroup(
+            dry_run_return_group_ids=dry_run_return_group_ids)
         # Create the corresponding group that will contain MeetingPowerObservers
         group_ids += self.createPowerObserversGroups(
             force_update_access=force_update_access,
-            only_group_ids=only_group_ids)
+            dry_run_return_group_ids=dry_run_return_group_ids)
+        group_ids += self.adapted()._custom_createOrUpdateGroups(
+            force_update_access=force_update_access, dry_run_return_group_ids=dry_run_return_group_ids)
         return group_ids
+
+    def _custom_createOrUpdateGroups(self, force_update_access=False, dry_run_return_group_ids=False):
+        '''See doc in interfaces.py.'''
+        return []
 
     def _set_default_faceted_search(self, collection_id='searchmyitems'):
         """ """
@@ -6733,7 +6728,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listTransitionsUntilPresented(self):
         '''List available workflow transitions until the 'present' transition included.
-           We base this on the MeetingConfig.transitionsForPresentingAnItem field.
+           We base this on the MeetingConfig.getTransitionsForPresentingAnItem.
            This will let us set an item cloned to another meetingConfig to any state until 'presented'.
            We list every item transitions of every available meetingConfigs.'''
         # we do not use an empty '' but '__nothing__' because of a bug in DataGridField SelectColumn...
@@ -6742,7 +6737,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                           domain='PloneMeeting',
                           context=self.REQUEST)), ]
         tool = api.portal.get_tool('portal_plonemeeting')
-        for cfg in tool.getActiveConfigs():
+        # sort cfg by Title
+        for cfg in humansorted(tool.getActiveConfigs(), key=attrgetter('title')):
             # only show other meetingConfigs than self
             if cfg == self:
                 continue
@@ -6755,7 +6751,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 text = '%s -> %s' % (cfgTitle,
                                      availableItemTransitionTitles[availableItemTransitionIds.index(tr)])
                 res.append(('%s.%s' % (cfgId, tr), text))
-        return DisplayList(tuple(res)).sortedByValue()
+        return DisplayList(tuple(res))
 
     security.declarePrivate('listExecutableItemActions')
 
@@ -7025,14 +7021,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getTransitionsForPresentingAnItem')
 
-    def getTransitionsForPresentingAnItem(self, org_uid=None, **kwargs):
-        '''Overrides field 'transitionsForPresentingAnItem' accessor to be able
-           to pass a p_org_uid, if given, the transitions will be filtered out
-           regarding suffixed Plone groups enabled for it.'''
-        transitions = self.getField('transitionsForPresentingAnItem').get(self, **kwargs)
+    def getTransitionsForPresentingAnItem(self, org_uid=None):
+        '''Return default transitions to present an item.'''
+        item_wf_val_levels = self.getItemWFValidationLevels(only_enabled=True)
+        transitions = [v['leading_transition'] for v in item_wf_val_levels
+                       if v['leading_transition'] != '-']
+        # in case items are created "validated", there is no "validate" transition
+        if transitions:
+            transitions.append('validate')
+        transitions.append('present')
         if org_uid:
             tool = api.portal.get_tool('portal_plonemeeting')
-            item_wf_val_levels = self.getItemWFValidationLevels(only_enabled=True)
             tr_suffixes = {v['leading_transition']: v['suffix'] for v in item_wf_val_levels
                            if v['leading_transition'] != '-'}
             res = []
@@ -7531,7 +7530,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # he is able to add a meetingitem to a 'decided' meeting.
         # except if we specifically restricted given p_review_states.
         if not review_states:
-            review_states = self.getMeetingStatesAcceptingItemsForMeetingManagers()
+            if self.aq_parent.isManager(self):
+                review_states = self.getMeetingStatesAcceptingItemsForMeetingManagers()
+            else:
+                review_states = self.getItemPreferredMeetingStates()
 
         query = {'portal_type': self.getMeetingTypeName(),
                  'review_state': review_states,
@@ -7544,15 +7546,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getMeetingsAcceptingItems(self, review_states=[], inTheFuture=False):
         '''Returns meetings accepting items.'''
+        # compute the query so when review_states=[], it is computed and we use
+        # the "review_state" value from the query
+        query = self._getMeetingsAcceptingItemsQuery(review_states, inTheFuture)
         req = self.REQUEST
         key = "PloneMeeting-MeetingConfig-getMeetingsAcceptingItems-{0}-{1}-{2}".format(
-            repr(self), review_states, inTheFuture)
+            self.id, tuple(query['review_state']), inTheFuture)
         cache = IAnnotations(req)
         brains = cache.get(key, None)
 
         if brains is None:
             catalog = api.portal.get_tool('portal_catalog')
-            query = self._getMeetingsAcceptingItemsQuery(review_states, inTheFuture)
             brains = catalog.unrestrictedSearchResults(**query)
             cache[key] = brains
         return brains
@@ -7581,7 +7585,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def displayGroupsAndUsers(self):
         """Display groups and users specific to this MeetingConfig (meetingmanagers, powerobservers, ...)."""
-        plone_group_ids = self._createOrUpdateAllPloneGroups(only_group_ids=True)
+        plone_group_ids = self._createOrUpdateAllPloneGroups(dry_run_return_group_ids=True)
         # include also group "Administrators"
         plone_group_ids.append("Administrators")
         portal = api.portal.get()

@@ -396,6 +396,13 @@
       class=".views.DisplayMeetingItemVoters"
       permission="zope2.View" />
 
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeetingContent"
+      name="display-meeting-item-changed-attendees-order"
+      template="templates/meeting_item_changed_attendees_order.pt"
+      class=".views.DisplayMeetingItemChangedAttendeesOrder"
+      permission="zope2.View" />
+
     <!-- Custom view for meetingadvice -->
     <browser:page
       for="Products.PloneMeeting.content.advice.IMeetingAdvice"
@@ -477,17 +484,30 @@
        name="item_remove_redefined_attendee_position_form"
        class=".itemattendee.RemoveRedefinedAttendeePositionForm"
        permission="zope2.View" />
+   <browser:view
+       for="Products.PloneMeeting.interfaces.IMeetingItem"
+       layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+       name="item-change-attendee-order"
+       class=".itemattendee.ChangeAttendeeOrderView"
+       permission="zope2.View" />
+   <browser:view
+       for="Products.PloneMeeting.interfaces.IMeetingItem"
+       layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+       name="item-reinit-attendees-order"
+       class=".itemattendee.ReinitAttendeesOrderView"
+       permission="zope2.View" />
+     <!-- Votes -->
      <browser:page
        for="Products.PloneMeeting.interfaces.IMeetingItem"
        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
        name="item_encode_votes_form"
-       class=".itemvotes.EncodeVotesFormWrapper"
+       class=".itemvotes.EncodeVotesForm"
        permission="zope2.View" />
      <browser:page
        for="Products.PloneMeeting.interfaces.IMeetingItem"
        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
        name="item_encode_secret_votes_form"
-       class=".itemvotes.EncodeSecretVotesFormWrapper"
+       class=".itemvotes.EncodeSecretVotesForm"
        permission="zope2.View" />
    <browser:view
        for="Products.PloneMeeting.interfaces.IMeetingItem"
@@ -834,15 +854,22 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
-    <!-- this view will contains some methods doing unrestricted things.  It replaces Manager Proxy roled python Scripts -->
+    <!-- this view will contains some methods doing unrestricted things.
+         It replaces Manager Proxy roled python Scripts -->
     <browser:page
-        for="*"
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
         name="pm_unrestricted_methods"
-        class=".views_unrestricted.UnrestrictedMethodsView"
+        class=".views_unrestricted.ItemUnrestrictedMethodsView"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         allowed_attributes="getLinkedMeetingTitle
-                            getLinkedMeetingDate
-                            findFirstItemNumberForMeeting"
+                            getLinkedMeetingDate"
+        permission="zope2.View" />
+    <browser:page
+        for="Products.PloneMeeting.content.meeting.IMeeting"
+        name="pm_unrestricted_methods"
+        class=".views_unrestricted.MeetingUnrestrictedMethodsView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        allowed_attributes="findFirstItemNumber"
         permission="zope2.View" />
 
     <browser:page

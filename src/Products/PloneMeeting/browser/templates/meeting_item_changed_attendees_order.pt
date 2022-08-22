@@ -1,0 +1,14 @@
+<div id="content"
+     i18n:domain="PloneMeeting"
+     class="meeting_item_changed_attendees_order_tooltipster"
+     tal:define="items python: view._get_items()">
+  <h4><span i18n:translate="">The order of attendees was changed for the <span i18n:name="number" tal:content="python: len(items)">number</span> following item(s)</span> :</h4>
+  <ul tal:repeat="item items">
+    <li><span tal:content="python: item.getItemNumber(for_display=True)"></span>.
+        <span tal:content="structure python: item.getPrettyLink()"></span>
+       </li>
+  </ul>
+  <p class="discreet" tal:condition="not:items" i18n:translate="">
+    Nothing to display.
+  </p>
+</div>

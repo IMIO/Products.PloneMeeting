@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from AccessControl import Unauthorized
 from AccessControl.Permission import Permission
 from Acquisition import aq_base
 from appy.pod.xhtml2odt import XhtmlPreprocessor
@@ -1009,6 +1010,21 @@ def get_dx_widget(obj, field_name, mode=DISPLAY_MODE):
     return widget
 
 
+def set_dx_value(obj, field_name, value, raise_unauthorized=True):
+    """Convenience method to be able to set an attribute on a DX content type."""
+    field = get_dx_field(obj, field_name)
+    if field is not None:
+        # will raise in case an error occurs
+        field.validate(value)
+        schema = get_dx_schema(obj)
+        write_permission = schema.queryTaggedValue(
+            WRITE_PERMISSIONS_KEY, {}).get(field_name, ModifyPortalContent)
+        if _checkPermission(write_permission, obj):
+            field.set(obj, value)
+        elif raise_unauthorized:
+            raise Unauthorized
+
+
 def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True, reindex=True, unlock=True):
     '''Sets on p_obj the content of a field whose name is p_fieldName and whose
        new value is p_fieldValue. This method is called by Ajax pages.'''
@@ -1996,13 +2012,14 @@ def get_item_validation_wf_suffixes(cfg, org_uid=None, only_enabled=True):
     return suffixes
 
 
-def compute_item_roles_to_assign_to_suffixes_cachekey(method, cfg, item_state, org_uid=None):
+def compute_item_roles_to_assign_to_suffixes_cachekey(method, cfg, item, item_state, org_uid=None):
     '''cachekey method for compute_item_roles_to_assign_to_suffixes.'''
+    # we do not use item in the key, cfg and item_state is sufficient
     return cfg.getId(), cfg.modified(), item_state, org_uid
 
 
 @ram.cache(compute_item_roles_to_assign_to_suffixes_cachekey)
-def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org_uid=None):
+def compute_item_roles_to_assign_to_suffixes(cfg, item, item_state, org_uid=None):
     """ """
     apply_meetingmanagers_access = True
     suffix_roles = {}
@@ -2063,10 +2080,9 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org_uid=None):
         # we also give the Contributor except to 'observers'
         # so every editors roles get the "PloneMeeting: Add decision annex"
         # permission that let add decision annex
-        item_is_decided = item_state in cfg.getItemDecidedStates()
         for suffix in get_item_validation_wf_suffixes(cfg, org_uid):
             given_roles = ['Reader']
-            if item_is_decided and suffix != 'observers':
+            if item.may_add_annex_decision(cfg, item_state) and suffix != 'observers':
                 given_roles.append('Contributor')
             suffix_roles[suffix] = given_roles
 

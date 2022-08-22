@@ -2,7 +2,164 @@ Changelog
 =========
 
 
-4.2rc28 (unreleased)
+4.2rc31 (unreleased)
+--------------------
+
+- Added `Meeting.update_first_item_number` that will manage updating first item
+  number of the meeting.  This way the method is callable from a TAL expression
+  and we may use it when necessary.
+  Moreover, the parameter `get_items_additional_catalog_query={}` will let manage
+  cases where items to take into account are not every items but only a subset
+  of items.
+  [gbastien]
+- Added `safe_utils.set_dx_value` that will let set a value for a DX content
+  attribute from a `RestrictedPython` call.
+  [gbastien]
+- Fixed vocabularies using organizations to make sure we can use organizations
+  outside my organization, excepted for the `MeetingItem.associatedGroups` field.
+  [gbastien]
+- Adapted overrided `generationlinks.pt` regarding changes in
+  `collective.documentgenerator` (POD templates grouped by title).
+  [gbastien]
+- Added `_configurePortalRepository` in `setuphandlers.py` to remove default
+  Plone types that are versionable (`Document`, `Event`, ...).
+  Added upgrade step to 4204.
+  [gbastien]
+- Added possibility to add images to `MeetingItemTemplate/MeetingItemReccuring`.
+  Display the `folder_contents` tab on items of the `MeetingConfig`.
+  [gbastien]
+- Added possibility to manage order of attendees by item, this is sometimes
+  necessary when attendee position changed on an item.
+  [gbastien]
+- Removed field `MeetingConfig.transitionsForPresentingAnItem` as information is
+  in `MeetingConfig.itemWFValidationLevels`, method
+  `MeetingConfig.getTransitionsForPresentingAnItem` is kept and does the job.
+  [gbastien]
+- Display info and warning message when meeting `meeting_number/first_item_number`
+  fields are updated, especially when numbering logic is inconsistent because
+  the previous meeting numbers are not consistent or when a meeting was deleted.
+  Moved boolean field `MeetingConfig.yearlyInitMeetingNumber` to multi select field
+  `MeetingConfig.yearlyInitMeetingNumbers` so we may yearly reinit meeting fields
+  `meeting_number` and `first_item_number`.
+  Fields `Meeting.meeting_number` and `Meeting.first_item_number` are now optional.
+  Changed `Meeting.get_previous_meeting` parameter `interval` default value
+  from `60` to `180` days.
+  [gbastien]
+- Make sure dashboard cache is invlaidated (etags) when a meeting date changed,
+  this is necessary so meeting date faceted filters are correct.
+  [gbastien]
+- Added adaptable method `MeetingConfig._custom_createOrUpdateGroups` to ease
+  a profile adding a custom `MeetingConfig` related group.
+  `MeetingConfig._createOrUpdateAllPloneGroups` parameter `only_group_ids=False`
+  was renamed to `dry_run_return_group_ids=False`.
+  [gbastien]
+- Make `ToolPloneMeeting.get_filtered_plone_groups_for_user` org_uids parameter
+  optionnal so we may only filter on given suffixes.
+  [gbastien]
+- Added a user `pmManager2`, `MeetingManager` of `meetingConfig2` for tests.
+  [gbastien]
+- Added possibility to make a committee selectable only on an item and
+  not on a meeting.
+  [gbastien]
+- Added adaptable method `MeetingItem._annex_decision_addable_states_after_validation`
+  that will manage item states in which annex decision may be added after the
+  validation process so since the `validated` state until the end of the item WF.
+  [gbastien]
+- Added WF adaptation `waiting_advices_given_and_signed_advices_required_to_validate`
+  that will check if necessary advice reached their WF last step.
+  This is an answer to rare case where advice is not given `completely` and item was
+  validated, now if advice WF last step was no reached, it will not be possible to
+  validate the item.
+  [gbastien]
+- On the meeting view, when no available items, close the `available-items`
+  collapsible so it takes less place and display the number of available items
+  like it is already the case for presented items so it is clear why the
+  collpasible is closed.
+  [gbastien]
+- Make `imio.helpers.date.wordizeDate` available in `pm_utils`
+  (for POD templates, TAL expressions, ...).
+  [gbastien]
+
+4.2rc30 (2022-07-01)
+--------------------
+
+- Make the `Migrate_To_4200._fixPODTemplatesInstructions`
+  `getFirstItemNumber/first_item_number` replacement work for any cases,
+  not only for `Meeting` POD templates.
+  [gbastien]
+- In `Migrate_To_4200._fixPODTemplatesInstructions` manage `display_date`
+  instructions.
+  [gbastien]
+- In `MeetingConfig.getMeetingsAcceptingItems`, moved the `review_states`
+  computation logic from `MeetingItem.listMeetingsAcceptingItems` to
+  `MeetingConfig._getMeetingsAcceptingItemsQuery` so calling
+  `MeetingConfig.getMeetingsAcceptingItems` will always be correct when
+  `review_states=[]`.
+  This fixes a bug in `imio.pm.ws.soap.soapview.SOAPView._meetingsAcceptingItems`
+  that was returning the same meetings accepting items no matter user was
+  `MeetingManager` or not (was actually always returning meetings accepting items
+  as if user was a `MeetingManager`).
+  [gbastien]
+- Adaptations to display error message on the field and not at the top of the form:
+
+  - Use a `constraint` instead an `invariant` to validate
+    `IMeetingCategory.category_mapping_when_cloning_to_other_mc`;
+  - Raise a `WidgetActionExecutionError` instead a `Invalid` for
+    `IPMDirectory.validate_position_types`.
+
+  [gbastien]
+- Reorganized MeetingItem predecessors/successors related methods, added parameter
+  `unrestricted=True` to methods missing it so it can be set to `False` when called
+  from `plonemeeting.restapi` to get linked items.
+  [gbastien]
+- Adapted `MeetingConfig.validate_customAdvisers` so it is possible to remove a
+  delay aware adviser config if it was never used and to change the
+  `for_item_created_from` if it is not an auto asked advice.
+  [gbastien]
+- Cleaned `UnrestrictedMethodsView`, splitted it to `ItemUnrestrictedMethodsView`
+  and `MeetingUnrestrictedMethodsView` because the `findFirstItemNumberForMeeting`
+  method is the only one called with a `Meeting` as context and others need a
+  `MeetingItem` as context.
+  Renamed `findFirstItemNumberForMeeting` to `findFirstItemNumber`.
+  [gbastien]
+- Fix to not fail to display advice tooltipster on `itemTemplate` when
+  no `proposingGroup` is selected.
+  [gbastien]
+- Make MeetingManager bypass `MeetingCategory.using_groups` check when cloning
+  an item, this way we avoid problems with category not selectable by
+  `MeetingManager` leading to items not cloned (recurring items, delayed items, ...).
+  Added `MeetingItem.get_successor` helper that will return the last
+  (and very often only) successor.
+  [gbastien]
+- Avoid wrong order in item manually linked items when an item was linked before
+  it is presented to a meeting, as items are sorted on meeting date.
+  Add items without a meeting date at the top of items so it will be at the top
+  when inserted into a meeting.
+  [gbastien]
+- In `Meeting.validate_dates`, removed check for `start_date > date` and
+  `end_date < date`, this could not be the cases sometimes...
+  [gbastien]
+- Added possibility to encode votes by `voting group` and to encode same votes
+  for several items.  Added field `held_position.voting_group`.
+  [gbastien]
+
+4.2rc29 (2022-06-17)
+--------------------
+
+- In `Migrate_To_4200`, update TAL expressions using
+  `updateLocalRoles` to `update_local_roles`.
+  [gbastien]
+- Import harmless functions from `utils.py` into `safe_utils.py` so it is
+  available on `pm_utils` in TAL expressions and POD templates.
+  [gbastien]
+- Make `organization.get_acronym` return an empty string u'' when acronym is `None`.
+  [gbastien]
+- In `ToolPloneMeeting.pasteItem`, do not use `proposingGroup` vocab `by_value`
+  to get the first user group because `by_value` generates a dict that is not
+  ordered, use `_terms` that holds terms ordered.
+  [gbastien]
+
+4.2rc28 (2022-06-14)
 --------------------
 
 - Back to previous behavior for `MeetingItem.mayTakeOver`, do not check
@@ -47,6 +204,14 @@ Changelog
   [gbastien]
 - Fixed an issue in `PMDataChangesHistoryAdapter`. The tooltip was mentioning the wrong actor.
   [aduchene]
+- When handling `meeting.first_item_number` on meeting closure, only compute
+  number if it is still `-1`, in other cases, do nothing, this will manage the case
+  when reinitializing the first item number at the beginning of a new year.
+  [gbastien]
+- Added `events._invalidateAttendeesRelatedCache` to factorize invalidation of
+  attendees related cache. Used by `person/held_position/meeting` to invalidate
+  caches when necessary.
+  [gbastien]
 
 4.2rc27 (2022-05-17)
 --------------------

@@ -222,6 +222,14 @@ class testSetup(PloneMeetingTestCase):
         for meeting_type in meeting_types:
             self.failIf(set(meeting_types).difference(factory_types))
 
+    def test_pm_VersionableTypes(self):
+        """Make sure every Plone default types are not more versionable."""
+        portal_repository = api.portal.get_tool('portal_repository')
+        # there could be several meetingadvice types, all must be versionable
+        versioned = sorted([u'annex', u'annexDecision'] + self.tool.getAdvicePortalTypeIds())
+        self.assertEqual(sorted(portal_repository.getVersionableContentTypes()), versioned)
+        self.assertEqual(sorted(portal_repository._version_policy_mapping.keys()), versioned)
+
     def test_pm_EnsureSolrActivated(self):
         """ """
         pm_logger.info("HAS_SOLR %s" % HAS_SOLR)

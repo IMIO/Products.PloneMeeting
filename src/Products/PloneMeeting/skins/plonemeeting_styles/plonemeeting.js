@@ -569,7 +569,7 @@ function moveItem(baseUrl, moveType, tag) {
 }
 
 function isMeeting() {
-    if ($("body.template-meeting_view").length) {
+    if ($("body.template-meeting_view").length || $("body.template-meeting_available_items_view").length) {
         return true;
     }
     return false;
@@ -581,11 +581,16 @@ $(document).on('ap_transition_triggered', synchronizeMeetingFaceteds);
 // synchronize faceted displayed on the meeting_view, available items and presented items
 function synchronizeMeetingFaceteds(infos) {
 
-    if (isMeeting) {
+    if (isMeeting()) {
 
         // refresh iframe 'available items' while removing an item
         if ((infos.transition === 'backToValidated') &&
             ((window.frames[0]) && (window.frames[0] != window))) {
+          /* if available collapsible closed, open it, this avoids problem
+             with iframeresizer not correctly resized */
+          if ($('h2.available-items.active').length == 0) {
+            $('h2.available-items', parent.document).click();
+          }
           window.frames[0].Faceted.URLHandler.hash_changed();
           updateNumberOfItems();
         } else if ((infos.transition === 'present') && (window != parent)) {
@@ -631,6 +636,18 @@ function refreshAfterDelete(event) {
   }
 }
 
+function updateNumberOfAvailableItems() {
+  // update the number of available items displayed on the meeting_view when
+  // available items ajax query is successfull, we may get the search-results-number
+  results = $('#search-results-number');
+  if (results.length) {
+    $('span.meeting_number_of_available_items', parent.document)[0].innerHTML = results.text();
+  } else {
+    $('span.meeting_number_of_available_items', parent.document)[0].innerHTML = "0";
+    $('h2.available-items', parent.document).click();
+  }
+}
+
 $(document).on('toggle_details_ajax_success', init_tooltipsters);
 
 function init_tooltipsters(event) {
@@ -639,6 +656,7 @@ function init_tooltipsters(event) {
       pmCommonOverlays(selector_prefix='table#meeting_users ');
       attendeesInfos();
       manageAttendees();
+      initializeItemAttendeesDND();
     }
     if (css_id.startsWith('collapsible-text-linkeditem-')) {
       categorizedChildsInfos({selector: 'div.item-linkeditems .tooltipster-childs-infos', });
@@ -811,50 +829,87 @@ $(document).ready(function () {
   });
 });
 
-function initializeItemsDND(){
-$('table.faceted-table-results').tableDnD({
-  onDrop: function(table, row) {
-    row_id = row.id;
+function tableDNDComputeNewValue(table, row, data_name) {
     row_index = row.rowIndex;
-    // id is like row_200
-    row_item_number = parseInt(table.rows[row.rowIndex].cells[2].dataset.item_number);
+    // data value will be something like 100 (item_number) or 2 (attendee position)
+    row_number = parseInt(table.rows[row.rowIndex].cells[2].dataset[data_name]);
     // find if moving up or down
     move_type = 'up';
     if (table.tBodies[0].rows.length > row_index) {
          // we have a next row, compare with it
-         next_row_item_number = parseInt(table.rows[row.rowIndex + 1].cells[2].dataset.item_number);
-         if (row_item_number < next_row_item_number) {
+         next_row_number = parseInt(table.rows[row.rowIndex + 1].cells[2].dataset[data_name]);
+         if (row_number < next_row_number) {
              move_type = 'down';
          }
     } else {move_type = 'down';}
 
     // now that we know the move, we can determinate number to use
     if (move_type == 'down') {
-      new_value = parseInt(table.rows[row.rowIndex - 1].cells[2].dataset.item_number);
+      new_value = parseInt(table.rows[row.rowIndex - 1].cells[2].dataset[data_name]);
     } else {
-      new_value = parseInt(table.rows[row.rowIndex + 1].cells[2].dataset.item_number);
+      new_value = parseInt(table.rows[row.rowIndex + 1].cells[2].dataset[data_name]);
     }
-    base_url = row.cells[3].children.item('a').href;
-    $.ajax({
-      url: base_url + "/@@change-item-order",
-      dataType: 'html',
-      data: {moveType:'number',
-             wishedNumber:parseFloat(new_value)/100},
-      cache: false,
-      success: function(data) {
-        Faceted.URLHandler.hash_changed();
-        start_meeting_scroll_to_item_observer(tag=null, row_id=row_id);
-      },
-      error: function(jqXHR, textStatus, errorThrown) {
-        /*console.log(textStatus);*/
-        window.location.href = window.location.href;
-        }
-      });
-   },
-   dragHandle: ".draggable",
-   onDragClass: "dragindicator dragging",
+    return new_value;
+}
 
-});
+/* dnd for items position on a meeting */
+function initializeMeetingItemsDND(){
+    let data_name = "item_number";
+    let view_name = "@@change-item-order";
+    $('table.faceted-table-results').tableDnD({
+      onDrop: function(table, row) {
+        row_id = row.id;
+        new_value = tableDNDComputeNewValue(table, row, data_name);
+        base_url = row.cells[3].children.item('a').href;
+        $.ajax({
+          url: base_url + "/" + view_name,
+          dataType: 'html',
+          data: {moveType:'number',
+                 wishedNumber:parseFloat(new_value)/100},
+          cache: false,
+          success: function(data) {
+            Faceted.URLHandler.hash_changed();
+            start_meeting_scroll_to_item_observer(tag=null, row_id=row_id);
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+            /*console.log(textStatus);*/
+            window.location.href = window.location.href;
+            }
+          });
+       },
+       dragHandle: ".draggable",
+       onDragClass: "dragindicator dragging",
+
+    });
+}
+
+/* dnd for attendees on an item */
+function initializeItemAttendeesDND() {
+    let data_name = "attendee_number";
+    let view_name = "@@item-change-attendee-order";
+    $('table.faceted-table-results').tableDnD({
+      onDrop: function(table, row) {
+        row_id = row.id;
+        new_value = tableDNDComputeNewValue(table, row, data_name);
+        base_url = canonical_url();
+        $.ajax({
+          url: base_url + "/" + view_name,
+          dataType: 'html',
+          data: {attendee_uid: row.cells[2].dataset.attendee_uid,
+                 'position:int': parseInt(new_value)},
+          cache: false,
+          success: function(data) {
+            refresh_attendees(highlight=['.td_cell_number-column', '.th_header_number-column']);
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+            /*console.log(textStatus);*/
+            window.location.href = window.location.href;
+            }
+          });
+      },
+      dragHandle: ".draggable",
+      onDragClass: "dragindicator dragging"
+    });
 }
 
 // do not redefine window.onbeforeunload or it breaks form unload protection
@@ -873,11 +928,17 @@ function toggleAllDetails() {
   }
 }
 
-function selectAllVoteValues(tag) {
-  $('input[value='+tag.value+']').each(function() {
-    this.checked = true;
-    }
-  );
+function selectAllVoteValues(tag, group_id, vote_value) {
+  if (group_id == 'all') {
+    $('table#form-widgets-votes input[value='+vote_value+']').each(function() {
+      this.checked = true;
+      }
+    );
+  } else {
+        $('tr.'+group_id+' input[value='+vote_value+']').each(function() {
+      this.checked = true;
+      }
+    );}
 }
 
 /* while scrolling on meeting manage available items sticky table header */

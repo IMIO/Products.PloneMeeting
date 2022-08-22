@@ -14,7 +14,6 @@ from Products.PloneMeeting.browser.itemvotes import _get_linked_item_vote_number
 from Products.PloneMeeting.browser.meeting import BaseMeetingView
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import WriteBudgetInfos
-from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.utils import get_current_user_id
 from Products.PloneMeeting.utils import reindex_object
 from Products.PloneMeeting.utils import sendMailIfRelevant
@@ -366,7 +365,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
             # taking into account linked votes
             if self.votesAreSecret:
                 linked_vote_numbers = _get_linked_item_vote_numbers(
-                    self.context, self.meeting, vote_number)
+                    self.context, self.meeting, vote_number) or [0]
                 if not linked_vote_numbers or vote_number == min(linked_vote_numbers):
                     total_voted = 0
                     for linked_vote_number in linked_vote_numbers:
@@ -447,12 +446,14 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
+        # cache will be invalidated if something changed about attendees on meeting
         meeting = self.context.getMeeting()
         ordered_contacts = meeting.ordered_contacts.items()
         redefined_item_attendees = meeting._get_all_redefined_attendees(only_keys=False)
         show_votes = self.context.show_votes()
         item_votes = self.context.get_item_votes(include_vote_number=False)
         context_uid = self.context.UID()
+        item_attendees_order = meeting._get_item_attendees_order(context_uid)
         # if something redefined for context or not
         if context_uid not in str(redefined_item_attendees):
             redefined_item_attendees = []
@@ -464,6 +465,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                 cfg_modified,
                 ordered_contacts,
                 redefined_item_attendees,
+                item_attendees_order,
                 show_votes,
                 item_votes,
                 may_change_attendees,
@@ -509,10 +511,6 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
     # do ram.cache have a different key name
     __call__ = AsyncLoadItemAssemblyAndSignatures__call__
 
-    def get_all_used_held_positions(self):
-        """ """
-        return get_all_used_held_positions(self.meeting)
-
 
 class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
     """ """
@@ -544,10 +542,6 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
                 item_votes,
                 repr(self.context),
                 cache_date)
-
-    def get_all_used_held_positions(self):
-        """ """
-        return get_all_used_held_positions(self.context)
 
     def _update(self):
         """ """

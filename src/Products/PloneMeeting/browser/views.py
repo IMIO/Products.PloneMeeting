@@ -45,7 +45,6 @@ from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
-from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.indexes import _to_coded_adviser_index
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
@@ -928,7 +927,12 @@ class BaseDGHV(object):
             if committee_id:
                 contacts = self.context.get_committee_attendees(committee_id, the_objects=True)
             else:
-                contacts = get_all_used_held_positions(meeting)
+                # when context is an item, make sure we have correct order in case
+                # attendees order was redefined
+                if self.context.getTagName() == 'MeetingItem':
+                    contacts = self.context.get_all_attendees(the_objects=True, ordered=True)
+                else:
+                    contacts = meeting.get_all_attendees(the_objects=True)
             excused = meeting.get_excused()
             absents = meeting.get_absents()
             replaced = meeting.get_replacements()
@@ -2351,6 +2355,20 @@ class DisplayMeetingItemRedefinedPosition(BrowserView):
         brains = catalog(UID=item_uids, sort_on='getItemNumber')
         objs = [brain.getObject() for brain in brains]
         return objs
+
+
+class DisplayMeetingItemChangedAttendeesOrder(BrowserView):
+    """This view will display the items for which attendees order was changed."""
+
+    def _get_items(self):
+        """Returns the list of items the attendees were changed for."""
+        uids = self.context._get_item_attendees_order().keys()
+        ordered_items = []
+        if uids:
+            ordered_items = [
+                item for item in self.context.get_items(
+                    uids=uids, ordered=True, the_objects=True, unrestricted=True)]
+        return ordered_items
 
 
 class DisplayMeetingItemNotPresent(BrowserView):

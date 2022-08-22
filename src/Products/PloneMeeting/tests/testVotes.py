@@ -6,6 +6,7 @@
 #
 
 from AccessControl import Unauthorized
+from plone import api
 from Products.PloneMeeting.browser.itemvotes import IEncodeSecretVotes
 from Products.PloneMeeting.browser.itemvotes import secret_votes_default
 from Products.PloneMeeting.browser.itemvotes import votes_default
@@ -13,6 +14,7 @@ from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.statusmessages.interfaces import IStatusMessage
 from z3c.form import validator
 from zope.i18n import translate
 from zope.interface import Invalid
@@ -368,7 +370,7 @@ class testVotes(PloneMeetingTestCase):
         hp4 = person4.get_held_positions()[0]
         hp4_uid = hp4.UID()
         self.request['PUBLISHED'] = public_item
-        votes_form = public_item.restrictedTraverse('@@item_encode_votes_form').form_instance
+        votes_form = public_item.restrictedTraverse('@@item_encode_votes_form')
         votes_form.meeting = meeting
         # change vote to all 'no'
         votes_form.votes = [{'voter_uid': hp1_uid, 'vote_value': 'no'},
@@ -379,6 +381,7 @@ class testVotes(PloneMeetingTestCase):
         self.request.form['vote_number'] = 0
         votes_form.label = u"My label"
         votes_form.linked_to_previous = False
+        votes_form.apply_until_item_number = u'0'
         votes_form.update()
         # only for MeetingManagers
         self.changeUser('pmCreator1')
@@ -410,7 +413,7 @@ class testVotes(PloneMeetingTestCase):
         person4 = self.portal.contacts.get('person4')
         hp4 = person4.get_held_positions()[0]
         hp4_uid = hp4.UID()
-        votes_form = public_item.restrictedTraverse('@@item_encode_votes_form').form_instance
+        votes_form = public_item.restrictedTraverse('@@item_encode_votes_form')
         votes_form.meeting = meeting
         # there are 'yes' votes so not able to link to previous
         self.assertEqual(public_item.getVoteCount('yes'), 2)
@@ -426,6 +429,7 @@ class testVotes(PloneMeetingTestCase):
         votes_form.vote_number = 0
         votes_form.label = u"My label"
         votes_form.linked_to_previous = False
+        votes_form.apply_until_item_number = u'0'
         votes_form._doApply()
         load_view._update()
         self.assertTrue(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
@@ -446,6 +450,7 @@ class testVotes(PloneMeetingTestCase):
         votes_form.vote_number = 1
         votes_form.label = u"My label 1"
         votes_form.linked_to_previous = True
+        votes_form.apply_until_item_number = u'0'
         votes_form.votes = [{'voter_uid': hp3_uid, 'vote_value': 'yes'},
                             {'voter_uid': hp4_uid, 'vote_value': NOT_ENCODED_VOTE_VALUE}]
         votes_form._doApply()
@@ -475,7 +480,7 @@ class testVotes(PloneMeetingTestCase):
 
         # encode votes form
         votes_form = secret_item.restrictedTraverse(
-            '@@item_encode_secret_votes_form').form_instance
+            '@@item_encode_secret_votes_form')
         self.request['PUBLISHED'] = secret_item
         votes_form.meeting = meeting
         votes_form.votes = [
@@ -486,6 +491,7 @@ class testVotes(PloneMeetingTestCase):
         votes_form.vote_number = 0
         votes_form.label = u"My label"
         votes_form.linked_to_previous = False
+        votes_form.apply_until_item_number = u'0'
         # only for MeetingManagers
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, votes_form._doApply)
@@ -510,7 +516,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertFalse(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
 
         # make linked vote addable
-        votes_form = secret_item.restrictedTraverse('@@item_encode_secret_votes_form').form_instance
+        votes_form = secret_item.restrictedTraverse('@@item_encode_secret_votes_form')
         votes_form.meeting = meeting
         votes_form.votes = [
             {'vote_value': 'yes', 'vote_count': 0, 'vote_value_id': 'yes'},
@@ -519,6 +525,7 @@ class testVotes(PloneMeetingTestCase):
         votes_form.vote_number = 0
         votes_form.label = u"My label"
         votes_form.linked_to_previous = False
+        votes_form.apply_until_item_number = u'0'
         votes_form._doApply()
         load_view._update()
         self.assertTrue(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
@@ -534,6 +541,7 @@ class testVotes(PloneMeetingTestCase):
         votes_form.vote_number = 1
         votes_form.label = u"My label 1"
         votes_form.linked_to_previous = True
+        votes_form.apply_until_item_number = u'0'
         votes_form.votes = [{'vote_value': 'yes', 'vote_count': 1, 'vote_value_id': 'yes'}]
         votes_form._doApply()
         # 2 encoded votes
@@ -739,6 +747,80 @@ class testVotes(PloneMeetingTestCase):
         self.assertFalse(manage_vote_action in rendered)
         self.assertFalse(manage_attendee_action in rendered)
         self.assertFalse(manage_signatory_action in rendered)
+
+    def test_pm_EncodeVotesForSeveralItems(self):
+        """Votes may be encoded for several items but only relevant items will be updated."""
+        self.changeUser('pmManager')
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
+        # for now public_item and yes_public_item votes are different
+        self.assertNotEqual(public_item.get_item_votes(), yes_public_item.get_item_votes())
+        secret_item_votes = secret_item.get_item_votes()
+        yes_secret_item_votes = yes_secret_item.get_item_votes()
+        self.request['PUBLISHED'] = public_item
+        votes_form = public_item.restrictedTraverse('@@item_encode_votes_form')
+        self.request.form['vote_number'] = 0
+        votes_form.meeting = public_item.getMeeting()
+        votes_form.update()
+        votes_form.votes = votes_form.widgets['votes'].value
+        votes_form.linked_to_previous = False
+        votes_form.vote_number = 0
+        votes_form.apply_until_item_number = u'400'
+        votes_form._doApply()
+        # votes were updated for yes_public_item but not for secret items
+        self.assertEqual(public_item.get_item_votes(), yes_public_item.get_item_votes())
+        self.assertEqual(secret_item_votes, secret_item.get_item_votes())
+        self.assertEqual(yes_secret_item_votes, yes_secret_item.get_item_votes())
+        # relevant messages are displayed to the user
+        messages = IStatusMessage(self.request).show()
+        self.assertEqual(messages[-2].message, u'Votes have been encoded for items "1 & 2".')
+        self.assertEqual(messages[-1].message, u'Votes could not be updated for items "3 & 4".')
+
+    def test_pm_EncodeVotesByVotingGroup(self):
+        """Just check that voting_group functionnality is working."""
+        # create an organization outside own_org
+        self.changeUser('siteadmin')
+        outside_org = api.content.create(
+            container=self.portal.contacts,
+            type='organization',
+            id='org-outside-own-org',
+            title='Organization outside own org')
+        # define voting_group for some voters
+        person1 = self.portal.contacts.get('person1')
+        hp1 = person1.get_held_positions()[0]
+        hp1.voting_group = self._relation(outside_org)
+
+        # display form and check that elements are there
+        self.changeUser('pmManager')
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
+        self.request['PUBLISHED'] = public_item
+        votes_form = public_item.restrictedTraverse('@@item_encode_votes_form')
+        self.request.form['vote_number'] = 0
+        votes_form.meeting = public_item.getMeeting()
+        votes_form.update()
+        self.request.form['ajax_load'] = 'dummy'
+        rendered_form = votes_form.render()
+        # select values are there
+        self.assertTrue("<span>All</span>:" in rendered_form)
+        self.assertTrue("<span>Organization outside own org</span>:" in rendered_form)
+        self.assertTrue("<span>Others</span>:" in rendered_form)
+        self.assertTrue(
+            '<tr class="datagridwidget-row required org-outside-own-org row-1" data-index="0">'
+            in rendered_form)
+        # when no voting_group defined for any voter, controls are not there
+        hp1.voting_group = None
+        # clear cache
+        self.request['_build_voting_groups'] = None
+        votes_form.update()
+        rendered_form = votes_form.render()
+        # select values are there
+        self.assertTrue("<span>All</span>:" in rendered_form)
+        self.assertFalse("<span>Organization outside own org</span>:" in rendered_form)
+        self.assertFalse("<span>Others</span>:" in rendered_form)
+        self.assertFalse(
+            '<tr class="datagridwidget-row required org-outside-own-org row-1" data-index="0">'
+            in rendered_form)
 
 
 def test_suite():

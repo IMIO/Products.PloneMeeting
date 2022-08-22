@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import ClassSecurityInfo
+from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_organizations
@@ -68,6 +69,7 @@ from z3c.form.browser.checkbox import CheckBoxFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.component import adapts
+from zope.component import getMultiAdapter
 from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.i18n import translate
@@ -529,24 +531,6 @@ class IMeeting(IDXMeetingContent):
             raise Invalid(msg.encode('utf-8'))
 
         # check start_date/end_date
-        # start_date can not be before date
-        if data.start_date and (data.start_date < data.date):
-            msg = translate("start_date_before_meeting_date",
-                            domain='PloneMeeting',
-                            context=context.REQUEST)
-            # avoid multiple call to this invariant
-            context.REQUEST.set("validate_dates_done", True)
-            # encode msg in utf-8 for restapi
-            raise Invalid(msg.encode('utf-8'))
-        # end_date can not be before date
-        if data.end_date and (data.end_date < data.date):
-            msg = translate("end_date_before_meeting_date",
-                            domain='PloneMeeting',
-                            context=context.REQUEST)
-            # avoid multiple call to this invariant
-            context.REQUEST.set("validate_dates_done", True)
-            # encode msg in utf-8 for restapi
-            raise Invalid(msg.encode('utf-8'))
         # start_date must be before end_date
         if data.start_date and data.end_date and data.start_date > data.end_date:
             msg = translate("start_date_after_end_date",
@@ -582,7 +566,7 @@ class IMeeting(IDXMeetingContent):
             # removed attendees?
             # REQUEST.form['meeting_attendees'] is like
             # ['muser_attendeeuid1_attendee', 'muser_attendeeuid2_excused']
-            stored_attendees = get_all_used_held_positions(context, the_objects=False)
+            stored_attendees = context.get_all_attendees()
             meeting_attendees = [attendee.split('_')[1] for attendee
                                  in request.form.get('meeting_attendees', [])
                                  if attendee.split('_')[2] == 'attendee']
@@ -602,6 +586,29 @@ class IMeeting(IDXMeetingContent):
                     msg = translate(
                         'can_not_remove_attendee_redefined_on_items',
                         mapping={'attendee_title': attendee_brain.get_full_title},
+                        domain='PloneMeeting',
+                        context=request)
+                    # avoid multiple call to this invariant
+                    context.REQUEST.set("validate_attendees_done", True)
+                    # encode msg in utf-8 for restapi
+                    raise Invalid(msg.encode('utf-8'))
+
+            # can not remove or add attendees on meeting when attendees order
+            # was redefined on items
+            item_attendees_order = context._get_item_attendees_order(from_meeting_if_empty=False)
+            if item_attendees_order:
+                all_meeting_attendees = [
+                    attendee.split('_')[1] for attendee
+                    in request.form.get('meeting_attendees', [])]
+                all_added_meeting_attendees = set(all_meeting_attendees).difference(stored_attendees)
+                all_removed_meeting_attendees = set(stored_attendees).difference(all_meeting_attendees)
+                all_changed_meeting_attendees = tuple(all_added_meeting_attendees) + \
+                    tuple(all_removed_meeting_attendees)
+                if all_changed_meeting_attendees:
+                    msg = translate(
+                        'can_not_remove_or_add_attendee_item_attendees_reordered',
+                        mapping={'item_url': uuidToObject(
+                            item_attendees_order.keys()[0]).absolute_url()},
                         domain='PloneMeeting',
                         context=request)
                     # avoid multiple call to this invariant
@@ -749,26 +756,21 @@ def default_committees(data):
     return res
 
 
-def get_all_used_held_positions(obj, include_new=False, the_objects=True):
-    '''This will return every currently stored held_positions.
-       If include_new=True, extra held_positions newly selected in the
-       configuration are added.
+def get_all_usable_held_positions(obj, the_objects=True):
+    '''This will return every currently stored held_positions if p_obj is a Meeting,
+       and will include every selectable held_positions.
        If p_the_objects=True, we return held_position objects, UID otherwise.
        '''
     # used Persons are held_positions stored in orderedContacts
-    contacts = hasattr(obj.aq_base, 'ordered_contacts') and list(obj.ordered_contacts) or []
-    if include_new:
-        # now getOrderedContacts from MeetingConfig and append new contacts at the end
-        # this is the case while adding new contact and editing existing meeting
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(obj)
-        selectable_contacts = cfg.getOrderedContacts()
-        new_selectable_contacts = [c for c in selectable_contacts if c not in contacts]
-        contacts = contacts + new_selectable_contacts
-
+    contacts = base_hasattr(obj, 'ordered_contacts') and list(obj.ordered_contacts) or []
+    # append every selectable hp selected in MeetingConfig
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(obj)
+    selectable_contacts = cfg.getOrderedContacts()
+    new_selectable_contacts = [c for c in selectable_contacts if c not in contacts]
+    contacts = contacts + new_selectable_contacts
     if contacts and the_objects:
         contacts = uuidsToObjects(uuids=contacts, ordered=True, unrestricted=True)
-
     return tuple(contacts)
 
 
@@ -921,10 +923,10 @@ class Meeting(Container):
             {'optional': True,
              'condition': "python:cfg.show_meeting_manager_reserved_field('meetingmanagers_notes')"},
         'meeting_number':
-            {'optional': False,
+            {'optional': True,
              'condition': "python:tool.isManager(cfg)"},
         'first_item_number':
-            {'optional': False,
+            {'optional': True,
              'condition': "python:tool.isManager(cfg)"},
     }
 
@@ -1139,6 +1141,17 @@ class Meeting(Container):
         additional_catalog_query.update({'committees_index': committees_index})
         kwargs["additional_catalog_query"] = additional_catalog_query
         return self.get_items(ordered=ordered, **kwargs)
+
+    def get_all_attendees(self, ordered_uids=[], the_objects=False):
+        '''This will return every currently stored held_positions.
+           If p_the_objects=True, we return held_position objects, UID otherwise.'''
+        # in some case especially with pm.restapi, validators are called before
+        # created event and ordered_contacts may not be initialized
+        contacts = ordered_uids or (
+            base_hasattr(self, 'ordered_contacts') and list(self.ordered_contacts)) or []
+        if contacts and the_objects:
+            contacts = uuidsToObjects(uuids=contacts, ordered=True, unrestricted=True)
+        return tuple(contacts)
 
     def is_late(self):
         '''Is meeting considered late?
@@ -1432,6 +1445,25 @@ class Meeting(Container):
                 position_type = hp.get_label(
                     forced_position_type_value=position_type)
         return position_type
+
+    def _get_item_attendees_order(self, item_uid=None, from_meeting_if_empty=True):
+        """ """
+        if not base_hasattr(self, 'item_attendees_order'):
+            return []
+
+        all_uids = []
+        if item_uid:
+            all_uids = self.item_attendees_order.get(item_uid)
+            if not all_uids and from_meeting_if_empty:
+                all_uids = self.get_all_attendees()
+        else:
+            # return the entire value
+            return deepcopy(self.item_attendees_order)
+        return all_uids
+
+    def _set_item_attendees_order(self, item_uid, values):
+        """ """
+        self.item_attendees_order[item_uid] = values
 
     security.declarePublic('get_item_votes')
 
@@ -1905,6 +1937,41 @@ class Meeting(Container):
             if not delta.strip() in ('', '0',):
                 self.freeze_deadline = getDateFromDelta(self.date, '-' + delta)
 
+    def update_first_item_number(self,
+                                 update_item_references=True,
+                                 get_items_additional_catalog_query={},
+                                 force=False):
+        """ """
+        # only update if still the initial value
+        if self.attribute_is_used('first_item_number') and (self.first_item_number == -1 or force):
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            # as this may be applied on a closed meeting, we can not protect the method
+            # with a permission, so we check if user isManager
+            if not tool.isManager(cfg):
+                raise Unauthorized
+            updated = False
+            if "first_item_number" in cfg.getYearlyInitMeetingNumbers():
+                # I must reinit the first_item_number to 1 if it is the first
+                # meeting of this year.
+                prev = self.get_previous_meeting()
+                if prev and \
+                   (prev.date.year != self.date.year):
+                    self.first_item_number = 1
+                    updated = True
+
+            if updated is False:
+                unrestricted_methods = getMultiAdapter(
+                    (self, self.REQUEST), name='pm_unrestricted_methods')
+                self.first_item_number = \
+                    unrestricted_methods.findFirstItemNumber(
+                        get_items_additional_catalog_query=get_items_additional_catalog_query)
+            if update_item_references:
+                self.update_item_references()
+            api.portal.show_message(_("first_item_number_init",
+                                      mapping={"first_item_number": self.first_item_number}),
+                                    request=self.REQUEST)
+
     security.declarePublic('get_user_replacements')
 
     def get_user_replacements(self):
@@ -2192,7 +2259,7 @@ class Meeting(Container):
 
     security.declarePublic('get_previous_meeting')
 
-    def get_previous_meeting(self, interval=60):
+    def get_previous_meeting(self, interval=180):
         '''Gets the previous meeting based on meeting date. We only search among
            meetings in the previous p_interval, which is a number
            of days. If no meeting is found, the method returns None.'''

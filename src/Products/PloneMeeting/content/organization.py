@@ -76,7 +76,8 @@ class ICertifiedSignaturesRowSchema(Interface):
 class IPMOrganization(IOrganization):
     """These fields are for organizations added to the 'plonegroup-organization' organization.
        We protect these fields with read/write permission so it is only
-       shown on organization added to 'plonegroup-organization'."""
+       shown on organization added to 'plonegroup-organization' and fields are hidden
+       from view and edit form when adding an organization outside "My organization"."""
 
     acronym = schema.TextLine(
         title=_("PloneMeeting_label_acronym"),
@@ -183,7 +184,7 @@ class PMOrganization(Organization):
 
     def get_acronym(self):
         """Accessor so it can be called in a TAL expression."""
-        return self.acronym
+        return self.acronym or u''
 
     def get_groups_in_charge(self, the_objects=False):
         """Accessor so it can be called in a TAL expression."""

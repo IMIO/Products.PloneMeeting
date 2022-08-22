@@ -432,19 +432,18 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getActiveConfigs')
 
-    def getActiveConfigs(self, check_using_groups=True):
+    def getActiveConfigs(self, check_using_groups=True, check_access=True):
         '''Gets the active meeting configurations.
            If check_using_groups is True, we check that current
            user is member of one of the cfg using_groups.'''
         res = []
         for cfg in self.objectValues('MeetingConfig'):
-            isManager = self.isManager(cfg)
-            isPowerObserver = self.isPowerObserverForCfg(cfg)
             if api.content.get_state(cfg) == 'active' and \
-               self.checkMayView(cfg) and \
-               (isManager or isPowerObserver or
-                    (check_using_groups and self.get_orgs_for_user(
-                        using_groups=cfg.getUsingGroups()))):
+               (not check_access or
+                (self.checkMayView(cfg) and
+                    (self.isManager(cfg) or self.isPowerObserverForCfg(cfg) or
+                        (check_using_groups and self.get_orgs_for_user(
+                            using_groups=cfg.getUsingGroups()))))):
                 res.append(cfg)
         return res
 
@@ -471,7 +470,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             user_groups = user.getGroups()
         return sorted(user_groups)
 
-    def get_filtered_plone_groups_for_user(self, org_uids, userId=None, suffixes=[], the_objects=False):
+    def get_filtered_plone_groups_for_user(self, org_uids=[], userId=None, suffixes=[], the_objects=False):
         """For caching reasons, we only use ram.cache on get_plone_groups_for_user
            to avoid too much entries when using p_org_uids.
            Use this when needing to filter on org_uids."""
@@ -479,12 +478,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             userId=userId, the_objects=the_objects)
         if the_objects:
             user_groups = [plone_group for plone_group in user_groups
-                           if plone_group.id.split('_')[0] in org_uids and
-                           (not suffixes or plone_group.id.split('_')[1] in suffixes)]
+                           if (not org_uids or plone_group.id.split('_')[0] in org_uids) and
+                           (not suffixes or '_' in plone_group.id and plone_group.id.split('_')[1] in suffixes)]
         else:
             user_groups = [plone_group_id for plone_group_id in user_groups
-                           if plone_group_id.split('_')[0] in org_uids and
-                           (not suffixes or plone_group_id.split('_')[1] in suffixes)]
+                           if (not org_uids or plone_group_id.split('_')[0] in org_uids) and
+                           (not suffixes or '_' in plone_group_id and plone_group_id.split('_')[1] in suffixes)]
         return sorted(user_groups)
 
     def group_is_not_empty_cachekey(method, self, org_uid, suffix, user_id=None):
@@ -1050,10 +1049,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                   copyAnnexes=False, copyDecisionAnnexes=False,
                   newOwnerId=None, copyFields=DEFAULT_COPIED_FIELDS,
                   newPortalType=None, keepProposingGroup=False, keep_ftw_labels=False,
-                  keptAnnexIds=[], keptDecisionAnnexIds=[]):
+                  keptAnnexIds=[], keptDecisionAnnexIds=[],
+                  ignoreUsingGroupsForMeetingManagers=True):
         '''Paste objects (previously copied) in destFolder. If p_newOwnerId
            is specified, it will become the new owner of the item.
-           This method does NOT manage after creation calls like at_post_create_script.'''
+           This method does NOT manage after creation calls like at_post_create_script.
+           If p_ignoreUsingGroupsForMeetingManagers=True and user is MeetingManager,
+           then we will set check_using_groups=False while verifying if category
+           is_selectable.'''
         # warn that we are pasting items
         # so it is not necessary to perform some methods
         # like updating advices as it will be removed here under
@@ -1099,6 +1102,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         except:
             raise PloneMeetingError('Could not copy.')
 
+        isManager = self.isManager(destMeetingConfig)
+
         # Let the logged user do everything on the newly created item
         with api.env.adopt_roles(['Manager']):
             newItem.setCreators((newOwnerId,))
@@ -1135,12 +1140,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # remove 'category' from fieldsToKeep if it is disabled
             if 'category' in fieldsToKeep:
                 category = copiedItem.getCategory(theObject=True)
-                if category and not category.is_selectable(userId=loggedUserId):
+                if category and not category.is_selectable(
+                        userId=loggedUserId, ignore_using_groups=isManager):
                     fieldsToKeep.remove('category')
             # remove 'classifier' from fieldsToKeep if it is disabled
             if 'classifier' in fieldsToKeep:
                 classifier = copiedItem.getClassifier(theObject=True)
-                if classifier and not classifier.is_selectable(userId=loggedUserId):
+                if classifier and not classifier.is_selectable(
+                        userId=loggedUserId, ignore_using_groups=isManager):
                     fieldsToKeep.remove('classifier')
 
             newItem._at_creation_flag = True
@@ -1192,16 +1199,16 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if newItem.attribute_is_used('proposingGroupWithGroupInCharge'):
                     field = newItem.getField('proposingGroupWithGroupInCharge')
                     vocab = get_vocab(newItem, field.vocabulary_factory, only_factory=True)
-                    userProposingGroupUids = vocab(newItem, include_stored=False).by_value.keys()
-                    if userProposingGroupUids:
-                        newItem.setProposingGroupWithGroupInCharge(userProposingGroupUids[0])
+                    userProposingGroupTerms = vocab(newItem, include_stored=False)._terms
+                    if userProposingGroupTerms:
+                        newItem.setProposingGroupWithGroupInCharge(userProposingGroupTerms[0].token)
                 else:
                     # proposingGroup
                     field = newItem.getField('proposingGroup')
                     vocab = get_vocab(newItem, field.vocabulary_factory, only_factory=True)
-                    userProposingGroupUids = vocab(newItem, include_stored=False).by_value.keys()
-                    if userProposingGroupUids:
-                        newItem.setProposingGroup(userProposingGroupUids[0])
+                    userProposingGroupTerms = vocab(newItem, include_stored=False)._terms
+                    if userProposingGroupTerms:
+                        newItem.setProposingGroup(userProposingGroupTerms[0].token)
 
             if newOwnerId != loggedUserId:
                 plone_utils.changeOwnershipOf(newItem, newOwnerId)

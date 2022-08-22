@@ -18,7 +18,6 @@ from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
 from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import get_annexes
-from zope.component import getMultiAdapter
 from zope.i18n import translate
 from zope.interface import implements
 
@@ -122,17 +121,18 @@ class MeetingWorkflowActions(object):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
-    security.declarePrivate('init_sequence_number')
+    security.declarePrivate('update_meeting_number')
 
-    def init_sequence_number(self):
+    def update_meeting_number(self):
         '''When a meeting is published (or frozen, depending on workflow
            adaptations), we attribute him a sequence number.'''
-        if self.context.meeting_number != -1:
-            return  # Already done.
-        if self.cfg.getYearlyInitMeetingNumber():
-            # I must reinit the meeting number to 0 if it is the first
+        if not self.context.attribute_is_used('meeting_number') or \
+           self.context.meeting_number != -1:
+            return  # Not used or already computed.
+        prev = self.context.get_previous_meeting()
+        if "meeting_number" in self.cfg.getYearlyInitMeetingNumbers():
+            # I must reinit the meeting number to 1 if it is the first
             # meeting of this year.
-            prev = self.context.get_previous_meeting()
             if prev and \
                (prev.date.year != self.context.date.year):
                 self.context.meeting_number = 1
@@ -142,35 +142,47 @@ class MeetingWorkflowActions(object):
         meeting_number = self.cfg.getLastMeetingNumber() + 1
         self.context.meeting_number = meeting_number
         self.cfg.setLastMeetingNumber(meeting_number)
+        api.portal.show_message(_("meeting_number_init",
+                                  mapping={"meeting_number": meeting_number}),
+                                request=self.context.REQUEST)
+        # show a warning if previous meeting number is not consistent
+        if prev and \
+           (prev.date.year == self.context.date.year) and \
+           prev.meeting_number != meeting_number - 1:
+            api.portal.show_message(
+                _("meeting_number_inconsistent",
+                  mapping={
+                      "previous_meeting_number": prev.meeting_number,
+                      "previous_meeting_date": self.tool.format_date(prev.date)}),
+                request=self.context.REQUEST, type="warning")
 
     security.declarePrivate('doPublish')
 
     def doPublish(self, stateChange):
         '''When publishing the meeting, initialize the sequence number.'''
-        self.init_sequence_number()
+        self.update_meeting_number()
 
     security.declarePrivate('doFreeze')
 
     def doFreeze(self, stateChange):
         '''When freezing the meeting, we initialize sequence number.'''
-        self.init_sequence_number()
+        self.update_meeting_number()
 
     security.declarePrivate('doDecide')
 
     def doDecide(self, stateChange):
         ''' '''
-        pass
+        self.update_meeting_number()
+        # Set the firstItemNumber
+        self.context.update_first_item_number()
 
     security.declarePrivate('doClose')
 
     def doClose(self, stateChange):
         ''' '''
+        self.update_meeting_number()
         # Set the firstItemNumber
-        unrestricted_methods = getMultiAdapter((self.context, self.context.REQUEST),
-                                               name='pm_unrestricted_methods')
-        self.context.first_item_number = \
-            unrestricted_methods.findFirstItemNumberForMeeting(self.context)
-        self.context.update_item_references()
+        self.context.update_first_item_number(force=True)
         # remove annex previews of every items if relevant
         if self.cfg.getRemoveAnnexesPreviewsOnMeetingClosure():
             # add logging message to fingerpointing log

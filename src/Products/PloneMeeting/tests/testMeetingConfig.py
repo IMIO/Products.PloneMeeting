@@ -454,6 +454,61 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.setCustomAdvisers([customAdvisersCreatedUntilSetAndPast, ])
         self.failIf(cfg.validate_customAdvisers([customAdvisersCreatedUntilSetAndPast, ]))
 
+        # the 'for_item_created_from' may be changed if it is not an 'auto' advice
+        customAdvisersNotAutoChangedCreatedFrom = \
+            {'row_id': 'unique_id_123',
+             'org': self.vendors_uid,
+             'gives_auto_advice_on': '',
+             'for_item_created_from': '2013/01/01',
+             'for_item_created_until': '2013/01/15',
+             'gives_auto_advice_on_help_message': 'Auto help message changed',
+             'delay': '20',
+             'delay_left_alert': '',
+             'delay_label': 'Delay label changed',
+             'available_on': '',
+             'is_linked_to_previous_row': '0', }
+        cfg.setCustomAdvisers([customAdvisersNotAutoChangedCreatedFrom, ])
+        customAdvisersNotAutoChangedCreatedFrom['for_item_created_from'] = '2010/01/01'
+        self.failIf(cfg.validate_customAdvisers([customAdvisersNotAutoChangedCreatedFrom, ]))
+        # but can not be changed for an "auto" adviser
+        customAdvisersNotAutoChangedCreatedFrom['gives_auto_advice_on'] = 'python: True'
+        cfg.setCustomAdvisers([customAdvisersNotAutoChangedCreatedFrom, ])
+        customAdvisersNotAutoChangedCreatedFrom['for_item_created_from'] = '2009/01/01'
+        # does not validate
+        self.failUnless(cfg.validate_customAdvisers([customAdvisersNotAutoChangedCreatedFrom, ]))
+
+    def test_pm_Validate_customAdvisersDelayAwareConfigRemovableIfNotUsed(self):
+        '''Test the MeetingConfig.customAdvisers validate method.'''
+        # first check that we can edit an unused configuration
+        self.changeUser('admin')
+        cfg = self.meetingConfig
+        customAdvisers = {'row_id': 'unique_id_123',
+                          'org': self.developers_uid,
+                          'gives_auto_advice_on': '',
+                          'for_item_created_from': '2012/01/01',
+                          'for_item_created_until': '',
+                          'gives_auto_advice_on_help_message': 'Help message',
+                          'delay': '10',
+                          'delay_left_alert': '',
+                          'delay_label': 'Delay label',
+                          'available_on': '',
+                          'is_linked_to_previous_row': '0', }
+        # validate returns nothing if validation was successful
+        self.failIf(cfg.validate_customAdvisers([customAdvisers, ]))
+        cfg.setCustomAdvisers([customAdvisers])
+
+        # create an item
+        self.changeUser('pmCreator1')
+        item = self.create(
+            'MeetingItem',
+            optionalAdvisers=['{0}__rowid__unique_id_123'.format(self.developers_uid)])
+        # can not remove configuration
+        self.failUnless(cfg.validate_customAdvisers([]))
+        item.setOptionalAdvisers([])
+        item._update_after_edit()
+        # now may be removed
+        self.failIf(cfg.validate_customAdvisers([]))
+
     def test_pm_Validate_customAdvisersAvailableOn(self):
         '''Test the MeetingConfig.customAdvisers validate method.
            This validates that available_on can only be used if nothing is defined
@@ -786,43 +841,6 @@ class testMeetingConfig(PloneMeetingTestCase):
                                                 'adviser_group': 'Developers', },
                                        context=self.portal.REQUEST)
         self.assertEqual(cfg.validate_customAdvisers(customAdvisers), can_not_remove_msg)
-
-    def test_pm_Validate_transitionsForPresentingAnItem(self):
-        '''Test the MeetingConfig.transitionsForPresentingAnItem validation.
-           It fails if :
-           - empty, as it is required;
-           - first given transition is not correct;
-           - given sequence is wrong;
-           - last given transition does not result in the 'presented' state.'''
-        cfg = self.meetingConfig
-        # the right sequence is the one defined on self.meetingConfig
-        self.failIf(cfg.validate_transitionsForPresentingAnItem(cfg.getTransitionsForPresentingAnItem()))
-        # if not sequence provided, it fails
-        label = cfg.Schema()['transitionsForPresentingAnItem'].widget.Label(cfg)
-        required_error_msg = PloneMessageFactory(u'error_required',
-                                                 default=u'${name} is required, please correct.',
-                                                 mapping={'name': label})
-        self.assertEqual(cfg.validate_transitionsForPresentingAnItem([]), required_error_msg)
-        # if first provided transition is wrong, it fails with a specific message
-        first_transition_error_msg = _('first_transition_must_leave_wf_initial_state')
-        self.assertEqual(cfg.validate_transitionsForPresentingAnItem(['not_a_transition_leaving_initial_state']),
-                         first_transition_error_msg)
-        # if the given sequence is not right, it fails
-        wrong_sequence_error_msg = _('given_wf_path_does_not_lead_to_present')
-        sequence = list(cfg.getTransitionsForPresentingAnItem())
-        sequence.insert(1, 'wrong_transition')
-        self.assertEqual(cfg.validate_transitionsForPresentingAnItem(sequence), wrong_sequence_error_msg)
-        # XXX for this test, we need at least 2 transitions in the sequence
-        # as we will remove last transition from the sequence and if we only have
-        # one transition, it leads to the required_error message instead
-        if not len(cfg.getTransitionsForPresentingAnItem()) > 1:
-            pm_logger.info('Could not make every checks in test_pm_validateTransitionsForPresentingAnItem '
-                           'because only one TransitionsForPresentingAnItem')
-            return
-        last_transition_error_msg = _('last_transition_must_result_in_presented_state')
-        sequence_with_last_removed = list(cfg.getTransitionsForPresentingAnItem())[:-1]
-        self.assertEqual(cfg.validate_transitionsForPresentingAnItem(sequence_with_last_removed),
-                         last_transition_error_msg)
 
     def test_pm_Validate_insertingMethodsOnAddItem(self):
         '''Test the MeetingConfig.insertingMethodsOnAddItem validation.
@@ -2032,12 +2050,13 @@ class testMeetingConfig(PloneMeetingTestCase):
         proposed_state = cfg.getItemWorkflow(True).states[self._stateMappingFor('proposed')]
         translated_proposed_state = translate(proposed_state.title, domain="plone")
         level_removed_error = \
-            translate('item_wf_val_states_can_not_be_removed_in_use',
-                      domain='PloneMeeting',
-                      mapping={'item_state': "Waiting advices ({0})".format(
-                        translated_proposed_state.lower()),
-                               'item_url': item.absolute_url()},
-                      context=self.request)
+            translate(
+                'item_wf_val_states_can_not_be_removed_in_use',
+                domain='PloneMeeting',
+                mapping={'item_state': "Waiting advices ({0})".format(
+                         translated_proposed_state.lower()),
+                         'item_url': item.absolute_url()},
+                context=self.request)
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
                          level_removed_error)
 

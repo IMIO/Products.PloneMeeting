@@ -344,7 +344,9 @@ class MeetingItemWorkflowConditions(object):
                 down_or_up = down_or_up_wf(advice_obj)
                 if down_or_up:
                     res = 'wait_advices_{0}_from.png'.format(down_or_up), \
-                        'icon_help_waiting_advices_{0}'.format(down_or_up)
+                        translate('icon_help_waiting_advices_{0}'.format(down_or_up),
+                                  domain="PloneMeeting",
+                                  context=self.context.REQUEST)
         return res
 
     security.declarePublic('mayValidate')
@@ -641,12 +643,31 @@ class MeetingItemWorkflowConditions(object):
                 return True
         return False
 
+    def _advice_is_to_give(self, adviceInfo):
+        """ """
+        res = False
+        if adviceInfo['type'] in (NOT_GIVEN_ADVICE_VALUE, 'asked_again', ):
+            res = True
+        elif "waiting_advices_given_and_signed_advices_required_to_validate" in \
+                self.cfg.getWorkflowAdaptations():
+            # check that the WF went to the last advice WF state
+            # and also if advice was asked again, that last time it was asked
+            # it went to the end as well
+            advice_obj = self.context.getAdviceObj(adviceInfo['id'])
+            # when using the advice WF with signed, the WF transition is "signFinancialAdvice"
+            # we will get the last step signed or asked again if exist
+            last_step = getLastWFAction(
+                advice_obj, ['signFinancialAdvice', 'backToAdviceInitialState'])
+            if not last_step or last_step['action'] != 'signFinancialAdvice':
+                res = True
+        return res
+
     def _hasAdvicesToGive(self, destination_state):
         """Check if there are advice to give in p_destination_state."""
         hasAdvicesToGive = False
         for org_uid, adviceInfo in self.context.adviceIndex.items():
             # only consider advices to give
-            if adviceInfo['type'] not in (NOT_GIVEN_ADVICE_VALUE, 'asked_again', ):
+            if not self._advice_is_to_give(adviceInfo):
                 continue
             adviceStates = self.cfg.getItemAdviceStatesForOrg(org_uid)
             if destination_state in adviceStates:
@@ -2881,11 +2902,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     # both items have a meeting, compare meeting dates
                     return cmp(item2_meeting_date, item1_meeting_date)
                 elif item1_meeting_date and not item2_meeting_date:
-                    # only item1 has a Meeting, it will be displayed before
-                    return -1
-                elif not item1_meeting_date and item2_meeting_date:
-                    # only item2 has a Meeting, it will be displayed before
+                    # only item1 has a Meeting, it will be displayed after
                     return 1
+                elif not item1_meeting_date and item2_meeting_date:
+                    # only item2 has a Meeting, it will be displayed after
+                    return -1
                 else:
                     # no meeting at all, sort by item creation date
                     return cmp(item1_created, item2_created)
@@ -2969,6 +2990,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('need_MeetingItem_update_committees', True)
         for extra_marker in extra_markers:
             self.REQUEST.set(extra_marker, True)
+
+    def _annex_decision_addable_states_after_validation(self, cfg, item_state):
+        '''See doc in interfaces.py.'''
+        return cfg.getItemDecidedStates()
+
+    def may_add_annex_decision(self, cfg, item_state):
+        """ """
+        addable_states = self.adapted()._annex_decision_addable_states_after_validation(cfg, item_state)
+        return addable_states == "*" or item_state in addable_states
 
     security.declareProtected(ModifyPortalContent, 'setCategory')
 
@@ -3141,9 +3171,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # we call findBaseNumberRelativeToMeetingConfig, see docstring there
                 # call the view on meeting because it is memoized and for example in meeting_view
                 # the meeting does not change but the item does
-                unrestrictedMethodsView = getMultiAdapter((meeting, self.REQUEST),
-                                                          name='pm_unrestricted_methods')
-                currentMeetingComputedFirstNumber = unrestrictedMethodsView.findFirstItemNumberForMeeting(meeting)
+                view = getMultiAdapter((meeting, self.REQUEST), name='pm_unrestricted_methods')
+                currentMeetingComputedFirstNumber = view.findFirstItemNumber()
                 # now that we have the currentMeetingComputedFirstNumber, that is
                 # the theorical current meeting first number, we can compute current item
                 # number that is this number + current item number relativeTo the meeting - 1
@@ -3205,11 +3234,44 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.linked_predecessor_path = "/".join(predecessor.getPhysicalPath())
             if not getattr(predecessor, 'linked_successor_uids', None):
                 predecessor.linked_successor_uids = PersistentList()
+            # update successors for predecessor
             predecessor.linked_successor_uids.append(self.UID())
         else:
             safe_delattr(self, 'linked_predecessor_uid')
             safe_delattr(self, 'linked_predecessor_path')
             safe_delattr(self, 'linked_successor_uids')
+
+    def get_successor(self, the_objects=True, unrestricted=True):
+        """Shortcut to get the last successors that should be the official successor."""
+        # we force ordered=True for get_successors to make sure the last successor
+        # is the last chronologically created
+        successors = self.get_successors(
+            the_objects=the_objects, ordered=True, unrestricted=unrestricted)
+        return successors and successors[-1] or None
+
+    def get_successors(self, the_objects=True, ordered=True, unrestricted=True):
+        '''Return the successors, so the items that were automatically linked to self.
+           Most of times, there will be one single successor, but it may happen
+           that several successors exist, for example when item delayed then corrected
+           then delayed again, most of time one of the 2 successors will be deleted
+           but it is not always the case...'''
+        res = getattr(self, 'linked_successor_uids', [])
+        if res and the_objects:
+            # res is a PersistentList, not working with catalog query
+            # searching successors ordered will make sure that items are returned chronologically
+            res = uuidsToObjects(uuids=tuple(res), ordered=ordered, unrestricted=unrestricted)
+        return res
+
+    def get_every_successors(obj, the_objects=True, unrestricted=True):
+        '''Loop recursievely thru every successors of p_obj and return it.'''
+        def recurse_successors(successors, res=[]):
+            for successor in successors:
+                res.append(successor)
+                recurse_successors(successor.get_successors())
+            return res
+        res = recurse_successors(obj.get_successors(
+            the_objects=the_objects, unrestricted=unrestricted))
+        return res
 
     def get_predecessor(self, the_object=True, unrestricted=True):
         ''' '''
@@ -3220,23 +3282,47 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = portal.unrestrictedTraverse(predecessor_path)
         return res
 
-    def get_successors(self, the_objects=True, unrestricted=True):
-        ''' '''
-        res = getattr(self, 'linked_successor_uids', [])
-        if res and the_objects:
-            # res is a PersistentList, not working with catalog query
-            res = uuidsToObjects(uuids=tuple(res), unrestricted=unrestricted)
-        return res
+    security.declarePublic('get_predecessors')
 
-    def get_every_successors(obj):
-        '''Loop recursievely thru every successors of p_obj and return it.'''
-        def recurse_successors(successors, res=[]):
-            for successor in successors:
-                res.append(successor)
-                recurse_successors(successor.get_successors())
-            return res
-        res = recurse_successors(obj.get_successors())
-        return res
+    def get_predecessors(self, only_viewable=False, include_successors=True):
+        '''See doc in interfaces.py.'''
+        item = self.getSelf()
+
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
+        predecessor = item.get_predecessor()
+        predecessors = []
+        # retrieve every predecessors
+        while predecessor:
+            if item._appendLinkedItem(predecessor, tool, cfg, only_viewable=only_viewable):
+                predecessors.append(predecessor)
+            predecessor = predecessor.get_predecessor()
+        # keep order
+        predecessors.reverse()
+        # retrieve successors too
+        if include_successors:
+            successors = item.get_every_successors()
+            successors = [successor for successor in successors
+                          if item._appendLinkedItem(successor, tool, cfg, only_viewable)]
+            predecessors += successors
+        return predecessors
+
+    security.declarePublic('displayLinkedItem')
+
+    def displayLinkedItem(self, item):
+        '''Return a HTML structure to display a linked item.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        meeting = item.hasMeeting()
+        # display the meeting date if the item is linked to a meeting
+        if meeting:
+            title = item.Title(withMeetingDate=True)
+            return tool.getColoredLink(item,
+                                       showColors=True,
+                                       showContentIcon=True,
+                                       contentValue=title)
+        else:
+            # try to share cache of getPrettyLink
+            return item.getPrettyLink()
 
     def getMeeting(self, only_uid=False, caching=True):
         '''Returns the linked meeting if it exists.'''
@@ -3421,12 +3507,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
 
-        if tool.isManager(cfg):
-            meeting_states_accepting_items = cfg.getMeetingStatesAcceptingItemsForMeetingManagers()
-        else:
-            meeting_states_accepting_items = cfg.getItemPreferredMeetingStates()
-
-        for meetingBrain in cfg.getMeetingsAcceptingItems(review_states=meeting_states_accepting_items):
+        # while passing empty review_states, it is computed depending
+        # on fact that current user isManager or not
+        for meetingBrain in cfg.getMeetingsAcceptingItems(review_states=[]):
             meetingDate = tool.format_date(meetingBrain.meeting_date, with_hour=True)
             meetingState = translate(meetingBrain.review_state,
                                      domain="plone",
@@ -4143,7 +4226,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('get_item_absents')
 
-    def get_item_absents(self, the_objects=False, **kwargs):
+    def get_item_absents(self, the_objects=False, ordered=True, **kwargs):
         '''Gets the absents for this item.
            Absent for an item are stored in the Meeting.item_absents dict.'''
         res = []
@@ -4151,6 +4234,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return res
         meeting = self.getMeeting()
         meeting_item_absents = meeting.get_item_absents().get(self.UID(), [])
+        if ordered:
+            meeting_item_absents = self._order_contacts(meeting_item_absents)
         if the_objects:
             item_absents = meeting._get_contacts(uids=meeting_item_absents, the_objects=the_objects)
         else:
@@ -4159,7 +4244,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('get_item_excused')
 
-    def get_item_excused(self, the_objects=False, **kwargs):
+    def get_item_excused(self, the_objects=False, ordered=True, **kwargs):
         '''Gets the excused for this item.
            Excused for an item are stored in the Meeting.item_excused dict.'''
         res = []
@@ -4167,6 +4252,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return res
         meeting = self.getMeeting()
         meeting_item_excused = meeting.get_item_excused().get(self.UID(), [])
+        if ordered:
+            meeting_item_excused = self._order_contacts(meeting_item_excused)
         if the_objects:
             item_excused = meeting._get_contacts(uids=meeting_item_excused, the_objects=the_objects)
         else:
@@ -4175,7 +4262,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('get_item_non_attendees')
 
-    def get_item_non_attendees(self, the_objects=False, **kwargs):
+    def get_item_non_attendees(self, the_objects=False, ordered=True, **kwargs):
         '''Gets the non_attendees for this item.
            Non attendees for an item are stored in the Meeting.item_non_attendees dict.'''
         res = []
@@ -4183,6 +4270,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return res
         meeting = self.getMeeting()
         meeting_item_non_attendees = meeting.get_item_non_attendees().get(self.UID(), [])
+        if ordered:
+            meeting_item_non_attendees = self._order_contacts(meeting_item_non_attendees)
         if the_objects:
             item_non_attendees = meeting._get_contacts(
                 uids=meeting_item_non_attendees, the_objects=the_objects)
@@ -4465,7 +4554,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         try:
             item.REQUEST.set('PUBLISHED', meeting)
             item.isRecurringItem = True
-            # we use the wf path defined in the cfg.transitionsForPresentingAnItem
+            # we use the wf path defined in the cfg.getTransitionsForPresentingAnItem
             # to present the item to the meeting
             cfg = tool.getMeetingConfig(item)
             # give 'Manager' role to current user to bypass transitions guard
@@ -6645,7 +6734,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not org_uid:
             return
         apply_meetingmanagers_access, suffix_roles = compute_item_roles_to_assign_to_suffixes(
-            cfg, item_state, org_uid)
+            cfg, self, item_state, org_uid)
 
         # apply local roles to computed suffixes
         self._assign_roles_to_group_suffixes(org_uid, suffix_roles)
@@ -7492,7 +7581,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('get_attendees')
 
-    def get_attendees(self, the_objects=False):
+    def get_attendees(self, the_objects=False, ordered=True):
         '''Returns the attendees for this item.'''
         res = []
         if not self.hasMeeting():
@@ -7505,8 +7594,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         attendees = [attendee for attendee in attendees
                      if attendee not in item_absents + item_excused + item_non_attendees]
         # get really present attendees now
+        if ordered:
+            attendees = self._order_contacts(attendees)
         attendees = meeting._get_contacts(uids=attendees, the_objects=the_objects)
         return attendees
+
+    def _order_contacts(self, uids):
+        """ """
+        return [uid for uid in self.get_all_attendees(ordered=True)
+                if uid in uids]
+
+    def get_all_attendees(self, the_objects=False, ordered=True):
+        '''Returns the every attendees for this item, including absents, excused, ...'''
+        if not self.hasMeeting():
+            return ()
+        meeting = self.getMeeting()
+        all_uids = []
+        if ordered:
+            all_uids = meeting._get_item_attendees_order(self.UID())
+        return meeting.get_all_attendees(all_uids, the_objects=the_objects)
 
     def get_attendee_short_title(self, hp, **kwargs):
         '''Helper that return short title for given p_hp,
@@ -7525,46 +7631,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            not _checkPermission(View, item):
             return False
         return True
-
-    security.declarePublic('get_predecessors')
-
-    def get_predecessors(self, only_viewable=False):
-        '''See doc in interfaces.py.'''
-        item = self.getSelf()
-
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(item)
-        predecessor = item.get_predecessor()
-        predecessors = []
-        # retrieve every predecessors
-        while predecessor:
-            if item._appendLinkedItem(predecessor, tool, cfg, only_viewable=only_viewable):
-                predecessors.append(predecessor)
-            predecessor = predecessor.get_predecessor()
-        # keep order
-        predecessors.reverse()
-        # retrieve successors too
-        successors = item.get_every_successors()
-        successors = [successor for successor in successors
-                      if item._appendLinkedItem(successor, tool, cfg, only_viewable)]
-        return predecessors + successors
-
-    security.declarePublic('displayLinkedItem')
-
-    def displayLinkedItem(self, item):
-        '''Return a HTML structure to display a linked item.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        meeting = item.hasMeeting()
-        # display the meeting date if the item is linked to a meeting
-        if meeting:
-            title = item.Title(withMeetingDate=True)
-            return tool.getColoredLink(item,
-                                       showColors=True,
-                                       showContentIcon=True,
-                                       contentValue=title)
-        else:
-            # try to share cache of getPrettyLink
-            return item.getPrettyLink()
 
     def downOrUpWorkflowAgain_cachekey(method, self, brain=False):
         '''cachekey method for self.downOrUpWorkflowAgain.'''

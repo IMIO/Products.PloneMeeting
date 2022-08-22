@@ -54,6 +54,7 @@ class Migrate_To_4203(Migrator):
         # as problem was introduced after 4200...
         if not from_migration_to_4200:
             self._adaptInternalImagesLinkToUseResolveUID()
+        logger.info('Done.')
 
 
 def migrate(context):

@@ -5,21 +5,25 @@
 # GNU General Public License (GPL)
 #
 
+from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group
 from imio.helpers.content import richtextval
 from os import path
 from plone.app.controlpanel.events import ConfigurationChangedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
+from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import duplicate_portal_type
 from Products.PloneMeeting.utils import escape
 from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import sendMailIfRelevant
+from Products.PloneMeeting.utils import set_dx_value
 from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.PloneMeeting.utils import transformAllRichTextFields
 from Products.PloneMeeting.utils import validate_item_assembly_value
 from zope.event import notify
+from zope.schema._bootstrapinterfaces import WrongType
 
 
 ASSEMBLY_CORRECT_VALUE = u'[[Text]][[Text]]'
@@ -292,6 +296,52 @@ class testUtils(PloneMeetingTestCase):
         self.assertEqual(meeting.observations.raw, text)
         transformAllRichTextFields(meeting, onlyField="observations")
         self.assertEqual(meeting.observations.raw, text)
+
+    def test_pm_Set_dx_value(self):
+        """utils.set_dx_value will set a value on a DX content and check if current
+           user has the permission and if the value does validate."""
+        cfg = self.meetingConfig
+        self._enableField('meeting_number', related_to='Meeting')
+        self._removeConfigObjectsFor(cfg)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        # if user able to set, data must validate
+        # here first_item_number needs an integer
+        self.assertEqual(meeting.first_item_number, -1)
+        self.assertRaises(WrongType, set_dx_value, meeting, "first_item_number", "a")
+        set_dx_value(meeting, "first_item_number", 50)
+        self.assertEqual(meeting.first_item_number, 50)
+        # can not do it if does not have the permission
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, meeting))
+        self.assertRaises(WrongType, set_dx_value, meeting, "first_item_number", "a")
+        self.assertRaises(Unauthorized, set_dx_value, meeting, "first_item_number", 55)
+        # parameter raise_unauthorized may be False
+        set_dx_value(meeting, "first_item_number", 55, raise_unauthorized=False)
+        # the value is not changed anyway
+        self.assertEqual(meeting.first_item_number, 50)
+        # make sure it is useable in TAL expressions
+        self.changeUser('pmManager')
+        cfg.setOnMeetingTransitionItemActionToExecute(
+            [{'meeting_transition': 'freeze',
+              'item_action': EXECUTE_EXPR_VALUE,
+              'tal_expression':
+                'python: pm_utils.set_dx_value(meeting, "meeting_number", 25)'}, ])
+        self.assertEqual(meeting.meeting_number, -1)
+        self.freezeMeeting(meeting)
+        # if was initialized to "1" by doFreeze but onMeetingTransitionItemActionToExecute
+        # did nothing because it is applied on each items and there are no items!
+        # So when using it to update meeting we really need to make sure the work done
+        # is only done one time
+        self.assertEqual(meeting.meeting_number, 1)
+        # set it back to -1 so we make sure onMeetingTransitionItemActionToExecute
+        # is done after doFreeze
+        meeting.meeting_number = -1
+        self.do(meeting, 'backToCreated')
+        item = self.create('MeetingItem', decision=self.decisionText)
+        self.presentItem(item)
+        self.freezeMeeting(meeting)
+        self.assertEqual(meeting.meeting_number, 25)
 
 
 def test_suite():

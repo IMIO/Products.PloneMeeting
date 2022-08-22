@@ -190,7 +190,7 @@ class PloneMeetingTestingHelpers:
             return getattr(
                 self, ('TRANSITIONS_FOR_PROPOSING_ITEM_%d' % meetingConfigNumber))
 
-    def proposeItem(self, item, first_level=False, as_manager=True):
+    def proposeItem(self, item, first_level=False, as_manager=True, clean_memoize=True):
         '''Propose passed p_item using TRANSITIONS_FOR_PROPOSING_ITEM_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_PROPOSING_ITEM_x is 1 or 2.
@@ -198,9 +198,10 @@ class PloneMeetingTestingHelpers:
            this makes it possible to reach an intermediate propose level.'''
         self._doTransitionsFor(item,
                                self.get_transitions_for_proposing_item(first_level),
-                               as_manager=as_manager)
+                               as_manager=as_manager,
+                               clean_memoize=clean_memoize)
 
-    def prevalidateItem(self, item, as_manager=True):
+    def prevalidateItem(self, item, as_manager=True, clean_memoize=True):
         '''Prevalidate passed p_item using TRANSITIONS_FOR_PREVALIDATING_ITEM_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_PREVALIDATING_ITEM_x is 1 or 2.'''
@@ -208,9 +209,10 @@ class PloneMeetingTestingHelpers:
         self._doTransitionsFor(
             item,
             getattr(self, ('TRANSITIONS_FOR_PREVALIDATING_ITEM_%d' % meetingConfigNumber)),
-            as_manager=as_manager)
+            as_manager=as_manager,
+            clean_memoize=clean_memoize)
 
-    def validateItem(self, item, as_manager=True):
+    def validateItem(self, item, as_manager=True, clean_memoize=True):
         '''Validate passed p_item using TRANSITIONS_FOR_VALIDATING_ITEM_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_VALIDATING_ITEM_x is 1 or 2.'''
@@ -218,9 +220,10 @@ class PloneMeetingTestingHelpers:
         self._doTransitionsFor(
             item,
             getattr(self, ('TRANSITIONS_FOR_VALIDATING_ITEM_%d' % meetingConfigNumber)),
-            as_manager=as_manager)
+            as_manager=as_manager,
+            clean_memoize=clean_memoize)
 
-    def presentItem(self, item, as_manager=True):
+    def presentItem(self, item, as_manager=True, clean_memoize=True):
         '''Present passed p_item using TRANSITIONS_FOR_PRESENTING_ITEM_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_PRESENTING_ITEM_x is 1 or 2.'''
@@ -228,9 +231,10 @@ class PloneMeetingTestingHelpers:
         self._doTransitionsFor(
             item,
             getattr(self, ('TRANSITIONS_FOR_PRESENTING_ITEM_%d' % meetingConfigNumber)),
-            as_manager=as_manager)
+            as_manager=as_manager,
+            clean_memoize=clean_memoize)
 
-    def publishMeeting(self, meeting, as_manager=False):
+    def publishMeeting(self, meeting, as_manager=False, clean_memoize=True):
         '''Publish passed p_meeting using TRANSITIONS_FOR_PUBLISHING_MEETING_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_PUBLISHING_MEETING_x is 1 or 2.'''
@@ -238,9 +242,10 @@ class PloneMeetingTestingHelpers:
         self._doTransitionsFor(
             meeting,
             getattr(self, ('TRANSITIONS_FOR_PUBLISHING_MEETING_%d' % meetingConfigNumber)),
-            as_manager=as_manager)
+            as_manager=as_manager,
+            clean_memoize=clean_memoize)
 
-    def freezeMeeting(self, meeting, as_manager=False):
+    def freezeMeeting(self, meeting, as_manager=False, clean_memoize=True):
         '''Freeze passed p_meeting using TRANSITIONS_FOR_FREEZING_MEETING_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_FREEZING_MEETING_x is 1 or 2.'''
@@ -248,9 +253,10 @@ class PloneMeetingTestingHelpers:
         self._doTransitionsFor(
             meeting,
             getattr(self, ('TRANSITIONS_FOR_FREEZING_MEETING_%d' % meetingConfigNumber)),
-            as_manager=as_manager)
+            as_manager=as_manager,
+            clean_memoize=clean_memoize)
 
-    def decideMeeting(self, meeting, as_manager=False):
+    def decideMeeting(self, meeting, as_manager=False, clean_memoize=True):
         '''Decide passed p_meeting using TRANSITIONS_FOR_DECIDING_MEETING_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_DECIDING_MEETING_x is 1 or 2.'''
@@ -258,9 +264,13 @@ class PloneMeetingTestingHelpers:
         self._doTransitionsFor(
             meeting,
             getattr(self, ('TRANSITIONS_FOR_DECIDING_MEETING_%d' % meetingConfigNumber)),
-            as_manager=as_manager)
+            as_manager=as_manager,
+            clean_memoize=clean_memoize)
 
-    def closeMeeting(self, meeting, as_manager=False):
+    def apply_meeting_transition_to_late_state(self, meeting, as_manager=False, clean_memoize=True):
+        self.freezeMeeting(meeting, as_manager, clean_memoize)
+
+    def closeMeeting(self, meeting, as_manager=False, clean_memoize=True):
         '''Close passed p_meeting using TRANSITIONS_FOR_CLOSING_MEETING_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_CLOSING_MEETING_x is 1 or 2.'''
@@ -268,7 +278,8 @@ class PloneMeetingTestingHelpers:
         self._doTransitionsFor(
             meeting,
             getattr(self, ('TRANSITIONS_FOR_CLOSING_MEETING_%d' % meetingConfigNumber)),
-            as_manager=as_manager)
+            as_manager=as_manager,
+            clean_memoize=clean_memoize)
 
     def backToState(self, itemOrMeeting, state, as_manager=True, comment=""):
         """Set the p_item back to p_state.
@@ -302,17 +313,17 @@ class PloneMeetingTestingHelpers:
         if as_manager:
             self.changeUser(currentUser)
 
-    def _doTransitionsFor(self, itemOrMeeting, transitions, as_manager=False, comment=""):
+    def _doTransitionsFor(self, itemOrMeeting, transitions, as_manager=False, comment="", clean_memoize=True):
         """Helper that just trigger given p_transitions on given p_itemOrMeeting."""
         # do things as admin to avoid permission issues
         if as_manager:
             currentUser = self.member.getId()
-            self.changeUser('admin')
+            self.changeUser('admin', clean_memoize=clean_memoize)
         for tr in transitions:
             if tr in self.transitions(itemOrMeeting):
-                self.do(itemOrMeeting, tr, comment=comment)
+                self.do(itemOrMeeting, tr, comment=comment, clean_memoize=clean_memoize)
         if as_manager:
-            self.changeUser(currentUser)
+            self.changeUser(currentUser, clean_memoize=clean_memoize)
 
     def _determinateUsedMeetingConfigNumber(self):
         """Helper method that check if we use meetingConfig or meetingConfig2."""

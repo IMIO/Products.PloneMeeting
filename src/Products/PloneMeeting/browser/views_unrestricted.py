@@ -1,13 +1,16 @@
+# -*- coding: utf-8 -*-
+
 from AccessControl import Unauthorized
 from plone import api
 from plone.memoize.view import memoize
 from Products.Five import BrowserView
+from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from zope.component import getMultiAdapter
 from zope.i18n import translate
 
 
-class UnrestrictedMethodsView(BrowserView):
+class ItemUnrestrictedMethodsView(BrowserView):
     """
       This class contains every methods behaving as unrestricted.
       These methods were formerly Manager proxy roled python Scripts.
@@ -29,8 +32,10 @@ class UnrestrictedMethodsView(BrowserView):
         if meeting:
             return meeting.date
 
-    @memoize
-    def findFirstItemNumberForMeeting(self, meeting):
+
+class MeetingUnrestrictedMethodsView(BrowserView):
+
+    def findFirstItemNumber(self, get_items_additional_catalog_query={}):
         """
           Return the base number to take into account while computing an item number.
           This is used when given p_meeting firstItemNumber is -1, we need to look in previous
@@ -46,7 +51,7 @@ class UnrestrictedMethodsView(BrowserView):
         # could be unaccessible to the current user, for example by default a
         # meeting in state 'created' is not viewable by items creators
         brains = catalog.unrestrictedSearchResults(portal_type=cfg.getMeetingTypeName(),
-                                                   meeting_date={'query': meeting.date,
+                                                   meeting_date={'query': self.context.date,
                                                                  'range': 'max'},
                                                    sort_on='meeting_date',
                                                    sort_order='reverse')
@@ -66,9 +71,13 @@ class UnrestrictedMethodsView(BrowserView):
             # and we continue to the previous meeting
             # divide lastItem itemNumber by 100 so we are sure to ignore subnumbers
             # 308 will become 3 or 1400 will become 14
-            items = meeting.get_items(the_objects=False, ordered=True, unrestricted=True)
-            item = items and items[-1]._unrestrictedGetObject()
-            lastItemNumber = item and item.getItemNumber() / 100 or 0
+            items = meeting.get_items(
+                the_objects=True,
+                ordered=True,
+                unrestricted=True,
+                additional_catalog_query=get_items_additional_catalog_query)
+            # compute number of items ignoring items with a subnumber
+            lastItemNumber = len([item for item in items if _is_integer(item.getItemNumber())])
             numberOfItemsBefore += lastItemNumber
             if not meeting.first_item_number == -1:
                 previousFirstItemNumber = meeting.first_item_number

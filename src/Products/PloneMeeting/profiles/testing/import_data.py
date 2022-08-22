@@ -143,6 +143,7 @@ dashboardTemplate.tal_condition = u'python: context.absolute_url().endswith("/se
 # Test users and groups
 siteadmin = UserDescriptor('siteadmin', ['Manager'], email="siteadmin@plonemeeting.org", fullname='Site administrator')
 pmManager = UserDescriptor('pmManager', [], email="pmmanager@plonemeeting.org", fullname='M. PMManager')
+pmManager2 = UserDescriptor('pmManager2', [], email="pmmanager2@plonemeeting.org", fullname='M. PMManager2')
 pmCreator1 = UserDescriptor('pmCreator1', [], email="pmcreator1@plonemeeting.org", fullname='M. PMCreator One')
 pmCreator1b = UserDescriptor('pmCreator1b', [], email="pmcreator1b@plonemeeting.org", fullname='M. PMCreator One bee')
 pmObserver1 = UserDescriptor('pmObserver1', [], email="pmobserver1@plonemeeting.org", fullname='M. PMObserver One')
@@ -235,6 +236,12 @@ vendors.advisers.append(pmManager)
 # Add a vintage group
 endUsers = OrgDescriptor('endUsers', 'End users', u'EndUsers', active=False)
 
+# Add 2 organizations outside "My org"
+org_outside1 = OrgDescriptor('orgOutside1', 'Org outside 1', u'OrgOutside1', active=False)
+org_outside1.parent_path = ".."
+org_outside2 = OrgDescriptor('orgOutside2', 'Org outside 2', u'OrgOutside2', active=False)
+org_outside2.parent_path = ".."
+
 # Add an external user
 cadranel = UserDescriptor('cadranel', [], fullname='M. Benjamin Cadranel')
 
@@ -282,7 +289,6 @@ meetingPma.usedMeetingAttributes = ('assembly', 'assembly_excused', 'assembly_ab
 meetingPma.maxShownListings = '100'
 meetingPma.workflowAdaptations = ['delayed']
 meetingPma.itemPositiveDecidedStates = ['accepted']
-meetingPma.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
 meetingPma.onMeetingTransitionItemActionToExecute = (
     {'meeting_transition': 'freeze',
      'item_action': 'itemfreeze',
@@ -401,7 +407,7 @@ meetingPma.addContactsCSV = False
 # Plonegov-assembly
 meetingPga = MeetingConfigDescriptor(
     'plonegov-assembly', 'PloneGov assembly', 'PloneGov assembly')
-meetingPga.meetingManagers = ['pmManager']
+meetingPga.meetingManagers = ['pmManager', 'pmManager2']
 meetingPga.shortName = 'Pga'
 meetingPga.assembly = 'Bill Gates, Steve Jobs'
 meetingPga.signatures = 'Bill Gates, Steve Jobs'
@@ -412,7 +418,6 @@ meetingPga.annexTypes = [financialAnalysis, legalAnalysis,
                          budgetAnalysisCfg2, itemAnnex, decisionAnnex,
                          adviceAnnex, adviceLegalAnalysis, meetingAnnex]
 meetingPga.usedItemAttributes = ('description', 'toDiscuss', 'associatedGroups', 'itemIsSigned',)
-meetingPga.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
 meetingPga.onMeetingTransitionItemActionToExecute = deepcopy(
     meetingPma.onMeetingTransitionItemActionToExecute)
 meetingPga.insertingMethodsOnAddItem = ({'insertingMethod': 'on_categories', 'reverse': '0'}, )
@@ -483,14 +488,14 @@ person4.firstname_abbreviated = u'P4'
 
 # The whole configuration object -----------------------------------------------
 data = PloneMeetingConfiguration('My meetings', (meetingPma, meetingPga),
-                                 (developers, vendors, endUsers))
+                                 (developers, vendors, endUsers, org_outside1, org_outside2))
 # necessary for testSetup.test_pm_ToolAttributesAreOnlySetOnFirstImportData
 data.restrictUsers = False
 data.persons = [person1, person2, person3, person4]
 data.usersOutsideGroups = [siteadmin, cadranel, voter1, voter2,
                            powerobserver1, powerobserver2,
                            restrictedpowerobserver1, restrictedpowerobserver2,
-                           budgetimpacteditor, templatemanager1]
+                           budgetimpacteditor, templatemanager1, pmManager2]
 contactsTemplate = PodTemplateDescriptor('contactsTemplate', 'Export organizations', dashboard=True)
 contactsTemplate.odt_file = 'organizations-export.ods'
 contactsTemplate.pod_formats = ['ods', 'xls']

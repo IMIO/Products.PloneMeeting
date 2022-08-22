@@ -2,8 +2,7 @@
 <table id="meeting_users" class="listing discreet faceted-table-results" cellspacing="0" cellpadding="0"
        tal:condition="python: view.show_attendees_fields()"
        i18n:domain="PloneMeeting">
-  <tal:defines define="get_all_used_held_positions python: modules['Products.PloneMeeting.browser.meeting'].get_all_used_held_positions;
-                       allUsers python: get_all_used_held_positions(context);
+  <tal:defines define="allUsers python: context.get_all_attendees(the_objects=True);
                        attendees python: context.get_attendees();
                        excused python: context.get_excused();
                        absents python: context.get_absents();
@@ -25,6 +24,15 @@
     <tal:comment replace="nothing">Column captions</tal:comment>
     <thead>
     <tr>
+      <th class="th_header_number-column">
+        <a tal:condition="isManager"
+           class="link-overlay-pm"
+           title="Redefined item attendees order"
+           i18n:attributes="title"
+           tal:attributes="href string:${context/absolute_url}/@@display-meeting-item-changed-attendees-order">
+         <span class="fa show-info link-action"></span>
+        </a>
+      </th>
       <th class="nosort">
         <span i18n:translate="default_for_all_items">For all items</span>
         <div class="refresh-attendees-container" onclick="refresh_meeting_attendees();">
@@ -63,8 +71,9 @@
                       classOddEven python: oddrow and 'even' or 'odd';
                       is_attendee_position_redefined python: context.is_attendee_position_redefined(aUid);"
           tal:attributes="class classOddEven">
+        <td class="td_cell_number-column" tal:content="repeat/mUser/number">1</td>
         <td>
-          <span tal:content="python: mUser.get_short_title()"
+          <span tal:content="python: mUser.get_short_title(include_voting_group=view.cfg.getDisplayVotingGroup())"
                 tal:attributes="class python: is_attendee_position_redefined and 'tooltipster-meeting-item-redefined-position link-help item-attendee-title highlightValue' or 'item-attendee-title';
                                 data-base_url string:${context/absolute_url};
                                 data-attendee_uid string:${aUid};">

@@ -1,7 +1,7 @@
 <tal:comment replace="nothing">User table: attendees, absents, signatories, replacements</tal:comment>
 <tal:users condition="python: view.show_attendees_fields()">
     <script language="javascript">
-    // some checkboxes may not be checked toghether
+    // some checkboxes may not be checked together
     var only_one_selected = ['attendee', 'excused', 'absent'];
     function showOrHideReplField(userId, hide_select, enable_user) {
       // Shows of hides "replacement" field for p_userId, depending on p_show.
@@ -52,12 +52,18 @@
               });
           }
           // finally, if the attendee box is unckecked, disable the 'signatory/voter' boxes
+          var attendee_title = document.getElementById('muser_'+userId+'_title');
           var attendee_box = document.getElementById('muser_'+userId+'_attendee');
+          var excused_box = document.getElementById('muser_'+userId+'_excused');
+          var absent_box = document.getElementById('muser_'+userId+'_absent');
           var signer_box = document.getElementById('muser_'+userId+'_signer');
           if (signer_box) {
               if (!attendee_box.checked) {signer_box.checked = false; signer_box.value = ''; signer_box.disabled = true;}
               else {signer_box.disabled = false;}
           }
+          if (!attendee_box.checked && (excused_box && !excused_box.checked) && (absent_box && !absent_box.checked)) {
+            attendee_title.classList = ["input_disabled"];
+          } else {attendee_title.classList = [];}
           var voter_box = document.getElementById('muser_'+userId+'_voter');
           if (voter_box) {
               if (!attendee_box.checked) {voter_box.checked = false; voter_box.value = ''; voter_box.disabled = true;}
@@ -95,6 +101,7 @@
           <thead>
             <tr>
               <th class="nosort"></th>
+              <th class="th_header_number-column"></th>
               <th class="nosort"></th>
               <th class="nosort" i18n:translate="is_attendee"></th>
               <th class="nosort" tal:condition="show_excused"
@@ -112,9 +119,15 @@
           <tbody>
             <tr tal:repeat="mUser all_users">
                   <td class="draggable">⣿</td>
+                  <td class="td_cell_number-column" tal:content="repeat/mUser/number">1</td>
                   <tal:defines define="muid python: mUser.UID();
                                        attendee_id python: 'muser_%s_attendee' % muid;">
-                    <td><img tal:attributes="src string:${mUser/getIconURL}" /> <b tal:content="mUser/get_short_title"></b></td>
+                    <td>
+                      <img tal:attributes="src string:${mUser/getIconURL}" />
+                      <b tal:attributes="id string:muser_${muid}_title;
+                                         class python: muid not in attendees and 'input_disabled';"
+                         tal:content="mUser/get_short_title"></b>
+                    </td>
                     <td align="center">
                       <input type="checkbox" class="noborder"
                              tal:define="cbid attendee_id"
@@ -207,9 +220,7 @@
         $(document).ready(function() {
             // initialize drag and drop
             $('#meeting_users').tableDnD({
-                onDrop: function(table, row) {
-                   alert($.tableDnD.serialize());
-                  },
+                onDrop: function(table, row) {},
                   dragHandle: ".draggable",
                   onDragClass: "dragindicator dragging"
               });
