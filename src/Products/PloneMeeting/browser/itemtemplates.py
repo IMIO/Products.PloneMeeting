@@ -10,7 +10,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.Five.browser import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
-from Products.PloneMeeting.utils import get_current_user_id
+from imio.helpers.cache import get_current_user_id
 from zope.i18n import translate
 
 

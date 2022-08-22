@@ -25,6 +25,7 @@ from email import Encoders
 from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
+from imio.helpers.cache import get_current_user_id
 from imio.helpers.content import richtextval
 from imio.helpers.security import fplog
 from imio.helpers.xhtml import addClassToContent
@@ -2433,18 +2434,6 @@ def get_annexes_config(context, portal_type="annex", annex_group=False):
     if annex_group:
         return group
     return config
-
-
-def get_current_user_id(request=None):
-    """Try to get user_id from REQUEST or fallback to plone.api."""
-    user_id = None
-    try:
-        if request is None:
-            request = getRequest()
-        user_id = request["AUTHENTICATED_USER"].getId()
-    except Exception:
-        user_id = api.user.get_current().getId()
-    return user_id
 
 
 def get_enabled_ordered_wfas(tool):

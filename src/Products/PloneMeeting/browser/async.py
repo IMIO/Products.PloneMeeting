@@ -14,7 +14,7 @@ from Products.PloneMeeting.browser.itemvotes import _get_linked_item_vote_number
 from Products.PloneMeeting.browser.meeting import BaseMeetingView
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import WriteBudgetInfos
-from Products.PloneMeeting.utils import get_current_user_id
+from imio.helpers.cache import get_current_user_id
 from Products.PloneMeeting.utils import reindex_object
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from zope.i18n import translate

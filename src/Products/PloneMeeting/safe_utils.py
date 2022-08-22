@@ -12,7 +12,7 @@ from Products.PloneMeeting.utils import escape
 from Products.PloneMeeting.utils import field_is_empty
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import get_annexes
-from Products.PloneMeeting.utils import get_current_user_id
+from imio.helpers.cache import get_current_user_id
 from Products.PloneMeeting.utils import get_gn_position_name
 from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import get_prefixed_gn_position_name

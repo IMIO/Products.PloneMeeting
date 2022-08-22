@@ -31,6 +31,7 @@ from imio.helpers.cache import cleanForeverCache
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanVocabularyCacheFor
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.content import get_user_fullname
 from imio.helpers.content import get_vocab
@@ -84,7 +85,7 @@ from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import add_wf_history_action
 from Products.PloneMeeting.utils import get_annexes
-from Products.PloneMeeting.utils import get_current_user_id
+from imio.helpers.cache import get_current_user_id
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import monthsIds
@@ -447,35 +448,18 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(cfg)
         return res
 
-    def get_plone_groups_for_user_cachekey(method, self, userId=None, the_objects=False):
-        '''cachekey method for self.get_plone_groups_for_user.'''
-        return (get_cachekey_volatile('_users_groups_value'),
-                userId or get_current_user_id(getattr(self, "REQUEST", None)),
-                the_objects)
-
     security.declarePublic('get_plone_groups_for_user')
 
-    @ram.cache(get_plone_groups_for_user_cachekey)
-    def get_plone_groups_for_user(self, userId=None, the_objects=False):
-        """Just return user.getGroups but cached."""
-        if api.user.is_anonymous():
-            return []
-        user = userId and api.user.get(userId) or api.user.get_current()
-        if not hasattr(user, "getGroups"):
-            return []
-        if the_objects:
-            pg = api.portal.get_tool("portal_groups")
-            user_groups = pg.getGroupsByUserId(user.id)
-        else:
-            user_groups = user.getGroups()
-        return sorted(user_groups)
+    def get_plone_groups_for_user(self, user_id=None, user=None, the_objects=False):
+        """Redefined so it is available on tool in POD templates and TAL expressions."""
+        return get_plone_groups_for_user(user_id=user_id, user=user, the_objects=the_objects)
 
-    def get_filtered_plone_groups_for_user(self, org_uids=[], userId=None, suffixes=[], the_objects=False):
+    def get_filtered_plone_groups_for_user(self, org_uids=[], user_id=None, suffixes=[], the_objects=False):
         """For caching reasons, we only use ram.cache on get_plone_groups_for_user
            to avoid too much entries when using p_org_uids.
            Use this when needing to filter on org_uids."""
         user_groups = self.get_plone_groups_for_user(
-            userId=userId, the_objects=the_objects)
+            user_id=user_id, the_objects=the_objects)
         if the_objects:
             user_groups = [plone_group for plone_group in user_groups
                            if (not org_uids or plone_group.id.split('_')[0] in org_uids) and

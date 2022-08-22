@@ -15,7 +15,7 @@ from Products.Archetypes.BaseObject import BaseObject
 from Products.Archetypes.Field import Field
 from Products.CMFPlone.CatalogTool import CatalogTool
 from Products.PloneMeeting import logger
-from Products.PloneMeeting.utils import get_current_user_id
+from imio.helpers.cache import get_current_user_id
 from Products.PlonePAS.tools.membership import MembershipTool
 from Products.PortalTransforms.cache import Cache
 from Products.PortalTransforms.transforms import safe_html

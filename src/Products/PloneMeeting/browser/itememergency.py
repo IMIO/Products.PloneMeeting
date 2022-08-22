@@ -8,7 +8,7 @@ from Products.Archetypes import DisplayList
 from Products.CMFCore.utils import getToolByName
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting.config import PMMessageFactory as _
-from Products.PloneMeeting.utils import get_current_user_id
+from imio.helpers.cache import get_current_user_id
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form
