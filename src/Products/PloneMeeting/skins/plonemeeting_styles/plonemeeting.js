@@ -586,6 +586,11 @@ function synchronizeMeetingFaceteds(infos) {
         // refresh iframe 'available items' while removing an item
         if ((infos.transition === 'backToValidated') &&
             ((window.frames[0]) && (window.frames[0] != window))) {
+          /* if available collapsible closed, open it, this avoids problem
+             with iframeresizer not correctly resized */
+          if ($('h2.available-items.active').length == 0) {
+            $('h2.available-items', parent.document).click();
+          }
           window.frames[0].Faceted.URLHandler.hash_changed();
           updateNumberOfItems();
         } else if ((infos.transition === 'present') && (window != parent)) {
