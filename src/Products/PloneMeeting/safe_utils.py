@@ -3,6 +3,7 @@
 
 from DateTime import DateTime
 from datetime import datetime
+from imio.helpers.date import wordizeDate
 from imio.history.utils import getLastWFAction
 from Products.PloneMeeting.utils import cleanMemoize
 from Products.PloneMeeting.utils import cropHTML

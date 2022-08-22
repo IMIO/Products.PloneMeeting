@@ -76,6 +76,9 @@ Changelog
   like it is already the case for presented items so it is clear why the
   collpasible is closed.
   [gbastien]
+- Make `imio.helpers.date.wordizeDate` available in `pm_utils`
+  (for POD templates, TAL expressions, ...).
+  [gbastien]
 
 4.2rc30 (2022-07-01)
 --------------------
