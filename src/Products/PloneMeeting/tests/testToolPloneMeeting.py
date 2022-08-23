@@ -1044,10 +1044,10 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         # we may pass a userId
         self.assertEqual(
-            self.tool.get_plone_groups_for_user(userId='pmCreator1'),
+            self.tool.get_plone_groups_for_user(user_id='pmCreator1'),
             sorted(pmcreator1_groups))
         self.assertEqual(
-            self.tool.get_plone_groups_for_user(userId='pmReviewer1'),
+            self.tool.get_plone_groups_for_user(user_id='pmReviewer1'),
             self.tool.get_plone_groups_for_user())
 
         # may get group objects when the_objects=True
@@ -1088,9 +1088,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         with api.env.adopt_user(user=pmCreator1):
             self.assertEqual(self.tool.get_plone_groups_for_user(),
                              sorted(pmcreator1_groups))
-            self.assertEqual(self.tool.get_plone_groups_for_user(userId='pmCreator1'),
+            self.assertEqual(self.tool.get_plone_groups_for_user(user_id='pmCreator1'),
                              sorted(pmcreator1_groups))
-            self.assertEqual(self.tool.get_plone_groups_for_user(userId='pmReviewer1'),
+            self.assertEqual(self.tool.get_plone_groups_for_user(user_id='pmReviewer1'),
                              sorted(pmreviewer1_groups))
 
     def test_pm_Get_selectable_orgs(self):
