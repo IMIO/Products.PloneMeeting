@@ -4,6 +4,7 @@
 from DateTime import DateTime
 from datetime import datetime
 from imio.helpers.cache import get_current_user_id
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.date import wordizeDate
 from imio.history.utils import getLastWFAction
 from Products.PloneMeeting.utils import cleanMemoize

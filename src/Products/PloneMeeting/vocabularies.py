@@ -33,6 +33,7 @@ from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import find
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
@@ -83,9 +84,7 @@ class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
            to the user personal folder."""
         original_checks = super(PMConditionAwareCollectionVocabulary, self)._cache_invalidation_key(
             context, real_context)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        user_plone_groups = tool.get_plone_groups_for_user()
-        return original_checks + (user_plone_groups, )
+        return original_checks + (get_plone_groups_for_user(), )
 
     def _brains(self, context):
         """We override the method because Meetings also provides the ICollection interface..."""
@@ -2512,7 +2511,7 @@ class SelectableCommitteesVocabulary(object):
         # cache by user_plone_groups if using committees "using_groups"
         user_plone_groups = []
         if cfg.is_committees_using("using_groups"):
-            user_plone_groups = tool.get_plone_groups_for_user()
+            user_plone_groups = get_plone_groups_for_user()
         return date, repr(cfg), committees, user_plone_groups, isManager, \
             term_title_attr, include_suppl, \
             check_is_manager_for_suppl, include_all_disabled, include_item_only, \

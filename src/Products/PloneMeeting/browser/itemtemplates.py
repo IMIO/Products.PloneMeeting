@@ -2,6 +2,7 @@
 
 from collective.contact.plonegroup.utils import get_plone_group_id
 from imio.helpers.cache import get_current_user_id
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import uuidToObject
 from plone import api
 from plone.app.layout.navigation.navtree import buildFolderTree
@@ -77,7 +78,7 @@ class ItemTemplateView(BrowserView):
         # for this proposingGroup, we keep it
         keepProposingGroup = False
         proposingGroup = templateItem.getProposingGroup()
-        if get_plone_group_id(proposingGroup, 'creators') in self.tool.get_plone_groups_for_user():
+        if get_plone_group_id(proposingGroup, 'creators') in get_plone_groups_for_user():
             keepProposingGroup = True
         newItem = templateItem.clone(newOwnerId=member_id,
                                      cloneEventAction='create_meeting_item_from_template',
@@ -142,7 +143,7 @@ class ItemTemplateView(BrowserView):
 
     def _createTemplatesTree_cachekey(method, self):
         '''cachekey method for self._createTemplatesTree.'''
-        return repr(self.cfg), self.cfg.modified(), self.tool.get_plone_groups_for_user()
+        return repr(self.cfg), self.cfg.modified(), get_plone_groups_for_user()
 
     @ram.cache(_createTemplatesTree_cachekey)
     def _createTemplatesTree(self):

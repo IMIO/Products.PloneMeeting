@@ -452,13 +452,16 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def get_plone_groups_for_user(self, user_id=None, user=None, the_objects=False):
         """Redefined so it is available on tool in POD templates and TAL expressions."""
+        import ipdb; ipdb.set_trace()
+        logger.warn('ToolPloneMeeting.get_plone_groups_for_user is deprecated, '
+                    'use imio.helpers.cache.get_plone_groups_for_user instead.')
         return get_plone_groups_for_user(user_id=user_id, user=user, the_objects=the_objects)
 
     def get_filtered_plone_groups_for_user(self, org_uids=[], user_id=None, suffixes=[], the_objects=False):
         """For caching reasons, we only use ram.cache on get_plone_groups_for_user
            to avoid too much entries when using p_org_uids.
            Use this when needing to filter on org_uids."""
-        user_groups = self.get_plone_groups_for_user(
+        user_groups = get_plone_groups_for_user(
             user_id=user_id, the_objects=the_objects)
         if the_objects:
             user_groups = [plone_group for plone_group in user_groups
@@ -513,7 +516,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            will return objects, this may not be ram.cached.
            This submethod should not be called directly.'''
         res = []
-        user_plone_group_ids = self.get_plone_groups_for_user(user_id)
+        user_plone_group_ids = get_plone_groups_for_user(user_id)
         org_uids = get_organizations(only_selected=only_selected,
                                      kept_org_uids=using_groups,
                                      the_objects=False)
@@ -617,7 +620,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             activeOrgUids = [org_uid for org_uid in get_organizations(
                 only_selected=True, the_objects=False, kept_org_uids=using_groups)]
             org_suffixes = get_all_suffixes()
-            for plone_group_id in self.get_plone_groups_for_user():
+            for plone_group_id in get_plone_groups_for_user():
                 # check if the plone_group_id ends with a least one of the p_suffixes
                 has_kept_suffixes = [suffix for suffix in suffixes
                                      if plone_group_id.endswith('_%s' % suffix)]
@@ -807,7 +810,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = False
         if not realManagers:
             mmanager_group_id = get_plone_group_id(context.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
-            res = mmanager_group_id in self.get_plone_groups_for_user()
+            res = mmanager_group_id in get_plone_groups_for_user()
         if realManagers or not res:
             # can not use _checkPermission(ManagePortal, self)
             # because it would say True when using adopt_roles
@@ -818,7 +821,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def isPowerObserverForCfg_cachekey(method, self, cfg, power_observer_types=[]):
         '''cachekey method for self.isPowerObserverForCfg.'''
-        return (self.get_plone_groups_for_user(),
+        return (get_plone_groups_for_user(),
                 repr(cfg),
                 power_observer_types)
 
@@ -835,7 +838,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
           p_power_observer_types suffixed groups.
           If no p_power_observer_types we check every existing power_observers groups.
         """
-        user_plone_groups = self.get_plone_groups_for_user()
+        user_plone_groups = get_plone_groups_for_user()
         for po_infos in cfg.getPowerObservers():
             if not power_observer_types or po_infos['row_id'] in power_observer_types:
                 groupId = "{0}_{1}".format(cfg.getId(), po_infos['row_id'])
@@ -848,7 +851,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if api.user.is_anonymous():
             return False
         # we only recompute if user groups changed or self changed
-        return (cfg._p_mtime, self.get_plone_groups_for_user(), repr(cfg))
+        return (cfg._p_mtime, get_plone_groups_for_user(), repr(cfg))
 
     @ram.cache(showPloneMeetingTab_cachekey)
     def showPloneMeetingTab(self, cfg):
@@ -1614,7 +1617,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         # we only recompute if cfgs, user groups or params changed
         cfg_infos = [(cfg._p_mtime, cfg.id) for cfg in self.objectValues('MeetingConfig')]
-        return (self.modified(), cfg_infos, self.get_plone_groups_for_user(), config_group, check_access, as_items)
+        return (self.modified(), cfg_infos, get_plone_groups_for_user(), config_group, check_access, as_items)
 
     security.declarePublic('getGroupedConfigs')
 

@@ -3,6 +3,7 @@ from Acquisition import aq_base
 from cPickle import dumps
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.security import fplog
 from plone import api
 from plone.api.exc import InvalidParameterError
@@ -58,7 +59,7 @@ def userAndGroupsAwarePortalTransformsCacheKey():
         from plone.api.exc import InvalidParameterError
         try:
             # while creating a new Plone Site, portal_plonemeeting is not available
-            tool = api.portal.get_tool('portal_plonemeeting')
+            api.portal.get_tool('portal_plonemeeting')
         except InvalidParameterError:
             return Cache.__pm_old_genCacheKey(self, identifier, *args)
         # XXX end of changes by PM
@@ -71,8 +72,7 @@ def userAndGroupsAwarePortalTransformsCacheKey():
         key = key.replace(' ', '_')
         # XXX begin changes by PM, do the cache key user and groups aware
         user_id = get_current_user_id()
-        tool = api.portal.get_tool('portal_plonemeeting')
-        groups = tool.get_plone_groups_for_user()
+        groups = get_plone_groups_for_user()
         key = '%s_%s_%s' % (key, user_id, '_'.join(groups))
         # XXX end of changes by PM
         if hasattr(aq_base(self.context), 'absolute_url'):
@@ -111,7 +111,7 @@ def _listAllowedRolesAndUsers_cachekey(method, self, user):
 
 @ram.cache(_listAllowedRolesAndUsers_cachekey)
 def _listAllowedRolesAndUsers(self, user):
-    """Monkeypatch to use ToolPloneMeeting.get_plone_groups_for_user instead getGroups.
+    """Monkeypatch to use get_plone_groups_for_user instead getGroups.
        Moreover store this in the REQUEST."""
 
     # Makes sure the list includes the user's groups.
@@ -120,12 +120,11 @@ def _listAllowedRolesAndUsers(self, user):
         # The anonymous user has no further roles
         return ['Anonymous']
     result = list(result)
-    # XXX change, replaced getGroups by tool.get_plone_groups_for_user
+    # XXX change, replaced getGroups by get_plone_groups_for_user
     # if hasattr(aq_base(user), 'getGroups'):
     #     groups = ['user:%s' % x for x in user.getGroups()]
     try:
-        tool = api.portal.get_tool('portal_plonemeeting')
-        groups = tool.get_plone_groups_for_user()
+        groups = get_plone_groups_for_user()
     except InvalidParameterError:
         groups = user.getGroups()
     if groups:

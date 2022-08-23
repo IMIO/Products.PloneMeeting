@@ -3,6 +3,7 @@
 from AccessControl import Unauthorized
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidToObject
 from plone import api
@@ -281,7 +282,6 @@ class AsyncRenderSearchTerm(BrowserView):
     def __call___cachekey(method, self):
         '''cachekey method for self.__call__.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        userGroups = tool.get_plone_groups_for_user()
         cfg = tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
         # URL to the annex_type can change if server URL changed
@@ -292,7 +292,7 @@ class AsyncRenderSearchTerm(BrowserView):
         # as portlet is highlighting the meeting we are on
         meeting_uid = self.context.__class__.__name__ == 'Meeting' and self.context.UID() or None
         collection_uid = self.request.get('collection_uid')
-        return (userGroups,
+        return (get_plone_groups_for_user(),
                 cfg_modified,
                 server_url,
                 date,

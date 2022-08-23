@@ -20,6 +20,7 @@ from DateTime import DateTime
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.cache import get_plone_groups_for_user
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.app.textfield.value import RichTextValue
@@ -1030,9 +1031,11 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         pmcreator1_groups = self.member.getGroups()
         self.assertEqual(self.tool.get_plone_groups_for_user(), sorted(pmcreator1_groups))
+        self.assertEqual(get_plone_groups_for_user(), sorted(pmcreator1_groups))
         self.changeUser('pmReviewer1')
         pmreviewer1_groups = self.member.getGroups()
         self.assertEqual(self.tool.get_plone_groups_for_user(), sorted(pmreviewer1_groups))
+        self.assertEqual(get_plone_groups_for_user(), sorted(pmreviewer1_groups))
         self.assertNotEqual(pmcreator1_groups, pmreviewer1_groups)
 
         # is aware of user groups changes
@@ -1040,20 +1043,31 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self._addPrincipalToGroup('pmReviewer1', self.vendors_creators)
         pmreviewer1_groups = self.member.getGroups()
         self.assertTrue(self.vendors_creators in self.tool.get_plone_groups_for_user())
+        self.assertTrue(self.vendors_creators in get_plone_groups_for_user())
         self.assertEqual(self.tool.get_plone_groups_for_user(), sorted(pmreviewer1_groups))
+        self.assertEqual(get_plone_groups_for_user(), sorted(pmreviewer1_groups))
 
         # we may pass a userId
         self.assertEqual(
             self.tool.get_plone_groups_for_user(user_id='pmCreator1'),
             sorted(pmcreator1_groups))
         self.assertEqual(
+            get_plone_groups_for_user(user_id='pmCreator1'),
+            sorted(pmcreator1_groups))
+        self.assertEqual(
             self.tool.get_plone_groups_for_user(user_id='pmReviewer1'),
             self.tool.get_plone_groups_for_user())
+        self.assertEqual(
+            get_plone_groups_for_user(user_id='pmReviewer1'),
+            get_plone_groups_for_user())
 
         # may get group objects when the_objects=True
         self.assertEqual(
             sorted([group.id for group in self.tool.get_plone_groups_for_user(the_objects=True)]),
             sorted(self.tool.get_plone_groups_for_user(the_objects=False)))
+        self.assertEqual(
+            sorted([group.id for group in get_plone_groups_for_user(the_objects=True)]),
+            sorted(get_plone_groups_for_user(the_objects=False)))
         # when necessary to filter on org_uids, use get_filtered_plone_groups_for_user
         self.assertEqual(
             sorted([group.id for group in
@@ -1088,9 +1102,17 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         with api.env.adopt_user(user=pmCreator1):
             self.assertEqual(self.tool.get_plone_groups_for_user(),
                              sorted(pmcreator1_groups))
+            self.assertEqual(get_plone_groups_for_user(),
+                             sorted(pmcreator1_groups))
+
             self.assertEqual(self.tool.get_plone_groups_for_user(user_id='pmCreator1'),
                              sorted(pmcreator1_groups))
+            self.assertEqual(get_plone_groups_for_user(user_id='pmCreator1'),
+                             sorted(pmcreator1_groups))
+
             self.assertEqual(self.tool.get_plone_groups_for_user(user_id='pmReviewer1'),
+                             sorted(pmreviewer1_groups))
+            self.assertEqual(get_plone_groups_for_user(user_id='pmReviewer1'),
                              sorted(pmreviewer1_groups))
 
     def test_pm_Get_selectable_orgs(self):
@@ -1169,7 +1191,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
            often use to manage shown CSS and tabs."""
         self.createUser('test_user')
         self.changeUser('test_user')
-        self.assertEqual(self.tool.get_plone_groups_for_user(), ['AuthenticatedUsers'])
+        self.assertEqual(get_plone_groups_for_user(), ['AuthenticatedUsers'])
         self.assertTrue(self.tool())
         self.assertRaises(Unauthorized, self.meetingConfig)
         self.assertRaises(Unauthorized, self.meetingConfig2)

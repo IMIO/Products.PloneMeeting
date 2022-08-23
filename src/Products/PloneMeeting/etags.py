@@ -4,6 +4,7 @@ from collective.iconifiedcategory.utils import _modified as iconified_modified
 from collective.messagesviewlet.utils import get_messages_to_show
 from DateTime import DateTime
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.cache import get_plone_groups_for_user
 from plone import api
 from plone.app.caching.interfaces import IETagValue
 from plone.app.caching.operations.utils import getContext
@@ -34,8 +35,7 @@ class UserGroups(object):
         self.request = request
 
     def __call__(self):
-        tool = api.portal.get_tool('portal_plonemeeting')
-        res = '_'.join(tool.get_plone_groups_for_user())
+        res = '_'.join(get_plone_groups_for_user())
         # as this list can be very long, we only returns it's crc32
         # indeed, if we return a too long value, it crashes the browser etags...
         # moreover, short etag save bandwidth

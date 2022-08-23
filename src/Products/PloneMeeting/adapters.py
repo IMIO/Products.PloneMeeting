@@ -23,6 +23,7 @@ from imio.annex.adapters import AnnexPrettyLinkAdapter
 from imio.helpers.adapters import MissingTerms
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.catalog import merge_queries
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
@@ -991,7 +992,7 @@ class ItemsInCopyAdapter(CompoundCriterionBaseAdapter):
         '''Queries all items for which the current user is in copyGroups.'''
         if not self.cfg:
             return {}
-        userPloneGroups = self.tool.get_plone_groups_for_user()
+        userPloneGroups = get_plone_groups_for_user()
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'getCopyGroups' use 'OR' by default
                 'getCopyGroups': {'query': userPloneGroups}, }
@@ -1011,7 +1012,7 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
 
         # now get highest hierarchic level for every user groups
         org_uids = self.tool.get_orgs_for_user()
-        userPloneGroupIds = self.tool.get_plone_groups_for_user()
+        userPloneGroupIds = get_plone_groups_for_user()
         reviewers = self.cfg.reviewersFor()
         userReviewerPloneGroupIds = []
         for org_uid in org_uids:
@@ -1168,7 +1169,7 @@ class BaseItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter)
            and 'reviewer' for a group, the search will return items in both states.'''
         if not self.cfg:
             return {}
-        userPloneGroups = self.tool.get_plone_groups_for_user()
+        userPloneGroups = get_plone_groups_for_user()
         reviewProcessInfos = []
         reviewers = self.cfg.reviewersFor()
         for userPloneGroupId in userPloneGroups:
@@ -1781,7 +1782,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
             if class_name == 'Meeting':
                 # if we have a SUFFIXPROFILEPREFIX prefixed group,
                 # check using "userIsAmong", this is only done for Meetings
-                if set(self.tool.get_plone_groups_for_user()).intersection(
+                if set(get_plone_groups_for_user()).intersection(
                         infos['visible_for_groups']):
                     return True
                 # build suffixes to pass to tool.userIsAmong

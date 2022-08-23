@@ -19,6 +19,7 @@ from DateTime import DateTime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_transitions
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
@@ -366,7 +367,7 @@ class MeetingItemWorkflowConditions(object):
                     'item_validation_no_validate_shortcuts' not in self.cfg.getWorkflowAdaptations() and
                         get_plone_group_id(
                             self.context.getProposingGroup(),
-                            last_level['suffix']) in self.tool.get_plone_groups_for_user()):
+                            last_level['suffix']) in get_plone_groups_for_user()):
                     res = True
                     if self._has_waiting_advices_transitions():
                         res = No(_('has_required_waiting_advices'))
@@ -464,7 +465,7 @@ class MeetingItemWorkflowConditions(object):
            - every advices that should be given have to be given;
            - user must be adviser for advice;
            - if advice not given, user must be able to evaluate completeness and item must be incomplete.'''
-        user_plone_groups = self.tool.get_plone_groups_for_user()
+        user_plone_groups = get_plone_groups_for_user()
         res = False
         for org_uid in self.context.adviceIndex:
             # org can give advice in current state and member is adviser for it
@@ -3418,7 +3419,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if not cfg.getRestrictAccessToSecretItems() or tool.isManager(cfg):
                 return True
         date = get_cachekey_volatile('_users_groups_value')
-        return repr(item), item.modified(), tool.get_plone_groups_for_user(), date
+        return repr(item), item.modified(), get_plone_groups_for_user(), date
 
     security.declarePublic('isPrivacyViewable')
 
@@ -3442,7 +3443,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # now check if among local_roles, a role is giving view access to the item
         # for a group that current user is member of except powerobservers groups
-        userGroups = tool.get_plone_groups_for_user()
+        userGroups = get_plone_groups_for_user()
         po_suffixes = tuple(po['row_id'] for po in cfg.getPowerObservers())
         itemUserRoles = [roles for group_id, roles in item.__ac_local_roles__.items()
                          if group_id in userGroups and not group_id.endswith(po_suffixes)]
@@ -5422,7 +5423,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if cfg.getEnableAdviceConfidentiality() and adviceInfo['isConfidential']:
             tool = api.portal.get_tool('portal_plonemeeting')
             advisers_group_id = get_plone_group_id(adviceInfo['id'], 'advisers')
-            if advisers_group_id not in tool.get_plone_groups_for_user() and \
+            if advisers_group_id not in get_plone_groups_for_user() and \
                is_confidential_power_observer:
                 return False
         return True
