@@ -452,7 +452,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def get_plone_groups_for_user(self, user_id=None, user=None, the_objects=False):
         """Redefined so it is available on tool in POD templates and TAL expressions."""
-        import ipdb; ipdb.set_trace()
         logger.warn('ToolPloneMeeting.get_plone_groups_for_user is deprecated, '
                     'use imio.helpers.cache.get_plone_groups_for_user instead.')
         return get_plone_groups_for_user(user_id=user_id, user=user, the_objects=the_objects)
