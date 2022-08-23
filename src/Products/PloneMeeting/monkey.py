@@ -2,6 +2,7 @@
 from Acquisition import aq_base
 from cPickle import dumps
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.cache import get_current_user_id
 from imio.helpers.security import fplog
 from plone import api
 from plone.api.exc import InvalidParameterError
@@ -15,7 +16,6 @@ from Products.Archetypes.BaseObject import BaseObject
 from Products.Archetypes.Field import Field
 from Products.CMFPlone.CatalogTool import CatalogTool
 from Products.PloneMeeting import logger
-from imio.helpers.cache import get_current_user_id
 from Products.PlonePAS.tools.membership import MembershipTool
 from Products.PortalTransforms.cache import Cache
 from Products.PortalTransforms.transforms import safe_html

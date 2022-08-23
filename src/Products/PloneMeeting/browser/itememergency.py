@@ -2,13 +2,13 @@
 
 from AccessControl import Unauthorized
 from DateTime import DateTime
+from imio.helpers.cache import get_current_user_id
 from plone import api
 from plone.z3cform.layout import wrap_form
 from Products.Archetypes import DisplayList
 from Products.CMFCore.utils import getToolByName
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting.config import PMMessageFactory as _
-from imio.helpers.cache import get_current_user_id
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form

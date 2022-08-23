@@ -22,6 +22,7 @@ from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDelet
 from imio.annex.adapters import AnnexPrettyLinkAdapter
 from imio.helpers.adapters import MissingTerms
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.cache import get_current_user_id
 from imio.helpers.catalog import merge_queries
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
@@ -59,7 +60,6 @@ from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import findNewValue
 from Products.PloneMeeting.utils import get_context_with_request
-from imio.helpers.cache import get_current_user_id
 from Products.PloneMeeting.utils import get_referer_obj
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getHistoryTexts

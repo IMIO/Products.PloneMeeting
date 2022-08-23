@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from collective.contact.plonegroup.utils import get_plone_group_id
+from imio.helpers.cache import get_current_user_id
 from imio.helpers.content import uuidToObject
 from plone import api
 from plone.app.layout.navigation.navtree import buildFolderTree
@@ -10,7 +11,6 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.Five.browser import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
-from imio.helpers.cache import get_current_user_id
 from zope.i18n import translate
 
 

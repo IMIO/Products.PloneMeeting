@@ -11,6 +11,7 @@ from collective.contact.plonegroup.utils import get_plone_groups
 from collective.eeafaceted.batchactions.utils import listify_uids
 from datetime import datetime
 from datetime import timedelta
+from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from plone import api
 from PloneMeetingTestCase import pm_logger
@@ -19,7 +20,6 @@ from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import down_or_up_wf
 from Products.PloneMeeting.utils import get_annexes
-from imio.helpers.cache import get_current_user_id
 from profilehooks import timecall
 
 

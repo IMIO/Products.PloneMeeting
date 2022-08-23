@@ -19,6 +19,7 @@ from datetime import timedelta
 from DateTime import DateTime
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.cache import get_cachekey_volatile
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.app.textfield.value import RichTextValue
@@ -35,7 +36,6 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 from Products.PloneMeeting.utils import get_annexes
 from zope.i18n import translate
 from zope.testing.testrunner.find import find_test_files
-from imio.helpers.cache import get_cachekey_volatile
 
 import os
 import transaction
