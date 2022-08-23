@@ -63,6 +63,10 @@ class Migrate_To_4204(Migrator):
             self._initMeetingsItemAttendeesOrder()
         self._migrateMCYearlyInitMeetingNumber()
 
+        # ToolPloneMeeting.get_plone_groups_for_user parameter userId is now user_id
+        self.updateTALConditions("get_plone_groups_for_user(userId",
+                                 "get_plone_groups_for_user(user_id")
+
         # remove field MeetingConfig.transitionsForPresentingAnItem
         self.cleanMeetingConfigs(field_names=['transitionsForPresentingAnItem'])
         logger.info('Done.')
