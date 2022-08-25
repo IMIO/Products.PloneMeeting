@@ -1491,7 +1491,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Tests the workflow functionality of using the
            'return_to_proposing_group_with_last_validation' wfAdaptation.'''
         # while it is active, the creators of the item can edit the item as well as the MeetingManagers
-        # after, he must be send to reviewer the item
+        # after, he must be sent to reviewer the item
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.proposeItem(item)
@@ -1523,7 +1523,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # Now send item to the reviewer
         self.changeUser('pmCreator1')
         self.do(item, 'goTo_returned_to_proposing_group_proposed')
-        # he item creator may not be able to modify the item
+        # the item creator may not be able to modify the item
         self.failIf(self.hasPermission(ModifyPortalContent, item))
         # MeetingManagers can still edit it also
         self.changeUser('pmManager')
@@ -1566,9 +1566,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         # activate the wfAdaptation and check
         self._activate_wfas(('return_to_proposing_group_with_all_validations', ))
         # test what should happen to the wf (added states and transitions)
-        # We can using the same test than last Validation in standard wf (created --> proposed)
+        # We can use the same test as last Validation in standard wf (created --> proposed)
         self._return_to_proposing_group_with_validation_active()
-        # We can also using the same test than last Validation
+        # We can also use the same test as last Validation
         self._return_to_proposing_group_with_validation_active_wf_functionality()
 
     def test_pm_WFA_hide_decisions_when_under_writing(self):
