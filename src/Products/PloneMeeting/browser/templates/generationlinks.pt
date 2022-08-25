@@ -16,7 +16,7 @@
           tal:define="infos view/get_links_info;
                       titles python:infos.keys();">
         <li tal:repeat="title titles" class="template-link">
-          <span class="template-link-title" title="Please choose a format to generate here next" tal:content="title">Template title</span><span class="template-link-after-title"></span>
+          <span class="template-link-title" title="Please choose a format to generate here next" i18n:attributes="title" tal:content="title">Template title</span><span class="template-link-after-title"></span>
           <span class="template-link-before-link"
                 tal:repeat="link python: infos[title]">
             <a href="#"
