@@ -344,6 +344,12 @@ class PloneMeetingTestingHelpers:
             group.removeMember(member)
         setRoles(self.portal, currentMember.getId(), currentMemberRoles)
 
+    def _remove_all_members_from_groups(self, group_id_list):
+        for group in group_id_list:
+            self._removeAllMembers(
+                api.group.get(group),
+                api.group.get(group).getMemberIds())
+
     def _addAllMembers(self, group, members):
         """Allow to add again all the members from a group.
            Overrided to do it as 'Manager' to be able not
