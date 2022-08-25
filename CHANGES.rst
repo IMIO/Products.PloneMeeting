@@ -83,6 +83,10 @@ Changelog
   `ToolPloneMeeting.get_plone_groups_for_user` that is deprecated but kept for
   backward compatibility.
   [gbastien]
+- As groups in charge title is escaped to avoid malicious code, render it on the
+  item view using `structure` or escaped characters like `'` are displayed with
+  their html entity code (`&#x27;`).
+  [gbastien]
 
 4.2rc30 (2022-07-01)
 --------------------

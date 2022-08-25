@@ -55,7 +55,7 @@
                   <span class="item_attribute_label"
                         i18n:translate="PloneMeeting_label_groupsInCharge"></span>:&nbsp;&nbsp;
                   <tal:displayGroupsInCharge condition="groupsInCharge">
-                      <span tal:content="python: context.displayValue(context.Vocabulary('groupsInCharge')[0], groupsInCharge)" />
+                      <span tal:content="structure python: context.displayValue(context.Vocabulary('groupsInCharge')[0], groupsInCharge)" />
                   </tal:displayGroupsInCharge>
                   <span tal:condition="not: groupsInCharge">-</span>
               </div>
