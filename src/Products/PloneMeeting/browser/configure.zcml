@@ -1223,13 +1223,4 @@
             permission="zope2.View" />
     </configure>
 
-    <!-- Override @@caching-controlpanel-ramcache -->
-    <browser:page
-        name="caching-controlpanel-ramcache"
-        for="Products.CMFPlone.interfaces.IPloneSiteRoot"
-        class="plone.app.caching.browser.controlpanel.RAMCache"
-        template="templates/ramcache.pt"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="cmf.ManagePortal" />
-
 </configure>

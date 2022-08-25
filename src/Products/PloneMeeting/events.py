@@ -12,6 +12,7 @@ from collective.documentviewer.async import queueJob
 from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
+from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.cache import setup_ram_cache
 from imio.helpers.content import get_modified_attrs
@@ -48,7 +49,6 @@ from Products.PloneMeeting.utils import AdviceAfterModifyEvent
 from Products.PloneMeeting.utils import AdviceAfterTransitionEvent
 from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
 from Products.PloneMeeting.utils import get_annexes
-from Products.PloneMeeting.utils import get_current_user_id
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import ItemAfterTransitionEvent
 from Products.PloneMeeting.utils import MeetingAfterTransitionEvent
@@ -282,14 +282,7 @@ def _invalidateOrgRelatedCachedVocabularies():
     invalidate_cachekey_volatile_for(
         "Products.PloneMeeting.vocabularies.askedadvicesvocabulary", get_again=True)
     # also invalidated here, called from organization._invalidateCachedMethods
-    invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.ToolPloneMeeting._users_groups_value', get_again=True)
-
-
-def _invalidateUsersAndGroupsRelatedCache():
-    '''Clean cache for vocabularies and caching methods using Plone users and groups.'''
-    invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.ToolPloneMeeting._users_groups_value', get_again=True)
+    invalidate_cachekey_volatile_for('_users_groups_value', get_again=True)
 
 
 def _invalidateAttendeesRelatedCache(all=True, get_agains=[]):
@@ -432,7 +425,7 @@ def onRegistryModified(event):
     if IRecordModifiedEvent.providedBy(event):  # and event.record.interface == IContactPlonegroupConfig:
         if event.record.fieldName == 'organizations' and event.oldValue:
             _invalidateOrgRelatedCachedVocabularies()
-            _invalidateUsersAndGroupsRelatedCache()
+            invalidate_cachekey_volatile_for('_users_groups_value', get_again=True)
 
             old_set = set(event.oldValue)
             new_set = set(event.newValue)
@@ -1501,14 +1494,12 @@ def onPrincipalAddedToGroup(event):
     """ """
     tool = api.portal.get_tool('portal_plonemeeting')
     tool.invalidateAllCache()
-    _invalidateUsersAndGroupsRelatedCache()
 
 
 def onPrincipalRemovedFromGroup(event):
     """ """
     tool = api.portal.get_tool('portal_plonemeeting')
     tool.invalidateAllCache()
-    _invalidateUsersAndGroupsRelatedCache()
 
 
 def onZopeProcessStarting(event):

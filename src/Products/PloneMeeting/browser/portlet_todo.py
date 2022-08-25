@@ -7,6 +7,7 @@ from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriter
 from collective.eeafaceted.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
 from eea.facetednavigation.widgets.sorting.widget import Widget as SortingWidget
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.cache import get_plone_groups_for_user
 from plone import api
 from plone.app.portlets.portlets import base
 from plone.memoize import ram
@@ -76,14 +77,13 @@ class Renderer(base.Renderer, FacetedRenderer):
 
     def render_cachekey(method, self):
         '''cachekey method for self.__call__.'''
-        userGroups = self.tool.get_plone_groups_for_user()
         # URL to the item can change if server URL changed
         server_url = self.request.get('SERVER_URL', None)
         # cache until an item is modified
         date = get_cachekey_volatile('Products.PloneMeeting.MeetingItem.modified')
         load_portlet_todo = self.request.get('load_portlet_todo', False)
         return (repr(self.cfg),
-                userGroups,
+                get_plone_groups_for_user(),
                 server_url,
                 date,
                 load_portlet_todo)
@@ -102,9 +102,7 @@ class Renderer(base.Renderer, FacetedRenderer):
 
     def getSearches_cachekey(method, self):
         '''cachekey method for self.getSearches.'''
-        userGroups = self.tool.get_plone_groups_for_user()
-        cfg_modified = self.cfg.modified()
-        return userGroups, cfg_modified
+        return get_plone_groups_for_user(), self.cfg.modified()
 
     @ram.cache(getSearches_cachekey)
     def getSearches(self):

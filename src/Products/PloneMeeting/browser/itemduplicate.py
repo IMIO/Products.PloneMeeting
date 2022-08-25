@@ -5,6 +5,8 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group_id
+from imio.helpers.cache import get_current_user_id
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_vocab
 from plone import api
 from plone.directives import form
@@ -13,7 +15,6 @@ from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
-from Products.PloneMeeting.utils import get_current_user_id
 from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from z3c.form import button
 from z3c.form import field
@@ -112,7 +113,6 @@ class DuplicateItemForm(z3c_form.Form):
 
     def _doApply(self, data):
         """ """
-        tool = api.portal.get_tool('portal_plonemeeting')
         user_id = get_current_user_id()
         cloneEventAction = DUPLICATE_EVENT_ACTION
         setCurrentAsPredecessor = False
@@ -131,7 +131,7 @@ class DuplicateItemForm(z3c_form.Form):
         # keep proposingGroup if current user creator for it
         keepProposingGroup = False
         proposingGroup = self.context.getProposingGroup()
-        if get_plone_group_id(proposingGroup, 'creators') in tool.get_plone_groups_for_user():
+        if get_plone_group_id(proposingGroup, 'creators') in get_plone_groups_for_user():
             keepProposingGroup = True
         newItem = self.context.clone(
             copyAnnexes=copyAnnexes,

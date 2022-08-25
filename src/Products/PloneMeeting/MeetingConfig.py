@@ -28,6 +28,7 @@ from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanVocabularyCacheFor
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.cache import get_current_user_id
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToObject
@@ -115,7 +116,6 @@ from Products.PloneMeeting.utils import createOrUpdatePloneGroup
 from Products.PloneMeeting.utils import duplicate_workflow
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_annexes
-from Products.PloneMeeting.utils import get_current_user_id
 from Products.PloneMeeting.utils import get_datagridfield_column_value
 from Products.PloneMeeting.utils import get_dx_attrs
 from Products.PloneMeeting.utils import get_dx_schema
@@ -6513,10 +6513,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getItemAdviceStatesForOrg_cachekey(method, self, org_uid=None):
         '''cachekey method for self.getItemAdviceStatesForOrg.'''
-        # this volatile is invalidated when an organization changed
-        date = get_cachekey_volatile(
-            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
-        return repr(self), org_uid, date
+        # the volatile is invalidated when an organization changed
+        return repr(self), org_uid, get_cachekey_volatile('_users_groups_value')
 
     security.declarePublic('getItemAdviceStates')
 
@@ -7709,10 +7707,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def get_orgs_with_as_copy_group_on_expression_cachekey(method, self):
         '''cachekey method for self.get_orgs_with_as_copy_group_on_expression.
            MeetingConfig.modified is updated when an organization added/removed/edited.'''
-        # this volatile is invalidated when an organization changed
-        date = get_cachekey_volatile(
-            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
-        return repr(self), self.modified(), date
+        # the volatile is invalidated when an organization changed
+        return repr(self), self.modified(), get_cachekey_volatile('_users_groups_value')
 
     @ram.cache(get_orgs_with_as_copy_group_on_expression_cachekey)
     def get_orgs_with_as_copy_group_on_expression(self):

@@ -3,6 +3,7 @@
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group_id
 from imio.actionspanel.interfaces import IContentDeletable
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_state_infos
 from imio.history.browser.views import IHVersionPreviewView
 from plone import api
@@ -75,11 +76,10 @@ class AdvicesIcons(BrowserView):
                 # if current user is a power observer that would not see the advice
                 # we store user plone groups because a power adviser may see a confidential advice
                 # if member of the proposingGroup
-                user_plone_groups = tool.get_plone_groups_for_user()
                 confidential_advices = [advice for advice in advices
                                         if advice["isConfidential"] and
                                         not get_plone_group_id(advice["id"], "advisers") in
-                                        user_plone_groups]
+                                        get_plone_groups_for_user()]
                 may_view_confidential_advices = not confidential_advices or \
                     not tool.isPowerObserverForCfg(cfg, power_observer_types=cfg.getAdviceConfidentialFor())
         return (repr(self.context),
@@ -420,8 +420,7 @@ def _display_asked_again_warning(advice, parent):
     if advice.advice_type == "asked_again":
         advisers_group_id = get_plone_group_id(advice.advice_group, 'advisers')
         if parent.adviceIndex[advice.advice_group]['advice_editable']:
-            tool = api.portal.get_tool('portal_plonemeeting')
-            if advisers_group_id in tool.get_plone_groups_for_user():
+            if advisers_group_id in get_plone_groups_for_user():
                 api.portal.show_message(
                     _("warning_advice_asked_again_need_to_change_advice_type"),
                     request=advice.REQUEST, type="warning")

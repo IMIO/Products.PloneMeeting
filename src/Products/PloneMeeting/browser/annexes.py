@@ -10,6 +10,7 @@ from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
 from collective.iconifiedcategory.browser.views import CategorizedChildView
 from collective.iconifiedcategory.utils import _categorized_elements
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_vocab
 from plone import api
 from plone.memoize import ram
@@ -175,7 +176,7 @@ class PMCategorizedChildView(CategorizedChildView):
                 elt for elt in self.context.categorized_elements.values()
                 if elt["confidential"]]
             may_view_confidential_annexes = not confidential_annexes or \
-                set(tool.get_plone_groups_for_user()).intersection(
+                set(get_plone_groups_for_user()).intersection(
                     confidential_annexes[0]["visible_for_groups"])
         return (repr(self.context),
                 last_updated,

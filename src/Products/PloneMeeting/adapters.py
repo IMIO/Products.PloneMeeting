@@ -21,6 +21,9 @@ from eea.facetednavigation.widgets.storage import Criterion
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
 from imio.annex.adapters import AnnexPrettyLinkAdapter
 from imio.helpers.adapters import MissingTerms
+from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.cache import get_current_user_id
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.catalog import merge_queries
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
@@ -58,7 +61,6 @@ from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import findNewValue
 from Products.PloneMeeting.utils import get_context_with_request
-from Products.PloneMeeting.utils import get_current_user_id
 from Products.PloneMeeting.utils import get_referer_obj
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getHistoryTexts
@@ -913,7 +915,7 @@ def query_user_groups_cachekey(method, self):
     # always check cfg.modified() as queries are portal_type aware
     cfg_modified = self.cfg and self.cfg.modified() or datetime.now()
     return self.context.modified(), get_current_user_id(self.request), \
-        self.tool._users_groups_value(), cfg_modified
+        get_cachekey_volatile('_users_groups_value'), cfg_modified
 
 
 def query_meeting_config_modified_cachekey(method, self):
@@ -990,7 +992,7 @@ class ItemsInCopyAdapter(CompoundCriterionBaseAdapter):
         '''Queries all items for which the current user is in copyGroups.'''
         if not self.cfg:
             return {}
-        userPloneGroups = self.tool.get_plone_groups_for_user()
+        userPloneGroups = get_plone_groups_for_user()
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'getCopyGroups' use 'OR' by default
                 'getCopyGroups': {'query': userPloneGroups}, }
@@ -1010,7 +1012,7 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
 
         # now get highest hierarchic level for every user groups
         org_uids = self.tool.get_orgs_for_user()
-        userPloneGroupIds = self.tool.get_plone_groups_for_user()
+        userPloneGroupIds = get_plone_groups_for_user()
         reviewers = self.cfg.reviewersFor()
         userReviewerPloneGroupIds = []
         for org_uid in org_uids:
@@ -1167,7 +1169,7 @@ class BaseItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter)
            and 'reviewer' for a group, the search will return items in both states.'''
         if not self.cfg:
             return {}
-        userPloneGroups = self.tool.get_plone_groups_for_user()
+        userPloneGroups = get_plone_groups_for_user()
         reviewProcessInfos = []
         reviewers = self.cfg.reviewersFor()
         for userPloneGroupId in userPloneGroups:
@@ -1780,7 +1782,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
             if class_name == 'Meeting':
                 # if we have a SUFFIXPROFILEPREFIX prefixed group,
                 # check using "userIsAmong", this is only done for Meetings
-                if set(self.tool.get_plone_groups_for_user()).intersection(
+                if set(get_plone_groups_for_user()).intersection(
                         infos['visible_for_groups']):
                     return True
                 # build suffixes to pass to tool.userIsAmong

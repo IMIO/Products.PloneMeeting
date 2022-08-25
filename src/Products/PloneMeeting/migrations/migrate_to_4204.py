@@ -63,6 +63,16 @@ class Migrate_To_4204(Migrator):
             self._initMeetingsItemAttendeesOrder()
         self._migrateMCYearlyInitMeetingNumber()
 
+        # ToolPloneMeeting.get_plone_groups_for_user parameter userId is now user_id
+        self.updateTALConditions("get_plone_groups_for_user(userId",
+                                 "get_plone_groups_for_user(user_id")
+        # ToolPloneMeeting.get_plone_groups_for_user is deprecated
+        # use imio.helpers.cache.get_plone_groups_for_user that is available in pm_utils
+        self.updateTALConditions("tool.get_plone_groups_for_user(",
+                                 "pm_utils.get_plone_groups_for_user(")
+        self.updateTALConditions("portal_plonemeeting.get_plone_groups_for_user(",
+                                 "pm_utils.get_plone_groups_for_user(")
+
         # remove field MeetingConfig.transitionsForPresentingAnItem
         self.cleanMeetingConfigs(field_names=['transitionsForPresentingAnItem'])
         logger.info('Done.')

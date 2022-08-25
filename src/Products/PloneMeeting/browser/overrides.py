@@ -27,6 +27,7 @@ from imio.annex import safe_utils as imio_annex_safe_utils
 from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import uuidToObject
 from imio.history import safe_utils as imio_history_safe_utils
 from imio.history.browser.views import IHContentHistoryView
@@ -443,7 +444,7 @@ class PMFacetedDashboardView(FacetedDashboardView):
             if suffixes:
                 res = self.tool.userIsAmong(suffixes)
             if not res and groups:
-                res = bool(set(groups).intersection(self.tool.get_plone_groups_for_user()))
+                res = bool(set(groups).intersection(get_plone_groups_for_user()))
         return res
 
     def __call__(self):
@@ -477,11 +478,9 @@ class PMRenderTermView(RenderTermPortletView):
 
     def number_of_items_cachekey(method, self, init=False):
         '''cachekey method for self.number_of_items.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        userGroups = tool.get_plone_groups_for_user()
         # cache until an item is modified
         date = get_cachekey_volatile('Products.PloneMeeting.MeetingItem.modified', method)
-        return (repr(self.context), userGroups, date, init)
+        return (repr(self.context), get_plone_groups_for_user(), date, init)
 
     @ram.cache(number_of_items_cachekey)
     def number_of_items(self, init=False):
@@ -540,7 +539,7 @@ class PMRenderCategoryView(IDRenderCategoryView):
     def hasTemplateItems_cachekey(method, self, init=False):
         '''cachekey method for self.hasTemplateItems.'''
         # when an itemTemplate is added/removed/edited/state changed, cfg is modified
-        return repr(self.cfg), self.cfg.modified(), self.tool.get_plone_groups_for_user()
+        return repr(self.cfg), self.cfg.modified(), get_plone_groups_for_user()
 
     @ram.cache(hasTemplateItems_cachekey)
     def hasTemplateItems(self):
@@ -708,8 +707,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             isPresentable = self.context.wfConditions().mayPresent()
 
         # this volatile is invalidated when user/groups changed
-        date = get_cachekey_volatile(
-            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+        date = get_cachekey_volatile('_users_groups_value')
 
         # check also portal_url in case application is accessed thru different URI
         return (repr(self.context), self.context.modified(), advicesIndexModified, date,

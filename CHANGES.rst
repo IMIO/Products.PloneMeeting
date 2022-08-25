@@ -79,6 +79,10 @@ Changelog
 - Make `imio.helpers.date.wordizeDate` available in `pm_utils`
   (for POD templates, TAL expressions, ...).
   [gbastien]
+- Adapted code to use `imio.helpers.cache.get_plone_groups_for_user` instead
+  `ToolPloneMeeting.get_plone_groups_for_user` that is deprecated but kept for
+  backward compatibility.
+  [gbastien]
 
 4.2rc30 (2022-07-01)
 --------------------

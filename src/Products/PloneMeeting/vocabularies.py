@@ -33,6 +33,7 @@ from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import find
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
@@ -83,9 +84,7 @@ class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
            to the user personal folder."""
         original_checks = super(PMConditionAwareCollectionVocabulary, self)._cache_invalidation_key(
             context, real_context)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        user_plone_groups = tool.get_plone_groups_for_user()
-        return original_checks + (user_plone_groups, )
+        return original_checks + (get_plone_groups_for_user(), )
 
     def _brains(self, context):
         """We override the method because Meetings also provides the ICollection interface..."""
@@ -192,7 +191,7 @@ class ItemProposingGroupsVocabulary(object):
         '''cachekey method for self.__call__.'''
         # this volatile is invalidated when plonegroup config changed
         date = get_cachekey_volatile(
-            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+            '_users_groups_value')
         return date
 
     @ram.cache(__call___cachekey)
@@ -241,7 +240,7 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
         '''cachekey method for self.__call__.'''
         # this volatile is invalidated when plonegroup config changed
         date = get_cachekey_volatile(
-            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+            '_users_groups_value')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         return date, repr(cfg)
@@ -298,7 +297,7 @@ class UserProposingGroupsVocabulary(object):
 
     def _user_proposing_group_terms_cachekey(method, self, context, tool, cfg):
         '''cachekey method for self._user_proposing_group_terms.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+        date = get_cachekey_volatile('_users_groups_value')
         selectable_org_uids = self._get_selectable_orgs(context, tool, cfg, the_objects=False)
         # use self.__class__.__name__ to get different ram.cache keys
         return date, context.portal_type, selectable_org_uids, self.__class__.__name__
@@ -1001,7 +1000,7 @@ class ItemOptionalAdvicesVocabulary(object):
             '''cachekey method for self._getNonDelayAwareAdvisers.'''
             # this volatile is invalidated when plonegroup config changed
             date = get_cachekey_volatile(
-                'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+                '_users_groups_value')
             return date, repr(cfg), cfg.modified()
 
         @ram.cache(_getNonDelayAwareAdvisers_cachekey)
@@ -2306,7 +2305,7 @@ class AssociatedGroupsVocabulary(object):
         '''cachekey method for self.__call__.'''
         # this volatile is invalidated when plonegroup config changed
         date = get_cachekey_volatile(
-            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+            '_users_groups_value')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         return date, sort, repr(cfg)
@@ -2386,15 +2385,14 @@ class CopyGroupsVocabulary(object):
         '''cachekey method for self.__call__.'''
         # this volatile is invalidated when plonegroup config changed
         date = get_cachekey_volatile(
-            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+            '_users_groups_value')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
     def CopyGroupsVocabulary__call__(self, context):
-        '''Lists the groups that will be selectable to be in copy for this
-           item.  If p_include_auto is True, we add terms regarding self.autoCopyGroups.'''
+        '''Lists the groups that will be selectable to be in copy for this item.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         portal_groups = api.portal.get_tool('portal_groups')
@@ -2513,7 +2511,7 @@ class SelectableCommitteesVocabulary(object):
         # cache by user_plone_groups if using committees "using_groups"
         user_plone_groups = []
         if cfg.is_committees_using("using_groups"):
-            user_plone_groups = tool.get_plone_groups_for_user()
+            user_plone_groups = get_plone_groups_for_user()
         return date, repr(cfg), committees, user_plone_groups, isManager, \
             term_title_attr, include_suppl, \
             check_is_manager_for_suppl, include_all_disabled, include_item_only, \
@@ -2844,7 +2842,7 @@ class PMUsers(UsersFactory):
     def __call___cachekey(method, self, context, query=''):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile(
-            'Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+            '_users_groups_value')
         return date, query
 
     @ram.cache(__call___cachekey)

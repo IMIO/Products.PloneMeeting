@@ -5,6 +5,7 @@ from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group_id
 from eea.facetednavigation.browser.app.view import FacetedContainerView
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import uuidsToObjects
 from imio.history.utils import getLastWFAction
 from plone import api
@@ -476,7 +477,7 @@ class MeetingFacetedView(BaseMeetingFacetedView):
         if suffixes:
             res = self.tool.userIsAmong(suffixes)
         if not res and groups:
-            res = bool(set(groups).intersection(self.tool.get_plone_groups_for_user()))
+            res = bool(set(groups).intersection(get_plone_groups_for_user()))
         return res
 
     def show_available_items(self):
