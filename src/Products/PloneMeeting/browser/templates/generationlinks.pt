@@ -31,10 +31,10 @@
             </a>
             <tal:comment replace="nothing">XXX Added by PloneMeting : send the document by email.</tal:comment>
             <tal:mail condition="python: view.getAvailableMailingLists(link['template'])">
-                <span i18n:attributes="title" title="available_mailing_lists_title"><img
-                    tal:attributes="src string:${view/portal_url}/sendMail.gif;
-                                    data-template_uid link/template_uid;
-                                    data-output_format link/output_format;"
+                <span tal:attributes="title python: view.get_available_mailing_lists_title_msg(link['output_format_title']);">
+                  <img tal:attributes="src string:${view/portal_url}/sendMail.gif;
+                                       data-template_uid link/template_uid;
+                                       data-output_format link/output_format;"
                     class="tooltipster-available-mailing-lists" /></span>
             </tal:mail>
             <tal:comment replace="nothing">XXX Added by PloneMeting : store generated document as annex.</tal:comment>
@@ -49,7 +49,7 @@
                                        javascript:$$(this).parents('form')[0].store_as_annex.value='0';;
                                        javascript:$$(this).parents('form')[0].target='_blank';;">
                         <img tal:attributes="src string:${view/portal_url}/store_as_annex.png;
-                                             title python: view.get_store_as_annex_title_msg(link['store_as_annex_title'])" />
+                                             title python: view.get_store_as_annex_title_msg(link['store_as_annex_title'], link['output_format_title'])" />
                     </a>
                 </tal:defines>
             </tal:store_as_annex>

@@ -323,13 +323,24 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
         cfg = tool.getMeetingConfig(self.context)
         return tool.isManager(cfg)
 
-    def get_store_as_annex_title_msg(self, annex_type_title):
+    def get_store_as_annex_title_msg(self, annex_type_title, output_format_title):
         """ """
-        return translate('store_as_annex_type_title',
-                         domain='PloneMeeting',
-                         mapping={'annex_type_title': safe_unicode(annex_type_title)},
-                         context=self.request,
-                         default="Store as annex of type \"${annex_type_title}\"")
+        return translate(
+            'store_as_annex_type_title',
+            domain='PloneMeeting',
+            mapping={'annex_type_title': safe_unicode(annex_type_title),
+                     'output_format': safe_unicode(output_format_title)},
+            context=self.request,
+            default="Store as annex of type \"${annex_type_title}\" with format \"${output_format}\"")
+
+    def get_available_mailing_lists_title_msg(self, output_format_title):
+        """ """
+        return translate(
+            'available_mailing_lists_title',
+            domain='PloneMeeting',
+            mapping={'output_format': safe_unicode(output_format_title)},
+            context=self.request,
+            default="Click to see available mailing lists for this POD template to generate with format \"${output_format}\"")
 
 
 class PMDashboardDocumentGeneratorLinksViewlet(DashboardDocumentGeneratorLinksViewlet, BaseGeneratorLinksViewlet):
