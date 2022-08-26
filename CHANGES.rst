@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc31 (unreleased)
+4.2rc31 (2022-08-26)
 --------------------
 
 - Added `Meeting.update_first_item_number` that will manage updating first item
