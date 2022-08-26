@@ -1171,7 +1171,9 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # and it has been presented
         sentItem = vendorsItem.getItemClonedToOtherMC(destMeetingConfigId=cfg2Id)
-        self.assertEqual(sentItem.query_state(), 'presented')
+        self.assertEqual(sentItem.query_state(),
+                         'presented',
+                         sentItem.wfConditions().mayPresent())
 
     def test_pm_SendItemToOtherMCUsingEmergency(self):
         '''Test when sending an item to another MeetingConfig and emergency is asked,
