@@ -25,7 +25,6 @@ from OFS.ObjectManager import BeforeDeleteException
 from plone import api
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.WorkflowCore import WorkflowException
-from Products.CMFPlone import PloneMessageFactory
 from Products.CMFPlone.CatalogTool import getIcon
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX

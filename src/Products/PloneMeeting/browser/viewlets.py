@@ -26,7 +26,7 @@ class ForceInsertNormal(ViewletBase):
 
     def show(self):
         """ """
-        return  self.view.brains
+        return self.view.brains
 
     def enabled(self):
         """Is the checkbox enabled?  Only necessary if meeting is in a late state."""

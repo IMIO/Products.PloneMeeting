@@ -2,7 +2,6 @@
 
 from AccessControl import Unauthorized
 from plone import api
-from plone.memoize.view import memoize
 from Products.Five import BrowserView
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.utils import notifyModifiedAndReindex

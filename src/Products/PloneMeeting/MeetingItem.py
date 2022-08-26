@@ -5421,7 +5421,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # and current user is not members of the _advisers that gave advice
         # advices could be hidden to power observers and/or restricted power observers
         if cfg.getEnableAdviceConfidentiality() and adviceInfo['isConfidential']:
-            tool = api.portal.get_tool('portal_plonemeeting')
             advisers_group_id = get_plone_group_id(adviceInfo['id'], 'advisers')
             if advisers_group_id not in get_plone_groups_for_user() and \
                is_confidential_power_observer:
