@@ -1477,7 +1477,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # test what should happen to the wf (added states and transitions)
         self._return_to_proposing_group_with_validation_active()
         # test the functionnality of returning an item to the proposing group
-        self._return_to_proposing_group_with_validation_active_wf_functionality()
+        self._return_to_proposing_group_with_validation_active_wf_functionality(all=False)
 
     def _return_to_proposing_group_with_validation_active(self):
         '''Tests while 'return_to_proposing_group' wfAdaptation is active.'''
@@ -1487,7 +1487,18 @@ class testWFAdaptations(PloneMeetingTestCase):
         #  ... we use the same test than original return to proposing group
         self._return_to_proposing_group_active_from_item_states()
 
-    def _return_to_proposing_group_with_validation_active_wf_functionality(self):
+    def _process_transition_for_correcting_item(self, item, all):
+        # all parameter if for custom profiles
+        if all:
+            # do custom WF steps
+            pass
+        self.changeUser('pmCreator1')
+        self.do(item, 'goTo_returned_to_proposing_group_proposed')
+
+    def _get_developers_reviewers_groups(self):
+        return [self.developers_reviewers]
+
+    def _return_to_proposing_group_with_validation_active_wf_functionality(self, all=True):
         '''Tests the workflow functionality of using the
            'return_to_proposing_group_with_last_validation' wfAdaptation.'''
         # while it is active, the creators of the item can edit the item as well as the MeetingManagers
@@ -1505,7 +1516,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         for userId in ('pmCreator1', 'pmReviewer1'):
             self.changeUser(userId)
             self.failIf(self.hasPermission(ModifyPortalContent, item))
-        # the item can be send back to the proposing group by the MeetingManagers only
+        # the item can be sent back to the proposing group by the MeetingManagers only
         for userId in ('pmCreator1', 'pmReviewer1'):
             self.changeUser(userId)
             self.failIf(self.transitions(item))
@@ -1521,9 +1532,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.failUnless(self.hasPermission(ModifyPortalContent, item))
         # Now send item to the reviewer
-        self.changeUser('pmCreator1')
-        self.do(item, 'goTo_returned_to_proposing_group_proposed')
+        self._process_transition_for_correcting_item(item, all)
         # the item creator may not be able to modify the item
+        self.changeUser('pmCreator1')
         self.failIf(self.hasPermission(ModifyPortalContent, item))
         # MeetingManagers can still edit it also
         self.changeUser('pmManager')
@@ -1540,20 +1551,19 @@ class testWFAdaptations(PloneMeetingTestCase):
         # send the item back to proposing group, freeze the meeting then send the item back to the meeting
         # the item should be now in the item state corresponding to the meeting frozen state, so 'itemfrozen'
         self.do(item, 'return_to_proposing_group')
-        self.do(item, 'goTo_returned_to_proposing_group_proposed')
+        self._process_transition_for_correcting_item(item, all)
+        self.changeUser('pmManager')
         self.freezeMeeting(meeting)
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
         self.assertEqual(item.query_state(), 'itemfrozen')
 
         # test when there is reviewers so item may be returned directly to meeting by the creator
-        self._removeAllMembers(
-            api.group.get(self.developers_reviewers),
-            api.group.get(self.developers_reviewers).getMemberIds())
+        self._remove_all_members_from_groups(self._get_developers_reviewers_groups())
         self.changeUser('pmManager')
         self.do(item, 'return_to_proposing_group')
-        self.changeUser('pmCreator1')
         # item may be directly returned to the meeting as itemcreated is the last validation level
-        self.assertEqual(self.transitions(item), ['backTo_itemfrozen_from_returned_to_proposing_group'])
+        self.changeUser('pmCreator1')
+        self.assertIn('backTo_itemfrozen_from_returned_to_proposing_group', self.transitions(item))
         self.failUnless(self.hasPermission(ModifyPortalContent, item))
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
         self.assertEqual(item.query_state(), 'itemfrozen')
@@ -1569,7 +1579,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # We can use the same test as last Validation in standard wf (created --> proposed)
         self._return_to_proposing_group_with_validation_active()
         # We can also use the same test as last Validation
-        self._return_to_proposing_group_with_validation_active_wf_functionality()
+        self._return_to_proposing_group_with_validation_active_wf_functionality(all=True)
 
     def test_pm_WFA_hide_decisions_when_under_writing(self):
         '''Test the workflowAdaptation 'hide_decisions_when_under_writing'.
@@ -1864,7 +1874,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Tests while 'waiting_advices' wfAdaptation is inactive.'''
         # make sure the 'waiting_advices' state does not exist in the item WF
         itemWF = self.meetingConfig.getItemWorkflow(True)
-        self.failIf('waiting_advices' in str(itemWF.states.keys()))
+        self.assertNotIn('waiting_advices', itemWF.states.keys())
 
     def _waiting_advices_active(self):
         '''Tests while 'waiting_advices' wfAdaptation is active.'''
@@ -1873,7 +1883,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         itemWF = cfg.getItemWorkflow(True)
         waiting_state_name = '{0}_waiting_advices'.format(self._stateMappingFor('proposed_first_level'))
         waiting_transition_name = 'wait_advices_from_{0}'.format(self._stateMappingFor('proposed_first_level'))
-        self.assertTrue(waiting_state_name in itemWF.states)
+        self.assertIn(waiting_state_name, itemWF.states.keys())
 
         # the budget impact editors functionnality still works even if 'remove_modify_access': True
         cfg.setItemBudgetInfosStates((waiting_state_name, ))
@@ -1894,7 +1904,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # 'pmReviewer1' may do it but by default is not able to edit it
         self.changeUser('pmReviewer1')
         # no advice asked so a No() instance is returned for now
-        self.assertFalse(waiting_transition_name in self.transitions(item))
+        self.assertNotIn(waiting_transition_name, self.transitions(item))
         advice_required_to_ask_advices = translate('advice_required_to_ask_advices',
                                                    domain='PloneMeeting',
                                                    context=self.request)
@@ -1907,8 +1917,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         item.setOptionalAdvisers((self.vendors_uid, ))
         item._update_after_edit()
         # still not available because no advice may be asked in state waiting_state_name
-        self.assertFalse(waiting_state_name in self.vendors.item_advice_states)
-        self.assertFalse(waiting_transition_name in self.transitions(item))
+        self.assertNotIn(waiting_state_name, self.vendors.item_advice_states)
+        self.assertNotIn(waiting_transition_name, self.transitions(item))
 
         # do things work
         self.vendors.item_advice_states = ("{0}__state__{1}".format(
@@ -1916,7 +1926,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # clean MeetingConfig.getItemAdviceStatesForOrg
         notify(ObjectModifiedEvent(self.vendors))
 
-        self.assertTrue(waiting_transition_name in self.transitions(item))
+        self.assertIn(waiting_transition_name, self.transitions(item))
         self._setItemToWaitingAdvices(item, waiting_transition_name)
         self.assertEqual(item.query_state(), waiting_state_name)
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
@@ -1978,7 +1988,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         # by default it is linked to the 'proposed' state
         itemWF = cfg.getItemWorkflow(True)
-        self.assertIn(waiting_advices_state, itemWF.states)
+        self.assertIn(waiting_advices_state, itemWF.states.keys())
 
         # suffixed transitions are not added
         self.assertNotIn('%s_waiting_advices' % self._stateMappingFor('proposed_first_level'), itemWF.states)
