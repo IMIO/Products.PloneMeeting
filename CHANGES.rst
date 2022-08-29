@@ -5,8 +5,9 @@ Changelog
 4.2rc32 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Fixed `Products.PloneMeeting.vocabularies.faceted_annexes_vocabulary` to take
+  into account every annexes configs, not only the `item_annexes` config.
+  [gbastien]
 
 4.2rc31 (2022-08-26)
 --------------------
@@ -51,7 +52,7 @@ Changelog
   Changed `Meeting.get_previous_meeting` parameter `interval` default value
   from `60` to `180` days.
   [gbastien]
-- Make sure dashboard cache is invlaidated (etags) when a meeting date changed,
+- Make sure dashboard cache is invalidated (etags) when a meeting date changed,
   this is necessary so meeting date faceted filters are correct.
   [gbastien]
 - Added adaptable method `MeetingConfig._custom_createOrUpdateGroups` to ease

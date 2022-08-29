@@ -881,6 +881,28 @@ class testFaceted(PloneMeetingTestCase):
         # not found
         self.assertEqual(len(self.catalog(SearchableText="specialdecisions")), 0)
 
+    def test_pm_Faceted_annexes_vocabulary(self):
+        """Test especially that enabling attributes in various annexes_types works."""
+        cfg = self.meetingConfig
+        vocab = get_vocab(
+            cfg,
+            "Products.PloneMeeting.vocabularies.faceted_annexes_vocabulary",
+            only_factory=True)
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        # nothing enabled, vocabulary is empty
+        self.assertEqual(vocab(cfg)._terms, [])
+        # enable "signed" for item_decision
+        self._enable_annex_config(item, param="signed", related_to="item_decision")
+        self.assertEqual(
+            [term.token for term in vocab(cfg)],
+            ['to_sign', 'not_to_sign', 'signed'])
+        # enable "confidentiality" for item_annex
+        self._enable_annex_config(item)
+        self.assertEqual(
+            [term.token for term in vocab(cfg)],
+            ['confidential', 'not_confidential', 'to_sign', 'not_to_sign', 'signed'])
+
 
 def test_suite():
     from unittest import makeSuite
