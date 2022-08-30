@@ -338,8 +338,8 @@ class PloneMeetingTestingHelpers:
            to change permissions ever lines"""
         from plone.app.testing.helpers import setRoles
         currentMember = api.user.get_current()
-        currentMemberRoles = currentMember.getRoles()
-        setRoles(self.portal, currentMember.getId(), currentMemberRoles + ['Manager', ])
+        currentMemberRoles = tuple(currentMember.getRoles())
+        setRoles(self.portal, currentMember.getId(), currentMemberRoles + ('Manager', ))
         for member in members:
             group.removeMember(member)
         setRoles(self.portal, currentMember.getId(), currentMemberRoles)
