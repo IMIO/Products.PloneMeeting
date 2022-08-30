@@ -7582,7 +7582,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('get_attendees')
 
     def get_attendees(self, the_objects=False, ordered=True):
-        '''Returns the attendees for this item.'''
+        '''Returns the attendees for this item, so people that are "present".'''
         res = []
         if not self.hasMeeting():
             return res
@@ -7605,7 +7605,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if uid in uids]
 
     def get_all_attendees(self, the_objects=False, ordered=True):
-        '''Returns the every attendees for this item, including absents, excused, ...'''
+        '''Returns every attendees for this item, including absents, excused, ...'''
         if not self.hasMeeting():
             return ()
         meeting = self.getMeeting()
