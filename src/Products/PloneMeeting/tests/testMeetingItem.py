@@ -4732,8 +4732,11 @@ class testMeetingItem(PloneMeetingTestCase):
         afterMCEdit_rendered_actions_panel = actions_panel()
         self.assertNotEqual(beforeMCEdit_rendered_actions_panel, afterMCEdit_rendered_actions_panel)
 
+    def _get_developers_all_reviewers_groups(self):
+        return [self.developers_reviewers]
+
     def test_pm_ItemActionsPanelCachingInvalidatedWhenUserGroupsChanged(self):
-        """Actions panel cache is invalidated when the the groups of a user changed.
+        """Actions panel cache is invalidated when the groups of a user changed.
            Here we will make a creator be a reviewer."""
         # make sure we use default itemWFValidationLevels,
         # useful when test executed with custom profile
@@ -4744,9 +4747,7 @@ class testMeetingItem(PloneMeetingTestCase):
         actions_panel = item.restrictedTraverse('@@actions_panel')
         beforeUserGroupsEdit_rendered_actions_panel = actions_panel()
         # remove every reviewers so creators may validate
-        rev_group = self.portal.portal_groups.getGroupById(self.developers_reviewers)
-        rev_users = rev_group.getMemberIds()
-        self._removeAllMembers(rev_group, rev_users)
+        self._remove_all_members_from_groups(self._get_developers_all_reviewers_groups())
         # now user able to validate
         self.assertIn("validate", self.transitions(item))
         actions_panel = item.restrictedTraverse('@@actions_panel')
