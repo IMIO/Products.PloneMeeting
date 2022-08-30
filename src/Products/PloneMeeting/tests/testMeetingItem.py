@@ -1212,7 +1212,6 @@ class testMeetingItem(PloneMeetingTestCase):
         dummyItem = self.create('MeetingItem')
         self.presentItem(dummyItem)
         self.freezeMeeting(frozenMeeting)
-        self.assertEqual(frozenMeeting.query_state(), 'frozen')
         createdMeeting = self.create('Meeting', date=now + timedelta(days=10))
         # create the meeting in cfg
         self.setMeetingConfig(cfgId)
@@ -1326,7 +1325,6 @@ class testMeetingItem(PloneMeetingTestCase):
         frozenMeeting = self.create('Meeting', date=now + timedelta(days=5))
         self.freezeMeeting(frozenMeeting)
         self.setMeetingConfig(cfgId)
-
         # send items
         self.changeUser('pmCreator1')
         normalItem.cloneToOtherMeetingConfig(cfg2Id)
