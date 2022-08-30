@@ -8,6 +8,9 @@ Changelog
 - Fixed `Products.PloneMeeting.vocabularies.faceted_annexes_vocabulary` to take
   into account every annexes configs, not only the `item_annexes` config.
   [gbastien]
+- In Migrate_To_4200 replace `.getMeetingNumber()` in TAL expressions by
+  `.meeting_number`.
+  [gbastien]
 
 4.2rc31 (2022-08-26)
 --------------------

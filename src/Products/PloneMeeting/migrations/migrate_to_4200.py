@@ -934,6 +934,7 @@ class Migrate_To_4200(Migrator):
             self.updateTALConditions("getDate()", "date")
             self.updateTALConditions("getStartDate()", "start_date")
             self.updateTALConditions("getEndDate()", "end_date")
+            self.updateTALConditions(".getMeetingNumber()", ".meeting_number")
             self.updateTALConditions("member.getGroups()", "tool.get_plone_groups_for_user()")
             self.updateTALConditions("power_observer_type='restrictedpowerobservers')",
                                      "power_observer_types=['restrictedpowerobservers'])")
