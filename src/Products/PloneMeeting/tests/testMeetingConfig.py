@@ -1497,7 +1497,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # only for Managers
         self.assertRaises(Unauthorized, cfg.updatePersonalLabels)
         self.changeUser('siteadmin')
-        # by default it only updates items not modified for 30 days
+        # by default, it only updates items not modified for 30 days
         # so calling it will change nothing
         cfg.updatePersonalLabels(personal_labels=['personal-label'])
         item1_labeling = ILabeling(item1)
@@ -1522,7 +1522,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             sorted(item2_labeling.storage['personal-label']),
             ['budgetimpacteditor', 'pmCreator1', 'pmCreator1b', 'pmManager', 'powerobserver1'])
 
-        # test test that only items older than given days are updated
+        # test that only items older than given days are updated
         self.proposeItem(item2)
         item2.setModificationDate(DateTime() - 50)
         item2.reindexObject()
