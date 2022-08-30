@@ -44,7 +44,7 @@
                   <span class="item_attribute_label"
                         i18n:translate="PloneMeeting_label_proposingGroup"></span>:&nbsp;&nbsp;
                   <tal:hasProposingGroup condition="nocall:proposingGroup">
-                    <span tal:content="proposingGroup/Title" />
+                    <span tal:content="structure python: context.displayValue(context.Vocabulary('proposingGroup')[0], proposingGroup.UID())" />
                     <metal:people use-macro="here/@@pm-macros/proposingGroupUsers"/>
                   </tal:hasProposingGroup>
                   <span tal:condition="not:nocall:proposingGroup">-</span>

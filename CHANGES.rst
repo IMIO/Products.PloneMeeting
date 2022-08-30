@@ -11,6 +11,9 @@ Changelog
 - In Migrate_To_4200 replace `.getMeetingNumber()` in TAL expressions by
   `.meeting_number`.
   [gbastien]
+- In `meetingitem_view`, render field proposingGroup by using the vocabulary so
+  we have coherence between edit and view and it displays sub organizations correctly.
+  [gbastien]
 
 4.2rc31 (2022-08-26)
 --------------------
