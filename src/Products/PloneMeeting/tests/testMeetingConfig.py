@@ -2064,7 +2064,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.setItemAdviceEditStates(())
 
         # itemcreated level is mandatory
-        proposed_state = cfg.getItemWorkflow(True).states[porposed_state]
+        proposed_state = cfg.getItemWorkflow(True).states[self._stateMappingFor('proposed')]
+        proposed_state_id = proposed_state.getId()
         translated_proposed_state = translate(proposed_state.title, domain="plone")
         level_removed_config_error = \
             translate('item_wf_val_states_can_not_be_removed_in_use_config',
@@ -2073,16 +2074,16 @@ class testMeetingConfig(PloneMeetingTestCase):
                       domain='PloneMeeting',
                       context=self.request)
         # values_disabled_proposed
-        self._disableItemValidationLevel(cfg, level=porposed_state)
+        self._disableItemValidationLevel(cfg, level=proposed_state_id)
         values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
-        self._enableItemValidationLevel(cfg, level=porposed_state)
+        self._enableItemValidationLevel(cfg, level=proposed_state_id)
         # used in itemAdviceStates, as state
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
                          level_removed_config_error)
         cfg.setItemAdviceStates(())
         cfg.at_post_edit_script()
         # used in transitionsToConfirm, as transition
-        cfg.setTransitionsToConfirm(('MeetingItem.%s' % proposed_state.id, 'MeetingItem.validate'))
+        cfg.setTransitionsToConfirm(('MeetingItem.%s' % proposed_state_id, 'MeetingItem.validate'))
         level_removed_config_error = \
             translate('item_wf_val_states_can_not_be_removed_in_use_config',
                       mapping={'state_or_transition': translated_proposed_state,
