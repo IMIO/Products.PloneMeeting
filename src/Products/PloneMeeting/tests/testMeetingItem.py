@@ -7646,6 +7646,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertIsNone(cloned.getMeeting())
         self.assertIsNone(cloned.getMeeting(only_uid=True))
 
+    def _users_to_remove_for_mailling_list(self):
+        return []
+
     def test_pm__sendCopyGroupsMailIfRelevant(self):
         """Check mail sent to copyGroups when they have access to item.
            Mail is not sent twice to same email address."""
@@ -7653,6 +7656,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # make sure we use default itemWFValidationLevels,
         # useful when test executed with custom profile
         self._setUpDefaultItemWFValidationLevels(cfg)
+        self._removeUsersFromEveryGroups(self._users_to_remove_for_mailling_list())
         # make utils.sendMailIfRelevant return details
         self.request['debug_sendMailIfRelevant'] = True
         cfg.setUseCopies(True)
