@@ -88,7 +88,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         pm_testfiles = [f.split('/')[-1] for f in pm_files]
         # there should not be a file in PloneMeeting that is not in this subproduct...
         # a subproduct can ignore some PloneMeeting test files in self.subproductIgnoredTestFiles
-        self.failIf(set(pm_testfiles).difference(set(subproduct_testfiles + self.subproductIgnoredTestFiles)))
+        self.assertSetEqual(set(pm_testfiles), set(subproduct_testfiles + self.subproductIgnoredTestFiles))
 
     def test_pm_ToolView(self):
         '''Access the tool view and just check that it does not fail displaying.'''
