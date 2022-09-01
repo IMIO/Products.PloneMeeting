@@ -115,7 +115,6 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     schemas = {'MeetingItem': MeetingItem_schema,
                'Meeting': Meeting_schema}
     subproductIgnoredTestFiles = ['testPerformances.py',
-                                  'testConversionWithDocumentViewer.py',
                                   'test_robot.py']
 
     layer = PM_TESTING_PROFILE_FUNCTIONAL
