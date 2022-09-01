@@ -85,8 +85,10 @@ class BaseAttendeeForm(form.Form):
         """Display concerned person as description."""
         person_uid = person_uid_default()
         if person_uid:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self.context)
             hp = uuidToObject(person_uid, unrestricted=True)
-            self.description = self.context.get_attendee_short_title(hp)
+            self.description = self.context.get_attendee_short_title(hp, cfg)
 
     def update(self):
         """ """

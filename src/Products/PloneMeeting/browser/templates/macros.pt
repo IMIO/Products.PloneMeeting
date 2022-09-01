@@ -367,7 +367,7 @@ document.location.reload(true);
           tal:condition="python: mayChangeAttendees and attendeesOrderIsRedefined"
           title="Reinitialize attendees order from meeting"
           id="reinit-attendees-order-action"
-          tal:attributes="onClick string:javascript:event.preventDefault();;confirmDeleteObject(base_url='${context/absolute_url}', object_uid=null, this, msgName='delete_confirm_message', view_name='@@item-reinit-attendees-order', redirect=null);;"
+          tal:attributes="onClick string:javascript:event.preventDefault();;confirmDeleteObject(base_url='${context/absolute_url}', object_uid=null, this, msgName='are_you_sure', view_name='@@item-reinit-attendees-order', redirect=null);;"
           i18n:attributes="title">
            <span class="fa delete-element"></span>
        </a>
@@ -473,7 +473,7 @@ document.location.reload(true);
      <td class="attendee-value attendee-title"
          tal:attributes="data-attendee_uid aUid;
                          data-attendee_number string:${repeat/mUser/number}">
-       <span tal:content="python: context.get_attendee_short_title(mUser, include_voting_group=meetingConfig.getDisplayVotingGroup())"
+       <span tal:content="python: context.get_attendee_short_title(mUser, meetingConfig)"
              tal:attributes="class python: is_attendee_position_redefined and 'tooltipster-meeting-item-redefined-position link-help item-attendee-title highlightValue' or 'item-attendee-title';
                              data-base_url string:${context/absolute_url};
                              data-attendee_uid string:${aUid};">
