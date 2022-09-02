@@ -14,8 +14,9 @@ Changelog
 - In `meetingitem_view`, render field proposingGroup by using the vocabulary so
   we have coherence between edit and view and it displays sub organizations correctly.
   [gbastien]
-- Simplified `MeetingItem.get_attendee_short_title`, manage `include_voting_group`
-  parameter in the method instead having to pass it as parameter.
+- Moved `MeetingItem.get_attendee_short_title` to `Meeting` and reuse it
+  everywhere. Manage `include_voting_group` parameter in the method instead
+  having to pass it as parameter.
   [gbastien]
 
 4.2rc31 (2022-08-26)

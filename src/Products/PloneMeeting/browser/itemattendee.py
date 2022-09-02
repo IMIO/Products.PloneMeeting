@@ -74,6 +74,7 @@ class BaseAttendeeForm(form.Form):
         self.request = request
         self.label = translate(self.label, domain='PloneMeeting', context=request)
         self.request.set('disable_border', 1)
+        self.meeting = self.context.getMeeting()
 
     def updateWidgets(self):
         # XXX manipulate self.fields BEFORE doing form.Form.updateWidgets
@@ -88,7 +89,7 @@ class BaseAttendeeForm(form.Form):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
             hp = uuidToObject(person_uid, unrestricted=True)
-            self.description = self.context.get_attendee_short_title(hp, cfg)
+            self.description = self.meeting.get_attendee_short_title(hp, cfg, item=self.context)
 
     def update(self):
         """ """
@@ -123,7 +124,6 @@ class BaseAttendeeForm(form.Form):
             _itemNumber_to_storedItemNumber(
                 data.get('apply_until_item_number') or u'0'
             )
-        self.meeting = self.context.getMeeting()
         self._doApply()
         # in any case, if attendee (un)set absent/excused/... invalidate itemvoters caching
         invalidate_cachekey_volatile_for(

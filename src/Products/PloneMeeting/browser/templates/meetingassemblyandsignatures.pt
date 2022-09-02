@@ -73,7 +73,7 @@
           tal:attributes="class classOddEven">
         <td class="td_cell_number-column" tal:content="repeat/mUser/number">1</td>
         <td>
-          <span tal:content="python: mUser.get_short_title(include_voting_group=view.cfg.getDisplayVotingGroup())"
+          <span tal:content="python: context.get_attendee_short_title(mUser, view.cfg)"
                 tal:attributes="class python: is_attendee_position_redefined and 'tooltipster-meeting-item-redefined-position link-help item-attendee-title highlightValue' or 'item-attendee-title';
                                 data-base_url string:${context/absolute_url};
                                 data-attendee_uid string:${aUid};">

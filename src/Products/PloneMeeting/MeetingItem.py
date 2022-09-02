@@ -7614,18 +7614,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             all_uids = meeting._get_item_attendees_order(self.UID())
         return meeting.get_all_attendees(all_uids, the_objects=the_objects)
 
-    def get_attendee_short_title(self, hp, cfg, **kwargs):
-        '''Helper that return short title for given p_hp,
-           taking into account that p_hp position may be redefined for self.'''
-        meeting = self.getMeeting()
-        position_type = meeting.get_attendee_position_for(
-            self.UID(), hp.UID())
-        include_voting_group = cfg.getDisplayVotingGroup()
-        return hp.get_short_title(
-            forced_position_type_value=position_type,
-            include_voting_group=include_voting_group,
-            **kwargs)
-
     def _appendLinkedItem(self, item, tool, cfg, only_viewable):
         if not only_viewable:
             return True

@@ -1446,6 +1446,19 @@ class Meeting(Container):
                     forced_position_type_value=position_type)
         return position_type
 
+    def get_attendee_short_title(self, hp, cfg, item=None, **kwargs):
+        '''Helper that return short title for given p_hp,
+           taking into account that p_hp position may be redefined for self.'''
+        position_type = None
+        if item is not None:
+            position_type = self.get_attendee_position_for(
+                item.UID(), hp.UID())
+        include_voting_group = cfg.getDisplayVotingGroup()
+        return hp.get_short_title(
+            forced_position_type_value=position_type,
+            include_voting_group=include_voting_group,
+            **kwargs)
+
     def _get_item_attendees_order(self, item_uid=None, from_meeting_if_empty=True):
         """ """
         if not base_hasattr(self, 'item_attendees_order'):
