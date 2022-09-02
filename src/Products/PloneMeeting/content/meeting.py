@@ -1996,6 +1996,19 @@ class Meeting(Container):
                 res[uid] = infos['replacement']
         return res
 
+    def _update_attendee_type(self, attendee_uid, attendee_type, force_clear=False):
+        """ """
+        if force_clear or attendee_uid not in self.ordered_contacts:
+            self.ordered_contacts[attendee_uid] = \
+                {'attendee': False,
+                 'excused': False,
+                 'absent': False,
+                 'signer': False,
+                 'signature_number': None,
+                 'replacement': None,
+                 'voter': False}
+        self.ordered_contacts[attendee_uid][attendee_type] = True
+
     def _do_update_contacts(self,
                             attendees=OrderedDict(),
                             signatories={},
@@ -2012,16 +2025,7 @@ class Meeting(Container):
         self.ordered_contacts.clear()
 
         for attendee_uid, attendee_type in attendees.items():
-            if attendee_uid not in self.ordered_contacts:
-                self.ordered_contacts[attendee_uid] = \
-                    {'attendee': False,
-                     'excused': False,
-                     'absent': False,
-                     'signer': False,
-                     'signature_number': None,
-                     'replacement': None,
-                     'voter': False}
-            self.ordered_contacts[attendee_uid][attendee_type] = True
+            self._update_attendee_type(attendee_uid, attendee_type)
 
         for signatory_uid, signature_number in signatories.items():
             self.ordered_contacts[signatory_uid]['signer'] = True
