@@ -1465,7 +1465,7 @@ class testContacts(PloneMeetingTestCase):
         self.failIf(cfg.getSelectableAdvisers())
         self.failIf(cfg.getOrderedAssociatedOrganizations())
         self.failIf(cfg.getOrderedGroupsInCharge())
-        self.failUnless(self.developers_reviewers in cfg.getSelectableCopyGroups())
+        self.assertIn(self.developers_reviewers, cfg.getSelectableCopyGroups())
         can_not_delete_organization_meetingconfig = \
             translate('can_not_delete_organization_meetingconfig',
                       domain="plone",
