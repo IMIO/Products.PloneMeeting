@@ -3049,7 +3049,7 @@ class testMeetingType(PloneMeetingTestCase):
                                            date=datetime(2015, 5, 5),
                                            observations=RichTextValue(text))
         meeting = getattr(pmFolder, meetingId)
-        self.assertTrue('1062-600x500.jpg' in meeting.objectIds())
+        self.assertIn('1062-600x500.jpg', meeting.objectIds())
         img = meeting.get('1062-600x500.jpg')
         # link to image uses resolveuid
         self.assertEqual(
@@ -3063,7 +3063,7 @@ class testMeetingType(PloneMeetingTestCase):
         # test using the quickedit
         text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image2
         set_field_from_ajax(meeting, 'observations', text)
-        self.assertTrue('1025-400x300.jpg' in meeting.objectIds())
+        self.assertIn('1025-400x300.jpg', meeting.objectIds())
         img2 = meeting.get('1025-400x300.jpg')
 
         # link to image uses resolveuid
@@ -3079,7 +3079,7 @@ class testMeetingType(PloneMeetingTestCase):
         text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image1
         meeting.observations = RichTextValue(text)
         notify(ObjectModifiedEvent(meeting, Attributes(Interface, 'observations')))
-        self.assertTrue('22-400x400.jpg' in meeting.objectIds())
+        self.assertIn('22-400x400.jpg', meeting.objectIds())
         img3 = meeting.get('22-400x400.jpg')
 
         # link to image uses resolveuid
