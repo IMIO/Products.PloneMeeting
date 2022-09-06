@@ -15,6 +15,7 @@ from datetime import timedelta
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import richtextval
 from imio.helpers.content import uuidsToObjects
+from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.content import uuidToObject
 from imio.prettylink.interfaces import IPrettyLink
 from persistent.list import PersistentList
@@ -24,7 +25,6 @@ from plone.app.contenttypes.behaviors.collection import Collection
 from plone.app.contenttypes.behaviors.collection import ICollection
 from plone.app.querystring.querybuilder import queryparser
 from plone.app.textfield import RichText
-from plone.app.uuid.utils import uuidToCatalogBrain
 from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
@@ -563,58 +563,23 @@ class IMeeting(IDXMeetingContent):
         cfg = tool.getMeetingConfig(context)
 
         if is_meeting and cfg.isUsingContacts():
+
             # removed attendees?
             # REQUEST.form['meeting_attendees'] is like
             # ['muser_attendeeuid1_attendee', 'muser_attendeeuid2_excused']
-            stored_attendees = context.get_all_attendees()
             meeting_attendees = [attendee.split('_')[1] for attendee
                                  in request.form.get('meeting_attendees', [])
                                  if attendee.split('_')[2] == 'attendee']
-            removed_meeting_attendees = set(stored_attendees).difference(meeting_attendees)
-            # do not go further if not removed attendees
-            # this is useful when creating a new meeting from restapi call
-            # where ObjectCreated event is triggered after validation
-            if removed_meeting_attendees:
-                # attendees redefined on items
-                redefined_item_attendees = context._get_all_redefined_attendees(
-                    by_persons=True)
-                conflict_attendees = removed_meeting_attendees.intersection(
-                    redefined_item_attendees)
-                if conflict_attendees:
-                    attendee_uid = tuple(conflict_attendees)[0]
-                    attendee_brain = uuidToCatalogBrain(attendee_uid)
-                    msg = translate(
-                        'can_not_remove_attendee_redefined_on_items',
-                        mapping={'attendee_title': attendee_brain.get_full_title},
-                        domain='PloneMeeting',
-                        context=request)
-                    # avoid multiple call to this invariant
-                    context.REQUEST.set("validate_attendees_done", True)
-                    # encode msg in utf-8 for restapi
-                    raise Invalid(msg.encode('utf-8'))
-
-            # can not remove or add attendees on meeting when attendees order
-            # was redefined on items
-            item_attendees_order = context._get_item_attendees_order(from_meeting_if_empty=False)
-            if item_attendees_order:
-                all_meeting_attendees = [
-                    attendee.split('_')[1] for attendee
-                    in request.form.get('meeting_attendees', [])]
-                all_added_meeting_attendees = set(all_meeting_attendees).difference(stored_attendees)
-                all_removed_meeting_attendees = set(stored_attendees).difference(all_meeting_attendees)
-                all_changed_meeting_attendees = tuple(all_added_meeting_attendees) + \
-                    tuple(all_removed_meeting_attendees)
-                if all_changed_meeting_attendees:
-                    msg = translate(
-                        'can_not_remove_or_add_attendee_item_attendees_reordered',
-                        mapping={'item_url': uuidToObject(
-                            item_attendees_order.keys()[0]).absolute_url()},
-                        domain='PloneMeeting',
-                        context=request)
-                    # avoid multiple call to this invariant
-                    context.REQUEST.set("validate_attendees_done", True)
-                    # encode msg in utf-8 for restapi
-                    raise Invalid(msg.encode('utf-8'))
+            all_meeting_attendees = [
+                attendee.split('_')[1] for attendee
+                in request.form.get('meeting_attendees', [])]
+            signatories = [signatory for signatory in
+                           request.form.get('meeting_signatories', [])
+                           if signatory]
+            signatory_uids = [signatory.split('__signaturenumber__')[0]
+                              for signatory in signatories]
+            _validate_attendees_removed_and_order(
+                context, meeting_attendees, all_meeting_attendees, signatory_uids)
 
             # removed voters?
             stored_voters = context.get_voters()
@@ -663,21 +628,11 @@ class IMeeting(IDXMeetingContent):
                     raise Invalid(msg.encode('utf-8'))
 
             # there can not be 2 same signatories
-            signatories = [signatory for signatory in
-                           request.form.get('meeting_signatories', [])
-                           if signatory]
             if signatories:
                 signature_numbers = [signatory.split('__signaturenumber__')[1]
                                      for signatory in signatories]
-                if len(signature_numbers) != len(set(signature_numbers)):
-                    msg = translate(
-                        'can_not_define_several_same_signature_number',
-                        domain='PloneMeeting',
-                        context=request)
-                    # avoid multiple call to this invariant
-                    context.REQUEST.set("validate_attendees_done", True)
-                    # encode msg in utf-8 for restapi
-                    raise Invalid(msg.encode('utf-8'))
+                _validate_attendees_signatories(
+                    context, signature_numbers)
 
         # avoid multiple call to this invariant
         context.REQUEST.set("validate_attendees_done", True)
@@ -772,6 +727,81 @@ def get_all_usable_held_positions(obj, the_objects=True):
     if contacts and the_objects:
         contacts = uuidsToObjects(uuids=contacts, ordered=True, unrestricted=True)
     return tuple(contacts)
+
+
+def _validate_attendees_removed_and_order(context, meeting_attendees, all_meeting_attendees, signatory_uids):
+    """ """
+    request = context.REQUEST
+    stored_attendees = context.get_all_attendees()
+    removed_meeting_attendees = set(stored_attendees).difference(meeting_attendees)
+    # do not go further if not removed attendees
+    # this is useful when creating a new meeting from restapi call
+    # where ObjectCreated event is triggered after validation
+    if removed_meeting_attendees:
+        # attendees redefined on items
+        redefined_item_attendees = context._get_all_redefined_attendees(
+            by_persons=True)
+        conflict_attendees = removed_meeting_attendees.intersection(
+            redefined_item_attendees)
+        if conflict_attendees:
+            attendee_uid = tuple(conflict_attendees)[0]
+            attendee_brain = uuidToCatalogBrain(attendee_uid)
+            msg = translate(
+                'can_not_remove_attendee_redefined_on_items',
+                mapping={'attendee_title': attendee_brain.get_full_title},
+                domain='PloneMeeting',
+                context=request)
+            # avoid multiple call to this invariant
+            context.REQUEST.set("validate_attendees_done", True)
+            # encode msg in utf-8 for restapi
+            raise Invalid(msg.encode('utf-8'))
+        # in theory this is not possible thru the UI as unselecting an attendee
+        # will disable the signatory field but this is possible thru the restapi
+        removed_signatories = tuple(
+            set(signatory_uids).intersection(removed_meeting_attendees))
+        if removed_signatories:
+            attendee_brain = uuidToCatalogBrain(removed_signatories[0])
+            msg = translate(
+                'can_not_remove_attendee_defined_as_signatory',
+                mapping={'attendee_title': attendee_brain.get_full_title},
+                domain='PloneMeeting',
+                context=request)
+            # avoid multiple call to this invariant
+            context.REQUEST.set("validate_attendees_done", True)
+            # encode msg in utf-8 for restapi
+            raise Invalid(msg.encode('utf-8'))
+
+    # can not remove or add attendees on meeting when attendees order
+    # was redefined on items
+    item_attendees_order = context._get_item_attendees_order(from_meeting_if_empty=False)
+    if item_attendees_order:
+        all_added_meeting_attendees = set(all_meeting_attendees).difference(stored_attendees)
+        all_removed_meeting_attendees = set(stored_attendees).difference(all_meeting_attendees)
+        all_changed_meeting_attendees = tuple(all_added_meeting_attendees) + \
+            tuple(all_removed_meeting_attendees)
+        if all_changed_meeting_attendees:
+            msg = translate(
+                'can_not_remove_or_add_attendee_item_attendees_reordered',
+                mapping={'item_url': uuidToObject(
+                    item_attendees_order.keys()[0]).absolute_url()},
+                domain='PloneMeeting',
+                context=request)
+            # avoid multiple call to this invariant
+            context.REQUEST.set("validate_attendees_done", True)
+            # encode msg in utf-8 for restapi
+            raise Invalid(msg.encode('utf-8'))
+
+
+def _validate_attendees_signatories(context, signature_numbers):
+    if len(signature_numbers) != len(set(signature_numbers)):
+        msg = translate(
+            'can_not_define_several_same_signature_number',
+            domain='PloneMeeting',
+            context=context.REQUEST)
+        # avoid multiple call to this invariant
+        context.REQUEST.set("validate_attendees_done", True)
+        # encode msg in utf-8 for restapi
+        raise Invalid(msg.encode('utf-8'))
 
 
 ########################################################################
@@ -1996,6 +2026,8 @@ class Meeting(Container):
                 res[uid] = infos['replacement']
         return res
 
+    security.declareProtected(ModifyPortalContent, '_update_attendee_type')
+
     def _update_attendee_type(self, attendee_uid, attendee_type, force_clear=False):
         """ """
         if force_clear or attendee_uid not in self.ordered_contacts:
@@ -2008,6 +2040,17 @@ class Meeting(Container):
                  'replacement': None,
                  'voter': False}
         self.ordered_contacts[attendee_uid][attendee_type] = True
+        self._p_changed = True
+
+    def _update_signature_number(self, signatory_uid, signature_number):
+        """ """
+        if signature_number is not None:
+            self.ordered_contacts[signatory_uid]['signer'] = True
+            self.ordered_contacts[signatory_uid]['signature_number'] = signature_number
+        else:
+            self.ordered_contacts[signatory_uid]['signer'] = False
+            self.ordered_contacts[signatory_uid]['signature_number'] = None
+        self._p_changed = True
 
     def _do_update_contacts(self,
                             attendees=OrderedDict(),
@@ -2028,8 +2071,7 @@ class Meeting(Container):
             self._update_attendee_type(attendee_uid, attendee_type)
 
         for signatory_uid, signature_number in signatories.items():
-            self.ordered_contacts[signatory_uid]['signer'] = True
-            self.ordered_contacts[signatory_uid]['signature_number'] = signature_number
+            self._update_signature_number(signatory_uid, signature_number)
 
         for replaced_uid, replacer_uid in replacements.items():
             self.ordered_contacts[replaced_uid]['replacement'] = replacer_uid

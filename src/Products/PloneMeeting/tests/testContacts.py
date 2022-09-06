@@ -20,7 +20,9 @@ from OFS.ObjectManager import BeforeDeleteException
 from plone import api
 from plone.namedfile import NamedImage
 from Products.CMFCore.permissions import View
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemattendee import set_meeting_item_signatory
+from Products.PloneMeeting.browser.itemattendee import WRONG_PERSON_UID
 from Products.PloneMeeting.content.directory import IPMDirectory
 from Products.PloneMeeting.content.meeting import get_all_usable_held_positions
 from Products.PloneMeeting.content.meeting import IMeeting
@@ -194,6 +196,15 @@ class testContacts(PloneMeetingTestCase):
                 self.assertTrue(remove_signatory_form.mayChangeAttendees())
                 self.assertTrue(redefine_form.mayChangeAttendees())
                 self.assertTrue(remove_redefined_form.mayChangeAttendees())
+            else:
+                self.assertFalse(byebye_form.mayChangeAttendees())
+                self.assertFalse(byebye_nonattendee_form.mayChangeAttendees())
+                self.assertFalse(signatory_form.mayChangeAttendees())
+                self.assertFalse(welcome_form.mayChangeAttendees())
+                self.assertFalse(welcome_nonattendee_form.mayChangeAttendees())
+                self.assertFalse(remove_signatory_form.mayChangeAttendees())
+                self.assertFalse(redefine_form.mayChangeAttendees())
+                self.assertFalse(remove_redefined_form.mayChangeAttendees())
         # False for everybody when item not in a meeting
         _check('pmManager', should=False)
         _check('pmCreator1', should=False)
@@ -211,6 +222,14 @@ class testContacts(PloneMeetingTestCase):
         self.closeMeeting(meeting)
         _check('pmManager', should=False)
         _check('pmCreator1', should=False)
+
+        # passing an unknown person_uid will raise a specific error
+        # store a wrong hp UID
+        wrong_uid = safe_unicode(meeting_attendees[0] + "a")
+        self.request['person_uid'] = wrong_uid
+        with self.assertRaises(ValueError) as cm:
+            byebye_form._update_description()
+        self.assertEqual(cm.exception.message, WRONG_PERSON_UID % wrong_uid)
 
     def test_pm_ItemAbsentsAndExcusedAndNonAttendees(self):
         '''Item absents management (item_absents, item_excused, non_attendees),
@@ -378,6 +397,9 @@ class testContacts(PloneMeetingTestCase):
         self.assertFalse(item2.get_item_absents())
         self.assertFalse(item1.get_item_non_attendees())
         self.assertFalse(item2.get_item_non_attendees())
+
+        # not able to set absent an attendee that is not present on the meeting
+        import ipdb; ipdb.set_trace()
 
     def test_pm_CanNotSetItemAbsentAndExcusedSamePerson(self):
         """ """
