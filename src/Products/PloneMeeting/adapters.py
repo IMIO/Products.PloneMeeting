@@ -1095,7 +1095,7 @@ class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCrit
             return {}
         # search every highest reviewer level for each group of the user
         user_org_uids = self.tool.get_orgs_for_user()
-        reviewProcessInfos = []
+        reviewProcessInfos = set([])
         for org_uid in user_org_uids:
             ploneGroups = self.tool.get_filtered_plone_groups_for_user(org_uids=[org_uid])
             # now that we have Plone groups of the organization
@@ -1113,13 +1113,13 @@ class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCrit
                     '%s%s' % (prefix_review_state, review_state) for review_state in review_states]
                 reviewProcessInfo = [
                     '%s__reviewprocess__%s' % (org_uid, review_state) for review_state in review_states]
-                reviewProcessInfos.extend(reviewProcessInfo)
+                reviewProcessInfos.update(set(reviewProcessInfo))
         if not reviewProcessInfos:
             # in this case, we do not want to display a result
             # we return an unknown review_state
             return _find_nothing_query(self.cfg.getItemTypeName())
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
-                'reviewProcessInfo': {'query': reviewProcessInfos}, }
+                'reviewProcessInfo': {'query': sorted(reviewProcessInfos)}, }
 
 
 class ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(

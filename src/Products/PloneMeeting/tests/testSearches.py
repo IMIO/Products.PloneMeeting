@@ -728,17 +728,19 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         # only reviewer for highest level
         reviewers = cfg.reviewersFor()
-        self.assertTrue(self.tool.userIsAmong([reviewers.keys()[0]]))
-        self.assertFalse(self.tool.userIsAmong([reviewers.keys()[1]]))
+        self.assertTrue(self.tool.userIsAmong([reviewers.keys()[0]]),
+                        'pmReviewer1 is not member of {0}'.format(reviewers.keys()[0]))
+        self.assertFalse(self.tool.userIsAmong(reviewers.keys()[1:]),
+                         'pmReviewer1 is member of these groupes {0}'.format(reviewers.keys()[1:]))
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofmyreviewergroups')
         query = adapter.query
         query['reviewProcessInfo']['query'].sort()
         states = reviewers.values()[0]
-        self.assertEqual(adapter.query,
-                         {'portal_type': {'query': itemTypeName},
+        self.assertEqual({'portal_type': {'query': itemTypeName},
                           'reviewProcessInfo': {
                           'query': sorted(['{0}__reviewprocess__{1}'.format(self.developers_uid, state)
-                                           for state in states])}})
+                                           for state in states])}},
+                         adapter.query)
 
         # now do the query
         # this adapter is not used by default, but is intended to be used with
@@ -759,7 +761,7 @@ class testSearches(PloneMeetingTestCase):
         # as first level user, he will see items
         self.changeUser('pmReviewerLevel1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofmyreviewergroups')
-        self.failUnless(len(collection.results()) == 2)
+        self.assertEqual(collection.results().length, 2)
         # as second level user, he will not see items of first level also
         self.changeUser('pmReviewerLevel2')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofmyreviewergroups')
@@ -771,16 +773,16 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmReviewerLevel2')
         # he can access first validation level items
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofmyreviewergroups')
-        self.failUnless(len(collection.results()) == 2)
+        self.assertEqual(collection.results().length, 2)
         # move item1 to last validation level
         self.proposeItem(item1)
         # both items still returned by the search for 'pmReviewerLevel2'
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofmyreviewergroups')
-        self.failUnless(len(collection.results()) == 2)
+        self.assertEqual(collection.results().length, 2)
         # but now, the search only returns item2 to 'pmReviewerLevel1'
         self.changeUser('pmReviewerLevel1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofmyreviewergroups')
-        self.failUnless(len(collection.results()) == 1)
+        self.assertEqual(collection.results().length, 1)
         self.failUnless(collection.results()[0].UID == item2.UID())
 
     def runSearchItemsToValidateOfEveryReviewerLevelsAndLowerLevelsTest(self):
@@ -1022,14 +1024,14 @@ class testSearches(PloneMeetingTestCase):
         adapter = getAdapter(cfg,
                              ICompoundCriterionFilter,
                              name='all-items-to-validate-of-highest-hierarchic-level')
-        self.assertEqual(adapter.query, {
-            'portal_type': {'query': [itemTypeName]},
-            'reviewProcessInfo':
-            {'query': [
-                '{0}__reviewprocess__{1}'.format(
-                    self.developers_uid, self._stateMappingFor('proposed')),
-                '{0}__reviewprocess__returned_to_proposing_group_{1}'.format(
-                    self.developers_uid, self._stateMappingFor('proposed'))]}})
+        states = self._get_query_review_process(cfg)[-1:]
+        query = sorted(['{0}__reviewprocess__{1}'.format(self.developers_uid, state)
+                        for state in states])
+        query += sorted(['{0}__reviewprocess__returned_to_proposing_group_{1}'.format(self.developers_uid, state)
+                         for state in states])
+        self.assertEqual({'portal_type': {'query': [itemTypeName]},
+                          'reviewProcessInfo': {'query': query}},
+                         adapter.query)
 
     def test_pm_SearchItemsToCorrectToValidateOfEveryReviewerGroups(self):
         '''Test the 'items-to-correct-to-validate-of-every-reviewer-groups'
@@ -1054,7 +1056,7 @@ class testSearches(PloneMeetingTestCase):
         wfAdaptations = list(cfg.getWorkflowAdaptations())
         if 'return_to_proposing_group_with_all_validations' not in wfAdaptations:
             wfAdaptations.append('return_to_proposing_group_with_all_validations')
-        # desactivate simple return to proposing group wf
+        # deactivate simple return to proposing group wf
         if 'return_to_proposing_group' in wfAdaptations:
             wfAdaptations.remove('return_to_proposing_group')
         cfg.setWorkflowAdaptations(wfAdaptations)
@@ -1067,11 +1069,13 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmManager')
         cleanRamCacheFor(
             'Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels')
-        self.assertEqual(adapter.query, {
+        states = self._get_query_review_process(cfg)[1:]
+        query = sorted(['{0}__reviewprocess__returned_to_proposing_group_{1}'.format(self.developers_uid, state)
+                         for state in states])
+        self.assertEqual({
             'portal_type': {'query': itemTypeName},
-            'reviewProcessInfo':
-            {'query': ['{0}__reviewprocess__returned_to_proposing_group_prevalidated'.format(self.developers_uid),
-                       '{0}__reviewprocess__returned_to_proposing_group_proposed'.format(self.developers_uid)]}})
+            'reviewProcessInfo': {'query': query}},
+            adapter.query)
 
         # it returns only items the current user is able to correct
         # create an item for developers and one for vendors and 'return' it to proposingGroup
@@ -1082,11 +1086,6 @@ class testSearches(PloneMeetingTestCase):
         vendorsItem = self.create('MeetingItem')
         self.assertEqual(vendorsItem.getProposingGroup(), self.vendors_uid)
         # present items
-        self.changeUser('admin')
-        # presenting item :
-        for tr in ('propose', 'prevalidate', 'validate', 'present'):
-            self.do(developersItem, tr)
-            self.do(vendorsItem, tr)
         self.changeUser('pmManager')
         self.presentItem(developersItem)
         self.presentItem(vendorsItem)
@@ -1099,21 +1098,21 @@ class testSearches(PloneMeetingTestCase):
         self.do(vendorsItem, 'return_to_proposing_group')
 
         self.changeUser('pmCreator1')
-        self.do(developersItem, 'goTo_returned_to_proposing_group_proposed')
+        self.do(developersItem, 'goTo_returned_to_proposing_group_{}'.format(self._stateMappingFor('proposed_first_level')))
         self.changeUser('pmCreator2')
-        self.do(vendorsItem, 'goTo_returned_to_proposing_group_proposed')
+        self.do(vendorsItem, 'goTo_returned_to_proposing_group_{}'.format(self._stateMappingFor('proposed_first_level')))
 
         self.changeUser('pmCreator1')
         # pmManager can't edit developersItem
-        self.assertTrue(not self.hasPermission(ModifyPortalContent, developersItem))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, developersItem))
         cleanRamCacheFor(
             'Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels')
         res = collection.results()
-        self.failUnless(len(res) == 0)
+        self.assertEqual(collection.results().length, 0)
 
         # pmCreator2 can't edit vendorsItem
         self.changeUser('pmCreator2')
-        self.assertTrue(not self.hasPermission(ModifyPortalContent, vendorsItem))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, vendorsItem))
         cleanRamCacheFor(
             'Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels')
         res = collection.results()
@@ -1141,6 +1140,10 @@ class testSearches(PloneMeetingTestCase):
         self.failUnless(len(res) == 1)
         self.failUnless(res[0].UID == vendorsItem.UID())
 
+    def _get_query_review_process(self, cfg):
+        return [state['state'] for state in cfg.getItemWFValidationLevels()
+                if state['enabled'] == '1' and state['state']]
+
     def test_pm_SearchAllItemsToValidateOfEveryReviewerGroups(self):
         '''Test the 'all-items-to-validate-of-every-reviewer-groups'
            CompoundCriterion adapter. This should return every items the user is able to validate
@@ -1159,18 +1162,14 @@ class testSearches(PloneMeetingTestCase):
         adapter = getAdapter(cfg,
                              ICompoundCriterionFilter,
                              name='all-items-to-validate-of-every-reviewer-groups')
-        self.assertEqual(adapter.query, {
-            'portal_type': {'query': [itemTypeName]},
-            'reviewProcessInfo':
-            {'query': [
-                '{0}__reviewprocess__prevalidated'.format(
-                    self.developers_uid),
-                '{0}__reviewprocess__{1}'.format(
-                    self.developers_uid, self._stateMappingFor('proposed')),
-                '{0}__reviewprocess__returned_to_proposing_group_prevalidated'.format(
-                    self.developers_uid),
-                '{0}__reviewprocess__returned_to_proposing_group_{1}'.format(
-                    self.developers_uid, self._stateMappingFor('proposed'))]}})
+        states = self._get_query_review_process(cfg)[1:]
+        query = sorted(['{0}__reviewprocess__{1}'.format(self.developers_uid, state)
+                        for state in states])
+        query += sorted(['{0}__reviewprocess__returned_to_proposing_group_{1}'.format(self.developers_uid, state)
+                         for state in states])
+        self.assertEqual({'portal_type': {'query': [itemTypeName]},
+                          'reviewProcessInfo': {'query': query}},
+                         adapter.query)
 
     def test_pm_SearchUnreadItems(self):
         '''Test the 'items-with-negative-personal-labels' adapter.
