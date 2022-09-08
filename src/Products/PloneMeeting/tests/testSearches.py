@@ -728,10 +728,9 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         # only reviewer for highest level
         reviewers = cfg.reviewersFor()
-        self.assertTrue(self.tool.userIsAmong([reviewers.keys()[0]]),
-                        'pmReviewer1 is not member of {0}'.format(reviewers.keys()[0]))
-        self.assertFalse(self.tool.userIsAmong(reviewers.keys()[1:]),
-                         'pmReviewer1 is member of these groupes {0}'.format(reviewers.keys()[1:]))
+        self._removeUsersFromEveryGroups(['pmReviewer1'])
+        self._addPrincipalToGroup('pmReviewer1',
+                                  "{0}_{1}".format(self.developers_uid, reviewers.keys()[0]))
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofmyreviewergroups')
         query = adapter.query
         query['reviewProcessInfo']['query'].sort()
