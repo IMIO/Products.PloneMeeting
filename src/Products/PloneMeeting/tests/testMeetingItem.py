@@ -1484,7 +1484,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(autoItem, 'propose')
         self.changeUser('pmReviewer1')
         self.do(autoItem, 'validate')
-        self.changeUser('pmCreator1')
         clonedAutoItem = autoItem.getItemClonedToOtherMC(cfg2Id)
         self.assertEqual(clonedAutoItem.query_state(), 'proposed')
 

@@ -242,7 +242,8 @@ class MeetingItemWorkflowConditions(object):
         # in this case we only validate the 'present' transition
         # or we are using the UI (actionspanel), in this case, we validate every transitions
         if destination_state == 'presented' or \
-           'imio.actionspanel_portal_cachekey' in self.context.REQUEST:
+           ('imio.actionspanel_portal_cachekey' in self.context.REQUEST and
+            not self.context.REQUEST.get('disable_check_required_data')):
             if not self.cfg.getUseGroupsAsCategories() and \
                not self.context.getCategory(theObject=True):
                 msg = No(_('required_category_ko'))
