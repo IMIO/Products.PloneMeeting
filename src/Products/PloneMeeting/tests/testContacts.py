@@ -219,6 +219,7 @@ class testContacts(PloneMeetingTestCase):
         _check('pmManager')
         _check('pmCreator1', should=False)
         # False for everybody when meeting is closed
+        self.changeUser('pmManager')
         self.closeMeeting(meeting)
         _check('pmManager', should=False)
         _check('pmCreator1', should=False)
@@ -328,7 +329,7 @@ class testContacts(PloneMeetingTestCase):
             sorted(meeting.get_item_non_attendees(by_persons=True)[hp1_uid]),
             sorted([item1_uid, item2_uid]))
         # @@display-meeting-item-not-present
-        # item and meeting reslults are the same
+        # item and meeting results are the same
         item_view = item1.restrictedTraverse('@@display-meeting-item-not-present')
         meeting_view = meeting.restrictedTraverse('@@display-meeting-item-not-present')
         for view in (item_view, meeting_view):
@@ -338,6 +339,19 @@ class testContacts(PloneMeetingTestCase):
             self.assertEqual(view.getItemsForNotPresent(), [item1])
             self.assertTrue(view(hp1_uid, "non_attendee"))
             self.assertEqual(view.getItemsForNotPresent(), [item1, item2])
+        # not able to set absent an attendee that is not present on the meeting
+        # set hp4_uid absent on meeting and try
+        hp4_uid = meeting.get_attendees()[3]
+        meeting.ordered_contacts[hp4_uid]['attendee'] = False
+        meeting.ordered_contacts[hp4_uid]['absent'] = True
+        self.assertTrue(hp4_uid in meeting.get_absents())
+        byebye_form.person_uid = hp4_uid
+        self.assertEqual(
+            byebye_form._doApply(),
+            'Can not set Absent (excused) a person that is not present on the meeting!\n')
+        # nothing was applied
+        self.assertNotIn(hp4_uid, byebye_form.context.get_item_excused())
+        self.assertNotIn(hp4_uid, byebye_form.context.get_item_absents())
 
         # welcome hp1 on item2
         self.request.set('person_uid', hp1_uid)
@@ -397,9 +411,6 @@ class testContacts(PloneMeetingTestCase):
         self.assertFalse(item2.get_item_absents())
         self.assertFalse(item1.get_item_non_attendees())
         self.assertFalse(item2.get_item_non_attendees())
-
-        # not able to set absent an attendee that is not present on the meeting
-        import ipdb; ipdb.set_trace()
 
     def test_pm_CanNotSetItemAbsentAndExcusedSamePerson(self):
         """ """
