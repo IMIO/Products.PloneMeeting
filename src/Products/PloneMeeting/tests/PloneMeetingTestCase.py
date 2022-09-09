@@ -91,6 +91,13 @@ class TestRequest(z3c_form_TestRequest):
     response = Response()
     RESPONSE = Response()
 
+    def __setitem__(self, attr, value):
+        """ """
+        self.__setattr__(attr, value)
+
+    def __getitem__(self, attr):
+        return self.__getattr__(attr)
+
 
 class TestFile:
     '''Stub class that simulates a file upload from a HTTP POST.'''
