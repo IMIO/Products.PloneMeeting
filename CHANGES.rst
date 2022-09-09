@@ -22,6 +22,8 @@ Changelog
   working because `imio.actionspanel_portal_cachekey` was found in the `REQUEST`,
   so added new key in `disable_check_required_data` in `REQUEST` to disable
   `MeetingItemWorkflowConditions._check_required_data` in this case.
+  Also fixed `MeetingItem.cloneToOtherMeetingConfig` that was sometimes
+  triggering too much transitions.
   [gbastien]
 
 4.2rc31 (2022-08-26)
