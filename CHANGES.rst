@@ -18,6 +18,13 @@ Changelog
   everywhere. Manage `include_voting_group` parameter in the method instead
   having to pass it as parameter.
   [gbastien]
+- Fixed bug when an item is sent to another MC automatically, it was actually not
+  working because `imio.actionspanel_portal_cachekey` was found in the `REQUEST`,
+  so added new key in `disable_check_required_data` in `REQUEST` to disable
+  `MeetingItemWorkflowConditions._check_required_data` in this case.
+  Also fixed `MeetingItem.cloneToOtherMeetingConfig` that was sometimes
+  triggering too much transitions.
+  [gbastien]
 
 4.2rc31 (2022-08-26)
 --------------------

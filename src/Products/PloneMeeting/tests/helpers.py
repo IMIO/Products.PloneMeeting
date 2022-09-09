@@ -316,6 +316,7 @@ class PloneMeetingTestingHelpers:
     def _doTransitionsFor(self, itemOrMeeting, transitions, as_manager=False, comment="", clean_memoize=True):
         """Helper that just trigger given p_transitions on given p_itemOrMeeting."""
         # do things as admin to avoid permission issues
+        self.request['disable_check_required_data'] = True
         if as_manager:
             currentUser = self.member.getId()
             self.changeUser('admin', clean_memoize=clean_memoize)
@@ -324,6 +325,7 @@ class PloneMeetingTestingHelpers:
                 self.do(itemOrMeeting, tr, comment=comment, clean_memoize=clean_memoize)
         if as_manager:
             self.changeUser(currentUser, clean_memoize=clean_memoize)
+        self.request['disable_check_required_data'] = False
 
     def _determinateUsedMeetingConfigNumber(self):
         """Helper method that check if we use meetingConfig or meetingConfig2."""

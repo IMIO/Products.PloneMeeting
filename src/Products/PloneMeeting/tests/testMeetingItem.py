@@ -1420,6 +1420,7 @@ class testMeetingItem(PloneMeetingTestCase):
         '''An item may be sent automatically or manually to another MC
            depending on what is defined in the MeetingConfig.'''
         cfg = self.meetingConfig
+        cfgId = cfg.getId()
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         cfg2.setUseGroupsAsCategories(True)
@@ -1429,7 +1430,13 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('proposed'),
                                               'validated'))
 
-        # an 'itemcreated' item may not be send
+        # create a meeting in cfg2 that could receive the item
+        # but that will not be the case as we stop at "validated"
+        self.changeUser('pmManager')
+        self.setMeetingConfig(cfg2Id)
+        self.create('Meeting', date=datetime.now() + timedelta(days=1))
+        self.setMeetingConfig(cfgId)
+        # an item in state itemcreated may not be sent
         self.changeUser('pmCreator1')
         self.tool.getPloneMeetingFolder(cfg2Id)
         item = self.create('MeetingItem')
@@ -1452,6 +1459,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(sentToInfos(item)(), [cloned_to_cfg2])
         self.assertEqual(self.catalog(UID=item.UID(), sentToInfos=[cloned_to_cfg2])[0].UID,
                          item.UID())
+        # item will be "validated"
+        cloned_item = item.getItemClonedToOtherMC(cfg2Id)
+        self.assertEqual(cloned_item.query_state(), "validated")
 
     def test_pm_SendItemToOtherMCTransitionsTriggeredOnlyWhenAutomaticOrHasMeeting(self):
         '''When an item is sent manually to another MC, the transitions are triggered
@@ -1484,7 +1494,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(autoItem, 'propose')
         self.changeUser('pmReviewer1')
         self.do(autoItem, 'validate')
-        self.changeUser('pmCreator1')
         clonedAutoItem = autoItem.getItemClonedToOtherMC(cfg2Id)
         self.assertEqual(clonedAutoItem.query_state(), 'proposed')
 
