@@ -11,7 +11,7 @@ from Products.CMFCore.permissions import View
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 
 
-class PloneMeetingTestingHelpers:
+class PloneMeetingTestingHelpers(object):
     '''Stub class that provides some helper methods about testing.'''
 
     TRANSITIONS_FOR_PROPOSING_ITEM_FIRST_LEVEL_1 = TRANSITIONS_FOR_PROPOSING_ITEM_FIRST_LEVEL_2 = ('propose', )

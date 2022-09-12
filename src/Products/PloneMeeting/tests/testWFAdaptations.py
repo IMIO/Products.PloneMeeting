@@ -1094,17 +1094,17 @@ class testWFAdaptations(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         # by default a 'propose' transition exists but we can not 'validate'
         # 'pmManager' is creator and reviewer
-        self.assertEqual(self.transitions(item), ['propose'])
+        self.assertListEqual(self.transitions(item), ['propose'])
         self.do(item, 'propose')
-        self.assertEqual(self.transitions(item), ['backToItemCreated', 'prevalidate'])
+        self.assertListEqual(self.transitions(item), ['backToItemCreated', 'prevalidate'])
         self.do(item, 'prevalidate')
-        self.assertEqual(self.transitions(item), ['backToProposed', 'validate'])
+        self.assertListEqual(self.transitions(item), ['backToProposed', 'validate'])
         self.do(item, 'validate')
         self.failIf(self.transitions(item))
         # with a user only creator
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        self.assertEqual(self.transitions(item), ['propose'])
+        self.assertListEqual(self.transitions(item), ['propose'])
         self.do(item, 'propose')
         self.failIf(self.transitions(item))
 
@@ -1138,8 +1138,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._setUpDefaultItemWFValidationLevels(cfg)
         self._enablePrevalidation(cfg)
         # configure 'pmReviewer1' as creator/prereviewer/reviewer
-        self._addPrincipalToGroup('pmReviewer1', get_plone_group_id(self.developers_uid, 'creators'))
-        self._addPrincipalToGroup('pmReviewer1', get_plone_group_id(self.developers_uid, 'prereviewers'))
+        self._addPrincipalToGroup('pmReviewer1', self.developers_creators)
+        self._addPrincipalToGroup('pmReviewer1', self.developers_prereviewers)
         # check while the wfAdaptation is not activated
         self._activate_wfas(())
         self._item_validation_no_validate_shortcuts_inactive()
