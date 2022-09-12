@@ -356,7 +356,7 @@
                     tal:attributes="class class_to_use">
                     <tal:block i18n:translate="title_assembly">Assembly</tal:block>
                     <tal:block condition="isUsingContacts"
-                               content="python:'(' + str(len(context.get_attendees())) + '/' + str(len(meeting.get_attendees())) + ')'">Number of attendees</tal:block>
+                               content="python:'(' + str(len(context.get_attendees())) + '/' + str(len(meeting.get_all_attendees())) + ')'">Number of attendees</tal:block>
               </span>
 
               <a i18n:name="assembly_edit" tal:condition="mayQuickEditItemAssembly" href="manage_item_assembly_form?initial_edit=1" class="link-overlay-pm">

@@ -29,6 +29,9 @@ Changelog
   `MeetingConfig.certifiedSignatures` or in `organization.certified_signatures`.
   Moreover use a simplified vocabulary for these 2 certified signatures fields.
   [gbastien]
+- Changed behavior of number of attendees displayed on an item: now it takes
+  into account absents on the meeting and not only present on the item.
+  [gbastien]
 
 4.2rc31 (2022-08-26)
 --------------------
