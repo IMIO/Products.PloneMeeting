@@ -52,7 +52,7 @@ class ICertifiedSignaturesRowSchema(Interface):
         title=_("Certified signatures held position"),
         description=_("Select a held position if necessary, 'Name', 'Function' and other data of this "
                       "held position will be used if you leave 'Name' and 'Function' columns empty."),
-        vocabulary='Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary',
+        vocabulary='Products.PloneMeeting.vocabularies.every_heldpositions_vocabulary',
         required=False,
     )
 

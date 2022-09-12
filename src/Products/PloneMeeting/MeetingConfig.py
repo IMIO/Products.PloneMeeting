@@ -3680,7 +3680,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            held_position column."""
         vocab_factory = getUtility(
             IVocabularyFactory,
-            "Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary")
+            "Products.PloneMeeting.vocabularies.every_heldpositions_vocabulary")
         vocab = vocab_factory(self)
         res = [(term.value, term.title) for term in vocab._terms]
         res.insert(0, ('_none_', _z3c_form('No value')))

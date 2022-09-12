@@ -25,6 +25,10 @@ Changelog
   Also fixed `MeetingItem.cloneToOtherMeetingConfig` that was sometimes
   triggering too much transitions.
   [gbastien]
+- Make sure a `held_position` is not deletable when used in
+  `MeetingConfig.certifiedSignatures` or in `organization.certified_signatures`.
+  Moreover use a simplified vocabulary for these 2 certified signatures fields.
+  [gbastien]
 
 4.2rc31 (2022-08-26)
 --------------------
