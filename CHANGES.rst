@@ -32,6 +32,9 @@ Changelog
 - Changed behavior of number of attendees displayed on an item: now it takes
   into account absents on the meeting and not only present on the item.
   [gbastien]
+- Changed position of `photo` and `signature` fields on `person`,
+  moved `signature` before `photo`.
+  [gbastien]
 
 4.2rc31 (2022-08-26)
 --------------------

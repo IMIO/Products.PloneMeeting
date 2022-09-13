@@ -30,6 +30,8 @@ class IPMPerson(IPerson):
         vocabulary=u'Products.PloneMeeting.Users',
     )
 
+    form.order_before(signature='photo')
+
     model.fieldset('app_parameters',
                    label=_(u"Application parameters"),
                    fields=['userid'])
