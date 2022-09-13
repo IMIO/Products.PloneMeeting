@@ -61,6 +61,20 @@ class testFaceted(PloneMeetingTestCase):
         # user is not redirected
         self.assertFalse(self.request.RESPONSE.getHeader('location'))
         self.assertTrue(self.request.RESPONSE.getStatus() == 200)
+        # make sure the different searches_... views are working
+        # check some searches and faceted filters
+        searches_items = creatorPMFolder.searches_items()
+        self.assertTrue('Items to validate' in searches_items)
+        self.assertTrue('section-preferred-meeting' in searches_items)
+        self.assertTrue('section-to-send-to' in searches_items)
+        searches_meetings = creatorPMFolder.searches_meetings()
+        self.assertTrue('Items to validate' in searches_meetings)
+        self.assertTrue("section-review-state" in searches_meetings)
+        self.assertTrue("section-date" in searches_meetings)
+        searches_decisions = creatorPMFolder.searches_decisions()
+        self.assertTrue('Items to validate' in searches_decisions)
+        self.assertTrue("section-review-state" in searches_decisions)
+        self.assertTrue("section-date" in searches_decisions)
 
     def test_pm_RedirectToNextMeeting(self):
         """When selected, some user profiles will be redirected to the next meeting if it exists

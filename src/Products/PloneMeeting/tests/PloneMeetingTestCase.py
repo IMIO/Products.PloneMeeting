@@ -91,6 +91,13 @@ class TestRequest(z3c_form_TestRequest):
     response = Response()
     RESPONSE = Response()
 
+    def __setitem__(self, attr, value):
+        """ """
+        self.__setattr__(attr, value)
+
+    def __getitem__(self, attr):
+        return self.__getattr__(attr)
+
 
 class TestFile:
     '''Stub class that simulates a file upload from a HTTP POST.'''
@@ -191,6 +198,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         test_total = self._resultForDoCleanups.count
         pm_logger.info('Executing [{0}/{1}] {2}:{3}'.format(
             test_num, test_total, self.__class__.__name__, self._testMethodName))
+        # necessary for MeetingItem.MeetingItemWorkflowConditions._check_required_data
+        self.request.set('imio.actionspanel_portal_cachekey', True)
 
     def tearDown(self):
         self._cleanExistingTmpAnnexFile()

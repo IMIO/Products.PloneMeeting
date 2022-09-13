@@ -242,7 +242,8 @@ class MeetingItemWorkflowConditions(object):
         # in this case we only validate the 'present' transition
         # or we are using the UI (actionspanel), in this case, we validate every transitions
         if destination_state == 'presented' or \
-           'imio.actionspanel_portal_cachekey' in self.context.REQUEST:
+           ('imio.actionspanel_portal_cachekey' in self.context.REQUEST and
+                not self.context.REQUEST.get('disable_check_required_data')):
             if not self.cfg.getUseGroupsAsCategories() and \
                not self.context.getCategory(theObject=True):
                 msg = No(_('required_category_ko'))
@@ -7394,12 +7395,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                             break
                         newItem.REQUEST['PUBLISHED'] = meeting
                     # trigger transition if available
+                    was_triggered = False
                     if tr in get_transitions(newItem):
                         wfTool.doActionFor(newItem, tr, comment=wf_comment)
-                        # if we reach the triggerUntil transition, we will stop at next loop
-                        if tr == triggerUntil:
+                        was_triggered = True
+                    # if we reach the triggerUntil transition, stop
+                    if tr == triggerUntil:
+                        if was_triggered:
                             need_to_warn = False
-                            break
+                        break
                 # warn if triggerUntil was not reached
                 if need_to_warn:
                     plone_utils.addPortalMessage(

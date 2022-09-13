@@ -154,6 +154,41 @@ class testContacts(PloneMeetingTestCase):
         item.setItemInitiator(())
         item._update_after_edit()
 
+        # not deletable when used as held_position of certified signatures
+        # datagridfield, on a MeetingConfig or on an organization
+        # MeetingConfig
+        certified = [
+            {'signatureNumber': '1',
+             'name': 'Name1',
+             'function': 'Function1',
+             'held_position': '_none_',
+             'date_from': '',
+             'date_to': '',
+             },
+            {'signatureNumber': '2',
+             'name': 'Name2',
+             'function': 'Function2',
+             'held_position': hp_uid,
+             'date_from': '',
+             'date_to': '',
+             },
+        ]
+        cfg.setCertifiedSignatures(certified)
+        self.assertRaises(BeforeDeleteException, api.content.delete, hp)
+        cfg.setCertifiedSignatures([])
+        # organization
+        group_certified_signatures = [
+            {'signature_number': '2',
+             'name': u'Redefined name2',
+             'function': u'Redefined function2',
+             'held_position': hp_uid,
+             'date_from': None,
+             'date_to': None},
+        ]
+        self.vendors.certified_signatures = group_certified_signatures
+        self.assertRaises(BeforeDeleteException, api.content.delete, hp)
+        self.vendors.certified_signatures = []
+
         # assert held position can be properly deleted
         api.content.delete(hp)
         self.assertFalse(person.get_held_positions())
@@ -1498,7 +1533,7 @@ class testContacts(PloneMeetingTestCase):
         self.failIf(cfg.getSelectableAdvisers())
         self.failIf(cfg.getOrderedAssociatedOrganizations())
         self.failIf(cfg.getOrderedGroupsInCharge())
-        self.failUnless(self.developers_reviewers in cfg.getSelectableCopyGroups())
+        self.assertIn(self.developers_reviewers, cfg.getSelectableCopyGroups())
         can_not_delete_organization_meetingconfig = \
             translate('can_not_delete_organization_meetingconfig',
                       domain="plone",

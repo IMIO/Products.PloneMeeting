@@ -143,7 +143,9 @@ def onItemTransition(item, event):
             # if already cloned to another MC, pass.  This could be the case
             # if the item is accepted, corrected then accepted again
             if not item._checkAlreadyClonedToOtherMC(otherMC):
+                item.REQUEST.set('disable_check_required_data', True)
                 item.cloneToOtherMeetingConfig(otherMC, automatically=True)
+                item.REQUEST.set('disable_check_required_data', False)
 
     # if 'takenOverBy' is used, it is automatically set after a transition
     # to last user that was taking the item over or to nothing
@@ -1316,9 +1318,15 @@ def onDashboardCollectionAdded(collection, event):
 def _is_held_pos_uid_used_by(held_pos_uid, obj):
     """ """
     res = False
-    if obj.getTagName() == 'MeetingConfig':
+    if obj.portal_type == 'MeetingConfig':
         if held_pos_uid in obj.getOrderedContacts() or \
-           held_pos_uid in obj.getOrderedItemInitiators():
+           held_pos_uid in obj.getOrderedItemInitiators() or \
+           held_pos_uid in [row['held_position'] for row
+                            in obj.getCertifiedSignatures()]:
+            res = True
+    if obj.portal_type == 'organization':
+        if held_pos_uid in [row['held_position'] for row
+                            in obj.certified_signatures or ()]:
             res = True
     elif obj.getTagName() == 'Meeting':
         ordered_contacts = getattr(obj, 'ordered_contacts', {})
@@ -1342,6 +1350,11 @@ def onHeldPositionWillBeRemoved(held_pos, event):
     for cfg in tool.objectValues('MeetingConfig'):
         if _is_held_pos_uid_used_by(held_pos_uid, cfg):
             using_obj = cfg
+            break
+    # check organizations
+    for org in get_organizations(only_selected=False):
+        if _is_held_pos_uid_used_by(held_pos_uid, org):
+            using_obj = org
             break
     # check meetings
     if not using_obj:
