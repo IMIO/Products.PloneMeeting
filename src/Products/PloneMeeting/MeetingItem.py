@@ -6734,14 +6734,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # in some case like ItemTemplate, we have no proposing group
         if not org_uid:
             return
+
         apply_meetingmanagers_access, suffix_roles = compute_item_roles_to_assign_to_suffixes(
             cfg, self, item_state, org_uid)
 
         # apply local roles to computed suffixes
         self._assign_roles_to_group_suffixes(org_uid, suffix_roles)
+        if org_uid != self.getProposingGroup():
+            original_proposing_group_roles = {}
+            for key in suffix_roles:
+                original_proposing_group_roles[key] = ['Reader']
 
-        # MeetingManagers get access if item at least validated or decided
-        # decided will include states "decided out of meeting"
+            self._assign_roles_to_group_suffixes(self.getProposingGroup(), suffix_roles)
+
+        # MeetingManagers get access if item at least validated or decided.
+        # Decided will include states "decided out of meeting"
         # if it is still not decided, it gets full access
         if apply_meetingmanagers_access:
             mmanagers_item_states = ['validated'] + list(cfg.getItemDecidedStates())
