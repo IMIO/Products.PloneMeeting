@@ -291,6 +291,11 @@
         name="labels-batch-action"
         class=".overrides.PMLabelsBatchActionForm"
         permission="zope2.View" />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingDashboardBatchActionsMarker"
+        name="update-local-roles-batch-action"
+        class=".views.UpdateLocalRolesBatchActionForm"
+        permission="cmf.ManagePortal" />
     <!-- Batch actions MeetingItem -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingContentBatchActionsMarker"

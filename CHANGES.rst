@@ -32,6 +32,8 @@ Changelog
 - Changed behavior of number of attendees displayed on an item: now it takes
   into account absents on the meeting and not only present on the item.
   [gbastien]
+- Make `update-local-roles` batch action available on dashboards displaying meetings.
+  [gbastien]
 
 4.2rc31 (2022-08-26)
 --------------------

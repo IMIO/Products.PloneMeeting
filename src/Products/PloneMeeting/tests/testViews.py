@@ -1777,6 +1777,8 @@ class testViews(PloneMeetingTestCase):
     def test_pm_UpdateLocalRolesBatchActionForm(self):
         """This will call.update_local_roles on selected elements."""
         cfg = self.meetingConfig
+        # remove recurring items in self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
         self._setPowerObserverStates(states=())
         powerobservers = '{0}_powerobservers'.format(cfg.getId())
 
@@ -1786,10 +1788,12 @@ class testViews(PloneMeetingTestCase):
         item2 = self.create('MeetingItem')
         item3 = self.create('MeetingItem')
         self.request.form['form.widgets.uids'] = ','.join([item1.UID(), item3.UID()])
-        dashboardFolder = self.getMeetingFolder().searches_items
+        searches_items = self.getMeetingFolder().searches_items
         # not available as not Manager
-        self.assertRaises(Unauthorized, dashboardFolder.restrictedTraverse, '@@update-local-roles-batch-action')
-        self.assertFalse(dashboardFolder.unrestrictedTraverse(
+        self.assertRaises(Unauthorized,
+                          searches_items.restrictedTraverse,
+                          '@@update-local-roles-batch-action')
+        self.assertFalse(searches_items.unrestrictedTraverse(
             '@@update-local-roles-batch-action').available())
 
         # as Manager
@@ -1798,8 +1802,8 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(powerobservers in item2.__ac_local_roles__)
         self.assertFalse(powerobservers in item3.__ac_local_roles__)
         self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'),))
-        dashboardFolder = self.getMeetingFolder().searches_items
-        form = dashboardFolder.restrictedTraverse('@@update-local-roles-batch-action')
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.restrictedTraverse('@@update-local-roles-batch-action')
         self.assertTrue(form.available())
         form.update()
         form.handleApply(form, None)
@@ -1807,11 +1811,28 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(powerobservers in item2.__ac_local_roles__)
         self.assertTrue(powerobservers in item3.__ac_local_roles__)
 
-        # only available for IMeetingItemDashboardBatchActionsMarker, not available on meeting
+        # also available for meetings
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
+        # not available as not Manager
+        searches_decisions = self.getMeetingFolder().searches_decisions
+        self.assertRaises(Unauthorized,
+                          searches_decisions.restrictedTraverse,
+                          '@@update-local-roles-batch-action')
+        self.assertFalse(searches_decisions.unrestrictedTraverse(
+            '@@update-local-roles-batch-action').available())
+        # as Manager
         self.changeUser('siteadmin')
-        self.assertRaises(AttributeError, meeting.restrictedTraverse, '@@update-local-roles-batch-action')
+        self.assertFalse(powerobservers in meeting.__ac_local_roles__)
+        self._setPowerObserverStates(field_name='meeting_states', states=('created',))
+        searches_decisions = self.getMeetingFolder().searches_decisions
+        meeting_uid = unicode(meeting.UID())
+        self.request['form.widgets.uids'] = meeting_uid
+        form = searches_decisions.restrictedTraverse('@@update-local-roles-batch-action')
+        self.assertTrue(form.available())
+        form.update()
+        form.handleApply(form, None)
+        self.assertTrue(powerobservers in meeting.__ac_local_roles__)
 
     def test_pm_DownloadAnnexesActionForm(self):
         """This batch action will download annexes as a zip file."""
