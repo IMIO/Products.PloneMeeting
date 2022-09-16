@@ -156,12 +156,13 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         orgs = object_values(self.own_org, 'PMOrganization') + \
             object_values(self.own_org.aq_parent, 'PMOrganization')
         for org in orgs:
-            setattr(self, org.getId(), org)
-            setattr(self, '{0}_uid'.format(org.getId()), org.UID())
+            org_id = org.getId().replace('-', '_')
+            setattr(self, org_id, org)
+            setattr(self, '{0}_uid'.format(org_id), org.UID())
             for plone_group_id in get_plone_groups(org.UID(), ids_only=True):
                 org_uid, suffix = plone_group_id.split('_')
                 setattr(self,
-                        '{0}_{1}'.format(org.getId(), suffix),
+                        '{0}_{1}'.format(org_id, suffix),
                         plone_group_id)
         # make held_position easily available as well
         i = 1
