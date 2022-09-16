@@ -6718,6 +6718,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     "Parameter suffix_roles values must be of type tuple or list!")
             self.manage_addLocalRoles(plone_group_id, tuple(roles))
 
+    def _assign_roles_to_all_groups_managing_item_suffixes(self,
+                                                           cfg,
+                                                           item_state,
+                                                           org_uids,
+                                                           org_uid):
+        '''See doc in interfaces.py.'''
+        # by default, every suffixes receive Reader role
+        item = self.getSelf()
+        for managing_org_uid in org_uids:
+            suffix_roles = {suffix: ['Reader'] for suffix in
+                            get_all_suffixes(managing_org_uid)}
+            item._assign_roles_to_group_suffixes(managing_org_uid, suffix_roles)
+
     def assign_roles_to_group_suffixes(self, cfg, item_state):
         """Method that do the work of assigning relevant roles to
            suffixed groups of an organization depending on current state :
@@ -6729,8 +6742,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            - validation levels
            For unknown states, method _get_corresponding_state_to_assign_local_roles
            will be used to determinate a known configuration to take into ccount"""
+        adapted = self.adapted()
         # Add the local roles corresponding to the group managing the item
-        org_uid = self.adapted()._getGroupManagingItem(item_state, theObject=False)
+        org_uid = adapted._getGroupManagingItem(item_state, theObject=False)
         # in some case like ItemTemplate, we have no proposing group
         if not org_uid:
             return
@@ -6739,6 +6753,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # apply local roles to computed suffixes
         self._assign_roles_to_group_suffixes(org_uid, suffix_roles)
+
+        # when more than one group managing item, make sure every groups get access
+        org_uids = adapted._getAllGroupsManagingItem(item_state)
+        if len(org_uids) > 1:
+            adapted._assign_roles_to_all_groups_managing_item_suffixes(
+                cfg, item_state, org_uids, org_uid)
 
         # MeetingManagers get access if item at least validated or decided
         # decided will include states "decided out of meeting"

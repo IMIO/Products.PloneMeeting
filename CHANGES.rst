@@ -34,6 +34,9 @@ Changelog
   [gbastien]
 - Make `update-local-roles` batch action available on dashboards displaying meetings.
   [gbastien]
+- Added adaptable method `MeetingItem._assign_roles_to_all_groups_managing_item_suffixes`
+  to handle cases where there are several groups managing item, by default,
+  groups not currently managing item will have `View` access.
 
 4.2rc31 (2022-08-26)
 --------------------

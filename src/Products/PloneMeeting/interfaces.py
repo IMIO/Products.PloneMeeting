@@ -368,6 +368,14 @@ class IMeetingItemDocumentation:
         """Return states in which annex decision are addable in the WF states after
            the validation process (so when item is validated and after).
            By default this will be when item is decided."""
+    def _assign_roles_to_non_managing_proposing_group_suffixes(self,
+                                                               cfg,
+                                                               item_state,
+                                                               proposing_group_uid,
+                                                               org_uid):
+        """In case the group currently managing the item is not the proposingGroup,
+           by default every suffixes of the proposingGroup will have the "Reader"
+           role on the item so it may see it."""
 
 
 class IMeetingItemWorkflowConditions(Interface):
