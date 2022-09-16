@@ -37,6 +37,9 @@ Changelog
 - Added adaptable method `MeetingItem._assign_roles_to_all_groups_managing_item_suffixes`
   to handle cases where there are several groups managing item, by default,
   groups not currently managing item will have `View` access.
+- Added item field `marginalNotes` to `MeetingItem._bypass_meeting_closed_check_for`
+  so it is still editable by a `MeetingManager` when the meeting is closed.
+  [gbastien]
 
 4.2rc31 (2022-08-26)
 --------------------

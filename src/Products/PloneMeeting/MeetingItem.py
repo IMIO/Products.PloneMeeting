@@ -4585,7 +4585,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _bypass_meeting_closed_check_for(self, fieldName):
         """See docstring in interfaces.py"""
-        if fieldName in ['internalNotes']:
+        if fieldName in ['internalNotes', 'marginalNotes']:
             return True
 
     security.declarePublic('mayQuickEdit')
