@@ -1423,6 +1423,12 @@ class testMeetingItem(PloneMeetingTestCase):
         cfgId = cfg.getId()
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
+        # bypass test if items are created "validated" in cfg2
+        if cfg2.getItemWorkflow(True).initial_state == "validated":
+            pm_logger.info(
+                "Test 'test_pm_SendItemToOtherMCManually' was bypassed because "
+                "transition \"validate\" does not exist in cfg2.")
+            return
         cfg2.setUseGroupsAsCategories(True)
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
