@@ -868,31 +868,39 @@ class testWorkflows(PloneMeetingTestCase):
         # field not writeable
         marginalNotesField = item.getField('marginalNotes')
         self.assertFalse(marginalNotesField.writeable(item))
+        self.assertFalse(item.mayQuickEdit('marginalNotes'))
         self.validateItem(item)
 
         # as MeetingManager
         self.changeUser('pmManager')
         # field not writeable
         self.assertFalse(marginalNotesField.writeable(item))
+        self.assertFalse(item.mayQuickEdit('marginalNotes'))
         meeting = self.create('Meeting')
         self.presentItem(item)
         self.assertEqual(item.query_state(), 'presented')
         self.assertFalse(marginalNotesField.writeable(item))
+        self.assertFalse(item.mayQuickEdit('marginalNotes'))
 
         # writeable when meeting frozen
         self.freezeMeeting(meeting)
         self.assertEqual(item.query_state(), 'itemfrozen')
         self.assertTrue(marginalNotesField.writeable(item))
+        self.assertTrue(item.mayQuickEdit('marginalNotes'))
         # as other fields
         obsField = item.getField('observations')
         self.assertTrue(obsField.writeable(item))
+        self.assertTrue(item.mayQuickEdit('observations'))
 
         # close meeting, still editable
         self.closeMeeting(meeting)
         self.assertEqual(meeting.query_state(), 'closed')
+        self.assertEqual(item.query_state(), 'accepted')
         self.assertTrue(marginalNotesField.writeable(item))
+        self.assertTrue(item.mayQuickEdit('marginalNotes'))
         # but not other fields
         self.assertFalse(obsField.writeable(item))
+        self.assertFalse(item.mayQuickEdit('observations'))
 
     def test_pm_RequiredDataToPresentItemCategoryOrGroupsInCharge(self):
         """When MeetingItem.category or MeetingItem.groupsInCharge is used,
