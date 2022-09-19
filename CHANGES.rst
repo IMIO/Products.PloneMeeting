@@ -40,6 +40,8 @@ Changelog
 - Added item field `marginalNotes` to `MeetingItem._bypass_meeting_closed_check_for`
   so it is still editable by a `MeetingManager` when the meeting is closed.
   [gbastien]
+- Display buildout git tag version in Plone control panel.
+  [gbastien]
 
 4.2rc31 (2022-08-26)
 --------------------

@@ -32,6 +32,7 @@ from imio.helpers.content import uuidToObject
 from imio.history import safe_utils as imio_history_safe_utils
 from imio.history.browser.views import IHContentHistoryView
 from imio.history.browser.views import IHDocumentBylineViewlet
+from imio.pyutils.system import get_git_tag
 from plone import api
 from plone import namedfile
 from plone.app.content.browser.foldercontents import FolderContentsView
@@ -340,7 +341,8 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
             domain='PloneMeeting',
             mapping={'output_format': safe_unicode(output_format_title)},
             context=self.request,
-            default="Click to see available mailing lists for this POD template to generate with format \"${output_format}\"")
+            default="Click to see available mailing lists for this POD template "
+            "to generate with format \"${output_format}\"")
 
 
 class PMDashboardDocumentGeneratorLinksViewlet(DashboardDocumentGeneratorLinksViewlet, BaseGeneratorLinksViewlet):
@@ -363,6 +365,8 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
     '''
     def version_overview(self):
         versions = super(PloneMeetingOverviewControlPanel, self).version_overview()
+        # buildout tag version
+        versions.insert(0, 'buildout tag %s' % get_git_tag('.'))
         # appy
         appy_version = api.env.get_distribution('appy')._version
         versions.insert(0, 'appy %s' % appy_version)
