@@ -40,6 +40,7 @@
   <include package="plone.memoize" />
   <include package="plonemeeting.restapi" />
   <include package="Products.CMFPlacefulWorkflow"/>
+  <include package="Products.CPUtils"/>
   <include package="Products.cron4plone" />
   <include package="Products.DataGridField" />
   <include package=".browser" />
