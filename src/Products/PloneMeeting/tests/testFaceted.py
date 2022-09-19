@@ -344,6 +344,9 @@ class testFaceted(PloneMeetingTestCase):
         terms_cfg2 = [term.token for term in vocab(pmFolder)]
         self.assertNotEqual(terms_cfg1, terms_cfg2)
 
+    def _orgs_to_exclude_from_filter(self):
+        return ()
+
     def test_pm_ProposingGroupsVocabularies(self):
         '''Test proposingGroup related cached vocabularies.'''
         self.changeUser('siteadmin')
@@ -441,13 +444,16 @@ class testFaceted(PloneMeetingTestCase):
         vocab = get_vocab(pmFolder,
                           "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary",
                           only_factory=True)
-        # by default when MeetingConfig.groupsHiddenInDashboardFilter is empty, every groups are returned
+        # by default when MeetingConfig.groupsHiddenInDashboardFilter is empty, every group are returned
         self.assertEqual(cfg.getGroupsHiddenInDashboardFilter(), ())
+        # remove extra organizations from profiles
+        cfg.setGroupsHiddenInDashboardFilter(self._orgs_to_exclude_from_filter())
+        cfg.at_post_edit_script()
         self.assertEqual(
             [term.title for term in vocab(pmFolder)],
             [u'Developers', u'Vendors', u'End users (Inactive)'])
         # now define values in MeetingConfig.groupsHiddenInDashboardFilter
-        cfg.setGroupsHiddenInDashboardFilter((self.vendors_uid, ))
+        cfg.setGroupsHiddenInDashboardFilter((self.vendors_uid, ) + self._orgs_to_exclude_from_filter())
         cfg.at_post_edit_script()
         self.assertEqual(
             [term.title for term in vocab(pmFolder)],
