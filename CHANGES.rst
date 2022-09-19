@@ -42,6 +42,9 @@ Changelog
   [gbastien]
 - Display buildout git tag version in Plone control panel.
   [gbastien]
+- Added `Products.CPUtils` as a dependency in `metadata.xml` so
+  `ExternalMethods` are installed.
+  [gbastien]
 
 4.2rc31 (2022-08-26)
 --------------------

@@ -21,6 +21,7 @@
     <dependency>profile-imio.pm.ws:default</dependency>
     <dependency>profile-plone.app.versioningbehavior:default</dependency>
     <dependency>profile-plonetheme.imioapps:plonemeetingskin</dependency>
+    <dependency>profile-Products.CPUtils:default</dependency>
     <dependency>profile-Products.DataGridField:default</dependency>
     <dependency>profile-Products.PasswordStrength:default</dependency>
     <dependency>profile-Products.cron4plone:default</dependency>
