@@ -2394,14 +2394,14 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser("siteadmin")
         self._select_organization(self.endUsers_uid)
-        self.assertEqual(
+        self.assertListEqual(
             cfg.listSelectableAdvisers().keys(),
             [self.developers_uid, self.endUsers_uid, self.vendors_uid])
         # restrict _advisers to developers and vendors
         select_org_for_function(self.developers_uid, "advisers")
         select_org_for_function(self.vendors_uid, "advisers")
         # endUsers no more in selectable advisers
-        self.assertEqual(
+        self.assertListEqual(
             cfg.listSelectableAdvisers().keys(),
             [self.developers_uid, self.vendors_uid])
 

@@ -765,7 +765,9 @@ class testMeetingType(PloneMeetingTestCase):
         # when nothing defined in MeetingConfig.orderedAssociatedOrganizations
         # then order of organizations selected in plonegroup is used
         self.assertFalse(cfg.getOrderedAssociatedOrganizations())
-        self.assertEqual(get_organizations(), [self.developers, self.vendors, self.endUsers])
+        self.assertIn(self.developers, get_organizations())
+        self.assertIn(self.vendors, get_organizations())
+        self.assertIn(self.endUsers, get_organizations())
         for itemData in data:
             new_item = self.create('MeetingItem', **itemData)
             self.presentItem(new_item)
