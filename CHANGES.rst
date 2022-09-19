@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc32 (unreleased)
+4.2rc32 (2022-09-19)
 --------------------
 
 - Fixed `Products.PloneMeeting.vocabularies.faceted_annexes_vocabulary` to take
