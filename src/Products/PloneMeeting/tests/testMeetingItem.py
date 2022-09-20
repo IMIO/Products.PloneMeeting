@@ -4768,6 +4768,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertNotEqual(beforeUserGroupsEdit_rendered_actions_panel,
                             afterUserGroupsEdit_rendered_actions_panel)
 
+    def _reviewers_may_edit_itemcreated(self):
+        return False
+
     def test_pm_ItemActionsPanelCachingProfiles(self):
         """Actions panel cache is generated for various profiles, check
            that is works as expected, profiles are:
@@ -4809,9 +4812,13 @@ class testMeetingItem(PloneMeetingTestCase):
         # creator
         self.assertEqual(_sum_entries(False), 0)
         self.assertEqual(_sum_entries(), 1)
-        # reviewer, does not have the hand on item, view as a Reader
         self.changeUser('pmReviewer1')
-        self.assertEqual(_sum_entries(), 2)
+        if self._reviewers_may_edit_itemcreated():
+            # reviewer, have the hand on item, view as a Reader
+            self.assertEqual(_sum_entries(), 1)
+        else:
+            # reviewer, does not have the hand on item, view as a Reader
+            self.assertEqual(_sum_entries(), 2)
         # observer, Reader
         self.changeUser('pmObserver1')
         self.assertEqual(_sum_entries(), 2)
