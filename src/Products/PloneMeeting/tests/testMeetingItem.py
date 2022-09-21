@@ -1162,7 +1162,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # create a meeting
         self.setMeetingConfig(cfg2Id)
-        self.create('Meeting')
+        self.create('Meeting', date=datetime(2022, 1, 1))
         self.assertFalse(self.transitions(vendorsItem))
 
         # item is automatically sent when it is validated
