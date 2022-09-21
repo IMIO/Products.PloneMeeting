@@ -368,12 +368,12 @@ class testFaceted(PloneMeetingTestCase):
             "Products.PloneMeeting.vocabularies.associatedgroupsvocabulary",
             only_factory=True)
         # once get, it is cached
-        self.assertEqual(len(vocab1(pmFolder)), 3)
+        self.assertEqual(len(vocab1(pmFolder)), len(self.proposing_groups))
         # contains My organization and external organizations
-        self.assertEqual(len(vocab2(pmFolder)), 6)
-        self.assertEqual(len(vocab3(pmFolder)), 3)
+        self.assertEqual(len(vocab2(pmFolder)), len(self.all_org))
+        self.assertEqual(len(vocab3(pmFolder)), len(self.proposing_groups))
         # when nothing in config, just displays the orgs selected in plonegroup
-        self.assertEqual(len(vocab4(pmFolder)), 2)
+        self.assertEqual(len(vocab4(pmFolder)), len(self.active_proposing_groups))
 
         # if we add/remove/edit an organozation, then the cache is cleaned
         # add an organization
@@ -381,10 +381,10 @@ class testFaceted(PloneMeetingTestCase):
         new_org_uid = new_org.UID()
         self._select_organization(new_org_uid)
         # cache was cleaned
-        self.assertEqual(len(vocab1(pmFolder)), 4)
-        self.assertEqual(len(vocab2(pmFolder)), 7)
-        self.assertEqual(len(vocab3(pmFolder)), 4)
-        self.assertEqual(len(vocab4(pmFolder)), 3)
+        self.assertEqual(len(vocab1(pmFolder)), len(self.proposing_groups) + 1)
+        self.assertEqual(len(vocab2(pmFolder)), len(self.all_org) + 1)
+        self.assertEqual(len(vocab3(pmFolder)), len(self.proposing_groups) + 1)
+        self.assertEqual(len(vocab4(pmFolder)), len(self.active_proposing_groups) + 1)
 
         # edit a group
         self.assertEqual(vocab1(pmFolder).by_token[new_org_uid].title, new_org.Title())
@@ -404,36 +404,35 @@ class testFaceted(PloneMeetingTestCase):
         self._select_organization(new_org_uid, remove=True)
         self.portal.restrictedTraverse('@@delete_givenuid')(new_org_uid)
         # cache was cleaned
-        self.assertEqual(len(vocab1(pmFolder)), 3)
-        self.assertEqual(len(vocab2(pmFolder)), 6)
-        self.assertEqual(len(vocab3(pmFolder)), 3)
-        self.assertEqual(len(vocab4(pmFolder)), 2)
+        # once get, it is cached
+        self.assertEqual(len(vocab1(pmFolder)), len(self.proposing_groups))
+        self.assertEqual(len(vocab2(pmFolder)), len(self.all_org))
+        self.assertEqual(len(vocab3(pmFolder)), len(self.proposing_groups))
+        self.assertEqual(len(vocab4(pmFolder)), len(self.active_proposing_groups))
         # activate "End users"
-        self.assertEqual(
-            [term.title for term in vocab1(pmFolder)],
-            [u'Developers', u'Vendors', u'End users (Inactive)'])
-        self.assertEqual(
-            [term.title for term in vocab2(pmFolder)],
-            [u'None', u'Devel', u'Devil', u'EndUsers', u'OrgOutside1', u'OrgOutside2'])
-        self.assertEqual(
-            [term.title for term in vocab3(pmFolder)],
-            [u'Developers', u'Vendors', u'End users (Inactive)'])
-        self.assertEqual(
-            [term.title for term in vocab4(pmFolder)],
-            [u'Developers', u'Vendors'])
+        proposing_groups_terms_titles = sorted([group.title + (not group.active and u' (Inactive)' or u'')
+                                                for group in self.proposing_groups])
+        self.assertListEqual(
+            sorted([term.title for term in vocab1(pmFolder)]), proposing_groups_terms_titles)
+        self.assertListEqual(sorted([term.title for term in vocab2(pmFolder)]),
+                             sorted([unicode(org.acronym) for org in self.all_org]))
+        self.assertListEqual(
+            sorted([term.title for term in vocab3(pmFolder)]), proposing_groups_terms_titles)
+
+        associeted_groups = sorted([group.title for group in self.proposing_groups if group.active])
+        self.assertListEqual([term.title for term in vocab4(pmFolder)], associeted_groups)
         self._select_organization(self.endUsers_uid)
-        self.assertEqual(
-            [term.title for term in vocab1(pmFolder)],
-            [u'Developers', u'End users', u'Vendors'])
-        self.assertEqual(
-            [term.title for term in vocab2(pmFolder)],
-            [u'None', u'Devel', u'Devil', u'EndUsers', u'OrgOutside1', u'OrgOutside2'])
-        self.assertEqual(
-            [term.title for term in vocab3(pmFolder)],
-            [u'Developers', u'End users', u'Vendors'])
-        self.assertEqual(
-            [term.title for term in vocab4(pmFolder)],
-            [u'Developers', u'End users', u'Vendors'])
+
+        proposing_groups_terms_titles = sorted([group.title for group in self.proposing_groups])
+        self.assertListEqual(
+            sorted([term.title for term in vocab1(pmFolder)]), proposing_groups_terms_titles)
+        self.assertListEqual(
+            sorted([term.title for term in vocab2(pmFolder)]), sorted([unicode(org.acronym) for org in self.all_org]))
+        self.assertListEqual(
+            sorted([term.title for term in vocab3(pmFolder)]), proposing_groups_terms_titles)
+
+        associeted_groups = sorted([group.title for group in self.proposing_groups])
+        self.assertListEqual([term.title for term in vocab4(pmFolder)], associeted_groups)
 
     def test_pm_ProposingGroupsForFacetedVocabulary(self):
         '''Test that vocabulary "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary"

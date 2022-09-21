@@ -149,10 +149,14 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.catalog = self.portal.portal_catalog
         self.wfTool = self.portal.portal_workflow
         self.own_org = get_own_organization()
-        # make organizations easily available thru their id and store uid
+        # make organizations easily available through their id and store uid
         # for each organization, we will have self.developers, self.developers_uid
         # as well as every plone groups : self.vendors_creators, self.developers_reviewers, ...
         # include organizations outside own_org as well
+        self.proposing_groups = object_values(self.own_org, 'PMOrganization')
+        self.all_org = object_values(self.own_org.aq_parent, 'PMOrganization') + self.proposing_groups
+        self.active_proposing_groups = [org for org in self.proposing_groups if org.active]
+        self.inactive_proposing_groups = [org for org in self.proposing_groups if not org.active]
         orgs = object_values(self.own_org, 'PMOrganization') + \
             object_values(self.own_org.aq_parent, 'PMOrganization')
         for org in orgs:
