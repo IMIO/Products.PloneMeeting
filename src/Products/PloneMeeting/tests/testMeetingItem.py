@@ -1160,9 +1160,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # pmManager may not validate it
         self.changeUser('pmManager')
 
-        # create a meeting
+        # create a meeting in the future so it accepts items
         self.setMeetingConfig(cfg2Id)
-        self.create('Meeting', date=datetime(2022, 1, 1))
+        self.create('Meeting', date=datetime.now() + timedelta(days=1))
         self.assertFalse(self.transitions(vendorsItem))
 
         # item is automatically sent when it is validated
