@@ -350,6 +350,13 @@ class testFaceted(PloneMeetingTestCase):
     def test_pm_ProposingGroupsVocabularies(self):
         '''Test proposingGroup related cached vocabularies.'''
         self.changeUser('siteadmin')
+        # check test profile values
+        self.assertGreater(len(self.proposing_groups), 2)
+        # greater than proposing_groups + "My organization"
+        self.assertGreater(len(self.all_org), len(self.proposing_groups)+1)
+        # not all proposing groups are activated
+        self.assertLess(len(self.active_proposing_groups), len(self.proposing_groups))
+
         pmFolder = self.getMeetingFolder()
         vocab1 = get_vocab(
             pmFolder,
