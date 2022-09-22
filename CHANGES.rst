@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc33 (unreleased)
+4.2rc33 (2022-09-22)
 --------------------
 
 - Make `Products.CPUtils` available in tests as it is a dependency installed
