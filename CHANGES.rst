@@ -5,8 +5,9 @@ Changelog
 4.2rc33 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Make `Products.CPUtils` available in tests as it is a dependency installed
+  by `metadata.xml`.
+  [gbastien]
 
 4.2rc32 (2022-09-19)
 --------------------
