@@ -512,9 +512,9 @@ class PloneMeetingTestingHelpers(object):
         self._updateItemValidationLevel(cfg, level, suffix, enable=False)
 
     def _setUpOrderedContacts(
-        self,
-        meeting_attrs=('attendees', 'excused', 'absents', 'signatories', ),
-        item_attrs=('attendees', 'excused', 'absents', 'signatories', 'itemInitiator')):
+            self,
+            meeting_attrs=('attendees', 'excused', 'absents', 'signatories', ),
+            item_attrs=('itemInitiator', )):
         """ """
         # login to be able to query held_positions for orderedContacts vocabulary
         self.changeUser('siteadmin')
