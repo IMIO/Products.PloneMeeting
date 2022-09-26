@@ -2913,15 +2913,26 @@ class testMeetingItem(PloneMeetingTestCase):
            - use an annex_type that current user may use."""
         cfg = self.meetingConfig
         cfg.setEnableItemDuplication(True)
+        annex_type = cfg.annexes_types.item_annexes.get('item-annex')
+        annex_type.title = u"Annex type\"><script>alert(document.domain)</script>\""
         dec_annex_type = cfg.annexes_types.item_decision_annexes.get('decision-annex')
+        # make sure annex type title is escaped in vocabulary
+        dec_annex_type.title = u"Annex decision type\"><script>alert(document.domain)</script>\""
         dec_annex_type.only_for_meeting_managers = True
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        annex_scan_id = self.addAnnex(item)
-        annex_scan_id.scan_id = '013999900000001'
-        annex_scan_id_id = annex_scan_id.getId()
-        annex_decision_meeting_manager = self.addAnnex(item, relatedTo='item_decision')
+        annex = self.addAnnex(
+            item,
+            annexTitle=u"Title\"><script>alert(document.domain)</script>\"",
+            annexType=annex_type.id)
+        annex.scan_id = '013999900000001'
+        annex_scan_id_id = annex.getId()
+        # make sure annex title is escaped in vocabulary
+        annex_decision_meeting_manager = self.addAnnex(
+            item,
+            annexTitle=u"Decision title\"><script>alert(document.domain)</script>\"",
+            relatedTo='item_decision')
         annex_decision_meeting_manager_id = annex_decision_meeting_manager.getId()
 
         # terms are disabled
@@ -2933,6 +2944,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(annex_vocab._terms[0].disabled)
         self.assertEqual(len(annex_decision_vocab), 1)
         self.assertTrue(annex_decision_vocab._terms[0].disabled)
+        # terms are escaped
+        annex_term_title = annex_vocab._terms[0].title
+        self.assertTrue("Annex type&quot;&gt;&lt;script&gt;alert" in annex_term_title)
+        self.assertTrue("> Title&quot;&gt;&lt;script" in annex_term_title)
+        annex_decision_term_title = annex_decision_vocab._terms[0].title
+        self.assertTrue("Annex decision type&quot;&gt;&lt;script&gt;alert" in annex_decision_term_title)
+        self.assertTrue("> Decision title&quot;&gt;&lt;script" in annex_decision_term_title)
         # trying to duplicate an item with those annexes will raise Unauthorized for pmCreator
         form = item.restrictedTraverse('@@item_duplicate_form').form_instance
         data = {'keep_link': False, 'annex_ids': [], 'annex_decision_ids': []}

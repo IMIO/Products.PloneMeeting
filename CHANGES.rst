@@ -9,6 +9,9 @@ Changelog
   even when not activated in the configuration because some default values were
   defined on the contacts.
   [gbastien]
+- Escape annex and annex_type title in `ContainedAnnexesVocabulary` and
+  `ContainedDecisionAnnexesVocabulary` in case it contain malicious code.
+  [gbastien]
 
 4.2rc33 (2022-09-22)
 --------------------

@@ -71,6 +71,7 @@ from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
 
+import html
 import itertools
 
 
@@ -2796,8 +2797,8 @@ class ContainedAnnexesVocabulary(object):
                     str(i),
                     portal_url,
                     annex['icon_url'],
-                    safe_unicode(annex['category_title']),
-                    safe_unicode(annex['title']))
+                    html.escape(safe_unicode(annex['category_title'])),
+                    html.escape(safe_unicode(annex['title'])))
                 i += 1
                 if annex['warn_filesize']:
                     term_title += u' ({0})'.format(render_filesize(annex['filesize']))
