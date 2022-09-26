@@ -3293,6 +3293,34 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertFalse('place' in add_form_instance.w)
         self.assertFalse('place_other' in add_form_instance.w)
 
+    def test_pm_DefaultAttendees(self):
+        """When creating a meeting, attendees, signatories and voters are taken
+           from the MeetingConfig."""
+        cfg = self.meetingConfig
+        cfg.setUseVotes(False)
+        self._setUpOrderedContacts(
+            meeting_attrs=('attendees', 'absents', ))
+        self.changeUser('pmManager')
+        pm_folder = self.getMeetingFolder()
+        meeting_type_name = cfg.getMeetingTypeName()
+        add_form = pm_folder.restrictedTraverse('++add++{0}'.format(meeting_type_name))
+        add_form.update()
+        rendered = add_form.render()
+        self.assertTrue("Attendee?" in rendered)
+        self.assertTrue("Absent?" in rendered)
+        self.assertFalse("Excused?" in rendered)
+        self.assertFalse("Signer?" in rendered)
+        self.assertFalse("Voter?" in rendered)
+        cfg.setUseVotes(True)
+        self._setUpOrderedContacts()
+        add_form.update()
+        rendered = add_form.render()
+        self.assertTrue("Attendee?" in rendered)
+        self.assertTrue("Absent?" in rendered)
+        self.assertTrue("Excused?" in rendered)
+        self.assertTrue("Signer?" in rendered)
+        self.assertTrue("Voter?" in rendered)
+
     def test_pm_ItemReferenceInMeetingUpdatedWhenNecessary(self):
         '''Items references in a meeting are updated only when relevant,
            so if an advice is added to a presented or frozen item, references are not updated.

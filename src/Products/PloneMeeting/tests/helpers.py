@@ -511,13 +511,16 @@ class PloneMeetingTestingHelpers(object):
         """Disable one or every item validation levels."""
         self._updateItemValidationLevel(cfg, level, suffix, enable=False)
 
-    def _setUpOrderedContacts(self):
+    def _setUpOrderedContacts(
+        self,
+        meeting_attrs=('attendees', 'excused', 'absents', 'signatories', ),
+        item_attrs=('attendees', 'excused', 'absents', 'signatories', 'itemInitiator')):
         """ """
         # login to be able to query held_positions for orderedContacts vocabulary
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
-        cfg.setUsedMeetingAttributes(('attendees', 'excused', 'absents', 'signatories', ))
-        cfg.setUsedItemAttributes(('attendees', 'excused', 'absents', 'signatories', 'itemInitiator'))
+        cfg.setUsedMeetingAttributes(meeting_attrs)
+        cfg.setUsedItemAttributes(item_attrs)
         ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
         cfg.setOrderedContacts(ordered_contacts)
         logout()

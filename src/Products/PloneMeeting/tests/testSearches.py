@@ -1113,8 +1113,8 @@ class testSearches(PloneMeetingTestCase):
         cleanRamCacheFor(
             'Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels')
         states = self._get_query_review_process(cfg)[1:]
-        query = sorted(['{0}__reviewprocess__returned_to_proposing_group_{1}'.format(self.developers_uid, state)
-                         for state in states])
+        query = sorted(['{0}__reviewprocess__returned_to_proposing_group_{1}'.format(
+                        self.developers_uid, state) for state in states])
         self.assertEqual({
             'portal_type': {'query': itemTypeName},
             'reviewProcessInfo': {'query': query}},

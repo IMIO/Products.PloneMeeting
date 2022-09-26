@@ -5,8 +5,10 @@ Changelog
 4.2rc34 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Fixed meeting creation default `signatories` and `voters` that were displayed
+  even when not activated in the configuration because some default values were
+  defined on the contacts.
+  [gbastien]
 
 4.2rc33 (2022-09-22)
 --------------------
