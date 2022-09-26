@@ -377,10 +377,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                     (attendee, 'attendee') for attendee in default_attendees))
                 signatories = []
                 if 'signatories' in usedMeetingAttrs:
-                    signatories = _get_default_signatories(obj)
+                    signatories = _get_default_signatories(obj, cfg)
                 voters = []
                 if cfg.getUseVotes():
-                    voters = _get_default_voters(obj)
+                    voters = _get_default_voters(obj, cfg)
                 obj._do_update_contacts(attendees=default_attendees,
                                         signatories=signatories,
                                         voters=voters)
