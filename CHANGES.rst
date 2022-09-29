@@ -12,6 +12,8 @@ Changelog
 - Escape annex and annex_type title in `ContainedAnnexesVocabulary` and
   `ContainedDecisionAnnexesVocabulary` in case it contain malicious code.
   [gbastien]
+- Added holidays for 2023.
+  [gbastien]
 
 4.2rc33 (2022-09-22)
 --------------------
