@@ -1505,6 +1505,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         else:
             return warnings
 
+    security.declareProtected(ModifyPortalContent, 'doInvalidateAllCache')
+
+    def doInvalidateAllCache(self):
+        """Form action that will invalidate the cache."""
+        self.invalidateAllCache()
+        api.portal.show_message(_('All cache was invalidated'), request=self.REQUEST)
+        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
+
     security.declareProtected(ModifyPortalContent, 'invalidateAllCache')
 
     def invalidateAllCache(self):
@@ -1514,8 +1522,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         cleanForeverCache()
         notifyModifiedAndReindex(self)
         logger.info('All cache was invalidated.')
-        api.portal.show_message(_('All cache was invalidated'), request=self.REQUEST)
-        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     security.declarePublic('deleteHistoryEvent')
 

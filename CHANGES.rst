@@ -18,6 +18,10 @@ Changelog
   [gbastien]
 - Added holidays for 2023.
   [gbastien]
+- Added `ToolPloneMeeting.doInvalidateAllCache` that is called by the form in
+  the UI and manages the redirect, this avoids having a redirect when
+  `ToolPloneMeeting.invalidateAllCache` is called from other parts of the code.
+  [gbastien]
 
 4.2rc33 (2022-09-22)
 --------------------
