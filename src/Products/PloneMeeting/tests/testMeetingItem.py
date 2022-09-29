@@ -779,16 +779,23 @@ class testMeetingItem(PloneMeetingTestCase):
             self.assertTrue(cfg2Id in v['icon_url'])
         # check also that order is correct, annexes are sorted according title
         originalItem = data['originalItem']
-        annex_titles = ["1. Annex title",
-                        "2. Annex title",
-                        "1. Decision annex title",
-                        "2. Decision annex title"]
+        # take care that decision annex order is correct like this because
+        # it use different annex types!
+        orig_annex_titles = ["1. Annex title",
+                             "2. Annex title",
+                             "2. Decision annex title",
+                             "1. Decision annex title"]
+        # but in cfg2 there is only one decision annex_type
+        new_annex_titles = ["1. Annex title",
+                            "2. Annex title",
+                            "1. Decision annex title",
+                            "2. Decision annex title"]
         self.assertEqual(
             [annex['title'] for annex in originalItem.categorized_elements.values()],
-            annex_titles)
+            orig_annex_titles)
         self.assertEqual(
             [annex['title'] for annex in newItem.categorized_elements.values()],
-            annex_titles)
+            new_annex_titles)
         # Now check the annexType of new annexes
         # annexes have no correspondences so default one is used each time
         defaultMC2ItemAT = get_categories(newItem.objectValues()[0], the_objects=True)[0]
@@ -877,7 +884,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # moreover a message was added
         messages = IStatusMessage(self.request).show()
         expectedMessage = translate("annex_not_kept_because_no_available_annex_type_warning",
-                                    mapping={'annexTitle': data['annex2'].Title()},
+                                    mapping={'annexTitle': data['annex1'].Title()},
                                     domain='PloneMeeting',
                                     context=self.request)
         self.assertEqual(messages[-2].message, expectedMessage)

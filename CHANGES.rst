@@ -12,6 +12,10 @@ Changelog
 - Escape annex and annex_type title in `ContainedAnnexesVocabulary` and
   `ContainedDecisionAnnexesVocabulary` in case it contain malicious code.
   [gbastien]
+- Fixed bug where order of annexes of an item sent to another MC was not correct.
+  This relies on a change in `collective.iconifiedcategory`,
+  adapted `IconifiedCategoryGroupAdapter.get_every_categories`.
+  [gbastien]
 
 4.2rc33 (2022-09-22)
 --------------------
