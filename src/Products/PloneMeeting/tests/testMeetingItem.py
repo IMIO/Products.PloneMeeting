@@ -682,8 +682,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setOtherMeetingConfigsClonableTo((otherMeetingConfigId,))
         if with_annexes:
             # Add annexes
-            annex1 = self.addAnnex(item)
-            annex2 = self.addAnnex(item)
+            annex1 = self.addAnnex(item, annexTitle="2. Annex title")
+            annex2 = self.addAnnex(item, annexTitle="1. Annex title")
         # Propose the item
         self.proposeItem(item)
         if with_advices:
@@ -729,10 +729,15 @@ class testMeetingItem(PloneMeetingTestCase):
                 self.do(meeting, transition)
                 self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         if with_annexes:
-            decisionAnnex1 = self.addAnnex(item, relatedTo='item_decision')
-            decisionAnnex2 = self.addAnnex(item,
-                                           annexType='marketing-annex',
-                                           relatedTo='item_decision')
+            decisionAnnex1 = self.addAnnex(
+                item,
+                annexTitle="2. Decision annex title",
+                relatedTo='item_decision')
+            decisionAnnex2 = self.addAnnex(
+                item,
+                annexTitle="1. Decision annex title",
+                annexType='marketing-annex',
+                relatedTo='item_decision')
         self.do(item, 'accept')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
 
@@ -772,7 +777,25 @@ class testMeetingItem(PloneMeetingTestCase):
         # Especially test that use content_category is correct on the duplicated annexes
         for v in get_categorized_elements(newItem):
             self.assertTrue(cfg2Id in v['icon_url'])
-
+        # check also that order is correct, annexes are sorted according title
+        originalItem = data['originalItem']
+        # take care that decision annex order is correct like this because
+        # it use different annex types!
+        orig_annex_titles = ["1. Annex title",
+                             "2. Annex title",
+                             "2. Decision annex title",
+                             "1. Decision annex title"]
+        # but in cfg2 there is only one decision annex_type
+        new_annex_titles = ["1. Annex title",
+                            "2. Annex title",
+                            "1. Decision annex title",
+                            "2. Decision annex title"]
+        self.assertEqual(
+            [annex['title'] for annex in originalItem.categorized_elements.values()],
+            orig_annex_titles)
+        self.assertEqual(
+            [annex['title'] for annex in newItem.categorized_elements.values()],
+            new_annex_titles)
         # Now check the annexType of new annexes
         # annexes have no correspondences so default one is used each time
         defaultMC2ItemAT = get_categories(newItem.objectValues()[0], the_objects=True)[0]
@@ -861,7 +884,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # moreover a message was added
         messages = IStatusMessage(self.request).show()
         expectedMessage = translate("annex_not_kept_because_no_available_annex_type_warning",
-                                    mapping={'annexTitle': data['annex2'].Title()},
+                                    mapping={'annexTitle': data['annex1'].Title()},
                                     domain='PloneMeeting',
                                     context=self.request)
         self.assertEqual(messages[-2].message, expectedMessage)
