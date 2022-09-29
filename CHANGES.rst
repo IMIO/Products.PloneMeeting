@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2rc34 (unreleased)
+4.2rc34 (2022-09-29)
 --------------------
 
 - Fixed meeting creation default `signatories` and `voters` that were displayed
