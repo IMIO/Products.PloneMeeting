@@ -16,6 +16,8 @@ Changelog
   This relies on a change in `collective.iconifiedcategory`,
   adapted `IconifiedCategoryGroupAdapter.get_every_categories`.
   [gbastien]
+- Added holidays for 2023.
+  [gbastien]
 
 4.2rc33 (2022-09-22)
 --------------------
