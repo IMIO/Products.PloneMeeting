@@ -5639,6 +5639,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append(tmp)
         return u", ".join(res) or "-"
 
+    def displayOtherMeetingConfigsClonableToPossibleValues(self):
+        '''Display otherMeetingConfigsClonableTo possible values.'''
+        vocab = get_vocab(self, 'Products.PloneMeeting.vocabularies.other_mcs_clonable_to_vocabulary')
+        return u", ".join([safe_unicode(term.title) for term in vocab._terms]) or "-"
+
     security.declarePublic('showAdvices')
 
     def showAdvices(self):

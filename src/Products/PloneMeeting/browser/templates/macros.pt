@@ -1018,7 +1018,7 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
             $("input[id^='otherMeetingConfigsClonableTo_']").each(function()
                 {
                  $(this).bind("click", function() {
-                    number = this.id.split('_')[1]
+                    number = this.id.split('_')[1];
                     otherMCEmergencyField = $('#otherMeetingConfigsClonableToEmergency_' + number);
                     otherMCPrivacyField = $('#otherMeetingConfigsClonableToPrivacy_' + number);
                     if (this.checked) {
@@ -1030,7 +1030,7 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
                         otherMCEmergencyField.attr('disabled', true);
                         otherMCPrivacyField.attr('checked', false);
                         otherMCPrivacyField.attr('disabled', true);
-                    };
+                    }
                     });
                 });
 
@@ -1038,15 +1038,14 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
             $("input[id^='otherMeetingConfigsClonableTo_']").each(function()
                 {
                 if (!$(this).attr('checked')) {
-                    number = this.id.split('_')[1]
+                    number = this.id.split('_')[1];
                     otherMCEmergencyField = $('#otherMeetingConfigsClonableToEmergency_' + number);
                     otherMCEmergencyField.attr('checked', false);
                     otherMCEmergencyField.attr('disabled', true);
                     otherMCPrivacyField = $('#otherMeetingConfigsClonableToPrivacy_' + number);
                     otherMCPrivacyField.attr('checked', false);
                     otherMCPrivacyField.attr('disabled', true);
-                    };
-                });
+                }});
             });
         </script>
         </tal:scriptForOtherMeetingConfigsClonableToSpecificFields>
@@ -1056,20 +1055,23 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
             <script type="text/javascript">
               $("input[id^='otherMeetingConfigsClonableTo_'").bind( "click", function() {
               var otherMeetingConfigsClonableToFields = $('#otherMeetingConfigsClonableToFields');
-              if (this.checked) {
+              /* unchecked every MC inputs */
+              if ($("input[id^='otherMeetingConfigsClonableTo_']:checked").length) {
                   otherMeetingConfigsClonableToFields.fadeIn();
               }
               else {
                   otherMeetingConfigsClonableToFields.fadeOut("normal", function() {
                       $(this).hide();
                   });
-              };
-              });
+              }});
             </script>
             <div id="otherMeetingConfigsClonableToFields"
                  tal:attributes="style python: context.getOtherMeetingConfigsClonableTo() and 'display: block' or 'display: none';">
                 <fieldset>
-                  <legend i18n:translate="">Data that will be used on new item</legend>
+                  <legend i18n:translate="">
+                    Data that will be used on new item to
+                    <span i18n:name="cfg_titles" tal:content="python: context.displayOtherMeetingConfigsClonableToPossibleValues()" />
+                  </legend>
                   <tal:loop tal:repeat="other_mc_field_name python: context.get_enable_clone_to_other_mc_fields(cfg)">
                     <metal:field use-macro="python:here.widget(other_mc_field_name, mode='edit')"/>
                   </tal:loop>

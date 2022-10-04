@@ -5,8 +5,9 @@ Changelog
 4.2rc35 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Fixed JS that displays/hides other configs to clone to on item edit when
+  possible to send to several other configs.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
