@@ -2035,7 +2035,7 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item, item_state, org_uid=None
     else:
         # if no corresponding item state, check if we manage state suffix roles manually
         apply_meetingmanagers_access, suffix_roles = cfg.adapted().get_item_custom_suffix_roles(
-            item_state)
+            item, item_state)
 
     # find suffix_roles if it was not managed manually
     if suffix_roles:

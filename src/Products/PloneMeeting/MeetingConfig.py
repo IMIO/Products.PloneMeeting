@@ -7660,7 +7660,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             corresponding_item_state = item_state.split('_waiting_advices')[0]
         return corresponding_item_state
 
-    def get_item_custom_suffix_roles(self, item_state):
+    def get_item_custom_suffix_roles(self, item, item_state):
         '''See doc in interfaces.py.'''
         return True, []
 

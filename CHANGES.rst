@@ -8,6 +8,9 @@ Changelog
 - Fixed JS that displays/hides other configs to clone to on item edit when
   possible to send to several other configs.
   [gbastien]
+- Added parameter `item` to adaptable method
+  `MeetingConfig.get_item_custom_suffix_roles`.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------

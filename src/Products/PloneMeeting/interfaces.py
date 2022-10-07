@@ -611,7 +611,7 @@ class IMeetingConfigDocumentation:
         '''If an item_state is not managed by MeetingItem.assign_roles_to_group_suffixes,
            maybe there is a correspondence between current item_state and
            a managed item state.'''
-    def get_item_custom_suffix_roles(self, item_state):
+    def get_item_custom_suffix_roles(self, item, item_state):
         """If an item_state is not managed by MeetingItem.assign_roles_to_group_suffixes,
            and no corresponding item state exists by default, we can manage
            suffix_roles manually."""
