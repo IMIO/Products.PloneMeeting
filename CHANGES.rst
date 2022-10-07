@@ -11,6 +11,8 @@ Changelog
 - Added parameter `item` to adaptable method
   `MeetingConfig.get_item_custom_suffix_roles`.
   [gbastien]
+- Removed `&nbsp;` from committees vocabulary or it is rendered in faceted filter.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
