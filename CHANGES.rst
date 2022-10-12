@@ -13,6 +13,9 @@ Changelog
   [gbastien]
 - Removed `&nbsp;` from committees vocabulary or it is rendered in faceted filter.
   [gbastien]
+- Fixed `meetingconfig_view`, moved `usedPollTypes` and `defaultPollType`
+  to the `Votes` tab.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
