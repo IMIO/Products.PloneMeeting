@@ -856,8 +856,6 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         """
           Redefined to add ram.cache...
         """
-        if not useIcons:
-            forceRedirectAfterTransition = True
         return super(MeetingActionsPanelView, self).\
             __call__(useIcons=useIcons,
                      showTransitions=showTransitions,

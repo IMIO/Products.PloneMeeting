@@ -20,6 +20,9 @@ Changelog
   trigger an update of items having the date as preferred date and an item is
   not viewable by the `MeetingManager`.
   [gbastien]
+- Removed management of `forceRedirectAfterTransition` in `MeetingActionsPanelView`
+  as this is now the default behavior implemented in `imio.actionspanel`.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
