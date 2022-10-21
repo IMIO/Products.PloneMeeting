@@ -907,7 +907,10 @@ table.listing th.th_header_getCategory,
 table.listing th.th_header_ModificationDate,
 table.listing th.th_header_CreationDate,
 table.listing th.th_header_creation-date-column,
-table.listing th.th_header_last-modification-column {
+table.listing th.th_header_last-modification-column,
+/* width of committees table datagridfield display */
+table#form-widgets-committees th.column-date,
+table#form-widgets-committees th.column-convocation_date {
     width: 80px;
 }
 table.listing th.th_header_privacy {
@@ -2488,13 +2491,8 @@ div#formfield-form-widgets-committees div.error,
 table#form-widgets-committees div.error {
     display: none;
 }
-/* width of committees table datagridfield display */
-table#form-widgets-committees th.column-date,
-table#form-widgets-committees th.column-convocation_date {
-    width: 130px;
-}
 table#form-widgets-committees th.column-place {
-    width: 180px;
+    min-width: 60px;
 }
 /* hide Meeting.committees label on edit and view */
 div#formfield-form-widgets-committees label[for="form-widgets-committees"],

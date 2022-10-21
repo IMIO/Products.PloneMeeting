@@ -2,6 +2,7 @@
 
 from collective.contact.plonegroup.utils import select_organization
 from copy import deepcopy
+from imio.helpers.content import richtextval
 from plone import api
 from plone.app.testing import logout
 from plone.app.textfield.value import RichTextValue
@@ -564,6 +565,7 @@ class PloneMeetingTestingHelpers(object):
         cfg_committees[0]['default_signatories'] = [self.hp2_uid, self.hp3_uid]
         cfg.setCommittees(cfg_committees)
         meeting = self.create('Meeting', committees=default_committees(DefaultData(cfg)))
+        meeting.committees[0]['committee_observations'] = richtextval('<p>Committee observations</p>')
         return meeting
 
     def _setUpDefaultItemWFValidationLevels(self, cfg):

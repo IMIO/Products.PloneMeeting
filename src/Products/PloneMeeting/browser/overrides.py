@@ -376,7 +376,7 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
         pm_ps_version = ps.getVersionForProfile('Products.PloneMeeting:default')
         pm_ps_last_version = ps.getLastVersionForProfile('Products.PloneMeeting:default')[0]
         if pm_ps_last_version != pm_ps_version:
-            pm_ps_version = '!!!%s/%s!!! Please launch upgrade steps!!!' % (pm_ps_last_version, pm_ps_version)
+            pm_ps_version = u'⚠⚠⚠ %s/%s ⚠⚠⚠ Please launch upgrade steps!!!' % (pm_ps_last_version, pm_ps_version)
         versions.insert(0, 'PloneMeeting %s (%s)' % (pm_version, pm_ps_version))
         # display versions of package begining with Products.Meeting*, plugins
         plugin_package_names = []

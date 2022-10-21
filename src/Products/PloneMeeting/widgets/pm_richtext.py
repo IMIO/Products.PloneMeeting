@@ -109,6 +109,9 @@ class PMZ3CFormWidgetSettings(Z3CFormWidgetSettings):
     def setupAjaxSave(self, widget_settings):
         """Override to remove the restrictedTraverse to check if save_url available."""
         portal = self.ckview.portal
+        # when used in a datagridfield, the target is sometimes a dict...
+        if not hasattr(self, "portal_type"):
+            return
         target = self.getSaveTarget()
         widget_settings['ajaxsave_enabled'] = 'true'
         save_url = str(portal.portal_url.getRelativeUrl(target) + '/cke-save')

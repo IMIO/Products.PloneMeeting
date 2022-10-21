@@ -23,6 +23,10 @@ Changelog
 - Removed management of `forceRedirectAfterTransition` in `MeetingActionsPanelView`
   as this is now the default behavior implemented in `imio.actionspanel`.
   [gbastien]
+- Added `RichText` column `committee_observations` to
+  `meeting.committees datagridfield`.
+  Added upgrade step to 4205.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
