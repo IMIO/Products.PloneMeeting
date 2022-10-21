@@ -392,7 +392,7 @@ def onOrgWillBeRemoved(current_org, event):
             {"meta_type": "MeetingItem",
              index_name: index_value})
         if brains:
-            item = brains[0].getObject()
+            item = brains[0]._unrestrictedGetObject()
             # The organization is linked to an existing item, we can not delete it.
             if item.isDefinedInTool():
                 msg = "can_not_delete_organization_config_meetingitem"
@@ -1140,7 +1140,7 @@ def onMeetingModified(meeting, event):
             brains = brains + catalog.unrestrictedSearchResults(
                 portal_type=cfg.getItemTypeName(), preferred_meeting_uid=meeting_uid)
             for brain in brains:
-                item = brain.getObject()
+                item = brain._unrestrictedGetObject()
                 item.reindexObject(idxs=['meeting_date', 'preferred_meeting_date'])
             # clean cache for "Products.PloneMeeting.Meeting.date"
             invalidate_cachekey_volatile_for(
@@ -1361,7 +1361,7 @@ def onHeldPositionWillBeRemoved(held_pos, event):
         brains = catalog.unrestrictedSearchResults(
             object_provides=IMeeting.__identifier__)
         for brain in brains:
-            meeting = brain.getObject()
+            meeting = brain._unrestrictedGetObject()
             if _is_held_pos_uid_used_by(held_pos_uid, meeting):
                 using_obj = meeting
                 break
@@ -1372,7 +1372,7 @@ def onHeldPositionWillBeRemoved(held_pos, event):
             pm_technical_index=[
                 ITEM_INITIATOR_INDEX_PATTERN.format(held_pos_uid)])
         if brains:
-            using_obj = brains[0].getObject()
+            using_obj = brains[0]._unrestrictedGetObject()
 
     if using_obj:
         msg = translate(

@@ -14,6 +14,7 @@ from datetime import timedelta
 from eea.facetednavigation.interfaces import IFacetedLayout
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import richtextval
+from imio.helpers.content import uuidToCatalogBrain
 from os import path
 from plone.app.querystring.querybuilder import queryparser
 from plone.app.textfield.value import RichTextValue
@@ -2913,39 +2914,56 @@ class testMeetingType(PloneMeetingTestCase):
            regarding the preferred_meeting_date and meeting_date."""
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
+        meeting_uid = meeting.UID()
         item = self.create('MeetingItem')
-        itemBrain = self.catalog(UID=item.UID())[0]
+        item_uid = item.UID()
+        itemBrain = uuidToCatalogBrain(item_uid)
         # by default, if no preferred/linked meeting, the date is '1950/01/01'
         self.assertEqual(itemBrain.meeting_date, datetime(1950, 1, 1))
         self.assertEqual(itemBrain.preferred_meeting_date, datetime(1950, 1, 1))
-        item.setPreferredMeeting(meeting.UID())
+        item.setPreferredMeeting(meeting_uid)
         item._update_after_edit()
         self.presentItem(item)
-        itemBrain = self.catalog(UID=item.UID())[0]
+        itemBrain = uuidToCatalogBrain(item_uid)
         self.assertEqual(itemBrain.meeting_date, meeting.date)
         self.assertEqual(itemBrain.preferred_meeting_date, meeting.date)
+        # create also an item to which pmManager does not have access
+        # but that uses meeting as preferred meeting
+        self.changeUser('pmCreator2')
+        item2 = self.create('MeetingItem', preferredMeeting=meeting_uid)
+        item2_uid = item2.UID()
+        item2Brain = uuidToCatalogBrain(item2_uid)
+        self.assertEqual(item2Brain.meeting_date, datetime(1950, 1, 1))
+        self.assertEqual(item2Brain.preferred_meeting_date, meeting.date)
 
         # right, change meeting's date and check again
+        self.changeUser('pmManager')
         meeting.date = datetime(2015, 5, 5)
         notify(ObjectModifiedEvent(meeting, Attributes(Interface, 'date')))
-        itemBrain = self.catalog(UID=item.UID())[0]
+        itemBrain = uuidToCatalogBrain(item_uid)
         self.assertEqual(itemBrain.meeting_date, meeting.date)
         self.assertEqual(itemBrain.preferred_meeting_date, meeting.date)
+        item2Brain = uuidToCatalogBrain(item2_uid, unrestricted=True)
+        self.assertEqual(item2Brain.meeting_date, datetime(1950, 1, 1))
+        self.assertEqual(item2Brain.preferred_meeting_date, meeting.date)
 
         # if item is removed from the meeting, it falls back to 1950
         self.do(item, 'backToValidated')
         self.assertEqual(item.query_state(), 'validated')
-        itemBrain = self.catalog(UID=item.UID())[0]
+        itemBrain = uuidToCatalogBrain(item_uid)
         self.assertEqual(itemBrain.meeting_date, datetime(1950, 1, 1))
         # preferred_meeting_date is still the meeting.date
         self.assertEqual(itemBrain.preferred_meeting_date, meeting.date)
 
         # when a meeting is removed, preferred_meeting_date is updated on items
-        self.deleteAsManager(meeting.UID())
+        self.deleteAsManager(meeting_uid)
         self.assertEqual(item.getPreferredMeeting(), ITEM_NO_PREFERRED_MEETING_VALUE)
-        itemBrain = self.catalog(UID=item.UID())[0]
+        itemBrain = uuidToCatalogBrain(item_uid)
         self.assertEqual(itemBrain.meeting_date, datetime(1950, 1, 1))
         self.assertEqual(itemBrain.preferred_meeting_date, datetime(1950, 1, 1))
+        item2Brain = uuidToCatalogBrain(item2_uid, unrestricted=True)
+        self.assertEqual(item2Brain.meeting_date, datetime(1950, 1, 1))
+        self.assertEqual(item2Brain.preferred_meeting_date, datetime(1950, 1, 1))
 
     def test_pm_GetFirstItemNumberIgnoresSubnumbers(self):
         """When computing the firstItemNumber of a meeting,

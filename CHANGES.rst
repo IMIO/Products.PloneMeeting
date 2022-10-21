@@ -16,6 +16,10 @@ Changelog
 - Fixed `meetingconfig_view`, moved `usedPollTypes` and `defaultPollType`
   to the `Votes` tab.
   [gbastien]
+- Avoid `Unauthorized` when a `MeetingManager` updates a meeting date and this
+  trigger an update of items having the date as preferred date and an item is
+  not viewable by the `MeetingManager`.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
