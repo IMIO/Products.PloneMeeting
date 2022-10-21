@@ -91,6 +91,7 @@ from Products.PloneMeeting.interfaces import IToolPloneMeetingCustom
 from z3c.form.interfaces import DISPLAY_MODE
 from z3c.form.interfaces import IContextAware
 from z3c.form.interfaces import IFieldWidget
+from z3c.form.interfaces import NOVALUE
 from zope.annotation import IAnnotations
 from zope.component import getAdapter
 from zope.component import getMultiAdapter
@@ -1474,7 +1475,7 @@ def translate_list(elements, domain="plone", as_list=False, separator=u', '):
 def display_as_html(plain_content, obj, mark_empty_tags=False, striked=False):
     """Display p_plain_content as HTML, especially ending lines
        that are not displayed if empty."""
-    plain_content = plain_content or ''
+    plain_content = plain_content if plain_content and not isinstance(plain_content, NOVALUE.__class__) else ''
     portal_transforms = api.portal.get_tool('portal_transforms')
     html_content = portal_transforms.convertTo('text/html', plain_content).getData()
     html_content = html_content.replace('\r', '')

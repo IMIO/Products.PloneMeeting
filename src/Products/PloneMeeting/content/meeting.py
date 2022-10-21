@@ -160,6 +160,14 @@ class ICommitteesRowSchema(Interface):
             vocabulary="Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary"),
         required=False)
 
+    form.widget('committee_observations', PMTextAreaFieldWidget)
+    committee_observations = RichText(
+        title=_(u"title_committees_committee_observations"),
+        default_mime_type='text/plain',
+        allowed_mime_types=("text/plain", ),
+        output_mime_type='text/x-html-safe',
+        required=False)
+
 
 class IMeeting(IDXMeetingContent):
     """
@@ -885,7 +893,7 @@ class Meeting(Container):
              'condition': "",
              'optional_columns': ['convocation_date', 'place',
                                   'assembly', 'signatures',
-                                  'attendees', 'signatories']},
+                                  'attendees', 'signatories', 'committee_observations']},
         'committees_observations':
             {'optional': True,
              'condition': ""},
