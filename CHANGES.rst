@@ -23,6 +23,9 @@ Changelog
 - Removed management of `forceRedirectAfterTransition` in `MeetingActionsPanelView`
   as this is now the default behavior implemented in `imio.actionspanel`.
   [gbastien]
+- In the advice proposing group comment popup, include advice name for which
+  user is adding a comment.
+  [gbastien]
 - Added `RichText` column `committee_observations` to
   `meeting.committees datagridfield`.
   Added upgrade step to 4205.
