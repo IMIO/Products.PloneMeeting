@@ -1475,6 +1475,7 @@ def translate_list(elements, domain="plone", as_list=False, separator=u', '):
 def display_as_html(plain_content, obj, mark_empty_tags=False, striked=False):
     """Display p_plain_content as HTML, especially ending lines
        that are not displayed if empty."""
+    # when used in a datagrid field, sometimes we get strange content...
     plain_content = plain_content if plain_content and not isinstance(plain_content, NOVALUE.__class__) else ''
     portal_transforms = api.portal.get_tool('portal_transforms')
     html_content = portal_transforms.convertTo('text/html', plain_content).getData()
