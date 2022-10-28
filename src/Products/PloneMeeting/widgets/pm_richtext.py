@@ -35,7 +35,8 @@ class PMRichTextWidget(RichTextWidget):
     def may_edit(self):
         """This field may sometimes be edited using specific write permissions."""
         res = False
-        if 'ajax_load' not in self.request.form:
+        # when used in a datagrid field, sometimes we get strange content...
+        if 'ajax_load' not in self.request.form and not isinstance(self.context, dict):
             portal_types = api.portal.get_tool('portal_types')
             fti = portal_types[self.context.portal_type]
             schema = fti.lookupSchema()
@@ -109,6 +110,9 @@ class PMZ3CFormWidgetSettings(Z3CFormWidgetSettings):
     def setupAjaxSave(self, widget_settings):
         """Override to remove the restrictedTraverse to check if save_url available."""
         portal = self.ckview.portal
+        # when used in a datagridfield, the target is sometimes a dict...
+        if not hasattr(self, "portal_type"):
+            return
         target = self.getSaveTarget()
         widget_settings['ajaxsave_enabled'] = 'true'
         save_url = str(portal.portal_url.getRelativeUrl(target) + '/cke-save')

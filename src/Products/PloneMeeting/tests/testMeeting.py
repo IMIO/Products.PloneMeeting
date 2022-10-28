@@ -3794,8 +3794,9 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(meeting.get_committees(), ['committee_1', 'committee_2'])
         # get_committee, return a given committee stored data
         self.assertEqual(sorted(meeting.get_committee('committee_1').keys()),
-                         ['assembly', 'attendees', 'convocation_date', 'date',
-                          'place', 'row_id', 'signatories', 'signatures'])
+                         ['assembly', 'attendees', 'committee_observations',
+                          'convocation_date', 'date', 'place', 'row_id',
+                          'signatories', 'signatures'])
         # get_committee_assembly, returns HTML by default
         self.assertEqual(meeting.get_committee_assembly('committee_1'),
                          u'<p>Default assembly</p>')
@@ -3822,6 +3823,10 @@ class testMeetingType(PloneMeetingTestCase):
                                                             the_objects=True,
                                                             by_signature_number=True),
                          {'1': self.hp2, '2': self.hp3})
+        # get_committee_observations
+        self.assertEqual(meeting2.get_committee_observations('committee_1'),
+                         '<p>Committee observations</p>')
+        self.assertIsNone(meeting2.get_committee_observations('committee_2'))
 
     def test_pm_Get_committee_items(self):
         """Method that will return items of a given committee including
