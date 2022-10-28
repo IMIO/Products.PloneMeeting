@@ -501,7 +501,7 @@ document.location.reload(true);
        <tal:comment replace="nothing">Button for byebying a user</tal:comment>
        <a href="#" class="link-overlay-pm-manage-attendees"
           tal:attributes="href string:@@item_byebye_attendee_form?person_uid=${aUid}"
-          tal:condition="python:mayChangeAttendees and isPresent and not isRealItemSignatory and aUid not in voted_voters">
+          tal:condition="python:mayChangeAttendees and isPresent and not isRealItemSignatory and (aUid not in voted_voters if not votesAreSecret else view.total_count != len(voters))">
         <span class="fa people-edit-itemabsent link-action"
               title="person_byebye"
               i18n:attributes="title" />
@@ -610,7 +610,7 @@ document.location.reload(true);
        <a href="#"
           class="link-overlay-pm-manage-attendees"
           tal:attributes="href string:@@item_byebye_nonattendee_form?person_uid=${aUid}"
-          tal:condition="python:context._mayChangeAttendees() and not isNonAttendee and not isRealItemSignatory and aUid not in voted_voters">
+          tal:condition="python:context._mayChangeAttendees() and not isNonAttendee and not isRealItemSignatory and (aUid not in voted_voters if not votesAreSecret else view.total_count != len(voters))">
         <span class="fa people-edit-itemabsent link-action"
               title="person_byebye"
               i18n:attributes="title" />
