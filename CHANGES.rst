@@ -26,6 +26,10 @@ Changelog
 - In the advice proposing group comment popup, include advice name for which
   user is adding a comment.
   [gbastien]
+- Added `RichText` column `committee_observations` to
+  `meeting.committees datagridfield`.
+  Added upgrade step to 4205.
+  [gbastien]
 - Added select/unselect all `attendees/excused/absents/voters` when editing
   meeting attendees (contacts).
   [gbastien]
