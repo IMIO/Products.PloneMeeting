@@ -30,6 +30,12 @@ Changelog
   `meeting.committees datagridfield`.
   Added upgrade step to 4205.
   [gbastien]
+- Added select/unselect all `attendees/excused/absents/voters` when editing
+  meeting attendees (contacts).
+  [gbastien]
+- Hide the `byebye attendee` action on item attendees management if linked
+  secret votes are all encoded.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
