@@ -656,12 +656,14 @@ class MeetingItemWorkflowConditions(object):
             # and also if advice was asked again, that last time it was asked
             # it went to the end as well
             advice_obj = self.context.getAdviceObj(adviceInfo['id'])
-            # when using the advice WF with signed, the WF transition is "signFinancialAdvice"
-            # we will get the last step signed or asked again if exist
-            last_step = getLastWFAction(
-                advice_obj, ['signFinancialAdvice', 'backToAdviceInitialState'])
-            if not last_step or last_step['action'] != 'signFinancialAdvice':
-                res = True
+            # bypass if it is not a finances advice
+            if advice_obj.portal_type.startswith('meetingadvicefinances'):
+                # when using the advice WF with signed, the WF transition is "signFinancialAdvice"
+                # we will get the last step signed or asked again if exist
+                last_step = getLastWFAction(
+                    advice_obj, ['signFinancialAdvice', 'backToAdviceInitialState'])
+                if not last_step or last_step['action'] != 'signFinancialAdvice':
+                    res = True
         return res
 
     def _hasAdvicesToGive(self, destination_state):

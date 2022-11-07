@@ -42,6 +42,9 @@ Changelog
 - Fixed `MyItemsTakenOverAdapter.query` that was always using same
   `member_id` because it used `forever_cachekey`, now it is not cached anymore.
   [gbastien]
+- Optimized WF adaptation `waiting_advices_given_and_signed_advices_required_to_validate`
+  to avoid check if advice is not a finances advice.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
