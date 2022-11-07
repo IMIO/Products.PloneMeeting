@@ -36,6 +36,9 @@ Changelog
 - Hide the `byebye attendee` action on item attendees management if linked
   secret votes are all encoded.
   [gbastien]
+- The `waiting_advices_given_and_signed_advices_required_to_validate` WF adaptation
+  depends of the `waiting_advices_given_advices_required_to_validate` WF adaptation.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------

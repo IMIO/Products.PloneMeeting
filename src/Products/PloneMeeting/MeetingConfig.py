@@ -4509,14 +4509,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if len(return_to_prop_group_wf_adaptations) > 1:
             return msg
 
-        msg = translate('wa_dependencies', domain='PloneMeeting', context=self.REQUEST)
         # dependecies, some adaptations will complete already select ones
         dependencies = {'waiting_advices': [v for v in self.wfAdaptations
                                             if v.startswith('waiting_advices_')],
-                        'item_validation_shortcuts': ['item_validation_no_validate_shortcuts']}
+                        'item_validation_shortcuts': ['item_validation_no_validate_shortcuts'],
+                        'waiting_advices_given_advices_required_to_validate':
+                            ['waiting_advices_given_and_signed_advices_required_to_validate']}
         for base_wfa, dependents in dependencies.items():
             if set(values).intersection(dependents) and base_wfa not in values:
-                return msg
+                return translate(
+                    'wa_dependencies', domain='PloneMeeting', context=self.REQUEST)
 
         # dependency on 'MeetingConfig.itemWFValidationLevels'
         msg = translate('wa_item_validation_levels_dependency',

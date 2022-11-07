@@ -291,6 +291,19 @@ class testWFAdaptations(PloneMeetingTestCase):
                 ('item_validation_no_validate_shortcuts', )),
             wa_dependencies)
 
+        # waiting_advices_given_and_signed_advices_required_to_validate depends on
+        # waiting_advices_given_advices_required_to_validate that depends on waiting_advices
+        self.failIf(cfg.validate_workflowAdaptations(
+            ('waiting_advices', 'waiting_advices_given_advices_required_to_validate', )))
+        self.assertEqual(
+            cfg.validate_workflowAdaptations(
+                ('waiting_advices', 'waiting_advices_given_and_signed_advices_required_to_validate', )),
+            wa_dependencies)
+        self.failIf(cfg.validate_workflowAdaptations(
+            ('waiting_advices',
+             'waiting_advices_given_advices_required_to_validate',
+             'waiting_advices_given_and_signed_advices_required_to_validate', )))
+
     def test_pm_Validate_workflowAdaptations_item_validation_levels_dependency(self):
         """Test MeetingConfig.validate_workflowAdaptations where some wfAdaptations
            depend on MeetingConfig.itemWFValidationLevels (that must be activated)."""
