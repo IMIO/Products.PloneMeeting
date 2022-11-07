@@ -971,17 +971,13 @@ class ItemsOfMyGroupsAdapter(CompoundCriterionBaseAdapter):
 class MyItemsTakenOverAdapter(CompoundCriterionBaseAdapter):
 
     @property
-    @ram.cache(forever_cachekey)
-    def query_myitemstakenover(self):
+    def query(self):
         '''Queries all items that current user take over.'''
         if not self.cfg:
             return {}
         member_id = get_current_user_id(self.request)
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'getTakenOverBy': {'query': member_id}, }
-
-    # we may not ram.cache methods in same file with same name...
-    query = query_myitemstakenover
 
 
 class ItemsInCopyAdapter(CompoundCriterionBaseAdapter):

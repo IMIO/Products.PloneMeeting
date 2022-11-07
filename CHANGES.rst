@@ -39,6 +39,9 @@ Changelog
 - The `waiting_advices_given_and_signed_advices_required_to_validate` WF adaptation
   depends of the `waiting_advices_given_advices_required_to_validate` WF adaptation.
   [gbastien]
+- Fixed `MyItemsTakenOverAdapter.query` that was always using same
+  `member_id` because it used `forever_cachekey`, now it is not cached anymore.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
