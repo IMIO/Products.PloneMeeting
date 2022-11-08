@@ -2684,6 +2684,10 @@ class testViews(PloneMeetingTestCase):
         # unlock then editable
         lockable.unlock()
         self.assertTrue(widget.may_edit())
+        # ajaxsave is correctly setup
+        self.assertIn(
+            "ajaxsave_enabled",
+            widget.context.restrictedTraverse('@@richtext-edit')('observations'))
 
     def test_pm_Print_scan_id_barcode(self):
         """Test the print_scan_id_barcode that takes care of raising
