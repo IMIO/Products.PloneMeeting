@@ -4,6 +4,7 @@ from AccessControl import Unauthorized
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
+from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidToObject
 from plone import api
@@ -464,6 +465,14 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         may_change_attendees = self.context._mayChangeAttendees()
         poll_type = self.context.getPollType()
         cache_date = self.request.get('cache_date', None)
+        # when using a cache_date, make sure cache is invalidated
+        if cache_date:
+            date = invalidate_cachekey_volatile_for(
+                'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignaturesRawFields',
+                get_again=True)
+        else:
+            date = get_cachekey_volatile(
+                'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignaturesRawFields')
         return (date,
                 context_uid,
                 cfg_modified,
@@ -528,8 +537,6 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
            Cache is invalidated depending on :
            - current user may edit or not;
            - something is redefined for current item or not.'''
-        date = get_cachekey_volatile(
-            'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         is_manager = tool.isManager(cfg)
@@ -537,6 +544,14 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
         ordered_contacts = self.context.ordered_contacts.items()
         item_votes = sorted(self.context.get_item_votes().items())
         cache_date = self.request.get('cache_date', None)
+        # when using a cache_date, make sure cache is invalidated
+        if cache_date:
+            date = invalidate_cachekey_volatile_for(
+                'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures',
+                get_again=True)
+        else:
+            date = get_cachekey_volatile(
+                'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures')
         return (date,
                 is_manager,
                 cfg_modified,
