@@ -7,6 +7,7 @@ from plone.app.textfield.widget import RichTextWidget
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.events import EditBegunEvent
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFPlone.utils import base_hasattr
 from Products.Five import BrowserView
 from Products.PloneMeeting.utils import checkMayQuickEdit
 from Products.PloneMeeting.utils import get_dx_widget
@@ -111,7 +112,7 @@ class PMZ3CFormWidgetSettings(Z3CFormWidgetSettings):
         """Override to remove the restrictedTraverse to check if save_url available."""
         portal = self.ckview.portal
         # when used in a datagridfield, the target is sometimes a dict...
-        if not hasattr(self, "portal_type"):
+        if not base_hasattr(self.ckview.context, "portal_type"):
             return
         target = self.getSaveTarget()
         widget_settings['ajaxsave_enabled'] = 'true'
