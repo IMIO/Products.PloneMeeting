@@ -52,14 +52,19 @@ class AdviceProposingGroupCommentForm(BaseAdviceInfoForm):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.label = translate(self.label,
-                               domain='PloneMeeting',
-                               context=self.request)
 
     def _init(self, data):
         """ """
         self.item = get_item(self.context)
         self.advice_infos = self._advice_infos(data, self.item)
+        self.label = u"{1} - {0}".format(
+            translate(self.label, context=self.request),
+            translate(
+                "Advice of ${advice_name}",
+                mapping={'advice_name':
+                         self.context.adviceIndex[data['advice_uid']]['name']},
+                domain='PloneMeeting',
+                context=self.request))
 
     def _check_auth(self, data):
         """Raise Unauthorized if current user may not view or edit comment."""

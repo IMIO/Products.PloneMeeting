@@ -160,6 +160,12 @@ class ICommitteesRowSchema(Interface):
             vocabulary="Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary"),
         required=False)
 
+    # called "committee_observations" because "observations" already exists on meeting class
+    committee_observations = RichText(
+        title=_(u"title_committees_committee_observations"),
+        required=False,
+        allowed_mime_types=(u"text/html", ))
+
 
 class IMeeting(IDXMeetingContent):
     """
@@ -885,7 +891,7 @@ class Meeting(Container):
              'condition': "",
              'optional_columns': ['convocation_date', 'place',
                                   'assembly', 'signatures',
-                                  'attendees', 'signatories']},
+                                  'attendees', 'signatories', 'committee_observations']},
         'committees_observations':
             {'optional': True,
              'condition': ""},
@@ -1109,6 +1115,13 @@ class Meeting(Container):
             # keys are values, values are keys
             res = {v: k for k, v in res.items()}
         return res
+
+    def get_committee_observations(self, row_id, for_display=True, mark_empty_tags=False, raw=True):
+        """Return "committee_observations" for given p_row_id committee."""
+        value = self.get_committee(row_id)["committee_observations"]
+        if not value:
+            return value
+        return raw and value.raw or value.output
 
     def get_committee_items(self, row_id, supplement=-1, ordered=True, **kwargs):
         """Return every items of a given committee p_row_id.

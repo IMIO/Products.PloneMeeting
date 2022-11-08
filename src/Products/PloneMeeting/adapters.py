@@ -971,7 +971,7 @@ class ItemsOfMyGroupsAdapter(CompoundCriterionBaseAdapter):
 class MyItemsTakenOverAdapter(CompoundCriterionBaseAdapter):
 
     @property
-    @ram.cache(forever_cachekey)
+    # @ram.cache(forever_cachekey)
     def query_myitemstakenover(self):
         '''Queries all items that current user take over.'''
         if not self.cfg:

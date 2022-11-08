@@ -2590,7 +2590,7 @@ class SelectableCommitteesVocabulary(object):
                     domain="PloneMeeting",
                     mapping={'title': term_title, 'number': number_word(i)},
                     context=context.REQUEST,
-                    default=u"${title} (${number}&nbsp;supplement)")
+                    default=u"${title} (${number} supplement)")
                 i += 1
                 suppl_terms.append(SimpleTerm(suppl_id,
                                               suppl_id,

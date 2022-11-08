@@ -5,8 +5,46 @@ Changelog
 4.2rc35 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Fixed JS that displays/hides other configs to clone to on item edit when
+  possible to send to several other configs.
+  [gbastien]
+- Added parameter `item` to adaptable method
+  `MeetingConfig.get_item_custom_suffix_roles`.
+  [gbastien]
+- Removed `&nbsp;` from committees vocabulary or it is rendered in faceted filter.
+  [gbastien]
+- Fixed `meetingconfig_view`, moved `usedPollTypes` and `defaultPollType`
+  to the `Votes` tab.
+  [gbastien]
+- Avoid `Unauthorized` when a `MeetingManager` updates a meeting date and this
+  trigger an update of items having the date as preferred date and an item is
+  not viewable by the `MeetingManager`.
+  [gbastien]
+- Removed management of `forceRedirectAfterTransition` in `MeetingActionsPanelView`
+  as this is now the default behavior implemented in `imio.actionspanel`.
+  [gbastien]
+- In the advice proposing group comment popup, include advice name for which
+  user is adding a comment.
+  [gbastien]
+- Added `RichText` column `committee_observations` to
+  `meeting.committees datagridfield`.
+  Added upgrade step to 4205.
+  [gbastien]
+- Added select/unselect all `attendees/excused/absents/voters` when editing
+  meeting attendees (contacts).
+  [gbastien]
+- Hide the `byebye attendee` action on item attendees management if linked
+  secret votes are all encoded.
+  [gbastien]
+- The `waiting_advices_given_and_signed_advices_required_to_validate` WF adaptation
+  depends of the `waiting_advices_given_advices_required_to_validate` WF adaptation.
+  [gbastien]
+- Fixed `MyItemsTakenOverAdapter.query` that was always using same
+  `member_id` because it used `forever_cachekey`, now it is not cached anymore.
+  [gbastien]
+- Optimized WF adaptation `waiting_advices_given_and_signed_advices_required_to_validate`
+  to avoid check if advice is not a finances advice.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------

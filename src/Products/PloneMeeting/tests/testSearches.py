@@ -580,6 +580,13 @@ class testSearches(PloneMeetingTestCase):
         self.assertTrue(not item.getTakenOverBy())
         self.failIf(collection.results())
 
+        # query is not cached (this was the case before and there was a bug
+        # because using forevercache and member_id changed
+        self.changeUser('pmCreator1')
+        self.assertEqual(adapter.query,
+                         {'portal_type': {'query': itemTypeName},
+                          'getTakenOverBy': {'query': 'pmCreator1'}})
+
     def _searchItemsToValidateOfHighestHierarchicLevelReviewerInfo(self, cfg):
         """ """
         return ['{0}__reviewprocess__{1}'.format(self.developers_uid,

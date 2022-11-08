@@ -14,6 +14,7 @@ from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.browser.itemvotes import _get_linked_item_vote_numbers
 from Products.PloneMeeting.browser.meeting import BaseMeetingView
+from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.utils import reindex_object
@@ -342,6 +343,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         """Returns informations regarding votes count."""
         data = []
         counts = []
+        total_count = 0
         for vote_number in range(len(self.item_votes)):
             sub_counts = []
             total_votes = self.context.getVoteCount('any_votable', vote_number)
@@ -376,7 +378,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                         context=self.request)
                     count = total_votes - total_voted
                     res.append(pattern.format(
-                        "not_yet",
+                        NOT_ENCODED_VOTE_VALUE,
                         translated_used_vote_value,
                         count))
                     sub_counts.append((translated_used_vote_value,
@@ -398,11 +400,13 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                     usedVoteValue,
                     translated_used_vote_value,
                     count))
+                if usedVoteValue != NOT_ENCODED_VOTE_VALUE:
+                    total_count += count
                 sub_counts.append((translated_used_vote_value, count, 'vote_value_' + usedVoteValue))
             votes = u" / ".join(res)
             data.append(votes)
             counts.append(sub_counts)
-        return data, counts
+        return data, counts, total_count
 
     def compute_next_vote_number(self):
         """Return next vote_number."""
@@ -491,9 +495,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
             if not self.votesAreSecret:
                 self.voted_voters = self.context.get_voted_voters()
             self.next_vote_number = self.compute_next_vote_number()
-            vote_counts = self.vote_counts()
-            self.displayable_counts = vote_counts[0]
-            self.counts = vote_counts[1]
+            self.displayable_counts, self.counts, self.total_count = self.vote_counts()
         else:
             self.votesAreSecret = False
             self.voters = []
