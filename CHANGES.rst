@@ -45,6 +45,8 @@ Changelog
 - Optimized WF adaptation `waiting_advices_given_and_signed_advices_required_to_validate`
   to avoid check if advice is not a finances advice.
   [gbastien]
+- Added `renderWidgets` macro that factorize rendering a list of widgets on a DX content.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------

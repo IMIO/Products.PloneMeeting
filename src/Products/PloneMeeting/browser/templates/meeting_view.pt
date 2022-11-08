@@ -46,25 +46,7 @@
     <div id="collapsible-dates-and-data"
          class="collapsible-content">
       <div class="collapsible-inner-content">
-        <table class="no-style-table table-view-widgets">
-          <tal:loop repeat="widget widgets">
-            <tr tal:attributes="id string:row-${widget/id};
-                                class python: not display_label and 'hide-bottom-border' or ''"
-                tal:define="display_label python: not view.meeting_view._is_rich(widget)">
-                <td class="table_widget_label" tal:condition="display_label">
-                  <label tal:attributes="for python: 'form-widgets-' + widget.__name__"
-                         tal:content="widget/label">Label</label>
-                </td>
-                <td class="table_widget_value"
-                    tal:attributes="colspan python: not display_label and '2' or '';
-                                    class python: display_label and 'table_widget_value' or ''">
-                  <tal:value content="structure python:view.meeting_view.view_widget(widget)">
-                    Value
-                  </tal:value>
-                </td>
-            </tr>
-          </tal:loop>
-        </table>
+        <metal:widgets use-macro="context/@@pm-macros/renderWidgets"/>
       </div>
     </div>
   </tal:dates_and_data>
@@ -121,14 +103,7 @@
     <div id="collapsible-committees"
          class="collapsible-content">
       <div class="collapsible-inner-content">
-        <tal:loop repeat="widget widgets">
-          <label tal:attributes="for python: 'form-widgets-' + widget.__name__"
-                 tal:condition="python: not view.meeting_view._is_rich(widget)"
-                 tal:content="widget/label">Label</label>
-          <tal:block tal:replace="structure python:view.meeting_view.view_widget(widget)">
-            Value
-          </tal:block>
-        </tal:loop>
+        <metal:widgets use-macro="context/@@pm-macros/renderWidgets"/>
       </div>
     </div>
   </tal:committees>
@@ -147,25 +122,7 @@
     <div id="collapsible-informations"
          class="collapsible-content">
       <div class="collapsible-inner-content">
-        <table class="no-style-table table-view-widgets">
-          <tal:loop repeat="widget widgets">
-            <tr tal:attributes="id string:row-${widget/id};
-                                class python: not display_label and 'hide-bottom-border' or ''"
-                tal:define="display_label python: not view.meeting_view._is_rich(widget)">
-                <td class="table_widget_label" tal:condition="display_label">
-                  <label tal:attributes="for python: 'form-widgets-' + widget.__name__"
-                         tal:content="widget/label">Label</label>
-                </td>
-                <td class="table_widget_value"
-                    tal:attributes="colspan python: not display_label and '2' or '';
-                                    class python: display_label and 'table_widget_value' or ''">
-                  <tal:value content="structure python:view.meeting_view.view_widget(widget)">
-                    Value
-                  </tal:value>
-                </td>
-            </tr>
-          </tal:loop>
-        </table>
+        <metal:widgets use-macro="context/@@pm-macros/renderWidgets"/>
       </div>
     </div>
   </tal:informations>
@@ -240,20 +197,7 @@
     <div id="collapsible-parameters"
          class="collapsible-content">
       <div class="collapsible-inner-content">
-        <table class="no-style-table table-view-widgets">
-          <tal:loop repeat="widget widgets">
-            <tr tal:attributes="id string:row-${widget/id}">
-                <td class="table_widget_label">
-                  <label tal:attributes="for python: 'form-widgets-' + widget.__name__"
-                         tal:content="widget/label">Label</label>
-                </td>
-                <td class="table_widget_value"
-                    tal:content="structure python:view.meeting_view.view_widget(widget)">
-                  Value
-                </td>
-            </tr>
-          </tal:loop>
-        </table>
+        <metal:widgets use-macro="context/@@pm-macros/renderWidgets"/>
       </div>
     </div>
   </tal:parameters>
