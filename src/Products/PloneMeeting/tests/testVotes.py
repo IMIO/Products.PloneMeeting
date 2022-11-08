@@ -721,6 +721,18 @@ class testVotes(PloneMeetingTestCase):
         self.assertTrue("Monsieur Person1FirstName Person1LastName, Assembly member 1" in rendered)
         self.assertFalse("@@display-meeting-item-voters" in rendered)
 
+        # passing a cache_date will invalidate cache
+        self.assertFalse('observations' in view.used_attrs)
+        self._enableField('assembly_observations', related_to='Meeting')
+        # not changed for now as cachekey still valid
+        self.assertFalse('assembly_observations' in view())
+        # managed by JS
+        self.request['cache_date'] = "Tue Nov 08 2022 14:41:49 GMT+0100"
+        self.assertTrue('assembly_observations' in view())
+        # still correct when cache_date no more used
+        self.request['cache_date'] = None
+        self.assertTrue('assembly_observations' in view())
+
     def test_pm_AsyncLoadItemAssemblyAndSignatures(self):
         """The @@load_item_assembly_and_signatures will load attendees
            details on the item view."""
@@ -747,6 +759,18 @@ class testVotes(PloneMeetingTestCase):
         self.assertFalse(manage_vote_action in rendered)
         self.assertFalse(manage_attendee_action in rendered)
         self.assertFalse(manage_signatory_action in rendered)
+
+        # passing a cache_date will invalidate cache
+        self.assertFalse('assembly_guests' in view.used_meeting_attrs)
+        self._enableField('assembly_guests', related_to='Meeting')
+        # not changed for now as cachekey still valid
+        self.assertFalse('Assembly guests' in view())
+        # managed by JS
+        self.request['cache_date'] = "Tue Nov 08 2022 14:41:49 GMT+0100"
+        self.assertTrue('Assembly guests' in view())
+        # still correct when cache_date no more used
+        self.request['cache_date'] = None
+        self.assertTrue('Assembly guests' in view())
 
     def test_pm_EncodeVotesForSeveralItems(self):
         """Votes may be encoded for several items but only relevant items will be updated."""
