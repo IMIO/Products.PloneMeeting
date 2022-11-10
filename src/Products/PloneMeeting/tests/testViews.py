@@ -1826,8 +1826,7 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(powerobservers in meeting.__ac_local_roles__)
         self._setPowerObserverStates(field_name='meeting_states', states=('created',))
         searches_decisions = self.getMeetingFolder().searches_decisions
-        meeting_uid = unicode(meeting.UID())
-        self.request['form.widgets.uids'] = meeting_uid
+        self.request.form['form.widgets.uids'] = unicode(meeting.UID())
         form = searches_decisions.restrictedTraverse('@@update-local-roles-batch-action')
         self.assertTrue(form.available())
         form.update()
