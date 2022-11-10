@@ -1456,23 +1456,27 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def update_all_local_roles(self,
                                meta_type=('Meeting', 'MeetingItem'),
                                portal_type=(),
+                               brains=[],
                                log=True,
                                redirect=True,
                                **kw):
         '''Update local_roles on Meeting and MeetingItem,
-           this is used to reflect configuration changes regarding access.'''
+           this is used to reflect configuration changes regarding access.
+           If p_brains is given, we use it, else we get brains using
+           p_meta_type and p_portal_type.'''
         startTime = time.time()
-        catalog = api.portal.get_tool('portal_catalog')
-        # meta_type does not work in DX, use object_provides
-        query = {'object_provides': []}
-        if 'Meeting' in meta_type:
-            query['object_provides'].append(IMeeting.__identifier__)
-        if 'MeetingItem' in meta_type:
-            query['object_provides'].append(IMeetingItem.__identifier__)
-        if portal_type:
-            query['portal_type'] = portal_type
-        query.update(kw)
-        brains = catalog.unrestrictedSearchResults(**query)
+        if not brains:
+            catalog = api.portal.get_tool('portal_catalog')
+            # meta_type does not work in DX, use object_provides
+            query = {'object_provides': []}
+            if 'Meeting' in meta_type:
+                query['object_provides'].append(IMeeting.__identifier__)
+            if 'MeetingItem' in meta_type:
+                query['object_provides'].append(IMeetingItem.__identifier__)
+            if portal_type:
+                query['portal_type'] = portal_type
+            query.update(kw)
+            brains = catalog.unrestrictedSearchResults(**query)
         numberOfBrains = len(brains)
         i = 1
         warnings = []

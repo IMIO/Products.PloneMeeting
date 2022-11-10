@@ -47,6 +47,9 @@ Changelog
   [gbastien]
 - Added `renderWidgets` macro that factorize rendering a list of widgets on a DX content.
   [gbastien]
+- Fixed the `Update local roles` dashboard batch action to make sure elements
+  are computed in the dashboard order.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
