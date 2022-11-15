@@ -792,6 +792,13 @@ class PMCompletenessChangesHistoryAdapter(BaseImioHistoryAdapter):
     history_attr_name = 'completeness_changes_history'
 
 
+class PMAdviceGivenHistoryAdapter(BaseImioHistoryAdapter):
+    """ """
+
+    history_type = 'advice_given'
+    history_attr_name = 'advice_given_history'
+
+
 class Criteria(eeaCriteria):
     """
       Override method that gets criteria to be able to manage various use cases :

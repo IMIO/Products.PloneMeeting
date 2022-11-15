@@ -339,6 +339,11 @@
            provides="imio.history.interfaces.IImioHistory" />
 
   <adapter for="OFS.interfaces.IItem"
+           factory=".adapters.PMAdviceGivenHistoryAdapter"
+           name="advice_given"
+           provides="imio.history.interfaces.IImioHistory" />
+
+  <adapter for="OFS.interfaces.IItem"
            provides="collective.documentgenerator.interfaces.IGenerablePODTemplates"
            factory=".adapters.PMGenerablePODTemplatesAdapter"/>
 

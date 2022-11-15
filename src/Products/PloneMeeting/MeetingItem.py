@@ -6953,7 +6953,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if not self._advice_is_given(advice_id):
                     continue
                 adviceObj = self.get(adviceInfo['advice_id'])
-                adviceObj.versionate_if_relevant(comment='Versioned because item was edited.')
+                adviceObj.historize_if_relevant(comment='Historized because item was edited.')
 
     def _advice_is_given(self, advice_id):
         """Return True if advice is not given."""

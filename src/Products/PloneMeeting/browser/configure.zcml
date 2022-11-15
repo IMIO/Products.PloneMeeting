@@ -639,6 +639,15 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
+    <!-- the view that shows advice given history -->
+    <browser:page
+        name="advice_given_history_view"
+        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        class=".advices.AdviceGivenHistoryView"
+        template="templates/advice-given-history.pt"
+        permission="zope2.View" />
+
     <!-- the view that show available delays for an advice on the advices list -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
@@ -1174,6 +1183,13 @@
         for="Products.PloneMeeting.content.meeting.IMeeting"
         name="contenthistory"
         class=".overrides.PMContentHistoryView"
+        layer="imio.history.interfaces.IImioHistoryLayer"
+        permission="zope.Public" />
+    <!-- Override @@historyview for IMeetingAdvice to include advice_given_history -->
+    <browser:view
+        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+        name="contenthistory"
+        class=".overrides.AdviceContentHistoryView"
         layer="imio.history.interfaces.IImioHistoryLayer"
         permission="zope.Public" />
 

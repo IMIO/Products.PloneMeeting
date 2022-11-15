@@ -1,0 +1,44 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      lang="en"
+      metal:use-macro="context/main_template/macros/master"
+      i18n:domain="PloneMeeting">
+
+<body>
+
+    <metal:main fill-slot="main">
+        <div id="content-core">
+            <h2 class="documentFirstHeading" i18n:translate="">Historized data</h2>
+
+            <h3 i18n:translate="">Advice data</h3>
+            <table class="no-style-table" width="100%">
+                <tr tal:repeat="data view/advice_data">
+                    <td class="table_widget_label">
+                        <label i18n:translate=""
+                               tal:content="python: 'title_' + data['field_name']">Label</label>
+                    </td>
+                    <td class="table_widget_value"
+                        tal:content="structure python: data['field_content'] or '-'">Value</td>
+                </tr>
+            </table>
+
+            <h3 i18n:translate="">Item data</h3>
+            <table class="no-style-table" width="100%">
+                <tr tal:repeat="data view/item_data">
+                    <td class="table_widget_label">
+                        <label tal:define="field python: context.aq_parent.getField(data['field_name'])"
+                               i18n:translate=""
+                               tal:content="field/widget/label_msgid">Label</label>
+                    </td>
+                    <td class="table_widget_value"
+                        tal:content="structure python: data['field_content'] or '-'">Value</td>
+                </tr>
+            </table>
+
+        </div>
+    </metal:main>
+
+</body>
+</html>

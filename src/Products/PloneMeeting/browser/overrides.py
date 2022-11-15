@@ -1418,6 +1418,15 @@ class PMContentHistoryView(IHContentHistoryView):
         return res
 
 
+class AdviceContentHistoryView(PMContentHistoryView):
+    """ """
+    histories_to_handle = (u'revision', u'workflow', u'advice_given')
+
+    def renderCustomJS(self):
+        """ """
+        return '<script>overOverlays();</script>'
+
+
 class PMCatalogNavigationTabs(CatalogNavigationTabs):
     """ """
 

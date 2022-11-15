@@ -358,7 +358,7 @@ class ChangeAdviceAskedAgainView(BrowserView):
             if not parent.adapted().mayAskAdviceAgain(self.context):
                 raise Unauthorized
             # historize the given advice if it was modified since last version
-            self.context.versionate_if_relevant(comment='advice_asked_again_and_historized_comments')
+            self.context.historize_if_relevant(comment='advice_asked_again_and_historized_comments')
             # now we may change advice_type to 'asked_again'
             self.context.advice_type = 'asked_again'
             # and we may also set 'advice_hide_during_redaction' to the default
@@ -511,3 +511,16 @@ class BaseAdviceInfoForm(AutoExtensibleForm, form.EditForm):
         advice_infos(context._shownAdviceTypeFor(advice_data))
         advice_infos._initAdviceInfos(data['advice_uid'])
         return advice_infos
+
+
+class AdviceGivenHistoryView(BrowserView):
+    """ """
+
+    def __call__(self, event_time):
+        """ """
+        for event in self.context.advice_given_history:
+            if int(event['time']) == event_time:
+                self.advice_data = event['advice_data']
+                self.item_data = event['item_data']
+                break
+        return super(AdviceGivenHistoryView, self).__call__()
