@@ -213,7 +213,6 @@ class MeetingAdvice(Container):
         # only historize advice if it was modified since last historization
         # and if it is not 'asked_again', indeed we do not versionate an advice
         # that is 'asked_again' of it's predecessor would be an advice 'asked_again' too...
-        import ipdb; ipdb.set_trace()
         if self.advice_type != 'asked_again' and isModifiedSinceLastVersion(self):
             historize_object_data(self, comment=comment)
 
