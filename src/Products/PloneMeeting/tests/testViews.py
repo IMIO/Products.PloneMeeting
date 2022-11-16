@@ -1581,6 +1581,22 @@ class testViews(PloneMeetingTestCase):
              (0, api.user.get('pmCreator1b')),
              (0, api.user.get('pmManager'))])
 
+    def _display_user_groups_sub_groups_false(self):
+        return [(1, api.user.get('pmCreator1')),
+                (1, api.user.get('pmCreator1b')),
+                (1, api.user.get('pmManager')),
+                (0, api.user.get('pmObserver1')),
+                (0, api.user.get('pmReviewer1'))]
+
+    def _display_user_groups_sub_groups_true(self):
+        return [(1, api.group.get(self.developers_creators)),
+                (2, api.user.get('pmCreator1')),
+                (2, api.user.get('pmCreator1b')),
+                (2, api.user.get('pmManager')),
+                (0, api.user.get('pmManager')),
+                (0, api.user.get('pmObserver1')),
+                (0, api.user.get('pmReviewer1'))]
+
     def test_pm_DisplayGroupUsersViewGroupsInGroups(self):
         """Subgroups are displayed with contained members.
            Normal users see only members and Manager will also see the contained group.
@@ -1595,24 +1611,12 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(len(view.groups), 1)
         # pmManager is in creators and observers but
         # with keep_subgroups=False, only one is kept
-        self.assertEqual(
-            view._get_groups_and_members(group),
-            [(1, api.user.get('pmCreator1')),
-             (1, api.user.get('pmCreator1b')),
-             (1, api.user.get('pmManager')),
-             (0, api.user.get('pmObserver1')),
-             (0, api.user.get('pmReviewer1'))])
+        self.assertListEqual(view._get_groups_and_members(group),
+                         self._display_user_groups_sub_groups_false())
         # when displaying, sub groups may be displayed, this is the case for Managers
         # pmManager is in creators and observers and is dispayed 2 times
-        self.assertEqual(
-            view._get_groups_and_members(group, keep_subgroups=True),
-            [(1, api.group.get(self.developers_creators)),
-             (2, api.user.get('pmCreator1')),
-             (2, api.user.get('pmCreator1b')),
-             (2, api.user.get('pmManager')),
-             (0, api.user.get('pmManager')),
-             (0, api.user.get('pmObserver1')),
-             (0, api.user.get('pmReviewer1'))])
+        self.assertEqual(view._get_groups_and_members(group, keep_subgroups=True),
+                         self._display_user_groups_sub_groups_true())
 
     def test_pm_DisplayGroupUsersViewAllPloneGroups(self):
         """It is possible to get every Plone groups."""
@@ -2392,6 +2396,8 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue('msgviewlet_' in browser.headers['etag'])
         # item in meeting
         self.request['PUBLISHED'] = presented_item
+        import ipdb
+        ipdb.set_trace()
         context_modified = ContextModified(presented_item, self.request)()
         linked_meeting_modified = LinkedMeetingModified(presented_item, self.request)()
         self.assertNotEqual(linked_meeting_modified, 'lm_0')
