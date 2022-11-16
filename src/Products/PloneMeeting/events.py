@@ -682,8 +682,6 @@ def item_added_or_initialized(item):
     item.emergency_changes_history = PersistentList()
     # Add a place to store completeness changes history
     item.completeness_changes_history = PersistentList()
-    # Add a place to store advice given history
-    item.advice_given_history = PersistentList()
     # Add a place to store takenOverBy by review_state user id
     item.takenOverByInfos = PersistentMapping()
     # An item has ben modified, use get_again for portlet_todo
@@ -782,6 +780,9 @@ def onAdviceAdded(advice, event):
     # if advice is added because we are pasting, pass as we will remove the advices...
     if advice.REQUEST.get('currentlyPastingItems', False):
         return
+
+    # Add a place to store advice_given_history
+    advice.advice_given_history = PersistentList()
 
     # update advice_row_id if it was not already done before
     # for example in a onAdviceTransition event handler that is called

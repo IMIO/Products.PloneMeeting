@@ -1020,12 +1020,24 @@ def get_dx_data(obj):
     """ """
     data = []
     # use print_value available on the documentgenerator helper view
-    view = obj.restrictedTraverse('@@document-generation')
+    view = obj.unrestrictedTraverse('@@document-generation')
     helper = view.get_generation_context_helper()
     for attr_name in get_dx_attrs(obj.portal_type):
+        # store field_value when it is a simple type
+        field_value = getattr(obj, attr_name)
+        if not isinstance(field_value, (str, int)):
+            field_value = None
+        field_content = None
+        try:
+            field_content = helper.print_value(attr_name, raw_xhtml=True)
+        except Exception:
+            logger.warning(
+                "In utils.get_dx_data, could not print_value for attr_name %s with value %s" %
+                (attr_name, getattr(obj, attr_name)))
         data.append(
             {'field_name': attr_name,
-             'field_content': helper.print_value(attr_name, raw_xhtml=True)})
+             'field_value': field_value,
+             'field_content': field_content})
     return data
 
 

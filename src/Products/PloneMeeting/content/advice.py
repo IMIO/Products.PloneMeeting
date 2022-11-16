@@ -5,6 +5,7 @@ from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organization
 from dexterity.localrolesfield.field import LocalRoleField
 from imio.history.utils import getLastWFAction
+from imio.history.utils import getLastAction
 from imio.prettylink.interfaces import IPrettyLink
 from plone import api
 from plone.app.textfield import RichText
@@ -25,6 +26,8 @@ from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
+from zope.component import getAdapter
+from imio.history.interfaces import IImioHistory
 
 
 class IMeetingAdvice(IDXMeetingContent):
@@ -239,6 +242,17 @@ class MeetingAdvice(Container):
         '''Make adapted method available on advice, but actually no adapter
            can be defined, just return self.'''
         return self
+
+    def get_previous_advice_type(self):
+        """ """
+        adapter = getAdapter(self, IImioHistory, 'advice_given')
+        last_event = getLastAction(adapter)
+        prev_advice_type = None
+        if last_event:
+            prev_advice_type = [field["field_value"] for field in last_event["advice_data"]
+                                if field["field_name"] == "advice_type"]
+            prev_advice_type = prev_advice_type and prev_advice_type[0]
+        return prev_advice_type
 
 
 class MeetingAdviceSchemaPolicy(DexteritySchemaPolicy):
