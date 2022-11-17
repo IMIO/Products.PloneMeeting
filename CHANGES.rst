@@ -50,6 +50,10 @@ Changelog
 - Fixed the `Update local roles` dashboard batch action to make sure elements
   are computed in the dashboard order.
   [gbastien]
+- Fixed copy/paste an image in CKeditor when editing an advice from
+  a faceted dashboard. Temporary fixed by overriding `CKeditorView` until it is
+  fixed in `collective.ckeditor`.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
