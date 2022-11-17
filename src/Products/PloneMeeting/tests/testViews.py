@@ -2396,8 +2396,6 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue('msgviewlet_' in browser.headers['etag'])
         # item in meeting
         self.request['PUBLISHED'] = presented_item
-        import ipdb
-        ipdb.set_trace()
         context_modified = ContextModified(presented_item, self.request)()
         linked_meeting_modified = LinkedMeetingModified(presented_item, self.request)()
         self.assertNotEqual(linked_meeting_modified, 'lm_0')
