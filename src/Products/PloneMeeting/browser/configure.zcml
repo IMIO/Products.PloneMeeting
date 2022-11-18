@@ -187,15 +187,14 @@
         class=".viewlets.PMMeetingBatchActionsViewlet"
         permission="zope2.View" />
 
-    <!-- Define a imio.history version preview for IMeetingAdvice -->
+    <!-- Define a imio.history event preview for IMeetingAdvice -->
     <browser:page
         for="Products.PloneMeeting.content.advice.IMeetingAdvice"
-        name="history-version-preview"
-        class="Products.PloneMeeting.browser.advices.AdviceVersionPreviewView"
+        name="history-event-preview"
+        class="Products.PloneMeeting.browser.advices.AdviceEventPreviewView"
         layer="imio.history.interfaces.IImioHistoryLayer"
-        template="templates/advice_version_preview.pt"
-        permission="zope2.View"
-        />
+        template="templates/advice_event_preview.pt"
+        permission="zope2.View" />
 
     <!-- The ajax view -->
     <browser:page

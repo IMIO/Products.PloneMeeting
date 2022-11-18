@@ -243,15 +243,19 @@ class MeetingAdvice(Container):
            can be defined, just return self.'''
         return self
 
+    def _get_event_field_data(self, event, field_name, data_type="field_value"):
+        """ """
+        data = [field[data_type] for field in event["advice_data"]
+                if field["field_name"] == field_name]
+        return data[0] if data else None
+
     def get_previous_advice_type(self):
         """ """
         adapter = getAdapter(self, IImioHistory, 'advice_given')
         last_event = getLastAction(adapter)
         prev_advice_type = None
         if last_event:
-            prev_advice_type = [field["field_value"] for field in last_event["advice_data"]
-                                if field["field_name"] == "advice_type"]
-            prev_advice_type = prev_advice_type and prev_advice_type[0]
+            prev_advice_type = self._get_event_field_data(last_event, "advice_type")
         return prev_advice_type
 
 

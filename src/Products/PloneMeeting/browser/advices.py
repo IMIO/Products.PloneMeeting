@@ -5,7 +5,7 @@ from collective.contact.plonegroup.utils import get_plone_group_id
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_state_infos
-from imio.history.browser.views import IHVersionPreviewView
+from imio.history.browser.views import EventPreviewView
 from plone import api
 from plone.autoform import directives
 from plone.autoform.form import AutoExtensibleForm
@@ -404,14 +404,18 @@ class AdviceConfidentialityView(BrowserView):
         return super(AdviceConfidentialityView, self).__call__()
 
 
-class AdviceVersionPreviewView(IHVersionPreviewView):
+class AdviceEventPreviewView(EventPreviewView):
     """ """
-    def __init__(self, context, request):
-        """ """
-        super(AdviceVersionPreviewView, self).__init__(context, request)
+
+    def __call__(self, event):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        self.adviceStyle = cfg.getAdviceStyle()
+        self.advice_style = cfg.getAdviceStyle()
+        # store some advice data
+        self.advice_type = self.context._get_event_field_data(event, "advice_type")
+        self.advice_comment = self.context._get_event_field_data(event, "advice_comment")
+        self.advice_observations = self.context._get_event_field_data(event, "advice_observations")
+        return super(AdviceEventPreviewView, self).__call__(event)
 
 
 def _display_asked_again_warning(advice, parent):
