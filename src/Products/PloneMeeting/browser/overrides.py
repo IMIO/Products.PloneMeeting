@@ -832,7 +832,9 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         isRealManager = self.tool.isManager(realManagers=True)
         isManager = not isRealManager and self.tool.isManager(self.cfg)
         # check also portal_url in case application is accessed thru different URI
-        return (repr(self.context), self.context.query_state(),
+        # use uid to be sure that a meeting removed then created again will
+        # not reuse the cache
+        return (self.context.UID(), self.context.query_state(),
                 isRealManager, isManager,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,

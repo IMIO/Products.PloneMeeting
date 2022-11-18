@@ -2841,6 +2841,29 @@ class testMeetingType(PloneMeetingTestCase):
         actions_panel._transitions = None
         self.assertNotEqual(meetingManager_rendered_actions_panel, actions_panel())
 
+    def test_pm_MeetingActionsPanelCachingWhenIdReused(self):
+        """When creating then deleting a meeting, and so same id is used,
+           @@actions_panel is correctly invalidated.
+           Check essentially that the delete_givenuid UID is correct."""
+        self._removeConfigObjectsFor(self.meetingConfig)
+        self.changeUser('siteadmin')
+        # one thing also is that intermediate free meeting id is reused
+        # create meeting-1, meeting-2, meeting-3, delete meeting-2 then
+        # create it again, meeting-2 id will be reused
+        m1 = self.create('Meeting', date=datetime(2022, 11, 18))
+        self.assertEqual(m1.getId(), 'o1')
+        m2 = self.create('Meeting', date=datetime(2022, 11, 19))
+        self.assertEqual(m2.getId(), 'o2')
+        m2_ap = m2.restrictedTraverse('@@actions_panel')()
+        m3 = self.create('Meeting', date=datetime(2022, 11, 20))
+        self.assertEqual(m3.getId(), 'o3')
+        self.deleteAsManager(m2.UID())
+        new_m2 = self.create('Meeting', date=datetime(2022, 11, 19))
+        # same id as old m2
+        self.assertEqual(new_m2.getId(), 'o2')
+        new_m2_ap = new_m2.restrictedTraverse('@@actions_panel')()
+        self.assertNotEqual(m2_ap, new_m2_ap)
+
     def test_pm_Get_next_meeting(self):
         """Test the get_next_meeting method that will return the next meeting
            regarding the meeting date."""
