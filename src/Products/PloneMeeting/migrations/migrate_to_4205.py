@@ -9,6 +9,7 @@ from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.utils import get_dx_data
+from Products.ZCatalog.ProgressHandler import ZLogHandler
 
 
 class Migrate_To_4205(Migrator):
@@ -35,7 +36,13 @@ class Migrate_To_4205(Migrator):
         h_repo = phs._getZVCRepo()
         logger.info('Moving to "advice_given_history"...')
         brains = self.catalog(object_provides=IMeetingAdvice.__identifier__)
+        pghandler = ZLogHandler(steps=1000)
+        pghandler.init('Moving to "advice_given_history"...',
+                       len(brains))
+        i = 0
         for brain in brains:
+            i += 1
+            pghandler.report(i)
             advice = brain.getObject()
             if base_hasattr(advice, "advice_given_history"):
                 continue

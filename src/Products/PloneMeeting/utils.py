@@ -1032,8 +1032,9 @@ def get_dx_data(obj):
             field_content = helper.print_value(attr_name, raw_xhtml=True)
         except Exception:
             logger.warning(
-                "In utils.get_dx_data, could not print_value for attr_name %s with value %s" %
-                (attr_name, getattr(obj, attr_name)))
+                "In \"utils.get_dx_data\", could not print_value for attr_name "
+                "\"%s\" with value \"%s\" for element at \"%s\"" %
+                (attr_name, getattr(obj, attr_name), "/".join(obj.getPhysicalPath())))
         data.append(
             {'field_name': attr_name,
              'field_value': field_value,
