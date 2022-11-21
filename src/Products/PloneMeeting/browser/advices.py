@@ -5,7 +5,7 @@ from collective.contact.plonegroup.utils import get_plone_group_id
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_state_infos
-from imio.history.browser.views import IHVersionPreviewView
+from imio.history.browser.views import VersionPreviewView
 from plone import api
 from plone.autoform import directives
 from plone.autoform.form import AutoExtensibleForm
@@ -404,7 +404,7 @@ class AdviceConfidentialityView(BrowserView):
         return super(AdviceConfidentialityView, self).__call__()
 
 
-class AdviceVersionPreviewView(IHVersionPreviewView):
+class AdviceVersionPreviewView(VersionPreviewView):
     """ """
     def __init__(self, context, request):
         """ """
