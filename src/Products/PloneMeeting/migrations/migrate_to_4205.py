@@ -8,6 +8,7 @@ from Products.PloneMeeting.content.advice import IMeetingAdvice
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.setuphandlers import _configurePortalRepository
 from Products.PloneMeeting.utils import get_dx_data
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 
@@ -80,6 +81,8 @@ class Migrate_To_4205(Migrator):
         # nothing should be versionned anymore
         self.portal.portal_historiesstorage._shadowStorage._storage.clear()
         self.portal.portal_historiesstorage.zvc_repo._histories.clear()
+        # remove every meetingadvice portal_types from portal_repository
+        _configurePortalRepository(removed_types=self.tool.getAdvicePortalTypeIds())
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 

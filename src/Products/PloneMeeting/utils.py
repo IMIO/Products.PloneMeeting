@@ -1597,7 +1597,7 @@ def isModifiedSinceLastVersion(obj):
     modified = True
     if last_event:
         # keep >= for backward compatibility as before, modified was set to timestamp, now it is older...
-        if last_event('time') >= obj.modified():
+        if last_event['time'] >= obj.modified():
             modified = False
     return modified
 
