@@ -389,12 +389,16 @@ class Migrator(BaseMigrator):
             cfg.updateCollectionColumns()
         logger.info('Done.')
 
-    def cleanMeetingConfigs(self, field_names=[]):
-        """Remove given p_field_names from every MeetingConfigs."""
+    def cleanMeetingConfigs(self, field_names=[], renamed={}):
+        """Remove given p_field_names from every MeetingConfigs.
+           If a field has same type but was just renamed,
+           it may be given in p_renamed dict mapping."""
         logger.info('Cleaning MeetingConfigs...')
         for cfg in self.tool.objectValues('MeetingConfig'):
             for field_name in field_names:
                 if base_hasattr(cfg, field_name):
+                    if field_name in renamed:
+                        setattr(cfg, renamed[field_name], getattr(cfg, field_name))
                     delattr(cfg, field_name)
         logger.info('Done.')
 

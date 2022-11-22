@@ -225,8 +225,7 @@ class testSetup(PloneMeetingTestCase):
     def test_pm_VersionableTypes(self):
         """Make sure every Plone default types are not more versionable."""
         portal_repository = api.portal.get_tool('portal_repository')
-        # there could be several meetingadvice types, all must be versionable
-        versioned = sorted([u'annex', u'annexDecision'] + self.tool.getAdvicePortalTypeIds())
+        versioned = [u'annex', u'annexDecision']
         self.assertEqual(sorted(portal_repository.getVersionableContentTypes()), versioned)
         self.assertEqual(sorted(portal_repository._version_policy_mapping.keys()), versioned)
 

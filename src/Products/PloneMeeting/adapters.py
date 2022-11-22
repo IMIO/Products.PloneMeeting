@@ -30,6 +30,7 @@ from imio.helpers.content import get_vocab_values
 from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.adapters import BaseImioHistoryAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
+from imio.history.utils import getLastAction
 from imio.prettylink.adapters import PrettyLinkAdapter
 from persistent.list import PersistentList
 from plone import api
@@ -797,6 +798,12 @@ class PMAdviceGivenHistoryAdapter(BaseImioHistoryAdapter):
 
     history_type = 'advice_given'
     history_attr_name = 'advice_given_history'
+
+    def revert_to_last_event(self):
+        """Revert advice values to last historized event."""
+        last_action = getLastAction(self)
+        for field_data in last_action['advice_data']:
+            setattr(self.context, field_data['field_name'], field_data['field_value'])
 
 
 class Criteria(eeaCriteria):

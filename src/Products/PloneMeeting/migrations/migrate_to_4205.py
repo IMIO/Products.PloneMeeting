@@ -83,6 +83,13 @@ class Migrate_To_4205(Migrator):
         self.portal.portal_historiesstorage.zvc_repo._histories.clear()
         # remove every meetingadvice portal_types from portal_repository
         _configurePortalRepository(removed_types=self.tool.getAdvicePortalTypeIds())
+        # MeetingConfig.versionateAdviceIfGivenAndItemModified was renamed to
+        # MeetingConfig.historizeAdviceIfGivenAndItemModified
+        self.cleanMeetingConfigs(
+            field_names=['versionateAdviceIfGivenAndItemModified'],
+            renamed={
+                'versionateAdviceIfGivenAndItemModified':
+                'historizeAdviceIfGivenAndItemModified'})
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 

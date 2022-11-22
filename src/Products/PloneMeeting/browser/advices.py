@@ -6,6 +6,7 @@ from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_state_infos
 from imio.history.browser.views import EventPreviewView
+from imio.history.interfaces import IImioHistory
 from plone import api
 from plone.autoform import directives
 from plone.autoform.form import AutoExtensibleForm
@@ -21,6 +22,7 @@ from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import is_proposing_group_editor
 from z3c.form import form
 from zope import schema
+from zope.component import getAdapter
 from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.i18n import translate
@@ -374,15 +376,12 @@ class ChangeAdviceAskedAgainView(BrowserView):
             if parent.adviceIndex[advice_uid]['delay']:
                 _reinit_advice_delay(parent, advice_uid)
         else:
-            pr = api.portal.get_tool('portal_repository')
             # we are about to set the advice back to original value
             if not parent.adapted().mayBackToPreviousAdvice(self.context):
                 raise Unauthorized
             # get last version_id and fall back to it
-            last_version_id = pr.getHistoryMetadata(self.context)._available[-1]
-            self.context.revertversion(version_id=last_version_id)
-            # revertversion would redirect to somewhere, break this
-            self.request.RESPONSE.status = 200
+            adapter = getAdapter(self.context, IImioHistory, 'advice_given')
+            adapter.revert_to_last_event()
 
         notify(ObjectModifiedEvent(self.context))
         item_state = parent.query_state()

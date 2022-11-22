@@ -939,7 +939,7 @@ def onAnnexRemoved(annex, event):
     if parent not in parent.aq_inner.aq_parent.objectValues():
         return
 
-    # if it is an annex added on an item, versionate given advices if necessary
+    # if it is an annex added on an item, historize given advices if necessary
     if parent.meta_type == 'MeetingItem':
         parent.updateHistory('delete',
                              annex,

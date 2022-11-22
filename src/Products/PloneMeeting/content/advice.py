@@ -214,7 +214,7 @@ class MeetingAdvice(Container):
         """Historize if self was never historized or
            if it was modified since last version."""
         # only historize advice if it was modified since last historization
-        # and if it is not 'asked_again', indeed we do not versionate an advice
+        # and if it is not 'asked_again', indeed we do not historize an advice
         # that is 'asked_again' of it's predecessor would be an advice 'asked_again' too...
         if self.advice_type != 'asked_again' and isModifiedSinceLastVersion(self):
             historize_object_data(self, comment=comment)

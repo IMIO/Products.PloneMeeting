@@ -1451,7 +1451,7 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(helper.print_value("observations", use_appy_pod_preprocessor=True),
                          text)
         # special case for place, default value is u"other"
-        self.assertEqual(helper.print_value("place"), PLACE_OTHER)
+        self.assertEqual(helper.print_value("place"), u'Other')
         meeting.place = u'Place1'
         self.assertEqual(helper.print_value("place"), u'Place1')
         meeting.place = PLACE_OTHER
@@ -1612,7 +1612,7 @@ class testViews(PloneMeetingTestCase):
         # pmManager is in creators and observers but
         # with keep_subgroups=False, only one is kept
         self.assertListEqual(view._get_groups_and_members(group),
-                         self._display_user_groups_sub_groups_false())
+                             self._display_user_groups_sub_groups_false())
         # when displaying, sub groups may be displayed, this is the case for Managers
         # pmManager is in creators and observers and is dispayed 2 times
         self.assertEqual(view._get_groups_and_members(group, keep_subgroups=True),

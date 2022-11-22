@@ -1079,7 +1079,7 @@
           <td tal:define="field python:here.getField('historizeItemDataWhenAdviceIsGiven')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('versionateAdviceIfGivenAndItemModified')">
+          <td tal:define="field python:here.getField('historizeAdviceIfGivenAndItemModified')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>

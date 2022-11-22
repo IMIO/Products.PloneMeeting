@@ -1025,7 +1025,7 @@ def get_dx_data(obj):
     for attr_name in get_dx_attrs(obj.portal_type):
         # store field_value when it is a simple type
         field_value = getattr(obj, attr_name)
-        if not isinstance(field_value, (str, int)):
+        if isinstance(field_value, RichTextValue):
             field_value = None
         field_content = None
         try:
