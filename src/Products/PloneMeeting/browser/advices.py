@@ -407,14 +407,21 @@ class AdviceEventPreviewView(EventPreviewView):
     """ """
 
     def __call__(self, event):
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        self.advice_style = cfg.getAdviceStyle()
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+        self.advice_style = self.cfg.getAdviceStyle()
         # store some advice data
+        self.advice_url = self.context.absolute_url()
         self.advice_type = self.context._get_event_field_data(event, "advice_type")
         self.advice_comment = self.context._get_event_field_data(event, "advice_comment")
         self.advice_observations = self.context._get_event_field_data(event, "advice_observations")
+        self.event = event
+        self.event_time = int(event['time'])
         return super(AdviceEventPreviewView, self).__call__(event)
+
+    def may_view_historized_data(self, event):
+        """ """
+        return self.tool.isManager(self.cfg)
 
 
 def _display_asked_again_warning(advice, parent):

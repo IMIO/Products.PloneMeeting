@@ -1,4 +1,11 @@
 <div i18n:domain="PloneMeeting">
+  <div class='historyLinks'>
+    <a tal:attributes='href string:${view/advice_url}/@@advice_given_history_view?event_time:int=${view/event_time}'
+       tal:condition="python: view.may_view_historized_data(view.event)"
+       class='link-overlay-pm-over' i18n:translate="">
+      Historized data
+    </a>
+  </div>
   <p id='historized_advice-advice_type'>
     <img src='#'
          tal:define="advice_type_icon string:advice_${view/advice_style}_${view/advice_type}.png"

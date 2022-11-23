@@ -240,14 +240,14 @@
                                     </div>
 
                                     <fieldset class="advice_comment">
-                                         <legend i18n:translate="">Advice official comment</legend>
+                                         <legend i18n:translate="title_advice_comment">Advice official comment</legend>
                                          <tal:comment define="readmore_text comment">
                                            <metal:readmorable use-macro='readmorable' />
                                          </tal:comment>
                                     </fieldset>
 
                                     <fieldset class="advice_observations">
-                                         <legend i18n:translate="">Advice observations</legend>
+                                         <legend i18n:translate="title_advice_observations">Advice observations</legend>
                                          <tal:observations define="readmore_text observations">
                                            <metal:readmorable use-macro='readmorable' />
                                          </tal:observations>

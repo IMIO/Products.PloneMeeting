@@ -2435,9 +2435,8 @@ class testAdvices(PloneMeetingTestCase):
         last_action_time4 = last_action['time']
         self.assertNotEqual(last_action_time3, last_action_time4)
 
-    def test_pm_HistorizedAdviceIsNotDeletable(self):
-        """When an advice has been historized (officially given or asked_again,
-           so when versions exist), it can not be deleted by the advisers."""
+    def _setUpHistorizedAdvice(self):
+        """ """
         cfg = self.meetingConfig
         cfg.setItemAdviceStates([self._stateMappingFor('itemcreated'), ])
         cfg.setItemAdviceEditStates([self._stateMappingFor('itemcreated'), ])
@@ -2452,18 +2451,24 @@ class testAdvices(PloneMeetingTestCase):
         item = self.create('MeetingItem', **data)
         # give advice
         self.changeUser('pmAdviser1')
-        developers_advice = createContentInContainer(
+        advice = createContentInContainer(
             item,
             'meetingadvice',
             **{'advice_group': self.developers_uid,
                'advice_type': u'positive',
                'advice_hide_during_redaction': False,
                'advice_comment': RichTextValue(u'My comment')})
+        return item, advice
+
+    def test_pm_HistorizedAdviceIsNotDeletable(self):
+        """When an advice has been historized (officially given or asked_again,
+           so when versions exist), it can not be deleted by the advisers."""
+        item, dev_advice = self._setUpHistorizedAdvice()
         # for now advice is deletable
         advices_icons_infos = item.restrictedTraverse('@@advices-icons-infos')
         # some values are initialized when view is called (__call__)
         advices_icons_infos(adviceType=u'positive')
-        self.assertTrue(advices_icons_infos.mayDelete(developers_advice))
+        self.assertTrue(advices_icons_infos.mayDelete(dev_advice))
         # give advice
         self.changeUser('pmReviewer2')
         vendors_advice = createContentInContainer(
@@ -2480,30 +2485,47 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(advices_icons_infos.mayDelete(vendors_advice))
 
         # ask developers_advice again
-        changeView = developers_advice.restrictedTraverse('@@change-advice-asked-again')
+        changeView = dev_advice.restrictedTraverse('@@change-advice-asked-again')
         self.changeUser('pmCreator1')
         changeView()
-        self.assertEqual(developers_advice.advice_type, 'asked_again')
+        self.assertEqual(dev_advice.advice_type, 'asked_again')
         # advice asker may obviously not delete it
         # some values are initialized when view is called (__call__)
         advices_icons_infos(adviceType=u'asked_again')
-        self.assertFalse(advices_icons_infos.mayDelete(developers_advice))
+        self.assertFalse(advices_icons_infos.mayDelete(dev_advice))
         # and advisers neither
         self.changeUser('pmAdviser1')
-        self.assertFalse(advices_icons_infos.mayDelete(developers_advice))
+        self.assertFalse(advices_icons_infos.mayDelete(dev_advice))
         # even when advice_type is changed
-        developers_advice.advice_type = 'positive'
-        notify(ObjectModifiedEvent(developers_advice))
+        dev_advice.advice_type = 'positive'
+        notify(ObjectModifiedEvent(dev_advice))
         advices_icons_infos(adviceType=u'positive')
-        self.assertFalse(advices_icons_infos.mayDelete(developers_advice))
+        self.assertFalse(advices_icons_infos.mayDelete(dev_advice))
 
         # when an advice is officially given, it is historized so advice is no more deletable
         self.proposeItem(item)
-        self.assertFalse(advices_icons_infos.mayDelete(developers_advice))
+        self.assertFalse(advices_icons_infos.mayDelete(dev_advice))
         self.changeUser('pmReviewer2')
         # some values are initialized when view is called (__call__)
         advices_icons_infos(adviceType=u'negative')
         self.assertFalse(advices_icons_infos.mayDelete(vendors_advice))
+
+    def test_pm_AdviceHistorizedPreviewAccess(self):
+        """By default only (Meeting)Managers may access an historized advice preview."""
+        item, advice = self._setUpHistorizedAdvice()
+        # historize advice
+        self.changeUser('pmCreator1')
+        self.proposeItem(item)
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        self.assertTrue(last_action)
+        # preview is not viewable for common user
+        advice_preview = advice.restrictedTraverse('@@history-event-preview')(last_action)
+        self.assertFalse("@@advice_given_history_view" in advice_preview)
+        # preview is viewable for MeetingManagers
+        self.changeUser('pmManager')
+        advice_preview = advice.restrictedTraverse('@@history-event-preview')(last_action)
+        self.assertTrue("@@advice_given_history_view" in advice_preview)
 
     def test_pm_AdviceHistorizedWithItemDataWhenAdviceGiven(self):
         """When an advice is given, it is versioned and relevant item infos are saved.

@@ -637,6 +637,16 @@ class BaseDGHV(object):
                 if 'custom_format' not in kwargs:
                     kwargs['custom_format'] = '%-d %B %Y'
                 value = self.display_date(date=getattr(self.real_context, field_name), **kwargs)
+            # Boolean
+            if class_name == 'Bool':
+                if value is True:
+                    value = translate('boolean_value_true',
+                                      domain="PloneMeeting",
+                                      context=self.request)
+                else:
+                    value = translate('boolean_value_false',
+                                      domain="PloneMeeting",
+                                      context=self.request)
             # RichText
             elif class_name == 'RichText':
                 if value is not None:
@@ -647,7 +657,6 @@ class BaseDGHV(object):
             # List/Choice
             elif getattr(field, 'vocabulary', None) or getattr(field, 'vocabularyName', None):
                 value = self.display_voc(field_name, **kwargs)
-
         # if a p_empty_marker is given and no value, use it
         # it may be "???" or "-" for example
         if not value:

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from DateTime import DateTime
 from imio.history.utils import add_event_to_history
 from persistent.list import PersistentList
 from plone import api
@@ -65,13 +66,16 @@ class Migrate_To_4205(Migrator):
                         version_advice.aq_parent = None
                         version_advice.REQUEST = None
                         meta = version_info["metadata"]["sys_metadata"]
+                        # replace some automatic comments
+                        comment = meta["comment"]
+                        comment = comment.replace("Versioned", "Historized")
                         add_event_to_history(
                             advice,
                             'advice_given_history',
                             action='advice_given_or_modified',
                             actor=api.user.get(meta["principal"]),
-                            time=meta["timestamp"],
-                            comments=meta["comment"],
+                            time=DateTime(meta["timestamp"]),
+                            comments=comment,
                             extra_infos={'item_data': item_data,
                                          'advice_data': advice_data})
                     else:

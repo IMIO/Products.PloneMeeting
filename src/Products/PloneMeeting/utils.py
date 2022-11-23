@@ -1023,10 +1023,6 @@ def get_dx_data(obj):
     view = obj.unrestrictedTraverse('@@document-generation')
     helper = view.get_generation_context_helper()
     for attr_name in get_dx_attrs(obj.portal_type):
-        # store field_value when it is a simple type
-        field_value = getattr(obj, attr_name)
-        if isinstance(field_value, RichTextValue):
-            field_value = None
         field_content = None
         try:
             field_content = helper.print_value(attr_name, raw_xhtml=True)
@@ -1035,6 +1031,10 @@ def get_dx_data(obj):
                 "In \"utils.get_dx_data\", could not print_value for attr_name "
                 "\"%s\" with value \"%s\" for element at \"%s\"" %
                 (attr_name, getattr(obj, attr_name), "/".join(obj.getPhysicalPath())))
+        # do not store a RichTextValue, store the rendered value
+        field_value = getattr(obj, attr_name)
+        if isinstance(field_value, RichTextValue):
+            field_value = field_content
         data.append(
             {'field_name': attr_name,
              'field_value': field_value,
