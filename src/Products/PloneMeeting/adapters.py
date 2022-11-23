@@ -30,6 +30,7 @@ from imio.helpers.content import get_vocab_values
 from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.adapters import BaseImioHistoryAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
+from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastAction
 from imio.prettylink.adapters import PrettyLinkAdapter
 from persistent.list import PersistentList
@@ -68,6 +69,7 @@ from Products.PloneMeeting.utils import getHistoryTexts
 from Products.PloneMeeting.utils import is_transition_before_date
 from z3c.form.term import MissingChoiceTermsVocabulary
 from zope.annotation import IAnnotations
+from zope.component import getAdapter
 from zope.i18n import translate
 from zope.schema.vocabulary import SimpleVocabulary
 
@@ -120,7 +122,7 @@ class AdviceContentDeletableAdapter(APContentDeletableAdapter):
     """
       Manage the mayDelete for meetingadvice.
       Must have 'Delete objects' on the item.
-      If some versions are saved (advice was asked_again at least once), advice
+      If advice was historized (advice was asked_again at least once), advice
       is not deletable.
     """
     def __init__(self, context):
@@ -132,10 +134,9 @@ class AdviceContentDeletableAdapter(APContentDeletableAdapter):
         mayDelete = super(AdviceContentDeletableAdapter, self).mayDelete()
         if mayDelete:
             tool = api.portal.get_tool('portal_plonemeeting')
-            pr = api.portal.get_tool('portal_repository')
             if not tool.isManager(realManagers=True) and \
-               pr.getHistoryMetadata(self.context):
-                return False
+               getLastAction(getAdapter(self.context, IImioHistory, 'advice_given')):
+                mayDelete = False
         return mayDelete
 
 

@@ -2383,13 +2383,13 @@ class testAdvices(PloneMeetingTestCase):
         # so for now it is still False
         self.assertFalse(advice.advice_hide_during_redaction)
         changeView()
-        # when going back to previous version, advice is historized
+        # when going back to previous version, advice is not historized
         adapter = getAdapter(advice, IImioHistory, 'advice_given')
         last_action = getLastAction(adapter)
         last_action_time2 = last_action['time']
-        self.assertNotEqual(last_action_time1, last_action_time2)
+        self.assertEqual(last_action_time1, last_action_time2)
+        # old values are set back
         self.assertEqual(advice.advice_type, 'negative')
-        # advice was automatically shown
         self.assertFalse(advice.advice_hide_during_redaction)
         # ok, ask_again and send it again to 'pmReviewer2', he will be able to edit it
         # but before, edit the advice so it is historized again

@@ -4,8 +4,9 @@ from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organization
 from dexterity.localrolesfield.field import LocalRoleField
-from imio.history.utils import getLastWFAction
+from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastAction
+from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
 from plone import api
 from plone.app.textfield import RichText
@@ -21,13 +22,12 @@ from Products.PloneMeeting.utils import isModifiedSinceLastVersion
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
+from zope.component import getAdapter
 from zope.i18n import translate
 from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
-from zope.component import getAdapter
-from imio.history.interfaces import IImioHistory
 
 
 class IMeetingAdvice(IDXMeetingContent):
