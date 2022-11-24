@@ -1445,11 +1445,22 @@ class testViews(PloneMeetingTestCase):
         text = '<p>Observations <img src="%s" alt="22-400x400.jpg" title="22-400x400.jpg"/>.</p>' \
             % self.external_image1
         set_field_from_ajax(meeting, "observations", text)
-        img_path = meeting.objectValues()[0].getFile().blob._p_blob_committed
+        image = meeting.objectValues()[0]
+        img_path = image.getFile().blob._p_blob_committed
         # when using printXhtml, img url are turned to blob path
         text = text.replace(self.external_image1, img_path)
         self.assertEqual(helper.print_value("observations", use_appy_pod_preprocessor=True),
                          text)
+        # raw_xhtml=True
+        self.assertIn("resolveuid/%s" % image.UID(),
+                      helper.print_value("observations", raw_xhtml=True))
+        # Boolean
+        self.assertFalse(meeting.extraordinary_session)
+        self.assertEqual(helper.print_value("extraordinary_session"), u'No')
+        meeting.extraordinary_session = None
+        self.assertEqual(helper.print_value("extraordinary_session"), u'No')
+        meeting.extraordinary_session = True
+        self.assertEqual(helper.print_value("extraordinary_session"), u'Yes')
         # special case for place, default value is u"other"
         self.assertEqual(helper.print_value("place"), u'Other')
         meeting.place = u'Place1'
