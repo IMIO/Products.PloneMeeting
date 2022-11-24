@@ -27,6 +27,7 @@ from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.catalog import merge_queries
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
+from imio.helpers.content import richtextval
 from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.adapters import BaseImioHistoryAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
@@ -63,6 +64,7 @@ from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import findNewValue
 from Products.PloneMeeting.utils import get_context_with_request
+from Products.PloneMeeting.utils import get_dx_attrs
 from Products.PloneMeeting.utils import get_referer_obj
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getHistoryTexts
@@ -803,8 +805,14 @@ class PMAdviceGivenHistoryAdapter(BaseImioHistoryAdapter):
     def revert_to_last_event(self):
         """Revert advice values to last historized event."""
         last_action = getLastAction(self)
+        rich_text_field_names = get_dx_attrs(
+            self.context.portal_type, richtext_only=True, as_display_list=False)
         for field_data in last_action['advice_data']:
-            setattr(self.context, field_data['field_name'], field_data['field_value'])
+            # handle rich text to store a RichTextValue
+            field_value = field_data['field_value']
+            if field_data['field_name'] in rich_text_field_names:
+                field_value = richtextval(field_value)
+            setattr(self.context, field_data['field_name'], field_value)
 
 
 class Criteria(eeaCriteria):
