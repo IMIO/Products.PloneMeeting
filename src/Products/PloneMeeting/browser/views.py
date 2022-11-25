@@ -803,12 +803,14 @@ class BaseDGHV(object):
                     res = res + u"<u>%s:</u>" % cgi.escape(advice['name'])
 
                 # add advice type
-                res = res + u"<br /><u>%s :</u> <i>%s</i>" % (translate('Advice type',
-                                                              domain='PloneMeeting',
-                                                              context=self.request),
-                                                              translate([advice['type']][0],
-                                                                        domain='PloneMeeting',
-                                                                        context=self.request), )
+                res = res + u"<br /><u>%s :</u> <i>%s</i>" % (
+                    translate(
+                        'title_advice_type',
+                        domain='PloneMeeting',
+                        context=self.request),
+                    translate([advice['type']][0],
+                              domain='PloneMeeting',
+                              context=self.request), )
 
                 # display the author if advice was given
                 if withAuthor and not adviceType == NOT_GIVEN_ADVICE_VALUE:
