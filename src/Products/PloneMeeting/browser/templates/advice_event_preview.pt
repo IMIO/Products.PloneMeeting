@@ -14,9 +14,9 @@
   </p>
   <p class='historized_advice-advice_comment'><span i18n:translate="advice_comment">Comment</span> :</p>
   <span tal:define="advice_comment view/advice_comment"
-        tal:replace="structure python: advice_comment and advice_comment or '-'" />
+        tal:replace="structure python: advice_comment or '-'" />
   <p class='historized_advice-advice_observations'><span i18n:translate="advice_observations">Observations</span> :</p>
   <span tal:define="advice_observations view/advice_observations"
-        tal:replace="structure python: advice_observations and advice_observations or '-'" />
+        tal:replace="structure python: advice_observations or '-'" />
 
 </div>
