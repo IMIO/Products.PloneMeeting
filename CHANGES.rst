@@ -57,6 +57,9 @@ Changelog
 - Fixed meeting `@@actions_panel` caching invalidation when a meeting was removed
   then created again, old cache was still used, base cachekey on meeting UID.
   [gbastien]
+- Advice historization is no more using Plone versioning but we use a new
+  `imio.history` history called `given_advice`.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------

@@ -1420,6 +1420,20 @@ class PMContentHistoryView(IHContentHistoryView):
         return res
 
 
+class AdviceContentHistoryView(PMContentHistoryView):
+    """ """
+    histories_to_handle = (u'revision', u'workflow', u'advice_given')
+
+    def show_preview(self, event):
+        """ """
+        if event['type'] == 'advice_given':
+            return True
+
+    def renderCustomJS(self):
+        """ """
+        return '<script>overOverlays();</script>'
+
+
 class PMCatalogNavigationTabs(CatalogNavigationTabs):
     """ """
 

@@ -187,15 +187,14 @@
         class=".viewlets.PMMeetingBatchActionsViewlet"
         permission="zope2.View" />
 
-    <!-- Define a imio.history version preview for IMeetingAdvice -->
+    <!-- Define a imio.history event preview for IMeetingAdvice -->
     <browser:page
         for="Products.PloneMeeting.content.advice.IMeetingAdvice"
-        name="history-version-preview"
-        class="Products.PloneMeeting.browser.advices.AdviceVersionPreviewView"
+        name="history-event-preview"
+        class="Products.PloneMeeting.browser.advices.AdviceEventPreviewView"
         layer="imio.history.interfaces.IImioHistoryLayer"
-        template="templates/advice_version_preview.pt"
-        permission="zope2.View"
-        />
+        template="templates/advice_event_preview.pt"
+        permission="zope2.View" />
 
     <!-- The ajax view -->
     <browser:page
@@ -637,6 +636,15 @@
         class=".advices.AdviceConfidentialityView"
         template="templates/adviceconfidentiality.pt"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
+    <!-- the view that shows advice given history -->
+    <browser:page
+        name="advice_given_history_view"
+        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        class=".advices.AdviceGivenHistoryView"
+        template="templates/advice-given-history.pt"
         permission="zope2.View" />
 
     <!-- the view that show available delays for an advice on the advices list -->
@@ -1174,6 +1182,13 @@
         for="Products.PloneMeeting.content.meeting.IMeeting"
         name="contenthistory"
         class=".overrides.PMContentHistoryView"
+        layer="imio.history.interfaces.IImioHistoryLayer"
+        permission="zope.Public" />
+    <!-- Override @@historyview for IMeetingAdvice to include advice_given_history -->
+    <browser:view
+        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+        name="contenthistory"
+        class=".overrides.AdviceContentHistoryView"
         layer="imio.history.interfaces.IImioHistoryLayer"
         permission="zope.Public" />
 

@@ -13,7 +13,8 @@
                        adviceStyle python: cfg.getAdviceStyle();
                        displayAdviceConfidentiality python: cfg.getEnableAdviceConfidentiality() and view.tool.isManager(cfg);
                        item_review_state python: view.itemReviewState;
-                       readmorable here/@@pm-macros/readmorable;">
+                       readmorable here/@@pm-macros/readmorable;
+                       portal_url python: view.portal_url;">
 
           <tal:comment replace="nothing">List of group names</tal:comment>
           <tal:loop repeat="advice python:advicesByType[adviceType]">
@@ -37,7 +38,7 @@
                      <tal:defines define="class_if_not_given string:advice_delay advice_delay_${advice/delay_infos/delay_status};">
                        <img src="advice_with_delay_big.png"
                             tal:define="delay_icon python: view.delay_icon(advice)"
-                            tal:attributes="src string:${view/portal_url}/${delay_icon};"/>
+                            tal:attributes="src string:${portal_url}/${delay_icon};"/>
                        <span class="advice_delay"
                              tal:content="advice/delay_infos/left_delay"
                              tal:attributes="class python: context._advice_is_given(advice['id']) and 'advice_delay' or class_if_not_given" />
@@ -48,7 +49,7 @@
                            title="This advice was given as personal initiative"
                            style="cursor: help;"
                            i18n:attributes="title"
-                           tal:attributes="src string:${view/portal_url}/advice_not_asked.png"/>
+                           tal:attributes="src string:${portal_url}/advice_not_asked.png"/>
                   </tal:not_asked_advice_icon>
                   <tal:inherited_advice condition="python: view.showLinkToInherited(adviceHolder)">
                       <acronym>
@@ -61,7 +62,7 @@
                             onclick="event.preventDefault();"
                             tal:attributes="data-advice_id string:${advice/id};
                                             data-base_url string:${item_url}">
-                          <img src="advice_inherited.png" tal:attributes="src string:${view/portal_url}/advice_inherited.png"/>
+                          <img src="advice_inherited.png" tal:attributes="src string:${portal_url}/advice_inherited.png"/>
                          </a>
                       </acronym>
                       <acronym tal:condition="python: view.mayRemoveInheritedAdvice()">
@@ -72,7 +73,7 @@
                             style="display: inline-block; padding: 0; cursor: pointer;"
                             href="#"
                             tal:attributes="href string:${item_url}/@@advice-remove-inheritance?advice_id=${advice/id}">
-                          <img src="advice_inherited_remove.png" tal:attributes="src string:${view/portal_url}/advice_inherited_remove.png"/>
+                          <img src="advice_inherited_remove.png" tal:attributes="src string:${portal_url}/advice_inherited_remove.png"/>
                          </a>
                       </acronym>
                   </tal:inherited_advice>
@@ -94,8 +95,8 @@
                            href="#"
                            onclick="event.preventDefault();"
                            tal:attributes="data-group_ids:json python: view.get_adviser_group_ids(advice['id']);
-                                           data-base_url string:${view/portal_url}">
-                         <img src="group_users.png" tal:attributes="src string:${view/portal_url}/group_users.png"/>
+                                           data-base_url string:${portal_url}">
+                         <img src="group_users.png" tal:attributes="src string:${portal_url}/group_users.png"/>
                         </a>
                      </acronym>
                      <span tal:attributes="title python: context.getAdviceHelpMessageFor(**advice)" class="fa fa-question-circle help-doc pmHelp" />
@@ -105,14 +106,14 @@
                              class="askAdviceAgainEditable"
                              i18n:attributes="title"
                              title="to_advice_asked_again"
-                             tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again.png;
+                             tal:attributes="src string:${portal_url}/advice_${adviceStyle}_asked_again.png;
                                        onClick string:javascript:$('.tooltipstered').tooltipster('hide');;callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again');;"/></acronym>
                      <acronym tal:condition="python: obj and context.adapted().mayBackToPreviousAdvice(obj)">
                          <img tal:condition="python: advice['type'] == 'asked_again'"
                               class="askAdviceAgainEditable"
                               i18n:attributes="title"
                               title="to_previous_given_advice"
-                              tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again_back_to_previous.png;
+                              tal:attributes="src string:${portal_url}/advice_${adviceStyle}_asked_again_back_to_previous.png;
                                               onClick string:javascript:$('.tooltipstered').tooltipster('hide');;callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again');;"/></acronym>
                      <tal:advice-change-delay-condition condition="view/mayChangeDelay">
                       <acronym title="Change delay"
@@ -124,7 +125,7 @@
                             onclick="event.preventDefault();"
                             tal:attributes="data-advice string:${advice/id};
                                             data-base_url string:${item_url}">
-                          <img src="advice_with_delay.png" tal:attributes="src string:${view/portal_url}/advice_with_delay.png"/>
+                          <img src="advice_with_delay.png" tal:attributes="src string:${portal_url}/advice_with_delay.png"/>
                          </a>
                       </acronym>
                      </tal:advice-change-delay-condition>
@@ -136,7 +137,7 @@
                            href="@@historyview"
                            tal:attributes="href string:${obj_absolute_url}/@@historyview">
                             <img src="++resource++imio.actionspanel/history.gif"
-                                 tal:attributes="src string:${view/portal_url}/++resource++imio.actionspanel/history.gif"/>
+                                 tal:attributes="src string:${portal_url}/++resource++imio.actionspanel/history.gif"/>
                         </a>
                      </acronym>
                   </div>
@@ -157,7 +158,7 @@
                                target='_parent'
                                tal:attributes="href string:${obj_absolute_url}/edit">
                               <img i18n:attributes="title" title="advice_edit"
-                                   tal:attributes="src string:${view/portal_url}/edit.png;" />
+                                   tal:attributes="src string:${portal_url}/edit.png;" />
                             </a>
                             <a href="view"
                                tal:condition="adviceIsLocked"
@@ -165,19 +166,19 @@
                                tal:attributes="href string:${obj_absolute_url}/view">
                               <img i18n:attributes="title" title="Locked"
                                    i18n:domain="plone"
-                                   tal:attributes="src string:${view/portal_url}/lock_icon.png;" />
+                                   tal:attributes="src string:${portal_url}/lock_icon.png;" />
                             </a>
                           </td>
                           <td align="right" width="20px" class="noPadding" condition="not: adviceIsLocked">
                             <img tal:condition="advice/hidden_during_redaction"
                                  class="adviceHiddenDuringRedactionEditable"
                                  i18n:attributes="title" title="to_not_hidden_during_redaction"
-                                 tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_enable_hidden_during_redaction.png;
+                                 tal:attributes="src string:${portal_url}/advice_${adviceStyle}_enable_hidden_during_redaction.png;
                                                  onClick string:javascript:$('.tooltipstered').tooltipster('hide');;callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-hidden-during-redaction');;"/>
                             <img tal:condition="not: advice/hidden_during_redaction"
                                  class="adviceHiddenDuringRedactionEditable"
                                  i18n:attributes="title" title="to_hidden_during_redaction"
-                                 tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_disable_hidden_during_redaction.png;
+                                 tal:attributes="src string:${portal_url}/advice_${adviceStyle}_disable_hidden_during_redaction.png;
                                                  onClick string:javascript:$('.tooltipstered').tooltipster('hide');;callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-hidden-during-redaction');;"/>
                           </td>
                           </tal:editableOrLocked>
@@ -187,18 +188,18 @@
                                tal:attributes="href string:${obj_absolute_url}/@@categorized-annexes">
                               <img src="manage_annexes.gif"
                                    i18n:attributes="title" title="Manage advice annexes"
-                                   tal:attributes="src string:${view/portal_url}/manage_annexes.gif"/>
+                                   tal:attributes="src string:${portal_url}/manage_annexes.gif"/>
                             </a>
                           </td>
                           <td align="right" width="20px" class="noPadding">
                               <img tal:condition="python: view.mayDelete(obj)"
                                    i18n:attributes="title" title="Delete advice"
-                                   tal:attributes="src string:${view/portal_url}/delete_icon.png;
+                                   tal:attributes="src string:${portal_url}/delete_icon.png;
                                                    onClick string:javascript:confirmDeleteObject(base_url='${context/absolute_url}', object_uid='${advice/advice_uid}', this);;"
                                    onClick="confirmDeleteObject(this);" style="cursor:pointer"/>
                               <img tal:condition="python: not view.mayDelete(obj)"
                                    i18n:attributes="title" title="Advice not deletable"
-                                   tal:attributes="src string:${view/portal_url}/delete_grey_icon.png;"
+                                   tal:attributes="src string:${portal_url}/delete_grey_icon.png;"
                                    style="cursor:help"/>
                           </td>
                         </tal:mayEdit>
@@ -207,7 +208,7 @@
                              target='_parent'
                              tal:attributes="href string:${obj_absolute_url}/view">
                             <img i18n:attributes="title" title="Advice advanced management screen"
-                                 tal:attributes="src string:${view/portal_url}/advice_manage.png;" />
+                                 tal:attributes="src string:${portal_url}/advice_manage.png;" />
                           </a>
                         </td>
                       </tr>
@@ -219,17 +220,14 @@
                                 <tal:defines
                                     define="comment python: obj.advice_comment and obj.advice_comment.output;
                                             observations python: obj.advice_observations and obj.advice_observations.output;">
-                                    <img tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_${advice/type}.png;
+                                    <img tal:attributes="src string:${portal_url}/advice_${adviceStyle}_${advice/type}.png;
                                                          title string:${advice/type};"
                                          i18n:attributes="title" title=""/>
                                     <span tal:content="string:${advice/type}" i18n:translate="">Advice type</span>
                                     <tal:comment replace="nothing">Display previous advice value if advice asked again.</tal:comment>
                                     <tal:previousAdviceType condition="python: obj.advice_type == 'asked_again'">
-                                      <tal:defines define="previous python: context.portal_repository.retrieve(obj, (context.portal_repository.getHistoryMetadata(obj).nextVersionId -1)).object">
-                                        (<img tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_${previous/advice_type}.png;
-                                                         title string:${previous/advice_type};"
-                                         i18n:attributes="title" title=""/>
-                                         <span tal:content="string:${previous/advice_type}" i18n:translate="">Previous advice type</span>)
+                                      <tal:defines define="context nocall:obj">
+                                        <metal:previousAdviceType use-macro="context/@@pm-macros/previousAdviceType" />
                                       </tal:defines>
                                     </tal:previousAdviceType>
 
@@ -242,14 +240,14 @@
                                     </div>
 
                                     <fieldset class="advice_comment">
-                                         <legend i18n:translate="">Advice official comment</legend>
+                                         <legend i18n:translate="title_advice_comment">Advice official comment</legend>
                                          <tal:comment define="readmore_text comment">
                                            <metal:readmorable use-macro='readmorable' />
                                          </tal:comment>
                                     </fieldset>
 
                                     <fieldset class="advice_observations">
-                                         <legend i18n:translate="">Advice observations</legend>
+                                         <legend i18n:translate="title_advice_observations">Advice observations</legend>
                                          <tal:observations define="readmore_text observations">
                                            <metal:readmorable use-macro='readmorable' />
                                          </tal:observations>
@@ -268,7 +266,7 @@
                                            target='_parent'
                                            tal:attributes="href string:${item_url}/advice_proposing_group_comment_form?advice_id=${advice/id}">
                                           <img i18n:attributes="title" title="advice_proposing_group_comment_edit"
-                                               tal:attributes="src string:${view/portal_url}/edit.png;" />
+                                               tal:attributes="src string:${portal_url}/edit.png;" />
                                         </a>
                                      </legend>
                                      <tal:proposing_group_comment define="readmore_text proposing_group_comment">

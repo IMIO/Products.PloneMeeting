@@ -781,6 +781,9 @@ def onAdviceAdded(advice, event):
     if advice.REQUEST.get('currentlyPastingItems', False):
         return
 
+    # Add a place to store advice_given_history
+    advice.advice_given_history = PersistentList()
+
     # update advice_row_id if it was not already done before
     # for example in a onAdviceTransition event handler that is called
     # before the onAdviceAdded...
@@ -936,7 +939,7 @@ def onAnnexRemoved(annex, event):
     if parent not in parent.aq_inner.aq_parent.objectValues():
         return
 
-    # if it is an annex added on an item, versionate given advices if necessary
+    # if it is an annex added on an item, historize given advices if necessary
     if parent.meta_type == 'MeetingItem':
         parent.updateHistory('delete',
                              annex,

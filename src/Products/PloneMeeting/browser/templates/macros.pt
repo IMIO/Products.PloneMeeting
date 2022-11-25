@@ -298,12 +298,11 @@ document.location.reload(true);
 </tal:comment>
 <metal:previousAdviceType define-macro="previousAdviceType" i18n:domain="PloneMeeting">
   <tal:defines define="adviceStyle python: context.portal_plonemeeting.getMeetingConfig(context).getAdviceStyle();
-                       pr python: context.portal_repository;
-                       previous python: pr.retrieve(context, (pr.getHistoryMetadata(context).nextVersionId -1)).object">
-    (<img tal:attributes="src string:$portal_url/advice_${adviceStyle}_${previous/advice_type}.png;
-                          title string:${previous/advice_type};"
+                       previous_advice_type python: context.get_previous_advice_type()">
+    (<img tal:attributes="src string:$portal_url/advice_${adviceStyle}_${previous_advice_type}.png;
+                          title string:${previous_advice_type};"
           i18n:attributes="title" title=""/>
-     <span tal:content="string:${previous/advice_type}" i18n:translate="">Previous advice type</span>)
+     <span tal:content="string:${previous_advice_type}" i18n:translate="">Previous advice type</span>)
   </tal:defines>
 </metal:previousAdviceType>
 

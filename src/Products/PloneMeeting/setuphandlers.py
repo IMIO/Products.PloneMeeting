@@ -591,13 +591,17 @@ def _configure_zamqp(site):
             dependency_strategy=DEPENDENCY_STRATEGY_REAPPLY)
 
 
-def _configurePortalRepository():
+def _configurePortalRepository(removed_types=[u'ATDocument',
+                                              u'ATNewsItem',
+                                              u'Document',
+                                              u'Event',
+                                              u'Link',
+                                              u'News Item']):
     """Make sure default Plone content type are not versionable."""
-    plone_versioned_types = [u'ATDocument', u'ATNewsItem', u'Document', u'Event', u'Link', u'News Item']
     pr = api.portal.get_tool('portal_repository')
     pr.setVersionableContentTypes([pt_id for pt_id in pr.getVersionableContentTypes()
-                                   if pt_id not in plone_versioned_types])
-    for p_type in plone_versioned_types:
+                                   if pt_id not in removed_types])
+    for p_type in removed_types:
         pr._version_policy_mapping.pop(p_type, None)
         # _version_policy_mapping is a dict, make change persistent
         pr._version_policy_mapping = pr._version_policy_mapping

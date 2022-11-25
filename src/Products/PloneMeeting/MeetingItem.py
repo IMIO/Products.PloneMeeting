@@ -6943,17 +6943,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             observersPloneGroupId = get_plone_group_id(groupInChargeUid, 'observers')
             self.manage_addLocalRoles(observersPloneGroupId, (READER_USECASES['groupsincharge'],))
 
-    def _versionateAdvicesOnItemEdit(self):
-        """When item is edited, versionate advices if necessary, it is the case if advice was
+    def _historizeAdvicesOnItemEdit(self):
+        """When item is edited, historize advices if necessary, it is the case if advice was
            really given and is not hidden during redaction."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        if cfg.getVersionateAdviceIfGivenAndItemModified():
+        if cfg.getHistorizeAdviceIfGivenAndItemModified():
             for advice_id, adviceInfo in self.adviceIndex.items():
                 if not self._advice_is_given(advice_id):
                     continue
                 adviceObj = self.get(adviceInfo['advice_id'])
-                adviceObj.versionate_if_relevant(comment='Versioned because item was edited.')
+                adviceObj.historize_if_relevant(comment='Historized because item was edited.')
 
     def _advice_is_given(self, advice_id):
         """Return True if advice is not given."""
@@ -6982,7 +6982,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Historize advice that were still not, this way we ensure that
             # given advices are historized with right item data
             if hasattr(self, 'adviceIndex'):
-                self._versionateAdvicesOnItemEdit()
+                self._historizeAdvicesOnItemEdit()
         # unmark deferred SearchableText reindexing
         setattr(self, REINDEX_NEEDED_MARKER, False)
         return BaseFolder.processForm(
@@ -7765,8 +7765,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # invalidate advices if needed
         if self.willInvalidateAdvices():
             self.update_local_roles(invalidate=True)
-        # versionate given advices if necessary
-        self._versionateAdvicesOnItemEdit()
+        # historize given advices if necessary
+        self._historizeAdvicesOnItemEdit()
         return set_field_from_ajax(self, fieldName, fieldValue)
 
     security.declarePublic('getFieldVersion')

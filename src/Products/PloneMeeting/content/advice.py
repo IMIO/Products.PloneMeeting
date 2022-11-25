@@ -4,9 +4,10 @@ from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organization
 from dexterity.localrolesfield.field import LocalRoleField
+from imio.history.interfaces import IImioHistory
+from imio.history.utils import getLastAction
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
-from persistent.list import PersistentList
 from plone import api
 from plone.app.textfield import RichText
 from plone.dexterity.content import Container
@@ -16,12 +17,12 @@ from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IDXMeetingContent
 from Products.PloneMeeting.utils import findMeetingAdvicePortalType
 from Products.PloneMeeting.utils import getWorkflowAdapter
+from Products.PloneMeeting.utils import historize_object_data
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
-from Products.PloneMeeting.utils import main_item_data
-from Products.PloneMeeting.utils import version_object
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
+from zope.component import getAdapter
 from zope.i18n import translate
 from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
@@ -35,20 +36,20 @@ class IMeetingAdvice(IDXMeetingContent):
     """
 
     advice_group = LocalRoleField(
-        title=_(u'Group'),
+        title=_(u'title_advice_group'),
         description=_(u"Choose a group."),
         vocabulary=u'Products.PloneMeeting.content.advice.advice_group_vocabulary',
         required=True,
     )
     advice_type = schema.Choice(
-        title=_(u'Advice type'),
+        title=_(u'title_advice_type'),
         description=_(u"Choose an advice type."),
         vocabulary=u'Products.PloneMeeting.content.advice.advice_type_vocabulary',
         required=True,
     )
     form.widget('advice_hide_during_redaction', RadioFieldWidget)
     advice_hide_during_redaction = schema.Bool(
-        title=_(u'Hide advice during redaction'),
+        title=_(u'title_advice_hide_during_redaction'),
         description=_("If you do not want the advice to be shown immediately after redaction, you can check this "
                       "box.  This will let you or other member of your group work on the advice before showing it.  "
                       "Note that if you lose access to the advice (for example if the item state evolve), "
@@ -58,26 +59,26 @@ class IMeetingAdvice(IDXMeetingContent):
     )
     form.widget('advice_comment', PMRichTextFieldWidget)
     advice_comment = RichText(
-        title=_(u"Advice official comment"),
+        title=_(u"title_advice_comment"),
         description=_("Enter the official comment."),
         required=False,
         allowed_mime_types=(u"text/html", )
     )
     form.widget('advice_observations', PMRichTextFieldWidget)
     advice_observations = RichText(
-        title=_(u"Advice observations"),
+        title=_(u"title_advice_observations"),
         description=_("Enter optionnal observations if necessary."),
         required=False,
         allowed_mime_types=(u"text/html", )
     )
     advice_reference = schema.TextLine(
-        title=_(u"Advice reference"),
+        title=_(u"title_advice_reference"),
         description=_("Enter a reference for this advice if necessary."),
         required=False,
     )
     form.mode(advice_row_id='hidden')
     advice_row_id = schema.TextLine(
-        title=_(u"Advice row id"),
+        title=_(u"title_advice_row_id"),
         description=_("Linked advice row id, this is managed programmatically."),
         required=False,
     )
@@ -209,21 +210,14 @@ class MeetingAdvice(Container):
         else:
             return min(lastEvent['time'], modified)
 
-    def versionate_if_relevant(self, comment):
-        """Versionate if self was never versioned or
+    def historize_if_relevant(self, comment):
+        """Historize if self was never historized or
            if it was modified since last version."""
         # only historize advice if it was modified since last historization
-        # and if it is not 'asked_again', indeed we do not versionate an advice
+        # and if it is not 'asked_again', indeed we do not historize an advice
         # that is 'asked_again' of it's predecessor would be an advice 'asked_again' too...
         if self.advice_type != 'asked_again' and isModifiedSinceLastVersion(self):
-            # create the historized_item_data before versioning, then removes it after
-            # it will still exist on the versioned object
-            item = self.getParentNode()
-            data = main_item_data(item)
-            self.historized_item_data = PersistentList(data)
-            version_object(self, comment=comment)
-            delattr(self, 'historized_item_data')
-            self.reindexObject(idxs=['modified', 'ModificationDate'])
+            historize_object_data(self, comment=comment)
 
     # def attribute_is_used_cachekey(method, self, name):
     #     '''cachekey method for self.attribute_is_used.'''
@@ -248,6 +242,21 @@ class MeetingAdvice(Container):
         '''Make adapted method available on advice, but actually no adapter
            can be defined, just return self.'''
         return self
+
+    def _get_event_field_data(self, event, field_name, data_type="field_value"):
+        """ """
+        data = [field[data_type] for field in event["advice_data"]
+                if field["field_name"] == field_name]
+        return data[0] if data else None
+
+    def get_previous_advice_type(self):
+        """ """
+        adapter = getAdapter(self, IImioHistory, 'advice_given')
+        last_event = getLastAction(adapter)
+        prev_advice_type = None
+        if last_event:
+            prev_advice_type = self._get_event_field_data(last_event, "advice_type")
+        return prev_advice_type
 
 
 class MeetingAdviceSchemaPolicy(DexteritySchemaPolicy):

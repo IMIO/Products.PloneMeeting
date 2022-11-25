@@ -1445,13 +1445,24 @@ class testViews(PloneMeetingTestCase):
         text = '<p>Observations <img src="%s" alt="22-400x400.jpg" title="22-400x400.jpg"/>.</p>' \
             % self.external_image1
         set_field_from_ajax(meeting, "observations", text)
-        img_path = meeting.objectValues()[0].getFile().blob._p_blob_committed
+        image = meeting.objectValues()[0]
+        img_path = image.getFile().blob._p_blob_committed
         # when using printXhtml, img url are turned to blob path
         text = text.replace(self.external_image1, img_path)
         self.assertEqual(helper.print_value("observations", use_appy_pod_preprocessor=True),
                          text)
+        # raw_xhtml=True
+        self.assertIn("resolveuid/%s" % image.UID(),
+                      helper.print_value("observations", raw_xhtml=True))
+        # Boolean
+        self.assertFalse(meeting.extraordinary_session)
+        self.assertEqual(helper.print_value("extraordinary_session"), u'No')
+        meeting.extraordinary_session = None
+        self.assertEqual(helper.print_value("extraordinary_session"), u'No')
+        meeting.extraordinary_session = True
+        self.assertEqual(helper.print_value("extraordinary_session"), u'Yes')
         # special case for place, default value is u"other"
-        self.assertEqual(helper.print_value("place"), PLACE_OTHER)
+        self.assertEqual(helper.print_value("place"), u'Other')
         meeting.place = u'Place1'
         self.assertEqual(helper.print_value("place"), u'Place1')
         meeting.place = PLACE_OTHER
@@ -1612,7 +1623,7 @@ class testViews(PloneMeetingTestCase):
         # pmManager is in creators and observers but
         # with keep_subgroups=False, only one is kept
         self.assertListEqual(view._get_groups_and_members(group),
-                         self._display_user_groups_sub_groups_false())
+                             self._display_user_groups_sub_groups_false())
         # when displaying, sub groups may be displayed, this is the case for Managers
         # pmManager is in creators and observers and is dispayed 2 times
         self.assertEqual(view._get_groups_and_members(group, keep_subgroups=True),

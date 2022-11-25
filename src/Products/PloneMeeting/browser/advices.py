@@ -5,7 +5,8 @@ from collective.contact.plonegroup.utils import get_plone_group_id
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_state_infos
-from imio.history.browser.views import VersionPreviewView
+from imio.history.browser.views import EventPreviewView
+from imio.history.interfaces import IImioHistory
 from plone import api
 from plone.autoform import directives
 from plone.autoform.form import AutoExtensibleForm
@@ -21,6 +22,7 @@ from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import is_proposing_group_editor
 from z3c.form import form
 from zope import schema
+from zope.component import getAdapter
 from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.i18n import translate
@@ -358,7 +360,7 @@ class ChangeAdviceAskedAgainView(BrowserView):
             if not parent.adapted().mayAskAdviceAgain(self.context):
                 raise Unauthorized
             # historize the given advice if it was modified since last version
-            self.context.versionate_if_relevant(comment='advice_asked_again_and_historized_comments')
+            self.context.historize_if_relevant(comment='advice_asked_again_and_historized_comments')
             # now we may change advice_type to 'asked_again'
             self.context.advice_type = 'asked_again'
             # and we may also set 'advice_hide_during_redaction' to the default
@@ -374,15 +376,12 @@ class ChangeAdviceAskedAgainView(BrowserView):
             if parent.adviceIndex[advice_uid]['delay']:
                 _reinit_advice_delay(parent, advice_uid)
         else:
-            pr = api.portal.get_tool('portal_repository')
             # we are about to set the advice back to original value
             if not parent.adapted().mayBackToPreviousAdvice(self.context):
                 raise Unauthorized
             # get last version_id and fall back to it
-            last_version_id = pr.getHistoryMetadata(self.context)._available[-1]
-            self.context.revertversion(version_id=last_version_id)
-            # revertversion would redirect to somewhere, break this
-            self.request.RESPONSE.status = 200
+            adapter = getAdapter(self.context, IImioHistory, 'advice_given')
+            adapter.revert_to_last_event()
 
         notify(ObjectModifiedEvent(self.context))
         item_state = parent.query_state()
@@ -404,14 +403,25 @@ class AdviceConfidentialityView(BrowserView):
         return super(AdviceConfidentialityView, self).__call__()
 
 
-class AdviceVersionPreviewView(VersionPreviewView):
+class AdviceEventPreviewView(EventPreviewView):
     """ """
-    def __init__(self, context, request):
+
+    def __call__(self, event):
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+        self.advice_style = self.cfg.getAdviceStyle()
+        # store some advice data
+        self.advice_url = self.context.absolute_url()
+        self.advice_type = self.context._get_event_field_data(event, "advice_type")
+        self.advice_comment = self.context._get_event_field_data(event, "advice_comment")
+        self.advice_observations = self.context._get_event_field_data(event, "advice_observations")
+        self.event = event
+        self.event_time = int(event['time'])
+        return super(AdviceEventPreviewView, self).__call__(event)
+
+    def may_view_historized_data(self, event):
         """ """
-        super(AdviceVersionPreviewView, self).__init__(context, request)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        self.adviceStyle = cfg.getAdviceStyle()
+        return self.tool.isManager(self.cfg)
 
 
 def _display_asked_again_warning(advice, parent):
@@ -511,3 +521,16 @@ class BaseAdviceInfoForm(AutoExtensibleForm, form.EditForm):
         advice_infos(context._shownAdviceTypeFor(advice_data))
         advice_infos._initAdviceInfos(data['advice_uid'])
         return advice_infos
+
+
+class AdviceGivenHistoryView(BrowserView):
+    """ """
+
+    def __call__(self, event_time):
+        """ """
+        for event in self.context.advice_given_history:
+            if int(event['time']) == event_time:
+                self.advice_data = event['advice_data']
+                self.item_data = event['item_data']
+                break
+        return super(AdviceGivenHistoryView, self).__call__()

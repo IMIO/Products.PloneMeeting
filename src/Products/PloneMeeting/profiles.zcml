@@ -164,7 +164,7 @@
 
   <genericsetup:upgradeStep
       title="Go to PloneMeeting 4205"
-      description="Add committee_observations to every meeting.committees"
+      description="Add committee_observations to every meeting.committees, init advice_given_history on advices"
       source="4204"
       destination="4205"
       handler="Products.PloneMeeting.migrations.migrate_to_4205.migrate"

@@ -788,7 +788,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.transitionsReinitializingDelays = []
         self.historizeItemDataWhenAdviceIsGiven = True
         self.keepAccessToItemWhenAdvice = 'default'
-        self.versionateAdviceIfGivenAndItemModified = True
+        self.historizeAdviceIfGivenAndItemModified = True
         self.customAdvisers = []
 
         # Votes parameters ----------------------------------------------------
