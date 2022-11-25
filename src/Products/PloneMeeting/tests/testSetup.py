@@ -123,6 +123,8 @@ class testSetup(PloneMeetingTestCase):
                 searches_items = self.getMeetingFolder(cfg).searches_items
                 self.assertFalse('There was an error while rendering the portlet.' in searches_items())
                 self.changeUser('admin')
+                # call test_pm_VersionableTypes for every profiles
+                self.test_pm_VersionableTypes()
             # clean memoize between each site because the same REQUEST especially
             # is used for every sites and this can lead to problems...
             cleanMemoize(self.portal)
