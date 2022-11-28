@@ -2474,6 +2474,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def showMeetingManagerReservedField(self, name):
         '''When must field named p_name be shown?'''
+        # show field if it is a recurring item or an item template
+        # especially done so item template managers may manage it
+        if self.isDefinedInTool() and \
+           self.attribute_is_used(name) and \
+           _checkPermission(WriteItemMeetingManagerFields, self):
+            return True
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         return cfg.show_meeting_manager_reserved_field(name, meta_type='MeetingItem')

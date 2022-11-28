@@ -8,6 +8,7 @@
 from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import select_org_for_function
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
@@ -2446,6 +2447,30 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(new_cfg_id, cfg_id)
         self.assertTrue(plone_group_id in self.portal.contacts.__ac_local_roles__)
         self.assertTrue(plone_group_id in self.tool.__ac_local_roles__)
+
+    def test_pm_ItemTemplatesManagersMayEditMeetingManagersReservedFields(self):
+        """Make sure itemtemplates managers may edit MeetingManagers reserved
+           fields on the item, like for example the "checklist" field."""
+        self.changeUser('templatemanager1')
+        template = self.meetingConfig.itemtemplates.template1
+        self.assertFalse(template.attribute_is_used('checkList'))
+        self.assertFalse(template.showMeetingManagerReservedField('checkList'))
+        self._enableField('checkList')
+        self.assertTrue(template.attribute_is_used('checkList'))
+        self.assertTrue(template.showMeetingManagerReservedField('checkList'))
+        # with a RichText field
+        self._enableField('note')
+        self.assertTrue(template.attribute_is_used('notes'))
+        self.assertTrue(template.showMeetingManagerReservedField('notes'))
+        self.assertTrue(template.mayQuickEdit('notes'))
+        # but it does not have access on a real item
+        self._addPrincipalToGroup(
+            self.member.id, get_plone_group_id(self.developers_uid, 'creators'))
+        item = self.create('MeetingItem')
+        self.assertTrue(item.attribute_is_used('checkList'))
+        self.assertFalse(item.showMeetingManagerReservedField('checkList'))
+        self.assertTrue(item.attribute_is_used('notes'))
+        self.assertFalse(item.mayQuickEdit('notes'))
 
 
 def test_suite():

@@ -351,6 +351,9 @@ Changelog
   attendees related cache. Used by `person/held_position/meeting` to invalidate
   caches when necessary.
   [gbastien]
+- Make sure itemtemplates managers have access to fields that are restricted to
+  MeetingManagers when managing the item templates.
+  [gbastien]
 
 4.2rc27 (2022-05-17)
 --------------------
