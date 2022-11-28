@@ -2459,7 +2459,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertTrue(template.attribute_is_used('checkList'))
         self.assertTrue(template.showMeetingManagerReservedField('checkList'))
         # with a RichText field
-        self._enableField('note')
+        self._enableField('notes')
         self.assertTrue(template.attribute_is_used('notes'))
         self.assertTrue(template.showMeetingManagerReservedField('notes'))
         self.assertTrue(template.mayQuickEdit('notes'))
