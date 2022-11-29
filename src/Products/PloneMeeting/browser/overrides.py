@@ -1538,7 +1538,11 @@ class PMUtils(Utils):
             nvalues.append(vocab_value)
         # XXX begin changes by Products.PloneMeeting
         # avoid escaping when generating POD templates
-        if not self.request.getURL().endswith('/document-generation'):
+        # do not escape vocabularies used in MeetingConfig
+        # especially the SelectableAssemblyMembersVocabulary for which terms
+        # contain HTML
+        if not self.request.getURL().endswith('/document-generation') and \
+           not IConfigElement.providedBy(self.context):
             nvalues = [html.escape(val) for val in nvalues]
         if IConfigElement.providedBy(self.context):
             value = u'-'

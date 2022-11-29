@@ -60,6 +60,9 @@ Changelog
 - Advice historization is no more using Plone versioning but we use a new
   `imio.history` history called `given_advice`.
   [gbastien]
+- Fixed display of `MeetingConfig` contacts related fields that was escaped for
+  JS protection purpose but was displaying HTML tags in the UI.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
