@@ -63,6 +63,9 @@ Changelog
 - Fixed display of `MeetingConfig` contacts related fields that was escaped for
   JS protection purpose but was displaying HTML tags in the UI.
   [gbastien]
+- Overrided DataGridField `datagrid_select_cell.pt` to use structure in `view` macro
+  so values using HTML are correctly rendered (`MeetingConfig.certifiedSignatures`).
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
