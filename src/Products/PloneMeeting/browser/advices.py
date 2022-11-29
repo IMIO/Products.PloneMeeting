@@ -19,6 +19,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.PloneMeeting.browser.advicechangedelay import _reinit_advice_delay
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.utils import get_event_field_data
 from Products.PloneMeeting.utils import is_proposing_group_editor
 from z3c.form import form
 from zope import schema
@@ -412,9 +413,9 @@ class AdviceEventPreviewView(EventPreviewView):
         self.advice_style = self.cfg.getAdviceStyle()
         # store some advice data
         self.advice_url = self.context.absolute_url()
-        self.advice_type = self.context._get_event_field_data(event, "advice_type")
-        self.advice_comment = self.context._get_event_field_data(event, "advice_comment")
-        self.advice_observations = self.context._get_event_field_data(event, "advice_observations")
+        self.advice_type = get_event_field_data(event["advice_data"], "advice_type")
+        self.advice_comment = get_event_field_data(event["advice_data"], "advice_comment")
+        self.advice_observations = get_event_field_data(event["advice_data"], "advice_observations")
         self.event = event
         self.event_time = int(event['time'])
         return super(AdviceEventPreviewView, self).__call__(event)

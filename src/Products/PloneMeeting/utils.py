@@ -1633,6 +1633,13 @@ def historize_object_data(obj, comment):
                      'advice_data': advice_data})
 
 
+def get_event_field_data(event_data, field_name, data_type="field_value"):
+    """ """
+    data = [field[data_type] for field in event_data
+            if field["field_name"] == field_name]
+    return data[0] if data else None
+
+
 # taken from http://mscerts.programming4.us/fr/639402.aspx
 # adapted to fit our needs
 def networkdays(start_date, end_date, holidays=[], weekends=(5, 6, )):

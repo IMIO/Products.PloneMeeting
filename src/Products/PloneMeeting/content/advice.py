@@ -17,6 +17,7 @@ from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IDXMeetingContent
 from Products.PloneMeeting.utils import findMeetingAdvicePortalType
 from Products.PloneMeeting.utils import getWorkflowAdapter
+from Products.PloneMeeting.utils import get_event_field_data
 from Products.PloneMeeting.utils import historize_object_data
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
@@ -243,19 +244,14 @@ class MeetingAdvice(Container):
            can be defined, just return self.'''
         return self
 
-    def _get_event_field_data(self, event, field_name, data_type="field_value"):
-        """ """
-        data = [field[data_type] for field in event["advice_data"]
-                if field["field_name"] == field_name]
-        return data[0] if data else None
-
     def get_previous_advice_type(self):
         """ """
         adapter = getAdapter(self, IImioHistory, 'advice_given')
         last_event = getLastAction(adapter)
         prev_advice_type = None
         if last_event:
-            prev_advice_type = self._get_event_field_data(last_event, "advice_type")
+            prev_advice_type = get_event_field_data(
+                last_event["advice_data"], "advice_type")
         return prev_advice_type
 
 
