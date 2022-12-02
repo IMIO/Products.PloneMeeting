@@ -66,6 +66,9 @@ Changelog
 - Overrided DataGridField `datagrid_select_cell.pt` to use structure in `view` macro
   so values using HTML are correctly rendered (`MeetingConfig.certifiedSignatures`).
   [gbastien]
+- Fixed `MeetingItem.setManuallyLinkedItems` when item created from restapi call
+  as item is still not indexed and so not found using a `portal_catalog` query.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------

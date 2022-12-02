@@ -2885,9 +2885,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             def _get_item_infos(item_uid):
                 """Return meeting_date and item_created data for given p_item_uid."""
                 if not caching or item_uid not in item_infos:
-                    brains = unrestrictedSearch(UID=item_uid)
-                    if brains:
-                        item = brains[0]._unrestrictedGetObject()
+                    item = self if item_uid == self.UID() else None
+                    if item is None:
+                        brains = unrestrictedSearch(UID=item_uid)
+                        if brains:
+                            # there could be no brains when created from restapi call
+                            # as new item is still not indexed
+                            item = brains[0]._unrestrictedGetObject()
+                    if item:
                         meeting = item.getMeeting()
                         item_infos[item_uid] = {
                             'item': item,
