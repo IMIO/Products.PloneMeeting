@@ -100,7 +100,6 @@ from zope.i18n import translate
 from zope.interface import implements
 
 import interfaces
-import md5
 import OFS.Moniker
 import time
 
@@ -347,7 +346,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     raise Exception
                 year, month, day = row['date'].split('/')
                 dates.append(datetime(int(year), int(month), int(day)))
-            except:
+            except Exception:
                 return _('holidays_wrong_date_format_error')
         if dates:
             # now check that dates are encoded ascending
@@ -456,7 +455,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     'use imio.helpers.cache.get_plone_groups_for_user instead.')
         return get_plone_groups_for_user(user_id=user_id, user=user, the_objects=the_objects)
 
-    def get_filtered_plone_groups_for_user(self, org_uids=[], user_id=None, suffixes=[], the_objects=False):
+    def get_filtered_plone_groups_for_user(
+            self, org_uids=[], user_id=None, suffixes=[], the_objects=False):
         """For caching reasons, we only use ram.cache on get_plone_groups_for_user
            to avoid too much entries when using p_org_uids.
            Use this when needing to filter on org_uids."""
@@ -465,11 +465,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if the_objects:
             user_groups = [plone_group for plone_group in user_groups
                            if (not org_uids or plone_group.id.split('_')[0] in org_uids) and
-                           (not suffixes or '_' in plone_group.id and plone_group.id.split('_')[1] in suffixes)]
+                           (not suffixes or '_' in plone_group.id and
+                            plone_group.id.split('_')[1] in suffixes)]
         else:
             user_groups = [plone_group_id for plone_group_id in user_groups
                            if (not org_uids or plone_group_id.split('_')[0] in org_uids) and
-                           (not suffixes or '_' in plone_group_id and plone_group_id.split('_')[1] in suffixes)]
+                           (not suffixes or '_' in plone_group_id and
+                            plone_group_id.split('_')[1] in suffixes)]
         return sorted(user_groups)
 
     def group_is_not_empty_cachekey(method, self, org_uid, suffix, user_id=None):
@@ -1085,7 +1087,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             copiedItem = m.bind(destFolder.getPhysicalRoot())
         except ConflictError:
             raise
-        except:
+        except Exception:
             raise PloneMeetingError('Could not copy.')
 
         isManager = self.isManager(destMeetingConfig)
