@@ -83,7 +83,8 @@ class Migrate_To_4205(Migrator):
                             vc_info.version_id, advice.absolute_url_path()))
 
         # nothing should be versionned anymore
-        self.portal.portal_historiesstorage._shadowStorage._storage.clear()
+        if self.portal.portal_historiesstorage._shadowStorage is not None:
+            self.portal.portal_historiesstorage._shadowStorage._storage.clear()
         self.portal.portal_historiesstorage.zvc_repo._histories.clear()
         # remove every meetingadvice portal_types from portal_repository
         _configurePortalRepository(removed_types=self.tool.getAdvicePortalTypeIds())
