@@ -2349,6 +2349,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             allowed_types.append(cfg.getItemTypeName())
             query = {}
             query['portal_type'] = allowed_types
+            query['sort_on'] = "modified"
+            query['sort_order'] = "reverse"
         return query
 
     security.declarePublic('getDefaultBudgetInfo')
