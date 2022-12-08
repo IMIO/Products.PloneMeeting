@@ -210,11 +210,17 @@
                  />
           </label>
         </td>
-        <tal:comment replace="nothing">XXX changes by PM, add state-review_state class to color result</tal:comment>
+        <tal:comment replace="nothing">
+          XXX changes by PM:
+          - add state-review_state class to color result;
+          - display translated portal_type when hovering icon.</tal:comment>
         <td tal:attributes="class python:'contenttype-%s state-%s' % (item.portal_type, item.review_state)">
           <img tal:define="icon item/getIcon"
                tal:condition="icon"
-               tal:attributes="src string:${view/portal_url}/$icon" />
+               i18n:attributes="title"
+               i18n:domain="plone"
+               tal:attributes="src string:${view/portal_url}/$icon;
+                               title python: item.portal_type;" />
           <a class="browsesite" tal:condition="browsable"
              tal:attributes="
              href python:view.genRefBrowserUrl(item.getURL());
