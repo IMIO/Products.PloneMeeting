@@ -140,6 +140,7 @@ from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleVocabulary
 
 import copy
+import html
 import logging
 import os
 
@@ -5871,7 +5872,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''
         res = []
         for po_infos in self.getPowerObservers():
-            res.append((po_infos['row_id'], po_infos['label']))
+            res.append((po_infos['row_id'], html.escape(po_infos['label'])))
         return DisplayList(res)
 
     security.declarePrivate('isVotable')
