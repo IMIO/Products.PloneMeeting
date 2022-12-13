@@ -614,6 +614,7 @@ class FacadeActionsPanelView(BrowserView):
             appendTypeNameToTransitionLabel=False,
             showEdit=True,
             showOwnDelete=True,
+            showOwnDeleteWithComments=False,
             showActions=True,
             showAddContent=False,
             showHistory=False,
@@ -629,6 +630,7 @@ class FacadeActionsPanelView(BrowserView):
             appendTypeNameToTransitionLabel=appendTypeNameToTransitionLabel,
             showEdit=showEdit,
             showOwnDelete=showOwnDelete,
+            showOwnDeleteWithComments=showOwnDeleteWithComments,
             showActions=showActions,
             showAddContent=showAddContent,
             showHistory=showHistory,
@@ -656,6 +658,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                           appendTypeNameToTransitionLabel=False,
                           showEdit=True,
                           showOwnDelete=True,
+                          showOwnDeleteWithComments=False,
                           showActions=True,
                           showAddContent=False,
                           showHistory=False,
@@ -730,8 +733,9 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                 sent_to,
                 isRealManager, isManager, isEditorUser,
                 userAbleToCorrectItemWaitingAdvices, isPowerObserverHiddenHistory,
-                meeting_review_state, useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
-                showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
+                meeting_review_state, useIcons, showTransitions, appendTypeNameToTransitionLabel,
+                showEdit, showOwnDelete, showOwnDeleteWithComments, showActions,
+                showAddContent, showHistory, showHistoryLastEventHasComments,
                 showArrows, isPresentable, self.portal_url, kwargs)
 
     @ram.cache(__call___cachekey)
@@ -742,6 +746,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             appendTypeNameToTransitionLabel=False,
             showEdit=True,
             showOwnDelete=True,
+            showOwnDeleteWithComments=False,
             showActions=True,
             showAddContent=False,
             showHistory=False,
@@ -780,6 +785,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                      appendTypeNameToTransitionLabel=appendTypeNameToTransitionLabel,
                      showEdit=showEdit,
                      showOwnDelete=showOwnDelete,
+                     showOwnDeleteWithComments=False,
                      showActions=showActions,
                      showAddContent=showAddContent,
                      showHistory=showHistory,
@@ -818,6 +824,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
                           appendTypeNameToTransitionLabel=False,
                           showEdit=True,
                           showOwnDelete=True,
+                          showOwnDeleteWithComments=False,
                           showActions=True,
                           showAddContent=False,
                           showHistory=False,
@@ -838,8 +845,9 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         return (self.context.UID(), self.context.query_state(),
                 isRealManager, isManager,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
-                showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
-                showArrows, self.portal_url, kwargs)
+                showOwnDelete, showOwnDeleteWithComments, showActions, showAddContent,
+                showHistory, showHistoryLastEventHasComments, showArrows,
+                self.portal_url, kwargs)
 
     @ram.cache(__call___cachekey)
     def MeetingActionsPanelView__call__(
@@ -849,6 +857,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
             appendTypeNameToTransitionLabel=False,
             showEdit=True,
             showOwnDelete=True,
+            showOwnDeleteWithComments=False,
             showActions=True,
             showAddContent=False,
             showHistory=False,
@@ -865,6 +874,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
                      appendTypeNameToTransitionLabel=appendTypeNameToTransitionLabel,
                      showEdit=showEdit,
                      showOwnDelete=showOwnDelete,
+                     showOwnDeleteWithComments=showOwnDeleteWithComments,
                      showActions=showActions,
                      showAddContent=showAddContent,
                      showHistory=showHistory,
@@ -900,6 +910,42 @@ class AdviceActionsPanelView(BaseActionsPanelView):
     """
     def __init__(self, context, request):
         super(AdviceActionsPanelView, self).__init__(context, request)
+        self.SECTIONS_TO_RENDER = ('renderOwnDelete',
+                                   'renderOwnDeleteWithComments')
+
+    def __call__(
+            self,
+            useIcons=True,
+            showTransitions=True,
+            appendTypeNameToTransitionLabel=False,
+            showEdit=True,
+            showOwnDelete=True,
+            # enable showOwnDeleteWithComments
+            showOwnDeleteWithComments=True,
+            showActions=True,
+            showAddContent=False,
+            showHistory=False,
+            showHistoryLastEventHasComments=True,
+            showArrows=False,
+            forceRedirectAfterTransition=False,
+            **kwargs):
+        """
+          Redefined to add ram.cache...
+        """
+        return super(AdviceActionsPanelView, self).\
+            __call__(useIcons=useIcons,
+                     showTransitions=showTransitions,
+                     appendTypeNameToTransitionLabel=appendTypeNameToTransitionLabel,
+                     showEdit=showEdit,
+                     showOwnDelete=showOwnDelete,
+                     showOwnDeleteWithComments=showOwnDeleteWithComments,
+                     showActions=showActions,
+                     showAddContent=showAddContent,
+                     showHistory=showHistory,
+                     showHistoryLastEventHasComments=showHistoryLastEventHasComments,
+                     showArrows=showArrows,
+                     forceRedirectAfterTransition=forceRedirectAfterTransition,
+                     **kwargs)
 
     @memoize_contextless
     def _transitionsToConfirm(self):
@@ -944,6 +990,7 @@ class ConfigActionsPanelView(ActionsPanelView):
                  appendTypeNameToTransitionLabel=True,
                  showEdit=True,
                  showOwnDelete=True,
+                 showOwnDeleteWithComments=False,
                  showActions=True,
                  showAddContent=False,
                  showHistory=False,
@@ -970,6 +1017,7 @@ class ConfigActionsPanelView(ActionsPanelView):
                      appendTypeNameToTransitionLabel=appendTypeNameToTransitionLabel,
                      showEdit=showEdit,
                      showOwnDelete=showOwnDelete,
+                     showOwnDeleteWithComments=showOwnDeleteWithComments,
                      showActions=showActions,
                      showAddContent=showAddContent,
                      showHistory=showHistory,
