@@ -3,6 +3,7 @@
 from AccessControl import Unauthorized
 from Acquisition import aq_base
 from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
+from archetypes.referencebrowserwidget.utils import named_template_adapter
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.ckeditor.browser.ckeditorfinder import CKFinder
 from collective.ckeditor.browser.ckeditorview import AjaxSave
@@ -1347,6 +1348,10 @@ class PMCKFinder(CKFinder):
         self.allowaddfolder = False
         self.showsearchbox = False
         self.openuploadwidgetdefault = True
+
+
+pm_default_popup_template = named_template_adapter(
+    ViewPageTemplateFile('templates/popup.pt'))
 
 
 class PMReferenceBrowserPopup(ReferenceBrowserPopup):

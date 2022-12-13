@@ -246,20 +246,25 @@
         permission="zope.Public"
         allowed_interface="Products.CMFPlone.browser.interfaces.IPlone" />
 
-    <configure package="plone.app.search"
-      zcml:condition="installed collective.solr">
-      <browser:page
-        name="search"
-        class="plone.app.search.browser.Search"
-        permission="zope2.View"
-        for="plone.app.layout.navigation.interfaces.INavigationRoot"
-        template="search.pt"
-        layer="collective.solr.browser.interfaces.IThemeSpecific"
-        zcml:condition="not-have plone-5"
-        />
+    <configure package="plone.app.search" zcml:condition="installed collective.solr">
+        <browser:page
+          name="search"
+          class="plone.app.search.browser.Search"
+          permission="zope2.View"
+          for="plone.app.layout.navigation.interfaces.INavigationRoot"
+          template="search.pt"
+          layer="collective.solr.browser.interfaces.IThemeSpecific"
+          zcml:condition="not-have plone-5" />
     </configure>
 
-    <adapter for="z3c.form.interfaces.IWidget"
-             factory=".widgets.pm_richtext.PMZ3CFormWidgetSettings" />
+    <adapter
+        for="z3c.form.interfaces.IWidget"
+        factory=".widgets.pm_richtext.PMZ3CFormWidgetSettings" />
+
+    <adapter
+        for="Products.Five.BrowserView"
+        factory=".browser.overrides.pm_default_popup_template"
+        name="popup"
+        provides="zope.formlib.namedtemplate.INamedTemplate" />
 
 </configure>

@@ -69,6 +69,9 @@ Changelog
 - Fixed `MeetingItem.setManuallyLinkedItems` when item created from restapi call
   as item is still not indexed and so not found using a `portal_catalog` query.
   [gbastien]
+- Overrided `archetypes.referencebrowserwidget popup.pt` to display elements
+  colored following `review_state` and sorted on `modified reversed`.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
