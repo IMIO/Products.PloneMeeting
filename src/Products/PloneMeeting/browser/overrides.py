@@ -1446,7 +1446,7 @@ class PMContentHistoryView(IHContentHistoryView):
       Overrides the ContentHistoryView template to use our own.
       We want to display the content_history as a table.
     '''
-    histories_to_handle = (u'revision', u'workflow', u'data_changes')
+    histories_to_handle = (u'revision', u'workflow', u'data_changes', u'deleted_children')
 
     def show_history(self):
         """Override to take MeetingConfig.hideHistoryTo into account."""
