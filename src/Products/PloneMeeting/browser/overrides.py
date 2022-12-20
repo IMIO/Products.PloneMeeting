@@ -919,7 +919,8 @@ class AdviceActionsPanelView(BaseActionsPanelView):
             showTransitions=True,
             appendTypeNameToTransitionLabel=False,
             showEdit=True,
-            showOwnDelete=True,
+            # disable showOwnDelete
+            showOwnDelete=False,
             # enable showOwnDeleteWithComments
             showOwnDeleteWithComments=True,
             showActions=True,
