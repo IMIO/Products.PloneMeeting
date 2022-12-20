@@ -455,7 +455,7 @@ function groupedConfigs() {
 function initializeActionsPanelTooltipster_callback() {
     jQuery(function($) {
         initializeOverlays();
-        preventDefaultClickTransition();
+        preventDefaultClick();
         duplicateItem();
     });
 }

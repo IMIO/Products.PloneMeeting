@@ -80,9 +80,10 @@
                   <div class="advice_popup_label">
                     <span tal:condition="advice/optional">(</span>
                     <span class="advice-name" tal:content="advice/name"></span>
-                         <tal:showDelayLabel condition="python: advice['delay'] and advice['delay_label']">
-                              - <span class="advice-label" tal:content="advice/delay_label"></span>
-                         </tal:showDelayLabel><span tal:condition="advice/optional">)</span>
+                    <tal:showDelayLabel condition="python: advice['delay'] and advice['delay_label']">
+                    - <span class="advice-label" tal:content="advice/delay_label"></span>
+                    </tal:showDelayLabel>
+                    <span tal:condition="advice/optional">)</span>
                   </div>
                   <div class="advice_popup_actions">
                      &nbsp;&nbsp;

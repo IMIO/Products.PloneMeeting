@@ -108,6 +108,14 @@ def advice_hide_during_redactionDefaultValue(data):
     return hidden
 
 
+def advice_label(advice_info):
+    """Render an advice label useable in several places."""
+    res = advice_info["name"]
+    if advice_info["delay"] and advice_info["delay_label"]:
+        res = "{0} - {1}".format(res, advice_info["delay_label"])
+    return res
+
+
 class MeetingAdvice(Container):
     """ """
 
@@ -137,21 +145,26 @@ class MeetingAdvice(Container):
         # the parent is not found because self does not have acquisition
         if not parent:
             return ""
-        if self.advice_group in parent.adviceIndex and parent.adviceIndex[self.advice_group]['isConfidential']:
+        if self.advice_group in parent.adviceIndex \
+           and parent.adviceIndex[self.advice_group]['isConfidential']:
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
             is_confidential_power_observer = tool.isPowerObserverForCfg(
                 cfg, cfg.getAdviceConfidentialFor())
             if not parent._adviceIsViewableForCurrentUser(
-               cfg, is_confidential_power_observer, parent.adviceIndex[self.advice_group]):
+               cfg,
+               is_confidential_power_observer,
+               parent.adviceIndex[self.advice_group]):
                 raise Unauthorized
 
         # we can not return a translated msg using _ so translate it
-        return translate("Advice given on item ${item_title}",
-                         mapping={'item_title': '"%s"' % unicode(parent.Title(), 'utf-8')},
-                         domain="PloneMeeting",
-                         default='Advice given on item "%s"' % parent.Title(),
-                         context=self.REQUEST)
+        return translate(
+            "Advice ${advice_label} given on item ${item_title}",
+            mapping={'item_title': unicode(parent.Title()),
+                     'advice_label': unicode(advice_label(parent.adviceIndex[self.advice_group]))},
+            domain="PloneMeeting",
+            default="Advice given on item",
+            context=self.REQUEST)
 
     def title_or_id(self):
         """ """

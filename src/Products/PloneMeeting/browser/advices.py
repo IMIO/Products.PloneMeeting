@@ -320,9 +320,6 @@ class AdviceInfos(BrowserView):
         self.customMessageInfos = customMessageInfos
         return self.index()
 
-    def authorname(self, advice):
-        return self.tool.getUserName(advice.Creator())
-
     def adviser_users(self, advice_info):
         """ """
         res = u''
