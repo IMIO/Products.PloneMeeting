@@ -192,16 +192,18 @@
                                    tal:attributes="src string:${portal_url}/manage_annexes.gif"/>
                             </a>
                           </td>
-                          <td align="right" width="20px" class="noPadding">
-                              <img tal:condition="python: view.mayDelete(obj)"
-                                   i18n:attributes="title" title="Delete advice"
-                                   tal:attributes="src string:${portal_url}/delete_icon.png;
-                                                   onClick string:javascript:confirmDeleteObject(base_url='${context/absolute_url}', object_uid='${advice/advice_uid}', this);;"
-                                   onClick="confirmDeleteObject(this);" style="cursor:pointer"/>
-                              <img tal:condition="python: not view.mayDelete(obj)"
-                                   i18n:attributes="title" title="Advice not deletable"
-                                   tal:attributes="src string:${portal_url}/delete_grey_icon.png;"
-                                   style="cursor:help"/>
+                          <td align="right" width="20px" class="noPadding"
+                              tal:define="mayDelete python: view.mayDelete(obj)">
+                            <a class="link-overlay-pm"
+                               tal:attributes="href string:${obj_absolute_url}/@@delete_with_comments?uid=${advice/advice_uid};"
+                               tal:condition="python: mayDelete">
+                              <img i18n:attributes="title" title="Delete advice"
+                                   tal:attributes="src string:${portal_url}/delete_icon.png;" />
+                            </a>
+                            <img tal:condition="python: not mayDelete"
+                                 i18n:attributes="title" title="Advice not deletable"
+                                 tal:attributes="src string:${portal_url}/delete_grey_icon.png;"
+                                 style="cursor:help"/>
                           </td>
                         </tal:mayEdit>
                         <td align="right" width="20px" class="noPadding" tal:condition="python: obj and adviceHolderIsViewable">
