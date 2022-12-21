@@ -6111,7 +6111,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # only MeetingManager may accept/refuse emergency
         self.assertFalse(item.adapted().mayAcceptOrRefuseEmergency())
         # item emergency history is empty
-        self.assertTrue(not item.emergency_changes_history)
+        self.assertFalse(item.emergency_changes_history)
         itemEmergencyView = item.restrictedTraverse('item-emergency')
         form = item.restrictedTraverse('@@item_emergency_change_form').form_instance
 

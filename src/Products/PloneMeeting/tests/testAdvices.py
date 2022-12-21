@@ -4080,6 +4080,24 @@ class testAdvices(PloneMeetingTestCase):
         advices_icons_infos = itemTemplate.restrictedTraverse('@@advices-icons-infos')
         self.assertTrue(advices_icons_infos('not_given'))
 
+    def test_pm_DeletingAdviceSavedToItemHistory(self):
+        """When an advice is deleted, a line is added to the item history."""
+        item, advice = self._setUpHistorizedAdvice()
+        self.assertFalse(item.deleted_children_history)
+        self.assertTrue(advice in item.objectValues())
+        self.request.form['uid'] = advice.UID()
+        self.request.form['comment'] = "My comment"
+        view = advice.restrictedTraverse('@@delete_with_comments')
+        view.apply(None)
+        # advice was deleted
+        self.assertFalse(advice in item.objectValues())
+        # deletion was historized
+        self.assertTrue(item.deleted_children_history[0]['action'], "delete_advice")
+        self.assertTrue(item.deleted_children_history[0]['comments'], "My comment")
+        # when duplicating item, history is empty
+        cloned_item = item.clone()
+        self.assertFalse(cloned_item.deleted_children_history)
+
 
 def test_suite():
     from unittest import makeSuite
