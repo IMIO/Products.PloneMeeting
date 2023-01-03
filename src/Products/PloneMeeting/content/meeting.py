@@ -1980,8 +1980,8 @@ class Meeting(Container):
             if "first_item_number" in cfg.getYearlyInitMeetingNumbers():
                 # I must reinit the first_item_number to 1 if it is the first
                 # meeting of this year.
-                prev = self.get_previous_meeting()
-                if prev and \
+                prev = self.get_previous_meeting(interval=365)
+                if not prev or \
                    (prev.date.year != self.date.year):
                     self.first_item_number = 1
                     updated = True
