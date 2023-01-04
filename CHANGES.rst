@@ -7,6 +7,9 @@ Changelog
 
 - Added `pmManager2` in `testing` profile so `plonemeeting.restapi` tests pass.
   [gbastien]
+- Fixed `MeetingItem.setManuallyLinkedItems` when item created from restapi call
+  as item is still not indexed and so not found using a `portal_catalog` query.
+  [gbastien]
 
 4.1.28.35 (2022-02-14)
 ----------------------
