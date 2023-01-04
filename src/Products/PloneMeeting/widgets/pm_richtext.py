@@ -99,7 +99,7 @@ class RichTextEdit(BrowserView):
 
     def __call__(self, field_name):
         """ """
-        # notify that edit befun, will especially lock content
+        # notify that edit begun, will especially lock content
         notify(EditBegunEvent(self.context))
         self.field_name = field_name
         self.widget = get_dx_widget(self.context, field_name, mode=INPUT_MODE)

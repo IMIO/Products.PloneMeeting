@@ -13,6 +13,7 @@ from plone.app.textfield import RichText
 from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IDXMeetingContent
 from Products.PloneMeeting.utils import findMeetingAdvicePortalType
@@ -108,6 +109,14 @@ def advice_hide_during_redactionDefaultValue(data):
     return hidden
 
 
+def get_advice_label(advice_info):
+    """Render an advice label useable in several places."""
+    res = advice_info["name"]
+    if advice_info["delay"] and advice_info["delay_label"]:
+        res = u"{0} - {1}".format(res, safe_unicode(advice_info["delay_label"]))
+    return res
+
+
 class MeetingAdvice(Container):
     """ """
 
@@ -137,21 +146,30 @@ class MeetingAdvice(Container):
         # the parent is not found because self does not have acquisition
         if not parent:
             return ""
-        if self.advice_group in parent.adviceIndex and parent.adviceIndex[self.advice_group]['isConfidential']:
+        if self.advice_group in parent.adviceIndex \
+           and parent.adviceIndex[self.advice_group]['isConfidential']:
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
             is_confidential_power_observer = tool.isPowerObserverForCfg(
                 cfg, cfg.getAdviceConfidentialFor())
             if not parent._adviceIsViewableForCurrentUser(
-               cfg, is_confidential_power_observer, parent.adviceIndex[self.advice_group]):
+               cfg,
+               is_confidential_power_observer,
+               parent.adviceIndex[self.advice_group]):
                 raise Unauthorized
 
+        # when creating a new advice object, it still not exist in parent's adviceIndex
+        label = u""
+        if self.advice_group in parent.adviceIndex:
+            label = get_advice_label(parent.adviceIndex[self.advice_group])
         # we can not return a translated msg using _ so translate it
-        return translate("Advice given on item ${item_title}",
-                         mapping={'item_title': '"%s"' % unicode(parent.Title(), 'utf-8')},
-                         domain="PloneMeeting",
-                         default='Advice given on item "%s"' % parent.Title(),
-                         context=self.REQUEST)
+        return translate(
+            "Advice ${advice_label} given on item ${item_title}",
+            mapping={'item_title': unicode(parent.Title(), 'utf-8'),
+                     'advice_label': label},
+            domain="PloneMeeting",
+            default="Advice given on item",
+            context=self.REQUEST)
 
     def title_or_id(self):
         """ """

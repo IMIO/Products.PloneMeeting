@@ -34,7 +34,7 @@
       <tal:author condition="nocall:obj">
         <tal:i18n i18n:domain="plone" i18n:translate="label_by_author">
         by
-        <span tal:content="python: view.authorname(obj)"
+        <span tal:content="python: view.tool.getUserName(obj.Creator())"
               i18n:name="author">Roland Barthes</span>
         </tal:i18n>
       </tal:author>

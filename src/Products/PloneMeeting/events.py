@@ -682,6 +682,8 @@ def item_added_or_initialized(item):
     item.emergency_changes_history = PersistentList()
     # Add a place to store completeness changes history
     item.completeness_changes_history = PersistentList()
+    # Add a place to store deleted advices history
+    item.deleted_children_history = PersistentList()
     # Add a place to store takenOverBy by review_state user id
     item.takenOverByInfos = PersistentMapping()
     # An item has ben modified, use get_again for portlet_todo
