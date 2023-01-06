@@ -76,6 +76,9 @@ Changelog
   deleting an advice, a comment may be entered and it will be historized in the
   item's history.
   [gbastien]
+- Make sure itemtemplates managers have access to fields that are restricted to
+  MeetingManagers when managing the item templates.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
@@ -366,9 +369,6 @@ Changelog
 - Added `events._invalidateAttendeesRelatedCache` to factorize invalidation of
   attendees related cache. Used by `person/held_position/meeting` to invalidate
   caches when necessary.
-  [gbastien]
-- Make sure itemtemplates managers have access to fields that are restricted to
-  MeetingManagers when managing the item templates.
   [gbastien]
 
 4.2rc27 (2022-05-17)
