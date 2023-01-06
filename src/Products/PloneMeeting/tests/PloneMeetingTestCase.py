@@ -732,6 +732,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         for field_name in field_names:
             if related_to == 'MeetingItem':
                 usedItemAttrs = list(cfg.getUsedItemAttributes())
+                # make sure we are not playing with a field_name that does not exist
+                if field_name not in cfg.getField('usedItemAttributes').Vocabulary(cfg):
+                    raise Exception("\"%s\" does not exist in usedItemAttributes" % field_name)
                 if enable and field_name not in usedItemAttrs:
                     usedItemAttrs.append(field_name)
                 elif not enable and field_name in usedItemAttrs:
@@ -739,6 +742,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 cfg.setUsedItemAttributes(usedItemAttrs)
             elif related_to == 'Meeting':
                 usedMeetingAttrs = list(cfg.getUsedMeetingAttributes())
+                # make sure we are not playing with a field_name that does not exist
+                if field_name not in cfg.getField('usedMeetingAttributes').Vocabulary(cfg):
+                    raise Exception("\"%s\" does not exist in usedMeetingAttributes" % field_name)
                 if enable and field_name not in usedMeetingAttrs:
                     usedMeetingAttrs.append(field_name)
                 elif not enable and field_name in usedMeetingAttrs:

@@ -2453,11 +2453,11 @@ class testMeetingConfig(PloneMeetingTestCase):
            fields on the item, like for example the "checklist" field."""
         self.changeUser('templatemanager1')
         template = self.meetingConfig.itemtemplates.template1
-        self.assertFalse(template.attribute_is_used('checkList'))
-        self.assertFalse(template.showMeetingManagerReservedField('checkList'))
-        self._enableField('checkList')
-        self.assertTrue(template.attribute_is_used('checkList'))
-        self.assertTrue(template.showMeetingManagerReservedField('checkList'))
+        self.assertFalse(template.attribute_is_used('textCheckList'))
+        self.assertFalse(template.showMeetingManagerReservedField('textCheckList'))
+        self._enableField('textCheckList')
+        self.assertTrue(template.attribute_is_used('textCheckList'))
+        self.assertTrue(template.showMeetingManagerReservedField('textCheckList'))
         # with a RichText field
         self._enableField('notes')
         self.assertTrue(template.attribute_is_used('notes'))
@@ -2467,8 +2467,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         self._addPrincipalToGroup(
             self.member.id, get_plone_group_id(self.developers_uid, 'creators'))
         item = self.create('MeetingItem')
-        self.assertTrue(item.attribute_is_used('checkList'))
-        self.assertFalse(item.showMeetingManagerReservedField('checkList'))
+        self.assertTrue(item.attribute_is_used('textCheckList'))
+        self.assertFalse(item.showMeetingManagerReservedField('textCheckList'))
         self.assertTrue(item.attribute_is_used('notes'))
         self.assertFalse(item.mayQuickEdit('notes'))
 
