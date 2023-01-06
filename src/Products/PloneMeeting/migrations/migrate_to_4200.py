@@ -1052,11 +1052,13 @@ class Migrate_To_4200(Migrator):
             self.addCKEditorStyle("table_optimization", "table", "style", "table-layout:auto;")
 
         if self.is_in_part('b'):  # update_all_local_roles
-            # update local_roles, workflow mappings and catalogs
+            # update workflow mappings before local_roles because permissions to add
+            # elements like "Image" will use it
+            self.refreshDatabase(catalogs=False, workflows=True)
             self.warnings += self.tool.update_all_local_roles(redirect=False)
 
         if self.is_in_part('c'):  # refresh catalog and workflow mappings
-            self.refreshDatabase(workflows=True, catalogsToUpdate=[])
+            self.refreshDatabase(catalogsToUpdate=[])
 
             # store meeting number of items
             self._updateMeetingsNumberOfItems()

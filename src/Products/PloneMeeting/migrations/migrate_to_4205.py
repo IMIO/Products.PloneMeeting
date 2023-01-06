@@ -96,6 +96,14 @@ class Migrate_To_4205(Migrator):
                 'versionateAdviceIfGivenAndItemModified':
                 'historizeAdviceIfGivenAndItemModified'})
 
+    def _updateLocalRolesItemBeforeStateValidated(self):
+        """Add permissions were not correctly setup on items in state before "validated"."""
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            review_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+            brains = self.catalog(portal_type=cfg.getItemTypeName(), review_state=review_states)
+            self.tool.update_all_local_roles(brains=brains)
+        logger.info('Done.')
+
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4205...')
@@ -103,6 +111,7 @@ class Migrate_To_4205(Migrator):
         # not necessary if executing the full upgrade to 4200
         if not from_migration_to_4200:
             self._updateMeetingCommittees()
+            self._updateLocalRolesItemBeforeStateValidated()
         self._initAdviceGivenHistory()
         logger.info('Migrating to PloneMeeting 4205... Done.')
 
@@ -111,7 +120,8 @@ def migrate(context):
     '''This migration function will:
 
        1) Update meetig.committees to add committee_observations;
-       2) Move from advice versioning to advice_given_history.
+       2) Update local roles of items in before review_state "validated";
+       3) Move from advice versioning to advice_given_history.
     '''
     migrator = Migrate_To_4205(context)
     migrator.run()
