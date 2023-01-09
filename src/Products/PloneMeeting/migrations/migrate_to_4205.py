@@ -16,6 +16,21 @@ from Products.ZCatalog.ProgressHandler import ZLogHandler
 
 class Migrate_To_4205(Migrator):
 
+    def _updateConfigCommittees(self):
+        """MeetingConfig.committees get a new value "enable_groups"."""
+        logger.info('Updating datagridfield "committees" for every MeetingConfigs...')
+        # reinstall workflows to take new role "MeetingCommitteeEditor" into account
+        self.runProfileSteps('Products.PloneMeeting', steps=['workflow'], profile='default')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            committees = cfg.getCommittees()
+            for committee in committees:
+                if "enable_editors" not in committee or \
+                   not committee["enable_editors"]:
+                    committee["enable_editors"] = "0"
+            cfg.setCommittees(committees)
+            cfg.at_post_edit_script()
+        logger.info('Done.')
+
     def _updateMeetingCommittees(self):
         """Initialize "committee_observations" column for every meetings..."""
         logger.info('Initializing "committee_observations" for every meetings "committees"...')
@@ -101,7 +116,8 @@ class Migrate_To_4205(Migrator):
         for cfg in self.tool.objectValues('MeetingConfig'):
             review_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
             brains = self.catalog(portal_type=cfg.getItemTypeName(), review_state=review_states)
-            self.tool.update_all_local_roles(brains=brains)
+            if brains:
+                self.tool.update_all_local_roles(brains=brains)
         logger.info('Done.')
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):
@@ -110,6 +126,7 @@ class Migrate_To_4205(Migrator):
 
         # not necessary if executing the full upgrade to 4200
         if not from_migration_to_4200:
+            self._updateConfigCommittees()
             self._updateMeetingCommittees()
             self._updateLocalRolesItemBeforeStateValidated()
         self._initAdviceGivenHistory()
@@ -119,9 +136,10 @@ class Migrate_To_4205(Migrator):
 def migrate(context):
     '''This migration function will:
 
-       1) Update meetig.committees to add committee_observations;
-       2) Update local roles of items in before review_state "validated";
-       3) Move from advice versioning to advice_given_history.
+       1) Update MeetingConfig.committees to add "enable_groups";
+       2) Update meetig.committees to add "committee_observations";
+       3) Update local roles of items in before review_state "validated";
+       4) Move from advice versioning to "advice_given_history".
     '''
     migrator = Migrate_To_4205(context)
     migrator.run()
