@@ -10,7 +10,6 @@ from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group
-from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
 from collective.datagridcolumns.SelectColumn import SelectColumn
@@ -172,6 +171,8 @@ ITEM_WF_STATE_ATTRS = [
     'itemAdviceInvalidateStates',
     'itemAutoSentToOtherMCStates',
     'itemBudgetInfosStates',
+    'ItemCommitteesStates',
+    'ItemCommitteesViewStates',
     'itemGroupsInChargeStates',
     'itemCopyGroupsStates',
     'itemManualSentToOtherMCStates',
@@ -2503,6 +2504,40 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='itemCommitteesStates',
+        widget=MultiSelectionWidget(
+            description="ItemCommitteesStates",
+            description_msgid="item_committees_states_descr",
+            format="checkbox",
+            label='Itemcommitteesstates',
+            label_msgid='PloneMeeting_label_itemCommitteesStates',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="committees",
+        multiValued=1,
+        vocabulary='listItemStates',
+        default=defValues.itemCommitteesStates,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='itemCommitteesViewStates',
+        widget=MultiSelectionWidget(
+            description="ItemCommitteesViewStates",
+            description_msgid="item_committees_view_states_descr",
+            format="checkbox",
+            label='Itemcommitteesviewstates',
+            label_msgid='PloneMeeting_label_itemCommitteesViewStates',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="committees",
+        multiValued=1,
+        vocabulary='listItemStates',
+        default=defValues.itemCommitteesViewStates,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
     DataGridField(
         name='committees',
         widget=DataGridField._properties['widget'](
@@ -4026,14 +4061,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         stored_enable_editors = [row["row_id"] for row in self.getCommittees()
                                  if row["enable_editors"] == "1"]
         disabled_editors = [v["row_id"] for v in value
-                           if v.get('orderindex_', None) != 'template_row_marker' and
-                           v["enable_editors"] == "0"]
+                            if v.get('orderindex_', None) != 'template_row_marker' and
+                            v["enable_editors"] == "0"]
         for disabled_editor in set(stored_enable_editors).intersection(disabled_editors):
-                plone_group_id = '{0}_{1}'.format(self.getId(), disabled_editor)
-                if api.group.get(plone_group_id).getGroupMembers():
-                    return translate('committee_disabled_editors_plone_group_not_empty',
-                                     domain='PloneMeeting',
-                                     context=self.REQUEST)
+            plone_group_id = '{0}_{1}'.format(self.getId(), disabled_editor)
+            if api.group.get(plone_group_id).getGroupMembers():
+                return translate('committee_disabled_editors_plone_group_not_empty',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
 
         # columns using_groups and auto_from are exclusive
         if self.is_committees_using("auto_from", new_value) and \
@@ -7146,6 +7181,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                           if committee['enabled'] == '1']
         # in case we have p_committee_id, only return this element, not a list
         if committee_id:
+            # manage __suppl__
+            committee_id = committee_id.split('__suppl__')[0]
             committees = [committee for committee in committees
                           if committee['row_id'] == committee_id][0]
         return committees

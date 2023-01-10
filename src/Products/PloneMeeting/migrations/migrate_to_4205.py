@@ -20,7 +20,7 @@ class Migrate_To_4205(Migrator):
         """MeetingConfig.committees get a new value "enable_groups"."""
         logger.info('Updating datagridfield "committees" for every MeetingConfigs...')
         # reinstall workflows to take new role "MeetingCommitteeEditor" into account
-        self.runProfileSteps('Products.PloneMeeting', steps=['workflow'], profile='default')
+        self.runProfileSteps('Products.PloneMeeting', steps=['rolemap', 'workflow'], profile='default')
         for cfg in self.tool.objectValues('MeetingConfig'):
             committees = cfg.getCommittees()
             for committee in committees:
@@ -29,6 +29,8 @@ class Migrate_To_4205(Migrator):
                     committee["enable_editors"] = "0"
             cfg.setCommittees(committees)
             cfg.at_post_edit_script()
+        # update new field committeeTranscript on items
+        self.initNewHTMLFields(query={'meta_type': ('MeetingItem')})
         logger.info('Done.')
 
     def _updateMeetingCommittees(self):

@@ -1716,7 +1716,6 @@ schema = Schema((
         default_output_type="text/x-html-safe",
         searchable=True,
         optional=True,
-        read_permission=WriteCommitteeFields,
         write_permission=WriteCommitteeFields,
     ),
     TextField(
@@ -1733,7 +1732,6 @@ schema = Schema((
         default_output_type="text/x-html-safe",
         searchable=True,
         optional=True,
-        read_permission=WriteCommitteeFields,
         write_permission=WriteCommitteeFields,
     ),
     TextField(
@@ -6970,13 +6968,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _updateCommitteeEditorsLocalRoles(self, cfg, item_state):
         '''Add local roles depending on MeetingConfig.committees.'''
+        if item_state in cfg.getItemCommitteesStates():
+            local_roles = ("MeetingCommitteeEditor", "Reader")
+        elif item_state in cfg.getItemCommitteesViewStates():
+            local_roles = ("Reader", )
+        else:
+            return
         cfg_id = cfg.getId()
         for committee_id in self.getCommittees():
             if committee_id != NO_COMMITTEE and \
-               cfg.getCommittees(committee_id=committee_id)['enable_editors'] == '1':
+               cfg.getCommittees(committee_id=committee_id)['enable_editors'] == "1":
                 self.manage_addLocalRoles(
-                    get_plone_group_id(cfg_id, committee_id),
-                    ("MeetingCommitteeEditor", ))
+                    get_plone_group_id(cfg_id, committee_id), local_roles)
 
     def _updateGroupsInChargeLocalRoles(self, cfg, item_state):
         '''Get the current groupsInCharge and give View access to the _observers Plone group.'''
