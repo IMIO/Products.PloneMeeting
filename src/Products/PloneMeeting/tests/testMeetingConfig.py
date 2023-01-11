@@ -8,6 +8,7 @@
 from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import select_org_for_function
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
@@ -2310,6 +2311,37 @@ class testMeetingConfig(PloneMeetingTestCase):
         # except if no more used
         cfg_committees[0]['default_attendees'] = []
         self.failIf(cfg.validate_committees(cfg_committees))
+
+    def test_pm_Validate_committees_enable_editors(self):
+        """When enable_editors=="1" a Plone group is created and
+           config will be removable/disablable if Plone group is empty."""
+        cfg = self.meetingConfig
+        self._enableField("committees", related_to='Meeting')
+        self.changeUser('siteadmin')
+        committees = cfg.getCommittees()
+        # no Plone group for row 0
+        plone_group_id = get_plone_group_id(cfg.getId(), committees[0]['row_id'])
+        self.assertIsNone(api.group.get(plone_group_id))
+        committees[0]['enable_editors'] = "1"
+        cfg.setCommittees(committees)
+        cfg.at_post_edit_script()
+        # a Plone group is created
+        group = api.group.get(plone_group_id)
+        self.assertTrue(group)
+        # add a user to the group so config is not removable
+        group.addMember('pmManager')
+        # enable_editors can not be set to "0"
+        committees[0]['enable_editors'] = "0"
+        self.failUnless(cfg.validate_committees(committees))
+        committees[0]['enable_editors'] = "1"
+        self.failIf(cfg.validate_committees(committees))
+        # row can not be removed
+        self.failUnless(cfg.validate_committees([committees[1]]))
+        # if group empty, then config me be disabled or line removed
+        group.removeMember('pmManager')
+        committees[0]['enable_editors'] = "0"
+        self.failIf(cfg.validate_committees(committees))
+        self.failIf(cfg.validate_committees([committees[1]]))
 
     def test_pm_Validate_defaultPollType(self):
         """Test the MeetingConfig.defaultPollType validator,

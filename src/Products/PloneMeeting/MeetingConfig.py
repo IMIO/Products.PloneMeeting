@@ -3500,7 +3500,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         # get removed row_ids and remove linked Plone group
         # rows that were removed
-        storedRowIds = [v['row_id'].strip() for v in self.getCommittees()]
+        storedRowIds = [v['row_id'].strip() for v in self.getCommittees()
+                        if v['enable_editors'] == "1"]
         rowIds = [v['row_id'].strip() for v in value
                   if v.get('orderindex_', None) != 'template_row_marker']
         removedRowIds = [storedRowId for storedRowId in storedRowIds
