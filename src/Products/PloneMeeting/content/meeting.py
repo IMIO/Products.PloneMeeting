@@ -2409,7 +2409,8 @@ class PlacesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         # XXX with MeetingConfig AT, place is stored as utf-8, we need unicode
-        places = [safe_unicode(place) for place in cfg.getPlaces().strip().split('\r\n') if place]
+        places = [safe_unicode(place) for place in cfg.getPlaces().strip().split('\r\n')
+                  if place.strip()]
         # history when context is a Meeting
         if context.getTagName() == "Meeting" and \
            context.place and \
