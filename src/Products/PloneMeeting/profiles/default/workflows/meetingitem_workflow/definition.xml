@@ -20,6 +20,7 @@
  <permission>PloneMeeting: Write budget infos</permission>
  <permission>PloneMeeting: Write marginal notes</permission>
  <permission>PloneMeeting: Write internal notes</permission>
+ <permission>PloneMeeting: Write committee fields</permission>
  <state state_id="accepted"
         title="accepted"
         i18n:attributes="title">
@@ -68,6 +69,12 @@
    <permission-role>Manager</permission-role>
    <permission-role>Editor</permission-role>
    <permission-role>MeetingBudgetImpactEditor</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write committee fields"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingCommitteeEditor</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write decision"
                   acquired="False">
@@ -149,6 +156,12 @@
    <permission-role>Manager</permission-role>
    <permission-role>Editor</permission-role>
    <permission-role>MeetingBudgetImpactEditor</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write committee fields"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingCommitteeEditor</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write decision"
                   acquired="False">
@@ -232,6 +245,12 @@
    <permission-role>Editor</permission-role>
    <permission-role>MeetingBudgetImpactEditor</permission-role>
   </permission-map>
+  <permission-map name="PloneMeeting: Write committee fields"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingCommitteeEditor</permission-role>
+  </permission-map>
   <permission-map name="PloneMeeting: Write decision"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -314,6 +333,12 @@
    <permission-role>Editor</permission-role>
    <permission-role>MeetingBudgetImpactEditor</permission-role>
   </permission-map>
+  <permission-map name="PloneMeeting: Write committee fields"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingCommitteeEditor</permission-role>
+  </permission-map>
   <permission-map name="PloneMeeting: Write decision"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -393,6 +418,12 @@
    <permission-role>Manager</permission-role>
    <permission-role>Editor</permission-role>
    <permission-role>MeetingBudgetImpactEditor</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write committee fields"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+   <permission-role>MeetingCommitteeEditor</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write decision"
                   acquired="False">

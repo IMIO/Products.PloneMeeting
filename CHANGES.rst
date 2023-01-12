@@ -72,12 +72,23 @@ Changelog
 - Overrided `archetypes.referencebrowserwidget popup.pt` to display elements
   colored following `review_state` and sorted on `modified reversed`.
   [gbastien]
-- Set `renderOwnDeleteWithComments=True` for AdviceActionsPanelView so when
+- Set `renderOwnDeleteWithComments=True` for `AdviceActionsPanelView` so when
   deleting an advice, a comment may be entered and it will be historized in the
   item's history.
   [gbastien]
-- Make sure itemtemplates managers have access to fields that are restricted to
-  MeetingManagers when managing the item templates.
+- Make sure item templates managers have access to fields that are restricted to
+  `MeetingManagers` when managing the item templates.
+  [gbastien]
+- Added `committees editors` functionnality:
+
+  - May be enabled in `MeetingConfig.committees enable_editors`;
+  - When enabled, will create a Plone group, members of this group will be able
+    to edit fields `MeetingItem.committeeObservations` and
+    `MeetingItem.committeeTranscript`.
+
+  [gbastien]
+- Added parameters `field_names=[]` to `utils.forceHTMLContentTypeForEmptyRichFields`
+  so it is possible to specify field names to initialize when known.
   [gbastien]
 
 4.2rc34 (2022-09-29)

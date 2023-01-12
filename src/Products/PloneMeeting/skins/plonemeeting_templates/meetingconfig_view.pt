@@ -1211,7 +1211,13 @@
       <p i18n:translate="meetingconfig_committees_descr" class='pageNameDescr'></p><br />
       <table width="100%" class="discreet">
         <tr valign="top">
-          <td colspan="3" tal:define="field python:here.getField('orderedCommitteeContacts')">
+          <td width="33%" tal:define="field python:here.getField('orderedCommitteeContacts')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td width="34%" tal:define="field python:here.getField('itemCommitteesStates')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td width="33%" tal:define="field python:here.getField('itemCommitteesViewStates')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>

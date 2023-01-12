@@ -53,6 +53,7 @@ WriteItemMeetingManagerFields = 'PloneMeeting: Write item MeetingManager reserve
 ReadBudgetInfos = 'PloneMeeting: Read budget infos'
 WriteBudgetInfos = 'PloneMeeting: Write budget infos'
 WriteInternalNotes = 'PloneMeeting: Write internal notes'
+WriteCommitteeFields = 'PloneMeeting: Write committee fields'
 WriteMarginalNotes = 'PloneMeeting: Write marginal notes'
 WriteHarmlessConfig = 'PloneMeeting: Write harmless config'
 WriteRiskyConfig = 'PloneMeeting: Write risky config'
@@ -235,7 +236,8 @@ EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'category', 'classifier', 'co
 
 EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE = ['observations', 'inAndOutMoves', 'notes',
                                           'internalNotes', 'isAcceptableOutOfMeeting',
-                                          'committeeObservations', 'votesObservations']
+                                          'committeeObservations', 'committeeTranscript',
+                                          'votesObservations']
 
 # to differenciate items of different meeting configs,
 # use a different icon color (MeetingConfig.itemIconColor)

@@ -5435,8 +5435,8 @@ class testMeetingItem(PloneMeetingTestCase):
             'marginalNotes', 'observations', 'pollTypeObservations',
             'preferredMeeting', 'proposingGroup',
             'takenOverBy', 'templateUsingGroups',
-            'toDiscuss', 'committeeObservations', 'votesObservations',
-            'otherMeetingConfigsClonableToEmergency',
+            'toDiscuss', 'committeeObservations', 'committeeTranscript',
+            'votesObservations', 'otherMeetingConfigsClonableToEmergency',
             'internalNotes', 'externalIdentifier', 'isAcceptableOutOfMeeting']
         NEUTRAL_FIELDS += self._extraNeutralFields()
         # neutral + default + extra + getExtraFieldsToCopyWhenCloning(True) +
@@ -8236,6 +8236,46 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.get_every_successors(),
                          [new_item1, new_item2, new_item21, new_item22,
                           new_item3, new_item31])
+
+    def test_pm_CommitteesEditors(self):
+        """When enabled, a specific committees editors group may view the item
+           and edit the committeesObservations and committeeTranscript fields."""
+        cfg = self.meetingConfig
+        self._enableField("committees", related_to="Meeting")
+        self._enableField('committeeObservations')
+        self._enableField('committeeTranscript')
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', committees=['committee_1'])
+        # for now vendors do not have access to item
+        self.changeUser('pmCreator2')
+        self.assertFalse(self.hasPermission(View, item))
+        # configure committees editors
+        cfg_committees = cfg.getCommittees()
+        cfg_committees[0]['enable_editors'] = "1"
+        cfg.setCommittees(cfg_committees)
+        cfg.at_post_edit_script()
+        self._addPrincipalToGroup(
+            'pmCreator2', "{0}_{1}".format(cfg.getId(), 'committee_1'))
+        item.update_local_roles()
+        # still may not view or edit item as relevant states not defined in MeetingConfig
+        self.assertFalse(self.hasPermission(View, item))
+        cfg.setItemCommitteesStates(['itemcreated'])
+        cfg.setItemCommitteesViewStates(['validated'])
+        # now vendors have access
+        item.update_local_roles()
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(item.mayQuickEdit('committeeObservations'))
+        self.assertTrue(item.mayQuickEdit('committeeTranscript'))
+        self.assertFalse(item.mayQuickEdit('description'))
+        self.assertFalse(item.mayQuickEdit('decision'))
+        # when validated, only able to view, not edit
+        self.validateItem(item)
+        self.assertEqual(item.query_state(), "validated")
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertFalse(item.mayQuickEdit('committeeObservations'))
+        self.assertFalse(item.mayQuickEdit('committeeTranscript'))
+        self.assertFalse(item.mayQuickEdit('description'))
+        self.assertFalse(item.mayQuickEdit('decision'))
 
 
 def test_suite():

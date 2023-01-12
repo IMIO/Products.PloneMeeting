@@ -91,6 +91,7 @@ from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.config import WriteBudgetInfos
+from Products.PloneMeeting.config import WriteCommitteeFields
 from Products.PloneMeeting.config import WriteDecision
 from Products.PloneMeeting.config import WriteInternalNotes
 from Products.PloneMeeting.config import WriteItemMeetingManagerFields
@@ -1706,7 +1707,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         widget=RichWidget(
             condition="python: here.attribute_is_used('committeeObservations')",
-            description_msgid="descr_field_vieawable_by_everyone",
+            description_msgid="descr_field_editable_by_committee_editors",
             label='Committeeobservations',
             label_msgid='PloneMeeting_label_committeeObservations',
             i18n_domain='PloneMeeting',
@@ -1715,7 +1716,23 @@ schema = Schema((
         default_output_type="text/x-html-safe",
         searchable=True,
         optional=True,
-        write_permission=WriteItemMeetingManagerFields,
+        write_permission=WriteCommitteeFields,
+    ),
+    TextField(
+        name='committeeTranscript',
+        allowable_content_types=('text/html',),
+        widget=RichWidget(
+            condition="python: here.attribute_is_used('committeeTranscript')",
+            description_msgid="descr_field_vieawable_by_committee_editors",
+            label='Committeetranscript',
+            label_msgid='PloneMeeting_label_committeeTranscript',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        default_output_type="text/x-html-safe",
+        searchable=True,
+        optional=True,
+        write_permission=WriteCommitteeFields,
     ),
     TextField(
         name='votesObservations',
@@ -6842,6 +6859,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self._updateBudgetImpactEditorsLocalRoles(cfg, item_state)
         # update internal notes editors local roles
         self._updateInternalNotesEditorsLocalRoles(cfg, item_state)
+        # update committees editors local roles
+        self._updateCommitteeEditorsLocalRoles(cfg, item_state)
         # update group in charge local roles
         # we will give the current groupsInCharge _observers sub group access to this item
         self._updateGroupsInChargeLocalRoles(cfg, item_state)
@@ -6942,10 +6961,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # for access to confidential annexes, we use the code in the IIconifiedInfos adapter
         adapter = getAdapter(self, IIconifiedInfos)
         adapter.parent = self
-        groups = adapter._item_visible_for_groups(
+        group_ids = adapter._item_visible_for_groups(
             adapter.cfg.getItemInternalNotesEditableBy())
-        for group in groups:
-            self.manage_addLocalRoles(group, ('MeetingInternalNotesEditor',))
+        for group_id in group_ids:
+            self.manage_addLocalRoles(group_id, ('MeetingInternalNotesEditor',))
+
+    def _updateCommitteeEditorsLocalRoles(self, cfg, item_state):
+        '''Add local roles depending on MeetingConfig.committees.'''
+        if item_state in cfg.getItemCommitteesStates():
+            local_roles = ("MeetingCommitteeEditor", "Reader")
+        elif item_state in cfg.getItemCommitteesViewStates():
+            local_roles = ("Reader", )
+        else:
+            return
+        cfg_id = cfg.getId()
+        for committee_id in self.getCommittees():
+            if committee_id != NO_COMMITTEE and \
+               cfg.getCommittees(committee_id=committee_id)['enable_editors'] == "1":
+                self.manage_addLocalRoles(
+                    get_plone_group_id(cfg_id, committee_id), local_roles)
 
     def _updateGroupsInChargeLocalRoles(self, cfg, item_state):
         '''Get the current groupsInCharge and give View access to the _observers Plone group.'''
