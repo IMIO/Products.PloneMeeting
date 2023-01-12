@@ -79,6 +79,14 @@ Changelog
 - Make sure item templates managers have access to fields that are restricted to
   `MeetingManagers` when managing the item templates.
   [gbastien]
+- Added `committees editors` functionnality:
+
+  - May be enabled in `MeetingConfig.committees enable_editors`;
+  - When enabled, will create a Plone group, members of this group will be able
+    to edit fields `MeetingItem.committeeObservations` and
+    `MeetingItem.committeeTranscript`.
+
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
