@@ -30,7 +30,7 @@ class Migrate_To_4205(Migrator):
             cfg.setCommittees(committees)
             cfg.at_post_edit_script()
         # update new field committeeTranscript on items
-        self.initNewHTMLFields(query={'meta_type': ('MeetingItem')})
+        self.initNewHTMLFields(query={'meta_type': ('MeetingItem')}, field_names=['committeeTranscript'])
         logger.info('Done.')
 
     def _updateMeetingCommittees(self):
@@ -128,6 +128,8 @@ class Migrate_To_4205(Migrator):
 
         # not necessary if executing the full upgrade to 4200
         if not from_migration_to_4200:
+            # will upgrade collective.documentgenerator and collective.messagesviewlet
+            self.upgradeAll(omit=['Products.PloneMeeting:default'])
             self._updateConfigCommittees()
             self._updateMeetingCommittees()
             self._updateLocalRolesItemBeforeStateValidated()

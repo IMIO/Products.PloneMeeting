@@ -87,6 +87,9 @@ Changelog
     `MeetingItem.committeeTranscript`.
 
   [gbastien]
+- Added parameters `field_names=[]` to `utils.forceHTMLContentTypeForEmptyRichFields`
+  so it is possible to specify field names to initialize when known.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
