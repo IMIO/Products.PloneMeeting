@@ -133,6 +133,7 @@ class Migrate_To_4205(Migrator):
             self._updateConfigCommittees()
             self._updateMeetingCommittees()
             self._updateLocalRolesItemBeforeStateValidated()
+            self.addNewSearches()
         self._initAdviceGivenHistory()
         logger.info('Migrating to PloneMeeting 4205... Done.')
 

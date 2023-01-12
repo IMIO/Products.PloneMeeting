@@ -207,6 +207,14 @@
            factory="Products.PloneMeeting.adapters.NegativePreviousIndexValuesAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-with-negative-previous-index" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.SearchItemsOfMyCommitteesAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-of-my-committees" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.SearchItemsOfMyCommitteesEditableAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-of-my-committees-editable" />
 
   <adapter for="*"
            factory="Products.PloneMeeting.adapters.LastDecisionsAdapter"
