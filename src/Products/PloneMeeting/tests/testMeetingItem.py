@@ -8250,12 +8250,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator2')
         self.assertFalse(self.hasPermission(View, item))
         # configure committees editors
-        cfg_committees = cfg.getCommittees()
-        cfg_committees[0]['enable_editors'] = "1"
-        cfg.setCommittees(cfg_committees)
-        cfg.at_post_edit_script()
-        self._addPrincipalToGroup(
-            'pmCreator2', "{0}_{1}".format(cfg.getId(), 'committee_1'))
+        self._setUpCommitteeEditor(cfg)
         item.update_local_roles()
         # still may not view or edit item as relevant states not defined in MeetingConfig
         self.assertFalse(self.hasPermission(View, item))
