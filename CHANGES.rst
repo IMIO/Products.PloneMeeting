@@ -84,7 +84,9 @@ Changelog
   - May be enabled in `MeetingConfig.committees enable_editors`;
   - When enabled, will create a Plone group, members of this group will be able
     to edit fields `MeetingItem.committeeObservations` and
-    `MeetingItem.committeeTranscript`.
+    `MeetingItem.committeeTranscript`;
+  - New searches `Item of my committees` and `Items of my committees editable`
+    are available when committees are used.
 
   [gbastien]
 - Added parameters `field_names=[]` to `utils.forceHTMLContentTypeForEmptyRichFields`

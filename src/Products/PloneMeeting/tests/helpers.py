@@ -466,6 +466,15 @@ class PloneMeetingTestingHelpers(object):
         item.setGroupsInCharge(groups)
         item.update_local_roles()
 
+    def _setUpCommitteeEditor(self, cfg):
+        """Will setup "pmCreator2" as committee_1 editor."""
+        cfg_committees = cfg.getCommittees()
+        cfg_committees[0]['enable_editors'] = "1"
+        cfg.setCommittees(cfg_committees)
+        cfg.at_post_edit_script()
+        self._addPrincipalToGroup(
+            'pmCreator2', "{0}_{1}".format(cfg.getId(), 'committee_1'))
+
     def _tearDownGroupsInCharge(self, item):
         """If group in charge is overrided, it may be setup differently."""
         item.setGroupsInCharge([])

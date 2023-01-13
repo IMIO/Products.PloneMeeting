@@ -2964,8 +2964,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': False,
                     'tal_condition': "python: 'takenOverBy' in cfg.getUsedItemAttributes() "
-                                     "and (tool.get_orgs_for_user(omitted_suffixes=['observers', ], "
-                                     "the_objects=False) or tool.isManager(cfg))",
+                                     "and (tool.get_orgs_for_user(omitted_suffixes=['observers', ]) "
+                                     "or tool.isManager(cfg))",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # All (visible) items
@@ -3348,6 +3348,40 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': False,
                     'tal_condition': "python: cfg.getEnableLabels()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items of my committees
+                ('searchitemsofmycommittees', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-of-my-committees'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: tool.get_orgs_for_user(omitted_suffixes=['observers', ]) "
+                        "and cfg.getCommittees()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items of my committees editable
+                ('searchitemsofmycommitteeseditable', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-of-my-committees-editable'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: tool.get_orgs_for_user(omitted_suffixes=['observers', ]) "
+                        "and cfg.getCommittees()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # All not-yet-decided meetings

@@ -1595,6 +1595,51 @@ class NegativePreviousIndexValuesAdapter(CompoundCriterionBaseAdapter):
     query = query_negative_previous_index_values
 
 
+class SearchItemsOfMyCommitteesAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    @ram.cache(query_user_groups_cachekey)
+    def query_itemsofmycommittees(self):
+        """Queries all items of committees of the current user."""
+        if not self.cfg:
+            return {}
+        # get every enable committees groups for current MeetingConfig
+        # and intersect with user groups
+        committee_group_ids = self.cfg.createCommitteeEditorsGroups(
+            dry_run_return_group_ids=True)
+        user_group_ids = self.tool.get_plone_groups_for_user()
+        committee_user_group_ids = set(committee_group_ids).intersection(
+            user_group_ids)
+        committee_ids = [committee_user_group_id.split("_", 1)[1]
+                         for committee_user_group_id
+                         in committee_user_group_ids]
+        return {
+            "portal_type": {"query": self.cfg.getItemTypeName()},
+            "committees_index": {"query": sorted(committee_ids)},
+        }
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_itemsofmycommittees
+
+
+class SearchItemsOfMyCommitteesEditableAdapter(SearchItemsOfMyCommitteesAdapter):
+
+    @property
+    @ram.cache(query_user_groups_cachekey)
+    def query_itemsofmycommitteeseditable(self):
+        """Queries all items of committees of the current user."""
+        if not self.cfg:
+            return {}
+        # this manage "portal_type" and "committees_index"
+        base_query = self.query_itemsofmycommittees
+        # complete with review_states in which items committees fields are editable
+        base_query.update({"review_state": {"query": self.cfg.getItemCommitteesStates()}})
+        return base_query
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_itemsofmycommitteeseditable
+
+
 class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
     """ """
 
