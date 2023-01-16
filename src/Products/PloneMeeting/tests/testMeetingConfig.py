@@ -8,6 +8,8 @@
 from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.utils import get_plone_group
+from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import select_org_for_function
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
@@ -2310,6 +2312,37 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg_committees[0]['default_attendees'] = []
         self.failIf(cfg.validate_committees(cfg_committees))
 
+    def test_pm_Validate_committees_enable_editors(self):
+        """When enable_editors=="1" a Plone group is created and
+           config will be removable/disablable if Plone group is empty."""
+        cfg = self.meetingConfig
+        self._enableField("committees", related_to='Meeting')
+        self.changeUser('siteadmin')
+        committees = cfg.getCommittees()
+        # no Plone group for row 0
+        plone_group_id = get_plone_group_id(cfg.getId(), committees[0]['row_id'])
+        self.assertIsNone(api.group.get(plone_group_id))
+        committees[0]['enable_editors'] = "1"
+        cfg.setCommittees(committees)
+        cfg.at_post_edit_script()
+        # a Plone group is created
+        group = api.group.get(plone_group_id)
+        self.assertTrue(group)
+        # add a user to the group so config is not removable
+        group.addMember('pmManager')
+        # enable_editors can not be set to "0"
+        committees[0]['enable_editors'] = "0"
+        self.failUnless(cfg.validate_committees(committees))
+        committees[0]['enable_editors'] = "1"
+        self.failIf(cfg.validate_committees(committees))
+        # row can not be removed
+        self.failUnless(cfg.validate_committees([committees[1]]))
+        # if group empty, then config me be disabled or line removed
+        group.removeMember('pmManager')
+        committees[0]['enable_editors'] = "0"
+        self.failIf(cfg.validate_committees(committees))
+        self.failIf(cfg.validate_committees([committees[1]]))
+
     def test_pm_Validate_defaultPollType(self):
         """Test the MeetingConfig.defaultPollType validator,
            selected defaultPollType must be among MeetingConfig.usedPollTypes."""
@@ -2394,14 +2427,14 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser("siteadmin")
         self._select_organization(self.endUsers_uid)
-        self.assertEqual(
+        self.assertListEqual(
             cfg.listSelectableAdvisers().keys(),
             [self.developers_uid, self.endUsers_uid, self.vendors_uid])
         # restrict _advisers to developers and vendors
         select_org_for_function(self.developers_uid, "advisers")
         select_org_for_function(self.vendors_uid, "advisers")
         # endUsers no more in selectable advisers
-        self.assertEqual(
+        self.assertListEqual(
             cfg.listSelectableAdvisers().keys(),
             [self.developers_uid, self.vendors_uid])
 
@@ -2446,6 +2479,30 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(new_cfg_id, cfg_id)
         self.assertTrue(plone_group_id in self.portal.contacts.__ac_local_roles__)
         self.assertTrue(plone_group_id in self.tool.__ac_local_roles__)
+
+    def test_pm_ItemTemplatesManagersMayEditMeetingManagersReservedFields(self):
+        """Make sure itemtemplates managers may edit MeetingManagers reserved
+           fields on the item, like for example the "checklist" field."""
+        self.changeUser('templatemanager1')
+        template = self.meetingConfig.itemtemplates.template1
+        self.assertFalse(template.attribute_is_used('textCheckList'))
+        self.assertFalse(template.showMeetingManagerReservedField('textCheckList'))
+        self._enableField('textCheckList')
+        self.assertTrue(template.attribute_is_used('textCheckList'))
+        self.assertTrue(template.showMeetingManagerReservedField('textCheckList'))
+        # with a RichText field
+        self._enableField('notes')
+        self.assertTrue(template.attribute_is_used('notes'))
+        self.assertTrue(template.showMeetingManagerReservedField('notes'))
+        self.assertTrue(template.mayQuickEdit('notes'))
+        # but it does not have access on a real item
+        self._addPrincipalToGroup(
+            self.member.id, get_plone_group_id(self.developers_uid, 'creators'))
+        item = self.create('MeetingItem')
+        self.assertTrue(item.attribute_is_used('textCheckList'))
+        self.assertFalse(item.showMeetingManagerReservedField('textCheckList'))
+        self.assertTrue(item.attribute_is_used('notes'))
+        self.assertFalse(item.mayQuickEdit('notes'))
 
 
 def test_suite():

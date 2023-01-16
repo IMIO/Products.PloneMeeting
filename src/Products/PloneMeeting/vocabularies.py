@@ -71,6 +71,7 @@ from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
 
+import html
 import itertools
 
 
@@ -2589,7 +2590,7 @@ class SelectableCommitteesVocabulary(object):
                     domain="PloneMeeting",
                     mapping={'title': term_title, 'number': number_word(i)},
                     context=context.REQUEST,
-                    default=u"${title} (${number}&nbsp;supplement)")
+                    default=u"${title} (${number} supplement)")
                 i += 1
                 suppl_terms.append(SimpleTerm(suppl_id,
                                               suppl_id,
@@ -2796,8 +2797,8 @@ class ContainedAnnexesVocabulary(object):
                     str(i),
                     portal_url,
                     annex['icon_url'],
-                    safe_unicode(annex['category_title']),
-                    safe_unicode(annex['title']))
+                    html.escape(safe_unicode(annex['category_title'])),
+                    html.escape(safe_unicode(annex['title'])))
                 i += 1
                 if annex['warn_filesize']:
                     term_title += u' ({0})'.format(render_filesize(annex['filesize']))

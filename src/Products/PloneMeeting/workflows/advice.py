@@ -76,7 +76,7 @@ class MeetingAdviceWorkflowActions(object):
            if MeetingConfig.historizeItemDataWhenAdviceIsGiven.
            Make sure also the 'advice_given_on' data is correct in item's adviceIndex."""
         # historize
-        self.context.versionate_if_relevant(ADVICE_GIVEN_HISTORIZED_COMMENT)
+        self.context.historize_if_relevant(ADVICE_GIVEN_HISTORIZED_COMMENT)
         # manage 'advice_given_on' dates
         parent = self.context.aq_parent
         advice_given_on = self.context.get_advice_given_on()

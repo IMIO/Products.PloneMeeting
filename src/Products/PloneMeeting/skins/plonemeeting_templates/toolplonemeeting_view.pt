@@ -199,7 +199,7 @@
       Warning: take care that launching these updates may take time, depending on the number of existing elements!  Do not launch during period of hig use!
       </p>
       <div class="configActions">
-        <form name="invalidateAllCacheForm" action="invalidateAllCache">
+        <form name="invalidateAllCacheForm" action="doInvalidateAllCache">
           <p class="discreet" style="color: red;" i18n:translate="pm_invalidate_all_cache_warning">
               Warning: this will invalidate all cache used in the application, this could lead to application being slow for some minutes until cache is recomputed for currently connected users but is harmless and must be done when changes impacting application header (tabs) are made or if any weirdness occurs (no access to new tabs, ...).
           </p>

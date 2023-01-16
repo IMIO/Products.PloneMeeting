@@ -7,6 +7,7 @@ from plone.app.textfield.widget import RichTextWidget
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.events import EditBegunEvent
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFPlone.utils import base_hasattr
 from Products.Five import BrowserView
 from Products.PloneMeeting.utils import checkMayQuickEdit
 from Products.PloneMeeting.utils import get_dx_widget
@@ -35,7 +36,8 @@ class PMRichTextWidget(RichTextWidget):
     def may_edit(self):
         """This field may sometimes be edited using specific write permissions."""
         res = False
-        if 'ajax_load' not in self.request.form:
+        # when used in a datagrid field, sometimes we get strange content...
+        if 'ajax_load' not in self.request.form and not isinstance(self.context, dict):
             portal_types = api.portal.get_tool('portal_types')
             fti = portal_types[self.context.portal_type]
             schema = fti.lookupSchema()
@@ -97,7 +99,7 @@ class RichTextEdit(BrowserView):
 
     def __call__(self, field_name):
         """ """
-        # notify that edit befun, will especially lock content
+        # notify that edit begun, will especially lock content
         notify(EditBegunEvent(self.context))
         self.field_name = field_name
         self.widget = get_dx_widget(self.context, field_name, mode=INPUT_MODE)
@@ -109,6 +111,9 @@ class PMZ3CFormWidgetSettings(Z3CFormWidgetSettings):
     def setupAjaxSave(self, widget_settings):
         """Override to remove the restrictedTraverse to check if save_url available."""
         portal = self.ckview.portal
+        # when used in a datagridfield, the target is sometimes a dict...
+        if not base_hasattr(self.ckview.context, "portal_type"):
+            return
         target = self.getSaveTarget()
         widget_settings['ajaxsave_enabled'] = 'true'
         save_url = str(portal.portal_url.getRelativeUrl(target) + '/cke-save')

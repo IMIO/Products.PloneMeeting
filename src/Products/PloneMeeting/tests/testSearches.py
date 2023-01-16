@@ -74,7 +74,7 @@ class testSearches(PloneMeetingTestCase):
                           'portal_type': {'query': itemTypeName}})
 
     def test_pm_SearchItemsToAdviceAdapter(self):
-        '''Test the 'search-items-to-advice' adapter that should return a list of items
+        '''Test the 'items-to-advice' adapter that should return a list of items
            a user has to give an advice for.'''
         self.changeUser('admin')
         cfg = self.meetingConfig
@@ -179,7 +179,7 @@ class testSearches(PloneMeetingTestCase):
         self.assertEqual(collection.results()[0].UID, item.UID())
 
     def test_pm_SearchItemsToAdviceWithoutHiddenDuringRedactionAdapter(self):
-        '''Test the 'search-items-to-advice-without-hidden-during-redaction' adapter
+        '''Test the 'items-to-advice-without-hidden-during-redaction' adapter
            that should return a list of items a user has to give an advice for but not
            advice currently hidden during redaction.'''
         # just check query as full search is tested in test_pm_SearchItemsToAdviceAdapter
@@ -200,7 +200,7 @@ class testSearches(PloneMeetingTestCase):
                 'portal_type': {'query': itemTypeName}})
 
     def test_pm_SearchMyItemsToAdviceAdapter(self):
-        '''Test the 'search-my-items-to-advice' adapter that should return
+        '''Test the 'my-items-to-advice' adapter that should return
            a list of items a user has to give an advice for.
            This will return only items for which advice is asked to entire group or
            asked to current user.
@@ -294,7 +294,7 @@ class testSearches(PloneMeetingTestCase):
         self.assertEqual(len(itemstoadvice.results()), 3)
 
     def test_pm_SearchAdvisedItems(self):
-        '''Test the 'search-advised-items' adapter.  This should return a list of items
+        '''Test the 'advised-items' adapter.  This should return a list of items
            a user has already give an advice for.'''
         self.changeUser('admin')
         cfg = self.meetingConfig
@@ -393,7 +393,7 @@ class testSearches(PloneMeetingTestCase):
         self.assertEqual(collection.results()[0].UID, item1.UID())
 
     def test_pm_SearchAdvisedItemsWithDelay(self):
-        '''Test the 'search-advised-items-with-delay' adapter.  This should return a list
+        '''Test the 'advised-items-with-delay' adapter.  This should return a list
            of items a user has already give a delay-aware advice for.'''
         self.changeUser('admin')
         cfg = self.meetingConfig
@@ -476,7 +476,7 @@ class testSearches(PloneMeetingTestCase):
         self.failIf(collection.results())
 
     def test_pm_SearchItemsInCopy(self):
-        '''Test the 'search-items-in-copy' adapter.  This should return a list of items
+        '''Test the 'items-in-copy' adapter.  This should return a list of items
            a user is in copy of.'''
         self.changeUser('admin')
         # specify that copyGroups can see the item when it is proposed
@@ -523,7 +523,7 @@ class testSearches(PloneMeetingTestCase):
         self.failUnless(collection.results())
 
     def test_pm_SearchItemsInCopyWithAutoCopyGroups(self):
-        '''Test the 'search-items-in-copy' adapter when using auto copyGroups.'''
+        '''Test the 'items-in-copy' adapter when using auto copyGroups.'''
         self.changeUser('admin')
         # specify that copyGroups can see the item when it is proposed
         cfg = self.meetingConfig
@@ -544,7 +544,7 @@ class testSearches(PloneMeetingTestCase):
         self.failUnless(collection.results())
 
     def test_pm_SearchMyItemsTakenOver(self):
-        '''Test the 'search-my-items-taken-over' method.  This should return
+        '''Test the 'my-items-taken-over' method.  This should return
            a list of items a user has taken over.'''
         self.changeUser('admin')
         # specify that copyGroups can see the item when it is proposed
@@ -579,6 +579,13 @@ class testSearches(PloneMeetingTestCase):
         self.proposeItem(item)
         self.assertTrue(not item.getTakenOverBy())
         self.failIf(collection.results())
+
+        # query is not cached (this was the case before and there was a bug
+        # because using forevercache and member_id changed
+        self.changeUser('pmCreator1')
+        self.assertEqual(adapter.query,
+                         {'portal_type': {'query': itemTypeName},
+                          'getTakenOverBy': {'query': 'pmCreator1'}})
 
     def _searchItemsToValidateOfHighestHierarchicLevelReviewerInfo(self, cfg):
         """ """
@@ -1113,8 +1120,8 @@ class testSearches(PloneMeetingTestCase):
         cleanRamCacheFor(
             'Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels')
         states = self._get_query_review_process(cfg)[1:]
-        query = sorted(['{0}__reviewprocess__returned_to_proposing_group_{1}'.format(self.developers_uid, state)
-                         for state in states])
+        query = sorted(['{0}__reviewprocess__returned_to_proposing_group_{1}'.format(
+                        self.developers_uid, state) for state in states])
         self.assertEqual({
             'portal_type': {'query': itemTypeName},
             'reviewProcessInfo': {'query': query}},
@@ -1303,6 +1310,59 @@ class testSearches(PloneMeetingTestCase):
             query_aliases.append(query_method)
         # there may not be 2 same query aliases
         self.assertEqual(sorted(query_aliases), sorted(set(query_aliases)))
+
+    def test_pm_SearchItemsOfMyCommitteesAndItemsOfMyCommitteesEditable(self):
+        '''Test the 'items-of-my-committees' and 'items-of-my-committees-editable'
+           adapters that should return a list of items current user is committee
+           editor for.'''
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        cfg.setItemCommitteesStates(['itemcreated'])
+        cfg.setItemCommitteesViewStates(['validated'])
+        itemTypeName = cfg.getItemTypeName()
+        # configure committees editors
+        self._setUpCommitteeEditor(cfg)
+
+        # items-of-my-committees
+        # first test the generated query, admin is not a committee editor
+        adapter = getAdapter(cfg,
+                             ICompoundCriterionFilter,
+                             name='items-of-my-committees')
+        self.assertEqual(adapter.query,
+                         {'committees_index': {'query': []},
+                          'portal_type': {'query': itemTypeName}})
+        self.changeUser('pmCreator2')
+        self.assertEqual(adapter.query,
+                         {'committees_index': {'query': ['committee_1']},
+                          'portal_type': {'query': itemTypeName}})
+        # now create items and test that the search
+        self.changeUser('pmManager')
+        editable_item = self.create('MeetingItem', committees=['committee_1'])
+        viewable_item = self.create('MeetingItem', committees=['committee_1'])
+        # a third item, not viewable by pmCreator2
+        self.create('MeetingItem')
+        self.validateItem(viewable_item)
+        collection = cfg.searches.searches_items.searchitemsofmycommittees
+        # pmManager is not a committee editor
+        self.failIf(collection.results())
+        self.changeUser('pmCreator2')
+        res = collection.results()
+        self.assertEqual(sorted([brain.UID for brain in res]),
+                         sorted([viewable_item.UID(), editable_item.UID()]))
+
+        # items-of-my-committees-editable
+        # first test the generated query, admin is not a committee editor
+        adapter = getAdapter(cfg,
+                             ICompoundCriterionFilter,
+                             name='items-of-my-committees-editable')
+        self.assertEqual(adapter.query,
+                         {'committees_index': {'query': ['committee_1']},
+                          'portal_type': {'query': itemTypeName},
+                          'review_state': {'query': ('itemcreated', )}})
+        collection = cfg.searches.searches_items.searchitemsofmycommitteeseditable
+        res = collection.results()
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0].UID, editable_item.UID())
 
 
 def test_suite():

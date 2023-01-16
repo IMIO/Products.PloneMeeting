@@ -66,7 +66,7 @@
           } else {attendee_title.classList = [];}
           var voter_box = document.getElementById('muser_'+userId+'_voter');
           if (voter_box) {
-              if (!attendee_box.checked) {voter_box.checked = false; voter_box.value = ''; voter_box.disabled = true;}
+              if (!attendee_box.checked) {voter_box.checked = false; voter_box.disabled = true;}
               else {voter_box.disabled = false;}
           }
 
@@ -103,17 +103,53 @@
               <th class="nosort"></th>
               <th class="th_header_number-column"></th>
               <th class="nosort"></th>
-              <th class="nosort" i18n:translate="is_attendee"></th>
-              <th class="nosort" tal:condition="show_excused"
-                  i18n:translate="is_excused"></th>
-              <th class="nosort" tal:condition="show_absents"
-                  i18n:translate="is_absent"></th>
+              <th class="nosort">
+                <input type="checkbox"
+                       id="select_unselect_items"
+                       onclick="toggleCheckboxes(this, 'meeting_attendees_marker', attrName='class', selector='$=');;
+                                unselectCheckBoxes(['select_unselect_excused_items', 'select_unselect_absents_items']);"
+                       title="select_unselect_items"
+                       i18n:attributes="title"
+                       i18n:domain="collective.eeafaceted.z3ctable"
+                       name="select_unselect_attendees_items" />
+                <span i18n:translate="is_attendee" />
+              </th>
+              <th class="nosort" tal:condition="show_excused">
+                <input type="checkbox"
+                       id="select_unselect_items"
+                       onclick="toggleCheckboxes(this, 'meeting_excused_marker', attrName='class', selector='$=');;
+                                unselectCheckBoxes(['select_unselect_attendees_items', 'select_unselect_absents_items', 'select_unselect_voters_items']);"
+                       title="select_unselect_items"
+                       i18n:attributes="title"
+                       i18n:domain="collective.eeafaceted.z3ctable"
+                       name="select_unselect_excused_items" />
+                <span i18n:translate="is_excused" />
+              </th>
+              <th class="nosort" tal:condition="show_absents">
+                <input type="checkbox"
+                       id="select_unselect_items"
+                       onclick="toggleCheckboxes(this, 'meeting_absents_marker', attrName='class', selector='$=');;
+                                unselectCheckBoxes(['select_unselect_excused_items', 'select_unselect_attendees_items', 'select_unselect_voters_items']);"
+                       title="select_unselect_items"
+                       i18n:attributes="title"
+                       i18n:domain="collective.eeafaceted.z3ctable"
+                       name="select_unselect_absents_items" />
+                <span i18n:translate="is_absent" />
+              </th>
               <th class="nosort" tal:condition="show_signatories"
                   i18n:translate="is_signer"></th>
               <th class="nosort" tal:condition="use_user_replacements"
                   i18n:translate="is_replaced"></th>
-              <th class="nosort" tal:condition="use_votes"
-                  i18n:translate="is_voter"></th>
+              <th class="nosort" tal:condition="use_votes">
+                <input type="checkbox"
+                       id="select_unselect_items"
+                       onclick="toggleCheckboxes(this, 'meeting_voters:list')"
+                       title="select_unselect_items"
+                       i18n:attributes="title"
+                       i18n:domain="collective.eeafaceted.z3ctable"
+                       name="select_unselect_voters_items" />
+                <span i18n:translate="is_voter" />
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -129,7 +165,7 @@
                          tal:content="mUser/get_short_title"></b>
                     </td>
                     <td align="center">
-                      <input type="checkbox" class="noborder"
+                      <input type="checkbox" class="noborder meeting_attendees_marker"
                              tal:define="cbid attendee_id"
                              tal:attributes="id cbid;
                                              name string:meeting_attendees:list;
@@ -138,7 +174,7 @@
                                              onClick python: 'onClickBox(this, \'attendee\', \'%s\')' % muid"/>
                     </td>
                     <td align="center" tal:condition="show_excused">
-                      <input type="checkbox" class="noborder"
+                      <input type="checkbox" class="noborder meeting_excused_marker"
                              tal:define="cbid python: 'muser_%s_excused' % muid;"
                              tal:attributes="id cbid;
                                              name string:meeting_attendees:list;
@@ -147,7 +183,7 @@
                                              onClick python: 'onClickBox(this, \'excused\', \'%s\')' % muid"/>
                     </td>
                     <td align="center" tal:condition="show_absents">
-                      <input type="checkbox" class="noborder"
+                      <input type="checkbox" class="noborder meeting_absents_marker"
                              tal:define="cbid python: 'muser_%s_absent' % muid;"
                              tal:attributes="id cbid;
                                              name string:meeting_attendees:list;

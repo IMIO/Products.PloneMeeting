@@ -1445,13 +1445,24 @@ class testViews(PloneMeetingTestCase):
         text = '<p>Observations <img src="%s" alt="22-400x400.jpg" title="22-400x400.jpg"/>.</p>' \
             % self.external_image1
         set_field_from_ajax(meeting, "observations", text)
-        img_path = meeting.objectValues()[0].getFile().blob._p_blob_committed
+        image = meeting.objectValues()[0]
+        img_path = image.getFile().blob._p_blob_committed
         # when using printXhtml, img url are turned to blob path
         text = text.replace(self.external_image1, img_path)
         self.assertEqual(helper.print_value("observations", use_appy_pod_preprocessor=True),
                          text)
+        # raw_xhtml=True
+        self.assertIn("resolveuid/%s" % image.UID(),
+                      helper.print_value("observations", raw_xhtml=True))
+        # Boolean
+        self.assertFalse(meeting.extraordinary_session)
+        self.assertEqual(helper.print_value("extraordinary_session"), u'No')
+        meeting.extraordinary_session = None
+        self.assertEqual(helper.print_value("extraordinary_session"), u'No')
+        meeting.extraordinary_session = True
+        self.assertEqual(helper.print_value("extraordinary_session"), u'Yes')
         # special case for place, default value is u"other"
-        self.assertEqual(helper.print_value("place"), PLACE_OTHER)
+        self.assertEqual(helper.print_value("place"), u'Other')
         meeting.place = u'Place1'
         self.assertEqual(helper.print_value("place"), u'Place1')
         meeting.place = PLACE_OTHER
@@ -1581,6 +1592,22 @@ class testViews(PloneMeetingTestCase):
              (0, api.user.get('pmCreator1b')),
              (0, api.user.get('pmManager'))])
 
+    def _display_user_groups_sub_groups_false(self):
+        return [(1, api.user.get('pmCreator1')),
+                (1, api.user.get('pmCreator1b')),
+                (1, api.user.get('pmManager')),
+                (0, api.user.get('pmObserver1')),
+                (0, api.user.get('pmReviewer1'))]
+
+    def _display_user_groups_sub_groups_true(self):
+        return [(1, api.group.get(self.developers_creators)),
+                (2, api.user.get('pmCreator1')),
+                (2, api.user.get('pmCreator1b')),
+                (2, api.user.get('pmManager')),
+                (0, api.user.get('pmManager')),
+                (0, api.user.get('pmObserver1')),
+                (0, api.user.get('pmReviewer1'))]
+
     def test_pm_DisplayGroupUsersViewGroupsInGroups(self):
         """Subgroups are displayed with contained members.
            Normal users see only members and Manager will also see the contained group.
@@ -1595,24 +1622,12 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(len(view.groups), 1)
         # pmManager is in creators and observers but
         # with keep_subgroups=False, only one is kept
-        self.assertEqual(
-            view._get_groups_and_members(group),
-            [(1, api.user.get('pmCreator1')),
-             (1, api.user.get('pmCreator1b')),
-             (1, api.user.get('pmManager')),
-             (0, api.user.get('pmObserver1')),
-             (0, api.user.get('pmReviewer1'))])
+        self.assertListEqual(view._get_groups_and_members(group),
+                             self._display_user_groups_sub_groups_false())
         # when displaying, sub groups may be displayed, this is the case for Managers
         # pmManager is in creators and observers and is dispayed 2 times
-        self.assertEqual(
-            view._get_groups_and_members(group, keep_subgroups=True),
-            [(1, api.group.get(self.developers_creators)),
-             (2, api.user.get('pmCreator1')),
-             (2, api.user.get('pmCreator1b')),
-             (2, api.user.get('pmManager')),
-             (0, api.user.get('pmManager')),
-             (0, api.user.get('pmObserver1')),
-             (0, api.user.get('pmReviewer1'))])
+        self.assertEqual(view._get_groups_and_members(group, keep_subgroups=True),
+                         self._display_user_groups_sub_groups_true())
 
     def test_pm_DisplayGroupUsersViewAllPloneGroups(self):
         """It is possible to get every Plone groups."""
@@ -1777,6 +1792,8 @@ class testViews(PloneMeetingTestCase):
     def test_pm_UpdateLocalRolesBatchActionForm(self):
         """This will call.update_local_roles on selected elements."""
         cfg = self.meetingConfig
+        # remove recurring items in self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
         self._setPowerObserverStates(states=())
         powerobservers = '{0}_powerobservers'.format(cfg.getId())
 
@@ -1786,10 +1803,12 @@ class testViews(PloneMeetingTestCase):
         item2 = self.create('MeetingItem')
         item3 = self.create('MeetingItem')
         self.request.form['form.widgets.uids'] = ','.join([item1.UID(), item3.UID()])
-        dashboardFolder = self.getMeetingFolder().searches_items
+        searches_items = self.getMeetingFolder().searches_items
         # not available as not Manager
-        self.assertRaises(Unauthorized, dashboardFolder.restrictedTraverse, '@@update-local-roles-batch-action')
-        self.assertFalse(dashboardFolder.unrestrictedTraverse(
+        self.assertRaises(Unauthorized,
+                          searches_items.restrictedTraverse,
+                          '@@update-local-roles-batch-action')
+        self.assertFalse(searches_items.unrestrictedTraverse(
             '@@update-local-roles-batch-action').available())
 
         # as Manager
@@ -1798,8 +1817,8 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(powerobservers in item2.__ac_local_roles__)
         self.assertFalse(powerobservers in item3.__ac_local_roles__)
         self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'),))
-        dashboardFolder = self.getMeetingFolder().searches_items
-        form = dashboardFolder.restrictedTraverse('@@update-local-roles-batch-action')
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.restrictedTraverse('@@update-local-roles-batch-action')
         self.assertTrue(form.available())
         form.update()
         form.handleApply(form, None)
@@ -1807,11 +1826,27 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(powerobservers in item2.__ac_local_roles__)
         self.assertTrue(powerobservers in item3.__ac_local_roles__)
 
-        # only available for IMeetingItemDashboardBatchActionsMarker, not available on meeting
+        # also available for meetings
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
+        # not available as not Manager
+        searches_decisions = self.getMeetingFolder().searches_decisions
+        self.assertRaises(Unauthorized,
+                          searches_decisions.restrictedTraverse,
+                          '@@update-local-roles-batch-action')
+        self.assertFalse(searches_decisions.unrestrictedTraverse(
+            '@@update-local-roles-batch-action').available())
+        # as Manager
         self.changeUser('siteadmin')
-        self.assertRaises(AttributeError, meeting.restrictedTraverse, '@@update-local-roles-batch-action')
+        self.assertFalse(powerobservers in meeting.__ac_local_roles__)
+        self._setPowerObserverStates(field_name='meeting_states', states=('created',))
+        searches_decisions = self.getMeetingFolder().searches_decisions
+        self.request.form['form.widgets.uids'] = unicode(meeting.UID())
+        form = searches_decisions.restrictedTraverse('@@update-local-roles-batch-action')
+        self.assertTrue(form.available())
+        form.update()
+        form.handleApply(form, None)
+        self.assertTrue(powerobservers in meeting.__ac_local_roles__)
 
     def test_pm_DownloadAnnexesActionForm(self):
         """This batch action will download annexes as a zip file."""
@@ -2663,6 +2698,10 @@ class testViews(PloneMeetingTestCase):
         # unlock then editable
         lockable.unlock()
         self.assertTrue(widget.may_edit())
+        # ajaxsave is correctly setup
+        self.assertIn(
+            "ajaxsave_enabled",
+            widget.context.restrictedTraverse('@@richtext-edit')('observations'))
 
     def test_pm_Print_scan_id_barcode(self):
         """Test the print_scan_id_barcode that takes care of raising

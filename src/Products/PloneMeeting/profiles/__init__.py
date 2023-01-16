@@ -788,7 +788,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.transitionsReinitializingDelays = []
         self.historizeItemDataWhenAdviceIsGiven = True
         self.keepAccessToItemWhenAdvice = 'default'
-        self.versionateAdviceIfGivenAndItemModified = True
+        self.historizeAdviceIfGivenAndItemModified = True
         self.customAdvisers = []
 
         # Votes parameters ----------------------------------------------------
@@ -806,6 +806,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.displayVotingGroup = True
         # Committees parameters -----------------------------------------------
         self.orderedCommitteeContacts = []
+        self.itemCommitteesStates = []
+        self.itemCommitteesViewStates = []
         self.committees = []
 
         # Contacts parameters --------------------------------------------------
@@ -873,6 +875,20 @@ class PloneMeetingConfiguration(Descriptor):
             {'date': '2022/11/11', },
             {'date': '2022/11/15', },
             {'date': '2022/12/25', },
+
+            {'date': '2023/01/01', },  # 2023
+            {'date': '2023/04/10', },
+            {'date': '2023/05/01', },
+            {'date': '2023/05/18', },
+            {'date': '2023/05/29', },
+            {'date': '2023/07/21', },
+            {'date': '2023/08/15', },
+            {'date': '2023/09/27', },
+            {'date': '2023/11/01', },
+            {'date': '2023/11/11', },
+            {'date': '2023/11/15', },
+            {'date': '2023/12/25', },
+
         ]
         self.delayUnavailableEndDays = ()
         self.configGroups = ()

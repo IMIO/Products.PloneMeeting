@@ -8,4 +8,12 @@
         name="cke_imagerotate"
         directory="imagerotate" />
 
+    <browser:page
+        name="ckeditor_plone_config.js"
+        for="*"
+        class=".ckeditorview.PMCKeditorView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        attribute="getCK_plone_config"
+        permission="zope.Public" />
+
 </configure>

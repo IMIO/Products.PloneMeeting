@@ -392,7 +392,7 @@ def onOrgWillBeRemoved(current_org, event):
             {"meta_type": "MeetingItem",
              index_name: index_value})
         if brains:
-            item = brains[0].getObject()
+            item = brains[0]._unrestrictedGetObject()
             # The organization is linked to an existing item, we can not delete it.
             if item.isDefinedInTool():
                 msg = "can_not_delete_organization_config_meetingitem"
@@ -682,6 +682,8 @@ def item_added_or_initialized(item):
     item.emergency_changes_history = PersistentList()
     # Add a place to store completeness changes history
     item.completeness_changes_history = PersistentList()
+    # Add a place to store deleted advices history
+    item.deleted_children_history = PersistentList()
     # Add a place to store takenOverBy by review_state user id
     item.takenOverByInfos = PersistentMapping()
     # An item has ben modified, use get_again for portlet_todo
@@ -780,6 +782,9 @@ def onAdviceAdded(advice, event):
     # if advice is added because we are pasting, pass as we will remove the advices...
     if advice.REQUEST.get('currentlyPastingItems', False):
         return
+
+    # Add a place to store advice_given_history
+    advice.advice_given_history = PersistentList()
 
     # update advice_row_id if it was not already done before
     # for example in a onAdviceTransition event handler that is called
@@ -936,7 +941,7 @@ def onAnnexRemoved(annex, event):
     if parent not in parent.aq_inner.aq_parent.objectValues():
         return
 
-    # if it is an annex added on an item, versionate given advices if necessary
+    # if it is an annex added on an item, historize given advices if necessary
     if parent.meta_type == 'MeetingItem':
         parent.updateHistory('delete',
                              annex,
@@ -1140,7 +1145,7 @@ def onMeetingModified(meeting, event):
             brains = brains + catalog.unrestrictedSearchResults(
                 portal_type=cfg.getItemTypeName(), preferred_meeting_uid=meeting_uid)
             for brain in brains:
-                item = brain.getObject()
+                item = brain._unrestrictedGetObject()
                 item.reindexObject(idxs=['meeting_date', 'preferred_meeting_date'])
             # clean cache for "Products.PloneMeeting.Meeting.date"
             invalidate_cachekey_volatile_for(
@@ -1361,7 +1366,7 @@ def onHeldPositionWillBeRemoved(held_pos, event):
         brains = catalog.unrestrictedSearchResults(
             object_provides=IMeeting.__identifier__)
         for brain in brains:
-            meeting = brain.getObject()
+            meeting = brain._unrestrictedGetObject()
             if _is_held_pos_uid_used_by(held_pos_uid, meeting):
                 using_obj = meeting
                 break
@@ -1372,7 +1377,7 @@ def onHeldPositionWillBeRemoved(held_pos, event):
             pm_technical_index=[
                 ITEM_INITIATOR_INDEX_PATTERN.format(held_pos_uid)])
         if brains:
-            using_obj = brains[0].getObject()
+            using_obj = brains[0]._unrestrictedGetObject()
 
     if using_obj:
         msg = translate(

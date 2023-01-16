@@ -123,6 +123,8 @@ class testSetup(PloneMeetingTestCase):
                 searches_items = self.getMeetingFolder(cfg).searches_items
                 self.assertFalse('There was an error while rendering the portlet.' in searches_items())
                 self.changeUser('admin')
+                # call test_pm_VersionableTypes for every profiles
+                self.test_pm_VersionableTypes()
             # clean memoize between each site because the same REQUEST especially
             # is used for every sites and this can lead to problems...
             cleanMemoize(self.portal)
@@ -225,8 +227,7 @@ class testSetup(PloneMeetingTestCase):
     def test_pm_VersionableTypes(self):
         """Make sure every Plone default types are not more versionable."""
         portal_repository = api.portal.get_tool('portal_repository')
-        # there could be several meetingadvice types, all must be versionable
-        versioned = sorted([u'annex', u'annexDecision'] + self.tool.getAdvicePortalTypeIds())
+        versioned = [u'annex', u'annexDecision']
         self.assertEqual(sorted(portal_repository.getVersionableContentTypes()), versioned)
         self.assertEqual(sorted(portal_repository._version_policy_mapping.keys()), versioned)
 

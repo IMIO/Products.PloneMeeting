@@ -368,6 +368,14 @@ class IMeetingItemDocumentation:
         """Return states in which annex decision are addable in the WF states after
            the validation process (so when item is validated and after).
            By default this will be when item is decided."""
+    def _assign_roles_to_non_managing_proposing_group_suffixes(self,
+                                                               cfg,
+                                                               item_state,
+                                                               proposing_group_uid,
+                                                               org_uid):
+        """In case the group currently managing the item is not the proposingGroup,
+           by default every suffixes of the proposingGroup will have the "Reader"
+           role on the item so it may see it."""
 
 
 class IMeetingItemWorkflowConditions(Interface):
@@ -603,7 +611,7 @@ class IMeetingConfigDocumentation:
         '''If an item_state is not managed by MeetingItem.assign_roles_to_group_suffixes,
            maybe there is a correspondence between current item_state and
            a managed item state.'''
-    def get_item_custom_suffix_roles(self, item_state):
+    def get_item_custom_suffix_roles(self, item, item_state):
         """If an item_state is not managed by MeetingItem.assign_roles_to_group_suffixes,
            and no corresponding item state exists by default, we can manage
            suffix_roles manually."""

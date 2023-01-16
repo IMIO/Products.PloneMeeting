@@ -6,6 +6,7 @@ from Acquisition import aq_base
 from appy.pod.xhtml2odt import XhtmlPreprocessor
 from appy.shared.diff import HtmlDiff
 from bs4 import BeautifulSoup
+from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.core.utils import get_position_type_name
@@ -39,6 +40,9 @@ from imio.helpers.xhtml import replace_content
 from imio.helpers.xhtml import separate_images
 from imio.helpers.xhtml import storeImagesLocally
 from imio.helpers.xhtml import xhtmlContentIsEmpty
+from imio.history.interfaces import IImioHistory
+from imio.history.utils import add_event_to_history
+from imio.history.utils import getLastAction
 from imio.history.utils import getLastWFAction
 from plone import api
 from plone.app.textfield import RichText
@@ -91,6 +95,7 @@ from Products.PloneMeeting.interfaces import IToolPloneMeetingCustom
 from z3c.form.interfaces import DISPLAY_MODE
 from z3c.form.interfaces import IContextAware
 from z3c.form.interfaces import IFieldWidget
+from z3c.form.interfaces import NOVALUE
 from zope.annotation import IAnnotations
 from zope.component import getAdapter
 from zope.component import getMultiAdapter
@@ -940,7 +945,7 @@ def get_dx_attrs(portal_type,
     # FIELD_INFOS
     portal_types = api.portal.get_tool('portal_types')
     fti = portal_types[portal_type]
-    field_infos = resolveDottedName(fti.klass).FIELD_INFOS
+    field_infos = getattr(resolveDottedName(fti.klass), "FIELD_INFOS", {})
     for field_name, field in schema_fields:
         if optional_only and \
            (field_name not in field_infos or not field_infos[field_name]['optional']):
@@ -1009,6 +1014,32 @@ def get_dx_widget(obj, field_name, mode=DISPLAY_MODE):
     # this will set widget.__name__
     locate(widget, None, field_name)
     return widget
+
+
+def get_dx_data(obj):
+    """ """
+    data = []
+    # use print_value available on the documentgenerator helper view
+    view = obj.unrestrictedTraverse('@@document-generation')
+    helper = view.get_generation_context_helper()
+    for attr_name in get_dx_attrs(obj.portal_type):
+        field_content = None
+        try:
+            field_content = helper.print_value(attr_name, raw_xhtml=True)
+        except Exception:
+            logger.warning(
+                "In \"utils.get_dx_data\", could not print_value for attr_name "
+                "\"%s\" with value \"%s\" for element at \"%s\"" %
+                (attr_name, getattr(obj, attr_name), "/".join(obj.getPhysicalPath())))
+        # do not store a RichTextValue, store the rendered value
+        field_value = getattr(obj, attr_name)
+        if isinstance(field_value, RichTextValue):
+            field_value = field_content
+        data.append(
+            {'field_name': attr_name,
+             'field_value': field_value,
+             'field_content': field_content})
+    return data
 
 
 def set_dx_value(obj, field_name, value, raise_unauthorized=True):
@@ -1172,14 +1203,14 @@ def signatureNotAlone(xhtmlContent, numberOfChars=CLASS_TO_LAST_CHILDREN_NUMBER_
 
 
 # ------------------------------------------------------------------------------
-def forceHTMLContentTypeForEmptyRichFields(obj):
+def forceHTMLContentTypeForEmptyRichFields(obj, field_names=[]):
     '''
       While saving an empty Rich field ('text/html'),
       the contentType is set back to 'text/plain'...
       Force it to 'text/html' if the field is empty.
     '''
     for field in obj.Schema().filterFields(default_content_type='text/html'):
-        if not field.getRaw(obj):
+        if (not field_names or field.getName() in field_names) and not field.getRaw(obj):
             field.setContentType(obj, 'text/html')
 
 
@@ -1474,7 +1505,8 @@ def translate_list(elements, domain="plone", as_list=False, separator=u', '):
 def display_as_html(plain_content, obj, mark_empty_tags=False, striked=False):
     """Display p_plain_content as HTML, especially ending lines
        that are not displayed if empty."""
-    plain_content = plain_content or ''
+    # when used in a datagrid field, sometimes we get strange content...
+    plain_content = plain_content if plain_content and not isinstance(plain_content, NOVALUE.__class__) else ''
     portal_transforms = api.portal.get_tool('portal_transforms')
     html_content = portal_transforms.convertTo('text/html', plain_content).getData()
     html_content = html_content.replace('\r', '')
@@ -1559,18 +1591,13 @@ def get_context_with_request(context):
 
 
 def isModifiedSinceLastVersion(obj):
-    """Check if given p_obj was modified since last version (versioning)."""
-    pr = api.portal.get_tool('portal_repository')
-    history_metadata = pr.getHistoryMetadata(obj)
+    """Check if given p_obj was modified since last version (history)."""
+    adapter = getAdapter(obj, IImioHistory, 'advice_given')
+    last_event = getLastAction(adapter)
     modified = True
-    if history_metadata and history_metadata._available:
-        # date it was versionned
-        timestamp = history_metadata._full[history_metadata.nextVersionId - 1]['metadata']['sys_metadata']['timestamp']
-        # we do not use _retrieve because it does a transaction savepoint and it
-        # breaks collective.zamqp...  So we use timestamp
-        # advice.modified will be older than timestamp as it is managed in see content.advice.versionate_if_relevant
+    if last_event:
         # keep >= for backward compatibility as before, modified was set to timestamp, now it is older...
-        if DateTime(timestamp) >= obj.modified():
+        if last_event['time'] >= obj.modified():
             modified = False
     return modified
 
@@ -1589,6 +1616,28 @@ def version_object(obj, keep_modified=True, only_once=False, comment=''):
     pr.save(obj=obj, comment=comment)
     # set back modified on obj so version timestamp is > obj modified
     obj.setModificationDate(obj_modified)
+
+
+def historize_object_data(obj, comment):
+    """Historize p_obj data and parent's data.
+       An optionnal p_comment may be defined and will be usedappear in the versions history."""
+    # compute advice data and item data
+    item_data = main_item_data(obj.aq_parent)
+    advice_data = get_dx_data(obj)
+    add_event_to_history(
+        obj,
+        'advice_given_history',
+        action='advice_given_or_modified',
+        comments=comment,
+        extra_infos={'item_data': item_data,
+                     'advice_data': advice_data})
+
+
+def get_event_field_data(event_data, field_name, data_type="field_value"):
+    """ """
+    data = [field[data_type] for field in event_data
+            if field["field_name"] == field_name]
+    return data[0] if data else None
 
 
 # taken from http://mscerts.programming4.us/fr/639402.aspx
@@ -2035,7 +2084,7 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item, item_state, org_uid=None
     else:
         # if no corresponding item state, check if we manage state suffix roles manually
         apply_meetingmanagers_access, suffix_roles = cfg.adapted().get_item_custom_suffix_roles(
-            item_state)
+            item, item_state)
 
     # find suffix_roles if it was not managed manually
     if suffix_roles:

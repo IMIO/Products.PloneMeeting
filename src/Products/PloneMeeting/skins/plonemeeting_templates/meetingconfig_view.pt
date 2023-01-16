@@ -434,15 +434,6 @@
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
-        <tr valign="top">
-          <td tal:define="field python:here.getField('usedPollTypes')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('defaultPollType')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td></td>
-        </tr>
       </table>
 
       <tal:comment replace="nothing">Annex types</tal:comment>
@@ -858,17 +849,19 @@
         <legend>
           <span i18n:translate="Searches">Searches</span>
         </legend>
-        <p i18n:translate="warning_meetingconfig_edit_section_descr" style="color: red;">
-          DO NOT CHANGE PARAMETERS DEFINED IN THIS SECTION UNLESS YOU ARE REALLY SURE WHAT YOU ARE DOING!
-        </p>
         <p class="discreet" i18n:translate="searches_descr"></p>
-        <h4><img src="manage.png"
-                 style="vertical-align: baseline;"
-                tal:attributes="src string:${portal_url}/manage.png;"/>
-            <a href="searches/folder_contents" i18n:translate="">
-                Manage dashboard
-            </a>
-        </h4>
+        <tal:isRealManager condition="isRealManager">
+          <p i18n:translate="warning_meetingconfig_edit_section_descr" style="color: red;">
+            DO NOT CHANGE PARAMETERS DEFINED IN THIS SECTION UNLESS YOU ARE REALLY SURE WHAT YOU ARE DOING!
+          </p>
+          <h4><img src="manage.png"
+                   style="vertical-align: baseline;"
+                  tal:attributes="src string:${portal_url}/manage.png;"/>
+              <a href="searches/folder_contents" i18n:translate="">
+                  Manage dashboard
+              </a>
+          </h4>
+        </tal:isRealManager>
         <p>&nbsp;</p>
 
         <tal:searchesCategories repeat="cFolder python: context.searches.objectValues()">
@@ -1088,7 +1081,7 @@
           <td tal:define="field python:here.getField('historizeItemDataWhenAdviceIsGiven')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('versionateAdviceIfGivenAndItemModified')">
+          <td tal:define="field python:here.getField('historizeAdviceIfGivenAndItemModified')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
@@ -1218,7 +1211,13 @@
       <p i18n:translate="meetingconfig_committees_descr" class='pageNameDescr'></p><br />
       <table width="100%" class="discreet">
         <tr valign="top">
-          <td colspan="3" tal:define="field python:here.getField('orderedCommitteeContacts')">
+          <td width="33%" tal:define="field python:here.getField('orderedCommitteeContacts')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td width="34%" tal:define="field python:here.getField('itemCommitteesStates')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td width="33%" tal:define="field python:here.getField('itemCommitteesViewStates')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
@@ -1238,6 +1237,15 @@
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td width="34%" tal:define="field python:here.getField('votesEncoder')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td></td>
+        </tr>
+        <tr valign="top">
+          <td tal:define="field python:here.getField('usedPollTypes')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('defaultPollType')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td></td>

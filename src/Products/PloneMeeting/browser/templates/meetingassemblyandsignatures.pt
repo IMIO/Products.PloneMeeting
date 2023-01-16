@@ -153,15 +153,6 @@
 <tal:comment replace="nothing">Assembly and signatures.
 Also for backward compatibility for people that used the 'assembly' or 'signatures'
 field before and the 'attendees' now, if the field is not empty, we display it</tal:comment>
-<table class="no-style-table table-view-widgets"
-       tal:define="widgets python: view.meeting_view.fieldsets['assembly'].widgets.values()">
-  <tal:loop repeat="widget widgets">
-    <tr tal:attributes="id string:row-${widget/id}">
-        <td class="table_widget_label">
-          <label tal:content="widget/label">Label</label>
-        </td>
-        <td class="table_widget_value"
-            tal:content="structure python:view.view_widget(widget)">Value</td>
-    </tr>
-  </tal:loop>
-</table>
+<tal:renderWidgets define="widgets python: view.meeting_view.fieldsets['assembly'].widgets.values()">
+  <metal:widgets use-macro="context/@@pm-macros/renderWidgets"/>
+</tal:renderWidgets>

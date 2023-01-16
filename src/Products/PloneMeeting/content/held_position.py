@@ -26,6 +26,7 @@ from z3c.relationfield.schema import RelationList
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 
+import html
 import zope.schema
 
 
@@ -175,8 +176,8 @@ class PMHeldPosition(HeldPosition):
                 context=getRequest(),
                 default='No label defined on held position')
         if highlight:
-            person_label = u'<b>{0}</b>'.format(person_label)
-            held_position_label = u'<b>{0}</b>'.format(held_position_label)
+            person_label = u'<b>{0}</b>'.format(html.escape(person_label))
+            held_position_label = u'<b>{0}</b>'.format(html.escape(held_position_label))
         res = ''
         if sub_organizations:
             sub_organizations_label = u"{0}".format(u"➔".join(

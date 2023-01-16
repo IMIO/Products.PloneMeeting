@@ -2,7 +2,129 @@ Changelog
 =========
 
 
-4.2rc32 (unreleased)
+4.2rc35 (unreleased)
+--------------------
+
+- Fixed JS that displays/hides other configs to clone to on item edit when
+  possible to send to several other configs.
+  [gbastien]
+- Added parameter `item` to adaptable method
+  `MeetingConfig.get_item_custom_suffix_roles`.
+  [gbastien]
+- Removed `&nbsp;` from committees vocabulary or it is rendered in faceted filter.
+  [gbastien]
+- Fixed `meetingconfig_view`, moved `usedPollTypes` and `defaultPollType`
+  to the `Votes` tab.
+  [gbastien]
+- Avoid `Unauthorized` when a `MeetingManager` updates a meeting date and this
+  trigger an update of items having the date as preferred date and an item is
+  not viewable by the `MeetingManager`.
+  [gbastien]
+- Removed management of `forceRedirectAfterTransition` in `MeetingActionsPanelView`
+  as this is now the default behavior implemented in `imio.actionspanel`.
+  [gbastien]
+- In the advice proposing group comment popup, include advice name for which
+  user is adding a comment.
+  [gbastien]
+- Added `RichText` column `committee_observations` to
+  `meeting.committees datagridfield`.
+  Added upgrade step to 4205.
+  [gbastien]
+- Added select/unselect all `attendees/excused/absents/voters` when editing
+  meeting attendees (contacts).
+  [gbastien]
+- Hide the `byebye attendee` action on item attendees management if linked
+  secret votes are all encoded.
+  [gbastien]
+- The `waiting_advices_given_and_signed_advices_required_to_validate` WF adaptation
+  depends of the `waiting_advices_given_advices_required_to_validate` WF adaptation.
+  [gbastien]
+- Fixed `MyItemsTakenOverAdapter.query` that was always using same
+  `member_id` because it used `forever_cachekey`, now it is not cached anymore.
+  [gbastien]
+- Optimized WF adaptation `waiting_advices_given_and_signed_advices_required_to_validate`
+  to avoid check if advice is not a finances advice.
+  [gbastien]
+- Added `renderWidgets` macro that factorize rendering a list of widgets on a DX content.
+  [gbastien]
+- Fixed the `Update local roles` dashboard batch action to make sure elements
+  are computed in the dashboard order.
+  [gbastien]
+- Fixed copy/paste an image in CKeditor when editing an advice from
+  a faceted dashboard. Temporary fixed by overriding `CKeditorView` until it is
+  fixed in `collective.ckeditor`.
+  [gbastien]
+- Fixed meeting `@@actions_panel` caching invalidation when a meeting was removed
+  then created again, old cache was still used, base cachekey on meeting UID.
+  [gbastien]
+- Advice historization is no more using Plone versioning but we use a new
+  `imio.history` history called `given_advice`.
+  [gbastien]
+- Fixed display of `MeetingConfig` contacts related fields that was escaped for
+  JS protection purpose but was displaying HTML tags in the UI.
+  [gbastien]
+- Overrided DataGridField `datagrid_select_cell.pt` to use structure in `view` macro
+  so values using HTML are correctly rendered (`MeetingConfig.certifiedSignatures`).
+  [gbastien]
+- Fixed `MeetingItem.setManuallyLinkedItems` when item created from restapi call
+  as item is still not indexed and so not found using a `portal_catalog` query.
+  [gbastien]
+- Overrided `archetypes.referencebrowserwidget popup.pt` to display elements
+  colored following `review_state` and sorted on `modified reversed`.
+  [gbastien]
+- Set `renderOwnDeleteWithComments=True` for `AdviceActionsPanelView` so when
+  deleting an advice, a comment may be entered and it will be historized in the
+  item's history.
+  [gbastien]
+- Make sure item templates managers have access to fields that are restricted to
+  `MeetingManagers` when managing the item templates.
+  [gbastien]
+- Added `committees editors` functionnality:
+
+  - May be enabled in `MeetingConfig.committees enable_editors`;
+  - When enabled, will create a Plone group, members of this group will be able
+    to edit fields `MeetingItem.committeeObservations` and
+    `MeetingItem.committeeTranscript`;
+  - New searches `Item of my committees` and `Items of my committees editable`
+    are available when committees are used.
+
+  [gbastien]
+- Added parameters `field_names=[]` to `utils.forceHTMLContentTypeForEmptyRichFields`
+  so it is possible to specify field names to initialize when known.
+  [gbastien]
+- Changed position of `photo` and `signature` fields on `person`,
+  moved `signature` before `photo`.
+  [gbastien]
+
+4.2rc34 (2022-09-29)
+--------------------
+
+- Fixed meeting creation default `signatories` and `voters` that were displayed
+  even when not activated in the configuration because some default values were
+  defined on the contacts.
+  [gbastien]
+- Escape annex and annex_type title in `ContainedAnnexesVocabulary` and
+  `ContainedDecisionAnnexesVocabulary` in case it contains malicious code.
+  [gbastien]
+- Fixed bug where order of annexes of an item sent to another MC was not correct.
+  This relies on a change in `collective.iconifiedcategory`,
+  adapted `IconifiedCategoryGroupAdapter.get_every_categories`.
+  [gbastien]
+- Added holidays for 2023.
+  [gbastien]
+- Added `ToolPloneMeeting.doInvalidateAllCache` that is called by the form in
+  the UI and manages the redirect, this avoids having a redirect when
+  `ToolPloneMeeting.invalidateAllCache` is called from other parts of the code.
+  [gbastien]
+
+4.2rc33 (2022-09-22)
+--------------------
+
+- Make `Products.CPUtils` available in tests as it is a dependency installed
+  by `metadata.xml`.
+  [gbastien]
+
+4.2rc32 (2022-09-19)
 --------------------
 
 - Fixed `Products.PloneMeeting.vocabularies.faceted_annexes_vocabulary` to take
@@ -32,8 +154,18 @@ Changelog
 - Changed behavior of number of attendees displayed on an item: now it takes
   into account absents on the meeting and not only present on the item.
   [gbastien]
-- Changed position of `photo` and `signature` fields on `person`,
-  moved `signature` before `photo`.
+- Make `update-local-roles` batch action available on dashboards displaying meetings.
+  [gbastien]
+- Added adaptable method `MeetingItem._assign_roles_to_all_groups_managing_item_suffixes`
+  to handle cases where there are several groups managing item, by default,
+  groups not currently managing item will have `View` access.
+- Added item field `marginalNotes` to `MeetingItem._bypass_meeting_closed_check_for`
+  so it is still editable by a `MeetingManager` when the meeting is closed.
+  [gbastien]
+- Display buildout git tag version in Plone control panel.
+  [gbastien]
+- Added `Products.CPUtils` as a dependency in `metadata.xml` so
+  `ExternalMethods` are installed.
   [gbastien]
 
 4.2rc31 (2022-08-26)

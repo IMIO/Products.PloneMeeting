@@ -140,6 +140,7 @@ from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleVocabulary
 
 import copy
+import html
 import logging
 import os
 
@@ -170,6 +171,8 @@ ITEM_WF_STATE_ATTRS = [
     'itemAdviceInvalidateStates',
     'itemAutoSentToOtherMCStates',
     'itemBudgetInfosStates',
+    'itemCommitteesStates',
+    'itemCommitteesViewStates',
     'itemGroupsInChargeStates',
     'itemCopyGroupsStates',
     'itemManualSentToOtherMCStates',
@@ -2006,13 +2009,13 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
-        name='versionateAdviceIfGivenAndItemModified',
-        default=defValues.versionateAdviceIfGivenAndItemModified,
+        name='historizeAdviceIfGivenAndItemModified',
+        default=defValues.historizeAdviceIfGivenAndItemModified,
         widget=BooleanField._properties['widget'](
-            description="VersionateAdviceIfGivenAndItemModified",
-            description_msgid="versionate_advice_if_given_and_item_modified_descr",
-            label='Versionateadviceifgivenanditemmodified',
-            label_msgid='PloneMeeting_label_versionateAdviceIfGivenAndItemModified',
+            description="historizeAdviceIfGivenAndItemModified",
+            description_msgid="historize_advice_if_given_and_item_modified_descr",
+            label='historizeadviceifgivenanditemmodified',
+            label_msgid='PloneMeeting_label_historizeAdviceIfGivenAndItemModified',
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
@@ -2501,6 +2504,40 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='itemCommitteesStates',
+        widget=MultiSelectionWidget(
+            description="ItemCommitteesStates",
+            description_msgid="item_committees_states_descr",
+            format="checkbox",
+            label='Itemcommitteesstates',
+            label_msgid='PloneMeeting_label_itemCommitteesStates',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="committees",
+        multiValued=1,
+        vocabulary='listItemStates',
+        default=defValues.itemCommitteesStates,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='itemCommitteesViewStates',
+        widget=MultiSelectionWidget(
+            description="ItemCommitteesViewStates",
+            description_msgid="item_committees_view_states_descr",
+            format="checkbox",
+            label='Itemcommitteesviewstates',
+            label_msgid='PloneMeeting_label_itemCommitteesViewStates',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="committees",
+        multiValued=1,
+        vocabulary='listItemStates',
+        default=defValues.itemCommitteesViewStates,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
     DataGridField(
         name='committees',
         widget=DataGridField._properties['widget'](
@@ -2543,6 +2580,11 @@ schema = Schema((
                                      col_description="committees_supplements_col_description",
                                      vocabulary="listNumbersFromZero",
                                      default='0'),
+                     'enable_editors':
+                        SelectColumn("Committee editors group enabled?",
+                                     col_description="committees_enable_editors_col_description",
+                                     vocabulary="listBooleanVocabulary",
+                                     default='0'),
                      'enabled':
                         SelectColumn("Committee enabled?",
                                      col_description="committees_enabled_col_description",
@@ -2560,7 +2602,7 @@ schema = Schema((
                  'default_assembly', 'default_signatures',
                  'default_attendees', 'default_signatories',
                  'using_groups', 'auto_from',
-                 'supplements', 'enabled'),
+                 'supplements', 'enable_editors', 'enabled'),
         allow_empty_rows=False,
     ),
     BooleanField(
@@ -2922,8 +2964,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': False,
                     'tal_condition': "python: 'takenOverBy' in cfg.getUsedItemAttributes() "
-                                     "and (tool.get_orgs_for_user(omitted_suffixes=['observers', ], "
-                                     "the_objects=False) or tool.isManager(cfg))",
+                                     "and (tool.get_orgs_for_user(omitted_suffixes=['observers', ]) "
+                                     "or tool.isManager(cfg))",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # All (visible) items
@@ -3308,6 +3350,40 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'tal_condition': "python: cfg.getEnableLabels()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
+                # Items of my committees
+                ('searchitemsofmycommittees', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-of-my-committees'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: tool.get_orgs_for_user(omitted_suffixes=['observers', ]) "
+                        "and cfg.getCommittees()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items of my committees editable
+                ('searchitemsofmycommitteeseditable', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-of-my-committees-editable'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: tool.get_orgs_for_user(omitted_suffixes=['observers', ]) "
+                        "and cfg.getCommittees()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
                 # All not-yet-decided meetings
                 ('searchnotdecidedmeetings', {
                     'subFolderId': 'searches_meetings',
@@ -3455,6 +3531,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             if not v.get('row_id', None):
                 v['row_id'] = 'committee_{0}'.format(self.generateUniqueId())
+
+        # get removed row_ids and remove linked Plone group
+        # rows that were removed
+        storedRowIds = [v['row_id'].strip() for v in self.getCommittees()
+                        if v['enable_editors'] == "1"]
+        rowIds = [v['row_id'].strip() for v in value
+                  if v.get('orderindex_', None) != 'template_row_marker']
+        removedRowIds = [storedRowId for storedRowId in storedRowIds
+                         if storedRowId not in rowIds]
+        # "enable_editors" that was set from "1" to "0"
+        storedEnableEditorsRowIds = [
+            v['row_id'].strip() for v in self.getCommittees()
+            if v['enable_editors'] == "1"]
+        disabledEditorsRowIds = [
+            v['row_id'].strip() for v in value
+            if v.get('orderindex_', None) != 'template_row_marker' or
+            v.get('enable_editors') == "0"]
+        disabledRowIds = [storedRowId for storedRowId in storedEnableEditorsRowIds
+                          if storedRowId not in disabledEditorsRowIds]
+        for row_id_to_remove in tuple(set(removedRowIds + disabledRowIds)):
+            plone_group_id = '{0}_{1}'.format(self.getId(), row_id_to_remove)
+            api.group.delete(plone_group_id)
 
         self.getField('committees').set(self, value, **kwargs)
 
@@ -3986,6 +4084,26 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return _('error_committee_row_id_removed_already_used',
                          mapping={'url': brains[0].getURL(),
                                   'committee_label': safe_unicode(self.get_committee_label(removed))})
+            # if "enable_editors", check if linked Plone group is empty
+            if self.getCommittees(committee_id=removed)["enable_editors"] == "1":
+                plone_group_id = '{0}_{1}'.format(self.getId(), removed)
+                if api.group.get(plone_group_id).getGroupMembers():
+                    return translate('committee_removed_plone_group_not_empty',
+                                     domain='PloneMeeting',
+                                     context=self.REQUEST)
+
+        # when changing "enable_editors" from "1" ro "0", Plone group must be empty
+        stored_enable_editors = [row["row_id"] for row in self.getCommittees()
+                                 if row["enable_editors"] == "1"]
+        disabled_editors = [v["row_id"] for v in value
+                            if v.get('orderindex_', None) != 'template_row_marker' and
+                            v["enable_editors"] == "0"]
+        for disabled_editor in set(stored_enable_editors).intersection(disabled_editors):
+            plone_group_id = '{0}_{1}'.format(self.getId(), disabled_editor)
+            if api.group.get(plone_group_id).getGroupMembers():
+                return translate('committee_disabled_editors_plone_group_not_empty',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
 
         # columns using_groups and auto_from are exclusive
         if self.is_committees_using("auto_from", new_value) and \
@@ -4509,14 +4627,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if len(return_to_prop_group_wf_adaptations) > 1:
             return msg
 
-        msg = translate('wa_dependencies', domain='PloneMeeting', context=self.REQUEST)
         # dependecies, some adaptations will complete already select ones
         dependencies = {'waiting_advices': [v for v in self.wfAdaptations
                                             if v.startswith('waiting_advices_')],
-                        'item_validation_shortcuts': ['item_validation_no_validate_shortcuts']}
+                        'item_validation_shortcuts': ['item_validation_no_validate_shortcuts'],
+                        'waiting_advices_given_advices_required_to_validate':
+                            ['waiting_advices_given_and_signed_advices_required_to_validate']}
         for base_wfa, dependents in dependencies.items():
             if set(values).intersection(dependents) and base_wfa not in values:
-                return msg
+                return translate(
+                    'wa_dependencies', domain='PloneMeeting', context=self.REQUEST)
 
         # dependency on 'MeetingConfig.itemWFValidationLevels'
         msg = translate('wa_item_validation_levels_dependency',
@@ -5869,7 +5989,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''
         res = []
         for po_infos in self.getPowerObservers():
-            res.append((po_infos['row_id'], po_infos['label']))
+            res.append((po_infos['row_id'], html.escape(po_infos['label'])))
         return DisplayList(res)
 
     security.declarePrivate('isVotable')
@@ -6234,6 +6354,29 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 self.reindexObjectSecurity()
         return groupIds
 
+    security.declarePrivate('createCommitteeEditorsGroups')
+
+    def createCommitteeEditorsGroups(self, dry_run_return_group_ids=False):
+        '''Create committee Plone groups that will be used to apply
+           the 'MeetingCommitteeEditor' local role on every items of this
+           MeetingConfig regarding self.committees.'''
+        groupIds = []
+        for committee in self.getCommittees():
+            groupSuffix = committee['row_id']
+            # create or update Plone group
+            if committee["enable_editors"] == "1":
+                groupTitleSuffix = translate(
+                    "committee_editors_group_title",
+                    domain="PloneMeeting",
+                    mapping={"label": safe_unicode(committee['label'])},
+                    context=self.REQUEST)
+                groupId, wasCreated = self._createOrUpdatePloneGroup(
+                    groupSuffix,
+                    groupTitleSuffix=groupTitleSuffix,
+                    dry_run_return_group_ids=dry_run_return_group_ids)
+                groupIds.append(groupId)
+        return groupIds
+
     security.declarePrivate('createBudgetImpactEditorsGroup')
 
     def createBudgetImpactEditorsGroup(self, dry_run_return_group_ids=False):
@@ -6313,6 +6456,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         group_ids += self.createPowerObserversGroups(
             force_update_access=force_update_access,
             dry_run_return_group_ids=dry_run_return_group_ids)
+        # Create the corresponding group that will contain committee editors
+        group_ids += self.createCommitteeEditorsGroups(
+            dry_run_return_group_ids=dry_run_return_group_ids)
+        # Custom create groups
         group_ids += self.adapted()._custom_createOrUpdateGroups(
             force_update_access=force_update_access, dry_run_return_group_ids=dry_run_return_group_ids)
         return group_ids
@@ -7059,7 +7206,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getCommittees')
 
-    def getCommittees(self, only_enabled=False, **kwargs):
+    def getCommittees(self, only_enabled=False, committee_id=None, **kwargs):
         '''Overrides field 'committees' accessor to be able to pass
            the p_only_enabled parameter that will return
            committees for which enabled is '1'.'''
@@ -7067,6 +7214,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if only_enabled:
             committees = [committee for committee in committees
                           if committee['enabled'] == '1']
+        # in case we have p_committee_id, only return this element, not a list
+        if committee_id:
+            # manage __suppl__
+            committee_id = committee_id.split('__suppl__')[0]
+            committees = [committee for committee in committees
+                          if committee['row_id'] == committee_id][0]
         return committees
 
     def getCategoriesIds_cachekey(method, self, catType='categories', onlySelectable=True, userId=None):
@@ -7660,7 +7813,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             corresponding_item_state = item_state.split('_waiting_advices')[0]
         return corresponding_item_state
 
-    def get_item_custom_suffix_roles(self, item_state):
+    def get_item_custom_suffix_roles(self, item, item_state):
         '''See doc in interfaces.py.'''
         return True, []
 

@@ -682,8 +682,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setOtherMeetingConfigsClonableTo((otherMeetingConfigId,))
         if with_annexes:
             # Add annexes
-            annex1 = self.addAnnex(item)
-            annex2 = self.addAnnex(item)
+            annex1 = self.addAnnex(item, annexTitle="2. Annex title")
+            annex2 = self.addAnnex(item, annexTitle="1. Annex title")
         # Propose the item
         self.proposeItem(item)
         if with_advices:
@@ -729,10 +729,15 @@ class testMeetingItem(PloneMeetingTestCase):
                 self.do(meeting, transition)
                 self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         if with_annexes:
-            decisionAnnex1 = self.addAnnex(item, relatedTo='item_decision')
-            decisionAnnex2 = self.addAnnex(item,
-                                           annexType='marketing-annex',
-                                           relatedTo='item_decision')
+            decisionAnnex1 = self.addAnnex(
+                item,
+                annexTitle="2. Decision annex title",
+                relatedTo='item_decision')
+            decisionAnnex2 = self.addAnnex(
+                item,
+                annexTitle="1. Decision annex title",
+                annexType='marketing-annex',
+                relatedTo='item_decision')
         self.do(item, 'accept')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
 
@@ -772,7 +777,25 @@ class testMeetingItem(PloneMeetingTestCase):
         # Especially test that use content_category is correct on the duplicated annexes
         for v in get_categorized_elements(newItem):
             self.assertTrue(cfg2Id in v['icon_url'])
-
+        # check also that order is correct, annexes are sorted according title
+        originalItem = data['originalItem']
+        # take care that decision annex order is correct like this because
+        # it use different annex types!
+        orig_annex_titles = ["1. Annex title",
+                             "2. Annex title",
+                             "2. Decision annex title",
+                             "1. Decision annex title"]
+        # but in cfg2 there is only one decision annex_type
+        new_annex_titles = ["1. Annex title",
+                            "2. Annex title",
+                            "1. Decision annex title",
+                            "2. Decision annex title"]
+        self.assertEqual(
+            [annex['title'] for annex in originalItem.categorized_elements.values()],
+            orig_annex_titles)
+        self.assertEqual(
+            [annex['title'] for annex in newItem.categorized_elements.values()],
+            new_annex_titles)
         # Now check the annexType of new annexes
         # annexes have no correspondences so default one is used each time
         defaultMC2ItemAT = get_categories(newItem.objectValues()[0], the_objects=True)[0]
@@ -861,7 +884,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # moreover a message was added
         messages = IStatusMessage(self.request).show()
         expectedMessage = translate("annex_not_kept_because_no_available_annex_type_warning",
-                                    mapping={'annexTitle': data['annex2'].Title()},
+                                    mapping={'annexTitle': data['annex1'].Title()},
                                     domain='PloneMeeting',
                                     context=self.request)
         self.assertEqual(messages[-2].message, expectedMessage)
@@ -1160,9 +1183,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # pmManager may not validate it
         self.changeUser('pmManager')
 
-        # create a meeting
+        # create a meeting in the future so it accepts items
         self.setMeetingConfig(cfg2Id)
-        self.create('Meeting')
+        self.create('Meeting', date=datetime.now() + timedelta(days=1))
         self.assertFalse(self.transitions(vendorsItem))
 
         # item is automatically sent when it is validated
@@ -1423,6 +1446,12 @@ class testMeetingItem(PloneMeetingTestCase):
         cfgId = cfg.getId()
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
+        # bypass test if items are created "validated" in cfg2
+        if cfg2.getItemWorkflow(True).initial_state == "validated":
+            pm_logger.info(
+                "Test 'test_pm_SendItemToOtherMCManually' was bypassed because "
+                "transition \"validate\" does not exist in cfg2.")
+            return
         cfg2.setUseGroupsAsCategories(True)
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
@@ -2907,15 +2936,26 @@ class testMeetingItem(PloneMeetingTestCase):
            - use an annex_type that current user may use."""
         cfg = self.meetingConfig
         cfg.setEnableItemDuplication(True)
+        annex_type = cfg.annexes_types.item_annexes.get('item-annex')
+        annex_type.title = u"Annex type\"><script>alert(document.domain)</script>\""
         dec_annex_type = cfg.annexes_types.item_decision_annexes.get('decision-annex')
+        # make sure annex type title is escaped in vocabulary
+        dec_annex_type.title = u"Annex decision type\"><script>alert(document.domain)</script>\""
         dec_annex_type.only_for_meeting_managers = True
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        annex_scan_id = self.addAnnex(item)
-        annex_scan_id.scan_id = '013999900000001'
-        annex_scan_id_id = annex_scan_id.getId()
-        annex_decision_meeting_manager = self.addAnnex(item, relatedTo='item_decision')
+        annex = self.addAnnex(
+            item,
+            annexTitle=u"Title\"><script>alert(document.domain)</script>\"",
+            annexType=annex_type.id)
+        annex.scan_id = '013999900000001'
+        annex_scan_id_id = annex.getId()
+        # make sure annex title is escaped in vocabulary
+        annex_decision_meeting_manager = self.addAnnex(
+            item,
+            annexTitle=u"Decision title\"><script>alert(document.domain)</script>\"",
+            relatedTo='item_decision')
         annex_decision_meeting_manager_id = annex_decision_meeting_manager.getId()
 
         # terms are disabled
@@ -2927,6 +2967,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(annex_vocab._terms[0].disabled)
         self.assertEqual(len(annex_decision_vocab), 1)
         self.assertTrue(annex_decision_vocab._terms[0].disabled)
+        # terms are escaped
+        annex_term_title = annex_vocab._terms[0].title
+        self.assertTrue("Annex type&quot;&gt;&lt;script&gt;alert" in annex_term_title)
+        self.assertTrue("> Title&quot;&gt;&lt;script" in annex_term_title)
+        annex_decision_term_title = annex_decision_vocab._terms[0].title
+        self.assertTrue("Annex decision type&quot;&gt;&lt;script&gt;alert" in annex_decision_term_title)
+        self.assertTrue("> Decision title&quot;&gt;&lt;script" in annex_decision_term_title)
         # trying to duplicate an item with those annexes will raise Unauthorized for pmCreator
         form = item.restrictedTraverse('@@item_duplicate_form').form_instance
         data = {'keep_link': False, 'annex_ids': [], 'annex_decision_ids': []}
@@ -4762,6 +4809,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertNotEqual(beforeUserGroupsEdit_rendered_actions_panel,
                             afterUserGroupsEdit_rendered_actions_panel)
 
+    def _reviewers_may_edit_itemcreated(self):
+        return False
+
     def test_pm_ItemActionsPanelCachingProfiles(self):
         """Actions panel cache is generated for various profiles, check
            that is works as expected, profiles are:
@@ -4803,9 +4853,13 @@ class testMeetingItem(PloneMeetingTestCase):
         # creator
         self.assertEqual(_sum_entries(False), 0)
         self.assertEqual(_sum_entries(), 1)
-        # reviewer, does not have the hand on item, view as a Reader
         self.changeUser('pmReviewer1')
-        self.assertEqual(_sum_entries(), 2)
+        if self._reviewers_may_edit_itemcreated():
+            # reviewer, have the hand on item, view as a Reader
+            self.assertEqual(_sum_entries(), 1)
+        else:
+            # reviewer, does not have the hand on item, view as a Reader
+            self.assertEqual(_sum_entries(), 2)
         # observer, Reader
         self.changeUser('pmObserver1')
         self.assertEqual(_sum_entries(), 2)
@@ -5381,8 +5435,8 @@ class testMeetingItem(PloneMeetingTestCase):
             'marginalNotes', 'observations', 'pollTypeObservations',
             'preferredMeeting', 'proposingGroup',
             'takenOverBy', 'templateUsingGroups',
-            'toDiscuss', 'committeeObservations', 'votesObservations',
-            'otherMeetingConfigsClonableToEmergency',
+            'toDiscuss', 'committeeObservations', 'committeeTranscript',
+            'votesObservations', 'otherMeetingConfigsClonableToEmergency',
             'internalNotes', 'externalIdentifier', 'isAcceptableOutOfMeeting']
         NEUTRAL_FIELDS += self._extraNeutralFields()
         # neutral + default + extra + getExtraFieldsToCopyWhenCloning(True) +
@@ -6057,7 +6111,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # only MeetingManager may accept/refuse emergency
         self.assertFalse(item.adapted().mayAcceptOrRefuseEmergency())
         # item emergency history is empty
-        self.assertTrue(not item.emergency_changes_history)
+        self.assertFalse(item.emergency_changes_history)
         itemEmergencyView = item.restrictedTraverse('item-emergency')
         form = item.restrictedTraverse('@@item_emergency_change_form').form_instance
 
@@ -8182,6 +8236,41 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.get_every_successors(),
                          [new_item1, new_item2, new_item21, new_item22,
                           new_item3, new_item31])
+
+    def test_pm_CommitteesEditors(self):
+        """When enabled, a specific committees editors group may view the item
+           and edit the committeesObservations and committeeTranscript fields."""
+        cfg = self.meetingConfig
+        self._enableField("committees", related_to="Meeting")
+        self._enableField('committeeObservations')
+        self._enableField('committeeTranscript')
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', committees=['committee_1'])
+        # for now vendors do not have access to item
+        self.changeUser('pmCreator2')
+        self.assertFalse(self.hasPermission(View, item))
+        # configure committees editors
+        self._setUpCommitteeEditor(cfg)
+        item.update_local_roles()
+        # still may not view or edit item as relevant states not defined in MeetingConfig
+        self.assertFalse(self.hasPermission(View, item))
+        cfg.setItemCommitteesStates(['itemcreated'])
+        cfg.setItemCommitteesViewStates(['validated'])
+        # now vendors have access
+        item.update_local_roles()
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(item.mayQuickEdit('committeeObservations'))
+        self.assertTrue(item.mayQuickEdit('committeeTranscript'))
+        self.assertFalse(item.mayQuickEdit('description'))
+        self.assertFalse(item.mayQuickEdit('decision'))
+        # when validated, only able to view, not edit
+        self.validateItem(item)
+        self.assertEqual(item.query_state(), "validated")
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertFalse(item.mayQuickEdit('committeeObservations'))
+        self.assertFalse(item.mayQuickEdit('committeeTranscript'))
+        self.assertFalse(item.mayQuickEdit('description'))
+        self.assertFalse(item.mayQuickEdit('decision'))
 
 
 def test_suite():

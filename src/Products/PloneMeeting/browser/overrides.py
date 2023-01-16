@@ -3,6 +3,7 @@
 from AccessControl import Unauthorized
 from Acquisition import aq_base
 from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
+from archetypes.referencebrowserwidget.utils import named_template_adapter
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.ckeditor.browser.ckeditorfinder import CKFinder
 from collective.ckeditor.browser.ckeditorview import AjaxSave
@@ -32,6 +33,7 @@ from imio.helpers.content import uuidToObject
 from imio.history import safe_utils as imio_history_safe_utils
 from imio.history.browser.views import IHContentHistoryView
 from imio.history.browser.views import IHDocumentBylineViewlet
+from imio.pyutils.system import get_git_tag
 from plone import api
 from plone import namedfile
 from plone.app.content.browser.foldercontents import FolderContentsView
@@ -340,7 +342,8 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
             domain='PloneMeeting',
             mapping={'output_format': safe_unicode(output_format_title)},
             context=self.request,
-            default="Click to see available mailing lists for this POD template to generate with format \"${output_format}\"")
+            default="Click to see available mailing lists for this POD template "
+            "to generate with format \"${output_format}\"")
 
 
 class PMDashboardDocumentGeneratorLinksViewlet(DashboardDocumentGeneratorLinksViewlet, BaseGeneratorLinksViewlet):
@@ -363,6 +366,8 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
     '''
     def version_overview(self):
         versions = super(PloneMeetingOverviewControlPanel, self).version_overview()
+        # buildout tag version
+        versions.insert(0, 'buildout tag %s' % get_git_tag('.'))
         # appy
         appy_version = api.env.get_distribution('appy')._version
         versions.insert(0, 'appy %s' % appy_version)
@@ -372,7 +377,7 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
         pm_ps_version = ps.getVersionForProfile('Products.PloneMeeting:default')
         pm_ps_last_version = ps.getLastVersionForProfile('Products.PloneMeeting:default')[0]
         if pm_ps_last_version != pm_ps_version:
-            pm_ps_version = '!!!%s/%s!!! Please launch upgrade steps!!!' % (pm_ps_last_version, pm_ps_version)
+            pm_ps_version = u'⚠⚠⚠ %s/%s ⚠⚠⚠ Please launch upgrade steps!!!' % (pm_ps_last_version, pm_ps_version)
         versions.insert(0, 'PloneMeeting %s (%s)' % (pm_version, pm_ps_version))
         # display versions of package begining with Products.Meeting*, plugins
         plugin_package_names = []
@@ -609,6 +614,7 @@ class FacadeActionsPanelView(BrowserView):
             appendTypeNameToTransitionLabel=False,
             showEdit=True,
             showOwnDelete=True,
+            showOwnDeleteWithComments=False,
             showActions=True,
             showAddContent=False,
             showHistory=False,
@@ -624,6 +630,7 @@ class FacadeActionsPanelView(BrowserView):
             appendTypeNameToTransitionLabel=appendTypeNameToTransitionLabel,
             showEdit=showEdit,
             showOwnDelete=showOwnDelete,
+            showOwnDeleteWithComments=showOwnDeleteWithComments,
             showActions=showActions,
             showAddContent=showAddContent,
             showHistory=showHistory,
@@ -651,6 +658,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                           appendTypeNameToTransitionLabel=False,
                           showEdit=True,
                           showOwnDelete=True,
+                          showOwnDeleteWithComments=False,
                           showActions=True,
                           showAddContent=False,
                           showHistory=False,
@@ -725,8 +733,9 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                 sent_to,
                 isRealManager, isManager, isEditorUser,
                 userAbleToCorrectItemWaitingAdvices, isPowerObserverHiddenHistory,
-                meeting_review_state, useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
-                showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
+                meeting_review_state, useIcons, showTransitions, appendTypeNameToTransitionLabel,
+                showEdit, showOwnDelete, showOwnDeleteWithComments, showActions,
+                showAddContent, showHistory, showHistoryLastEventHasComments,
                 showArrows, isPresentable, self.portal_url, kwargs)
 
     @ram.cache(__call___cachekey)
@@ -737,6 +746,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             appendTypeNameToTransitionLabel=False,
             showEdit=True,
             showOwnDelete=True,
+            showOwnDeleteWithComments=False,
             showActions=True,
             showAddContent=False,
             showHistory=False,
@@ -775,6 +785,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                      appendTypeNameToTransitionLabel=appendTypeNameToTransitionLabel,
                      showEdit=showEdit,
                      showOwnDelete=showOwnDelete,
+                     showOwnDeleteWithComments=False,
                      showActions=showActions,
                      showAddContent=showAddContent,
                      showHistory=showHistory,
@@ -813,6 +824,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
                           appendTypeNameToTransitionLabel=False,
                           showEdit=True,
                           showOwnDelete=True,
+                          showOwnDeleteWithComments=False,
                           showActions=True,
                           showAddContent=False,
                           showHistory=False,
@@ -828,11 +840,14 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         isRealManager = self.tool.isManager(realManagers=True)
         isManager = not isRealManager and self.tool.isManager(self.cfg)
         # check also portal_url in case application is accessed thru different URI
-        return (repr(self.context), self.context.query_state(),
+        # use uid to be sure that a meeting removed then created again will
+        # not reuse the cache
+        return (self.context.UID(), self.context.query_state(),
                 isRealManager, isManager,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
-                showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
-                showArrows, self.portal_url, kwargs)
+                showOwnDelete, showOwnDeleteWithComments, showActions, showAddContent,
+                showHistory, showHistoryLastEventHasComments, showArrows,
+                self.portal_url, kwargs)
 
     @ram.cache(__call___cachekey)
     def MeetingActionsPanelView__call__(
@@ -842,6 +857,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
             appendTypeNameToTransitionLabel=False,
             showEdit=True,
             showOwnDelete=True,
+            showOwnDeleteWithComments=False,
             showActions=True,
             showAddContent=False,
             showHistory=False,
@@ -852,14 +868,13 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         """
           Redefined to add ram.cache...
         """
-        if not useIcons:
-            forceRedirectAfterTransition = True
         return super(MeetingActionsPanelView, self).\
             __call__(useIcons=useIcons,
                      showTransitions=showTransitions,
                      appendTypeNameToTransitionLabel=appendTypeNameToTransitionLabel,
                      showEdit=showEdit,
                      showOwnDelete=showOwnDelete,
+                     showOwnDeleteWithComments=showOwnDeleteWithComments,
                      showActions=showActions,
                      showAddContent=showAddContent,
                      showHistory=showHistory,
@@ -895,6 +910,43 @@ class AdviceActionsPanelView(BaseActionsPanelView):
     """
     def __init__(self, context, request):
         super(AdviceActionsPanelView, self).__init__(context, request)
+        self.SECTIONS_TO_RENDER = ('renderOwnDelete',
+                                   'renderOwnDeleteWithComments')
+
+    def __call__(
+            self,
+            useIcons=True,
+            showTransitions=True,
+            appendTypeNameToTransitionLabel=False,
+            showEdit=True,
+            # disable showOwnDelete
+            showOwnDelete=False,
+            # enable showOwnDeleteWithComments
+            showOwnDeleteWithComments=True,
+            showActions=True,
+            showAddContent=False,
+            showHistory=False,
+            showHistoryLastEventHasComments=True,
+            showArrows=False,
+            forceRedirectAfterTransition=False,
+            **kwargs):
+        """
+          Redefined to add ram.cache...
+        """
+        return super(AdviceActionsPanelView, self).\
+            __call__(useIcons=useIcons,
+                     showTransitions=showTransitions,
+                     appendTypeNameToTransitionLabel=appendTypeNameToTransitionLabel,
+                     showEdit=showEdit,
+                     showOwnDelete=showOwnDelete,
+                     showOwnDeleteWithComments=showOwnDeleteWithComments,
+                     showActions=showActions,
+                     showAddContent=showAddContent,
+                     showHistory=showHistory,
+                     showHistoryLastEventHasComments=showHistoryLastEventHasComments,
+                     showArrows=showArrows,
+                     forceRedirectAfterTransition=forceRedirectAfterTransition,
+                     **kwargs)
 
     @memoize_contextless
     def _transitionsToConfirm(self):
@@ -939,6 +991,7 @@ class ConfigActionsPanelView(ActionsPanelView):
                  appendTypeNameToTransitionLabel=True,
                  showEdit=True,
                  showOwnDelete=True,
+                 showOwnDeleteWithComments=False,
                  showActions=True,
                  showAddContent=False,
                  showHistory=False,
@@ -965,6 +1018,7 @@ class ConfigActionsPanelView(ActionsPanelView):
                      appendTypeNameToTransitionLabel=appendTypeNameToTransitionLabel,
                      showEdit=showEdit,
                      showOwnDelete=showOwnDelete,
+                     showOwnDeleteWithComments=showOwnDeleteWithComments,
                      showActions=showActions,
                      showAddContent=showAddContent,
                      showHistory=showHistory,
@@ -1345,6 +1399,10 @@ class PMCKFinder(CKFinder):
         self.openuploadwidgetdefault = True
 
 
+pm_default_popup_template = named_template_adapter(
+    ViewPageTemplateFile('templates/popup.pt'))
+
+
 class PMReferenceBrowserPopup(ReferenceBrowserPopup):
     """ """
 
@@ -1389,7 +1447,7 @@ class PMContentHistoryView(IHContentHistoryView):
       Overrides the ContentHistoryView template to use our own.
       We want to display the content_history as a table.
     '''
-    histories_to_handle = (u'revision', u'workflow', u'data_changes')
+    histories_to_handle = (u'revision', u'workflow', u'data_changes', u'deleted_children')
 
     def show_history(self):
         """Override to take MeetingConfig.hideHistoryTo into account."""
@@ -1414,6 +1472,20 @@ class PMContentHistoryView(IHContentHistoryView):
                         cfg, power_observer_types=hideHistoryTo):
                     res = False
         return res
+
+
+class AdviceContentHistoryView(PMContentHistoryView):
+    """ """
+    histories_to_handle = (u'revision', u'workflow', u'advice_given')
+
+    def show_preview(self, event):
+        """ """
+        if event['type'] == 'advice_given':
+            return True
+
+    def renderCustomJS(self):
+        """ """
+        return '<script>overOverlays();</script>'
 
 
 class PMCatalogNavigationTabs(CatalogNavigationTabs):
@@ -1520,7 +1592,11 @@ class PMUtils(Utils):
             nvalues.append(vocab_value)
         # XXX begin changes by Products.PloneMeeting
         # avoid escaping when generating POD templates
-        if not self.request.getURL().endswith('/document-generation'):
+        # do not escape vocabularies used in MeetingConfig
+        # especially the SelectableAssemblyMembersVocabulary for which terms
+        # contain HTML
+        if not self.request.getURL().endswith('/document-generation') and \
+           not IConfigElement.providedBy(self.context):
             nvalues = [html.escape(val) for val in nvalues]
         if IConfigElement.providedBy(self.context):
             value = u'-'

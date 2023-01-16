@@ -364,6 +364,14 @@ function asyncToggleIcon(UID, baseUrl, viewName, baseSelector) {
     });
 }
 
+function unselectCheckBoxes(names) {
+    for (const name in names) {
+    $('input[name="' + names[name] + '"]').each(function() {
+        this.checked = false;
+    });
+    }
+}
+
 function reloadIfLocked() {
   /* Function that needs to be called when getting the edit view of a
      rich-text field through Ajax. */

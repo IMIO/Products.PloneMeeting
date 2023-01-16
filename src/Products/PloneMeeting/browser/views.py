@@ -623,7 +623,7 @@ class BaseDGHV(object):
         """Overridable method to manage some specific usecases for self.print_value."""
         return None
 
-    def print_value(self, field_name, empty_marker=u'', **kwargs):
+    def print_value(self, field_name, empty_marker=u'', raw_xhtml=False, **kwargs):
         """Convenient method that print more or less everything."""
         # special handling for some values
         value = self._print_special_value(field_name, empty_marker, **kwargs)
@@ -637,15 +637,26 @@ class BaseDGHV(object):
                 if 'custom_format' not in kwargs:
                     kwargs['custom_format'] = '%-d %B %Y'
                 value = self.display_date(date=getattr(self.real_context, field_name), **kwargs)
+            # Boolean
+            if class_name == 'Bool':
+                if value is True:
+                    value = translate('boolean_value_true',
+                                      domain="PloneMeeting",
+                                      context=self.request)
+                else:
+                    value = translate('boolean_value_false',
+                                      domain="PloneMeeting",
+                                      context=self.request)
             # RichText
             elif class_name == 'RichText':
-                value = value and value.output
-                if value:
-                    value = self.printXhtml(self.context, xhtmlContents=value, **kwargs)
+                if value is not None:
+                    if raw_xhtml:
+                        value = value.raw
+                    else:
+                        value = self.printXhtml(self.context, xhtmlContents=value, **kwargs)
             # List/Choice
-            elif getattr(field, 'vocabulary', None):
+            elif getattr(field, 'vocabulary', None) or getattr(field, 'vocabularyName', None):
                 value = self.display_voc(field_name, **kwargs)
-
         # if a p_empty_marker is given and no value, use it
         # it may be "???" or "-" for example
         if not value:
@@ -792,12 +803,14 @@ class BaseDGHV(object):
                     res = res + u"<u>%s:</u>" % cgi.escape(advice['name'])
 
                 # add advice type
-                res = res + u"<br /><u>%s :</u> <i>%s</i>" % (translate('Advice type',
-                                                              domain='PloneMeeting',
-                                                              context=self.request),
-                                                              translate([advice['type']][0],
-                                                                        domain='PloneMeeting',
-                                                                        context=self.request), )
+                res = res + u"<br /><u>%s :</u> <i>%s</i>" % (
+                    translate(
+                        'title_advice_type',
+                        domain='PloneMeeting',
+                        context=self.request),
+                    translate([advice['type']][0],
+                              domain='PloneMeeting',
+                              context=self.request), )
 
                 # display the author if advice was given
                 if withAuthor and not adviceType == NOT_GIVEN_ADVICE_VALUE:
@@ -2247,7 +2260,7 @@ class UpdateLocalRolesBatchActionForm(BaseBatchActionForm):
     def _apply(self, **data):
         """ """
         uids = listify_uids(data['uids'])
-        self.tool.update_all_local_roles(**{'UID': uids, 'log': False})
+        self.tool.update_all_local_roles(brains=self.brains, log=False)
         msg = translate('update_selected_elements',
                         domain="PloneMeeting",
                         mapping={'number_of_elements': len(uids)},

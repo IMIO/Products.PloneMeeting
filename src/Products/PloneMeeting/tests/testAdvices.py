@@ -12,6 +12,8 @@ from datetime import datetime
 from datetime import timedelta
 from DateTime import DateTime
 from imio.helpers.cache import cleanRamCacheFor
+from imio.history.interfaces import IImioHistory
+from imio.history.utils import getLastAction
 from imio.history.utils import getLastWFAction
 from os import path
 from plone import api
@@ -32,6 +34,7 @@ from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
 from Products.statusmessages.interfaces import IStatusMessage
+from zope.component import getAdapter
 from zope.component import queryUtility
 from zope.event import notify
 from zope.i18n import translate
@@ -2339,11 +2342,13 @@ class testAdvices(PloneMeetingTestCase):
 
         # send advice back to creator so advice may be asked_again
         # never historized
-        pr = api.portal.get_tool('portal_repository')
-        self.assertFalse(pr.getHistoryMetadata(advice))
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        self.assertIsNone(getLastAction(adapter))
         self.backToState(item, 'itemcreated')
         # advice was historized
-        self.assertEqual(pr.getHistoryMetadata(advice)._available, [0])
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        last_action_time1 = last_action['time']
         self.assertTrue(item.adapted().mayAskAdviceAgain(advice))
         self.assertFalse(item.adapted().mayBackToPreviousAdvice(advice))
         # for now 'advice_hide_during_redaction' is False
@@ -2357,14 +2362,17 @@ class testAdvices(PloneMeetingTestCase):
         # right, ask advice again
         changeView()
         # advice was not historized again because it was not modified
-        self.assertEqual(pr.getHistoryMetadata(advice)._available, [0])
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        self.assertEqual(last_action_time1, last_action['time'])
         self.assertEqual(advice.advice_type, 'asked_again')
         # now it is available in vocabulary
         vocab = factory(advice)
         self.assertTrue('asked_again' in vocab)
-        pr = self.portal.portal_repository
         # version 0 was saved
-        self.assertEqual(pr.getHistoryMetadata(advice)._available, [0])
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        self.assertEqual(last_action_time1, last_action['time'])
         # we may also revert to previous version
         self.assertFalse(item.adapted().mayAskAdviceAgain(advice))
         self.assertTrue(item.adapted().mayBackToPreviousAdvice(advice))
@@ -2375,17 +2383,23 @@ class testAdvices(PloneMeetingTestCase):
         # so for now it is still False
         self.assertFalse(advice.advice_hide_during_redaction)
         changeView()
-        # when going back to previous version, a new version is done
-        self.assertEqual(pr.getHistoryMetadata(advice)._available, [0, 1])
+        # when going back to previous version, advice is not historized
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        last_action_time2 = last_action['time']
+        self.assertEqual(last_action_time1, last_action_time2)
+        # old values are set back
         self.assertEqual(advice.advice_type, 'negative')
-        # advice was automatically shown
         self.assertFalse(advice.advice_hide_during_redaction)
         # ok, ask_again and send it again to 'pmReviewer2', he will be able to edit it
         # but before, edit the advice so it is historized again
         notify(ObjectModifiedEvent(advice))
         changeView()
-        # this time a new version has been saved
-        self.assertEqual(pr.getHistoryMetadata(advice)._available, [0, 1, 2])
+        # this time advice is historized again
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        last_action_time3 = last_action['time']
+        self.assertNotEqual(last_action_time2, last_action_time3)
         self.assertEqual(advice.advice_type, 'asked_again')
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
@@ -2394,14 +2408,16 @@ class testAdvices(PloneMeetingTestCase):
         advice_edit = advice.restrictedTraverse('@@edit')
         advice_edit.update()
         self.assertEqual(advice_edit.widgets['advice_hide_during_redaction'].value, ['true'])
-        # when an advice is 'asked_again', it is not versioned twice even
+        # when an advice is 'asked_again', it is not historized twice even
         # if advice was edited in between, an advice 'asked_again' is like 'never given'
         # this will avoid that previous advice of an advice 'asked_again' is also
         # an advice 'asked_again'...
         notify(ObjectModifiedEvent(advice))
         self.changeUser('pmReviewer1')
         self.backToState(item, 'itemcreated')
-        self.assertEqual(pr.getHistoryMetadata(advice)._available, [0, 1, 2])
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        self.assertEqual(last_action_time3, last_action['time'])
         # but works after when advice is no more 'asked_again'
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
@@ -2414,11 +2430,13 @@ class testAdvices(PloneMeetingTestCase):
         notify(ObjectModifiedEvent(advice))
         self.changeUser('pmReviewer1')
         self.backToState(item, 'itemcreated')
-        self.assertEqual(pr.getHistoryMetadata(advice)._available, [0, 1, 2, 3])
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        last_action_time4 = last_action['time']
+        self.assertNotEqual(last_action_time3, last_action_time4)
 
-    def test_pm_HistorizedAdviceIsNotDeletable(self):
-        """When an advice has been historized (officially given or asked_again,
-           so when versions exist), it can not be deleted by the advisers."""
+    def _setUpHistorizedAdvice(self):
+        """ """
         cfg = self.meetingConfig
         cfg.setItemAdviceStates([self._stateMappingFor('itemcreated'), ])
         cfg.setItemAdviceEditStates([self._stateMappingFor('itemcreated'), ])
@@ -2433,18 +2451,24 @@ class testAdvices(PloneMeetingTestCase):
         item = self.create('MeetingItem', **data)
         # give advice
         self.changeUser('pmAdviser1')
-        developers_advice = createContentInContainer(
+        advice = createContentInContainer(
             item,
             'meetingadvice',
             **{'advice_group': self.developers_uid,
                'advice_type': u'positive',
                'advice_hide_during_redaction': False,
                'advice_comment': RichTextValue(u'My comment')})
+        return item, advice
+
+    def test_pm_HistorizedAdviceIsNotDeletable(self):
+        """When an advice has been historized (officially given or asked_again,
+           so when versions exist), it can not be deleted by the advisers."""
+        item, dev_advice = self._setUpHistorizedAdvice()
         # for now advice is deletable
         advices_icons_infos = item.restrictedTraverse('@@advices-icons-infos')
         # some values are initialized when view is called (__call__)
         advices_icons_infos(adviceType=u'positive')
-        self.assertTrue(advices_icons_infos.mayDelete(developers_advice))
+        self.assertTrue(advices_icons_infos.mayDelete(dev_advice))
         # give advice
         self.changeUser('pmReviewer2')
         vendors_advice = createContentInContainer(
@@ -2461,30 +2485,47 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(advices_icons_infos.mayDelete(vendors_advice))
 
         # ask developers_advice again
-        changeView = developers_advice.restrictedTraverse('@@change-advice-asked-again')
+        changeView = dev_advice.restrictedTraverse('@@change-advice-asked-again')
         self.changeUser('pmCreator1')
         changeView()
-        self.assertEqual(developers_advice.advice_type, 'asked_again')
+        self.assertEqual(dev_advice.advice_type, 'asked_again')
         # advice asker may obviously not delete it
         # some values are initialized when view is called (__call__)
         advices_icons_infos(adviceType=u'asked_again')
-        self.assertFalse(advices_icons_infos.mayDelete(developers_advice))
+        self.assertFalse(advices_icons_infos.mayDelete(dev_advice))
         # and advisers neither
         self.changeUser('pmAdviser1')
-        self.assertFalse(advices_icons_infos.mayDelete(developers_advice))
+        self.assertFalse(advices_icons_infos.mayDelete(dev_advice))
         # even when advice_type is changed
-        developers_advice.advice_type = 'positive'
-        notify(ObjectModifiedEvent(developers_advice))
+        dev_advice.advice_type = 'positive'
+        notify(ObjectModifiedEvent(dev_advice))
         advices_icons_infos(adviceType=u'positive')
-        self.assertFalse(advices_icons_infos.mayDelete(developers_advice))
+        self.assertFalse(advices_icons_infos.mayDelete(dev_advice))
 
         # when an advice is officially given, it is historized so advice is no more deletable
         self.proposeItem(item)
-        self.assertFalse(advices_icons_infos.mayDelete(developers_advice))
+        self.assertFalse(advices_icons_infos.mayDelete(dev_advice))
         self.changeUser('pmReviewer2')
         # some values are initialized when view is called (__call__)
         advices_icons_infos(adviceType=u'negative')
         self.assertFalse(advices_icons_infos.mayDelete(vendors_advice))
+
+    def test_pm_AdviceHistorizedPreviewAccess(self):
+        """By default only (Meeting)Managers may access an historized advice preview."""
+        item, advice = self._setUpHistorizedAdvice()
+        # historize advice
+        self.changeUser('pmCreator1')
+        self.proposeItem(item)
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        self.assertTrue(last_action)
+        # preview is not viewable for common user
+        advice_preview = advice.restrictedTraverse('@@history-event-preview')(last_action)
+        self.assertFalse("@@advice_given_history_view" in advice_preview)
+        # preview is viewable for MeetingManagers
+        self.changeUser('pmManager')
+        advice_preview = advice.restrictedTraverse('@@history-event-preview')(last_action)
+        self.assertTrue("@@advice_given_history_view" in advice_preview)
 
     def test_pm_AdviceHistorizedWithItemDataWhenAdviceGiven(self):
         """When an advice is given, it is versioned and relevant item infos are saved.
@@ -2520,17 +2561,16 @@ class testAdvices(PloneMeetingTestCase):
                                              'advice_type': u'negative',
                                              'advice_hide_during_redaction': False,
                                              'advice_comment': RichTextValue(u'My comment')})
-        # advice is versioned when it is given, aka transition giveAdvice has been triggered
-        pr = api.portal.get_tool('portal_repository')
-        self.assertFalse(pr.getHistoryMetadata(advice))
+        # advice is historized when it is given, aka transition giveAdvice has been triggered
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        self.assertIsNone(getLastAction(adapter))
         self.changeUser('pmReviewer1')
         self.validateItem(item)
-        h_metadata = pr.getHistoryMetadata(advice)
-        self.assertTrue(h_metadata)
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        last_action_time1 = last_action['time']
         # first version, item data was historized on it
-        self.assertEqual(h_metadata._available, [0])
-        previous = pr.retrieve(advice, 0).object
-        self.assertEqual(previous.historized_item_data,
+        self.assertEqual(last_action['item_data'],
                          [{'field_name': 'title', 'field_content': 'Item to advice'},
                           {'field_name': 'description', 'field_content': '<p>Item description</p>'},
                           {'field_name': 'detailedDescription', 'field_content': '<p>Item detailed description</p>'},
@@ -2541,18 +2581,19 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(advice.query_state(), 'advice_under_edit')
         self.validateItem(item)
         self.assertEqual(advice.query_state(), 'advice_given')
-        h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEqual(h_metadata._available, [0])
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        self.assertEqual(last_action_time1, last_action['time'])
 
         # come back to 'proposed' and edit advice
         item.setDecision('<p>Another decision</p>')
         self.backToState(item, self._stateMappingFor('proposed'))
         notify(ObjectModifiedEvent(advice))
         self.validateItem(item)
-        h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEqual(h_metadata._available, [0, 1])
-        previous = pr.retrieve(advice, 1).object
-        self.assertEqual(previous.historized_item_data,
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        self.assertNotEqual(last_action_time1, last_action['time'])
+        self.assertEqual(last_action['item_data'],
                          [{'field_name': 'title', 'field_content': 'Item to advice'},
                           {'field_name': 'description', 'field_content': '<p>Item description</p>'},
                           {'field_name': 'detailedDescription', 'field_content': '<p>Item detailed description</p>'},
@@ -2584,12 +2625,13 @@ class testAdvices(PloneMeetingTestCase):
 
         # advice is versioned when it is given, aka transition giveAdvice has been triggered
         self.changeUser('pmReviewer1')
-        pr = api.portal.get_tool('portal_repository')
-        self.assertFalse(pr.getHistoryMetadata(advice))
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        self.assertIsNone(getLastAction(adapter))
         advice_modified = advice.modified()
         self.assertTrue(isModifiedSinceLastVersion(advice))
         self.validateItem(item)
-        self.assertTrue(pr.getHistoryMetadata(advice))
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        self.assertTrue(getLastAction(adapter))
         self.assertFalse(isModifiedSinceLastVersion(advice))
         self.assertEqual(advice_modified, advice.modified())
 
@@ -2667,28 +2709,30 @@ class testAdvices(PloneMeetingTestCase):
                                              'advice_hide_during_redaction': False,
                                              'advice_comment': RichTextValue(u'My comment')})
         # advice will be versioned if the item is edited
-        # this is only the case if cfg.versionateAdviceIfGivenAndItemModified is True
+        # this is only the case if cfg.historizeAdviceIfGivenAndItemModified is True
         self.changeUser('siteadmin')
-        cfg.setVersionateAdviceIfGivenAndItemModified(False)
+        cfg.setHistorizeAdviceIfGivenAndItemModified(False)
         self.changeUser('pmReviewer1')
-        pr = api.portal.get_tool('portal_repository')
-        self.assertFalse(pr.getHistoryMetadata(advice))
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        self.assertIsNone(getLastAction(adapter))
         self.request.form['detailedDescription'] = '<p>Item detailed description not active</p>'
         item.processForm()
         self.assertEqual(item.getDetailedDescription(),
                          '<p>Item detailed description not active</p>')
-        # it was not versioned because versionateAdviceIfGivenAndItemModified is False
-        h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEqual(h_metadata, [])
+        # it was not versioned because historizeAdviceIfGivenAndItemModified is False
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        self.assertIsNone(getLastAction(adapter))
         # activate and try again
         self.changeUser('siteadmin')
-        cfg.setVersionateAdviceIfGivenAndItemModified(True)
+        cfg.setHistorizeAdviceIfGivenAndItemModified(True)
         self.changeUser('pmReviewer1')
         item.processForm()
         # first version, item data was historized on it
-        previous = pr.retrieve(advice, 0).object
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        last_action_time1 = last_action['time']
         # we have item data before it was modified
-        self.assertEqual(previous.historized_item_data,
+        self.assertEqual(last_action['item_data'],
                          [{'field_name': 'title',
                            'field_content': 'Item to advice'},
                           {'field_name': 'description',
@@ -2700,17 +2744,19 @@ class testAdvices(PloneMeetingTestCase):
                           {'field_name': 'decision',
                            'field_content': '<p>Item decision</p>'}])
 
-        # when editing item a second time, if advice is not edited, it is not versioned uselessly
+        # when editing item a second time, if advice is not edited, it is not historized uselessly
         self.request.form['detailedDescription'] = '<p>Item detailed description edited 2</p>'
         item.processForm({'detailedDescription': '<p>Item detailed description edited 2</p>'})
         self.assertEqual(item.getDetailedDescription(), '<p>Item detailed description edited 2</p>')
-        h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEqual(h_metadata._available, [0])
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        self.assertEqual(last_action_time1, last_action['time'])
 
-        # when moving to 'validated', advice is 'adviceGiven', but not versioned again
+        # when moving to 'validated', advice is 'adviceGiven', but not historized again
         self.validateItem(item)
-        h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEqual(h_metadata._available, [0])
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        self.assertEqual(last_action_time1, last_action['time'])
 
         # but it is again if advice is edited
         self.changeUser('pmManager')
@@ -2718,10 +2764,12 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         notify(ObjectModifiedEvent(advice))
         self.changeUser('pmReviewer1')
-        # validate item, this time advice is versioned again
+        # validate item, this time advice is historized again
         self.validateItem(item)
-        h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEqual(h_metadata._available, [0, 1])
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        last_action_time2 = last_action['time']
+        self.assertNotEqual(last_action_time1, last_action_time2)
 
         # and once again back to proposed and edit item
         # not versioned because advice was not edited
@@ -2731,8 +2779,9 @@ class testAdvices(PloneMeetingTestCase):
         self.request.form['detailedDescription'] = '<p>Item detailed description edited 3</p>'
         item.processForm({'detailedDescription': '<p>Item detailed description edited 3</p>'})
         self.assertEqual(item.getDetailedDescription(), '<p>Item detailed description edited 3</p>')
-        h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEqual(h_metadata._available, [0, 1])
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        self.assertEqual(last_action_time2, last_action['time'])
 
         # right, back to proposed and use ajax edit
         self.changeUser('pmManager')
@@ -2742,12 +2791,13 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         item.setFieldFromAjax('detailedDescription', '<p>Item detailed description edited 4</p>')
         self.assertEqual(item.getDetailedDescription(), '<p>Item detailed description edited 4</p>')
-        # advice was versioned again
-        h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEqual(h_metadata._available, [0, 1, 2])
+        # advice was historized again
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        last_action_time3 = last_action['time']
+        self.assertNotEqual(last_action_time2, last_action_time3)
         # we have item data before it was modified
-        previous = pr.retrieve(advice, 2).object
-        self.assertEqual(previous.historized_item_data,
+        self.assertEqual(last_action['item_data'],
                          [{'field_name': 'title',
                            'field_content': 'Item to advice'},
                           {'field_name': 'description',
@@ -2759,26 +2809,29 @@ class testAdvices(PloneMeetingTestCase):
                           {'field_name': 'decision',
                            'field_content': '<p>Item decision</p>'}])
 
-        # advice are no more versionated when annex is added/removed
+        # advice are no more historized when annex is added/removed
         annex = self.addAnnex(item)
-        # was already versionated so no more
-        h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEqual(h_metadata._available, [0, 1, 2])
+        # was already historized so no more
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        self.assertEqual(last_action_time3, last_action['time'])
         # right edit the advice and remove the annex
         self.changeUser('pmReviewer2')
         notify(ObjectModifiedEvent(advice))
         self.changeUser('pmReviewer1')
         self.deleteAsManager(annex.UID())
-        # advice was not versioned again
-        h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEqual(h_metadata._available, [0, 1, 2])
-        # edit advice and add a new annex, advice will not be versionated
+        # advice was not historized again
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        self.assertEqual(last_action_time3, last_action['time'])
+        # edit advice and add a new annex, advice will not be historized
         self.changeUser('pmReviewer2')
         notify(ObjectModifiedEvent(advice))
         self.changeUser('pmReviewer1')
         annex = self.addAnnex(item)
-        h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEqual(h_metadata._available, [0, 1, 2])
+        adapter = getAdapter(advice, IImioHistory, 'advice_given')
+        last_action = getLastAction(adapter)
+        self.assertEqual(last_action_time3, last_action['time'])
 
     def _setupKeepAccessToItemWhenAdvice(self,
                                          value='default',
@@ -3002,15 +3055,6 @@ class testAdvices(PloneMeetingTestCase):
         # notify modified
         notify(ObjectModifiedEvent(advice))
         self.assertTrue('1062-600x500.jpg' in advice.objectIds())
-
-    def test_pm_ManualVersioningEnabledForMeetingAdvicePortalTypes(self):
-        """ """
-        portal_types = self.portal.portal_types
-        portal_repository = self.portal.portal_repository
-        for portal_type_id in portal_types:
-            if portal_type_id.startswith('meetingadvice'):
-                self.assertEqual(portal_repository._version_policy_mapping[portal_type_id],
-                                 [u'version_on_revert'])
 
     def test_pm_GetAdviceObj(self):
         """Test the MeetingItem.getAdviceObj that return the real advice
@@ -4035,6 +4079,24 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(advices_icons())
         advices_icons_infos = itemTemplate.restrictedTraverse('@@advices-icons-infos')
         self.assertTrue(advices_icons_infos('not_given'))
+
+    def test_pm_DeletingAdviceSavedToItemHistory(self):
+        """When an advice is deleted, a line is added to the item history."""
+        item, advice = self._setUpHistorizedAdvice()
+        self.assertFalse(item.deleted_children_history)
+        self.assertTrue(advice in item.objectValues())
+        self.request.form['uid'] = advice.UID()
+        self.request.form['comment'] = "My comment"
+        view = advice.restrictedTraverse('@@delete_with_comments')
+        view.apply(None)
+        # advice was deleted
+        self.assertFalse(advice in item.objectValues())
+        # deletion was historized
+        self.assertTrue(item.deleted_children_history[0]['action'], "delete_advice")
+        self.assertTrue(item.deleted_children_history[0]['comments'], "My comment")
+        # when duplicating item, history is empty
+        cloned_item = item.clone()
+        self.assertFalse(cloned_item.deleted_children_history)
 
 
 def test_suite():

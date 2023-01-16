@@ -149,19 +149,24 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.catalog = self.portal.portal_catalog
         self.wfTool = self.portal.portal_workflow
         self.own_org = get_own_organization()
-        # make organizations easily available thru their id and store uid
+        # make organizations easily available through their id and store uid
         # for each organization, we will have self.developers, self.developers_uid
         # as well as every plone groups : self.vendors_creators, self.developers_reviewers, ...
         # include organizations outside own_org as well
+        self.proposing_groups = object_values(self.own_org, 'PMOrganization')
+        self.all_org = object_values(self.own_org.aq_parent, 'PMOrganization') + self.proposing_groups
+        self.active_proposing_groups = [org for org in self.proposing_groups if org.active]
+        self.inactive_proposing_groups = [org for org in self.proposing_groups if not org.active]
         orgs = object_values(self.own_org, 'PMOrganization') + \
             object_values(self.own_org.aq_parent, 'PMOrganization')
         for org in orgs:
-            setattr(self, org.getId(), org)
-            setattr(self, '{0}_uid'.format(org.getId()), org.UID())
+            org_id = org.getId().replace('-', '_')
+            setattr(self, org_id, org)
+            setattr(self, '{0}_uid'.format(org_id), org.UID())
             for plone_group_id in get_plone_groups(org.UID(), ids_only=True):
                 org_uid, suffix = plone_group_id.split('_')
                 setattr(self,
-                        '{0}_{1}'.format(org.getId(), suffix),
+                        '{0}_{1}'.format(org_id, suffix),
                         plone_group_id)
         # make held_position easily available as well
         i = 1
@@ -372,10 +377,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                     (attendee, 'attendee') for attendee in default_attendees))
                 signatories = []
                 if 'signatories' in usedMeetingAttrs:
-                    signatories = _get_default_signatories(obj)
+                    signatories = _get_default_signatories(obj, cfg)
                 voters = []
                 if cfg.getUseVotes():
-                    voters = _get_default_voters(obj)
+                    voters = _get_default_voters(obj, cfg)
                 obj._do_update_contacts(attendees=default_attendees,
                                         signatories=signatories,
                                         voters=voters)
@@ -727,6 +732,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         for field_name in field_names:
             if related_to == 'MeetingItem':
                 usedItemAttrs = list(cfg.getUsedItemAttributes())
+                # make sure we are not playing with a field_name that does not exist
+                if field_name not in cfg.getField('usedItemAttributes').Vocabulary(cfg):
+                    raise Exception("\"%s\" does not exist in usedItemAttributes" % field_name)
                 if enable and field_name not in usedItemAttrs:
                     usedItemAttrs.append(field_name)
                 elif not enable and field_name in usedItemAttrs:
@@ -734,6 +742,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 cfg.setUsedItemAttributes(usedItemAttrs)
             elif related_to == 'Meeting':
                 usedMeetingAttrs = list(cfg.getUsedMeetingAttributes())
+                # make sure we are not playing with a field_name that does not exist
+                if field_name not in cfg.getField('usedMeetingAttributes').Vocabulary(cfg):
+                    raise Exception("\"%s\" does not exist in usedMeetingAttributes" % field_name)
                 if enable and field_name not in usedMeetingAttrs:
                     usedMeetingAttrs.append(field_name)
                 elif not enable and field_name in usedMeetingAttrs:

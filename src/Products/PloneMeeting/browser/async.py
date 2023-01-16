@@ -4,6 +4,7 @@ from AccessControl import Unauthorized
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
+from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidToObject
 from plone import api
@@ -14,6 +15,7 @@ from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.browser.itemvotes import _get_linked_item_vote_numbers
 from Products.PloneMeeting.browser.meeting import BaseMeetingView
+from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.utils import reindex_object
@@ -342,6 +344,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         """Returns informations regarding votes count."""
         data = []
         counts = []
+        total_count = 0
         for vote_number in range(len(self.item_votes)):
             sub_counts = []
             total_votes = self.context.getVoteCount('any_votable', vote_number)
@@ -376,7 +379,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                         context=self.request)
                     count = total_votes - total_voted
                     res.append(pattern.format(
-                        "not_yet",
+                        NOT_ENCODED_VOTE_VALUE,
                         translated_used_vote_value,
                         count))
                     sub_counts.append((translated_used_vote_value,
@@ -398,11 +401,13 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                     usedVoteValue,
                     translated_used_vote_value,
                     count))
+                if usedVoteValue != NOT_ENCODED_VOTE_VALUE:
+                    total_count += count
                 sub_counts.append((translated_used_vote_value, count, 'vote_value_' + usedVoteValue))
             votes = u" / ".join(res)
             data.append(votes)
             counts.append(sub_counts)
-        return data, counts
+        return data, counts, total_count
 
     def compute_next_vote_number(self):
         """Return next vote_number."""
@@ -460,6 +465,14 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         may_change_attendees = self.context._mayChangeAttendees()
         poll_type = self.context.getPollType()
         cache_date = self.request.get('cache_date', None)
+        # when using a cache_date, make sure cache is invalidated
+        if cache_date:
+            date = invalidate_cachekey_volatile_for(
+                'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignaturesRawFields',
+                get_again=True)
+        else:
+            date = get_cachekey_volatile(
+                'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignaturesRawFields')
         return (date,
                 context_uid,
                 cfg_modified,
@@ -478,7 +491,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         self.context_uid = self.context.UID()
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-        self.usedMeetingAttrs = self.cfg.getUsedMeetingAttributes()
+        self.used_meeting_attrs = self.cfg.getUsedMeetingAttributes()
         self.meeting = self.context.getMeeting()
         self.show_votes = self.context.show_votes()
         if self.show_votes:
@@ -491,9 +504,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
             if not self.votesAreSecret:
                 self.voted_voters = self.context.get_voted_voters()
             self.next_vote_number = self.compute_next_vote_number()
-            vote_counts = self.vote_counts()
-            self.displayable_counts = vote_counts[0]
-            self.counts = vote_counts[1]
+            self.displayable_counts, self.counts, self.total_count = self.vote_counts()
         else:
             self.votesAreSecret = False
             self.voters = []
@@ -526,8 +537,6 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
            Cache is invalidated depending on :
            - current user may edit or not;
            - something is redefined for current item or not.'''
-        date = get_cachekey_volatile(
-            'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         is_manager = tool.isManager(cfg)
@@ -535,6 +544,14 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
         ordered_contacts = self.context.ordered_contacts.items()
         item_votes = sorted(self.context.get_item_votes().items())
         cache_date = self.request.get('cache_date', None)
+        # when using a cache_date, make sure cache is invalidated
+        if cache_date:
+            date = invalidate_cachekey_volatile_for(
+                'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures',
+                get_again=True)
+        else:
+            date = get_cachekey_volatile(
+                'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures')
         return (date,
                 is_manager,
                 cfg_modified,

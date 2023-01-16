@@ -129,11 +129,11 @@ class MeetingWorkflowActions(object):
         if not self.context.attribute_is_used('meeting_number') or \
            self.context.meeting_number != -1:
             return  # Not used or already computed.
-        prev = self.context.get_previous_meeting()
+        prev = self.context.get_previous_meeting(interval=365)
         if "meeting_number" in self.cfg.getYearlyInitMeetingNumbers():
             # I must reinit the meeting number to 1 if it is the first
             # meeting of this year.
-            if prev and \
+            if not prev or \
                (prev.date.year != self.context.date.year):
                 self.context.meeting_number = 1
                 self.cfg.setLastMeetingNumber(1)

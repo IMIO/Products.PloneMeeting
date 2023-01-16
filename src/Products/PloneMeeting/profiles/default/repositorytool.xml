@@ -7,8 +7,5 @@
         <type name="annexDecision">
             <policy name="version_on_revert"/>
         </type>
-        <type name="meetingadvice">
-            <policy name="version_on_revert"/>
-        </type>
     </policymap>
 </repositorytool>

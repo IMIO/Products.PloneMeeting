@@ -38,7 +38,7 @@ class Migrate_To_4204(Migrator):
         """Boolean field yearlyInitMeetingNumber is not a list of choices called
            yearlyInitMeetingNumbers."""
         logger.info('Migrating field "yearlyInitMeetingNumber" to '
-                    '"yearlyInitMeetingNumbers" for every meetings...')
+                    '"yearlyInitMeetingNumbers" for every MeetingConfigs...')
         for cfg in self.tool.objectValues('MeetingConfig'):
             if hasattr(cfg, "yearlyInitMeetingNumber"):
                 if cfg.yearlyInitMeetingNumber is True:
@@ -61,6 +61,7 @@ class Migrate_To_4204(Migrator):
             _configurePortalRepository()
             self._reloadItemTemplateAndRecurringTypes()
             self._initMeetingsItemAttendeesOrder()
+            self.updateHolidays()
         self._migrateMCYearlyInitMeetingNumber()
 
         # ToolPloneMeeting.get_plone_groups_for_user parameter userId is now user_id

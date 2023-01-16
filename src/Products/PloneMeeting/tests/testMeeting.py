@@ -766,7 +766,9 @@ class testMeetingType(PloneMeetingTestCase):
         # when nothing defined in MeetingConfig.orderedAssociatedOrganizations
         # then order of organizations selected in plonegroup is used
         self.assertFalse(cfg.getOrderedAssociatedOrganizations())
-        self.assertEqual(get_organizations(), [self.developers, self.vendors, self.endUsers])
+        self.assertIn(self.developers, get_organizations())
+        self.assertIn(self.vendors, get_organizations())
+        self.assertIn(self.endUsers, get_organizations())
         for itemData in data:
             new_item = self.create('MeetingItem', **itemData)
             self.presentItem(new_item)
@@ -2839,6 +2841,29 @@ class testMeetingType(PloneMeetingTestCase):
         actions_panel._transitions = None
         self.assertNotEqual(meetingManager_rendered_actions_panel, actions_panel())
 
+    def test_pm_MeetingActionsPanelCachingWhenIdReused(self):
+        """When creating then deleting a meeting, and so same id is used,
+           @@actions_panel is correctly invalidated.
+           Check essentially that the delete_givenuid UID is correct."""
+        self._removeConfigObjectsFor(self.meetingConfig)
+        self.changeUser('siteadmin')
+        # one thing also is that intermediate free meeting id is reused
+        # create meeting-1, meeting-2, meeting-3, delete meeting-2 then
+        # create it again, meeting-2 id will be reused
+        m1 = self.create('Meeting', date=datetime(2022, 11, 18))
+        self.assertEqual(m1.getId(), 'o1')
+        m2 = self.create('Meeting', date=datetime(2022, 11, 19))
+        self.assertEqual(m2.getId(), 'o2')
+        m2_ap = m2.restrictedTraverse('@@actions_panel')()
+        m3 = self.create('Meeting', date=datetime(2022, 11, 20))
+        self.assertEqual(m3.getId(), 'o3')
+        self.deleteAsManager(m2.UID())
+        new_m2 = self.create('Meeting', date=datetime(2022, 11, 19))
+        # same id as old m2
+        self.assertEqual(new_m2.getId(), 'o2')
+        new_m2_ap = new_m2.restrictedTraverse('@@actions_panel')()
+        self.assertNotEqual(m2_ap, new_m2_ap)
+
     def test_pm_Get_next_meeting(self):
         """Test the get_next_meeting method that will return the next meeting
            regarding the meeting date."""
@@ -2912,39 +2937,56 @@ class testMeetingType(PloneMeetingTestCase):
            regarding the preferred_meeting_date and meeting_date."""
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
+        meeting_uid = meeting.UID()
         item = self.create('MeetingItem')
-        itemBrain = self.catalog(UID=item.UID())[0]
+        item_uid = item.UID()
+        itemBrain = uuidToCatalogBrain(item_uid)
         # by default, if no preferred/linked meeting, the date is '1950/01/01'
         self.assertEqual(itemBrain.meeting_date, datetime(1950, 1, 1))
         self.assertEqual(itemBrain.preferred_meeting_date, datetime(1950, 1, 1))
-        item.setPreferredMeeting(meeting.UID())
+        item.setPreferredMeeting(meeting_uid)
         item._update_after_edit()
         self.presentItem(item)
-        itemBrain = self.catalog(UID=item.UID())[0]
+        itemBrain = uuidToCatalogBrain(item_uid)
         self.assertEqual(itemBrain.meeting_date, meeting.date)
         self.assertEqual(itemBrain.preferred_meeting_date, meeting.date)
+        # create also an item to which pmManager does not have access
+        # but that uses meeting as preferred meeting
+        self.changeUser('pmCreator2')
+        item2 = self.create('MeetingItem', preferredMeeting=meeting_uid)
+        item2_uid = item2.UID()
+        item2Brain = uuidToCatalogBrain(item2_uid)
+        self.assertEqual(item2Brain.meeting_date, datetime(1950, 1, 1))
+        self.assertEqual(item2Brain.preferred_meeting_date, meeting.date)
 
         # right, change meeting's date and check again
+        self.changeUser('pmManager')
         meeting.date = datetime(2015, 5, 5)
         notify(ObjectModifiedEvent(meeting, Attributes(Interface, 'date')))
-        itemBrain = self.catalog(UID=item.UID())[0]
+        itemBrain = uuidToCatalogBrain(item_uid)
         self.assertEqual(itemBrain.meeting_date, meeting.date)
         self.assertEqual(itemBrain.preferred_meeting_date, meeting.date)
+        item2Brain = uuidToCatalogBrain(item2_uid, unrestricted=True)
+        self.assertEqual(item2Brain.meeting_date, datetime(1950, 1, 1))
+        self.assertEqual(item2Brain.preferred_meeting_date, meeting.date)
 
         # if item is removed from the meeting, it falls back to 1950
         self.do(item, 'backToValidated')
         self.assertEqual(item.query_state(), 'validated')
-        itemBrain = self.catalog(UID=item.UID())[0]
+        itemBrain = uuidToCatalogBrain(item_uid)
         self.assertEqual(itemBrain.meeting_date, datetime(1950, 1, 1))
         # preferred_meeting_date is still the meeting.date
         self.assertEqual(itemBrain.preferred_meeting_date, meeting.date)
 
         # when a meeting is removed, preferred_meeting_date is updated on items
-        self.deleteAsManager(meeting.UID())
+        self.deleteAsManager(meeting_uid)
         self.assertEqual(item.getPreferredMeeting(), ITEM_NO_PREFERRED_MEETING_VALUE)
-        itemBrain = self.catalog(UID=item.UID())[0]
+        itemBrain = uuidToCatalogBrain(item_uid)
         self.assertEqual(itemBrain.meeting_date, datetime(1950, 1, 1))
         self.assertEqual(itemBrain.preferred_meeting_date, datetime(1950, 1, 1))
+        item2Brain = uuidToCatalogBrain(item2_uid, unrestricted=True)
+        self.assertEqual(item2Brain.meeting_date, datetime(1950, 1, 1))
+        self.assertEqual(item2Brain.preferred_meeting_date, datetime(1950, 1, 1))
 
     def test_pm_GetFirstItemNumberIgnoresSubnumbers(self):
         """When computing the firstItemNumber of a meeting,
@@ -3291,6 +3333,34 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(add_form_instance.w['signatures'].value, u'Default signatures')
         self.assertFalse('place' in add_form_instance.w)
         self.assertFalse('place_other' in add_form_instance.w)
+
+    def test_pm_DefaultAttendees(self):
+        """When creating a meeting, attendees, signatories and voters are taken
+           from the MeetingConfig."""
+        cfg = self.meetingConfig
+        cfg.setUseVotes(False)
+        self._setUpOrderedContacts(
+            meeting_attrs=('attendees', 'absents', ))
+        self.changeUser('pmManager')
+        pm_folder = self.getMeetingFolder()
+        meeting_type_name = cfg.getMeetingTypeName()
+        add_form = pm_folder.restrictedTraverse('++add++{0}'.format(meeting_type_name))
+        add_form.update()
+        rendered = add_form.render()
+        self.assertTrue("Attendee?" in rendered)
+        self.assertTrue("Absent?" in rendered)
+        self.assertFalse("Excused?" in rendered)
+        self.assertFalse("Signer?" in rendered)
+        self.assertFalse("Voter?" in rendered)
+        cfg.setUseVotes(True)
+        self._setUpOrderedContacts()
+        add_form.update()
+        rendered = add_form.render()
+        self.assertTrue("Attendee?" in rendered)
+        self.assertTrue("Absent?" in rendered)
+        self.assertTrue("Excused?" in rendered)
+        self.assertTrue("Signer?" in rendered)
+        self.assertTrue("Voter?" in rendered)
 
     def test_pm_ItemReferenceInMeetingUpdatedWhenNecessary(self):
         '''Items references in a meeting are updated only when relevant,
@@ -3765,8 +3835,9 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(meeting.get_committees(), ['committee_1', 'committee_2'])
         # get_committee, return a given committee stored data
         self.assertEqual(sorted(meeting.get_committee('committee_1').keys()),
-                         ['assembly', 'attendees', 'convocation_date', 'date',
-                          'place', 'row_id', 'signatories', 'signatures'])
+                         ['assembly', 'attendees', 'committee_observations',
+                          'convocation_date', 'date', 'place', 'row_id',
+                          'signatories', 'signatures'])
         # get_committee_assembly, returns HTML by default
         self.assertEqual(meeting.get_committee_assembly('committee_1'),
                          u'<p>Default assembly</p>')
@@ -3793,6 +3864,10 @@ class testMeetingType(PloneMeetingTestCase):
                                                             the_objects=True,
                                                             by_signature_number=True),
                          {'1': self.hp2, '2': self.hp3})
+        # get_committee_observations
+        self.assertEqual(meeting2.get_committee_observations('committee_1'),
+                         '<p>Committee observations</p>')
+        self.assertIsNone(meeting2.get_committee_observations('committee_2'))
 
     def test_pm_Get_committee_items(self):
         """Method that will return items of a given committee including

@@ -2,6 +2,7 @@
 
 from collective.contact.plonegroup.utils import select_organization
 from copy import deepcopy
+from imio.helpers.content import richtextval
 from plone import api
 from plone.app.testing import logout
 from plone.app.textfield.value import RichTextValue
@@ -465,6 +466,15 @@ class PloneMeetingTestingHelpers(object):
         item.setGroupsInCharge(groups)
         item.update_local_roles()
 
+    def _setUpCommitteeEditor(self, cfg):
+        """Will setup "pmCreator2" as committee_1 editor."""
+        cfg_committees = cfg.getCommittees()
+        cfg_committees[0]['enable_editors'] = "1"
+        cfg.setCommittees(cfg_committees)
+        cfg.at_post_edit_script()
+        self._addPrincipalToGroup(
+            'pmCreator2', "{0}_{1}".format(cfg.getId(), 'committee_1'))
+
     def _tearDownGroupsInCharge(self, item):
         """If group in charge is overrided, it may be setup differently."""
         item.setGroupsInCharge([])
@@ -511,13 +521,16 @@ class PloneMeetingTestingHelpers(object):
         """Disable one or every item validation levels."""
         self._updateItemValidationLevel(cfg, level, suffix, enable=False)
 
-    def _setUpOrderedContacts(self):
+    def _setUpOrderedContacts(
+            self,
+            meeting_attrs=('attendees', 'excused', 'absents', 'signatories', ),
+            item_attrs=('itemInitiator', )):
         """ """
         # login to be able to query held_positions for orderedContacts vocabulary
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
-        cfg.setUsedMeetingAttributes(('attendees', 'excused', 'absents', 'signatories', ))
-        cfg.setUsedItemAttributes(('attendees', 'excused', 'absents', 'signatories', 'itemInitiator'))
+        cfg.setUsedMeetingAttributes(meeting_attrs)
+        cfg.setUsedItemAttributes(item_attrs)
         ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
         cfg.setOrderedContacts(ordered_contacts)
         logout()
@@ -561,6 +574,7 @@ class PloneMeetingTestingHelpers(object):
         cfg_committees[0]['default_signatories'] = [self.hp2_uid, self.hp3_uid]
         cfg.setCommittees(cfg_committees)
         meeting = self.create('Meeting', committees=default_committees(DefaultData(cfg)))
+        meeting.committees[0]['committee_observations'] = richtextval('<p>Committee observations</p>')
         return meeting
 
     def _setUpDefaultItemWFValidationLevels(self, cfg):

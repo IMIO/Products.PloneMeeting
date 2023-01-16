@@ -27,9 +27,12 @@ from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.catalog import merge_queries
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
+from imio.helpers.content import richtextval
 from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.adapters import BaseImioHistoryAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
+from imio.history.interfaces import IImioHistory
+from imio.history.utils import getLastAction
 from imio.prettylink.adapters import PrettyLinkAdapter
 from persistent.list import PersistentList
 from plone import api
@@ -61,12 +64,14 @@ from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import findNewValue
 from Products.PloneMeeting.utils import get_context_with_request
+from Products.PloneMeeting.utils import get_dx_attrs
 from Products.PloneMeeting.utils import get_referer_obj
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getHistoryTexts
 from Products.PloneMeeting.utils import is_transition_before_date
 from z3c.form.term import MissingChoiceTermsVocabulary
 from zope.annotation import IAnnotations
+from zope.component import getAdapter
 from zope.i18n import translate
 from zope.schema.vocabulary import SimpleVocabulary
 
@@ -119,7 +124,7 @@ class AdviceContentDeletableAdapter(APContentDeletableAdapter):
     """
       Manage the mayDelete for meetingadvice.
       Must have 'Delete objects' on the item.
-      If some versions are saved (advice was asked_again at least once), advice
+      If advice was historized (advice was asked_again at least once), advice
       is not deletable.
     """
     def __init__(self, context):
@@ -131,10 +136,9 @@ class AdviceContentDeletableAdapter(APContentDeletableAdapter):
         mayDelete = super(AdviceContentDeletableAdapter, self).mayDelete()
         if mayDelete:
             tool = api.portal.get_tool('portal_plonemeeting')
-            pr = api.portal.get_tool('portal_repository')
             if not tool.isManager(realManagers=True) and \
-               pr.getHistoryMetadata(self.context):
-                return False
+               getLastAction(getAdapter(self.context, IImioHistory, 'advice_given')):
+                mayDelete = False
         return mayDelete
 
 
@@ -792,6 +796,25 @@ class PMCompletenessChangesHistoryAdapter(BaseImioHistoryAdapter):
     history_attr_name = 'completeness_changes_history'
 
 
+class PMAdviceGivenHistoryAdapter(BaseImioHistoryAdapter):
+    """ """
+
+    history_type = 'advice_given'
+    history_attr_name = 'advice_given_history'
+
+    def revert_to_last_event(self):
+        """Revert advice values to last historized event."""
+        last_action = getLastAction(self)
+        rich_text_field_names = get_dx_attrs(
+            self.context.portal_type, richtext_only=True, as_display_list=False)
+        for field_data in last_action['advice_data']:
+            # handle rich text to store a RichTextValue
+            field_value = field_data['field_value']
+            if field_data['field_name'] in rich_text_field_names:
+                field_value = richtextval(field_value)
+            setattr(self.context, field_data['field_name'], field_value)
+
+
 class Criteria(eeaCriteria):
     """
       Override method that gets criteria to be able to manage various use cases :
@@ -971,7 +994,7 @@ class ItemsOfMyGroupsAdapter(CompoundCriterionBaseAdapter):
 class MyItemsTakenOverAdapter(CompoundCriterionBaseAdapter):
 
     @property
-    @ram.cache(forever_cachekey)
+    # @ram.cache(forever_cachekey)
     def query_myitemstakenover(self):
         '''Queries all items that current user take over.'''
         if not self.cfg:
@@ -1572,6 +1595,51 @@ class NegativePreviousIndexValuesAdapter(CompoundCriterionBaseAdapter):
     query = query_negative_previous_index_values
 
 
+class SearchItemsOfMyCommitteesAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    @ram.cache(query_user_groups_cachekey)
+    def query_itemsofmycommittees(self):
+        """Queries all items of committees of the current user."""
+        if not self.cfg:
+            return {}
+        # get every enable committees groups for current MeetingConfig
+        # and intersect with user groups
+        committee_group_ids = self.cfg.createCommitteeEditorsGroups(
+            dry_run_return_group_ids=True)
+        user_group_ids = self.tool.get_plone_groups_for_user()
+        committee_user_group_ids = set(committee_group_ids).intersection(
+            user_group_ids)
+        committee_ids = [committee_user_group_id.split("_", 1)[1]
+                         for committee_user_group_id
+                         in committee_user_group_ids]
+        return {
+            "portal_type": {"query": self.cfg.getItemTypeName()},
+            "committees_index": {"query": sorted(committee_ids)},
+        }
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_itemsofmycommittees
+
+
+class SearchItemsOfMyCommitteesEditableAdapter(SearchItemsOfMyCommitteesAdapter):
+
+    @property
+    @ram.cache(query_user_groups_cachekey)
+    def query_itemsofmycommitteeseditable(self):
+        """Queries all items of committees of the current user."""
+        if not self.cfg:
+            return {}
+        # this manage "portal_type" and "committees_index"
+        base_query = self.query_itemsofmycommittees
+        # complete with review_states in which items committees fields are editable
+        base_query.update({"review_state": {"query": self.cfg.getItemCommitteesStates()}})
+        return base_query
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_itemsofmycommitteeseditable
+
+
 class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
     """ """
 
@@ -1881,9 +1949,11 @@ class IconifiedCategoryGroupAdapter(object):
             return cfg.annexes_types.meeting_annexes
 
     def get_every_categories(self, only_enabled=True):
-        categories = get_categories(self.context, only_enabled=only_enabled)
+        categories = get_categories(
+            self.context, the_objects=True, only_enabled=only_enabled)
         self.request['force_use_item_decision_annexes_group'] = True
-        categories = categories + get_categories(self.context, only_enabled=only_enabled)
+        categories = categories + get_categories(
+            self.context, the_objects=True, only_enabled=only_enabled)
         self.request['force_use_item_decision_annexes_group'] = False
         return categories
 

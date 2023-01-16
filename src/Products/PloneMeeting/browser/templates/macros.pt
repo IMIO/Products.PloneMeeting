@@ -298,12 +298,11 @@ document.location.reload(true);
 </tal:comment>
 <metal:previousAdviceType define-macro="previousAdviceType" i18n:domain="PloneMeeting">
   <tal:defines define="adviceStyle python: context.portal_plonemeeting.getMeetingConfig(context).getAdviceStyle();
-                       pr python: context.portal_repository;
-                       previous python: pr.retrieve(context, (pr.getHistoryMetadata(context).nextVersionId -1)).object">
-    (<img tal:attributes="src string:$portal_url/advice_${adviceStyle}_${previous/advice_type}.png;
-                          title string:${previous/advice_type};"
+                       previous_advice_type python: context.get_previous_advice_type()">
+    (<img tal:attributes="src string:$portal_url/advice_${adviceStyle}_${previous_advice_type}.png;
+                          title string:${previous_advice_type};"
           i18n:attributes="title" title=""/>
-     <span tal:content="string:${previous/advice_type}" i18n:translate="">Previous advice type</span>)
+     <span tal:content="string:${previous_advice_type}" i18n:translate="">Previous advice type</span>)
   </tal:defines>
 </metal:previousAdviceType>
 
@@ -501,7 +500,7 @@ document.location.reload(true);
        <tal:comment replace="nothing">Button for byebying a user</tal:comment>
        <a href="#" class="link-overlay-pm-manage-attendees"
           tal:attributes="href string:@@item_byebye_attendee_form?person_uid=${aUid}"
-          tal:condition="python:mayChangeAttendees and isPresent and not isRealItemSignatory and aUid not in voted_voters">
+          tal:condition="python:mayChangeAttendees and isPresent and not isRealItemSignatory and (aUid not in voted_voters if not votesAreSecret else view.total_count != len(voters))">
         <span class="fa people-edit-itemabsent link-action"
               title="person_byebye"
               i18n:attributes="title" />
@@ -610,7 +609,7 @@ document.location.reload(true);
        <a href="#"
           class="link-overlay-pm-manage-attendees"
           tal:attributes="href string:@@item_byebye_nonattendee_form?person_uid=${aUid}"
-          tal:condition="python:context._mayChangeAttendees() and not isNonAttendee and not isRealItemSignatory and aUid not in voted_voters">
+          tal:condition="python:context._mayChangeAttendees() and not isNonAttendee and not isRealItemSignatory and (aUid not in voted_voters if not votesAreSecret else view.total_count != len(voters))">
         <span class="fa people-edit-itemabsent link-action"
               title="person_byebye"
               i18n:attributes="title" />
@@ -1018,7 +1017,7 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
             $("input[id^='otherMeetingConfigsClonableTo_']").each(function()
                 {
                  $(this).bind("click", function() {
-                    number = this.id.split('_')[1]
+                    number = this.id.split('_')[1];
                     otherMCEmergencyField = $('#otherMeetingConfigsClonableToEmergency_' + number);
                     otherMCPrivacyField = $('#otherMeetingConfigsClonableToPrivacy_' + number);
                     if (this.checked) {
@@ -1030,7 +1029,7 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
                         otherMCEmergencyField.attr('disabled', true);
                         otherMCPrivacyField.attr('checked', false);
                         otherMCPrivacyField.attr('disabled', true);
-                    };
+                    }
                     });
                 });
 
@@ -1038,15 +1037,14 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
             $("input[id^='otherMeetingConfigsClonableTo_']").each(function()
                 {
                 if (!$(this).attr('checked')) {
-                    number = this.id.split('_')[1]
+                    number = this.id.split('_')[1];
                     otherMCEmergencyField = $('#otherMeetingConfigsClonableToEmergency_' + number);
                     otherMCEmergencyField.attr('checked', false);
                     otherMCEmergencyField.attr('disabled', true);
                     otherMCPrivacyField = $('#otherMeetingConfigsClonableToPrivacy_' + number);
                     otherMCPrivacyField.attr('checked', false);
                     otherMCPrivacyField.attr('disabled', true);
-                    };
-                });
+                }});
             });
         </script>
         </tal:scriptForOtherMeetingConfigsClonableToSpecificFields>
@@ -1056,20 +1054,23 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
             <script type="text/javascript">
               $("input[id^='otherMeetingConfigsClonableTo_'").bind( "click", function() {
               var otherMeetingConfigsClonableToFields = $('#otherMeetingConfigsClonableToFields');
-              if (this.checked) {
+              /* unchecked every MC inputs */
+              if ($("input[id^='otherMeetingConfigsClonableTo_']:checked").length) {
                   otherMeetingConfigsClonableToFields.fadeIn();
               }
               else {
                   otherMeetingConfigsClonableToFields.fadeOut("normal", function() {
                       $(this).hide();
                   });
-              };
-              });
+              }});
             </script>
             <div id="otherMeetingConfigsClonableToFields"
                  tal:attributes="style python: context.getOtherMeetingConfigsClonableTo() and 'display: block' or 'display: none';">
                 <fieldset>
-                  <legend i18n:translate="">Data that will be used on new item</legend>
+                  <legend i18n:translate="">
+                    Data that will be used on new item to
+                    <span i18n:name="cfg_titles" tal:content="python: context.displayOtherMeetingConfigsClonableToPossibleValues()" />
+                  </legend>
                   <tal:loop tal:repeat="other_mc_field_name python: context.get_enable_clone_to_other_mc_fields(cfg)">
                     <metal:field use-macro="python:here.widget(other_mc_field_name, mode='edit')"/>
                   </tal:loop>
@@ -1098,3 +1099,28 @@ Need to receive element "readmore_text".</tal:comment>
    </p>
  </div>
 </metal:readmorable>
+
+
+<tal:comment replace="nothing">Macro used to render a list of widgets.
+Need to receive element "widgets".</tal:comment>
+<metal:renderWidgets define-macro="renderWidgets" i18n:domain="PloneMeeting">
+  <table class="no-style-table table-view-widgets">
+    <tal:loop repeat="widget widgets">
+      <tr tal:attributes="id string:row-${widget/id};
+                          class python: not display_label and 'hide-bottom-border' or ''"
+          tal:define="display_label python: not view.meeting_view._is_rich(widget)">
+          <td class="table_widget_label" tal:condition="display_label">
+            <label tal:attributes="for python: 'form-widgets-' + widget.__name__"
+                   tal:content="widget/label">Label</label>
+          </td>
+          <td class="table_widget_value"
+              tal:attributes="colspan python: not display_label and '2' or '';
+                              class python: display_label and 'table_widget_value' or ''">
+            <tal:value content="structure python:view.meeting_view.view_widget(widget)">
+              Value
+            </tal:value>
+          </td>
+      </tr>
+    </tal:loop>
+  </table>
+</metal:renderWidgets>

@@ -40,6 +40,7 @@
   <include package="plone.memoize" />
   <include package="plonemeeting.restapi" />
   <include package="Products.CMFPlacefulWorkflow"/>
+  <include package="Products.CPUtils"/>
   <include package="Products.cron4plone" />
   <include package="Products.DataGridField" />
   <include package=".browser" />
@@ -206,6 +207,14 @@
            factory="Products.PloneMeeting.adapters.NegativePreviousIndexValuesAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-with-negative-previous-index" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.SearchItemsOfMyCommitteesAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-of-my-committees" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.SearchItemsOfMyCommitteesEditableAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-of-my-committees-editable" />
 
   <adapter for="*"
            factory="Products.PloneMeeting.adapters.LastDecisionsAdapter"
@@ -335,6 +344,11 @@
   <adapter for="OFS.interfaces.IItem"
            factory=".adapters.PMDataChangesHistoryAdapter"
            name="data_changes"
+           provides="imio.history.interfaces.IImioHistory" />
+
+  <adapter for="OFS.interfaces.IItem"
+           factory=".adapters.PMAdviceGivenHistoryAdapter"
+           name="advice_given"
            provides="imio.history.interfaces.IImioHistory" />
 
   <adapter for="OFS.interfaces.IItem"
