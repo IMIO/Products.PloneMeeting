@@ -806,8 +806,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.displayVotingGroup = True
         # Committees parameters -----------------------------------------------
         self.orderedCommitteeContacts = []
-        self.itemCommitteesStates = ['presented', 'itemfrozen']
-        self.itemCommitteesViewStates = ['accepted']
+        self.itemCommitteesStates = []
+        self.itemCommitteesViewStates = []
         self.committees = []
 
         # Contacts parameters --------------------------------------------------
