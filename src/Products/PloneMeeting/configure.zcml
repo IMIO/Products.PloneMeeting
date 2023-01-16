@@ -200,11 +200,11 @@
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-with-personal-labels" />
   <adapter for="*"
-           factory="Products.PloneMeeting.adapters.NegativePersonalLabelsAdapter"
+           factory="Products.PloneMeeting.adapters.PMNegativePersonalLabelsAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-with-negative-personal-labels" />
   <adapter for="*"
-           factory="Products.PloneMeeting.adapters.NegativePreviousIndexValuesAdapter"
+           factory="Products.PloneMeeting.adapters.PMNegativePreviousIndexValuesAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-with-negative-previous-index" />
   <adapter for="*"
@@ -479,6 +479,23 @@
         factory=".behavior.TALCondition"
         marker=".interfaces.ITALConditionable" />
   </unconfigure>
+
+  <!-- collective.compoundcriterion, unconfigure negative-personal-labels and negative-previous-index,
+       it is overrided as items-with-negative-personal-labels and items-with-negative-previous-index -->
+  <unconfigure package="collective.compoundcriterion">
+    <adapter
+        for="*"
+        factory="collective.compoundcriterion.adapters.NegativePreviousIndexValuesAdapter"
+        provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+        name="negative-previous-index" />
+    <adapter
+        zcml:condition="installed ftw.labels"
+        for="*"
+        factory="collective.compoundcriterion.adapters.NegativePersonalLabelsAdapter"
+        provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+        name="negative-personal-labels" />
+  </unconfigure>
+
   <plone:behavior
       title="TALCondition"
       description="Add a TAL condition field useable to check if content should be available."

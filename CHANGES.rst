@@ -92,6 +92,12 @@ Changelog
 - Added parameters `field_names=[]` to `utils.forceHTMLContentTypeForEmptyRichFields`
   so it is possible to specify field names to initialize when known.
   [gbastien]
+- Make `adapters.PMNegativePersonalLabelsAdapter` and
+  `adapters.PMNegativePreviousIndexValuesAdapter` inherits from base classes
+  `adapters.NegativePreviousIndexValuesAdapter` and
+  `adapters.NegativePersonalLabelsAdapter` that were moved to
+  `collective.compoundcriterion`.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
