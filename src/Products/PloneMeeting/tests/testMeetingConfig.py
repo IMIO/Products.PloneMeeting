@@ -2483,6 +2483,7 @@ class testMeetingConfig(PloneMeetingTestCase):
     def test_pm_ItemTemplatesManagersMayEditMeetingManagersReservedFields(self):
         """Make sure itemtemplates managers may edit MeetingManagers reserved
            fields on the item, like for example the "checklist" field."""
+        self._enableField('textCheckList', enable=False)
         self.changeUser('templatemanager1')
         template = self.meetingConfig.itemtemplates.template1
         self.assertFalse(template.attribute_is_used('textCheckList'))
