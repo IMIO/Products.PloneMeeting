@@ -352,7 +352,8 @@ document.location.reload(true);
                    mayChangeAttendees python: context._mayChangeAttendees();
                    attendeesOrderIsRedefined python: meeting._get_item_attendees_order(view.context_uid, from_meeting_if_empty=False);
                    votesAreSecret python:view.votesAreSecret;
-                   pollType python:context.getPollType();"
+                   pollType python:context.getPollType();
+                   context_url python: context.absolute_url();"
        id="meeting_users"
        class="listing faceted-table-results"
        cellspacing="0"
@@ -366,7 +367,7 @@ document.location.reload(true);
           tal:condition="python: mayChangeAttendees and attendeesOrderIsRedefined"
           title="Reinitialize attendees order from meeting"
           id="reinit-attendees-order-action"
-          tal:attributes="onClick string:javascript:event.preventDefault();;confirmDeleteObject(base_url='${context/absolute_url}', object_uid=null, this, msgName='are_you_sure', view_name='@@item-reinit-attendees-order', redirect=null);;"
+          tal:attributes="onClick string:javascript:event.preventDefault();;confirmDeleteObject(base_url='${context_url}', object_uid=null, this, msgName='are_you_sure', view_name='@@item-reinit-attendees-order', redirect=null);;"
           i18n:attributes="title">
            <span class="fa delete-element"></span>
        </a>
@@ -393,9 +394,13 @@ document.location.reload(true);
             i18n:attributes="title"
             class="fa vote-linked-to-previous leading-icon"></span>
       <span i18n:translate="vote_values">Votes</span>
-      (<span i18n:translate=""
-             tal:attributes="class string:item_polltype_${pollType};"
-             tal:content="string:polltype_${pollType}">Poll type</span>)
+      (<span data-base_url="#"
+         style="display: inline;"
+         tal:define="edit_css_classes python: context.mayQuickEdit('pollType') and 'tooltipster-item-polltype-change item_polltype Editable pmAction' or ''"
+         tal:attributes="data-base_url string:${context_url};
+                         class string:${edit_css_classes} item_polltype_${context/getPollType}">
+          <span metal:use-macro="python: here.widget('pollType', mode='view')" />
+      </span>)
       <tal:actions condition="mayChangeAttendees"
                    define="form_name python: votesAreSecret and '@@item_encode_secret_votes_form' or '@@item_encode_votes_form';">
        <br />
@@ -409,7 +414,7 @@ document.location.reload(true);
           tal:condition="python: context._voteIsDeletable(vote_infos['vote_number'])"
           title="Delete this vote"
           id="delete-vote-action"
-          tal:attributes="onClick string:javascript:event.preventDefault();;confirmDeleteObject(base_url='${context/absolute_url}', object_uid=${vote_infos/vote_number}, this, msgName='delete_confirm_message', view_name='@@item_delete_vote', redirect='0');;"
+          tal:attributes="onClick string:javascript:event.preventDefault();;confirmDeleteObject(base_url='${context_url}', object_uid=${vote_infos/vote_number}, this, msgName='delete_confirm_message', view_name='@@item_delete_vote', redirect='0');;"
           i18n:attributes="title">
            <span class="fa delete-element"></span>
        </a>
@@ -474,7 +479,7 @@ document.location.reload(true);
                          data-attendee_number string:${repeat/mUser/number}">
        <span tal:content="python: meeting.get_attendee_short_title(mUser, meetingConfig, item=context)"
              tal:attributes="class python: is_attendee_position_redefined and 'tooltipster-meeting-item-redefined-position link-help item-attendee-title highlightValue' or 'item-attendee-title';
-                             data-base_url string:${context/absolute_url};
+                             data-base_url string:${context_url};
                              data-attendee_uid string:${aUid};">
         Attendee short title
        </span>
@@ -516,7 +521,7 @@ document.location.reload(true);
        <tal:left condition="python: aUid in itemExcused">
 
         <span class="tooltipster-meeting-item-not-present fa people-left link-help"
-              tal:attributes="data-base_url string:${context/absolute_url};
+              tal:attributes="data-base_url string:${context_url};
                               data-not_present_uid string:${aUid};
                               data-not_present_type string:excused;">
         </span>
@@ -538,7 +543,7 @@ document.location.reload(true);
        <tal:comment replace="nothing">Show "absent" icon if the user was absent for this item</tal:comment>
        <tal:left condition="python: aUid in itemAbsents">
          <span class="tooltipster-meeting-item-not-present fa people-left link-help"
-               tal:attributes="data-base_url string:${context/absolute_url};
+               tal:attributes="data-base_url string:${context_url};
                                data-not_present_uid string:${aUid};
                                data-not_present_type string:absent;">
          </span>
@@ -574,7 +579,7 @@ document.location.reload(true);
       <tal:replacerMeetingSigner condition="python: aUid in realItemSignatories">
        <span tal:condition="python: aUid in itemSignatories"
                 class="tooltipster-meeting-item-signatories fa people-signatory-replacer link-help"
-                tal:attributes="data-base_url string:${context/absolute_url};
+                tal:attributes="data-base_url string:${context_url};
                                 data-signatory_uid string:${aUid};">
         <span class="item-signatory-replacer-signature-number"
               tal:content="python: realItemSignatories[aUid]" />
@@ -618,7 +623,7 @@ document.location.reload(true);
        <tal:left condition="python: aUid in itemNonAttendees">
 
         <span class="tooltipster-meeting-item-not-present fa people-left link-help"
-              tal:attributes="data-base_url string:${context/absolute_url};
+              tal:attributes="data-base_url string:${context_url};
                               data-not_present_uid string:${aUid};
                               data-not_present_type string:non_attendee;">
         </span>

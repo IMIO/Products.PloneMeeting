@@ -665,6 +665,7 @@ function init_tooltipsters(event) {
       attendeesInfos();
       manageAttendees();
       initializeItemAttendeesDND();
+      pollTypeChange();
     }
     if (css_id.startsWith('collapsible-text-linkeditem-')) {
       categorizedChildsInfos({selector: 'div.item-linkeditems .tooltipster-childs-infos', });

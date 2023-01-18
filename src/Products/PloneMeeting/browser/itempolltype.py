@@ -66,7 +66,9 @@ class ChangeItemPollTypeView(BrowserView):
         if (new_value == 'no_vote' or is_switching_vote_mode) and \
            self.context.get_item_votes(include_unexisting=False):
             can_not_switch_polltype_msg = _('can_not_switch_polltype_votes_encoded')
-            return can_not_switch_polltype_msg
+            api.portal.show_message(
+                validation_msg, request=self.request, type='warning')
+            return True
 
     def _changePollType(self, new_value):
         '''Helper method that changes pollType value and check that :
@@ -76,8 +78,6 @@ class ChangeItemPollTypeView(BrowserView):
         old_pollType = self.context.getPollType()
         validation_msg = self.validate_new_poll_type(old_pollType, new_value)
         if validation_msg:
-            api.portal.show_message(
-                validation_msg, request=self.request, type='warning')
             return
 
         # save old_pollType so we can pass it the the ItemPollTypeChangedEvent
@@ -96,3 +96,36 @@ class ChangeItemPollTypeView(BrowserView):
         if self.context.hasMeeting():
             meeting = self.context.getMeeting()
             notifyModifiedAndReindex(meeting)
+
+
+class ItemVotePollTypeView(ItemPollTypeView):
+    '''Render the item pollType selection on the item votes view.'''
+
+    def __call__(self, vote_number):
+        ''' '''
+        self.vote_number = vote_number
+
+    def selectablePollTypes(self):
+        '''Returns a list of pollTypes the current user can set the item to.'''
+        if not self.context.adapted().mayChangeVotePollType():
+            return []
+        pollType = self.context.getVotePollType(self.vote_number)
+        return [term for term in self.vocab if term.value != pollType]
+
+
+class ChangeItemVotePollTypeView(BrowserView):
+    '''This manage the item vote pollType changes.'''
+
+    def __call__(self, vote_number, new_value):
+        '''Change pollType value.'''
+        self.vote_number = vote_number
+        return super(ChangeItemVotePollTypeView, self).__call__(new_value)
+
+    def _changePollType(self, new_value):
+        ''' '''
+        old_pollType = self.context.getVotePollType(self.vote_number)
+        validation_msg = self.validate_new_poll_type(old_pollType, new_value)
+        if validation_msg:
+            return
+        # set new vote pollType
+        self.context.setVotePollType(self.vote_number, new_value)

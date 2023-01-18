@@ -124,7 +124,7 @@ function refresh_attendees(highlight=null, click_cancel=false) {
     $.when(highlight_attendees(highlight));
   }
 }
-// highlight votes when is is refreshed
+// highlight votes when it is refreshed
 function highlight_attendees(highlight_selector='') {
   $.when($("#collapsible-assembly-and-signatures table tr td" + highlight_selector).effect(
     'highlight', {}, 2000));
