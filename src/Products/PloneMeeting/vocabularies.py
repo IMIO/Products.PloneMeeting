@@ -1370,7 +1370,7 @@ class UsedVoteValuesVocabulary(object):
                 used_values_attr = 'firstLinkedVoteUsedVoteValues'
             for usedVoteValue in cfg.getUsedVoteValues(
                     used_values_attr=used_values_attr,
-                    include_not_encoded=not self.context.get_votes_are_secret()):
+                    include_not_encoded=not self.context.get_vote_is_secret(vote_number)):
                 res.append(
                     SimpleTerm(
                         usedVoteValue,

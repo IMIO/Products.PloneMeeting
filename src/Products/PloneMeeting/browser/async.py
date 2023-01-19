@@ -357,7 +357,8 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
             pattern = u'<span class="vote_value_{0}" title="{1}">{2}</span>'
 
             # specify how much voted for this vote if secret
-            if self.votesAreSecret:
+            vote_is_secret = self.context.get_vote_is_secret(vote_number)
+            if vote_is_secret:
                 voted = self.context.getVoteCount('any_voted', vote_number)
                 formated_total_votes = "{0} / {1}".format(voted, total_votes)
             sub_counts.append((number_of_votes_msg,
@@ -366,7 +367,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
 
             # compute votes not encoded for first secret vote
             # taking into account linked votes
-            if self.votesAreSecret:
+            if vote_is_secret:
                 linked_vote_numbers = _get_linked_item_vote_numbers(
                     self.context, self.meeting, vote_number) or [0]
                 if not linked_vote_numbers or vote_number == min(linked_vote_numbers):
@@ -426,7 +427,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                 res = True
             else:
                 # check vote_values not out of MeetingConfig.firstLinkedVoteUsedVoteValues
-                if self.votesAreSecret:
+                if self.context.get_vote_is_secret(vote_number):
                     vote_values = [vote_value for vote_value, vote_count
                                    in vote_infos['votes'].items()
                                    if vote_count and vote_value in self.cfg.getUsedVoteValues()]
@@ -456,7 +457,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         ordered_contacts = meeting.ordered_contacts.items()
         redefined_item_attendees = meeting._get_all_redefined_attendees(only_keys=False)
         show_votes = self.context.show_votes()
-        item_votes = self.context.get_item_votes(include_vote_number=False)
+        item_votes = self.context.get_item_votes(include_extra_infos=False)
         context_uid = self.context.UID()
         item_attendees_order = meeting._get_item_attendees_order(context_uid)
         # if something redefined for context or not
@@ -495,18 +496,14 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         self.meeting = self.context.getMeeting()
         self.show_votes = self.context.show_votes()
         if self.show_votes:
-            self.votesAreSecret = self.context.get_votes_are_secret()
             self.voters = self.context.get_item_voters() or []
             self.item_votes = self.context.get_item_votes(
                 include_unexisting=True,
                 ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE]) or []
-            self.voted_voters = ()
-            if not self.votesAreSecret:
-                self.voted_voters = self.context.get_voted_voters()
+            self.voted_voters = self.context.get_voted_voters()
             self.next_vote_number = self.compute_next_vote_number()
             self.displayable_counts, self.counts, self.total_count = self.vote_counts()
         else:
-            self.votesAreSecret = False
             self.voters = []
             self.item_votes = []
             self.voted_voters = []

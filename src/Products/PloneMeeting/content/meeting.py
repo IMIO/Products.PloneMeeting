@@ -1513,7 +1513,7 @@ class Meeting(Container):
                 # add an empty vote 0
                 data_item_vote_0 = item.get_item_votes(
                     vote_number=0,
-                    include_vote_number=False,
+                    include_extra_infos=False,
                     include_unexisting=True)
                 # make sure we use persistent for 'voters'
                 data_item_vote_0['voters'] = PersistentMapping(data_item_vote_0['voters'])
@@ -1555,7 +1555,7 @@ class Meeting(Container):
                 # add an empty vote 0
                 data_item_vote_0 = item.get_item_votes(
                     vote_number=0,
-                    include_vote_number=False,
+                    include_extra_infos=False,
                     include_unexisting=True)
                 self.item_votes[item_uid].append(PersistentMapping(data_item_vote_0))
         # new vote_number

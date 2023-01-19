@@ -351,8 +351,6 @@ document.location.reload(true);
                    voted_voters python:view.voted_voters;
                    mayChangeAttendees python: context._mayChangeAttendees();
                    attendeesOrderIsRedefined python: meeting._get_item_attendees_order(view.context_uid, from_meeting_if_empty=False);
-                   votesAreSecret python:view.votesAreSecret;
-                   pollType python:context.getPollType();
                    context_url python: context.absolute_url();"
        id="meeting_users"
        class="listing faceted-table-results"
@@ -396,13 +394,14 @@ document.location.reload(true);
       <span i18n:translate="vote_values">Votes</span>
       (<span data-base_url="#"
          style="display: inline;"
-         tal:define="edit_css_classes python: context.mayQuickEdit('pollType') and 'tooltipster-item-polltype-change item_polltype Editable pmAction' or ''"
+         tal:define="edit_css_classes python: mayChangeAttendees and 'tooltipster-item-vote-polltype-change item_polltype Editable pmAction' or ''"
          tal:attributes="data-base_url string:${context_url};
+                         data-vote_number:int python: vote_infos['vote_number'];
                          class string:${edit_css_classes} item_polltype_${context/getPollType}">
           <span metal:use-macro="python: here.widget('pollType', mode='view')" />
       </span>)
       <tal:actions condition="mayChangeAttendees"
-                   define="form_name python: votesAreSecret and '@@item_encode_secret_votes_form' or '@@item_encode_votes_form';">
+                   define="form_name python: context.get_vote_is_secret(vote_infos['vote_number']) and '@@item_encode_secret_votes_form' or '@@item_encode_votes_form';">
        <br />
        <a tal:attributes="href string:${form_name}?vote_number:int=${vote_infos/vote_number}"
           title="Edit this vote"
@@ -505,7 +504,7 @@ document.location.reload(true);
        <tal:comment replace="nothing">Button for byebying a user</tal:comment>
        <a href="#" class="link-overlay-pm-manage-attendees"
           tal:attributes="href string:@@item_byebye_attendee_form?person_uid=${aUid}"
-          tal:condition="python:mayChangeAttendees and isPresent and not isRealItemSignatory and (aUid not in voted_voters if not votesAreSecret else view.total_count != len(voters))">
+          tal:condition="python:mayChangeAttendees and isPresent and not isRealItemSignatory and (not isVoter or (aUid not in voted_voters and view.total_count != len(voters)))">
         <span class="fa people-edit-itemabsent link-action"
               title="person_byebye"
               i18n:attributes="title" />
@@ -614,7 +613,7 @@ document.location.reload(true);
        <a href="#"
           class="link-overlay-pm-manage-attendees"
           tal:attributes="href string:@@item_byebye_nonattendee_form?person_uid=${aUid}"
-          tal:condition="python:context._mayChangeAttendees() and not isNonAttendee and not isRealItemSignatory and (aUid not in voted_voters if not votesAreSecret else view.total_count != len(voters))">
+          tal:condition="python:context._mayChangeAttendees() and not isNonAttendee and not isRealItemSignatory and (not isVoter or (aUid not in voted_voters and view.total_count != len(voters)))">
         <span class="fa people-edit-itemabsent link-action"
               title="person_byebye"
               i18n:attributes="title" />
@@ -649,44 +648,45 @@ document.location.reload(true);
        <span tal:condition="not:isVoter">-</span>
      </td>
 
-     <tal:vote repeat="vote_infos itemVotes" condition="python: show_votes and not votesAreSecret">
-      <td align="center" class="attendee-value vote-value public-vote">
-        <tal:comment replace="nothing">Show "vote" value the user voted for this item</tal:comment>
-        <tal:voted condition="python: aUid in voters and aUid in vote_infos['voters']">
-         <tal:defines define="vote_value python: vote_infos['voters'][aUid];
-                              formatted_vote_value string:vote_value_${vote_value}">
-          <span tal:attributes="class string:vote_value ${formatted_vote_value}">
-           <tal:block i18n:translate="" content="formatted_vote_value">Vote value</tal:block>
-          </span>
-         </tal:defines>
-        </tal:voted>
-        <tal:comment replace="nothing">Show "not votable linked value"</tal:comment>
-        <tal:voted condition="python: aUid in voters and aUid not in vote_infos['voters']">
-           <span title="Voter already encoded a vote for another linked vote"
-                 i18n:attributes="title"
-                 class="fa vote-linked-to-previous disabled"></span>
-        </tal:voted>
-        <tal:comment replace="nothing">Not a voter</tal:comment>
-        <tal:not_voter condition="python: aUid not in voters">
-          <span class="item-not-voter" i18n:attributes="title" title="Not voter">-</span>
-        </tal:not_voter>
-      </td>
-     </tal:vote>
-
-     <tal:vote repeat="vote_infos itemVotes" condition="votesAreSecret">
-      <td align="center"
-          class="attendee-value vote-value secret-vote"
-          tal:define="loop_index repeat/mUser/index"
-          tal:attributes="rowspan python:len(allUsers);"
-          tal:condition="python: loop_index == 0">
-        <tal:comment replace="nothing">Show "vote" value count</tal:comment>
-        <tal:loop repeat="vote_count python: view.counts[vote_infos['vote_number']]">
-         <span tal:attributes="class python:'secret_vote_value ' + vote_count[2]"
-               tal:content="python:vote_count[0]"></span> :
-         <span tal:attributes="class python:'secret_vote_count ' + vote_count[2]"
-               tal:content="python:vote_count[1]"></span><br />
-        </tal:loop>
-      </td>
+     <tal:vote repeat="vote_infos itemVotes" condition="python: show_votes">
+      <tal:public_vote condition="python: not context.get_vote_is_secret(vote_infos['vote_number'])">
+        <td align="center" class="attendee-value vote-value public-vote">
+          <tal:comment replace="nothing">Show "vote" value the user voted for this item</tal:comment>
+          <tal:voted condition="python: aUid in voters and aUid in vote_infos['voters']">
+           <tal:defines define="vote_value python: vote_infos['voters'][aUid];
+                                formatted_vote_value string:vote_value_${vote_value}">
+            <span tal:attributes="class string:vote_value ${formatted_vote_value}">
+             <tal:block i18n:translate="" content="formatted_vote_value">Vote value</tal:block>
+            </span>
+           </tal:defines>
+          </tal:voted>
+          <tal:comment replace="nothing">Show "not votable linked value"</tal:comment>
+          <tal:voted condition="python: aUid in voters and aUid not in vote_infos['voters']">
+             <span title="Voter already encoded a vote for another linked vote"
+                   i18n:attributes="title"
+                   class="fa vote-linked-to-previous disabled"></span>
+          </tal:voted>
+          <tal:comment replace="nothing">Not a voter</tal:comment>
+          <tal:not_voter condition="python: aUid not in voters">
+            <span class="item-not-voter" i18n:attributes="title" title="Not voter">-</span>
+          </tal:not_voter>
+        </td>
+      </tal:public_vote>
+      <tal:secret_vote condition="python: context.get_vote_is_secret(vote_infos['vote_number'])">
+        <td align="center"
+            class="attendee-value vote-value secret-vote"
+            tal:define="loop_index repeat/mUser/index"
+            tal:attributes="rowspan python:len(allUsers);"
+            tal:condition="python: loop_index == 0">
+          <tal:comment replace="nothing">Show "vote" value count</tal:comment>
+          <tal:loop repeat="vote_count python: view.counts[vote_infos['vote_number']]">
+           <span tal:attributes="class python:'secret_vote_value ' + vote_count[2]"
+                 tal:content="python:vote_count[0]"></span> :
+           <span tal:attributes="class python:'secret_vote_count ' + vote_count[2]"
+                 tal:content="python:vote_count[1]"></span><br />
+          </tal:loop>
+        </td>
+      </tal:secret_vote>
      </tal:vote>
 
   </tr>

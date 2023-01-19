@@ -15,6 +15,8 @@ from zope.schema.interfaces import IVocabularyFactory
 class ItemPollTypeView(BrowserView):
     '''Render the item pollType selection on the meetingitem_view.'''
 
+    change_view_name = "change-item-polltype"
+
     def __init__(self, context, request):
         super(BrowserView, self).__init__(context, request)
         self.context = context
@@ -24,6 +26,10 @@ class ItemPollTypeView(BrowserView):
         factory = queryUtility(IVocabularyFactory,
                                'Products.PloneMeeting.vocabularies.polltypesvocabulary')
         self.vocab = factory(self.context)
+
+    def change_view_params(self, pollTypeTerm):
+        """ """
+        return {'new_value': pollTypeTerm.token}
 
     def selectablePollTypes(self):
         '''Returns a list of pollTypes the current user can set the item to.'''
@@ -65,9 +71,10 @@ class ChangeItemPollTypeView(BrowserView):
                                   new_value.startswith('secret'))
         if (new_value == 'no_vote' or is_switching_vote_mode) and \
            self.context.get_item_votes(include_unexisting=False):
-            can_not_switch_polltype_msg = _('can_not_switch_polltype_votes_encoded')
             api.portal.show_message(
-                validation_msg, request=self.request, type='warning')
+                _('can_not_switch_polltype_votes_encoded'),
+                request=self.request,
+                type='warning')
             return True
 
     def _changePollType(self, new_value):
@@ -101,19 +108,30 @@ class ChangeItemPollTypeView(BrowserView):
 class ItemVotePollTypeView(ItemPollTypeView):
     '''Render the item pollType selection on the item votes view.'''
 
+    change_view_name = "change-item-vote-polltype"
+
     def __call__(self, vote_number):
         ''' '''
         self.vote_number = vote_number
+        return super(ItemVotePollTypeView, self).__call__()
+
+    def change_view_params(self, pollTypeTerm):
+        """ """
+        params = super(ItemVotePollTypeView, self).change_view_params(pollTypeTerm)
+        params['vote_number:int'] = self.vote_number
+        return params
 
     def selectablePollTypes(self):
         '''Returns a list of pollTypes the current user can set the item to.'''
-        if not self.context.adapted().mayChangeVotePollType():
+        if not self.context._mayChangeAttendees():
             return []
-        pollType = self.context.getVotePollType(self.vote_number)
-        return [term for term in self.vocab if term.value != pollType]
+        pollType = self.context.get_item_votes(self.vote_number).get(
+            'poll_type', self.context.getPollType())
+        return [term for term in self.vocab
+                if term.value not in [pollType, 'no_vote']]
 
 
-class ChangeItemVotePollTypeView(BrowserView):
+class ChangeItemVotePollTypeView(ChangeItemPollTypeView):
     '''This manage the item vote pollType changes.'''
 
     def __call__(self, vote_number, new_value):
@@ -123,9 +141,15 @@ class ChangeItemVotePollTypeView(BrowserView):
 
     def _changePollType(self, new_value):
         ''' '''
-        old_pollType = self.context.getVotePollType(self.vote_number)
+        old_pollType = self.context.get_item_votes(self.vote_number).get(
+            'poll_type', self.context.getPollType())
         validation_msg = self.validate_new_poll_type(old_pollType, new_value)
         if validation_msg:
             return
         # set new vote pollType
-        self.context.setVotePollType(self.vote_number, new_value)
+        if new_value.startswith('secret_'):
+            self.context.getMeeting().set_item_secret_vote(
+                self.context, {'poll_type': new_value}, vote_number=self.vote_number)
+        else:
+            self.context.getMeeting().set_item_public_vote(
+                self.context, {'poll_type': new_value}, vote_number=self.vote_number)

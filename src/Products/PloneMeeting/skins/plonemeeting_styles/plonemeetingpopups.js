@@ -340,7 +340,7 @@ function editAnnex(){
 }
 
 function listTypeChange() {
-    // listType change on meeting_view
+    // listType change on meetingitem_view
     tooltipster_helper(selector='.tooltipster-item-listtype-change',
                        view_name='@@item-listtype',
                        data_parameters=[],
@@ -348,15 +348,23 @@ function listTypeChange() {
 }
 
 function pollTypeChange() {
-    // pollType change on meeting_view
+    // pollType change on meetingitem_view
     tooltipster_helper(selector='.tooltipster-item-polltype-change',
                        view_name='@@item-polltype',
                        data_parameters=[],
                        options={});
 }
 
+function votePollTypeChange() {
+    // vote pollType change on meetingitem_view
+    tooltipster_helper(selector='.tooltipster-item-vote-polltype-change',
+                       view_name='@@item-vote-polltype',
+                       data_parameters=['vote_number:int'],
+                       options={});
+}
+
 function emergencyChange() {
-    // emergency change on meeting_view
+    // emergency change on meetingitem_view
     tooltipster_helper(selector='.tooltipster-item-emergency-change',
                        view_name='@@item-emergency',
                        data_parameters=[],
@@ -365,7 +373,7 @@ function emergencyChange() {
 }
 
 function completenessChange() {
-    // emergency change on meeting_view
+    // emergency change on meetingitem_view
     tooltipster_helper(selector='.tooltipster-item-completeness-change',
                        view_name='@@item-completeness',
                        data_parameters=[],
