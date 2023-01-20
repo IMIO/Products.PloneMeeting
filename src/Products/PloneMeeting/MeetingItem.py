@@ -4370,6 +4370,41 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         poll_type = vote_infos.get('poll_type', self.getPollType())
         return poll_type.startswith('secret')
 
+    def _build_unexisting_vote(self,
+                               is_secret,
+                               vote_number,
+                               poll_type,
+                               voter_uids=[],
+                               include_extra_infos=True):
+        """ """
+        if is_secret:
+            votes = [{'label': None,
+                      'votes': {},
+                      'linked_to_previous': vote_number != 0 and self.REQUEST.get(
+                          'form.widgets.linked_to_previous', False) or False}]
+            if include_extra_infos:
+                votes[0]['vote_number'] = 0
+                votes[0]['poll_type'] = poll_type
+                # define vote_value = '' for every used vote values
+                tool = api.portal.get_tool('portal_plonemeeting')
+                cfg = tool.getMeetingConfig(self)
+                for used_vote in cfg.getUsedVoteValues():
+                    votes[0]['votes'][used_vote] = 0
+        else:
+            votes = [
+                {
+                    'label': None,
+                    'voters': {},
+                    'linked_to_previous': vote_number != 0 and self.REQUEST.get(
+                        'form.widgets.linked_to_previous', False) or False}]
+            if include_extra_infos:
+                votes[0]['vote_number'] = 0
+                votes[0]['poll_type'] = poll_type
+            # define vote not encoded for every voters
+            for voter_uid in voter_uids:
+                votes[0]['voters'][voter_uid] = NOT_ENCODED_VOTE_VALUE
+        return votes
+
     security.declarePublic('get_item_votes')
 
     def get_item_votes(self,
@@ -4403,7 +4438,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 for vote_infos in votes:
                     vote_infos['vote_number'] = i
                     vote_infos['linked_to_previous'] = vote_infos.get('linked_to_previous', False)
-                    vote_infos['linked_to_previous'] = vote_infos.get('poll_type', poll_type)
+                    vote_infos['poll_type'] = vote_infos.get('poll_type', poll_type)
                     i += 1
         # vote_number
         elif len(item_votes) - 1 >= vote_number:
@@ -4412,21 +4447,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # secret votes
         if votes_are_secret:
             if include_unexisting and not votes:
-                votes = [{'label': None,
-                          'votes': {},
-                          # if first, never linked_to_previous
-                          # this check is done so it works when nothing still encoded
-                          # and addind a linked vote immediatelly
-                          'linked_to_previous': vote_number != 0 and self.REQUEST.get(
-                              'form.widgets.linked_to_previous', False) or False}]
-                if include_extra_infos:
-                    votes[0]['vote_number'] = 0
-                    votes[0]['poll_type'] = poll_type
-                # define vote_value = '' for every used vote values
-                tool = api.portal.get_tool('portal_plonemeeting')
-                cfg = tool.getMeetingConfig(self)
-                for used_vote in cfg.getUsedVoteValues():
-                    votes[0]['votes'][used_vote] = 0
+                votes = self._build_unexisting_vote(True, vote_number, poll_type)
         # public votes
         else:
             # add an empty vote in case nothing in itemVotes
@@ -4434,18 +4455,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if include_unexisting:
                 # first or not existing
                 if not votes:
-                    votes = [
-                        {
-                            'label': None,
-                            'voters': {},
-                            'linked_to_previous': vote_number != 0 and self.REQUEST.get(
-                                'form.widgets.linked_to_previous', False) or False}]
-                    if include_extra_infos:
-                        votes[0]['vote_number'] = 0
-                        votes[0]['poll_type'] = poll_type
-                    # define vote not encoded for every voters
-                    for voter_uid in voter_uids:
-                        votes[0]['voters'][voter_uid] = NOT_ENCODED_VOTE_VALUE
+                    votes = self._build_unexisting_vote(False, vote_number, poll_type)
                 else:
                     # add new values if some voters were added
                     for vote in votes:

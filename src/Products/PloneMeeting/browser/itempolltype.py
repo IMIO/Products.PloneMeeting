@@ -147,9 +147,18 @@ class ChangeItemVotePollTypeView(ChangeItemPollTypeView):
         if validation_msg:
             return
         # set new vote pollType
+        meeting = self.context.getMeeting()
         if new_value.startswith('secret_'):
-            self.context.getMeeting().set_item_secret_vote(
-                self.context, {'poll_type': new_value}, vote_number=self.vote_number)
+            data = self.context._build_unexisting_vote(
+                is_secret=True, vote_number=0, poll_type=new_value)[0]
+            meeting.set_item_secret_vote(
+                self.context, data, vote_number=self.vote_number)
         else:
-            self.context.getMeeting().set_item_public_vote(
-                self.context, {'poll_type': new_value}, vote_number=self.vote_number)
+            data = self.context._build_unexisting_vote(
+                is_secret=False,
+                vote_number=0,
+                poll_type=new_value,
+                voter_uids=self.context.get_item_voters())[0]
+            import ipdb; ipdb.set_trace()
+            meeting.set_item_public_vote(
+                self.context, data, vote_number=self.vote_number)

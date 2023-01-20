@@ -593,6 +593,7 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
         self.votes = [vote for vote in self.votes if isinstance(vote, dict)]
         data = {}
         data['label'] = self.label
+        import ipdb; ipdb.set_trace()
         data['linked_to_previous'] = self.linked_to_previous
         data['votes'] = {}
         for vote in self.votes:
