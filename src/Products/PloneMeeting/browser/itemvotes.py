@@ -350,7 +350,11 @@ class EncodeVotesForm(BaseAttendeeForm):
                 if wdt.__name__ == 'voter_uid':
                     wdt.mode = HIDDEN_MODE
         # disable apply_until_item_number when using several votes
-        if len(self.context.get_item_votes()) > 1 or self.request.get('vote_number', 0) > 0:
+        # or if poll_type was redefined
+        vote_number = self.request.get('vote_number', 0)
+        if len(self.context.get_item_votes()) > 1 or \
+           vote_number > 0 or \
+           self.context.get_item_votes(vote_number).get('poll_type', None):
             apply_until_item_number = self.widgets['apply_until_item_number']
             apply_until_item_number.disabled = "disabled"
             apply_until_item_number.title = _(u"Not available when using several votes on same item.")
@@ -370,6 +374,10 @@ class EncodeVotesForm(BaseAttendeeForm):
         data['voters'] = PersistentMapping()
         for vote in self.votes:
             data['voters'][vote['voter_uid']] = vote['vote_value']
+        # add poll_type in case it was redefined
+        vote_infos = self.context.get_item_votes(vote_number=self.request.get('vote_number', 0))
+        if 'poll_type' in vote_infos:
+            data['poll_type'] = vote_infos['poll_type']
 
         items_to_update = _itemsToUpdate(
             from_item_number=self.context.getItemNumber(relativeTo='meeting'),
@@ -593,7 +601,6 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
         self.votes = [vote for vote in self.votes if isinstance(vote, dict)]
         data = {}
         data['label'] = self.label
-        import ipdb; ipdb.set_trace()
         data['linked_to_previous'] = self.linked_to_previous
         data['votes'] = {}
         for vote in self.votes:

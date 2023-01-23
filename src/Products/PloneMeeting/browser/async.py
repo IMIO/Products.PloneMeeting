@@ -419,13 +419,14 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
            More over, may only add linked_to_previous if :
            - already a linked_to_previous element;
            - not linked_to_previous element does not use forbidden vote_values,
-             aka vote_values not in MeetingConfig.firstLinkedVoteUsedVoteValues."""
+             aka vote_values not in MeetingConfig.firstLinkedVoteUsedVoteValues;
+           - vote poll_type was not redefined."""
         res = False
         vote_infos = self.item_votes[vote_number]
         if (vote_infos['vote_number'] + 1 == self.next_vote_number):
             if vote_infos['linked_to_previous']:
                 res = True
-            else:
+            elif vote_infos.get('poll_type') == self.context.getPollType():
                 # check vote_values not out of MeetingConfig.firstLinkedVoteUsedVoteValues
                 if self.context.get_vote_is_secret(vote_number):
                     vote_values = [vote_value for vote_value, vote_count

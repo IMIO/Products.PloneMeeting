@@ -3,6 +3,7 @@
 from AccessControl import Unauthorized
 from plone import api
 from Products.Five.browser import BrowserView
+from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import ItemPollTypeChangedEvent
@@ -16,6 +17,7 @@ class ItemPollTypeView(BrowserView):
     '''Render the item pollType selection on the meetingitem_view.'''
 
     change_view_name = "change-item-polltype"
+    js_onsuccess = "null"
 
     def __init__(self, context, request):
         super(BrowserView, self).__init__(context, request)
@@ -51,18 +53,8 @@ class ChangeItemPollTypeView(BrowserView):
         '''Change pollType value.'''
         self._changePollType(new_value)
 
-    def validate_new_poll_type(self, old_pollType, new_value):
-        '''Make sure the new selected value can be selected.'''
-        # make sure new_value exists
-        factory = queryUtility(IVocabularyFactory,
-                               'Products.PloneMeeting.vocabularies.polltypesvocabulary')
-        if new_value not in factory(self.context):
-            raise KeyError("New value '{0}' does not correspond to a value of MeetingItem.pollType".
-                           format(new_value))
-
-        if not self.context.adapted().mayChangePollType():
-            raise Unauthorized
-
+    def _do_validate_new_poll_type(self, old_pollType, new_value):
+        """Specific validation."""
         # if user tries to switch from a public pollType to a secret
         # and vice-versa, it can not be done if some votes are encoded
         is_switching_vote_mode = (old_pollType.startswith('secret') and
@@ -77,14 +69,28 @@ class ChangeItemPollTypeView(BrowserView):
                 type='warning')
             return True
 
+    def validate_new_poll_type(self, old_pollType, new_value):
+        '''Make sure the new selected value can be selected.'''
+        # make sure new_value exists
+        factory = queryUtility(IVocabularyFactory,
+                               'Products.PloneMeeting.vocabularies.polltypesvocabulary')
+        if new_value not in factory(self.context):
+            raise KeyError("New value '{0}' does not correspond to a value of MeetingItem.pollType".
+                           format(new_value))
+
+        if not self.context.adapted().mayChangePollType():
+            raise Unauthorized
+
+        # if common validation pass, call specific validation
+        return self._do_validate_new_poll_type(old_pollType, new_value)
+
     def _changePollType(self, new_value):
         '''Helper method that changes pollType value and check that :
            - new_value is among selectable pollType values;
            - user actually mayChangePollType;
            - adapt Meeting.item_votes values.'''
         old_pollType = self.context.getPollType()
-        validation_msg = self.validate_new_poll_type(old_pollType, new_value)
-        if validation_msg:
+        if self.validate_new_poll_type(old_pollType, new_value):
             return
 
         # save old_pollType so we can pass it the the ItemPollTypeChangedEvent
@@ -109,6 +115,7 @@ class ItemVotePollTypeView(ItemPollTypeView):
     '''Render the item pollType selection on the item votes view.'''
 
     change_view_name = "change-item-vote-polltype"
+    js_onsuccess = "onsuccessManageAttendees"
 
     def __call__(self, vote_number):
         ''' '''
@@ -139,16 +146,36 @@ class ChangeItemVotePollTypeView(ChangeItemPollTypeView):
         self.vote_number = vote_number
         return super(ChangeItemVotePollTypeView, self).__call__(new_value)
 
+    def _do_validate_new_poll_type(self, old_pollType, new_value):
+        """Specific validation."""
+        # only if no vote encoded
+        if self.context.getVoteCount(
+            NOT_ENCODED_VOTE_VALUE, vote_number=self.vote_number) != \
+           len(self.context.get_item_voters()):
+            api.portal.show_message(
+                _('can_not_switch_vote_polltype_votes_encoded'),
+                request=self.request,
+                type='warning')
+            return True
+        # can not be linked to other vote
+        elif self.context.get_item_votes(vote_number=self.vote_number).get('linked_to_previous', False):
+            api.portal.show_message(
+                _('can_not_switch_vote_polltype_linked_to_previous'),
+                request=self.request,
+                type='warning')
+            return True
+        else:
+            return False
+
     def _changePollType(self, new_value):
         ''' '''
         old_pollType = self.context.get_item_votes(self.vote_number).get(
             'poll_type', self.context.getPollType())
-        validation_msg = self.validate_new_poll_type(old_pollType, new_value)
-        if validation_msg:
+        if self.validate_new_poll_type(old_pollType, new_value):
             return
         # set new vote pollType
         meeting = self.context.getMeeting()
-        if new_value.startswith('secret_'):
+        if new_value.startswith('secret'):
             data = self.context._build_unexisting_vote(
                 is_secret=True, vote_number=0, poll_type=new_value)[0]
             meeting.set_item_secret_vote(
@@ -159,6 +186,5 @@ class ChangeItemVotePollTypeView(ChangeItemPollTypeView):
                 vote_number=0,
                 poll_type=new_value,
                 voter_uids=self.context.get_item_voters())[0]
-            import ipdb; ipdb.set_trace()
             meeting.set_item_public_vote(
                 self.context, data, vote_number=self.vote_number)

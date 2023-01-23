@@ -7,7 +7,9 @@
                            onclick string:event.preventDefault();;
                            callViewAndReload(base_url='${context/absolute_url}',
                                              view_name='@@${view/change_view_name}',
-                                             params=${change_view_params});;;"
+                                             params=${change_view_params},
+                                             force_faceted=false,
+                                             onsuccess=${view/js_onsuccess});;;"
            tal:content="pollType/title">Poll type</a><br />
     </tal:loop>
 </tal:defines>

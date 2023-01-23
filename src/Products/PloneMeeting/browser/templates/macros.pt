@@ -386,7 +386,7 @@ document.location.reload(true);
     <th class="header-attendee-non-attendee" tal:condition="showNonAttendees" i18n:translate="is_non_attendee">Non attendee?</th>
     <th class="header-attendee-voter" tal:condition="show_votes" i18n:translate="is_voter">Voter?</th>
     <tal:vote repeat="vote_infos itemVotes" tal:condition="show_votes">
-     <th class="header-attendee-vote" class="nosort">
+     <th class="header-attendee-vote nosort">
       <span tal:condition="python: vote_infos['linked_to_previous']"
             title="This vote is linked to previous vote"
             i18n:attributes="title"
@@ -426,15 +426,15 @@ document.location.reload(true);
           class="link-overlay-pm-manage-attendees">
            <span class="fa add-element"></span>
        </a>
-       <tal:linked_to_previous define="show_icon python: view.show_add_vote_linked_to_previous_icon(vote_infos['vote_number'])">
-        <a tal:condition="show_icon"
+       <tal:linked_to_previous define="show_link_to_previous_icon python: view.show_add_vote_linked_to_previous_icon(vote_infos['vote_number'])">
+        <a tal:condition="show_link_to_previous_icon"
            tal:attributes="href string:${add_form_name}?vote_number:int=${next_vote_number}&form.widgets.linked_to_previous:boolean=True"
            title="Add new linked vote"
            i18n:attributes="title"
            class="link-overlay-pm-manage-attendees">
             <span class="fa vote-linked-to-previous"></span>
         </a>
-        <span tal:condition="not:show_icon"
+        <span tal:condition="not:show_link_to_previous_icon"
               title="Not able to add new linked votes because incompatible vote vales have been encoded on current vote"
               i18n:attributes="title"
               class="fa vote-linked-to-previous disabled">

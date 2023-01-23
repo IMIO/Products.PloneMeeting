@@ -4366,8 +4366,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def get_vote_is_secret(self, vote_number):
         """ """
-        vote_infos = self.get_item_votes(vote_number=vote_number)
-        poll_type = vote_infos.get('poll_type', self.getPollType())
+        item_votes = self.getMeeting().get_item_votes().get(self.UID(), [])
+        if len(item_votes) - 1 >= vote_number:
+            poll_type = item_votes[vote_number].get('poll_type', self.getPollType())
+        else:
+            poll_type = self.getPollType()
         return poll_type.startswith('secret')
 
     def _build_unexisting_vote(self,
@@ -4426,7 +4429,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         meeting = self.getMeeting()
         item_votes = meeting.get_item_votes().get(self.UID(), [])
         voter_uids = self.get_item_voters()
-        votes_are_secret = self.get_votes_are_secret()
         poll_type = self.getPollType()
         # all votes
         if vote_number == 'all':
@@ -4445,7 +4447,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             votes.append(item_votes[vote_number])
 
         # secret votes
-        if votes_are_secret:
+        if self.get_vote_is_secret(vote_number):
             if include_unexisting and not votes:
                 votes = self._build_unexisting_vote(True, vote_number, poll_type)
         # public votes
@@ -4456,23 +4458,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # first or not existing
                 if not votes:
                     votes = self._build_unexisting_vote(False, vote_number, poll_type)
-                else:
-                    # add new values if some voters were added
-                    for vote in votes:
-                        stored_voter_uids = vote['voters'].keys()
-                        for voter_uid in voter_uids:
-                            if voter_uid not in stored_voter_uids:
-                                vote['voters'][voter_uid] = NOT_ENCODED_VOTE_VALUE
-            # make sure we only have current voters in 'voters'
-            # this could not be the case when encoding votes
-            # for a voter then setting him absent
-            # discard also ignored_vote_values
-            for vote in votes:
+
+        i = 0 if vote_number == 'all' else vote_number
+        for vote in votes:
+            if not self.get_vote_is_secret(i):
+                # add new values if some voters were added
+                stored_voter_uids = vote['voters'].keys()
+                for voter_uid in voter_uids:
+                    if voter_uid not in stored_voter_uids:
+                        vote['voters'][voter_uid] = NOT_ENCODED_VOTE_VALUE
+                # make sure we only have current voters in 'voters'
+                # this could not be the case when encoding votes
+                # for a voter then setting him absent
+                # discard also ignored_vote_values
                 vote['voters'] = {vote_voter_uid: vote_voter_value
                                   for vote_voter_uid, vote_voter_value in vote['voters'].items()
                                   if vote_voter_uid in voter_uids and
                                   (not ignored_vote_values or
                                    vote_voter_value not in ignored_vote_values)}
+            i = i + 1
 
         # when asking a vote_number, only return this one as a dict, not as a list
         if votes and vote_number != 'all':

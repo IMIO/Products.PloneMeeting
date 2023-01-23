@@ -1528,6 +1528,9 @@ class Meeting(Container):
                 if item_voter_uid not in data['voters']:
                     data['voters'][item_voter_uid] = NOT_VOTABLE_LINKED_TO_VALUE
             self.item_votes[item_uid].append(PersistentMapping(data))
+        elif 'voters' not in self.item_votes[item_uid]:
+            # changing poll_type for vote_number, in this case 'voters' key does not exist
+            self.item_votes[item_uid][vote_number] = PersistentMapping(data)
         else:
             # use update in case we only update a subset of votes
             # when some vote NOT_VOTABLE_LINKED_TO_VALUE or so
