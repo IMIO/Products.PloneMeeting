@@ -4415,7 +4415,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                        include_extra_infos=True,
                        include_unexisting=True,
                        unexisting_value=NOT_ENCODED_VOTE_VALUE,
-                       ignored_vote_values=[]):
+                       ignored_vote_values=[],
+                       force_list_result=False):
         '''p_vote_number may be 'all' (default), return a list of every votes,
            or an integer like 0, returns the vote with given number.
            If p_include_extra_infos, for convenience, some extra infos are added
@@ -4479,14 +4480,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             i = i + 1
 
         # when asking a vote_number, only return this one as a dict, not as a list
-        if votes and vote_number != 'all':
+        if votes and vote_number != 'all' and not force_list_result:
             votes = votes[0]
         return votes
 
-    def get_voted_voters(self):
+    def get_voted_voters(self, vote_number='all'):
         '''Voter uids that actually voted on this item, relevant for public votes.'''
         item_votes = self.get_item_votes(
-            ignored_vote_values=[NOT_ENCODED_VOTE_VALUE])
+            vote_number=vote_number,
+            ignored_vote_values=[NOT_ENCODED_VOTE_VALUE],
+            force_list_result=True)
         voted_voters = []
         for vote in item_votes:
             voters = vote.get('voters', {}).keys()
