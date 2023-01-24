@@ -2204,9 +2204,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         old_pollType = self.getPollType()
         if old_pollType != value:
             view = self.restrictedTraverse("@@change-item-polltype")
-            # validation_msg is None if it passed
-            validation_msg = view.validate_new_poll_type(old_pollType, value)
-            return validation_msg
+            # validation_msg is None if it passed, True otherwise
+            return view.validate_new_poll_type(old_pollType, value)
 
     security.declarePrivate('validate_proposingGroup')
 

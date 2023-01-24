@@ -213,38 +213,35 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
                     # used when vote is secret
                     len_voters = len(voters)
                     for item_vote in all_item_votes:
-                        all_item_votes = item_to_update.get_item_votes()
-                        i = 0
-                        for item_vote in all_item_votes:
-                            # secret
-                            if item_to_update.get_vote_is_secret(vote_number=i):
-                                # every voters voted?
-                                encoded_votes_count = item_to_update.getVoteCount(
-                                    vote_value='any_voted', vote_number=i)
-                                if len_voters == encoded_votes_count:
-                                    api.portal.show_message(
-                                        _("Can not set ${not_present_type} "
-                                          "a person that voted on an item!",
-                                          mapping={
-                                              'not_present_type':
-                                                  _('item_not_present_type_{0}'.format(
-                                                    self.not_present_type))}),
-                                        type='warning',
-                                        request=self.request)
-                                    error = True
-                            # public
-                            else:
-                                if self.person_uid in item_vote['voters']:
-                                    api.portal.show_message(
-                                        _("Can not set ${not_present_type} "
-                                          "a person that voted on an item!",
-                                          mapping={
-                                              'not_present_type':
-                                                  _('item_not_present_type_{0}'.format(
-                                                    self.not_present_type))}),
-                                        type='warning',
-                                        request=self.request)
-                                    error = True
+                        # secret
+                        if item_to_update.get_vote_is_secret(vote_number=i):
+                            # every voters voted?
+                            encoded_votes_count = item_to_update.getVoteCount(
+                                vote_value='any_voted', vote_number=i)
+                            if len_voters == encoded_votes_count:
+                                api.portal.show_message(
+                                    _("Can not set ${not_present_type} "
+                                      "a person that voted on an item!",
+                                      mapping={
+                                          'not_present_type':
+                                              _('item_not_present_type_{0}'.format(
+                                                self.not_present_type))}),
+                                    type='warning',
+                                    request=self.request)
+                                error = True
+                        # public
+                        else:
+                            if self.person_uid in item_vote['voters']:
+                                api.portal.show_message(
+                                    _("Can not set ${not_present_type} "
+                                      "a person that voted on an item!",
+                                      mapping={
+                                          'not_present_type':
+                                              _('item_not_present_type_{0}'.format(
+                                                self.not_present_type))}),
+                                    type='warning',
+                                    request=self.request)
+                                error = True
 
             if error:
                 if item_to_update != self.context:
@@ -272,8 +269,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
         # user will first have to select another signatory on meeting or item
         # return a portal_message if trying to set absent and item that is
         # already excused (and the other way round)
-        error = self._mayByeByeAttendeePrecondition(items_to_update)
-        if error:
+        if self._mayByeByeAttendeePrecondition(items_to_update):
             self._finished = True
             return
 
