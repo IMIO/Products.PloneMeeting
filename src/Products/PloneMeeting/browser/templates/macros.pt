@@ -1114,7 +1114,8 @@ Need to receive element "widgets".</tal:comment>
     <tal:loop repeat="widget widgets">
       <tr tal:attributes="id string:row-${widget/id};
                           class python: not display_label and 'hide-bottom-border' or ''"
-          tal:define="display_label python: not view.meeting_view._is_rich(widget)">
+          tal:define="display_label python: not view.meeting_view._is_rich(widget) and
+                                            not view.meeting_view._is_datagrid(widget)">
           <td class="table_widget_label" tal:condition="display_label">
             <label tal:attributes="for python: 'form-widgets-' + widget.__name__"
                    tal:content="widget/label">Label</label>
