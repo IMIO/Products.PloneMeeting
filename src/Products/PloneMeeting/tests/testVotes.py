@@ -844,6 +844,40 @@ class testVotes(PloneMeetingTestCase):
             '<tr class="datagridwidget-row required org-outside-own-org row-1" data-index="0">'
             in rendered_form)
 
+    def test_pm_ChangeVotePollType(self):
+        """Poll type may be changed on a per vote basis."""
+        self.changeUser('pmManager')
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
+        # not changed when encoded
+        self.assertTrue(secret_item.get_vote_is_secret(0))
+        view = secret_item.restrictedTraverse('@@change-item-vote-polltype')
+        view(0, 'freehand')
+        self.assertTrue(secret_item.get_vote_is_secret(0))
+
+        # the view on item is rendering
+        votes_view = secret_item.restrictedTraverse('@@load_item_assembly_and_signatures')
+        rendered = votes_view()
+        self.assertTrue("secret-vote" in rendered)
+        self.assertFalse("public-vote" in rendered)
+
+        # add an empty vote and change it's poll_type
+        secret_vote = secret_item.get_item_votes(0)
+        secret_vote['votes']['yes'] = 0
+        secret_vote['votes']['abstain'] = 0
+        secret_vote['votes']['no'] = 0
+        meeting.set_item_secret_vote(secret_item, secret_vote, 1)
+        view(1, 'freehand')
+        # vote_number 1 is now public
+        self.assertTrue(secret_item.get_vote_is_secret(0))
+        self.assertFalse(secret_item.get_vote_is_secret(1))
+        self.assertFalse("voters" in secret_item.get_item_votes(0))
+        self.assertTrue("voters" in secret_item.get_item_votes(1))
+        # the view on item is rendering
+        rendered = votes_view()
+        self.assertTrue("secret-vote" in rendered)
+        self.assertTrue("public-vote" in rendered)
+
 
 def test_suite():
     from unittest import makeSuite
