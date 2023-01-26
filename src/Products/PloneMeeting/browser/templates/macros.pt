@@ -387,22 +387,23 @@ document.location.reload(true);
     <th class="header-attendee-voter" tal:condition="show_votes" i18n:translate="is_voter">Voter?</th>
     <tal:vote repeat="vote_infos itemVotes" tal:condition="show_votes">
      <th class="header-attendee-vote nosort">
-      <span tal:condition="python: vote_infos['linked_to_previous']"
-            title="This vote is linked to previous vote"
-            i18n:attributes="title"
-            class="fa vote-linked-to-previous leading-icon"></span>
-      <span i18n:translate="vote_values">Votes</span>
-      (<span data-base_url="#"
-         style="display: inline;"
-         tal:define="edit_css_classes python: mayChangeAttendees and 'tooltipster-item-vote-polltype-change item_polltype Editable pmAction' or ''"
-         tal:attributes="data-base_url string:${context_url};
-                         data-vote_number:int python: vote_infos['vote_number'];
-                         class string:${edit_css_classes} item_polltype_${vote_infos/poll_type}">
-          <span tal:content="string:polltype_${vote_infos/poll_type}" i18n:translate="">Vote poll type</span>
-      </span>)
+      <div class="vote-header">
+        <span tal:condition="python: vote_infos['linked_to_previous']"
+              title="This vote is linked to previous vote"
+              i18n:attributes="title"
+              class="fa vote-linked-to-previous leading-icon"></span>
+        <span i18n:translate="vote_values">Votes</span>
+        (<span data-base_url="#"
+           style="display: inline;"
+           tal:define="edit_css_classes python: mayChangeAttendees and 'tooltipster-item-vote-polltype-change item_polltype Editable pmAction' or ''"
+           tal:attributes="data-base_url string:${context_url};
+                           data-vote_number:int python: vote_infos['vote_number'];
+                           class string:${edit_css_classes} item_polltype_${vote_infos/poll_type}">
+            <span tal:content="string:polltype_${vote_infos/poll_type}" i18n:translate="">Vote poll type</span>
+        </span>)
+      </div>
       <tal:actions condition="mayChangeAttendees"
                    define="edit_form_name python: context.get_vote_is_secret(vote_infos['vote_number']) and '@@item_encode_secret_votes_form' or '@@item_encode_votes_form';">
-        <br />
         <a tal:attributes="href string:${edit_form_name}?vote_number:int=${vote_infos/vote_number}"
            title="Edit this vote"
            i18n:attributes="title"
