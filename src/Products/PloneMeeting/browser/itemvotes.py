@@ -352,13 +352,11 @@ class EncodeVotesForm(BaseAttendeeForm):
                     wdt.mode = HIDDEN_MODE
         # disable apply_until_item_number when using several votes
         # or if poll_type was redefined
-        vote_number = self.request.get('vote_number', 0)
-        if len(self.context.get_item_votes()) > 1 or \
-           vote_number > 0 or \
-           self.context.get_item_votes(vote_number).get('poll_type', None):
+        if _should_disable_apply_until_item_number(self.context):
             apply_until_item_number = self.widgets['apply_until_item_number']
             apply_until_item_number.disabled = "disabled"
-            apply_until_item_number.title = _(u"Not available when using several votes on same item.")
+            apply_until_item_number.title = _(
+                u"Not available when using several votes on same item.")
 
     def _doApply(self):
         """ """
@@ -376,7 +374,7 @@ class EncodeVotesForm(BaseAttendeeForm):
         for vote in self.votes:
             data['voters'][vote['voter_uid']] = vote['vote_value']
         # add poll_type in case it was redefined
-        vote_infos = self.context.get_item_votes(vote_number=self.request.get('vote_number', 0))
+        vote_infos = self.context.get_item_votes(vote_number=self.vote_number)
         if 'poll_type' in vote_infos:
             data['poll_type'] = vote_infos['poll_type']
 
@@ -551,6 +549,17 @@ class IEncodeSecretVotes(Interface):
             raise Invalid(msg)
 
 
+def _should_disable_apply_until_item_number(context):
+    """Is it possible to use the "apply_until_item_number" field?"""
+    vote_number = context.REQUEST.get('vote_number', 0)
+    if len(context.get_item_votes()) > 1 or \
+       vote_number > 0 or \
+       context.get_item_votes(vote_number).get('poll_type', None) != \
+       context.getPollType():
+        return True
+    return False
+
+
 class EncodeSecretVotesForm(BaseAttendeeForm):
     """ """
 
@@ -578,7 +587,7 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
                 elif wdt.__name__ == 'vote_value' and wdt.value:
                     wdt.klass += " {0}".format(wdt.context['vote_value'])
         # disable apply_until_item_number when using several votes
-        if len(self.context.get_item_votes()) > 1 or self.request.get('vote_number', 0) > 0:
+        if _should_disable_apply_until_item_number(self.context):
             apply_until_item_number = self.widgets['apply_until_item_number']
             apply_until_item_number.disabled = "disabled"
             apply_until_item_number.title = _(u"Not available when using several votes on same item.")

@@ -413,7 +413,7 @@ document.location.reload(true);
            tal:condition="python: context._voteIsDeletable(vote_infos['vote_number'])"
            title="Delete this vote"
            id="delete-vote-action"
-           tal:attributes="onClick string:javascript:event.preventDefault();;confirmDeleteObject(base_url='${context_url}', object_uid=${vote_infos/vote_number}, this, msgName='delete_confirm_message', view_name='@@item_delete_vote', redirect='0');;"
+           tal:attributes="onClick string:javascript:event.preventDefault();;confirmDeleteObject(base_url='${context_url}', object_uid=${vote_infos/vote_number}, this, msgName='delete_confirm_message', view_name='@@item_delete_vote', redirect=0);;"
            i18n:attributes="title">
             <span class="fa delete-element"></span>
         </a>

@@ -7,6 +7,7 @@
 
 from AccessControl import Unauthorized
 from plone import api
+from Products.PloneMeeting.browser.itemvotes import _should_disable_apply_until_item_number
 from Products.PloneMeeting.browser.itemvotes import IEncodeSecretVotes
 from Products.PloneMeeting.browser.itemvotes import secret_votes_default
 from Products.PloneMeeting.browser.itemvotes import votes_default
@@ -472,13 +473,8 @@ class testVotes(PloneMeetingTestCase):
         self.assertEqual(item_votes[0]['voters'][hp4_uid], NOT_VOTABLE_LINKED_TO_VALUE)
         self.assertEqual(item_votes[1]['voters'][hp4_uid], 'yes')
 
-    def test_pm_EncodeSecretVotesForm(self):
+    def _setUpSecretVoteForm(self, secret_item, meeting):
         """ """
-        self.changeUser('pmManager')
-        meeting, public_item, secret_item = \
-            self._createMeetingWithVotes(include_yes=False)
-
-        # encode votes form
         votes_form = secret_item.restrictedTraverse(
             '@@item_encode_secret_votes_form')
         self.request['PUBLISHED'] = secret_item
@@ -492,6 +488,16 @@ class testVotes(PloneMeetingTestCase):
         votes_form.label = u"My label"
         votes_form.linked_to_previous = False
         votes_form.apply_until_item_number = u'0'
+        return votes_form
+
+    def test_pm_EncodeSecretVotesForm(self):
+        """ """
+        self.changeUser('pmManager')
+        meeting, public_item, secret_item = \
+            self._createMeetingWithVotes(include_yes=False)
+
+        # encode votes form
+        votes_form = self._setUpSecretVoteForm(secret_item, meeting)
         # only for MeetingManagers
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, votes_form._doApply)
@@ -854,6 +860,10 @@ class testVotes(PloneMeetingTestCase):
         view = secret_item.restrictedTraverse('@@change-item-vote-polltype')
         view(0, 'freehand')
         self.assertTrue(secret_item.get_vote_is_secret(0))
+        # encode votes form
+        self._setUpSecretVoteForm(secret_item, meeting)
+        # "apply_until_item_number" field is useable
+        self.assertFalse(_should_disable_apply_until_item_number(secret_item))
 
         # the view on item is rendering
         votes_view = secret_item.restrictedTraverse('@@load_item_assembly_and_signatures')
@@ -868,6 +878,9 @@ class testVotes(PloneMeetingTestCase):
         secret_vote['votes']['no'] = 0
         meeting.set_item_secret_vote(secret_item, secret_vote, 1)
         view(1, 'freehand')
+        # "apply_until_item_number" field would be disabled
+        self.assertTrue(_should_disable_apply_until_item_number(secret_item))
+
         # vote_number 1 is now public
         self.assertTrue(secret_item.get_vote_is_secret(0))
         self.assertFalse(secret_item.get_vote_is_secret(1))

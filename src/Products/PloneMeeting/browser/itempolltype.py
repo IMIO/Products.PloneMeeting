@@ -3,6 +3,7 @@
 from AccessControl import Unauthorized
 from plone import api
 from Products.Five.browser import BrowserView
+from Products.PloneMeeting.browser.itemvotes import _get_linked_item_vote_numbers
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -158,7 +159,8 @@ class ChangeItemVotePollTypeView(ChangeItemPollTypeView):
                 type='warning')
             return True
         # can not be linked to other vote
-        elif self.context.get_item_votes(vote_number=self.vote_number).get('linked_to_previous', False):
+        elif self.vote_number in _get_linked_item_vote_numbers(
+                self.context, self.context.getMeeting(), self.vote_number):
             api.portal.show_message(
                 _('can_not_switch_vote_polltype_linked_to_previous'),
                 request=self.request,
