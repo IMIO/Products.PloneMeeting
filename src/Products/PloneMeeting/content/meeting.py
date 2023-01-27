@@ -1565,6 +1565,9 @@ class Meeting(Container):
         if vote_number + 1 > len(self.item_votes[item_uid]):
             self.item_votes[item_uid].append(PersistentMapping(data))
         else:
+            # when changing poll_type from public to secret
+            # make sure key "voters" is removed
+            self.item_votes[item_uid][vote_number].pop('voters', None)
             self.item_votes[item_uid][vote_number].update(data)
 
     security.declarePublic('display_user_replacement')

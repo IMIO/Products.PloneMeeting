@@ -470,7 +470,13 @@ class testVotes(PloneMeetingTestCase):
                             {'voter_uid': hp4_uid, 'vote_value': 'yes'}]
         votes_form._doApply()
         item_votes = public_item.get_item_votes()
+        self.assertEqual(item_votes[0]['voters'][hp1_uid], 'no')
+        self.assertEqual(item_votes[0]['voters'][hp2_uid], 'abstain')
+        self.assertEqual(item_votes[0]['voters'][hp3_uid], NOT_VOTABLE_LINKED_TO_VALUE)
         self.assertEqual(item_votes[0]['voters'][hp4_uid], NOT_VOTABLE_LINKED_TO_VALUE)
+        self.assertEqual(item_votes[1]['voters'][hp1_uid], NOT_VOTABLE_LINKED_TO_VALUE)
+        self.assertEqual(item_votes[1]['voters'][hp2_uid], NOT_VOTABLE_LINKED_TO_VALUE)
+        self.assertEqual(item_votes[1]['voters'][hp3_uid], 'yes')
         self.assertEqual(item_votes[1]['voters'][hp4_uid], 'yes')
 
     def _setUpSecretVoteForm(self, secret_item, meeting):
@@ -485,6 +491,35 @@ class testVotes(PloneMeetingTestCase):
             {'vote_value': 'abstain', 'vote_count': 0, 'vote_value_id': 'abstain'}]
         self.request.form['vote_number'] = 0
         votes_form.vote_number = 0
+        votes_form.label = u"My label"
+        votes_form.linked_to_previous = False
+        votes_form.apply_until_item_number = u'0'
+        return votes_form
+
+    def _setUpPublicVoteForm(self, public_item, meeting):
+        """ """
+        person1 = self.portal.contacts.get('person1')
+        hp1 = person1.get_held_positions()[0]
+        hp1_uid = hp1.UID()
+        person2 = self.portal.contacts.get('person2')
+        hp2 = person2.get_held_positions()[0]
+        hp2_uid = hp2.UID()
+        person3 = self.portal.contacts.get('person3')
+        hp3 = person3.get_held_positions()[0]
+        hp3_uid = hp3.UID()
+        person4 = self.portal.contacts.get('person4')
+        hp4 = person4.get_held_positions()[0]
+        hp4_uid = hp4.UID()
+        votes_form = public_item.restrictedTraverse(
+            '@@item_encode_votes_form')
+        votes_form.meeting = meeting
+        # change vote to all 'no'
+        votes_form.votes = [{'voter_uid': hp1_uid, 'vote_value': 'no'},
+                            {'voter_uid': hp2_uid, 'vote_value': 'no'},
+                            {'voter_uid': hp3_uid, 'vote_value': 'no'},
+                            {'voter_uid': hp4_uid, 'vote_value': 'no'}]
+        votes_form.vote_number = 0
+        self.request.form['vote_number'] = 0
         votes_form.label = u"My label"
         votes_form.linked_to_previous = False
         votes_form.apply_until_item_number = u'0'
@@ -850,8 +885,8 @@ class testVotes(PloneMeetingTestCase):
             '<tr class="datagridwidget-row required org-outside-own-org row-1" data-index="0">'
             in rendered_form)
 
-    def test_pm_ChangeVotePollType(self):
-        """Poll type may be changed on a per vote basis."""
+    def test_pm_ChangeSecretVotePollType(self):
+        """Change poll_type on a secret vote."""
         self.changeUser('pmManager')
         meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
             self._createMeetingWithVotes()
@@ -890,6 +925,47 @@ class testVotes(PloneMeetingTestCase):
         rendered = votes_view()
         self.assertTrue("secret-vote" in rendered)
         self.assertTrue("public-vote" in rendered)
+
+    def test_pm_ChangePublicVotePollType(self):
+        """Change poll_type on a public vote."""
+        self.changeUser('pmManager')
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
+        # not changed when encoded
+        self.assertFalse(public_item.get_vote_is_secret(0))
+        view = public_item.restrictedTraverse('@@change-item-vote-polltype')
+        view(0, 'secret')
+        self.assertFalse(public_item.get_vote_is_secret(0))
+        # encode votes form
+        self._setUpPublicVoteForm(public_item, meeting)
+        # "apply_until_item_number" field is useable
+        self.assertFalse(_should_disable_apply_until_item_number(public_item))
+
+        # the view on item is rendering
+        votes_view = public_item.restrictedTraverse(
+            '@@load_item_assembly_and_signatures')
+        rendered = votes_view()
+        self.assertTrue("public-vote" in rendered)
+        self.assertFalse("secret-vote" in rendered)
+
+        # add an empty vote and change it's poll_type
+        public_vote = public_item.get_item_votes(0)
+        public_vote["voters"] = {hp_uid: NOT_ENCODED_VOTE_VALUE
+                                 for hp_uid in public_vote["voters"]}
+        meeting.set_item_public_vote(public_item, public_vote, 1)
+        view(1, 'secret')
+        # "apply_until_item_number" field would be disabled
+        self.assertTrue(_should_disable_apply_until_item_number(public_item))
+
+        # vote_number 1 is now secret
+        self.assertFalse(public_item.get_vote_is_secret(0))
+        self.assertTrue(public_item.get_vote_is_secret(1))
+        self.assertTrue("voters" in public_item.get_item_votes(0))
+        self.assertFalse("voters" in public_item.get_item_votes(1))
+        # the view on item is rendering
+        rendered = votes_view()
+        self.assertTrue("public-vote" in rendered)
+        self.assertTrue("secret-vote" in rendered)
 
 
 def test_suite():
