@@ -5528,6 +5528,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("review_state",
                 u"{0} (review_state)".format(
                     translate('header_review_state', domain=d, context=self.REQUEST))),
+            ("review_state_title", u"{0} (review_state_title)".format(
+                translate('header_review_state_title_descr', domain=d, context=self.REQUEST))),
             ("actions",
                 u"{0} (actions)".format(
                     translate("header_actions", domain=d, context=self.REQUEST))),

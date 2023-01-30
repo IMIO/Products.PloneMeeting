@@ -102,6 +102,9 @@ Changelog
   votes `poll_type` may be different, this is used to manage case where
   emergency is voted using a public vote on an item using secret `poll_type`.
   [gbastien]
+- Make the `review_state_title` column (that translates the review_state title
+  instead id) also available for dashboards displaying meetings.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
