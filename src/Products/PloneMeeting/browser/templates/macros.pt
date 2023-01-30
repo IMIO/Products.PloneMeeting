@@ -437,7 +437,7 @@ document.location.reload(true);
               <span class="fa vote-linked-to-previous"></span>
           </a>
           <span tal:condition="not:show_link_to_previous_icon"
-                title="Not able to add new linked votes because incompatible vote vales have been encoded on current vote"
+                title="Not able to add new linked votes because incompatible vote vales have been encoded on current vote or poll type for current vote was redefined"
                 i18n:attributes="title"
                 class="fa vote-linked-to-previous disabled">
           </span>
