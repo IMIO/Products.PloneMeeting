@@ -6569,7 +6569,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # link to unknown external image, like during copy/paste of content
         # that has a link to an unexisting image or so
         decision = '<p>Not working external image <img width="100" height="100" ' \
-            'src="https://i.picsum.photos/id/449/400.png">.</p>'
+            'src="https://fastly.picsum.photos/id/449/400.png">.</p>'
         item.setDecision(decision)
         item.at_post_edit_script()
         img4 = item.get('imagenotfound.jpg')
