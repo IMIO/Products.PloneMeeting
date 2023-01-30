@@ -20,13 +20,12 @@
   <metal:fill fill-slot="content-core">
     <metal:main_macro define-macro="body"
                       tal:define="tool python: context.aq_inner.aq_parent;
-                                  context_url context/absolute_url;
+                                  context_url python: context.absolute_url();
                                   isManager python: tool.isManager(context);
                                   isRealManager python: tool.isManager(realManagers=True);
                                   mode python:'view';
                                   pageName request/pageName|string:default;
-                                  member context/@@plone_portal_state/member;
-                                  schematas here/Schemata;
+                                  schematas python: here.Schemata();
                                   fieldsets python:[key for key in schematas.keys() if (key not in ('metadata', 'settings'))];
                                   displayable_fieldsets python: list(fieldsets);">
 
@@ -35,7 +34,7 @@
     <span tal:repeat="fieldset displayable_fieldsets">
       [
       <tal:otherFieldset condition="python: pageName!=fieldset"><a
-        tal:attributes="href python:here.absolute_url()+'?pageName=%s'%fieldset" tal:condition="python: pageName!=fieldset">
+        tal:attributes="href python:context_url + '?pageName=%s'%fieldset" tal:condition="python: pageName!=fieldset">
         <span tal:content="fieldset" i18n:translate=""></span></a>
       </tal:otherFieldset>
       <tal:currentFieldset condition="python: pageName==fieldset"><b><span

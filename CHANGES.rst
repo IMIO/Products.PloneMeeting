@@ -98,6 +98,10 @@ Changelog
   `adapters.NegativePersonalLabelsAdapter` that were moved to
   `collective.compoundcriterion`.
   [gbastien]
+- Added possibility to redefine the `poll_type` on a per vote basis so item and
+  votes `poll_type` may be different, this is used to manage case where
+  emergency is voted using a public vote on an item using secret `poll_type`.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------

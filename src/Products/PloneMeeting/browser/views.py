@@ -1506,7 +1506,7 @@ class BaseDGHV(object):
                 if vote_count == 0 and vote_value not in include_null_vote_count_values:
                     continue
                 counts[vote_value] = vote_count
-            infos = {}
+            infos = item_vote.copy()
             infos['counts'] = counts
             infos['label'] = item_vote['label']
             infos['voters'] = item_vote.get('voters', {})
@@ -1623,11 +1623,11 @@ class BaseDGHV(object):
         patterns.update(custom_patterns)
         # get votes
         rendered = u""
-        secret = self.context.get_votes_are_secret()
         meeting = self.context.getMeeting()
         vote_infos = self.vote_infos(
             used_vote_values, include_null_vote_count_values, keep_vote_numbers)
         for vote_info in vote_infos:
+            secret = vote_info['poll_type'].startswith('secret')
             counts = vote_info['counts']
             label = vote_info['label']
             voters = vote_info['voters']
@@ -2465,14 +2465,16 @@ class DisplayMeetingItemVoters(BrowserView):
         res = {'public': [],
                'secret': []}
         for item in items:
-            if not item.get_votes_are_secret():
-                if set(item.get_item_voters()).difference(item.get_voted_voters()):
-                    res['public'].append(item)
-            else:
-                data = {}
-                total_voters = item.getVoteCount('any_votable')
-                for item_vote in item.get_item_votes():
-                    vote_number = item_vote['vote_number']
+            data = {}
+            for item_vote in item.get_item_votes():
+                vote_number = item_vote['vote_number']
+                is_secret = item_vote['poll_type'].startswith('secret')
+                if not is_secret:
+                    if set(item_vote['voters']).difference(
+                       item.get_voted_voters(vote_number=vote_number)):
+                        res['public'].append(item)
+                else:
+                    total_voters = item.getVoteCount('any_votable')
                     i = vote_number
                     linked_numbers = _get_linked_item_vote_numbers(
                         item, self.context, vote_number=vote_number)
@@ -2483,6 +2485,7 @@ class DisplayMeetingItemVoters(BrowserView):
                         data[i] = 0
                     vote_count = item.getVoteCount('any_voted', vote_number=vote_number)
                     data[i] += vote_count
+            if is_secret:
                 # now if we have an element in res < total_voters, we miss some votes
                 for count in data.values():
                     if count < total_voters:
@@ -2497,10 +2500,14 @@ class DisplayMeetingItemVoters(BrowserView):
         res = {
             'public': [
                 item for item in items
-                if item not in non_voted_items['public'] and not item.get_votes_are_secret()],
+                if item not in non_voted_items['public'] and
+                item not in non_voted_items['secret'] and
+                not item.get_votes_are_secret()],
             'secret': [
                 item for item in items
-                if item not in non_voted_items['secret'] and item.get_votes_are_secret()]}
+                if item not in non_voted_items['secret'] and
+                item not in non_voted_items['public'] and
+                item.get_votes_are_secret()]}
         return res
 
 

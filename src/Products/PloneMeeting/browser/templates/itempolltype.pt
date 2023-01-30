@@ -2,11 +2,14 @@
     <tal:loop repeat="pollType selectablePollTypes">
         <span class="fa fa-angle-double-right" />
         <a href="#"
+           tal:define="change_view_params python: view.change_view_params(pollType);"
            tal:attributes="class python: 'link-overlay-pm item_polltype_%s' % pollType.token;
                            onclick string:event.preventDefault();;
                            callViewAndReload(base_url='${context/absolute_url}',
-                                             view_name='@@change-item-polltype',
-                                             params={'new_value': '${pollType/token}'});;;"
+                                             view_name='@@${view/change_view_name}',
+                                             params=${change_view_params},
+                                             force_faceted=false,
+                                             onsuccess=${view/js_onsuccess});;;"
            tal:content="pollType/title">Poll type</a><br />
     </tal:loop>
 </tal:defines>

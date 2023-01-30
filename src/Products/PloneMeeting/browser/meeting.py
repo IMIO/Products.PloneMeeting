@@ -198,6 +198,10 @@ class BaseMeetingView(object):
         return widget.field.__class__.__name__ == 'RichText' and \
             widget.__class__.__name__ != 'PMTextAreaWidget'
 
+    def _is_datagrid(self, widget):
+        """Does given p_widget use a DataGrid field?"""
+        return widget.__class__.__name__ == 'BlockDataGridField'
+
     def view_widget(self, widget, empty_value="-"):
         """Render an empty_value instead nothing when field empty."""
         value = getattr(self.context, widget.__name__, None)

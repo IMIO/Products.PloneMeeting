@@ -1513,7 +1513,7 @@ class Meeting(Container):
                 # add an empty vote 0
                 data_item_vote_0 = item.get_item_votes(
                     vote_number=0,
-                    include_vote_number=False,
+                    include_extra_infos=False,
                     include_unexisting=True)
                 # make sure we use persistent for 'voters'
                 data_item_vote_0['voters'] = PersistentMapping(data_item_vote_0['voters'])
@@ -1528,6 +1528,9 @@ class Meeting(Container):
                 if item_voter_uid not in data['voters']:
                     data['voters'][item_voter_uid] = NOT_VOTABLE_LINKED_TO_VALUE
             self.item_votes[item_uid].append(PersistentMapping(data))
+        elif 'voters' not in self.item_votes[item_uid][vote_number]:
+            # changing poll_type for vote_number, in this case 'voters' key does not exist
+            self.item_votes[item_uid][vote_number] = PersistentMapping(data)
         else:
             # use update in case we only update a subset of votes
             # when some vote NOT_VOTABLE_LINKED_TO_VALUE or so
@@ -1555,13 +1558,16 @@ class Meeting(Container):
                 # add an empty vote 0
                 data_item_vote_0 = item.get_item_votes(
                     vote_number=0,
-                    include_vote_number=False,
+                    include_extra_infos=False,
                     include_unexisting=True)
                 self.item_votes[item_uid].append(PersistentMapping(data_item_vote_0))
         # new vote_number
         if vote_number + 1 > len(self.item_votes[item_uid]):
             self.item_votes[item_uid].append(PersistentMapping(data))
         else:
+            # when changing poll_type from public to secret
+            # make sure key "voters" is removed
+            self.item_votes[item_uid][vote_number].pop('voters', None)
             self.item_votes[item_uid][vote_number].update(data)
 
     security.declarePublic('display_user_replacement')

@@ -795,6 +795,23 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
+    <!-- the view that show pollTypes available for a vote on the item attendees management -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="item-vote-polltype"
+        class=".itempolltype.ItemVotePollTypeView"
+        template="templates/itempolltype.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
+    <!-- the view that change a vote pollType value then refresh page -->
+    <browser:view
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="change-item-vote-polltype"
+        class=".itempolltype.ChangeItemVotePollTypeView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
     <!-- the view that display staticInfos about item in the PrettyLink column -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
