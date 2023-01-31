@@ -1380,6 +1380,22 @@ schema = Schema((
         optional=True,
         write_permission=WriteDecision,
     ),
+    TextField(
+        name='votesResult',
+        widget=RichWidget(
+            condition="python: here.attribute_is_used('votesResult')",
+            label='VotesResult',
+            label_msgid='PloneMeeting_label_votesResult',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        read_permission="PloneMeeting: Read decision",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=True,
+        write_permission=WriteDecision,
+    ),
     BooleanField(
         name='oralQuestion',
         default=False,
@@ -2095,7 +2111,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getMotivation')
 
     def getMotivation(self, **kwargs):
-        '''Overridden version of 'motivation' field accessor. It allows to manage
+        '''Override 'motivation' field accessor. It allows to manage
            the 'hide_decisions_when_under_writing' workflowAdaptation that
            hides the motivation/decision for non-managers if meeting state is 'decided.'''
         # hide the decision?
@@ -2113,7 +2129,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getDecision')
 
     def getDecision(self, **kwargs):
-        '''Overridde 'decision' field accessor.
+        '''Override 'decision' field accessor.
            Manage the 'hide_decisions_when_under_writing' workflowAdaptation that
            hides the decision for non-managers if meeting state is 'decided.'''
         # hide the decision?
@@ -2127,6 +2143,42 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # hide the decision?
         msg = self._mayNotViewDecisionMsg()
         return msg or self.getField('decision').getRaw(self, **kwargs)
+
+    def _eval_votes_result(self):
+        """ """
+        extra_expr_ctx = _base_extra_expr_ctx(self)
+        extra_expr_ctx.update({'item': self, 'meeting': self.getMeeting()})
+        cfg = extra_expr_ctx['cfg']
+        # default raise_on_error=False so if the expression
+        # raise an error, we will get '' for reference and a message in the log
+        res = _evaluateExpression(self,
+                                  expression=cfg.getVotesResultTALExpr().strip(),
+                                  roles_bypassing_expression=[],
+                                  extra_expr_ctx=extra_expr_ctx,
+                                  empty_expr_is_true=False)
+        # make sure we do not have None
+
+        res = res or ''
+        return res
+
+    security.declarePublic('getVotesResult')
+
+    def getVotesResult(self, **kwargs):
+        '''Override 'votesResult' field accessor.
+           If empty we will return the evaluated MeetingConfig.votesResultExpr.'''
+        res = self.getField('votesResult').get(self, **kwargs)
+        if not res:
+            res = self._eval_votes_result()
+        return res
+
+    security.declarePublic('getRawVotesResult')
+
+    def getRawVotesResult(self, **kwargs):
+        '''See getVotesResult docstring.'''
+        res = self.getField('votesResult').getRaw(self, **kwargs)
+        if not res:
+            res = self._eval_votes_result()
+        return res
 
     security.declarePrivate('validate_category')
 

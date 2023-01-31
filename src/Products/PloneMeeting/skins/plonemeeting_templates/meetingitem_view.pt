@@ -495,6 +495,11 @@
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
+    <tal:comment replace="nothing">votesResult</tal:comment>
+    <tal:field define="fieldName python: 'votesResult'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
     <tal:comment replace="nothing">Other meetingConfigs clonable to</tal:comment>
     <tal:block tal:condition="showAdvancedClonableToOtherMCs"
                tal:define="otherMCs python: context.getOtherMeetingConfigsClonableTo()">

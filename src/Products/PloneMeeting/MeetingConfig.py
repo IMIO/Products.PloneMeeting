@@ -2732,6 +2732,20 @@ schema = Schema((
         schemata="votes",
         write_permission="PloneMeeting: Write risky config",
     ),
+    StringField(
+        name='votesResultTALExpr',
+        default=defValues.votesResultTALExpr,
+        widget=StringField._properties['widget'](
+            description="VotesResultTALExpr",
+            description_msgid="votes_result_tal_expr_descr",
+            size=70,
+            label='Votesresulttalexpr',
+            label_msgid='PloneMeeting_label_votesResultTALExpr',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="votes",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     BooleanField(
         name='displayVotingGroup',
         default=defValues.displayVotingGroup,

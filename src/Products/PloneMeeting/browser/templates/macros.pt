@@ -325,7 +325,7 @@ document.location.reload(true);
 <div id="item-people"
      metal:define-macro="itemPeople" i18n:domain="PloneMeeting"
      tal:define="usedAttrs usedAttrs|meetingConfig/getUsedItemAttributes;
-                 meeting context/getMeeting;
+                 meeting python: context.getMeeting();
                  usedMeetingAttributes usedMeetingAttributes|meetingConfig/getUsedMeetingAttributes">
  <div metal:use-macro="context/global_statusmessage/macros/portal_message">
    Portal status message

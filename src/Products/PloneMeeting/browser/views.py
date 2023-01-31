@@ -1534,6 +1534,7 @@ class BaseDGHV(object):
                     single_vote_value=u"une",
                     secret_intro=u"<p>Au scrutin secret,</p>",
                     public_intro=u"",
+                    total_voters_pattern=u"<p>Il y a {0} votants.</p>",
                     custom_patterns={},
                     vote_label_pattern=u"<p><strong>{0}</strong></p>",
                     used_vote_values=[],
@@ -1543,6 +1544,7 @@ class BaseDGHV(object):
                     include_voters=False,
                     include_person_title=True,
                     include_hp=True,
+                    include_total_voters=False,
                     abbreviate_firstname=False,
                     voters_pattern=u"<p>{0}</p>",
                     voter_separator=u", ",
@@ -1631,10 +1633,14 @@ class BaseDGHV(object):
             counts = vote_info['counts']
             label = vote_info['label']
             voters = vote_info['voters']
+            total_voters = sum(vote_info['votes'].values()) if secret else len(vote_info['voters'])
             if render_as_html:
                 # vote label
                 if vote_label_pattern and label:
                     rendered += vote_label_pattern.format(label)
+                # total_voters
+                if include_total_voters:
+                    rendered += total_voters_pattern.format(total_voters)
                 # intro
                 if secret and secret_intro:
                     rendered += secret_intro
