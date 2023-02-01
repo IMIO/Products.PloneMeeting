@@ -8,6 +8,7 @@ from eea.facetednavigation.browser.app.view import FacetedContainerView
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import uuidsToObjects
 from imio.history.utils import getLastWFAction
+from imio.pyutils.utils import sort_by_indexes
 from plone import api
 from plone.dexterity.browser.add import DefaultAddForm
 from plone.dexterity.browser.add import DefaultAddView
@@ -64,12 +65,26 @@ def manage_fields(the_form):
                 group.fields = group.fields.omit(field_name)
 
 
+def reorder_groups(the_form):
+    """Reorder groups/fieldsets because when adding custom fields to an existing
+       group, fieldset is duplicated and when merged for display,
+       the overrided fieldset is displayed first."""
+    order = {'dates_and_data': 1,
+             'assembly': 2,
+             'committees': 3,
+             'informations': 4,
+             'parameters': 5}
+    indexes = [order.get(group.__name__, 6) for group in the_form.groups]
+    # avoid useless reorder
+    if indexes != sorted(indexes):
+        the_form.groups = sort_by_indexes(the_form.groups, indexes)
+
+
 def manage_label_assembly(the_form):
-    '''
-      Depending on the fact that we use 'assembly' alone or
-      'assembly, excused, absents', we will translate the 'assembly' label
-      a different way.
-    '''
+    """Depending on the fact that we use "assembly" alone or
+       "assembly, excused, absents", we will translate the "assembly" label
+       a different way.
+    """
     widgets = getattr(the_form, 'w', None) or the_form.widgets
     if 'assembly' in widgets:
         if 'assembly_excused' in widgets or \
@@ -385,6 +400,7 @@ class MeetingEdit(DefaultEditForm, BaseMeetingView):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.used_attrs = self.cfg.getUsedMeetingAttributes()
         manage_fields(self)
+        reorder_groups(self)
 
     def update(self):
         super(MeetingEdit, self).update()
@@ -414,6 +430,7 @@ class MeetingAddForm(DefaultAddForm, BaseMeetingView):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.used_attrs = self.cfg.getUsedMeetingAttributes()
         manage_fields(self)
+        reorder_groups(self)
 
     def update(self):
         super(MeetingAddForm, self).update()
