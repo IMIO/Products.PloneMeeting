@@ -14,6 +14,7 @@ from plone.dexterity.browser.add import DefaultAddForm
 from plone.dexterity.browser.add import DefaultAddView
 from plone.dexterity.browser.edit import DefaultEditForm
 from plone.dexterity.browser.view import DefaultView
+from plone.supermodel.directives import FIELDSETS_KEY
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.WorkflowCore import WorkflowException
@@ -22,6 +23,7 @@ from Products.Five import BrowserView
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.content.meeting import get_all_usable_held_positions
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
@@ -69,12 +71,11 @@ def reorder_groups(the_form):
     """Reorder groups/fieldsets because when adding custom fields to an existing
        group, fieldset is duplicated and when merged for display,
        the overrided fieldset is displayed first."""
-    order = {'dates_and_data': 1,
-             'assembly': 2,
-             'committees': 3,
-             'informations': 4,
-             'parameters': 5}
-    indexes = [order.get(group.__name__, 6) for group in the_form.groups]
+    order = {fieldset.__name__: i for i, fieldset in
+             enumerate(IMeeting.getTaggedValue(FIELDSETS_KEY))}
+    # in case group does not exist (new group added by custom plugin)
+    # it will be displayed at the end
+    indexes = [order.get(group.__name__, 9) for group in the_form.groups]
     # avoid useless reorder
     if indexes != sorted(indexes):
         the_form.groups = sort_by_indexes(the_form.groups, indexes)
