@@ -8105,12 +8105,19 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.assertEqual(item.Vocabulary('committees')[0].keys(),
-                         [NO_COMMITTEE, 'committee_1', 'committee_2'])
+                         [NO_COMMITTEE,
+                          'committee_1',
+                          'committee_2',
+                          'committee_for_item'])
         self.changeUser('pmManager')
         self.assertEqual(
             item.Vocabulary('committees')[0].keys(),
-            [NO_COMMITTEE, 'committee_1',
-             'committee_2', u'committee_2__suppl__1', u'committee_2__suppl__2'])
+            [NO_COMMITTEE,
+             'committee_1',
+             'committee_2',
+             u'committee_2__suppl__1',
+             u'committee_2__suppl__2',
+             u'committee_for_item'])
 
     def test_pm_CommitteesUsingGroups(self):
         """It is possible to restrict the selectable committees to some proposingGroup."""
@@ -8123,11 +8130,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         dev_item = self.create('MeetingItem')
         self.assertEqual(dev_item.Vocabulary('committees')[0].keys(),
-                         [NO_COMMITTEE, 'committee_1'])
+                         [NO_COMMITTEE, 'committee_1', u'committee_for_item'])
         self.changeUser('pmCreator2')
         vendors_item = self.create('MeetingItem')
         self.assertEqual(vendors_item.Vocabulary('committees')[0].keys(),
-                         [NO_COMMITTEE, 'committee_2'])
+                         [NO_COMMITTEE, 'committee_2', u'committee_for_item'])
 
     def test_pm_CommitteesItemOnly(self):
         """It is possible to display a committee only on the item and not on the meeting,

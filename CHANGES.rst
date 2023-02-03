@@ -108,6 +108,9 @@ Changelog
 - Make sure meeting fieldsets order is correct when a custom field has been
   added to an existing fieldset.
   [gbastien]
+- Fixed `meeting.committees` default value, ignore MeetingConfig.committees
+  that use `enabled="item_only"`.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------

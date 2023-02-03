@@ -371,6 +371,19 @@ meetingPma.committees = (
      'label': "Committee 2",
      'row_id': 'committee_2',
      'supplements': '2',
+     'using_groups': []},
+    {'acronym': 'CommForItem',
+     'auto_from': [],
+     'default_assembly': '',
+     'default_attendees': [],
+     'default_place': '',
+     'default_signatories': [],
+     'default_signatures': '',
+     'enabled': 'item_only',
+     'enable_editors': '0',
+     'label': "Committee for item",
+     'row_id': 'committee_for_item',
+     'supplements': '0',
      'using_groups': []}, )
 meetingPma.useAdvices = True
 meetingPma.selectableAdvisers = ['developers', 'vendors']
