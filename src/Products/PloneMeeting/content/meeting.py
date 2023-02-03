@@ -737,7 +737,8 @@ def default_committees(data):
     res = []
     if "committees" in used_attrs:
         for committee in cfg.getCommittees():
-            if committee['enabled'] == '0':
+            # not enabled or item_only, we pass
+            if committee['enabled'] != '1':
                 continue
             mdata = {}
             mdata['row_id'] = committee['row_id']
