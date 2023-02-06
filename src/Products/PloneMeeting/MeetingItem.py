@@ -28,6 +28,7 @@ from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.content import uuidToObject
 from imio.helpers.security import fplog
+from imio.helpers.xhtml import is_html
 from imio.history.utils import get_all_history_attr
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
@@ -2144,7 +2145,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         msg = self._mayNotViewDecisionMsg()
         return msg or self.getField('decision').getRaw(self, **kwargs)
 
-    def _eval_votes_result(self):
+    def _eval_votes_result(self, check_is_html=True):
         """ """
         extra_expr_ctx = _base_extra_expr_ctx(self)
         extra_expr_ctx.update({'item': self, 'meeting': self.getMeeting()})
@@ -2157,26 +2158,30 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                   extra_expr_ctx=extra_expr_ctx,
                                   empty_expr_is_true=False)
         # make sure we do not have None
-
         res = res or ''
+        # make sure result is HTML
+        if res and check_is_html and not is_html(res):
+            api.portal.show_message(
+                _('votes_result_not_html'), request=self.REQUEST, type='warning')
+            res = ''
         return res
 
     security.declarePublic('getVotesResult')
 
-    def getVotesResult(self, **kwargs):
+    def getVotesResult(self, real=False, **kwargs):
         '''Override 'votesResult' field accessor.
            If empty we will return the evaluated MeetingConfig.votesResultExpr.'''
         res = self.getField('votesResult').get(self, **kwargs)
-        if not res:
+        if not real and not res:
             res = self._eval_votes_result()
         return res
 
     security.declarePublic('getRawVotesResult')
 
-    def getRawVotesResult(self, **kwargs):
+    def getRawVotesResult(self, real=False, **kwargs):
         '''See getVotesResult docstring.'''
         res = self.getField('votesResult').getRaw(self, **kwargs)
-        if not res:
+        if not real and not res:
             res = self._eval_votes_result()
         return res
 
@@ -7873,6 +7878,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getFieldVersion(self, fieldName, changes=False):
         '''See doc in utils.py.'''
         return getFieldVersion(self, fieldName, changes)
+
+    security.declarePublic('getRichTextCSSClass')
+
+    def getRichTextCSSClass(self, field_name):
+        '''Let's arbitrary add custom CSS class to a RichText widget.'''
+        if field_name == 'votesResult':
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            # we return "modified" if field contains something
+            if tool.isManager(cfg) and self.getRawVotesResult(real=True):
+                return "highlightValue"
+        return ""
 
     security.declarePrivate('getAdviceRelatedIndexes')
 

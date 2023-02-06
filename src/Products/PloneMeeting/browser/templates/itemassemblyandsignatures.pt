@@ -6,6 +6,9 @@
             mayQuickEditItemSignatures python: context.mayQuickEditItemSignatures();
             meetingConfig python: view.cfg;
             meeting python: view.meeting;
+            member python: view.member;
+            portal_url python: view.portal_url;
+            usedAttrs python: view.used_item_attrs;
             usedMeetingAttrs python: view.used_meeting_attrs;">
       <tal:item_assembly tal:condition="python: ('assembly' in usedMeetingAttrs or meeting.get_assembly()) and not meeting.get_attendees()">
           <tal:defines define="mayQuickEdit python: context.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True);
@@ -68,6 +71,12 @@
             </div>
           </tal:defines>
       </tal:item_signatures>
+
+      <tal:comment replace="nothing">votesResult</tal:comment>
+      <tal:field define="fieldName python: 'votesResult'; ajaxEdit python:True;">
+         <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+      </tal:field>
+
   </tal:defines>
 
 </tal:assembly_and_signatures>

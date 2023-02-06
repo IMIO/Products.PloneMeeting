@@ -680,6 +680,7 @@ function init_ckeditor(event) {
 }
 
 function saveCKeditor(field_name, base_url, async=true) {
+  alert('hello');
   ajaxsave = CKEDITOR.instances[field_name].getCommand('ajaxsave');
   ajaxsave.async = async;
   CKEDITOR.instances[field_name].execCommand('ajaxsave', 'saveCmd');

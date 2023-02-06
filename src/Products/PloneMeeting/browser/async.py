@@ -475,6 +475,10 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         else:
             date = get_cachekey_volatile(
                 'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignaturesRawFields')
+        # when using votesResult, invalidate cache if field content changed
+        votesResult = None
+        if self.context.attribute_is_used('votesResult'):
+            votesResult = self.context.getRawVotesResult(real=True)
         return (date,
                 context_uid,
                 cfg_modified,
@@ -485,7 +489,8 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                 item_votes,
                 may_change_attendees,
                 poll_type,
-                cache_date)
+                cache_date,
+                votesResult)
 
     def _update(self):
         """ """
@@ -493,6 +498,8 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         self.context_uid = self.context.UID()
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+        self.member = api.user.get_current()
+        self.used_item_attrs = self.cfg.getUsedItemAttributes()
         self.used_meeting_attrs = self.cfg.getUsedMeetingAttributes()
         self.meeting = self.context.getMeeting()
         self.show_votes = self.context.show_votes()

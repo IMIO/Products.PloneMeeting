@@ -480,6 +480,8 @@
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
+    <metal:people use-macro="here/@@pm-macros/votesResult"/>
+
     <tal:comment replace="nothing">Decision</tal:comment>
     <tal:field define="fieldName python: 'decision'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
@@ -492,11 +494,6 @@
 
     <tal:comment replace="nothing">DecisionEnd</tal:comment>
     <tal:field define="fieldName python: 'decisionEnd'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
-    </tal:field>
-
-    <tal:comment replace="nothing">votesResult</tal:comment>
-    <tal:field define="fieldName python: 'votesResult'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 

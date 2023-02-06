@@ -2025,6 +2025,10 @@ div.tooltipster-content table.actionspanel-no-style-table td.noPadding {
    color: &dtml-linkColor;;
 }
 
+#content div.highlightValue legend a {
+    color: red;
+}
+
 /* linked-to-previous icon */
 #content span.vote-linked-to-previous:before {
    content: "\f12e";

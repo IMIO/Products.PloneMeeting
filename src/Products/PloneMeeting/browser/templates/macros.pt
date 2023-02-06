@@ -118,9 +118,10 @@
                  jsEdit python: '%s,\'editField\',{%s},null,initRichTextField)' % (jsCall, jsParams);
                  jsChanges python: '%s,\'viewFieldVersion\',{%s,\'changes\':\'True\'})' % (jsCall, jsParams);
                  jsView python: '%s,\'viewFieldVersion\',{%s,\'changes\':\'False\'})' % (jsCall, jsParams);
-                 needToRefreshPage needToRefreshPage|nothing;"
+                 needToRefreshPage needToRefreshPage|nothing;
+                 CSSClass python: context.getRichTextCSSClass(fieldName);"
      style="position: relative"
-     tal:attributes="id hookId;">
+     tal:attributes="id hookId; class CSSClass">
 
 <script type='text/javascript'>
 function refreshPageIfNeeded(){
@@ -173,6 +174,7 @@ document.location.reload(true);
                  isOptional field/optional|python:False;
                  isUsed python: not isOptional or (isOptional and fieldName in usedAttrs);
                  ajaxEdit ajaxEdit|nothing;
+                 legendCSSClass legendCSSClass|nothing;
                  mayEdit python: ajaxEdit and context.mayQuickEdit(fieldName) and not context.unrestrictedTraverse('@@plone_lock_info').is_locked_for_current_user()"
      tal:condition="python: isUsed and field.widget.visible and field.widget.visible and field.widget.testCondition(context.getParentNode(), context.getParentNode(), context) and member.has_permission(field.read_permission, context)">
   <tal:rich condition="python: isRich">
@@ -1132,3 +1134,19 @@ Need to receive element "widgets".</tal:comment>
     </tal:loop>
   </table>
 </metal:renderWidgets>
+
+
+<metal:votesResult define-macro="votesResult" i18n:domain="PloneMeeting">
+  <tal:comment replace="nothing">Display votesResult on item view.</tal:comment>
+  <fieldset>
+    <legend>
+      <div class="collapsible active"
+           tal:attributes="onclick string:toggleDetails('collapsible-votes-result', toggle_parent_active=true, parent_tag=this);">&nbsp;Votes result
+      </div>
+    </legend>
+
+    <div id="collapsible-votes-result">
+        Votes result text
+    </div>
+  </fieldset>
+</metal:votesResult>
