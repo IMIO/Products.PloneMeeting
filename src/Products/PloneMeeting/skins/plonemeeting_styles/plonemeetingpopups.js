@@ -74,9 +74,14 @@ function manageAttendees() {
                   return true;
                 },
               onClose : function (e) {
-                selector = '.attendee-value'
+                selector = '.attendee-value';
                 if (e.target.innerHTML.includes('item_encode_votes_form')) {
                   selector = '.vote-value';
+                  // reload votesResult
+                  tags = $("div#collapsible-votes-result");
+                  if (tags.length == 1) {
+                    loadContent(tags[0], load_view='@@display-field-content?field_name=votesResult');
+                  }
                 }
                 else if (e.target.innerHTML.includes('_attendee_form')) {
                   selector = '.attendee-assembly';

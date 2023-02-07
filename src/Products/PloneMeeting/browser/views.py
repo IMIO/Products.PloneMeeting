@@ -56,6 +56,7 @@ from Products.PloneMeeting.utils import get_dx_field
 from Products.PloneMeeting.utils import get_dx_widget
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import get_person_from_userid
+from Products.PloneMeeting.utils import may_view_field
 from Products.PloneMeeting.utils import reindex_object
 from z3c.form.field import Fields
 from z3c.form.interfaces import DISPLAY_MODE
@@ -1803,7 +1804,7 @@ def print_votes(item,
                 voters_pattern=u"<p>{0}</p>",
                 voter_separator=u", ",
                 voter_pattern=u"{0}",
-                no_votes_marker=u"-",
+                no_votes_marker=u"<p>-</p>",
                 keep_vote_numbers=[],
                 render_as_html=True,
                 escape_for_html=True):
@@ -2521,6 +2522,25 @@ class DisplayMeetingItemVoters(BrowserView):
                 item not in non_voted_items['public'] and
                 item.get_votes_are_secret()]}
         return res
+
+
+class DisplayFieldContent(BrowserView):
+    """This view will display a given field content."""
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def __call__(self, field_name, raw=False):
+        """ """
+        if not may_view_field(self.context, field_name):
+            raise Unauthorized
+
+        field = self.context.getField(field_name)
+        if raw:
+            return field.getEditAccessor(self.context)()
+        else:
+            return field.getAccessor(self.context)()
 
 
 class PODTemplateMailingLists(BrowserView):

@@ -19,6 +19,7 @@ from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import get_context_with_request
+from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.widgets.pm_number import PMNumberFieldWidget
 from Products.PloneMeeting.widgets.pm_selectreadonly import PMSelectReadonlyWidget
 from z3c.form import field
@@ -388,6 +389,7 @@ class EncodeVotesForm(BaseAttendeeForm):
             # set item public votes
             if is_vote_updatable_for(self.context, item_to_update):
                 self.meeting.set_item_public_vote(item_to_update, data, self.vote_number)
+                notifyModifiedAndReindex(item_to_update)
                 updated.append(item_to_update.getItemNumber(for_display=True))
             else:
                 not_updated.append(item_to_update.getItemNumber(for_display=True))
@@ -626,6 +628,7 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
             # set item secret vote
             if is_vote_updatable_for(self.context, item_to_update):
                 self.meeting.set_item_secret_vote(item_to_update, data, self.vote_number)
+                notifyModifiedAndReindex(item_to_update)
                 updated.append(item_to_update.getItemNumber(for_display=True))
             else:
                 not_updated.append(item_to_update.getItemNumber(for_display=True))

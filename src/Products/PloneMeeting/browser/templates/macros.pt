@@ -1146,7 +1146,12 @@ Need to receive element "widgets".</tal:comment>
     </legend>
 
     <div id="collapsible-votes-result">
-        Votes result text
+      <tal:content content="structure python: context.restrictedTraverse('@@display-field-content')(field_name='votesResult')" />
+      <p class="discreet"
+         tal:condition="python: context.mayQuickEdit('votesResult')"
+         i18n:translate="">
+        Editable in "Assembly and signatures" here above.
+      </p>
     </div>
   </fieldset>
 </metal:votesResult>

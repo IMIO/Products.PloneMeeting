@@ -1384,7 +1384,7 @@ schema = Schema((
     TextField(
         name='votesResult',
         widget=RichWidget(
-            condition="python: here.attribute_is_used('votesResult')",
+            condition="python: here.showMeetingManagerReservedField('votesResult')",
             label='VotesResult',
             label_msgid='PloneMeeting_label_votesResult',
             i18n_domain='PloneMeeting',
@@ -1395,7 +1395,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission=WriteDecision,
+        write_permission=WriteItemMeetingManagerFields,
     ),
     BooleanField(
         name='oralQuestion',

@@ -1959,6 +1959,13 @@ def checkMayQuickEdit(obj,
     return res
 
 
+def may_view_field(obj, field_name):
+    """Check if current user has permission and condition to see the given p_field_name."""
+    field = obj.getField(field_name)
+    return _checkPermission(field.read_permission, obj) and \
+        _evaluateExpression(obj, field.widget.condition)
+
+
 def get_states_before_cachekey(method, obj, review_state):
     '''cachekey method for get_states_before.'''
     # do only re-compute if cfg changed or params changed

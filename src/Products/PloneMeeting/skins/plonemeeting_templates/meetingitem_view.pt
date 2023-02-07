@@ -480,7 +480,9 @@
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
-    <metal:people use-macro="here/@@pm-macros/votesResult"/>
+    <tal:votesResult_after_motivation condition="python: 'votesResult_after_motivation' in usedAttrs">
+      <metal:votesResult use-macro="here/@@pm-macros/votesResult"/>
+    </tal:votesResult_after_motivation>
 
     <tal:comment replace="nothing">Decision</tal:comment>
     <tal:field define="fieldName python: 'decision'; ajaxEdit python:True">
@@ -496,6 +498,10 @@
     <tal:field define="fieldName python: 'decisionEnd'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
+
+    <tal:votesResult_after_decisionEnd condition="python: 'votesResult_after_decisionEnd' in usedAttrs">
+      <metal:votesResult use-macro="here/@@pm-macros/votesResult"/>
+    </tal:votesResult_after_decisionEnd>
 
     <tal:comment replace="nothing">Other meetingConfigs clonable to</tal:comment>
     <tal:block tal:condition="showAdvancedClonableToOtherMCs"

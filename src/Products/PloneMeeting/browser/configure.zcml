@@ -332,6 +332,12 @@
 
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeetingItem"
+      name="display-field-content"
+      class=".views.DisplayFieldContent"
+      permission="zope2.View" />
+
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeetingItem"
       name="load_item_assembly_and_signatures"
       template="templates/itemassemblyandsignatures.pt"
       class=".async.AsyncLoadItemAssemblyAndSignatures"
