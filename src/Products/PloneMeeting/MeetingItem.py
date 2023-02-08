@@ -1387,6 +1387,8 @@ schema = Schema((
             condition="python: here.showMeetingManagerReservedField('votesResult')",
             label='VotesResult',
             label_msgid='PloneMeeting_label_votesResult',
+            description="VotesResult",
+            description_msgid="votes_result_descr",
             i18n_domain='PloneMeeting',
         ),
         default_content_type="text/html",

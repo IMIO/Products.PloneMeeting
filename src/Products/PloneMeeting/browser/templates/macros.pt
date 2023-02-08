@@ -1138,18 +1138,22 @@ Need to receive element "widgets".</tal:comment>
 
 <metal:votesResult define-macro="votesResult" i18n:domain="PloneMeeting">
   <tal:comment replace="nothing">Display votesResult on item view.</tal:comment>
-  <fieldset>
+  <fieldset tal:define="mayEdit python: context.mayQuickEdit('votesResult')">
     <legend>
       <div class="collapsible active"
-           tal:attributes="onclick string:toggleDetails('collapsible-votes-result', toggle_parent_active=true, parent_tag=this);">&nbsp;Votes result
+           tal:attributes="onclick string:toggleDetails('collapsible-votes-result', toggle_parent_active=true, parent_tag=this);">
+        <span tal:attributes="class python: 'highlightValue' if mayEdit and context.getRawVotesResult(real=True) else ''"
+              i18n:translate="PloneMeeting_label_votesResult">
+          Votes result
+        </span>
       </div>
     </legend>
 
     <div id="collapsible-votes-result">
       <tal:content content="structure python: context.restrictedTraverse('@@display-field-content')(field_name='votesResult')" />
       <p class="discreet"
-         tal:condition="python: context.mayQuickEdit('votesResult')"
-         i18n:translate="">
+         tal:condition="mayEdit"
+         i18n:translate="votes_result_editable_comment">
         Editable in "Assembly and signatures" here above.
       </p>
     </div>

@@ -108,8 +108,12 @@ Changelog
 - Make sure meeting fieldsets order is correct when a custom field has been
   added to an existing fieldset.
   [gbastien]
-- Fixed `meeting.committees` default value, ignore MeetingConfig.committees
+- Fixed `meeting.committees` default value, ignore `MeetingConfig.committees`
   that use `enabled="item_only"`.
+  [gbastien]
+- Added `MeetingItem.votesResult`, a field that will hold a generated text of
+  votes result based on `MeetingConfig.votesResultTALExpr` but that is also
+  editable when generated text needs to be customized.
   [gbastien]
 
 4.2rc34 (2022-09-29)
@@ -1270,8 +1274,9 @@ Changelog
   to send an e-mail to arbitrary users.
   Renamed parameter `permissionOrSuffixOrRoleOrGroupIds` to `value`.
   [gbastien]
-- Added a field `MeetingConfig.itemPreferredMeetingStates` that allows to set selectable
-  preferredMeeting states.
+- Added a field `MeetingConfig.itemPreferredMeetingStates` that allows to set
+  selectable preferred meeting states.
+  [aduchene]
 - Added a helper method `MeetingConfig.listStateIds` to get all state ids
   for a given objectType.
   [aduchene]

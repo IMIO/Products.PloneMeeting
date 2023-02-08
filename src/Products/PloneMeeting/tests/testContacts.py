@@ -287,7 +287,10 @@ class testContacts(PloneMeetingTestCase):
         self.assertFalse(item1.get_item_absents())
         self.assertFalse(item2.get_item_absents())
         # set hp1 absent
+        # modified when applied
+        modified = item1.modified()
         byebye_form._doApply()
+        self.assertNotEqual(modified, item1.modified())
         self.assertEqual(item1.get_item_absents(), (hp1_uid, ))
         self.assertEqual(item2.get_item_absents(), (hp1_uid, ))
         self.assertEqual(

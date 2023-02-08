@@ -77,11 +77,6 @@ function manageAttendees() {
                 selector = '.attendee-value';
                 if (e.target.innerHTML.includes('item_encode_votes_form')) {
                   selector = '.vote-value';
-                  // reload votesResult
-                  tags = $("div#collapsible-votes-result");
-                  if (tags.length == 1) {
-                    loadContent(tags[0], load_view='@@display-field-content?field_name=votesResult');
-                  }
                 }
                 else if (e.target.innerHTML.includes('_attendee_form')) {
                   selector = '.attendee-assembly';
@@ -93,6 +88,15 @@ function manageAttendees() {
                   selector = '.attendee-nonattendee';
                 }
                 highlight_attendees(selector);
+
+                // reload votesResult
+                if (e.target.innerHTML.includes('_votes_form')) {
+                  tags = $("div#collapsible-votes-result");
+                  if (tags.length == 1) {
+                    loadContent(tags[0], load_view='@@display-field-content?field_name=votesResult');
+                  }
+                }
+
               },
             }
        });

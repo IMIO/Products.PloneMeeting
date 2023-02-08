@@ -1888,7 +1888,7 @@ def print_votes(item,
         counts = vote_info['counts']
         label = vote_info['label']
         voters = vote_info['voters']
-        total_voters = sum(vote_info['votes'].values()) if secret else len(vote_info['voters'])
+        total_voters = len(item.get_item_voters())
         if render_as_html:
             # vote label
             if vote_label_pattern and label:
