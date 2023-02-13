@@ -287,7 +287,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertFalse(item1.get_item_absents())
         self.assertFalse(item2.get_item_absents())
         # set hp1 absent
-        # modified when applied
+        # item modified when applied
         modified = item1.modified()
         byebye_form._doApply()
         self.assertNotEqual(modified, item1.modified())
@@ -301,7 +301,10 @@ class testContacts(PloneMeetingTestCase):
             sorted(meeting.get_item_absents(by_persons=True)[hp1_uid]),
             sorted([item1_uid, item2_uid]))
         # set hp1 non attendee
+        # item modified when applied
+        modified = item1.modified()
         byebye_nonattendee_form._doApply()
+        self.assertNotEqual(modified, item1.modified())
         self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
         self.assertEqual(item2.get_item_non_attendees(), (hp1_uid, ))
         self.assertEqual(
@@ -315,7 +318,10 @@ class testContacts(PloneMeetingTestCase):
         byebye_form.person_uid = hp2_uid
         byebye_form.not_present_type = 'excused'
         byebye_form.apply_until_item_number = 100
+        # item modified when applied
+        modified = item1.modified()
         byebye_form._doApply()
+        self.assertNotEqual(modified, item1.modified())
         # absent
         self.assertEqual(item1.get_item_absents(), (hp1_uid, ))
         self.assertEqual(item2.get_item_absents(), (hp1_uid, ))
@@ -368,7 +374,10 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(
             welcome_form.description,
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1')
+        # item modified when applied
+        modified = item2.modified()
         welcome_form._doApply()
+        self.assertNotEqual(modified, item2.modified())
         self.assertEqual(item1.get_item_absents(), (hp1_uid, ))
         self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
         self.assertFalse(item2.get_item_absents())
@@ -381,7 +390,10 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(
             welcome_form.description,
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1')
+        # item modified when applied
+        modified = item1.modified()
         welcome_form._doApply()
+        self.assertNotEqual(modified, item1.modified())
         self.assertFalse(item1.get_item_absents())
         self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
         self.assertFalse(item2.get_item_absents())
@@ -490,8 +502,10 @@ class testContacts(PloneMeetingTestCase):
         signatory_form.apply_until_item_number = 200
         signatory_form.signature_number = '1'
         signatory_form.position_type = u'default'
+        # item modified when applied
+        modified = item1.modified()
         signatory_form._doApply()
-
+        self.assertNotEqual(modified, item1.modified())
         self.assertEqual(item1.get_item_signatories(real=True), {hp_uid: '1'})
         self.assertEqual(item2.get_item_signatories(real=True), {hp_uid: '1'})
         self.assertTrue(hp_uid in item1.get_item_signatories())

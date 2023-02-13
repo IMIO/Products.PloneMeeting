@@ -571,7 +571,10 @@ class testVotes(PloneMeetingTestCase):
         votes_form.label = u"My label"
         votes_form.linked_to_previous = False
         votes_form.apply_until_item_number = u'0'
+        # item modified when applied
+        modified = secret_item.modified()
         votes_form._doApply()
+        self.assertNotEqual(modified, secret_item.modified())
         load_view._update()
         self.assertTrue(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
 
@@ -833,7 +836,10 @@ class testVotes(PloneMeetingTestCase):
         votes_form.linked_to_previous = False
         votes_form.vote_number = 0
         votes_form.apply_until_item_number = u'400'
+        # item modified when applied
+        modified = public_item.modified()
         votes_form._doApply()
+        self.assertNotEqual(modified, public_item.modified())
         # votes were updated for yes_public_item but not for secret items
         self.assertEqual(public_item.get_item_votes(), yes_public_item.get_item_votes())
         self.assertEqual(secret_item_votes, secret_item.get_item_votes())
