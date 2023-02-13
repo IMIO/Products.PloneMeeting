@@ -2527,10 +2527,6 @@ class DisplayMeetingItemVoters(BrowserView):
 class DisplayCollapsibleRichTextField(BrowserView):
     """This view will display a collapsible for a RichText field."""
 
-    # will enable custom comment to scroll to top
-    # very linked to first usecase "votesResult", will be factorized
-    enable_scroll_to_top = True
-
     def __init__(self, context, request):
         self.context = context
         self.request = request

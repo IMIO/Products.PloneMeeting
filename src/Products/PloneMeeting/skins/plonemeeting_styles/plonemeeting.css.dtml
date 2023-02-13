@@ -2072,6 +2072,14 @@ div.tooltipster-content table.actionspanel-no-style-table td.noPadding {
     color: lightgrey;
     cursor: help;
 }
+#content span.fa.disabled-dark {
+    color: grey;
+    opacity: 0.6;
+    cursor: help;
+}
+#content span.fa.disabled-dark:hover {
+    opacity: 1;
+}
 #content span.fa.green-colored {
     color: green;
 }
