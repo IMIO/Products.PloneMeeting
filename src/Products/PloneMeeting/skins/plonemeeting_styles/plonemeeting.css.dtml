@@ -631,7 +631,8 @@ div.hsGrey {
 a.highlightValue,
 p.highlightValue,
 span.highlightValue,
-dt.highlightValue span {
+dt.highlightValue span,
+#content div.highlightValue legend a {
     color: red !important;
 }
 p.warningValue,
@@ -2023,10 +2024,6 @@ div.tooltipster-content table.actionspanel-no-style-table td.noPadding {
 #content legend span.edit-element {
    font-size: 90%;
    color: &dtml-linkColor;;
-}
-
-#content div.highlightValue legend a {
-    color: red;
 }
 
 /* linked-to-previous icon */

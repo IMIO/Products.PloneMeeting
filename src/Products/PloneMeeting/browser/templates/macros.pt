@@ -16,7 +16,7 @@
        i18n:attributes="title fastedit_save_and_exit_changes"
        title="Save changes and exit."
        tal:attributes="src string:$portal_url/save_and_exit.gif;
-                       onClick python:'askAjaxChunk(\'hook_%s\', \'POST\', \'%s\', \'@@pm-macros\', \'saveField\', {}, getRichTextContent)' % (fieldName, context.absolute_url())"/>
+                       onClick python:'askAjaxChunk(\'hook_%s\', \'POST\', \'%s\', \'@@pm-macros\', \'saveField\', {}, getRichTextContent, %s)' % (fieldName, context.absolute_url(), context.getRichTextOnSend(fieldName))"/>
   &nbsp;
   <img style="cursor:pointer;"
        i18n:attributes="title fastedit_save_changes"
@@ -1134,28 +1134,3 @@ Need to receive element "widgets".</tal:comment>
     </tal:loop>
   </table>
 </metal:renderWidgets>
-
-
-<metal:votesResult define-macro="votesResult" i18n:domain="PloneMeeting">
-  <tal:comment replace="nothing">Display votesResult on item view.</tal:comment>
-  <fieldset tal:define="mayEdit python: context.mayQuickEdit('votesResult')">
-    <legend>
-      <div class="collapsible active"
-           tal:attributes="onclick string:toggleDetails('collapsible-votes-result', toggle_parent_active=true, parent_tag=this);">
-        <span tal:attributes="class python: 'highlightValue' if mayEdit and context.getRawVotesResult(real=True) else ''"
-              i18n:translate="PloneMeeting_label_votesResult">
-          Votes result
-        </span>
-      </div>
-    </legend>
-
-    <div id="collapsible-votes-result">
-      <tal:content content="structure python: context.restrictedTraverse('@@display-field-content')(field_name='votesResult')" />
-      <p class="discreet"
-         tal:condition="mayEdit"
-         i18n:translate="votes_result_editable_comment">
-        Editable in "Assembly and signatures" here above.
-      </p>
-    </div>
-  </fieldset>
-</metal:votesResult>

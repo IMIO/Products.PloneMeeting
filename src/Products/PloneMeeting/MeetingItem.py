@@ -7893,6 +7893,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 return "highlightValue"
         return ""
 
+    security.declarePublic('getRichTextOnSend')
+
+    def getRichTextOnSend(self, field_name):
+        '''Manage onSend JS parameter of askAjaxChunk for given p_field_name.'''
+        if field_name == 'votesResult':
+            return "reloadVotesResult"
+        return "null"
+
     security.declarePrivate('getAdviceRelatedIndexes')
 
     def getAdviceRelatedIndexes(self):

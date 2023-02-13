@@ -2524,8 +2524,12 @@ class DisplayMeetingItemVoters(BrowserView):
         return res
 
 
-class DisplayFieldContent(BrowserView):
-    """This view will display a given field content."""
+class DisplayCollapsibleRichTextField(BrowserView):
+    """This view will display a collapsible for a RichText field."""
+
+    # will enable custom comment to scroll to top
+    # very linked to first usecase "votesResult", will be factorized
+    enable_scroll_to_top = True
 
     def __init__(self, context, request):
         self.context = context
@@ -2536,11 +2540,13 @@ class DisplayFieldContent(BrowserView):
         if not may_view_field(self.context, field_name):
             raise Unauthorized
 
+        self.field_name = field_name
         field = self.context.getField(field_name)
         if raw:
-            return field.getEditAccessor(self.context)()
+            self.field_content = field.getEditAccessor(self.context)()
         else:
-            return field.getAccessor(self.context)()
+            self.field_content = field.getAccessor(self.context)()
+        return self.index()
 
 
 class PODTemplateMailingLists(BrowserView):

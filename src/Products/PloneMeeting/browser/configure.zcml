@@ -332,8 +332,9 @@
 
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeetingItem"
-      name="display-field-content"
-      class=".views.DisplayFieldContent"
+      name="display-collapsible-rich-field"
+      class=".views.DisplayCollapsibleRichTextField"
+      template="templates/display_collapsible_field.pt"
       permission="zope2.View" />
 
     <browser:page

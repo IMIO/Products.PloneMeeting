@@ -91,16 +91,20 @@ function manageAttendees() {
 
                 // reload votesResult
                 if (e.target.innerHTML.includes('_votes_form')) {
-                  tags = $("div#collapsible-votes-result");
-                  if (tags.length == 1) {
-                    loadContent(tags[0], load_view='@@display-field-content?field_name=votesResult');
-                  }
+                  reloadVotesResult();
                 }
 
               },
             }
        });
     });
+}
+
+function reloadVotesResult() {
+    tags = $("div#marker-collapsible-field-votesResult");
+    if (tags.length == 1) {
+      loadContent(tags[0], load_view='@@display-collapsible-rich-field?field_name=votesResult');
+    }
 }
 
 // refresh meeting attendees panel
