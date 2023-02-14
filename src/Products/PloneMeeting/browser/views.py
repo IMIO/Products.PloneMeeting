@@ -2534,7 +2534,7 @@ class DisplayCollapsibleRichTextField(BrowserView):
     def __call__(self, field_name, raw=False):
         """ """
         if not may_view_field(self.context, field_name):
-            raise Unauthorized
+            return ""
 
         self.field_name = field_name
         field = self.context.getField(field_name)

@@ -24,6 +24,7 @@ from imio.helpers.content import get_transitions
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import safe_delattr
+from imio.helpers.content import safe_encode
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.content import uuidToObject
@@ -1384,7 +1385,7 @@ schema = Schema((
     TextField(
         name='votesResult',
         widget=RichWidget(
-            condition="python: here.showMeetingManagerReservedField('votesResult')",
+            condition="python: here.attribute_is_used('votesResult')",
             label='VotesResult',
             label_msgid='PloneMeeting_label_votesResult',
             description="VotesResult",
@@ -1397,7 +1398,11 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission=WriteItemMeetingManagerFields,
+        # we use WriteMarginalNotes so MeetingManagers may edit votesResult
+        # when item is decided but as field in not in
+        # MeetingItem._bypass_meeting_closed_check_for it will not be quick editable
+        # when the meeting is closed
+        write_permission=WriteMarginalNotes,
     ),
     BooleanField(
         name='oralQuestion',
@@ -2147,6 +2152,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         msg = self._mayNotViewDecisionMsg()
         return msg or self.getField('decision').getRaw(self, **kwargs)
 
+    def _eval_votes_result_cachekey(method, self, check_is_html=True):
+        '''cachekey method for self._eval_votes_result.'''
+        return repr(self), self.modified(), check_is_html
+
+    @ram.cache(_eval_votes_result_cachekey)
     def _eval_votes_result(self, check_is_html=True):
         """ """
         extra_expr_ctx = _base_extra_expr_ctx(self)
@@ -2166,7 +2176,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             api.portal.show_message(
                 _('votes_result_not_html'), request=self.REQUEST, type='warning')
             res = ''
-        return res
+        return safe_encode(res)
 
     security.declarePublic('getVotesResult')
 
@@ -4721,6 +4731,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            If p_bypassMeetingClosedCheck is True, we will not check if meeting is closed but
            only for permission and condition.'''
         field = self.Schema()[fieldName]
+        # some fields are still editable even when meeting closed
         bypassMeetingClosedCheck = bypassMeetingClosedCheck or \
             self.adapted()._bypass_meeting_closed_check_for(fieldName)
         res = checkMayQuickEdit(

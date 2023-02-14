@@ -6,6 +6,7 @@
 #
 
 from AccessControl import Unauthorized
+from imio.helpers.cache import cleanRamCache
 from plone import api
 from Products.PloneMeeting.browser.itemvotes import _should_disable_apply_until_item_number
 from Products.PloneMeeting.browser.itemvotes import IEncodeSecretVotes
@@ -15,6 +16,7 @@ from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import may_view_field
 from Products.statusmessages.interfaces import IStatusMessage
 from z3c.form import validator
 from zope.i18n import translate
@@ -34,15 +36,21 @@ class testVotes(PloneMeetingTestCase):
         """ """
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
-        public_item = self.create('MeetingItem')
-        secret_item = self.create('MeetingItem', pollType='secret')
+        public_item = self.create('MeetingItem',
+                                  decision=self.decisionText)
+        secret_item = self.create('MeetingItem',
+                                  decision=self.decisionText,
+                                  pollType='secret')
         self.presentItem(public_item)
         if include_yes:
-            yes_public_item = self.create('MeetingItem')
+            yes_public_item = self.create('MeetingItem',
+                                          decision=self.decisionText)
             self.presentItem(yes_public_item)
         self.presentItem(secret_item)
         if include_yes:
-            yes_secret_item = self.create('MeetingItem', pollType='secret')
+            yes_secret_item = self.create('MeetingItem',
+                                          decision=self.decisionText,
+                                          pollType='secret')
             self.presentItem(yes_secret_item)
         voters = meeting.get_voters()
         # public votes
@@ -976,6 +984,83 @@ class testVotes(PloneMeetingTestCase):
         rendered = votes_view()
         self.assertTrue("public-vote" in rendered)
         self.assertTrue("secret-vote" in rendered)
+
+    def test_pm_ItemGetVotesResult(self):
+        """Field MeetingItem.votesResult accessor is overrided to handle
+           votes result generated text."""
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        self._enableField('votesResult')
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertFalse(item.mayQuickEdit('votesResult'))
+        self.assertTrue(may_view_field(item, 'votesResult'))
+        self.changeUser('pmManager')
+        self.assertFalse(item.mayQuickEdit('votesResult'))
+        self.assertTrue(may_view_field(item, 'votesResult'))
+
+        # get outside meeting
+        self.assertEqual(cfg.getVotesResultTALExpr(), '')
+        self.assertEqual(item.getVotesResult(), '')
+        self.assertEqual(item.getVotesResult(real=True), '')
+        self.assertFalse(isinstance(item.getVotesResult(), unicode))
+        cfg.setVotesResultTALExpr(
+            'python: pm_utils.print_votes(item, include_total_voters=True)')
+        cleanRamCache()
+        self.assertEqual(item.getVotesResult(), '<p>-</p>')
+        self.assertFalse(isinstance(item.getVotesResult(), unicode))
+        self.assertEqual(item.getVotesResult(real=True), '')
+
+        # get in meeting
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
+        # not editable until item is frozen
+        self.assertEqual(public_item.query_state(), 'presented')
+        self.assertFalse(public_item.mayQuickEdit('votesResult'))
+        self.assertTrue(may_view_field(public_item, 'votesResult'))
+        self.assertEqual(
+            public_item.getVotesResult(),
+            '<p>Il y a 4 votants.</p><p>Par 2 voix pour, une voix contre '
+            'et une abstention,</p>')
+        self.assertEqual(
+            yes_public_item.getVotesResult(),
+            "<p>Il y a 4 votants.</p><p>\xc3\x80 l'unanimit\xc3\xa9,</p>")
+        self.assertEqual(
+            secret_item.getVotesResult(),
+            '<p>Il y a 4 votants.</p><p>Au scrutin secret,</p>'
+            '<p>Par une voix pour, une voix contre et 2 abstentions,</p>')
+        self.assertEqual(
+            yes_secret_item.getVotesResult(),
+            "<p>Il y a 4 votants.</p><p>Au scrutin secret,</p>"
+            "<p>\xc3\x80 l'unanimit\xc3\xa9,</p>")
+
+        # freeze the meeting and set values
+        self.freezeMeeting(meeting)
+        self.assertEqual(public_item.query_state(), 'itemfrozen')
+        self.assertTrue(public_item.mayQuickEdit('votesResult'))
+        self.assertTrue(secret_item.mayQuickEdit('votesResult'))
+
+        # when a value is set, then it is used
+        self.assertFalse(public_item.getVotesResult(real=True))
+        self.assertFalse(secret_item.getVotesResult(real=True))
+        public_item.setVotesResult('<p>Custom public text.</p>')
+        self.assertEqual(public_item.getVotesResult(), '<p>Custom public text.</p>')
+        self.assertEqual(public_item.getVotesResult(real=True), '<p>Custom public text.</p>')
+        secret_item.setVotesResult('<p>Custom secret text.</p>')
+        self.assertEqual(secret_item.getVotesResult(), '<p>Custom secret text.</p>')
+        self.assertEqual(secret_item.getVotesResult(real=True), '<p>Custom secret text.</p>')
+
+        # decide item, still editable until meeting is closed
+        self.decideMeeting(meeting)
+        self.assertEqual(public_item.query_state(), 'itempublished')
+        self.assertTrue(public_item.mayQuickEdit('votesResult'))
+        self.assertTrue(secret_item.mayQuickEdit('votesResult'))
+        self.do(public_item, 'accept')
+        self.assertEqual(public_item.query_state(), 'accepted')
+        self.assertTrue(public_item.mayQuickEdit('votesResult'))
+        self.closeMeeting(meeting)
+        self.assertEqual(public_item.query_state(), 'accepted')
+        self.assertFalse(public_item.mayQuickEdit('votesResult'))
 
 
 def test_suite():

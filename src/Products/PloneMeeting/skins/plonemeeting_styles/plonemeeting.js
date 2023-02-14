@@ -641,6 +641,10 @@ function refreshAfterDelete(event) {
   css_id = event.tag.id;
   if (css_id == 'delete-vote-action') {
     refresh_attendees(highlight='.vote-value');
+  } else {
+    if (css_id == 'reinit-attendees-order-action') {
+      refresh_attendees(highlight='.td_cell_number-column');
+    }
   }
 }
 

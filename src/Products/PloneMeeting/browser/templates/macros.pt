@@ -367,7 +367,7 @@ document.location.reload(true);
           tal:condition="python: mayChangeAttendees and attendeesOrderIsRedefined"
           title="Reinitialize attendees order from meeting"
           id="reinit-attendees-order-action"
-          tal:attributes="onClick string:javascript:event.preventDefault();;confirmDeleteObject(base_url='${context_url}', object_uid=null, this, msgName='are_you_sure', view_name='@@item-reinit-attendees-order', redirect=null);;"
+          tal:attributes="onClick string:javascript:event.preventDefault();;confirmDeleteObject(base_url='${context_url}', object_uid=null, this, msgName='are_you_sure', view_name='@@item-reinit-attendees-order', redirect=0);;"
           i18n:attributes="title">
            <span class="fa delete-element"></span>
        </a>
