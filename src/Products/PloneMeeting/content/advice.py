@@ -17,8 +17,8 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IDXMeetingContent
 from Products.PloneMeeting.utils import findMeetingAdvicePortalType
-from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import get_event_field_data
+from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import historize_object_data
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget

@@ -499,7 +499,6 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.member = api.user.get_current()
-        self.used_item_attrs = self.cfg.getUsedItemAttributes()
         self.used_meeting_attrs = self.cfg.getUsedMeetingAttributes()
         self.meeting = self.context.getMeeting()
         self.show_votes = self.context.show_votes()

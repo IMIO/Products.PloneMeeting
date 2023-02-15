@@ -4,11 +4,7 @@
     define="redefinedItemAssemblies python: context.redefinedItemAssemblies();
             redefinedItemSignatures python: context.getItemSignatures(real=True) or context.get_item_signatories(real=True);
             mayQuickEditItemSignatures python: context.mayQuickEditItemSignatures();
-            meetingConfig python: view.cfg;
             meeting python: view.meeting;
-            member python: view.member;
-            portal_url python: view.portal_url;
-            usedAttrs python: view.used_item_attrs;
             usedMeetingAttrs python: view.used_meeting_attrs;">
       <tal:item_assembly tal:condition="python: ('assembly' in usedMeetingAttrs or meeting.get_assembly()) and not meeting.get_attendees()">
           <tal:defines define="mayQuickEdit python: context.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True);
