@@ -497,7 +497,9 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         self.error_msg = self.request.get('attendees_error_msg')
         self.context_uid = self.context.UID()
         self.tool = api.portal.get_tool('portal_plonemeeting')
+        # necessary for the @@pm-macros/viewContentField
         self.cfg = self.tool.getMeetingConfig(self.context)
+        self.used_item_attrs = self.cfg.getUsedItemAttributes()
         self.member = api.user.get_current()
         self.used_meeting_attrs = self.cfg.getUsedMeetingAttributes()
         self.meeting = self.context.getMeeting()
