@@ -842,12 +842,13 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         # check also portal_url in case application is accessed thru different URI
         # use uid to be sure that a meeting removed then created again will
         # not reuse the cache
+        # we also check number_of_items for the Delete action
         return (self.context.UID(), self.context.query_state(),
                 isRealManager, isManager,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showOwnDeleteWithComments, showActions, showAddContent,
                 showHistory, showHistoryLastEventHasComments, showArrows,
-                self.portal_url, kwargs)
+                self.portal_url, self.context.number_of_items() == "0", kwargs)
 
     @ram.cache(__call___cachekey)
     def MeetingActionsPanelView__call__(

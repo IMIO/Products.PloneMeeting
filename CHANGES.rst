@@ -111,6 +111,9 @@ Changelog
 - Fixed `meeting.committees` default value, ignore MeetingConfig.committees
   that use `enabled="item_only"`.
   [gbastien]
+- Invalidate meeting `actionspanel` caching when meeting contains or
+  no more contains items so the `Delete` action is displayed or not.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
