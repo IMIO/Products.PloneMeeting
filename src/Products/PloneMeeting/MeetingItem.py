@@ -2152,13 +2152,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         msg = self._mayNotViewDecisionMsg()
         return msg or self.getField('decision').getRaw(self, **kwargs)
 
-    def _eval_votes_result_cachekey(method, self, check_is_html=True):
-        '''cachekey method for self._eval_votes_result.'''
+    def _get_votes_result_cachekey(method, self, check_is_html=True):
+        '''cachekey method for self._get_votes_result.'''
         return repr(self), self.modified(), check_is_html
 
-    @ram.cache(_eval_votes_result_cachekey)
-    def _eval_votes_result(self, check_is_html=True):
-        """ """
+    @ram.cache(_get_votes_result_cachekey)
+    def _get_votes_result(self, check_is_html=True):
+        """Compute votesResult using MeetingConfig.votesResultTALExpr.
+           When p_check_is_html=True result is checked and if it is not HTML
+           a portal_message is displayed to the user."""
         extra_expr_ctx = _base_extra_expr_ctx(self)
         # quick bypass when not used or if item not in a meeting
         expr = extra_expr_ctx['cfg'].getVotesResultTALExpr().strip()
@@ -2189,7 +2191,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            If empty we will return the evaluated MeetingConfig.votesResultExpr.'''
         res = self.getField('votesResult').get(self, **kwargs)
         if not real and not res:
-            res = self._eval_votes_result()
+            res = self._get_votes_result(**kwargs)
         return res
 
     security.declarePublic('getRawVotesResult')
@@ -2198,7 +2200,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See getVotesResult docstring.'''
         res = self.getField('votesResult').getRaw(self, **kwargs)
         if not real and not res:
-            res = self._eval_votes_result()
+            res = self._get_votes_result(**kwargs)
         return res
 
     security.declarePrivate('validate_category')
