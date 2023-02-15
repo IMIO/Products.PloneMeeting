@@ -2160,12 +2160,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def _eval_votes_result(self, check_is_html=True):
         """ """
         extra_expr_ctx = _base_extra_expr_ctx(self)
+        # quick bypass when not used or if item not in a meeting
+        expr = extra_expr_ctx['cfg'].getVotesResultTALExpr().strip()
+        if not expr or not self.hasMeeting():
+            return ''
+
         extra_expr_ctx.update({'item': self, 'meeting': self.getMeeting()})
-        cfg = extra_expr_ctx['cfg']
         # default raise_on_error=False so if the expression
         # raise an error, we will get '' for reference and a message in the log
         res = _evaluateExpression(self,
-                                  expression=cfg.getVotesResultTALExpr().strip(),
+                                  expression=expr,
                                   roles_bypassing_expression=[],
                                   extra_expr_ctx=extra_expr_ctx,
                                   empty_expr_is_true=False)

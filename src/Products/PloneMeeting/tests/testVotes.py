@@ -991,6 +991,7 @@ class testVotes(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self._removeConfigObjectsFor(cfg)
         self._enableField('votesResult')
+        self._enableField('votesResult_after_motivation')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.assertFalse(item.mayQuickEdit('votesResult'))
@@ -1007,7 +1008,8 @@ class testVotes(PloneMeetingTestCase):
         cfg.setVotesResultTALExpr(
             'python: pm_utils.print_votes(item, include_total_voters=True)')
         cleanRamCache()
-        self.assertEqual(item.getVotesResult(), '<p>-</p>')
+        # not computed when not in a meeting
+        self.assertEqual(item.getVotesResult(), '')
         self.assertFalse(isinstance(item.getVotesResult(), unicode))
         self.assertEqual(item.getVotesResult(real=True), '')
 
@@ -1061,6 +1063,21 @@ class testVotes(PloneMeetingTestCase):
         self.closeMeeting(meeting)
         self.assertEqual(public_item.query_state(), 'accepted')
         self.assertFalse(public_item.mayQuickEdit('votesResult'))
+
+        # wrong expression will not break the view, if result is not html
+        # a portal_messag is displayed
+        IStatusMessage(self.request).show()
+        item.setVotesResult('')
+        public_item.setVotesResult('')
+        cfg.setVotesResultTALExpr("string:not html")
+        cleanRamCache()
+        # no message as item not in a meeting
+        item.restrictedTraverse('base_view')()
+        self.assertFalse(IStatusMessage(self.request).show())
+        # message as public_item in a meeting
+        public_item.restrictedTraverse('base_view')()
+        self.assertEqual(IStatusMessage(self.request).show()[0].message,
+                         u'Votes result is not HTML')
 
 
 def test_suite():
