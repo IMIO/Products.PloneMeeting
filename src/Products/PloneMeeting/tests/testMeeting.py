@@ -3401,15 +3401,10 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.changeUser('pmReviewer2')
         self.assertTrue(self.hasPermission(View, item1))
-        # make sure item2 is not accessible to 'pmReviewer2'
-        if self.hasPermission(View, item2):
-            item2.manage_permission(View, ['Manager'])
-            item2.manage_permission(AccessContentsInformation, ['Manager'])
-            item2.reindexObject()
         self.assertFalse(self.hasPermission(View, item2))
         # there are unaccessible items
         self.assertTrue(
-            len(meeting.get_items(ordered=True, the_objects=False)) < meeting.number_of_items())
+            len(meeting.get_items(the_objects=False)) < meeting.number_of_items())
         # enable item references update
         self.request.set('need_Meeting_update_item_references', True)
         # make sure it will be changed
