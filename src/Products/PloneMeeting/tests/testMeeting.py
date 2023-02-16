@@ -1944,8 +1944,8 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         # by default, 7 normal items and none late
-        self.assertEqual(meeting.number_of_items(), '7')
-        self.assertEqual(meeting.number_of_items(True), 7)
+        self.assertEqual(meeting.number_of_items(as_str=True), '7')
+        self.assertEqual(meeting.number_of_items(), 7)
         self.assertEqual(len(meeting.get_raw_items()), 7)
         # add a late item
         self.freezeMeeting(meeting)
@@ -1953,20 +1953,26 @@ class testMeetingType(PloneMeetingTestCase):
         item.setPreferredMeeting(meeting.UID())
         self.presentItem(item)
         # now 8 items
-        self.assertEqual(meeting.number_of_items(), '8')
-        self.assertEqual(meeting.number_of_items(True), 8)
+        self.assertEqual(meeting.number_of_items(as_str=True), '8')
+        self.assertEqual(meeting.number_of_items(), 8)
         self.assertEqual(len(meeting.get_raw_items()), 8)
         # remove an item
         self.backToState(item, 'validated')
-        self.assertEqual(meeting.number_of_items(), '7')
-        self.assertEqual(meeting.number_of_items(True), 7)
+        self.assertEqual(meeting.number_of_items(as_str=True), '7')
+        self.assertEqual(meeting.number_of_items(), 7)
         self.assertEqual(len(meeting.get_raw_items()), 7)
         # delete an item
         first_item = meeting.get_items(the_objects=True, ordered=True)[0]
         self.deleteAsManager(first_item.UID())
-        self.assertEqual(meeting.number_of_items(), '6')
-        self.assertEqual(meeting.number_of_items(True), 6)
+        self.assertEqual(meeting.number_of_items(as_str=True), '6')
+        self.assertEqual(meeting.number_of_items(), 6)
         self.assertEqual(len(meeting.get_raw_items()), 6)
+        # remove every items
+        removeView = meeting.restrictedTraverse('@@remove-several-items')
+        removeView([i.UID for i in meeting.get_items(the_objects=False)])
+        self.assertEqual(meeting.number_of_items(as_str=True), '0')
+        self.assertEqual(meeting.number_of_items(), 0)
+        self.assertEqual(len(meeting.get_raw_items()), 0)
 
     def test_pm_AvailableItems(self):
         """
@@ -2741,15 +2747,6 @@ class testMeetingType(PloneMeetingTestCase):
                               permission=(View,),
                               visible=True,
                               category='object_buttons')
-        # add an action that only shows up when no item in the meeting
-        meetingType.addAction(id='no_items',
-                              name='no_items',
-                              action='',
-                              icon_expr='',
-                              condition="python: not context.get_items(the_objects=False)",
-                              permission=(View,),
-                              visible=True,
-                              category='object_buttons')
         # not available for now
         pa = self.portal.portal_actions
         object_buttons = [k['id'] for k in pa.listFilteredActionsFor(meeting)['object_buttons']]
@@ -2769,20 +2766,12 @@ class testMeetingType(PloneMeetingTestCase):
         # still equal, actions panel was not invalidated
         self.assertEqual(beforeEdit_rendered_actions_panel, afterEdit_rendered_actions_panel)
 
-        # NOT invalidated neither when getRawItems changed
-        # for performance reasons, we invalidate only when review_state changed
-        # this usecase is not supported for now
-        # for now, no item in the meeting, the 'no_items' action is shown
-        object_buttons = [k['id'] for k in pa.listFilteredActionsFor(meeting)['object_buttons']]
-        self.assertTrue('no_items' in object_buttons)
+        # invalidated when items added as the Delete action will disappear
+        self.assertTrue("Delete" in afterEdit_rendered_actions_panel)
         item = self.create('MeetingItem')
         self.presentItem(item)
-        object_buttons = [k['id'] for k in pa.listFilteredActionsFor(meeting)['object_buttons']]
-        self.assertFalse('no_items' in object_buttons)
-        actions_panel._transitions = None
         presentedItem_rendered_actions_panel = actions_panel()
-        # still equal, actions panel was not invalidated
-        self.assertEqual(afterEdit_rendered_actions_panel, presentedItem_rendered_actions_panel)
+        self.assertFalse("Delete" in presentedItem_rendered_actions_panel)
 
         # invalidated when review state changed
         # just make sure the contained item is not changed

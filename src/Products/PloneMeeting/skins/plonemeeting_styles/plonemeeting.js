@@ -621,7 +621,7 @@ function updateNumberOfItems() {
   // get numberOfItems using an ajax call if on the meeting_view
   if (parent.$('.meeting_number_of_items').length) {
     response = $.ajax({
-      url: document.baseURI + '/number_of_items',
+      url: document.baseURI + '/number_of_items?as_str:bool=1',
       dataType: 'html',
       cache: false,
       async: true,

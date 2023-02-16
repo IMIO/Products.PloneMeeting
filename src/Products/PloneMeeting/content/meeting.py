@@ -2275,12 +2275,14 @@ class Meeting(Container):
 
     security.declarePublic('number_of_items')
 
-    def number_of_items(self, as_int=False):
-        '''How much items in this meeting ?'''
-        total = getattr(self, "_number_of_items")
-        if not as_int:
-            total = str(total)
-        return total
+    def number_of_items(self, as_str=False):
+        '''How much items in this meeting ?
+           If p_as_str=True, we return a str.  This is necessary when returned
+           for JS as when 0, nothing is returned by Zope.'''
+        if as_str:
+            return str(getattr(self, "_number_of_items"))
+        else:
+            return getattr(self, "_number_of_items")
 
     security.declarePublic('show_votes')
 
