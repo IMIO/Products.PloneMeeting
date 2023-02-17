@@ -111,6 +111,11 @@ Changelog
 - Fixed `meeting.committees` default value, ignore `MeetingConfig.committees`
   that use `enabled="item_only"`.
   [gbastien]
+- Finally fixed invalidating meeting `actionspanel` caching when meeting
+  contains/does not contain items so the `Delete` action is handled correctly.
+  `Meeting.number_of_items` replaced parameter `as_int=False` by `as_str=False`
+  as we only want it to be str for JS.
+  [gbastien]
 - Added `MeetingItem.votesResult`, a field that will hold a generated text of
   votes result based on `MeetingConfig.votesResultTALExpr` but that is also
   editable when generated text needs to be customized.

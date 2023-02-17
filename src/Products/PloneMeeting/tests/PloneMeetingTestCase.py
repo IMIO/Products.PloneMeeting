@@ -15,6 +15,7 @@ from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
 from copy import deepcopy
 from datetime import datetime
+from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import get_transitions
 from imio.helpers.content import object_values
@@ -267,6 +268,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         '''Logs out currently logged user and logs in p_loginName.'''
         logout()
         if clean_memoize:
+            # necessary to invalidate monkey._listAllowedRolesAndUsers
+            # or a catalog query reuses cached allowedRolesAndUsers
+            cleanRamCache()
             self.cleanMemoize()
         if loginName == 'admin':
             login(self.app, loginName)

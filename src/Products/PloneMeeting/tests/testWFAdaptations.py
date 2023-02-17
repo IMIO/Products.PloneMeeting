@@ -342,10 +342,6 @@ class testWFAdaptations(PloneMeetingTestCase):
            moreover it checks too if a validation level is available,
            this could not be the case when set using import_data or
            if validation_level was just disabled."""
-        wa_error = translate(
-            'wa_presented_back_to_wrong_itemWFValidationLevels',
-            domain='PloneMeeting', context=self.request)
-
         # make sure we use default itemWFValidationLevels,
         # useful when test executed with custom profile
         cfg = self.meetingConfig
@@ -358,7 +354,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # unknown (unselected) item validation level
         self.assertEqual(
             cfg.validate_workflowAdaptations(('presented_item_back_to_unknown', )),
-            wa_error)
+            u'The workflow adaptation "presented_item_back_to_unknown" is no more available!')
 
     def test_pm_Validate_workflowAdaptations_added_no_publication(self):
         """Test MeetingConfig.validate_workflowAdaptations that manage addition
