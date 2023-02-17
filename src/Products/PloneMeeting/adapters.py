@@ -184,7 +184,7 @@ class MeetingContentDeletableAdapter(APContentDeletableAdapter):
         '''See docstring in interfaces.py.'''
         res = super(MeetingContentDeletableAdapter, self).mayDelete()
         if res:
-            if self.context.get_raw_items() and \
+            if self.context.number_of_items() != 0 and \
                not api.user.get_current().has_role('Manager'):
                 res = False
         return res

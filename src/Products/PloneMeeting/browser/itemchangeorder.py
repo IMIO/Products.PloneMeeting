@@ -80,7 +80,7 @@ class ChangeItemOrderView(BrowserView):
                     type='warning')
                 return False
 
-        nbOfItems = meeting.number_of_items(as_int=True)
+        nbOfItems = meeting.number_of_items()
         items = meeting.get_items(ordered=True, unrestricted=True)
 
         # Calibrate and validate moveValue

@@ -3551,7 +3551,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # in the meetingConfig and relativeTo='meeting' behaves normally
         meeting_before = self._createMeetingWithItems(meetingDate=datetime(2012, 5, 5, 12, 0))
         # we have 7 items in meeting_before and firstItemNumber is not set
-        self.assertEqual(meeting_before.number_of_items(), '7')
+        self.assertEqual(meeting_before.number_of_items(), 7)
         self.assertEqual(meeting_before.first_item_number, -1)
         self.assertEqual(
             meeting_before.get_items(ordered=True)[-1].getItemNumber(relativeTo='meetingConfig'),
@@ -4853,7 +4853,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # creator
         self.assertEqual(_sum_entries(False), 0)
         self.assertEqual(_sum_entries(), 1)
-        self.changeUser('pmReviewer1')
+        self.changeUser('pmReviewer1', clean_memoize=False)
         if self._reviewers_may_edit_itemcreated():
             # reviewer, have the hand on item, view as a Reader
             self.assertEqual(_sum_entries(), 1)
@@ -4861,63 +4861,63 @@ class testMeetingItem(PloneMeetingTestCase):
             # reviewer, does not have the hand on item, view as a Reader
             self.assertEqual(_sum_entries(), 2)
         # observer, Reader
-        self.changeUser('pmObserver1')
+        self.changeUser('pmObserver1', clean_memoize=False)
         self.assertEqual(_sum_entries(), 2)
         # copyGroups or optionalAdvisers, Reader
-        self.changeUser('pmReviewer2')
+        self.changeUser('pmReviewer2', clean_memoize=False)
         self.assertEqual(_sum_entries(), 2)
         # powerobserver, Reader
-        self.changeUser('powerobserver1')
+        self.changeUser('powerobserver1', clean_memoize=False)
         self.assertEqual(_sum_entries(), 2)
 
         # propose item, pmReviewer1 has hand on item, other are Readers
-        self.changeUser('pmCreator1')
-        self.proposeItem(item)
+        self.changeUser('pmCreator1', clean_memoize=False)
+        self.proposeItem(item, clean_memoize=False)
         self.assertEqual(_sum_entries(False), 2)
         self.assertEqual(_sum_entries(), 3)
         # reviewer, has hand on item
-        self.changeUser('pmReviewer1')
+        self.changeUser('pmReviewer1', clean_memoize=False)
         self.assertEqual(_sum_entries(), 4)
         # observer, Reader
-        self.changeUser('pmObserver1')
+        self.changeUser('pmObserver1', clean_memoize=False)
         self.assertEqual(_sum_entries(), 4)
         # copyGroups or optionalAdvisers, Reader
-        self.changeUser('pmReviewer2')
+        self.changeUser('pmReviewer2', clean_memoize=False)
         self.assertEqual(_sum_entries(), 4)
         # powerobserver,Reader
-        self.changeUser('powerobserver1')
+        self.changeUser('powerobserver1', clean_memoize=False)
         self.assertEqual(_sum_entries(), 4)
 
         # special case for powerobservers when using MeetingConfig.hideHistoryTo
         cfg.setHideHistoryTo(('powerobservers', ))
         self.assertEqual(_sum_entries(), 5)
         # but still ok for others
-        self.changeUser('pmReviewer2')
+        self.changeUser('pmReviewer2', clean_memoize=False)
         self.assertEqual(_sum_entries(), 5)
 
         # now test as a MeetingManager that has access when item validated
-        self.changeUser('pmReviewer1')
-        self.validateItem(item, as_manager=False)
+        self.changeUser('pmReviewer1', clean_memoize=False)
+        self.validateItem(item, as_manager=False, clean_memoize=False)
         self.assertEqual(_sum_entries(), 6)
         # without meeting, MeetingManager may edit
-        self.changeUser('pmManager')
+        self.changeUser('pmManager', clean_memoize=False)
         self.assertEqual(_sum_entries(), 7)
         self.create('Meeting')
         self.assertEqual(_sum_entries(), 8)
         # does not change for others
-        self.changeUser('pmCreator1')
+        self.changeUser('pmCreator1', clean_memoize=False)
         self.assertEqual(_sum_entries(), 8)
         # reviewer, has hand on item
-        self.changeUser('pmReviewer1')
+        self.changeUser('pmReviewer1', clean_memoize=False)
         self.assertEqual(_sum_entries(), 8)
         # observer, Reader
-        self.changeUser('pmObserver1')
+        self.changeUser('pmObserver1', clean_memoize=False)
         self.assertEqual(_sum_entries(), 8)
         # copyGroups or optionalAdvisers, Reader
-        self.changeUser('pmReviewer2')
+        self.changeUser('pmReviewer2', clean_memoize=False)
         self.assertEqual(_sum_entries(), 8)
         # powerobserver, Reader but changed as using MeetingConfig.hideHistoryTo
-        self.changeUser('powerobserver1')
+        self.changeUser('powerobserver1', clean_memoize=False)
         self.assertEqual(_sum_entries(), 9)
 
     def test_pm_HistoryCommentViewability(self):

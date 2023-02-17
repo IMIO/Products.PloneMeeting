@@ -4662,14 +4662,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         # check that selected back_from_presented transitions
         # exists in MeetingConfig.itemWFValidationLevels
+        # this may be the case when removing a validation level already selected
         if back_from_presented:
-            msg = translate('wa_presented_back_to_wrong_itemWFValidationLevels',
-                            domain='PloneMeeting',
-                            context=self.REQUEST)
             for back_from in back_from_presented:
                 presented_state = back_from.replace('presented_item_back_to_', '')
                 if presented_state not in item_validation_states:
-                    return msg
+                    return translate(
+                        'wa_presented_back_to_wrong_itemWFValidationLevels',
+                        domain='PloneMeeting',
+                        mapping={"wfa_back_from_title": back_from},
+                        context=self.REQUEST)
 
         catalog = api.portal.get_tool('portal_catalog')
         wfTool = api.portal.get_tool('portal_workflow')

@@ -2,7 +2,7 @@
                tal:define="context_url python: context.absolute_url();
                            meeting python: context.getMeeting();
                            itemNumber python: context.getItemNumber(relativeTo='meeting', for_display=True);
-                           lastItemNumber python: meeting.number_of_items();
+                           lastItemNumber python: str(meeting.number_of_items());
                            mayView python: view.tool.checkMayView(meeting);">
 
     <tal:comment replace="nothing">Go to the meeting</tal:comment>

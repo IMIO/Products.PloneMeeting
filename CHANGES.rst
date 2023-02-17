@@ -111,6 +111,11 @@ Changelog
 - Fixed `meeting.committees` default value, ignore MeetingConfig.committees
   that use `enabled="item_only"`.
   [gbastien]
+- Finally fixed invalidating meeting `actionspanel` caching when meeting
+  contains/does not contain items so the `Delete` action is handled correctly.
+  `Meeting.number_of_items` replaced parameter `as_int=False` by `as_str=False`
+  as we only want it to be str for JS.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
