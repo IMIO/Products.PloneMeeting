@@ -16,7 +16,7 @@
        i18n:attributes="title fastedit_save_and_exit_changes"
        title="Save changes and exit."
        tal:attributes="src string:$portal_url/save_and_exit.gif;
-                       onClick python:'askAjaxChunk(\'hook_%s\', \'POST\', \'%s\', \'@@pm-macros\', \'saveField\', {}, getRichTextContent)' % (fieldName, context.absolute_url())"/>
+                       onClick python:'askAjaxChunk(\'hook_%s\', \'POST\', \'%s\', \'@@pm-macros\', \'saveField\', {}, getRichTextContent, %s)' % (fieldName, context.absolute_url(), context.getRichTextOnSend(fieldName))"/>
   &nbsp;
   <img style="cursor:pointer;"
        i18n:attributes="title fastedit_save_changes"
@@ -118,9 +118,10 @@
                  jsEdit python: '%s,\'editField\',{%s},null,initRichTextField)' % (jsCall, jsParams);
                  jsChanges python: '%s,\'viewFieldVersion\',{%s,\'changes\':\'True\'})' % (jsCall, jsParams);
                  jsView python: '%s,\'viewFieldVersion\',{%s,\'changes\':\'False\'})' % (jsCall, jsParams);
-                 needToRefreshPage needToRefreshPage|nothing;"
+                 needToRefreshPage needToRefreshPage|nothing;
+                 CSSClass python: context.getRichTextCSSClass(fieldName);"
      style="position: relative"
-     tal:attributes="id hookId;">
+     tal:attributes="id hookId; class CSSClass">
 
 <script type='text/javascript'>
 function refreshPageIfNeeded(){
@@ -173,6 +174,7 @@ document.location.reload(true);
                  isOptional field/optional|python:False;
                  isUsed python: not isOptional or (isOptional and fieldName in usedAttrs);
                  ajaxEdit ajaxEdit|nothing;
+                 legendCSSClass legendCSSClass|nothing;
                  mayEdit python: ajaxEdit and context.mayQuickEdit(fieldName) and not context.unrestrictedTraverse('@@plone_lock_info').is_locked_for_current_user()"
      tal:condition="python: isUsed and field.widget.visible and field.widget.visible and field.widget.testCondition(context.getParentNode(), context.getParentNode(), context) and member.has_permission(field.read_permission, context)">
   <tal:rich condition="python: isRich">
@@ -325,7 +327,7 @@ document.location.reload(true);
 <div id="item-people"
      metal:define-macro="itemPeople" i18n:domain="PloneMeeting"
      tal:define="usedAttrs usedAttrs|meetingConfig/getUsedItemAttributes;
-                 meeting context/getMeeting;
+                 meeting python: context.getMeeting();
                  usedMeetingAttributes usedMeetingAttributes|meetingConfig/getUsedMeetingAttributes">
  <div metal:use-macro="context/global_statusmessage/macros/portal_message">
    Portal status message
@@ -365,7 +367,7 @@ document.location.reload(true);
           tal:condition="python: mayChangeAttendees and attendeesOrderIsRedefined"
           title="Reinitialize attendees order from meeting"
           id="reinit-attendees-order-action"
-          tal:attributes="onClick string:javascript:event.preventDefault();;confirmDeleteObject(base_url='${context_url}', object_uid=null, this, msgName='are_you_sure', view_name='@@item-reinit-attendees-order', redirect=null);;"
+          tal:attributes="onClick string:javascript:event.preventDefault();;confirmDeleteObject(base_url='${context_url}', object_uid=null, this, msgName='are_you_sure', view_name='@@item-reinit-attendees-order', redirect=0);;"
           i18n:attributes="title">
            <span class="fa delete-element"></span>
        </a>

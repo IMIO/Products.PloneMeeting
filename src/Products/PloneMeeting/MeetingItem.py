@@ -24,10 +24,12 @@ from imio.helpers.content import get_transitions
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import safe_delattr
+from imio.helpers.content import safe_encode
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.content import uuidToObject
 from imio.helpers.security import fplog
+from imio.helpers.xhtml import is_html
 from imio.history.utils import get_all_history_attr
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
@@ -1380,6 +1382,28 @@ schema = Schema((
         optional=True,
         write_permission=WriteDecision,
     ),
+    TextField(
+        name='votesResult',
+        widget=RichWidget(
+            condition="python: here.attribute_is_used('votesResult')",
+            label='VotesResult',
+            label_msgid='PloneMeeting_label_votesResult',
+            description="VotesResult",
+            description_msgid="votes_result_descr",
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        read_permission="PloneMeeting: Read decision",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=True,
+        # we use WriteMarginalNotes so MeetingManagers may edit votesResult
+        # when item is decided but as field in not in
+        # MeetingItem._bypass_meeting_closed_check_for it will not be quick editable
+        # when the meeting is closed
+        write_permission=WriteMarginalNotes,
+    ),
     BooleanField(
         name='oralQuestion',
         default=False,
@@ -2095,7 +2119,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getMotivation')
 
     def getMotivation(self, **kwargs):
-        '''Overridden version of 'motivation' field accessor. It allows to manage
+        '''Override 'motivation' field accessor. It allows to manage
            the 'hide_decisions_when_under_writing' workflowAdaptation that
            hides the motivation/decision for non-managers if meeting state is 'decided.'''
         # hide the decision?
@@ -2113,7 +2137,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getDecision')
 
     def getDecision(self, **kwargs):
-        '''Overridde 'decision' field accessor.
+        '''Override 'decision' field accessor.
            Manage the 'hide_decisions_when_under_writing' workflowAdaptation that
            hides the decision for non-managers if meeting state is 'decided.'''
         # hide the decision?
@@ -2127,6 +2151,57 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # hide the decision?
         msg = self._mayNotViewDecisionMsg()
         return msg or self.getField('decision').getRaw(self, **kwargs)
+
+    def _get_votes_result_cachekey(method, self, check_is_html=True):
+        '''cachekey method for self._get_votes_result.'''
+        return repr(self), self.modified(), check_is_html
+
+    @ram.cache(_get_votes_result_cachekey)
+    def _get_votes_result(self, check_is_html=True):
+        """Compute votesResult using MeetingConfig.votesResultTALExpr.
+           When p_check_is_html=True result is checked and if it is not HTML
+           a portal_message is displayed to the user."""
+        extra_expr_ctx = _base_extra_expr_ctx(self)
+        # quick bypass when not used or if item not in a meeting
+        expr = extra_expr_ctx['cfg'].getVotesResultTALExpr().strip()
+        if not expr or not self.hasMeeting():
+            return ''
+
+        extra_expr_ctx.update({'item': self, 'meeting': self.getMeeting()})
+        # default raise_on_error=False so if the expression
+        # raise an error, we will get '' for reference and a message in the log
+        res = _evaluateExpression(self,
+                                  expression=expr,
+                                  roles_bypassing_expression=[],
+                                  extra_expr_ctx=extra_expr_ctx,
+                                  empty_expr_is_true=False)
+        # make sure we do not have None
+        res = res or ''
+        # make sure result is HTML
+        if res and check_is_html and not is_html(res):
+            api.portal.show_message(
+                _('votes_result_not_html'), request=self.REQUEST, type='warning')
+            res = ''
+        return safe_encode(res)
+
+    security.declarePublic('getVotesResult')
+
+    def getVotesResult(self, real=False, **kwargs):
+        '''Override 'votesResult' field accessor.
+           If empty we will return the evaluated MeetingConfig.votesResultExpr.'''
+        res = self.getField('votesResult').get(self, **kwargs)
+        if not real and not res:
+            res = self._get_votes_result(**kwargs)
+        return res
+
+    security.declarePublic('getRawVotesResult')
+
+    def getRawVotesResult(self, real=False, **kwargs):
+        '''See getVotesResult docstring.'''
+        res = self.getField('votesResult').getRaw(self, **kwargs)
+        if not real and not res:
+            res = self._get_votes_result(**kwargs)
+        return res
 
     security.declarePrivate('validate_category')
 
@@ -4662,6 +4737,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            If p_bypassMeetingClosedCheck is True, we will not check if meeting is closed but
            only for permission and condition.'''
         field = self.Schema()[fieldName]
+        # some fields are still editable even when meeting closed
         bypassMeetingClosedCheck = bypassMeetingClosedCheck or \
             self.adapted()._bypass_meeting_closed_check_for(fieldName)
         res = checkMayQuickEdit(
@@ -7821,6 +7897,26 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getFieldVersion(self, fieldName, changes=False):
         '''See doc in utils.py.'''
         return getFieldVersion(self, fieldName, changes)
+
+    security.declarePublic('getRichTextCSSClass')
+
+    def getRichTextCSSClass(self, field_name):
+        '''Let's arbitrary add custom CSS class to a RichText widget.'''
+        if field_name == 'votesResult':
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            # we return "modified" if field contains something
+            if tool.isManager(cfg) and self.getRawVotesResult(real=True):
+                return "highlightValue"
+        return ""
+
+    security.declarePublic('getRichTextOnSend')
+
+    def getRichTextOnSend(self, field_name):
+        '''Manage onSend JS parameter of askAjaxChunk for given p_field_name.'''
+        if field_name == 'votesResult':
+            return "reloadVotesResult"
+        return "null"
 
     security.declarePrivate('getAdviceRelatedIndexes')
 

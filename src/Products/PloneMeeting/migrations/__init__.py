@@ -410,7 +410,7 @@ class Migrator(BaseMigrator):
                 delattr(self.tool, field_name)
         logger.info('Done.')
 
-    def initNewHTMLFields(self, query={'meta_type': 'MeetingItem'}, field_names=[]):
+    def initNewHTMLFields(self, query={'meta_type': 'MeetingItem'}, field_name=None):
         '''Make sure the content_type is correctly set to 'text/html' for new xhtml fields.'''
         logger.info('Initializing new HTML fields...')
         brains = self.portal.portal_catalog(**query)
@@ -421,7 +421,7 @@ class Migrator(BaseMigrator):
             i += 1
             pghandler.report(i)
             itemOrMeeting = brain.getObject()
-            forceHTMLContentTypeForEmptyRichFields(itemOrMeeting, field_names=field_names)
+            forceHTMLContentTypeForEmptyRichFields(itemOrMeeting, field_name=field_name)
         pghandler.finish()
         logger.info('Done.')
 

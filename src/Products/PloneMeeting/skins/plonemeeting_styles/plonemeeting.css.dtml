@@ -631,7 +631,8 @@ div.hsGrey {
 a.highlightValue,
 p.highlightValue,
 span.highlightValue,
-dt.highlightValue span {
+dt.highlightValue span,
+#content div.highlightValue legend a {
     color: red !important;
 }
 p.warningValue,
@@ -2070,6 +2071,14 @@ div.tooltipster-content table.actionspanel-no-style-table td.noPadding {
 #content span.fa.disabled {
     color: lightgrey;
     cursor: help;
+}
+#content span.fa.disabled-dark {
+    color: grey;
+    opacity: 0.6;
+    cursor: help;
+}
+#content span.fa.disabled-dark:hover {
+    opacity: 1;
 }
 #content span.fa.green-colored {
     color: green;

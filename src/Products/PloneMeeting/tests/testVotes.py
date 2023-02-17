@@ -6,6 +6,7 @@
 #
 
 from AccessControl import Unauthorized
+from imio.helpers.cache import cleanRamCache
 from plone import api
 from Products.PloneMeeting.browser.itemvotes import _should_disable_apply_until_item_number
 from Products.PloneMeeting.browser.itemvotes import IEncodeSecretVotes
@@ -15,6 +16,7 @@ from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import may_view_field
 from Products.statusmessages.interfaces import IStatusMessage
 from z3c.form import validator
 from zope.i18n import translate
@@ -34,15 +36,21 @@ class testVotes(PloneMeetingTestCase):
         """ """
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
-        public_item = self.create('MeetingItem')
-        secret_item = self.create('MeetingItem', pollType='secret')
+        public_item = self.create('MeetingItem',
+                                  decision=self.decisionText)
+        secret_item = self.create('MeetingItem',
+                                  decision=self.decisionText,
+                                  pollType='secret')
         self.presentItem(public_item)
         if include_yes:
-            yes_public_item = self.create('MeetingItem')
+            yes_public_item = self.create('MeetingItem',
+                                          decision=self.decisionText)
             self.presentItem(yes_public_item)
         self.presentItem(secret_item)
         if include_yes:
-            yes_secret_item = self.create('MeetingItem', pollType='secret')
+            yes_secret_item = self.create('MeetingItem',
+                                          decision=self.decisionText,
+                                          pollType='secret')
             self.presentItem(yes_secret_item)
         voters = meeting.get_voters()
         # public votes
@@ -151,17 +159,21 @@ class testVotes(PloneMeetingTestCase):
         helper_secret = view.get_generation_context_helper()
         view = yes_secret_item.restrictedTraverse('document-generation')
         helper_yes_secret = view.get_generation_context_helper()
+        # test also total_voters using include_total_voters=True
         # public vote
-        self.assertEqual(helper_public.print_votes(),
-                         u'<p>Par 2 voix pour, une voix contre et une abstention,</p>')
-        self.assertEqual(helper_public.print_votes(single_vote_value=u"1", no_votes_marker="<!>"),
-                         u'<p>Par 2 voix pour, 1 voix contre et 1 abstention,</p>')
+        self.assertEqual(
+            helper_public.print_votes(include_total_voters=True),
+            u'<p>Il y a 4 votants.</p><p>Par 2 voix pour, une voix contre et une abstention,</p>')
+        self.assertEqual(
+            helper_public.print_votes(single_vote_value=u"1", no_votes_marker="<!>"),
+            u'<p>Par 2 voix pour, 1 voix contre et 1 abstention,</p>')
         # public vote all yes
-        self.assertEqual(helper_yes_public.print_votes(),
-                         u"<p>\xc0 l'unanimit\xe9,</p>")
+        self.assertEqual(
+            helper_yes_public.print_votes(include_total_voters=True),
+            u"<p>Il y a 4 votants.</p><p>\xc0 l'unanimit\xe9,</p>")
         # secret vote
-        self.assertEqual(helper_secret.print_votes(),
-                         u'<p>Au scrutin secret,</p>'
+        self.assertEqual(helper_secret.print_votes(include_total_voters=True),
+                         u'<p>Il y a 4 votants.</p><p>Au scrutin secret,</p>'
                          u'<p>Par une voix pour, une voix contre et 2 abstentions,</p>')
         # public vote all yes and secret_intro
         self.assertEqual(helper_yes_secret.print_votes(secret_intro=u"<p>À bulletin secret,</p>"),
@@ -567,7 +579,10 @@ class testVotes(PloneMeetingTestCase):
         votes_form.label = u"My label"
         votes_form.linked_to_previous = False
         votes_form.apply_until_item_number = u'0'
+        # item modified when applied
+        modified = secret_item.modified()
         votes_form._doApply()
+        self.assertNotEqual(modified, secret_item.modified())
         load_view._update()
         self.assertTrue(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
 
@@ -829,7 +844,10 @@ class testVotes(PloneMeetingTestCase):
         votes_form.linked_to_previous = False
         votes_form.vote_number = 0
         votes_form.apply_until_item_number = u'400'
+        # item modified when applied
+        modified = public_item.modified()
         votes_form._doApply()
+        self.assertNotEqual(modified, public_item.modified())
         # votes were updated for yes_public_item but not for secret items
         self.assertEqual(public_item.get_item_votes(), yes_public_item.get_item_votes())
         self.assertEqual(secret_item_votes, secret_item.get_item_votes())
@@ -966,6 +984,100 @@ class testVotes(PloneMeetingTestCase):
         rendered = votes_view()
         self.assertTrue("public-vote" in rendered)
         self.assertTrue("secret-vote" in rendered)
+
+    def test_pm_ItemGetVotesResult(self):
+        """Field MeetingItem.votesResult accessor is overrided to handle
+           votes result generated text."""
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        self._enableField('votesResult')
+        self._enableField('votesResult_after_motivation')
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertFalse(item.mayQuickEdit('votesResult'))
+        self.assertTrue(may_view_field(item, 'votesResult'))
+        self.changeUser('pmManager')
+        self.assertFalse(item.mayQuickEdit('votesResult'))
+        self.assertTrue(may_view_field(item, 'votesResult'))
+
+        # get outside meeting
+        self.assertEqual(cfg.getVotesResultTALExpr(), '')
+        self.assertEqual(item.getVotesResult(), '')
+        self.assertEqual(item.getVotesResult(real=True), '')
+        self.assertFalse(isinstance(item.getVotesResult(), unicode))
+        cfg.setVotesResultTALExpr(
+            'python: pm_utils.print_votes(item, include_total_voters=True)')
+        cleanRamCache()
+        # not computed when not in a meeting
+        self.assertEqual(item.getVotesResult(), '')
+        self.assertFalse(isinstance(item.getVotesResult(), unicode))
+        self.assertEqual(item.getVotesResult(real=True), '')
+
+        # get in meeting
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
+        # not editable until item is frozen
+        self.assertEqual(public_item.query_state(), 'presented')
+        self.assertFalse(public_item.mayQuickEdit('votesResult'))
+        self.assertTrue(may_view_field(public_item, 'votesResult'))
+        self.assertEqual(
+            public_item.getVotesResult(),
+            '<p>Il y a 4 votants.</p><p>Par 2 voix pour, une voix contre '
+            'et une abstention,</p>')
+        self.assertEqual(
+            yes_public_item.getVotesResult(),
+            "<p>Il y a 4 votants.</p><p>\xc3\x80 l'unanimit\xc3\xa9,</p>")
+        self.assertEqual(
+            secret_item.getVotesResult(),
+            '<p>Il y a 4 votants.</p><p>Au scrutin secret,</p>'
+            '<p>Par une voix pour, une voix contre et 2 abstentions,</p>')
+        self.assertEqual(
+            yes_secret_item.getVotesResult(),
+            "<p>Il y a 4 votants.</p><p>Au scrutin secret,</p>"
+            "<p>\xc3\x80 l'unanimit\xc3\xa9,</p>")
+
+        # freeze the meeting and set values
+        self.freezeMeeting(meeting)
+        self.assertEqual(public_item.query_state(), 'itemfrozen')
+        self.assertTrue(public_item.mayQuickEdit('votesResult'))
+        self.assertTrue(secret_item.mayQuickEdit('votesResult'))
+
+        # when a value is set, then it is used
+        self.assertFalse(public_item.getVotesResult(real=True))
+        self.assertFalse(secret_item.getVotesResult(real=True))
+        public_item.setVotesResult('<p>Custom public text.</p>')
+        self.assertEqual(public_item.getVotesResult(), '<p>Custom public text.</p>')
+        self.assertEqual(public_item.getVotesResult(real=True), '<p>Custom public text.</p>')
+        secret_item.setVotesResult('<p>Custom secret text.</p>')
+        self.assertEqual(secret_item.getVotesResult(), '<p>Custom secret text.</p>')
+        self.assertEqual(secret_item.getVotesResult(real=True), '<p>Custom secret text.</p>')
+
+        # decide item, still editable until meeting is closed
+        self.decideMeeting(meeting)
+        self.assertEqual(public_item.query_state(), 'itempublished')
+        self.assertTrue(public_item.mayQuickEdit('votesResult'))
+        self.assertTrue(secret_item.mayQuickEdit('votesResult'))
+        self.do(public_item, 'accept')
+        self.assertEqual(public_item.query_state(), 'accepted')
+        self.assertTrue(public_item.mayQuickEdit('votesResult'))
+        self.closeMeeting(meeting)
+        self.assertEqual(public_item.query_state(), 'accepted')
+        self.assertFalse(public_item.mayQuickEdit('votesResult'))
+
+        # wrong expression will not break the view, if result is not html
+        # a portal_messag is displayed
+        IStatusMessage(self.request).show()
+        item.setVotesResult('')
+        public_item.setVotesResult('')
+        cfg.setVotesResultTALExpr("string:not html")
+        cleanRamCache()
+        # no message as item not in a meeting
+        item.restrictedTraverse('base_view')()
+        self.assertFalse(IStatusMessage(self.request).show())
+        # message as public_item in a meeting
+        public_item.restrictedTraverse('base_view')()
+        self.assertEqual(IStatusMessage(self.request).show()[0].message,
+                         u'Votes result is not HTML')
 
 
 def test_suite():

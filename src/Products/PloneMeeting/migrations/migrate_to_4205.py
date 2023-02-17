@@ -30,7 +30,8 @@ class Migrate_To_4205(Migrator):
             cfg.setCommittees(committees)
             cfg.at_post_edit_script()
         # update new field committeeTranscript on items
-        self.initNewHTMLFields(query={'meta_type': ('MeetingItem')}, field_names=['committeeTranscript'])
+        self.initNewHTMLFields(
+            query={'meta_type': ('MeetingItem')}, field_name='committeeTranscript')
         logger.info('Done.')
 
     def _updateMeetingCommittees(self):
@@ -134,6 +135,9 @@ class Migrate_To_4205(Migrator):
             self._updateMeetingCommittees()
             self._updateLocalRolesItemBeforeStateValidated()
             self.addNewSearches()
+            # update new field votesResult on items
+            self.initNewHTMLFields(
+                query={'meta_type': ('MeetingItem')}, field_name='votesResult')
         self._initAdviceGivenHistory()
         logger.info('Migrating to PloneMeeting 4205... Done.')
 

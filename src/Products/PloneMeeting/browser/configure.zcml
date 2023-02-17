@@ -332,6 +332,13 @@
 
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeetingItem"
+      name="display-collapsible-rich-field"
+      class=".views.DisplayCollapsibleRichTextField"
+      template="templates/display_collapsible_field.pt"
+      permission="zope2.View" />
+
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeetingItem"
       name="load_item_assembly_and_signatures"
       template="templates/itemassemblyandsignatures.pt"
       class=".async.AsyncLoadItemAssemblyAndSignatures"

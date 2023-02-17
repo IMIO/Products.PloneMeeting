@@ -5436,7 +5436,8 @@ class testMeetingItem(PloneMeetingTestCase):
             'preferredMeeting', 'proposingGroup',
             'takenOverBy', 'templateUsingGroups',
             'toDiscuss', 'committeeObservations', 'committeeTranscript',
-            'votesObservations', 'otherMeetingConfigsClonableToEmergency',
+            'votesObservations', 'votesResult',
+            'otherMeetingConfigsClonableToEmergency',
             'internalNotes', 'externalIdentifier', 'isAcceptableOutOfMeeting']
         NEUTRAL_FIELDS += self._extraNeutralFields()
         # neutral + default + extra + getExtraFieldsToCopyWhenCloning(True) +

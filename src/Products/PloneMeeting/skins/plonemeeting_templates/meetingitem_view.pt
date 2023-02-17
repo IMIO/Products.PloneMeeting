@@ -480,6 +480,12 @@
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
+    <tal:votesResult_after_motivation condition="python: 'votesResult_after_motivation' in usedAttrs">
+      <div tal:attributes="id string:marker-collapsible-field-votesResult">
+        <tal:votesResult replace="structure python: context.restrictedTraverse('@@display-collapsible-rich-field')('votesResult')" />
+      </div>
+    </tal:votesResult_after_motivation>
+
     <tal:comment replace="nothing">Decision</tal:comment>
     <tal:field define="fieldName python: 'decision'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
@@ -494,6 +500,12 @@
     <tal:field define="fieldName python: 'decisionEnd'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
+
+    <tal:votesResult_after_decisionEnd condition="python: 'votesResult_after_decisionEnd' in usedAttrs">
+      <div tal:attributes="id string:marker-collapsible-field-votesResult">
+        <tal:votesResult replace="structure python: context.restrictedTraverse('@@display-collapsible-rich-field')('votesResult')" />
+      </div>
+    </tal:votesResult_after_decisionEnd>
 
     <tal:comment replace="nothing">Other meetingConfigs clonable to</tal:comment>
     <tal:block tal:condition="showAdvancedClonableToOtherMCs"

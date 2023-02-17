@@ -641,6 +641,10 @@ function refreshAfterDelete(event) {
   css_id = event.tag.id;
   if (css_id == 'delete-vote-action') {
     refresh_attendees(highlight='.vote-value');
+  } else {
+    if (css_id == 'reinit-attendees-order-action') {
+      refresh_attendees(highlight='.td_cell_number-column');
+    }
   }
 }
 
@@ -680,6 +684,7 @@ function init_ckeditor(event) {
 }
 
 function saveCKeditor(field_name, base_url, async=true) {
+  alert('hello');
   ajaxsave = CKEDITOR.instances[field_name].getCommand('ajaxsave');
   ajaxsave.async = async;
   CKEDITOR.instances[field_name].execCommand('ajaxsave', 'saveCmd');

@@ -108,7 +108,7 @@ Changelog
 - Make sure meeting fieldsets order is correct when a custom field has been
   added to an existing fieldset.
   [gbastien]
-- Fixed `meeting.committees` default value, ignore MeetingConfig.committees
+- Fixed `meeting.committees` default value, ignore `MeetingConfig.committees`
   that use `enabled="item_only"`.
   [gbastien]
 - Finally fixed invalidating meeting `actionspanel` caching when meeting
@@ -119,6 +119,10 @@ Changelog
 - Fixed the `waiting_advices` WFAdaptation that was changing the `from_state title`
   (for example state `proposed`) to the `from_state id` and so losing the custom
   title that could be set in `MeetingConfig.itemWFValidationLevels`.
+  [gbastien]
+- Added `MeetingItem.votesResult`, a field that will hold a generated text of
+  votes result based on `MeetingConfig.votesResultTALExpr` but that is also
+  editable when generated text needs to be customized.
   [gbastien]
 
 4.2rc34 (2022-09-29)
@@ -1279,8 +1283,9 @@ Changelog
   to send an e-mail to arbitrary users.
   Renamed parameter `permissionOrSuffixOrRoleOrGroupIds` to `value`.
   [gbastien]
-- Added a field `MeetingConfig.itemPreferredMeetingStates` that allows to set selectable
-  preferredMeeting states.
+- Added a field `MeetingConfig.itemPreferredMeetingStates` that allows to set
+  selectable preferred meeting states.
+  [aduchene]
 - Added a helper method `MeetingConfig.listStateIds` to get all state ids
   for a given objectType.
   [aduchene]

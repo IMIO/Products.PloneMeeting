@@ -56,6 +56,7 @@ from Products.PloneMeeting.utils import get_dx_field
 from Products.PloneMeeting.utils import get_dx_widget
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import get_person_from_userid
+from Products.PloneMeeting.utils import may_view_field
 from Products.PloneMeeting.utils import reindex_object
 from z3c.form.field import Fields
 from z3c.form.interfaces import DISPLAY_MODE
@@ -1484,196 +1485,6 @@ class BaseDGHV(object):
 
         return signature_lines
 
-    def vote_infos(self, used_vote_values=[], include_null_vote_count_values=[], keep_vote_numbers=[]):
-        """ """
-        item_votes = self.context.get_item_votes(include_unexisting=False)
-        if not used_vote_values:
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self.context)
-            used_vote_values = cfg.getUsedVoteValues()
-        # there may have several votes
-        votes = []
-        i = 0
-        for item_vote in item_votes:
-            if keep_vote_numbers and i not in keep_vote_numbers:
-                continue
-            i = i + 1
-            counts = OrderedDict()
-            for vote_value in used_vote_values:
-                vote_count = self.context.getVoteCount(
-                    vote_value=vote_value, vote_number=item_vote['vote_number'])
-                # keep 0 vote_counts?
-                if vote_count == 0 and vote_value not in include_null_vote_count_values:
-                    continue
-                counts[vote_value] = vote_count
-            infos = item_vote.copy()
-            infos['counts'] = counts
-            infos['label'] = item_vote['label']
-            infos['voters'] = item_vote.get('voters', {})
-            infos['linked_to_previous'] = item_vote['linked_to_previous']
-            votes.append(infos)
-        return votes
-
-    def is_all_count(self,
-                     vote_info=None,
-                     vote_number=0,
-                     vote_value='yes',
-                     used_vote_values=[],
-                     include_null_vote_count_values=[]):
-        """ """
-        if vote_info is None:
-            vote_infos = self.vote_infos(used_vote_values, include_null_vote_count_values)
-            vote_info = vote_infos[vote_number]
-        counts = vote_info['counts']
-        return len(counts) == 1 and vote_value in counts
-
-    def print_votes(self,
-                    main_pattern=u"<p>Par {0},</p>",
-                    separator=u", ",
-                    last_separator=u" et ",
-                    single_vote_value=u"une",
-                    secret_intro=u"<p>Au scrutin secret,</p>",
-                    public_intro=u"",
-                    custom_patterns={},
-                    vote_label_pattern=u"<p><strong>{0}</strong></p>",
-                    used_vote_values=[],
-                    include_null_vote_count_values=[],
-                    all_yes_render=u"<p>À l'unanimité,</p>",
-                    used_patterns="sentence",
-                    include_voters=False,
-                    include_person_title=True,
-                    include_hp=True,
-                    abbreviate_firstname=False,
-                    voters_pattern=u"<p>{0}</p>",
-                    voter_separator=u", ",
-                    voter_pattern=u"{0}",
-                    no_votes_marker=u"-",
-                    keep_vote_numbers=[],
-                    render_as_html=True,
-                    escape_for_html=True):
-        """Function for printing votes :
-           When using p_render_as_html=True :
-           - p_main_pattern is the main pattern the votes will be rendered;
-           - p_separator is used to separate vote values;
-           - p_last_separator is used to separate last vote value from others;
-           - p_secret_intro will be included before rendered vote_values if votes are secret;
-           - p_public_intro will be included before rendered vote_values if votes are public;
-           - p_custom_patterns will override internal patterns;
-           - p_vote_label_pattern used to render vote label, by default is None so not rendered,
-             but could be u"<p><strong>{0}</strong></p>" for example;
-           - p_used_vote_values if given, will be used, if not, will use MeetingConfig.usedVoteValues;
-           - p_include_null_vote_count_values, by default null (0) vote counts are not shown,
-             define a list of used vote values to keep;
-           - p_all_yes_render, rendered instead vote values when every values are 'yes';
-           - render_as_html=True
-           """
-
-        def _render_voters(vote_value, voters, meeting):
-            """ """
-            voter_uids = [voter_uid for voter_uid, voter_vote_value in voters.items()
-                          if voter_vote_value == vote_value]
-            # _get_contacts return ordered contacts
-            voters = meeting._get_contacts(uids=voter_uids, the_objects=True)
-            res = []
-            for voter in voters:
-                forced_position_type_value = None
-                if self.context.getTagName() == "MeetingItem":
-                    forced_position_type_value = meeting.get_attendee_position_for(
-                        self.context.UID(), voter.UID())
-                if include_hp:
-                    voter_short_title = voter.get_short_title(
-                        include_sub_organizations=False,
-                        include_person_title=include_person_title,
-                        abbreviate_firstname=abbreviate_firstname,
-                        forced_position_type_value=forced_position_type_value)
-                else:
-                    voter_short_title = voter.get_person_short_title(
-                        include_person_title=include_person_title,
-                        abbreviate_firstname=abbreviate_firstname,
-                        forced_position_type_value=forced_position_type_value)
-                if escape_for_html:
-                    voter_short_title = cgi.escape(voter_short_title)
-                res.append(voter_pattern.format(voter_short_title))
-            return voters_pattern.format(voter_separator.join(res))
-
-        if used_patterns == "sentence":
-            patterns = {
-                'yes': u"{0} voix pour",
-                'yes_multiple': u"{0} voix pour",
-                'no': u"{0} voix contre",
-                'no_multiple': u"{0} voix contre",
-                'abstain': u"{0} abstention",
-                'abstain_multiple': u"{0} abstentions"}
-        elif used_patterns == "counts":
-            patterns = {
-                'yes': u"<p><strong>Pour: {0}</strong></p>",
-                'yes_multiple': u"<p><strong>Pour: {0}</strong></p>",
-                'no': u"<p><strong>Contre: {0}</strong></p>",
-                'no_multiple': u"<p><strong>Contre: {0}</strong></p>",
-                'abstain': u"<p><strong>Abstention: {0}</strong></p>",
-                'abstain_multiple': u"<p><strong>Abstentions: {0}</strong></p>"}
-        elif used_patterns == "counts_persons":
-            patterns = {
-                'yes': u"<p><strong>A voté pour: {0}</strong></p>",
-                'yes_multiple': u"<p><strong>Ont votés pour: {0}</strong></p>",
-                'no': u"<p><strong>A voté contre: {0}</strong></p>",
-                'no_multiple': u"<p><strong>Ont votés contre: {0}</strong></p>",
-                'abstain': u"<p><strong>S'est abstenu(e): {0}</strong></p>",
-                'abstain_multiple': u"<p><strong>Se sont abstenu(e)s: {0}</strong></p>"}
-        patterns.update(custom_patterns)
-        # get votes
-        rendered = u""
-        meeting = self.context.getMeeting()
-        vote_infos = self.vote_infos(
-            used_vote_values, include_null_vote_count_values, keep_vote_numbers)
-        for vote_info in vote_infos:
-            secret = vote_info['poll_type'].startswith('secret')
-            counts = vote_info['counts']
-            label = vote_info['label']
-            voters = vote_info['voters']
-            if render_as_html:
-                # vote label
-                if vote_label_pattern and label:
-                    rendered += vote_label_pattern.format(label)
-                # intro
-                if secret and secret_intro:
-                    rendered += secret_intro
-                elif public_intro:
-                    rendered += public_intro
-                # all yes or detailled
-                if all_yes_render and \
-                   not vote_info['linked_to_previous'] and \
-                   self.is_all_count(vote_info, 'yes'):
-                    rendered += all_yes_render
-                else:
-                    values = []
-                    for vote_value, vote_count in counts.items():
-                        # use _multiple suffixed pattern?
-                        pattern_value = vote_count > 1 and vote_value + '_multiple' or vote_value
-                        if vote_count == 1:
-                            vote_count = single_vote_value
-                        value = patterns[pattern_value].format(vote_count)
-                        # prepare voters if necessary
-                        if include_voters and not secret:
-                            value += _render_voters(vote_value, voters, meeting)
-                        values.append(value)
-
-                    # render text taking into account last_separator
-                    last_rendered = u""
-                    two_last_values = values[-2:]
-                    all = []
-                    if len(two_last_values) == 2:
-                        last_rendered = last_separator.join(two_last_values)
-                        values = values[:-2]
-                        all.append(last_rendered)
-                    # after last_rendered management, still values?
-                    if values:
-                        begin_rendered_values = separator.join(values)
-                        all.insert(0, begin_rendered_values)
-                    rendered += main_pattern.format(separator.join(all))
-
-        return render_as_html and (rendered or no_votes_marker) or vote_infos
-
 
 class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
     """ """
@@ -1926,6 +1737,205 @@ class MeetingDocumentGenerationHelperView(DXDocumentGenerationHelperView, Folder
             return self.real_context.get_place()
 
 
+def get_vote_infos(item, used_vote_values=[], include_null_vote_count_values=[], keep_vote_numbers=[]):
+    """ """
+    item_votes = item.get_item_votes(include_unexisting=False)
+    if not used_vote_values:
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
+        used_vote_values = cfg.getUsedVoteValues()
+    # there may have several votes
+    votes = []
+    i = 0
+    for item_vote in item_votes:
+        if keep_vote_numbers and i not in keep_vote_numbers:
+            continue
+        i = i + 1
+        counts = OrderedDict()
+        for vote_value in used_vote_values:
+            vote_count = item.getVoteCount(
+                vote_value=vote_value, vote_number=item_vote['vote_number'])
+            # keep 0 vote_counts?
+            if vote_count == 0 and vote_value not in include_null_vote_count_values:
+                continue
+            counts[vote_value] = vote_count
+        infos = item_vote.copy()
+        infos['counts'] = counts
+        infos['label'] = item_vote['label']
+        infos['voters'] = item_vote.get('voters', {})
+        infos['linked_to_previous'] = item_vote['linked_to_previous']
+        votes.append(infos)
+    return votes
+
+
+def is_all_count(item,
+                 vote_info=None,
+                 vote_number=0,
+                 vote_value='yes',
+                 used_vote_values=[],
+                 include_null_vote_count_values=[]):
+    """ """
+    if vote_info is None:
+        vote_infos = get_vote_infos(item, used_vote_values, include_null_vote_count_values)
+        vote_info = vote_infos[vote_number]
+    counts = vote_info['counts']
+    return len(counts) == 1 and vote_value in counts
+
+
+def print_votes(item,
+                main_pattern=u"<p>Par {0},</p>",
+                separator=u", ",
+                last_separator=u" et ",
+                single_vote_value=u"une",
+                secret_intro=u"<p>Au scrutin secret,</p>",
+                public_intro=u"",
+                total_voters_pattern=u"<p>Il y a {0} votants.</p>",
+                custom_patterns={},
+                vote_label_pattern=u"<p><strong>{0}</strong></p>",
+                used_vote_values=[],
+                include_null_vote_count_values=[],
+                all_yes_render=u"<p>À l'unanimité,</p>",
+                used_patterns="sentence",
+                include_voters=False,
+                include_person_title=True,
+                include_hp=True,
+                include_total_voters=False,
+                abbreviate_firstname=False,
+                voters_pattern=u"<p>{0}</p>",
+                voter_separator=u", ",
+                voter_pattern=u"{0}",
+                no_votes_marker=u"<p>-</p>",
+                keep_vote_numbers=[],
+                render_as_html=True,
+                escape_for_html=True):
+    """Function for printing votes :
+       When using p_render_as_html=True :
+       - p_main_pattern is the main pattern the votes will be rendered;
+       - p_separator is used to separate vote values;
+       - p_last_separator is used to separate last vote value from others;
+       - p_secret_intro will be included before rendered vote_values if votes are secret;
+       - p_public_intro will be included before rendered vote_values if votes are public;
+       - p_custom_patterns will override internal patterns;
+       - p_vote_label_pattern used to render vote label, by default is None so not rendered,
+         but could be u"<p><strong>{0}</strong></p>" for example;
+       - p_used_vote_values if given, will be used, if not, will use MeetingConfig.usedVoteValues;
+       - p_include_null_vote_count_values, by default null (0) vote counts are not shown,
+         define a list of used vote values to keep;
+       - p_all_yes_render, rendered instead vote values when every values are 'yes';
+       - render_as_html=True
+       """
+
+    def _render_voters(vote_value, voters, meeting):
+        """ """
+        voter_uids = [voter_uid for voter_uid, voter_vote_value in voters.items()
+                      if voter_vote_value == vote_value]
+        # _get_contacts return ordered contacts
+        voters = meeting._get_contacts(uids=voter_uids, the_objects=True)
+        res = []
+        for voter in voters:
+            forced_position_type_value = None
+            if item.getTagName() == "MeetingItem":
+                forced_position_type_value = meeting.get_attendee_position_for(
+                    item.UID(), voter.UID())
+            if include_hp:
+                voter_short_title = voter.get_short_title(
+                    include_sub_organizations=False,
+                    include_person_title=include_person_title,
+                    abbreviate_firstname=abbreviate_firstname,
+                    forced_position_type_value=forced_position_type_value)
+            else:
+                voter_short_title = voter.get_person_short_title(
+                    include_person_title=include_person_title,
+                    abbreviate_firstname=abbreviate_firstname,
+                    forced_position_type_value=forced_position_type_value)
+            if escape_for_html:
+                voter_short_title = cgi.escape(voter_short_title)
+            res.append(voter_pattern.format(voter_short_title))
+        return voters_pattern.format(voter_separator.join(res))
+
+    if used_patterns == "sentence":
+        patterns = {
+            'yes': u"{0} voix pour",
+            'yes_multiple': u"{0} voix pour",
+            'no': u"{0} voix contre",
+            'no_multiple': u"{0} voix contre",
+            'abstain': u"{0} abstention",
+            'abstain_multiple': u"{0} abstentions"}
+    elif used_patterns == "counts":
+        patterns = {
+            'yes': u"<p><strong>Pour: {0}</strong></p>",
+            'yes_multiple': u"<p><strong>Pour: {0}</strong></p>",
+            'no': u"<p><strong>Contre: {0}</strong></p>",
+            'no_multiple': u"<p><strong>Contre: {0}</strong></p>",
+            'abstain': u"<p><strong>Abstention: {0}</strong></p>",
+            'abstain_multiple': u"<p><strong>Abstentions: {0}</strong></p>"}
+    elif used_patterns == "counts_persons":
+        patterns = {
+            'yes': u"<p><strong>A voté pour: {0}</strong></p>",
+            'yes_multiple': u"<p><strong>Ont votés pour: {0}</strong></p>",
+            'no': u"<p><strong>A voté contre: {0}</strong></p>",
+            'no_multiple': u"<p><strong>Ont votés contre: {0}</strong></p>",
+            'abstain': u"<p><strong>S'est abstenu(e): {0}</strong></p>",
+            'abstain_multiple': u"<p><strong>Se sont abstenu(e)s: {0}</strong></p>"}
+    patterns.update(custom_patterns)
+    # get votes
+    rendered = u""
+    meeting = item.getMeeting()
+    vote_infos = get_vote_infos(
+        item, used_vote_values, include_null_vote_count_values, keep_vote_numbers)
+    for vote_info in vote_infos:
+        secret = vote_info['poll_type'].startswith('secret')
+        counts = vote_info['counts']
+        label = vote_info['label']
+        voters = vote_info['voters']
+        total_voters = len(item.get_item_voters())
+        if render_as_html:
+            # vote label
+            if vote_label_pattern and label:
+                rendered += vote_label_pattern.format(label)
+            # total_voters
+            if include_total_voters:
+                rendered += total_voters_pattern.format(total_voters)
+            # intro
+            if secret and secret_intro:
+                rendered += secret_intro
+            elif public_intro:
+                rendered += public_intro
+            # all yes or detailled
+            if all_yes_render and \
+               not vote_info['linked_to_previous'] and \
+               is_all_count(item, vote_info, 'yes'):
+                rendered += all_yes_render
+            else:
+                values = []
+                for vote_value, vote_count in counts.items():
+                    # use _multiple suffixed pattern?
+                    pattern_value = vote_count > 1 and vote_value + '_multiple' or vote_value
+                    if vote_count == 1:
+                        vote_count = single_vote_value
+                    value = patterns[pattern_value].format(vote_count)
+                    # prepare voters if necessary
+                    if include_voters and not secret:
+                        value += _render_voters(vote_value, voters, meeting)
+                    values.append(value)
+
+                # render text taking into account last_separator
+                last_rendered = u""
+                two_last_values = values[-2:]
+                all = []
+                if len(two_last_values) == 2:
+                    last_rendered = last_separator.join(two_last_values)
+                    values = values[:-2]
+                    all.append(last_rendered)
+                # after last_rendered management, still values?
+                if values:
+                    begin_rendered_values = separator.join(values)
+                    all.insert(0, begin_rendered_values)
+                rendered += main_pattern.format(separator.join(all))
+
+    return render_as_html and (rendered or no_votes_marker) or vote_infos
+
+
 class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
     """ """
 
@@ -2106,6 +2116,9 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
     def print_public_deliberation_decided(self, xhtmlContents=[], **kwargs):
         '''Overridable method to return public deliberation when decided.'''
         return self.print_deliberation(xhtmlContents, **kwargs)
+
+    def print_votes(self, **kw):
+        return print_votes(self.context, **kw)
 
 
 class AdviceDocumentGenerationHelperView(DXDocumentGenerationHelperView, BaseDGHV):
@@ -2509,6 +2522,27 @@ class DisplayMeetingItemVoters(BrowserView):
                 item not in non_voted_items['public'] and
                 item.get_votes_are_secret()]}
         return res
+
+
+class DisplayCollapsibleRichTextField(BrowserView):
+    """This view will display a collapsible for a RichText field."""
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def __call__(self, field_name, raw=False):
+        """ """
+        if not may_view_field(self.context, field_name):
+            return ""
+
+        self.field_name = field_name
+        field = self.context.getField(field_name)
+        if raw:
+            self.field_content = field.getEditAccessor(self.context)()
+        else:
+            self.field_content = field.getAccessor(self.context)()
+        return self.index()
 
 
 class PODTemplateMailingLists(BrowserView):

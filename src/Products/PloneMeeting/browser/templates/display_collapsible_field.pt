@@ -1,0 +1,21 @@
+<fieldset i18n:domain="PloneMeeting">
+  <legend>
+    <div class="collapsible active"
+         tal:attributes="onclick string:toggleDetails('collapsible-field-content-${view/field_name}', toggle_parent_active=true, parent_tag=this);">
+      <span tal:attributes="class python: context.getRichTextCSSClass(view.field_name)"
+            i18n:translate=""
+            tal:content="string:PloneMeeting_label_${view/field_name}">
+        Field title
+      </span>
+      <span class="fa edit-element disabled-dark"
+            tal:condition="python: context.mayQuickEdit(view.field_name)"
+            tal:attributes="title string:${view/field_name}_collapsible_field_comment"
+            i18n:attributes="title" />
+    </div>
+  </legend>
+
+  <div tal:attributes="id string:collapsible-field-content-${view/field_name}">
+    <tal:content content="structure python: view.field_content" />
+  </div>
+
+</fieldset>

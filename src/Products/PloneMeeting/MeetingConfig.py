@@ -2732,6 +2732,20 @@ schema = Schema((
         schemata="votes",
         write_permission="PloneMeeting: Write risky config",
     ),
+    StringField(
+        name='votesResultTALExpr',
+        default=defValues.votesResultTALExpr,
+        widget=StringField._properties['widget'](
+            description="VotesResultTALExpr",
+            description_msgid="votes_result_tal_expr_descr",
+            size=70,
+            label='Votesresulttalexpr',
+            label_msgid='PloneMeeting_label_votesResultTALExpr',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="votes",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     BooleanField(
         name='displayVotingGroup',
         default=defValues.displayVotingGroup,
@@ -3916,12 +3930,25 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listUsedItemAttributes')
 
     def listUsedItemAttributes(self):
-        return self.listAttributes(MeetingItem.schema, optionalOnly=True)
+        res = self.listAttributes(MeetingItem.schema, optionalOnly=True)
+        # add special values for votesResult to repeat it after motivation
+        # and/or after decisionEnd
+        res.add('votesResult_after_motivation',
+                '%s (votesResult_after_motivation)' %
+                (translate('votesResult_after_motivation',
+                           domain='PloneMeeting',
+                           context=self.REQUEST)))
+        res.add('votesResult_after_decisionEnd',
+                '%s (votesResult_after_decisionEnd)' %
+                (translate('votesResult_after_decisionEnd',
+                           domain='PloneMeeting',
+                           context=self.REQUEST)))
+        return res.sortedByValue()
 
     security.declarePrivate('listItemAttributes')
 
     def listItemAttributes(self):
-        return self.listAttributes(MeetingItem.schema)
+        return self.listAttributes(MeetingItem.schema).sortedByValue()
 
     security.declarePrivate('listUsedMeetingAttributes')
 
@@ -3948,7 +3975,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                         domain='PloneMeeting',
                                         context=self.REQUEST),
                               field)))
-        return DisplayList(tuple(res))
+        return DisplayList(tuple(res)).sortedByValue()
 
     security.declarePrivate('listMeetingAttributes')
 
@@ -4491,8 +4518,23 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            ensures that wrong combinations aren't used.'''
         pm = 'PloneMeeting'
         # Prevent combined use of "proposingGroupWithGroupInCharge" and "groupsInCharge"
-        if ('proposingGroupWithGroupInCharge' in newValue) and ('groupsInCharge' in newValue):
+        if 'proposingGroupWithGroupInCharge' in newValue and 'groupsInCharge' in newValue:
             return translate('no_proposingGroupWithGroupInCharge_and_groupsInCharge',
+                             domain=pm,
+                             context=self.REQUEST)
+        # votesResult must be enabled to use
+        # votesResult_after_motivation/votesResult_after_decisionEnd
+        # and votesResult_after_motivation/votesResult_after_decisionEnd can not
+        # be used at the same time
+        if 'votesResult_after_motivation' in newValue and \
+           'votesResult_after_decisionEnd' in newValue:
+            return translate('no_votesResult_after_together',
+                             domain=pm,
+                             context=self.REQUEST)
+        if ('votesResult_after_motivation' in newValue or
+            'votesResult_after_decisionEnd' in newValue) and \
+                'votesResult' not in newValue:
+            return translate('no_votesResult_after_without_votesResult',
                              domain=pm,
                              context=self.REQUEST)
 
