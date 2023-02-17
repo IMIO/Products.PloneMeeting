@@ -116,6 +116,10 @@ Changelog
   `Meeting.number_of_items` replaced parameter `as_int=False` by `as_str=False`
   as we only want it to be str for JS.
   [gbastien]
+- Fixed the `waiting_advices` WFAdaptation that was changing the `from_state title`
+  (for example state `proposed`) to the `from_state id` and so losing the custom
+  title that could be set in `MeetingConfig.itemWFValidationLevels`.
+  [gbastien]
 - Added `MeetingItem.votesResult`, a field that will hold a generated text of
   votes result based on `MeetingConfig.votesResultTALExpr` but that is also
   editable when generated text needs to be customized.

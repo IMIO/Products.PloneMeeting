@@ -1870,9 +1870,18 @@ class testWFAdaptations(PloneMeetingTestCase):
              'use_custom_icon': False,
              'use_custom_back_transition_title_for': (),
              'use_custom_state_title': True, },), }
+        # change the from_state title to check that it is not changed by the WFA (was the case...)
+        levels = self.meetingConfig.getItemWFValidationLevels()
+        levels[1]['state_title'] = "h\xc3\xa9h\xc3\xa9"
+        self.meetingConfig.setItemWFValidationLevels(levels)
         self._activate_wfas(
             ('waiting_advices', 'waiting_advices_proposing_group_send_back'),
             keep_existing=True)
+        itemWF = self.meetingConfig.getItemWorkflow(True)
+        self.assertEqual(
+            itemWF.states[self._stateMappingFor('proposed_first_level')].title,
+            "h\xc3\xa9h\xc3\xa9")
+
         self._waiting_advices_active()
 
         # back to original configuration

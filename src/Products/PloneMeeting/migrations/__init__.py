@@ -476,6 +476,16 @@ class Migrator(BaseMigrator):
             cfg.setUsedItemAttributes(adapted_usedItemAttrs)
         logger.info('Done.')
 
+    def cleanUsedMeetingAttributes(self, to_remove=[]):
+        '''When a meeting attribute is no more available or has been renamed.'''
+        logger.info('Cleaning MeetingConfig used meeting attributes, removing columns "%s"...'
+                    % ', '.join(to_remove))
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            usedItemAttrs = list(cfg.getUsedMeetingAttributes())
+            adapted_usedItemAttrs = [k for k in usedItemAttrs if k not in to_remove]
+            cfg.setUsedMeetingAttributes(adapted_usedItemAttrs)
+        logger.info('Done.')
+
     def removeUnusedWorkflows(self):
         '''Check used workflows and remove workflows containing '__' that are not used.'''
         logger.info('Cleaning unused workflows...')

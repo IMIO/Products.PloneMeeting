@@ -888,8 +888,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                         # update from_state
                         from_state = wf.states[from_state_id]
                         existing_transitions = from_state.transitions
-                        from_state.setProperties(title=from_state_id, description='',
-                                                 transitions=existing_transitions + (from_transition_id, ))
+                        from_state.transitions = existing_transitions + (from_transition_id, )
 
                     for back_state_id in back_state_ids:
                         defined_back_transition_ids = infos.get('defined_back_transition_ids', {})
