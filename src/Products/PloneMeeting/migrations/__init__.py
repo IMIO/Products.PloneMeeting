@@ -425,13 +425,15 @@ class Migrator(BaseMigrator):
         pghandler.finish()
         logger.info('Done.')
 
-    def updateItemColumns(self,
-                          field_names=('itemColumns',
-                                       'availableItemsListVisibleColumns',
-                                       'itemsListVisibleColumns'),
-                          to_remove=[],
-                          to_replace={},
-                          to_add=[]):
+    def updateColumns(self,
+                      field_names=('itemColumns',
+                                   'availableItemsListVisibleColumns',
+                                   'itemsListVisibleColumns',
+                                   'meetingColumns'),
+                      to_remove=[],
+                      to_replace={},
+                      to_add=[],
+                      cfg_ids=[]):
         '''When a column is no more available.'''
         logger.info('Cleaning MeetingConfig columns related fields, '
                     'removing columns "%s", replacing "%s" and adding "%s"...'
@@ -439,6 +441,8 @@ class Migrator(BaseMigrator):
                        ', '.join(to_replace.keys()),
                        ', '.join(to_add)))
         for cfg in self.tool.objectValues('MeetingConfig'):
+            if cfg_ids and cfg.getId() not in cfg_ids:
+                continue
             for field_name in field_names:
                 field = cfg.getField(field_name)
                 keys = field.get(cfg)
@@ -452,14 +456,20 @@ class Migrator(BaseMigrator):
             cfg.updateCollectionColumns()
         logger.info('Done.')
 
-    def cleanItemFilters(self, to_remove=[], to_add=[]):
+    def updateItemFilters(self,
+                          to_remove=[],
+                          to_add=[],
+                          field_names=['dashboardItemsListingsFilters',
+                                       'dashboardMeetingAvailableItemsFilters',
+                                       'dashboardMeetingLinkedItemsFilters'],
+                          cfg_ids=[]):
         '''When a faceted filter is no more available or has been renamed.'''
         logger.info('Cleaning MeetingConfig faceted filter related fields, removing columns "%s"...'
                     % ', '.join(to_remove))
         for cfg in self.tool.objectValues('MeetingConfig'):
-            for field_name in ('dashboardItemsListingsFilters',
-                               'dashboardMeetingAvailableItemsFilters',
-                               'dashboardMeetingLinkedItemsFilters'):
+            if cfg_ids and cfg.getId() not in cfg_ids:
+                continue
+            for field_name in field_names:
                 field = cfg.getField(field_name)
                 keys = field.get(cfg)
                 adapted_keys = [k for k in keys if k not in to_remove]

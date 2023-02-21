@@ -994,7 +994,7 @@ class Migrate_To_4200(Migrator):
             self.updateTALConditions(".showHolidaysWarning(context)", ".showHolidaysWarning(cfg)")
 
             # replacements MeetingConfig item columns
-            self.updateItemColumns(
+            self.updateColumns(
                 to_replace={'getPreferredMeetingDate': 'preferred_meeting_date',
                             'linkedMeetingDate': 'meeting_date'})
 

@@ -124,6 +124,13 @@ Changelog
   votes result based on `MeetingConfig.votesResultTALExpr` but that is also
   editable when generated text needs to be customized.
   [gbastien]
+- Renamed migration helper `Migrator.updateItemColumns` to `Migrator.updateColumns`
+  now that it manages meeting related attribute `MeetingConfig.meetingColumns` and
+  added parameter `cfg_ids=[]` to be able to apply only for some `MeetingConfigs`.
+  Renamed migration helper `Migrator.cleanItemFilters` to
+  `Migrator.updateItemFilters` as it manages adding/removing filters.  Added
+  parameter `cfg_ids=[]` to be able to apply only for some MeetingConfigs as well.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
