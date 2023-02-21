@@ -989,6 +989,9 @@ class testVotes(PloneMeetingTestCase):
         """Field MeetingItem.votesResult accessor is overrided to handle
            votes result generated text."""
         cfg = self.meetingConfig
+        # disable itempublished so we play nice with plugins
+        if self._check_wfa_available(['no_publication']):
+            self._activate_wfas(('no_publication', ), keep_existing=False)
         self._removeConfigObjectsFor(cfg)
         self._enableField('votesResult')
         self._enableField('votesResult_after_motivation')
@@ -1054,7 +1057,7 @@ class testVotes(PloneMeetingTestCase):
 
         # decide item, still editable until meeting is closed
         self.decideMeeting(meeting)
-        self.assertEqual(public_item.query_state(), 'itempublished')
+        self.assertEqual(public_item.query_state(), 'itemfrozen')
         self.assertTrue(public_item.mayQuickEdit('votesResult'))
         self.assertTrue(secret_item.mayQuickEdit('votesResult'))
         self.do(public_item, 'accept')
