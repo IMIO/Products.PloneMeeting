@@ -2107,10 +2107,10 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item, item_state, org_uid=None
         data='state', only_enabled=False)
 
     # by default, observers may View in every states as well as creators
-    # this way observers have access or it is never the case
-    # and creators have access when state "itemcreated" is disabled
-    suffix_roles = {'observers': ['Reader'],
-                    'creators': ['Reader']}
+    # for observers, this also depends on MeetingConfig.itemObserversStates if defined
+    suffix_roles = {'creators': ['Reader'], }
+    if not cfg.getItemObserversStates() or item_state in cfg.getItemObserversStates():
+        suffix_roles['observers'] = ['Reader']
 
     # MeetingConfig.itemWFValidationLevels
     # states before validated
