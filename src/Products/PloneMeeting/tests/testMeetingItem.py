@@ -8280,6 +8280,28 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item.mayQuickEdit('description'))
         self.assertFalse(item.mayQuickEdit('decision'))
 
+    def test_pm_ItemObserversStates(self):
+        """By default observers have access in every item states excepted
+           if MeetingConfig.itemObserversStates is defined."""
+        cfg = self.meetingConfig
+        self.assertFalse(cfg.getItemObserversStates())
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.changeUser('pmObserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        cfg.setItemObserversStates(['validated'])
+        item._update_after_edit()
+        # creator still access
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, item))
+        # but observer no more
+        self.changeUser('pmObserver1')
+        self.assertFalse(self.hasPermission(View, item))
+        self.validateItem(item)
+        self.assertTrue(self.hasPermission(View, item))
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, item))
+
 
 def test_suite():
     from unittest import makeSuite

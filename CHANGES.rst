@@ -131,6 +131,9 @@ Changelog
   `Migrator.updateItemFilters` as it manages adding/removing filters.  Added
   parameter `cfg_ids=[]` to be able to apply only for some MeetingConfigs as well.
   [gbastien]
+- Added possibility to restrict WF states in which the suffix `_observers`
+  have access to items. This rely on `MeetingConfig.itemObserversStates`.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------

@@ -2191,6 +2191,23 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='itemObserversStates',
+        widget=MultiSelectionWidget(
+            description="IitemObserversStates",
+            description_msgid="item_observers_states_descr",
+            format="checkbox",
+            label='Itemobserversstates',
+            label_msgid='PloneMeeting_label_itemObserversStates',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listItemStates',
+        default=defValues.itemObserversStates,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
     BooleanField(
         name='useCopies',
         default=defValues.useCopies,
