@@ -2083,7 +2083,19 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
                          level_removed_config_error)
         cfg.setItemAdviceStates(())
-        cfg.at_post_edit_script()
+        # also for field itemObserversStates
+        level_removed_config_error = \
+            translate(
+                'item_wf_val_states_can_not_be_removed_in_use_config',
+                mapping={'state_or_transition': translated_proposed_state,
+                         'cfg_field_name':
+                         'Restrict observers access to item to following states', },
+                domain='PloneMeeting',
+                context=self.request)
+        cfg.setItemObserversStates((self._stateMappingFor('proposed'), ))
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
+                         level_removed_config_error)
+        cfg.setItemObserversStates(())
         # used in transitionsToConfirm, as transition
         cfg.setTransitionsToConfirm(('MeetingItem.%s' % proposed_state_id, 'MeetingItem.validate'))
         level_removed_config_error = \

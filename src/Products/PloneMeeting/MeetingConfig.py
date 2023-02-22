@@ -173,9 +173,10 @@ ITEM_WF_STATE_ATTRS = [
     'itemBudgetInfosStates',
     'itemCommitteesStates',
     'itemCommitteesViewStates',
-    'itemGroupsInChargeStates',
     'itemCopyGroupsStates',
+    'itemGroupsInChargeStates',
     'itemManualSentToOtherMCStates',
+    'itemObserversStates',
     'recordItemHistoryStates']
 ITEM_WF_TRANSITION_ATTRS = [
     'transitionsReinitializingDelays',
