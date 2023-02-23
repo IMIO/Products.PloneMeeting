@@ -839,7 +839,8 @@ class testWorkflows(PloneMeetingTestCase):
         with self.assertRaises(WorkflowException) as cm:
             self.closeMeeting(meeting)
         self.assertEqual(cm.exception.message,
-                         'Can not close a meeting containing items returned to proposing group!')
+                         u'Can not set a meeting to Closed if it '
+                         u'contains items returned to proposing group!')
         # if no item returned anymore, closable
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
         # Meeting.get_items is memoized and cache is not invalidated when an item's state changed
