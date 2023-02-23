@@ -134,6 +134,9 @@ Changelog
 - Added possibility to restrict WF states in which the suffix `_observers`
   have access to items. This rely on `MeetingConfig.itemObserversStates`.
   [gbastien]
+- Fixed `Unauthorized` in `toolplonemeeting_view` for `MeetingManagers`
+  that are not `MeetingManager` for every `MeetingConfig`.
+  [gbastien]
 - Added WFA `hide_decisions_when_under_writing_check_returned_to_proposing_group`
   that will check that there are no more items `Returned to proposing group` when
   publishing decisions.
