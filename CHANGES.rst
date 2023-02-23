@@ -137,6 +137,8 @@ Changelog
 - Fixed `Unauthorized` in `toolplonemeeting_view` for `MeetingManagers`
   that are not `MeetingManager` for every `MeetingConfig`.
   [gbastien]
+- Highlight marginal notes fieldset legend on item view when it contains text.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
