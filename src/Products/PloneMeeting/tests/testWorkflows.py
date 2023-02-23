@@ -847,6 +847,51 @@ class testWorkflows(PloneMeetingTestCase):
         self.cleanMemoize()
         self.closeMeeting(meeting)
 
+    def test_pm_CanNotPublishDecisionsIfItemStillReturnedToProposingGroup(self):
+        """If there are items in state 'returned_to_proposing_group',
+           a meeting may not be set to 'decisions_published'."""
+        if not self._check_wfa_available(['return_to_proposing_group',
+                                          'hide_decisions_when_under_writing',
+                                          'hide_decisions_when_under_writing_check_returned_to_proposing_group']):
+            return
+
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        cfg.setWorkflowAdaptations(
+            ('return_to_proposing_group',
+             'hide_decisions_when_under_writing',
+             'hide_decisions_when_under_writing_check_returned_to_proposing_group'))
+        cfg.at_post_edit_script()
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        item = self.create('MeetingItem')
+        self.presentItem(item)
+        self.decideMeeting(meeting)
+        self.do(item, 'return_to_proposing_group')
+        with self.assertRaises(WorkflowException) as cm:
+            self.do(meeting, 'publish_decisions')
+        self.assertEqual(cm.exception.message,
+                         u'Can not set a meeting to Decisions published if it '
+                         u'contains items returned to proposing group!')
+        # it is doable if 'hide_decisions_when_under_writing_check_returned_to_proposing_group'
+        # WFA not enabled
+        cfg.setWorkflowAdaptations(('return_to_proposing_group',
+                                    'hide_decisions_when_under_writing',))
+        cfg.at_post_edit_script()
+        self.do(meeting, 'publish_decisions')
+        self.assertEqual(meeting.query_state(), 'decisions_published')
+        self.do(meeting, 'backToDecided')
+        self.assertEqual(meeting.query_state(), 'decided')
+        # re-enable and test when no more items returned_to_proposing_group
+        cfg.setWorkflowAdaptations(
+            ('return_to_proposing_group',
+             'hide_decisions_when_under_writing',
+             'hide_decisions_when_under_writing_check_returned_to_proposing_group'))
+        cfg.at_post_edit_script()
+        self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
+        self.do(meeting, 'publish_decisions')
+        self.assertEqual(meeting.query_state(), 'decisions_published')
+
     def test_pm_WriteItemMeetingManagerReservedFieldsPermission(self):
         """The permission WriteItemMeetingManagerFields is used to protect fields
            on the item that are only editable by MeetingManagers."""

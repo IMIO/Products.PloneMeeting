@@ -304,6 +304,18 @@ class testWFAdaptations(PloneMeetingTestCase):
              'waiting_advices_given_advices_required_to_validate',
              'waiting_advices_given_and_signed_advices_required_to_validate', )))
 
+        # hide_decisions_when_under_writing_check_returned_to_proposing_group
+        # depends on hide_decisions_when_under_writing
+        self.failIf(cfg.validate_workflowAdaptations(
+            ('hide_decisions_when_under_writing',
+             'hide_decisions_when_under_writing_check_returned_to_proposing_group', )))
+        self.failIf(cfg.validate_workflowAdaptations(
+            ('hide_decisions_when_under_writing', )))
+        self.assertEqual(
+            cfg.validate_workflowAdaptations(
+                ('hide_decisions_when_under_writing_check_returned_to_proposing_group', )),
+            wa_dependencies)
+
     def test_pm_Validate_workflowAdaptations_item_validation_levels_dependency(self):
         """Test MeetingConfig.validate_workflowAdaptations where some wfAdaptations
            depend on MeetingConfig.itemWFValidationLevels (that must be activated)."""

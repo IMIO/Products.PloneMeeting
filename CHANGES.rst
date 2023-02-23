@@ -134,6 +134,10 @@ Changelog
 - Added possibility to restrict WF states in which the suffix `_observers`
   have access to items. This rely on `MeetingConfig.itemObserversStates`.
   [gbastien]
+- Added WFA `hide_decisions_when_under_writing_check_returned_to_proposing_group`
+  that will check that there are no more items `Returned to proposing group` when
+  publishing decisions.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------

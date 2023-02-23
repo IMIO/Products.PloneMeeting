@@ -2895,6 +2895,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'return_to_proposing_group_with_all_validations',
                      'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
                      'hide_decisions_when_under_writing',
+                     'hide_decisions_when_under_writing_check_returned_to_proposing_group',
                      'waiting_advices',
                      'waiting_advices_from_every_val_levels',
                      'waiting_advices_from_before_last_val_level',
@@ -4688,11 +4689,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             return msg
 
         # dependecies, some adaptations will complete already select ones
-        dependencies = {'waiting_advices': [v for v in self.wfAdaptations
-                                            if v.startswith('waiting_advices_')],
-                        'item_validation_shortcuts': ['item_validation_no_validate_shortcuts'],
-                        'waiting_advices_given_advices_required_to_validate':
-                            ['waiting_advices_given_and_signed_advices_required_to_validate']}
+        dependencies = {
+            'waiting_advices': [v for v in self.wfAdaptations
+                                if v.startswith('waiting_advices_')],
+            'item_validation_shortcuts': ['item_validation_no_validate_shortcuts'],
+            'waiting_advices_given_advices_required_to_validate':
+                ['waiting_advices_given_and_signed_advices_required_to_validate'],
+            'hide_decisions_when_under_writing':
+                ['hide_decisions_when_under_writing_check_returned_to_proposing_group'],
+        }
         for base_wfa, dependents in dependencies.items():
             if set(values).intersection(dependents) and base_wfa not in values:
                 return translate(
