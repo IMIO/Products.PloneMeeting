@@ -7908,6 +7908,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # we return "modified" if field contains something
             if tool.isManager(cfg) and self.getRawVotesResult(real=True):
                 return "highlightValue"
+        elif field_name == 'marginalNotes' and self.getRawMarginalNotes():
+            return "highlightValue"
         return ""
 
     security.declarePublic('getRichTextOnSend')

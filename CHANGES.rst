@@ -137,6 +137,8 @@ Changelog
 - Fixed `Unauthorized` in `toolplonemeeting_view` for `MeetingManagers`
   that are not `MeetingManager` for every `MeetingConfig`.
   [gbastien]
+- Highlight marginal notes fieldset legend on item view when it contains text.
+  [gbastien]
 - Added WFA `hide_decisions_when_under_writing_check_returned_to_proposing_group`
   that will check that there are no more items `Returned to proposing group` when
   publishing decisions.
