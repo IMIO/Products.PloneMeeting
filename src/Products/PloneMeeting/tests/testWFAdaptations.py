@@ -62,6 +62,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                           'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
                           'delayed',
                           'hide_decisions_when_under_writing',
+                          'hide_decisions_when_under_writing_check_returned_to_proposing_group',
                           'item_validation_no_validate_shortcuts',
                           'item_validation_shortcuts',
                           'mark_not_applicable',
