@@ -35,7 +35,7 @@
         </legend>
         <p class="discreet" i18n:translate="meeting_configurations_descr"></p><br />
 
-        <fieldset tal:repeat="grouped_config python: context.getGroupedConfigs(check_access=False, as_items=True)">
+        <fieldset tal:repeat="grouped_config python: context.getGroupedConfigs(check_access=True, as_items=True)">
           <legend tal:content="python: '{0} ({1})'.format(grouped_config[0][1], grouped_config[0][2] or '-')">Config group title</legend>
 
             <table class="vertical listing nosort" width="100%">

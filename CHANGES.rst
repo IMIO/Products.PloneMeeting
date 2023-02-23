@@ -134,6 +134,9 @@ Changelog
 - Added possibility to restrict WF states in which the suffix `_observers`
   have access to items. This rely on `MeetingConfig.itemObserversStates`.
   [gbastien]
+- Fixed `Unauthorized` in `toolplonemeeting_view` for `MeetingManagers`
+  that are not `MeetingManager` for every `MeetingConfig`.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------

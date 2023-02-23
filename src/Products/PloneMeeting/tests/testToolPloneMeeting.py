@@ -100,6 +100,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue(self.tool.restrictedTraverse('toolplonemeeting_view')())
         self.changeUser('siteadmin')
         self.assertTrue(self.tool.restrictedTraverse('toolplonemeeting_view')())
+        # ok for MeetingManagers only of one MeetingConfig
+        self.changeUser('pmManager2')
+        self.assertTrue(self.tool.restrictedTraverse('toolplonemeeting_view')())
 
     def test_pm_GetMeetingConfig(self):
         '''Test the ToolPloneMeeting.getMeetingConfig method :
