@@ -8212,7 +8212,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # unknown category (should not be possible)
         item.setCategory('unknown')
         self.assertEqual(item.getCategory(), 'unknown')
-        self.assertEqual(item.getCategory(True), 'development')
+        self.assertEqual(item.getCategory(True), '')
 
     def test_pm_GetClassifier(self):
         """The MeetingItem.classifier accessor was overrided."""
