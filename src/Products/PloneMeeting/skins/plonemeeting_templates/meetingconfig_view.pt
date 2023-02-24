@@ -313,14 +313,9 @@
           <td tal:define="field python:here.getField('usedMeetingAttributes')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
-          <td></td>
-        </tr>
-        <tr valign="top">
           <td tal:define="field python:here.getField('orderedAssociatedOrganizations')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
           <td></td>
         </tr>
         <tr valign="top">
