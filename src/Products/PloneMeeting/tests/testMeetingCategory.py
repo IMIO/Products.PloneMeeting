@@ -122,6 +122,26 @@ class testMeetingCategory(PloneMeetingTestCase):
         '''While removing a classifier, it should raise if it is linked...'''
         self._checkCategoryRemoval(classifier=True)
 
+    def test_pm_CanNotRenameUsedCategory(self):
+        """As well as deleted, a used category can not be renamed neither as we
+           us it's identifier as key."""
+        #self._enableField('category')
+        self.meetingConfig.setUseGroupsAsCategories(False)
+        self.changeUser('pmCreator1')
+        # use a category that is not used in MeetingConfig (default itemtemplate)
+        item = self.create('MeetingItem', category="events")
+        self.assertEqual(item.getCategory(), "events")
+        self.changeUser('siteadmin')
+        category = item.getCategory(True)
+        self.assertRaises(BeforeDeleteException,
+                          category.aq_parent.manage_renameObject,
+                          category.getId(),
+                          'my_new_id')
+        item.setCategory('development')
+        item._update_after_edit()
+        category.aq_parent.manage_renameObject(category.getId(), 'my_new_id')
+        self.assertEqual(category.getId(), 'my_new_id')
+
     def test_pm_ListCategoriesOfOtherMCs(self):
         '''Test the vocabulary of the 'category_mapping_when_cloning_to_other_mc' field.'''
         cfg = self.meetingConfig
