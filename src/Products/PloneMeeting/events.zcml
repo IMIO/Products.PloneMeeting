@@ -105,7 +105,7 @@
 
   <subscriber for=".content.category.IMeetingCategory
                    OFS.interfaces.IObjectWillBeMovedEvent"
-              handler=".events.onCategoryWillBeMoved" />
+              handler=".events.onCategoryWillBeMovedOrRemoved" />
 
   <subscriber for=".content.organization.IPMOrganization
                    OFS.interfaces.IObjectWillBeRemovedEvent"

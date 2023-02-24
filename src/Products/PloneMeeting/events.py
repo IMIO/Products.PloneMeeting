@@ -1449,7 +1449,7 @@ def onFacetedGlobalSettingsChanged(folder, event):
     _notifyContainerModified(folder)
 
 
-def onCategoryWillBeMoved(category, event):
+def onCategoryWillBeMovedOrRemoved(category, event):
     '''Checks if the current p_category can be moved (renamed) or deleted:
       - it can not be linked to an existing meetingItem (normal item,
         recurring item or item template);
