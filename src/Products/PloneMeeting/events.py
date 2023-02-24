@@ -1457,11 +1457,8 @@ def onCategoryWillBeMoved(category, event):
         of another meetingcategory.'''
     # If we are trying to remove the whole Plone Site, bypass this hook.
     # bypass also if we are in the creation process
-    if event.object.meta_type == 'Plone Site':
-        return
-
-    # also called when new category created
-    if IObjectWillBeAddedEvent.providedBy(event):
+    if event.object.meta_type == 'Plone Site' or \
+       IObjectWillBeAddedEvent.providedBy(event):
         return
 
     tool = api.portal.get_tool('portal_plonemeeting')
