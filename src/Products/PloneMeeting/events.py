@@ -19,6 +19,7 @@ from imio.helpers.content import get_modified_attrs
 from imio.helpers.content import richtextval
 from imio.helpers.security import fplog
 from imio.helpers.xhtml import storeImagesLocally
+from OFS.interfaces import IObjectWillBeAddedEvent
 from OFS.ObjectManager import BeforeDeleteException
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
@@ -1448,15 +1449,16 @@ def onFacetedGlobalSettingsChanged(folder, event):
     _notifyContainerModified(folder)
 
 
-def onCategoryWillBeRemoved(category, event):
-    '''Checks if the current p_category can be deleted:
+def onCategoryWillBeMovedOrRemoved(category, event):
+    '''Checks if the current p_category can be moved (renamed) or deleted:
       - it can not be linked to an existing meetingItem (normal item,
         recurring item or item template);
       - it can not be used in field 'category_mapping_when_cloning_to_other_mc'
         of another meetingcategory.'''
     # If we are trying to remove the whole Plone Site, bypass this hook.
     # bypass also if we are in the creation process
-    if event.object.meta_type == 'Plone Site':
+    if event.object.meta_type == 'Plone Site' or \
+       IObjectWillBeAddedEvent.providedBy(event):
         return
 
     tool = api.portal.get_tool('portal_plonemeeting')

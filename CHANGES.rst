@@ -143,6 +143,8 @@ Changelog
   that will check that there are no more items `Returned to proposing group` when
   publishing decisions.
   [gbastien]
+- Make sure a `MeetingCategory` can not be renamed if it is used.
+  [gbastien]
 - Removed field `MeetingConfig.useGroupsAsCategories`, field `MeetingItem.category`
   is now an optional field managed by `MeetingConfig.usedItemAttributes`.
   [gbastien]
