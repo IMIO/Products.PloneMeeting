@@ -552,7 +552,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.changeUser('admin')
         cfg = self.meetingConfig
         self._removeConfigObjectsFor(cfg)
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         research = cfg.categories.research
         research.using_groups = (self.endUsers_uid, )
         self.create('MeetingItemRecurring',
@@ -636,7 +636,7 @@ class testWorkflows(PloneMeetingTestCase):
         # if transitions for presenting an item can not be triggered
         # the item will no be inserted in the meeting
         # enable categories so the recurring items are not presentable
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         meeting2 = self.create('Meeting')
         self.assertEqual(len(meeting2.get_items()), 0)
 
@@ -907,7 +907,7 @@ class testWorkflows(PloneMeetingTestCase):
         """Field MeetingItem.marginalNotes is writeable when item is decided."""
         cfg = self.meetingConfig
         cfg.setUsedItemAttributes(('marginalNotes', 'observations'))
-        cfg.setUseGroupsAsCategories(True)
+        self._enableField('category', enable=False)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setDecision(self.decisionText)
@@ -952,7 +952,7 @@ class testWorkflows(PloneMeetingTestCase):
         """When MeetingItem.category or MeetingItem.groupsInCharge is used,
            it is required to present an item."""
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         self._enableField('groupsInCharge')
         self.changeUser('pmManager')
         self.create('Meeting')

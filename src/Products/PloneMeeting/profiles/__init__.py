@@ -472,9 +472,6 @@ class MeetingConfigDescriptor(Descriptor):
         # Item states into which item events will be stored in item's history.
         self.recordItemHistoryStates = ()
         self.usedMeetingAttributes = ['assembly', 'signatures']
-        # Do you want to use Organizations as categories ? In this case, you
-        # do not need to define categories anymore.
-        self.useGroupsAsCategories = True
         self.orderedAssociatedOrganizations = []
         self.orderedGroupsInCharge = []
         # Must the "toDiscuss" value be set when inserting an item into a

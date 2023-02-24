@@ -20,7 +20,6 @@ from plone.app.querystring.querybuilder import queryparser
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products import PloneMeeting as products_plonemeeting
-from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
@@ -68,7 +67,6 @@ class testMeetingType(PloneMeetingTestCase):
            2) vendors
            Sort methods are defined this way:
            a) plonegov-assembly: on_categories
-              (with useGroupsAsCategories=True);
            b) plonemeeting-assembly: on_proposing_groups.
            Sort methods tested here are "on_categories" and "on_proposing_groups".'''
         self.changeUser('pmManager')
@@ -375,7 +373,7 @@ class testMeetingType(PloneMeetingTestCase):
     def test_pm_InsertItemCategories(self):
         '''Sort method tested here is "on_categories".'''
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         cfg.setInsertingMethodsOnAddItem(
             ({'insertingMethod': 'on_categories', 'reverse': '0'}, ))
         self.changeUser('pmManager')
@@ -1022,7 +1020,7 @@ class testMeetingType(PloneMeetingTestCase):
            with a deactivated category used.'''
         self.changeUser('pmManager')
         self.setMeetingConfig(self.meetingConfig2.getId())
-        self.meetingConfig.setUseGroupsAsCategories(False)
+        self._enableField('category')
         self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
                                                           'reverse': '0'},
                                                          {'insertingMethod': 'on_categories',
@@ -1061,7 +1059,7 @@ class testMeetingType(PloneMeetingTestCase):
                                                           {'insertingMethod': 'on_proposing_groups',
                                                            'reverse': '0'},))
         self.setMeetingConfig(self.meetingConfig2.getId())
-        self.assertFalse(self.meetingConfig2.getUseGroupsAsCategories())
+        self.assertTrue('category' in self.meetingConfig2.getUsedItemAttributes())
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         data = ({'proposingGroup': self.developers_uid,
@@ -1326,7 +1324,7 @@ class testMeetingType(PloneMeetingTestCase):
               'reverse': '0'},
              {'insertingMethod': 'on_proposing_groups',
               'reverse': '0'}, ))
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         # groups in charge
         gic1 = self.create(
             'organization',
@@ -1684,7 +1682,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         cfg = self.meetingConfig
         self._removeConfigObjectsFor(cfg, folders=['itemtemplates'])
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         cfg.setInsertingMethodsOnAddItem(
             ({'insertingMethod': 'on_categories',
               'reverse': '0'}, ))
@@ -2017,7 +2015,7 @@ class testMeetingType(PloneMeetingTestCase):
         i3.setTitle('i3')
         i3.setDecision('<p>Decision item 3</p>')
         # set a category if the meetingConfig use it
-        if not cfg.getUseGroupsAsCategories():
+        if 'category' in cfg.getUsedItemAttributes():
             i1.setCategory('development')
             i2.setCategory('research')
             i3.setCategory('events')
@@ -2156,12 +2154,12 @@ class testMeetingType(PloneMeetingTestCase):
            in a meeting of cfg2 because REQUEST['PUBLISHED'] changed!"""
         # configure
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(True)
+        self._enableField('category', enable=False)
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
                                            'reverse': '0'},))
         cfgId = cfg.getId()
         cfg2 = self.meetingConfig2
-        cfg2.setUseGroupsAsCategories(True)
+        self._enableField('category', cfg=cfg2, enable=False)
         cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
                                             'reverse': '0'},))
         cfg2Id = cfg2.getId()
@@ -3424,7 +3422,7 @@ class testMeetingType(PloneMeetingTestCase):
     def test_pm_MeetingInsertingMethodsHelpMsgView(self):
         '''Test the @@display-inserting-methods-helper-msg view.'''
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         view = meeting.restrictedTraverse('@@display-inserting-methods-helper-msg')
@@ -3993,7 +3991,7 @@ class testMeetingType(PloneMeetingTestCase):
         """The the helper Meeting.update_first_item_number that will take in charge"""
         cfg = self.meetingConfig
         self._enableField('first_item_number', related_to='Meeting')
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         self.changeUser('pmManager')
         meeting1 = self._createMeetingWithItems(meetingDate=datetime(2022, 6, 6))
         meeting2 = self._createMeetingWithItems()

@@ -362,9 +362,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             if 'decision' in attrs:
                 obj.setDecision(attrs['decision'])
             # define a category for the item if necessary
-            if autoAddCategory and not \
-               cfg.getUseGroupsAsCategories() and not \
-               obj.getCategory():
+            if autoAddCategory and \
+               'category' in cfg.getUsedItemAttributes() and \
+               not obj.getCategory():
                 aCategory = cfg.getCategories()[0].getId()
                 obj.setCategory(aCategory)
         if hasattr(obj.aq_inner, 'processForm'):

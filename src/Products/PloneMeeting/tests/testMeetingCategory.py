@@ -29,8 +29,8 @@ class testMeetingCategory(PloneMeetingTestCase):
             folder_name = TOOL_FOLDER_CLASSIFIERS
         self._removeConfigObjectsFor(cfg)
         self._removeConfigObjectsFor(cfg2)
-        cfg.setUseGroupsAsCategories(False)
-        cfg2.setUseGroupsAsCategories(False)
+        self._enableField('category')
+        self._enableField('category', cfg=cfg2)
         # add 3 categories in cfg1 and one in cfg2 having same id as cat1 in cfg1
         cat1 = self.create('meetingcategory', id="cat1",
                            title="Category 1", is_classifier=classifier)
@@ -146,7 +146,7 @@ class testMeetingCategory(PloneMeetingTestCase):
         aCatInMC2 = cfg2.categories.deployment
         self.assertEqual(len(vocab_factory(aCatInMC2)), 0)
         # activate categories in both meetingConfigs
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         # still not enough...
         self.assertEqual(len(vocab_factory(aCatInMC2)), 0)
         # ... we must also specify that elements of self.meetingConfig2 can be sent to self.meetingConfig

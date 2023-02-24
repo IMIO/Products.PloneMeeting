@@ -87,7 +87,7 @@
             </div>
 
             <tal:comment replace="nothing">Category</tal:comment>
-            <tal:category condition="python: not cfg.getUseGroupsAsCategories()">
+            <tal:category condition="python: 'category' in usedAttrs">
             <div class="discreet"
                  tal:define="cat python: context.getCategory(True)">
                 <span class="item_attribute_label"

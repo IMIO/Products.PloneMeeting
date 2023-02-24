@@ -116,11 +116,28 @@ class Migrate_To_4205(Migrator):
 
     def _updateLocalRolesItemBeforeStateValidated(self):
         """Add permissions were not correctly setup on items in state before "validated"."""
+        logger.info('Updating "Add permissions" for every items before "validated"...')
         for cfg in self.tool.objectValues('MeetingConfig'):
             review_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
             brains = self.catalog(portal_type=cfg.getItemTypeName(), review_state=review_states)
             if brains:
                 self.tool.update_all_local_roles(brains=brains)
+        logger.info('Done.')
+
+    def _removeCfgUseGroupsAsCategories(self):
+        """Field MeetingConfig.useGroupsAsCategories was removed,
+           enable 'category' in MeetingConfig.usedItemAttributes when relevant."""
+        logger.info('Removing field "MeetingConfig.useGroupsAsCategories" from every MeetingConfigs...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            if not base_hasattr(cfg, 'useGroupsAsCategories'):
+                continue
+            enable_category = not cfg.useGroupsAsCategories
+            if enable_category:
+                logger.info("'category' was enabled for MeetingConfig %s" % cfg.getId())
+                used_item_attrs = list(cfg.getUsedItemAttributes())
+                used_item_attrs.append('category')
+                cfg.setUsedItemAttributes(used_item_attrs)
+            delattr(cfg, 'useGroupsAsCategories')
         logger.info('Done.')
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):
@@ -139,6 +156,7 @@ class Migrate_To_4205(Migrator):
             self.initNewHTMLFields(
                 query={'meta_type': ('MeetingItem')}, field_name='votesResult')
         self._initAdviceGivenHistory()
+        self._removeCfgUseGroupsAsCategories()
         logger.info('Migrating to PloneMeeting 4205... Done.')
 
 
@@ -148,7 +166,8 @@ def migrate(context):
        1) Update MeetingConfig.committees to add "enable_groups";
        2) Update meetig.committees to add "committee_observations";
        3) Update local roles of items in before review_state "validated";
-       4) Move from advice versioning to "advice_given_history".
+       4) Move from advice versioning to "advice_given_history";
+       5) Remove field "MeetingConfig.useGroupsAsCategories".
     '''
     migrator = Migrate_To_4205(context)
     migrator.run()

@@ -8,7 +8,6 @@
 from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_organization
-from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import select_org_for_function
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
@@ -878,18 +877,20 @@ class testMeetingConfig(PloneMeetingTestCase):
                                                    context=self.request)
         values = ({'insertingMethod': 'on_categories',
                    'reverse': '0'}, )
-        self.assertTrue(cfg.getUseGroupsAsCategories() is True)
+        self.assertFalse('category' in cfg.getUsedItemAttributes())
         self.assertTrue(cfg.validate_insertingMethodsOnAddItem(values) == not_using_categories_error_msg)
-        # check on using categories is made on presence of 'useGroupsAsCategories' in the
-        # REQUEST, or if not found, on the value defined on the MeetingConfig object
-        cfg.setUseGroupsAsCategories(False)
+        # check on using categories is made on presence of 'category' in 'usedItemAttributes'
+        # in the REQUEST, or if not found, on the value defined on the MeetingConfig object
+        self._enableField('category')
         # this time it validates
         self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
-        # except if we just redefined it, aka 'useGroupsAsCategories' to True in the REQUEST
-        self.portal.REQUEST.set('useGroupsAsCategories', True)
+        # except if we just redefined it, aka 'category' not in 'usedItemAttributes' in the REQUEST
+        used_item_attrs = list(cfg.getUsedItemAttributes())
+        used_item_attrs.remove('category')
+        self.portal.REQUEST.set('usedItemAttributes', used_item_attrs)
         self.assertTrue(cfg.validate_insertingMethodsOnAddItem(values) == not_using_categories_error_msg)
-        self.portal.REQUEST.set('useGroupsAsCategories', False)
-        # this time it validates as redefining it to using categories
+        self.portal.REQUEST.set('usedItemAttributes', cfg.getUsedItemAttributes())
+        # this time it validates as redefining it to using category
         self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
 
         # test when selecting 'on_poll_type' without using the 'pollType' field

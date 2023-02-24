@@ -541,19 +541,6 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
-        name='useGroupsAsCategories',
-        default=defValues.useGroupsAsCategories,
-        widget=BooleanField._properties['widget'](
-            description="UseGroupsAsCategories",
-            description_msgid="use_groups_as_categories_descr",
-            label='Usegroupsascategories',
-            label_msgid='PloneMeeting_label_useGroupsAsCategories',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        write_permission="PloneMeeting: Write risky config",
-    ),
     LinesField(
         name='orderedAssociatedOrganizations',
         widget=InAndOutWidget(
@@ -5142,10 +5129,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  context=self.REQUEST)
         # check that if we selected 'on_categories', we actually use categories...
         if 'on_categories' in res:
-            if hasattr(self.REQUEST, 'useGroupsAsCategories'):
-                notUsingCategories = self.REQUEST.get('useGroupsAsCategories')
+            if hasattr(self.REQUEST, 'usedItemAttributes'):
+                notUsingCategories = 'category' not in self.REQUEST.get('usedItemAttributes')
             else:
-                notUsingCategories = self.getUseGroupsAsCategories()
+                notUsingCategories = 'category' not in self.getUsedItemAttributes()
             if notUsingCategories:
                 return translate('inserting_methods_not_using_categories_error',
                                  domain='PloneMeeting',
