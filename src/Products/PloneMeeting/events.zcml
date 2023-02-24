@@ -16,7 +16,7 @@
               handler=".events.onItemInitialized" />
 
   <subscriber for=".interfaces.IMeetingItem
-                   zope.lifecycleevent.interfaces.IObjectAddedEvent"
+                   zope.lifecycleevent.IObjectAddedEvent"
               handler=".events.onItemAdded" />
 
   <subscriber for=".interfaces.IMeetingItem
@@ -36,11 +36,11 @@
               handler=".events.onItemRemoved" />
 
   <subscriber for=".interfaces.IMeetingItem
-                   zope.lifecycleevent.ObjectCopiedEvent"
+                   zope.lifecycleevent.IObjectCopiedEvent"
               handler=".events.onItemCopied" />
 
   <subscriber for=".interfaces.IMeetingItem
-                   zope.lifecycleevent.ObjectMovedEvent"
+                   zope.lifecycleevent.IObjectMovedEvent"
               handler=".events.onItemMoved" />
 
   <subscriber for=".interfaces.IMeetingItem
@@ -72,11 +72,11 @@
               handler=".events.onItemEditCancelled" />
 
   <subscriber for=".content.meeting.IMeeting
-                   zope.lifecycleevent.interfaces.IObjectAddedEvent"
+                   zope.lifecycleevent.IObjectAddedEvent"
               handler=".events.onMeetingAdded" />
 
   <subscriber for=".content.meeting.IMeeting
-                   zope.lifecycleevent.interfaces.IObjectCreatedEvent"
+                   zope.lifecycleevent.IObjectCreatedEvent"
               handler=".events.onMeetingCreated" />
 
   <subscriber for=".content.meeting.IMeeting
@@ -88,7 +88,7 @@
               handler=".events.onMeetingTransition" />
 
   <subscriber for=".content.meeting.IMeeting
-                   zope.lifecycleevent.ObjectMovedEvent"
+                   zope.lifecycleevent.IObjectMovedEvent"
               handler=".events.onMeetingMoved" />
 
   <subscriber for=".content.meeting.IMeeting
@@ -104,8 +104,8 @@
               handler=".events.onConfigWillBeRemoved" />
 
   <subscriber for=".content.category.IMeetingCategory
-                   OFS.interfaces.IObjectWillBeRemovedEvent"
-              handler=".events.onCategoryWillBeRemoved" />
+                   OFS.interfaces.IObjectWillBeMovedEvent"
+              handler=".events.onCategoryWillBeMoved" />
 
   <subscriber for=".content.organization.IPMOrganization
                    OFS.interfaces.IObjectWillBeRemovedEvent"
@@ -116,7 +116,7 @@
               handler=".events.onOrgRemoved" />
 
   <subscriber for=".interfaces.IConfigElement
-                   zope.lifecycleevent.interfaces.IObjectAddedEvent"
+                   zope.lifecycleevent.IObjectAddedEvent"
               handler=".events.onConfigOrPloneElementAdded" />
 
   <subscriber for=".interfaces.IConfigElement
@@ -132,7 +132,7 @@
               handler=".events.onConfigOrPloneElementRemoved" />
 
   <subscriber for=".interfaces.IPloneElement
-                   zope.lifecycleevent.interfaces.IObjectAddedEvent"
+                   zope.lifecycleevent.IObjectAddedEvent"
               handler=".events.onConfigOrPloneElementAdded" />
 
   <subscriber for=".interfaces.IPloneElement
@@ -161,7 +161,7 @@
               handler=".events.onAdviceEditFinished" />
 
   <subscriber for=".content.advice.IMeetingAdvice
-                   zope.lifecycleevent.interfaces.IObjectAddedEvent"
+                   zope.lifecycleevent.IObjectAddedEvent"
               handler=".events.onAdviceAdded" />
 
   <subscriber for=".content.advice.IMeetingAdvice
@@ -174,7 +174,7 @@
 
   <!-- imio.annex events -->
   <subscriber for="imio.annex.content.annex.IAnnex
-                   zope.lifecycleevent.interfaces.IObjectAddedEvent"
+                   zope.lifecycleevent.IObjectAddedEvent"
               handler=".events.onAnnexAdded" />
 
   <subscriber for="imio.annex.content.annex.IAnnex
@@ -214,7 +214,7 @@
 
   <!-- DashboardCollection events -->
   <subscriber for="collective.eeafaceted.collectionwidget.interfaces.IDashboardCollection
-                   zope.lifecycleevent.interfaces.IObjectAddedEvent"
+                   zope.lifecycleevent.IObjectAddedEvent"
               handler=".events.onDashboardCollectionAdded" />
 
   <subscriber for="plone.registry.interfaces.IRecordModifiedEvent"
