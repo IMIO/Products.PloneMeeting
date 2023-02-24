@@ -19,8 +19,8 @@ from imio.helpers.content import get_modified_attrs
 from imio.helpers.content import richtextval
 from imio.helpers.security import fplog
 from imio.helpers.xhtml import storeImagesLocally
-from OFS.ObjectManager import BeforeDeleteException
 from OFS.interfaces import IObjectWillBeAddedEvent
+from OFS.ObjectManager import BeforeDeleteException
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from plone import api
