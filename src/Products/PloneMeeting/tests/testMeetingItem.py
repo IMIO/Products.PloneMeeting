@@ -4243,7 +4243,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         # categories are used
-        self.assertTrue(item.showCategory())
+        self.assertTrue(item.attribute_is_used('category'))
         cat_required_msg = translate('category_required',
                                      domain='PloneMeeting',
                                      context=self.portal.REQUEST)

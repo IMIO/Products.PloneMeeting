@@ -900,18 +900,16 @@ class testMeetingConfig(PloneMeetingTestCase):
                       context=self.request)
         values = ({'insertingMethod': 'on_poll_type',
                    'reverse': '0'}, )
-        if 'pollType' not in cfg.getUsedItemAttributes():
-            cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() + ('pollType', ))
-        self.assertTrue('pollType' in cfg.getUsedItemAttributes())
+        self._enableField('pollType')
+        del self.request.other['usedItemAttributes']
         # it validates
         self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
         # check on using 'pollType' is made on presence of 'pollType' in 'usedItemAttributes' in the
         # REQUEST, or if not found, on the value defined on the MeetingConfig object
         # unselect 'pollType', validation fails
-        usedItemAttrs = list(cfg.getUsedItemAttributes())
-        usedItemAttrsWithoutPollType = usedItemAttrs
+        usedItemAttrsWithoutPollType = list(cfg.getUsedItemAttributes())
         usedItemAttrsWithoutPollType.remove('pollType')
-        cfg.setUsedItemAttributes(usedItemAttrsWithoutPollType)
+        self._enableField('pollType', enable=False)
         self.assertEqual(cfg.validate_insertingMethodsOnAddItem(values),
                          inserting_methods_not_using_poll_type_error_msg)
         # it validates if 'usedItemAttributes' found in the REQUEST
@@ -936,8 +934,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # check on using 'toDiscuss' is made on presence of 'toDiscuss' in 'usedItemAttributes' in the
         # REQUEST, or if not found, on the value defined on the MeetingConfig object
         # unselect 'toDiscuss', validation fails
-        usedItemAttrs = list(cfg.getUsedItemAttributes())
-        usedItemAttrsWithoutToDiscuss = usedItemAttrs
+        usedItemAttrsWithoutToDiscuss = list(cfg.getUsedItemAttributes())
         usedItemAttrsWithoutToDiscuss.remove('toDiscuss')
         cfg.setUsedItemAttributes(usedItemAttrsWithoutToDiscuss)
         self.portal.REQUEST.set('usedItemAttributes', ())
@@ -965,8 +962,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # check on using 'privacy' is made on presence of 'privacy' in 'usedItemAttributes' in the
         # REQUEST, or if not found, on the value defined on the MeetingConfig object
         # unselect 'privacy', validation fails
-        usedItemAttrs = list(cfg.getUsedItemAttributes())
-        usedItemAttrsWithoutPrivacy = usedItemAttrs
+        usedItemAttrsWithoutPrivacy = list(cfg.getUsedItemAttributes())
         usedItemAttrsWithoutPrivacy.remove('privacy')
         cfg.setUsedItemAttributes(usedItemAttrsWithoutPrivacy)
         self.portal.REQUEST.set('usedItemAttributes', ())
