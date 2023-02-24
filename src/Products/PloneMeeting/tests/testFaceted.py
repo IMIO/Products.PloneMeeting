@@ -151,7 +151,7 @@ class testFaceted(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         pmFolder = self.getMeetingFolder()
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         vocab = get_vocab(cfg,
                           "Products.PloneMeeting.vocabularies.categoriesvocabulary",
                           only_factory=True)
@@ -207,7 +207,7 @@ class testFaceted(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         pmFolder = self.getMeetingFolder()
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         vocab = get_vocab(cfg,
                           "Products.PloneMeeting.vocabularies.classifiersvocabulary",
                           only_factory=True)
@@ -265,7 +265,7 @@ class testFaceted(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         pmFolder = self.getMeetingFolder()
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         vocab = get_vocab(cfg,
                           "Products.PloneMeeting.vocabularies.categoriesvocabulary",
                           only_factory=True)
@@ -273,7 +273,7 @@ class testFaceted(PloneMeetingTestCase):
         # now in cfg2
         cfg2 = self.meetingConfig2
         self.setMeetingConfig(cfg2.getId())
-        cfg2.setUseGroupsAsCategories(False)
+        self._enableField('category', cfg=cfg2)
         pmFolder = self.getMeetingFolder()
         terms_cfg2 = [term.token for term in vocab(pmFolder)]
         self.assertNotEqual(terms_cfg1, terms_cfg2)
@@ -475,7 +475,7 @@ class testFaceted(PloneMeetingTestCase):
         '''Test the "Products.PloneMeeting.vocabularies.groupsinchargevocabulary"
            vocabulary, especially because it is cached.'''
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         self._enableField('classifier')
         self.changeUser('siteadmin')
         org1 = self.create('organization', id='org1', title='Org 1', acronym='Org1')

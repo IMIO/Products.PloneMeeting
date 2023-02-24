@@ -144,8 +144,8 @@ class testMeetingItem(PloneMeetingTestCase):
         expectedCategories.remove('subproducts')
         self.assertEqual([cat.id for cat in cfg.getCategories(userId='pmCreator2')], expectedCategories)
 
-        # if useGroupsAsCategories is on, getCategories will still return categories
-        cfg.setUseGroupsAsCategories(True)
+        # if not using 'category', getCategories will still return categories
+        self._enableField("category", enable=False)
         expectedCategories.remove('maintenance')
         expectedCategories.append('subproducts')
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
@@ -347,7 +347,7 @@ class testMeetingItem(PloneMeetingTestCase):
            account by MeetingItem.getGroupsInCharge and get local_roles on item
            if MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup.'''
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(True)
+        self._enableField('category', enable=False)
         cfg.setIncludeGroupsInChargeDefinedOnProposingGroup(False)
         cfg.setItemGroupsInChargeStates((self._stateMappingFor('itemcreated'), ))
         self.developers.groups_in_charge = (self.vendors_uid, )
@@ -384,7 +384,7 @@ class testMeetingItem(PloneMeetingTestCase):
            account by MeetingItem.getGroupsInCharge and get local_roles on item
            if MeetingConfig.includeGroupsInChargeDefinedOnCategory.'''
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         cfg.setIncludeGroupsInChargeDefinedOnCategory(False)
         cfg.setItemGroupsInChargeStates((self._stateMappingFor('itemcreated'), ))
         development = cfg.categories.development
@@ -441,7 +441,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # Activate the functionnality
         self.changeUser('admin')
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         meetingConfigId = cfg.getId()
         otherMeetingConfigId = self.meetingConfig2.getId()
         # the item is sendable if it is 'accepted', the user is a MeetingManager,
@@ -669,7 +669,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # Activate the functionnality
         cfg = self.meetingConfig
         self.changeUser('admin')
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         otherMeetingConfigId = self.meetingConfig2.getId()
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=datetime(2008, 6, 12, 8, 0, 0))
@@ -1085,7 +1085,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # in this case, it failed because a category is required for newItem and was not set
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
-        self.assertFalse(cfg2.getUseGroupsAsCategories())
+        self.assertTrue("category" in cfg2.getUsedItemAttributes())
         # item is not 'presented' as category is required to present
         self.assertEqual(newItem.query_state(), 'validated')
         fail_to_trigger_msg = u'Some transitions could not be triggered for the item ' \
@@ -1095,7 +1095,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # now adapt cfg2 to not use categories,
         # the required transitions should have been triggerd this time
-        cfg2.setUseGroupsAsCategories(True)
+        self._enableField('category', cfg=cfg2, enable=False)
         # change insert order method too as 'on_categories' for now
         cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
                                             'reverse': '0'}, ))
@@ -1166,8 +1166,8 @@ class testMeetingItem(PloneMeetingTestCase):
         cfgId = cfg.getId()
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
-        cfg.setUseGroupsAsCategories(True)
-        cfg2.setUseGroupsAsCategories(True)
+        self._enableField('category', enable=False)
+        self._enableField('category', cfg=cfg2, enable=False)
         cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
                                             'reverse': '0'}, ))
         cfg.setItemAutoSentToOtherMCStates(('validated', ))
@@ -1212,7 +1212,7 @@ class testMeetingItem(PloneMeetingTestCase):
                                          'trigger_workflow_transitions_until': '%s.%s' %
                                          (cfg2Id, 'present')},))
         # use insertion on groups for cfg2
-        cfg2.setUseGroupsAsCategories(True)
+        self._enableField('category', cfg=cfg2, enable=False)
         cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
                                             'reverse': '0'}, ))
 
@@ -1313,7 +1313,7 @@ class testMeetingItem(PloneMeetingTestCase):
                                          'trigger_workflow_transitions_until':
                                          NO_TRIGGER_WF_TRANSITION_UNTIL},))
         # use insertion on groups for cfg2
-        cfg2.setUseGroupsAsCategories(True)
+        self._enableField('category', cfg=cfg2, enable=False)
         cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
                                             'reverse': '0'}, ))
 
@@ -1421,8 +1421,8 @@ class testMeetingItem(PloneMeetingTestCase):
            to a category in destination meetingConfig.'''
         # activate categories in both meetingConfigs, as no mapping is defined,
         # the newItem will have no category
-        self.meetingConfig.setUseGroupsAsCategories(False)
-        self.meetingConfig2.setUseGroupsAsCategories(False)
+        self._enableField('category')
+        self._enableField('category', cfg=self.meetingConfig2)
         data = self._setupSendItemToOtherMC()
         newItem = data['newItem']
         self.assertEqual(newItem.getCategory(), '')
@@ -1452,7 +1452,7 @@ class testMeetingItem(PloneMeetingTestCase):
                 "Test 'test_pm_SendItemToOtherMCManually' was bypassed because "
                 "transition \"validate\" does not exist in cfg2.")
             return
-        cfg2.setUseGroupsAsCategories(True)
+        self._enableField('category', cfg=cfg2, enable=False)
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
                                          (cfg2Id, 'validate')},))
@@ -1504,7 +1504,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         self._setUpDefaultItemWFValidationLevels(cfg2)
         cfg2Id = cfg2.getId()
-        cfg2.setUseGroupsAsCategories(True)
+        self._enableField('category', cfg=cfg2, enable=False)
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
                                          (cfg2Id, 'propose')},))
@@ -1570,7 +1570,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
-        cfg2.setUseGroupsAsCategories(True)
+        self._enableField('category', cfg=cfg2, enable=False)
         if 'privacy' not in cfg2.getUsedItemAttributes():
             cfg2.setUsedItemAttributes(cfg2.getUsedItemAttributes() + ('privacy', ))
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
@@ -1627,7 +1627,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
-        cfg2.setUseGroupsAsCategories(True)
+        self._enableField('category', cfg=cfg2, enable=False)
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
         cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
@@ -1861,7 +1861,7 @@ class testMeetingItem(PloneMeetingTestCase):
         '''When an item is cloned with a disabled category,
            the new item does not have a category and user must select it.'''
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setCategory('research')
@@ -1884,8 +1884,7 @@ class testMeetingItem(PloneMeetingTestCase):
            it is the case when duplicating an item without category of having a
            disabled category or when sending an item to another MC, an item without
            category can not be "presented".'''
-        cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         self.changeUser('pmManager')
         self.create('Meeting')
         item = self.create('MeetingItem')
@@ -3831,7 +3830,7 @@ class testMeetingItem(PloneMeetingTestCase):
           Check that we still have the stored value in the vocabulary.
         '''
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         self.changeUser('pmManager')
         # create 2 items of different categories
         item = self.create('MeetingItem')
@@ -3858,7 +3857,7 @@ class testMeetingItem(PloneMeetingTestCase):
           Values are sorted using Natural sorting.
         '''
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         # create categories
         self._removeConfigObjectsFor(cfg, folders=['itemtemplates', 'categories'])
         data = {'cat2': '1 One',
@@ -3890,7 +3889,7 @@ class testMeetingItem(PloneMeetingTestCase):
         """If 'category' selected in MeetingConfig.itemFieldsToKeepConfigSortingFor,
            the vocabulary keeps config order, not sorted alphabetically."""
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         self.changeUser('siteadmin')
         self.create('meetingcategory', id='cat1', title='Category 1')
         self.changeUser('pmCreator1')
@@ -4235,15 +4234,15 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_Validate_category(self):
         '''MeetingItem.category is mandatory if categories are used.'''
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         cfg2 = self.meetingConfig2
-        cfg2.setUseGroupsAsCategories(False)
+        self._enableField('category', cfg=cfg2)
         # make sure we use categories
         self.setMeetingConfig(cfg2.getId())
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         # categories are used
-        self.assertTrue(item.showCategory())
+        self.assertTrue(item.attribute_is_used('category'))
         cat_required_msg = translate('category_required',
                                      domain='PloneMeeting',
                                      context=self.portal.REQUEST)
@@ -4616,7 +4615,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def _setupItemActionsPanelInvalidation(self):
         """Setup for every test_pm_ItemActionsPanelCachingXXX tests."""
         # use categories
-        self.meetingConfig.setUseGroupsAsCategories(False)
+        self._enableField('category')
         # create an item
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -7189,7 +7188,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         # remove recurring items in self.meetingConfig
         self._removeConfigObjectsFor(cfg)
         # change itemReferenceFormat to include an item data (Title)
@@ -8044,7 +8043,7 @@ class testMeetingItem(PloneMeetingTestCase):
            the "committees" widget is not displayed on the item edit form but
            the values are selected automatically."""
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         self._enableField("committees", related_to="Meeting")
         cfg_committees = cfg.getCommittees()
         # by default auto mode is not enabled
@@ -8123,7 +8122,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_CommitteesUsingGroups(self):
         """It is possible to restrict the selectable committees to some proposingGroup."""
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         self._enableField("committees", related_to="Meeting")
         cfg_committees = cfg.getCommittees()
         cfg_committees[0]["using_groups"] = [self.developers_uid]
@@ -8142,7 +8141,7 @@ class testMeetingItem(PloneMeetingTestCase):
            some kind of false committee but necessary on item to use sort on committees
            when inserting item in a meeting for example."""
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         self._enableField("committees", related_to="Meeting")
         cfg.getCommittees()[1]['enabled'] = 'item_only'
         # MeetingItem, item_only committee is selectable
@@ -8174,12 +8173,12 @@ class testMeetingItem(PloneMeetingTestCase):
         """When using "auto_from" in MeetingConfig.committees, it will
            also be triggered when item sent to another MC."""
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(True)
+        self._enableField('category', enable=False)
         cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'), ))
         cfg_committees = cfg.getCommittees()
         # configure committees for cfg2
         cfg2 = self.meetingConfig2
-        cfg2.setUseGroupsAsCategories(True)
+        self._enableField('category', cfg=cfg2, enable=False)
         cfg2.setCommittees(cfg_committees)
         cfg2_committees = cfg2.getCommittees()
         cfg2_committees[1]['auto_from'] = ["proposing_group__" + self.developers_uid]
@@ -8197,7 +8196,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_GetCategory(self):
         """The proposingGroup/category magic was removed, test it."""
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(True)
+        self._enableField('category', enable=False)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.assertEqual(item.getCategory(), '')
@@ -8210,6 +8209,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.getCategory(theObject=True), cfg.categories.development)
         self.assertEqual(item.getProposingGroup(), self.developers_uid)
         self.assertEqual(item.getProposingGroup(theObject=True), self.developers)
+        # unknown category (should not be possible)
+        item.setCategory('unknown')
+        self.assertEqual(item.getCategory(), 'unknown')
+        self.assertEqual(item.getCategory(True), '')
 
     def test_pm_GetClassifier(self):
         """The MeetingItem.classifier accessor was overrided."""

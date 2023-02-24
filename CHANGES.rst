@@ -145,6 +145,9 @@ Changelog
   [gbastien]
 - Make sure a `MeetingCategory` can not be renamed if it is used.
   [gbastien]
+- Removed field `MeetingConfig.useGroupsAsCategories`, field `MeetingItem.category`
+  is now an optional field managed by `MeetingConfig.usedItemAttributes`.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------

@@ -197,7 +197,7 @@ class CategoriesOfOtherMCsVocabulary(object):
         catType = self._is_classifier(context) and 'classifiers' or 'categories'
         for otherMC in otherMCs:
             otherMCObj = getattr(tool, otherMC['meeting_config'])
-            if otherMCObj.getUseGroupsAsCategories():
+            if 'category' not in otherMCObj.getUsedItemAttributes():
                 continue
             otherMCId = otherMCObj.getId()
             otherMCTitle = otherMCObj.Title()

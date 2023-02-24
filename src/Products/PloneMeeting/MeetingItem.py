@@ -247,7 +247,7 @@ class MeetingItemWorkflowConditions(object):
         if destination_state == 'presented' or \
            ('imio.actionspanel_portal_cachekey' in self.context.REQUEST and
                 not self.context.REQUEST.get('disable_check_required_data')):
-            if not self.cfg.getUseGroupsAsCategories() and \
+            if self.context.attribute_is_used("category") and \
                not self.context.getCategory(theObject=True):
                 msg = No(_('required_category_ko'))
             elif self.context.attribute_is_used('classifier') and not self.context.getClassifier():
@@ -1195,7 +1195,7 @@ schema = Schema((
     StringField(
         name='category',
         widget=SelectionWidget(
-            condition="python: here.showCategory()",
+            condition="python: here.attribute_is_used('category')",
             format="select",
             description="Category",
             description_msgid="item_category_descr",
@@ -1203,6 +1203,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_category',
             i18n_domain='PloneMeeting',
         ),
+        optional=True,
         vocabulary='listCategories',
     ),
     StringField(
@@ -2216,7 +2217,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # check if value is among categories defined in the MeetingConfig
-        if not cfg.getUseGroupsAsCategories() and value not in cfg.categories.objectIds():
+        if self.attribute_is_used('category') and \
+           value not in cfg.categories.objectIds():
             return translate('category_required', domain='PloneMeeting', context=self.REQUEST)
 
     security.declarePrivate('validate_committees')
@@ -3806,15 +3808,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return 'normal'
 
-    security.declarePublic('showCategory')
-
-    def showCategory(self):
-        '''I must not show the "category" field if I use groups for defining
-           categories.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        return not cfg.getUseGroupsAsCategories()
-
     security.declarePrivate('listCategories')
 
     def listCategories(self, classifiers=False):
@@ -3862,9 +3855,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cat_id = self.getField('category').get(self, **kwargs)
         # avoid problems with acquisition
         if theObject:
-            res = ''
-            if cat_id in cfg.categories.objectIds():
-                res = getattr(cfg.categories, cat_id)
+            res = getattr(cfg.categories, cat_id, '')
         else:
             res = cat_id
         return res
@@ -4337,9 +4328,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def get_item_absents(self, the_objects=False, ordered=True, **kwargs):
         '''Gets the absents for this item.
            Absent for an item are stored in the Meeting.item_absents dict.'''
-        res = []
         if not self.hasMeeting():
-            return res
+            return []
         meeting = self.getMeeting()
         meeting_item_absents = meeting.get_item_absents().get(self.UID(), [])
         if ordered:
@@ -4355,9 +4345,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def get_item_excused(self, the_objects=False, ordered=True, **kwargs):
         '''Gets the excused for this item.
            Excused for an item are stored in the Meeting.item_excused dict.'''
-        res = []
         if not self.hasMeeting():
-            return res
+            return []
         meeting = self.getMeeting()
         meeting_item_excused = meeting.get_item_excused().get(self.UID(), [])
         if ordered:
@@ -4373,9 +4362,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def get_item_non_attendees(self, the_objects=False, ordered=True, **kwargs):
         '''Gets the non_attendees for this item.
            Non attendees for an item are stored in the Meeting.item_non_attendees dict.'''
-        res = []
         if not self.hasMeeting():
-            return res
+            return []
         meeting = self.getMeeting()
         meeting_item_non_attendees = meeting.get_item_non_attendees().get(self.UID(), [])
         if ordered:
@@ -7489,18 +7477,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              reindexNewItem=False)
         # manage categories mapping, if original and new items use
         # categories, we check if a mapping is defined in the configuration of the original item
-        if not cfg.getUseGroupsAsCategories() and \
-           not destMeetingConfig.getUseGroupsAsCategories():
-            originalCategory = self.getCategory(theObject=True)
+        originalCategory = self.getCategory(theObject=True)
+        if originalCategory and "category" in destUsedItemAttributes:
             # find out if something is defined when sending an item to destMeetingConfig
-            if originalCategory:
-                for destCat in originalCategory.category_mapping_when_cloning_to_other_mc:
-                    if destCat.split('.')[0] == destMeetingConfigId:
-                        # we found a mapping defined for the new category, apply it
-                        # get the category so it fails if it does not exist (that should not be possible...)
-                        newCat = getattr(destMeetingConfig.categories, destCat.split('.')[1])
-                        newItem.setCategory(newCat.getId())
-                        break
+            for destCat in originalCategory.category_mapping_when_cloning_to_other_mc:
+                if destCat.split('.')[0] == destMeetingConfigId:
+                    # we found a mapping defined for the new category, apply it
+                    # get the category so it fails if it does not exist (that should not be possible...)
+                    newCat = getattr(destMeetingConfig.categories, destCat.split('.')[1])
+                    newItem.setCategory(newCat.getId())
+                    break
 
         # find meeting to present the item in and set it as preferred
         # this way if newItem needs to be presented in a frozen meeting, it works

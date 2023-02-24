@@ -211,7 +211,7 @@ class testColumns(PloneMeetingTestCase):
     def test_pm_ItemCategoryColumn(self):
         """Test the column displaying category of MeetingItem."""
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         meetingFolder = self.getMeetingFolder()
@@ -236,7 +236,7 @@ class testColumns(PloneMeetingTestCase):
     def test_pm_MeetingPrettyLinkColumnWithStaticInfos(self):
         """Test the PMPrettyLinkColumn for Meeting, especially when displaying static infos."""
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         meetingFolder = self.getMeetingFolder()
