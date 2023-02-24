@@ -1884,7 +1884,6 @@ class testMeetingItem(PloneMeetingTestCase):
            it is the case when duplicating an item without category of having a
            disabled category or when sending an item to another MC, an item without
            category can not be "presented".'''
-        cfg = self.meetingConfig
         self._enableField('category')
         self.changeUser('pmManager')
         self.create('Meeting')
@@ -8210,6 +8209,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.getCategory(theObject=True), cfg.categories.development)
         self.assertEqual(item.getProposingGroup(), self.developers_uid)
         self.assertEqual(item.getProposingGroup(theObject=True), self.developers)
+        # unknown category (should not be possible)
+        item.setCategory('unknown')
+        self.assertEqual(item.getCategory(), 'unknown')
+        self.assertEqual(item.getCategory(True), 'development')
 
     def test_pm_GetClassifier(self):
         """The MeetingItem.classifier accessor was overrided."""
