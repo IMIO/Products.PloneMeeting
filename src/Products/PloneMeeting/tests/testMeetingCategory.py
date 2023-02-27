@@ -125,8 +125,7 @@ class testMeetingCategory(PloneMeetingTestCase):
     def test_pm_CanNotRenameUsedCategory(self):
         """As well as deleted, a used category can not be renamed neither as we
            us it's identifier as key."""
-        #self._enableField('category')
-        self.meetingConfig.setUseGroupsAsCategories(False)
+        self._enableField('category')
         self.changeUser('pmCreator1')
         # use a category that is not used in MeetingConfig (default itemtemplate)
         item = self.create('MeetingItem', category="events")
