@@ -1872,9 +1872,9 @@ def print_votes(item,
     elif used_patterns == "counts_persons":
         patterns = {
             'yes': u"<p><strong>A voté pour: {0}</strong></p>",
-            'yes_multiple': u"<p><strong>Ont votés pour: {0}</strong></p>",
+            'yes_multiple': u"<p><strong>Ont voté pour: {0}</strong></p>",
             'no': u"<p><strong>A voté contre: {0}</strong></p>",
-            'no_multiple': u"<p><strong>Ont votés contre: {0}</strong></p>",
+            'no_multiple': u"<p><strong>Ont voté contre: {0}</strong></p>",
             'abstain': u"<p><strong>S'est abstenu(e): {0}</strong></p>",
             'abstain_multiple': u"<p><strong>Se sont abstenu(e)s: {0}</strong></p>"}
     patterns.update(custom_patterns)
