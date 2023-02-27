@@ -150,7 +150,7 @@ class ChangeItemVotePollTypeView(ChangeItemPollTypeView):
     def _do_validate_new_poll_type(self, old_pollType, new_value):
         """Specific validation."""
         # only if no vote encoded
-        if self.context.getVoteCount(
+        if self.context.get_vote_count(
             NOT_ENCODED_VOTE_VALUE, vote_number=self.vote_number) != \
            len(self.context.get_item_voters()):
             api.portal.show_message(

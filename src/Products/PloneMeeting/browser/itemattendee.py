@@ -216,7 +216,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
                         # secret
                         if item_to_update.get_vote_is_secret(vote_number=i):
                             # every voters voted?
-                            encoded_votes_count = item_to_update.getVoteCount(
+                            encoded_votes_count = item_to_update.get_vote_count(
                                 vote_value='any_voted', vote_number=i)
                             if len_voters == encoded_votes_count:
                                 api.portal.show_message(

@@ -400,12 +400,12 @@ class testVotes(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, votes_form._doApply)
         self.changeUser('pmManager')
-        self.assertEqual(public_item.getVoteCount('yes'), 2)
+        self.assertEqual(public_item.get_vote_count('yes'), 2)
         votes_form.update()
         votes_form._doApply()
         # votes were updated
-        self.assertEqual(public_item.getVoteCount('yes'), 0)
-        self.assertEqual(public_item.getVoteCount('no'), 4)
+        self.assertEqual(public_item.get_vote_count('yes'), 0)
+        self.assertEqual(public_item.get_vote_count('no'), 4)
 
     def test_pm_EncodePublicVotesFormLinkedToPrevious(self):
         """ """
@@ -429,7 +429,7 @@ class testVotes(PloneMeetingTestCase):
         votes_form = public_item.restrictedTraverse('@@item_encode_votes_form')
         votes_form.meeting = meeting
         # there are 'yes' votes so not able to link to previous
-        self.assertEqual(public_item.getVoteCount('yes'), 2)
+        self.assertEqual(public_item.get_vote_count('yes'), 2)
         load_view = public_item.restrictedTraverse('@@load_item_assembly_and_signatures')
         load_view._update()
         self.assertFalse(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
@@ -549,12 +549,12 @@ class testVotes(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, votes_form._doApply)
         self.changeUser('pmManager')
-        self.assertEqual(secret_item.getVoteCount('yes'), 1)
+        self.assertEqual(secret_item.get_vote_count('yes'), 1)
         votes_form.update()
         votes_form._doApply()
         # votes were updated
-        self.assertEqual(secret_item.getVoteCount('yes'), 0)
-        self.assertEqual(secret_item.getVoteCount('no'), 4)
+        self.assertEqual(secret_item.get_vote_count('yes'), 0)
+        self.assertEqual(secret_item.get_vote_count('no'), 4)
 
     def test_pm_EncodeSecretVotesFormLinkedToPrevious(self):
         """ """
@@ -563,7 +563,7 @@ class testVotes(PloneMeetingTestCase):
             self._createMeetingWithVotes(include_yes=False)
 
         # there are 'yes' votes so not able to link to previous
-        self.assertEqual(secret_item.getVoteCount('yes'), 1)
+        self.assertEqual(secret_item.get_vote_count('yes'), 1)
         load_view = secret_item.restrictedTraverse('@@load_item_assembly_and_signatures')
         load_view._update()
         self.assertFalse(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))

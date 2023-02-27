@@ -347,7 +347,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         total_count = 0
         for vote_number in range(len(self.item_votes)):
             sub_counts = []
-            total_votes = self.context.getVoteCount('any_votable', vote_number)
+            total_votes = self.context.get_vote_count('any_votable', vote_number)
             number_of_votes_msg = translate(
                 'number_of_voters', domain='PloneMeeting', context=self.request)
             res = [u'<span title="{0}">{1}</span>'.format(
@@ -359,7 +359,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
             # specify how much voted for this vote if secret
             vote_is_secret = self.context.get_vote_is_secret(vote_number)
             if vote_is_secret:
-                voted = self.context.getVoteCount('any_voted', vote_number)
+                voted = self.context.get_vote_count('any_voted', vote_number)
                 formated_total_votes = "{0} / {1}".format(voted, total_votes)
             sub_counts.append((number_of_votes_msg,
                                formated_total_votes,
@@ -373,7 +373,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                 if not linked_vote_numbers or vote_number == min(linked_vote_numbers):
                     total_voted = 0
                     for linked_vote_number in linked_vote_numbers:
-                        total_voted += self.context.getVoteCount('any_voted', linked_vote_number)
+                        total_voted += self.context.get_vote_count('any_voted', linked_vote_number)
                     translated_used_vote_value = translate(
                         'vote_value_not_yet',
                         domain='PloneMeeting',
@@ -397,7 +397,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                     'vote_value_{0}'.format(usedVoteValue),
                     domain='PloneMeeting',
                     context=self.request)
-                count = self.context.getVoteCount(usedVoteValue, vote_number)
+                count = self.context.get_vote_count(usedVoteValue, vote_number)
                 res.append(pattern.format(
                     usedVoteValue,
                     translated_used_vote_value,

@@ -7827,9 +7827,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 cfg.isVotable(self)
         return res
 
-    security.declarePublic('getVoteCount')
+    security.declarePublic('get_vote_count')
 
-    def getVoteCount(self, vote_value, vote_number=0):
+    def get_vote_count(self, vote_value, vote_number=0):
         '''Gets the number of votes for p_vote_value.
            A special value 'any_votable' may be passed for p_vote_value,
            in this case every values other than NOT_VOTABLE_LINKED_TO_VALUE are counted.'''
