@@ -151,6 +151,10 @@ Changelog
 - Fixed `IMeeting.validate_dates` that was failing because `Data` object
   does not behaves the same way when creating or editing a `Meeting`.
   [gbastien]
+- Make sure not used fields are not displayed on the meeting view.
+  `BaseMeetingView.show_field` ignores not used boolean fields that are `False`
+  and special management for `IMeeting.place` field.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
