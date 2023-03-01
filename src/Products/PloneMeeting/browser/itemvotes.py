@@ -19,6 +19,7 @@ from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import get_context_with_request
+from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.widgets.pm_number import PMNumberFieldWidget
 from Products.PloneMeeting.widgets.pm_selectreadonly import PMSelectReadonlyWidget
 from z3c.form import field
@@ -292,7 +293,8 @@ def is_vote_updatable_for(context, item_to_update):
        if using same pollType and same voters and not using several or linked votes."""
     res = False
     if context == item_to_update or \
-       (context.getPollType() == item_to_update.getPollType() and
+       (context.get_item_votes(vote_number=0).get('poll_type', context.getPollType()) ==
+        item_to_update.get_item_votes(vote_number=0).get('poll_type', item_to_update.getPollType()) and
         context.get_item_voters() == item_to_update.get_item_voters() and
             len(item_to_update.get_item_votes()) < 2):
         res = True
@@ -350,10 +352,12 @@ class EncodeVotesForm(BaseAttendeeForm):
                 if wdt.__name__ == 'voter_uid':
                     wdt.mode = HIDDEN_MODE
         # disable apply_until_item_number when using several votes
-        if len(self.context.get_item_votes()) > 1 or self.request.get('vote_number', 0) > 0:
+        # or if poll_type was redefined
+        if _should_disable_apply_until_item_number(self.context):
             apply_until_item_number = self.widgets['apply_until_item_number']
             apply_until_item_number.disabled = "disabled"
-            apply_until_item_number.title = _(u"Not available when using several votes on same item.")
+            apply_until_item_number.title = _(
+                u"Not available when using several votes on same item.")
 
     def _doApply(self):
         """ """
@@ -370,6 +374,10 @@ class EncodeVotesForm(BaseAttendeeForm):
         data['voters'] = PersistentMapping()
         for vote in self.votes:
             data['voters'][vote['voter_uid']] = vote['vote_value']
+        # add poll_type in case it was redefined
+        vote_infos = self.context.get_item_votes(vote_number=self.vote_number)
+        if 'poll_type' in vote_infos:
+            data['poll_type'] = vote_infos['poll_type']
 
         items_to_update = _itemsToUpdate(
             from_item_number=self.context.getItemNumber(relativeTo='meeting'),
@@ -381,6 +389,7 @@ class EncodeVotesForm(BaseAttendeeForm):
             # set item public votes
             if is_vote_updatable_for(self.context, item_to_update):
                 self.meeting.set_item_public_vote(item_to_update, data, self.vote_number)
+                notifyModifiedAndReindex(item_to_update)
                 updated.append(item_to_update.getItemNumber(for_display=True))
             else:
                 not_updated.append(item_to_update.getItemNumber(for_display=True))
@@ -542,6 +551,17 @@ class IEncodeSecretVotes(Interface):
             raise Invalid(msg)
 
 
+def _should_disable_apply_until_item_number(context):
+    """Is it possible to use the "apply_until_item_number" field?"""
+    vote_number = context.REQUEST.get('vote_number', 0)
+    if len(context.get_item_votes()) > 1 or \
+       vote_number > 0 or \
+       context.get_item_votes(vote_number).get('poll_type', None) != \
+       context.getPollType():
+        return True
+    return False
+
+
 class EncodeSecretVotesForm(BaseAttendeeForm):
     """ """
 
@@ -569,7 +589,7 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
                 elif wdt.__name__ == 'vote_value' and wdt.value:
                     wdt.klass += " {0}".format(wdt.context['vote_value'])
         # disable apply_until_item_number when using several votes
-        if len(self.context.get_item_votes()) > 1 or self.request.get('vote_number', 0) > 0:
+        if _should_disable_apply_until_item_number(self.context):
             apply_until_item_number = self.widgets['apply_until_item_number']
             apply_until_item_number.disabled = "disabled"
             apply_until_item_number.title = _(u"Not available when using several votes on same item.")
@@ -608,6 +628,7 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
             # set item secret vote
             if is_vote_updatable_for(self.context, item_to_update):
                 self.meeting.set_item_secret_vote(item_to_update, data, self.vote_number)
+                notifyModifiedAndReindex(item_to_update)
                 updated.append(item_to_update.getItemNumber(for_display=True))
             else:
                 not_updated.append(item_to_update.getItemNumber(for_display=True))
@@ -665,7 +686,7 @@ class ItemDeleteVoteView(BrowserView):
             assert self.context._voteIsDeletable(vote_number)
 
             vote_to_delete = item_votes[vote_number]
-            if self.context.get_votes_are_secret():
+            if self.context.get_vote_is_secret(vote_number):
                 originnal_vote_keys = [str(vote_count) for vote_value, vote_count
                                        in vote_to_delete['votes'].items()]
                 originnal_vote_keys = "__".join(originnal_vote_keys)

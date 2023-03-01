@@ -193,7 +193,7 @@ body.cke_editable.cke_show_borders table[border='0'] tr td,
 #content div.pmMoreInfo table:not([border]):not([style*="border"])  tr td,
 body.cke_editable table:not([border='0']):not([style*="border"])  tr td,
 body.cke_editable table.cke_show_border:not([border='0']):not([style*="border"])  tr td,
-#content table.no-style-table table tr td,
+#content table.no-style-table table:not([class='listing datagridwidget-table-view']) tr td,
 #content div.static-infos table[border='1'] tr th,
 #content div.static-infos table[border='1'] tr td,
 #content div.pmMoreInfo table[border='1'] tr th,
@@ -631,7 +631,8 @@ div.hsGrey {
 a.highlightValue,
 p.highlightValue,
 span.highlightValue,
-dt.highlightValue span {
+dt.highlightValue span,
+#content div.highlightValue legend a {
     color: red !important;
 }
 p.warningValue,
@@ -717,6 +718,7 @@ input:disabled:not(.notTriggerableTransitionButton),
 input[readonly=""] {
     color: lightgrey !important;
     border-color: lightgrey !important;
+    background-color: #F0F0F0;
     cursor: not-allowed !important;
 }
 
@@ -2070,6 +2072,14 @@ div.tooltipster-content table.actionspanel-no-style-table td.noPadding {
     color: lightgrey;
     cursor: help;
 }
+#content span.fa.disabled-dark {
+    color: grey;
+    opacity: 0.6;
+    cursor: help;
+}
+#content span.fa.disabled-dark:hover {
+    opacity: 1;
+}
 #content span.fa.green-colored {
     color: green;
 }
@@ -2403,6 +2413,10 @@ span.item-not-voter {
    cursor: help;
 }
 
+div.vote-header {
+    padding-bottom: 0.25em;
+}
+
 /* integer field with +1/-1 control */
 input.int-field {
   padding-left: 0.5em;
@@ -2494,9 +2508,8 @@ table#form-widgets-committees div.error {
 table#form-widgets-committees th.column-place {
     min-width: 60px;
 }
-/* hide Meeting.committees label on edit and view */
-div#formfield-form-widgets-committees label[for="form-widgets-committees"],
-body.template-meeting_view label[for="form-widgets-committees"] {
+/* hide Meeting.committees label on edit */
+div#formfield-form-widgets-committees label[for="form-widgets-committees"] {
     display: none;
 }
 

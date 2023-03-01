@@ -1505,7 +1505,7 @@ class testViews(PloneMeetingTestCase):
         # remove recurring items in self.meetingConfig
         self.changeUser('siteadmin')
         self._removeConfigObjectsFor(cfg)
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         cfg.setInsertingMethodsOnAddItem((
             {'insertingMethod': 'on_list_type',
              'reverse': '0'},

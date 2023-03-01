@@ -4,6 +4,8 @@
 #
 
 from appy.shared.diff import HtmlDiff
+from collective.compoundcriterion.adapters import NegativePersonalLabelsAdapter
+from collective.compoundcriterion.adapters import NegativePreviousIndexValuesAdapter
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentgenerator.adapters import GenerablePODTemplatesAdapter
@@ -182,7 +184,7 @@ class MeetingContentDeletableAdapter(APContentDeletableAdapter):
         '''See docstring in interfaces.py.'''
         res = super(MeetingContentDeletableAdapter, self).mayDelete()
         if res:
-            if self.context.get_raw_items() and \
+            if self.context.number_of_items() != 0 and \
                not api.user.get_current().has_role('Manager'):
                 res = False
         return res
@@ -925,11 +927,6 @@ class CompoundCriterionBaseAdapter(object):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
-    @property
-    def query(self):
-        ''' '''
-        return {}
-
 
 # cachekeys useable for CompoundCriterionAdapters
 def query_user_groups_cachekey(method, self):
@@ -1543,7 +1540,7 @@ class PersonalLabelsAdapter(CompoundCriterionBaseAdapter):
     query = query_personal_labels
 
 
-class NegativePersonalLabelsAdapter(CompoundCriterionBaseAdapter):
+class PMNegativePersonalLabelsAdapter(CompoundCriterionBaseAdapter, NegativePersonalLabelsAdapter):
 
     @property
     @ram.cache(query_user_groups_cachekey)
@@ -1552,21 +1549,17 @@ class NegativePersonalLabelsAdapter(CompoundCriterionBaseAdapter):
            query and turn personal labels to negative personal values.'''
         if not self.cfg:
             return {}
-        # get personal labels to make current user aware and to negativate
-        labels = [value for value in self.context.query if value[u'i'] == u'labels']
-        if labels:
-            member_id = get_current_user_id(self.request)
-            # if no selected values, the 'v' key is not there...
-            labels = labels[0].get('v', [])
-            personal_labels = ['{0}:{1}'.format(member_id, label) for label in labels]
-        return {'portal_type': {'query': self.cfg.getItemTypeName()},
-                'labels': {'not': personal_labels}, }
+        base_query = super(PMNegativePersonalLabelsAdapter, self).query
+        base_query.update({'portal_type': {'query': self.cfg.getItemTypeName()}})
+        return base_query
 
     # we may not ram.cache methods in same file with same name...
     query = query_negative_personal_labels
 
 
-class NegativePreviousIndexValuesAdapter(CompoundCriterionBaseAdapter):
+class PMNegativePreviousIndexValuesAdapter(CompoundCriterionBaseAdapter, NegativePreviousIndexValuesAdapter):
+
+    _adapter_name = u'items-with-negative-previous-index'
 
     @property
     @ram.cache(query_user_groups_cachekey)
@@ -1577,19 +1570,10 @@ class NegativePreviousIndexValuesAdapter(CompoundCriterionBaseAdapter):
            items that does not have that or that advice.'''
         if not self.cfg:
             return {}
-        # get previous index
-        previous = None
-        for value in self.context.query:
-            if value[u'i'] == u'CompoundCriterion' and \
-               u'items-with-negative-previous-index' in value[u'v']:
-                break
-            previous = value
 
-        query = {
-            'portal_type': {'query': self.cfg.getItemTypeName()}, }
-        if previous:
-            query[previous[u'i']] = {'not': previous[u'v']}
-        return query
+        base_query = super(PMNegativePreviousIndexValuesAdapter, self).query
+        base_query.update({'portal_type': {'query': self.cfg.getItemTypeName()}})
+        return base_query
 
     # we may not ram.cache methods in same file with same name...
     query = query_negative_previous_index_values

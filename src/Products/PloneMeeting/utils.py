@@ -1203,14 +1203,18 @@ def signatureNotAlone(xhtmlContent, numberOfChars=CLASS_TO_LAST_CHILDREN_NUMBER_
 
 
 # ------------------------------------------------------------------------------
-def forceHTMLContentTypeForEmptyRichFields(obj, field_names=[]):
+def forceHTMLContentTypeForEmptyRichFields(obj, field_name=None):
     '''
       While saving an empty Rich field ('text/html'),
       the contentType is set back to 'text/plain'...
       Force it to 'text/html' if the field is empty.
     '''
-    for field in obj.Schema().filterFields(default_content_type='text/html'):
-        if (not field_names or field.getName() in field_names) and not field.getRaw(obj):
+    if field_name:
+        fields = obj.Schema().filterFields(default_content_type='text/html', __name__=field_name)
+    else:
+        fields = obj.Schema().filterFields(default_content_type='text/html')
+    for field in fields:
+        if not field.getRaw(obj):
             field.setContentType(obj, 'text/html')
 
 
@@ -1955,6 +1959,13 @@ def checkMayQuickEdit(obj,
     return res
 
 
+def may_view_field(obj, field_name):
+    """Check if current user has permission and condition to see the given p_field_name."""
+    field = obj.getField(field_name)
+    return _checkPermission(field.read_permission, obj) and \
+        _evaluateExpression(obj, field.widget.condition)
+
+
 def get_states_before_cachekey(method, obj, review_state):
     '''cachekey method for get_states_before.'''
     # do only re-compute if cfg changed or params changed
@@ -2096,10 +2107,10 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item, item_state, org_uid=None
         data='state', only_enabled=False)
 
     # by default, observers may View in every states as well as creators
-    # this way observers have access or it is never the case
-    # and creators have access when state "itemcreated" is disabled
-    suffix_roles = {'observers': ['Reader'],
-                    'creators': ['Reader']}
+    # for observers, this also depends on MeetingConfig.itemObserversStates if defined
+    suffix_roles = {'creators': ['Reader'], }
+    if not cfg.getItemObserversStates() or item_state in cfg.getItemObserversStates():
+        suffix_roles['observers'] = ['Reader']
 
     # MeetingConfig.itemWFValidationLevels
     # states before validated

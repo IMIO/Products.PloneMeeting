@@ -62,6 +62,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                           'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
                           'delayed',
                           'hide_decisions_when_under_writing',
+                          'hide_decisions_when_under_writing_check_returned_to_proposing_group',
                           'item_validation_no_validate_shortcuts',
                           'item_validation_shortcuts',
                           'mark_not_applicable',
@@ -304,6 +305,18 @@ class testWFAdaptations(PloneMeetingTestCase):
              'waiting_advices_given_advices_required_to_validate',
              'waiting_advices_given_and_signed_advices_required_to_validate', )))
 
+        # hide_decisions_when_under_writing_check_returned_to_proposing_group
+        # depends on hide_decisions_when_under_writing
+        self.failIf(cfg.validate_workflowAdaptations(
+            ('hide_decisions_when_under_writing',
+             'hide_decisions_when_under_writing_check_returned_to_proposing_group', )))
+        self.failIf(cfg.validate_workflowAdaptations(
+            ('hide_decisions_when_under_writing', )))
+        self.assertEqual(
+            cfg.validate_workflowAdaptations(
+                ('hide_decisions_when_under_writing_check_returned_to_proposing_group', )),
+            wa_dependencies)
+
     def test_pm_Validate_workflowAdaptations_item_validation_levels_dependency(self):
         """Test MeetingConfig.validate_workflowAdaptations where some wfAdaptations
            depend on MeetingConfig.itemWFValidationLevels (that must be activated)."""
@@ -342,10 +355,6 @@ class testWFAdaptations(PloneMeetingTestCase):
            moreover it checks too if a validation level is available,
            this could not be the case when set using import_data or
            if validation_level was just disabled."""
-        wa_error = translate(
-            'wa_presented_back_to_wrong_itemWFValidationLevels',
-            domain='PloneMeeting', context=self.request)
-
         # make sure we use default itemWFValidationLevels,
         # useful when test executed with custom profile
         cfg = self.meetingConfig
@@ -358,7 +367,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # unknown (unselected) item validation level
         self.assertEqual(
             cfg.validate_workflowAdaptations(('presented_item_back_to_unknown', )),
-            wa_error)
+            u'The workflow adaptation "presented_item_back_to_unknown" is no more available!')
 
     def test_pm_Validate_workflowAdaptations_added_no_publication(self):
         """Test MeetingConfig.validate_workflowAdaptations that manage addition
@@ -1874,9 +1883,16 @@ class testWFAdaptations(PloneMeetingTestCase):
              'use_custom_icon': False,
              'use_custom_back_transition_title_for': (),
              'use_custom_state_title': True, },), }
+        # change the from_state title to check that it is not changed by the WFA (was the case...)
+        levels = self.meetingConfig.getItemWFValidationLevels()
+        levels[0]['state_title'] = "h\xc3\xa9h\xc3\xa9"
+        self.meetingConfig.setItemWFValidationLevels(levels)
         self._activate_wfas(
             ('waiting_advices', 'waiting_advices_proposing_group_send_back'),
             keep_existing=True)
+        itemWF = self.meetingConfig.getItemWorkflow(True)
+        self.assertEqual(itemWF.states['itemcreated'].title, "h\xc3\xa9h\xc3\xa9")
+
         self._waiting_advices_active()
 
         # back to original configuration

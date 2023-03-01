@@ -173,9 +173,10 @@ ITEM_WF_STATE_ATTRS = [
     'itemBudgetInfosStates',
     'itemCommitteesStates',
     'itemCommitteesViewStates',
-    'itemGroupsInChargeStates',
     'itemCopyGroupsStates',
+    'itemGroupsInChargeStates',
     'itemManualSentToOtherMCStates',
+    'itemObserversStates',
     'recordItemHistoryStates']
 ITEM_WF_TRANSITION_ATTRS = [
     'transitionsReinitializingDelays',
@@ -538,19 +539,6 @@ schema = Schema((
         vocabulary='listUsedMeetingAttributes',
         default=defValues.usedMeetingAttributes,
         enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    BooleanField(
-        name='useGroupsAsCategories',
-        default=defValues.useGroupsAsCategories,
-        widget=BooleanField._properties['widget'](
-            description="UseGroupsAsCategories",
-            description_msgid="use_groups_as_categories_descr",
-            label='Usegroupsascategories',
-            label_msgid='PloneMeeting_label_useGroupsAsCategories',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -2191,6 +2179,23 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='itemObserversStates',
+        widget=MultiSelectionWidget(
+            description="IitemObserversStates",
+            description_msgid="item_observers_states_descr",
+            format="checkbox",
+            label='Itemobserversstates',
+            label_msgid='PloneMeeting_label_itemObserversStates',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listItemStates',
+        default=defValues.itemObserversStates,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
     BooleanField(
         name='useCopies',
         default=defValues.useCopies,
@@ -2732,6 +2737,20 @@ schema = Schema((
         schemata="votes",
         write_permission="PloneMeeting: Write risky config",
     ),
+    StringField(
+        name='votesResultTALExpr',
+        default=defValues.votesResultTALExpr,
+        widget=StringField._properties['widget'](
+            description="VotesResultTALExpr",
+            description_msgid="votes_result_tal_expr_descr",
+            size=70,
+            label='Votesresulttalexpr',
+            label_msgid='PloneMeeting_label_votesResultTALExpr',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="votes",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     BooleanField(
         name='displayVotingGroup',
         default=defValues.displayVotingGroup,
@@ -2863,6 +2882,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'return_to_proposing_group_with_all_validations',
                      'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
                      'hide_decisions_when_under_writing',
+                     'hide_decisions_when_under_writing_check_returned_to_proposing_group',
                      'waiting_advices',
                      'waiting_advices_from_every_val_levels',
                      'waiting_advices_from_before_last_val_level',
@@ -3916,12 +3936,25 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listUsedItemAttributes')
 
     def listUsedItemAttributes(self):
-        return self.listAttributes(MeetingItem.schema, optionalOnly=True)
+        res = self.listAttributes(MeetingItem.schema, optionalOnly=True)
+        # add special values for votesResult to repeat it after motivation
+        # and/or after decisionEnd
+        res.add('votesResult_after_motivation',
+                '%s (votesResult_after_motivation)' %
+                (translate('votesResult_after_motivation',
+                           domain='PloneMeeting',
+                           context=self.REQUEST)))
+        res.add('votesResult_after_decisionEnd',
+                '%s (votesResult_after_decisionEnd)' %
+                (translate('votesResult_after_decisionEnd',
+                           domain='PloneMeeting',
+                           context=self.REQUEST)))
+        return res.sortedByValue()
 
     security.declarePrivate('listItemAttributes')
 
     def listItemAttributes(self):
-        return self.listAttributes(MeetingItem.schema)
+        return self.listAttributes(MeetingItem.schema).sortedByValue()
 
     security.declarePrivate('listUsedMeetingAttributes')
 
@@ -3948,7 +3981,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                         domain='PloneMeeting',
                                         context=self.REQUEST),
                               field)))
-        return DisplayList(tuple(res))
+        return DisplayList(tuple(res)).sortedByValue()
 
     security.declarePrivate('listMeetingAttributes')
 
@@ -4491,8 +4524,23 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            ensures that wrong combinations aren't used.'''
         pm = 'PloneMeeting'
         # Prevent combined use of "proposingGroupWithGroupInCharge" and "groupsInCharge"
-        if ('proposingGroupWithGroupInCharge' in newValue) and ('groupsInCharge' in newValue):
+        if 'proposingGroupWithGroupInCharge' in newValue and 'groupsInCharge' in newValue:
             return translate('no_proposingGroupWithGroupInCharge_and_groupsInCharge',
+                             domain=pm,
+                             context=self.REQUEST)
+        # votesResult must be enabled to use
+        # votesResult_after_motivation/votesResult_after_decisionEnd
+        # and votesResult_after_motivation/votesResult_after_decisionEnd can not
+        # be used at the same time
+        if 'votesResult_after_motivation' in newValue and \
+           'votesResult_after_decisionEnd' in newValue:
+            return translate('no_votesResult_after_together',
+                             domain=pm,
+                             context=self.REQUEST)
+        if ('votesResult_after_motivation' in newValue or
+            'votesResult_after_decisionEnd' in newValue) and \
+                'votesResult' not in newValue:
+            return translate('no_votesResult_after_without_votesResult',
                              domain=pm,
                              context=self.REQUEST)
 
@@ -4628,11 +4676,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             return msg
 
         # dependecies, some adaptations will complete already select ones
-        dependencies = {'waiting_advices': [v for v in self.wfAdaptations
-                                            if v.startswith('waiting_advices_')],
-                        'item_validation_shortcuts': ['item_validation_no_validate_shortcuts'],
-                        'waiting_advices_given_advices_required_to_validate':
-                            ['waiting_advices_given_and_signed_advices_required_to_validate']}
+        dependencies = {
+            'waiting_advices': [v for v in self.wfAdaptations
+                                if v.startswith('waiting_advices_')],
+            'item_validation_shortcuts': ['item_validation_no_validate_shortcuts'],
+            'waiting_advices_given_advices_required_to_validate':
+                ['waiting_advices_given_and_signed_advices_required_to_validate'],
+            'hide_decisions_when_under_writing':
+                ['hide_decisions_when_under_writing_check_returned_to_proposing_group'],
+        }
         for base_wfa, dependents in dependencies.items():
             if set(values).intersection(dependents) and base_wfa not in values:
                 return translate(
@@ -4662,14 +4714,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         # check that selected back_from_presented transitions
         # exists in MeetingConfig.itemWFValidationLevels
+        # this may be the case when removing a validation level already selected
         if back_from_presented:
-            msg = translate('wa_presented_back_to_wrong_itemWFValidationLevels',
-                            domain='PloneMeeting',
-                            context=self.REQUEST)
             for back_from in back_from_presented:
                 presented_state = back_from.replace('presented_item_back_to_', '')
                 if presented_state not in item_validation_states:
-                    return msg
+                    return translate(
+                        'wa_presented_back_to_wrong_itemWFValidationLevels',
+                        domain='PloneMeeting',
+                        mapping={"wfa_back_from_title": back_from},
+                        context=self.REQUEST)
 
         catalog = api.portal.get_tool('portal_catalog')
         wfTool = api.portal.get_tool('portal_workflow')
@@ -5075,10 +5129,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  context=self.REQUEST)
         # check that if we selected 'on_categories', we actually use categories...
         if 'on_categories' in res:
-            if hasattr(self.REQUEST, 'useGroupsAsCategories'):
-                notUsingCategories = self.REQUEST.get('useGroupsAsCategories')
+            if hasattr(self.REQUEST, 'usedItemAttributes'):
+                notUsingCategories = 'category' not in self.REQUEST.get('usedItemAttributes')
             else:
-                notUsingCategories = self.getUseGroupsAsCategories()
+                notUsingCategories = 'category' not in self.getUsedItemAttributes()
             if notUsingCategories:
                 return translate('inserting_methods_not_using_categories_error',
                                  domain='PloneMeeting',
@@ -5528,6 +5582,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("review_state",
                 u"{0} (review_state)".format(
                     translate('header_review_state', domain=d, context=self.REQUEST))),
+            ("review_state_title", u"{0} (review_state_title)".format(
+                translate('header_review_state_title_descr', domain=d, context=self.REQUEST))),
             ("actions",
                 u"{0} (actions)".format(
                     translate("header_actions", domain=d, context=self.REQUEST))),

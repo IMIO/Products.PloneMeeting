@@ -8,11 +8,13 @@ from eea.facetednavigation.browser.app.view import FacetedContainerView
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import uuidsToObjects
 from imio.history.utils import getLastWFAction
+from imio.pyutils.utils import sort_by_indexes
 from plone import api
 from plone.dexterity.browser.add import DefaultAddForm
 from plone.dexterity.browser.add import DefaultAddView
 from plone.dexterity.browser.edit import DefaultEditForm
 from plone.dexterity.browser.view import DefaultView
+from plone.supermodel.directives import FIELDSETS_KEY
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.WorkflowCore import WorkflowException
@@ -21,6 +23,7 @@ from Products.Five import BrowserView
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.content.meeting import get_all_usable_held_positions
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
@@ -64,12 +67,25 @@ def manage_fields(the_form):
                 group.fields = group.fields.omit(field_name)
 
 
+def reorder_groups(the_form):
+    """Reorder groups/fieldsets because when adding custom fields to an existing
+       group, fieldset is duplicated and when merged for display,
+       the overrided fieldset is displayed first."""
+    order = {fieldset.__name__: i for i, fieldset in
+             enumerate(IMeeting.getTaggedValue(FIELDSETS_KEY))}
+    # in case group does not exist (new group added by custom plugin)
+    # it will be displayed at the end
+    indexes = [order.get(group.__name__, 9) for group in the_form.groups]
+    # avoid useless reorder
+    if indexes != sorted(indexes):
+        the_form.groups = sort_by_indexes(the_form.groups, indexes)
+
+
 def manage_label_assembly(the_form):
-    '''
-      Depending on the fact that we use 'assembly' alone or
-      'assembly, excused, absents', we will translate the 'assembly' label
-      a different way.
-    '''
+    """Depending on the fact that we use "assembly" alone or
+       "assembly, excused, absents", we will translate the "assembly" label
+       a different way.
+    """
     widgets = getattr(the_form, 'w', None) or the_form.widgets
     if 'assembly' in widgets:
         if 'assembly_excused' in widgets or \
@@ -197,6 +213,10 @@ class BaseMeetingView(object):
         """Does given p_widget use a RichText field?"""
         return widget.field.__class__.__name__ == 'RichText' and \
             widget.__class__.__name__ != 'PMTextAreaWidget'
+
+    def _is_datagrid(self, widget):
+        """Does given p_widget use a DataGrid field?"""
+        return widget.__class__.__name__ == 'BlockDataGridField'
 
     def view_widget(self, widget, empty_value="-"):
         """Render an empty_value instead nothing when field empty."""
@@ -381,6 +401,7 @@ class MeetingEdit(DefaultEditForm, BaseMeetingView):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.used_attrs = self.cfg.getUsedMeetingAttributes()
         manage_fields(self)
+        reorder_groups(self)
 
     def update(self):
         super(MeetingEdit, self).update()
@@ -410,6 +431,7 @@ class MeetingAddForm(DefaultAddForm, BaseMeetingView):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.used_attrs = self.cfg.getUsedMeetingAttributes()
         manage_fields(self)
+        reorder_groups(self)
 
     def update(self):
         super(MeetingAddForm, self).update()

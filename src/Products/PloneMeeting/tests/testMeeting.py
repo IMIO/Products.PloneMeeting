@@ -20,7 +20,6 @@ from plone.app.querystring.querybuilder import queryparser
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products import PloneMeeting as products_plonemeeting
-from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
@@ -68,7 +67,6 @@ class testMeetingType(PloneMeetingTestCase):
            2) vendors
            Sort methods are defined this way:
            a) plonegov-assembly: on_categories
-              (with useGroupsAsCategories=True);
            b) plonemeeting-assembly: on_proposing_groups.
            Sort methods tested here are "on_categories" and "on_proposing_groups".'''
         self.changeUser('pmManager')
@@ -375,7 +373,7 @@ class testMeetingType(PloneMeetingTestCase):
     def test_pm_InsertItemCategories(self):
         '''Sort method tested here is "on_categories".'''
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         cfg.setInsertingMethodsOnAddItem(
             ({'insertingMethod': 'on_categories', 'reverse': '0'}, ))
         self.changeUser('pmManager')
@@ -1022,7 +1020,7 @@ class testMeetingType(PloneMeetingTestCase):
            with a deactivated category used.'''
         self.changeUser('pmManager')
         self.setMeetingConfig(self.meetingConfig2.getId())
-        self.meetingConfig.setUseGroupsAsCategories(False)
+        self._enableField('category')
         self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
                                                           'reverse': '0'},
                                                          {'insertingMethod': 'on_categories',
@@ -1061,7 +1059,7 @@ class testMeetingType(PloneMeetingTestCase):
                                                           {'insertingMethod': 'on_proposing_groups',
                                                            'reverse': '0'},))
         self.setMeetingConfig(self.meetingConfig2.getId())
-        self.assertFalse(self.meetingConfig2.getUseGroupsAsCategories())
+        self.assertTrue('category' in self.meetingConfig2.getUsedItemAttributes())
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         data = ({'proposingGroup': self.developers_uid,
@@ -1326,7 +1324,7 @@ class testMeetingType(PloneMeetingTestCase):
               'reverse': '0'},
              {'insertingMethod': 'on_proposing_groups',
               'reverse': '0'}, ))
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         # groups in charge
         gic1 = self.create(
             'organization',
@@ -1684,7 +1682,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         cfg = self.meetingConfig
         self._removeConfigObjectsFor(cfg, folders=['itemtemplates'])
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         cfg.setInsertingMethodsOnAddItem(
             ({'insertingMethod': 'on_categories',
               'reverse': '0'}, ))
@@ -1944,8 +1942,8 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         # by default, 7 normal items and none late
-        self.assertEqual(meeting.number_of_items(), '7')
-        self.assertEqual(meeting.number_of_items(True), 7)
+        self.assertEqual(meeting.number_of_items(as_str=True), '7')
+        self.assertEqual(meeting.number_of_items(), 7)
         self.assertEqual(len(meeting.get_raw_items()), 7)
         # add a late item
         self.freezeMeeting(meeting)
@@ -1953,20 +1951,26 @@ class testMeetingType(PloneMeetingTestCase):
         item.setPreferredMeeting(meeting.UID())
         self.presentItem(item)
         # now 8 items
-        self.assertEqual(meeting.number_of_items(), '8')
-        self.assertEqual(meeting.number_of_items(True), 8)
+        self.assertEqual(meeting.number_of_items(as_str=True), '8')
+        self.assertEqual(meeting.number_of_items(), 8)
         self.assertEqual(len(meeting.get_raw_items()), 8)
         # remove an item
         self.backToState(item, 'validated')
-        self.assertEqual(meeting.number_of_items(), '7')
-        self.assertEqual(meeting.number_of_items(True), 7)
+        self.assertEqual(meeting.number_of_items(as_str=True), '7')
+        self.assertEqual(meeting.number_of_items(), 7)
         self.assertEqual(len(meeting.get_raw_items()), 7)
         # delete an item
         first_item = meeting.get_items(the_objects=True, ordered=True)[0]
         self.deleteAsManager(first_item.UID())
-        self.assertEqual(meeting.number_of_items(), '6')
-        self.assertEqual(meeting.number_of_items(True), 6)
+        self.assertEqual(meeting.number_of_items(as_str=True), '6')
+        self.assertEqual(meeting.number_of_items(), 6)
         self.assertEqual(len(meeting.get_raw_items()), 6)
+        # remove every items
+        removeView = meeting.restrictedTraverse('@@remove-several-items')
+        removeView([i.UID for i in meeting.get_items(the_objects=False)])
+        self.assertEqual(meeting.number_of_items(as_str=True), '0')
+        self.assertEqual(meeting.number_of_items(), 0)
+        self.assertEqual(len(meeting.get_raw_items()), 0)
 
     def test_pm_AvailableItems(self):
         """
@@ -2011,7 +2015,7 @@ class testMeetingType(PloneMeetingTestCase):
         i3.setTitle('i3')
         i3.setDecision('<p>Decision item 3</p>')
         # set a category if the meetingConfig use it
-        if not cfg.getUseGroupsAsCategories():
+        if 'category' in cfg.getUsedItemAttributes():
             i1.setCategory('development')
             i2.setCategory('research')
             i3.setCategory('events')
@@ -2150,12 +2154,12 @@ class testMeetingType(PloneMeetingTestCase):
            in a meeting of cfg2 because REQUEST['PUBLISHED'] changed!"""
         # configure
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(True)
+        self._enableField('category', enable=False)
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
                                            'reverse': '0'},))
         cfgId = cfg.getId()
         cfg2 = self.meetingConfig2
-        cfg2.setUseGroupsAsCategories(True)
+        self._enableField('category', cfg=cfg2, enable=False)
         cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
                                             'reverse': '0'},))
         cfg2Id = cfg2.getId()
@@ -2741,15 +2745,6 @@ class testMeetingType(PloneMeetingTestCase):
                               permission=(View,),
                               visible=True,
                               category='object_buttons')
-        # add an action that only shows up when no item in the meeting
-        meetingType.addAction(id='no_items',
-                              name='no_items',
-                              action='',
-                              icon_expr='',
-                              condition="python: not context.get_items(the_objects=False)",
-                              permission=(View,),
-                              visible=True,
-                              category='object_buttons')
         # not available for now
         pa = self.portal.portal_actions
         object_buttons = [k['id'] for k in pa.listFilteredActionsFor(meeting)['object_buttons']]
@@ -2769,20 +2764,12 @@ class testMeetingType(PloneMeetingTestCase):
         # still equal, actions panel was not invalidated
         self.assertEqual(beforeEdit_rendered_actions_panel, afterEdit_rendered_actions_panel)
 
-        # NOT invalidated neither when getRawItems changed
-        # for performance reasons, we invalidate only when review_state changed
-        # this usecase is not supported for now
-        # for now, no item in the meeting, the 'no_items' action is shown
-        object_buttons = [k['id'] for k in pa.listFilteredActionsFor(meeting)['object_buttons']]
-        self.assertTrue('no_items' in object_buttons)
+        # invalidated when items added as the Delete action will disappear
+        self.assertTrue("Delete" in afterEdit_rendered_actions_panel)
         item = self.create('MeetingItem')
         self.presentItem(item)
-        object_buttons = [k['id'] for k in pa.listFilteredActionsFor(meeting)['object_buttons']]
-        self.assertFalse('no_items' in object_buttons)
-        actions_panel._transitions = None
         presentedItem_rendered_actions_panel = actions_panel()
-        # still equal, actions panel was not invalidated
-        self.assertEqual(afterEdit_rendered_actions_panel, presentedItem_rendered_actions_panel)
+        self.assertFalse("Delete" in presentedItem_rendered_actions_panel)
 
         # invalidated when review state changed
         # just make sure the contained item is not changed
@@ -3412,15 +3399,10 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.changeUser('pmReviewer2')
         self.assertTrue(self.hasPermission(View, item1))
-        # make sure item2 is not accessible to 'pmReviewer2'
-        if self.hasPermission(View, item2):
-            item2.manage_permission(View, ['Manager'])
-            item2.manage_permission(AccessContentsInformation, ['Manager'])
-            item2.reindexObject()
         self.assertFalse(self.hasPermission(View, item2))
         # there are unaccessible items
         self.assertTrue(
-            len(meeting.get_items(ordered=True, the_objects=False)) < meeting.number_of_items())
+            len(meeting.get_items(the_objects=False)) < meeting.number_of_items())
         # enable item references update
         self.request.set('need_Meeting_update_item_references', True)
         # make sure it will be changed
@@ -3440,7 +3422,7 @@ class testMeetingType(PloneMeetingTestCase):
     def test_pm_MeetingInsertingMethodsHelpMsgView(self):
         '''Test the @@display-inserting-methods-helper-msg view.'''
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         view = meeting.restrictedTraverse('@@display-inserting-methods-helper-msg')
@@ -4027,7 +4009,7 @@ class testMeetingType(PloneMeetingTestCase):
         """The the helper Meeting.update_first_item_number that will take in charge"""
         cfg = self.meetingConfig
         self._enableField('first_item_number', related_to='Meeting')
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         self.changeUser('pmManager')
         meeting1 = self._createMeetingWithItems(meetingDate=datetime(2022, 6, 6))
         meeting2 = self._createMeetingWithItems()

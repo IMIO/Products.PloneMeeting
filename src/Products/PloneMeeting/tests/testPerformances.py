@@ -194,17 +194,17 @@ class testPerformances(PloneMeetingTestCase):
         self._presentSeveralItems(items)
         # called second times whith items in the meeting
         pm_logger.info('Presenting %d items without annexes in a meeting containing %d items.'
-                       % (50, meeting.number_of_items(as_int=True)))
+                       % (50, meeting.number_of_items()))
         dummy_meeting, items = self._setupMeetingItemsWithAnnexes(50, 0, with_meeting=False, as_uids=False)
         self._presentSeveralItems(items)
         # called third times whith items in the meeting
         pm_logger.info('Presenting %d items without annexes in a meeting containing %d items.'
-                       % (50, meeting.number_of_items(as_int=True)))
+                       % (50, meeting.number_of_items()))
         dummy_meeting, items = self._setupMeetingItemsWithAnnexes(50, 0, with_meeting=False, as_uids=False)
         self._presentSeveralItems(items)
         # called fourth times whith items in the meeting
         pm_logger.info('Presenting %d items without annexes in a meeting containing %d items.'
-                       % (50, meeting.number_of_items(as_int=True)))
+                       % (50, meeting.number_of_items()))
         dummy_meeting, items = self._setupMeetingItemsWithAnnexes(50, 0, with_meeting=False, as_uids=False)
         self._presentSeveralItems(items)
 
@@ -213,11 +213,11 @@ class testPerformances(PloneMeetingTestCase):
            to another MC.  Every items contain 5 annexes.'''
         pm_logger.info('Freezing a meeting containing %d items and sending %d items to another MC.' % (50, 25))
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(True)
+        self._enableField('category', enable=False)
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
                                            'reverse': '0'}, ))
         cfg2 = self.meetingConfig2
-        cfg2.setUseGroupsAsCategories(True)
+        self._enableField('category', cfg=cfg2, enable=False)
         cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
                                             'reverse': '0'}, ))
         cfg2Id = cfg2.getId()
@@ -513,7 +513,7 @@ class testPerformances(PloneMeetingTestCase):
     def test_pm_GetCategoriesCaching(self):
         '''Test MeetingConfig.getCategories caching.'''
         times = 1000
-        self.meetingConfig.setUseGroupsAsCategories(False)
+        self._enableField('category')
         # first test with 10 groups without usingGroups
         self._setupForMeetingCategories(10, withUsingGroups=False)
         pm_logger.info('getCategories called %d times with %d activated groups, without usingGroups.'

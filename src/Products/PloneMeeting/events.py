@@ -19,6 +19,7 @@ from imio.helpers.content import get_modified_attrs
 from imio.helpers.content import richtextval
 from imio.helpers.security import fplog
 from imio.helpers.xhtml import storeImagesLocally
+from OFS.interfaces import IObjectWillBeAddedEvent
 from OFS.ObjectManager import BeforeDeleteException
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
@@ -236,18 +237,31 @@ def onMeetingBeforeTransition(meeting, event):
     '''Called before a transition is triggered on a meeting.'''
     # when raising exceptions in a WF script, this needs to be done in the
     # before transition or state is changed nevertheless?
-    if event.new_state.id == 'closed':
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(meeting)
-        if 'return_to_proposing_group' in cfg.getWorkflowAdaptations():
-            # raise a WorkflowException in case there are items still in a
-            # 'returned_to_proposing_group' state
-            returned_to_pg_state_ids = [
-                state for state in cfg.getItemWorkflow(True).states
-                if state.startswith('returned_to_proposing_group')]
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(meeting)
+    wfas = cfg.getWorkflowAdaptations()
+    if event.new_state.id == 'closed' or \
+            (event.new_state.id == 'decisions_published' and
+             'hide_decisions_when_under_writing_check_returned_to_proposing_group' in wfas):
+        # raise a WorkflowException in case there are items returned_to_proposing_group
+        returned_to_pg_state_ids = [
+            state for state in cfg.getItemWorkflow(True).states
+            if state.startswith('returned_to_proposing_group')]
+        if returned_to_pg_state_ids:
             additional_catalog_query = {'review_state': returned_to_pg_state_ids}
-            if meeting.get_items(the_objects=False, additional_catalog_query=additional_catalog_query):
-                msg = _('Can not close a meeting containing items returned to proposing group!')
+            if meeting.get_items(
+                    the_objects=False,
+                    additional_catalog_query=additional_catalog_query):
+                msg = translate(
+                    'Can not set a meeting to ${new_state_title} if it '
+                    'contains items returned to proposing group!',
+                    domain="PloneMeeting",
+                    mapping={
+                        'new_state_title':
+                            translate(cfg.getMeetingWorkflow(True).states[event.new_state.id].title,
+                                      domain="plone",
+                                      context=meeting.REQUEST)},
+                    context=meeting.REQUEST)
                 raise WorkflowException(msg)
 
 
@@ -1435,15 +1449,16 @@ def onFacetedGlobalSettingsChanged(folder, event):
     _notifyContainerModified(folder)
 
 
-def onCategoryWillBeRemoved(category, event):
-    '''Checks if the current p_category can be deleted:
+def onCategoryWillBeMovedOrRemoved(category, event):
+    '''Checks if the current p_category can be moved (renamed) or deleted:
       - it can not be linked to an existing meetingItem (normal item,
         recurring item or item template);
       - it can not be used in field 'category_mapping_when_cloning_to_other_mc'
         of another meetingcategory.'''
     # If we are trying to remove the whole Plone Site, bypass this hook.
     # bypass also if we are in the creation process
-    if event.object.meta_type == 'Plone Site':
+    if event.object.meta_type == 'Plone Site' or \
+       IObjectWillBeAddedEvent.providedBy(event):
         return
 
     tool = api.portal.get_tool('portal_plonemeeting')

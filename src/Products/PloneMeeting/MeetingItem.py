@@ -24,10 +24,12 @@ from imio.helpers.content import get_transitions
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import safe_delattr
+from imio.helpers.content import safe_encode
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.content import uuidToObject
 from imio.helpers.security import fplog
+from imio.helpers.xhtml import is_html
 from imio.history.utils import get_all_history_attr
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
@@ -245,7 +247,7 @@ class MeetingItemWorkflowConditions(object):
         if destination_state == 'presented' or \
            ('imio.actionspanel_portal_cachekey' in self.context.REQUEST and
                 not self.context.REQUEST.get('disable_check_required_data')):
-            if not self.cfg.getUseGroupsAsCategories() and \
+            if self.context.attribute_is_used("category") and \
                not self.context.getCategory(theObject=True):
                 msg = No(_('required_category_ko'))
             elif self.context.attribute_is_used('classifier') and not self.context.getClassifier():
@@ -1193,7 +1195,7 @@ schema = Schema((
     StringField(
         name='category',
         widget=SelectionWidget(
-            condition="python: here.showCategory()",
+            condition="python: here.attribute_is_used('category')",
             format="select",
             description="Category",
             description_msgid="item_category_descr",
@@ -1201,6 +1203,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_category',
             i18n_domain='PloneMeeting',
         ),
+        optional=True,
         vocabulary='listCategories',
     ),
     StringField(
@@ -1379,6 +1382,28 @@ schema = Schema((
         default_output_type="text/x-html-safe",
         optional=True,
         write_permission=WriteDecision,
+    ),
+    TextField(
+        name='votesResult',
+        widget=RichWidget(
+            condition="python: here.attribute_is_used('votesResult')",
+            label='VotesResult',
+            label_msgid='PloneMeeting_label_votesResult',
+            description="VotesResult",
+            description_msgid="votes_result_descr",
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        read_permission="PloneMeeting: Read decision",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=True,
+        # we use WriteMarginalNotes so MeetingManagers may edit votesResult
+        # when item is decided but as field in not in
+        # MeetingItem._bypass_meeting_closed_check_for it will not be quick editable
+        # when the meeting is closed
+        write_permission=WriteMarginalNotes,
     ),
     BooleanField(
         name='oralQuestion',
@@ -2095,7 +2120,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getMotivation')
 
     def getMotivation(self, **kwargs):
-        '''Overridden version of 'motivation' field accessor. It allows to manage
+        '''Override 'motivation' field accessor. It allows to manage
            the 'hide_decisions_when_under_writing' workflowAdaptation that
            hides the motivation/decision for non-managers if meeting state is 'decided.'''
         # hide the decision?
@@ -2113,7 +2138,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getDecision')
 
     def getDecision(self, **kwargs):
-        '''Overridde 'decision' field accessor.
+        '''Override 'decision' field accessor.
            Manage the 'hide_decisions_when_under_writing' workflowAdaptation that
            hides the decision for non-managers if meeting state is 'decided.'''
         # hide the decision?
@@ -2128,6 +2153,57 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         msg = self._mayNotViewDecisionMsg()
         return msg or self.getField('decision').getRaw(self, **kwargs)
 
+    def _get_votes_result_cachekey(method, self, check_is_html=True):
+        '''cachekey method for self._get_votes_result.'''
+        return repr(self), self.modified(), check_is_html
+
+    @ram.cache(_get_votes_result_cachekey)
+    def _get_votes_result(self, check_is_html=True):
+        """Compute votesResult using MeetingConfig.votesResultTALExpr.
+           When p_check_is_html=True result is checked and if it is not HTML
+           a portal_message is displayed to the user."""
+        extra_expr_ctx = _base_extra_expr_ctx(self)
+        # quick bypass when not used or if item not in a meeting
+        expr = extra_expr_ctx['cfg'].getVotesResultTALExpr().strip()
+        if not expr or not self.hasMeeting():
+            return ''
+
+        extra_expr_ctx.update({'item': self, 'meeting': self.getMeeting()})
+        # default raise_on_error=False so if the expression
+        # raise an error, we will get '' for reference and a message in the log
+        res = _evaluateExpression(self,
+                                  expression=expr,
+                                  roles_bypassing_expression=[],
+                                  extra_expr_ctx=extra_expr_ctx,
+                                  empty_expr_is_true=False)
+        # make sure we do not have None
+        res = res or ''
+        # make sure result is HTML
+        if res and check_is_html and not is_html(res):
+            api.portal.show_message(
+                _('votes_result_not_html'), request=self.REQUEST, type='warning')
+            res = ''
+        return safe_encode(res)
+
+    security.declarePublic('getVotesResult')
+
+    def getVotesResult(self, real=False, **kwargs):
+        '''Override 'votesResult' field accessor.
+           If empty we will return the evaluated MeetingConfig.votesResultExpr.'''
+        res = self.getField('votesResult').get(self, **kwargs)
+        if not real and not res:
+            res = self._get_votes_result(**kwargs)
+        return res
+
+    security.declarePublic('getRawVotesResult')
+
+    def getRawVotesResult(self, real=False, **kwargs):
+        '''See getVotesResult docstring.'''
+        res = self.getField('votesResult').getRaw(self, **kwargs)
+        if not real and not res:
+            res = self._get_votes_result(**kwargs)
+        return res
+
     security.declarePrivate('validate_category')
 
     def validate_category(self, value):
@@ -2141,7 +2217,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # check if value is among categories defined in the MeetingConfig
-        if not cfg.getUseGroupsAsCategories() and value not in cfg.categories.objectIds():
+        if self.attribute_is_used('category') and \
+           value not in cfg.categories.objectIds():
             return translate('category_required', domain='PloneMeeting', context=self.REQUEST)
 
     security.declarePrivate('validate_committees')
@@ -2204,9 +2281,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         old_pollType = self.getPollType()
         if old_pollType != value:
             view = self.restrictedTraverse("@@change-item-polltype")
-            # validation_msg is None if it passed
-            validation_msg = view.validate_new_poll_type(old_pollType, value)
-            return validation_msg
+            # validation_msg is None if it passed, True otherwise
+            return view.validate_new_poll_type(old_pollType, value)
 
     security.declarePrivate('validate_proposingGroup')
 
@@ -3732,15 +3808,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return 'normal'
 
-    security.declarePublic('showCategory')
-
-    def showCategory(self):
-        '''I must not show the "category" field if I use groups for defining
-           categories.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        return not cfg.getUseGroupsAsCategories()
-
     security.declarePrivate('listCategories')
 
     def listCategories(self, classifiers=False):
@@ -3788,9 +3855,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cat_id = self.getField('category').get(self, **kwargs)
         # avoid problems with acquisition
         if theObject:
-            res = ''
-            if cat_id in cfg.categories.objectIds():
-                res = getattr(cfg.categories, cat_id)
+            res = getattr(cfg.categories, cat_id, '')
         else:
             res = cat_id
         return res
@@ -4263,9 +4328,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def get_item_absents(self, the_objects=False, ordered=True, **kwargs):
         '''Gets the absents for this item.
            Absent for an item are stored in the Meeting.item_absents dict.'''
-        res = []
         if not self.hasMeeting():
-            return res
+            return []
         meeting = self.getMeeting()
         meeting_item_absents = meeting.get_item_absents().get(self.UID(), [])
         if ordered:
@@ -4281,9 +4345,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def get_item_excused(self, the_objects=False, ordered=True, **kwargs):
         '''Gets the excused for this item.
            Excused for an item are stored in the Meeting.item_excused dict.'''
-        res = []
         if not self.hasMeeting():
-            return res
+            return []
         meeting = self.getMeeting()
         meeting_item_excused = meeting.get_item_excused().get(self.UID(), [])
         if ordered:
@@ -4299,9 +4362,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def get_item_non_attendees(self, the_objects=False, ordered=True, **kwargs):
         '''Gets the non_attendees for this item.
            Non attendees for an item are stored in the Meeting.item_non_attendees dict.'''
-        res = []
         if not self.hasMeeting():
-            return res
+            return []
         meeting = self.getMeeting()
         meeting_item_non_attendees = meeting.get_item_non_attendees().get(self.UID(), [])
         if ordered:
@@ -4364,17 +4426,63 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """ """
         return bool(self.getPollType().startswith('secret'))
 
+    def get_vote_is_secret(self, vote_number):
+        """ """
+        item_votes = self.getMeeting().get_item_votes().get(self.UID(), [])
+        if len(item_votes) - 1 >= vote_number:
+            poll_type = item_votes[vote_number].get('poll_type', self.getPollType())
+        else:
+            poll_type = self.getPollType()
+        return poll_type.startswith('secret')
+
+    def _build_unexisting_vote(self,
+                               is_secret,
+                               vote_number,
+                               poll_type,
+                               voter_uids=[],
+                               include_extra_infos=True):
+        """ """
+        if is_secret:
+            votes = [{'label': None,
+                      'votes': {},
+                      'linked_to_previous': vote_number != 0 and self.REQUEST.get(
+                          'form.widgets.linked_to_previous', False) or False}]
+            if include_extra_infos:
+                votes[0]['vote_number'] = 0
+                votes[0]['poll_type'] = poll_type
+                # define vote_value = '' for every used vote values
+                tool = api.portal.get_tool('portal_plonemeeting')
+                cfg = tool.getMeetingConfig(self)
+                for used_vote in cfg.getUsedVoteValues():
+                    votes[0]['votes'][used_vote] = 0
+        else:
+            votes = [
+                {
+                    'label': None,
+                    'voters': {},
+                    'linked_to_previous': vote_number != 0 and self.REQUEST.get(
+                        'form.widgets.linked_to_previous', False) or False}]
+            if include_extra_infos:
+                votes[0]['vote_number'] = 0
+                votes[0]['poll_type'] = poll_type
+            # define vote not encoded for every voters
+            for voter_uid in voter_uids:
+                votes[0]['voters'][voter_uid] = NOT_ENCODED_VOTE_VALUE
+        return votes
+
     security.declarePublic('get_item_votes')
 
     def get_item_votes(self,
                        vote_number='all',
-                       include_vote_number=True,
+                       include_extra_infos=True,
                        include_unexisting=True,
                        unexisting_value=NOT_ENCODED_VOTE_VALUE,
-                       ignored_vote_values=[]):
+                       ignored_vote_values=[],
+                       force_list_result=False):
         '''p_vote_number may be 'all' (default), return a list of every votes,
            or an integer like 0, returns the vote with given number.
-           If p_include_vote_number, for convenience, a key 'vote_number'
+           If p_include_extra_infos, for convenience, some extra infos are added
+           'vote_number', 'linked_to_previous' and 'poll_type'
            is added to the returned value.
            If p_include_unexisting, will return p_unexisting_value for votes that
            does not exist, so when votes just enabled, new voter selected, ...'''
@@ -4384,41 +4492,27 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         meeting = self.getMeeting()
         item_votes = meeting.get_item_votes().get(self.UID(), [])
         voter_uids = self.get_item_voters()
-        votes_are_secret = self.get_votes_are_secret()
+        poll_type = self.getPollType()
         # all votes
         if vote_number == 'all':
             # votes will be a list
             votes = deepcopy(item_votes)
-            if include_vote_number:
+            if include_extra_infos:
                 # add a 'vote_number' key into the result for convenience
                 i = 0
                 for vote_infos in votes:
                     vote_infos['vote_number'] = i
                     vote_infos['linked_to_previous'] = vote_infos.get('linked_to_previous', False)
+                    vote_infos['poll_type'] = vote_infos.get('poll_type', poll_type)
                     i += 1
         # vote_number
         elif len(item_votes) - 1 >= vote_number:
             votes.append(item_votes[vote_number])
 
         # secret votes
-        if votes_are_secret:
-            if include_unexisting:
-                # first or not existing
-                if not votes:
-                    votes = [{'label': None,
-                              'votes': {},
-                              # if first, never linked_to_previous
-                              # this check is done so it works when nothing still encoded
-                              # and addind a linked vote immediatelly
-                              'linked_to_previous': vote_number != 0 and self.REQUEST.get(
-                                  'form.widgets.linked_to_previous', False) or False}]
-                    if include_vote_number:
-                        votes[0]['vote_number'] = 0
-                    # define vote_value = '' for every used vote values
-                    tool = api.portal.get_tool('portal_plonemeeting')
-                    cfg = tool.getMeetingConfig(self)
-                    for used_vote in cfg.getUsedVoteValues():
-                        votes[0]['votes'][used_vote] = 0
+        if self.get_vote_is_secret(vote_number):
+            if include_unexisting and not votes:
+                votes = self._build_unexisting_vote(True, vote_number, poll_type)
         # public votes
         else:
             # add an empty vote in case nothing in itemVotes
@@ -4426,44 +4520,38 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if include_unexisting:
                 # first or not existing
                 if not votes:
-                    votes = [
-                        {
-                            'label': None,
-                            'voters': {},
-                            'linked_to_previous': vote_number != 0 and self.REQUEST.get(
-                                'form.widgets.linked_to_previous', False) or False}]
-                    if include_vote_number:
-                        votes[0]['vote_number'] = 0
-                    # define vote not encoded for every voters
-                    for voter_uid in voter_uids:
-                        votes[0]['voters'][voter_uid] = NOT_ENCODED_VOTE_VALUE
-                else:
-                    # add new values if some voters were added
-                    for vote in votes:
-                        stored_voter_uids = vote['voters'].keys()
-                        for voter_uid in voter_uids:
-                            if voter_uid not in stored_voter_uids:
-                                vote['voters'][voter_uid] = NOT_ENCODED_VOTE_VALUE
-            # make sure we only have current voters in 'voters'
-            # this could not be the case when encoding votes
-            # for a voter then setting him absent
-            # discard also ignored_vote_values
-            for vote in votes:
+                    votes = self._build_unexisting_vote(False, vote_number, poll_type)
+
+        i = 0 if vote_number == 'all' else vote_number
+        for vote in votes:
+            if not self.get_vote_is_secret(i):
+                # add new values if some voters were added
+                stored_voter_uids = vote['voters'].keys()
+                for voter_uid in voter_uids:
+                    if voter_uid not in stored_voter_uids:
+                        vote['voters'][voter_uid] = NOT_ENCODED_VOTE_VALUE
+                # make sure we only have current voters in 'voters'
+                # this could not be the case when encoding votes
+                # for a voter then setting him absent
+                # discard also ignored_vote_values
                 vote['voters'] = {vote_voter_uid: vote_voter_value
                                   for vote_voter_uid, vote_voter_value in vote['voters'].items()
                                   if vote_voter_uid in voter_uids and
                                   (not ignored_vote_values or
                                    vote_voter_value not in ignored_vote_values)}
+            i = i + 1
 
         # when asking a vote_number, only return this one as a dict, not as a list
-        if votes and vote_number != 'all':
+        if votes and vote_number != 'all' and not force_list_result:
             votes = votes[0]
         return votes
 
-    def get_voted_voters(self):
-        '''Voter uids that actually voted on this item.'''
+    def get_voted_voters(self, vote_number='all'):
+        '''Voter uids that actually voted on this item, relevant for public votes.'''
         item_votes = self.get_item_votes(
-            ignored_vote_values=[NOT_ENCODED_VOTE_VALUE])
+            vote_number=vote_number,
+            ignored_vote_values=[NOT_ENCODED_VOTE_VALUE],
+            force_list_result=True)
         voted_voters = []
         for vote in item_votes:
             voters = vote.get('voters', {}).keys()
@@ -4637,6 +4725,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            If p_bypassMeetingClosedCheck is True, we will not check if meeting is closed but
            only for permission and condition.'''
         field = self.Schema()[fieldName]
+        # some fields are still editable even when meeting closed
         bypassMeetingClosedCheck = bypassMeetingClosedCheck or \
             self.adapted()._bypass_meeting_closed_check_for(fieldName)
         res = checkMayQuickEdit(
@@ -7388,18 +7477,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              reindexNewItem=False)
         # manage categories mapping, if original and new items use
         # categories, we check if a mapping is defined in the configuration of the original item
-        if not cfg.getUseGroupsAsCategories() and \
-           not destMeetingConfig.getUseGroupsAsCategories():
-            originalCategory = self.getCategory(theObject=True)
+        originalCategory = self.getCategory(theObject=True)
+        if originalCategory and "category" in destUsedItemAttributes:
             # find out if something is defined when sending an item to destMeetingConfig
-            if originalCategory:
-                for destCat in originalCategory.category_mapping_when_cloning_to_other_mc:
-                    if destCat.split('.')[0] == destMeetingConfigId:
-                        # we found a mapping defined for the new category, apply it
-                        # get the category so it fails if it does not exist (that should not be possible...)
-                        newCat = getattr(destMeetingConfig.categories, destCat.split('.')[1])
-                        newItem.setCategory(newCat.getId())
-                        break
+            for destCat in originalCategory.category_mapping_when_cloning_to_other_mc:
+                if destCat.split('.')[0] == destMeetingConfigId:
+                    # we found a mapping defined for the new category, apply it
+                    # get the category so it fails if it does not exist (that should not be possible...)
+                    newCat = getattr(destMeetingConfig.categories, destCat.split('.')[1])
+                    newItem.setCategory(newCat.getId())
+                    break
 
         # find meeting to present the item in and set it as preferred
         # this way if newItem needs to be presented in a frozen meeting, it works
@@ -7740,34 +7827,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 cfg.isVotable(self)
         return res
 
-    security.declarePublic('hasVotes')
+    security.declarePublic('get_vote_count')
 
-    def hasVotes(self):
-        '''Return True if vote values are defined for this item.'''
-        if not self.votes:
-            return False
-        # we may also say that if every encoded votes are 'not_yet' (NOT_ENCODED_VOTE_VALUE) values
-        # we consider that there is no votes
-        if self.get_votes_are_secret():
-            return bool([v for v in self.votes if (v != NOT_ENCODED_VOTE_VALUE and self.votes[v] != 0)])
-        else:
-            return bool([val for val in self.votes.values() if val != NOT_ENCODED_VOTE_VALUE])
-
-    security.declarePublic('getVoteValue')
-
-    def getVoteValue(self, hp_uid, vote_number=0):
-        '''What is the vote value for user with id p_userId?'''
-        if self.get_votes_are_secret():
-            raise 'Unusable when votes are secret.'
-        itemVotes = self.get_item_votes(vote_number=vote_number)
-        if hp_uid in itemVotes['voters']:
-            return itemVotes[hp_uid]
-        else:
-            return NOT_ENCODED_VOTE_VALUE
-
-    security.declarePublic('getVoteCount')
-
-    def getVoteCount(self, vote_value, vote_number=0):
+    def get_vote_count(self, vote_value, vote_number=0):
         '''Gets the number of votes for p_vote_value.
            A special value 'any_votable' may be passed for p_vote_value,
            in this case every values other than NOT_VOTABLE_LINKED_TO_VALUE are counted.'''
@@ -7778,7 +7840,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # only return count for NOT_ENCODED_VOTE_VALUE
         if not itemVotes and vote_value == NOT_ENCODED_VOTE_VALUE:
             res = len(item_voter_uids)
-        elif not self.get_votes_are_secret():
+        elif not self.get_vote_is_secret(vote_number):
             # public
             for item_voter_uid in item_voter_uids:
                 if (item_voter_uid not in itemVotes['voters'] and
@@ -7821,6 +7883,28 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getFieldVersion(self, fieldName, changes=False):
         '''See doc in utils.py.'''
         return getFieldVersion(self, fieldName, changes)
+
+    security.declarePublic('getRichTextCSSClass')
+
+    def getRichTextCSSClass(self, field_name):
+        '''Let's arbitrary add custom CSS class to a RichText widget.'''
+        if field_name == 'votesResult':
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            # we return "modified" if field contains something
+            if tool.isManager(cfg) and self.getRawVotesResult(real=True):
+                return "highlightValue"
+        elif field_name == 'marginalNotes' and self.getRawMarginalNotes():
+            return "highlightValue"
+        return ""
+
+    security.declarePublic('getRichTextOnSend')
+
+    def getRichTextOnSend(self, field_name):
+        '''Manage onSend JS parameter of askAjaxChunk for given p_field_name.'''
+        if field_name == 'votesResult':
+            return "reloadVotesResult"
+        return "null"
 
     security.declarePrivate('getAdviceRelatedIndexes')
 

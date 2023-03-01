@@ -347,7 +347,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         total_count = 0
         for vote_number in range(len(self.item_votes)):
             sub_counts = []
-            total_votes = self.context.getVoteCount('any_votable', vote_number)
+            total_votes = self.context.get_vote_count('any_votable', vote_number)
             number_of_votes_msg = translate(
                 'number_of_voters', domain='PloneMeeting', context=self.request)
             res = [u'<span title="{0}">{1}</span>'.format(
@@ -357,8 +357,9 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
             pattern = u'<span class="vote_value_{0}" title="{1}">{2}</span>'
 
             # specify how much voted for this vote if secret
-            if self.votesAreSecret:
-                voted = self.context.getVoteCount('any_voted', vote_number)
+            vote_is_secret = self.context.get_vote_is_secret(vote_number)
+            if vote_is_secret:
+                voted = self.context.get_vote_count('any_voted', vote_number)
                 formated_total_votes = "{0} / {1}".format(voted, total_votes)
             sub_counts.append((number_of_votes_msg,
                                formated_total_votes,
@@ -366,13 +367,13 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
 
             # compute votes not encoded for first secret vote
             # taking into account linked votes
-            if self.votesAreSecret:
+            if vote_is_secret:
                 linked_vote_numbers = _get_linked_item_vote_numbers(
                     self.context, self.meeting, vote_number) or [0]
                 if not linked_vote_numbers or vote_number == min(linked_vote_numbers):
                     total_voted = 0
                     for linked_vote_number in linked_vote_numbers:
-                        total_voted += self.context.getVoteCount('any_voted', linked_vote_number)
+                        total_voted += self.context.get_vote_count('any_voted', linked_vote_number)
                     translated_used_vote_value = translate(
                         'vote_value_not_yet',
                         domain='PloneMeeting',
@@ -396,7 +397,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                     'vote_value_{0}'.format(usedVoteValue),
                     domain='PloneMeeting',
                     context=self.request)
-                count = self.context.getVoteCount(usedVoteValue, vote_number)
+                count = self.context.get_vote_count(usedVoteValue, vote_number)
                 res.append(pattern.format(
                     usedVoteValue,
                     translated_used_vote_value,
@@ -418,15 +419,16 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
            More over, may only add linked_to_previous if :
            - already a linked_to_previous element;
            - not linked_to_previous element does not use forbidden vote_values,
-             aka vote_values not in MeetingConfig.firstLinkedVoteUsedVoteValues."""
+             aka vote_values not in MeetingConfig.firstLinkedVoteUsedVoteValues;
+           - vote poll_type was not redefined."""
         res = False
         vote_infos = self.item_votes[vote_number]
         if (vote_infos['vote_number'] + 1 == self.next_vote_number):
             if vote_infos['linked_to_previous']:
                 res = True
-            else:
+            elif vote_infos.get('poll_type') == self.context.getPollType():
                 # check vote_values not out of MeetingConfig.firstLinkedVoteUsedVoteValues
-                if self.votesAreSecret:
+                if self.context.get_vote_is_secret(vote_number):
                     vote_values = [vote_value for vote_value, vote_count
                                    in vote_infos['votes'].items()
                                    if vote_count and vote_value in self.cfg.getUsedVoteValues()]
@@ -456,7 +458,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         ordered_contacts = meeting.ordered_contacts.items()
         redefined_item_attendees = meeting._get_all_redefined_attendees(only_keys=False)
         show_votes = self.context.show_votes()
-        item_votes = self.context.get_item_votes(include_vote_number=False)
+        item_votes = self.context.get_item_votes(include_extra_infos=False)
         context_uid = self.context.UID()
         item_attendees_order = meeting._get_item_attendees_order(context_uid)
         # if something redefined for context or not
@@ -473,6 +475,10 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         else:
             date = get_cachekey_volatile(
                 'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignaturesRawFields')
+        # when using votesResult, invalidate cache if field content changed
+        votesResult = None
+        if self.context.attribute_is_used('votesResult'):
+            votesResult = self.context.getRawVotesResult(real=True)
         return (date,
                 context_uid,
                 cfg_modified,
@@ -483,30 +489,30 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                 item_votes,
                 may_change_attendees,
                 poll_type,
-                cache_date)
+                cache_date,
+                votesResult)
 
     def _update(self):
         """ """
         self.error_msg = self.request.get('attendees_error_msg')
         self.context_uid = self.context.UID()
         self.tool = api.portal.get_tool('portal_plonemeeting')
+        # necessary for the @@pm-macros/viewContentField
         self.cfg = self.tool.getMeetingConfig(self.context)
+        self.used_item_attrs = self.cfg.getUsedItemAttributes()
+        self.member = api.user.get_current()
         self.used_meeting_attrs = self.cfg.getUsedMeetingAttributes()
         self.meeting = self.context.getMeeting()
         self.show_votes = self.context.show_votes()
         if self.show_votes:
-            self.votesAreSecret = self.context.get_votes_are_secret()
             self.voters = self.context.get_item_voters() or []
             self.item_votes = self.context.get_item_votes(
                 include_unexisting=True,
                 ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE]) or []
-            self.voted_voters = ()
-            if not self.votesAreSecret:
-                self.voted_voters = self.context.get_voted_voters()
+            self.voted_voters = self.context.get_voted_voters()
             self.next_vote_number = self.compute_next_vote_number()
             self.displayable_counts, self.counts, self.total_count = self.vote_counts()
         else:
-            self.votesAreSecret = False
             self.voters = []
             self.item_votes = []
             self.voted_voters = []

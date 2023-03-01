@@ -448,7 +448,8 @@ class GroupsInChargeVocabulary(object):
         cfg = tool.getMeetingConfig(context)
         res = []
         is_using_cfg_order = False
-        if 'groupsInCharge' not in cfg.getUsedItemAttributes():
+        used_item_attrs = cfg.getUsedItemAttributes()
+        if 'groupsInCharge' not in used_item_attrs:
             # groups in charge are defined on organizations or categories
             # organizations
             orgs = get_organizations(only_selected=only_selected)
@@ -459,10 +460,10 @@ class GroupsInChargeVocabulary(object):
                     if group_in_charge and group_in_charge not in res:
                         res.append(group_in_charge)
             # categories
-            if not cfg.getUseGroupsAsCategories():
+            if 'category' in used_item_attrs:
                 categories = cfg.getCategories(onlySelectable=False)
                 # add classifiers when using it
-                if 'classifier' in cfg.getUsedItemAttributes():
+                if 'classifier' in used_item_attrs:
                     categories += cfg.getCategories(
                         catType='classifiers', onlySelectable=False)
                 for cat in categories:
@@ -1370,7 +1371,7 @@ class UsedVoteValuesVocabulary(object):
                 used_values_attr = 'firstLinkedVoteUsedVoteValues'
             for usedVoteValue in cfg.getUsedVoteValues(
                     used_values_attr=used_values_attr,
-                    include_not_encoded=not self.context.get_votes_are_secret()):
+                    include_not_encoded=not self.context.get_vote_is_secret(vote_number)):
                 res.append(
                     SimpleTerm(
                         usedVoteValue,

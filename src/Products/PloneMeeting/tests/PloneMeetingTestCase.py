@@ -15,6 +15,7 @@ from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
 from copy import deepcopy
 from datetime import datetime
+from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import get_transitions
 from imio.helpers.content import object_values
@@ -129,10 +130,14 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     cfg1_id = 'plonemeeting-assembly'
     cfg2_id = 'plonegov-assembly'
 
-    external_image1 = "https://i.picsum.photos/id/22/400/400.jpg?hmac=Id8VAtx7v59BrMxVGFbHMrf-93mskILQzmMJ__Tzww8"
-    external_image2 = "https://i.picsum.photos/id/1025/400/300.jpg?hmac=5qUnaqytITcD06pLxsGw7l_twswo9b9p9c8zz_tdpMc"
-    external_image3 = "https://i.picsum.photos/id/1035/600/400.jpg?hmac=mnooh0fwG-2MIGW-xTUcYO6wyyx9LNdZK4RM6R2SA7A"
-    external_image4 = "https://i.picsum.photos/id/1062/600/500.jpg?hmac=ZoUBWDuRcsyqDbBPOj5jEU1kHgJ5iGO1edk1-QYode8"
+    external_image1 = \
+        "https://fastly.picsum.photos/id/22/400/400.jpg?hmac=Id8VAtx7v59BrMxVGFbHMrf-93mskILQzmMJ__Tzww8"
+    external_image2 = \
+        "https://fastly.picsum.photos/id/1025/400/300.jpg?hmac=5qUnaqytITcD06pLxsGw7l_twswo9b9p9c8zz_tdpMc"
+    external_image3 = \
+        "https://fastly.picsum.photos/id/1035/600/400.jpg?hmac=mnooh0fwG-2MIGW-xTUcYO6wyyx9LNdZK4RM6R2SA7A"
+    external_image4 = \
+        "https://fastly.picsum.photos/id/1062/600/500.jpg?hmac=ZoUBWDuRcsyqDbBPOj5jEU1kHgJ5iGO1edk1-QYode8"
 
     def setUp(self):
         # enable full diff in failing tests
@@ -263,6 +268,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         '''Logs out currently logged user and logs in p_loginName.'''
         logout()
         if clean_memoize:
+            # necessary to invalidate monkey._listAllowedRolesAndUsers
+            # or a catalog query reuses cached allowedRolesAndUsers
+            cleanRamCache()
             self.cleanMemoize()
         if loginName == 'admin':
             login(self.app, loginName)
@@ -354,9 +362,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             if 'decision' in attrs:
                 obj.setDecision(attrs['decision'])
             # define a category for the item if necessary
-            if autoAddCategory and not \
-               cfg.getUseGroupsAsCategories() and not \
-               obj.getCategory():
+            if autoAddCategory and \
+               'category' in cfg.getUsedItemAttributes() and \
+               not obj.getCategory():
                 aCategory = cfg.getCategories()[0].getId()
                 obj.setCategory(aCategory)
         if hasattr(obj.aq_inner, 'processForm'):

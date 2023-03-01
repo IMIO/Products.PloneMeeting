@@ -60,7 +60,7 @@ class testAdvices(PloneMeetingTestCase):
         # create an item and ask the advice of group 'vendors'
         data = {
             'title': 'Item to advice',
-            'category': 'maintenance'
+            'category': 'development'
         }
         item1 = self.create('MeetingItem', **data)
         item1.setOptionalAdvisers((self.vendors_uid, ))
@@ -135,7 +135,7 @@ class testAdvices(PloneMeetingTestCase):
         # create an item and ask the advice of group 'vendors'
         data = {
             'title': 'Item to advice',
-            'category': 'maintenance'
+            'category': 'development'
         }
         item1 = self.create('MeetingItem', **data)
         item1.setOptionalAdvisers((self.vendors_uid, ))
@@ -365,7 +365,7 @@ class testAdvices(PloneMeetingTestCase):
         # create an item and ask the advice of group 'vendors'
         data = {
             'title': 'Item to advice',
-            'category': 'maintenance',
+            'category': 'development',
             'optionalAdvisers': (self.vendors_uid,)
         }
         item1 = self.create('MeetingItem', **data)
@@ -386,7 +386,7 @@ class testAdvices(PloneMeetingTestCase):
         # create an item and ask the advice of group 'vendors'
         data = {
             'title': 'Item to advice',
-            'category': 'maintenance',
+            'category': 'development',
             'optionalAdvisers': (self.vendors_uid,)
         }
         item = self.create('MeetingItem', **data)
@@ -1328,7 +1328,7 @@ class testAdvices(PloneMeetingTestCase):
               'delay_label': ''}, ])
         data = {
             'title': 'Item to advice',
-            'category': 'maintenance'
+            'category': 'development'
         }
         item = self.create('MeetingItem', **data)
         item.setOptionalAdvisers((self.vendors_uid, ))
@@ -2269,7 +2269,7 @@ class testAdvices(PloneMeetingTestCase):
         # create an item and ask the advice of group 'vendors'
         data = {
             'title': 'Item to advice',
-            'category': 'maintenance',
+            'category': 'development',
             'optionalAdvisers': (self.vendors_uid, )
         }
         item = self.create('MeetingItem', **data)
@@ -2315,7 +2315,7 @@ class testAdvices(PloneMeetingTestCase):
         # create an item and ask the advice of group 'vendors'
         data = {
             'title': 'Item to advice',
-            'category': 'maintenance',
+            'category': 'development',
             'optionalAdvisers': (self.vendors_uid, self.developers_uid, )
         }
         item = self.create('MeetingItem', **data)
@@ -2445,7 +2445,7 @@ class testAdvices(PloneMeetingTestCase):
         # create an item and ask the advice of group 'vendors'
         data = {
             'title': 'Item to advice',
-            'category': 'maintenance',
+            'category': 'development',
             'optionalAdvisers': (self.vendors_uid, self.developers_uid, )
         }
         item = self.create('MeetingItem', **data)
@@ -2544,7 +2544,7 @@ class testAdvices(PloneMeetingTestCase):
         # create an item and ask the advice of group 'vendors'
         data = {
             'title': 'Item to advice',
-            'category': 'maintenance',
+            'category': 'development',
             'optionalAdvisers': (self.vendors_uid, self.developers_uid, ),
             'description': '<p>Item description</p>',
         }
@@ -2691,7 +2691,7 @@ class testAdvices(PloneMeetingTestCase):
         # create an item and ask the advice of group 'vendors'
         data = {
             'title': 'Item to advice',
-            'category': 'maintenance',
+            'category': 'development',
             'optionalAdvisers': (self.vendors_uid, self.developers_uid, ),
             'description': '<p>Item description</p>',
         }
@@ -3280,7 +3280,7 @@ class testAdvices(PloneMeetingTestCase):
         # create an item and ask the advice of group 'vendors'
         data = {
             'title': 'Item to advice',
-            'category': 'maintenance',
+            'category': 'development',
             'optionalAdvisers': (self.vendors_uid, )
         }
         item = self.create('MeetingItem', **data)
@@ -3674,7 +3674,7 @@ class testAdvices(PloneMeetingTestCase):
         # create an item and ask the advice of group 'developers'
         data = {
             'title': 'Item to advice',
-            'category': 'maintenance',
+            'category': 'development',
             'optionalAdvisers': (self.developers_uid, )
         }
         item = self.create('MeetingItem', **data)
@@ -4004,7 +4004,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         data = {
             'title': 'Item to advice',
-            'category': 'maintenance',
+            'category': 'development',
             'optionalAdvisers': (self.developers_uid, ),
             'copyGroups': (self.vendors_advisers, ),
             'privacy': 'secret'

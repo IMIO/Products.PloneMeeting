@@ -339,7 +339,6 @@ meetingPma.onMeetingTransitionItemActionToExecute = (
      'tal_expression': ''},)
 
 meetingPma.insertingMethodsOnAddItem = ({'insertingMethod': 'on_proposing_groups', 'reverse': '0'}, )
-meetingPma.useGroupsAsCategories = True
 meetingPma.defaultLabels = [
     {'color': 'blue', 'by_user': False, 'title': 'Label'},
     {'color': 'yellow', 'by_user': True, 'title': 'Personal label'},
@@ -371,6 +370,19 @@ meetingPma.committees = (
      'label': "Committee 2",
      'row_id': 'committee_2',
      'supplements': '2',
+     'using_groups': []},
+    {'acronym': 'CommForItem',
+     'auto_from': [],
+     'default_assembly': '',
+     'default_attendees': [],
+     'default_place': '',
+     'default_signatories': [],
+     'default_signatures': '',
+     'enabled': 'item_only',
+     'enable_editors': '0',
+     'label': "Committee for item",
+     'row_id': 'committee_for_item',
+     'supplements': '0',
      'using_groups': []}, )
 meetingPma.useAdvices = True
 meetingPma.selectableAdvisers = ['developers', 'vendors']
@@ -419,11 +431,10 @@ meetingPga.classifiers = [classifier1, classifier2, classifier3]
 meetingPga.annexTypes = [financialAnalysis, legalAnalysis,
                          budgetAnalysisCfg2, itemAnnex, decisionAnnex,
                          adviceAnnex, adviceLegalAnalysis, meetingAnnex]
-meetingPga.usedItemAttributes = ('description', 'toDiscuss', 'associatedGroups', 'itemIsSigned',)
+meetingPga.usedItemAttributes = ('description', 'toDiscuss', 'associatedGroups', 'itemIsSigned', 'category')
 meetingPga.onMeetingTransitionItemActionToExecute = deepcopy(
     meetingPma.onMeetingTransitionItemActionToExecute)
 meetingPga.insertingMethodsOnAddItem = ({'insertingMethod': 'on_categories', 'reverse': '0'}, )
-meetingPga.useGroupsAsCategories = False
 meetingPga.orderedGroupsInCharge = ['developers', 'vendors']
 meetingPga.itemTemplates = (template1, template2, )
 meetingPga.workflowAdaptations = ['delayed']

@@ -237,47 +237,41 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
         if not error and self.context.show_votes():
             voters = item_to_update.get_item_voters()
             if self.person_uid in voters:
-                # secret
-                if item_to_update.get_votes_are_secret():
-                    # is there place to remove a voter?
-                    len_voters = len(voters)
-                    all_item_votes = item_to_update.get_item_votes()
-                    i = 0
-                    for item_vote in all_item_votes:
-                        encoded_votes_count = item_to_update.getVoteCount(
+                all_item_votes = item_to_update.get_item_votes(
+                    ignored_vote_values=[NOT_ENCODED_VOTE_VALUE])
+                i = 0
+                # used when vote is secret
+                len_voters = len(voters)
+                for item_vote in all_item_votes:
+                    # secret
+                    if item_to_update.get_vote_is_secret(vote_number=i):
+                        # every voters voted?
+                        encoded_votes_count = item_to_update.get_vote_count(
                             vote_value='any_voted', vote_number=i)
                         if len_voters == encoded_votes_count:
-                            msg = translate(
-                                "Can not set ${not_present_type} "
-                                "a person that voted on an item!",
-                                mapping={
-                                    'not_present_type':
-                                        _('item_not_present_type_{0}'.format(
-                                          self.not_present_type))},
-                                domain="PloneMeeting", context=self.request)
-                            api.portal.show_message(msg,
-                                                    type='warning',
-                                                    request=self.request)
+                            api.portal.show_message(
+                                _("Can not set ${not_present_type} "
+                                  "a person that voted on an item!",
+                                  mapping={
+                                      'not_present_type':
+                                          _('item_not_present_type_{0}'.format(
+                                            self.not_present_type))}),
+                                type='warning',
+                                request=self.request)
                             error = True
-                # public
-                else:
-                    all_item_votes = item_to_update.get_item_votes(
-                        ignored_vote_values=[NOT_ENCODED_VOTE_VALUE])
-                    hp_uid_in_voters = bool([item_vote for item_vote in all_item_votes
-                                             if self.person_uid in item_vote['voters']])
-                    if hp_uid_in_voters:
-                        msg = translate(
-                            "Can not set ${not_present_type} "
-                            "a person that voted on an item!",
-                            mapping={
-                                'not_present_type':
-                                    _('item_not_present_type_{0}'.format(
-                                      self.not_present_type))},
-                            domain="PloneMeeting", context=self.request)
-                        api.portal.show_message(msg,
-                                                type='warning',
-                                                request=self.request)
-                        error = True
+                    # public
+                    else:
+                        if self.person_uid in item_vote['voters']:
+                            api.portal.show_message(
+                                _("Can not set ${not_present_type} "
+                                  "a person that voted on an item!",
+                                  mapping={
+                                      'not_present_type':
+                                          _('item_not_present_type_{0}'.format(
+                                            self.not_present_type))}),
+                                type='warning',
+                                request=self.request)
+                            error = True
         return error, msg
 
     def _doApply(self):

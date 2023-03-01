@@ -1296,7 +1296,7 @@ class testSearches(PloneMeetingTestCase):
             # there must be at least one query_... method that is an alias for query
             self.assertTrue(
                 query_methods,
-                "No query_methdods for {0}".format(adapter_name))
+                "No query_xxx methdod for {0}".format(adapter_name))
             # make sure the query_... method is an alias for query
             found_alias = False
             for query_method in query_methods:

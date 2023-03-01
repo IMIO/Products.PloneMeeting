@@ -621,7 +621,7 @@ function updateNumberOfItems() {
   // get numberOfItems using an ajax call if on the meeting_view
   if (parent.$('.meeting_number_of_items').length) {
     response = $.ajax({
-      url: document.baseURI + '/number_of_items',
+      url: document.baseURI + '/number_of_items?as_str:bool=1',
       dataType: 'html',
       cache: false,
       async: true,
@@ -641,6 +641,10 @@ function refreshAfterDelete(event) {
   css_id = event.tag.id;
   if (css_id == 'delete-vote-action') {
     refresh_attendees(highlight='.vote-value');
+  } else {
+    if (css_id == 'reinit-attendees-order-action') {
+      refresh_attendees(highlight='.td_cell_number-column');
+    }
   }
 }
 
@@ -665,6 +669,7 @@ function init_tooltipsters(event) {
       attendeesInfos();
       manageAttendees();
       initializeItemAttendeesDND();
+      votePollTypeChange();
     }
     if (css_id.startsWith('collapsible-text-linkeditem-')) {
       categorizedChildsInfos({selector: 'div.item-linkeditems .tooltipster-childs-infos', });
@@ -679,6 +684,7 @@ function init_ckeditor(event) {
 }
 
 function saveCKeditor(field_name, base_url, async=true) {
+  alert('hello');
   ajaxsave = CKEDITOR.instances[field_name].getCommand('ajaxsave');
   ajaxsave.async = async;
   CKEDITOR.instances[field_name].execCommand('ajaxsave', 'saveCmd');

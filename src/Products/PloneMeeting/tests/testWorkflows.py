@@ -552,7 +552,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.changeUser('admin')
         cfg = self.meetingConfig
         self._removeConfigObjectsFor(cfg)
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         research = cfg.categories.research
         research.using_groups = (self.endUsers_uid, )
         self.create('MeetingItemRecurring',
@@ -636,7 +636,7 @@ class testWorkflows(PloneMeetingTestCase):
         # if transitions for presenting an item can not be triggered
         # the item will no be inserted in the meeting
         # enable categories so the recurring items are not presentable
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         meeting2 = self.create('Meeting')
         self.assertEqual(len(meeting2.get_items()), 0)
 
@@ -839,13 +839,59 @@ class testWorkflows(PloneMeetingTestCase):
         with self.assertRaises(WorkflowException) as cm:
             self.closeMeeting(meeting)
         self.assertEqual(cm.exception.message,
-                         'Can not close a meeting containing items returned to proposing group!')
+                         u'Can not set a meeting to Closed if it '
+                         u'contains items returned to proposing group!')
         # if no item returned anymore, closable
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
         # Meeting.get_items is memoized and cache is not invalidated when an item's state changed
         cleanRamCacheFor('Products.PloneMeeting.Meeting.get_items')
         self.cleanMemoize()
         self.closeMeeting(meeting)
+
+    def test_pm_CanNotPublishDecisionsIfItemStillReturnedToProposingGroup(self):
+        """If there are items in state 'returned_to_proposing_group',
+           a meeting may not be set to 'decisions_published'."""
+        if not self._check_wfa_available(['return_to_proposing_group',
+                                          'hide_decisions_when_under_writing',
+                                          'hide_decisions_when_under_writing_check_returned_to_proposing_group']):
+            return
+
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        cfg.setWorkflowAdaptations(
+            ('return_to_proposing_group',
+             'hide_decisions_when_under_writing',
+             'hide_decisions_when_under_writing_check_returned_to_proposing_group'))
+        cfg.at_post_edit_script()
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        item = self.create('MeetingItem')
+        self.presentItem(item)
+        self.decideMeeting(meeting)
+        self.do(item, 'return_to_proposing_group')
+        with self.assertRaises(WorkflowException) as cm:
+            self.do(meeting, 'publish_decisions')
+        self.assertEqual(cm.exception.message,
+                         u'Can not set a meeting to Decisions published if it '
+                         u'contains items returned to proposing group!')
+        # it is doable if 'hide_decisions_when_under_writing_check_returned_to_proposing_group'
+        # WFA not enabled
+        cfg.setWorkflowAdaptations(('return_to_proposing_group',
+                                    'hide_decisions_when_under_writing',))
+        cfg.at_post_edit_script()
+        self.do(meeting, 'publish_decisions')
+        self.assertEqual(meeting.query_state(), 'decisions_published')
+        self.do(meeting, 'backToDecided')
+        self.assertEqual(meeting.query_state(), 'decided')
+        # re-enable and test when no more items returned_to_proposing_group
+        cfg.setWorkflowAdaptations(
+            ('return_to_proposing_group',
+             'hide_decisions_when_under_writing',
+             'hide_decisions_when_under_writing_check_returned_to_proposing_group'))
+        cfg.at_post_edit_script()
+        self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
+        self.do(meeting, 'publish_decisions')
+        self.assertEqual(meeting.query_state(), 'decisions_published')
 
     def test_pm_WriteItemMeetingManagerReservedFieldsPermission(self):
         """The permission WriteItemMeetingManagerFields is used to protect fields
@@ -861,7 +907,7 @@ class testWorkflows(PloneMeetingTestCase):
         """Field MeetingItem.marginalNotes is writeable when item is decided."""
         cfg = self.meetingConfig
         cfg.setUsedItemAttributes(('marginalNotes', 'observations'))
-        cfg.setUseGroupsAsCategories(True)
+        self._enableField('category', enable=False)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setDecision(self.decisionText)
@@ -906,7 +952,7 @@ class testWorkflows(PloneMeetingTestCase):
         """When MeetingItem.category or MeetingItem.groupsInCharge is used,
            it is required to present an item."""
         cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         self._enableField('groupsInCharge')
         self.changeUser('pmManager')
         self.create('Meeting')

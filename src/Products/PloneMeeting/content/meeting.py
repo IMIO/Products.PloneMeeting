@@ -527,7 +527,9 @@ class IMeeting(IDXMeetingContent):
                 raise Invalid(msg.encode('utf-8'))
 
         # check pre_meeting_date
-        if data.pre_meeting_date and (data.pre_meeting_date > data.date):
+        if hasattr(data, 'pre_meeting_date') and \
+           data.pre_meeting_date and \
+           data.pre_meeting_date > data.date:
             msg = translate("pre_date_after_meeting_date",
                             domain='PloneMeeting',
                             context=context.REQUEST)
@@ -538,7 +540,12 @@ class IMeeting(IDXMeetingContent):
 
         # check start_date/end_date
         # start_date must be before end_date
-        if data.start_date and data.end_date and data.start_date > data.end_date:
+        # getattr(data, 'start_date', None) does not work as expected with Data...
+        if hasattr(data, 'start_date') and \
+           data.start_date and \
+           hasattr(data, 'end_date') and \
+           data.end_date and \
+           data.start_date > data.end_date:
             msg = translate("start_date_after_end_date",
                             domain='PloneMeeting',
                             context=context.REQUEST)
@@ -692,7 +699,8 @@ def default_committees(data):
     res = []
     if "committees" in used_attrs:
         for committee in cfg.getCommittees():
-            if committee['enabled'] == '0':
+            # not enabled or item_only, we pass
+            if committee['enabled'] != '1':
                 continue
             mdata = {}
             mdata['row_id'] = committee['row_id']
@@ -1543,7 +1551,7 @@ class Meeting(Container):
                 # add an empty vote 0
                 data_item_vote_0 = item.get_item_votes(
                     vote_number=0,
-                    include_vote_number=False,
+                    include_extra_infos=False,
                     include_unexisting=True)
                 # make sure we use persistent for 'voters'
                 data_item_vote_0['voters'] = PersistentMapping(data_item_vote_0['voters'])
@@ -1558,6 +1566,9 @@ class Meeting(Container):
                 if item_voter_uid not in data['voters']:
                     data['voters'][item_voter_uid] = NOT_VOTABLE_LINKED_TO_VALUE
             self.item_votes[item_uid].append(PersistentMapping(data))
+        elif 'voters' not in self.item_votes[item_uid][vote_number]:
+            # changing poll_type for vote_number, in this case 'voters' key does not exist
+            self.item_votes[item_uid][vote_number] = PersistentMapping(data)
         else:
             # use update in case we only update a subset of votes
             # when some vote NOT_VOTABLE_LINKED_TO_VALUE or so
@@ -1585,13 +1596,16 @@ class Meeting(Container):
                 # add an empty vote 0
                 data_item_vote_0 = item.get_item_votes(
                     vote_number=0,
-                    include_vote_number=False,
+                    include_extra_infos=False,
                     include_unexisting=True)
                 self.item_votes[item_uid].append(PersistentMapping(data_item_vote_0))
         # new vote_number
         if vote_number + 1 > len(self.item_votes[item_uid]):
             self.item_votes[item_uid].append(PersistentMapping(data))
         else:
+            # when changing poll_type from public to secret
+            # make sure key "voters" is removed
+            self.item_votes[item_uid][vote_number].pop('voters', None)
             self.item_votes[item_uid][vote_number].update(data)
 
     security.declarePublic('display_user_replacement')
@@ -2310,12 +2324,14 @@ class Meeting(Container):
 
     security.declarePublic('number_of_items')
 
-    def number_of_items(self, as_int=False):
-        '''How much items in this meeting ?'''
-        total = getattr(self, "_number_of_items")
-        if not as_int:
-            total = str(total)
-        return total
+    def number_of_items(self, as_str=False):
+        '''How much items in this meeting ?
+           If p_as_str=True, we return a str.  This is necessary when returned
+           for JS as when 0, nothing is returned by Zope.'''
+        if as_str:
+            return str(getattr(self, "_number_of_items"))
+        else:
+            return getattr(self, "_number_of_items")
 
     security.declarePublic('show_votes')
 

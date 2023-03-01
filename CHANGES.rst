@@ -92,6 +92,65 @@ Changelog
 - Added parameters `field_names=[]` to `utils.forceHTMLContentTypeForEmptyRichFields`
   so it is possible to specify field names to initialize when known.
   [gbastien]
+- Make `adapters.PMNegativePersonalLabelsAdapter` and
+  `adapters.PMNegativePreviousIndexValuesAdapter` inherits from base classes
+  `adapters.NegativePreviousIndexValuesAdapter` and
+  `adapters.NegativePersonalLabelsAdapter` that were moved to
+  `collective.compoundcriterion`.
+  [gbastien]
+- Added possibility to redefine the `poll_type` on a per vote basis so item and
+  votes `poll_type` may be different, this is used to manage case where
+  emergency is voted using a public vote on an item using secret `poll_type`.
+  [gbastien]
+- Make the `review_state_title` column (that translates the review_state title
+  instead id) also available for dashboards displaying meetings.
+  [gbastien]
+- Make sure meeting fieldsets order is correct when a custom field has been
+  added to an existing fieldset.
+  [gbastien]
+- Fixed `meeting.committees` default value, ignore `MeetingConfig.committees`
+  that use `enabled="item_only"`.
+  [gbastien]
+- Finally fixed invalidating meeting `actionspanel` caching when meeting
+  contains/does not contain items so the `Delete` action is handled correctly.
+  `Meeting.number_of_items` replaced parameter `as_int=False` by `as_str=False`
+  as we only want it to be str for JS.
+  [gbastien]
+- Fixed the `waiting_advices` WFAdaptation that was changing the `from_state title`
+  (for example state `proposed`) to the `from_state id` and so losing the custom
+  title that could be set in `MeetingConfig.itemWFValidationLevels`.
+  [gbastien]
+- Added `MeetingItem.votesResult`, a field that will hold a generated text of
+  votes result based on `MeetingConfig.votesResultTALExpr` but that is also
+  editable when generated text needs to be customized.
+  [gbastien]
+- Renamed migration helper `Migrator.updateItemColumns` to `Migrator.updateColumns`
+  now that it manages meeting related attribute `MeetingConfig.meetingColumns` and
+  added parameter `cfg_ids=[]` to be able to apply only for some `MeetingConfigs`.
+  Renamed migration helper `Migrator.cleanItemFilters` to
+  `Migrator.updateItemFilters` as it manages adding/removing filters.  Added
+  parameter `cfg_ids=[]` to be able to apply only for some MeetingConfigs as well.
+  [gbastien]
+- Added possibility to restrict WF states in which the suffix `_observers`
+  have access to items. This rely on `MeetingConfig.itemObserversStates`.
+  [gbastien]
+- Fixed `Unauthorized` in `toolplonemeeting_view` for `MeetingManagers`
+  that are not `MeetingManager` for every `MeetingConfig`.
+  [gbastien]
+- Highlight marginal notes fieldset legend on item view when it contains text.
+  [gbastien]
+- Added WFA `hide_decisions_when_under_writing_check_returned_to_proposing_group`
+  that will check that there are no more items `Returned to proposing group` when
+  publishing decisions.
+  [gbastien]
+- Make sure a `MeetingCategory` can not be renamed if it is used.
+  [gbastien]
+- Removed field `MeetingConfig.useGroupsAsCategories`, field `MeetingItem.category`
+  is now an optional field managed by `MeetingConfig.usedItemAttributes`.
+  [gbastien]
+- Fixed `IMeeting.validate_dates` that was failing because `Data` object
+  does not behaves the same way when creating or editing a `Meeting`.
+  [gbastien]
 - Changed position of `photo` and `signature` fields on `person`,
   moved `signature` before `photo`.
   [gbastien]
@@ -1254,8 +1313,9 @@ Changelog
   to send an e-mail to arbitrary users.
   Renamed parameter `permissionOrSuffixOrRoleOrGroupIds` to `value`.
   [gbastien]
-- Added a field `MeetingConfig.itemPreferredMeetingStates` that allows to set selectable
-  preferredMeeting states.
+- Added a field `MeetingConfig.itemPreferredMeetingStates` that allows to set
+  selectable preferred meeting states.
+  [aduchene]
 - Added a helper method `MeetingConfig.listStateIds` to get all state ids
   for a given objectType.
   [aduchene]

@@ -29,8 +29,8 @@ class testMeetingCategory(PloneMeetingTestCase):
             folder_name = TOOL_FOLDER_CLASSIFIERS
         self._removeConfigObjectsFor(cfg)
         self._removeConfigObjectsFor(cfg2)
-        cfg.setUseGroupsAsCategories(False)
-        cfg2.setUseGroupsAsCategories(False)
+        self._enableField('category')
+        self._enableField('category', cfg=cfg2)
         # add 3 categories in cfg1 and one in cfg2 having same id as cat1 in cfg1
         cat1 = self.create('meetingcategory', id="cat1",
                            title="Category 1", is_classifier=classifier)
@@ -122,6 +122,25 @@ class testMeetingCategory(PloneMeetingTestCase):
         '''While removing a classifier, it should raise if it is linked...'''
         self._checkCategoryRemoval(classifier=True)
 
+    def test_pm_CanNotRenameUsedCategory(self):
+        """As well as deleted, a used category can not be renamed neither as we
+           us it's identifier as key."""
+        self._enableField('category')
+        self.changeUser('pmCreator1')
+        # use a category that is not used in MeetingConfig (default itemtemplate)
+        item = self.create('MeetingItem', category="events")
+        self.assertEqual(item.getCategory(), "events")
+        self.changeUser('siteadmin')
+        category = item.getCategory(True)
+        self.assertRaises(BeforeDeleteException,
+                          category.aq_parent.manage_renameObject,
+                          category.getId(),
+                          'my_new_id')
+        item.setCategory('development')
+        item._update_after_edit()
+        category.aq_parent.manage_renameObject(category.getId(), 'my_new_id')
+        self.assertEqual(category.getId(), 'my_new_id')
+
     def test_pm_ListCategoriesOfOtherMCs(self):
         '''Test the vocabulary of the 'category_mapping_when_cloning_to_other_mc' field.'''
         cfg = self.meetingConfig
@@ -146,7 +165,7 @@ class testMeetingCategory(PloneMeetingTestCase):
         aCatInMC2 = cfg2.categories.deployment
         self.assertEqual(len(vocab_factory(aCatInMC2)), 0)
         # activate categories in both meetingConfigs
-        cfg.setUseGroupsAsCategories(False)
+        self._enableField('category')
         # still not enough...
         self.assertEqual(len(vocab_factory(aCatInMC2)), 0)
         # ... we must also specify that elements of self.meetingConfig2 can be sent to self.meetingConfig
