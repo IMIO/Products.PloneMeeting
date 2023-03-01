@@ -527,7 +527,9 @@ class IMeeting(IDXMeetingContent):
                 raise Invalid(msg.encode('utf-8'))
 
         # check pre_meeting_date
-        if data.pre_meeting_date and (data.pre_meeting_date > data.date):
+        if hasattr(data, 'pre_meeting_date') and \
+           data.pre_meeting_date and \
+           data.pre_meeting_date > data.date:
             msg = translate("pre_date_after_meeting_date",
                             domain='PloneMeeting',
                             context=context.REQUEST)
@@ -538,7 +540,12 @@ class IMeeting(IDXMeetingContent):
 
         # check start_date/end_date
         # start_date must be before end_date
-        if data.start_date and data.end_date and data.start_date > data.end_date:
+        # getattr(data, 'start_date', None) does not work as expected with Data...
+        if hasattr(data, 'start_date') and \
+           data.start_date and \
+           hasattr(data, 'end_date') and \
+           data.end_date and \
+           data.start_date > data.end_date:
             msg = translate("start_date_after_end_date",
                             domain='PloneMeeting',
                             context=context.REQUEST)

@@ -148,6 +148,9 @@ Changelog
 - Removed field `MeetingConfig.useGroupsAsCategories`, field `MeetingItem.category`
   is now an optional field managed by `MeetingConfig.usedItemAttributes`.
   [gbastien]
+- Fixed `IMeeting.validate_dates` that was failing because `Data` object
+  does not behaves the same way when creating or editing a `Meeting`.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
