@@ -155,6 +155,12 @@ Changelog
   `BaseMeetingView.show_field` ignores not used boolean fields that are `False`
   and special management for `IMeeting.place` field.
   [gbastien]
+- Fixed `ItemDocumentGenerationHelperView.print_votes`, make sure voters
+  are ordered when `include_voters=True`. Fixed `Meeting._get_contacts` to take
+  into account parameter `uids` order when given.
+  Fixed `MeetingItem.get_item_votes`, use an `OrderedDict` instead a `Dict`
+  to store voters to preserve order.
+  [gbastien]
 
 4.2rc34 (2022-09-29)
 --------------------
