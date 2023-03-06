@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2 (unreleased)
+4.2 (2023-03-06)
 ----------------
 
 - Fixed JS that displays/hides other configs to clone to on item edit when
