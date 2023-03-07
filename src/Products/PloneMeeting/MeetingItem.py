@@ -4534,11 +4534,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # this could not be the case when encoding votes
                 # for a voter then setting him absent
                 # discard also ignored_vote_values
-                vote['voters'] = {vote_voter_uid: vote_voter_value
-                                  for vote_voter_uid, vote_voter_value in vote['voters'].items()
-                                  if vote_voter_uid in voter_uids and
-                                  (not ignored_vote_values or
-                                   vote_voter_value not in ignored_vote_values)}
+                vote['voters'] = OrderedDict(
+                    [(vote_voter_uid, vote['voters'][vote_voter_uid])
+                     for vote_voter_uid in voter_uids
+                     if (not ignored_vote_values or
+                         vote['voters'][vote_voter_uid] not in ignored_vote_values)])
             i = i + 1
 
         # when asking a vote_number, only return this one as a dict, not as a list

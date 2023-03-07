@@ -181,9 +181,19 @@ class BaseMeetingView(object):
     def show_field(self, field_name):
         '''Show the p_field_name field?
            Must be enabled or not empty.'''
-        return field_name in self.used_attrs or \
-            (self.context.__class__.__name__ == 'Meeting' and
-             getattr(self.context, field_name, None) not in (None, -1))
+        is_used = field_name in self.used_attrs
+        if not is_used and self.context.__class__.__name__ == 'Meeting':
+            value = getattr(self.context, field_name, None)
+            # special case for place that rely also on place_other
+            if field_name == "place":
+                if value != "other" or self.context.place_other is not None:
+                    is_used = True
+            elif value not in (None, -1, False):
+                # None for empty RichTextFields
+                # -1 for meeting_number/first_item_number
+                # False for boolean fields
+                is_used = True
+        return is_used
 
     def show_datagrid_column(self, widget, field_name, column_name):
         '''Show the p_column_name or p_field_name DataGridField?

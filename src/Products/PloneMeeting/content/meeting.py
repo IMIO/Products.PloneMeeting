@@ -1282,18 +1282,19 @@ class Meeting(Container):
 
     def _get_contacts(self, contact_type=None, uids=None, the_objects=False):
         """Return contacts.  Parameters p_contact_type and p_uids are mutually exclusive."""
-        contact_uids = []
+        res = []
         ordered_contacts = getattr(self, 'ordered_contacts', OrderedDict())
         if contact_type:
-            for uid, infos in ordered_contacts.items():
-                if infos[contact_type] and (not uids or uid in uids):
-                    contact_uids.append(uid)
+            # if we have uids, we keep it's order
+            uids = uids or ordered_contacts.keys()
+            for uid in uids:
+                if ordered_contacts[uid][contact_type]:
+                    res.append(uid)
         else:
-            contact_uids = uids
+            res = uids
 
-        res = contact_uids
         if res and the_objects:
-            res = uuidsToObjects(contact_uids, ordered=True, unrestricted=True)
+            res = uuidsToObjects(res, ordered=True, unrestricted=True)
         return tuple(res)
 
     security.declarePublic('get_attendees')

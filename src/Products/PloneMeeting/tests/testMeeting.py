@@ -3801,7 +3801,32 @@ class testMeetingType(PloneMeetingTestCase):
             ['dates_and_data', 'assembly', 'committees', 'informations', 'parameters'])
         # view
         view = meeting.restrictedTraverse('@@meeting_view')
-        self.assertTrue(view())
+        rendered_view = view()
+        self.assertTrue(rendered_view)
+        # every fields but "attendees" that is loaded synch, are displayed
+        attrs.remove('attendees')
+        attrs.remove('absents')
+        attrs.remove('excused')
+        attrs.remove('non_attendees')
+        attrs.remove('replacements')
+        attrs.remove('signatories')
+        # remove also committees and committees_ fields that is linked to the datagridfield
+        attrs = [attr for attr in attrs if not attr.startswith('committees')]
+        # check that when every fields are disabled, it is not displayed
+        for attr in attrs:
+            self.assertTrue("row-form-widgets-%s" % attr in rendered_view)
+        # now disable most of fields and check that it it is not there anymore
+        cfg.setUsedMeetingAttributes(())
+        # remove dates
+        meeting.start_date = None
+        meeting.mid_date = None
+        meeting.mid_start_date = None
+        meeting.end_date = None
+        view = meeting.restrictedTraverse('@@meeting_view')
+        rendered_view = view()
+        for attr in attrs:
+            self.assertFalse("row-form-widgets-%s" % attr in rendered_view,
+                             "Attribute %s was found in meeting view!" % attr)
 
     def test_pm_MeetingCommitteesHelpers(self):
         """Various helper methods will ease use of committees."""

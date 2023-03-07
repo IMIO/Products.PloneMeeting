@@ -2,8 +2,15 @@ Changelog
 =========
 
 
-4.2rc35 (unreleased)
---------------------
+4.2.1 (unreleased)
+------------------
+
+- Changed position of `photo` and `signature` fields on `person`,
+  moved `signature` before `photo`.
+  [gbastien]
+
+4.2 (2023-03-06)
+----------------
 
 - Fixed JS that displays/hides other configs to clone to on item edit when
   possible to send to several other configs.
@@ -151,8 +158,15 @@ Changelog
 - Fixed `IMeeting.validate_dates` that was failing because `Data` object
   does not behaves the same way when creating or editing a `Meeting`.
   [gbastien]
-- Changed position of `photo` and `signature` fields on `person`,
-  moved `signature` before `photo`.
+- Make sure not used fields are not displayed on the meeting view.
+  `BaseMeetingView.show_field` ignores not used boolean fields that are `False`
+  and special management for `IMeeting.place` field.
+  [gbastien]
+- Fixed `ItemDocumentGenerationHelperView.print_votes`, make sure voters
+  are ordered when `include_voters=True`. Fixed `Meeting._get_contacts` to take
+  into account parameter `uids` order when given.
+  Fixed `MeetingItem.get_item_votes`, use an `OrderedDict` instead a `Dict`
+  to store voters to preserve order.
   [gbastien]
 
 4.2rc34 (2022-09-29)

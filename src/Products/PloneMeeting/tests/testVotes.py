@@ -175,10 +175,41 @@ class testVotes(PloneMeetingTestCase):
         self.assertEqual(helper_secret.print_votes(include_total_voters=True),
                          u'<p>Il y a 4 votants.</p><p>Au scrutin secret,</p>'
                          u'<p>Par une voix pour, une voix contre et 2 abstentions,</p>')
-        # public vote all yes and secret_intro
+        # secret vote all yes and secret_intro
         self.assertEqual(helper_yes_secret.print_votes(secret_intro=u"<p>À bulletin secret,</p>"),
                          u"<p>\xc0 bulletin secret,</p>"
                          u"<p>\xc0 l'unanimit\xe9,</p>")
+
+        # include_voters=True
+        # public vote
+        self.assertEqual(
+            helper_public.print_votes(include_voters=True),
+            u'<p>Par 2 voix pour<p>Monsieur Person1FirstName Person1LastName, '
+            u'Assembly member 1, Monsieur Person2FirstName Person2LastName, '
+            u'Assembly member 2</p>, une voix contre<p>Madame Person3FirstName '
+            u'Person3LastName, Assembly member 3</p> et une abstention<p>Madame '
+            u'Person4FirstName Person4LastName, Assembly member 4 &amp; 5</p>,</p>')
+        # public vote all yes
+        self.assertEqual(
+            helper_yes_public.print_votes(include_voters=True),
+            u"<p>\xc0 l'unanimit\xe9,</p>")
+        self.assertEqual(
+            helper_yes_public.print_votes(include_voters=True, all_yes_render=None),
+            u'<p>Par 4 voix pour<p>'
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
+            u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
+            u'Madame Person3FirstName Person3LastName, Assembly member 3, '
+            u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5</p>,</p>')
+        # change an assembly member order, it is taken into account
+        change_view = yes_public_item.restrictedTraverse('@@item-change-attendee-order')
+        change_view(attendee_uid=public_item.get_all_attendees()[0], position=3)
+        self.assertEqual(
+            helper_yes_public.print_votes(include_voters=True, all_yes_render=None),
+            u'<p>Par 4 voix pour'
+            u'<p>Monsieur Person2FirstName Person2LastName, Assembly member 2, '
+            u'Madame Person3FirstName Person3LastName, Assembly member 3, '
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
+            u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5</p>,</p>')
 
         # no votes
         meeting.item_votes[public_item.UID()] = []
