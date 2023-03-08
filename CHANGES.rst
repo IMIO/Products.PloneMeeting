@@ -8,6 +8,8 @@ Changelog
 - Do no more use `ToolPloneMeeting.get_plone_groups_for_user`,
   use `imio.helpers.cache.get_plone_groups_for_user` instead.
   [gbastien]
+- Added `fingerpointing-like` log when sending an email.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------
