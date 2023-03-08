@@ -5,8 +5,9 @@ Changelog
 4.2.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Do no more use `ToolPloneMeeting.get_plone_groups_for_user`,
+  use `imio.helpers.cache.get_plone_groups_for_user` instead.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------
