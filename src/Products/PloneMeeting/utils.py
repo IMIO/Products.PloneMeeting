@@ -6,7 +6,6 @@ from Acquisition import aq_base
 from appy.pod.xhtml2odt import XhtmlPreprocessor
 from appy.shared.diff import HtmlDiff
 from bs4 import BeautifulSoup
-from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.core.utils import get_position_type_name
@@ -28,6 +27,7 @@ from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.content import richtextval
+from imio.helpers.content import safe_encode
 from imio.helpers.security import fplog
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import addClassToLastChildren
@@ -592,6 +592,10 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
                           attachments)
         except EmailError, ee:
             logger.warn(str(ee))
+    # add a fingerpointing log message
+    extras = u'event={0} subject="{1}" recipients=[{2}]'.format(
+        event, subject, ", ".join(recipients))
+    fplog('send_mail', extras=safe_encode(extras))
     return subject, body
 
 
@@ -703,8 +707,6 @@ def sendMailIfRelevant(obj,
             unique_emails.append(email)
             unique_email_recipients.append(recipient)
         mail_subject, mail_body = sendMail(unique_email_recipients, obj, event, mapping=mapping)
-        logger.info("Mail(s) \"%s (%s)\" sent to \"%s\"" % (
-            event, mail_subject, ", ".join(recipients)))
     debug = debug or obj.REQUEST.get('debug_sendMailIfRelevant', False)
     if debug:
         return recipients, mail_subject, mail_body

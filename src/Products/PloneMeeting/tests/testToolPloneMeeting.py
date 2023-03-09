@@ -1033,11 +1033,11 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # works with different users
         self.changeUser('pmCreator1')
         pmcreator1_groups = self.member.getGroups()
-        self.assertEqual(self.tool.get_plone_groups_for_user(), sorted(pmcreator1_groups))
+        self.assertEqual(get_plone_groups_for_user(), sorted(pmcreator1_groups))
         self.assertEqual(get_plone_groups_for_user(), sorted(pmcreator1_groups))
         self.changeUser('pmReviewer1')
         pmreviewer1_groups = self.member.getGroups()
-        self.assertEqual(self.tool.get_plone_groups_for_user(), sorted(pmreviewer1_groups))
+        self.assertEqual(get_plone_groups_for_user(), sorted(pmreviewer1_groups))
         self.assertEqual(get_plone_groups_for_user(), sorted(pmreviewer1_groups))
         self.assertNotEqual(pmcreator1_groups, pmreviewer1_groups)
 
@@ -1045,29 +1045,29 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertFalse(self.vendors_creators in pmreviewer1_groups)
         self._addPrincipalToGroup('pmReviewer1', self.vendors_creators)
         pmreviewer1_groups = self.member.getGroups()
-        self.assertTrue(self.vendors_creators in self.tool.get_plone_groups_for_user())
         self.assertTrue(self.vendors_creators in get_plone_groups_for_user())
-        self.assertEqual(self.tool.get_plone_groups_for_user(), sorted(pmreviewer1_groups))
+        self.assertTrue(self.vendors_creators in get_plone_groups_for_user())
+        self.assertEqual(get_plone_groups_for_user(), sorted(pmreviewer1_groups))
         self.assertEqual(get_plone_groups_for_user(), sorted(pmreviewer1_groups))
 
         # we may pass a userId
         self.assertEqual(
-            self.tool.get_plone_groups_for_user(user_id='pmCreator1'),
+            get_plone_groups_for_user(user_id='pmCreator1'),
             sorted(pmcreator1_groups))
         self.assertEqual(
             get_plone_groups_for_user(user_id='pmCreator1'),
             sorted(pmcreator1_groups))
         self.assertEqual(
-            self.tool.get_plone_groups_for_user(user_id='pmReviewer1'),
-            self.tool.get_plone_groups_for_user())
+            get_plone_groups_for_user(user_id='pmReviewer1'),
+            get_plone_groups_for_user())
         self.assertEqual(
             get_plone_groups_for_user(user_id='pmReviewer1'),
             get_plone_groups_for_user())
 
         # may get group objects when the_objects=True
         self.assertEqual(
-            sorted([group.id for group in self.tool.get_plone_groups_for_user(the_objects=True)]),
-            sorted(self.tool.get_plone_groups_for_user(the_objects=False)))
+            sorted([group.id for group in get_plone_groups_for_user(the_objects=True)]),
+            sorted(get_plone_groups_for_user(the_objects=False)))
         self.assertEqual(
             sorted([group.id for group in get_plone_groups_for_user(the_objects=True)]),
             sorted(get_plone_groups_for_user(the_objects=False)))
@@ -1103,17 +1103,17 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # make sure we do not mess utils.get_current_user_id
         self.request.set("AUTHENTICATED_USER", None)
         with api.env.adopt_user(user=pmCreator1):
-            self.assertEqual(self.tool.get_plone_groups_for_user(),
+            self.assertEqual(get_plone_groups_for_user(),
                              sorted(pmcreator1_groups))
             self.assertEqual(get_plone_groups_for_user(),
                              sorted(pmcreator1_groups))
 
-            self.assertEqual(self.tool.get_plone_groups_for_user(user_id='pmCreator1'),
+            self.assertEqual(get_plone_groups_for_user(user_id='pmCreator1'),
                              sorted(pmcreator1_groups))
             self.assertEqual(get_plone_groups_for_user(user_id='pmCreator1'),
                              sorted(pmcreator1_groups))
 
-            self.assertEqual(self.tool.get_plone_groups_for_user(user_id='pmReviewer1'),
+            self.assertEqual(get_plone_groups_for_user(user_id='pmReviewer1'),
                              sorted(pmreviewer1_groups))
             self.assertEqual(get_plone_groups_for_user(user_id='pmReviewer1'),
                              sorted(pmreviewer1_groups))
