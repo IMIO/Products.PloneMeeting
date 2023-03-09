@@ -5,6 +5,11 @@ Changelog
 4.2.1 (unreleased)
 ------------------
 
+- Do no more use `ToolPloneMeeting.get_plone_groups_for_user`,
+  use `imio.helpers.cache.get_plone_groups_for_user` instead.
+  [gbastien]
+- Added `fingerpointing-like` log when sending an email.
+  [gbastien]
 - Changed position of `photo` and `signature` fields on `person`,
   moved `signature` before `photo`.
   [gbastien]

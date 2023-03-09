@@ -1591,7 +1591,7 @@ class SearchItemsOfMyCommitteesAdapter(CompoundCriterionBaseAdapter):
         # and intersect with user groups
         committee_group_ids = self.cfg.createCommitteeEditorsGroups(
             dry_run_return_group_ids=True)
-        user_group_ids = self.tool.get_plone_groups_for_user()
+        user_group_ids = get_plone_groups_for_user()
         committee_user_group_ids = set(committee_group_ids).intersection(
             user_group_ids)
         committee_ids = [committee_user_group_id.split("_", 1)[1]
