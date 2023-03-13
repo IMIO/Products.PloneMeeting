@@ -21,7 +21,7 @@ from plone import api
 from plone.namedfile import NamedImage
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
-from Products.PloneMeeting.browser.itemattendee import set_meeting_item_signatory
+from Products.PloneMeeting.browser.itemattendee import _set_meeting_item_signatory
 from Products.PloneMeeting.browser.itemattendee import WRONG_PERSON_UID
 from Products.PloneMeeting.content.directory import IPMDirectory
 from Products.PloneMeeting.content.meeting import get_all_usable_held_positions
@@ -392,7 +392,7 @@ class testContacts(PloneMeetingTestCase):
         byebye_form.person_uid = hp4_uid
         self.assertEqual(
             byebye_form._doApply(),
-            'Can not set Absent (excused) a person that is not present on the meeting!\n')
+            'Can not set "Absent (excused)" a person that is not present on the meeting!\n')
         # nothing was applied
         self.assertNotIn(hp4_uid, byebye_form.context.get_item_excused())
         self.assertNotIn(hp4_uid, byebye_form.context.get_item_absents())
@@ -805,7 +805,7 @@ class testContacts(PloneMeetingTestCase):
         # when a position_type used for signatory, it overcomes
         # defined label if it is not u'default'
         # try with default
-        set_meeting_item_signatory(meeting, item_uid, '2', signatory3_uid, u'default')
+        _set_meeting_item_signatory(meeting, item_uid, '2', signatory3_uid, u'default')
         printed_signatories = helper.print_signatories_by_position(
             signature_format=(u'prefixed_position_type', u'person'))
         self.assertEqual(
@@ -818,7 +818,7 @@ class testContacts(PloneMeetingTestCase):
             }
         )
         # try with something else than default
-        set_meeting_item_signatory(meeting, item_uid, '2', signatory3_uid, u'super')
+        _set_meeting_item_signatory(meeting, item_uid, '2', signatory3_uid, u'super')
         printed_signatories = helper.print_signatories_by_position(
             signature_format=(u'prefixed_position_type', u'person'))
         self.assertEqual(

@@ -4381,6 +4381,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              the_objects=False,
                              by_signature_number=False,
                              real=False,
+                             include_position_type=False,
                              **kwargs):
         '''Returns the signatories for this item. If no signatory is defined,
            meeting signatories are returned.
@@ -4417,8 +4418,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             signatories = {reversed_signatories[signatory.UID()]: signatory
                            for signatory in signatories_objs}
 
+        # finally if include_position_type=True, complete data
+        if include_position_type:
+            item_signatories = meeting.get_item_signatories(include_position_type=True).get(
+                self.UID(), {})
+            for signature_number, uid_or_obj in signatories.items():
+                signatories[signature_number] = {
+                    'hp': uid_or_obj,
+                    'position_type': signature_number in item_signatories and
+                    item_signatories[signature_number]['position_type'] or
+                    uuidToObject(isinstance(uid_or_obj, basestring) and
+                                 uid_or_obj or uid_or_obj.UID()).position_type}
+        # finally change k/v if necessary
         if not by_signature_number:
-            signatories = {v: k for k, v in signatories.items()}
+            if not include_position_type:
+                signatories = {v: k for k, v in signatories.items()}
+            else:
+                signatories = {v['hp']: {'signature_number': k, 'position_type': v['position_type']}
+                               for k, v in signatories.items()}
 
         return signatories
 

@@ -13,6 +13,8 @@ Changelog
 - Changed position of `photo` and `signature` fields on `person`,
   moved `signature` before `photo`.
   [gbastien]
+- Adapted code to manage attendees management thru restapi.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------

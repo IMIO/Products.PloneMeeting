@@ -2,6 +2,7 @@
 
 from AccessControl import Unauthorized
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidToObject
 from imio.helpers.security import fplog
 from persistent.mapping import PersistentMapping
@@ -20,6 +21,7 @@ from z3c.form import button
 from z3c.form import field
 from z3c.form import form
 from z3c.form.interfaces import NO_VALUE
+from zExceptions import BadRequest
 from zope import schema
 from zope.component.hooks import getSite
 from zope.i18n import translate
@@ -28,6 +30,7 @@ from zope.interface import provider
 from zope.schema._bootstrapinterfaces import IContextAwareDefaultFactory
 
 WRONG_PERSON_UID = "No held_position found with UID \"%s\"!"
+WRONG_POSITION_TYPE = "Given position_type \"%s\" does not exist!"
 
 
 def person_uid_default():
@@ -92,7 +95,7 @@ class BaseAttendeeForm(form.Form):
             cfg = tool.getMeetingConfig(self.context)
             hp = uuidToObject(person_uid, unrestricted=True)
             if not hp:
-                raise ValueError(WRONG_PERSON_UID % person_uid)
+                raise BadRequest(WRONG_PERSON_UID % person_uid)
             self.description = self.meeting.get_attendee_short_title(hp, cfg, item=self.context)
 
     def update(self):
@@ -204,7 +207,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
         # attendee not present on meeting
         if self.person_uid not in self.meeting.get_attendees():
             msg = translate(
-                "Can not set ${not_present_type} a person that is not present on the meeting!",
+                "Can not set \"${not_present_type}\" a person that is not present on the meeting!",
                 mapping={'not_present_type': _('item_not_present_type_{0}'.format(
                     self.not_present_type))},
                 domain="PloneMeeting", context=self.request)
@@ -213,7 +216,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
         # item signatory
         elif self.person_uid in item_to_update.get_item_signatories(real=True):
             msg = translate(
-                "Can not set ${not_present_type} a person selected as signatory on an item!",
+                "Can not set \"${not_present_type}\" a person selected as signatory on an item!",
                 mapping={'not_present_type': _('item_not_present_type_{0}'.format(
                     self.not_present_type))},
                 domain="PloneMeeting", context=self.request)
@@ -221,13 +224,13 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
             error = True
         # already excused
         elif self.not_present_type == 'absent' and self.person_uid in item_to_update.get_item_excused():
-            msg = translate("Can not set absent a person selected as excused on an item!",
+            msg = translate("Can not set \"Absent\" a person selected as excused on an item!",
                             domain="PloneMeeting", context=self.request)
             api.portal.show_message(msg, type='warning', request=self.request)
             error = True
         # already absent
         elif self.not_present_type == 'excused' and self.person_uid in item_to_update.get_item_absents():
-            msg = translate("Can not set excused a person selected as absent on an item!",
+            msg = translate("Can not set \"Excused\" a person selected as absent on an item!",
                             domain="PloneMeeting", context=self.request)
             api.portal.show_message(msg, type='warning', request=self.request)
             error = True
@@ -437,7 +440,7 @@ class IRedefineSignatory(IBaseAttendee):
         vocabulary=u"Products.PloneMeeting.vocabularies.numbersvocabulary")
 
 
-def set_meeting_item_signatory(meeting, item_uid, signature_number, hp_uid, position_type):
+def _set_meeting_item_signatory(meeting, item_uid, signature_number, hp_uid, position_type):
     """ """
     updated = False
     item_signatories = meeting.item_signatories.get(item_uid, PersistentMapping())
@@ -456,40 +459,34 @@ class RedefineSignatoryForm(BaseAttendeeForm):
     schema = IRedefineSignatory
     fields = field.Fields(IRedefineSignatory)
 
-    def mayChangeAttendees(self):
-        """ """
-        res = super(RedefineSignatoryForm, self).mayChangeAttendees()
-        if res:
-            # check that person_uid :
-            # - is not already a signatory, on meeting or item;
-            # - is present.
-            if self.person_uid in self.meeting.get_signatories() or \
-               self.person_uid in self.context.get_item_signatories() or \
-               self.person_uid not in self.meeting.get_attendees():
-                res = False
-        return res
-
     def _checkMayApplyPrecondition(self, item_to_update):
         """Check that person_uid:
            - is not already a signatory, on meeting or item;
-           - is present."""
+           - is present;
+           - position_type exists."""
         error = False
         msg = None
-        # XXX add _checkGlobalMayApplyPrecondition method to manage global checks
-        if self.person_uid in self.meeting.get_signatories() or \
-           self.person_uid not in self.meeting.get_attendees():
+        # these checks are essentially for restapi as Web UI will prevent these actions
+        if self.person_uid in self.meeting.get_signatories():
             msg = translate(
-                "Can not set signatory a person that is already signatory on the meeting!",
+                "Can not set \"Signatory\" a person that is already signatory on the meeting!",
                 domain="PloneMeeting", context=self.request)
             api.portal.show_message(msg, type='warning', request=self.request)
             error = True
-        else:
-            if self.person_uid in item_to_update.get_item_signatories():
-                msg = translate(
-                    "Can not set signatory a signatory already defined on an item!",
-                    domain="PloneMeeting", context=self.request)
-                api.portal.show_message(msg, type='warning', request=self.request)
-                error = True
+        elif self.person_uid not in self.meeting.get_attendees():
+            msg = translate(
+                "Can not set \"Signatory\" a person that is not present on the meeting!",
+                domain="PloneMeeting", context=self.request)
+            api.portal.show_message(msg, type='warning', request=self.request)
+            error = True
+        elif self.person_uid in item_to_update.get_item_signatories():
+            msg = translate(
+                "Can not set \"Signatory\" a person already redefined as signatory on an item!",
+                domain="PloneMeeting", context=self.request)
+            api.portal.show_message(msg, type='warning', request=self.request)
+            error = True
+        elif self.position_type not in get_vocab(self.context, self.schema['position_type'].vocabularyName):
+            raise BadRequest(WRONG_POSITION_TYPE % self.position_type)
         return error, msg
 
     def _doApply(self):
@@ -510,7 +507,7 @@ class RedefineSignatoryForm(BaseAttendeeForm):
         # apply signatory
         for item_to_update in items_to_update:
             item_to_update_uid = item_to_update.UID()
-            updated = set_meeting_item_signatory(
+            updated = _set_meeting_item_signatory(
                 self.meeting,
                 item_to_update_uid,
                 self.signature_number,
