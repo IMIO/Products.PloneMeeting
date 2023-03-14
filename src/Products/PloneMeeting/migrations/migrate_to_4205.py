@@ -16,8 +16,9 @@ from Products.ZCatalog.ProgressHandler import ZLogHandler
 
 class Migrate_To_4205(Migrator):
 
-    def _updateConfigCommittees(self):
-        """MeetingConfig.committees get a new value "enable_groups"."""
+    def _updateConfigCommitteesAndVotesResult(self):
+        """MeetingConfig.committees get a new value "enable_groups" and
+           init new field MeetingItem.votesResult."""
         logger.info('Updating datagridfield "committees" for every MeetingConfigs...')
         # reinstall workflows to take new role "MeetingCommitteeEditor" into account
         self.runProfileSteps('Products.PloneMeeting', steps=['rolemap', 'workflow'], profile='default')
@@ -29,9 +30,10 @@ class Migrate_To_4205(Migrator):
                     committee["enable_editors"] = "0"
             cfg.setCommittees(committees)
             cfg.at_post_edit_script()
-        # update new field committeeTranscript on items
+        # update new fields committeeTranscript and votesResult on items
         self.initNewHTMLFields(
-            query={'meta_type': ('MeetingItem')}, field_name='committeeTranscript')
+            query={'meta_type': ('MeetingItem')},
+            field_names=('committeeTranscript', 'votesResult'))
         logger.info('Done.')
 
     def _updateMeetingCommittees(self):
@@ -148,13 +150,11 @@ class Migrate_To_4205(Migrator):
         if not from_migration_to_4200:
             # will upgrade collective.documentgenerator and collective.messagesviewlet
             self.upgradeAll(omit=['Products.PloneMeeting:default'])
-            self._updateConfigCommittees()
+            self._updateConfigCommitteesAndVotesResult()
             self._updateMeetingCommittees()
             self._updateLocalRolesItemBeforeStateValidated()
             self.addNewSearches()
-            # update new field votesResult on items
-            self.initNewHTMLFields(
-                query={'meta_type': ('MeetingItem')}, field_name='votesResult')
+
         self._initAdviceGivenHistory()
         self._removeCfgUseGroupsAsCategories()
         logger.info('Migrating to PloneMeeting 4205... Done.')
@@ -163,7 +163,8 @@ class Migrate_To_4205(Migrator):
 def migrate(context):
     '''This migration function will:
 
-       1) Update MeetingConfig.committees to add "enable_groups";
+       1) Update MeetingConfig.committees to add "enable_groups",
+          init new MeetingItem fields 'committeeTranscript' and 'votesResult';
        2) Update meetig.committees to add "committee_observations";
        3) Update local roles of items in before review_state "validated";
        4) Move from advice versioning to "advice_given_history";
