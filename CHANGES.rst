@@ -10,6 +10,8 @@ Changelog
   [gbastien]
 - Added `fingerpointing-like` log when sending an email.
   [gbastien]
+- Fixed `PersonalLabelsAdapter` that breaks if no labels selected in query index.
+  [gbastien]
 - Changed position of `photo` and `signature` fields on `person`,
   moved `signature` before `photo`.
   [gbastien]
