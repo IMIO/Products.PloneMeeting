@@ -1531,7 +1531,8 @@ class PersonalLabelsAdapter(CompoundCriterionBaseAdapter):
         labels = [value for value in self.context.query if value[u'i'] == u'labels']
         if labels:
             member_id = get_current_user_id(self.request)
-            labels = labels[0][u'v']
+            # if no selected values, the 'v' key is not there...
+            labels = labels[0].get(u'v', [])
             personal_labels = ['{0}:{1}'.format(member_id, label) for label in labels]
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'labels': {'query': personal_labels}, }
