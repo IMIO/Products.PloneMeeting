@@ -1324,7 +1324,7 @@ class Meeting(Container):
 
     security.declarePublic('get_signatories')
 
-    def get_signatories(self, the_objects=False, by_signature_number=False):
+    def get_signatories(self, the_objects=False, by_signature_number=False, include_position_type=False):
         '''Returns the signatories in this meeting.'''
         signers = self._get_contacts('signer', the_objects=the_objects)
         # order is important in case we have several same signature_number, the first win
@@ -1336,11 +1336,24 @@ class Meeting(Container):
             res = OrderedDict(
                 [(signer_uid, self.ordered_contacts[signer_uid]['signature_number'])
                  for signer_uid in signers])
+
+        if include_position_type:
+            # make signature_number the key
+            reversed_res = {v: k for k, v in res.items()}
+            for signature_number, uid_or_obj in reversed_res.items():
+                res[uid_or_obj] = {
+                    'signature_number': signature_number,
+                    'position_type': uuidToObject(
+                        isinstance(uid_or_obj, basestring) and
+                        uid_or_obj or uid_or_obj.UID()).position_type}
+
         if by_signature_number:
             # reverse res so when several same signature_number, the first win
             res = OrderedDict(reversed(res.items()))
             # keys are values, values are keys
             res = {v: k for k, v in res.items()}
+            # XXX manage include_position_type
+
         return dict(res)
 
     security.declarePublic('get_replacements')
