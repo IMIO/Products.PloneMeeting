@@ -361,8 +361,9 @@ class EncodeVotesForm(BaseAttendeeForm):
 
     def _doApply(self):
         """ """
-        if not self.mayChangeAttendees():
-            raise Unauthorized
+        error = super(EncodeVotesForm, self)._doApply()
+        if error:
+            return error
 
         # prepare Meeting.item_votes compatible data
         # while datagrid used in an overlay, some <NO_VALUE>
@@ -379,13 +380,9 @@ class EncodeVotesForm(BaseAttendeeForm):
         if 'poll_type' in vote_infos:
             data['poll_type'] = vote_infos['poll_type']
 
-        items_to_update = _itemsToUpdate(
-            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
-            until_item_number=self.apply_until_item_number,
-            meeting=self.meeting)
         updated = []
         not_updated = []
-        for item_to_update in items_to_update:
+        for item_to_update in self.items_to_update:
             # set item public votes
             if is_vote_updatable_for(self.context, item_to_update):
                 self.meeting.set_item_public_vote(item_to_update, data, self.vote_number)
@@ -399,8 +396,8 @@ class EncodeVotesForm(BaseAttendeeForm):
         voter_uids = "__".join(voter_uids)
         vote_values = [vote['vote_value'] for vote in self.votes]
         vote_values = "__".join(vote_values)
-        first_item_number = items_to_update[0].getItemNumber(for_display=True)
-        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        first_item_number = self.items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = self.items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} vote_number={1} voter_uids={2} vote_values={3} ' \
             'from_item_number={4} until_item_number={5}'.format(
                 repr(self.context),
@@ -604,8 +601,9 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
 
     def _doApply(self):
         """ """
-        if not self.mayChangeAttendees():
-            raise Unauthorized
+        error = super(EncodeSecretVotesForm, self)._doApply()
+        if error:
+            return error
 
         # prepare Meeting.itemVotes compatible data
         # while datagrid used in an overlay, some <NO_VALUE>
@@ -618,13 +616,9 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
         for vote in self.votes:
             data['votes'][vote['vote_value_id']] = vote['vote_count']
 
-        items_to_update = _itemsToUpdate(
-            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
-            until_item_number=self.apply_until_item_number,
-            meeting=self.meeting)
         updated = []
         not_updated = []
-        for item_to_update in items_to_update:
+        for item_to_update in self.items_to_update:
             # set item secret vote
             if is_vote_updatable_for(self.context, item_to_update):
                 self.meeting.set_item_secret_vote(item_to_update, data, self.vote_number)
@@ -638,8 +632,8 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
         vote_values = "__".join(vote_values)
         vote_count = [str(vote['vote_count']) for vote in self.votes]
         vote_count = "__".join(vote_count)
-        first_item_number = items_to_update[0].getItemNumber(for_display=True)
-        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        first_item_number = self.items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = self.items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} vote_number={1} vote_values={2} vote_count={3} ' \
             'from_item_number={4} until_item_number={5}'.format(
                 repr(self.context),

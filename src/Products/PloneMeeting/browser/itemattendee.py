@@ -153,13 +153,35 @@ class BaseAttendeeForm(form.Form):
 
     def _doApply(self):
         """ """
-        raise NotImplementedError('This must be overrided!')
+        if not self.mayChangeAttendees():
+            raise Unauthorized
+
+        self.items_to_update = _itemsToUpdate(
+            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
+            until_item_number=self.apply_until_item_number,
+            meeting=self.meeting)
+
+        # return a portal_message if trying to byebye an attendee that is
+        # a signatory redefined on the item
+        # user will first have to select another signatory on meeting or item
+        # return a portal_message if trying to set absent and item that is
+        # already excused (and the other way round)
+        error = self.mayApplyPrecondition(self.items_to_update)
+        if error:
+            self._finished = True
+            return error
 
     def render(self):
         if self._finished:
             # make sure we return nothing, taken into account by ajax query
             return redirect(self.request, self.context.absolute_url())
         return super(BaseAttendeeForm, self).render()
+
+    def _checkMayApplyPrecondition(self, item_to_update):
+        """ """
+        error = False
+        msg = None
+        return error, msg
 
     def mayApplyPrecondition(self, items_to_update):
         """ """
@@ -279,36 +301,22 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
 
     def _doApply(self):
         """ """
-        if not self.mayChangeAttendees():
-            raise Unauthorized
-
-        items_to_update = _itemsToUpdate(
-            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
-            until_item_number=self.apply_until_item_number,
-            meeting=self.meeting)
-
-        # return a portal_message if trying to byebye an attendee that is
-        # a signatory redefined on the item
-        # user will first have to select another signatory on meeting or item
-        # return a portal_message if trying to set absent and item that is
-        # already excused (and the other way round)
-        error = self.mayApplyPrecondition(items_to_update)
+        error = super(ByeByeAttendeeForm, self)._doApply()
         if error:
-            self._finished = True
             return error
 
         # apply item_absents/item_excused
         meeting_not_present_attr = getattr(
             self.meeting, self.NOT_PRESENT_MAPPING[self.not_present_type])
-        for item_to_update in items_to_update:
+        for item_to_update in self.items_to_update:
             item_to_update_uid = item_to_update.UID()
             item_not_present = meeting_not_present_attr.get(item_to_update_uid, [])
             if self.person_uid not in item_not_present:
                 item_not_present.append(self.person_uid)
                 meeting_not_present_attr[item_to_update_uid] = item_not_present
                 notifyModifiedAndReindex(item_to_update)
-        first_item_number = items_to_update[0].getItemNumber(for_display=True)
-        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        first_item_number = self.items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = self.items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} not_present_type={2} from_item_number={3} until_item_number={4}'.format(
             repr(self.context), self.person_uid, self.not_present_type, first_item_number, last_item_number)
         fplog('byebye_item_attendee', extras=extras)
@@ -348,24 +356,21 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
 
     def _doApply(self):
         """ """
-        if not self.mayChangeAttendees():
-            raise Unauthorized
+        error = super(WelcomeAttendeeForm, self)._doApply()
+        if error:
+            return error
 
         # check where is person_uid, item_absents or item_excused
         meeting_absent_attr = self._get_meeting_absent_attr()
-        items_to_update = _itemsToUpdate(
-            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
-            until_item_number=self.apply_until_item_number,
-            meeting=self.meeting)
-        for item_to_update in items_to_update:
+        for item_to_update in self.items_to_update:
             item_to_update_uid = item_to_update.UID()
             item_absents = meeting_absent_attr.get(item_to_update_uid, [])
             if self.person_uid in item_absents:
                 item_absents.remove(self.person_uid)
                 meeting_absent_attr[item_to_update_uid] = item_absents
                 notifyModifiedAndReindex(item_to_update)
-        first_item_number = items_to_update[0].getItemNumber(for_display=True)
-        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        first_item_number = self.items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = self.items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
             repr(self.context), self.person_uid, first_item_number, last_item_number)
         fplog('welcome_item_attendee', extras=extras)
@@ -491,21 +496,12 @@ class RedefineSignatoryForm(BaseAttendeeForm):
 
     def _doApply(self):
         """ """
-        if not self.mayChangeAttendees():
-            raise Unauthorized
-
-        items_to_update = _itemsToUpdate(
-            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
-            until_item_number=self.apply_until_item_number,
-            meeting=self.meeting)
-
-        error = self.mayApplyPrecondition(items_to_update)
+        error = super(RedefineSignatoryForm, self)._doApply()
         if error:
-            self._finished = True
             return error
 
         # apply signatory
-        for item_to_update in items_to_update:
+        for item_to_update in self.items_to_update:
             item_to_update_uid = item_to_update.UID()
             updated = _set_meeting_item_signatory(
                 self.meeting,
@@ -515,8 +511,8 @@ class RedefineSignatoryForm(BaseAttendeeForm):
                 self.position_type)
             if updated:
                 notifyModifiedAndReindex(item_to_update)
-        first_item_number = items_to_update[0].getItemNumber(for_display=True)
-        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        first_item_number = self.items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = self.items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} signature_number={2} from_item_number={3} until_item_number={4}'.format(
             repr(self.context), self.person_uid, self.signature_number, first_item_number, last_item_number)
         fplog('redefine_item_signatory', extras=extras)
@@ -541,16 +537,12 @@ class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
 
     def _doApply(self):
         """ """
-        if not self.mayChangeAttendees():
-            raise Unauthorized
-
-        items_to_update = _itemsToUpdate(
-            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
-            until_item_number=self.apply_until_item_number,
-            meeting=self.meeting)
+        error = super(RemoveRedefinedSignatoryForm, self)._doApply()
+        if error:
+            return error
 
         # apply signatory
-        for item_to_update in items_to_update:
+        for item_to_update in self.items_to_update:
             item_to_update_uid = item_to_update.UID()
             item_signatories = self.meeting.item_signatories.get(item_to_update_uid, {})
             signature_number = [k for k, v in item_signatories.items()
@@ -564,8 +556,8 @@ class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
                 else:
                     del self.meeting.item_signatories[item_to_update_uid]
                 notifyModifiedAndReindex(item_to_update)
-        first_item_number = items_to_update[0].getItemNumber(for_display=True)
-        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        first_item_number = self.items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = self.items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
             repr(self.context), self.person_uid, first_item_number, last_item_number)
         fplog('remove_redefined_item_signatory', extras=extras)
@@ -606,18 +598,24 @@ class RedefineAttendeePositionForm(BaseAttendeeForm):
     schema = IRedefineAttendeePosition
     fields = field.Fields(IRedefineAttendeePosition)
 
+    def _checkMayApplyPrecondition(self, item_to_update):
+        """Condition to apply:
+           - new position_type must exist."""
+        error = False
+        msg = None
+        if self.position_type not in get_vocab(self.context, "PMAttendeeRedefinePositionTypes"):
+            # could only happen with restapi
+            raise BadRequest(WRONG_POSITION_TYPE % self.position_type)
+        return error, msg
+
     def _doApply(self):
         """ """
-        if not self.mayChangeAttendees():
-            raise Unauthorized
-
-        items_to_update = _itemsToUpdate(
-            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
-            until_item_number=self.apply_until_item_number,
-            meeting=self.meeting)
+        error = super(RedefineAttendeePositionForm, self)._doApply()
+        if error:
+            return error
 
         # apply redefined position
-        for item_to_update in items_to_update:
+        for item_to_update in self.items_to_update:
             item_to_update_uid = item_to_update.UID()
             updated = set_meeting_item_attendee_position(
                 self.meeting,
@@ -626,8 +624,8 @@ class RedefineAttendeePositionForm(BaseAttendeeForm):
                 self.position_type)
             if updated:
                 notifyModifiedAndReindex(item_to_update)
-        first_item_number = items_to_update[0].getItemNumber(for_display=True)
-        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        first_item_number = self.items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = self.items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
             repr(self.context), self.person_uid, first_item_number, last_item_number)
         fplog('redefine_item_attendee_position', extras=extras)
@@ -648,16 +646,12 @@ class RemoveRedefinedAttendeePositionForm(BaseAttendeeForm):
 
     def _doApply(self):
         """ """
-        if not self.mayChangeAttendees():
-            raise Unauthorized
-
-        items_to_update = _itemsToUpdate(
-            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
-            until_item_number=self.apply_until_item_number,
-            meeting=self.meeting)
+        error = super(RemoveRedefinedAttendeePositionForm, self)._doApply()
+        if error:
+            return error
 
         # apply removal of redefined attendee position
-        for item_to_update in items_to_update:
+        for item_to_update in self.items_to_update:
             item_to_update_uid = item_to_update.UID()
             item_attendees_positions = self.meeting.item_attendees_positions.get(
                 item_to_update_uid, {})
@@ -666,8 +660,8 @@ class RemoveRedefinedAttendeePositionForm(BaseAttendeeForm):
             if not item_attendees_positions:
                 del self.meeting.item_attendees_positions[item_to_update_uid]
                 notifyModifiedAndReindex(item_to_update)
-        first_item_number = items_to_update[0].getItemNumber(for_display=True)
-        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        first_item_number = self.items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = self.items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
             repr(self.context), self.person_uid, first_item_number, last_item_number)
         fplog('remove_redefined_item_attendee_position', extras=extras)
