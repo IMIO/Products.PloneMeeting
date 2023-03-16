@@ -515,3 +515,8 @@ contactsTemplate.pod_formats = ['ods', 'xls']
 contactsTemplate.dashboard_collections_ids = ['all_orgs']
 contactsTemplate.use_objects = True
 data.contactsTemplates = [contactsTemplate]
+data.directory_position_types = [
+    {'token': u'default',
+     'name': u'Défaut'},
+    {'token': u'administrator',
+     'name': u'Administrateur|Administrateurs|Administratrice|Administratrices'}, ]

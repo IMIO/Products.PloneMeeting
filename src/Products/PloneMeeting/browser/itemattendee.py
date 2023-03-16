@@ -208,7 +208,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
         if self.person_uid not in self.meeting.get_attendees():
             msg = translate(
                 "Can not set \"${not_present_type}\" a person that is not present on the meeting!",
-                mapping={'not_present_type': _('item_not_present_type_{0}'.format(
+                mapping={'not_present_type': _('{0}'.format(
                     self.not_present_type))},
                 domain="PloneMeeting", context=self.request)
             api.portal.show_message(msg, type='warning', request=self.request)
@@ -217,7 +217,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
         elif self.person_uid in item_to_update.get_item_signatories(real=True):
             msg = translate(
                 "Can not set \"${not_present_type}\" a person selected as signatory on an item!",
-                mapping={'not_present_type': _('item_not_present_type_{0}'.format(
+                mapping={'not_present_type': _('{0}'.format(
                     self.not_present_type))},
                 domain="PloneMeeting", context=self.request)
             api.portal.show_message(msg, type='warning', request=self.request)
@@ -257,7 +257,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
                                   "a person that voted on an item!",
                                   mapping={
                                       'not_present_type':
-                                          _('item_not_present_type_{0}'.format(
+                                          _('{0}'.format(
                                             self.not_present_type))}),
                                 type='warning',
                                 request=self.request)
@@ -270,7 +270,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
                                   "a person that voted on an item!",
                                   mapping={
                                       'not_present_type':
-                                          _('item_not_present_type_{0}'.format(
+                                          _('{0}'.format(
                                             self.not_present_type))}),
                                 type='warning',
                                 request=self.request)
@@ -314,7 +314,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
         fplog('byebye_item_attendee', extras=extras)
         api.portal.show_message(
             _("Attendee has been set ${not_present_type}.",
-              mapping={'not_present_type': _('item_not_present_type_{0}'.format(self.not_present_type))}),
+              mapping={'not_present_type': _('{0}'.format(self.not_present_type))}),
             request=self.request)
         self._finished = True
 

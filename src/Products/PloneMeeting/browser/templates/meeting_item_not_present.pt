@@ -2,7 +2,7 @@
      i18n:domain="PloneMeeting"
      class="meeting_item_not_present_tooltipster">
   <h4><span i18n:translate="">This attendee is marked as
-    <span i18n:name="not_present_type" i18n:translate="" tal:content="string:item_not_present_type_${view/not_present_type}">not present type</span> for the
+    <span i18n:name="not_present_type" i18n:translate="" tal:content="string:${view/not_present_type}">not present type</span> for the
     <span i18n:name="number" tal:content="python: len(view.items_for_not_present)">number</span> following items
     (<span i18n:name="clusters" tal:content="python: view.display_clusters()">clusters</span>)</span> :</h4>
   <ul tal:condition="python: view.items_for_not_present">

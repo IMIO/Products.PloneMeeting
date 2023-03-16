@@ -105,8 +105,8 @@ Changelog
     are available when committees are used.
 
   [gbastien]
-- Added parameters `field_names=[]` to `utils.forceHTMLContentTypeForEmptyRichFields`
-  so it is possible to specify field names to initialize when known.
+- Added parameters `field_name=None` to `utils.forceHTMLContentTypeForEmptyRichFields`
+  so it is possible to specify field name to initialize when known.
   [gbastien]
 - Make `adapters.PMNegativePersonalLabelsAdapter` and
   `adapters.PMNegativePreviousIndexValuesAdapter` inherits from base classes

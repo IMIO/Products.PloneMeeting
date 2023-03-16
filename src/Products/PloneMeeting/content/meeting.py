@@ -1351,8 +1351,11 @@ class Meeting(Container):
             # reverse res so when several same signature_number, the first win
             res = OrderedDict(reversed(res.items()))
             # keys are values, values are keys
-            res = {v: k for k, v in res.items()}
-            # XXX manage include_position_type
+            if include_position_type:
+                res = {v['signature_number']: {'hp': k, 'position_type': v['position_type']}
+                       for k, v in res.items()}
+            else:
+                res = {v: k for k, v in res.items()}
 
         return dict(res)
 
@@ -1462,7 +1465,7 @@ class Meeting(Container):
            for given p_item_uid and p_signatory_uid."""
         # check if signatory_uid is redefined on the item
         data = self.get_item_signatories(by_signatories=False, include_position_type=True)
-        data = {k: v['position_type'] for k, v in data[item_uid].items()
+        data = {k: v['position_type'] for k, v in data.get(item_uid, {}).items()
                 if v['hp_uid'] == signatory_uid}
         hp = uuidToObject(signatory_uid, unrestricted=True)
         if data:
