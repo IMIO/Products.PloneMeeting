@@ -12,6 +12,8 @@ Changelog
   [gbastien]
 - Fixed `PersonalLabelsAdapter` that breaks if no labels selected in query index.
   [gbastien]
+- Fixed disabled attendees in meeting edit form.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------
