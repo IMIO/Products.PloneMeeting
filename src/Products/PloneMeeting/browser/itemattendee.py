@@ -230,8 +230,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
         if self.person_uid not in self.meeting.get_attendees():
             msg = translate(
                 "Can not set \"${not_present_type}\" a person that is not present on the meeting!",
-                mapping={'not_present_type': _('{0}'.format(
-                    self.not_present_type))},
+                mapping={'not_present_type': _(self.not_present_type)},
                 domain="PloneMeeting", context=self.request)
             api.portal.show_message(msg, type='warning', request=self.request)
             error = True
@@ -239,21 +238,16 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
         elif self.person_uid in item_to_update.get_item_signatories(real=True):
             msg = translate(
                 "Can not set \"${not_present_type}\" a person selected as signatory on an item!",
-                mapping={'not_present_type': _('{0}'.format(
-                    self.not_present_type))},
+                mapping={'not_present_type': _(self.not_present_type)},
                 domain="PloneMeeting", context=self.request)
             api.portal.show_message(msg, type='warning', request=self.request)
             error = True
-        # already excused
-        elif self.not_present_type == 'absent' and self.person_uid in item_to_update.get_item_excused():
-            msg = translate("Can not set \"Absent\" a person selected as excused on an item!",
-                            domain="PloneMeeting", context=self.request)
-            api.portal.show_message(msg, type='warning', request=self.request)
-            error = True
-        # already absent
-        elif self.not_present_type == 'excused' and self.person_uid in item_to_update.get_item_absents():
-            msg = translate("Can not set \"Excused\" a person selected as absent on an item!",
-                            domain="PloneMeeting", context=self.request)
+        # attendee not present on item
+        elif self.person_uid not in self.context.get_attendees():
+            msg = translate(
+                "Can not set \"${not_present_type}\" a person that is not present on the item!",
+                mapping={'not_present_type': _(self.not_present_type)},
+                domain="PloneMeeting", context=self.request)
             api.portal.show_message(msg, type='warning', request=self.request)
             error = True
 
@@ -481,12 +475,6 @@ class RedefineSignatoryForm(BaseAttendeeForm):
         elif self.person_uid not in self.meeting.get_attendees():
             msg = translate(
                 "Can not set \"Signatory\" a person that is not present on the meeting!",
-                domain="PloneMeeting", context=self.request)
-            api.portal.show_message(msg, type='warning', request=self.request)
-            error = True
-        elif self.person_uid in item_to_update.get_item_signatories():
-            msg = translate(
-                "Can not set \"Signatory\" a person already redefined as signatory on an item!",
                 domain="PloneMeeting", context=self.request)
             api.portal.show_message(msg, type='warning', request=self.request)
             error = True
