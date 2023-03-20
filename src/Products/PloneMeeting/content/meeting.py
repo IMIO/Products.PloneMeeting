@@ -1193,12 +1193,12 @@ class Meeting(Container):
         kwargs["additional_catalog_query"] = additional_catalog_query
         return self.get_items(ordered=ordered, **kwargs)
 
-    def get_all_attendees(self, ordered_uids=[], the_objects=False):
+    def get_all_attendees(self, uids=[], the_objects=False):
         '''This will return every currently stored held_positions.
            If p_the_objects=True, we return held_position objects, UID otherwise.'''
         # in some case especially with pm.restapi, validators are called before
         # created event and ordered_contacts may not be initialized
-        contacts = ordered_uids or (
+        contacts = uids or (
             base_hasattr(self, 'ordered_contacts') and list(self.ordered_contacts)) or []
         if contacts and the_objects:
             contacts = uuidsToObjects(uuids=contacts, ordered=True, unrestricted=True)

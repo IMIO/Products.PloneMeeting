@@ -7786,15 +7786,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return [uid for uid in self.get_all_attendees(ordered=True)
                 if uid in uids]
 
-    def get_all_attendees(self, the_objects=False, ordered=True):
+    def get_all_attendees(self, uids=[], the_objects=False, ordered=True):
         '''Returns every attendees for this item, including absents, excused, ...'''
         if not self.hasMeeting():
             return ()
         meeting = self.getMeeting()
-        all_uids = []
-        if ordered:
-            all_uids = meeting._get_item_attendees_order(self.UID())
-        return meeting.get_all_attendees(all_uids, the_objects=the_objects)
+        if ordered and not uids:
+            uids = meeting._get_item_attendees_order(self.UID())
+        return meeting.get_all_attendees(uids, the_objects=the_objects)
 
     def _appendLinkedItem(self, item, tool, cfg, only_viewable):
         if not only_viewable:
