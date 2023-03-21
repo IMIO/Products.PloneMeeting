@@ -566,6 +566,12 @@ class testContacts(PloneMeetingTestCase):
             self.assertTrue(view.index())
             self.assertEqual(view.get_items_for_signatory(), [item1, item2])
 
+        # possible to edit an already redefined signatory
+        signatory_form.signature_number = '2'
+        signatory_form._doApply()
+        self.assertEqual(item1.get_item_signatories(real=True), {hp_uid: '2'})
+        self.assertEqual(item2.get_item_signatories(real=True), {hp_uid: '2'})
+
         # remove redefined signatory on item2
         remove_signatory_form = item2.restrictedTraverse('@@item_remove_redefined_signatory_form')
         remove_signatory_form.meeting = meeting
