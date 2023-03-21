@@ -4425,10 +4425,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             for signature_number, uid_or_obj in signatories.items():
                 signatories[signature_number] = {
                     'hp': uid_or_obj,
-                    'position_type': signature_number in item_signatories and
-                    item_signatories[signature_number]['position_type'] or
-                    uuidToObject(isinstance(uid_or_obj, basestring) and
-                                 uid_or_obj or uid_or_obj.UID()).position_type}
+                    'position_type': item_signatories[signature_number]['position_type']
+                    if signature_number in item_signatories else
+                    (uid_or_obj.position_type if the_objects else
+                     uuidToObject(uid_or_obj).position_type)}
         # finally change k/v if necessary
         if not by_signature_number:
             if not include_position_type:

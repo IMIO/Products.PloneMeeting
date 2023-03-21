@@ -29,6 +29,7 @@ from zope.interface import Interface
 from zope.interface import provider
 from zope.schema._bootstrapinterfaces import IContextAwareDefaultFactory
 
+
 WRONG_PERSON_UID = "No held_position found with UID \"%s\"!"
 WRONG_POSITION_TYPE = "Given position_type \"%s\" does not exist!"
 
@@ -179,8 +180,7 @@ class BaseAttendeeForm(form.Form):
 
     def _checkMayApplyPrecondition(self, item_to_update):
         """ """
-        error = False
-        msg = None
+        error, msg = False, None
         return error, msg
 
     def mayApplyPrecondition(self, items_to_update):
