@@ -17,6 +17,7 @@ Changelog
   [gbastien]
 - Adapted code to manage attendees thru `restapi` `@attendee/@attendees`
   endpoints on meeting and item.
+  Added possibility to edit a redefined item signatory.
   [gbastien]
 
 4.2 (2023-03-06)

@@ -423,6 +423,15 @@ def position_type_default():
     return position_type
 
 
+def signature_number_default():
+    """
+      Get the value from the REQUEST as it is passed when editing
+      already redefined item signatory.
+    """
+    request = getSite().REQUEST
+    return request.get('signature_number', u'1')
+
+
 class IRedefineSignatory(IBaseAttendee):
 
     position_type = schema.Choice(
@@ -435,20 +444,25 @@ class IRedefineSignatory(IBaseAttendee):
     signature_number = schema.Choice(
         title=_(u"Signature number"),
         description=_(u""),
+        defaultFactory=signature_number_default,
         required=True,
         vocabulary=u"Products.PloneMeeting.vocabularies.numbersvocabulary")
 
 
 def _set_meeting_item_signatory(meeting, item_uid, signature_number, hp_uid, position_type):
-    """ """
-    updated = False
+    """Set an item signatory.  If already item signatory, it may be directly
+       changed to another signatory number."""
+    # check if already redefined, if already redefined, remove it
+    item_sigantories = meeting.item_signatories.get(item_uid, {})
+    for item_signature_number, item_signatory in item_sigantories.items():
+        if item_signatory['hp_uid'] == hp_uid:
+            # remove redefined item signatory
+            _remove_item_signatory(meeting, item_uid, item_signature_number)
+
     item_signatories = meeting.item_signatories.get(item_uid, PersistentMapping())
-    if hp_uid not in item_signatories.values():
-        updated = True
-        item_signatories[signature_number] = PersistentMapping(
-            {'hp_uid': hp_uid, 'position_type': position_type})
-        meeting.item_signatories[item_uid] = item_signatories
-    return updated
+    item_signatories[signature_number] = PersistentMapping(
+        {'hp_uid': hp_uid, 'position_type': position_type})
+    meeting.item_signatories[item_uid] = item_signatories
 
 
 class RedefineSignatoryForm(BaseAttendeeForm):
@@ -491,14 +505,13 @@ class RedefineSignatoryForm(BaseAttendeeForm):
         # apply signatory
         for item_to_update in self.items_to_update:
             item_to_update_uid = item_to_update.UID()
-            updated = _set_meeting_item_signatory(
+            _set_meeting_item_signatory(
                 self.meeting,
                 item_to_update_uid,
                 self.signature_number,
                 self.person_uid,
                 self.position_type)
-            if updated:
-                notifyModifiedAndReindex(item_to_update)
+            notifyModifiedAndReindex(item_to_update)
         first_item_number = self.items_to_update[0].getItemNumber(for_display=True)
         last_item_number = self.items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} signature_number={2} from_item_number={3} until_item_number={4}'.format(
@@ -514,6 +527,15 @@ class RedefineSignatoryForm(BaseAttendeeForm):
 
 class IRemoveRedefinedSignatory(IBaseAttendee):
     """ """
+
+
+def _remove_item_signatory(meeting, item_uid, signature_number):
+    """ """
+    del meeting.item_signatories[item_uid][signature_number]
+    # if no more redefined item signatories,
+    # remove item UID from meeting.item_signatories
+    if not meeting.item_signatories[item_uid]:
+        del meeting.item_signatories[item_uid]
 
 
 class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
@@ -536,13 +558,7 @@ class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
             signature_number = [k for k, v in item_signatories.items()
                                 if v['hp_uid'] == self.person_uid]
             if signature_number:
-                del item_signatories[signature_number[0]]
-                # if no more redefined item signatories,
-                # remove item UID from meeting.item_signatories
-                if item_signatories:
-                    self.meeting.item_signatories[item_to_update_uid] = item_signatories
-                else:
-                    del self.meeting.item_signatories[item_to_update_uid]
+                _remove_item_signatory(self.meeting, item_to_update_uid, signature_number[0])
                 notifyModifiedAndReindex(item_to_update)
         first_item_number = self.items_to_update[0].getItemNumber(for_display=True)
         last_item_number = self.items_to_update[-1].getItemNumber(for_display=True)
