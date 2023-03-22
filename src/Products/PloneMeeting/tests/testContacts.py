@@ -587,7 +587,7 @@ class testContacts(PloneMeetingTestCase):
         # Meeting.get_item_signatories may also be used
         # to get every item signatories hp objects
         self.assertEqual(meeting.get_item_signatories(by_signature_number=True),
-                         OrderedDict([('1', [hp])]))
+                         OrderedDict([('2', [hp])]))
 
         # trying to define a forbidden signatory (already signatory on meeting or not present)
         # 1) already signatory, try to define meeting signatory 2 as item signatory 2
@@ -613,7 +613,7 @@ class testContacts(PloneMeetingTestCase):
             'Can not set "Signatory" a person that is not present on the meeting!\n')
 
         # can set a signatory already define on item to another signature_number
-        self.assertEqual(item1.get_item_signatories(real=True), {hp_uid: '1'})
+        self.assertEqual(item1.get_item_signatories(real=True), {hp_uid: '2'})
         signatory_form.person_uid = hp_uid
         signatory_form.apply_until_item_number = 100
         signatory_form.signature_number = '3'
