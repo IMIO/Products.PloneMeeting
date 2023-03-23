@@ -202,7 +202,7 @@ class BaseAttendeeForm(form.Form):
                 break
         # add a \n before final_msg if any
         if final_msg:
-            final_msg = u"\n".format(final_msg)
+            final_msg = u"\n{0}".format(final_msg)
         return error and (msg + final_msg) or False
 
 
