@@ -7,6 +7,7 @@ from imio.helpers.content import uuidToObject
 from imio.helpers.security import fplog
 from persistent.mapping import PersistentMapping
 from plone import api
+from plone.z3cform.fieldsets.utils import move
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
@@ -86,6 +87,7 @@ class BaseAttendeeForm(form.Form):
         # XXX manipulate self.fields BEFORE doing form.Form.updateWidgets
         # hide person_uid field
         self.fields['person_uid'].mode = 'hidden'
+        move(self, 'apply_until_item_number', after='*')
         form.Form.updateWidgets(self)
 
     def _update_description(self):
@@ -186,10 +188,10 @@ class BaseAttendeeForm(form.Form):
     def mayApplyPrecondition(self, items_to_update):
         """ """
         error = False
+        final_msg = ''
         for item_to_update in items_to_update:
             error, msg = self._checkMayApplyPrecondition(item_to_update)
             if error:
-                final_msg = ''
                 if item_to_update != self.context:
                     final_msg = translate(
                         "Please check item number ${item_number} at ${item_url}.",
@@ -198,7 +200,10 @@ class BaseAttendeeForm(form.Form):
                         domain="PloneMeeting", context=self.request)
                     api.portal.show_message(final_msg, type='warning', request=self.request)
                 break
-        return error and ("{0}\n{1}".format(msg, final_msg)) or False
+        # add a \n before final_msg if any
+        if final_msg:
+            final_msg = u"\n".format(final_msg)
+        return error and (msg + final_msg) or False
 
 
 class IByeByeAttendee(IBaseAttendee):
@@ -268,28 +273,37 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
                         encoded_votes_count = item_to_update.get_vote_count(
                             vote_value='any_voted', vote_number=i)
                         if len_voters == encoded_votes_count:
-                            api.portal.show_message(
-                                _("Can not set ${not_present_type} "
-                                  "a person that voted on an item!",
-                                  mapping={
-                                      'not_present_type':
-                                          _('{0}'.format(
-                                            self.not_present_type))}),
-                                type='warning',
-                                request=self.request)
+                            msg = translate(
+                                "Can not set \"${not_present_type}\" "
+                                "a person that voted on an item!",
+                                domain="PloneMeeting",
+                                mapping={
+                                    'not_present_type':
+                                    translate(
+                                        self.not_present_type,
+                                        domain="PloneMeeting",
+                                        context=self.request)},
+                                context=self.request)
+                            api.portal.show_message(msg,
+                                                    type='warning',
+                                                    request=self.request)
                             error = True
                     # public
                     else:
                         if self.person_uid in item_vote['voters']:
-                            api.portal.show_message(
-                                _("Can not set ${not_present_type} "
-                                  "a person that voted on an item!",
-                                  mapping={
-                                      'not_present_type':
-                                          _('{0}'.format(
-                                            self.not_present_type))}),
-                                type='warning',
-                                request=self.request)
+                            msg = translate("Can not set \"${not_present_type}\" "
+                                            "a person that voted on an item!",
+                                            domain="PloneMeeting",
+                                            mapping={
+                                                'not_present_type':
+                                                translate(
+                                                    self.not_present_type,
+                                                    domain="PloneMeeting",
+                                                    context=self.request)},
+                                            context=self.request)
+                            api.portal.show_message(msg,
+                                                    type='warning',
+                                                    request=self.request)
                             error = True
         return error, msg
 

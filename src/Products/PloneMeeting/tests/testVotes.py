@@ -374,7 +374,8 @@ class testVotes(PloneMeetingTestCase):
         byebye_form.person_uid = hp1_uid
         byebye_form.not_present_type = 'excused'
         byebye_form.apply_until_item_number = '200'
-        byebye_form._doApply()
+        self.assertEqual(byebye_form._doApply(),
+                         u'Can not set "Absent (excused)" a person that voted on an item!')
         # was not set excused
         self.assertFalse(meeting.get_item_excused(by_persons=True))
 
@@ -383,13 +384,17 @@ class testVotes(PloneMeetingTestCase):
         public_votes['voters'][hp1_uid] = NOT_ENCODED_VOTE_VALUE
         meeting.set_item_public_vote(public_item, public_votes, 0)
         # not done because could not be done on secret_item
-        byebye_form._doApply()
+        self.assertEqual(
+            byebye_form._doApply(),
+            u'Can not set "Absent (excused)" a person that voted on an item!\n'
+            u'Please check item number 2 at http://nohost/plone/Members/pmManager'
+            u'/mymeetings/plonemeeting-assembly/o3.')
         self.assertFalse(meeting.get_item_excused(by_persons=True))
         # encode secret votes
         secret_votes = secret_item.get_item_votes()[0]
         secret_votes['votes']['yes'] = 0
         meeting.set_item_secret_vote(secret_item, secret_votes, 0)
-        byebye_form._doApply()
+        self.assertIsNone(byebye_form._doApply())
         self.assertEqual(
             sorted(meeting.get_item_excused(by_persons=True)[hp1_uid]),
             sorted([public_item.UID(), secret_item.UID()]))

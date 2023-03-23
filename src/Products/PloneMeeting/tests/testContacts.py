@@ -328,7 +328,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertTrue(hp1_uid in byebye_nonattendee_form.context.get_item_absents())
         self.assertEqual(
             byebye_nonattendee_form._doApply(),
-            'Can not set "Non attendee" a person that is not present on the item!\n')
+            'Can not set "Non attendee" a person that is not present on the item!')
         # nothing done so not modified
         self.assertEqual(modified, item1.modified())
         hp3_uid = meeting.get_attendees()[2]
@@ -402,7 +402,7 @@ class testContacts(PloneMeetingTestCase):
         byebye_form.person_uid = hp4_uid
         self.assertEqual(
             byebye_form._doApply(),
-            'Can not set "Absent (excused)" a person that is not present on the meeting!\n')
+            'Can not set "Absent (excused)" a person that is not present on the meeting!')
         # nothing was applied
         self.assertNotIn(hp4_uid, byebye_form.context.get_item_excused())
         self.assertNotIn(hp4_uid, byebye_form.context.get_item_absents())
@@ -596,7 +596,7 @@ class testContacts(PloneMeetingTestCase):
         item_signatories_before = signatory_form.context.get_item_signatories(real=True)
         self.assertEqual(
             signatory_form._doApply(),
-            'Can not set "Signatory" a person that is already signatory on the meeting!\n')
+            'Can not set "Signatory" a person that is already signatory on the meeting!')
         # nothing changed
         self.assertEqual(item_signatories_before,
                          signatory_form.context.get_item_signatories(real=True))
@@ -610,7 +610,7 @@ class testContacts(PloneMeetingTestCase):
         signatory_form.person_uid = absent_uid
         self.assertEqual(
             signatory_form._doApply(),
-            'Can not set "Signatory" a person that is not present on the meeting!\n')
+            'Can not set "Signatory" a person that is not present on the meeting!')
 
         # can set a signatory already define on item to another signature_number
         self.assertEqual(item1.get_item_signatories(real=True), {hp_uid: '2'})

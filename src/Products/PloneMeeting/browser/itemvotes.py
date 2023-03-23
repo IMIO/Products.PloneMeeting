@@ -11,10 +11,8 @@ from plone import api
 from plone.autoform.directives import widget
 from plone.restapi.deserializer import boolean_value
 from Products.Five import BrowserView
-from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
-from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
 from Products.PloneMeeting.browser.itemattendee import BaseAttendeeForm
-from Products.PloneMeeting.browser.itemattendee import person_uid_default
+from Products.PloneMeeting.browser.itemattendee import IBaseAttendee
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -181,13 +179,7 @@ class IVote(Interface):
         vocabulary="Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary", )
 
 
-class IEncodeVotes(Interface):
-
-    person_uid = schema.TextLine(
-        title=_(u"Person uid"),
-        description=_(u""),
-        defaultFactory=person_uid_default,
-        required=False)
+class IEncodeVotes(IBaseAttendee):
 
     vote_number = schema.Int(
         title=_(u"Vote number"),
@@ -215,13 +207,6 @@ class IEncodeVotes(Interface):
                       u"Leave empty if not used."),
         defaultFactory=label_default,
         required=False)
-
-    apply_until_item_number = schema.TextLine(
-        title=_(u"Apply until item number"),
-        description=_(u"If you specify a number, the values entered here above will be applied from current "
-                      u"item to the item number entered. Leave empty to only apply for current item."),
-        required=False,
-        constraint=validate_apply_until_item_number,)
 
 
 def _get_linked_item_vote_numbers(context, meeting, vote_number=0):
@@ -466,13 +451,7 @@ class ISecretVote(Interface):
         required=False)
 
 
-class IEncodeSecretVotes(Interface):
-
-    person_uid = schema.TextLine(
-        title=_(u"Person uid"),
-        description=_(u""),
-        defaultFactory=person_uid_default,
-        required=False)
+class IEncodeSecretVotes(IBaseAttendee):
 
     vote_number = schema.Int(
         title=_(u"Vote number"),
@@ -500,13 +479,6 @@ class IEncodeSecretVotes(Interface):
                       u"Leave empty if not used."),
         defaultFactory=label_default,
         required=False)
-
-    apply_until_item_number = schema.TextLine(
-        title=_(u"Apply until item number"),
-        description=_(u"If you specify a number, the values entered here above will be applied from current "
-                      u"item to the item number entered. Leave empty to only apply for current item."),
-        required=False,
-        constraint=validate_apply_until_item_number,)
 
     @invariant
     def validate_votes(data):
