@@ -388,7 +388,7 @@ class testVotes(PloneMeetingTestCase):
             byebye_form._doApply(),
             u'Can not set "Absent (excused)" a person that voted on an item!\n'
             u'Please check item number 2 at http://nohost/plone/Members/pmManager'
-            u'/mymeetings/plonemeeting-assembly/o3.')
+            u'/mymeetings/%s/o3.' % self.meetingConfig.getId())
         self.assertFalse(meeting.get_item_excused(by_persons=True))
         # encode secret votes
         secret_votes = secret_item.get_item_votes()[0]
