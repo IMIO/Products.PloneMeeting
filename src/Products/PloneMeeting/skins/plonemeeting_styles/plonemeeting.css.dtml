@@ -713,13 +713,17 @@ div.portletPloneMeetingHeaderIcons {
     font-size: 120%;
 }
 
+/* used in meeting assembly disabled attendees and in attendees popup management */
 input:disabled:not(.notTriggerableTransitionButton),
 .input_disabled,
 input[readonly=""] {
-    color: lightgrey !important;
+    color: grey;
+    cursor: not-allowed;
+}
+input:disabled:not(.notTriggerableTransitionButton),
+input[readonly=""] {
     border-color: lightgrey !important;
     background-color: #F0F0F0;
-    cursor: not-allowed !important;
 }
 
 .adviceHiddenDuringRedactionEditable,

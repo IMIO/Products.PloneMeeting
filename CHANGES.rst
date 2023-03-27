@@ -12,6 +12,8 @@ Changelog
   [gbastien]
 - Fixed `PersonalLabelsAdapter` that breaks if no labels selected in query index.
   [gbastien]
+- Fixed disabled attendees styling in meeting edit form.
+  [gbastien]
 - Changed position of `photo` and `signature` fields on `person`,
   moved `signature` before `photo`.
   [gbastien]
