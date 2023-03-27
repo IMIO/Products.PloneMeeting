@@ -717,8 +717,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # * The "write_permission" on field "MeetingItem.annexes" is set on
         #   "PloneMeeting: Add annex". It means that people having this
         #   permission may also disassociate annexes from items.
-        mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingItem'], ('Owner', 'Manager', ), acquire=0)
-        mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['Meeting'], ('MeetingManager', 'Manager', ), acquire=0)
+        mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingItem'],
+                                    ('Owner', 'Manager', ), acquire=0)
+        mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['Meeting'],
+                                    ('MeetingManager', 'Manager', ), acquire=0)
         # Only Manager may change the set of allowable types in folders.
         mc_folder.manage_permission(ATCTPermissions.ModifyConstrainTypes, ['Manager'], acquire=0)
         # Give MeetingManager localrole to relevant _meetingmanagers group

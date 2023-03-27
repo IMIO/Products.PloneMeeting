@@ -20,7 +20,9 @@ from OFS.ObjectManager import BeforeDeleteException
 from plone import api
 from plone.namedfile import NamedImage
 from Products.CMFCore.permissions import View
-from Products.PloneMeeting.browser.itemattendee import set_meeting_item_signatory
+from Products.CMFPlone.utils import safe_unicode
+from Products.PloneMeeting.browser.itemattendee import _set_meeting_item_signatory
+from Products.PloneMeeting.browser.itemattendee import WRONG_PERSON_UID
 from Products.PloneMeeting.content.directory import IPMDirectory
 from Products.PloneMeeting.content.meeting import get_all_usable_held_positions
 from Products.PloneMeeting.content.meeting import IMeeting
@@ -31,6 +33,7 @@ from Products.PloneMeeting.utils import get_prefixed_gn_position_name
 from Products.statusmessages.interfaces import IStatusMessage
 from z3c.form import validator
 from z3c.form.interfaces import WidgetActionExecutionError
+from zExceptions import BadRequest
 from zope.event import notify
 from zope.i18n import translate
 from zope.interface import Invalid
@@ -229,6 +232,15 @@ class testContacts(PloneMeetingTestCase):
                 self.assertTrue(remove_signatory_form.mayChangeAttendees())
                 self.assertTrue(redefine_form.mayChangeAttendees())
                 self.assertTrue(remove_redefined_form.mayChangeAttendees())
+            else:
+                self.assertFalse(byebye_form.mayChangeAttendees())
+                self.assertFalse(byebye_nonattendee_form.mayChangeAttendees())
+                self.assertFalse(signatory_form.mayChangeAttendees())
+                self.assertFalse(welcome_form.mayChangeAttendees())
+                self.assertFalse(welcome_nonattendee_form.mayChangeAttendees())
+                self.assertFalse(remove_signatory_form.mayChangeAttendees())
+                self.assertFalse(redefine_form.mayChangeAttendees())
+                self.assertFalse(remove_redefined_form.mayChangeAttendees())
         # False for everybody when item not in a meeting
         _check('pmManager', should=False)
         _check('pmCreator1', should=False)
@@ -243,9 +255,18 @@ class testContacts(PloneMeetingTestCase):
         _check('pmManager')
         _check('pmCreator1', should=False)
         # False for everybody when meeting is closed
+        self.changeUser('pmManager')
         self.closeMeeting(meeting)
         _check('pmManager', should=False)
         _check('pmCreator1', should=False)
+
+        # passing an unknown person_uid will raise a specific error
+        # store a wrong hp UID
+        wrong_uid = safe_unicode(meeting_attendees[0] + "a")
+        self.request['person_uid'] = wrong_uid
+        with self.assertRaises(BadRequest) as cm:
+            byebye_form._update_description()
+        self.assertEqual(cm.exception.message, WRONG_PERSON_UID % wrong_uid)
 
     def test_pm_ItemAbsentsAndExcusedAndNonAttendees(self):
         '''Item absents management (item_absents, item_excused, non_attendees),
@@ -303,16 +324,25 @@ class testContacts(PloneMeetingTestCase):
         # set hp1 non attendee
         # item modified when applied
         modified = item1.modified()
+        # can not set non attendee a person that is already absent
+        self.assertTrue(hp1_uid in byebye_nonattendee_form.context.get_item_absents())
+        self.assertEqual(
+            byebye_nonattendee_form._doApply(),
+            'Can not set "Non attendee" a person that is not present on the item!')
+        # nothing done so not modified
+        self.assertEqual(modified, item1.modified())
+        hp3_uid = meeting.get_attendees()[2]
+        byebye_nonattendee_form.person_uid = hp3_uid
         byebye_nonattendee_form._doApply()
         self.assertNotEqual(modified, item1.modified())
-        self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
-        self.assertEqual(item2.get_item_non_attendees(), (hp1_uid, ))
+        self.assertEqual(item1.get_item_non_attendees(), (hp3_uid, ))
+        self.assertEqual(item2.get_item_non_attendees(), (hp3_uid, ))
         self.assertEqual(
             sorted(meeting.get_item_non_attendees().keys()),
             sorted([item1_uid, item2_uid]))
-        self.assertEqual(meeting.get_item_non_attendees(by_persons=True).keys(), [hp1_uid])
+        self.assertEqual(meeting.get_item_non_attendees(by_persons=True).keys(), [hp3_uid])
         self.assertEqual(
-            sorted(meeting.get_item_non_attendees(by_persons=True)[hp1_uid]),
+            sorted(meeting.get_item_non_attendees(by_persons=True)[hp3_uid]),
             sorted([item1_uid, item2_uid]))
         # set hp2 excused
         byebye_form.person_uid = hp2_uid
@@ -343,17 +373,17 @@ class testContacts(PloneMeetingTestCase):
             sorted(meeting.get_item_excused(by_persons=True)[hp2_uid]),
             sorted([item1_uid]))
         # non attendees
-        self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
-        self.assertEqual(item2.get_item_non_attendees(), (hp1_uid, ))
+        self.assertEqual(item1.get_item_non_attendees(), (hp3_uid, ))
+        self.assertEqual(item2.get_item_non_attendees(), (hp3_uid, ))
         self.assertEqual(
             sorted(meeting.get_item_non_attendees().keys()),
             sorted([item1_uid, item2_uid]))
-        self.assertEqual(meeting.get_item_non_attendees(by_persons=True).keys(), [hp1_uid])
+        self.assertEqual(meeting.get_item_non_attendees(by_persons=True).keys(), [hp3_uid])
         self.assertEqual(
-            sorted(meeting.get_item_non_attendees(by_persons=True)[hp1_uid]),
+            sorted(meeting.get_item_non_attendees(by_persons=True)[hp3_uid]),
             sorted([item1_uid, item2_uid]))
         # @@display-meeting-item-not-present
-        # item and meeting reslults are the same
+        # item and meeting results are the same
         item_view = item1.restrictedTraverse('@@display-meeting-item-not-present')
         meeting_view = meeting.restrictedTraverse('@@display-meeting-item-not-present')
         for view in (item_view, meeting_view):
@@ -361,8 +391,21 @@ class testContacts(PloneMeetingTestCase):
             self.assertEqual(view.getItemsForNotPresent(), [item1, item2])
             self.assertTrue(view(hp2_uid, "excused"))
             self.assertEqual(view.getItemsForNotPresent(), [item1])
-            self.assertTrue(view(hp1_uid, "non_attendee"))
+            self.assertTrue(view(hp3_uid, "non_attendee"))
             self.assertEqual(view.getItemsForNotPresent(), [item1, item2])
+        # not able to set absent an attendee that is not present on the meeting
+        # set hp4_uid absent on meeting and try
+        hp4_uid = meeting.get_attendees()[3]
+        meeting.ordered_contacts[hp4_uid]['attendee'] = False
+        meeting.ordered_contacts[hp4_uid]['absent'] = True
+        self.assertTrue(hp4_uid in meeting.get_absents())
+        byebye_form.person_uid = hp4_uid
+        self.assertEqual(
+            byebye_form._doApply(),
+            'Can not set "Absent (excused)" a person that is not present on the meeting!')
+        # nothing was applied
+        self.assertNotIn(hp4_uid, byebye_form.context.get_item_excused())
+        self.assertNotIn(hp4_uid, byebye_form.context.get_item_absents())
 
         # welcome hp1 on item2
         self.request.set('person_uid', hp1_uid)
@@ -379,7 +422,7 @@ class testContacts(PloneMeetingTestCase):
         welcome_form._doApply()
         self.assertNotEqual(modified, item2.modified())
         self.assertEqual(item1.get_item_absents(), (hp1_uid, ))
-        self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
+        self.assertEqual(item1.get_item_non_attendees(), (hp3_uid, ))
         self.assertFalse(item2.get_item_absents())
         # welcome hp1 on item1
         welcome_form = item1.restrictedTraverse('@@item_welcome_attendee_form')
@@ -395,7 +438,7 @@ class testContacts(PloneMeetingTestCase):
         welcome_form._doApply()
         self.assertNotEqual(modified, item1.modified())
         self.assertFalse(item1.get_item_absents())
-        self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
+        self.assertEqual(item1.get_item_non_attendees(), (hp3_uid, ))
         self.assertFalse(item2.get_item_absents())
         # welcome hp2 on item1
         self.request.set('person_uid', hp2_uid)
@@ -410,12 +453,12 @@ class testContacts(PloneMeetingTestCase):
         welcome_form._doApply()
         self.assertFalse(item1.get_item_excused())
         self.assertFalse(item2.get_item_excused())
-        self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
+        self.assertEqual(item1.get_item_non_attendees(), (hp3_uid, ))
         # welcome non attendee hp1 on item1 and item2
         self.request.set('person_uid', hp1_uid)
         welcome_nonattendee_form = item1.restrictedTraverse('@@item_welcome_nonattendee_form')
         welcome_nonattendee_form.meeting = meeting
-        welcome_nonattendee_form.person_uid = hp1_uid
+        welcome_nonattendee_form.person_uid = hp3_uid
         welcome_nonattendee_form.apply_until_item_number = u'200'
         welcome_nonattendee_form.update()
         self.assertEqual(
@@ -523,6 +566,12 @@ class testContacts(PloneMeetingTestCase):
             self.assertTrue(view.index())
             self.assertEqual(view.get_items_for_signatory(), [item1, item2])
 
+        # possible to edit an already redefined signatory
+        signatory_form.signature_number = '2'
+        signatory_form._doApply()
+        self.assertEqual(item1.get_item_signatories(real=True), {hp_uid: '2'})
+        self.assertEqual(item2.get_item_signatories(real=True), {hp_uid: '2'})
+
         # remove redefined signatory on item2
         remove_signatory_form = item2.restrictedTraverse('@@item_remove_redefined_signatory_form')
         remove_signatory_form.meeting = meeting
@@ -538,22 +587,38 @@ class testContacts(PloneMeetingTestCase):
         # Meeting.get_item_signatories may also be used
         # to get every item signatories hp objects
         self.assertEqual(meeting.get_item_signatories(by_signature_number=True),
-                         OrderedDict([('1', [hp])]))
+                         OrderedDict([('2', [hp])]))
 
         # trying to define a forbidden signatory (already signatory on meeting or not present)
-        # will raise Unauthorized
         # 1) already signatory, try to define meeting signatory 2 as item signatory 2
         meeting_signatory_2_uid = meeting.get_signatories(by_signature_number=True)['2']
         signatory_form.person_uid = meeting_signatory_2_uid
-        self.assertRaises(Unauthorized, signatory_form._doApply)
+        item_signatories_before = signatory_form.context.get_item_signatories(real=True)
+        self.assertEqual(
+            signatory_form._doApply(),
+            'Can not set "Signatory" a person that is already signatory on the meeting!')
+        # nothing changed
+        self.assertEqual(item_signatories_before,
+                         signatory_form.context.get_item_signatories(real=True))
 
-        # set an attendee absent on item and try to select him as signatory on item1
+        # set an attendee absent on meeting and try to select him as signatory on item1
         absent = self.portal.contacts.get('person2').get_held_positions()[0]
         absent_uid = absent.UID()
         meeting.ordered_contacts[absent_uid]['attendee'] = False
         meeting.ordered_contacts[absent_uid]['excused'] = True
         self.assertTrue(absent_uid in meeting.get_excused())
         signatory_form.person_uid = absent_uid
+        self.assertEqual(
+            signatory_form._doApply(),
+            'Can not set "Signatory" a person that is not present on the meeting!')
+
+        # can set a signatory already define on item to another signature_number
+        self.assertEqual(item1.get_item_signatories(real=True), {hp_uid: '2'})
+        signatory_form.person_uid = hp_uid
+        signatory_form.apply_until_item_number = 100
+        signatory_form.signature_number = '3'
+        signatory_form._doApply()
+        self.assertEqual(item1.get_item_signatories(real=True), {hp_uid: '3'})
 
     def test_pm_ItemSignatoriesSameSignatureNumberOnMeeting(self):
         '''Check how signatories are considered when several same signature_number on meeting.
@@ -772,7 +837,7 @@ class testContacts(PloneMeetingTestCase):
         # when a position_type used for signatory, it overcomes
         # defined label if it is not u'default'
         # try with default
-        set_meeting_item_signatory(meeting, item_uid, '2', signatory3_uid, u'default')
+        _set_meeting_item_signatory(meeting, item_uid, '2', signatory3_uid, u'default')
         printed_signatories = helper.print_signatories_by_position(
             signature_format=(u'prefixed_position_type', u'person'))
         self.assertEqual(
@@ -785,7 +850,7 @@ class testContacts(PloneMeetingTestCase):
             }
         )
         # try with something else than default
-        set_meeting_item_signatory(meeting, item_uid, '2', signatory3_uid, u'super')
+        _set_meeting_item_signatory(meeting, item_uid, '2', signatory3_uid, u'super')
         printed_signatories = helper.print_signatories_by_position(
             signature_format=(u'prefixed_position_type', u'person'))
         self.assertEqual(

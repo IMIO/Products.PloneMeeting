@@ -378,7 +378,7 @@ document.location.reload(true);
           onclick="refresh_attendees(highlight='.attendee-value');"
           i18n:attributes="title refresh_values"
           title="Refresh">
-      <span class="fa refresh-attendees link-action"></span>
+      <span class="fa refresh-attendees"></span>
      </div>
     </th>
     <th class="header-attendee-present" i18n:translate="is_attendee"></th>
@@ -496,7 +496,7 @@ document.location.reload(true);
        <a href="#" class="link-overlay-pm-manage-attendees"
           tal:attributes="href string:@@item_remove_redefined_attendee_position_form?person_uid=${aUid}"
           tal:condition="python: mayChangeAttendees and is_attendee_position_redefined">
-        <span class="fa people-remove-element link-action"
+        <span class="fa people-remove-element"
               title="person_remove_redefined_attendee_position"
               i18n:attributes="title" />
        </a>
@@ -532,7 +532,7 @@ document.location.reload(true);
          <tal:comment replace="nothing">Remove info user being an item excused</tal:comment>
          <a href="#" class="link-overlay-pm-manage-attendees" tal:attributes="href string:item_welcome_attendee_form?person_uid=${aUid}"
             tal:condition="python:mayChangeAttendees">
-          <span class="fa people-remove-element link-action"
+          <span class="fa people-remove-element"
                 title="person_welcome"
                 i18n:attributes="title" />
          </a>
@@ -554,7 +554,7 @@ document.location.reload(true);
          <tal:comment replace="nothing">Remove info user being an item absent</tal:comment>
          <a href="#" class="link-overlay-pm-manage-attendees" tal:attributes="href string:item_welcome_attendee_form?person_uid=${aUid}"
             tal:condition="mayChangeAttendees">
-          <span class="fa people-remove-element link-action"
+          <span class="fa people-remove-element"
                 title="person_welcome"
                 i18n:attributes="title" />
          </a>
@@ -580,22 +580,32 @@ document.location.reload(true);
        </span>)
       </tal:replacedMeetingSigner>
       <tal:replacerMeetingSigner condition="python: aUid in realItemSignatories">
-       <span tal:condition="python: aUid in itemSignatories"
-                class="tooltipster-meeting-item-signatories fa people-signatory-replacer link-help"
-                tal:attributes="data-base_url string:${context_url};
-                                data-signatory_uid string:${aUid};">
-        <span class="item-signatory-replacer-signature-number"
-              tal:content="python: realItemSignatories[aUid]" />
-       </span>
-
-       <tal:comment replace="nothing">Remove info user being an item signatory</tal:comment>
-       <a href="#" class="link-overlay-pm-manage-attendees"
-          tal:attributes="href string:@@item_remove_redefined_signatory_form?person_uid=${aUid}"
-          tal:condition="mayChangeAttendees">
-        <span class="fa people-remove-element link-action"
-              title="Remove attendee from signatory defined for this item"
-              i18n:attributes="title" />
-       </a>
+        <tal:defines define="signature_number python: realItemSignatories[aUid]">
+          <span tal:condition="python: aUid in itemSignatories"
+                   class="tooltipster-meeting-item-signatories fa people-signatory-replacer link-help"
+                   tal:attributes="data-base_url string:${context_url};
+                                   data-signatory_uid string:${aUid};">
+           <span class="item-signatory-replacer-signature-number"
+                 tal:content="signature_number" />
+          </span>
+          <tal:comment replace="nothing">Edit redefined item signatory</tal:comment>
+          <a href="#"
+             class="link-overlay-pm-manage-attendees"
+             tal:attributes="href string:@@item_redefine_signatory_form?person_uid=${aUid}&signature_number=${signature_number}"
+             tal:condition="mayChangeAttendees">
+           <span class="fa edit-element"
+                 title="Edit redefined signatory for this item"
+                 i18n:attributes="title" />
+          </a>
+          <tal:comment replace="nothing">Remove info user being an item signatory</tal:comment>
+          <a href="#" class="link-overlay-pm-manage-attendees"
+             tal:attributes="href string:@@item_remove_redefined_signatory_form?person_uid=${aUid}"
+             tal:condition="mayChangeAttendees">
+           <span class="fa people-remove-element"
+                 title="Remove attendee from signatory defined for this item"
+                 i18n:attributes="title" />
+          </a>
+        </tal:defines>
       </tal:replacerMeetingSigner>
 
       <tal:comment replace="nothing">Button for redefining a signatory</tal:comment>
@@ -636,7 +646,7 @@ document.location.reload(true);
            class="link-overlay-pm-manage-attendees"
            tal:attributes="href string:@@item_welcome_nonattendee_form?person_uid=${aUid}"
            tal:condition="mayChangeAttendees">
-         <span class="fa people-remove-element link-action"
+         <span class="fa people-remove-element"
                title="nonattendee_welcome"
                i18n:attributes="title" />
         </a>

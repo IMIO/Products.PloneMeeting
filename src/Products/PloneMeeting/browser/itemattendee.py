@@ -2,10 +2,12 @@
 
 from AccessControl import Unauthorized
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidToObject
 from imio.helpers.security import fplog
 from persistent.mapping import PersistentMapping
 from plone import api
+from plone.z3cform.fieldsets.utils import move
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
@@ -20,12 +22,17 @@ from z3c.form import button
 from z3c.form import field
 from z3c.form import form
 from z3c.form.interfaces import NO_VALUE
+from zExceptions import BadRequest
 from zope import schema
 from zope.component.hooks import getSite
 from zope.i18n import translate
 from zope.interface import Interface
 from zope.interface import provider
 from zope.schema._bootstrapinterfaces import IContextAwareDefaultFactory
+
+
+WRONG_PERSON_UID = "No held_position found with UID \"%s\"!"
+WRONG_POSITION_TYPE = "Given position_type \"%s\" does not exist!"
 
 
 def person_uid_default():
@@ -80,6 +87,7 @@ class BaseAttendeeForm(form.Form):
         # XXX manipulate self.fields BEFORE doing form.Form.updateWidgets
         # hide person_uid field
         self.fields['person_uid'].mode = 'hidden'
+        move(self, 'apply_until_item_number', after='*')
         form.Form.updateWidgets(self)
 
     def _update_description(self):
@@ -89,6 +97,8 @@ class BaseAttendeeForm(form.Form):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
             hp = uuidToObject(person_uid, unrestricted=True)
+            if not hp:
+                raise BadRequest(WRONG_PERSON_UID % person_uid)
             self.description = self.meeting.get_attendee_short_title(hp, cfg, item=self.context)
 
     def update(self):
@@ -146,13 +156,56 @@ class BaseAttendeeForm(form.Form):
 
     def _doApply(self):
         """ """
-        raise NotImplementedError('This must be overrided!')
+        if not self.mayChangeAttendees():
+            raise Unauthorized
+
+        self.items_to_update = _itemsToUpdate(
+            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
+            until_item_number=self.apply_until_item_number,
+            meeting=self.meeting)
+
+        error = self.mayApplyPrecondition(self.items_to_update)
+        if error:
+            self._finished = True
+            return error
+
+        # a sub form must call
+        # error = super(SubAttendeeForm, self)._doApply()
+        # if error:
+        #     return error
+        # then do his job
 
     def render(self):
         if self._finished:
             # make sure we return nothing, taken into account by ajax query
             return redirect(self.request, self.context.absolute_url())
         return super(BaseAttendeeForm, self).render()
+
+    def _checkMayApplyPrecondition(self, item_to_update):
+        """Must return a tuple with error True/False and a msg."""
+        error, msg = False, None
+        return error, msg
+
+    def mayApplyPrecondition(self, items_to_update):
+        """Base method that manage checking if action is authorized.
+           A sub form will have to override the _checkMayApplyPrecondition method."""
+        error = False
+        final_msg = ''
+        for item_to_update in items_to_update:
+            error, msg = self._checkMayApplyPrecondition(item_to_update)
+            if error:
+                if item_to_update != self.context:
+                    final_msg = translate(
+                        "Please check item number ${item_number} at ${item_url}.",
+                        mapping={'item_number': item_to_update.getItemNumber(for_display=True),
+                                 'item_url': item_to_update.absolute_url()},
+                        domain="PloneMeeting", context=self.request)
+                    api.portal.show_message(final_msg, type='warning', request=self.request)
+                break
+        # add a \n before final_msg if any
+        if final_msg:
+            final_msg = u"\n{0}".format(final_msg)
+        return error and (msg + final_msg) or False
 
 
 class IByeByeAttendee(IBaseAttendee):
@@ -174,123 +227,114 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
     NOT_PRESENT_MAPPING = {'absent': 'item_absents',
                            'excused': 'item_excused'}
 
-    def _mayByeByeAttendeePrecondition(self, items_to_update):
-        """Are there condition at execution time that
-           makes attendee byebyeable?
-           This is the case if used in votes, redefined signatory, ..."""
+    def _checkMayApplyPrecondition(self, item_to_update):
+        """Check that:
+           - is an attendee on the meeting;
+           - is not a signatory on the item;
+           - is an attendee on the item;
+           - is not a voter."""
         error = False
-        for item_to_update in items_to_update:
-            # item signatory
-            if self.person_uid in item_to_update.get_item_signatories(real=True):
-                api.portal.show_message(
-                    _("Can not set ${not_present_type} a person selected as signatory on an item!",
-                      mapping={'not_present_type': _('item_not_present_type_{0}'.format(self.not_present_type))}),
-                    type='warning',
-                    request=self.request)
-                error = True
-            # already excused
-            if self.not_present_type == 'absent' and self.person_uid in item_to_update.get_item_excused():
-                api.portal.show_message(
-                    _("Can not set excused a person selected as absent on an item!"),
-                    type='warning',
-                    request=self.request)
-                error = True
-            # already absent
-            if self.not_present_type == 'excused' and self.person_uid in item_to_update.get_item_absents():
-                api.portal.show_message(
-                    _("Can not set absent a person selected as excused on an item!"),
-                    type='warning',
-                    request=self.request)
-                error = True
-            # item voter
-            # if not a voter, continue
-            if self.context.show_votes():
-                voters = item_to_update.get_item_voters()
-                if self.person_uid in voters:
-                    all_item_votes = item_to_update.get_item_votes(
-                        ignored_vote_values=[NOT_ENCODED_VOTE_VALUE])
-                    i = 0
-                    # used when vote is secret
-                    len_voters = len(voters)
-                    for item_vote in all_item_votes:
-                        # secret
-                        if item_to_update.get_vote_is_secret(vote_number=i):
-                            # every voters voted?
-                            encoded_votes_count = item_to_update.get_vote_count(
-                                vote_value='any_voted', vote_number=i)
-                            if len_voters == encoded_votes_count:
-                                api.portal.show_message(
-                                    _("Can not set ${not_present_type} "
-                                      "a person that voted on an item!",
-                                      mapping={
-                                          'not_present_type':
-                                              _('item_not_present_type_{0}'.format(
-                                                self.not_present_type))}),
-                                    type='warning',
-                                    request=self.request)
-                                error = True
-                        # public
-                        else:
-                            if self.person_uid in item_vote['voters']:
-                                api.portal.show_message(
-                                    _("Can not set ${not_present_type} "
-                                      "a person that voted on an item!",
-                                      mapping={
-                                          'not_present_type':
-                                              _('item_not_present_type_{0}'.format(
-                                                self.not_present_type))}),
-                                    type='warning',
-                                    request=self.request)
-                                error = True
+        msg = None
+        # attendee not present on meeting
+        if self.person_uid not in self.meeting.get_attendees():
+            msg = translate(
+                "Can not set \"${not_present_type}\" a person that is not present on the meeting!",
+                mapping={'not_present_type': _(self.not_present_type)},
+                domain="PloneMeeting", context=self.request)
+            api.portal.show_message(msg, type='warning', request=self.request)
+            error = True
+        # item signatory
+        elif self.person_uid in item_to_update.get_item_signatories(real=True):
+            msg = translate(
+                "Can not set \"${not_present_type}\" a person selected as signatory on an item!",
+                mapping={'not_present_type': _(self.not_present_type)},
+                domain="PloneMeeting", context=self.request)
+            api.portal.show_message(msg, type='warning', request=self.request)
+            error = True
+        # attendee not present on item
+        elif self.person_uid not in self.context.get_attendees():
+            msg = translate(
+                "Can not set \"${not_present_type}\" a person that is not present on the item!",
+                mapping={'not_present_type': _(self.not_present_type)},
+                domain="PloneMeeting", context=self.request)
+            api.portal.show_message(msg, type='warning', request=self.request)
+            error = True
 
-            if error:
-                if item_to_update != self.context:
-                    api.portal.show_message(
-                        _("Please check item number ${item_number} at ${item_url}.",
-                          mapping={'item_number': item_to_update.getItemNumber(for_display=True),
-                                   'item_url': item_to_update.absolute_url()}),
-                        type='warning',
-                        request=self.request)
-                break
-        return error
+        # item voter
+        # if not a voter, continue
+        if not error and self.context.show_votes():
+            voters = item_to_update.get_item_voters()
+            if self.person_uid in voters:
+                all_item_votes = item_to_update.get_item_votes(
+                    ignored_vote_values=[NOT_ENCODED_VOTE_VALUE])
+                i = 0
+                # used when vote is secret
+                len_voters = len(voters)
+                for item_vote in all_item_votes:
+                    # secret
+                    if item_to_update.get_vote_is_secret(vote_number=i):
+                        # every voters voted?
+                        encoded_votes_count = item_to_update.get_vote_count(
+                            vote_value='any_voted', vote_number=i)
+                        if len_voters == encoded_votes_count:
+                            msg = translate(
+                                "Can not set \"${not_present_type}\" "
+                                "a person that voted on an item!",
+                                domain="PloneMeeting",
+                                mapping={
+                                    'not_present_type':
+                                    translate(
+                                        self.not_present_type,
+                                        domain="PloneMeeting",
+                                        context=self.request)},
+                                context=self.request)
+                            api.portal.show_message(msg,
+                                                    type='warning',
+                                                    request=self.request)
+                            error = True
+                    # public
+                    else:
+                        if self.person_uid in item_vote['voters']:
+                            msg = translate("Can not set \"${not_present_type}\" "
+                                            "a person that voted on an item!",
+                                            domain="PloneMeeting",
+                                            mapping={
+                                                'not_present_type':
+                                                translate(
+                                                    self.not_present_type,
+                                                    domain="PloneMeeting",
+                                                    context=self.request)},
+                                            context=self.request)
+                            api.portal.show_message(msg,
+                                                    type='warning',
+                                                    request=self.request)
+                            error = True
+        return error, msg
 
     def _doApply(self):
         """ """
-        if not self.mayChangeAttendees():
-            raise Unauthorized
-
-        items_to_update = _itemsToUpdate(
-            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
-            until_item_number=self.apply_until_item_number,
-            meeting=self.meeting)
-
-        # return a portal_message if trying to byebye an attendee that is
-        # a signatory redefined on the item
-        # user will first have to select another signatory on meeting or item
-        # return a portal_message if trying to set absent and item that is
-        # already excused (and the other way round)
-        if self._mayByeByeAttendeePrecondition(items_to_update):
-            self._finished = True
-            return
+        error = super(ByeByeAttendeeForm, self)._doApply()
+        if error:
+            return error
 
         # apply item_absents/item_excused
         meeting_not_present_attr = getattr(
             self.meeting, self.NOT_PRESENT_MAPPING[self.not_present_type])
-        for item_to_update in items_to_update:
+        for item_to_update in self.items_to_update:
             item_to_update_uid = item_to_update.UID()
             item_not_present = meeting_not_present_attr.get(item_to_update_uid, [])
             if self.person_uid not in item_not_present:
                 item_not_present.append(self.person_uid)
                 meeting_not_present_attr[item_to_update_uid] = item_not_present
                 notifyModifiedAndReindex(item_to_update)
-        first_item_number = items_to_update[0].getItemNumber(for_display=True)
-        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        first_item_number = self.items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = self.items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} not_present_type={2} from_item_number={3} until_item_number={4}'.format(
             repr(self.context), self.person_uid, self.not_present_type, first_item_number, last_item_number)
         fplog('byebye_item_attendee', extras=extras)
         api.portal.show_message(
             _("Attendee has been set ${not_present_type}.",
-              mapping={'not_present_type': _('item_not_present_type_{0}'.format(self.not_present_type))}),
+              mapping={'not_present_type': _('{0}'.format(self.not_present_type))}),
             request=self.request)
         self._finished = True
 
@@ -324,24 +368,21 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
 
     def _doApply(self):
         """ """
-        if not self.mayChangeAttendees():
-            raise Unauthorized
+        error = super(WelcomeAttendeeForm, self)._doApply()
+        if error:
+            return error
 
-        # check where is person_uid, item_absents or item_excused
+        # check where is person_uid, item_absents/item_excused/item_non_attendees
         meeting_absent_attr = self._get_meeting_absent_attr()
-        items_to_update = _itemsToUpdate(
-            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
-            until_item_number=self.apply_until_item_number,
-            meeting=self.meeting)
-        for item_to_update in items_to_update:
+        for item_to_update in self.items_to_update:
             item_to_update_uid = item_to_update.UID()
             item_absents = meeting_absent_attr.get(item_to_update_uid, [])
             if self.person_uid in item_absents:
                 item_absents.remove(self.person_uid)
                 meeting_absent_attr[item_to_update_uid] = item_absents
                 notifyModifiedAndReindex(item_to_update)
-        first_item_number = items_to_update[0].getItemNumber(for_display=True)
-        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        first_item_number = self.items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = self.items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
             repr(self.context), self.person_uid, first_item_number, last_item_number)
         fplog('welcome_item_attendee', extras=extras)
@@ -400,6 +441,15 @@ def position_type_default():
     return position_type
 
 
+def signature_number_default():
+    """
+      Get the value from the REQUEST as it is passed when editing
+      already redefined item signatory.
+    """
+    request = getSite().REQUEST
+    return request.get('signature_number', u'1')
+
+
 class IRedefineSignatory(IBaseAttendee):
 
     position_type = schema.Choice(
@@ -412,20 +462,25 @@ class IRedefineSignatory(IBaseAttendee):
     signature_number = schema.Choice(
         title=_(u"Signature number"),
         description=_(u""),
+        defaultFactory=signature_number_default,
         required=True,
         vocabulary=u"Products.PloneMeeting.vocabularies.numbersvocabulary")
 
 
-def set_meeting_item_signatory(meeting, item_uid, signature_number, hp_uid, position_type):
-    """ """
-    updated = False
+def _set_meeting_item_signatory(meeting, item_uid, signature_number, hp_uid, position_type):
+    """Set an item signatory.  If already item signatory, it may be directly
+       changed to another signatory number."""
+    # check if already redefined, if already redefined, remove it
+    item_sigantories = meeting.item_signatories.get(item_uid, {})
+    for item_signature_number, item_signatory in item_sigantories.items():
+        if item_signatory['hp_uid'] == hp_uid:
+            # remove redefined item signatory
+            _remove_item_signatory(meeting, item_uid, item_signature_number)
+
     item_signatories = meeting.item_signatories.get(item_uid, PersistentMapping())
-    if hp_uid not in item_signatories.values():
-        updated = True
-        item_signatories[signature_number] = PersistentMapping(
-            {'hp_uid': hp_uid, 'position_type': position_type})
-        meeting.item_signatories[item_uid] = item_signatories
-    return updated
+    item_signatories[signature_number] = PersistentMapping(
+        {'hp_uid': hp_uid, 'position_type': position_type})
+    meeting.item_signatories[item_uid] = item_signatories
 
 
 class RedefineSignatoryForm(BaseAttendeeForm):
@@ -435,41 +490,48 @@ class RedefineSignatoryForm(BaseAttendeeForm):
     schema = IRedefineSignatory
     fields = field.Fields(IRedefineSignatory)
 
-    def mayChangeAttendees(self):
-        """ """
-        res = super(RedefineSignatoryForm, self).mayChangeAttendees()
-        if res:
-            # check that person_uid :
-            # - is not already a signatory;
-            # - is present.
-            if self.person_uid in self.meeting.get_signatories() or \
-               self.person_uid not in self.meeting.get_attendees():
-                res = False
-        return res
+    def _checkMayApplyPrecondition(self, item_to_update):
+        """Check that person_uid:
+           - is not already a signatory, on meeting or item;
+           - is present;
+           - position_type exists."""
+        error = False
+        msg = None
+        # these checks are essentially for restapi as Web UI will prevent these actions
+        if self.person_uid in self.meeting.get_signatories():
+            msg = translate(
+                "Can not set \"Signatory\" a person that is already signatory on the meeting!",
+                domain="PloneMeeting", context=self.request)
+            api.portal.show_message(msg, type='warning', request=self.request)
+            error = True
+        elif self.person_uid not in self.meeting.get_attendees():
+            msg = translate(
+                "Can not set \"Signatory\" a person that is not present on the meeting!",
+                domain="PloneMeeting", context=self.request)
+            api.portal.show_message(msg, type='warning', request=self.request)
+            error = True
+        elif self.position_type not in get_vocab(self.context, self.schema['position_type'].vocabularyName):
+            raise BadRequest(WRONG_POSITION_TYPE % self.position_type)
+        return error, msg
 
     def _doApply(self):
         """ """
-        if not self.mayChangeAttendees():
-            raise Unauthorized
-
-        items_to_update = _itemsToUpdate(
-            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
-            until_item_number=self.apply_until_item_number,
-            meeting=self.meeting)
+        error = super(RedefineSignatoryForm, self)._doApply()
+        if error:
+            return error
 
         # apply signatory
-        for item_to_update in items_to_update:
+        for item_to_update in self.items_to_update:
             item_to_update_uid = item_to_update.UID()
-            updated = set_meeting_item_signatory(
+            _set_meeting_item_signatory(
                 self.meeting,
                 item_to_update_uid,
                 self.signature_number,
                 self.person_uid,
                 self.position_type)
-            if updated:
-                notifyModifiedAndReindex(item_to_update)
-        first_item_number = items_to_update[0].getItemNumber(for_display=True)
-        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+            notifyModifiedAndReindex(item_to_update)
+        first_item_number = self.items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = self.items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} signature_number={2} from_item_number={3} until_item_number={4}'.format(
             repr(self.context), self.person_uid, self.signature_number, first_item_number, last_item_number)
         fplog('redefine_item_signatory', extras=extras)
@@ -485,6 +547,15 @@ class IRemoveRedefinedSignatory(IBaseAttendee):
     """ """
 
 
+def _remove_item_signatory(meeting, item_uid, signature_number):
+    """ """
+    del meeting.item_signatories[item_uid][signature_number]
+    # if no more redefined item signatories,
+    # remove item UID from meeting.item_signatories
+    if not meeting.item_signatories[item_uid]:
+        del meeting.item_signatories[item_uid]
+
+
 class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
     """ """
 
@@ -494,35 +565,26 @@ class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
 
     def _doApply(self):
         """ """
-        if not self.mayChangeAttendees():
-            raise Unauthorized
-
-        items_to_update = _itemsToUpdate(
-            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
-            until_item_number=self.apply_until_item_number,
-            meeting=self.meeting)
+        error = super(RemoveRedefinedSignatoryForm, self)._doApply()
+        if error:
+            return error
 
         # apply signatory
-        for item_to_update in items_to_update:
+        for item_to_update in self.items_to_update:
             item_to_update_uid = item_to_update.UID()
             item_signatories = self.meeting.item_signatories.get(item_to_update_uid, {})
             signature_number = [k for k, v in item_signatories.items()
                                 if v['hp_uid'] == self.person_uid]
             if signature_number:
-                del item_signatories[signature_number[0]]
-                # if no more redefined item signatories,
-                # remove item UID from meeting.item_signatories
-                if item_signatories:
-                    self.meeting.item_signatories[item_to_update_uid] = item_signatories
-                else:
-                    del self.meeting.item_signatories[item_to_update_uid]
+                _remove_item_signatory(self.meeting, item_to_update_uid, signature_number[0])
                 notifyModifiedAndReindex(item_to_update)
-        first_item_number = items_to_update[0].getItemNumber(for_display=True)
-        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        first_item_number = self.items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = self.items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
             repr(self.context), self.person_uid, first_item_number, last_item_number)
         fplog('remove_redefined_item_signatory', extras=extras)
-        api.portal.show_message(_("Attendee is no more defined as item signatory."), request=self.request)
+        api.portal.show_message(
+            _("Attendee is no more defined as item signatory."), request=self.request)
         self._finished = True
 
 
@@ -559,18 +621,24 @@ class RedefineAttendeePositionForm(BaseAttendeeForm):
     schema = IRedefineAttendeePosition
     fields = field.Fields(IRedefineAttendeePosition)
 
+    def _checkMayApplyPrecondition(self, item_to_update):
+        """Condition to apply:
+           - new position_type must exist."""
+        error = False
+        msg = None
+        if self.position_type not in get_vocab(self.context, "PMAttendeeRedefinePositionTypes"):
+            # could only happen with restapi
+            raise BadRequest(WRONG_POSITION_TYPE % self.position_type)
+        return error, msg
+
     def _doApply(self):
         """ """
-        if not self.mayChangeAttendees():
-            raise Unauthorized
-
-        items_to_update = _itemsToUpdate(
-            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
-            until_item_number=self.apply_until_item_number,
-            meeting=self.meeting)
+        error = super(RedefineAttendeePositionForm, self)._doApply()
+        if error:
+            return error
 
         # apply redefined position
-        for item_to_update in items_to_update:
+        for item_to_update in self.items_to_update:
             item_to_update_uid = item_to_update.UID()
             updated = set_meeting_item_attendee_position(
                 self.meeting,
@@ -579,12 +647,13 @@ class RedefineAttendeePositionForm(BaseAttendeeForm):
                 self.position_type)
             if updated:
                 notifyModifiedAndReindex(item_to_update)
-        first_item_number = items_to_update[0].getItemNumber(for_display=True)
-        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        first_item_number = self.items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = self.items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
             repr(self.context), self.person_uid, first_item_number, last_item_number)
         fplog('redefine_item_attendee_position', extras=extras)
-        api.portal.show_message(_("Attendee position has been redefined."), request=self.request)
+        api.portal.show_message(
+            _("Attendee position has been redefined."), request=self.request)
         self._finished = True
 
 
@@ -601,16 +670,12 @@ class RemoveRedefinedAttendeePositionForm(BaseAttendeeForm):
 
     def _doApply(self):
         """ """
-        if not self.mayChangeAttendees():
-            raise Unauthorized
-
-        items_to_update = _itemsToUpdate(
-            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
-            until_item_number=self.apply_until_item_number,
-            meeting=self.meeting)
+        error = super(RemoveRedefinedAttendeePositionForm, self)._doApply()
+        if error:
+            return error
 
         # apply removal of redefined attendee position
-        for item_to_update in items_to_update:
+        for item_to_update in self.items_to_update:
             item_to_update_uid = item_to_update.UID()
             item_attendees_positions = self.meeting.item_attendees_positions.get(
                 item_to_update_uid, {})
@@ -619,13 +684,13 @@ class RemoveRedefinedAttendeePositionForm(BaseAttendeeForm):
             if not item_attendees_positions:
                 del self.meeting.item_attendees_positions[item_to_update_uid]
                 notifyModifiedAndReindex(item_to_update)
-        first_item_number = items_to_update[0].getItemNumber(for_display=True)
-        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        first_item_number = self.items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = self.items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
             repr(self.context), self.person_uid, first_item_number, last_item_number)
         fplog('remove_redefined_item_attendee_position', extras=extras)
-        api.portal.show_message(_("Redefined attendee position was removed."),
-                                request=self.request)
+        api.portal.show_message(
+            _("Redefined attendee position was removed."), request=self.request)
         self._finished = True
 
 
@@ -656,8 +721,7 @@ class ChangeAttendeeOrderView(BrowserView):
         fplog('change_item_attendees_order', extras=extras)
         # message
         api.portal.show_message(
-            _("Attendee position was changed."),
-            request=self.request)
+            _("Attendee position was changed."), request=self.request)
         return True
 
 

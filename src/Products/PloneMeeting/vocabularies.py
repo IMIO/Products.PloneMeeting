@@ -1885,9 +1885,9 @@ class ItemNotPresentTypeVocabulary(object):
         res = []
         usedMeetingAttributes = cfg.getUsedMeetingAttributes()
         if 'absents' in usedMeetingAttributes:
-            res.append(SimpleTerm('absent', 'absent', _(u"item_not_present_type_absent")))
+            res.append(SimpleTerm('absent', 'absent', _(u"absent")))
         if 'excused' in usedMeetingAttributes:
-            res.append(SimpleTerm('excused', 'excused', _(u"item_not_present_type_excused")))
+            res.append(SimpleTerm('excused', 'excused', _(u"excused")))
         return SimpleVocabulary(res)
 
 

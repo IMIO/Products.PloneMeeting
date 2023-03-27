@@ -3653,6 +3653,24 @@ class testMeetingType(PloneMeetingTestCase):
                                '{0}__signaturenumber__2'.format(attendee_uids[1])]
         self.request.form['meeting_signatories'] = meeting_signatories
         self.assertEqual(invariants.validate(data), ())
+        self.request.set('validate_attendees_done', False)
+        # can not unselect a user that is signatory
+        # thru the UI this should not be possible, but thru restapi
+        # remove signatory 1
+        self.request.form['meeting_attendees'] = [
+            meeting_attendee for meeting_attendee in meeting_attendees
+            if not attendee_uids[0] in meeting_attendee]
+        attendee_title = uuidToCatalogBrain(attendee_uids[0]).get_full_title
+        error_msg = translate(
+            u'can_not_remove_attendee_defined_as_signatory',
+            domain='PloneMeeting',
+            mapping={
+                'attendee_title': attendee_title},
+            context=self.request)
+        errors = invariants.validate(data)
+        self.request.set('validate_attendees_done', False)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0].message, error_msg)
 
     def test_pm_Votes_observations(self):
         """Fields Meeting.votes_observations and MeetingItem.votesObservations

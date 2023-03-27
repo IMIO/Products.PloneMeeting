@@ -12,7 +12,14 @@ Changelog
   [gbastien]
 - Fixed `PersonalLabelsAdapter` that breaks if no labels selected in query index.
   [gbastien]
-- Fixed disabled attendees in meeting edit form.
+- Fixed disabled attendees styling in meeting edit form.
+  [gbastien]
+- Changed position of `photo` and `signature` fields on `person`,
+  moved `signature` before `photo`.
+  [gbastien]
+- Adapted code to manage attendees thru `restapi` `@attendee/@attendees`
+  endpoints on meeting and item.
+  Added possibility to edit a redefined item signatory.
   [gbastien]
 
 4.2 (2023-03-06)
@@ -102,8 +109,8 @@ Changelog
     are available when committees are used.
 
   [gbastien]
-- Added parameters `field_names=[]` to `utils.forceHTMLContentTypeForEmptyRichFields`
-  so it is possible to specify field names to initialize when known.
+- Added parameters `field_name=None` to `utils.forceHTMLContentTypeForEmptyRichFields`
+  so it is possible to specify field name to initialize when known.
   [gbastien]
 - Make `adapters.PMNegativePersonalLabelsAdapter` and
   `adapters.PMNegativePreviousIndexValuesAdapter` inherits from base classes

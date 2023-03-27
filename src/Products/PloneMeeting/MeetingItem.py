@@ -4381,6 +4381,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              the_objects=False,
                              by_signature_number=False,
                              real=False,
+                             include_position_type=False,
                              **kwargs):
         '''Returns the signatories for this item. If no signatory is defined,
            meeting signatories are returned.
@@ -4417,8 +4418,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             signatories = {reversed_signatories[signatory.UID()]: signatory
                            for signatory in signatories_objs}
 
+        # finally if include_position_type=True, complete data
+        if include_position_type:
+            item_signatories = meeting.get_item_signatories(include_position_type=True).get(
+                self.UID(), {})
+            for signature_number, uid_or_obj in signatories.items():
+                signatories[signature_number] = {
+                    'hp': uid_or_obj,
+                    'position_type': item_signatories[signature_number]['position_type']
+                    if signature_number in item_signatories else
+                    (uid_or_obj.position_type if the_objects else
+                     uuidToObject(uid_or_obj).position_type)}
+        # finally change k/v if necessary
         if not by_signature_number:
-            signatories = {v: k for k, v in signatories.items()}
+            if not include_position_type:
+                signatories = {v: k for k, v in signatories.items()}
+            else:
+                signatories = {v['hp']: {'signature_number': k, 'position_type': v['position_type']}
+                               for k, v in signatories.items()}
 
         return signatories
 
@@ -7769,15 +7786,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return [uid for uid in self.get_all_attendees(ordered=True)
                 if uid in uids]
 
-    def get_all_attendees(self, the_objects=False, ordered=True):
+    def get_all_attendees(self, uids=[], the_objects=False, ordered=True):
         '''Returns every attendees for this item, including absents, excused, ...'''
         if not self.hasMeeting():
             return ()
         meeting = self.getMeeting()
-        all_uids = []
-        if ordered:
-            all_uids = meeting._get_item_attendees_order(self.UID())
-        return meeting.get_all_attendees(all_uids, the_objects=the_objects)
+        if ordered and not uids:
+            uids = meeting._get_item_attendees_order(self.UID())
+        return meeting.get_all_attendees(uids, the_objects=the_objects)
 
     def _appendLinkedItem(self, item, tool, cfg, only_viewable):
         if not only_viewable:
