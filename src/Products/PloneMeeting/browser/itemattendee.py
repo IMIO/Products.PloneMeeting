@@ -164,15 +164,16 @@ class BaseAttendeeForm(form.Form):
             until_item_number=self.apply_until_item_number,
             meeting=self.meeting)
 
-        # return a portal_message if trying to byebye an attendee that is
-        # a signatory redefined on the item
-        # user will first have to select another signatory on meeting or item
-        # return a portal_message if trying to set absent and item that is
-        # already excused (and the other way round)
         error = self.mayApplyPrecondition(self.items_to_update)
         if error:
             self._finished = True
             return error
+
+        # a sub form must call
+        # error = super(SubAttendeeForm, self)._doApply()
+        # if error:
+        #     return error
+        # then do his job
 
     def render(self):
         if self._finished:
@@ -181,12 +182,13 @@ class BaseAttendeeForm(form.Form):
         return super(BaseAttendeeForm, self).render()
 
     def _checkMayApplyPrecondition(self, item_to_update):
-        """ """
+        """Must return a tuple with error True/False and a msg."""
         error, msg = False, None
         return error, msg
 
     def mayApplyPrecondition(self, items_to_update):
-        """ """
+        """Base method that manage checking if action is authorized.
+           A sub form will have to override the _checkMayApplyPrecondition method."""
         error = False
         final_msg = ''
         for item_to_update in items_to_update:
@@ -226,9 +228,11 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
                            'excused': 'item_excused'}
 
     def _checkMayApplyPrecondition(self, item_to_update):
-        """Are there condition at execution time that
-           makes attendee byebyeable?
-           This is the case if used in votes, redefined signatory, ..."""
+        """Check that:
+           - is an attendee on the meeting;
+           - is not a signatory on the item;
+           - is an attendee on the item;
+           - is not a voter."""
         error = False
         msg = None
         # attendee not present on meeting
@@ -368,7 +372,7 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
         if error:
             return error
 
-        # check where is person_uid, item_absents or item_excused
+        # check where is person_uid, item_absents/item_excused/item_non_attendees
         meeting_absent_attr = self._get_meeting_absent_attr()
         for item_to_update in self.items_to_update:
             item_to_update_uid = item_to_update.UID()
@@ -579,7 +583,8 @@ class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
         extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
             repr(self.context), self.person_uid, first_item_number, last_item_number)
         fplog('remove_redefined_item_signatory', extras=extras)
-        api.portal.show_message(_("Attendee is no more defined as item signatory."), request=self.request)
+        api.portal.show_message(
+            _("Attendee is no more defined as item signatory."), request=self.request)
         self._finished = True
 
 
@@ -647,7 +652,8 @@ class RedefineAttendeePositionForm(BaseAttendeeForm):
         extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
             repr(self.context), self.person_uid, first_item_number, last_item_number)
         fplog('redefine_item_attendee_position', extras=extras)
-        api.portal.show_message(_("Attendee position has been redefined."), request=self.request)
+        api.portal.show_message(
+            _("Attendee position has been redefined."), request=self.request)
         self._finished = True
 
 
@@ -683,8 +689,8 @@ class RemoveRedefinedAttendeePositionForm(BaseAttendeeForm):
         extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
             repr(self.context), self.person_uid, first_item_number, last_item_number)
         fplog('remove_redefined_item_attendee_position', extras=extras)
-        api.portal.show_message(_("Redefined attendee position was removed."),
-                                request=self.request)
+        api.portal.show_message(
+            _("Redefined attendee position was removed."), request=self.request)
         self._finished = True
 
 
@@ -715,8 +721,7 @@ class ChangeAttendeeOrderView(BrowserView):
         fplog('change_item_attendees_order', extras=extras)
         # message
         api.portal.show_message(
-            _("Attendee position was changed."),
-            request=self.request)
+            _("Attendee position was changed."), request=self.request)
         return True
 
 
