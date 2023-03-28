@@ -428,88 +428,107 @@ def _configureCKeditor(site):
        CKeditor custom styles are kept during migrations using the _before_reinstall/_after_reinstall hooks.'''
     logger.info('Defining CKeditor as the new default editor for every users and configuring it (styles)...')
     # this will install collective.ckeditor if it is not already the case...
-    configure_ckeditor(site, custom='plonemeeting', forceTextPaste=0, scayt=1, removeWsc=1)
+    configure_ckeditor(site, custom='plonemeeting', forceTextPaste=0, scayt=1, removeWsc=1, use_registry=True)
     # remove every styles defined by default and add the custom styles if not already done...
-    cke_props = site.portal_properties.ckeditor_properties
-    if cke_props.menuStyles.find(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG) == -1:
-        enc = site.portal_properties.site_properties.getProperty('default_charset')
+    menuStyles = api.portal.get_registry_record(
+        "collective.ckeditor.browser.ckeditorsettings.ICKEditorSchema.menuStyles")
+    if menuStyles.find(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG) == -1:
         msg_highlight_red = translate('ckeditor_style_highlight_in_red',
                                       domain='PloneMeeting',
-                                      context=site.REQUEST).encode('utf-8')
+                                      context=site.REQUEST)
         msg_highlight_blue = translate('ckeditor_style_highlight_in_blue',
                                        domain='PloneMeeting',
-                                       context=site.REQUEST).encode('utf-8')
+                                       context=site.REQUEST)
         msg_highlight_green = translate('ckeditor_style_highlight_in_green',
                                         domain='PloneMeeting',
-                                        context=site.REQUEST).encode('utf-8')
+                                        context=site.REQUEST)
         msg_highlight_yellow = translate('ckeditor_style_highlight_in_yellow',
                                          domain='PloneMeeting',
-                                         context=site.REQUEST).encode('utf-8')
+                                         context=site.REQUEST)
         msg_x_small = translate('ckeditor_style_x_small',
                                 domain='PloneMeeting',
-                                context=site.REQUEST).encode('utf-8')
+                                context=site.REQUEST)
         msg_small = translate('ckeditor_style_small',
                               domain='PloneMeeting',
-                              context=site.REQUEST).encode('utf-8')
+                              context=site.REQUEST)
         msg_large = translate('ckeditor_style_large',
                               domain='PloneMeeting',
-                              context=site.REQUEST).encode('utf-8')
+                              context=site.REQUEST)
         msg_x_large = translate('ckeditor_style_x_large',
                                 domain='PloneMeeting',
-                                context=site.REQUEST).encode('utf-8')
+                                context=site.REQUEST)
         msg_table_optimization = translate('ckeditor_style_table_optimization',
                                            domain='PloneMeeting',
-                                           context=site.REQUEST).encode('utf-8')
+                                           context=site.REQUEST)
         msg_table_no_optimization = translate('ckeditor_style_table_no_optimization',
                                               domain='PloneMeeting',
-                                              context=site.REQUEST).encode('utf-8')
+                                              context=site.REQUEST)
         msg_indent = translate('ckeditor_style_indent_first_line',
                                domain='PloneMeeting',
-                               context=site.REQUEST).encode('utf-8')
+                               context=site.REQUEST)
         msg_page_break = translate('ckeditor_style_page_break',
                                    domain='PloneMeeting',
-                                   context=site.REQUEST).encode('utf-8')
-
-        menuStyles = unicode(
-            "[\n{0}\n{{ name : '{1}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-red' }} }},\n"
-            "{{ name : '{2}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-blue' }} }},\n"
-            "{{ name : '{3}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-green' }} }},\n"
-            "{{ name : '{4}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-yellow' }} }},\n"
-            "{{ name : '{5}'\t\t, element : 'p', attributes : {{ 'class' : 'xSmallText' }} }},\n"
-            "{{ name : '{6}'\t\t, element : 'p', attributes : {{ 'class' : 'smallText' }} }},\n"
-            "{{ name : '{7}'\t\t, element : 'p', attributes : {{ 'class' : 'largeText' }} }},\n"
-            "{{ name : '{8}'\t\t, element : 'p', attributes : {{ 'class' : 'xLargeText' }} }},\n"
-            "{{ name : '{9}'\t\t, element : 'table', styles : {{ 'table-layout' : 'auto' }} }},\n"
-            "{{ name : '{10}'\t\t, element : 'table', styles : {{ 'table-layout' : 'fixed' }} }},\n"
-            "{{ name : '{11}'\t\t, element : 'p', attributes : {{ 'style' : 'text-indent: 40px;' }} }},\n"
-            "{{ name : '{12}'\t\t, element : 'p', attributes : {{ 'class' : 'page-break' }} }},\n]\n".
-            format(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG,
-                   msg_highlight_red,
-                   msg_highlight_blue,
-                   msg_highlight_green,
-                   msg_highlight_yellow,
-                   msg_x_small,
-                   msg_small,
-                   msg_large,
-                   msg_x_large,
-                   msg_table_optimization,
-                   msg_table_no_optimization,
-                   msg_indent,
-                   msg_page_break), enc)
-        cke_props.menuStyles = menuStyles
+                                   context=site.REQUEST)
+        menuStyles = \
+            u"[\n{0}\n{{ name : '{1}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-red' }} }},\n" \
+            u"{{ name : '{2}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-blue' }} }},\n" \
+            u"{{ name : '{3}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-green' }} }},\n" \
+            u"{{ name : '{4}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-yellow' }} }},\n" \
+            u"{{ name : '{5}'\t\t, element : 'p', attributes : {{ 'class' : 'xSmallText' }} }},\n" \
+            u"{{ name : '{6}'\t\t, element : 'p', attributes : {{ 'class' : 'smallText' }} }},\n" \
+            u"{{ name : '{7}'\t\t, element : 'p', attributes : {{ 'class' : 'largeText' }} }},\n" \
+            u"{{ name : '{8}'\t\t, element : 'p', attributes : {{ 'class' : 'xLargeText' }} }},\n" \
+            u"{{ name : '{9}'\t\t, element : 'table', styles : {{ 'table-layout' : 'auto' }} }},\n" \
+            u"{{ name : '{10}'\t\t, element : 'table', styles : {{ 'table-layout' : 'fixed' }} }},\n" \
+            u"{{ name : '{11}'\t\t, element : 'p', attributes : {{ 'style' : 'text-indent: 40px;' }} }},\n" \
+            u"{{ name : '{12}'\t\t, element : 'p', attributes : {{ 'class' : 'page-break' }} }},\n]\n".format(
+                CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG,
+                msg_highlight_red,
+                msg_highlight_blue,
+                msg_highlight_green,
+                msg_highlight_yellow,
+                msg_x_small,
+                msg_small,
+                msg_large,
+                msg_x_large,
+                msg_table_optimization,
+                msg_table_no_optimization,
+                msg_indent,
+                msg_page_break)
+        api.portal.set_registry_record(
+            "collective.ckeditor.browser.ckeditorsettings.ICKEditorSchema.menuStyles", menuStyles)
     # make sure we use resolveuid for images so URL is always correct even if item id changed
-    cke_props.allow_link_byuid = True
+    api.portal.set_registry_record(
+        "collective.ckeditor.browser.ckeditorsettings.ICKEditorSchema.allow_link_byuid", True)
     # make sure force paste as plain text is disabled
-    cke_props.forcePasteAsPlainText = False
+    api.portal.set_registry_record(
+        "collective.ckeditor.browser.ckeditorsettings.ICKEditorSchema.forcePasteAsPlainText", False)
     # disable folder creation thru CKeditor to avoid
     # having the add folder icon when adding an image
-    cke_props.allow_folder_creation = False
+    api.portal.set_registry_record(
+        "collective.ckeditor.browser.ckeditorsettings.ICKEditorSchema.allow_folder_creation", False)
     # set 500px for editor height everywhere
-    cke_props.height = '500px'
+    api.portal.set_registry_record(
+        "collective.ckeditor.browser.ckeditorsettings.ICKEditorSchema.height", '500px')
     # do not use 'rows' of the field widget for editor height
-    cke_props.properties_overloaded = (u'width', u'height')
+    api.portal.set_registry_record(
+        "collective.ckeditor.browser.ckeditorsettings.ICKEditorSchema.overloadable_properties",
+        ['width', 'height'])
     # use Moono-Lisa skin
-    cke_props.skin = u'moono-lisa'
+    api.portal.set_registry_record(
+        "collective.ckeditor.browser.ckeditorsettings.ICKEditorSchema.skin", 'moono-lisa')
+    # configure extra plugins
+    plugins = list(api.portal.get_registry_record(
+        "collective.ckeditor.browser.ckeditorsettings.ICKEditorSchema.plugins"))
+    extra_plugins = [
+        u"tableresize;/++resource++ckeditor/plugins/tableresize/plugin.js",
+        u"nonbreaking;/++resource++cke_nonbreaking/plugin.js",
+        u"imagerotate;/++resource++cke_imagerotate/plugin.js"]
+    for extra_plugin in extra_plugins:
+        if extra_plugin not in plugins:
+            plugins.append(extra_plugin)
+    api.portal.set_registry_record(
+        "collective.ckeditor.browser.ckeditorsettings.ICKEditorSchema.plugins", plugins)
     logger.info('Done.')
 
 

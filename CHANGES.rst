@@ -21,6 +21,8 @@ Changelog
   endpoints on meeting and item.
   Added possibility to edit a redefined item signatory.
   [gbastien]
+- Adapted code to be able to use `collective.ckeditor 4.11+`.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------

@@ -684,7 +684,6 @@ function init_ckeditor(event) {
 }
 
 function saveCKeditor(field_name, base_url, async=true) {
-  alert('hello');
   ajaxsave = CKEDITOR.instances[field_name].getCommand('ajaxsave');
   ajaxsave.async = async;
   CKEDITOR.instances[field_name].execCommand('ajaxsave', 'saveCmd');
@@ -695,6 +694,8 @@ function saveAndExitCKeditor(field_name, base_url) {
   saveCKeditor(field_name, base_url, async=false);
   exitCKeditor(field_name, base_url);
 }
+
+CKEDITOR.config.clipboard_handleImages = false;
 
 function exitCKeditor(field_name, base_url) {
   CKEDITOR.instances[field_name].destroy();

@@ -258,10 +258,6 @@
     </configure>
 
     <adapter
-        for="z3c.form.interfaces.IWidget"
-        factory=".widgets.pm_richtext.PMZ3CFormWidgetSettings" />
-
-    <adapter
         for="Products.Five.BrowserView"
         factory=".browser.overrides.pm_default_popup_template"
         name="popup"

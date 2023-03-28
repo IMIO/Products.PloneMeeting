@@ -1752,15 +1752,14 @@ div.pmMoreInfo table[cellpadding='0'] tr th {
    increase also zIndex to make sure menu is viewable in FF when opened in a popup */
 div.cke.cke_combopanel, div.cke.cke_menu_panel {
     height: 450px;
-    z-index: 11000 !important;
 }
 
-div.cke_dialog_background_cover {
-   z-index: 14000 !important;
+div.cke_panel {
+   z-index: 10050 !important;
 }
 
-table.cke_dialog {
-   z-index: 15000 !important;
+div.cke_dialog_container {
+   z-index: 10100 !important;
 }
 
 /* this avoid losing toolbar when maximizing a CKeditor with very long content */

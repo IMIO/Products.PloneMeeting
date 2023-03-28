@@ -30,6 +30,7 @@ from Products.PloneMeeting.interfaces import IMeetingItemDashboardBatchActionsMa
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.migrations.migrate_to_4206 import Migrate_To_4206
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.setuphandlers import columnInfos
 from Products.PloneMeeting.setuphandlers import indexInfos
@@ -874,6 +875,9 @@ class Migrate_To_4200(Migrator):
         logger.info('Migrating to PloneMeeting 4200...')
 
         if self.is_in_part('a'):  # main step, everything but update local roles and refresh catalog
+            # first thing, fix ckeditor_properties or it breaks collective.ckeditor upgrade
+            Migrate_To_4206(self.portal)._fixCKeditorConfig()
+
             self._fixPODTemplatesInstructions()
             self._fixFacetedFilters()
 
