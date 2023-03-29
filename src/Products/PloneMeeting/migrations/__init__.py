@@ -96,15 +96,16 @@ class Migrator(BaseMigrator):
         """Before self.reinstall hook that let's a subplugin knows that the profile
            will be executed and may launch some migration steps before PM ones."""
         # save CKeditor custom styles
-        cke_props = self.portal.portal_properties.ckeditor_properties
-        self.menuStyles = cke_props.menuStyles
+        self.menuStyles = api.portal.get_registry_record(
+            "collective.ckeditor.browser.ckeditorsettings.ICKEditorSchema.menuStyles")
 
     def _after_reinstall(self):
         """After self.reinstall hook that let's a subplugin knows that the profile
            has been executed and may launch some migration steps before PM ones."""
         # set back CKeditor custom styles
-        cke_props = self.portal.portal_properties.ckeditor_properties
-        cke_props.menuStyles = self.menuStyles
+        api.portal.set_registry_record(
+            "collective.ckeditor.browser.ckeditorsettings.ICKEditorSchema.menuStyles",
+            self.menuStyles)
 
     def getWorkflows(self, meta_types=['Meeting',
                                        'MeetingItem',
@@ -597,27 +598,31 @@ class Migrator(BaseMigrator):
            - p_style_type is the type of style, by default "class", could be "style" also;
            - p_style_value is the style value (class name or style definition)."""
         logger.info("Adding style '%s' to CKEditor styles..." % style_name)
-        cke_props = self.portal.portal_properties.ckeditor_properties
-        if cke_props.menuStyles.find(style_name) == -1:
+        menuStyles = api.portal.get_registry_record(
+            "collective.ckeditor.browser.ckeditorsettings.ICKEditorSchema.menuStyles")
+        if menuStyles.find(style_name) == -1:
             # msgid always starts with ckeditor_style_ and ends with style_name
             msg_style_name = translate(
                 'ckeditor_style_{0}'.format(style_name),
                 domain='PloneMeeting',
                 context=self.request)
-            menuStyles = cke_props.menuStyles
             style = u"{{ name : '{0}'\t\t, element : '{1}', attributes : " \
                 u"{{ '{2}' : '{3}' }} }},\n]".format(
                     msg_style_name, style_element, style_type, style_value)
             # last element, check if we need a ',' before or not...
-            strippedMenuStyles = menuStyles.replace(u' ', u'').replace(u'\n', u'').replace(u'\r', u'')
+            strippedMenuStyles = menuStyles.replace(u' ', u'').replace(
+                u'\n', u'').replace(u'\r', u'')
             if u',]' not in strippedMenuStyles:
                 menuStyles = menuStyles.replace(u'\n]', u']')
                 style = u",\n" + style
             menuStyles = menuStyles.replace(u']', style)
-            cke_props.menuStyles = menuStyles
+            api.portal.set_registry_record(
+                "collective.ckeditor.browser.ckeditorsettings.ICKEditorSchema.menuStyles",
+                menuStyles)
             self.warn(logger, "Style '{0}' was added...".format(style_name))
         else:
-            logger.info("Style '{0}' already exists and was not added...".format(style_name))
+            logger.info("Style '{0}' already exists and was not added...".format(
+                style_name))
         logger.info('Done.')
 
     def _already_migrated(self, done=True):

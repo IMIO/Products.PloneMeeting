@@ -10,8 +10,9 @@ class Migrate_To_4206(Migrator):
         """Make sure CKeditor config is correct before executing migration from
            ckeditor_properties to registry."""
         logger.info('Fixing CKeditor properties...')
-        cke_props = self.portal.portal_properties.ckeditor_properties
-        cke_props.properties_overloaded = ('width', 'height')
+        cke_props = self.portal.portal_properties.get("ckeditor_properties", None)
+        if cke_props is not None:
+            cke_props.properties_overloaded = ('width', 'height')
         logger.info('Done.')
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):
