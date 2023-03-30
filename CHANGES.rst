@@ -27,6 +27,9 @@ Changelog
   [gbastien]
 - Removed JS alert `hello` when ajax saving rich text.
   [gbastien]
+- Make `is_all_count` available again on the `ItemDocumentGenerationHelperView`.
+  It was moved out together with `print_votes`.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------

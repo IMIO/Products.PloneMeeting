@@ -167,6 +167,9 @@ class testVotes(PloneMeetingTestCase):
         self.assertEqual(
             helper_public.print_votes(single_vote_value=u"1", no_votes_marker="<!>"),
             u'<p>Par 2 voix pour, 1 voix contre et 1 abstention,</p>')
+        # is_all_count is also available on the helper view
+        self.assertFalse(helper_public.is_all_count())
+        self.assertTrue(helper_yes_public.is_all_count())
         # public vote all yes
         self.assertEqual(
             helper_yes_public.print_votes(include_total_voters=True),
@@ -1117,6 +1120,12 @@ class testVotes(PloneMeetingTestCase):
         public_item.restrictedTraverse('base_view')()
         self.assertEqual(IStatusMessage(self.request).show()[0].message,
                          u'Votes result is not HTML')
+        # is_all_count is also available on pm_utils
+        cfg.setVotesResultTALExpr(
+            "python: pm_utils.is_all_count(item) and '<p>All OK</p>' or '<p>Not all OK</p>'")
+        cleanRamCache()
+        self.assertEqual(public_item.getVotesResult(), '<p>Not all OK</p>')
+        self.assertEqual(yes_secret_item.getVotesResult(), '<p>All OK</p>')
 
 
 def test_suite():

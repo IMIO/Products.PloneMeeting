@@ -2120,6 +2120,9 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
     def print_votes(self, **kw):
         return print_votes(self.context, **kw)
 
+    def is_all_count(self, **kw):
+        return is_all_count(self.context, **kw)
+
 
 class AdviceDocumentGenerationHelperView(DXDocumentGenerationHelperView, BaseDGHV):
     """ """
