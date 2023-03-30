@@ -353,7 +353,7 @@ class testFaceted(PloneMeetingTestCase):
         # check test profile values
         self.assertGreater(len(self.proposing_groups), 2)
         # greater than proposing_groups + "My organization"
-        self.assertGreater(len(self.all_org), len(self.proposing_groups)+1)
+        self.assertGreater(len(self.all_org), len(self.proposing_groups) + 1)
         # not all proposing groups are activated
         self.assertLess(len(self.active_proposing_groups), len(self.proposing_groups))
 

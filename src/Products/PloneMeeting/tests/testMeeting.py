@@ -4032,7 +4032,6 @@ class testMeetingType(PloneMeetingTestCase):
 
     def test_pm_Update_first_item_number(self):
         """The the helper Meeting.update_first_item_number that will take in charge"""
-        cfg = self.meetingConfig
         self._enableField('first_item_number', related_to='Meeting')
         self._enableField('category')
         self.changeUser('pmManager')

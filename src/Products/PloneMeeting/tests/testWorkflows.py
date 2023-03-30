@@ -626,7 +626,6 @@ class testWorkflows(PloneMeetingTestCase):
 
     def test_pm_RecurringItemsWithUntriggerableTransitions(self):
         '''Tests the recurring items system when some transitions could not be triggered.'''
-        cfg = self.meetingConfig
         self._setupRecurringItems()
         self.changeUser('pmManager')
         # now test with hardcoded transitions
@@ -951,7 +950,6 @@ class testWorkflows(PloneMeetingTestCase):
     def test_pm_RequiredDataToPresentItemCategoryOrGroupsInCharge(self):
         """When MeetingItem.category or MeetingItem.groupsInCharge is used,
            it is required to present an item."""
-        cfg = self.meetingConfig
         self._enableField('category')
         self._enableField('groupsInCharge')
         self.changeUser('pmManager')
