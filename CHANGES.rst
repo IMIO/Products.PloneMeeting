@@ -21,6 +21,10 @@ Changelog
   endpoints on meeting and item.
   Added possibility to edit a redefined item signatory.
   [gbastien]
+- Fixed `PMDataChangesHistoryAdapter` when historizing multivalued fields
+  (`MeetingItem.copyGroups` for example) and some old values are no more in
+  existing values.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------
