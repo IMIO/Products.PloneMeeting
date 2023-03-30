@@ -1736,6 +1736,9 @@ class testMeetingItem(PloneMeetingTestCase):
             else:
                 self.assertEqual(adviceInfo['delay_infos'], {})
             self.assertEqual(adviceInfo['type'], 'not_given')
+        # advices are removed and not cataloged
+        self.assertEqual(len(self.catalog(path="/".join(item.getPhysicalPath()))), 3)
+        self.assertEqual(len(self.catalog(path="/".join(clonedItem.getPhysicalPath()))), 1)
 
     def test_pm_CloneItemWithInheritAdvices(self):
         '''When an item is cloned with option inheritAdvices=True.
