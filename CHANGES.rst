@@ -25,6 +25,8 @@ Changelog
   (`MeetingItem.copyGroups` for example) and some old values are no more in
   existing values.
   [gbastien]
+- Removed JS alert `hello` when ajax saving rich text.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------
