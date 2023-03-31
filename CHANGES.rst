@@ -30,6 +30,8 @@ Changelog
 - Make `is_all_count` available again on the `ItemDocumentGenerationHelperView`.
   It was moved out together with `print_votes`.
   [gbastien]
+- Fixed item advices invalidation, advices were removed but not unindexed.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------
