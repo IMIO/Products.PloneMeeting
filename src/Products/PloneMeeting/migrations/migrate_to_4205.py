@@ -53,6 +53,13 @@ class Migrate_To_4205(Migrator):
 
     def _initAdviceGivenHistory(self):
         """Moving from versioning to imio.history advice_given_history."""
+        # if using MeetingConfig.enableAdviceInvalidation, clean potential orphan brains
+        must_clean = [cfg.id for cfg in self.tool.objectValues('MeetingConfig')
+                      if cfg.getEnableAdviceInvalidation()]
+        if must_clean:
+            self.clean_orphan_brains(
+                query={"object_provides": IMeetingAdvice.__identifier__})
+
         pr = api.portal.get_tool('portal_repository')
         phs = api.portal.get_tool('portal_historiesstorage')
         h_repo = phs._getZVCRepo()

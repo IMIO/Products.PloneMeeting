@@ -6066,10 +6066,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 roles.remove(role_to_remove)
                 obj.manage_permission(permission, roles)
 
-    def _removeEveryContainedAdvices(self):
+    def _removeEveryContainedAdvices(self, suppress_events=True):
         """Remove every contained advices."""
         for advice in self.getAdvices():
-            self._delObject(advice.getId(), suppress_events=True)
+            self._delObject(advice.getId(), suppress_events=suppress_events)
 
     def _adviceDelayIsTimedOut(self, groupId, computeNewDelayInfos=False):
         """Returns True if given p_advice is delay-aware and delay is timed out.
@@ -6155,10 +6155,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                    context=self.REQUEST),
                                          type='info')
             # remove every meetingadvice from self
-            # to be able to remove every contained meetingadvice, we need to mark
-            # them as deletable, aka we need to give permission 'Delete objects' on
-            # every meetingadvice to the role 'Authenticated', a role that current user has
-            self._removeEveryContainedAdvices()
+            self._removeEveryContainedAdvices(suppress_events=False)
 
         # manage inherited advices
         inheritedAdviserUids = inheritedAdviserUids or [

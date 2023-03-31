@@ -210,7 +210,6 @@ class testColumns(PloneMeetingTestCase):
 
     def test_pm_ItemCategoryColumn(self):
         """Test the column displaying category of MeetingItem."""
-        cfg = self.meetingConfig
         self._enableField('category')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')

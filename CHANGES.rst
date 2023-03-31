@@ -21,6 +21,23 @@ Changelog
   endpoints on meeting and item.
   Added possibility to edit a redefined item signatory.
   [gbastien]
+- Fixed `PMDataChangesHistoryAdapter` when historizing multivalued fields
+  (`MeetingItem.copyGroups` for example) and some old values are no more in
+  existing values.
+  [gbastien]
+- Removed JS alert `hello` when ajax saving rich text.
+  [gbastien]
+- Make `is_all_count` available again on the `ItemDocumentGenerationHelperView`.
+  It was moved out together with `print_votes`.
+  [gbastien]
+- Fixed item advices invalidation, advices were removed but not unindexed.
+  In `Migrate_To_4205._initAdviceGivenHistory`, call `clean_catalog_orphans` to
+  clean potential `meetingadvice` orphan when using
+  `MeetingConfig.enableAdviceInvalidation`.
+  [gbastien]
+- Reordered fields on `MeetingConfig`, moved `xhtmlTransformTypes` just under
+  `xhtmlTransformFields`.
+  [gbastien]
 - Adapted code to be able to use `collective.ckeditor 4.11+`.
   [gbastien]
 

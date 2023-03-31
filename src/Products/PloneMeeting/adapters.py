@@ -773,6 +773,9 @@ class PMDataChangesHistoryAdapter(ImioWfHistoryAdapter):
                 elif widgetName == 'MultiSelectionWidget':
                     allValues = self.context.getField(name).Vocabulary(self.context)
                     val = [allValues.getValue(v) for v in oldValue]
+                    # remove None in val in case we have old values that
+                    # does not exist anymore in allValues
+                    val = [v for v in val if v is not None]
                     if not val:
                         val = '-'
                     else:

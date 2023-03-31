@@ -424,6 +424,8 @@ class testAdvices(PloneMeetingTestCase):
         self.deleteAsManager(annex1.UID())
         self.failIf(item.hasAdvices())
         self.failIf(item.getGivenAdvices())
+        # advice does not exist anymore and has been correctly unindexed
+        self.assertEqual(len(self.catalog(path="/".join(item.getPhysicalPath()))), 1)
         # given the advice again so we can check other case where advices are invalidated
         self.backToState(item, self._stateMappingFor('proposed'))
         self.changeUser('pmReviewer2')
