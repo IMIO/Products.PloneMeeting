@@ -32,6 +32,9 @@ Changelog
   [gbastien]
 - Fixed item advices invalidation, advices were removed but not unindexed.
   [gbastien]
+- Reordered fields on `MeetingConfig`, moved `xhtmlTransformTypes` just under
+  `xhtmlTransformFields`.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------
