@@ -695,8 +695,6 @@ function saveAndExitCKeditor(field_name, base_url) {
   exitCKeditor(field_name, base_url);
 }
 
-CKEDITOR.config.clipboard_handleImages = false;
-
 function exitCKeditor(field_name, base_url) {
   CKEDITOR.instances[field_name].destroy();
   tag=$('div#hook_' + field_name)[0];
