@@ -29,7 +29,13 @@ class Migrate_To_4201(Migrator):
     def _disableWscForCKeditor(self):
         '''The link 'Check spell' in Scayt button is broken, hide it.'''
         logger.info('CKeditor, adding "wsc" to the removePlugins...')
-        configure_ckeditor(self.portal, custom='plonemeeting', forceTextPaste=0, scayt=1, removeWsc=1)
+        configure_ckeditor(
+            self.portal,
+            custom='plonemeeting',
+            forceTextPaste=0,
+            scayt=1,
+            removeWsc=1,
+            use_registry=True)
         logger.info('Done.')
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):
