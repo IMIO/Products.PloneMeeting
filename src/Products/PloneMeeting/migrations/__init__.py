@@ -412,7 +412,8 @@ class Migrator(BaseMigrator):
 
     def initNewHTMLFields(self, query={'meta_type': 'MeetingItem'}, field_names=[]):
         '''Make sure the content_type is correctly set to 'text/html' for new xhtml fields.'''
-        logger.info('Initializing new HTML fields...')
+        logger.info('Initializing new HTML fields (query=%s, field_names=%s)...'
+                    % (query, field_names))
         brains = self.portal.portal_catalog(**query)
         pghandler = ZLogHandler(steps=1000)
         pghandler.init('Initializing new HTML fields', len(brains))

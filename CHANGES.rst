@@ -31,6 +31,9 @@ Changelog
   It was moved out together with `print_votes`.
   [gbastien]
 - Fixed item advices invalidation, advices were removed but not unindexed.
+  In `Migrate_To_4205._initAdviceGivenHistory`, call `clean_catalog_orphans` to
+  clean potential `meetingadvice` orphan when using
+  `MeetingConfig.enableAdviceInvalidation`.
   [gbastien]
 - Reordered fields on `MeetingConfig`, moved `xhtmlTransformTypes` just under
   `xhtmlTransformFields`.
