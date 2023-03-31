@@ -13,6 +13,13 @@ class Migrate_To_4206(Migrator):
         cke_props = self.portal.portal_properties.get("ckeditor_properties", None)
         if cke_props is not None:
             cke_props.properties_overloaded = ('width', 'height')
+            if cke_props.bodyClass is None:
+                cke_props.bodyClass = ''
+            if cke_props.width is None:
+                cke_props.width = ''
+            if isinstance(cke_props.height, unicode):
+                cke_props.height = str(cke_props.height)
+
         logger.info('Done.')
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):

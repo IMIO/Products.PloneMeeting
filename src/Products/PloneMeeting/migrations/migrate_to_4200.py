@@ -875,8 +875,9 @@ class Migrate_To_4200(Migrator):
         logger.info('Migrating to PloneMeeting 4200...')
 
         if self.is_in_part('a'):  # main step, everything but update local roles and refresh catalog
-            # first thing, fix ckeditor_properties or it breaks collective.ckeditor upgrade
+            # first thing, fix ckeditor_properties and upgrade it
             Migrate_To_4206(self.portal)._fixCKeditorConfig()
+            self.upgradeProfile('collective.ckeditor:default')
 
             self._fixPODTemplatesInstructions()
             self._fixFacetedFilters()
