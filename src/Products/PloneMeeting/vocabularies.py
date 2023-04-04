@@ -22,6 +22,7 @@ from collective.eeafaceted.collectionwidget.content.dashboardcollection import I
 from collective.eeafaceted.collectionwidget.vocabulary import CachedCollectionVocabulary
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
 from collective.iconifiedcategory.utils import get_categorized_elements
+from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import render_filesize
@@ -2816,6 +2817,14 @@ class ContainedAnnexesVocabulary(object):
                 elif annex['category_uid'] not in categories_vocab:
                     term.disabled = True
                     term.title += translate(' [reserved MeetingManagers]',
+                                            domain='PloneMeeting',
+                                            context=context.REQUEST)
+                # annexType ask a PDF but the file is not a PDF
+                # could happen if configuration changed after creation of annex
+                elif get_category_object(annex_obj, annex_obj.content_category).only_pdf and \
+                        annex_obj.file.contentType != 'application/pdf':
+                    term.disabled = True
+                    term.title += translate(' [PDF required]',
                                             domain='PloneMeeting',
                                             context=context.REQUEST)
                 else:

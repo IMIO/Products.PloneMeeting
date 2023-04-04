@@ -737,7 +737,8 @@ class testMeetingItem(PloneMeetingTestCase):
                 item,
                 annexTitle="1. Decision annex title",
                 annexType='marketing-annex',
-                relatedTo='item_decision')
+                relatedTo='item_decision',
+                annexFile=self.annexFilePDF)
         self.do(item, 'accept')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
 
@@ -858,11 +859,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(sentToInfos(originalItem)(), [clonable_to_cfg2])
         self.assertTrue(self.catalog(UID=originalItem.UID(), sentToInfos=[clonable_to_cfg2]))
 
-    def test_pm_SendItemToOtherMCWithoutDefinedAnnexType(self):
+    def test_pm_SendItemToOtherMCAnnexesNotKeptIfDestConfigNotAllowingIt(self):
         '''When cloning an item to another meetingConfig or to the same meetingConfig,
            if we have annexes on the original item and destination meetingConfig (that could be same
            as original item or another) does not have annex types defined,
-           it does not fail but annexes are not kept and a portal message is displayed.'''
+           it does not fail but annexes are not kept and a portal message is displayed.
+           Same thing if new annex_type is only_pdf, if new file is not PDF is it not kept.'''
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         # first test when sending to another meetingConfig
@@ -870,6 +872,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('admin')
         self._removeConfigObjectsFor(cfg2, folders=['annexes_types/item_annexes', ])
         self.assertTrue(not cfg2.annexes_types.item_annexes.objectValues())
+        # require only_pdf for decision annex
+        cfg2.annexes_types.item_decision_annexes.objectValues()[0].only_pdf = True
         # now create an item, add an annex and clone it to the other meetingConfig
         data = self._setupSendItemToOtherMC(with_annexes=True)
         originalItem = data['originalItem']
@@ -877,14 +881,20 @@ class testMeetingItem(PloneMeetingTestCase):
         # original item had annexes
         self.assertEqual(len(get_annexes(originalItem, portal_types=['annex'])), 2)
         self.assertEqual(len(get_annexes(originalItem, portal_types=['annexDecision'])), 2)
-        # but new item is missing the normal annexes because
+        # but no normal annex was kept because
         # no annexType for normal annexes are defined in the cfg2
+        # one decision annex is kept because it is PDF and decision annex type requires a PDF file
         self.assertEqual(len(get_annexes(newItem, portal_types=['annex'])), 0)
-        self.assertEqual(len(get_annexes(newItem, portal_types=['annexDecision'])), 2)
+        self.assertEqual(len(get_annexes(newItem, portal_types=['annexDecision'])), 1)
         # moreover a message was added
         messages = IStatusMessage(self.request).show()
         expectedMessage = translate("annex_not_kept_because_no_available_annex_type_warning",
                                     mapping={'annexTitle': data['annex1'].Title()},
+                                    domain='PloneMeeting',
+                                    context=self.request)
+        self.assertEqual(messages[-3].message, expectedMessage)
+        expectedMessage = translate("annex_not_kept_because_only_pdf_annex_type_warning",
+                                    mapping={'annexTitle': data['decisionAnnex1'].Title()},
                                     domain='PloneMeeting',
                                     context=self.request)
         self.assertEqual(messages[-2].message, expectedMessage)
@@ -2935,6 +2945,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_ItemDuplicateFormOnlyKeepRelevantAnnexes(self):
         """Test the @@item_duplicate_form that will only let keep annexes that :
            - have no scan_id;
+           - have a PDF file if annex_type only_pdf is True;
            - use an annex_type that current user may use."""
         cfg = self.meetingConfig
         cfg.setEnableItemDuplication(True)
@@ -2953,6 +2964,9 @@ class testMeetingItem(PloneMeetingTestCase):
             annexType=annex_type.id)
         annex.scan_id = '013999900000001'
         annex_scan_id_id = annex.getId()
+        # add an annex then change annex_type only_pdf to True after
+        self.addAnnex(item, annexType='overhead-analysis')
+        cfg.annexes_types.item_annexes.get('overhead-analysis').only_pdf = True
         # make sure annex title is escaped in vocabulary
         annex_decision_meeting_manager = self.addAnnex(
             item,
@@ -2965,12 +2979,13 @@ class testMeetingItem(PloneMeetingTestCase):
             item, u"Products.PloneMeeting.vocabularies.contained_annexes_vocabulary")
         annex_decision_vocab = get_vocab(
             item, u"Products.PloneMeeting.vocabularies.contained_decision_annexes_vocabulary")
-        self.assertEqual(len(annex_vocab), 1)
+        self.assertEqual(len(annex_vocab), 2)
         self.assertTrue(annex_vocab._terms[0].disabled)
+        self.assertTrue(annex_vocab._terms[1].disabled)
         self.assertEqual(len(annex_decision_vocab), 1)
         self.assertTrue(annex_decision_vocab._terms[0].disabled)
         # terms are escaped
-        annex_term_title = annex_vocab._terms[0].title
+        annex_term_title = annex_vocab._terms[1].title
         self.assertTrue("Annex type&quot;&gt;&lt;script&gt;alert" in annex_term_title)
         self.assertTrue("> Title&quot;&gt;&lt;script" in annex_term_title)
         annex_decision_term_title = annex_decision_vocab._terms[0].title
@@ -2996,8 +3011,9 @@ class testMeetingItem(PloneMeetingTestCase):
             item, u"Products.PloneMeeting.vocabularies.contained_annexes_vocabulary")
         annex_decision_vocab = get_vocab(
             item, u"Products.PloneMeeting.vocabularies.contained_decision_annexes_vocabulary")
-        self.assertEqual(len(annex_vocab), 1)
+        self.assertEqual(len(annex_vocab), 2)
         self.assertTrue(annex_vocab._terms[0].disabled)
+        self.assertTrue(annex_vocab._terms[1].disabled)
         self.assertEqual(len(annex_decision_vocab), 1)
         self.assertFalse(annex_decision_vocab._terms[0].disabled)
         data = {'keep_link': False, 'annex_ids': [], 'annex_decision_ids': []}

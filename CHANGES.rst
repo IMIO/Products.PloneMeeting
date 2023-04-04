@@ -38,6 +38,9 @@ Changelog
 - Reordered fields on `MeetingConfig`, moved `xhtmlTransformTypes` just under
   `xhtmlTransformFields`.
   [gbastien]
+- Make sure annex are not kept upon duplication (to same or distant MC)
+  if annex type requires a PDF file and the annex file is not PDF.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------
