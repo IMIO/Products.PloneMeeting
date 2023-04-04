@@ -884,7 +884,6 @@ class testMeetingItem(PloneMeetingTestCase):
         # but no normal annex was kept because
         # no annexType for normal annexes are defined in the cfg2
         # one decision annex is kept because it is PDF and decision annex type requires a PDF file
-        import ipdb; ipdb.set_trace()
         self.assertEqual(len(get_annexes(newItem, portal_types=['annex'])), 0)
         self.assertEqual(len(get_annexes(newItem, portal_types=['annexDecision'])), 1)
         # moreover a message was added
