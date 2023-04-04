@@ -2822,7 +2822,7 @@ class ContainedAnnexesVocabulary(object):
                 # annexType ask a PDF but the file is not a PDF
                 # could happen if configuration changed after creation of annex
                 elif get_category_object(annex_obj, annex_obj.content_category).only_pdf and \
-                     annex_obj.file.contentType != 'application/pdf':
+                        annex_obj.file.contentType != 'application/pdf':
                     term.disabled = True
                     term.title += translate(' [PDF required]',
                                             domain='PloneMeeting',
