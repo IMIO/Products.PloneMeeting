@@ -2945,6 +2945,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_ItemDuplicateFormOnlyKeepRelevantAnnexes(self):
         """Test the @@item_duplicate_form that will only let keep annexes that :
            - have no scan_id;
+           - have a PDF file if annex_type only_pdf is True;
            - use an annex_type that current user may use."""
         cfg = self.meetingConfig
         cfg.setEnableItemDuplication(True)
@@ -2963,6 +2964,9 @@ class testMeetingItem(PloneMeetingTestCase):
             annexType=annex_type.id)
         annex.scan_id = '013999900000001'
         annex_scan_id_id = annex.getId()
+        # add an annex then change annex_type only_pdf to True after
+        self.addAnnex(item, annexType='overhead-analysis')
+        cfg.annexes_types.item_annexes.get('overhead-analysis').only_pdf = True
         # make sure annex title is escaped in vocabulary
         annex_decision_meeting_manager = self.addAnnex(
             item,
@@ -2975,12 +2979,13 @@ class testMeetingItem(PloneMeetingTestCase):
             item, u"Products.PloneMeeting.vocabularies.contained_annexes_vocabulary")
         annex_decision_vocab = get_vocab(
             item, u"Products.PloneMeeting.vocabularies.contained_decision_annexes_vocabulary")
-        self.assertEqual(len(annex_vocab), 1)
+        self.assertEqual(len(annex_vocab), 2)
         self.assertTrue(annex_vocab._terms[0].disabled)
+        self.assertTrue(annex_vocab._terms[1].disabled)
         self.assertEqual(len(annex_decision_vocab), 1)
         self.assertTrue(annex_decision_vocab._terms[0].disabled)
         # terms are escaped
-        annex_term_title = annex_vocab._terms[0].title
+        annex_term_title = annex_vocab._terms[1].title
         self.assertTrue("Annex type&quot;&gt;&lt;script&gt;alert" in annex_term_title)
         self.assertTrue("> Title&quot;&gt;&lt;script" in annex_term_title)
         annex_decision_term_title = annex_decision_vocab._terms[0].title
@@ -3006,8 +3011,9 @@ class testMeetingItem(PloneMeetingTestCase):
             item, u"Products.PloneMeeting.vocabularies.contained_annexes_vocabulary")
         annex_decision_vocab = get_vocab(
             item, u"Products.PloneMeeting.vocabularies.contained_decision_annexes_vocabulary")
-        self.assertEqual(len(annex_vocab), 1)
+        self.assertEqual(len(annex_vocab), 2)
         self.assertTrue(annex_vocab._terms[0].disabled)
+        self.assertTrue(annex_vocab._terms[1].disabled)
         self.assertEqual(len(annex_decision_vocab), 1)
         self.assertFalse(annex_decision_vocab._terms[0].disabled)
         data = {'keep_link': False, 'annex_ids': [], 'annex_decision_ids': []}
