@@ -737,7 +737,8 @@ class testMeetingItem(PloneMeetingTestCase):
                 item,
                 annexTitle="1. Decision annex title",
                 annexType='marketing-annex',
-                relatedTo='item_decision')
+                relatedTo='item_decision',
+                annexFile=self.annexFilePDF)
         self.do(item, 'accept')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
 
@@ -858,11 +859,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(sentToInfos(originalItem)(), [clonable_to_cfg2])
         self.assertTrue(self.catalog(UID=originalItem.UID(), sentToInfos=[clonable_to_cfg2]))
 
-    def test_pm_SendItemToOtherMCWithoutDefinedAnnexType(self):
+    def test_pm_SendItemToOtherMCAnnexesNotKeptIfDestConfigNotAllowingIt(self):
         '''When cloning an item to another meetingConfig or to the same meetingConfig,
            if we have annexes on the original item and destination meetingConfig (that could be same
            as original item or another) does not have annex types defined,
-           it does not fail but annexes are not kept and a portal message is displayed.'''
+           it does not fail but annexes are not kept and a portal message is displayed.
+           Same thing if new annex_type is only_pdf, if new file is not PDF is it not kept.'''
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         # first test when sending to another meetingConfig
@@ -870,6 +872,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('admin')
         self._removeConfigObjectsFor(cfg2, folders=['annexes_types/item_annexes', ])
         self.assertTrue(not cfg2.annexes_types.item_annexes.objectValues())
+        # require only_pdf for decision annex
+        cfg2.annexes_types.item_decision_annexes.objectValues()[0].only_pdf = True
         # now create an item, add an annex and clone it to the other meetingConfig
         data = self._setupSendItemToOtherMC(with_annexes=True)
         originalItem = data['originalItem']
@@ -877,14 +881,21 @@ class testMeetingItem(PloneMeetingTestCase):
         # original item had annexes
         self.assertEqual(len(get_annexes(originalItem, portal_types=['annex'])), 2)
         self.assertEqual(len(get_annexes(originalItem, portal_types=['annexDecision'])), 2)
-        # but new item is missing the normal annexes because
+        # but no normal annex was kept because
         # no annexType for normal annexes are defined in the cfg2
+        # one decision annex is kept because it is PDF and decision annex type requires a PDF file
+        import ipdb; ipdb.set_trace()
         self.assertEqual(len(get_annexes(newItem, portal_types=['annex'])), 0)
-        self.assertEqual(len(get_annexes(newItem, portal_types=['annexDecision'])), 2)
+        self.assertEqual(len(get_annexes(newItem, portal_types=['annexDecision'])), 1)
         # moreover a message was added
         messages = IStatusMessage(self.request).show()
         expectedMessage = translate("annex_not_kept_because_no_available_annex_type_warning",
                                     mapping={'annexTitle': data['annex1'].Title()},
+                                    domain='PloneMeeting',
+                                    context=self.request)
+        self.assertEqual(messages[-3].message, expectedMessage)
+        expectedMessage = translate("annex_not_kept_because_only_pdf_annex_type_warning",
+                                    mapping={'annexTitle': data['decisionAnnex1'].Title()},
                                     domain='PloneMeeting',
                                     context=self.request)
         self.assertEqual(messages[-2].message, expectedMessage)
