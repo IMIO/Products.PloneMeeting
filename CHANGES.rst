@@ -41,6 +41,9 @@ Changelog
 - Make sure annex are not kept upon duplication (to same or distant MC)
   if annex type requires a PDF file and the annex file is not PDF.
   [gbastien]
+- Fixed action `Delete whole meeting` when triggered from dashboards, was
+  redirecting resulting in a broken dashboard because collection `UID` was lost.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------
