@@ -44,6 +44,9 @@ Changelog
 - Fixed action `Delete whole meeting` when triggered from dashboards, was
   redirecting resulting in a broken dashboard because collection `UID` was lost.
   [gbastien]
+- Adapted `MeetingItem.setPreferredMeeting` and `MeetingItem._update_preferred_meeting`
+  to manage empty of wrong value when creating an item using `restapi`.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------
