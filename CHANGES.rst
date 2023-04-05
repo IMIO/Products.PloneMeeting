@@ -47,6 +47,10 @@ Changelog
 - Adapted `MeetingItem.setPreferredMeeting` and `MeetingItem._update_preferred_meeting`
   to manage empty of wrong value when creating an item using `restapi`.
   [gbastien]
+- Fixed `PMExistingPODTemplate`, do not break if the reusable `PODTemplate` is not
+  stored in the `podtemplates` folder of a `MeetingConfig`, it could be in the
+  `contacts` directory or somwhere else.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------

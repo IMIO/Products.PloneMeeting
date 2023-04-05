@@ -1638,10 +1638,16 @@ class PMExistingPODTemplate(ExistingPODTemplateFactory):
     implements(IVocabularyFactory)
 
     def _renderTermTitle(self, brain):
+        """If template in podtemplates folder of a MeetingConfig,
+           include MeetingConfig title (2 levels above), else include parent title.
+           This could be a template stored in "contacts" or somewhere else."""
         template = brain.getObject()
-        cfg = template.aq_inner.aq_parent.aq_parent
+        if template.aq_inner.aq_parent.id == "podtemplates":
+            parent_title = template.aq_inner.aq_parent.aq_parent.Title(include_config_group=True)
+        else:
+            parent_title = template.aq_inner.aq_parent.Title()
         return u'{} ➔ {} ➔ {}'.format(
-            safe_unicode(cfg.Title(include_config_group=True)),
+            safe_unicode(parent_title),
             safe_unicode(template.Title()),
             safe_unicode(template.odt_file.filename))
 
