@@ -51,6 +51,9 @@ Changelog
   stored in the `podtemplates` folder of a `MeetingConfig`, it could be in the
   `contacts` directory or somwhere else.
   [gbastien]
+- Make sure transitions are rendered in the actions_panel displayed on advices.
+  This is necessary for cases were a complex workflow is used for advices.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------

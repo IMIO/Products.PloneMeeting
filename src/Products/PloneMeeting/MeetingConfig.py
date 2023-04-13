@@ -4907,6 +4907,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('wa_removed_removed_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
+
+        # XXX to be managed when moving MeetingConfig to DX
+        # some datagridfield attributes
+        # powerObservers, meetingConfigsToCloneTo, onTransitionFieldTransforms
+
         return self.adapted().custom_validate_workflowAdaptations(values, added, removed)
 
     def custom_validate_workflowAdaptations(self, values, added, removed):
