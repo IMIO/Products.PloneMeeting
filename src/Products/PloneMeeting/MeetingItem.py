@@ -3667,7 +3667,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 ('_init_',
                  translate('_init_', domain="plone", context=self.REQUEST)), ))
         )
-        res += cfg.listEveryMeetingTransitions()
+        res += cfg.listMeetingTransitions()
         return res
 
     security.declarePrivate('listOtherMeetingConfigsClonableTo')

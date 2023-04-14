@@ -1242,7 +1242,7 @@ schema = Schema((
             description_msgid="on_transition_field_transforms_descr",
             columns={'transition':
                         SelectColumn("On transition field transform transition",
-                                     vocabulary="listEveryItemTransitions",
+                                     vocabulary="listItemTransitions",
                                      col_description="The transition that will trigger the field transform."),
                      'field_name':
                         SelectColumn("On transition field transform field name",
@@ -1271,7 +1271,7 @@ schema = Schema((
             description_msgid="on_meeting_transition_item_action_to_execute_descr",
             columns={'meeting_transition':
                         SelectColumn("On meeting transition item action to execute meeting transition",
-                                     vocabulary="listEveryMeetingTransitions",
+                                     vocabulary="listMeetingTransitions",
                                      col_description="The transition triggered on the meeting."),
                      'item_action':
                         SelectColumn("On meeting transition item action to execute item action",
@@ -1978,7 +1978,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
-        vocabulary='listEveryItemTransitions',
+        vocabulary='listItemTransitions',
         default=defValues.transitionsReinitializingDelays,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -4655,18 +4655,74 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if '' in values:
             values.remove('')
 
+        # used to check removed and conflicts
+        item_type = self.getItemTypeName()
+        meeting_type = self.getMeetingTypeName()
+        removed_and_conflicts_checks = {
+            'hide_decisions_when_under_writing':
+                {'portal_type': meeting_type,
+                 'review_state': 'decisions_published',
+                 'optional_with': None},
+            'accepted_out_of_meeting':
+                {'portal_type': item_type,
+                 'review_state': 'accepted_out_of_meeting',
+                 'optional_with': 'accepted_out_of_meeting_and_duplicated'},
+            'accepted_out_of_meeting_and_duplicated':
+                {'portal_type': item_type,
+                 'review_state': 'accepted_out_of_meeting',
+                 'optional_with': 'accepted_out_of_meeting'},
+            'accepted_out_of_meeting_emergency':
+                {'portal_type': item_type,
+                 'review_state': 'accepted_out_of_meeting_emergency',
+                 'optional_with': 'accepted_out_of_meeting_emergency_and_duplicated'},
+            'accepted_out_of_meeting_emergency_and_duplicated':
+                {'portal_type': item_type,
+                 'review_state': 'accepted_out_of_meeting_emergency',
+                 'optional_with': 'accepted_out_of_meeting_emergency'},
+            'transfered':
+                {'portal_type': item_type,
+                 'review_state': 'transfered',
+                 'optional_with': 'transfered_and_duplicated'},
+            'transfered_and_duplicated':
+                {'portal_type': item_type,
+                 'review_state': 'transfered',
+                 'optional_with': 'transfered'},
+            'removed':
+                {'portal_type': item_type,
+                 'review_state': 'removed',
+                 'optional_with': 'removed_and_duplicated'},
+            'removed_and_duplicated':
+                {'portal_type': item_type,
+                 'review_state': 'removed',
+                 'optional_with': 'removed'},
+            'postpone_next_meeting':
+                {'portal_type': item_type,
+                 'review_state': 'postponed_next_meeting',
+                 'optional_with': None},
+            'mark_not_applicable':
+                {'portal_type': item_type,
+                 'review_state': 'marked_not_applicable',
+                 'optional_with': None},
+            'refused':
+                {'portal_type': item_type,
+                 'review_state': 'refused',
+                 'optional_with': None},
+            'delayed':
+                {'portal_type': item_type,
+                 'review_state': 'delayed',
+                 'optional_with': None},
+            'accepted_but_modified':
+                {'portal_type': item_type,
+                 'review_state': 'accepted_but_modified',
+                 'optional_with': None},
+            'pre_accepted':
+                {'portal_type': item_type,
+                 'review_state': 'pre_accepted',
+                 'optional_with': None},
+        }
+
         # conflicts
         msg = translate('wa_conflicts', domain='PloneMeeting', context=self.REQUEST)
-        if 'removed' in values and 'removed_and_duplicated' in values:
-            return msg
-        if 'accepted_out_of_meeting' in values and \
-           'accepted_out_of_meeting_and_duplicated' in values:
-            return msg
-        if 'accepted_out_of_meeting_emergency' in values and \
-           'accepted_out_of_meeting_emergency_and_duplicated' in values:
-            return msg
-        if 'transfered' in values and 'transfered_and_duplicated' in values:
-            return msg
         if 'no_decide' in values and 'hide_decisions_when_under_writing' in values:
             return msg
         # several 'return_to_proposing_group' values may not be selected together
@@ -4674,6 +4730,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             v for v in values if v.startswith('return_to_proposing_group')]
         if len(return_to_prop_group_wf_adaptations) > 1:
             return msg
+        # check removed_checks taking into account the "optional_with" value
+        # that links 2 wfa that can not be used together
+        for conflict_wfa, infos in removed_and_conflicts_checks.items():
+            if infos['optional_with'] and \
+               (conflict_wfa in values and infos['optional_with'] in values):
+                return msg
 
         # dependecies, some adaptations will complete already select ones
         dependencies = {
@@ -4734,9 +4796,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # this will remove the 'published' state for Meeting and 'itempublished' for MeetingItem
             # check that no more elements are in these states
             if catalog.unrestrictedSearchResults(
-                portal_type=self.getItemTypeName(), review_state='itempublished') or \
+                portal_type=item_type, review_state='itempublished') or \
                catalog.unrestrictedSearchResults(
-                    portal_type=self.getMeetingTypeName(), review_state='published'):
+                    portal_type=meeting_type, review_state='published'):
                 return translate('wa_added_no_publication_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4744,9 +4806,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # this will remove the 'frozen' state for Meeting and 'itemfrozen' for MeetingItem
             # check that no more elements are in these states
             if catalog.unrestrictedSearchResults(
-                portal_type=self.getItemTypeName(), review_state='itemfrozen') or \
+                portal_type=item_type, review_state='itemfrozen') or \
                catalog.unrestrictedSearchResults(
-                    portal_type=self.getMeetingTypeName(), review_state='frozen'):
+                    portal_type=meeting_type, review_state='frozen'):
                 return translate('wa_added_no_freeze_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4754,7 +4816,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # this will remove the 'decided' state for Meeting
             # check that no more elements are in these states
             if catalog.unrestrictedSearchResults(
-                    portal_type=self.getMeetingTypeName(), review_state='decided'):
+                    portal_type=meeting_type, review_state='decided'):
                 return translate('wa_added_no_decide_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4770,10 +4832,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # get every 'waiting_advices'-like states, we could have 'itemcreated_waiting_advices',
             # 'proposed_waiting_advices' or
             # 'itemcreated__or__proposedToValidationLevel1__or__..._waiting_advices' for example
-            itemWF = wfTool.getWorkflowsFor(self.getItemTypeName())[0]
+            itemWF = wfTool.getWorkflowsFor(item_type)[0]
             waiting_advices_states = [state for state in itemWF.states if 'waiting_advices' in state]
             if catalog.unrestrictedSearchResults(
-                    portal_type=self.getItemTypeName(), review_state=waiting_advices_states):
+                    portal_type=item_type, review_state=waiting_advices_states):
                 return translate('wa_removed_waiting_advices_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4783,7 +4845,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # this will remove the 'returned_to_proposing_group' state for MeetingItem
             # check that no more items are in this state
             if catalog.unrestrictedSearchResults(
-                    portal_type=self.getItemTypeName(), review_state='returned_to_proposing_group'):
+                    portal_type=item_type, review_state='returned_to_proposing_group'):
                 return translate('wa_removed_return_to_proposing_group_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4793,7 +4855,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # this will remove the 'returned_to_proposing_group with last validation state'
             # for MeetingItem check that no more items are in this state
             if catalog.unrestrictedSearchResults(
-                    portal_type=self.getItemTypeName(), review_state=validation_returned_states):
+                    portal_type=item_type, review_state=validation_returned_states):
                 return translate('wa_removed_return_to_proposing_group_with_last_validation_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4802,111 +4864,36 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # for MeetingItem check that no more items are in these states
             # not downgrade from all to last validation if one item is in intermediary state
             if (catalog.unrestrictedSearchResults(
-                    portal_type=self.getItemTypeName(), review_state=validation_returned_states)) or \
+                    portal_type=item_type, review_state=validation_returned_states)) or \
                (('return_to_proposing_group' not in added) and
                 ('return_to_proposing_group_with_last_validation' not in added) and
                     (catalog.unrestrictedSearchResults(
-                        portal_type=self.getItemTypeName(), review_state='returned_to_proposing_group'))):
+                        portal_type=item_type, review_state='returned_to_proposing_group'))):
                 return translate('wa_removed_return_to_proposing_group_with_all_validations_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-        if 'hide_decisions_when_under_writing' in removed:
-            # this will remove the 'decisions_published' state for Meeting
-            # check that no more meetings are in this state
-            if catalog.unrestrictedSearchResults(
-                    portal_type=self.getMeetingTypeName(),
-                    review_state='decisions_published'):
-                return translate('wa_removed_hide_decisions_when_under_writing_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
-        if 'accepted_out_of_meeting' in removed or \
-           'accepted_out_of_meeting_and_duplicated' in removed:
-            # this will remove the 'accepted_out_of_meeting' state for Item
-            # check that no more items are in this state
-            if catalog.unrestrictedSearchResults(
-                    portal_type=self.getItemTypeName(),
-                    review_state='accepted_out_of_meeting'):
-                return translate('wa_removed_accepted_out_of_meeting_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
-        if 'accepted_out_of_meeting_emergency' in removed or \
-           'accepted_out_of_meeting_emergency_and_duplicated' in removed:
-            # this will remove the 'accepted_out_of_meeting_emergency' state for Item
-            # check that no more items are in this state
-            if catalog.unrestrictedSearchResults(
-                    portal_type=self.getItemTypeName(),
-                    review_state='accepted_out_of_meeting_emergency'):
-                return translate('wa_removed_accepted_out_of_meeting_emergency_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
-        if 'transfered' in removed or 'transfered_and_duplicated' in removed:
-            # this will remove the 'transfered' state for Item
-            # check that no more items are in this state
-            if catalog.unrestrictedSearchResults(
-                    portal_type=self.getItemTypeName(),
-                    review_state='transfered'):
-                return translate('wa_removed_transfered_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
-        if 'postpone_next_meeting' in removed:
-            # this will remove the 'postponed_next_meeting' state for Item
-            # check that no more items are in this state
-            if catalog.unrestrictedSearchResults(
-                    portal_type=self.getItemTypeName(), review_state='postponed_next_meeting'):
-                return translate('wa_removed_postpone_next_meeting_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
-        if 'mark_not_applicable' in removed:
-            # this will remove the 'marked_not_applicable' state for Item
-            # check that no more items are in this state
-            if catalog.unrestrictedSearchResults(
-                    portal_type=self.getItemTypeName(), review_state='marked_not_applicable'):
-                return translate('wa_removed_mark_not_applicable_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
-        if 'refused' in removed:
-            # this will remove the 'refused' state for Item
-            # check that no more items are in this state
-            if catalog.unrestrictedSearchResults(
-                    portal_type=self.getItemTypeName(), review_state='refused'):
-                return translate('wa_removed_refused_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
-        if 'delayed' in removed:
-            # this will remove the 'delayed' state for Item
-            # check that no more items are in this state
-            if catalog.unrestrictedSearchResults(
-                    portal_type=self.getItemTypeName(), review_state='delayed'):
-                return translate('wa_removed_delayed_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
-        if 'accepted_but_modified' in removed:
-            # this will remove the 'accepted_but_modified' state for Item
-            # check that no more items are in this state
-            if catalog.unrestrictedSearchResults(
-                    portal_type=self.getItemTypeName(), review_state='accepted_but_modified'):
-                return translate('wa_removed_accepted_but_modified_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
-        if 'pre_accepted' in removed:
-            # this will remove the 'pre_accepted' state for Item
-            # check that no more items are in this state
-            if catalog.unrestrictedSearchResults(
-                    portal_type=self.getItemTypeName(), review_state='pre_accepted'):
-                return translate('wa_removed_pre_accepted_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
-        # check if 'removed' is removed only if the other 'removed_and_duplicated' is not added
-        # at the same time (switch from one to other)
-        if ('removed' in removed and 'removed_and_duplicated' not in added) or \
-           ('removed_and_duplicated' in removed and 'removed' not in added):
-            # this will remove the 'removed' state for Item
-            # check that no more items are in this state
-            if catalog.unrestrictedSearchResults(
-                    portal_type=self.getItemTypeName(), review_state='removed'):
-                return translate('wa_removed_removed_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
+
+        # check removed directly linked to a single review_state
+        for removed_wfa, infos in removed_and_conflicts_checks.items():
+            if removed_wfa in removed and \
+               (not infos['optional_with'] or infos['optional_with'] not in added):
+                # check that no more elements are in removed state
+                if catalog.unrestrictedSearchResults(
+                        portal_type=infos['portal_type'],
+                        review_state=infos['review_state']):
+                    return translate(
+                        'wa_removed_found_elements_error',
+                        mapping={
+                            'wfa': translate(
+                                removed_wfa,
+                                domain="PloneMeeting",
+                                context=self.REQUEST),
+                            'review_state': translate(
+                                infos['review_state'],
+                                domain="plone",
+                                context=self.REQUEST)},
+                        domain='PloneMeeting',
+                        context=self.REQUEST)
 
         # XXX to be managed when moving MeetingConfig to DX
         # some datagridfield attributes
@@ -5030,7 +5017,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for attr in cfg_item_wf_attrs:
             field = self.getField(attr)
             # manage case where item state direclty equal value
-            # of value contains item state, like 'suffix_profile_prereviewers'
+            # or value contains item state, like 'suffix_profile_prereviewers'
             crossed_states = [v for v in field.getAccessor(self)()
                               for r in removed_or_disabled_states if r in v]
             crossed_transitions = [v for v in field.getAccessor(self)()
@@ -6967,18 +6954,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Vocabulary for column item_action of field onMeetingTransitionItemActionToExecute.
            This list a special value 'Execute given action' and the list of item transitions.'''
         res = [(EXECUTE_EXPR_VALUE, _(EXECUTE_EXPR_VALUE))]
-        transitions = self.listEveryItemTransitions()
+        transitions = self.listItemTransitions()
         return DisplayList(res) + transitions
 
-    security.declarePrivate('listEveryItemTransitions')
+    security.declarePrivate('listItemTransitions')
 
-    def listEveryItemTransitions(self):
+    def listItemTransitions(self):
         '''Vocabulary that list every item WF transitions.'''
         return DisplayList(self.listTransitions('Item')).sortedByValue()
 
-    security.declarePrivate('listEveryMeetingTransitions')
+    security.declarePrivate('listMeetingTransitions')
 
-    def listEveryMeetingTransitions(self):
+    def listMeetingTransitions(self):
         '''Vocabulary that list every meeting WF transitions.'''
         return DisplayList(self.listTransitions('Meeting')).sortedByValue()
 
