@@ -177,18 +177,26 @@ ITEM_WF_STATE_ATTRS = [
     'itemGroupsInChargeStates',
     'itemManualSentToOtherMCStates',
     'itemObserversStates',
-    'recordItemHistoryStates']
+    'recordItemHistoryStates',
+    # datagridfields
+    'powerObservers/item_states']
 ITEM_WF_TRANSITION_ATTRS = [
     'transitionsReinitializingDelays',
     'transitionsToConfirm',
-    'mailItemEvents']
-
+    'mailItemEvents',
+    # datagridfields
+    'onTransitionFieldTransforms/transition',
+    'onMeetingTransitionItemActionToExecute/item_action']
 MEETING_WF_STATE_ATTRS = [
     'itemPreferredMeetingStates',
-    'meetingPresentItemWhenNoCurrentMeetingStates']
+    'meetingPresentItemWhenNoCurrentMeetingStates',
+    # datagridfields
+    'powerObservers/meeting_states']
 MEETING_WF_TRANSITION_ATTRS = [
     'transitionsToConfirm',
-    'mailMeetingEvents']
+    'mailMeetingEvents',
+    # datagridfields
+    'onMeetingTransitionItemActionToExecute/meeting_transition']
 
 schema = Schema((
 
@@ -4643,6 +4651,42 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
 
+    def _check_wf_used_in_config(self,
+                                 removed_or_disabled_states=[],
+                                 removed_or_disabled_transitions=[]):
+        """Check if given p_states or p_transitions are used in any MeetingConfig fields."""
+        cfg_item_wf_attrs = list(ITEM_WF_STATE_ATTRS) + list(ITEM_WF_TRANSITION_ATTRS)
+        cfg_meeting_wf_attrs = list(MEETING_WF_STATE_ATTRS) + list(MEETING_WF_TRANSITION_ATTRS)
+        for attr in cfg_item_wf_attrs + cfg_meeting_wf_attrs:
+            # if attr contains a "/" it means it is a column of a datagridfield
+            field = self.getField(attr.split("/")[0])
+            # manage case where item state direclty equal value
+            # or value contains item state, like 'suffix_profile_prereviewers'
+            values = field.getAccessor(self)()
+            if "/" in attr:
+                col_name = attr.split("/")[1]
+                values = [row[col_name] for row in values]
+            crossed_states = [v for v in values
+                              for r in removed_or_disabled_states if r in v]
+            crossed_transitions = [v for v in values
+                                   for r in removed_or_disabled_transitions if r in v]
+            if crossed_states or crossed_transitions:
+                every_crossed = crossed_states + crossed_transitions
+                return translate(
+                    'state_or_transition_can_not_be_removed_in_use_config',
+                    domain='PloneMeeting',
+                    mapping={
+                        'state_or_transition': translate(
+                            # manage values like MeetingItem.proposed
+                            every_crossed[0].split('.')[-1],
+                            domain="plone",
+                            context=self.REQUEST),
+                        'cfg_field_name': translate(
+                            msgid='PloneMeeting_label_{0}'.format(field.getName()),
+                            domain='PloneMeeting',
+                            context=self.REQUEST)},
+                    context=self.REQUEST)
+
     security.declarePrivate('validate_workflowAdaptations')
 
     def validate_workflowAdaptations(self, values):
@@ -4658,67 +4702,77 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # used to check removed and conflicts
         item_type = self.getItemTypeName()
         meeting_type = self.getMeetingTypeName()
+        validation_returned_states = _getValidationReturnedStates(self)
         removed_and_conflicts_checks = {
             'hide_decisions_when_under_writing':
                 {'portal_type': meeting_type,
-                 'review_state': 'decisions_published',
-                 'optional_with': None},
+                 'review_state': ['decisions_published'],
+                 'optional_with': ()},
             'accepted_out_of_meeting':
                 {'portal_type': item_type,
-                 'review_state': 'accepted_out_of_meeting',
-                 'optional_with': 'accepted_out_of_meeting_and_duplicated'},
+                 'review_state': ['accepted_out_of_meeting'],
+                 'optional_with': ('accepted_out_of_meeting_and_duplicated', )},
             'accepted_out_of_meeting_and_duplicated':
                 {'portal_type': item_type,
-                 'review_state': 'accepted_out_of_meeting',
-                 'optional_with': 'accepted_out_of_meeting'},
+                 'review_state': ['accepted_out_of_meeting'],
+                 'optional_with': ('accepted_out_of_meeting', )},
             'accepted_out_of_meeting_emergency':
                 {'portal_type': item_type,
-                 'review_state': 'accepted_out_of_meeting_emergency',
-                 'optional_with': 'accepted_out_of_meeting_emergency_and_duplicated'},
+                 'review_state': ['accepted_out_of_meeting_emergency'],
+                 'optional_with': ('accepted_out_of_meeting_emergency_and_duplicated', )},
             'accepted_out_of_meeting_emergency_and_duplicated':
                 {'portal_type': item_type,
-                 'review_state': 'accepted_out_of_meeting_emergency',
-                 'optional_with': 'accepted_out_of_meeting_emergency'},
+                 'review_state': ['accepted_out_of_meeting_emergency'],
+                 'optional_with': ('accepted_out_of_meeting_emergency', )},
             'transfered':
                 {'portal_type': item_type,
-                 'review_state': 'transfered',
-                 'optional_with': 'transfered_and_duplicated'},
+                 'review_state': ['transfered'],
+                 'optional_with': ('transfered_and_duplicated', )},
             'transfered_and_duplicated':
                 {'portal_type': item_type,
-                 'review_state': 'transfered',
-                 'optional_with': 'transfered'},
+                 'review_state': ['transfered'],
+                 'optional_with': ('transfered', )},
             'removed':
                 {'portal_type': item_type,
-                 'review_state': 'removed',
-                 'optional_with': 'removed_and_duplicated'},
+                 'review_state': ['removed'],
+                 'optional_with': ('removed_and_duplicated', )},
             'removed_and_duplicated':
                 {'portal_type': item_type,
-                 'review_state': 'removed',
-                 'optional_with': 'removed'},
+                 'review_state': ['removed'],
+                 'optional_with': ('removed', )},
             'postpone_next_meeting':
                 {'portal_type': item_type,
-                 'review_state': 'postponed_next_meeting',
-                 'optional_with': None},
+                 'review_state': ['postponed_next_meeting'],
+                 'optional_with': ()},
             'mark_not_applicable':
                 {'portal_type': item_type,
-                 'review_state': 'marked_not_applicable',
-                 'optional_with': None},
+                 'review_state': ['marked_not_applicable'],
+                 'optional_with': ()},
             'refused':
                 {'portal_type': item_type,
-                 'review_state': 'refused',
-                 'optional_with': None},
+                 'review_state': ['refused'],
+                 'optional_with': ()},
             'delayed':
                 {'portal_type': item_type,
-                 'review_state': 'delayed',
-                 'optional_with': None},
+                 'review_state': ['delayed'],
+                 'optional_with': ()},
             'accepted_but_modified':
                 {'portal_type': item_type,
-                 'review_state': 'accepted_but_modified',
-                 'optional_with': None},
+                 'review_state': ['accepted_but_modified'],
+                 'optional_with': ()},
             'pre_accepted':
                 {'portal_type': item_type,
-                 'review_state': 'pre_accepted',
-                 'optional_with': None},
+                 'review_state': ['pre_accepted'],
+                 'optional_with': ()},
+            'return_to_proposing_group':
+                {'portal_type': item_type,
+                 'review_state': ['returned_to_proposing_group'],
+                 'optional_with': ('return_to_proposing_group_with_last_validation',
+                                   'return_to_proposing_group_with_all_validations')},
+            'return_to_proposing_group_with_last_validation':
+                {'portal_type': item_type,
+                 'review_state': validation_returned_states,
+                 'optional_with': ('return_to_proposing_group_with_all_validations', )},
         }
 
         # conflicts
@@ -4730,11 +4784,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             v for v in values if v.startswith('return_to_proposing_group')]
         if len(return_to_prop_group_wf_adaptations) > 1:
             return msg
-        # check removed_checks taking into account the "optional_with" value
+        # check removed_checks taking into account the "optional_with" values
         # that links 2 wfa that can not be used together
         for conflict_wfa, infos in removed_and_conflicts_checks.items():
             if infos['optional_with'] and \
-               (conflict_wfa in values and infos['optional_with'] in values):
+               (conflict_wfa in values and set(infos['optional_with']).intersection(values)):
                 return msg
 
         # dependecies, some adaptations will complete already select ones
@@ -4839,26 +4893,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('wa_removed_waiting_advices_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-        if ('return_to_proposing_group' in removed) and \
-            not (('return_to_proposing_group_with_last_validation' in added) or
-                 ('return_to_proposing_group_with_all_validations' in added)):
-            # this will remove the 'returned_to_proposing_group' state for MeetingItem
-            # check that no more items are in this state
-            if catalog.unrestrictedSearchResults(
-                    portal_type=item_type, review_state='returned_to_proposing_group'):
-                return translate('wa_removed_return_to_proposing_group_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
-        validation_returned_states = _getValidationReturnedStates(self)
-        if ('return_to_proposing_group_with_last_validation' in removed) and \
-           not ('return_to_proposing_group_with_all_validations' in added):
-            # this will remove the 'returned_to_proposing_group with last validation state'
-            # for MeetingItem check that no more items are in this state
-            if catalog.unrestrictedSearchResults(
-                    portal_type=item_type, review_state=validation_returned_states):
-                return translate('wa_removed_return_to_proposing_group_with_last_validation_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
+
         if 'return_to_proposing_group_with_all_validations' in removed:
             # this will remove the 'returned_to_proposing_group with every validation states'
             # for MeetingItem check that no more items are in these states
@@ -4876,7 +4911,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # check removed directly linked to a single review_state
         for removed_wfa, infos in removed_and_conflicts_checks.items():
             if removed_wfa in removed and \
-               (not infos['optional_with'] or infos['optional_with'] not in added):
+               (not infos['optional_with'] or
+                    not set(infos['optional_with']).intersection(added)):
                 # check that no more elements are in removed state
                 if catalog.unrestrictedSearchResults(
                         portal_type=infos['portal_type'],
@@ -4889,15 +4925,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                 domain="PloneMeeting",
                                 context=self.REQUEST),
                             'review_state': translate(
-                                infos['review_state'],
+                                infos['review_state'][0],
                                 domain="plone",
                                 context=self.REQUEST)},
                         domain='PloneMeeting',
                         context=self.REQUEST)
 
-        # XXX to be managed when moving MeetingConfig to DX
-        # some datagridfield attributes
-        # powerObservers, meetingConfigsToCloneTo, onTransitionFieldTransforms
+        # for each removed WFAdaptation build list of item and meeting
+        # states and transitions that will be removed
+        # we have the states in removed_and_conflicts_checks
+        # we may compute the transitions by checking in portal_workfow
+        # with transitions lead to known states
+        # XXX to be implemented
 
         return self.adapted().custom_validate_workflowAdaptations(values, added, removed)
 
@@ -5001,9 +5040,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         # make sure the MeetingConfig does not use a state that was removed or disabled
         # either using state or transition
-        # states
-        cfg_item_wf_attrs = list(ITEM_WF_STATE_ATTRS) + list(ITEM_WF_TRANSITION_ATTRS)
-        # transitions
         enabled_stored_transitions = self.getItemWFValidationLevels(
             data='leading_transition',
             only_enabled=True)
@@ -5013,35 +5049,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             only_enabled=True)
         removed_or_disabled_transitions = tuple(set(enabled_stored_transitions).difference(
             set(enabled_values_transitions)))
-
-        for attr in cfg_item_wf_attrs:
-            field = self.getField(attr)
-            # manage case where item state direclty equal value
-            # or value contains item state, like 'suffix_profile_prereviewers'
-            crossed_states = [v for v in field.getAccessor(self)()
-                              for r in removed_or_disabled_states if r in v]
-            crossed_transitions = [v for v in field.getAccessor(self)()
-                                   for r in removed_or_disabled_transitions if r in v]
-            if crossed_states or crossed_transitions:
-                every_crossed = crossed_states + crossed_transitions
-                return translate(
-                    'item_wf_val_states_can_not_be_removed_in_use_config',
-                    domain='PloneMeeting',
-                    mapping={
-                        'state_or_transition': translate(
-                            # manage values like MeetingItem.proposed
-                            every_crossed[0].split('.')[-1],
-                            domain="plone",
-                            context=self.REQUEST),
-                        'cfg_field_name': translate(
-                            msgid='PloneMeeting_label_{0}'.format(field.getName()),
-                            domain='PloneMeeting',
-                            context=self.REQUEST)},
-                    context=self.REQUEST)
-
-        # XXX to be managed when moving MeetingConfig to DX
-        # some datagridfield attributes
-        # powerObservers, meetingConfigsToCloneTo, onTransitionFieldTransforms
+        return self._check_wf_used_in_config(
+            removed_or_disabled_states=removed_or_disabled_states,
+            removed_or_disabled_transitions=removed_or_disabled_transitions)
 
     security.declarePrivate('validate_mailItemEvents')
 

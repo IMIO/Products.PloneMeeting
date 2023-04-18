@@ -2061,13 +2061,12 @@ class testMeetingConfig(PloneMeetingTestCase):
            level state that is used by the MeetingConfig."""
         cfg = self.meetingConfig
         cfg.setItemAdviceEditStates(())
-
         # itemcreated level is mandatory
         proposed_state = cfg.getItemWorkflow(True).states[self._stateMappingFor('proposed')]
         proposed_state_id = proposed_state.getId()
         translated_proposed_state = translate(proposed_state.title, domain="plone")
         level_removed_config_error = \
-            translate('item_wf_val_states_can_not_be_removed_in_use_config',
+            translate('state_or_transition_can_not_be_removed_in_use_config',
                       mapping={'state_or_transition': translated_proposed_state,
                                'cfg_field_name': 'Item states allowing to define advices', },
                       domain='PloneMeeting',
@@ -2083,7 +2082,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # also for field itemObserversStates
         level_removed_config_error = \
             translate(
-                'item_wf_val_states_can_not_be_removed_in_use_config',
+                'state_or_transition_can_not_be_removed_in_use_config',
                 mapping={'state_or_transition': translated_proposed_state,
                          'cfg_field_name':
                          'Restrict observers access to item to following states', },
@@ -2096,7 +2095,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # used in transitionsToConfirm, as transition
         cfg.setTransitionsToConfirm(('MeetingItem.%s' % proposed_state_id, 'MeetingItem.validate'))
         level_removed_config_error = \
-            translate('item_wf_val_states_can_not_be_removed_in_use_config',
+            translate('state_or_transition_can_not_be_removed_in_use_config',
                       mapping={'state_or_transition': translated_proposed_state,
                                'cfg_field_name': 'Transitions to confirm', },
                       domain='PloneMeeting',

@@ -54,6 +54,10 @@ Changelog
 - Make sure transitions are rendered in the actions_panel displayed on advices.
   This is necessary for cases were a complex workflow is used for advices.
   [gbastien]
+- Completed `MeetingConfig.validate_workflowAdaptations` and
+  `MeetingConfig.validate_itemWFValidationLevels` to factorize translations and
+  check transitions and states used in datagridfields.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------
