@@ -4939,9 +4939,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     # check that removed states/transitions no more used in config
                     # we have the states, get the transitions leading to it
                     related_wf = itemWF if infos['portal_type'] == item_type else meetingWF
-                    removed_or_disabled_transitions = itertools.chain.from_iterable(
+                    removed_or_disabled_transitions = list(itertools.chain.from_iterable(
                         [[tr.id for tr in get_leading_transitions(related_wf, state_id)]
-                         for state_id in infos['review_state']])
+                         for state_id in infos['review_state']]))
                     used_in_cfg_error_msg = self._check_wf_used_in_config(
                         removed_or_disabled_states=infos['review_state'],
                         removed_or_disabled_transitions=removed_or_disabled_transitions)
