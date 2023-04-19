@@ -529,7 +529,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             domain='PloneMeeting',
             mapping={
                 'wfa': translate(
-                    'postpone_next_meeting',
+                    'wa_postpone_next_meeting',
                     domain="PloneMeeting",
                     context=self.request),
                 'review_state': translate(
@@ -562,18 +562,20 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, item_transition)
         self.assertEqual(item.query_state(), item_state)
         self.failIf(cfg.validate_workflowAdaptations((wf_adaptation_name, )))
+        import ipdb; ipdb.set_trace()
+        translated_item_state = translate(
+            item_state,
+            domain="plone",
+            context=self.request)
         msg_removed_error = translate(
             'wa_removed_found_elements_error',
             domain='PloneMeeting',
             mapping={
                 'wfa': translate(
-                    wf_adaptation_name,
+                    "wa_%s" % wf_adaptation_name,
                     domain="PloneMeeting",
                     context=self.request),
-                'review_state': translate(
-                    item_state,
-                    domain="plone",
-                    context=self.request)},
+                'review_state': translated_item_state},
             context=self.request)
         self.assertEqual(
             cfg.validate_workflowAdaptations(()),
@@ -582,6 +584,19 @@ class testWFAdaptations(PloneMeetingTestCase):
         # make wfAdaptation selectable
         self.do(item, 'backToItemPublished')
         self.failIf(cfg.validate_workflowAdaptations(()))
+
+        # use it in the configuration, especially in a datagridfield
+        self._setPowerObserverStates(states=(item_state, ))
+        state_or_transition_can_not_be_removed_in_use_config_error = translate(
+            'state_or_transition_can_not_be_removed_in_use_config',
+            domain='PloneMeeting',
+            mapping={
+                'state_or_transition': translated_item_state,
+                'cfg_field_name': "Manage power observers"},
+            context=self.request)
+        self.assertEqual(
+            cfg.validate_workflowAdaptations(()),
+            state_or_transition_can_not_be_removed_in_use_config_error)
 
     def test_pm_Validate_workflowAdaptations_removed_mark_not_applicable(self):
         """Test MeetingConfig.validate_workflowAdaptations that manage removal
@@ -634,7 +649,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                 domain='PloneMeeting',
                 mapping={
                     'wfa': translate(
-                        wfa_name,
+                        "wa_%s" % wfa_name,
                         domain="PloneMeeting",
                         context=self.request),
                     'review_state': translate(
@@ -769,7 +784,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             domain='PloneMeeting',
             mapping={
                 'wfa': translate(
-                    'return_to_proposing_group',
+                    'wa_return_to_proposing_group',
                     domain="PloneMeeting",
                     context=self.request),
                 'review_state': translate(
@@ -813,7 +828,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             domain='PloneMeeting',
             mapping={
                 'wfa': translate(
-                    'return_to_proposing_group_with_last_validation',
+                    'wa_return_to_proposing_group_with_last_validation',
                     domain="PloneMeeting",
                     context=self.request),
                 'review_state': translate(

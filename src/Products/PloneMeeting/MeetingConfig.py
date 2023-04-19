@@ -141,6 +141,7 @@ from zope.schema.vocabulary import SimpleVocabulary
 
 import copy
 import html
+import itertools
 import logging
 import os
 
@@ -4666,6 +4667,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if "/" in attr:
                 col_name = attr.split("/")[1]
                 values = [row[col_name] for row in values]
+                # manage multivalued columns
+                if values and hasattr(values[0], "__iter__"):
+                    values = itertools.chain.from_iterable(values)
             crossed_states = [v for v in values
                               for r in removed_or_disabled_states if r in v]
             crossed_transitions = [v for v in values
@@ -4842,7 +4846,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         context=self.REQUEST)
 
         catalog = api.portal.get_tool('portal_catalog')
-        wfTool = api.portal.get_tool('portal_workflow')
+        itemWF = self.getItemWorkflow(theObject=True)
 
         # validate new added workflowAdaptations regarding existing items and meetings
         added = set(values).difference(set(self.getWorkflowAdaptations()))
@@ -4886,7 +4890,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # get every 'waiting_advices'-like states, we could have 'itemcreated_waiting_advices',
             # 'proposed_waiting_advices' or
             # 'itemcreated__or__proposedToValidationLevel1__or__..._waiting_advices' for example
-            itemWF = wfTool.getWorkflowsFor(item_type)[0]
             waiting_advices_states = [state for state in itemWF.states if 'waiting_advices' in state]
             if catalog.unrestrictedSearchResults(
                     portal_type=item_type, review_state=waiting_advices_states):
@@ -4921,7 +4924,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         'wa_removed_found_elements_error',
                         mapping={
                             'wfa': translate(
-                                removed_wfa,
+                                "wa_%s" % removed_wfa,
                                 domain="PloneMeeting",
                                 context=self.REQUEST),
                             'review_state': translate(
@@ -4930,13 +4933,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                 context=self.REQUEST)},
                         domain='PloneMeeting',
                         context=self.REQUEST)
+                else:
+                    # check that removed states/transitions no more used in config
+                    # we have the states, get the transitions leading to it
+                    removed_or_disabled_transitions = []
+                    for tr in itemWF.transitions.values():
+                        if tr.new_state_id in infos['review_state']:
+                            removed_or_disabled_transitions.append(tr.id)
+                    used_in_cfg_error_msg = self._check_wf_used_in_config(
+                        removed_or_disabled_states=infos['review_state'],
+                        removed_or_disabled_transitions=removed_or_disabled_transitions)
+                    if used_in_cfg_error_msg:
+                        return used_in_cfg_error_msg
 
-        # for each removed WFAdaptation build list of item and meeting
-        # states and transitions that will be removed
-        # we have the states in removed_and_conflicts_checks
-        # we may compute the transitions by checking in portal_workfow
-        # with transitions lead to known states
         # XXX to be implemented
+        # check in MeetingConfig.meetingConfigsToCloneTo of other MeetingConfigs
+        # that removed state is not used there
 
         return self.adapted().custom_validate_workflowAdaptations(values, added, removed)
 
