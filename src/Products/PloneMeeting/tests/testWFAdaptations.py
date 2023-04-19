@@ -12,6 +12,7 @@ from copy import deepcopy
 from DateTime import DateTime
 from datetime import datetime
 from datetime import timedelta
+from imio.helpers.workflow import get_leading_transition
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.CMFCore.permissions import DeleteObjects
@@ -185,6 +186,8 @@ class testWFAdaptations(PloneMeetingTestCase):
            between wfAdaptations that may not be selected together."""
         wa_conflicts = translate('wa_conflicts', domain='PloneMeeting', context=self.request)
         cfg = self.meetingConfig
+        # remove use of delayed in powerObservers or WFA will not validate
+        self._setPowerObserverStates(states=[])
 
         # return_to_proposing_group_... alone is ok
         self.failIf(cfg.validate_workflowAdaptations(
@@ -263,6 +266,8 @@ class testWFAdaptations(PloneMeetingTestCase):
            between wfAdaptations, a base WFA must be selected and other will complete it."""
         wa_dependencies = translate('wa_dependencies', domain='PloneMeeting', context=self.request)
         cfg = self.meetingConfig
+        # remove use of delayed in powerObservers or WFA will not validate
+        self._setPowerObserverStates(states=[])
 
         # waiting_advices alone is ok
         self.failIf(cfg.validate_workflowAdaptations(('waiting_advices', )))
@@ -324,6 +329,9 @@ class testWFAdaptations(PloneMeetingTestCase):
                                   domain='PloneMeeting',
                                   context=self.request)
         cfg = self.meetingConfig
+        # remove use of delayed in powerObservers or WFA will not validate
+        self._setPowerObserverStates(states=[])
+
         # make sure we use default itemWFValidationLevels,
         # useful when test executed with custom profile
         self._setUpDefaultItemWFValidationLevels(cfg)
@@ -358,6 +366,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         # make sure we use default itemWFValidationLevels,
         # useful when test executed with custom profile
         cfg = self.meetingConfig
+        # remove use of delayed in powerObservers or WFA will not validate
+        self._setPowerObserverStates(states=[])
+
         self._setUpDefaultItemWFValidationLevels(cfg)
         # itemcreated and proposed are enabled
         self.assertEqual(cfg.getItemWFValidationLevels(data='state', only_enabled=True),
@@ -585,6 +596,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.failIf(cfg.validate_workflowAdaptations(()))
 
         # use it in the configuration, especially in a datagridfield
+        # used in config as state
         self._setPowerObserverStates(states=(item_state, ))
         state_or_transition_can_not_be_removed_in_use_config_error = translate(
             'state_or_transition_can_not_be_removed_in_use_config',
@@ -596,6 +608,28 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(
             cfg.validate_workflowAdaptations(()),
             state_or_transition_can_not_be_removed_in_use_config_error)
+        self._setPowerObserverStates(states=())
+        self.failIf(cfg.validate_workflowAdaptations(()))
+        # used in config as transition
+        tr_title = get_leading_transition(cfg.getItemWorkflow(True), item_state).title
+        state_or_transition_can_not_be_removed_in_use_config_error = translate(
+            'state_or_transition_can_not_be_removed_in_use_config',
+            domain='PloneMeeting',
+            mapping={
+                'state_or_transition': translate(
+                    tr_title, domain="plone", context=self.request),
+                'cfg_field_name':
+                    "Transforms to apply to rich text fields of an item after a workflow transition"},
+            context=self.request)
+        cfg.setOnTransitionFieldTransforms(
+            ({'transition': item_transition,
+              'field_name': 'MeetingItem.decision',
+              'tal_expression': 'string:Decided'},))
+        self.assertEqual(
+            cfg.validate_workflowAdaptations(()),
+            state_or_transition_can_not_be_removed_in_use_config_error)
+        cfg.setOnTransitionFieldTransforms(())
+        self.failIf(cfg.validate_workflowAdaptations(()))
 
     def test_pm_Validate_workflowAdaptations_removed_mark_not_applicable(self):
         """Test MeetingConfig.validate_workflowAdaptations that manage removal
