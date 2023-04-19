@@ -12,7 +12,7 @@ from copy import deepcopy
 from DateTime import DateTime
 from datetime import datetime
 from datetime import timedelta
-from imio.helpers.workflow import get_leading_transition
+from imio.helpers.workflow import get_leading_transitions
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.CMFCore.permissions import DeleteObjects
@@ -611,7 +611,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._setPowerObserverStates(states=())
         self.failIf(cfg.validate_workflowAdaptations(()))
         # used in config as transition
-        tr_title = get_leading_transition(cfg.getItemWorkflow(True), item_state).title
+        tr_title = get_leading_transitions(cfg.getItemWorkflow(True), item_state)[0].title
         state_or_transition_can_not_be_removed_in_use_config_error = translate(
             'state_or_transition_can_not_be_removed_in_use_config',
             domain='PloneMeeting',

@@ -32,7 +32,7 @@ from imio.helpers.cache import get_current_user_id
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToObject
-from imio.helpers.workflow import get_leading_transition
+from imio.helpers.workflow import get_leading_transitions
 from natsort import humansorted
 from operator import attrgetter
 from persistent.list import PersistentList
@@ -4939,9 +4939,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     # check that removed states/transitions no more used in config
                     # we have the states, get the transitions leading to it
                     related_wf = itemWF if infos['portal_type'] == item_type else meetingWF
-                    removed_or_disabled_transitions = [
-                        get_leading_transition(related_wf, state_id).id
-                        for state_id in infos['review_state']]
+                    removed_or_disabled_transitions = itertools.chain.from_iterable(
+                        [[tr.id for tr in get_leading_transitions(related_wf, state_id)]
+                         for state_id in infos['review_state']])
                     used_in_cfg_error_msg = self._check_wf_used_in_config(
                         removed_or_disabled_states=infos['review_state'],
                         removed_or_disabled_transitions=removed_or_disabled_transitions)
