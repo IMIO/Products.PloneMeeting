@@ -936,7 +936,6 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         self.changeUser('pmManager')
         self._activate_wfas(('hide_decisions_when_under_writing', ))
-
         meeting = self.create('Meeting')
         self.decideMeeting(meeting)
         self.do(meeting, 'publish_decisions')
@@ -946,7 +945,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             domain='PloneMeeting',
             mapping={
                 'wfa': translate(
-                    'hide_decisions_when_under_writing',
+                    'wa_hide_decisions_when_under_writing',
                     domain="PloneMeeting",
                     context=self.request),
                 'review_state': translate(
@@ -958,6 +957,20 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         # make wfAdaptation selectable
         self.closeMeeting(meeting)
+        # still defined in MeetingConfig.onMeetingTransitionItemActionToExecute
+        state_or_transition_can_not_be_removed_in_use_config_error = translate(
+            'state_or_transition_can_not_be_removed_in_use_config',
+            domain='PloneMeeting',
+            mapping={
+                'state_or_transition': "Publish decisions",
+                'cfg_field_name': "Actions to execute on items of a meeting "
+                "when a transition is triggered on that meeting"},
+            context=self.request)
+        self.assertEqual(
+            cfg.validate_workflowAdaptations(()),
+            state_or_transition_can_not_be_removed_in_use_config_error)
+        # clean it
+        cfg.setOnMeetingTransitionItemActionToExecute(())
         self.failIf(cfg.validate_workflowAdaptations(()))
 
     def test_pm_WFA_no_publication(self):

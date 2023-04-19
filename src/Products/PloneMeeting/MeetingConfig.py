@@ -4848,6 +4848,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         catalog = api.portal.get_tool('portal_catalog')
         itemWF = self.getItemWorkflow(theObject=True)
+        meetingWF = self.getMeetingWorkflow(theObject=True)
 
         # validate new added workflowAdaptations regarding existing items and meetings
         added = set(values).difference(set(self.getWorkflowAdaptations()))
@@ -4937,8 +4938,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 else:
                     # check that removed states/transitions no more used in config
                     # we have the states, get the transitions leading to it
+                    related_wf = itemWF if infos['portal_type'] == item_type else meetingWF
                     removed_or_disabled_transitions = [
-                        get_leading_transition(itemWF, state_id).id
+                        get_leading_transition(related_wf, state_id).id
                         for state_id in infos['review_state']]
                     used_in_cfg_error_msg = self._check_wf_used_in_config(
                         removed_or_disabled_states=infos['review_state'],
