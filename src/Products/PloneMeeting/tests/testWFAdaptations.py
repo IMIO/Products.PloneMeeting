@@ -562,7 +562,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, item_transition)
         self.assertEqual(item.query_state(), item_state)
         self.failIf(cfg.validate_workflowAdaptations((wf_adaptation_name, )))
-        import ipdb; ipdb.set_trace()
         translated_item_state = translate(
             item_state,
             domain="plone",
