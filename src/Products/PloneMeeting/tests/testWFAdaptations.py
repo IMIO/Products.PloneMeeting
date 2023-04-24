@@ -957,6 +957,20 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         # make wfAdaptation selectable
         self.closeMeeting(meeting)
+
+        # still defined in MeetingConfig.transitionsToConfirm
+        state_or_transition_can_not_be_removed_in_use_config_error = translate(
+            'state_or_transition_can_not_be_removed_in_use_config',
+            domain='PloneMeeting',
+            mapping={
+                'state_or_transition': "Back to 'Decisions published'",
+                'cfg_field_name': "Transitions to confirm"},
+            context=self.request)
+        self.assertEqual(
+            cfg.validate_workflowAdaptations(()),
+            state_or_transition_can_not_be_removed_in_use_config_error)
+        # clean it
+        cfg.setTransitionsToConfirm(())
         # still defined in MeetingConfig.onMeetingTransitionItemActionToExecute
         state_or_transition_can_not_be_removed_in_use_config_error = translate(
             'state_or_transition_can_not_be_removed_in_use_config',
