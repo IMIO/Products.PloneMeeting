@@ -1254,7 +1254,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg2Id = cfg2.getId()
         cfg2.setMeetingConfigsToCloneTo(
             ({'meeting_config': cfgId,
-              'trigger_workflow_transitions_until': '__nothing__'},)
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},)
         )
 
         # a user can not delete the MeetingConfig
@@ -1664,7 +1664,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(cfg3.getPlaces(), places)
 
         # test with dict and cfg_ids parameter
-        cfg_value = ({'meeting_config': cfg2.getId(), 'trigger_workflow_transitions_until': '__nothing__'},)
+        cfg_value = ({'meeting_config': cfg2.getId(),
+                      'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},)
         self.assertEqual(cfg.meetingConfigsToCloneTo, cfg_value)
         self.assertEqual(cfg2.meetingConfigsToCloneTo, ())
         self.assertEqual(cfg3.meetingConfigsToCloneTo, ())
@@ -2106,6 +2107,29 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.setItemAdviceEditStates(())
         cfg.setTransitionsToConfirm(())
         self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
+        # could be used in another cfg field meetingConfigsToCloneTo.trigger_workflow_transitions_until
+        cfg2 = self.meetingConfig2
+        cfg_id = cfg.getId()
+        error_msg = translate(
+            'state_or_transition_can_not_be_removed_in_use_other_config',
+            domain='PloneMeeting',
+            mapping={
+                'transition': translate(
+                    self.TRANSITIONS_FOR_PROPOSING_ITEM_FIRST_LEVEL_1[0],
+                    domain="plone",
+                    context=self.request),
+                'parameter_label': translate(
+                    "PloneMeeting_label_meetingConfigsToCloneTo",
+                    domain="PloneMeeting",
+                    context=self.request),
+                'other_cfg_title': safe_unicode(cfg2.Title()), },
+            context=self.request)
+        cfg2.setMeetingConfigsToCloneTo(
+            ({'meeting_config': '%s' % cfg_id,
+              'trigger_workflow_transitions_until': '%s.%s' %
+              (cfg_id, self.TRANSITIONS_FOR_PROPOSING_ITEM_FIRST_LEVEL_1[0])},))
+        self.assertEqual(
+            cfg.validate_itemWFValidationLevels(values_disabled_proposed), error_msg)
 
     def test_pm_Validate_itemWFValidationLevels_data_format(self):
         """Test MeetingConfig.validate_itemWFValidationLevels data format:
