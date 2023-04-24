@@ -4975,10 +4975,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     if used_in_cfg_error_msg:
                         return used_in_cfg_error_msg
 
-        # XXX to be implemented
-        # check in MeetingConfig.meetingConfigsToCloneTo of other MeetingConfigs
-        # that removed state is not used there
-
         return self.adapted().custom_validate_workflowAdaptations(values, added, removed)
 
     def custom_validate_workflowAdaptations(self, values, added, removed):
