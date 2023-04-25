@@ -6,6 +6,7 @@
 #
 
 from collections import OrderedDict
+from collective.behavior.internalnumber.browser.settings import DxPortalTypesVocabulary
 from collective.contact.plonegroup.browser.settings import EveryOrganizationsVocabulary
 from collective.contact.plonegroup.browser.settings import SortedSelectedOrganizationsElephantVocabulary
 from collective.contact.plonegroup.config import get_registry_organizations
@@ -2964,3 +2965,28 @@ class PMAttendeeRedefinePositionTypesVocabulary(PMPositionTypesVocabulary):
 
 
 PMAttendeeRedefinePositionTypesVocabularyFactory = PMAttendeeRedefinePositionTypesVocabulary()
+
+
+class PMDxPortalTypesVocabulary(DxPortalTypesVocabulary):
+    """Override to take into account AT MeetingItem FTIs."""
+
+    def __call__(self, context):
+        portal_types = api.portal.get_tool('portal_types')
+        terms = super(PMDxPortalTypesVocabulary, self).__call__(context)._terms
+        item_ftis = [fti for fti in portal_types.values()
+                     if fti.id.startswith("MeetingItem") and
+                     not (fti.id.startswith("MeetingItemRecurring") or
+                          fti.id.startswith("MeetingItemTemplate") or
+                          fti.id == "MeetingItem")]
+        portal = api.portal.get()
+        for item_fti in item_ftis:
+            terms.append(SimpleTerm(
+                item_fti.id,
+                item_fti.id,
+                translate(item_fti.title,
+                          domain="plone",
+                          context=portal.REQUEST)))
+        return SimpleVocabulary(terms)
+
+
+PMDxPortalTypesVocabularyFactory = PMDxPortalTypesVocabulary()
