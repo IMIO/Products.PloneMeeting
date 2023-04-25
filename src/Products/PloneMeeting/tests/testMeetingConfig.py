@@ -22,6 +22,7 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
 from imio.helpers.content import get_vocab
+from imio.helpers.workflow import get_leading_transitions
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -2110,12 +2111,15 @@ class testMeetingConfig(PloneMeetingTestCase):
         # could be used in another cfg field meetingConfigsToCloneTo.trigger_workflow_transitions_until
         cfg2 = self.meetingConfig2
         cfg_id = cfg.getId()
+        tr = get_leading_transitions(
+            cfg.getItemWorkflow(True), self._stateMappingFor('proposed'),
+            not_starting_with="back")[0]
         error_msg = translate(
             'state_or_transition_can_not_be_removed_in_use_other_config',
             domain='PloneMeeting',
             mapping={
                 'transition': translate(
-                    self.TRANSITIONS_FOR_PROPOSING_ITEM_FIRST_LEVEL_1[0],
+                    tr.title,
                     domain="plone",
                     context=self.request),
                 'parameter_label': translate(
@@ -2126,8 +2130,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             context=self.request)
         cfg2.setMeetingConfigsToCloneTo(
             ({'meeting_config': '%s' % cfg_id,
-              'trigger_workflow_transitions_until': '%s.%s' %
-              (cfg_id, self.TRANSITIONS_FOR_PROPOSING_ITEM_FIRST_LEVEL_1[0])},))
+              'trigger_workflow_transitions_until': '%s.%s' % (cfg_id, tr.id)},))
         self.assertEqual(
             cfg.validate_itemWFValidationLevels(values_disabled_proposed), error_msg)
 
