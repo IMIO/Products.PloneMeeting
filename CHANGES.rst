@@ -38,6 +38,26 @@ Changelog
 - Reordered fields on `MeetingConfig`, moved `xhtmlTransformTypes` just under
   `xhtmlTransformFields`.
   [gbastien]
+- Make sure annex are not kept upon duplication (to same or distant MC)
+  if annex type requires a PDF file and the annex file is not PDF.
+  [gbastien]
+- Fixed action `Delete whole meeting` when triggered from dashboards, was
+  redirecting resulting in a broken dashboard because collection `UID` was lost.
+  [gbastien]
+- Adapted `MeetingItem.setPreferredMeeting` and `MeetingItem._update_preferred_meeting`
+  to manage empty of wrong value when creating an item using `restapi`.
+  [gbastien]
+- Fixed `PMExistingPODTemplate`, do not break if the reusable `PODTemplate` is not
+  stored in the `podtemplates` folder of a `MeetingConfig`, it could be in the
+  `contacts` directory or somwhere else.
+  [gbastien]
+- Make sure transitions are rendered in the actions_panel displayed on advices.
+  This is necessary for cases were a complex workflow is used for advices.
+  [gbastien]
+- Completed `MeetingConfig.validate_workflowAdaptations` and
+  `MeetingConfig.validate_itemWFValidationLevels` to factorize translations and
+  check transitions and states used in datagridfields.
+  [gbastien]
 - Adapted code to be able to use `collective.ckeditor 4.11+`.
   [gbastien]
 

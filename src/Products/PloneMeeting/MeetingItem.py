@@ -3087,6 +3087,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         field = self.getField('preferredMeeting')
         current_value = field.get(self, **kwargs)
         if value != current_value:
+            if not value:
+                value = ITEM_NO_PREFERRED_MEETING_VALUE
             self._update_preferred_meeting(value)
             field.set(self, value, **kwargs)
 
@@ -3332,7 +3334,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.preferred_meeting_path = None
         if preferred_meeting_uid != ITEM_NO_PREFERRED_MEETING_VALUE:
             meeting_brain = uuidToCatalogBrain(preferred_meeting_uid, unrestricted=True)
-            self.preferred_meeting_path = meeting_brain.getPath()
+            # necessary for restapi as value is set before being validated...
+            # if passing a wrong value, meeting_brain is an empty result
+            if meeting_brain:
+                self.preferred_meeting_path = meeting_brain.getPath()
 
     def _update_predecessor(self, predecessor):
         '''Only one predecessor possible but several successors.
@@ -3662,7 +3667,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 ('_init_',
                  translate('_init_', domain="plone", context=self.REQUEST)), ))
         )
-        res += cfg.listEveryMeetingTransitions()
+        res += cfg.listMeetingTransitions()
         return res
 
     security.declarePrivate('listOtherMeetingConfigsClonableTo')

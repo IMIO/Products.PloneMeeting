@@ -1167,7 +1167,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     # the annexType in the old MeetingConfig the item is copied from
                     if newPortalType:
                         originCfg = self.getMeetingConfig(copiedItem)
-                        if not self._updateContentCategoryAfterSentToOtherMeetingConfig(newAnnex, originCfg):
+                        new_annex_category = self._updateContentCategoryAfterSentToOtherMeetingConfig(
+                            newAnnex, originCfg)
+                        if new_annex_category is None:
                             msg = translate('annex_not_kept_because_no_available_annex_type_warning',
                                             mapping={'annexTitle': safe_unicode(newAnnex.Title()),
                                                      'cfg': safe_unicode(destMeetingConfig.Title())},
@@ -1176,7 +1178,16 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                             plone_utils.addPortalMessage(msg, 'warning')
                             unrestrictedRemoveGivenObject(newAnnex)
                             continue
-
+                        elif new_annex_category.only_pdf and \
+                                newAnnex.file.contentType != 'application/pdf':
+                            msg = translate('annex_not_kept_because_only_pdf_annex_type_warning',
+                                            mapping={'annexTitle': safe_unicode(newAnnex.Title()),
+                                                     'cfg': safe_unicode(destMeetingConfig.Title())},
+                                            domain='PloneMeeting',
+                                            context=self.REQUEST)
+                            plone_utils.addPortalMessage(msg, 'warning')
+                            unrestrictedRemoveGivenObject(newAnnex)
+                            continue
                     # initialize to_print correctly regarding configuration
                     if not destMeetingConfig.getKeepOriginalToPrintOfClonedItems():
                         newAnnex.to_print = \
@@ -1265,7 +1276,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # use default category
             categories = get_categories(annex, sort_on='getObjPositionInParent')
             if not categories:
-                return False
+                return None
             else:
                 adapted_annex = IconifiedCategorization(annex)
                 setattr(adapted_annex,
@@ -1273,7 +1284,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         calculate_category_id(categories[0].getObject()))
         # try to get the category, if it raises KeyError it means we need to change the annex portal_type
         try:
-            get_category_object(annex, annex.content_category)
+            new_annex_category = get_category_object(annex, annex.content_category)
         except KeyError:
             if annex.portal_type == 'annex':
                 annex.portal_type = 'annexDecision'
@@ -1282,9 +1293,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # reindexObject without idxs would update modified
             reindex_object(annex, no_idxs=['SearchableText'])
             # now it should not fail anymore
-            get_category_object(annex, annex.content_category)
+            new_annex_category = get_category_object(annex, annex.content_category)
 
-        return True
+        return new_annex_category
 
     security.declarePublic('getSelf')
 

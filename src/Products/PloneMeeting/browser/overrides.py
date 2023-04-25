@@ -911,7 +911,7 @@ class AdviceActionsPanelView(BaseActionsPanelView):
     """
     def __init__(self, context, request):
         super(AdviceActionsPanelView, self).__init__(context, request)
-        self.SECTIONS_TO_RENDER = ('renderOwnDelete',
+        self.SECTIONS_TO_RENDER = ('renderTransitions',
                                    'renderOwnDeleteWithComments')
 
     def __call__(

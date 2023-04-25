@@ -2214,8 +2214,11 @@ class testAdvices(PloneMeetingTestCase):
         # if the adviser is also powerobserver, he may access the advice nevertheless
         self._addPrincipalToGroup('pmAdviser1', '%s_powerobservers' % cfg.getId())
         self.changeUser('pmAdviser1')
-        advice_view = developers_advice.restrictedTraverse('@@view')
         self.assertTrue(advice_view())
+        # he may trigger the "Delete with comments" action, and the classic Delete is not available
+        rendered_ap = developers_advice.restrictedTraverse('@@actions_panel')()
+        self.assertFalse("delete_givenuid" in rendered_ap)
+        self.assertTrue("delete_with_comments" in rendered_ap)
 
         # a MeetingManager may toggle advice confidentiality
         # a MeetingManager would be able to change advice confidentiality
