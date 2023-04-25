@@ -4955,7 +4955,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                 domain="PloneMeeting",
                                 context=self.REQUEST),
                             'review_state': translate(
-                                infos['review_state'][0],
+                                infos['review_state'][-1],
                                 domain="plone",
                                 context=self.REQUEST)},
                         domain='PloneMeeting',
