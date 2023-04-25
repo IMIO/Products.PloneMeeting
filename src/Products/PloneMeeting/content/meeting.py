@@ -1952,6 +1952,10 @@ class Meeting(Container):
         may_update = False
         meeting = self.getSelf()
         may_update = meeting.is_late()
+        if not may_update:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(meeting)
+            may_update = cfg.getComputeItemReferenceForItemsOutOfMeeting()
         return may_update
 
     def update_item_references(self, start_number=0, check_needed=False, clear=False):

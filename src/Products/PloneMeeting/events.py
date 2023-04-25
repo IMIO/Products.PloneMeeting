@@ -2,6 +2,7 @@
 
 from AccessControl import Unauthorized
 from collections import OrderedDict
+from collective.behavior.internalnumber.browser.settings import get_settings
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
@@ -700,6 +701,8 @@ def item_added_or_initialized(item):
     item.deleted_children_history = PersistentList()
     # Add a place to store takenOverBy by review_state user id
     item.takenOverByInfos = PersistentMapping()
+    # Add a place to store internal_number
+    item.internal_number = -1
     # An item has ben modified, use get_again for portlet_todo
     invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
     # if element is in a MeetingConfig, we mark it with IConfigElement interface
@@ -1017,6 +1020,10 @@ def onItemEditCancelled(item, event):
        the _at_creation to True, it means we are creating an item from a template,
        we need to delete it if first edit was cancelled.'''
     if item._at_creation_flag and not item.isTemporary():
+        # rollback internal_number if used
+        if getattr(item, "internal_number", -1) != -1:
+            settings = get_settings()
+            settings[item.portal_type]['nb'] -= 1
         parent = item.getParentNode()
         parent.manage_delObjects(ids=[item.getId()])
 

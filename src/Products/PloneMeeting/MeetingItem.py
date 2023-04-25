@@ -4062,11 +4062,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if item.hasMeeting():
             may_update = True
         else:
-            # manage reference for items decided out of meeting
+            # manage reference for items out of meeting
             tool = api.portal.get_tool("portal_plonemeeting")
             cfg = tool.getMeetingConfig(item)
-            may_update = cfg.getComputeItemReferenceForItemsOutOfMeeting() and \
-                item.is_decided(cfg)
+            may_update = cfg.getComputeItemReferenceForItemsOutOfMeeting()
         return may_update
 
     security.declarePublic('update_item_reference')
@@ -6770,6 +6769,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         indexes += self.update_committees()
         # reindex necessary indexes
         self.reindexObject(idxs=indexes)
+        # manage when itemReference is based on internal_number
+        self.update_item_reference()
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
 

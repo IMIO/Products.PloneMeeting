@@ -6,6 +6,8 @@ from Acquisition import aq_base
 from appy.pod.xhtml2odt import XhtmlPreprocessor
 from appy.shared.diff import HtmlDiff
 from bs4 import BeautifulSoup
+from collective.behavior.internalnumber.browser.settings import get_settings
+from collective.behavior.internalnumber.subscribers import object_added
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.core.utils import get_position_type_name
@@ -2505,6 +2507,20 @@ def get_enabled_ordered_wfas(tool):
         [wfa for wfa in MeetingConfig.wfAdaptations
          if wfa in itertools.chain.from_iterable(
              [cfg.getWorkflowAdaptations() for cfg in tool.objectValues('MeetingConfig')])])
+
+
+def get_internal_number(obj, init=True):
+    """ """
+    internal_number = getattr(obj, "internal_number", -1) \
+        if base_hasattr(obj, "internal_number") else None
+    if init and internal_number == -1:
+        # will update value in settings
+        object_added(obj, {})
+        # get value from setting and set it
+        settings = get_settings()
+        if obj.portal_type in settings:
+            internal_number = settings[obj.portal_type]['nb']
+    return internal_number
 
 
 class AdvicesUpdatedEvent(ObjectEvent):
