@@ -528,7 +528,10 @@
         <span tal:condition="not: otherMCs">-</span>
         <div tal:condition="otherMCs">
           <fieldset>
-            <legend i18n:translate="">Data that will be used on new item</legend>
+            <legend i18n:translate="">
+              Data that will be used on new item to
+              <span i18n:name="cfg_titles" tal:content="python: context.displayOtherMeetingConfigsClonableToPossibleValues()" />
+            </legend>
             <tal:otherMeetingConfigsClonableToFieldTitle condition="python: 'otherMeetingConfigsClonableToFieldTitle' in usedAttrs">
               <span class="item_attribute_label"
                     i18n:translate="PloneMeeting_label_itemTitle"></span>:&nbsp;&nbsp;
