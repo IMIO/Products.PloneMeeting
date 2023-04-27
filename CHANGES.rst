@@ -58,6 +58,8 @@ Changelog
   `MeetingConfig.validate_itemWFValidationLevels` to factorize translations and
   check transitions and states used in datagridfields.
   [gbastien]
+- Fixed translation of `Data that will be used on new item` on `meetingitem_view.pt`.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------
