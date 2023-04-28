@@ -188,6 +188,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg = self.meetingConfig
         # remove use of delayed in powerObservers or WFA will not validate
         self._setPowerObserverStates(states=[])
+        # make test more robust for profiles, cleanup config
+        cfg.setItemAutoSentToOtherMCStates(())
+        cfg.setItemManualSentToOtherMCStates(())
 
         # return_to_proposing_group_... alone is ok
         self.failIf(cfg.validate_workflowAdaptations(
@@ -331,6 +334,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg = self.meetingConfig
         # remove use of delayed in powerObservers or WFA will not validate
         self._setPowerObserverStates(states=[])
+        # make test more robust for profiles, cleanup config
+        cfg.setItemAutoSentToOtherMCStates(())
+        cfg.setItemManualSentToOtherMCStates(())
 
         # make sure we use default itemWFValidationLevels,
         # useful when test executed with custom profile
@@ -368,6 +374,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg = self.meetingConfig
         # remove use of delayed in powerObservers or WFA will not validate
         self._setPowerObserverStates(states=[])
+        # make test more robust for profiles, cleanup config
+        cfg.setItemAutoSentToOtherMCStates(())
+        cfg.setItemManualSentToOtherMCStates(())
 
         self._setUpDefaultItemWFValidationLevels(cfg)
         # itemcreated and proposed are enabled
