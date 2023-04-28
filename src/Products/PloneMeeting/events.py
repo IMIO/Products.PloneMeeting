@@ -2,7 +2,8 @@
 
 from AccessControl import Unauthorized
 from collections import OrderedDict
-from collective.behavior.internalnumber.browser.settings import get_settings
+from collective.behavior.internalnumber.browser.settings import decrement_nb_for
+from collective.behavior.internalnumber.browser.settings import decrement_if_last_nb
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
@@ -51,6 +52,7 @@ from Products.PloneMeeting.utils import AdviceAfterModifyEvent
 from Products.PloneMeeting.utils import AdviceAfterTransitionEvent
 from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_internal_number
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import ItemAfterTransitionEvent
 from Products.PloneMeeting.utils import MeetingAfterTransitionEvent
@@ -701,17 +703,15 @@ def item_added_or_initialized(item):
     item.deleted_children_history = PersistentList()
     # Add a place to store takenOverBy by review_state user id
     item.takenOverByInfos = PersistentMapping()
-    # Add a place to store internal_number
-    item.internal_number = -1
-    # An item has ben modified, use get_again for portlet_todo
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
     # if element is in a MeetingConfig, we mark it with IConfigElement interface
     if item.isDefinedInTool():
         alsoProvides(item, IConfigElement)
     else:
         noLongerProvides(item, IConfigElement)
-        # An item has ben modified
-        invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
+        # Manage internal_number if activated in @@internalnumber-settings
+        get_internal_number(item, init=True)
+    # An item has ben modified
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def onItemInitialized(item, event):
@@ -1022,8 +1022,7 @@ def onItemEditCancelled(item, event):
     if item._at_creation_flag and not item.isTemporary():
         # rollback internal_number if used
         if getattr(item, "internal_number", -1) != -1:
-            settings = get_settings()
-            settings[item.portal_type]['nb'] -= 1
+            decrement_nb_for(item.portal_type)
         parent = item.getParentNode()
         parent.manage_delObjects(ids=[item.getId()])
 
@@ -1058,6 +1057,9 @@ def onItemWillBeRemoved(item, event):
     # If we are trying to remove the whole Plone Site or a MeetingConfig, bypass this hook.
     if event.object.meta_type in ['Plone Site', 'MeetingConfig']:
         return
+
+    # decrement internal_number if it was the last added item
+    decrement_if_last_nb(item)
 
     # update item predecessor and successors
     predecessor = item.get_predecessor()

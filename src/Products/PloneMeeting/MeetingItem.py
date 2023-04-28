@@ -4075,8 +4075,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            stores it and reindex 'getItemReference'.
            This rely on _may_update_item_reference.'''
         res = ''
-        meeting = self.getMeeting()
         if not clear and self.adapted()._may_update_item_reference():
+            meeting = self.getMeeting()
             extra_expr_ctx = _base_extra_expr_ctx(self)
             extra_expr_ctx.update({'item': self, 'meeting': meeting})
             cfg = extra_expr_ctx['cfg']
@@ -6769,7 +6769,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         indexes += self.update_committees()
         # reindex necessary indexes
         self.reindexObject(idxs=indexes)
-        # manage when itemReference is based on internal_number
+        # itemReference uses MeetingConfig.computeItemReferenceForItemsOutOfMeeting?
         self.update_item_reference()
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)

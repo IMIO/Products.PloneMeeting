@@ -4,6 +4,7 @@
   <dependencies>
     <dependency>profile-Products.CMFPlacefulWorkflow:CMFPlacefulWorkflow</dependency>
     <dependency>profile-imio.dashboard:default</dependency>
+    <dependency>profile-collective.behavior.internalnumber:default</dependency>
     <dependency>profile-collective.ckeditor:default</dependency>
     <dependency>profile-collective.contact.plonegroup:default</dependency>
     <dependency>profile-collective.datagridcolumns:default</dependency>
