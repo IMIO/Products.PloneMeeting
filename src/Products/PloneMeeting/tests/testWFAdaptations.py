@@ -910,16 +910,19 @@ class testWFAdaptations(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.presentItem(item)
         self.freezeMeeting(meeting)
+        self.assertEqual(item.query_state(), 'itemfrozen')
         self.do(item, 'return_to_proposing_group')
         self.assertEqual(item.query_state(), 'returned_to_proposing_group')
         self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_all_validations',)))
+        returned_to_proposing_group_last_state = 'returned_to_proposing_group_' + self._stateMappingFor('proposed')
+
         if 'return_to_proposing_group' in cfg.listWorkflowAdaptations():
             self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group', )))
 
         if 'return_to_proposing_group_with_last_validation' in cfg.listWorkflowAdaptations():
             self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation',)))
-        self.do(item, 'goTo_returned_to_proposing_group_proposed')
-        self.assertEqual(item.query_state(), 'returned_to_proposing_group_proposed')
+        self._process_transition_for_correcting_item(item, True)
+        self.assertEqual(item.query_state(), returned_to_proposing_group_last_state)
         self.assertEqual(
             cfg.validate_workflowAdaptations(()),
             return_to_proposing_group_removed_error)
@@ -932,6 +935,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                 cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation',)),
                 return_to_proposing_group_removed_error)
         # make wfAdaptation unselectable
+        self.changeUser("pmManager")
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
         self.failIf(cfg.validate_workflowAdaptations(()))
 
