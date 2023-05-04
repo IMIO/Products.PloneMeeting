@@ -850,7 +850,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             return
 
         self.changeUser('pmManager')
-        self._activate_wfas(('return_to_proposing_group_with_last_validation', ))
+        self._activate_wfas(('return_to_proposing_group_with_last_validation',))
 
         meeting = self.create('Meeting')
         item = self.create('MeetingItem')
@@ -859,12 +859,13 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'return_to_proposing_group')
         self.assertEqual(item.query_state(), 'returned_to_proposing_group')
         self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation',)))
+        returned_to_proposing_group_last_state = 'returned_to_proposing_group_' + self._stateMappingFor('proposed')
         if 'return_to_proposing_group' in cfg.listWorkflowAdaptations():
-            self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group', )))
+            self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group',)))
         if 'return_to_proposing_group_with_all_validations' in cfg.listWorkflowAdaptations():
             self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_all_validations',)))
-        self.do(item, 'goTo_returned_to_proposing_group_proposed')
-        self.assertEqual(item.query_state(), 'returned_to_proposing_group_proposed')
+        self.do(item, 'goTo_' + returned_to_proposing_group_last_state)
+        self.assertEqual(item.query_state(), returned_to_proposing_group_last_state)
         msg_removed_error = translate(
             'wa_removed_found_elements_error',
             domain='PloneMeeting',
@@ -874,14 +875,14 @@ class testWFAdaptations(PloneMeetingTestCase):
                     domain="PloneMeeting",
                     context=self.request),
                 'review_state': translate(
-                    'returned_to_proposing_group_proposed',
+                    returned_to_proposing_group_last_state,
                     domain="plone",
                     context=self.request)},
             context=self.request)
         self.assertEqual(cfg.validate_workflowAdaptations(()), msg_removed_error)
         if 'return_to_proposing_group' in cfg.listWorkflowAdaptations():
             self.assertEqual(
-                cfg.validate_workflowAdaptations(('return_to_proposing_group', )),
+                cfg.validate_workflowAdaptations(('return_to_proposing_group',)),
                 msg_removed_error)
         if 'return_to_proposing_group_with_all_validations' in cfg.listWorkflowAdaptations():
             self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_all_validations',)))
