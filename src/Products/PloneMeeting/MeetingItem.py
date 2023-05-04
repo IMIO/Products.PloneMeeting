@@ -3209,14 +3209,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('isDefinedInTool')
 
-    def isDefinedInTool(self, item_type='*'):
+    def isDefinedInTool(self, item_type=None):
         '''Is this item being defined in the tool (portal_plonemeeting) ?
            p_item_type can be :
-           - '*', we return True for any item defined in the tool;
+           - None, we return True for any item defined in the tool;
            - 'recurring', we return True if it is a recurring item defined in the tool;
            - 'itemtemplate', we return True if it is an item template defined in the tool.'''
         is_in_tool = 'portal_plonemeeting' in self.absolute_url()
-        if item_type == '*':
+        if item_type is None:
             return is_in_tool
         elif item_type == 'recurring':
             return is_in_tool and self.portal_type.startswith('MeetingItemRecurring')

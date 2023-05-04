@@ -2509,11 +2509,15 @@ def get_enabled_ordered_wfas(tool):
 
 
 def get_internal_number(obj, init=False):
-    """ """
+    """Return an item internalnumber.
+       If p_init=True, itemnumber is initialized if relevant."""
     internal_number = getattr(obj, "internal_number", None)
-    if init and internal_number is None:
-        next_nb = increment_nb_for(obj.portal_type)
+    if init and internal_number is None and not obj.isDefinedInTool():
+        # internalnumber is a DX behavior and default value is the next available
+        # we init and increment here, decrement is managed upon edit cancel
+        next_nb = increment_nb_for(obj.portal_type, bypass_attr_check=True)
         if next_nb:
+            # we get next_nb but current nb is next - 1
             internal_number = next_nb - 1
             setattr(obj, "internal_number", internal_number)
     return internal_number
