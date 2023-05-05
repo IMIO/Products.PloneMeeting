@@ -433,7 +433,9 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
 
     def _doWichValidationWithReturnedToProposingGroup(new_state_id,
                                                       base_state_id,
-                                                      last_returned_state_id):
+                                                      last_returned_state_id,
+                                                      base_guard_state_id=None
+                                                      ):
         """Helper method for adding a new state, base work will be done using the
            p_base_state_id (cloning permission, transition start/end points)."""
         wf = itemWorkflow
@@ -470,6 +472,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         wf.transitions.addTransition(transition_id)
         transition = wf.transitions[transition_id]
         image_url = '%(portal_url)s/{0}.png'.format(transition_id)
+        guard_destination_state = base_guard_state_id or transition_id.replace('goTo_returned_to_proposing_group_', '')
         transition.setProperties(
             title=transition_id,
             new_state_id=new_state_id, trigger_type=1, script_name='',
@@ -477,8 +480,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             actbox_icon=image_url, actbox_category='workflow',
             props={
                 'guard_expr': 'python:here.wfConditions()'
-                '.mayProposeToNextValidationLevel(destinationState="{0}")'.format(
-                    transition_id.replace('goTo_returned_to_proposing_group_', ''))})
+                '.mayProposeToNextValidationLevel(destinationState="{0}")'.format(guard_destination_state)})
 
         wf.states[last_returned_state_id].setProperties(
             title=last_returned_state_id, description='',
@@ -545,8 +547,10 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
 
         # keep validation returned states
         validation_returned_states = _getValidationReturnedStates(meetingConfig)
+        base_guard_state_id = None
         if whichValidation == 'last':
             validation_returned_states = (validation_returned_states[-1],)
+            base_guard_state_id = meetingConfig.getItemWFValidationLevels(data='state', only_enabled=True)[1]
         elif whichValidation is None:
             validation_returned_states = ()
         last_returned_state_id = 'returned_to_proposing_group'
@@ -558,7 +562,9 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             base_state_id = validation_state.replace('returned_to_proposing_group_', '')
             _doWichValidationWithReturnedToProposingGroup(new_state_id=validation_state,
                                                           base_state_id=base_state_id,
-                                                          last_returned_state_id=last_returned_state_id)
+                                                          last_returned_state_id=last_returned_state_id,
+                                                          base_guard_state_id=base_guard_state_id
+                                                          )
             last_returned_state_id = validation_state
 
     def _apply_item_validation_levels(meetingConfig, itemWorkflow):
