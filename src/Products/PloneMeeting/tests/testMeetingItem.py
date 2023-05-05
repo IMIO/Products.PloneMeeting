@@ -6,6 +6,8 @@
 #
 
 from AccessControl import Unauthorized
+from collective.behavior.internalnumber.browser.settings import get_settings
+from collective.behavior.internalnumber.browser.settings import set_settings
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.iconifiedcategory.utils import calculate_category_id
@@ -8323,6 +8325,27 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         self.changeUser('pmCreator1')
         self.assertTrue(self.hasPermission(View, item))
+
+    def test_pm_ItemInternalNumber(self):
+        """Test the internal_number managed by collective.behavior.internalnumber."""
+        # by default creationg an item will not initialize the internal_number
+        cfg = self.meetingConfig
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(get_settings(), {})
+        self.failIf(hasattr(item, "internal_number"))
+        # enable for MeetingItem portal_type
+        set_settings({cfg.getItemTypeName(): {'u': False, 'nb': 1, 'expr': u'number'}})
+        item = self.create('MeetingItem')
+        self.assertEqual(item.internal_number, 1)
+        self.assertEqual(get_settings()[item.portal_type]['nb'], 2)
+        item = self.create('MeetingItem')
+        self.assertEqual(item.internal_number, 2)
+        self.assertEqual(get_settings()[item.portal_type]['nb'], 3)
+        # decrement if edit cancelled
+        item._at_creation_flag = True
+        item.restrictedTraverse('@@at_lifecycle_view').cancel_edit()
+        self.assertEqual(get_settings()[item.portal_type]['nb'], 2)
 
 
 def test_suite():

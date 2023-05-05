@@ -2,8 +2,8 @@
 
 from AccessControl import Unauthorized
 from collections import OrderedDict
-from collective.behavior.internalnumber.browser.settings import decrement_nb_for
 from collective.behavior.internalnumber.browser.settings import decrement_if_last_nb
+from collective.behavior.internalnumber.browser.settings import decrement_nb_for
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
@@ -686,7 +686,8 @@ def item_added_or_initialized(item):
     # avoid multiple initialization
     # when using restapi for example, this empties adviceIndex
     # because init/update_local_roles/init
-    if hasattr(item, '_v_already_initialized'):
+    # wait for portal_type to be initialized
+    if item.portal_type == "MeetingItem" or hasattr(item, '_v_already_initialized'):
         return
     item._v_already_initialized = True
 

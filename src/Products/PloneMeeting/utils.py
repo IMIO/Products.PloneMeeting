@@ -2515,7 +2515,8 @@ def get_internal_number(obj, init=False):
     if init and internal_number is None and not obj.isDefinedInTool():
         # internalnumber is a DX behavior and default value is the next available
         # we init and increment here, decrement is managed upon edit cancel
-        next_nb = increment_nb_for(obj.portal_type, bypass_attr_check=True)
+        next_nb = increment_nb_for(obj, bypass_attr_check=True)
+        # if not enabled for portal_type, then next_nb is None
         if next_nb:
             # we get next_nb but current nb is next - 1
             internal_number = next_nb - 1
