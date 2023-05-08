@@ -962,7 +962,8 @@ class testSearches(PloneMeetingTestCase):
                              name='items-to-correct-to-validate-of-highest-hierarchic-level')
         self.assertEqual(adapter.query, {
             'reviewProcessInfo':
-            {'query': ['{0}__reviewprocess__returned_to_proposing_group_proposed'.format(self.developers_uid)]},
+            {'query': ['{0}__reviewprocess__returned_to_proposing_group_{1}'.format(self.developers_uid,
+                                                                                    self._stateMappingFor('proposed'))]},
             'portal_type': {'query': itemTypeName}})
 
         # it returns only items the current user is able to correct
@@ -983,9 +984,9 @@ class testSearches(PloneMeetingTestCase):
         self.do(vendorsItem, 'return_to_proposing_group')
 
         self.changeUser('pmCreator1')
-        self.do(developersItem, 'goTo_returned_to_proposing_group_proposed')
+        self.do(developersItem, 'goTo_returned_to_proposing_group_' + self._stateMappingFor('proposed'))
         self.changeUser('pmCreator2')
-        self.do(vendorsItem, 'goTo_returned_to_proposing_group_proposed')
+        self.do(vendorsItem, 'goTo_returned_to_proposing_group_' + self._stateMappingFor('proposed'))
         self.changeUser('pmManager')
 
         # pmManager may only edit developersItem
