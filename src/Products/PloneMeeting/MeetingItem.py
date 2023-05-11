@@ -3858,9 +3858,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         cat_id = self.getField('category').get(self, **kwargs)
-        # avoid problems with acquisition
         if theObject:
-            res = getattr(cfg.categories, cat_id, '')
+            # return '' if category does not exist or is None
+            res = ''
+            # avoid problems with acquisition or if cat_id is None
+            if cat_id in cfg.categories.objectIds():
+                res = cfg.categories.get(cat_id)
         else:
             res = cat_id
         return res
@@ -3872,11 +3875,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         classifier_id = self.getField('classifier').get(self, **kwargs)
-        # avoid problems with acquisition
         if theObject:
+            # return '' if classifier does not exist or is None
             res = ''
+            # avoid problems with acquisition or if classifier_id is None
             if classifier_id in cfg.classifiers.objectIds():
-                res = getattr(cfg.classifiers, classifier_id)
+                res = cfg.classifiers.get(classifier_id)
         else:
             res = classifier_id
         return res
