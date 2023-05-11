@@ -8230,9 +8230,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.getCategory(theObject=True), cfg.categories.development)
         self.assertEqual(item.getProposingGroup(), self.developers_uid)
         self.assertEqual(item.getProposingGroup(theObject=True), self.developers)
-        # unknown category (should not be possible)
+        # unknown or None category (could happen when item created thru WS and validation disabled)
         item.setCategory('unknown')
         self.assertEqual(item.getCategory(), 'unknown')
+        self.assertEqual(item.getCategory(True), '')
+        item.setCategory(None)
+        self.assertIsNone(item.getCategory())
         self.assertEqual(item.getCategory(True), '')
 
     def test_pm_GetClassifier(self):
@@ -8247,6 +8250,13 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setClassifier('classifier1')
         self.assertEqual(item.getClassifier(), 'classifier1')
         self.assertEqual(item.getClassifier(theObject=True), cfg.classifiers.classifier1)
+        # unknown or None classifier (could happen when item created thru WS and validation disabled)
+        item.setClassifier('unknown')
+        self.assertEqual(item.getClassifier(), 'unknown')
+        self.assertEqual(item.getClassifier(True), '')
+        item.setClassifier(None)
+        self.assertIsNone(item.getClassifier())
+        self.assertEqual(item.getClassifier(True), '')
 
     def test_pm_GetSucessor(self):
         """Test that MeetingItem.get_successor will always return the last successor."""

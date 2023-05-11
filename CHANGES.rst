@@ -60,6 +60,10 @@ Changelog
   [gbastien]
 - Fixed translation of `Data that will be used on new item` on `meetingitem_view.pt`.
   [gbastien]
+- Make sure `MeetingItem.getCategory` and `MeetingItem.getClassifier` do not break
+  when attribute is `None`, this may happen when item created by REST WS and
+  `catefory/classifier` validation is disabled.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------
