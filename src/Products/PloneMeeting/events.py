@@ -19,6 +19,7 @@ from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.cache import setup_ram_cache
 from imio.helpers.content import get_modified_attrs
 from imio.helpers.content import richtextval
+from imio.helpers.content import safe_delattr
 from imio.helpers.security import fplog
 from imio.helpers.xhtml import storeImagesLocally
 from OFS.interfaces import IObjectWillBeAddedEvent
@@ -647,6 +648,8 @@ def onItemCopied(item, event):
     item._update_predecessor(None)
     # remove link with Meeting
     item._update_meeting_link(None)
+    # remove internal_number
+    safe_delattr(item, "internal_number")
 
 
 def onItemMoved(item, event):
@@ -1021,7 +1024,7 @@ def onItemEditCancelled(item, event):
        the _at_creation to True, it means we are creating an item from a template,
        we need to delete it if first edit was cancelled.'''
     if item._at_creation_flag and not item.isTemporary():
-        # rollback internal_number if used
+        # rollback internal_number if used and defined
         if getattr(item, "internal_number", -1) != -1:
             decrement_nb_for(item.portal_type)
         parent = item.getParentNode()
