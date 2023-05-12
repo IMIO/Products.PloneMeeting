@@ -64,6 +64,8 @@ Changelog
   when attribute is `None`, this may happen when item created by REST WS and
   `catefory/classifier` validation is disabled.
   [gbastien]
+- Added incremental internal number based on `collective.behavior.internalnumber`.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------

@@ -7316,10 +7316,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # clone
         # Copy/paste item into the folder, change portal_type on source
         # so it is correct in copiedData and may be used in events
-        old_portal_type = self.portal_type
-        self.portal_type = newPortalType or self.portal_type
-        sourceFolder = self.getParentNode()
-        copiedData = sourceFolder.manage_copyObjects(ids=[self.id])
+        original_portal_type = self.portal_type
+        self.portal_type = newPortalType or original_portal_type
+        copiedData = self.aq_inner.aq_parent.manage_copyObjects(ids=[self.id])
         newItem = tool.pasteItem(destFolder,
                                  copiedData,
                                  copyAnnexes=copyAnnexes,
@@ -7330,7 +7329,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                  keep_ftw_labels=keep_ftw_labels,
                                  keptAnnexIds=keptAnnexIds,
                                  keptDecisionAnnexIds=keptDecisionAnnexIds)
-        self.portal_type = old_portal_type
+        self.portal_type = original_portal_type
 
         # special handling for some fields kept when cloned_to_same_mc
         # we check that used values on original item are still useable for cloned item

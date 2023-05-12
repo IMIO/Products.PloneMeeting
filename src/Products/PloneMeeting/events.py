@@ -690,6 +690,7 @@ def item_added_or_initialized(item):
     # when using restapi for example, this empties adviceIndex
     # because init/update_local_roles/init
     # wait for portal_type to be initialized
+    import ipdb; ipdb.set_trace()
     if item.portal_type == "MeetingItem" or hasattr(item, '_v_already_initialized'):
         return
     item._v_already_initialized = True
