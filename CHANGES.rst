@@ -66,6 +66,9 @@ Changelog
   [gbastien]
 - On tool view, display also configs that are not active (in red).
   [gbastien]
+- Make sure `MeetingItem.otherMeetingConfigsClonableToFieldXXX` fields are
+  displayed in Schema defined order on the item edit and view.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------

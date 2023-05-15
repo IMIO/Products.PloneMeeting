@@ -1641,21 +1641,30 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
         cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
-        self._enableField('otherMeetingConfigsClonableToFieldTitle')
         self._enableField('otherMeetingConfigsClonableToFieldDecision')
+        self._enableField('otherMeetingConfigsClonableToFieldMotivation')
+        self._enableField('otherMeetingConfigsClonableToFieldTitle')
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setTitle('Title')
         item.setDecision('<p></p>')
         item.setOtherMeetingConfigsClonableToFieldTitle('Field title')
+        item.setOtherMeetingConfigsClonableToFieldMotivation('<p>Field motivation</p>')
         item.setOtherMeetingConfigsClonableToFieldDecision('<p>Field decision</p>')
         item.setOtherMeetingConfigsClonableTo((cfg2Id,))
         newItem = item.cloneToOtherMeetingConfig(cfg2Id)
         self.assertEqual(newItem.Title(), 'Field title')
+        self.assertEqual(newItem.getMotivation(), '<p>Field motivation</p>')
         self.assertEqual(newItem.getDecision(), '<p>Field decision</p>')
         self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldTitle'))
+        self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldMotivation'))
         self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldDecision'))
+        # otherMeetingConfigsClonableToFieldXXX order is correct (schema)
+        self.assertEqual(item.get_enable_clone_to_other_mc_fields(cfg),
+                         ['otherMeetingConfigsClonableToFieldTitle',
+                          'otherMeetingConfigsClonableToFieldMotivation',
+                          'otherMeetingConfigsClonableToFieldDecision'])
 
     def test_pm_CloneItemWithSetCurrentAsPredecessor(self):
         '''When an item is cloned with option setCurrentAsPredecessor=True,
