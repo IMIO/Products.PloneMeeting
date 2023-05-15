@@ -64,6 +64,8 @@ Changelog
   when attribute is `None`, this may happen when item created by REST WS and
   `catefory/classifier` validation is disabled.
   [gbastien]
+- On tool view, display also configs that are not active (in red).
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------
