@@ -92,31 +92,33 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
     def test_pm_ToolView(self):
         '''Access the tool view and just check that it does not fail displaying.'''
+        cfgId = self.meetingConfig.getId()
+        cfg2Id = self.meetingConfig2.getId()
         # as anonymous this raises Unauthorized
         self.assertRaises(Unauthorized, self.tool.restrictedTraverse('toolplonemeeting_view'))
         # creator sees nothing
         self.changeUser('pmCreator1')
-        self.assertFalse("portal_plonemeeting/plonemeeting-assembly" in
+        self.assertFalse("portal_plonemeeting/%s" % cfgId in
                          self.tool.restrictedTraverse('toolplonemeeting_view')())
-        self.assertFalse("portal_plonemeeting/plonegov-assembly" in
+        self.assertFalse("portal_plonemeeting/%s" % cfg2Id in
                          self.tool.restrictedTraverse('toolplonemeeting_view')())
         # pmManager see both configs
         self.changeUser('pmManager')
-        self.assertTrue("portal_plonemeeting/plonemeeting-assembly" in
+        self.assertTrue("portal_plonemeeting/%s" % cfgId in
                         self.tool.restrictedTraverse('toolplonemeeting_view')())
-        self.assertTrue("portal_plonemeeting/plonegov-assembly" in
+        self.assertTrue("portal_plonemeeting/%s" % cfg2Id in
                         self.tool.restrictedTraverse('toolplonemeeting_view')())
         self.changeUser('siteadmin')
         # siteadmin see both configs
-        self.assertTrue("portal_plonemeeting/plonemeeting-assembly" in
+        self.assertTrue("portal_plonemeeting/%s" % cfgId in
                         self.tool.restrictedTraverse('toolplonemeeting_view')())
-        self.assertTrue("portal_plonemeeting/plonegov-assembly" in
+        self.assertTrue("portal_plonemeeting/%s" % cfg2Id in
                         self.tool.restrictedTraverse('toolplonemeeting_view')())
         # pmManager2 will only see one MeetingConfig2
         self.changeUser('pmManager2')
-        self.assertFalse("portal_plonemeeting/plonemeeting-assembly" in
+        self.assertFalse("portal_plonemeeting/%s" % cfgId in
                          self.tool.restrictedTraverse('toolplonemeeting_view')())
-        self.assertTrue("portal_plonemeeting/plonegov-assembly" in
+        self.assertTrue("portal_plonemeeting/%s" % cfg2Id in
                         self.tool.restrictedTraverse('toolplonemeeting_view')())
 
     def test_pm_GetMeetingConfig(self):
