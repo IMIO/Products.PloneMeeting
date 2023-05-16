@@ -1404,7 +1404,9 @@ class testWFAdaptations(PloneMeetingTestCase):
             creators_roles.append('Contributor')
         self.assertEqual(item.__ac_local_roles__[self.developers_creators], creators_roles)
         self.assertEqual(item.__ac_local_roles__[self.developers_observers], ['Reader'])
-        self.assertFalse(self.developers_reviewers in item.__ac_local_roles__)
+        # localroles keep what is defined for 'state': 'itemcreated' in self.meetingConfig.getItemWFValidationLevels
+        # if there are some extra suffixes they still havve REader access to this item
+        self.assertNotIn(self.developers_reviewers, item.__ac_local_roles__)
 
     def _no_validation_extra_suffixes(self):
         '''By default, when using no validation (items are created "validated")
