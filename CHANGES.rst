@@ -58,6 +58,17 @@ Changelog
   `MeetingConfig.validate_itemWFValidationLevels` to factorize translations and
   check transitions and states used in datagridfields.
   [gbastien]
+- Fixed translation of `Data that will be used on new item` on `meetingitem_view.pt`.
+  [gbastien]
+- Make sure `MeetingItem.getCategory` and `MeetingItem.getClassifier` do not break
+  when attribute is `None`, this may happen when item created by REST WS and
+  `catefory/classifier` validation is disabled.
+  [gbastien]
+- On tool view, display also configs that are not active (in red).
+  [gbastien]
+- Make sure `MeetingItem.otherMeetingConfigsClonableToFieldXXX` fields are
+  displayed in Schema defined order on the item edit and view.
+  [gbastien]
 - Adapted code to be able to use `collective.ckeditor 4.11+`.
   [gbastien]
 

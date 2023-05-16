@@ -1641,21 +1641,30 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
         cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
-        self._enableField('otherMeetingConfigsClonableToFieldTitle')
         self._enableField('otherMeetingConfigsClonableToFieldDecision')
+        self._enableField('otherMeetingConfigsClonableToFieldMotivation')
+        self._enableField('otherMeetingConfigsClonableToFieldTitle')
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setTitle('Title')
         item.setDecision('<p></p>')
         item.setOtherMeetingConfigsClonableToFieldTitle('Field title')
+        item.setOtherMeetingConfigsClonableToFieldMotivation('<p>Field motivation</p>')
         item.setOtherMeetingConfigsClonableToFieldDecision('<p>Field decision</p>')
         item.setOtherMeetingConfigsClonableTo((cfg2Id,))
         newItem = item.cloneToOtherMeetingConfig(cfg2Id)
         self.assertEqual(newItem.Title(), 'Field title')
+        self.assertEqual(newItem.getMotivation(), '<p>Field motivation</p>')
         self.assertEqual(newItem.getDecision(), '<p>Field decision</p>')
         self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldTitle'))
+        self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldMotivation'))
         self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldDecision'))
+        # otherMeetingConfigsClonableToFieldXXX order is correct (schema)
+        self.assertEqual(item.get_enable_clone_to_other_mc_fields(cfg),
+                         ['otherMeetingConfigsClonableToFieldTitle',
+                          'otherMeetingConfigsClonableToFieldMotivation',
+                          'otherMeetingConfigsClonableToFieldDecision'])
 
     def test_pm_CloneItemWithSetCurrentAsPredecessor(self):
         '''When an item is cloned with option setCurrentAsPredecessor=True,
@@ -8228,9 +8237,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.getCategory(theObject=True), cfg.categories.development)
         self.assertEqual(item.getProposingGroup(), self.developers_uid)
         self.assertEqual(item.getProposingGroup(theObject=True), self.developers)
-        # unknown category (should not be possible)
+        # unknown or None category (could happen when item created thru WS and validation disabled)
         item.setCategory('unknown')
         self.assertEqual(item.getCategory(), 'unknown')
+        self.assertEqual(item.getCategory(True), '')
+        item.setCategory(None)
+        self.assertIsNone(item.getCategory())
         self.assertEqual(item.getCategory(True), '')
 
     def test_pm_GetClassifier(self):
@@ -8245,6 +8257,13 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setClassifier('classifier1')
         self.assertEqual(item.getClassifier(), 'classifier1')
         self.assertEqual(item.getClassifier(theObject=True), cfg.classifiers.classifier1)
+        # unknown or None classifier (could happen when item created thru WS and validation disabled)
+        item.setClassifier('unknown')
+        self.assertEqual(item.getClassifier(), 'unknown')
+        self.assertEqual(item.getClassifier(True), '')
+        item.setClassifier(None)
+        self.assertIsNone(item.getClassifier())
+        self.assertEqual(item.getClassifier(True), '')
 
     def test_pm_GetSucessor(self):
         """Test that MeetingItem.get_successor will always return the last successor."""
