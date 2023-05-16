@@ -521,9 +521,9 @@ def _configureCKeditor(site):
     plugins = list(api.portal.get_registry_record(
         "collective.ckeditor.browser.ckeditorsettings.ICKEditorSchema.plugins"))
     extra_plugins = [
-        u"tableresize;/++resource++ckeditor/plugins/tableresize/plugin.js",
-        u"nonbreaking;/++resource++cke_nonbreaking/plugin.js",
-        u"imagerotate;/++resource++cke_imagerotate/plugin.js"]
+        "tableresize;/++resource++ckeditor/plugins/tableresize/plugin.js",
+        "nonbreaking;/++resource++cke_nonbreaking/plugin.js",
+        "imagerotate;/++resource++cke_imagerotate/plugin.js"]
     for extra_plugin in extra_plugins:
         if extra_plugin not in plugins:
             plugins.append(extra_plugin)
