@@ -8348,9 +8348,11 @@ class testMeetingItem(PloneMeetingTestCase):
         set_settings({cfg.getItemTypeName(): {'u': False, 'nb': 1, 'expr': u'number'}})
         item = self.create('MeetingItem')
         self.assertEqual(item.internal_number, 1)
+        self.assertEqual(self.catalog(internal_number=1)[0].UID, item.UID())
         self.assertEqual(get_settings()[item.portal_type]['nb'], 2)
         item = self.create('MeetingItem')
         self.assertEqual(item.internal_number, 2)
+        self.assertEqual(self.catalog(internal_number=2)[0].UID, item.UID())
         self.assertEqual(get_settings()[item.portal_type]['nb'], 3)
         # decremented if edit cancelled
         item._at_creation_flag = True
@@ -8360,6 +8362,7 @@ class testMeetingItem(PloneMeetingTestCase):
         set_settings({cfg.getItemTypeName(): {'u': False, 'nb': 50000, 'expr': u'number'}})
         item = self.create('MeetingItem')
         self.assertEqual(item.internal_number, 50000)
+        self.assertEqual(self.catalog(internal_number=50000)[0].UID, item.UID())
         # not set on items created in configuration
         self.changeUser('siteadmin')
         item_template = self.create('MeetingItemTemplate')
