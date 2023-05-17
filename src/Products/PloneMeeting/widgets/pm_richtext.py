@@ -104,18 +104,3 @@ class RichTextEdit(BrowserView):
         self.field_name = field_name
         self.widget = get_dx_widget(self.context, field_name, mode=INPUT_MODE)
         return self.index()
-
-
-class PMZ3CFormWidgetSettings(Z3CFormWidgetSettings):
-
-    def setupAjaxSave(self, widget_settings):
-        """Override to remove the restrictedTraverse to check if save_url available."""
-        portal = self.ckview.portal
-        # when used in a datagridfield, the target is sometimes a dict...
-        if not base_hasattr(self.ckview.context, "portal_type"):
-            return
-        target = self.getSaveTarget()
-        widget_settings['ajaxsave_enabled'] = 'true'
-        save_url = str(portal.portal_url.getRelativeUrl(target) + '/cke-save')
-        widget_settings['ajaxsave_url'] = save_url
-        widget_settings['ajaxsave_fieldname'] = self.getFieldName()

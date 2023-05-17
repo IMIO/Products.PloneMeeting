@@ -155,7 +155,7 @@ class Migrate_To_4205(Migrator):
         # not necessary if executing the full upgrade to 4200
         if not from_migration_to_4200:
             # will upgrade collective.documentgenerator and collective.messagesviewlet
-            self.upgradeAll(omit=['Products.PloneMeeting:default'])
+            self.upgradeAll()
             self._updateConfigCommitteesAndVotesResult()
             self._updateMeetingCommittees()
             self._updateLocalRolesItemBeforeStateValidated()

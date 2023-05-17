@@ -69,6 +69,8 @@ Changelog
 - Make sure `MeetingItem.otherMeetingConfigsClonableToFieldXXX` fields are
   displayed in Schema defined order on the item edit and view.
   [gbastien]
+- Adapted code to be able to use `collective.ckeditor 4.11+`.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------
