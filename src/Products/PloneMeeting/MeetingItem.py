@@ -3209,14 +3209,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('isDefinedInTool')
 
-    def isDefinedInTool(self, item_type='*'):
+    def isDefinedInTool(self, item_type=None):
         '''Is this item being defined in the tool (portal_plonemeeting) ?
            p_item_type can be :
-           - '*', we return True for any item defined in the tool;
+           - None, we return True for any item defined in the tool;
            - 'recurring', we return True if it is a recurring item defined in the tool;
            - 'itemtemplate', we return True if it is an item template defined in the tool.'''
         is_in_tool = 'portal_plonemeeting' in self.absolute_url()
-        if item_type == '*':
+        if item_type is None:
             return is_in_tool
         elif item_type == 'recurring':
             return is_in_tool and self.portal_type.startswith('MeetingItemRecurring')
@@ -4066,11 +4066,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if item.hasMeeting():
             may_update = True
         else:
-            # manage reference for items decided out of meeting
+            # manage reference for items out of meeting
             tool = api.portal.get_tool("portal_plonemeeting")
             cfg = tool.getMeetingConfig(item)
-            may_update = cfg.getComputeItemReferenceForItemsOutOfMeeting() and \
-                item.is_decided(cfg)
+            may_update = cfg.getComputeItemReferenceForItemsOutOfMeeting()
         return may_update
 
     security.declarePublic('update_item_reference')
@@ -4080,8 +4079,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            stores it and reindex 'getItemReference'.
            This rely on _may_update_item_reference.'''
         res = ''
-        meeting = self.getMeeting()
         if not clear and self.adapted()._may_update_item_reference():
+            meeting = self.getMeeting()
             extra_expr_ctx = _base_extra_expr_ctx(self)
             extra_expr_ctx.update({'item': self, 'meeting': meeting})
             cfg = extra_expr_ctx['cfg']
@@ -6774,6 +6773,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         indexes += self.update_committees()
         # reindex necessary indexes
         self.reindexObject(idxs=indexes)
+        # itemReference uses MeetingConfig.computeItemReferenceForItemsOutOfMeeting?
+        self.update_item_reference()
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
 
@@ -7297,9 +7298,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         if destFolder is None:
             destFolder = tool.getPloneMeetingFolder(cfg.getId(), newOwnerId)
-        # Copy/paste item into the folder
-        sourceFolder = self.getParentNode()
-        copiedData = sourceFolder.manage_copyObjects(ids=[self.id])
         # if we are cloning to the same mc, keep some more fields
         same_mc_types = (None,
                          cfg.getItemTypeName(),
@@ -7316,6 +7314,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             cloned_to_same_mc, cloned_from_item_template)
 
         # clone
+        # Copy/paste item into the folder, change portal_type on source
+        # so it is correct in copiedData and may be used in events
+        original_portal_type = self.portal_type
+        self.portal_type = newPortalType or original_portal_type
+        copiedData = self.aq_inner.aq_parent.manage_copyObjects(ids=[self.id])
         newItem = tool.pasteItem(destFolder,
                                  copiedData,
                                  copyAnnexes=copyAnnexes,
@@ -7326,6 +7329,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                  keep_ftw_labels=keep_ftw_labels,
                                  keptAnnexIds=keptAnnexIds,
                                  keptDecisionAnnexIds=keptDecisionAnnexIds)
+        self.portal_type = original_portal_type
+
         # special handling for some fields kept when cloned_to_same_mc
         # we check that used values on original item are still useable for cloned item
         # in case configuration changed since original item was created

@@ -6,6 +6,7 @@ from Acquisition import aq_base
 from appy.pod.xhtml2odt import XhtmlPreprocessor
 from appy.shared.diff import HtmlDiff
 from bs4 import BeautifulSoup
+from collective.behavior.internalnumber.browser.settings import increment_nb_for
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.core.utils import get_position_type_name
@@ -26,6 +27,7 @@ from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from imio.helpers.cache import get_current_user_id
+from imio.helpers.content import base_getattr
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_encode
 from imio.helpers.security import fplog
@@ -2505,6 +2507,22 @@ def get_enabled_ordered_wfas(tool):
         [wfa for wfa in MeetingConfig.wfAdaptations
          if wfa in itertools.chain.from_iterable(
              [cfg.getWorkflowAdaptations() for cfg in tool.objectValues('MeetingConfig')])])
+
+
+def get_internal_number(obj, init=False):
+    """Return an item internalnumber.
+       If p_init=True, itemnumber is initialized if relevant."""
+    internal_number = base_getattr(obj, "internal_number", None)
+    if init and internal_number is None and not obj.isDefinedInTool():
+        # internalnumber is a DX behavior and default value is the next available
+        # we init and increment here, decrement is managed upon edit cancel
+        next_nb = increment_nb_for(obj, bypass_attr_check=True)
+        # if not enabled for portal_type, then next_nb is None
+        if next_nb:
+            # we get next_nb but current nb is next - 1
+            internal_number = next_nb - 1
+            setattr(obj, "internal_number", internal_number)
+    return internal_number
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

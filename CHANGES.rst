@@ -69,6 +69,9 @@ Changelog
 - Make sure `MeetingItem.otherMeetingConfigsClonableToFieldXXX` fields are
   displayed in Schema defined order on the item edit and view.
   [gbastien]
+- Added possibility to have an incremental internal number for items.
+  This relies on `collective.behavior.internalnumber`.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------

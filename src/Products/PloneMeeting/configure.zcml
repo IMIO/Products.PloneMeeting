@@ -12,6 +12,7 @@
   <include package="imio.annex" />
   <include package="communesplone.layout" />
   <include package="Products.PasswordStrength" />
+  <include package="collective.behavior.internalnumber" />
   <include package="collective.ckeditor" />
   <include package="collective.contact.core" />
   <include package="collective.contact.plonegroup" />

@@ -679,7 +679,6 @@ schema = Schema((
         schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
-
     BooleanField(
         name='enableLabels',
         default=defValues.enableLabels,

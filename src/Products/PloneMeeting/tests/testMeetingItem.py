@@ -6,6 +6,8 @@
 #
 
 from AccessControl import Unauthorized
+from collective.behavior.internalnumber.browser.settings import get_settings
+from collective.behavior.internalnumber.browser.settings import set_settings
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.iconifiedcategory.utils import calculate_category_id
@@ -5413,7 +5415,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertIsNone(itemFromTemplate.restrictedTraverse('@@at_lifecycle_view').begin_edit())
 
         # but it is still possible to add items in the configuration
-        self.changeUser('admin')
+        self.changeUser('siteadmin')
         # an item template
         templateTypeName = cfg.getItemTypeName(configType='MeetingItemTemplate')
         itemTemplate = cfg.itemtemplates.restrictedTraverse('portal_factory/{0}/tmp_id'.format(templateTypeName))
@@ -8342,6 +8344,80 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         self.changeUser('pmCreator1')
         self.assertTrue(self.hasPermission(View, item))
+
+    def test_pm_ItemInternalNumber(self):
+        """Test the internal_number managed by collective.behavior.internalnumber."""
+        # by default creating an item will not initialize the internal_number
+        cfg = self.meetingConfig
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(get_settings(), {})
+        self.failIf(hasattr(item, "internal_number"))
+        # enable for MeetingItem portal_type
+        set_settings({cfg.getItemTypeName(): {'u': False, 'nb': 1, 'expr': u'number'}})
+        item = self.create('MeetingItem')
+        self.assertEqual(item.internal_number, 1)
+        self.assertEqual(self.catalog(internal_number=1)[0].UID, item.UID())
+        self.assertEqual(get_settings()[item.portal_type]['nb'], 2)
+        item = self.create('MeetingItem')
+        self.assertEqual(item.internal_number, 2)
+        self.assertEqual(self.catalog(internal_number=2)[0].UID, item.UID())
+        self.assertEqual(get_settings()[item.portal_type]['nb'], 3)
+        # decremented if edit cancelled
+        item._at_creation_flag = True
+        item.restrictedTraverse('@@at_lifecycle_view').cancel_edit()
+        self.assertEqual(get_settings()[item.portal_type]['nb'], 2)
+        # can start at an arbitrary number
+        set_settings({cfg.getItemTypeName(): {'u': False, 'nb': 50000, 'expr': u'number'}})
+        item = self.create('MeetingItem')
+        self.assertEqual(item.internal_number, 50000)
+        self.assertEqual(self.catalog(internal_number=50000)[0].UID, item.UID())
+        # not set on items created in configuration
+        self.changeUser('siteadmin')
+        item_template = self.create('MeetingItemTemplate')
+        self.failIf(hasattr(item_template, "internal_number"))
+        recurring_item = self.create('MeetingItemRecurring')
+        self.failIf(hasattr(recurring_item, "internal_number"))
+
+    def test_pm_ItemInternalNumberClonedItem(self):
+        """Test the internal_number managed by collective.behavior.internalnumber
+           when cloning item (locally or to another MC)."""
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'), ))
+        cfg.setMeetingConfigsToCloneTo(
+            ({'meeting_config': '%s' % cfg2Id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
+        # create item and send it to cfg2 and cfg3
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # enable for MeetingItem portal_type
+        set_settings({
+            cfg.getItemTypeName(): {'u': False, 'nb': 1, 'expr': u'number'}})
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(item.internal_number, 1)
+        # clone locally
+        cloned_item = item.clone()
+        self.assertEqual(cloned_item.internal_number, 2)
+        # create item from template
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        itemTemplate = cfg.getItemTemplates(as_brains=False)[0]
+        itemFromTemplate = view.createItemFromTemplate(itemTemplate.UID())
+        itemFromTemplate.processForm()
+        self.assertEqual(itemFromTemplate.internal_number, 3)
+        # clone to another cfg, not enabled for now
+        itemFromTemplate.setOtherMeetingConfigsClonableTo((cfg2Id, ))
+        itemCfg2 = itemFromTemplate.cloneToOtherMeetingConfig(cfg2Id)
+        self.failIf(hasattr(itemCfg2, "internal_number"))
+        self.deleteAsManager(itemCfg2.UID())
+        set_settings({
+            cfg2.getItemTypeName(): {'u': False, 'nb': 50, 'expr': u'number'}})
+        itemCfg2 = itemFromTemplate.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEqual(itemCfg2.internal_number, 50)
 
 
 def test_suite():

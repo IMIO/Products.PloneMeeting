@@ -231,6 +231,8 @@
              factory=".vocabularies.PMCategoryTitleVocabulary" />
     <utility component=".vocabularies.PMMergeTemplatesVocabularyFactory"
              name="collective.documentgenerator.MergeTemplates" />
+    <utility component=".vocabularies.PMDxPortalTypesVocabularyFactory"
+             name="collective.internalnumber.portaltypevocabulary" />
 
     <!-- Batch actions overrides -->
     <browser:page

@@ -24,7 +24,6 @@ from plone.namedfile.file import NamedImage
 from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import logger
-from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PloneMeetingError
@@ -132,6 +131,8 @@ class ToolInitializer:
             functions = get_registry_functions()
             function_ids = [function['fct_id'] for function in functions]
             # append new functions
+            # late import for multi config profile (MeetingLalouviere)
+            from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
             suffixes = MEETING_GROUP_SUFFIXES + EXTRA_GROUP_SUFFIXES
             for suffix in suffixes:
                 if suffix['fct_id'] not in function_ids:
