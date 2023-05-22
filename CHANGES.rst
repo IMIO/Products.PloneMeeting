@@ -64,6 +64,11 @@ Changelog
   when attribute is `None`, this may happen when item created by REST WS and
   `catefory/classifier` validation is disabled.
   [gbastien]
+- On tool view, display also configs that are not active (in red).
+  [gbastien]
+- Make sure `MeetingItem.otherMeetingConfigsClonableToFieldXXX` fields are
+  displayed in Schema defined order on the item edit and view.
+  [gbastien]
 - Added possibility to have an incremental internal number for items.
   This relies on `collective.behavior.internalnumber`.
   [gbastien]

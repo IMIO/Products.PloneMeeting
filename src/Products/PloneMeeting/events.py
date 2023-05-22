@@ -2,6 +2,7 @@
 
 from AccessControl import Unauthorized
 from collections import OrderedDict
+from collective.behavior.internalnumber.browser.settings import _internal_number_is_used
 from collective.behavior.internalnumber.browser.settings import decrement_if_last_nb
 from collective.behavior.internalnumber.browser.settings import decrement_nb_for
 from collective.contact.plonegroup.utils import get_all_suffixes
@@ -1025,7 +1026,7 @@ def onItemEditCancelled(item, event):
        we need to delete it if first edit was cancelled.'''
     if item._at_creation_flag and not item.isTemporary():
         # rollback internal_number if used and defined
-        if getattr(item, "internal_number", -1) != -1:
+        if _internal_number_is_used(item):
             decrement_nb_for(item.portal_type)
         parent = item.getParentNode()
         parent.manage_delObjects(ids=[item.getId()])

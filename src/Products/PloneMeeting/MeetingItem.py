@@ -7407,8 +7407,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def get_enable_clone_to_other_mc_fields(self, cfg, ignored_field_names=[]):
         """Return the ids of 'otherMeetingConfigsClonableToFieldXXX' that are enabled."""
-        return [field_name for field_name in cfg.getUsedItemAttributes()
-                if field_name.startswith('otherMeetingConfigsClonableToField') and
+        return [field_name for field_name in self.Schema().keys()
+                if field_name in cfg.getUsedItemAttributes() and
+                field_name.startswith('otherMeetingConfigsClonableToField') and
                 field_name not in ignored_field_names]
 
     security.declarePublic('doCloneToOtherMeetingConfig')

@@ -92,17 +92,34 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
     def test_pm_ToolView(self):
         '''Access the tool view and just check that it does not fail displaying.'''
-        # XXX fix me, should raise Unauthorized to anonymous
-        # self.assertRaises(self.tool.restrictedTraverse('view'))
+        cfgId = self.meetingConfig.getId()
+        cfg2Id = self.meetingConfig2.getId()
+        # as anonymous this raises Unauthorized
+        self.assertRaises(Unauthorized, self.tool.restrictedTraverse('toolplonemeeting_view'))
+        # creator sees nothing
         self.changeUser('pmCreator1')
-        self.assertTrue(self.tool.restrictedTraverse('toolplonemeeting_view')())
+        self.assertFalse("portal_plonemeeting/%s" % cfgId in
+                         self.tool.restrictedTraverse('toolplonemeeting_view')())
+        self.assertFalse("portal_plonemeeting/%s" % cfg2Id in
+                         self.tool.restrictedTraverse('toolplonemeeting_view')())
+        # pmManager see both configs
         self.changeUser('pmManager')
-        self.assertTrue(self.tool.restrictedTraverse('toolplonemeeting_view')())
+        self.assertTrue("portal_plonemeeting/%s" % cfgId in
+                        self.tool.restrictedTraverse('toolplonemeeting_view')())
+        self.assertTrue("portal_plonemeeting/%s" % cfg2Id in
+                        self.tool.restrictedTraverse('toolplonemeeting_view')())
         self.changeUser('siteadmin')
-        self.assertTrue(self.tool.restrictedTraverse('toolplonemeeting_view')())
-        # ok for MeetingManagers only of one MeetingConfig
+        # siteadmin see both configs
+        self.assertTrue("portal_plonemeeting/%s" % cfgId in
+                        self.tool.restrictedTraverse('toolplonemeeting_view')())
+        self.assertTrue("portal_plonemeeting/%s" % cfg2Id in
+                        self.tool.restrictedTraverse('toolplonemeeting_view')())
+        # pmManager2 will only see one MeetingConfig2
         self.changeUser('pmManager2')
-        self.assertTrue(self.tool.restrictedTraverse('toolplonemeeting_view')())
+        self.assertFalse("portal_plonemeeting/%s" % cfgId in
+                         self.tool.restrictedTraverse('toolplonemeeting_view')())
+        self.assertTrue("portal_plonemeeting/%s" % cfg2Id in
+                        self.tool.restrictedTraverse('toolplonemeeting_view')())
 
     def test_pm_GetMeetingConfig(self):
         '''Test the ToolPloneMeeting.getMeetingConfig method :
