@@ -27,6 +27,7 @@ from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from imio.helpers.cache import get_current_user_id
+from imio.helpers.content import base_getattr
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_encode
 from imio.helpers.security import fplog
@@ -2511,7 +2512,7 @@ def get_enabled_ordered_wfas(tool):
 def get_internal_number(obj, init=False):
     """Return an item internalnumber.
        If p_init=True, itemnumber is initialized if relevant."""
-    internal_number = getattr(obj, "internal_number", None)
+    internal_number = base_getattr(obj, "internal_number", None)
     if init and internal_number is None and not obj.isDefinedInTool():
         # internalnumber is a DX behavior and default value is the next available
         # we init and increment here, decrement is managed upon edit cancel
