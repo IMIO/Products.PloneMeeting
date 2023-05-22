@@ -690,8 +690,12 @@ def item_added_or_initialized(item):
     # avoid multiple initialization
     # when using restapi for example, this empties adviceIndex
     # because init/update_local_roles/init
-    # wait for portal_type to be initialized
-    if item.portal_type == "MeetingItem" or hasattr(item, '_v_already_initialized'):
+    # initialization is made before portal_type is initialized for restapi
+    # but must be done after portal_type is initialized in other cases
+    # especially for internalnumber to work as it's configuration is based on the portal_type
+    if (item.portal_type == "MeetingItem" and
+        item.REQUEST.getHeader("content_type") != "application/json") or \
+       hasattr(item, '_v_already_initialized'):
         return
     item._v_already_initialized = True
 
