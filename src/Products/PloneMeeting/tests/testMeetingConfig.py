@@ -2133,6 +2133,11 @@ class testMeetingConfig(PloneMeetingTestCase):
               'trigger_workflow_transitions_until': '%s.%s' % (cfg_id, tr.id)},))
         self.assertEqual(
             cfg.validate_itemWFValidationLevels(values_disabled_proposed), error_msg)
+        # ok if transition not used
+        cfg2.setMeetingConfigsToCloneTo(
+            ({'meeting_config': '%s' % cfg_id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
+        self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
 
     def test_pm_Validate_itemWFValidationLevels_data_format(self):
         """Test MeetingConfig.validate_itemWFValidationLevels data format:

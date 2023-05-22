@@ -4698,11 +4698,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for other_cfg in tool.objectValues('MeetingConfig'):
             if other_cfg == self:
                 continue
-            values = [v['trigger_workflow_transitions_until'].split('.')[1]
-                      for v in other_cfg.getMeetingConfigsToCloneTo()
-                      if v['meeting_config'] == cfg_id and
-                      v['trigger_workflow_transitions_until'].split('.')[1]
-                      in removed_or_disabled_transitions]
+            values = [
+                v['trigger_workflow_transitions_until'].split('.')[1]
+                for v in other_cfg.getMeetingConfigsToCloneTo()
+                if v['meeting_config'] == cfg_id and
+                v['trigger_workflow_transitions_until'] !=
+                NO_TRIGGER_WF_TRANSITION_UNTIL and
+                v['trigger_workflow_transitions_until'].split('.')[1]
+                in removed_or_disabled_transitions]
             if values:
                 return translate(
                     'state_or_transition_can_not_be_removed_in_use_other_config',
