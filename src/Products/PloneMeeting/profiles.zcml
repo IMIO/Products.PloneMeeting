@@ -172,7 +172,7 @@
 
   <genericsetup:upgradeStep
       title="Go to PloneMeeting 4206"
-      description="Go to PloneMeeting 4205"
+      description="Go to PloneMeeting 4206"
       source="4205"
       destination="4206"
       handler="Products.PloneMeeting.migrations.migrate_to_4206.migrate"
