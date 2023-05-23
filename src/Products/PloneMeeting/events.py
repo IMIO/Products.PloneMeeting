@@ -30,6 +30,7 @@ from persistent.mapping import PersistentMapping
 from plone import api
 from plone.app.textfield import RichText
 from plone.registry.interfaces import IRecordModifiedEvent
+from plone.restapi.deserializer import json_body
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
@@ -687,15 +688,22 @@ def item_added_or_initialized(item):
        because some are triggered in some cases and not others...
        Especially for plone.restapi that calls Initialized then do the validation.'''
 
+    def _init_restapi_portal_type(item):
+        """Try to init portal_type when creating from restapi."""
+        if item.portal_type == "MeetingItem" and \
+           item.REQUEST.getHeader("content_type") == "application/json":
+            portal_type = json_body(item.REQUEST).get('@type')
+            if portal_type is not None:
+                item.portal_type = portal_type
+
     # avoid multiple initialization
     # when using restapi for example, this empties adviceIndex
     # because init/update_local_roles/init
     # initialization is made before portal_type is initialized for restapi
     # but must be done after portal_type is initialized in other cases
     # especially for internalnumber to work as it's configuration is based on the portal_type
-    if (item.portal_type == "MeetingItem" and
-        item.REQUEST.getHeader("content_type") != "application/json") or \
-       hasattr(item, '_v_already_initialized'):
+    _init_restapi_portal_type(item)
+    if item.portal_type == "MeetingItem" or hasattr(item, '_v_already_initialized'):
         return
     item._v_already_initialized = True
 
