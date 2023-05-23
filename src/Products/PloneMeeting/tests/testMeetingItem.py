@@ -8402,6 +8402,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # clone locally
         cloned_item = item.clone()
         self.assertEqual(cloned_item.internal_number, 2)
+        self.assertEqual(self.catalog(internal_number=2)[0].UID, cloned_item.UID())
         # create item from template
         pmFolder = self.getMeetingFolder()
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
@@ -8409,6 +8410,7 @@ class testMeetingItem(PloneMeetingTestCase):
         itemFromTemplate = view.createItemFromTemplate(itemTemplate.UID())
         itemFromTemplate.processForm()
         self.assertEqual(itemFromTemplate.internal_number, 3)
+        self.assertEqual(self.catalog(internal_number=3)[0].UID, itemFromTemplate.UID())
         # clone to another cfg, not enabled for now
         itemFromTemplate.setOtherMeetingConfigsClonableTo((cfg2Id, ))
         itemCfg2 = itemFromTemplate.cloneToOtherMeetingConfig(cfg2Id)
@@ -8418,6 +8420,7 @@ class testMeetingItem(PloneMeetingTestCase):
             cfg2.getItemTypeName(): {'u': False, 'nb': 50, 'expr': u'number'}})
         itemCfg2 = itemFromTemplate.cloneToOtherMeetingConfig(cfg2Id)
         self.assertEqual(itemCfg2.internal_number, 50)
+        self.assertEqual(self.catalog(internal_number=50)[0].UID, itemCfg2.UID())
 
 
 def test_suite():
