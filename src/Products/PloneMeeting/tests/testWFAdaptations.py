@@ -2163,10 +2163,10 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertNotIn('proposed_waiting_advices', itemWF.states)
         self.assertNotIn('prevalidated_waiting_advices', itemWF.states)
         # transitions are created
-        self.assertIn(self._wait_advice_from_proposed_state_transition(), itemWF.transitions)
+        self.assertIn('wait_advices_from_proposed', itemWF.transitions)
         self.assertIn('wait_advices_from_prevalidated', itemWF.transitions)
         # back transitions are created
-        self.assertIn(self._wait_advice_from_proposed_state_back_transition(), itemWF.transitions)
+        self.assertIn('backTo_proposed_from_waiting_advices', itemWF.transitions)
         self.assertIn('backTo_prevalidated_from_waiting_advices', itemWF.transitions)
 
         # right, create an item and set it to 'proposed__or__prevalidated_waiting_advices'
@@ -2180,7 +2180,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse(self.transitions(item))
         # 'pmReviewerLevel1' may do it, it is a prereviewer
         self.changeUser('pmReviewerLevel1')
-        self.assertIn(self._wait_advice_from_proposed_state_transition(), self.transitions(item))
+        self.assertIn('wait_advices_from_proposed', self.transitions(item))
         # trigger from 'prevalidated'
         self.do(item, 'prevalidate')
         self.assertEqual(item.query_state(), 'prevalidated')
