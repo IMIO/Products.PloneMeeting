@@ -268,7 +268,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         '''Logs out currently logged user and logs in p_loginName.'''
         logout()
         if clean_memoize:
-            # necessary to invalidate monkey._listAllowedRolesAndUsers
+            # necessary to invalidate imio.helpers.patches._listAllowedRolesAndUsers
             # or a catalog query reuses cached allowedRolesAndUsers
             cleanRamCache()
             self.cleanMemoize()

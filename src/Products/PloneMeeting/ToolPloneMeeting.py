@@ -785,7 +785,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''cachekey method for self.isManager.'''
         # check also user id to avoid problems between Zope admin and anonymous
         # as they have both no group when initializing portal, some requests
-        # (first time viewlet initialization?) have sometims anonymous as user
+        # (first time viewlet initialization?) have sometimes anonymous as user
         return (get_cachekey_volatile('_users_groups_value'),
                 get_current_user_id(self.REQUEST),
                 repr(context),

@@ -72,6 +72,9 @@ Changelog
 - Added possibility to have an incremental internal number for items.
   This relies on `collective.behavior.internalnumber`.
   [gbastien]
+- Moved `monkey._listAllowedRolesAndUsers` to
+  `imio.helpers.patches._listAllowedRolesAndUsers`.
+  [gbastien]
 
 4.2 (2023-03-06)
 ----------------

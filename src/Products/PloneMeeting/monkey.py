@@ -1,12 +1,10 @@
 
 from Acquisition import aq_base
 from cPickle import dumps
-from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.security import fplog
 from plone import api
-from plone.api.exc import InvalidParameterError
 from plone.app.querystring import queryparser
 from plone.memoize import ram
 from plone.restapi.deserializer import boolean_value
@@ -15,7 +13,6 @@ from plone.restapi.services import Service
 from plonemeeting.restapi import logger as pmrestapi_logger
 from Products.Archetypes.BaseObject import BaseObject
 from Products.Archetypes.Field import Field
-from Products.CMFPlone.CatalogTool import CatalogTool
 from Products.PloneMeeting import logger
 from Products.PlonePAS.tools.membership import MembershipTool
 from Products.PortalTransforms.cache import Cache
@@ -101,43 +98,6 @@ def validate(self, REQUEST=None, errors=None, data=None, metadata=None):
 
 BaseObject.validate = validate
 logger.info("Monkey patching Products.Archetypes.BaseObject.BaseObject (validate)")
-
-
-def _listAllowedRolesAndUsers_cachekey(method, self, user):
-    '''cachekey method for self._listAllowedRolesAndUsers.'''
-    date = get_cachekey_volatile('_users_groups_value')
-    return date, user.getId()
-
-
-@ram.cache(_listAllowedRolesAndUsers_cachekey)
-def _listAllowedRolesAndUsers(self, user):
-    """Monkeypatch to use get_plone_groups_for_user instead getGroups.
-       Moreover store this in the REQUEST."""
-
-    # Makes sure the list includes the user's groups.
-    result = user.getRoles()
-    if 'Anonymous' in result:
-        # The anonymous user has no further roles
-        return ['Anonymous']
-    result = list(result)
-    # XXX change, replaced getGroups by get_plone_groups_for_user
-    # if hasattr(aq_base(user), 'getGroups'):
-    #     groups = ['user:%s' % x for x in user.getGroups()]
-    try:
-        groups = get_plone_groups_for_user()
-    except InvalidParameterError:
-        groups = user.getGroups()
-    if groups:
-        groups = ['user:%s' % x for x in groups]
-        result = result + groups
-    # Order the arguments from small to large sets
-    result.insert(0, 'user:%s' % user.getId())
-    result.append('Anonymous')
-    return result
-
-
-CatalogTool._listAllowedRolesAndUsers = _listAllowedRolesAndUsers
-logger.info("Monkey patching Products.CMFPlone.CatalogTool.CatalogTool (_listAllowedRolesAndUsers)")
 
 
 def hasScript(s):
