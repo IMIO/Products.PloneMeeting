@@ -45,11 +45,11 @@ Changelog
   redirecting resulting in a broken dashboard because collection `UID` was lost.
   [gbastien]
 - Adapted `MeetingItem.setPreferredMeeting` and `MeetingItem._update_preferred_meeting`
-  to manage empty of wrong value when creating an item using `restapi`.
+  to manage empty or wrong value when creating an item using `restapi`.
   [gbastien]
 - Fixed `PMExistingPODTemplate`, do not break if the reusable `PODTemplate` is not
   stored in the `podtemplates` folder of a `MeetingConfig`, it could be in the
-  `contacts` directory or somwhere else.
+  `contacts` directory or somewhere else.
   [gbastien]
 - Make sure transitions are rendered in the actions_panel displayed on advices.
   This is necessary for cases were a complex workflow is used for advices.
