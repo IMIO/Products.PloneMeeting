@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.1 (unreleased)
+4.2.1 (2023-05-31)
 ------------------
 
 - Do no more use `ToolPloneMeeting.get_plone_groups_for_user`,
