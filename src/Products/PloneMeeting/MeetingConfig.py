@@ -4912,9 +4912,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # validate removed workflowAdaptations, in case we removed a wfAdaptation that added
         # a state for example, double check that no more element (item or meeting) is in that state...
         removed = set(self.getWorkflowAdaptations()).difference(set(values))
-        # any 'waiting_advices' WFAdaptation may not be removed when there are items in waiting_advices states
-        removed_waiting_advices = bool([r for r in removed if 'waiting_advices' in r])
-        if removed_waiting_advices:
+        if 'waiting_advices' in removed:
             # this will remove the 'waiting_advices' state for MeetingItem
             # check that no more items are in this state
             # get every 'waiting_advices'-like states, we could have 'itemcreated_waiting_advices',

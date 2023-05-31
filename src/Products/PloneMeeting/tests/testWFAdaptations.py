@@ -798,11 +798,14 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertTrue(item.query_state().endswith('_waiting_advices'))
         self.failIf(cfg.validate_workflowAdaptations(
             ('waiting_advices', 'waiting_advices_proposing_group_send_back')))
+        # 'waiting_advices_proposing_group_send_back' may be unselected
+        self.failIf(cfg.validate_workflowAdaptations(('waiting_advices', )))
+        # but 'waiting_advices' can not be removed
         self.assertEqual(
             cfg.validate_workflowAdaptations(()),
             waiting_advices_removed_error)
 
-        # make wfAdaptation selectable
+        # make wfAdaptation unselectable
         self.changeUser(self._userAbleToBackFromWaitingAdvices(item.query_state()))
         self.do(item, 'backTo_{0}_from_waiting_advices'.format(proposedState))
         self.failIf(cfg.validate_workflowAdaptations(()))
@@ -2536,11 +2539,11 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg = self.meetingConfig
         # ease override by subproducts
         if not self._check_wfa_available([
-            'waiting_advices',
-            'waiting_advices_adviser_send_back',
-            'waiting_advices_proposing_group_send_back',
-            'waiting_advices_from_every_val_levels',
-            'waiting_advices_adviser_may_validate']):
+                'waiting_advices',
+                'waiting_advices_adviser_send_back',
+                'waiting_advices_proposing_group_send_back',
+                'waiting_advices_from_every_val_levels',
+                'waiting_advices_adviser_may_validate']):
             return
 
         # back from
@@ -2559,10 +2562,11 @@ class testWFAdaptations(PloneMeetingTestCase):
         # adviser may send back
         self.changeUser('pmReviewer2')
         # in case shortcuts are activated
-        back_transitions = 'backTo_validated_from_waiting_advices' in self._waiting_advices_adviser_send_back_states() \
-                           and self._waiting_advices_adviser_send_back_states() \
-                           or self._waiting_advices_adviser_send_back_states() + \
-                           ['backTo_validated_from_waiting_advices']
+        back_transitions = 'backTo_validated_from_waiting_advices' in \
+            self._waiting_advices_adviser_send_back_states() and \
+            self._waiting_advices_adviser_send_back_states() or \
+            self._waiting_advices_adviser_send_back_states() + \
+            ['backTo_validated_from_waiting_advices']
         self.assertEqual(self.transitions(item), back_transitions)
         self.do(item, 'backTo_validated_from_waiting_advices')
         self.assertEqual(item.query_state(), 'validated')
@@ -2572,17 +2576,18 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg = self.meetingConfig
         # ease override by subproducts
         if not self._check_wfa_available([
-            'waiting_advices',
-            'waiting_advices_adviser_send_back',
-            'waiting_advices_from_last_val_level',
-            'waiting_advices_given_advices_required_to_validate']):
+                'waiting_advices',
+                'waiting_advices_adviser_send_back',
+                'waiting_advices_from_last_val_level',
+                'waiting_advices_given_advices_required_to_validate']):
             return
 
         # back from
-        self._activate_wfas(('waiting_advices',
-                             'waiting_advices_adviser_send_back',
-                             'waiting_advices_from_last_val_level',
-                             'waiting_advices_given_advices_required_to_validate'))
+        self._activate_wfas(
+            ('waiting_advices',
+             'waiting_advices_adviser_send_back',
+             'waiting_advices_from_last_val_level',
+             'waiting_advices_given_advices_required_to_validate'))
         cfg.setItemAdviceStates(self._default_waiting_advices_state())
 
         # developers
