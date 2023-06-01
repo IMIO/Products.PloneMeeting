@@ -5,8 +5,10 @@ Changelog
 4.2.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Fixed `MeetingConfig.validate_workflowAdaptations`. Removing a `waiting_advices`
+  complementary configuration is allowed, only check for items in review_state
+  `waiting_advices` if the `waiting_advices` WFA was removed.
+  [gbastien]
 
 4.2.1 (2023-05-31)
 ------------------
