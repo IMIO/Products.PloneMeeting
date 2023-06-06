@@ -37,6 +37,7 @@ from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.content import get_user_fullname
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
+from imio.helpers.security import check_zope_admin
 from imio.helpers.security import fplog
 from imio.migrator.utils import end_time
 from imio.prettylink.interfaces import IPrettyLink
@@ -62,7 +63,6 @@ from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import UniqueObject
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import safe_unicode
-from Products.CPUtils.Extensions.utils import check_zope_admin
 from Products.CPUtils.Extensions.utils import remove_generated_previews
 from Products.DataGridField import DataGridField
 from Products.DataGridField.Column import Column

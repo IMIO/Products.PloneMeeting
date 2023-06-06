@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
+
 from collections import OrderedDict
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
+from imio.helpers.security import check_zope_admin
 from imio.pyutils import system
 from plone import api
 from plone.app.uuid.utils import uuidToObject
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.registry.interfaces import IRegistry
 from Products.CMFPlone.utils import safe_unicode
-from Products.CPUtils.Extensions.utils import check_zope_admin
 from z3c.relationfield.relation import RelationValue
 from zope.component import getUtility
 from zope.intid.interfaces import IIntIds

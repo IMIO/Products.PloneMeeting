@@ -16,6 +16,8 @@ Changelog
 - Fixed `Migrator.updateWFStatesAndTransitions` that was broken now that
   `MeetingConfig STATE_ATTRS/TRANSITION_ATTRS` manage `DataGridFields`.
   [gbastien]
+- `check_zope_admin` was moved from `Products.CPUtils` to `imio.helpers.security`.
+  [gbastien]
 
 4.2.1 (2023-05-31)
 ------------------
