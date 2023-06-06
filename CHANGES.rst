@@ -18,6 +18,9 @@ Changelog
   [gbastien]
 - `check_zope_admin` was moved from `Products.CPUtils` to `imio.helpers.security`.
   [gbastien]
+- Make sure tables with no border are dispalyed as this in every cases
+  (view, dashboards, CKEditor, ...).
+  [gbastien]
 
 4.2.1 (2023-05-31)
 ------------------
