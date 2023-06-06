@@ -139,30 +139,45 @@ class Migrator(BaseMigrator):
             'Updating workflow states/transitions changes for elements of type "%s"...'
             % query or related_to)
 
+        def _replace_values_in_list(values, review_state_mappings):
+            """ """
+            for original, replacement in review_state_mappings.items():
+                values = replace_in_list(values, original, replacement)
+                # try also to replace a value like 'Meeting.frozen'
+                original = '%s.%s' % (related_to, original)
+                replacement = '%s.%s' % (related_to, replacement)
+                values = replace_in_list(values, original, replacement)
+            return values
+
+        def _update_attrs(attrs, mappings):
+            for attr in attrs:
+                # state_attr may be a datagridfield field_name/column_name
+                # like powerObservers/item_states
+                if "/" in attr:
+                    field_name, col_name = attr.split('/')
+                    values = cfg.getField(field_name).get(cfg)
+                    for row in values:
+                        if hasattr(row[col_name], '__iter__'):
+                            col_values = _replace_values_in_list(
+                                row[col_name], mappings)
+                        else:
+                            col_values = mappings.get(row[col_name], row[col_name])
+                        row[col_name] = col_values
+                else:
+                    field_name = attr
+                    values = cfg.getField(field_name).get(cfg)
+                    values = _replace_values_in_list(values, mappings)
+                setattr(cfg, field_name, tuple(values))
+
         # MeetingConfigs
         state_attrs = ITEM_WF_STATE_ATTRS if related_to == 'MeetingItem' else MEETING_WF_STATE_ATTRS
         tr_attrs = ITEM_WF_TRANSITION_ATTRS if related_to == 'MeetingItem' else MEETING_WF_TRANSITION_ATTRS
         for cfg in self.tool.objectValues('MeetingConfig'):
             # state_attrs
-            for state_attr in state_attrs:
-                values = getattr(cfg, state_attr)
-                for original, replacement in review_state_mappings.items():
-                    values = replace_in_list(values, original, replacement)
-                    # try also to replace a value like 'Meeting.frozen'
-                    original = '%s.%s' % (related_to, original)
-                    replacement = '%s.%s' % (related_to, replacement)
-                    values = replace_in_list(values, original, replacement)
-                setattr(cfg, state_attr, tuple(values))
+            _update_attrs(state_attrs, review_state_mappings)
+
             # transition_attrs
-            for tr_attr in tr_attrs:
-                values = getattr(cfg, tr_attr)
-                for original, replacement in transition_mappings.items():
-                    values = replace_in_list(values, original, replacement)
-                    # try also to replace a value like 'Meeting.freeze'
-                    original = '%s.%s' % (related_to, original)
-                    replacement = '%s.%s' % (related_to, replacement)
-                    values = replace_in_list(values, original, replacement)
-                setattr(cfg, tr_attr, tuple(values))
+            _update_attrs(tr_attrs, transition_mappings)
 
         # workflow_history
         # manage query if not given

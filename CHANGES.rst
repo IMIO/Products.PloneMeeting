@@ -9,6 +9,13 @@ Changelog
   complementary configuration is allowed, only check for items in review_state
   `waiting_advices` if the `waiting_advices` WFA was removed.
   [gbastien]
+- Set `MeetingStoreItemsPodTemplateAsAnnexBatchActionForm.available_permission`
+  to `ManagePortal`, this new feature from `collective.eeafaceted.batchactions`
+  avoids overriding the `available` method.
+  [gbastien]
+- Fixed `Migrator.updateWFStatesAndTransitions` that was broken now that
+  `MeetingConfig STATE_ATTRS/TRANSITION_ATTRS` manage `DataGridFields`.
+  [gbastien]
 
 4.2.1 (2023-05-31)
 ------------------
