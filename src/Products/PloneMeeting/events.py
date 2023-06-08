@@ -371,7 +371,7 @@ def onOrgWillBeRemoved(current_org, event):
                                                       mapping={'cfg_url': mc.absolute_url()},
                                                       domain="plone",
                                                       context=request))
-        for cat in mc.getCategories(catType='all', onlySelectable=False):
+        for cat in mc.getCategories(catType='item', onlySelectable=False):
             if current_org_uid in cat.get_using_groups() or current_org_uid in cat.get_groups_in_charge():
                 raise BeforeDeleteException(translate("can_not_delete_organization_meetingcategory",
                                                       mapping={'url': cat.absolute_url()},
@@ -1512,7 +1512,7 @@ def onCategoryWillBeMovedOrRemoved(category, event):
         raise BeforeDeleteException(msg)
     # check field category_mapping_when_cloning_to_other_mc of other MC categories
     cat_mapping_id = '{0}.{1}'.format(cfg.getId(), category.getId())
-    catType = category.is_classifier() and 'classifiers' or 'categories'
+    catType = category.get_type()
     for other_cfg in tool.objectValues('MeetingConfig'):
         if other_cfg == cfg:
             continue

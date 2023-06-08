@@ -4056,6 +4056,10 @@ class testMeetingType(PloneMeetingTestCase):
             get_items_additional_catalog_query={'getCategory': 'development'}, force=True)
         self.assertEqual(meeting2.first_item_number, 3)
 
+    def test_pm_MeetingCategories(self):
+        """ """
+        pass
+
 
 def test_suite():
     from unittest import makeSuite

@@ -262,6 +262,12 @@ class IMeeting(IDXMeetingContent):
         title=_(u"title_pre_meeting_place"),
         required=False)
 
+    category = schema.Choice(
+        title=_(u'title_meeting_category'),
+        description=_(u"meeting_category_descr"),
+        vocabulary="Products.PloneMeeting.vocabularies.meeting_categories_vocabulary",
+        required=False,
+    )
     form.widget('extraordinary_session', RadioFieldWidget)
     extraordinary_session = schema.Bool(
         title=_(u'title_extraordinary_session'),
@@ -891,6 +897,9 @@ class Meeting(Container):
             {'optional': False,
              'condition': "python:view.show_field('place') and "
                 "(view.mode != 'display' or context.place == u'other')"},
+        'category':
+            {'optional': True,
+             'condition': ""},
         'videoconference':
             {'optional': True,
              'condition': ""},

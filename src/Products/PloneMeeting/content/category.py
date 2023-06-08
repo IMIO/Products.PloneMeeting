@@ -39,7 +39,10 @@ def validate_category_mapping_when_cloning_to_other_mc(values):
 
 class IMeetingCategory(IConfigElement):
     """
-        MeetingCategory schema
+       MeetingCategory schema
+       We protect some fields with read/write permission so it is only
+       shown on categories related to items, it will not be shown for categories
+       related to meetings.
     """
 
     category_id = schema.TextLine(
@@ -48,6 +51,8 @@ class IMeetingCategory(IConfigElement):
         required=False,
     )
 
+    form.read_permission(using_groups='PloneMeeting.manage_item_category_fields')
+    form.write_permission(using_groups='PloneMeeting.manage_item_category_fields')
     form.widget('using_groups', PMCheckBoxFieldWidget, multiple='multiple')
     using_groups = schema.List(
         title=_("PloneMeeting_label_usingGroups"),
@@ -59,6 +64,10 @@ class IMeetingCategory(IConfigElement):
         default=[],
     )
 
+    form.read_permission(
+        category_mapping_when_cloning_to_other_mc='PloneMeeting.manage_item_category_fields')
+    form.write_permission(
+        category_mapping_when_cloning_to_other_mc='PloneMeeting.manage_item_category_fields')
     form.widget('category_mapping_when_cloning_to_other_mc',
                 PMCheckBoxFieldWidget,
                 multiple='multiple')
@@ -73,6 +82,8 @@ class IMeetingCategory(IConfigElement):
         constraint=validate_category_mapping_when_cloning_to_other_mc,
     )
 
+    form.read_permission(groups_in_charge='PloneMeeting.manage_item_category_fields')
+    form.write_permission(groups_in_charge='PloneMeeting.manage_item_category_fields')
     form.widget('groups_in_charge', PMCheckBoxFieldWidget, multiple='multiple')
     groups_in_charge = schema.List(
         title=_("PloneMeeting_label_groupsInCharge"),
@@ -97,12 +108,11 @@ class MeetingCategory(Item):
     implements(IMeetingCategory)
     security = ClassSecurityInfo()
 
-    security.declarePublic('is_classifier')
+    security.declarePublic('get_type')
 
-    def is_classifier(self):
-        '''Return True if current category is a classifier,
-           False if it is a normal category.'''
-        return self.aq_inner.aq_parent.getId() == 'classifiers'
+    def get_type(self):
+        '''Returns category type, actually the parent folder id.'''
+        return self.aq_inner.aq_parent.getId()
 
     security.declarePublic('get_order')
 
@@ -115,9 +125,8 @@ class MeetingCategory(Item):
             # restricted to some groups, we pass onlySelectable=False
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
-            catType = self.is_classifier() and 'classifiers' or 'categories'
             i = cfg.getCategories(
-                catType=catType, onlySelectable=only_selectable).index(self)
+                catType=self.get_type(), onlySelectable=only_selectable).index(self)
         except ValueError:
             i = None
         return i
@@ -172,12 +181,12 @@ class MeetingCategorySchemaPolicy(DexteritySchemaPolicy):
 class CategoriesOfOtherMCsVocabulary(object):
     implements(IVocabularyFactory)
 
-    def _is_classifier(self, context):
-        '''Depending on context (container or meetingcategory), return if it is a classifier.'''
+    def _get_type(self, context):
+        '''Depending on context (container or meetingcategory), return category type.'''
         if context.portal_type == 'meetingcategory':
-            return context.is_classifier()
+            return context.get_type()
         else:
-            return context.getId() == 'classifiers'
+            return context.getId()
 
     def __call__(self, context):
         '''Vocabulary for 'category_mapping_when_cloning_to_other_mc' field, it returns
@@ -194,7 +203,7 @@ class CategoriesOfOtherMCsVocabulary(object):
         cfg = tool.getMeetingConfig(context)
         # get every other MC the items of this MC can be sent to
         otherMCs = cfg.getMeetingConfigsToCloneTo()
-        catType = self._is_classifier(context) and 'classifiers' or 'categories'
+        catType = self._get_type(context)
         for otherMC in otherMCs:
             otherMCObj = getattr(tool, otherMC['meeting_config'])
             if 'category' not in otherMCObj.getUsedItemAttributes():

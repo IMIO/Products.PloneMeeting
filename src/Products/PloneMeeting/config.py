@@ -63,14 +63,17 @@ AddAnnexDecision = 'PloneMeeting: Add annexDecision'
 AddItem = 'PloneMeeting: Add MeetingItem'
 AddMeeting = 'PloneMeeting: Add Meeting'
 ManageOwnOrganizationFields = 'PloneMeeting: Manage internal organization fields'
+ManageItemCategoryFields = 'PloneMeeting: Manage item category fields'
 WriteUseridField = 'PloneMeeting: Write userid field'
 setDefaultRoles(ReadDecision, ('Manager',))
 setDefaultRoles(WriteDecision, ('Manager',))
 setDefaultRoles(AddAnnex, ('Manager',))
 setDefaultRoles(AddAnnexDecision, ('Manager',))
 setDefaultRoles(WriteMarginalNotes, ('Manager',))
-# given to nobody by default, is only given on /contact/plonegroup-organization level
+# given to nobody by default, is only given on /contacts/plonegroup-organization folder
 setDefaultRoles(ManageOwnOrganizationFields, ())
+# given to nobody by default, is only given on .../meeting-config-id/meetingcategories folder
+setDefaultRoles(ManageItemCategoryFields, ())
 setDefaultRoles(WriteUseridField, ('Manager', ))
 
 # Permissions
@@ -210,6 +213,7 @@ TOOL_FOLDER_RECURRING_ITEMS = "recurringitems"
 TOOL_FOLDER_ITEM_TEMPLATES = "itemtemplates"
 TOOL_FOLDER_ANNEX_TYPES = 'annexes_types'
 TOOL_FOLDER_POD_TEMPLATES = 'podtemplates'
+TOOL_FOLDER_MEETING_CATEGORIES = 'meetingcategories'
 
 ITEM_NO_PREFERRED_MEETING_VALUE = "whatever"
 

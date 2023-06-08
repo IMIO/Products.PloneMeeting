@@ -70,6 +70,8 @@
               title="PloneMeeting: Add annexDecision" />
   <permission id="PloneMeeting.manage_internal_organization_fields"
               title="PloneMeeting: Manage internal organization fields" />
+  <permission id="PloneMeeting.manage_item_category_fields"
+              title="PloneMeeting: Manage item category fields" />
   <permission id="PloneMeeting.write_userid_field"
               title="PloneMeeting: Write userid field" />
 

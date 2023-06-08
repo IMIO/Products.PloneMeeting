@@ -124,23 +124,22 @@ class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
 PMConditionAwareCollectionVocabularyFactory = PMConditionAwareCollectionVocabulary()
 
 
-class ItemCategoriesVocabulary(object):
+class CategoriesVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context, classifiers=False):
+    def __call___cachekey(method, self, context, cat_type='categories'):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.MeetingConfig.getCategoriesIds')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, repr(cfg), classifiers
+        return date, repr(cfg), cat_type
 
     @ram.cache(__call___cachekey)
-    def ItemCategoriesVocabulary__call__(self, context, classifiers=False):
+    def __call__(self, context, cat_type='categories'):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        catType = classifiers and 'classifiers' or 'categories'
-        categories = cfg.getCategories(catType=catType, onlySelectable=False)
+        categories = cfg.getCategories(catType=cat_type, onlySelectable=False)
         activeCategories = [cat for cat in categories if cat.enabled]
         notActiveCategories = [cat for cat in categories if not cat.enabled]
         res_active = []
@@ -169,6 +168,15 @@ class ItemCategoriesVocabulary(object):
         res = res + sorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
+
+class ItemCategoriesVocabulary(CategoriesVocabulary):
+    implements(IVocabularyFactory)
+
+    def ItemCategoriesVocabulary__call__(self, context, cat_type='categories'):
+        """ """
+        return super(ItemCategoriesVocabulary, self).__call__(
+            context, cat_type=cat_type)
+
     # do ram.cache have a different key name
     __call__ = ItemCategoriesVocabulary__call__
 
@@ -179,12 +187,31 @@ ItemCategoriesVocabularyFactory = ItemCategoriesVocabulary()
 class ItemClassifiersVocabulary(ItemCategoriesVocabulary):
     implements(IVocabularyFactory)
 
-    def __call__(self, context, classifiers=True):
+    def ItemClassifiersVocabulary__call__(self, context, cat_type='categories'):
         """ """
-        return super(ItemClassifiersVocabulary, self).__call__(context, classifiers=True)
+        return super(ItemClassifiersVocabulary, self).__call__(
+            context, cat_type='classifiers')
+
+    # do ram.cache have a different key name
+    __call__ = ItemClassifiersVocabulary__call__
 
 
 ItemClassifiersVocabularyFactory = ItemClassifiersVocabulary()
+
+
+class MeetingCategoriesVocabulary(CategoriesVocabulary):
+    implements(IVocabularyFactory)
+
+    def MeetingCategoriesVocabulary__call__(self, context, cat_type='categories'):
+        """ """
+        return super(ItemCategoriesVocabulary, self).__call__(
+            context, cat_type='meetingcategories')
+
+    # do ram.cache have a different key name
+    __call__ = MeetingCategoriesVocabulary__call__
+
+
+MeetingCategoriesVocabularyFactory = MeetingCategoriesVocabulary()
 
 
 class ItemProposingGroupsVocabulary(object):
