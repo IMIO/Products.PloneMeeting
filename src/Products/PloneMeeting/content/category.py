@@ -204,6 +204,7 @@ class CategoriesOfOtherMCsVocabulary(object):
         # get every other MC the items of this MC can be sent to
         otherMCs = cfg.getMeetingConfigsToCloneTo()
         catType = self._get_type(context)
+        cat_ids = []
         for otherMC in otherMCs:
             otherMCObj = getattr(tool, otherMC['meeting_config'])
             if 'category' not in otherMCObj.getUsedItemAttributes():
@@ -212,6 +213,7 @@ class CategoriesOfOtherMCsVocabulary(object):
             otherMCTitle = otherMCObj.Title()
             for category in otherMCObj.getCategories(catType=catType, onlySelectable=False):
                 cat_id = '%s.%s' % (otherMCId, category.getId())
+                cat_ids.append(cat_id)
                 cat_title = safe_unicode('%s -> %s' % (otherMCTitle, category.Title()))
                 if not category.enabled:
                     cat_title = translate(
@@ -220,4 +222,21 @@ class CategoriesOfOtherMCsVocabulary(object):
                         mapping={'element_title': cat_title},
                         context=context.REQUEST)
                 terms.append(SimpleTerm(cat_id, cat_id, cat_title))
+        # manage missing values
+        if context.portal_type == 'meetingcategory' and \
+           context.category_mapping_when_cloning_to_other_mc:
+            missing_cat_ids = set(
+                context.category_mapping_when_cloning_to_other_mc).difference(cat_ids)
+            for cat_info in missing_cat_ids:
+                cfg_id, cat_id = cat_info.split('.')
+                cat = cfg.get(catType).get(cat_id)
+                # in older versions it was possible to delete a category
+                # used in category_mapping_when_cloning_to_other_mc
+                if cat:
+                    cat_title = cat.Title()
+                else:
+                    cat_title = cat_id
+                cat_title = safe_unicode('%s -> %s' % (
+                    tool.get(cfg_id).Title(), cat_title))
+                terms.append(SimpleTerm(cat_info, cat_info, cat_title))
         return SimpleVocabulary(terms)
