@@ -2209,6 +2209,7 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
 
     label = _CEBA("Store POD template as annex for selected elements")
     button_with_icon = True
+    available_permission = ModifyPortalContent
 
     def __init__(self, context, request):
         super(MeetingStoreItemsPodTemplateAsAnnexBatchActionForm, self).__init__(
@@ -2218,8 +2219,9 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
 
     def available(self):
         """ """
+        # super() will check for self.available_permission
         if self.cfg.getMeetingItemTemplatesToStoreAsAnnex() and \
-           _checkPermission(ModifyPortalContent, self.context):
+           super(MeetingStoreItemsPodTemplateAsAnnexBatchActionForm, self).available():
             return True
 
     def _update(self):
@@ -2262,16 +2264,13 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
 class UpdateLocalRolesBatchActionForm(BaseBatchActionForm):
 
     label = _CEBA("Update accesses for selected elements")
+    available_permission = ManagePortal
     button_with_icon = False
 
     def __init__(self, context, request):
         super(UpdateLocalRolesBatchActionForm, self).__init__(context, request)
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(context)
-
-    def available(self):
-        """Only available to Managers."""
-        return _checkPermission(ManagePortal, self.context)
 
     def _apply(self, **data):
         """ """
@@ -2289,6 +2288,7 @@ class PMDeleteBatchActionForm(DeleteBatchActionForm):
     """ """
 
     section = "annexes"
+    available_permission = ModifyPortalContent
 
     def __init__(self, context, request):
         super(PMDeleteBatchActionForm, self).__init__(context, request)
@@ -2297,8 +2297,9 @@ class PMDeleteBatchActionForm(DeleteBatchActionForm):
 
     def available(self):
         """ """
+        # super() will check for self.available_permission
         return "delete" in self.cfg.getEnabledAnnexesBatchActions() and \
-               _checkPermission(ModifyPortalContent, self.context)
+            super(PMDeleteBatchActionForm, self).available()
 
     def _get_deletable_elements(self):
         """Get deeltable elements using IContentDeletable."""
