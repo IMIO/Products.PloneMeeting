@@ -108,6 +108,7 @@ from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MA
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _clear_local_roles
+from Products.PloneMeeting.utils import _get_category
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import add_wf_history_action
 from Products.PloneMeeting.utils import addDataChange
@@ -3855,35 +3856,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getCategory(self, theObject=False, **kwargs):
         '''Overrided accessor to be able to handle parameter p_theObject=False.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
         cat_id = self.getField('category').get(self, **kwargs)
-        if theObject:
-            # return '' if category does not exist or is None
-            res = ''
-            # avoid problems with acquisition or if cat_id is None
-            if cat_id in cfg.categories.objectIds():
-                res = cfg.categories.get(cat_id)
-        else:
-            res = cat_id
-        return res
+        return _get_category(self, cat_id, the_object=theObject)
 
     security.declarePublic('getClassifier')
 
     def getClassifier(self, theObject=False, **kwargs):
         '''Overrided accessor to be able to handle parameter p_theObject=False.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        classifier_id = self.getField('classifier').get(self, **kwargs)
-        if theObject:
-            # return '' if classifier does not exist or is None
-            res = ''
-            # avoid problems with acquisition or if classifier_id is None
-            if classifier_id in cfg.classifiers.objectIds():
-                res = cfg.classifiers.get(classifier_id)
-        else:
-            res = classifier_id
-        return res
+        cat_id = self.getField('classifier').get(self, **kwargs)
+        return _get_category(self, cat_id, the_object=theObject, cat_type="classifiers")
 
     security.declarePublic('getProposingGroup')
 

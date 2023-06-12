@@ -218,6 +218,7 @@ class PMConfigActionsPanelViewlet(PMContentActionsPanelViewlet):
 
     backPages = {'categories': 'data',
                  'classifiers': 'data',
+                 'meetingcategories': 'data',
                  'itemtemplates': 'data',
                  'podtemplates': 'doc',
                  'recurringitems': 'data', }

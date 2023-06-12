@@ -49,6 +49,7 @@ from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
 from Products.PloneMeeting.interfaces import IDXMeetingContent
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
+from Products.PloneMeeting.utils import _get_category
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_next_meeting
@@ -263,16 +264,10 @@ class IMeeting(IDXMeetingContent):
         required=False)
 
     category = schema.Choice(
-        title=_(u'title_meeting_category'),
-        description=_(u"meeting_category_descr"),
+        title=_(u'title_category'),
         vocabulary="Products.PloneMeeting.vocabularies.meeting_categories_vocabulary",
         required=False,
     )
-    form.widget('extraordinary_session', RadioFieldWidget)
-    extraordinary_session = schema.Bool(
-        title=_(u'title_extraordinary_session'),
-        default=False,
-        required=False)
 
     form.widget('videoconference', RadioFieldWidget)
     videoconference = schema.Bool(
@@ -285,6 +280,12 @@ class IMeeting(IDXMeetingContent):
         title=_("title_adopts_next_agenda_of"),
         value_type=schema.Choice(
             vocabulary="Products.PloneMeeting.vocabularies.other_mcs_clonable_to_vocabulary"),
+        required=False)
+
+    form.widget('extraordinary_session', RadioFieldWidget)
+    extraordinary_session = schema.Bool(
+        title=_(u'title_extraordinary_session'),
+        default=False,
         required=False)
 
     form.widget('assembly', PMTextAreaFieldWidget)
@@ -463,7 +464,7 @@ class IMeeting(IDXMeetingContent):
                            'mid_start_date', 'end_date',
                            'approval_date', 'convocation_date',
                            'validation_deadline', 'freeze_deadline',
-                           'place', 'place_other',
+                           'place', 'place_other', 'category',
                            'videoconference', 'adopts_next_agenda_of',
                            'pre_meeting_date', 'pre_meeting_place',
                            'extraordinary_session'])
@@ -1026,6 +1027,12 @@ class Meeting(Container):
         if self.getTagName() != 'Meeting':
             res = self.context
         return res
+
+    def get_category(self, the_object=False):
+        '''Helper to get the category.
+           If p_theObject=True, we return the category object,
+           the stored category id otherwise.'''
+        return _get_category(self, self.category, the_object=the_object)
 
     def get_assembly(self, for_display=True, striked=True, mark_empty_tags=False, raw=True):
         """ """

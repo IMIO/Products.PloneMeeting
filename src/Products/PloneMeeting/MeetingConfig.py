@@ -6696,8 +6696,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # create the default item template
                 self._create_default_item_template()
 
-            # setup the ManageItemCategoryFields permission for TOOL_FOLDER_MEETING_CATEGORIES
-            if folderId == TOOL_FOLDER_MEETING_CATEGORIES:
+            # setup the ManageItemCategoryFields permission
+            # for categories/classifiers folders
+            if folderId in (TOOL_FOLDER_CATEGORIES, TOOL_FOLDER_CLASSIFIERS):
                 folder.manage_permission(
                     ManageItemCategoryFields,
                     ('Manager', 'Site Administrator'), acquire=0)
@@ -7356,15 +7357,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            If p_onlySelectable is True, there will be a check to see if the category
            is available to the current user, otherwise, we return every existing categories.
            If a p_userId is given, it will be used to be passed to isSelectable.
-           p_catType may be 'categories' (default), then returns categories, 'classifiers',
-           then returns classifiers or 'all', then return every categories and classifiers.'''
+           p_catType may be 'categories' (default), then returns 'categories', 'classifiers',
+           then returns classifiers or 'item/meeting' will return item or meeting
+           related categories.'''
 
-        if catType == 'all':
+        if catType == 'item':
+            # return every item related categories
             categories = self.categories.objectValues() + self.classifiers.objectValues()
-        elif catType == 'classifiers':
-            categories = self.classifiers.objectValues()
+        elif catType == 'meeting':
+            # return every meeting related categories
+            categories = self.meetingcategories.objectValues()
         else:
-            categories = self.categories.objectValues()
+            # return asked categories: categories, classifiers or meetingcategories
+            categories = self.get(catType).objectValues()
 
         if onlySelectable:
             filter_ids = self.getCategoriesIds(catType, onlySelectable, userId)

@@ -10,7 +10,7 @@
   <utility component=".vocabularies.ItemClassifiersVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.classifiersvocabulary" />
   <utility component=".vocabularies.MeetingCategoriesVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.meetingcategoriesvocabulary" />
+           name="Products.PloneMeeting.vocabularies.meeting_categories_vocabulary" />
   <utility component=".vocabularies.UserProposingGroupsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.userproposinggroupsvocabulary" />
   <utility component=".vocabularies.UserProposingGroupsWithGroupsInChargeVocabularyFactory"

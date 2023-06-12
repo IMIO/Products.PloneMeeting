@@ -204,7 +204,7 @@ class MeetingCategoriesVocabulary(CategoriesVocabulary):
 
     def MeetingCategoriesVocabulary__call__(self, context, cat_type='categories'):
         """ """
-        return super(ItemCategoriesVocabulary, self).__call__(
+        return super(MeetingCategoriesVocabulary, self).__call__(
             context, cat_type='meetingcategories')
 
     # do ram.cache have a different key name

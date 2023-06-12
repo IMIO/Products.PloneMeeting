@@ -611,6 +611,26 @@
         </tal:defines>
       </fieldset>
 
+      <tal:comment replace="nothing">Meeting categories</tal:comment>
+      <a name="meetingcategories"></a>
+      <fieldset>
+        <legend>
+         <span i18n:translate="Meeting categories"></span>
+          <a href="#"
+             class="link-overlay-pm"
+             title="add_object"
+             i18n:attributes="title"
+             tal:condition="isRealManager"
+             tal:attributes="href string:${context_url}/meetingcategories/++add++meetingcategory">
+            <img src="#" tal:attributes="src string:$portal_url/new.png" />
+          </a>
+        </legend>
+        <p class="discreet" i18n:translate="meeting_categories_descr"></p><br />
+        <tal:defines define="cFolder python:context.meetingcategories;">
+          <metal:addtionalInformations use-macro="here/@@pm-macros/categoriesInConfig" />
+        </tal:defines>
+      </fieldset>
+
       <!-- Recurring items -->
       <a name="recurringitems"></a>
       <fieldset>

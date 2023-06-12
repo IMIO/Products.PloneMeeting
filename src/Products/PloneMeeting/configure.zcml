@@ -248,6 +248,7 @@
   <adapter name="annexes_index" factory=".indexes.annexes_index" />
   <adapter name="Description" factory=".indexes.Description" />
   <adapter name="getConfigId" factory=".indexes.getConfigId" />
+  <adapter name="getCategory" factory=".indexes.getCategory" />
   <adapter name="getCopyGroups" factory=".indexes.getCopyGroups" />
   <adapter name="getGroupsInCharge" factory=".indexes.getGroupsInCharge" />
   <adapter name="preferred_meeting_date" factory=".indexes.preferred_meeting_date" />

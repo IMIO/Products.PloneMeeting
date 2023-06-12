@@ -72,7 +72,8 @@ setDefaultRoles(AddAnnexDecision, ('Manager',))
 setDefaultRoles(WriteMarginalNotes, ('Manager',))
 # given to nobody by default, is only given on /contacts/plonegroup-organization folder
 setDefaultRoles(ManageOwnOrganizationFields, ())
-# given to nobody by default, is only given on .../meeting-config-id/meetingcategories folder
+# given to nobody by default, is only given on .../meeting-config-id/categories
+# and .../meeting-config-id/classifiers folder
 setDefaultRoles(ManageItemCategoryFields, ())
 setDefaultRoles(WriteUseridField, ('Manager', ))
 
