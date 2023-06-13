@@ -984,6 +984,10 @@ class ConfigActionsPanelView(ActionsPanelView):
         if self.context.portal_type == 'organization':
             self.SECTIONS_TO_RENDER += ('renderLinkedPloneGroups', )
 
+        if self.context.portal_type == 'meetingcategory':
+            self.SECTIONS_TO_RENDER += ('renderActions', )
+            self.ACCEPTABLE_ACTIONS = ('rename', )
+
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
@@ -1009,11 +1013,14 @@ class ConfigActionsPanelView(ActionsPanelView):
                 showActions = True
             elif self.context.portal_type in ('organization', 'person', 'directory'):
                 showAddContent = True
+            elif self.context.portal_type == 'meetingcategory':
+                showActions = True
         else:
             # let add a new held_position from person dashboard
             if self.context.portal_type in ('person', ):
                 showAddContent = True
-
+            elif self.context.portal_type in ('meetingcategory', ):
+                showActions = True
         return super(ConfigActionsPanelView, self).\
             __call__(useIcons=useIcons,
                      showTransitions=showTransitions,

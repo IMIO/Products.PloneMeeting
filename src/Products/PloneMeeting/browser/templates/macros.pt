@@ -958,7 +958,7 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
         <h5><a tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a></h5>
         <tal:additionalInformations
             define="context python: obj;
-                    excludedFields python: ('title', 'category_id')">
+                    excludedFields python: ('title', )">
             <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
         </tal:additionalInformations>
     </td>
