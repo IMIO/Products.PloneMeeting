@@ -521,3 +521,12 @@ def committees_index_meeting(obj):
       Indexes the committees of a meeting into "committees_index" index.
     """
     return get_datagridfield_column_value(obj.committees, "row_id") or EMPTY_STRING
+
+
+@indexer(IMeeting)
+def getCategory(obj):
+    """
+      Indexes the category under name "getCategory" for Meetings.
+    """
+    # can not index "None"
+    return obj.category or _marker

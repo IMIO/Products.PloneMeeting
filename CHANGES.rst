@@ -24,6 +24,8 @@ Changelog
 - Adapted `BatchActions` to use new attribute `available_permission` to avoid
   overriding the `available` method.
   [gbastien]
+- Added `category` on meetings.
+  [gbastien]
 
 4.2.1 (2023-05-31)
 ------------------

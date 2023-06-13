@@ -78,6 +78,7 @@ from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import ManageItemCategoryFields
 from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
@@ -89,6 +90,7 @@ from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
 from Products.PloneMeeting.config import TOOL_FOLDER_CATEGORIES
 from Products.PloneMeeting.config import TOOL_FOLDER_CLASSIFIERS
 from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
+from Products.PloneMeeting.config import TOOL_FOLDER_MEETING_CATEGORIES
 from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
@@ -2824,12 +2826,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  ('meetingcategory', ),
                                  ()
                                  ),
-
         TOOL_FOLDER_CLASSIFIERS: (('Classifiers', 'Folder'),
                                   ('meetingcategory', ),
                                   ()
                                   ),
-
+        TOOL_FOLDER_MEETING_CATEGORIES: (('Meeting categories', 'Folder'),
+                                         ('meetingcategory', ),
+                                         ()
+                                         ),
         TOOL_FOLDER_SEARCHES: (('Searches', 'Folder'),
                                ('Folder', ),
                                # 'items' is a reserved word
@@ -6692,6 +6696,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # create the default item template
                 self._create_default_item_template()
 
+            # setup the ManageItemCategoryFields permission
+            # for categories/classifiers folders
+            if folderId in (TOOL_FOLDER_CATEGORIES, TOOL_FOLDER_CLASSIFIERS):
+                folder.manage_permission(
+                    ManageItemCategoryFields,
+                    ('Manager', 'Site Administrator'), acquire=0)
+
             folder.setTitle(translate(folderTitle,
                                       domain="PloneMeeting",
                                       context=self.REQUEST,
@@ -7328,12 +7339,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         """Cached method to speed up getCategories and to be able to keep cache
            for longer than a request as getCategories returns objects."""
         ids = []
-        if catType == 'all':
+        if catType == 'item':
+            # every item related categories
             categories = self.categories.objectValues() + self.classifiers.objectValues()
-        elif catType == 'classifiers':
-            categories = self.classifiers.objectValues()
         else:
-            categories = self.categories.objectValues()
+            categories = self.get(catType).objectValues()
 
         for cat in categories:
             if not onlySelectable or cat.is_selectable(userId=userId):
@@ -7347,15 +7357,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            If p_onlySelectable is True, there will be a check to see if the category
            is available to the current user, otherwise, we return every existing categories.
            If a p_userId is given, it will be used to be passed to isSelectable.
-           p_catType may be 'categories' (default), then returns categories, 'classifiers',
-           then returns classifiers or 'all', then return every categories and classifiers.'''
+           p_catType may be 'categories' (default), then returns 'categories', 'classifiers',
+           then returns classifiers or 'item/meeting' will return item or meeting
+           related categories.'''
 
-        if catType == 'all':
+        if catType == 'item':
+            # return every item related categories
             categories = self.categories.objectValues() + self.classifiers.objectValues()
-        elif catType == 'classifiers':
-            categories = self.classifiers.objectValues()
+        elif catType == 'meeting':
+            # return every meeting related categories
+            categories = self.meetingcategories.objectValues()
         else:
-            categories = self.categories.objectValues()
+            # return asked categories: categories, classifiers or meetingcategories
+            categories = self.get(catType).objectValues()
 
         if onlySelectable:
             filter_ids = self.getCategoriesIds(catType, onlySelectable, userId)

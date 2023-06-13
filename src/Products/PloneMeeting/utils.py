@@ -2525,6 +2525,22 @@ def get_internal_number(obj, init=False):
     return internal_number
 
 
+def _get_category(obj, cat_id, the_object=False, cat_type='categories'):
+    """Get the cat_type "category" on an item or meeting.
+       p_cat_type may be "categories", "classifiers" or "meetingcategories"."""
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(obj)
+    if the_object:
+        # return '' if category does not exist or is None
+        res = ''
+        # avoid problems with acquisition or if cat_id is None
+        if cat_id in cfg.get(cat_type).objectIds():
+            res = cfg.get(cat_type).get(cat_id)
+    else:
+        res = cat_id
+    return res
+
+
 class AdvicesUpdatedEvent(ObjectEvent):
     implements(IAdvicesUpdatedEvent)
 

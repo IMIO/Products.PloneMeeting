@@ -42,6 +42,11 @@ classifier1 = CategoryDescriptor('classifier1', 'Classifier 1')
 classifier2 = CategoryDescriptor('classifier2', 'Classifier 2')
 classifier3 = CategoryDescriptor('classifier3', 'Classifier 3')
 
+# Meeting categories
+mcategory1 = CategoryDescriptor('mcategory1', 'Meeting category 1', category_id='MC1')
+mcategory2 = CategoryDescriptor('mcategory2', 'Meeting category 2', category_id='MC2')
+mcategory3 = CategoryDescriptor('mcategory3', 'Meeting category 3')
+
 # Annex types
 overheadAnalysisSubtype = ItemAnnexSubTypeDescriptor(
     'overhead-analysis-sub-annex',
@@ -280,6 +285,7 @@ meetingPma.assembly = 'Gauthier Bastien, Gilles Demaret, Kilian Soree, ' \
 meetingPma.signatures = 'Bill Gates, Steve Jobs'
 meetingPma.categories = [development, research, events]
 meetingPma.classifiers = [classifier1, classifier2, classifier3]
+meetingPma.meetingcategories = [mcategory1, mcategory2, mcategory3]
 meetingPma.annexTypes = [financialAnalysis, budgetAnalysisCfg1, overheadAnalysis,
                          itemAnnex, decisionAnnex, marketingAnalysis,
                          adviceAnnex, adviceLegalAnalysis, meetingAnnex]

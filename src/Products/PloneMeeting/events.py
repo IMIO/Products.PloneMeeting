@@ -371,7 +371,7 @@ def onOrgWillBeRemoved(current_org, event):
                                                       mapping={'cfg_url': mc.absolute_url()},
                                                       domain="plone",
                                                       context=request))
-        for cat in mc.getCategories(catType='all', onlySelectable=False):
+        for cat in mc.getCategories(catType='item', onlySelectable=False):
             if current_org_uid in cat.get_using_groups() or current_org_uid in cat.get_groups_in_charge():
                 raise BeforeDeleteException(translate("can_not_delete_organization_meetingcategory",
                                                       mapping={'url': cat.absolute_url()},
@@ -1161,7 +1161,7 @@ def onMeetingModified(meeting, event):
     if not isinstance(event, ContainerModifiedEvent):
         mod_attrs = get_modified_attrs(event)
         need_reindex = False
-        if not mod_attrs or "date" in mod_attrs:
+        if not mod_attrs or "date" in mod_attrs or "category" in mod_attrs:
             need_reindex = meeting.update_title()
         # Update contact-related info (attendees, signatories, replacements...)
         meeting.update_contacts()
@@ -1477,10 +1477,13 @@ def onFacetedGlobalSettingsChanged(folder, event):
 
 def onCategoryWillBeMovedOrRemoved(category, event):
     '''Checks if the current p_category can be moved (renamed) or deleted:
-      - it can not be linked to an existing meetingItem (normal item,
-        recurring item or item template);
-      - it can not be used in field 'category_mapping_when_cloning_to_other_mc'
-        of another meetingcategory.'''
+      - if item related:
+        - it can not be linked to an existing meetingItem
+          (normal item, recurring item or item template);
+        - it can not be used in field 'category_mapping_when_cloning_to_other_mc'
+          of another meetingcategory.
+      - if meeting related:
+        - it can not be linked to an existing meeting.'''
     # If we are trying to remove the whole Plone Site, bypass this hook.
     # bypass also if we are in the creation process
     if event.object.meta_type == 'Plone Site' or \
@@ -1490,40 +1493,54 @@ def onCategoryWillBeMovedOrRemoved(category, event):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(category)
     catalog = api.portal.get_tool('portal_catalog')
-    brains = catalog.unrestrictedSearchResults(
-        portal_type=(
-            cfg.getItemTypeName(),
-            cfg.getItemTypeName(configType='MeetingItemRecurring'),
-            cfg.getItemTypeName(configType='MeetingItemTemplate')),
-        getCategory=category.getId())
-    brains += catalog.unrestrictedSearchResults(
-        portal_type=(
-            cfg.getItemTypeName(),
-            cfg.getItemTypeName(configType='MeetingItemRecurring'),
-            cfg.getItemTypeName(configType='MeetingItemTemplate')),
-        getRawClassifier=category.getId())
-    if brains:
-        # linked to an existing item, we can not delete it
-        msg = translate(
-            "can_not_delete_meetingcategory_meetingitem",
-            domain="plone",
-            mapping={'url': brains[0].getURL()},
-            context=category.REQUEST)
-        raise BeforeDeleteException(msg)
-    # check field category_mapping_when_cloning_to_other_mc of other MC categories
-    cat_mapping_id = '{0}.{1}'.format(cfg.getId(), category.getId())
-    catType = category.is_classifier() and 'classifiers' or 'categories'
-    for other_cfg in tool.objectValues('MeetingConfig'):
-        if other_cfg == cfg:
-            continue
-        for other_cat in other_cfg.getCategories(catType=catType, onlySelectable=False):
-            if cat_mapping_id in other_cat.category_mapping_when_cloning_to_other_mc:
-                msg = translate(
-                    "can_not_delete_meetingcategory_other_category_mapping",
-                    domain="plone",
-                    mapping={'url': other_cat.absolute_url()},
-                    context=category.REQUEST)
-                raise BeforeDeleteException(msg)
+
+    if category in cfg.getCategories(catType='item', onlySelectable=False):
+        brains = catalog.unrestrictedSearchResults(
+            portal_type=(
+                cfg.getItemTypeName(),
+                cfg.getItemTypeName(configType='MeetingItemRecurring'),
+                cfg.getItemTypeName(configType='MeetingItemTemplate')),
+            getCategory=category.getId())
+        brains += catalog.unrestrictedSearchResults(
+            portal_type=(
+                cfg.getItemTypeName(),
+                cfg.getItemTypeName(configType='MeetingItemRecurring'),
+                cfg.getItemTypeName(configType='MeetingItemTemplate')),
+            getRawClassifier=category.getId())
+        if brains:
+            # linked to an existing item, we can not delete it
+            msg = translate(
+                "can_not_delete_meetingcategory_meetingitem",
+                domain="plone",
+                mapping={'url': brains[0].getURL()},
+                context=category.REQUEST)
+            raise BeforeDeleteException(msg)
+        # check field category_mapping_when_cloning_to_other_mc of other MC categories
+        cat_mapping_id = '{0}.{1}'.format(cfg.getId(), category.getId())
+        catType = category.get_type()
+        for other_cfg in tool.objectValues('MeetingConfig'):
+            if other_cfg == cfg:
+                continue
+            for other_cat in other_cfg.getCategories(catType=catType, onlySelectable=False):
+                if cat_mapping_id in other_cat.category_mapping_when_cloning_to_other_mc:
+                    msg = translate(
+                        "can_not_delete_meetingcategory_other_category_mapping",
+                        domain="plone",
+                        mapping={'url': other_cat.absolute_url()},
+                        context=category.REQUEST)
+                    raise BeforeDeleteException(msg)
+    else:
+        brains = catalog.unrestrictedSearchResults(
+            portal_type=cfg.getMeetingTypeName(),
+            getCategory=category.getId())
+        if brains:
+            # linked to an existing meeting, we can not delete it
+            msg = translate(
+                "can_not_delete_meetingcategory_meeting",
+                domain="plone",
+                mapping={'url': brains[0].getURL()},
+                context=category.REQUEST)
+            raise BeforeDeleteException(msg)
 
 
 def onMeetingWillBeRemoved(meeting, event):
