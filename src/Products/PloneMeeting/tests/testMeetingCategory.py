@@ -141,6 +141,31 @@ class testMeetingCategory(PloneMeetingTestCase):
         category.aq_parent.manage_renameObject(category.getId(), 'my_new_id')
         self.assertEqual(category.getId(), 'my_new_id')
 
+    def test_pm_CanNotRenameOrRemoveUsedMeetingCategory(self):
+        """A category used on a meeting can not be renamed or removed."""
+        self._enableField('category', related_to='Meeting')
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', category='mcategory1')
+        category = meeting.get_category(True)
+        # can not rename
+        self.changeUser('siteadmin')
+        self.assertRaises(BeforeDeleteException,
+                          category.aq_inner.aq_parent.manage_renameObject,
+                          category.getId(),
+                          'my_new_id')
+        # can not delete
+        self.assertRaises(BeforeDeleteException,
+            category.aq_inner.aq_parent.manage_delObjects,
+            [category.getId()])
+        # can be renamed or removed if not used
+        meeting.category = None
+        meeting.reindexObject()
+        # renamed
+        category.aq_parent.manage_renameObject(category.getId(), 'my_new_id')
+        self.assertEqual(category.getId(), 'my_new_id')
+        # removed
+        category.aq_parent.manage_delObjects([category.getId()])
+
     def test_pm_ListCategoriesOfOtherMCs(self):
         '''Test the vocabulary of the 'category_mapping_when_cloning_to_other_mc' field.'''
         cfg = self.meetingConfig

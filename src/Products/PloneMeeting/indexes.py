@@ -528,4 +528,5 @@ def getCategory(obj):
     """
       Indexes the category under name "getCategory" for Meetings.
     """
-    return obj.category
+    # can not index "None"
+    return obj.category or _marker

@@ -43,8 +43,8 @@ classifier2 = CategoryDescriptor('classifier2', 'Classifier 2')
 classifier3 = CategoryDescriptor('classifier3', 'Classifier 3')
 
 # Meeting categories
-mcategory1 = CategoryDescriptor('mcategory1', 'Meeting category 1')
-mcategory2 = CategoryDescriptor('mcategory2', 'Meeting category 2')
+mcategory1 = CategoryDescriptor('mcategory1', 'Meeting category 1', category_id='MC1')
+mcategory2 = CategoryDescriptor('mcategory2', 'Meeting category 2', category_id='MC2')
 mcategory3 = CategoryDescriptor('mcategory3', 'Meeting category 3')
 
 # Annex types

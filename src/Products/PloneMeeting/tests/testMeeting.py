@@ -4057,8 +4057,21 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(meeting2.first_item_number, 3)
 
     def test_pm_MeetingCategories(self):
-        """ """
-        pass
+        """When category enabled on meeting, it's category_id is displayed in meeting title."""
+        cfg = self.meetingConfig
+        self._enableField('category', related_to="Meeting")
+        # when used, the category's category_id is displayed in the title
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=datetime(2023, 6, 13, 15, 00), category='mcategory1')
+        self.assertEqual(
+            meeting.get_category(True), cfg.meetingcategories.mcategory1)
+        self.assertEqual(meeting.title, u'MC1 - 13 june 2023 (15:00)')
+        self.assertTrue("title='MC1 - 13/06/2023 (15:00)'" in meeting.get_pretty_link())
+        # when no category_id, it is not displayed
+        meeting.category = 'mcategory3'
+        notify(ObjectModifiedEvent(meeting))
+        self.assertEqual(meeting.title, u'13 june 2023 (15:00)')
+        self.assertTrue("title='13/06/2023 (15:00)'" in meeting.get_pretty_link())
 
 
 def test_suite():

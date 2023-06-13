@@ -1161,7 +1161,7 @@ def onMeetingModified(meeting, event):
     if not isinstance(event, ContainerModifiedEvent):
         mod_attrs = get_modified_attrs(event)
         need_reindex = False
-        if not mod_attrs or "date" in mod_attrs:
+        if not mod_attrs or "date" in mod_attrs or "category" in mod_attrs:
             need_reindex = meeting.update_title()
         # Update contact-related info (attendees, signatories, replacements...)
         meeting.update_contacts()
