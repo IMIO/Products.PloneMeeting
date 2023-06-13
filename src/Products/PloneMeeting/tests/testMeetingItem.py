@@ -7514,6 +7514,22 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.getItemReference(), 'Ref/1')
         # reference viewable on item view
         self.assertTrue(item.getItemReference() in item())
+        # reference is shown in every states
+        item = self.create('MeetingItem')
+        self.assertTrue(item.adapted().mustShowItemReference())
+        self.proposeItem(item)
+        self.assertTrue(item.adapted().mustShowItemReference())
+        self.validateItem(item)
+        self.assertTrue(item.adapted().mustShowItemReference())
+        meeting = self.create('Meeting')
+        self.presentItem(item)
+        self.assertTrue(item.adapted().mustShowItemReference())
+        self.freezeMeeting(meeting)
+        self.assertTrue(item.adapted().mustShowItemReference())
+        self.decideMeeting(meeting)
+        self.assertTrue(item.adapted().mustShowItemReference())
+        self.closeMeeting(meeting)
+        self.assertTrue(item.adapted().mustShowItemReference())
 
     def test_pm_ItemNotDeletableWhenContainingGivenAdvices(self):
         """If MeetingConfig.itemWithGivenAdviceIsNotDeletable is True,

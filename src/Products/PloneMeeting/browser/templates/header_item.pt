@@ -7,7 +7,7 @@
       tal:condition="nocall:itemNumber"
       tal:content="string:${itemNumber}."></span>
     <span tal:content="structure python: context.getPrettyLink()">Pretty title</span>
-    <tal:itemRef define="dummy context/checkPrivacyViewable;
+    <tal:itemRef define="dummy python: context.checkPrivacyViewable();
                          itemReference python: context.getItemReference();"
                  condition="python: context.adapted().mustShowItemReference()">
         <br />

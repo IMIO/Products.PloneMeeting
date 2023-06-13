@@ -4667,9 +4667,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = False
         item = self.getSelf()
         meeting = item.getMeeting()
-        if (meeting and item.getMeeting().is_late()) or \
-           (not meeting and item.getItemReference()):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if meeting and item.getMeeting().is_late():
             res = True
+        else:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(item)
+            res = cfg.getComputeItemReferenceForItemsOutOfMeeting()
         return res
 
     security.declarePrivate('addRecurringItemToMeeting')

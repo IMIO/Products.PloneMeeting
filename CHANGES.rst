@@ -26,6 +26,9 @@ Changelog
   [gbastien]
 - Added `category` on meetings.
   [gbastien]
+- Fixed reference not displayed on item in state `presented` when using
+  `MeetingConfig.computeItemReferenceForItemsOutOfMeeting`.
+  [gbastien]
 
 4.2.1 (2023-05-31)
 ------------------

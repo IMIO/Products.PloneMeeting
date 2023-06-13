@@ -189,8 +189,7 @@ class IMeetingItemDocumentation:
     def mustShowItemReference():
         '''When must I show the item reference ? In the default implementation,
            item references are shown as soon as a meeting is frozen or when
-           an item is out of a meeting but has a reference (case when using
-           workflowAdaptation "accepted_out_of_meeting" for example).'''
+           using MeetingConfig.computeItemReferenceForItemsOutOfMeeting.'''
     def get_predecessors():
         '''Returns the entire chain of predecessors and successors.'''
     def addRecurringItemToMeeting(meeting):
