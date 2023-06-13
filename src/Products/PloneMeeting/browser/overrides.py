@@ -30,6 +30,7 @@ from imio.dashboard.interfaces import IContactsDashboard
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import uuidToObject
+from imio.helpers.security import check_zope_admin
 from imio.history import safe_utils as imio_history_safe_utils
 from imio.history.browser.views import IHContentHistoryView
 from imio.history.browser.views import IHDocumentBylineViewlet
@@ -1630,13 +1631,15 @@ class PMBaseOverviewControlPanel(UsersGroupsControlPanelView):
     def doSearch(self, searchString):
         results = super(PMBaseOverviewControlPanel, self).doSearch(searchString)
         adapted_results = []
+        is_zope_admin = check_zope_admin()
         for item in results:
             adapted_item = item.copy()
             # only keep some relevant roles
             for role in self.portal_roles:
                 adapted_item['roles'][role]['canAssign'] = False
-            # remove possibility to remove user from UI
-            adapted_item['can_delete'] = False
+            # remove possibility to remove user from UI except for the Zope admin
+            if not is_zope_admin:
+                adapted_item['can_delete'] = False
             adapted_results.append(adapted_item)
         return adapted_results
 

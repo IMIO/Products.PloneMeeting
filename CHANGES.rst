@@ -29,6 +29,8 @@ Changelog
 - Fixed reference not displayed on item in state `presented` when using
   `MeetingConfig.computeItemReferenceForItemsOutOfMeeting`.
   [gbastien]
+- In users management, a real Zope admin may remove a user.
+  [gbastien]
 
 4.2.1 (2023-05-31)
 ------------------
