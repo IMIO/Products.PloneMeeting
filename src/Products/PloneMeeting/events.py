@@ -1530,6 +1530,7 @@ def onCategoryWillBeMovedOrRemoved(category, event):
                         context=category.REQUEST)
                     raise BeforeDeleteException(msg)
     else:
+        # meeting related category
         brains = catalog.unrestrictedSearchResults(
             portal_type=cfg.getMeetingTypeName(),
             getCategory=category.getId())
