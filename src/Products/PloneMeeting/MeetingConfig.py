@@ -2481,7 +2481,7 @@ schema = Schema((
         schemata="advices",
         multiValued=1,
         vocabulary='listItemAttributeVisibleForWithMeetingManagers',
-        default=defValues.usingGroups,
+        default=defValues.itemInternalNotesEditableBy,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -2911,7 +2911,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'accepted_out_of_meeting_emergency_and_duplicated',
                      'transfered',
                      'transfered_and_duplicated',
-                     'meetingmanager_correct_closed_meeting')
+                     'meetingmanager_correct_closed_meeting',
+                     'meeting_remove_meetingobserverglobal')
 
     def getId(self, real_id=False):
         """Override to take __real_id__ into account (used in some tests)."""
@@ -3607,6 +3608,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 criteria.edit(criterion.__name__, **{'default': value})
         self.getField('maxShownListings').set(self, value, **kwargs)
 
+    security.declareProtected(WriteRiskyConfig, 'setUsingGroups')
+
+    def setUsingGroups(self, value, **kwargs):
+        '''Overrides the field 'setUsingGroups' mutator to enable or disable
+           the 'meeting_remove_meetingobserverglobal' WFA when relevant.
+           Updating WF role mappings and every meetings local_roles is managed
+           by the onConfigModified event.'''
+        stored = self.getField('usingGroups').get(self, **kwargs)
+        if not stored and value:
+            # enabling usingGroups
+            self.REQUEST.set('need_update_meeting_remove_meetingobserverglobal', True)
+            wfas = list(self.getWorkflowAdaptations())
+            if 'meeting_remove_meetingobserverglobal' not in wfas:
+                wfas.append('meeting_remove_meetingobserverglobal')
+                self.setWorkflowAdaptations(wfas)
+        elif stored and not value:
+            # disabling usingGroups
+            self.REQUEST.set('need_update_meeting_remove_meetingobserverglobal', True)
+            wfas = list(self.getWorkflowAdaptations())
+            wfas.remove('meeting_remove_meetingobserverglobal')
+            self.setWorkflowAdaptations(wfas)
+
     security.declarePublic('getUsedVoteValues')
 
     def getUsedVoteValues(self,
@@ -3664,9 +3687,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getUsingGroups')
 
     def getUsingGroups(self, theObjects=False, **kwargs):
-        '''Overrides the field 'usingGroups' acessor to manage theObjects.'''
+        '''Overrides the field 'usingGroups' accessor to manage theObjects.'''
         res = self.getField('usingGroups').get(self, **kwargs)
         if theObjects:
+            # when no usingGroups, so kept_org_uids=[],
+            # get_organizations will return every orgs
             res = get_organizations(kept_org_uids=res)
         return res
 

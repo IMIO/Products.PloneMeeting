@@ -22,6 +22,7 @@ from imio.helpers.content import get_modified_attrs
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_delattr
 from imio.helpers.security import fplog
+from imio.helpers.workflow import update_role_mappings_for
 from imio.helpers.xhtml import storeImagesLocally
 from OFS.interfaces import IObjectWillBeAddedEvent
 from OFS.ObjectManager import BeforeDeleteException
@@ -484,6 +485,19 @@ def _itemAnnexTypes(cfg):
             annex_types.append(annex_type)
             annex_types = annex_types + list(annex_type.objectValues())
     return annex_types
+
+
+def onConfigModified(config, event):
+    '''Enable the 'meeting_remove_meetingobserverglobal' WFA if relevant.'''
+    if config.REQUEST.get('need_update_meeting_remove_meetingobserverglobal', False) is True:
+        wf = config.getMeetingWorkflow()
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog.unrestrictedSearchResults(
+            portal_type=config.getMeetingTypeName())
+        for brain in brains:
+            obj = brain.getObject()
+            update_role_mappings_for(wf, obj)
+            obj.update_local_roles()
 
 
 def onConfigWillBeRemoved(config, event):

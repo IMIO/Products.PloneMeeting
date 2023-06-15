@@ -5,6 +5,7 @@ from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_organizations
+from collective.contact.plonegroup.utils import get_plone_groups
 from collective.dexteritytextindexer.directives import searchable
 from collective.dexteritytextindexer.interfaces import IDynamicTextIndexExtender
 from collective.z3cform.datagridfield import BlockDataGridFieldFactory
@@ -2215,7 +2216,7 @@ class Meeting(Container):
            tiggering too much things."""
         notifyModifiedAndReindex(self, extra_idxs=idxs, notify_event=True)
 
-    def update_local_roles(self, **kwargs):
+    def update_local_roles(self, avoid_reindex=False, **kwargs):
         """Update various local roles."""
         # remove every localRoles then recompute
         old_local_roles = self.__ac_local_roles__.copy()
@@ -2226,6 +2227,7 @@ class Meeting(Container):
         # corresponding MeetingConfig.powerObsevers
         # it is done on every edit because of 'meeting_access_on' TAL expression
         self._update_power_observers_local_roles()
+        self._update_using_groups_local_roles()
         _addManagedPermissions(self)
         # notify that localRoles have been updated
         notify(MeetingLocalRolesUpdatedEvent(self, old_local_roles))
@@ -2233,7 +2235,6 @@ class Meeting(Container):
         # update annexes categorized_elements to store 'visible_for_groups'
         updateAnnexesAccess(self)
         # reindex object security except if avoid_reindex=True and localroles are the same
-        avoid_reindex = kwargs.get('avoid_reindex', False)
         # XXX check on currently_migrating_meeting_dx to be removed after Meeting migrated to DX
         if not self.REQUEST.get('currently_migrating_meeting_dx') and \
            (not avoid_reindex or old_local_roles != self.__ac_local_roles__):
@@ -2266,6 +2267,15 @@ class Meeting(Container):
                 power_observers_group_id = "%s_%s" % (cfg_id, po_infos['row_id'])
                 self.manage_addLocalRoles(power_observers_group_id,
                                           (READER_USECASES['powerobservers'],))
+
+    def _update_using_groups_local_roles(self):
+        '''When using MeetingConfig.usingGroups, only defined groups will get
+           access to the meeting.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        for org_uid in cfg.getUsingGroups():
+            for plone_group_id in get_plone_groups(org_uid, ids_only=True):
+                self.manage_addLocalRoles(plone_group_id, ('Reader', ))
 
     security.declarePublic('wfConditions')
 
