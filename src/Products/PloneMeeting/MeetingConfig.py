@@ -80,6 +80,7 @@ from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ManageItemCategoryFields
 from Products.PloneMeeting.config import MEETING_CONFIG
+from Products.PloneMeeting.config import MEETING_REMOVE_MOG_WFA
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
@@ -2912,7 +2913,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'transfered',
                      'transfered_and_duplicated',
                      'meetingmanager_correct_closed_meeting',
-                     'meeting_remove_meetingobserverglobal')
+                     MEETING_REMOVE_MOG_WFA)
 
     def getId(self, real_id=False):
         """Override to take __real_id__ into account (used in some tests)."""
@@ -3616,19 +3617,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            Updating WF role mappings and every meetings local_roles is managed
            by the onConfigModified event.'''
         stored = self.getField('usingGroups').get(self, **kwargs)
+        self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, False)
         if not stored and value:
             # enabling usingGroups
-            self.REQUEST.set('need_update_meeting_remove_meetingobserverglobal', True)
+            self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
             wfas = list(self.getWorkflowAdaptations())
-            if 'meeting_remove_meetingobserverglobal' not in wfas:
-                wfas.append('meeting_remove_meetingobserverglobal')
+            if MEETING_REMOVE_MOG_WFA not in wfas:
+                wfas.append(MEETING_REMOVE_MOG_WFA)
                 self.setWorkflowAdaptations(wfas)
         elif stored and not value:
             # disabling usingGroups
-            self.REQUEST.set('need_update_meeting_remove_meetingobserverglobal', True)
+            self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
             wfas = list(self.getWorkflowAdaptations())
-            wfas.remove('meeting_remove_meetingobserverglobal')
+            wfas.remove(MEETING_REMOVE_MOG_WFA)
             self.setWorkflowAdaptations(wfas)
+        self.getField('usingGroups').set(self, value, **kwargs)
 
     security.declarePublic('getUsedVoteValues')
 

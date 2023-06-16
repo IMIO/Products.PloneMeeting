@@ -41,6 +41,7 @@ from Products.PloneMeeting.config import ITEM_INITIATOR_INDEX_PATTERN
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import MEETING_REMOVE_MOG_WFA
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ROOT_FOLDER
@@ -489,15 +490,19 @@ def _itemAnnexTypes(cfg):
 
 def onConfigModified(config, event):
     '''Enable the 'meeting_remove_meetingobserverglobal' WFA if relevant.'''
-    if config.REQUEST.get('need_update_meeting_remove_meetingobserverglobal', False) is True:
-        wf = config.getMeetingWorkflow()
+    if config.REQUEST.get('need_update_%s' % MEETING_REMOVE_MOG_WFA, False) is True:
+        wf = config.getMeetingWorkflow(True)
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog.unrestrictedSearchResults(
             portal_type=config.getMeetingTypeName())
+        logger.info(
+            'Configuring "%s" for %s meeting(s)...'
+            % (MEETING_REMOVE_MOG_WFA, len(brains)))
         for brain in brains:
             obj = brain.getObject()
-            update_role_mappings_for(wf, obj)
+            update_role_mappings_for(obj, wf)
             obj.update_local_roles()
+        logger.info('Done.')
 
 
 def onConfigWillBeRemoved(config, event):

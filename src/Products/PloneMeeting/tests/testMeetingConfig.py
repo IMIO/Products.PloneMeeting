@@ -26,6 +26,7 @@ from imio.helpers.workflow import get_leading_transitions
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.CatalogTool import getIcon
 from Products.CMFPlone.utils import safe_unicode
@@ -36,6 +37,7 @@ from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import MEETING_REMOVE_MOG_WFA
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -50,6 +52,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import DefaultData
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import createOrUpdatePloneGroup
+from Products.PloneMeeting.utils import sendMailIfRelevant
 from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import ObjectModifiedEvent
@@ -2544,6 +2547,76 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertFalse(item.showMeetingManagerReservedField('textCheckList'))
         self.assertTrue(item.attribute_is_used('notes'))
         self.assertFalse(item.mayQuickEdit('notes'))
+
+    def test_pm_UsingGroupsMeetingAccess(self):
+        """Make sure when MeetingConfig.usingGroups is defined that user does not
+           have access to the meetings as it will automatically use the
+           'meeting_remove_meetingobserverglobal' WFA adaptation and update
+           existing meetings created before defining the usingGroups."""
+        cfg = self.meetingConfig
+        # test without usingGroups then enable it
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, meeting))
+        self.assertFalse(MEETING_REMOVE_MOG_WFA in cfg.getWorkflowAdaptations())
+        # enable usingGroups
+        self.changeUser('siteadmin')
+        cfg.setUsingGroups((self.vendors_uid, ))
+        cfg.at_post_edit_script()
+        notify(ObjectModifiedEvent(cfg))
+        self.changeUser('pmCreator1')
+        self.assertFalse(self.hasPermission(View, meeting))
+        self.assertTrue(MEETING_REMOVE_MOG_WFA in cfg.getWorkflowAdaptations())
+        # disable usingGroups
+        self.changeUser('siteadmin')
+        cfg.setUsingGroups(())
+        cfg.at_post_edit_script()
+        notify(ObjectModifiedEvent(cfg))
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, meeting))
+        self.assertFalse(MEETING_REMOVE_MOG_WFA in cfg.getWorkflowAdaptations())
+
+    def test_pm_UsingGroupsMailMeetingEvents(self):
+        """When MeetingConfig.usingGroups is defined, mail notifications are not
+           wrongly sent to wrong user."""
+        cfg = self.meetingConfig
+        cfg.setMailMeetingEvents(['meeting_state_changed_freeze'])
+        # test without usingGroups then enable it
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        recipients, subject, body = sendMailIfRelevant(
+            meeting,
+            event='meeting_state_changed_freeze',
+            value=View,
+            isPermission=True,
+            debug=True)
+        dev_creator1_mail = u'M. PMCreator One <pmcreator1@plonemeeting.org>'
+        dev_reviewer1_mail = u'M. PMReviewer One <pmreviewer1@plonemeeting.org>'
+        ven_creator2_mail = u'M. PMCreator Two <pmcreator2@plonemeeting.org>'
+        ven_reviewer2_mail = u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'
+        # developers only access now
+        self.assertTrue(dev_creator1_mail in recipients)
+        self.assertTrue(dev_reviewer1_mail in recipients)
+        # vendors, will have access after as well
+        self.assertTrue(ven_creator2_mail in recipients)
+        self.assertTrue(ven_reviewer2_mail in recipients)
+        # enable usingGroups
+        self.changeUser('siteadmin')
+        cfg.setUsingGroups((self.vendors_uid, ))
+        cfg.at_post_edit_script()
+        notify(ObjectModifiedEvent(cfg))
+        # developers did not receive the email
+        recipients, subject, body = sendMailIfRelevant(
+            meeting,
+            event='meeting_state_changed_freeze',
+            value=View,
+            isPermission=True,
+            debug=True)
+        self.assertFalse(dev_creator1_mail in recipients)
+        self.assertFalse(dev_reviewer1_mail in recipients)
+        self.assertTrue(ven_creator2_mail in recipients)
+        self.assertTrue(ven_reviewer2_mail in recipients)
 
 
 def test_suite():

@@ -11,6 +11,7 @@ from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import AddAnnex
+from Products.PloneMeeting.config import MEETING_REMOVE_MOG_WFA
 from Products.PloneMeeting.utils import updateCollectionCriterion
 
 
@@ -1072,7 +1073,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             back_transition = validation_state_infos['back_transition']
             presented.transitions = presented.transitions + (back_transition, )
 
-        elif wfAdaptation == 'meeting_remove_meetingobserverglobal':
+        elif wfAdaptation == MEETING_REMOVE_MOG_WFA:
             for state in meetingWorkflow.states.values():
                 for permission in state.permission_roles:
                     removePermission(state, permission, "MeetingObserverGlobal")

@@ -76,6 +76,8 @@ setDefaultRoles(ManageOwnOrganizationFields, ())
 # and .../meeting-config-id/classifiers folder
 setDefaultRoles(ManageItemCategoryFields, ())
 setDefaultRoles(WriteUseridField, ('Manager', ))
+# the 'meeting_remove_meetingobserverglobal' WFA is used in various code
+MEETING_REMOVE_MOG_WFA = 'meeting_remove_meetingobserverglobal'
 
 # Permissions
 DEFAULT_ADD_CONTENT_PERMISSION = "Add portal content"
