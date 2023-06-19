@@ -1287,7 +1287,7 @@ class testViews(PloneMeetingTestCase):
         cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'),))
         cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'),))
         cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'),))
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers((self.developers_uid, self.vendors_uid), )
@@ -2197,7 +2197,7 @@ class testViews(PloneMeetingTestCase):
         cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'),))
         cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'),))
         cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'),))
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
 
         item = self.create('MeetingItem')
         item._update_after_edit()

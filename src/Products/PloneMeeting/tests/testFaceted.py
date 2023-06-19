@@ -454,13 +454,13 @@ class testFaceted(PloneMeetingTestCase):
         self.assertEqual(cfg.getGroupsHiddenInDashboardFilter(), ())
         # remove extra organizations from profiles
         cfg.setGroupsHiddenInDashboardFilter(self._orgs_to_exclude_from_filter())
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         self.assertEqual(
             [term.title for term in vocab(pmFolder)],
             [u'Developers', u'Vendors', u'End users (Inactive)'])
         # now define values in MeetingConfig.groupsHiddenInDashboardFilter
         cfg.setGroupsHiddenInDashboardFilter((self.vendors_uid, ) + self._orgs_to_exclude_from_filter())
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         self.assertEqual(
             [term.title for term in vocab(pmFolder)],
             [u'Developers', u'End users (Inactive)'])
@@ -578,12 +578,12 @@ class testFaceted(PloneMeetingTestCase):
         self.assertEqual(len(vocab(pmFolder)), 4)
 
         cfg.setUsersHiddenInDashboardFilter(('pmCreator1',))
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         # cache was cleaned and pmCreator is not in the list anymore
         self.assertEqual(len(vocab(pmFolder)), 3)
 
         cfg.setUsersHiddenInDashboardFilter(())
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         # cache was cleaned and pmCreator is back in the list
         self.assertEqual(len(vocab(pmFolder)), 4)
 
@@ -661,7 +661,7 @@ class testFaceted(PloneMeetingTestCase):
                                'delay': '11',
                                'delay_label': 'New delay'})
         cfg.setCustomAdvisers(customAdvisers)
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         self.assertEqual(len(vocab(pmFolder)), 7)
         self.assertTrue('delay_row_id__unique_id_999' in vocab(pmFolder).by_token)
         # delay is displayed in customAdviser title
@@ -669,16 +669,16 @@ class testFaceted(PloneMeetingTestCase):
         # edit a customAdviser
         customAdvisers[-1]['delay'] = '12'
         cfg.setCustomAdvisers(customAdvisers)
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         self.assertTrue('12 day(s)' in vocab(pmFolder).by_token['delay_row_id__unique_id_999'].title)
         # remove a customAdviser
         customAdvisers = customAdvisers[:-1]
         cfg.setCustomAdvisers(customAdvisers)
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         self.assertEqual(len(vocab(pmFolder)), 6)
         # power advisers are taken into account by the vocabulary
         cfg.setPowerAdvisersGroups([self.endUsers_uid])
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         self.assertEqual(len(vocab(pmFolder)), 7)
 
     def test_pm_AskedAdvicesVocabularyWithWrongContext(self):
@@ -782,7 +782,7 @@ class testFaceted(PloneMeetingTestCase):
                           'negative',
                           'not_given',
                           'positive'])
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         # cache invalidated
         self.assertEqual(sorted([term.token for term in vocab(pmFolder)]),
                          ['asked_again',

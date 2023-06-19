@@ -15,6 +15,7 @@ from datetime import timedelta
 from imio.helpers.workflow import get_leading_transitions
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
@@ -119,7 +120,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse('returned_to_proposing_group' in itemWF.states)
         # activate
         self._activate_wfas(('return_to_proposing_group', ))
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         itemWF = cfg.getItemWorkflow(True)
         self.assertTrue('returned_to_proposing_group' in itemWF.states)
 
@@ -1027,8 +1028,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(cfg.validate_workflowAdaptations((MEETING_REMOVE_MOG_WFA, )), msg)
         # can not be removed, define MeetingConfig.usingGroups, it will be added automatically
         cfg.setUsingGroups((self.vendors_uid, ))
-        cfg.at_post_edit_script()
-        notify(ObjectModifiedEvent(cfg))
+        notify(ObjectEditedEvent(cfg))
         self.assertTrue(MEETING_REMOVE_MOG_WFA in cfg.getWorkflowAdaptations())
         self.assertEqual(cfg.validate_workflowAdaptations(()), msg)
 
@@ -2807,7 +2807,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg.setItemAdviceViewStates(('itemcreated', ))
         if 'postpone_next_meeting' not in cfg.getWorkflowAdaptations():
             self._activate_wfas(('postpone_next_meeting', ), keep_existing=True)
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -2867,7 +2867,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmManager')
         if 'postpone_next_meeting' not in cfg.getWorkflowAdaptations():
             self._activate_wfas(('postpone_next_meeting', ), keep_existing=True)
-            cfg.at_post_edit_script()
+            notify(ObjectEditedEvent(cfg))
 
         item = self.create('MeetingItem')
         item.setDecision('<p>Decision</p>')

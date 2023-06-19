@@ -7,9 +7,11 @@ from plone import api
 from plone.app.testing import logout
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
+from zope.event import notify
 
 
 class PloneMeetingTestingHelpers(object):
@@ -471,7 +473,7 @@ class PloneMeetingTestingHelpers(object):
         cfg_committees = cfg.getCommittees()
         cfg_committees[0]['enable_editors'] = "1"
         cfg.setCommittees(cfg_committees)
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         self._addPrincipalToGroup(
             'pmCreator2', "{0}_{1}".format(cfg.getId(), 'committee_1'))
 
@@ -494,7 +496,7 @@ class PloneMeetingTestingHelpers(object):
         if enable_extra_suffixes:
             itemWFValidationLevels[2]['extra_suffixes'] = ['reviewers']
         cfg.setItemWFValidationLevels(itemWFValidationLevels)
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         self.changeUser(currentUser)
 
     def _updateItemValidationLevel(self, cfg, level=None, suffix=None, extra_suffixes=None, enable=True):
@@ -510,7 +512,7 @@ class PloneMeetingTestingHelpers(object):
                 if extra_suffixes:
                     itemValLevel['extra_suffixes'] = extra_suffixes
         cfg.setItemWFValidationLevels(itemValLevels)
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         self.changeUser(currentUser)
 
     def _enableItemValidationLevel(self, cfg, level=None, suffix=None):
@@ -584,4 +586,4 @@ class PloneMeetingTestingHelpers(object):
         # useful when test executed with custom profile
         defValues = MeetingConfigDescriptor.get()
         cfg.setItemWFValidationLevels(deepcopy(defValues.itemWFValidationLevels))
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))

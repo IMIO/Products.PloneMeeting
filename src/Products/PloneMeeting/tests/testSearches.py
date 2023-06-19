@@ -881,7 +881,7 @@ class testSearches(PloneMeetingTestCase):
         if 'return_to_proposing_group' not in wfAdaptations:
             wfAdaptations.append('return_to_proposing_group')
         cfg.setWorkflowAdaptations(wfAdaptations)
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
 
         # normally this search is not available to users that are not able to correct items
         # nevertheless, if a user is not able to edit items to correct, the special
@@ -953,7 +953,7 @@ class testSearches(PloneMeetingTestCase):
         if 'return_to_proposing_group' in wfAdaptations:
             wfAdaptations.remove('return_to_proposing_group')
         cfg.setWorkflowAdaptations(wfAdaptations)
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
 
         # first test the generated query
         self.changeUser('pmManager')

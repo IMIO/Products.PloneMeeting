@@ -15,6 +15,8 @@ from collective.documentviewer.async import queueJob
 from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
+from imio.helpers.cache import cleanRamCache
+from imio.helpers.cache import cleanVocabularyCacheFor
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.cache import setup_ram_cache
@@ -41,6 +43,7 @@ from Products.PloneMeeting.config import ITEM_INITIATOR_INDEX_PATTERN
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETING_REMOVE_MOG_WFA
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -56,6 +59,7 @@ from Products.PloneMeeting.utils import AdviceAfterAddEvent
 from Products.PloneMeeting.utils import AdviceAfterModifyEvent
 from Products.PloneMeeting.utils import AdviceAfterTransitionEvent
 from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
+from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_internal_number
 from Products.PloneMeeting.utils import get_states_before
@@ -488,15 +492,63 @@ def _itemAnnexTypes(cfg):
     return annex_types
 
 
-def onConfigModified(config, event):
-    '''Enable the MEETING_REMOVE_MOG_WFA WFA if relevant.'''
-    if config.REQUEST.get('need_update_%s' % MEETING_REMOVE_MOG_WFA, False) is True:
-        wf = config.getMeetingWorkflow(True)
+def onConfigInitialized(cfg, event):
+    '''Trigger when new MeetingConfig added.'''
+
+    # Register the portal types that are specific to this meeting config.
+    cfg.registerPortalTypes()
+    # Set a property allowing to know in which MeetingConfig we are
+    cfg.manage_addProperty(MEETING_CONFIG, cfg.id, 'string')
+    # Create the subfolders
+    cfg._createSubFolders()
+    # Create the collections related to this meeting config
+    cfg.createSearches(cfg._searchesInfo())
+    # define default search for faceted
+    cfg._set_default_faceted_search()
+    # Update customViewFields defined on DashboardCollections
+    cfg.updateCollectionColumns()
+    # Sort the item tags if needed
+    cfg.setAllItemTagsField()
+    cfg.updateIsDefaultFields()
+    # Make sure we have 'text/html' for every Rich fields
+    forceHTMLContentTypeForEmptyRichFields(cfg)
+    # Create every linked Plone groups
+    # call it with force_update_access=True
+    # so we manage rare case where the Plone group already exist
+    # before, in this case it is not created but we must set local_roles
+    cfg._createOrUpdateAllPloneGroups(force_update_access=True)
+    # Call sub-product code if any
+    cfg.adapted().onEdit(isCreated=True)
+
+
+def onConfigEdited(cfg, event):
+    '''Trigger upon each MeetingConfig edition (except the first).'''
+
+    # invalidateAll ram.cache
+    cleanRamCache()
+    # invalidate cache of every vocabularies
+    cleanVocabularyCacheFor()
+    # Update title of every linked Plone groups
+    cfg._createOrUpdateAllPloneGroups()
+    # Update portal types
+    cfg.registerPortalTypes()
+    # Update customViewFields defined on DashboardCollections
+    cfg.updateCollectionColumns()
+    # Update item tags order if I must sort them
+    cfg.setAllItemTagsField()
+    cfg.updateIsDefaultFields()
+    # Make sure we have 'text/html' for every Rich fields
+    forceHTMLContentTypeForEmptyRichFields(cfg)
+    cfg.adapted().onEdit(isCreated=False)  # Call sub-product code if any
+
+    # Enable the MEETING_REMOVE_MOG_WFA WFA if relevant
+    if cfg.REQUEST.get('need_update_%s' % MEETING_REMOVE_MOG_WFA, False) is True:
+        wf = cfg.getMeetingWorkflow(True)
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog.unrestrictedSearchResults(
-            portal_type=config.getMeetingTypeName())
+            portal_type=cfg.getMeetingTypeName())
         logger.info(
-            'Configuring "%s" for %s meeting(s)...'
+            'Configuring WFA "%s", updating %s meeting(s)...'
             % (MEETING_REMOVE_MOG_WFA, len(brains)))
         for brain in brains:
             obj = brain.getObject()

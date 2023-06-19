@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.PloneMeeting.config import ManageItemCategoryFields
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from zope.event import notify
 from zope.i18n import translate
-from zope.lifecycleevent import ObjectModifiedEvent
 
 
 class Migrate_To_4207(Migrator):
@@ -42,8 +42,7 @@ class Migrate_To_4207(Migrator):
                 # remove and set usingGroups, this will trigger the update
                 cfg.usingGroups = ()
                 cfg.setUsingGroups(usingGroups)
-                cfg.at_post_edit_script()
-                notify(ObjectModifiedEvent(cfg))
+                notify(ObjectEditedEvent(cfg))
         logger.info('Done.')
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):

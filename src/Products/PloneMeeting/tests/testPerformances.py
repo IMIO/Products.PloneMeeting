@@ -58,7 +58,7 @@ class testPerformances(PloneMeetingTestCase):
             self.changeUser('siteadmin')
             wfAdaptations.append('no_publication')
             cfg.setWorkflowAdaptations(wfAdaptations)
-            cfg.at_post_edit_script()
+            notify(ObjectEditedEvent(cfg))
 
         self.changeUser('pmManager')
         meeting = None
