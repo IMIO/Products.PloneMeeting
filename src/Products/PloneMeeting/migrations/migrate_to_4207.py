@@ -33,7 +33,7 @@ class Migrate_To_4207(Migrator):
 
     def _updateMeetingAccessForMeetingConfigUsingGroups(self):
         """When using MeetingConfig.usingGroups, Meeting workflow can not use
-           MeetingObserverGlobal role, we need to apply the 'meeting_remove_meetingobserverglobal'
+           MeetingObserverGlobal role, we need to apply the MEETING_REMOVE_MOG_WFA
            WFA and update existing meetings."""
         logger.info('Updating meetings access for MeetingConfigs using usingGroups parameter...')
         for cfg in self.tool.objectValues('MeetingConfig'):

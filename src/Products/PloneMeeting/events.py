@@ -489,7 +489,7 @@ def _itemAnnexTypes(cfg):
 
 
 def onConfigModified(config, event):
-    '''Enable the 'meeting_remove_meetingobserverglobal' WFA if relevant.'''
+    '''Enable the MEETING_REMOVE_MOG_WFA WFA if relevant.'''
     if config.REQUEST.get('need_update_%s' % MEETING_REMOVE_MOG_WFA, False) is True:
         wf = config.getMeetingWorkflow(True)
         catalog = api.portal.get_tool('portal_catalog')

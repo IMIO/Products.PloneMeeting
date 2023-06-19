@@ -31,6 +31,11 @@ Changelog
   [gbastien]
 - In users management, a real Zope admin may remove a user.
   [gbastien]
+- When using `MeetingConfig.usingGroups`, make sure we do not let the role
+  `MeetingObserverGlobal` access the meetings or groups that are not in
+  `MeetingConfig.usingGroups` have access and also receive mail notifications
+  about meeting events.
+  [gbastien]
 
 4.2.1 (2023-05-31)
 ------------------

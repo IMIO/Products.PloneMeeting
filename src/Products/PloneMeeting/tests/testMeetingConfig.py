@@ -2551,7 +2551,7 @@ class testMeetingConfig(PloneMeetingTestCase):
     def test_pm_UsingGroupsMeetingAccess(self):
         """Make sure when MeetingConfig.usingGroups is defined that user does not
            have access to the meetings as it will automatically use the
-           'meeting_remove_meetingobserverglobal' WFA adaptation and update
+           MEETING_REMOVE_MOG_WFA WFA adaptation and update
            existing meetings created before defining the usingGroups."""
         cfg = self.meetingConfig
         # test without usingGroups then enable it

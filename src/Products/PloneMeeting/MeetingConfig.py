@@ -3613,7 +3613,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def setUsingGroups(self, value, **kwargs):
         '''Overrides the field 'setUsingGroups' mutator to enable or disable
-           the 'meeting_remove_meetingobserverglobal' WFA when relevant.
+           the MEETING_REMOVE_MOG_WFA WFA when relevant.
            Updating WF role mappings and every meetings local_roles is managed
            by the onConfigModified event.'''
         stored = self.getField('usingGroups').get(self, **kwargs)
@@ -5005,6 +5005,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         removed_or_disabled_transitions=removed_or_disabled_transitions)
                     if used_in_cfg_error_msg:
                         return used_in_cfg_error_msg
+
+        # MEETING_REMOVE_MOG_WFA can not be managed manually
+        if MEETING_REMOVE_MOG_WFA in added or MEETING_REMOVE_MOG_WFA in removed:
+            return translate('wa_meeting_remove_mog_error',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
 
         return self.adapted().custom_validate_workflowAdaptations(values, added, removed)
 
