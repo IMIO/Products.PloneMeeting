@@ -283,12 +283,12 @@ class AdviceChangeDelayHistoryView(BrowserView):
         self.request = request
         self.tool = api.portal.get_tool('portal_plonemeeting')
 
-    def renderComments(self, comments):
+    def renderComments(self, comments, mimetype='text/plain'):
         """
           Borrowed from imio.history.
         """
         transformsTool = api.portal.get_tool('portal_transforms')
-        data = transformsTool.convertTo('text/x-html-safe', comments)
+        data = transformsTool.convertTo('text/x-html-safe', comments, mimetype=mimetype)
         return data.getData()
 
     def getHistoryInfos(self):

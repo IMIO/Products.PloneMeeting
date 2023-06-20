@@ -31,6 +31,9 @@ Changelog
   [gbastien]
 - In users management, a real Zope admin may remove a user.
   [gbastien]
+- Pass `mimetype='text/plain'` in `renderComments` methods to avoid
+  `portal_transforms` wrong `mimetype` detection.
+  [gbastien]
 
 4.2.1 (2023-05-31)
 ------------------
