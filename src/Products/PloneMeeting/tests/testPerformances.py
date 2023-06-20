@@ -14,13 +14,15 @@ from datetime import timedelta
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from plone import api
-from PloneMeetingTestCase import pm_logger
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import down_or_up_wf
 from Products.PloneMeeting.utils import get_annexes
 from profilehooks import timecall
+from zope.event import notify
 
 
 class testPerformances(PloneMeetingTestCase):

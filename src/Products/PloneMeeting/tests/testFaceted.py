@@ -11,6 +11,7 @@ from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedLayout
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from zope.event import notify
