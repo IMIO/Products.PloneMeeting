@@ -1041,14 +1041,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg1ItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         cfg2ItemWF = self.wfTool.getWorkflowsFor(cfg2.getItemTypeName())[0]
-        if cfg1ItemWF.getId() == cfg2ItemWF.getId():
-            self.changeUser('admin')
-            # duplicate WF and update self.meetingConfig2
-            copyInfos = self.wfTool.manage_copyObjects(self.meetingConfig.getItemWorkflow())
-            newWFId = self.wfTool.manage_pasteObjects(copyInfos)[0]['new_id']
-            cfg2.setItemWorkflow(newWFId)
-            cfg2.at_post_edit_script()
-        # now define a different WF intial_state for self.meetingConfig2
+        # define a different WF intial_state for self.meetingConfig2
         # item workflow and test that everything is ok
         # set new intial_state to 'validated'
         newWF = self.wfTool.getWorkflowsFor(cfg2.getItemTypeName())[0]
@@ -1056,11 +1049,10 @@ class testMeetingItem(PloneMeetingTestCase):
         # now send an item from self.meetingConfig to self.meetingConfig2
         data = self._setupSendItemToOtherMC()
         newItem = data['newItem']
-        newItemWF = self.wfTool.getWorkflowsFor(newItem)[0]
         # the cfg1ItemWF initial_state is different from newItem WF initial_state
-        self.assertNotEquals(newItemWF.initial_state, cfg1ItemWF.initial_state)
+        self.assertNotEqual(cfg2ItemWF.initial_state, cfg1ItemWF.initial_state)
         # but the initial_state for new item is correct
-        self.assertEqual(self.wfTool.getInfoFor(newItem, 'review_state'), newItemWF.initial_state)
+        self.assertEqual(self.wfTool.getInfoFor(newItem, 'review_state'), cfg2ItemWF.initial_state)
 
     def test_pm_SendItemToOtherMCWithTriggeredTransitions(self):
         '''Test when sending an item to another MeetingConfig and some transitions are

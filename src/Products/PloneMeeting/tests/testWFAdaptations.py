@@ -173,7 +173,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         # use same WF
         cfg2.setItemWorkflow(cfg.getItemWorkflow())
         cfg2.setMeetingWorkflow(cfg.getMeetingWorkflow())
-        cfg2.at_post_edit_script()
         self.assertEqual(cfg.getItemWorkflow(), cfg2.getItemWorkflow())
         self.assertEqual(cfg.getMeetingWorkflow(), cfg2.getMeetingWorkflow())
         # apply the 'return_to_proposing_group' WFAdaptation for cfg
@@ -185,7 +184,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse('returned_to_proposing_group' in originalWF.states)
         self.assertFalse('returned_to_proposing_group' in cfg2ItemWF.states)
         # test again if saving cfg2
-        cfg2.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg2))
         originalWF = self.wfTool.get(cfg.getItemWorkflow())
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         cfg2ItemWF = self.wfTool.getWorkflowsFor(cfg2.getItemTypeName())[0]

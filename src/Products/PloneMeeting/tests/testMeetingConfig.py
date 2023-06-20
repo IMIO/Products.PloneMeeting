@@ -1648,7 +1648,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.categories.folder_position(position='up', id='development')
         self.assertNotEqual(categories_modified, cfg.categories.modified())
 
-    def test_pm_update_cfgs(self):
+    def test_pm_Update_cfgs(self):
         """ """
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
@@ -1656,7 +1656,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         notify(ObjectEditedEvent(cfg))
         cfg2 = self.meetingConfig2
         cfg2.setWorkflowAdaptations(())
-        cfg2.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg2))
         cfg3 = self.create('MeetingConfig', workflowAdaptations=[])
 
         # test with normal value
@@ -1702,7 +1702,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             self.assertFalse('returned_to_proposing_group' in wfFor(cfg2_item_type_name)[0].states)
             self.assertFalse('returned_to_proposing_group' in wfFor(cfg3_item_type_name)[0].states)
             cfg3.setWorkflowAdaptations(('return_to_proposing_group', ))
-            cfg3.at_post_edit_script()
+            notify(ObjectEditedEvent(cfg3))
             cfg3.update_cfgs(field_name='workflowAdaptations', reload=False)
             self.assertFalse('returned_to_proposing_group' in wfFor(cfg_item_type_name)[0].states)
             self.assertFalse('returned_to_proposing_group' in wfFor(cfg2_item_type_name)[0].states)

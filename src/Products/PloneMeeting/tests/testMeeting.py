@@ -3172,7 +3172,7 @@ class testMeetingType(PloneMeetingTestCase):
         cfg.setWorkflowAdaptations(())
         notify(ObjectEditedEvent(cfg))
         cfg2.setWorkflowAdaptations(())
-        cfg2.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg2))
 
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
