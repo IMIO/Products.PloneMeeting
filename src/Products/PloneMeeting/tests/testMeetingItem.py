@@ -8185,7 +8185,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(cfg_committees[0]['row_id'] in
                          vendors_item.Vocabulary('committees')[0].keys())
         vendors_item.setCommittees((cfg_committees[0]['row_id'], ))
-        import ipdb; ipdb.set_trace()
         self.assertTrue(cfg_committees[0]['row_id'] in
                         vendors_item.Vocabulary('committees')[0].keys())
 
