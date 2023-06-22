@@ -34,6 +34,9 @@ Changelog
 - Pass `mimetype='text/plain'` in `renderComments` methods to avoid
   `portal_transforms` wrong `mimetype` detection.
   [gbastien]
+- Fixed `SelectableCommitteesVocabulary`, make sure if a value is stored,
+  it is always in the vocabulary no matter it has `usingGroups`.
+  [gbastien]
 
 4.2.1 (2023-05-31)
 ------------------

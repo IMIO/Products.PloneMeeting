@@ -2639,7 +2639,11 @@ class SelectableCommitteesVocabulary(object):
             if (committee['enabled'] == '1' and committee['row_id']) or \
                (include_item_only and committee['enabled'] == 'item_only' and committee['row_id']) or \
                committee['row_id'] in stored_values:
-                if check_using_groups and not is_manager and committee['using_groups']:
+                # check_using_groups only if not a stored value
+                if check_using_groups and \
+                   committee['row_id'] not in stored_values and \
+                   not is_manager and \
+                   committee['using_groups']:
                     org_uids = tool.get_selectable_orgs(
                         cfg, only_selectable=True, the_objects=False)
                     if not set(org_uids).intersection(committee['using_groups']):
@@ -2691,8 +2695,7 @@ class ItemSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
 
     def _get_stored_values(self):
         """ """
-        stored_values = self.context.getCommittees()
-        return stored_values
+        return self.context.getCommittees()
 
     def __call__(self, context):
         """ """
