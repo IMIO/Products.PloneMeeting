@@ -2571,14 +2571,23 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, meeting))
         self.assertFalse(MEETING_REMOVE_MOG_WFA in cfg.getWorkflowAdaptations())
         # now with correct values
+        self.changeUser('siteadmin')
         cfg.setUsingGroups((self.vendors_uid, ))
         notify(ObjectEditedEvent(cfg))
         self.changeUser('pmCreator1')
         self.assertFalse(self.hasPermission(View, meeting))
         self.assertTrue(MEETING_REMOVE_MOG_WFA in cfg.getWorkflowAdaptations())
-        # disable usingGroups
+        # give access to developers
         self.changeUser('siteadmin')
+        cfg.setUsingGroups((self.vendors_uid, self.developers_uid))
+        notify(ObjectEditedEvent(cfg))
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, meeting))
+        self.assertEqual(
+            cfg.getWorkflowAdaptations().count(MEETING_REMOVE_MOG_WFA), 1)
+        # disable usingGroups
         # empty value '' is ignored
+        self.changeUser('siteadmin')
         cfg.setUsingGroups([''])
         notify(ObjectEditedEvent(cfg))
         self.changeUser('pmCreator1')

@@ -3631,6 +3631,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             wfas = list(self.getWorkflowAdaptations())
             wfas.remove(MEETING_REMOVE_MOG_WFA)
             self.setWorkflowAdaptations(wfas)
+        elif stored and value and list(stored) != value:
+            # value changed, need to update local roles but WFA is already selected
+            self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
         self.getField('usingGroups').set(self, value, **kwargs)
 
     security.declarePublic('getUsedVoteValues')
