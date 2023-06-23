@@ -37,6 +37,14 @@ Changelog
 - Fixed `SelectableCommitteesVocabulary`, make sure if a value is stored,
   it is always in the vocabulary no matter it has `usingGroups`.
   [gbastien]
+- When using `MeetingConfig.usingGroups`, make sure we do not let the role
+  `MeetingObserverGlobal` access the meetings or groups that are not in
+  `MeetingConfig.usingGroups` have access and also receive mail notifications
+  about meeting events.
+  Because of code order (events are called before the
+  `at_post_create_script/at_post_edit_script`), all this was cleaned, we do
+  no more use the `at_post_create_script/at_post_edit_script`.
+  [gbastien]
 
 4.2.1 (2023-05-31)
 ------------------

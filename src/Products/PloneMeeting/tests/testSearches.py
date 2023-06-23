@@ -16,6 +16,7 @@ from plone import api
 from plone.app.querystring.querybuilder import queryparser
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.adapters import _find_nothing_query
@@ -23,6 +24,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from zope.component import getAdapter
 from zope.component import getAdapters
+from zope.event import notify
 
 
 class testSearches(PloneMeetingTestCase):
@@ -881,7 +883,7 @@ class testSearches(PloneMeetingTestCase):
         if 'return_to_proposing_group' not in wfAdaptations:
             wfAdaptations.append('return_to_proposing_group')
         cfg.setWorkflowAdaptations(wfAdaptations)
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
 
         # normally this search is not available to users that are not able to correct items
         # nevertheless, if a user is not able to edit items to correct, the special
@@ -953,7 +955,7 @@ class testSearches(PloneMeetingTestCase):
         if 'return_to_proposing_group' in wfAdaptations:
             wfAdaptations.remove('return_to_proposing_group')
         cfg.setWorkflowAdaptations(wfAdaptations)
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
 
         # first test the generated query
         self.changeUser('pmManager')
@@ -962,8 +964,8 @@ class testSearches(PloneMeetingTestCase):
                              name='items-to-correct-to-validate-of-highest-hierarchic-level')
         self.assertEqual(adapter.query, {
             'reviewProcessInfo':
-            {'query': ['{0}__reviewprocess__returned_to_proposing_group_{1}'.format(self.developers_uid,
-                                                                                    self._stateMappingFor('proposed'))]},
+            {'query': ['{0}__reviewprocess__returned_to_proposing_group_{1}'.format(
+                self.developers_uid, self._stateMappingFor('proposed'))]},
             'portal_type': {'query': itemTypeName}})
 
         # it returns only items the current user is able to correct

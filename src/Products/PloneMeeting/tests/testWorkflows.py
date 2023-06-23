@@ -10,6 +10,7 @@ from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import cleanRamCacheFor
 from imio.history.utils import getLastWFAction
 from OFS.ObjectManager import BeforeDeleteException
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -25,6 +26,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 from Products.statusmessages.interfaces import IStatusMessage
 from zExceptions import Redirect
 from zope.annotation.interfaces import IAnnotations
+from zope.event import notify
 from zope.i18n import translate
 
 import transaction
@@ -828,7 +830,7 @@ class testWorkflows(PloneMeetingTestCase):
         """If there are items in state 'returned_to_proposing_group', a meeting may not be closed."""
         cfg = self.meetingConfig
         cfg.setWorkflowAdaptations(('return_to_proposing_group', ))
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         item = self.create('MeetingItem')
@@ -861,7 +863,7 @@ class testWorkflows(PloneMeetingTestCase):
             ('return_to_proposing_group',
              'hide_decisions_when_under_writing',
              'hide_decisions_when_under_writing_check_returned_to_proposing_group'))
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         item = self.create('MeetingItem')
@@ -877,7 +879,7 @@ class testWorkflows(PloneMeetingTestCase):
         # WFA not enabled
         cfg.setWorkflowAdaptations(('return_to_proposing_group',
                                     'hide_decisions_when_under_writing',))
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         self.do(meeting, 'publish_decisions')
         self.assertEqual(meeting.query_state(), 'decisions_published')
         self.do(meeting, 'backToDecided')
@@ -887,7 +889,7 @@ class testWorkflows(PloneMeetingTestCase):
             ('return_to_proposing_group',
              'hide_decisions_when_under_writing',
              'hide_decisions_when_under_writing_check_returned_to_proposing_group'))
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
         self.do(meeting, 'publish_decisions')
         self.assertEqual(meeting.query_state(), 'decisions_published')

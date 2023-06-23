@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from eea.facetednavigation.interfaces import ICriteria
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from zope.event import notify
 
 
 class Migrate_To_4202(Migrator):
@@ -28,7 +30,7 @@ class Migrate_To_4202(Migrator):
                 brains = self.catalog(portal_type=cfg.getItemTypeName(), review_state='pre_accepted')
                 logger.info('The "pre_accepted" WFAdaptation was found for "{0}", '
                             'updating "{1}" items...'.format(cfg.getId(), len(brains)))
-                cfg.at_post_edit_script()
+                notify(ObjectEditedEvent(cfg))
                 item_wf = cfg.getItemWorkflow(True)
                 for brain in brains:
                     item = brain.getObject()

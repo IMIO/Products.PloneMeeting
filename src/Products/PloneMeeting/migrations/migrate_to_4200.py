@@ -15,6 +15,7 @@ from OFS.ObjectManager import BeforeDeleteException
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.app.contenttypes.migration.migration import migrate as pac_migrate
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.contentmigration.basemigrator.migrator import CMFFolderMigrator
@@ -37,6 +38,7 @@ from Products.PloneMeeting.utils import cleanMemoize
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.annotation import IAnnotations
 from zope.component import queryUtility
+from zope.event import notify
 from zope.interface import alsoProvides
 from zope.interface import noLongerProvides
 
@@ -349,7 +351,7 @@ class Migrate_To_4200(Migrator):
                         "new_value is \"{3}\".".format(
                             field_name, cfg.getId(), old_value, new_value))
                     field.set(cfg, new_value)
-            cfg.at_post_edit_script()
+            notify(ObjectEditedEvent(cfg))
         logger.info('Done.')
 
     def _configureVotes(self):

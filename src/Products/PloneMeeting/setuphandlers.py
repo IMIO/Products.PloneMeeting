@@ -156,6 +156,7 @@ def postInstall(context):
     if isNotPloneMeetingProfile(context):
         return
     site = context.getSite()
+    tool = site.portal_plonemeeting
 
     activate_solr_and_reindex_if_available(site)
     # Create or update indexes
@@ -177,8 +178,8 @@ def postInstall(context):
         wft.doActionFor(site.Members, 'retract')
 
     # Make sure portal_plonemeeting permissions are correct regarding used WF
-    tool_wf = wft.getWorkflowsFor(site.portal_plonemeeting)[0]
-    tool_wf.updateRoleMappingsFor(site.portal_plonemeeting)
+    tool_wf = wft.getWorkflowsFor(tool)[0]
+    tool_wf.updateRoleMappingsFor(tool)
 
     # Make "Unauthorized" exceptions appear in the error log.
     site.error_log.setProperties(
@@ -191,7 +192,7 @@ def postInstall(context):
             'portal_plonemeeting_policy',
             workflow_policy_type='default_workflow_policy (Simple Policy)',
             duplicate_id='empty')
-        site.portal_plonemeeting.manage_addProduct['CMFPlacefulWorkflow'].manage_addWorkflowPolicyConfig()
+        tool.manage_addProduct['CMFPlacefulWorkflow'].manage_addWorkflowPolicyConfig()
 
     pol = ppw.portal_plonemeeting_policy
     pol.setTitle(_(u'PloneMeeting tool policy'))
@@ -200,14 +201,14 @@ def postInstall(context):
         ('MeetingConfig', ), ('plonemeeting_activity_workflow',))
     # use onestate workflow for Folders contained in the tool/MeetingConfigs
     pol.setChain('Folder', ('plonemeeting_onestate_workflow',))
-    pc = getattr(site.portal_plonemeeting, WorkflowPolicyConfig_id)
+    pc = getattr(tool, WorkflowPolicyConfig_id)
     pc.setPolicyIn('')
     pc.setPolicyBelow('portal_plonemeeting_policy')
 
     # We must be able to choose a user password on user creation.
     site.manage_changeProperties(validate_email=0)
 
-    site.portal_plonemeeting.at_post_create_script()
+    tool.at_post_create_script()
 
     # Do not generate an action (tab) for each root folder
     site.portal_properties.site_properties.manage_changeProperties(
@@ -225,8 +226,8 @@ def postInstall(context):
 
     # portal_quickinstaller removes some installed elements when reinstalling...
     # re-add them manually here...
-    for meetingConfig in site.portal_plonemeeting.objectValues('MeetingConfig'):
-        meetingConfig.registerPortalTypes()
+    for cfg in tool.objectValues('MeetingConfig'):
+        cfg.registerPortalTypes()
 
     # Check if the personal folder creation of users is enabled
     # check if the creation flag is set to 0, change it if necessary

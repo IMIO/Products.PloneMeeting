@@ -23,6 +23,7 @@ from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from plone.locking.interfaces import ILockable
 from plone.testing.z2 import Browser
+from Products.Archetypes.event import ObjectEditedEvent
 from Products import PloneMeeting as products_plonemeeting
 from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -49,6 +50,7 @@ from z3c.form.interfaces import DISPLAY_MODE
 from z3c.form.interfaces import INPUT_MODE
 from zope.component import getAdapter
 from zope.component import getMultiAdapter
+from zope.event import notify
 from zope.i18n import translate
 
 import magic
@@ -1287,7 +1289,7 @@ class testViews(PloneMeetingTestCase):
         cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'),))
         cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'),))
         cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'),))
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers((self.developers_uid, self.vendors_uid), )
@@ -2197,7 +2199,7 @@ class testViews(PloneMeetingTestCase):
         cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'),))
         cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'),))
         cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'),))
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
 
         item = self.create('MeetingItem')
         item._update_after_edit()

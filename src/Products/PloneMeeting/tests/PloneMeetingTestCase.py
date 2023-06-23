@@ -28,6 +28,7 @@ from plone.app.testing.bbb import _createMemberarea
 from plone.app.testing.helpers import setRoles
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFPlone.utils import base_hasattr
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting.browser.meeting import _get_default_attendees
@@ -678,12 +679,12 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             cfg = self.meetingConfig
         if not keep_existing:
             cfg.setWorkflowAdaptations(())
-            cfg.at_post_edit_script()
+            notify(ObjectEditedEvent(cfg))
         else:
             wfas = tuple(set(tuple(wfas) + cfg.getWorkflowAdaptations()))
         if wfas:
             cfg.setWorkflowAdaptations(wfas)
-            cfg.at_post_edit_script()
+            notify(ObjectEditedEvent(cfg))
         self.changeUser(currentUser)
 
     def _deactivate_wfas(self, wfas, cfg=None):
@@ -697,7 +698,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         wfas = [wfa for wfa in cfg.getWorkflowAdaptations()
                 if wfa not in wfas]
         cfg.setWorkflowAdaptations(wfas)
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         self.changeUser(currentUser)
 
     def _activate_config(self,
@@ -722,7 +723,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if reload:
             currentUser = self.member.getId()
             self.changeUser('siteadmin')
-            cfg.at_post_edit_script()
+            notify(ObjectEditedEvent(cfg))
             self.changeUser(currentUser)
 
     def _enableAutoConvert(self, enable=True):
@@ -761,7 +762,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if reload:
             currentUser = self.member.getId()
             self.changeUser('siteadmin')
-            cfg.at_post_edit_script()
+            notify(ObjectEditedEvent(cfg))
             self.changeUser(currentUser)
         else:
             cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attribute_is_used')

@@ -25,8 +25,6 @@ from DateTime import DateTime
 from eea.facetednavigation.interfaces import ICriteria
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from ftw.labels.interfaces import ILabeling
-from imio.helpers.cache import cleanRamCache
-from imio.helpers.cache import cleanVocabularyCacheFor
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.content import get_vocab
@@ -56,6 +54,7 @@ from Products.Archetypes.atapi import SelectionWidget
 from Products.Archetypes.atapi import StringField
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.Archetypes.utils import IntDisplayList
 from Products.CMFCore.Expression import Expression
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -79,7 +78,7 @@ from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ManageItemCategoryFields
-from Products.PloneMeeting.config import MEETING_CONFIG
+from Products.PloneMeeting.config import MEETING_REMOVE_MOG_WFA
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
@@ -117,7 +116,6 @@ from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import computeCertifiedSignatures
 from Products.PloneMeeting.utils import createOrUpdatePloneGroup
 from Products.PloneMeeting.utils import duplicate_workflow
-from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_datagridfield_column_value
 from Products.PloneMeeting.utils import get_dx_attrs
@@ -135,6 +133,7 @@ from zope.annotation import IAnnotations
 from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.container.interfaces import INameChooser
+from zope.event import notify
 from zope.i18n import translate
 from zope.i18nmessageid.message import Message
 from zope.interface import alsoProvides
@@ -2481,7 +2480,7 @@ schema = Schema((
         schemata="advices",
         multiValued=1,
         vocabulary='listItemAttributeVisibleForWithMeetingManagers',
-        default=defValues.usingGroups,
+        default=defValues.itemInternalNotesEditableBy,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -2911,7 +2910,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'accepted_out_of_meeting_emergency_and_duplicated',
                      'transfered',
                      'transfered_and_duplicated',
-                     'meetingmanager_correct_closed_meeting')
+                     'meetingmanager_correct_closed_meeting',
+                     MEETING_REMOVE_MOG_WFA)
 
     def getId(self, real_id=False):
         """Override to take __real_id__ into account (used in some tests)."""
@@ -3607,6 +3607,32 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 criteria.edit(criterion.__name__, **{'default': value})
         self.getField('maxShownListings').set(self, value, **kwargs)
 
+    security.declareProtected(WriteRiskyConfig, 'setUsingGroups')
+
+    def setUsingGroups(self, value, **kwargs):
+        '''Overrides the field 'setUsingGroups' mutator to enable or disable
+           the MEETING_REMOVE_MOG_WFA WFA when relevant.
+           Updating WF role mappings and every meetings local_roles is managed
+           by the onConfigModified event.'''
+        # make sure we do not get a [''] as value
+        value = [v for v in value if v]
+        stored = self.getField('usingGroups').get(self, **kwargs)
+        self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, False)
+        if not stored and value:
+            # enabling usingGroups
+            self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
+            wfas = list(self.getWorkflowAdaptations())
+            if MEETING_REMOVE_MOG_WFA not in wfas:
+                wfas.append(MEETING_REMOVE_MOG_WFA)
+                self.setWorkflowAdaptations(wfas)
+        elif stored and not value:
+            # disabling usingGroups
+            self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
+            wfas = list(self.getWorkflowAdaptations())
+            wfas.remove(MEETING_REMOVE_MOG_WFA)
+            self.setWorkflowAdaptations(wfas)
+        self.getField('usingGroups').set(self, value, **kwargs)
+
     security.declarePublic('getUsedVoteValues')
 
     def getUsedVoteValues(self,
@@ -3664,9 +3690,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getUsingGroups')
 
     def getUsingGroups(self, theObjects=False, **kwargs):
-        '''Overrides the field 'usingGroups' acessor to manage theObjects.'''
+        '''Overrides the field 'usingGroups' accessor to manage theObjects.'''
         res = self.getField('usingGroups').get(self, **kwargs)
         if theObjects:
+            # when no usingGroups, so kept_org_uids=[],
+            # get_organizations will return every orgs
             res = get_organizations(kept_org_uids=res)
         return res
 
@@ -4977,6 +5005,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         removed_or_disabled_transitions=removed_or_disabled_transitions)
                     if used_in_cfg_error_msg:
                         return used_in_cfg_error_msg
+
+        # MEETING_REMOVE_MOG_WFA can not be managed manually
+        if MEETING_REMOVE_MOG_WFA in added or MEETING_REMOVE_MOG_WFA in removed:
+            return translate('wa_meeting_remove_mog_error',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
 
         return self.adapted().custom_validate_workflowAdaptations(values, added, removed)
 
@@ -6578,54 +6612,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('at_post_create_script')
 
     def at_post_create_script(self):
-        '''Create the sub-folders of a meeting config, that will contain
-           categories, recurring items, etc., and create the tab that
-           corresponds to this meeting config.'''
-        # Register the portal types that are specific to this meeting config.
-        self.registerPortalTypes()
-        # Set a property allowing to know in which MeetingConfig we are
-        self.manage_addProperty(MEETING_CONFIG, self.id, 'string')
-        # Create the subfolders
-        self._createSubFolders()
-        # Create the collections related to this meeting config
-        self.createSearches(self._searchesInfo())
-        # define default search for faceted
-        self._set_default_faceted_search()
-        # Update customViewFields defined on DashboardCollections
-        self.updateCollectionColumns()
-        # Sort the item tags if needed
-        self.setAllItemTagsField()
-        self.updateIsDefaultFields()
-        # Make sure we have 'text/html' for every Rich fields
-        forceHTMLContentTypeForEmptyRichFields(self)
-        # Create every linked Plone groups
-        # call it with force_update_access=True
-        # so we manage rare case where the Plone group already exist
-        # before, in this case it is not created but we must set local_roles
-        self._createOrUpdateAllPloneGroups(force_update_access=True)
-        # Call sub-product code if any
-        self.adapted().onEdit(isCreated=True)
+        '''Managed by events.onConfigInitialized.'''
+        pass
 
     security.declarePrivate('at_post_edit_script')
 
     def at_post_edit_script(self):
-        ''' '''
-        # invalidateAll ram.cache
-        cleanRamCache()
-        # invalidate cache of every vocabularies
-        cleanVocabularyCacheFor()
-        # Update title of every linked Plone groups
-        self._createOrUpdateAllPloneGroups()
-        # Update portal types
-        self.registerPortalTypes()
-        # Update customViewFields defined on DashboardCollections
-        self.updateCollectionColumns()
-        # Update item tags order if I must sort them
-        self.setAllItemTagsField()
-        self.updateIsDefaultFields()
-        # Make sure we have 'text/html' for every Rich fields
-        forceHTMLContentTypeForEmptyRichFields(self)
-        self.adapted().onEdit(isCreated=False)  # Call sub-product code if any
+        '''Managed by events.onConfigEdited.'''
+        pass
 
     def _create_default_item_template(self):
         """Create the default item template for this MeetingConfig.
@@ -7832,7 +7826,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for cfg in cfgs:
             cfg.getField(field_name).set(cfg, value)
             if reload:
-                cfg.at_post_edit_script()
+                notify(ObjectEditedEvent(cfg))
 
     def get_labels_vocab(self, only_personal=True):
         """ """

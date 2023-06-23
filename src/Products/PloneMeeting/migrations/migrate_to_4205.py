@@ -4,6 +4,7 @@ from DateTime import DateTime
 from imio.history.utils import add_event_to_history
 from persistent.list import PersistentList
 from plone import api
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.content.advice import IMeetingAdvice
 from Products.PloneMeeting.content.meeting import IMeeting
@@ -12,6 +13,7 @@ from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.setuphandlers import _configurePortalRepository
 from Products.PloneMeeting.utils import get_dx_data
 from Products.ZCatalog.ProgressHandler import ZLogHandler
+from zope.event import notify
 
 
 class Migrate_To_4205(Migrator):
@@ -29,7 +31,7 @@ class Migrate_To_4205(Migrator):
                    not committee["enable_editors"]:
                     committee["enable_editors"] = "0"
             cfg.setCommittees(committees)
-            cfg.at_post_edit_script()
+            notify(ObjectEditedEvent(cfg))
         # update new fields committeeTranscript and votesResult on items
         self.initNewHTMLFields(
             query={'meta_type': ('MeetingItem')},

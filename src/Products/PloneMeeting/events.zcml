@@ -100,6 +100,14 @@
               handler=".events.onMeetingRemoved" />
 
   <subscriber for=".interfaces.IMeetingConfig
+                   Products.Archetypes.interfaces.IObjectInitializedEvent"
+              handler=".events.onConfigInitialized" />
+
+  <subscriber for=".interfaces.IMeetingConfig
+                   Products.Archetypes.interfaces.IObjectEditedEvent"
+              handler=".events.onConfigEdited" />
+
+  <subscriber for=".interfaces.IMeetingConfig
                    OFS.interfaces.IObjectWillBeRemovedEvent"
               handler=".events.onConfigWillBeRemoved" />
 

@@ -15,12 +15,14 @@ from datetime import timedelta
 from imio.helpers.workflow import get_leading_transitions
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
+from Products.PloneMeeting.config import MEETING_REMOVE_MOG_WFA
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.config import WriteDecision
 from Products.PloneMeeting.config import WriteInternalNotes
@@ -76,6 +78,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                           'item_validation_no_validate_shortcuts',
                           'item_validation_shortcuts',
                           'mark_not_applicable',
+                          MEETING_REMOVE_MOG_WFA,
                           'meetingmanager_correct_closed_meeting',
                           'no_decide',
                           'no_freeze',
@@ -117,7 +120,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse('returned_to_proposing_group' in itemWF.states)
         # activate
         self._activate_wfas(('return_to_proposing_group', ))
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         itemWF = cfg.getItemWorkflow(True)
         self.assertTrue('returned_to_proposing_group' in itemWF.states)
 
@@ -170,7 +173,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         # use same WF
         cfg2.setItemWorkflow(cfg.getItemWorkflow())
         cfg2.setMeetingWorkflow(cfg.getMeetingWorkflow())
-        cfg2.at_post_edit_script()
         self.assertEqual(cfg.getItemWorkflow(), cfg2.getItemWorkflow())
         self.assertEqual(cfg.getMeetingWorkflow(), cfg2.getMeetingWorkflow())
         # apply the 'return_to_proposing_group' WFAdaptation for cfg
@@ -182,7 +184,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse('returned_to_proposing_group' in originalWF.states)
         self.assertFalse('returned_to_proposing_group' in cfg2ItemWF.states)
         # test again if saving cfg2
-        cfg2.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg2))
         originalWF = self.wfTool.get(cfg.getItemWorkflow())
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         cfg2ItemWF = self.wfTool.getWorkflowsFor(cfg2.getItemTypeName())[0]
@@ -190,10 +192,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse('returned_to_proposing_group' in cfg2ItemWF.states)
         self.assertFalse('returned_to_proposing_group' in originalWF.states)
 
-    def test_pm_Validate_workflowAdaptations_conflicts(self):
-        """Test MeetingConfig.validate_workflowAdaptations that manage conflicts
-           between wfAdaptations that may not be selected together."""
-        wa_conflicts = translate('wa_conflicts', domain='PloneMeeting', context=self.request)
+    def _clean_config_used_wfas(self):
+        """Make sure the config is clean and we can use 0 wfas."""
         cfg = self.meetingConfig
         # remove use of delayed in powerObservers or WFA will not validate
         self._setPowerObserverStates(states=[])
@@ -201,6 +201,13 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg.setItemAutoSentToOtherMCStates(())
         cfg.setItemManualSentToOtherMCStates(())
 
+    def test_pm_Validate_workflowAdaptations_conflicts(self):
+        """Test MeetingConfig.validate_workflowAdaptations that manage conflicts
+           between wfAdaptations that may not be selected together."""
+        cfg = self.meetingConfig
+        self._clean_config_used_wfas()
+
+        wa_conflicts = translate('wa_conflicts', domain='PloneMeeting', context=self.request)
         # return_to_proposing_group_... alone is ok
         self.failIf(cfg.validate_workflowAdaptations(
             ('return_to_proposing_group',)))
@@ -341,11 +348,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                                   domain='PloneMeeting',
                                   context=self.request)
         cfg = self.meetingConfig
-        # remove use of delayed in powerObservers or WFA will not validate
-        self._setPowerObserverStates(states=[])
-        # make test more robust for profiles, cleanup config
-        cfg.setItemAutoSentToOtherMCStates(())
-        cfg.setItemManualSentToOtherMCStates(())
+        self._clean_config_used_wfas()
 
         # make sure we use default itemWFValidationLevels,
         # useful when test executed with custom profile
@@ -378,15 +381,11 @@ class testWFAdaptations(PloneMeetingTestCase):
            moreover it checks too if a validation level is available,
            this could not be the case when set using import_data or
            if validation_level was just disabled."""
+        cfg = self.meetingConfig
+        self._clean_config_used_wfas()
+
         # make sure we use default itemWFValidationLevels,
         # useful when test executed with custom profile
-        cfg = self.meetingConfig
-        # remove use of delayed in powerObservers or WFA will not validate
-        self._setPowerObserverStates(states=[])
-        # make test more robust for profiles, cleanup config
-        cfg.setItemAutoSentToOtherMCStates(())
-        cfg.setItemManualSentToOtherMCStates(())
-
         self._setUpDefaultItemWFValidationLevels(cfg)
         # itemcreated and proposed are enabled
         self.assertEqual(cfg.getItemWFValidationLevels(data='state', only_enabled=True),
@@ -1012,6 +1011,25 @@ class testWFAdaptations(PloneMeetingTestCase):
         # clean it
         cfg.setOnMeetingTransitionItemActionToExecute(())
         self.failIf(cfg.validate_workflowAdaptations(()))
+
+    def test_pm_Validate_workflowAdaptations_remove_meeting_mog(self):
+        """Make sure MEETING_REMOVE_MOG_WFA can not be managed manually, it is
+           enabled/disabled when automatically when using MeetingConfig.usingGroups."""
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if not self._check_wfa_available([MEETING_REMOVE_MOG_WFA]):
+            return
+
+        self._clean_config_used_wfas()
+        msg = translate('wa_meeting_remove_mog_error', domain='PloneMeeting', context=self.request)
+        # can not be added
+        self.assertFalse(MEETING_REMOVE_MOG_WFA in cfg.getWorkflowAdaptations())
+        self.assertEqual(cfg.validate_workflowAdaptations((MEETING_REMOVE_MOG_WFA, )), msg)
+        # can not be removed, define MeetingConfig.usingGroups, it will be added automatically
+        cfg.setUsingGroups((self.vendors_uid, ))
+        notify(ObjectEditedEvent(cfg))
+        self.assertTrue(MEETING_REMOVE_MOG_WFA in cfg.getWorkflowAdaptations())
+        self.assertEqual(cfg.validate_workflowAdaptations(()), msg)
 
     def test_pm_WFA_no_publication(self):
         '''Test the workflowAdaptation 'no_publication'.
@@ -2788,7 +2806,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg.setItemAdviceViewStates(('itemcreated', ))
         if 'postpone_next_meeting' not in cfg.getWorkflowAdaptations():
             self._activate_wfas(('postpone_next_meeting', ), keep_existing=True)
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -2848,7 +2866,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmManager')
         if 'postpone_next_meeting' not in cfg.getWorkflowAdaptations():
             self._activate_wfas(('postpone_next_meeting', ), keep_existing=True)
-            cfg.at_post_edit_script()
+            notify(ObjectEditedEvent(cfg))
 
         item = self.create('MeetingItem')
         item.setDecision('<p>Decision</p>')

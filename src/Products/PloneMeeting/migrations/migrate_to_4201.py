@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from zope.event import notify
 
 
 class Migrate_To_4201(Migrator):
@@ -14,7 +16,7 @@ class Migrate_To_4201(Migrator):
                                if state_id.startswith('returned_to_proposing_group')]
             if returned_states:
                 # reload config, this will apply WFA correctly
-                cfg.at_post_edit_script()
+                notify(ObjectEditedEvent(cfg))
                 # update WF permissions for items in relevant states
                 item_wf = cfg.getItemWorkflow(True)
                 brains = self.catalog(

@@ -11,6 +11,7 @@ from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import AddAnnex
+from Products.PloneMeeting.config import MEETING_REMOVE_MOG_WFA
 from Products.PloneMeeting.utils import updateCollectionCriterion
 
 
@@ -114,6 +115,16 @@ def get_waiting_advices_infos(cfg_id):
     """ """
     return WAITING_ADVICES_FROM_STATES.get(
         cfg_id, WAITING_ADVICES_FROM_STATES.get('*', ()))
+
+
+def removePermission(state, perm, role):
+    '''For a given p_state, this function ensures that p_role is not more
+       among roles who are granted p_perm. '''
+    roles = state.permission_roles[perm]
+    if role in roles:
+        roles = list(roles)
+        roles.remove(role)
+        state.setPermission(perm, 0, roles)
 
 
 def grantPermission(state, perm, role):
@@ -1061,6 +1072,11 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 states=[item_validation_state])
             back_transition = validation_state_infos['back_transition']
             presented.transitions = presented.transitions + (back_transition, )
+
+        elif wfAdaptation == MEETING_REMOVE_MOG_WFA:
+            for state in meetingWorkflow.states.values():
+                for permission in state.permission_roles:
+                    removePermission(state, permission, "MeetingObserverGlobal")
 
         logger.info(WF_APPLIED % (wfAdaptation, meetingConfig.getId()))
 

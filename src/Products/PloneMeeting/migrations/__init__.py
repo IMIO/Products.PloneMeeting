@@ -21,6 +21,7 @@ from imio.pyutils.utils import replace_in_list
 from natsort import humansorted
 from operator import attrgetter
 from plone import api
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.MeetingConfig import ITEM_WF_STATE_ATTRS
@@ -32,6 +33,7 @@ from Products.PloneMeeting.setuphandlers import indexInfos
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import reindex_object
 from Products.ZCatalog.ProgressHandler import ZLogHandler
+from zope.event import notify
 from zope.i18n import translate
 
 import itertools
@@ -533,11 +535,11 @@ class Migrator(BaseMigrator):
 
     def reloadMeetingConfigs(self, full=False):
         '''Reload MeetingConfigs, either only portal_types related parameters,
-           or full reload (at_post_edit_script).'''
+           or full reload.'''
         logger.info("Reloading every MeetingConfigs (full={0})...".format(repr(full)))
         for cfg in self.tool.objectValues('MeetingConfig'):
             if full:
-                cfg.at_post_edit_script()
+                notify(ObjectEditedEvent(cfg))
             else:
                 cfg.registerPortalTypes()
         logger.info('Done.')

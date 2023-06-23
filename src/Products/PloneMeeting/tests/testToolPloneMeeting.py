@@ -27,6 +27,7 @@ from plone.app.textfield.value import RichTextValue
 from plone.dexterity.interfaces import IDexterityContent
 from plone.dexterity.utils import createContentInContainer
 from plone.testing.z2 import Browser
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -35,6 +36,7 @@ from Products.PloneMeeting.etags import _modified
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import get_annexes
+from zope.event import notify
 from zope.i18n import translate
 from zope.testing.testrunner.find import find_test_files
 
@@ -148,7 +150,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(self.tool.getDefaultMeetingConfig().getId(), cfg.getId())
         # if we change default config, it works
         cfg2.setIsDefault(True)
-        cfg2.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg2))
         self.assertTrue(not cfg.getIsDefault())
         self.assertTrue(cfg2.getIsDefault())
         self.assertEqual(self.tool.getDefaultMeetingConfig().getId(), cfg2.getId())

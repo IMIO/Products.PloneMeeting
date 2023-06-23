@@ -19,6 +19,7 @@ from os import path
 from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -3733,7 +3734,7 @@ class testAdvices(PloneMeetingTestCase):
         # 2.2) if advice is not askable, advice inheritance is not removed
         cfg.setSelectableAdvisers(())
         # invalidate cache for item advices vocabulary used by MeetingItem.showOptionalAdvisers
-        cfg.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
         item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
         self.changeUser('pmManager')
         self.assertTrue(item2.adviceIndex[self.vendors_uid]['inherited'])

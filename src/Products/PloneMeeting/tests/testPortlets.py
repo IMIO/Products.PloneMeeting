@@ -8,6 +8,7 @@
 from imio.helpers.cache import cleanRamCacheFor
 from plone.portlets.interfaces import IPortletManager
 from plone.portlets.interfaces import IPortletRenderer
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.PloneMeeting.browser import portlet_plonemeeting
 from Products.PloneMeeting.browser import portlet_todo
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
@@ -70,7 +71,7 @@ class testPortlets(PloneMeetingTestCase):
         itemsCategory = pmFolder2.restrictedTraverse('@@render_collection_widget_category')
         itemsCategory(widget=None)
         # clean ram.cache even if cache is still correct because the same for every users
-        notify(ObjectModifiedEvent(cfg))
+        notify(ObjectEditedEvent(cfg))
         self.assertTrue(itemsCategory.hasTemplateItems())
         # no matter actually there are no itemTemplates available for him...
         self.assertFalse(cfg.getItemTemplates(as_brains=True, onlyActive=True, filtered=True))
