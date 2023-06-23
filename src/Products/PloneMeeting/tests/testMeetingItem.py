@@ -8174,6 +8174,12 @@ class testMeetingItem(PloneMeetingTestCase):
         vendors_item = self.create('MeetingItem')
         self.assertEqual(vendors_item.Vocabulary('committees')[0].keys(),
                          [NO_COMMITTEE, 'committee_2', u'committee_for_item'])
+        # when committee no accessible but stored on context it is part of the vocabulary
+        self.assertFalse(cfg_committees[0]['row_id'] in
+                         vendors_item.Vocabulary('committees')[0].keys())
+        vendors_item.setCommittees((cfg_committees[0]['row_id'], ))
+        self.assertTrue(cfg_committees[0]['row_id'] in
+                        vendors_item.Vocabulary('committees')[0].keys())
 
     def test_pm_CommitteesItemOnly(self):
         """It is possible to display a committee only on the item and not on the meeting,

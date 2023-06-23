@@ -31,6 +31,12 @@ Changelog
   [gbastien]
 - In users management, a real Zope admin may remove a user.
   [gbastien]
+- Pass `mimetype='text/plain'` in `renderComments` methods to avoid
+  `portal_transforms` wrong `mimetype` detection.
+  [gbastien]
+- Fixed `SelectableCommitteesVocabulary`, make sure if a value is stored,
+  it is always in the vocabulary no matter it has `usingGroups`.
+  [gbastien]
 - When using `MeetingConfig.usingGroups`, make sure we do not let the role
   `MeetingObserverGlobal` access the meetings or groups that are not in
   `MeetingConfig.usingGroups` have access and also receive mail notifications
