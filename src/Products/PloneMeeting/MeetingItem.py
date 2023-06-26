@@ -862,6 +862,11 @@ class MeetingItemWorkflowActions(object):
     def doItemFreeze(self, stateChange):
         pass
 
+    security.declarePrivate('doItemDecide')
+
+    def doItemDecide(self, stateChange):
+        pass
+
     security.declarePrivate('doAccept_out_of_meeting')
 
     def doAccept_out_of_meeting(self, stateChange):
