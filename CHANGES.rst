@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.2 (unreleased)
+4.2.2 (2023-06-27)
 ------------------
 
 - Fixed `MeetingConfig.validate_workflowAdaptations`. Removing a `waiting_advices`
