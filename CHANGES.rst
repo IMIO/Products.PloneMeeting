@@ -5,8 +5,9 @@ Changelog
 4.2.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Fixed `lateItem` item mail notification that was broken because still using
+  the `uid_catalog` and meeting DX does not use it anymore.
+  [gbastien]
 
 4.2.2 (2023-06-27)
 ------------------
