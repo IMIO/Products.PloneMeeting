@@ -2,7 +2,14 @@ Changelog
 =========
 
 
-4.2.2 (unreleased)
+4.2.3 (unreleased)
+------------------
+
+- Fixed `lateItem` item mail notification that was broken because still using
+  the `uid_catalog` and meeting DX does not use it anymore.
+  [gbastien]
+
+4.2.2 (2023-06-27)
 ------------------
 
 - Fixed `MeetingConfig.validate_workflowAdaptations`. Removing a `waiting_advices`

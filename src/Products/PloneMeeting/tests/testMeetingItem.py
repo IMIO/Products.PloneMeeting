@@ -8437,6 +8437,20 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(itemCfg2.internal_number, 50)
         self.assertEqual(self.catalog(internal_number=50)[0].UID, itemCfg2.UID())
 
+    def test_pm_ItemMailNotificationLateItem(self):
+        """Test the "lateItem" notification."""
+        cfg = self.meetingConfig
+        cfg.setMailItemEvents(('lateItem', ))
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        self.freezeMeeting(meeting)
+        item = self.create('MeetingItem', preferredMeeting=meeting.UID())
+        self.request['debug_sendMailIfRelevant'] = True
+        self.changeUser('pmReviewer1')
+        recipients, subject, body = item.wfActions().doValidate(None)
+        self.assertEqual(recipients, [u'M. PMManager <pmmanager@plonemeeting.org>'])
+        self.assertEqual(subject, u'PloneMeeting assembly - A "late" item has been validated.')
+
 
 def test_suite():
     from unittest import makeSuite

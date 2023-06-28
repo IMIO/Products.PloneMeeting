@@ -800,16 +800,12 @@ class MeetingItemWorkflowActions(object):
 
     def doValidate(self, stateChange):
         # If it is a "late" item, we must potentially send a mail to warn MeetingManagers.
-        preferredMeeting = self.context.getPreferredMeeting()
-        if preferredMeeting != ITEM_NO_PREFERRED_MEETING_VALUE:
-            # Get the meeting from its UID
-            uid_catalog = api.portal.get_tool('uid_catalog')
-            brains = uid_catalog.searchResults(UID=preferredMeeting)
-            if brains:
-                meeting = brains[0].getObject()
-                if self.context.wfConditions().isLateFor(meeting):
-                    sendMailIfRelevant(self.context, 'lateItem',
-                                       'meetingmanagers', isSuffix=True)
+        preferredMeetingUID = self.context.getPreferredMeeting()
+        if preferredMeetingUID != ITEM_NO_PREFERRED_MEETING_VALUE:
+            meeting = uuidToObject(preferredMeetingUID)
+            if meeting and self.context.wfConditions().isLateFor(meeting):
+                return sendMailIfRelevant(
+                    self.context, 'lateItem', 'meetingmanagers', isSuffix=True)
 
     def _forceInsertNormal(self):
         """ """
