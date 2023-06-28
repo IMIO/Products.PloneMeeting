@@ -708,9 +708,10 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             # Then, update the item workflow.
             removeState(itemWorkflow, 'itempublished', 'itempublish', 'backToItemPublished')
 
-        # "add_itemdecided" adds state 'itemdecided' in the item workflow.
-        if wfAdaptation == 'add_itemdecided':
-            addState()
+        # "no_itemdecide" removes state 'itemdecided' in the item workflow.
+        if wfAdaptation == 'no_itemdecide':
+            # Update the item workflow
+            removeState(itemWorkflow, 'itemdecided', 'itemdecide', 'backToItemDecided')
 
         # "no_decide" removes state 'decided' in the meeting workflow.
         if wfAdaptation == 'no_decide':

@@ -2877,6 +2877,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'no_freeze',
                      'no_publication',
                      'no_decide',
+                     'no_itemdecide',
                      # then define added item decided states
                      'accepted_but_modified',
                      'postpone_next_meeting',
