@@ -1487,8 +1487,14 @@ dl.portletWidgetCollection div.noMeetings {
     margin-left: 0.5em;
     margin-bottom: 0.5em;
 }
+
+/* lowercase collections title in widget collection portlet */
 dl.portlet.portletWidgetCollection div.widget-portlet li a {
     text-transform: lowercase;
+}
+/* but not in the meetings listing so meeting category acronym is displayed normal */
+dl.portlet.portletWidgetCollection div.widget-portlet ul.fewMeetings li a {
+    text-transform: none;
 }
 
 /* pretty link displayed to inherited item in advice popup */
