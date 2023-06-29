@@ -20,11 +20,10 @@
  <permission>PloneMeeting: Write budget infos</permission>
  <permission>PloneMeeting: Write marginal notes</permission>
  <permission>PloneMeeting: Write internal notes</permission>
- <permission>PloneMeeting: Write committee fields</permission>
  <state state_id="accepted"
         title="accepted"
         i18n:attributes="title">
-  <exit-transition transition_id="backToItemDecided"/>
+  <exit-transition transition_id="backToItemPublished"/>
   <permission-map name="Access contents information"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -70,12 +69,6 @@
    <permission-role>Editor</permission-role>
    <permission-role>MeetingBudgetImpactEditor</permission-role>
   </permission-map>
-  <permission-map name="PloneMeeting: Write committee fields"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-   <permission-role>MeetingCommitteeEditor</permission-role>
-  </permission-map>
   <permission-map name="PloneMeeting: Write decision"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -105,12 +98,6 @@
    <permission-role>Manager</permission-role>
    <permission-role>Reader</permission-role>
   </permission-map>
- </state>
- <state state_id="itemdecided"
-        title="itemdecided"
-        i18n:attributes="title">
-  <exit-transition transition_id="backToItemPublished"/>
-  <exit-transition transition_id="accept"/>
  </state>
  <state state_id="itemfrozen"
         title="itemfrozen"
@@ -163,12 +150,6 @@
    <permission-role>Editor</permission-role>
    <permission-role>MeetingBudgetImpactEditor</permission-role>
   </permission-map>
-  <permission-map name="PloneMeeting: Write committee fields"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-   <permission-role>MeetingCommitteeEditor</permission-role>
-  </permission-map>
   <permission-map name="PloneMeeting: Write decision"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -203,8 +184,8 @@
  <state state_id="itempublished"
         title="itempublished"
         i18n:attributes="title">
+  <exit-transition transition_id="accept"/>
   <exit-transition transition_id="backToItemFrozen"/>
-  <exit-transition transition_id="itemdecide"/>
   <permission-map name="Access contents information"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -250,12 +231,6 @@
    <permission-role>Manager</permission-role>
    <permission-role>Editor</permission-role>
    <permission-role>MeetingBudgetImpactEditor</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Write committee fields"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-   <permission-role>MeetingCommitteeEditor</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write decision"
                   acquired="False">
@@ -339,12 +314,6 @@
    <permission-role>Editor</permission-role>
    <permission-role>MeetingBudgetImpactEditor</permission-role>
   </permission-map>
-  <permission-map name="PloneMeeting: Write committee fields"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-   <permission-role>MeetingCommitteeEditor</permission-role>
-  </permission-map>
   <permission-map name="PloneMeeting: Write decision"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -363,6 +332,7 @@
   <permission-map name="PloneMeeting: Write marginal notes"
                   acquired="False">
    <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
   </permission-map>
   <permission-map name="Review portal content"
                   acquired="False">
@@ -425,12 +395,6 @@
    <permission-role>Editor</permission-role>
    <permission-role>MeetingBudgetImpactEditor</permission-role>
   </permission-map>
-  <permission-map name="PloneMeeting: Write committee fields"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-   <permission-role>MeetingCommitteeEditor</permission-role>
-  </permission-map>
   <permission-map name="PloneMeeting: Write decision"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -449,6 +413,7 @@
   <permission-map name="PloneMeeting: Write marginal notes"
                   acquired="False">
    <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
   </permission-map>
   <permission-map name="Review portal content"
                   acquired="False">
@@ -471,17 +436,6 @@
   <action url="" icon="%(portal_url)s/accept.png" category="workflow" i18n:translate="">accept</action>
   <guard>
     <guard-expression>python:here.wfConditions().mayDecide()</guard-expression>
-  </guard>
- </transition>
- <transition transition_id="backToItemDecided"
-             title="backToItemDecided"
-             new_state="itemdecided"
-             trigger="USER"
-             before_script=""
-             after_script=""
-             i18n:attributes="title">
-  <action url="" icon="" category="workflow" i18n:translate="">backToItemDecided</action>
-  <guard>
   </guard>
  </transition>
  <transition transition_id="backToItemFrozen"
@@ -530,17 +484,6 @@
   <action url="" icon="%(portal_url)s/backToValidated.png" category="workflow" i18n:translate="">backToValidated</action>
   <guard>
     <guard-expression>python:here.wfConditions().mayCorrect('validated')</guard-expression>
-  </guard>
- </transition>
- <transition transition_id="itemdecide"
-             title="itemdecide"
-             new_state="itemdecided"
-             trigger="USER"
-             before_script=""
-             after_script=""
-             i18n:attributes="title">
-  <action url="" icon="" category="workflow" i18n:translate="">itemdecide</action>
-  <guard>
   </guard>
  </transition>
  <transition transition_id="itemfreeze"
