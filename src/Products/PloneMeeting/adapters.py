@@ -879,18 +879,16 @@ class Criteria(eeaCriteria):
                 # on a faceted?  it is a pmFolder or a subFolder of the pmFolder
                 resultsperpagedefault = cfg.getMaxShownListings()
                 if IFacetedNavigable.providedBy(context):
-                    # listings of items has some configuration but not listings of meetings
+                    # keep relevant filters depending on configuration
                     if context.getId() == 'searches_items':
                         kept_filters = cfg.getDashboardItemsListingsFilters()
                         self.context = cfg.searches.searches_items
                     elif context.getId() == 'searches_meetings':
+                        kept_filters = cfg.getDashboardMeetingsListingsFilters()
                         self.context = cfg.searches.searches_meetings
-                        self.criteria = self._criteria()
-                        return self.context, self.criteria
                     elif context.getId() == 'searches_decisions':
+                        kept_filters = cfg.getDashboardMeetingsListingsFilters()
                         self.context = cfg.searches.searches_decisions
-                        self.criteria = self._criteria()
-                        return self.context, self.criteria
                     else:
                         self.context = cfg.searches
                         self.criteria = self._criteria()

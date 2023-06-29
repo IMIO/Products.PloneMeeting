@@ -8,6 +8,13 @@ Changelog
 - Fixed `lateItem` item mail notification that was broken because still using
   the `uid_catalog` and meeting DX does not use it anymore.
   [gbastien]
+- Completed meeting categories functionality:
+
+  - Added optional column in dashboards displaying meetings;
+  - Added faceted filter in dashboards displaying meetings
+    (this rely on new parameter `MeetingConfig.dashboardMeetingsListingsFilters`).
+
+  [gbastien]
 
 4.2.2 (2023-06-27)
 ------------------

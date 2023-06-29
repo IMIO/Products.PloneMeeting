@@ -801,6 +801,15 @@
           </td>
         </tr>
         <tr valign="top">
+          <td tal:define="field python:here.getField('dashboardMeetingsListingsFilters')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td>
+          </td>
+          <td>
+          </td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('itemsVisibleFields')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
