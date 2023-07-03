@@ -3461,6 +3461,30 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse('published' in meetingWFStates)
         self.assertFalse('decided' in meetingWFStates)
 
+    def test_pm_ItemDecidedWithReturnToProposingGroup(self):
+        """Test with "itemdecided" together with "return_to_proposing_group"
+           when meeting frozen, item can go back to "itemfrozen" and
+           when meeting decided, item can go back to "itemdecided"."""
+        if not self._check_wfa_available(
+                ['itemdecided', 'return_to_proposing_group']):
+            return
+        self._activate_wfas(('itemdecided', 'return_to_proposing_group'))
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem', decision=self.decisionText)
+        meeting = self.create('Meeting')
+        self.presentItem(item)
+        self.do(item, 'return_to_proposing_group')
+        self.assertEqual(self.transitions(item),
+                         ['backTo_presented_from_returned_to_proposing_group'])
+        self.freezeMeeting(meeting)
+        self.assertEqual(self.transitions(item),
+                         ['backTo_itemfrozen_from_returned_to_proposing_group'])
+        self.decideMeeting(meeting)
+        self.assertEqual(self.transitions(item),
+                         ['backTo_itemdecided_from_returned_to_proposing_group'])
+        self.do(item, 'backTo_itemdecided_from_returned_to_proposing_group')
+        self.assertEqual(item.query_state(), 'itemdecided')
+
 
 def test_suite():
     from unittest import makeSuite

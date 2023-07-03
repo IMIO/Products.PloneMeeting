@@ -313,6 +313,9 @@ meetingPma.onMeetingTransitionItemActionToExecute = (
     {'meeting_transition': 'decide',
      'item_action': 'itempublish',
      'tal_expression': ''},
+    {'meeting_transition': 'decide',
+     'item_action': 'itemdecide',
+     'tal_expression': ''},
 
     {'meeting_transition': 'publish_decisions',
      'item_action': 'itemfreeze',
