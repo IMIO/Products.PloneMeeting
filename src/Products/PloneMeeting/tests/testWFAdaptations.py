@@ -3468,6 +3468,14 @@ class testWFAdaptations(PloneMeetingTestCase):
         if not self._check_wfa_available(
                 ['itemdecided', 'return_to_proposing_group']):
             return
+        # enable auto itemdecide item when meeting decided
+        cfg = self.meetingConfig
+        actions = list(cfg.getOnMeetingTransitionItemActionToExecute())
+        actions.insert(5,
+                       {'meeting_transition': 'decide',
+                        'item_action': 'itemdecide',
+                        'tal_expression': ''})
+        cfg.setOnMeetingTransitionItemActionToExecute(actions)
         self._activate_wfas(('itemdecided', 'return_to_proposing_group'))
         self.changeUser('pmManager')
         item = self.create('MeetingItem', decision=self.decisionText)
