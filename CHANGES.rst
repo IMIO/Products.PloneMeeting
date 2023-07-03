@@ -15,6 +15,8 @@ Changelog
     (this rely on new parameter `MeetingConfig.dashboardMeetingsListingsFilters`).
 
   [gbastien]
+- Added `imio.helpers.workflow.update_role_mappings_for` to `safe_utils`.
+  [gbastien]
 
 4.2.2 (2023-06-27)
 ------------------
