@@ -17,6 +17,12 @@ Changelog
   [gbastien]
 - Added `imio.helpers.workflow.update_role_mappings_for` to `safe_utils`.
   [gbastien]
+- Added `itemdecided` workflow adaptation that will add a state `itemdecided` in
+  the item workflow between `itempublished` and `accepted`.
+  [gbastien]
+- Keep field `MeetingItem.isAcceptableOutOfMeeting` when item duplicated in the
+  same MC (or from an item template).
+  [gbastien]
 
 4.2.2 (2023-06-27)
 ------------------
