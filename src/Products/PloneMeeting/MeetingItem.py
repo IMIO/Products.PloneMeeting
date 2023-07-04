@@ -585,12 +585,18 @@ class MeetingItemWorkflowConditions(object):
             # and there is no last validation state, aka it is "itemcreated"
             if current_validation_state != last_val_state:
                 return
+
         # get the linked meeting
         meeting = self.context.getMeeting()
         meetingState = meeting.query_state()
-        # use RETURN_TO_PROPOSING_GROUP_MAPPINGS to know in wich meetingStates
+        # use RETURN_TO_PROPOSING_GROUP_MAPPINGS to know in which meetingStates
         # the given p_transitionName can be triggered
         authorizedMeetingStates = RETURN_TO_PROPOSING_GROUP_MAPPINGS[transitionName]
+        # special behavior when using WFA 'itemdecided', back to itemfrozen
+        # may only be done if meeting in state 'frozen'
+        if 'itemdecided' in self.cfg.getWorkflowAdaptations() and \
+           transitionName == 'backTo_itemfrozen_from_returned_to_proposing_group':
+            authorizedMeetingStates = ['frozen']
         if meetingState in authorizedMeetingStates:
             return True
         # if we did not return True, then return a No(...) message specifying that
@@ -609,6 +615,16 @@ class MeetingItemWorkflowConditions(object):
                                 context=self.context.REQUEST)}))
         return False
 
+    security.declarePublic('mayFreeze')
+
+    def mayFreeze(self):
+        res = False
+        if _checkPermission(ReviewPortalContent, self.context):
+            meeting = self.context.getMeeting()
+            if meeting and meeting.query_state() not in get_states_before(meeting, 'frozen'):
+                res = True
+        return res
+
     security.declarePublic('mayPublish')
 
     def mayPublish(self):
@@ -619,13 +635,13 @@ class MeetingItemWorkflowConditions(object):
                 res = True
         return res
 
-    security.declarePublic('mayFreeze')
+    security.declarePublic('mayItemDecide')
 
-    def mayFreeze(self):
+    def mayItemDecide(self):
         res = False
         if _checkPermission(ReviewPortalContent, self.context):
-            meeting = self.context.hasMeeting() and self.context.getMeeting() or None
-            if meeting and meeting.query_state() not in get_states_before(meeting, 'frozen'):
+            meeting = self.context.getMeeting()
+            if meeting.query_state() not in get_states_before(meeting, 'decided'):
                 res = True
         return res
 
@@ -842,20 +858,24 @@ class MeetingItemWorkflowActions(object):
            the entire doPresent.
            By default, this will freeze or publish the item."""
         wTool = api.portal.get_tool('portal_workflow')
-        try:
-            wTool.doActionFor(self.context, 'itemfreeze')
-            wTool.doActionFor(self.context, 'itempublish')
-        except WorkflowException:
-            pass  # Maybe does state 'itempublish' not exist.
+        # depending on enabled WFA, try to go as far as possible
+        for tr in ('itemfreeze', 'itempublish', 'itemdecide'):
+            if tr in get_transitions(self.context):
+                wTool.doActionFor(self.context, tr)
+
+    security.declarePrivate('doItemFreeze')
+
+    def doItemFreeze(self, stateChange):
+        pass
 
     security.declarePrivate('doItemPublish')
 
     def doItemPublish(self, stateChange):
         pass
 
-    security.declarePrivate('doItemFreeze')
+    security.declarePrivate('doItemDecide')
 
-    def doItemFreeze(self, stateChange):
+    def doItemDecide(self, stateChange):
         pass
 
     security.declarePrivate('doAccept_out_of_meeting')

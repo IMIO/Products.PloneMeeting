@@ -2889,6 +2889,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     # Names of workflow adaptations, ORDER IS IMPORTANT!
     wfAdaptations = ('item_validation_shortcuts',
                      'item_validation_no_validate_shortcuts',
+                     'itemdecided',
                      'only_creator_may_delete',
                      # first define meeting workflow state removal
                      'no_freeze',
@@ -4826,6 +4827,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
              {'portal_type': item_type,
               'review_state': ['accepted_out_of_meeting_emergency'],
               'optional_with': ('accepted_out_of_meeting_emergency', )}),
+            ('itemdecided',
+             {'portal_type': item_type,
+              'review_state': ['itemdecided'],
+              'optional_with': ()}),
             ('transfered',
              {'portal_type': item_type,
               'review_state': ['transfered'],

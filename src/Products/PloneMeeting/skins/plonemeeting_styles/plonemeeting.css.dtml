@@ -422,11 +422,13 @@ div.viewlet_workflowstate span.state-published {
 .state-published {color: darkgoldenrod !important;}
 /* black */
 div.viewlet_workflowstate span.state-decided,
+div.viewlet_workflowstate span.state-itemdecided,
 div.viewlet_workflowstate span.state-decisions_published {
     background-color: black;
     border-color: black;
 }
 .state-decided,
+.state-itemdecided,
 .state-decisions_published {
    color: black !important;
 }

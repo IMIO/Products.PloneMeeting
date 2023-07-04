@@ -16,7 +16,8 @@ from Products.PloneMeeting.utils import updateCollectionCriterion
 
 
 # states of the meeting from which an item can be 'returned_to_proposing_group'
-RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES = ('presented', 'itemfrozen', 'itempublished', )
+RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES = (
+    'presented', 'itemfrozen', 'itempublished', 'itemdecided')
 # mapping definintions regarding the 'return_to_proposing_group' wfAdaptation
 # this is used in MeetingItem.mayBackToMeeting and may vary upon used workflow
 # the key is the transition triggerable on the item and the values are states
@@ -30,6 +31,8 @@ RETURN_TO_PROPOSING_GROUP_MAPPINGS = {'backTo_presented_from_returned_to_proposi
                                       ['published', ],
                                       'backTo_itemfrozen_from_returned_to_proposing_group':
                                       ['frozen', 'decided', 'decisions_published', ],
+                                      'backTo_itemdecided_from_returned_to_proposing_group':
+                                      ['decided', 'decisions_published', ],
                                       'NO_MORE_RETURNABLE_STATES': ['closed', 'archived', ]
                                       }
 
@@ -707,6 +710,27 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             removeState(meetingWorkflow, 'published', 'publish', 'backToPublished')
             # Then, update the item workflow.
             removeState(itemWorkflow, 'itempublished', 'itempublish', 'backToItemPublished')
+
+        # "itemdecided" adds state 'itemdecided' in the item workflow.
+        if wfAdaptation == 'itemdecided':
+            # Update the item workflow
+            addState(
+                wf_id=itemWorkflow.getId(),
+                new_state_id='itemdecided',
+                new_state_title='itemdecided',
+                permissions_cloned_state_id='itemfrozen',
+                leading_transition_id='itemdecide',
+                leading_transition_title='itemdecide',
+                back_transitions=[
+                    {'back_transition_id': 'backToItemDecided',
+                     'back_transition_title': 'backToItemDecided',
+                     'back_from_state_id': 'accepted'}],
+                existing_leaving_transition_ids=['accept', 'backToItemPublished'],
+                leaving_to_state_id='accepted',
+                guard_name='mayItemDecide()')
+            # clean itemfrozen and accepted transitions
+            itemWorkflow.states['accepted'].transitions = ['backToItemDecided']
+            itemWorkflow.states['itempublished'].transitions = ['itemdecide', 'backToItemFrozen']
 
         # "no_decide" removes state 'decided' in the meeting workflow.
         if wfAdaptation == 'no_decide':
