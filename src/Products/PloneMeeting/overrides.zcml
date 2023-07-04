@@ -238,7 +238,7 @@
     <browser:page
         for="collective.eeafaceted.batchactions.interfaces.IBatchActionsMarker"
         name="transition-batch-action"
-        class=".browser.overrides.PMTransitionBatchActionForm"
+        class=".browser.batchactions.PMTransitionBatchActionForm"
         permission="zope2.View" />
 
     <browser:page

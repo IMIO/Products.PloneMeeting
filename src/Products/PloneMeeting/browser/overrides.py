@@ -13,8 +13,6 @@ from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentgenerator.viewlets.generationlinks import DocumentGeneratorLinksViewlet
-from collective.eeafaceted.batchactions.browser.views import LabelsBatchActionForm
-from collective.eeafaceted.batchactions.browser.views import TransitionBatchActionForm
 from collective.eeafaceted.collectionwidget.browser.views import FacetedDashboardView
 from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGenerationView
 from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGeneratorLinksViewlet
@@ -1422,34 +1420,6 @@ class PMReferenceBrowserPopup(ReferenceBrowserPopup):
         return getattr(item, 'title_or_id', '') or \
             getattr(item, 'Title', '') or \
             getattr(item, 'getId', '')
-
-
-class PMLabelsBatchActionForm(LabelsBatchActionForm):
-    """ """
-
-    def available(self):
-        """Only available when labels are enabled."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        return cfg.getEnableLabels()
-
-
-class PMTransitionBatchActionForm(TransitionBatchActionForm):
-    """ """
-
-    def available(self):
-        """Only available to users having operational roles in the application.
-           This is essentially done to hide this to (restricted)powerobservers
-           and to non MeetingManagers on the meeting_view."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        class_name = self.context.__class__.__name__
-        return class_name != 'MeetingItem' and \
-            ((class_name == 'Meeting' and
-                _checkPermission(ModifyPortalContent, self.context)) or
-             (not class_name == 'Meeting' and
-             (tool.isManager(cfg) or
-              bool(tool.userIsAmong(suffixes=get_all_suffixes(None), cfg=cfg)))))
 
 
 class PMContentHistoryView(IHContentHistoryView):

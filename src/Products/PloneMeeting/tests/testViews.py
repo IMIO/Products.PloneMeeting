@@ -23,8 +23,8 @@ from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from plone.locking.interfaces import ILockable
 from plone.testing.z2 import Browser
-from Products.Archetypes.event import ObjectEditedEvent
 from Products import PloneMeeting as products_plonemeeting
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
