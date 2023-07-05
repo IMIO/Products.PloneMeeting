@@ -1792,7 +1792,7 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(form.available())
 
     def test_pm_UpdateLocalRolesBatchActionForm(self):
-        """This will call.update_local_roles on selected elements."""
+        """This will call update_local_roles on selected elements."""
         cfg = self.meetingConfig
         # remove recurring items in self.meetingConfig
         self._removeConfigObjectsFor(cfg)
@@ -1849,6 +1849,74 @@ class testViews(PloneMeetingTestCase):
         form.update()
         form.handleApply(form, None)
         self.assertTrue(powerobservers in meeting.__ac_local_roles__)
+
+    def test_pm_UpdateGroupsInChargeBatchActionForm(self):
+        """This will update groupsInCharge for selected items."""
+        # not available when not using groupsInCharge
+        self.changeUser('pmCreator1')
+        searches_items = self.getMeetingFolder().searches_items
+        self.assertFalse(searches_items.unrestrictedTraverse(
+            '@@update-groups-in-charge-batch-action').available())
+        # enable groupsInCharge
+        self._enableField('groupsInCharge')
+        self.assertTrue(searches_items.unrestrictedTraverse(
+            '@@update-groups-in-charge-batch-action').available())
+
+        # not available to non operational users
+        self.changeUser('powerobserver1')
+        searches_items = self.getMeetingFolder().searches_items
+        self.assertFalse(searches_items.unrestrictedTraverse(
+            '@@update-groups-in-charge-batch-action').available())
+
+        # create some items
+        self.changeUser('pmCreator1')
+        searches_items = self.getMeetingFolder().searches_items
+        item1 = self.create('MeetingItem', groupsInCharge=[self.developers_uid])
+        item1_uid = item1.UID()
+        item2 = self.create('MeetingItem', groupsInCharge=[self.vendors_uid])
+        item2_uid = item2.UID()
+        item3 = self.create('MeetingItem', groupsInCharge=[self.developers_uid, self.vendors_uid])
+        item3_uid = item3.UID()
+        self.request.form['form.widgets.uids'] = ','.join([item1_uid, item2_uid, item3_uid])
+        form = searches_items.restrictedTraverse('@@update-groups-in-charge-batch-action')
+        form.update()
+        # values are ordered
+        self.assertEqual(
+            [term.value for term in form.widgets['added_values'].terms.terms._terms],
+            [self.developers_uid, self.vendors_uid])
+
+        # add vendors
+        self.request['form.widgets.action_choice'] = 'add'
+        self.request['form.widgets.added_values'] = [self.vendors_uid]
+        form.handleApply(form, None)
+        # was added
+        self.assertEqual(item1.getGroupsInCharge(), [self.developers_uid, self.vendors_uid])
+        # already selected, not changed
+        self.assertEqual(item2.getGroupsInCharge(), [self.vendors_uid])
+        self.assertEqual(item3.getGroupsInCharge(), [self.developers_uid, self.vendors_uid])
+
+        # add developers
+        self.request['form.widgets.action_choice'] = 'add'
+        self.request['form.widgets.added_values'] = [self.developers_uid]
+        form = searches_items.restrictedTraverse('@@update-groups-in-charge-batch-action')
+        form.update()
+        form.handleApply(form, None)
+        # was added at first value, order is respected
+        self.assertEqual(item2.getGroupsInCharge(), [self.developers_uid, self.vendors_uid])
+        # already selected, not changed
+        self.assertEqual(item1.getGroupsInCharge(), [self.developers_uid, self.vendors_uid])
+        self.assertEqual(item3.getGroupsInCharge(), [self.developers_uid, self.vendors_uid])
+
+        # remove vendors
+        self.request['form.widgets.action_choice'] = 'remove'
+        self.request['form.widgets.removed_values'] = [self.vendors_uid]
+        form = searches_items.restrictedTraverse('@@update-groups-in-charge-batch-action')
+        form.update()
+        form.handleApply(form, None)
+        # was removed for the 3 items
+        self.assertEqual(item1.getGroupsInCharge(), [self.developers_uid])
+        self.assertEqual(item2.getGroupsInCharge(), [self.developers_uid])
+        self.assertEqual(item3.getGroupsInCharge(), [self.developers_uid])
 
     def test_pm_DownloadAnnexesActionForm(self):
         """This batch action will download annexes as a zip file."""

@@ -114,10 +114,14 @@ class UpdateGroupsInChargeBatchActionForm(BaseARUOBatchActionForm):
     label = _CEBA("Update groups in charge for selected elements")
 
     def available(self):
-        """Only available to users having operational roles in the application.
+        """Only available when using groupsInCharge to users having operational
+           roles in the application.
            This is essentially done to hide this to (restricted)powerobservers
            and to non MeetingManagers on the meeting_view."""
-        return _is_operational_user(self.context)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        return "groupsInCharge" in cfg.getUsedItemAttributes() and \
+            _is_operational_user(self.context)
 
     @property
     def _vocabulary(self):
