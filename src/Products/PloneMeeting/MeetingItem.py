@@ -851,7 +851,7 @@ class MeetingItemWorkflowActions(object):
         # If the meeting is already in a late state and this item is a "late" item,
         # I must set automatically the item to the first "late state" (itemfrozen by default).
         if meeting.is_late():
-            do_transitions(self._latePresentedItemTransitions())
+            do_transitions(self.context, self._latePresentedItemTransitions())
 
     def _latePresentedItemTransitions(self):
         """Return the transitions to execute on a late item.
