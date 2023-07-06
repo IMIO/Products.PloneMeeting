@@ -1640,13 +1640,17 @@ class PMPortalTypesVocabulary(PortalTypesVocabularyFactory):
         if cfg:
             # available for item, meeting and advice
             itemTypeName = cfg.getItemTypeName()
-            res.append(SimpleTerm(itemTypeName, itemTypeName, translate(itemTypeName,
-                                                                        domain="plone",
-                                                                        context=context.REQUEST)))
+            res.append(SimpleTerm(itemTypeName,
+                                  itemTypeName,
+                                  translate(itemTypeName,
+                                            domain="plone",
+                                            context=context.REQUEST)))
             meetingTypeName = cfg.getMeetingTypeName()
-            res.append(SimpleTerm(meetingTypeName, meetingTypeName, translate(meetingTypeName,
-                                                                              domain="plone",
-                                                                              context=context.REQUEST)))
+            res.append(SimpleTerm(meetingTypeName,
+                                  meetingTypeName,
+                                  translate(meetingTypeName,
+                                            domain="plone",
+                                            context=context.REQUEST)))
             # manage multiple 'meetingadvice' portal_types
             for portal_type in tool.getAdvicePortalTypes():
                 res.append(SimpleTerm(portal_type.id,
@@ -1674,7 +1678,8 @@ class PMExistingPODTemplate(ExistingPODTemplateFactory):
            This could be a template stored in "contacts" or somewhere else."""
         template = brain.getObject()
         if template.aq_inner.aq_parent.id == "podtemplates":
-            parent_title = template.aq_inner.aq_parent.aq_parent.Title(include_config_group=True)
+            parent_title = template.aq_inner.aq_parent.aq_parent.Title(
+                include_config_group=True)
         else:
             parent_title = template.aq_inner.aq_parent.Title()
         return u'{} ➔ {} ➔ {}'.format(

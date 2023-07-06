@@ -34,6 +34,8 @@ Changelog
   `MeetingItemWorkflowActions._latePresentedItemTransitions` that just needs
   a tuple of transitions to trigger on a late item, easier to override.
   [gbastien]
+- Updated link to the documentation.
+  [gbastien]
 
 4.2.2 (2023-06-27)
 ------------------

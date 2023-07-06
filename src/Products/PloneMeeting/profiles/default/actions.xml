@@ -147,7 +147,7 @@
    </object>
    <object name="documentation" meta_type="CMF Action" i18n:domain="PloneMeeting" insert-before="*">
      <property name="title" i18n:translate="">iA.Delib documentation</property>
-     <property name="url_expr">string:https://docs.imio.be/imio-doc/ia.delib/</property>
+     <property name="url_expr">string:https://docs.imio.be/iadelib/</property>
      <property name="link_target">_blank</property>
      <property name="available_expr"></property>
      <property name="permissions">
