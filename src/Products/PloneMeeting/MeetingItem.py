@@ -20,7 +20,6 @@ from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
-from imio.helpers.content import get_transitions
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import safe_delattr
@@ -29,6 +28,8 @@ from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.content import uuidToObject
 from imio.helpers.security import fplog
+from imio.helpers.workflow import do_transitions
+from imio.helpers.workflow import get_transitions
 from imio.helpers.xhtml import is_html
 from imio.history.utils import get_all_history_attr
 from imio.history.utils import getLastWFAction
@@ -752,13 +753,15 @@ class MeetingItemWorkflowConditions(object):
     def mayAccept_out_of_meeting_emergency(self):
         """ """
         res = False
-        emergency = self.context.getEmergency()
-        if emergency == 'emergency_accepted':
-            if _checkPermission(ReviewPortalContent, self.context) and self.tool.isManager(self.cfg):
+        if self.context.getIsAcceptableOutOfMeeting() and \
+           _checkPermission(ReviewPortalContent, self.context) and \
+           self.tool.isManager(self.cfg):
+            emergency = self.context.getEmergency()
+            if emergency == 'emergency_accepted':
                 res = True
-        # if at least emergency is asked, then return a No message
-        elif emergency != 'no_emergency':
-            res = No(_('emergency_accepted_required_to_accept_out_of_meeting_emergency'))
+            # if at least emergency is asked, then return a No message
+            elif emergency != 'no_emergency':
+                res = No(_('emergency_accepted_required_to_accept_out_of_meeting_emergency'))
         return res
 
     security.declarePublic('mayTransfer')
@@ -850,18 +853,15 @@ class MeetingItemWorkflowActions(object):
         # If the meeting is already in a late state and this item is a "late" item,
         # I must set automatically the item to the first "late state" (itemfrozen by default).
         if meeting.is_late():
-            self._latePresentedItem()
+            do_transitions(self.context, self._latePresentedItemTransitions())
 
-    def _latePresentedItem(self):
-        """Set presented item in a late state, this is done to be easy to override in case
-           WF transitions to set an item late item is different, without redefining
-           the entire doPresent.
-           By default, this will freeze or publish the item."""
-        wTool = api.portal.get_tool('portal_workflow')
-        # depending on enabled WFA, try to go as far as possible
-        for tr in ('itemfreeze', 'itempublish', 'itemdecide'):
-            if tr in get_transitions(self.context):
-                wTool.doActionFor(self.context, tr)
+    def _latePresentedItemTransitions(self):
+        """Return the transitions to execute on a late item.
+           By default, this will freeze, publish or decide the item."""
+        # can can not base this on MeetingConfig.onMeetingTransitionItemActionToExecute
+        # because sometimes for performance reasons, freezing items when
+        # freezing the meeting is disabled but we want a late item to be auto frozen...
+        return ('itemfreeze', 'itempublish', 'itemdecide')
 
     security.declarePrivate('doItemFreeze')
 
@@ -884,7 +884,11 @@ class MeetingItemWorkflowActions(object):
         """Duplicate item to validated if WFAdaptation
            'accepted_out_of_meeting_and_duplicated' is used."""
         if 'accepted_out_of_meeting_and_duplicated' in self.cfg.getWorkflowAdaptations():
-            self._duplicateAndValidate(cloneEventAction='create_from_accepted_out_of_meeting')
+            new_item = self._duplicateAndValidate(
+                cloneEventAction='create_from_accepted_out_of_meeting')
+            # make sure new_item is no more isAcceptableOutOfMeeting
+            # when auto duplicated, new item is supposed to be presented in a next meeting
+            new_item.setIsAcceptableOutOfMeeting(False)
         self.context.update_item_reference()
 
     security.declarePrivate('doAccept_out_of_meeting_emergency')
@@ -893,7 +897,12 @@ class MeetingItemWorkflowActions(object):
         """Duplicate item to validated if WFAdaptation
            'accepted_out_of_meeting_emergency_and_duplicated' is used."""
         if 'accepted_out_of_meeting_emergency_and_duplicated' in self.cfg.getWorkflowAdaptations():
-            self._duplicateAndValidate(cloneEventAction='create_from_accepted_out_of_meeting_emergency')
+            new_item = self._duplicateAndValidate(
+                cloneEventAction='create_from_accepted_out_of_meeting_emergency')
+            # make sure new_item is no more isAcceptableOutOfMeeting
+            # when auto duplicated, new item is supposed to be presented in a next meeting
+            new_item.setIsAcceptableOutOfMeeting(False)
+
         self.context.update_item_reference()
 
     security.declarePrivate('doTransfer')

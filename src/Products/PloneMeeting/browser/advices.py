@@ -4,7 +4,7 @@ from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group_id
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import get_plone_groups_for_user
-from imio.helpers.content import get_state_infos
+from imio.helpers.workflow import get_state_infos
 from imio.history.browser.views import EventPreviewView
 from imio.history.interfaces import IImioHistory
 from plone import api

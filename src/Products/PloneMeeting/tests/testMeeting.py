@@ -1791,6 +1791,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertTrue(meeting.is_late())
         self.presentItem(lateItem)
         self.assertEqual(lateItem.getListType(), 'late')
+        self.assertEqual(lateItem.query_state(), 'itemfrozen')
 
         # remove the late item, put the meeting back to a non frozen state
         # and insert it again, it will be inserted as a normal item

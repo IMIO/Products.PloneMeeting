@@ -459,7 +459,9 @@ class IMeetingItemWorkflowActions(Interface):
     def doCorrect(stateChange):
         '''Executes when the user performs a wrong action and needs to undo
            it.'''
-
+    def _latePresentedItemTransitions():
+        '''The list of transitions to trigger on an item when presented into
+        a late meeting.'''
 
 class IMeetingItemCustom(IMeetingItem):
     '''If you want to propose your own implementations of IMeetingItem methods,
