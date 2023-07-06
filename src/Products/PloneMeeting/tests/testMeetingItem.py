@@ -5447,7 +5447,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # on the parameter MeetingConfig.toDiscussSetOnItemInsert
         # check test test_pm_ToDiscussFieldBehaviourWhenCloned
         NEUTRAL_FIELDS = [
-            'completeness', 'emergency', 'id', 'isAcceptableOutOfMeeting',
+            'completeness', 'emergency', 'id',
             'itemAssembly', 'itemAssemblyAbsents', 'itemAssemblyExcused',
             'itemAssemblyGuests', 'itemInitiator', 'itemIsSigned',
             'itemKeywords', 'itemNumber', 'itemReference',
@@ -5460,7 +5460,7 @@ class testMeetingItem(PloneMeetingTestCase):
             'toDiscuss', 'committeeObservations', 'committeeTranscript',
             'votesObservations', 'votesResult',
             'otherMeetingConfigsClonableToEmergency',
-            'internalNotes', 'externalIdentifier', 'isAcceptableOutOfMeeting']
+            'internalNotes', 'externalIdentifier']
         NEUTRAL_FIELDS += self._extraNeutralFields()
         # neutral + default + extra + getExtraFieldsToCopyWhenCloning(True) +
         # getExtraFieldsToCopyWhenCloning(False) should equal itemFields
@@ -8436,6 +8436,20 @@ class testMeetingItem(PloneMeetingTestCase):
         itemCfg2 = itemFromTemplate.cloneToOtherMeetingConfig(cfg2Id)
         self.assertEqual(itemCfg2.internal_number, 50)
         self.assertEqual(self.catalog(internal_number=50)[0].UID, itemCfg2.UID())
+
+    def test_pm_ItemMailNotificationLateItem(self):
+        """Test the "lateItem" notification."""
+        cfg = self.meetingConfig
+        cfg.setMailItemEvents(('lateItem', ))
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        self.freezeMeeting(meeting)
+        item = self.create('MeetingItem', preferredMeeting=meeting.UID())
+        self.request['debug_sendMailIfRelevant'] = True
+        self.changeUser('pmReviewer1')
+        recipients, subject, body = item.wfActions().doValidate(None)
+        self.assertEqual(recipients, [u'M. PMManager <pmmanager@plonemeeting.org>'])
+        self.assertEqual(subject, u'PloneMeeting assembly - A "late" item has been validated.')
 
 
 def test_suite():

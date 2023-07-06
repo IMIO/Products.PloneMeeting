@@ -422,11 +422,13 @@ div.viewlet_workflowstate span.state-published {
 .state-published {color: darkgoldenrod !important;}
 /* black */
 div.viewlet_workflowstate span.state-decided,
+div.viewlet_workflowstate span.state-itemdecided,
 div.viewlet_workflowstate span.state-decisions_published {
     background-color: black;
     border-color: black;
 }
 .state-decided,
+.state-itemdecided,
 .state-decisions_published {
    color: black !important;
 }
@@ -1487,8 +1489,14 @@ dl.portletWidgetCollection div.noMeetings {
     margin-left: 0.5em;
     margin-bottom: 0.5em;
 }
+
+/* lowercase collections title in widget collection portlet */
 dl.portlet.portletWidgetCollection div.widget-portlet li a {
     text-transform: lowercase;
+}
+/* but not in the meetings listing so meeting category acronym is displayed normal */
+dl.portlet.portletWidgetCollection div.widget-portlet ul.fewMeetings li a {
+    text-transform: none;
 }
 
 /* pretty link displayed to inherited item in advice popup */

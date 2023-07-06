@@ -38,6 +38,12 @@ class ItemCategoryColumn(VocabularyColumn):
         return css_classes
 
 
+class MeetingCategoryColumn(ItemCategoryColumn):
+    """A column that display the Meeting.category."""
+    attrName = 'getCategory'
+    vocabulary = u'Products.PloneMeeting.vocabularies.meeting_categories_vocabulary'
+
+
 class ItemClassifierColumn(VocabularyColumn):
     """A column that display the MeetingItem.classifier."""
     vocabulary = u'Products.PloneMeeting.vocabularies.classifiersvocabulary'

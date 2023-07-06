@@ -1618,6 +1618,23 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
+        name='dashboardMeetingsListingsFilters',
+        widget=MultiSelectionWidget(
+            description="DashboardMeetingsListingsFilters",
+            description_msgid="dashboard_meetings_listings_filters_descr",
+            format="checkbox",
+            label='Dashboardmeetingslistingsfilters',
+            label_msgid='PloneMeeting_label_dashboardMeetingsListingsFilters',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listDashboardMeetingsListingsFilters',
+        default=defValues.dashboardMeetingsListingsFilters,
+        enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
         name='groupsHiddenInDashboardFilter',
         widget=MultiSelectionWidget(
             description="GroupsHiddenInDashboardFilter",
@@ -2872,6 +2889,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     # Names of workflow adaptations, ORDER IS IMPORTANT!
     wfAdaptations = ('item_validation_shortcuts',
                      'item_validation_no_validate_shortcuts',
+                     'itemdecided',
                      'only_creator_may_delete',
                      # first define meeting workflow state removal
                      'no_freeze',
@@ -4051,6 +4069,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                    criterion.__name__)))
         return DisplayList(tuple(res))
 
+    security.declarePrivate('listDashboardMeetingsListingsFilters')
+
+    def listDashboardMeetingsListingsFilters(self):
+        """Vocabulary for 'dashboardMeetingsListingsFilters' field."""
+        criteria = ICriteria(self.searches.searches_decisions).criteria
+        res = []
+        for criterion in criteria:
+            if criterion.section == u'advanced':
+                res.append(
+                    (criterion.__name__,
+                     u"%s (%s)" % (translate(criterion.title,
+                                             domain="eea",
+                                             context=self.REQUEST),
+                                   criterion.__name__)))
+        return DisplayList(tuple(res))
+
     security.declarePrivate('listResultsPerPage')
 
     def listResultsPerPage(self):
@@ -4793,6 +4827,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
              {'portal_type': item_type,
               'review_state': ['accepted_out_of_meeting_emergency'],
               'optional_with': ('accepted_out_of_meeting_emergency', )}),
+            ('itemdecided',
+             {'portal_type': item_type,
+              'review_state': ['itemdecided'],
+              'optional_with': ()}),
             ('transfered',
              {'portal_type': item_type,
               'review_state': ['transfered'],
@@ -5663,6 +5701,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     translate('header_review_state', domain=d, context=self.REQUEST))),
             ("review_state_title", u"{0} (review_state_title)".format(
                 translate('header_review_state_title_descr', domain=d, context=self.REQUEST))),
+            ("meeting_category", u"{0} (meeting_category)".format(
+                translate("header_getCategory", domain=d, context=self.REQUEST))),
             ("actions",
                 u"{0} (actions)".format(
                     translate("header_actions", domain=d, context=self.REQUEST))),

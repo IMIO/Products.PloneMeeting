@@ -2,7 +2,40 @@ Changelog
 =========
 
 
-4.2.2 (unreleased)
+4.2.3 (unreleased)
+------------------
+
+- Fixed `lateItem` item mail notification that was broken because still using
+  the `uid_catalog` and meeting DX does not use it anymore.
+  [gbastien]
+- Completed meeting categories functionality:
+
+  - Added optional column in dashboards displaying meetings;
+  - Added faceted filter in dashboards displaying meetings
+    (this rely on new parameter `MeetingConfig.dashboardMeetingsListingsFilters`).
+
+  [gbastien]
+- Added `imio.helpers.workflow.update_role_mappings_for` to `safe_utils`.
+  [gbastien]
+- Added `itemdecided` workflow adaptation that will add a state `itemdecided` in
+  the item workflow between `itempublished` and `accepted`.
+  [gbastien]
+- Keep field `MeetingItem.isAcceptableOutOfMeeting` when item duplicated in the
+  same MC (or from an item template).
+  `isAcceptableOutOfMeeting` is set back to `False` when using workflow adaptations
+  `accepted_out_of_meeting_and_duplicated` and
+  `accepted_out_of_meeting_emergency_and_duplicated` as item is duplicated to be
+  presented in a next meeting.
+  [gbastien]
+- `get_state_infos` was moved from `imio.helpers.content` to
+  `imio.helpers.workflow`, adapted import accordingly.
+  [gbastien]
+- Replaced `MeetingItemWorkflowActions._latePresentedItem` by
+  `MeetingItemWorkflowActions._latePresentedItemTransitions` that just needs
+  a tuple of transitions to trigger on a late item, easier to override.
+  [gbastien]
+
+4.2.2 (2023-06-27)
 ------------------
 
 - Fixed `MeetingConfig.validate_workflowAdaptations`. Removing a `waiting_advices`
