@@ -1886,6 +1886,8 @@ class testViews(PloneMeetingTestCase):
             [self.developers_uid, self.vendors_uid])
 
         # add vendors
+        # for now item1 not found in catalog
+        self.assertFalse(self.catalog(getGroupsInCharge=self.vendors_uid, UID=item1_uid))
         self.request['form.widgets.action_choice'] = 'add'
         self.request['form.widgets.added_values'] = [self.vendors_uid]
         form.handleApply(form, None)
@@ -1894,6 +1896,8 @@ class testViews(PloneMeetingTestCase):
         # already selected, not changed
         self.assertEqual(item2.getGroupsInCharge(), [self.vendors_uid])
         self.assertEqual(item3.getGroupsInCharge(), [self.developers_uid, self.vendors_uid])
+        # adapted elements were reindexed
+        self.assertTrue(self.catalog(getGroupsInCharge=self.vendors_uid, UID=item1_uid))
 
         # add developers
         self.request['form.widgets.action_choice'] = 'add'
