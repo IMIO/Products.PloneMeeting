@@ -753,13 +753,15 @@ class MeetingItemWorkflowConditions(object):
     def mayAccept_out_of_meeting_emergency(self):
         """ """
         res = False
-        emergency = self.context.getEmergency()
-        if emergency == 'emergency_accepted':
-            if _checkPermission(ReviewPortalContent, self.context) and self.tool.isManager(self.cfg):
+        if self.context.getIsAcceptableOutOfMeeting() and \
+           _checkPermission(ReviewPortalContent, self.context) and \
+           self.tool.isManager(self.cfg):
+            emergency = self.context.getEmergency()
+            if emergency == 'emergency_accepted':
                 res = True
-        # if at least emergency is asked, then return a No message
-        elif emergency != 'no_emergency':
-            res = No(_('emergency_accepted_required_to_accept_out_of_meeting_emergency'))
+            # if at least emergency is asked, then return a No message
+            elif emergency != 'no_emergency':
+                res = No(_('emergency_accepted_required_to_accept_out_of_meeting_emergency'))
         return res
 
     security.declarePublic('mayTransfer')
@@ -882,7 +884,11 @@ class MeetingItemWorkflowActions(object):
         """Duplicate item to validated if WFAdaptation
            'accepted_out_of_meeting_and_duplicated' is used."""
         if 'accepted_out_of_meeting_and_duplicated' in self.cfg.getWorkflowAdaptations():
-            self._duplicateAndValidate(cloneEventAction='create_from_accepted_out_of_meeting')
+            new_item = self._duplicateAndValidate(
+                cloneEventAction='create_from_accepted_out_of_meeting')
+            # make sure new_item is no more isAcceptableOutOfMeeting
+            # when auto duplicated, new item is supposed to be presented in a next meeting
+            new_item.setIsAcceptableOutOfMeeting(False)
         self.context.update_item_reference()
 
     security.declarePrivate('doAccept_out_of_meeting_emergency')
@@ -891,7 +897,12 @@ class MeetingItemWorkflowActions(object):
         """Duplicate item to validated if WFAdaptation
            'accepted_out_of_meeting_emergency_and_duplicated' is used."""
         if 'accepted_out_of_meeting_emergency_and_duplicated' in self.cfg.getWorkflowAdaptations():
-            self._duplicateAndValidate(cloneEventAction='create_from_accepted_out_of_meeting_emergency')
+            new_item = self._duplicateAndValidate(
+                cloneEventAction='create_from_accepted_out_of_meeting_emergency')
+            # make sure new_item is no more isAcceptableOutOfMeeting
+            # when auto duplicated, new item is supposed to be presented in a next meeting
+            new_item.setIsAcceptableOutOfMeeting(False)
+
         self.context.update_item_reference()
 
     security.declarePrivate('doTransfer')
