@@ -22,16 +22,17 @@ Changelog
   [gbastien]
 - Keep field `MeetingItem.isAcceptableOutOfMeeting` when item duplicated in the
   same MC (or from an item template).
+  `isAcceptableOutOfMeeting` is set back to `False` when using workflow adaptations
+  `accepted_out_of_meeting_and_duplicated` and
+  `accepted_out_of_meeting_emergency_and_duplicated` as item is duplicated to be
+  presented in a next meeting.
   [gbastien]
 - `get_state_infos` was moved from `imio.helpers.content` to
   `imio.helpers.workflow`, adapted import accordingly.
   [gbastien]
-- Removed `MeetingItemWorkflowActions._latePresentedItem`, an item presented in
-  a late meeting will use `MeetingConfig.onMeetingTransitionItemActionToExecute`
-  to be set in relevant `review_state` so it is more coherent, freezing a meeting
-  manually or inserting an item into a frozen meeting will make item
-  `review_state` be the same. Moreover we avoid this being manually managed and
-  sometimes being overrided by plugins.
+- Replaced `MeetingItemWorkflowActions._latePresentedItem` by
+  `MeetingItemWorkflowActions._latePresentedItemTransitions` that just needs
+  a tuple of transitions to trigger on a late item, easier to override.
   [gbastien]
 
 4.2.2 (2023-06-27)
