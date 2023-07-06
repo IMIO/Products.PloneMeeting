@@ -600,7 +600,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            possible if some items still in this state."""
         # ease override by subproducts
         cfg = self.meetingConfig
-        if wf_adaptation_name not in cfg.listWorkflowAdaptations():
+        if not self._check_wfa_available([wf_adaptation_name]):
             return
 
         self.changeUser('pmManager')
@@ -693,7 +693,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             item_transition='remove')
 
         cfg = self.meetingConfig
-        if 'removed_and_duplicated' in cfg.listWorkflowAdaptations():
+        if not self._check_wfa_available(['removed_and_duplicated']):
             # possible to switch from one to the other
             self.failIf(cfg.validate_workflowAdaptations(('removed_and_duplicated', )))
             cfg.setWorkflowAdaptations(('removed_and_duplicated', ))
@@ -757,32 +757,32 @@ class testWFAdaptations(PloneMeetingTestCase):
         # ease override by subproducts
         cfg = self.meetingConfig
         # accepted_out_of_meeting
-        if 'accepted_out_of_meeting' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['accepted_out_of_meeting']):
             _check(wfa_name='accepted_out_of_meeting',
                    transition='accept_out_of_meeting',
                    back_transition='backToValidatedFromAcceptedOutOfMeeting')
-        if 'accepted_out_of_meeting_and_duplicated' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['accepted_out_of_meeting_and_duplicated']):
             _check(wfa_name='accepted_out_of_meeting_and_duplicated',
                    transition='accept_out_of_meeting',
                    back_transition='backToValidatedFromAcceptedOutOfMeeting',
                    review_state='accepted_out_of_meeting')
         # accepted_out_of_meeting_emergency
-        if 'accepted_out_of_meeting_emergency' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['accepted_out_of_meeting_emergency']):
             _check(wfa_name='accepted_out_of_meeting_emergency',
                    transition='accept_out_of_meeting_emergency',
                    back_transition='backToValidatedFromAcceptedOutOfMeetingEmergency',
                    review_state='accepted_out_of_meeting_emergency')
-        if 'accepted_out_of_meeting_emergency_and_duplicated' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['accepted_out_of_meeting_emergency_and_duplicated']):
             _check(wfa_name='accepted_out_of_meeting_emergency_and_duplicated',
                    transition='accept_out_of_meeting_emergency',
                    back_transition='backToValidatedFromAcceptedOutOfMeetingEmergency',
                    review_state='accepted_out_of_meeting_emergency')
         # transfered
-        if 'transfered' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['transfered']):
             _check(wfa_name='transfered',
                    transition='transfer',
                    back_transition='backToValidatedFromTransfered')
-        if 'transfered_and_duplicated' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['transfered_and_duplicated']):
             _check(wfa_name='transfered_and_duplicated',
                    transition='transfer',
                    back_transition='backToValidatedFromTransfered',
@@ -851,9 +851,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'return_to_proposing_group')
         self.assertEqual(item.query_state(), 'returned_to_proposing_group')
         self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group', )))
-        if 'return_to_proposing_group_with_last_validation' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['return_to_proposing_group_with_last_validation']):
             self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation',)))
-        if 'return_to_proposing_group_with_all_validations' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['return_to_proposing_group_with_all_validations']):
             self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_all_validations',)))
         msg_removed_error = translate(
             'wa_removed_found_elements_error',
@@ -894,9 +894,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(item.query_state(), 'returned_to_proposing_group')
         self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation',)))
         returned_to_proposing_group_last_state = 'returned_to_proposing_group_' + self._stateMappingFor('proposed')
-        if 'return_to_proposing_group' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['return_to_proposing_group']):
             self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group',)))
-        if 'return_to_proposing_group_with_all_validations' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['return_to_proposing_group_with_all_validations']):
             self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_all_validations',)))
         self.do(item, 'goTo_' + returned_to_proposing_group_last_state)
         self.assertEqual(item.query_state(), returned_to_proposing_group_last_state)
@@ -914,11 +914,11 @@ class testWFAdaptations(PloneMeetingTestCase):
                     context=self.request)},
             context=self.request)
         self.assertEqual(cfg.validate_workflowAdaptations(()), msg_removed_error)
-        if 'return_to_proposing_group' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['return_to_proposing_group']):
             self.assertEqual(
                 cfg.validate_workflowAdaptations(('return_to_proposing_group',)),
                 msg_removed_error)
-        if 'return_to_proposing_group_with_all_validations' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['return_to_proposing_group_with_all_validations']):
             self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_all_validations',)))
         # make wfAdaptation unselectable
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
@@ -950,21 +950,21 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_all_validations',)))
         returned_to_proposing_group_last_state = 'returned_to_proposing_group_' + self._stateMappingFor('proposed')
 
-        if 'return_to_proposing_group' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['return_to_proposing_group']):
             self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group', )))
 
-        if 'return_to_proposing_group_with_last_validation' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['return_to_proposing_group_with_last_validation']):
             self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation',)))
         self._process_transition_for_correcting_item(item, True)
         self.assertEqual(item.query_state(), returned_to_proposing_group_last_state)
         self.assertEqual(
             cfg.validate_workflowAdaptations(()),
             return_to_proposing_group_removed_error)
-        if 'return_to_proposing_group' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['return_to_proposing_group']):
             self.assertEqual(
                 cfg.validate_workflowAdaptations(('return_to_proposing_group', )),
                 return_to_proposing_group_removed_error)
-        if 'return_to_proposing_group_with_last_validation' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['return_to_proposing_group_with_last_validation']):
             self.assertEqual(
                 cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation',)),
                 return_to_proposing_group_removed_error)
@@ -2771,7 +2771,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # test with only 'postpone_next_meeting' then when using
         # 'postpone_next_meeting' and 'no_publication' togheter if available
         set_of_wfAdaptations = [('postpone_next_meeting', )]
-        if 'no_publication' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['no_publication']):
             set_of_wfAdaptations.append(('no_publication', 'postpone_next_meeting'))
         for wfAdaptations in set_of_wfAdaptations:
             # activate the wfAdaptations and check
@@ -3151,7 +3151,6 @@ class testWFAdaptations(PloneMeetingTestCase):
     def test_pm_WFA_accepted_out_of_meeting(self):
         '''Test the workflowAdaptation 'accepted_out_of_meeting'.'''
         # ease override by subproducts
-        cfg = self.meetingConfig
         if not self._check_wfa_available(['accepted_out_of_meeting']):
             return
         self.changeUser('pmManager')
@@ -3162,7 +3161,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # enables it as well as in this WFA, the Review portal content permission
         # is given to reviewers on state 'validated'
         wfas = ('accepted_out_of_meeting', )
-        if 'reviewers_take_back_validated_item' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['reviewers_take_back_validated_item']):
             wfas = wfas + ('reviewers_take_back_validated_item', )
         self._activate_wfas(wfas)
         self._accepted_out_of_meeting_active()
@@ -3202,7 +3201,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         # test 'accepted_out_of_meeting_and_duplicated' if available
         cfg = self.meetingConfig
-        if 'accepted_out_of_meeting_and_duplicated' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['accepted_out_of_meeting_and_duplicated']):
             wfas = list(cfg.getWorkflowAdaptations())
             wfas.remove('accepted_out_of_meeting')
             wfas.append('accepted_out_of_meeting_and_duplicated')
@@ -3217,7 +3216,6 @@ class testWFAdaptations(PloneMeetingTestCase):
     def test_pm_WFA_accepted_out_of_meeting_emergency(self):
         '''Test the workflowAdaptation 'accepted_out_of_meeting_emergency'.'''
         # ease override by subproducts
-        cfg = self.meetingConfig
         if not self._check_wfa_available(['accepted_out_of_meeting_emergency']):
             return
         self.changeUser('pmManager')
@@ -3228,7 +3226,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # enables it as well as in this WFA, the Review portal content permission
         # is given to reviewers on state 'validated'
         wfas = ('accepted_out_of_meeting_emergency', )
-        if 'reviewers_take_back_validated_item' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['reviewers_take_back_validated_item']):
             wfas = wfas + ('reviewers_take_back_validated_item', )
         self._activate_wfas(wfas)
         self._accepted_out_of_meeting_emergency_active()
@@ -3250,6 +3248,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.validateItem(item)
         # not available until MeetingItem.isAcceptableOutOfMeeting is True
         self.assertFalse('accept_out_of_meeting_emergency' in self.transitions(item))
+        item.setIsAcceptableOutOfMeeting(True)
+        # not available until emergency is 'emergency_accepted'
+        self.assertFalse('accept_out_of_meeting_emergency' in self.transitions(item))
         item.setEmergency('emergency_accepted')
         self.assertTrue('accept_out_of_meeting_emergency' in self.transitions(item))
         # in case 'reviewers_take_back_validated_item' is available
@@ -3268,7 +3269,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         # test 'accepted_out_of_meeting_emergency_and_duplicated' if available
         cfg = self.meetingConfig
-        if 'accepted_out_of_meeting_emergency_and_duplicated' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['accepted_out_of_meeting_emergency_and_duplicated']):
             wfas = list(cfg.getWorkflowAdaptations())
             wfas.remove('accepted_out_of_meeting_emergency')
             wfas.append('accepted_out_of_meeting_emergency_and_duplicated')
@@ -3279,11 +3280,12 @@ class testWFAdaptations(PloneMeetingTestCase):
             self.assertEqual(duplicated_item.query_state(), 'validated')
             # duplicated_item emergency is no more asked
             self.assertEqual(duplicated_item.getEmergency(), 'no_emergency')
+            # duplicated_item is not more isAcceptableOutOfMeeting
+            self.assertFalse(duplicated_item.getIsAcceptableOutOfMeeting())
 
     def test_pm_WFA_transfered(self):
         '''Test the workflowAdaptation 'transfered'.'''
         # ease override by subproducts
-        cfg = self.meetingConfig
         if not self._check_wfa_available(['transfered']):
             return
         self.changeUser('pmManager')
@@ -3294,7 +3296,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # enables it as well as in this WFA, the Review portal content permission
         # is given to reviewers on state 'validated'
         wfas = ('transfered', )
-        if 'reviewers_take_back_validated_item' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['reviewers_take_back_validated_item']):
             wfas = wfas + ('reviewers_take_back_validated_item', )
         self._activate_wfas(wfas)
         self._transfered_active()
@@ -3334,7 +3336,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         # test 'transfered_and_duplicated' if available
         cfg = self.meetingConfig
-        if 'transfered_and_duplicated' in cfg.listWorkflowAdaptations():
+        if self._check_wfa_available(['transfered_and_duplicated']):
             wfas = list(cfg.getWorkflowAdaptations())
             wfas.remove('transfered')
             wfas.append('transfered_and_duplicated')

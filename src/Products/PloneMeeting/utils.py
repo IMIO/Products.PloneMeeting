@@ -1270,15 +1270,15 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId):
     cfg = extra_expr_ctx['cfg']
     wfTool = api.portal.get_tool('portal_workflow')
     wf_comment = _('wf_transition_triggered_by_application')
-    for config in cfg.getOnMeetingTransitionItemActionToExecute():
-        if config['meeting_transition'] == transitionId:
-            is_transition = not config['tal_expression']
+    for action in cfg.getOnMeetingTransitionItemActionToExecute():
+        if action['meeting_transition'] == transitionId:
+            is_transition = not action['tal_expression']
             for item in meeting.get_items():
                 if is_transition:
                     # do not fail if a transition could not be triggered, just add an
                     # info message to the log so configuration can be adapted to avoid this
                     try:
-                        wfTool.doActionFor(item, config['item_action'], comment=wf_comment)
+                        wfTool.doActionFor(item, action['item_action'], comment=wf_comment)
                     except WorkflowException:
                         pass
                 else:
@@ -1289,7 +1289,7 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId):
                         extra_expr_ctx.update({'item': item, 'meeting': meeting})
                         _evaluateExpression(
                             item,
-                            expression=config['tal_expression'].strip(),
+                            expression=action['tal_expression'].strip(),
                             roles_bypassing_expression=[],
                             extra_expr_ctx=extra_expr_ctx,
                             error_pattern=ITEM_EXECUTE_ACTION_ERROR)
