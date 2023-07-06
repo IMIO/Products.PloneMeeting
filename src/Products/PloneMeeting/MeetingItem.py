@@ -20,7 +20,6 @@ from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
-from imio.helpers.content import get_transitions
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import safe_delattr
@@ -29,6 +28,8 @@ from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.content import uuidToObject
 from imio.helpers.security import fplog
+from imio.helpers.workflow import get_leading_transitions
+from imio.helpers.workflow import get_transitions
 from imio.helpers.xhtml import is_html
 from imio.history.utils import get_all_history_attr
 from imio.history.utils import getLastWFAction
@@ -131,6 +132,7 @@ from Products.PloneMeeting.utils import is_editing
 from Products.PloneMeeting.utils import ItemDuplicatedEvent
 from Products.PloneMeeting.utils import ItemDuplicatedToOtherMCEvent
 from Products.PloneMeeting.utils import ItemLocalRolesUpdatedEvent
+from Products.PloneMeeting.utils import meetingExecuteActionOnLinkedItems
 from Products.PloneMeeting.utils import networkdays
 from Products.PloneMeeting.utils import normalize
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
@@ -850,18 +852,11 @@ class MeetingItemWorkflowActions(object):
         # If the meeting is already in a late state and this item is a "late" item,
         # I must set automatically the item to the first "late state" (itemfrozen by default).
         if meeting.is_late():
-            self._latePresentedItem()
-
-    def _latePresentedItem(self):
-        """Set presented item in a late state, this is done to be easy to override in case
-           WF transitions to set an item late item is different, without redefining
-           the entire doPresent.
-           By default, this will freeze or publish the item."""
-        wTool = api.portal.get_tool('portal_workflow')
-        # depending on enabled WFA, try to go as far as possible
-        for tr in ('itemfreeze', 'itempublish', 'itemdecide'):
-            if tr in get_transitions(self.context):
-                wTool.doActionFor(self.context, tr)
+            meeting_transition_id = get_leading_transitions(
+                self.cfg.getMeetingWorkflow(True),
+                meeting.query_state(),
+                not_starting_with="back")[0]
+            meetingExecuteActionOnLinkedItems(meeting, meeting_transition_id)
 
     security.declarePrivate('doItemFreeze')
 

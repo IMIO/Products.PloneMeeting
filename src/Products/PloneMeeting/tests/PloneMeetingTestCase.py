@@ -17,9 +17,9 @@ from copy import deepcopy
 from datetime import datetime
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanRamCacheFor
-from imio.helpers.content import get_transitions
 from imio.helpers.content import object_values
 from imio.helpers.testing import testing_logger
+from imio.helpers.workflow import get_transitions
 from plone import api
 from plone import namedfile
 from plone.app.testing import login
