@@ -34,6 +34,8 @@ Changelog
   `MeetingItemWorkflowActions._latePresentedItemTransitions` that just needs
   a tuple of transitions to trigger on a late item, easier to override.
   [gbastien]
+- Updated link to the documentation.
+  [gbastien]
 
 4.2.2 (2023-06-27)
 ------------------
@@ -77,8 +79,6 @@ Changelog
   Because of code order (events are called before the
   `at_post_create_script/at_post_edit_script`), all this was cleaned, we do
   no more use the `at_post_create_script/at_post_edit_script`.
-  [gbastien]
-- Updated link to the documentation.
   [gbastien]
 
 4.2.1 (2023-05-31)

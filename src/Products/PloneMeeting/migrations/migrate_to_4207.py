@@ -52,10 +52,6 @@ class Migrate_To_4207(Migrator):
         self._configureMeetingCategories()
         self._updateMeetingAccessForMeetingConfigUsingGroups()
 
-        if not from_migration_to_4200:
-            # re-apply actions.xml to update documentation url
-            self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'actions')
-
         logger.info('Migrating to PloneMeeting 4207... Done.')
 
 
