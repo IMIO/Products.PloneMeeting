@@ -3394,6 +3394,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         # ease override by subproducts
         if not self._check_wfa_available(['itemdecided']):
             return
+        # make test more robust by disabling every default WFAs
+        self._activate_wfas(())
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
         self._itemdecided_inactive()
@@ -3403,12 +3405,12 @@ class testWFAdaptations(PloneMeetingTestCase):
     def _itemdecided_inactive(self):
         '''Tests while 'itemdecided' wfAdaptation is inactive.'''
         self.changeUser('pmManager')
-        item = self.create('MeetingItem')
+        item = self.create('MeetingItem', decision=self.decisionText)
         meeting = self.create('Meeting')
         self.presentItem(item)
         self.decideMeeting(meeting)
         self.assertEqual(item.query_state(), 'itempublished')
-        self.assertEqual(self.transitions(item), ['backToItemFrozen'])
+        self.assertEqual(self.transitions(item), ['accept','backToItemFrozen'])
 
     def _itemdecided_active(self):
         '''Tests while 'transfered' wfAdaptation is active.'''
