@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.3 (unreleased)
+4.2.3 (2023-07-07)
 ------------------
 
 - Fixed `lateItem` item mail notification that was broken because still using
