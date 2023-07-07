@@ -138,7 +138,6 @@ class UpdateGroupsInChargeBatchActionForm(BaseARUOBatchActionForm):
         return "groupsInCharge" in cfg.getUsedItemAttributes() and \
             _is_operational_user(self.context)
 
-    @property
     def _vocabulary(self):
         return get_vocab(
             self.context, 'Products.PloneMeeting.vocabularies.itemgroupsinchargevocabulary')
