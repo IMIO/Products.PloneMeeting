@@ -544,24 +544,27 @@ class ItemGroupsInChargeVocabulary(GroupsInChargeVocabulary):
         sort = True
         if 'groupsInCharge' in cfg.getItemFieldsToKeepConfigSortingFor():
             sort = False
-        terms = list(super(ItemGroupsInChargeVocabulary, self).__call__(context, sort=sort)._terms)
+        terms = list(super(ItemGroupsInChargeVocabulary, self).__call__(
+            context, sort=sort)._terms)
 
         # when used on an item, manage missing terms, selected on item
         # but removed from orderedGroupsInCharge or from plonegroup
-        stored_terms = context.getGroupsInCharge()
-        term_uids = [term.token for term in terms]
-        missing_term_uids = [uid for uid in stored_terms
-                             if uid not in term_uids]
-        if missing_term_uids:
-            # make sure we only have organizations stored in own org
-            # this may be the case when creating item thru a restapi call
-            missing_term_uids = [uid for uid in missing_term_uids
-                                 if uid in get_organizations(only_selected=False, the_objects=False)]
+        # check if it is an item as vocabulary is used in the batch action
+        if context.__class__.__name__ == "MeetingItem":
+            stored_terms = context.getGroupsInCharge()
+            term_uids = [term.token for term in terms]
+            missing_term_uids = [uid for uid in stored_terms
+                                 if uid not in term_uids]
             if missing_term_uids:
-                missing_terms = uuidsToObjects(missing_term_uids, ordered=False, unrestricted=True)
-                for org in missing_terms:
-                    org_uid = org.UID()
-                    terms.append(SimpleTerm(org_uid, org_uid, org.get_full_title()))
+                # make sure we only have organizations stored in own org
+                # this may be the case when creating item thru a restapi call
+                missing_term_uids = [uid for uid in missing_term_uids
+                                     if uid in get_organizations(only_selected=False, the_objects=False)]
+                if missing_term_uids:
+                    missing_terms = uuidsToObjects(missing_term_uids, ordered=False, unrestricted=True)
+                    for org in missing_terms:
+                        org_uid = org.UID()
+                        terms.append(SimpleTerm(org_uid, org_uid, org.get_full_title()))
 
         return SimpleVocabulary(terms)
 

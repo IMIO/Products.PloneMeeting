@@ -11,14 +11,8 @@ from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
-from collective.eeafaceted.batchactions import _ as _CEBA
-from collective.eeafaceted.batchactions.browser.views import BaseBatchActionForm
-from collective.eeafaceted.batchactions.browser.views import DeleteBatchActionForm
-from collective.eeafaceted.batchactions.utils import listify_uids
 from eea.facetednavigation.interfaces import ICriteria
 from ftw.labels.interfaces import ILabeling
-from imio.actionspanel.interfaces import IContentDeletable
-from imio.annex.browser.views import DownloadAnnexesBatchActionForm
 from imio.helpers.content import uuidToObject
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.pyutils.utils import get_clusters
@@ -30,8 +24,6 @@ from plone.dexterity.interfaces import IDexterityContent
 from plone.memoize import ram
 from plone.memoize.view import memoize
 from plone.memoize.view import memoize_contextless
-from Products.CMFCore.permissions import ManagePortal
-from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.utils import safe_unicode
@@ -43,7 +35,6 @@ from Products.PloneMeeting.columns import render_item_annexes
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.indexes import _to_coded_adviser_index
@@ -58,9 +49,7 @@ from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import get_person_from_userid
 from Products.PloneMeeting.utils import may_view_field
 from Products.PloneMeeting.utils import reindex_object
-from z3c.form.field import Fields
 from z3c.form.interfaces import DISPLAY_MODE
-from zope import schema
 from zope.i18n import translate
 
 import cgi
@@ -2203,122 +2192,6 @@ class ItemHeaderView(BrowserView):
 
 class MeetingHeaderView(BrowserView):
     """ """
-
-
-class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
-
-    label = _CEBA("Store POD template as annex for selected elements")
-    button_with_icon = True
-    available_permission = ModifyPortalContent
-
-    def __init__(self, context, request):
-        super(MeetingStoreItemsPodTemplateAsAnnexBatchActionForm, self).__init__(
-            context, request)
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.tool.getMeetingConfig(context)
-
-    def available(self):
-        """ """
-        # super() will check for self.available_permission
-        if self.cfg.getMeetingItemTemplatesToStoreAsAnnex() and \
-           super(MeetingStoreItemsPodTemplateAsAnnexBatchActionForm, self).available():
-            return True
-
-    def _update(self):
-        self.fields += Fields(schema.Choice(
-            __name__='pod_template',
-            title=_(u'POD template to annex'),
-            vocabulary='Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary'))
-
-    def _apply(self, **data):
-        """ """
-        template_id, output_format = data['pod_template'].split('__output_format__')
-        pod_template = getattr(self.cfg.podtemplates, template_id)
-        num_of_generated_templates = 0
-        self.request.set('store_as_annex', '1')
-        for brain in self.brains:
-            item = brain.getObject()
-            generation_view = item.restrictedTraverse('@@document-generation')
-            res = generation_view(
-                template_uid=pod_template.UID(),
-                output_format=output_format,
-                return_portal_msg_code=True)
-            if not res:
-                num_of_generated_templates += 1
-            else:
-                # log error
-                msg = translate(msgid=res, domain='PloneMeeting', context=self.request)
-                logger.info(u'Could not generate POD template {0} using output format {1} for item at {2} : {3}'.format(
-                    template_id, output_format, '/'.join(item.getPhysicalPath()), msg))
-                api.portal.show_message(msg, request=self.request, type='error')
-
-        msg = translate('stored_item_template_as_annex',
-                        domain="PloneMeeting",
-                        mapping={'number_of_annexes': num_of_generated_templates},
-                        context=self.request,
-                        default="Stored ${number_of_annexes} annexes.")
-        api.portal.show_message(msg, request=self.request)
-        self.request.set('store_as_annex', '0')
-
-
-class UpdateLocalRolesBatchActionForm(BaseBatchActionForm):
-
-    label = _CEBA("Update accesses for selected elements")
-    available_permission = ManagePortal
-    button_with_icon = False
-
-    def __init__(self, context, request):
-        super(UpdateLocalRolesBatchActionForm, self).__init__(context, request)
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.tool.getMeetingConfig(context)
-
-    def _apply(self, **data):
-        """ """
-        uids = listify_uids(data['uids'])
-        self.tool.update_all_local_roles(brains=self.brains, log=False)
-        msg = translate('update_selected_elements',
-                        domain="PloneMeeting",
-                        mapping={'number_of_elements': len(uids)},
-                        context=self.request,
-                        default="Updated accesses for ${number_of_elements} element(s).")
-        api.portal.show_message(msg, request=self.request)
-
-
-class PMDeleteBatchActionForm(DeleteBatchActionForm):
-    """ """
-
-    section = "annexes"
-    available_permission = ModifyPortalContent
-
-    def __init__(self, context, request):
-        super(PMDeleteBatchActionForm, self).__init__(context, request)
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.tool.getMeetingConfig(context)
-
-    def available(self):
-        """ """
-        # super() will check for self.available_permission
-        return "delete" in self.cfg.getEnabledAnnexesBatchActions() and \
-            super(PMDeleteBatchActionForm, self).available()
-
-    def _get_deletable_elements(self):
-        """Get deeltable elements using IContentDeletable."""
-        deletables = [obj for obj in self.objs
-                      if IContentDeletable(obj).mayDelete()]
-        return deletables
-
-
-class PMDownloadAnnexesBatchActionForm(DownloadAnnexesBatchActionForm):
-    """ """
-
-    def __init__(self, context, request):
-        super(PMDownloadAnnexesBatchActionForm, self).__init__(context, request)
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.tool.getMeetingConfig(context)
-
-    def available(self):
-        """ """
-        return "download-annexes" in self.cfg.getEnabledAnnexesBatchActions()
 
 
 class DisplayMeetingConfigsOfConfigGroup(BrowserView):

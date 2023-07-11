@@ -1,0 +1,242 @@
+# -*- coding: utf-8 -*-
+
+from collective.contact.plonegroup.utils import get_all_suffixes
+from collective.eeafaceted.batchactions import _ as _CEBA
+from collective.eeafaceted.batchactions.browser.viewlets import BatchActionsViewlet
+from collective.eeafaceted.batchactions.browser.views import BaseARUOBatchActionForm
+from collective.eeafaceted.batchactions.browser.views import BaseBatchActionForm
+from collective.eeafaceted.batchactions.browser.views import DeleteBatchActionForm
+from collective.eeafaceted.batchactions.browser.views import LabelsBatchActionForm
+from collective.eeafaceted.batchactions.browser.views import TransitionBatchActionForm
+from collective.eeafaceted.batchactions.utils import listify_uids
+from imio.actionspanel.interfaces import IContentDeletable
+from imio.annex.browser.views import DownloadAnnexesBatchActionForm
+from imio.helpers.content import get_vocab
+from plone import api
+from Products.CMFCore.permissions import ManagePortal
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.utils import _checkPermission
+from Products.PloneMeeting import logger
+from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.utils import displaying_available_items
+from z3c.form.field import Fields
+from zope import schema
+from zope.i18n import translate
+
+
+#
+#
+#  New batch actions
+#
+#
+class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
+
+    label = _CEBA("Store POD template as annex for selected elements")
+    button_with_icon = True
+    available_permission = ModifyPortalContent
+
+    def __init__(self, context, request):
+        super(MeetingStoreItemsPodTemplateAsAnnexBatchActionForm, self).__init__(
+            context, request)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(context)
+
+    def available(self):
+        """ """
+        # super() will check for self.available_permission
+        if self.cfg.getMeetingItemTemplatesToStoreAsAnnex() and \
+           super(MeetingStoreItemsPodTemplateAsAnnexBatchActionForm, self).available():
+            return True
+
+    def _update(self):
+        self.fields += Fields(schema.Choice(
+            __name__='pod_template',
+            title=_(u'POD template to annex'),
+            vocabulary='Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary'))
+
+    def _apply(self, **data):
+        """ """
+        template_id, output_format = data['pod_template'].split('__output_format__')
+        pod_template = getattr(self.cfg.podtemplates, template_id)
+        num_of_generated_templates = 0
+        self.request.set('store_as_annex', '1')
+        for brain in self.brains:
+            item = brain.getObject()
+            generation_view = item.restrictedTraverse('@@document-generation')
+            res = generation_view(
+                template_uid=pod_template.UID(),
+                output_format=output_format,
+                return_portal_msg_code=True)
+            if not res:
+                num_of_generated_templates += 1
+            else:
+                # log error
+                msg = translate(msgid=res, domain='PloneMeeting', context=self.request)
+                logger.info(u'Could not generate POD template {0} using output format {1} for item at {2} : {3}'.format(
+                    template_id, output_format, '/'.join(item.getPhysicalPath()), msg))
+                api.portal.show_message(msg, request=self.request, type='error')
+
+        msg = translate('stored_item_template_as_annex',
+                        domain="PloneMeeting",
+                        mapping={'number_of_annexes': num_of_generated_templates},
+                        context=self.request,
+                        default="Stored ${number_of_annexes} annexes.")
+        api.portal.show_message(msg, request=self.request)
+        self.request.set('store_as_annex', '0')
+
+
+class UpdateLocalRolesBatchActionForm(BaseBatchActionForm):
+
+    label = _CEBA("Update accesses for selected elements")
+    available_permission = ManagePortal
+    button_with_icon = False
+
+    def __init__(self, context, request):
+        super(UpdateLocalRolesBatchActionForm, self).__init__(context, request)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(context)
+
+    def _apply(self, **data):
+        """ """
+        uids = listify_uids(data['uids'])
+        self.tool.update_all_local_roles(brains=self.brains, log=False)
+        msg = translate('update_selected_elements',
+                        domain="PloneMeeting",
+                        mapping={'number_of_elements': len(uids)},
+                        context=self.request,
+                        default="Updated accesses for ${number_of_elements} element(s).")
+        api.portal.show_message(msg, request=self.request)
+
+
+class UpdateGroupsInChargeBatchActionForm(BaseARUOBatchActionForm):
+    """ """
+
+    label = _CEBA("Update groups in charge for selected elements")
+    modified_attr_name = "groupsInCharge"
+    indexes = ["getGroupsInCharge"]
+    required = True
+
+    def available(self):
+        """Only available when using groupsInCharge to users having operational
+           roles in the application.
+           This is essentially done to hide this to (restricted)powerobservers
+           and to non MeetingManagers on the meeting_view."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        return "groupsInCharge" in cfg.getUsedItemAttributes() and \
+            _is_operational_user(self.context)
+
+    def _vocabulary(self):
+        return 'Products.PloneMeeting.vocabularies.itemgroupsinchargevocabulary'
+
+
+class PMDeleteBatchActionForm(DeleteBatchActionForm):
+    """ """
+
+    section = "annexes"
+    available_permission = ModifyPortalContent
+
+    def __init__(self, context, request):
+        super(PMDeleteBatchActionForm, self).__init__(context, request)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(context)
+
+    def available(self):
+        """ """
+        # super() will check for self.available_permission
+        return "delete" in self.cfg.getEnabledAnnexesBatchActions() and \
+            super(PMDeleteBatchActionForm, self).available()
+
+    def _get_deletable_elements(self):
+        """Get deeltable elements using IContentDeletable."""
+        deletables = [obj for obj in self.objs
+                      if IContentDeletable(obj).mayDelete()]
+        return deletables
+
+
+class PMDownloadAnnexesBatchActionForm(DownloadAnnexesBatchActionForm):
+    """ """
+
+    def __init__(self, context, request):
+        super(PMDownloadAnnexesBatchActionForm, self).__init__(context, request)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(context)
+
+    def available(self):
+        """ """
+        return "download-annexes" in self.cfg.getEnabledAnnexesBatchActions()
+
+
+#
+#
+#  Overrides
+#
+#
+class PMLabelsBatchActionForm(LabelsBatchActionForm):
+    """ """
+
+    def available(self):
+        """Only available when labels are enabled."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        return cfg.getEnableLabels()
+
+
+def _is_operational_user(context):
+    """Is current user an operationnal user in the application for the given p_context."""
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(context)
+    class_name = context.__class__.__name__
+    return class_name != 'MeetingItem' and \
+        ((class_name == 'Meeting' and
+            _checkPermission(ModifyPortalContent, context)) or
+         (not class_name == 'Meeting' and
+         (tool.isManager(cfg) or
+          bool(tool.userIsAmong(
+               suffixes=get_all_suffixes(omitted_suffixes=['observers']), cfg=cfg)))))
+
+
+class PMTransitionBatchActionForm(TransitionBatchActionForm):
+    """ """
+
+    def available(self):
+        """Only available to users having operational roles in the application.
+           This is essentially done to hide this to (restricted)powerobservers
+           and to non MeetingManagers on the meeting_view."""
+        return _is_operational_user(self.context)
+
+
+class PMMeetingBatchActionsViewlet(BatchActionsViewlet):
+    """ """
+    def available(self):
+        """Not available on the 'available items' when displayed on a meeting."""
+        if displaying_available_items(self.context):
+            return False
+        return True
+
+
+#
+#
+#  Viewlets
+#
+#
+class AnnexesBatchActionsViewlet(BatchActionsViewlet):
+    """ """
+
+    section = "annexes"
+
+    def available(self):
+        """ """
+        return True
+
+    @property
+    def select_item_name(self):
+        """Manage fact that in the annexes, there are 2 tables
+          (annexes and decision annexes) that use a different name
+          for the checkbox column."""
+        value = None
+        if self.request.get('categorized_tab').portal_type == 'annexDecision':
+            value = "select_item_annex_decision"
+        else:
+            value = super(AnnexesBatchActionsViewlet, self).select_item_name
+        return value

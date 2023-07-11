@@ -184,7 +184,7 @@
         name="collective.eeafaceted.batchactions"
         for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
         manager="collective.eeafaceted.z3ctable.interfaces.IBottomAboveNavManager"
-        class=".viewlets.PMMeetingBatchActionsViewlet"
+        class=".batchactions.PMMeetingBatchActionsViewlet"
         permission="zope2.View" />
 
     <!-- Define a imio.history event preview for IMeetingAdvice -->
@@ -271,40 +271,45 @@
     <!-- Batch actions dashboards displaying items -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItemDashboardBatchActionsMarker"
+        name="update-groups-in-charge-batch-action"
+        class=".batchactions.UpdateGroupsInChargeBatchActionForm"
+        permission="zope2.View" />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItemDashboardBatchActionsMarker"
         name="labels-batch-action"
-        class=".overrides.PMLabelsBatchActionForm"
+        class=".batchactions.PMLabelsBatchActionForm"
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItemDashboardBatchActionsMarker"
         name="update-local-roles-batch-action"
-        class=".views.UpdateLocalRolesBatchActionForm"
+        class=".batchactions.UpdateLocalRolesBatchActionForm"
         permission="cmf.ManagePortal" />
     <!-- Batch actions Meeting -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
         name="store-items-template-as-annex-batch-action"
-        class=".views.MeetingStoreItemsPodTemplateAsAnnexBatchActionForm"
+        class=".batchactions.MeetingStoreItemsPodTemplateAsAnnexBatchActionForm"
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
         name="labels-batch-action"
-        class=".overrides.PMLabelsBatchActionForm"
+        class=".batchactions.PMLabelsBatchActionForm"
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingDashboardBatchActionsMarker"
         name="update-local-roles-batch-action"
-        class=".views.UpdateLocalRolesBatchActionForm"
+        class=".batchactions.UpdateLocalRolesBatchActionForm"
         permission="cmf.ManagePortal" />
     <!-- Batch actions MeetingItem -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingContentBatchActionsMarker"
         name="download-annexes-batch-action"
-        class=".views.PMDownloadAnnexesBatchActionForm"
+        class=".batchactions.PMDownloadAnnexesBatchActionForm"
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingContentBatchActionsMarker"
         name="delete-batch-action"
-        class=".views.PMDeleteBatchActionForm"
+        class=".batchactions.PMDeleteBatchActionForm"
         permission="zope2.View" />
 
     <configure package="collective.contact.plonegroup.browser">
@@ -1185,7 +1190,7 @@
         name="collective.iconifiedcategory.belowcategorizedelements"
         for="Products.PloneMeeting.interfaces.IMeetingContent"
         manager="collective.iconifiedcategory.interfaces.IBelowCategorizedElementsManager"
-        class=".viewlets.AnnexesBatchActionsViewlet"
+        class=".batchactions.AnnexesBatchActionsViewlet"
         permission="zope2.View" />
 
     <browser:page

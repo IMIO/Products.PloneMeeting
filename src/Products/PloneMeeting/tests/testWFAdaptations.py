@@ -3410,7 +3410,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.presentItem(item)
         self.decideMeeting(meeting)
         self.assertEqual(item.query_state(), 'itempublished')
-        self.assertEqual(self.transitions(item), ['accept','backToItemFrozen'])
+        self.assertEqual(self.transitions(item), ['accept', 'backToItemFrozen'])
 
     def _itemdecided_active(self):
         '''Tests while 'transfered' wfAdaptation is active.'''

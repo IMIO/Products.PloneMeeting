@@ -4,7 +4,6 @@
 #
 
 from collections import OrderedDict
-from collective.eeafaceted.batchactions.browser.viewlets import BatchActionsViewlet
 from plone import api
 from plone.app.layout.viewlets import ViewletBase
 from Products.Five import BrowserView
@@ -43,37 +42,6 @@ class ForceInsertNormal(ViewletBase):
                                              name=u'plone_context_state')
 
     index = ViewPageTemplateFile("templates/viewlet_force_insert_normal.pt")
-
-
-class PMMeetingBatchActionsViewlet(BatchActionsViewlet):
-    """ """
-    def available(self):
-        """Not available on the 'available items' when displayed on a meeting."""
-        if displaying_available_items(self.context):
-            return False
-        return True
-
-
-class AnnexesBatchActionsViewlet(BatchActionsViewlet):
-    """ """
-
-    section = "annexes"
-
-    def available(self):
-        """ """
-        return True
-
-    @property
-    def select_item_name(self):
-        """Manage fact that in the annexes, there are 2 tables
-          (annexes and decision annexes) that use a different name
-          for the checkbox column."""
-        value = None
-        if self.request.get('categorized_tab').portal_type == 'annexDecision':
-            value = "select_item_annex_decision"
-        else:
-            value = super(AnnexesBatchActionsViewlet, self).select_item_name
-        return value
 
 
 class HeldPositionBackRefs(ViewletBase):
