@@ -116,18 +116,6 @@ class UpdateGroupsInChargeBatchActionForm(BaseARUOBatchActionForm):
     indexes = ["getGroupsInCharge"]
     required = True
 
-    @property
-    def description(self):
-        """ """
-        description = translate(super(UpdateGroupsInChargeBatchActionForm, self).description,
-                                context=self.request)
-        # warn that elements without a value will not be updated
-        description += translate(
-            'groups_in_charge_can_not_be_empty_batch_action_warning',
-            domain="collective.eeafaceted.batchactions",
-            context=self.request)
-        return description
-
     def available(self):
         """Only available when using groupsInCharge to users having operational
            roles in the application.
@@ -139,8 +127,7 @@ class UpdateGroupsInChargeBatchActionForm(BaseARUOBatchActionForm):
             _is_operational_user(self.context)
 
     def _vocabulary(self):
-        return get_vocab(
-            self.context, 'Products.PloneMeeting.vocabularies.itemgroupsinchargevocabulary')
+        return 'Products.PloneMeeting.vocabularies.itemgroupsinchargevocabulary'
 
 
 class PMDeleteBatchActionForm(DeleteBatchActionForm):
