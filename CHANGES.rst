@@ -5,8 +5,9 @@ Changelog
 4.2.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Added batch action to change groups in charge.
+  Moved batchactions to `bacthactions.py`.
+  [gbastien]
 
 4.2.3 (2023-07-07)
 ------------------
