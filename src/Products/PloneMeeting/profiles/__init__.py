@@ -709,7 +709,7 @@ class MeetingConfigDescriptor(Descriptor):
                                               'c11', 'c13', 'c14', 'c15', 'c16')
         self.dashboardMeetingAvailableItemsFilters = ('c4', 'c11', 'c16')
         self.dashboardMeetingLinkedItemsFilters = ('c4', 'c6', 'c7', 'c11', 'c12', 'c16', 'c19')
-        self.dashboardMeetingsListingsFilters = ('c4', 'c5')
+        self.dashboardMeetingsListingsFilters = ('c4', 'c5', 'c6')
         self.groupsHiddenInDashboardFilter = []
         self.usersHiddenInDashboardFilter = []
         # default batching value, this must be a multiple of "20"

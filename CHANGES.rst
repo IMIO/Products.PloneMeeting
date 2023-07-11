@@ -8,6 +8,8 @@ Changelog
 - Added batch action to change groups in charge.
   Moved batchactions to `bacthactions.py`.
   [gbastien]
+- Added faceted filter `Creator` (enabled by default) on listings of meetings.
+  [gbastien]
 
 4.2.3 (2023-07-07)
 ------------------
