@@ -11,7 +11,6 @@ from collective.eeafaceted.batchactions.browser.views import TransitionBatchActi
 from collective.eeafaceted.batchactions.utils import listify_uids
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.annex.browser.views import DownloadAnnexesBatchActionForm
-from imio.helpers.content import get_vocab
 from plone import api
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent

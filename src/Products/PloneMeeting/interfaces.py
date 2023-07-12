@@ -463,6 +463,7 @@ class IMeetingItemWorkflowActions(Interface):
         '''The list of transitions to trigger on an item when presented into
         a late meeting.'''
 
+
 class IMeetingItemCustom(IMeetingItem):
     '''If you want to propose your own implementations of IMeetingItem methods,
        you must define an adapter that adapts IMeetingItem to

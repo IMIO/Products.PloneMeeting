@@ -28,7 +28,7 @@ class FTWLabelsVocabulary(object):
         try:
             # in some case, like Plone Site creation, context is the Zope app...
             cfg = tool.getMeetingConfig(context)
-        except:
+        except Exception:
             return SimpleVocabulary(res)
 
         if cfg and cfg.getEnableLabels():
