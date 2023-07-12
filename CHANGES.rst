@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.4 (unreleased)
+4.2.4 (2023-07-12)
 ------------------
 
 - Added batch action to change groups in charge.
