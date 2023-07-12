@@ -6,6 +6,24 @@ from Products.PloneMeeting.migrations import Migrator
 
 class Migrate_To_4208(Migrator):
 
+    def _updateMeetingOptionalBooleanAttrs(self):
+        """Boolean attributes (videoconference and extraordinary_session) were
+           wrongly always enabled then disabled when bug was fixed...
+           Re-enable fields if used on a meeting of the configuration."""
+        logger.info('Re-enabling meetings fields videoconference and '
+                    'extraordinary_session if used for every MeetingConfigs...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            mAttrs = list(cfg.getUsedMeetingAttributes())
+            for field_name in ('videoconference', 'extraordinary_session'):
+                if field_name not in mAttrs:
+                    for brain in self.catalog(portal_type=cfg.getMeetingTypeName()):
+                        meeting = brain.getObject()
+                        if getattr(meeting, field_name) is True:
+                            mAttrs.append(field_name)
+                            break
+                cfg.setUsedMeetingAttributes(mAttrs)
+        logger.info('Done.')
+
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4208...')
@@ -20,6 +38,7 @@ class Migrate_To_4208(Migrator):
         if not from_migration_to_4200:
             # re-apply actions.xml to update documentation url
             self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'actions')
+            self._updateMeetingOptionalBooleanAttrs()
 
         logger.info('Migrating to PloneMeeting 4208... Done.')
 

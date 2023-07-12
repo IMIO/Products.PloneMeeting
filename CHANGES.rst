@@ -5,6 +5,11 @@ Changelog
 4.2.4 (unreleased)
 ------------------
 
+- Added faceted filter `Creator` (enabled by default) on listings of meetings.
+  [gbastien]
+- Added upgrade step to re-enable fields `meeting.videoconference` and
+  `meeting.extraordinary_session` if it was used on a previous meeting.
+  [gbastien]
 - Added batch action to change groups in charge.
   Moved batchactions to `bacthactions.py`.
   [gbastien]
