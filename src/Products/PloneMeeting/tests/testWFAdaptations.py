@@ -693,7 +693,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             item_transition='remove')
 
         cfg = self.meetingConfig
-        if not self._check_wfa_available(['removed_and_duplicated']):
+        if self._check_wfa_available(['removed_and_duplicated']):
             # possible to switch from one to the other
             self.failIf(cfg.validate_workflowAdaptations(('removed_and_duplicated', )))
             cfg.setWorkflowAdaptations(('removed_and_duplicated', ))
