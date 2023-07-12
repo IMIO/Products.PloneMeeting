@@ -10,6 +10,9 @@ Changelog
   [gbastien]
 - Added faceted filter `Creator` (enabled by default) on listings of meetings.
   [gbastien]
+- Added upgrade step to re-enable fields `meeting.videoconference` and
+  `meeting.extraordinary_session` if it was used on a previous meeting.
+  [gbastien]
 
 4.2.3 (2023-07-07)
 ------------------
