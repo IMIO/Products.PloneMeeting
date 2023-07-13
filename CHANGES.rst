@@ -5,8 +5,8 @@ Changelog
 4.2.5 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Make the `Change groups in charge` batch action available on meetings.
+  [gbastien]
 
 4.2.4 (2023-07-12)
 ------------------

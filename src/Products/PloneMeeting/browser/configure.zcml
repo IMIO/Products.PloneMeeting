@@ -292,6 +292,11 @@
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
+        name="update-groups-in-charge-batch-action"
+        class=".batchactions.UpdateGroupsInChargeBatchActionForm"
+        permission="zope2.View" />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
         name="labels-batch-action"
         class=".batchactions.PMLabelsBatchActionForm"
         permission="zope2.View" />
