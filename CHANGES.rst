@@ -7,6 +7,9 @@ Changelog
 
 - Make the `Change groups in charge` batch action available on meetings.
   [gbastien]
+- Removed monkeypatch for `plone.restapi.services.Service` that was done to
+  display input/output logging as this was moved to `imio.restapi`.
+  [gbastien]
 
 4.2.4 (2023-07-12)
 ------------------
