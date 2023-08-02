@@ -211,6 +211,7 @@ class testColumns(PloneMeetingTestCase):
     def test_pm_ItemCategoryColumn(self):
         """Test the column displaying category of MeetingItem."""
         self._enableField('category')
+        self._enable_column('getCategory')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         meetingFolder = self.getMeetingFolder()
@@ -257,6 +258,7 @@ class testColumns(PloneMeetingTestCase):
     def test_pm_ReviewStateTitleColumn(self):
         """Will display review_state title by getting the title used
            in the workflow object."""
+        self._enable_column('review_state_title')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         meetingFolder = self.getMeetingFolder()

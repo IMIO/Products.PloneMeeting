@@ -906,6 +906,10 @@ class Criteria(eeaCriteria):
                         new_criterion.default = u'getProposingGroup'
                         res.append(new_criterion)
                     continue
+                # ignore the collection widget when on meeting_view
+                if meeting_view and criterion.widget == u'collection-link':
+                    criterion.default = u''
+
                 if criterion.section != u'advanced' or \
                    criterion.__name__ in kept_filters:
                     # create new object to avoid modifying stored one
