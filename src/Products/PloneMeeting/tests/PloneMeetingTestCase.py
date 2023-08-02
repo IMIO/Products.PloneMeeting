@@ -733,6 +733,19 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
         return gsettings
 
+    def _enable_column(self, column_name, cfg=None, related_to='MeetingItem', enable=True):
+        """ """
+        cfg = cfg or self.meetingConfig
+        column_names = cfg.getItemColumns() if related_to=='MeetingItem' else cfg.getMeetingColumns()
+        if column_name not in column_names:
+            column_names += (column_name, )
+            if related_to == 'MeetingItem':
+                cfg.setItemColumns(column_names)
+            else:
+                cfg.setMeetingColumns(column_names)
+            cfg.updateCollectionColumns()
+            return True
+
     def _enableField(self, field_names, cfg=None, related_to='MeetingItem', enable=True, reload=False):
         """ """
         if not hasattr(field_names, "__iter__"):
