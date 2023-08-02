@@ -3417,9 +3417,14 @@ class testMeetingType(PloneMeetingTestCase):
     def test_pm_MeetingFacetedView(self):
         '''Faceted is correctly configured on a meeting and relevant layouts are used.'''
         self.changeUser('pmManager')
-        meeting = self.create('Meeting')
+        meeting = self._createMeetingWithItems()
         self.assertEqual(meeting.getLayout(), 'meeting_view')
         self.assertEqual(IFacetedLayout(meeting).layout, 'faceted-table-items')
+        # items are correctly displayed and sorted
+        # this makes sure the collection widget is ignored
+        faceted_query = meeting.restrictedTraverse('@@faceted_query')
+        self.assertEqual([brain.getObject().getItemNumber() for brain in faceted_query.query()],
+                         [100, 200, 300, 400, 500, 600, 700])
 
     def test_pm_MeetingInsertingMethodsHelpMsgView(self):
         '''Test the @@display-inserting-methods-helper-msg view.'''
