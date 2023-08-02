@@ -1414,7 +1414,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     def _removeAnnexPreviewFor(self, parent, annex):
-        ''' '''
+        '''Remove annex collective.documentviewer preview.'''
         remove_generated_previews(annex)
         annex_infos = parent.categorized_elements.get(annex.UID())
         if annex_infos:

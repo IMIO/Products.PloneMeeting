@@ -190,7 +190,9 @@ class MeetingWorkflowActions(object):
                 annexes = get_annexes(item)
                 if annexes:
                     for annex in annexes:
-                        self.tool._removeAnnexPreviewFor(item, annex)
+                        # only remove preview if show_preview is 0
+                        if item.categorized_elements[annex.UID()]['show_preview'] == 0:
+                            self.tool._removeAnnexPreviewFor(item, annex)
                 extras = 'item={0} number_of_annexes={1}'.format(repr(item), len(annexes))
                 fplog('remove_annex_previews', extras=extras)
             msg = translate(
