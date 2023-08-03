@@ -6,6 +6,7 @@ from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.content.category import ICategory
 from collective.iconifiedcategory.content.subcategory import ISubcategory
 from plone.app.blob.interfaces import IATBlob
+from Products.CMFCore.Expression import Expression
 from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
@@ -50,6 +51,14 @@ class Migrate_To_4208(Migrator):
                 obj.manage_delProperties(('layout', ))
         logger.info('Done.')
 
+    def _updateAnnexDecisionDownloadAction(self):
+        """Update the annexDecision portal_type download action condition_expr."""
+        logger.info('Update annexDecision portal_type download action condition_expr...')
+        annexDecion = self.portal.portal_types['annexDecision']
+        action = annexDecion.getActionObject('object_buttons/download')
+        action.condition = Expression('python:object.show_download()')
+        logger.info('Done.')
+
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4208...')
@@ -65,6 +74,7 @@ class Migrate_To_4208(Migrator):
             # re-apply actions.xml to update documentation url
             self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'actions')
             self._updateMeetingOptionalBooleanAttrs()
+            self._updateAnnexDecisionDownloadAction()
 
         self._fixDocumentviewerLayout()
         logger.info('Migrating to PloneMeeting 4208... Done.')
@@ -75,7 +85,8 @@ def migrate(context):
 
        1) Update searches_decisions faceted config;
        2) Re-apply actions.xml to update documentation URL;
-       3) Remove documentviewer layout from annex types and pod templates.
+       3) Remove documentviewer layout from annex types and pod templates;
+       4) Update annexDecision download action condition_expr.
     '''
     migrator = Migrate_To_4208(context)
     migrator.run()
