@@ -2209,9 +2209,12 @@ class testMeetingConfig(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
         annex_decision = self.addAnnex(item, relatedTo='item_decision')
+        # preview for this will not be removed
+        preview_annex = self.addAnnex(item, annexType='preview-annex')
         infos = _categorized_elements(item)
         self.assertEqual(infos[annex.UID()]['preview_status'], 'converted')
         self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'converted')
+        self.assertEqual(infos[preview_annex.UID()]['preview_status'], 'converted')
         # removeAnnexesPreviewsOnMeetingClosure=False
         self.assertFalse(cfg.getRemoveAnnexesPreviewsOnMeetingClosure())
         self.presentItem(item)
@@ -2219,6 +2222,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(meeting.query_state(), 'closed')
         self.assertEqual(infos[annex.UID()]['preview_status'], 'converted')
         self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'converted')
+        self.assertEqual(infos[preview_annex.UID()]['preview_status'], 'converted')
         # removeAnnexesPreviewsOnMeetingClosure=True
         cfg.setRemoveAnnexesPreviewsOnMeetingClosure(True)
         self.backToState(meeting, 'created')
@@ -2227,6 +2231,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         infos = _categorized_elements(item)
         self.assertEqual(infos[annex.UID()]['preview_status'], 'not_converted')
         self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'not_converted')
+        self.assertEqual(infos[preview_annex.UID()]['preview_status'], 'converted')
         # close a Meeting without items, this was generating a bug
         self._removeConfigObjectsFor(cfg)
         meeting = self.create('Meeting', date=datetime(2020, 1, 15))

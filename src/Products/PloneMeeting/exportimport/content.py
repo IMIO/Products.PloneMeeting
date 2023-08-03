@@ -533,6 +533,7 @@ class ToolInitializer:
             to_sign=at.to_sign,
             signed=at.signed,
             enabled=at.enabled,
+            show_preview=at.show_preview,
             description=at.description,
         )
         # store an empty set in other_mc_correspondences for validation
@@ -557,6 +558,7 @@ class ToolInitializer:
                 to_sign=at.to_sign,
                 signed=at.signed,
                 enabled=subType.enabled,
+                show_preview=at.show_preview,
                 description=at.description,
             )
             if sub_portal_type == 'ItemAnnexContentSubcategory':
