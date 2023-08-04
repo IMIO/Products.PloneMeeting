@@ -1632,6 +1632,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._activate_wfas(('return_to_proposing_group_with_last_validation', ))
         # test what should happen to the wf (added states and transitions)
         self._return_to_proposing_group_with_validation_active()
+        self._enablePrevalidation(self.meetingConfig)
         # test the functionnality of returning an item to the proposing group
         self._return_to_proposing_group_with_validation_active_wf_functionality(all=False)
 
@@ -1735,6 +1736,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         # We can use the same test as last Validation in standard wf (created --> proposed)
         self._return_to_proposing_group_with_validation_active()
         # We can also use the same test as last Validation
+        #self._return_to_proposing_group_with_validation_active_wf_functionality(all=True)
+
+        self._enablePrevalidation(self.meetingConfig)
         self._return_to_proposing_group_with_validation_active_wf_functionality(all=True)
 
     def test_pm_WFA_hide_decisions_when_under_writing(self):
@@ -3071,7 +3075,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         # check while the wfAdaptation is not activated
         self._presented_item_back_to_prevalidated_inactive()
         # activate the wfAdaptation and check, must be activated together with 'pre_validation'
-        self._enablePrevalidation(self.meetingConfig)
         self._activate_wfas(('presented_item_back_to_prevalidated', ))
         self._presented_item_back_to_prevalidated_active()
 

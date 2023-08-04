@@ -434,10 +434,13 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
     def _doWichValidationWithReturnedToProposingGroup(new_state_id,
                                                       base_state_id,
                                                       last_returned_state_id,
-                                                      base_guard_state_id=None
+                                                      first_guard_state_id=None
                                                       ):
         """Helper method for adding a new state, base work will be done using the
-           p_base_state_id (cloning permission, transition start/end points)."""
+           p_base_state_id (cloning permission, transition start/end points).
+           p_first_guard_state_id is used when return_to_proposing_group_with_last_validation
+           is active, to have the first state of the validation WF.
+        """
         wf = itemWorkflow
 
         # create new state
@@ -472,7 +475,9 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         wf.transitions.addTransition(transition_id)
         transition = wf.transitions[transition_id]
         image_url = '%(portal_url)s/{0}.png'.format(transition_id)
-        guard_destination_state = base_guard_state_id or transition_id.replace('goTo_returned_to_proposing_group_', '')
+        # guard_destination_state = first_guard_state_id \
+        #                           or transition_id.replace('goTo_returned_to_proposing_group_', '')
+        guard_destination_state = transition_id.replace('goTo_returned_to_proposing_group_', '')
         transition.setProperties(
             title=transition_id,
             new_state_id=new_state_id, trigger_type=1, script_name='',
@@ -480,8 +485,8 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             actbox_icon=image_url, actbox_category='workflow',
             props={
                 'guard_expr': 'python:here.wfConditions()'
-                '.mayProposeToNextValidationLevel(destinationState="{0}")'.format(guard_destination_state)})
-
+                '.mayProposeToNextValidationLevel(destinationState="{0}")'
+                .format(guard_destination_state)})
         wf.states[last_returned_state_id].setProperties(
             title=last_returned_state_id, description='',
             transitions=wf.states[last_returned_state_id].transitions + (transition_id, ))
@@ -547,10 +552,13 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
 
         # keep validation returned states
         validation_returned_states = _getValidationReturnedStates(meetingConfig)
-        base_guard_state_id = None
+        first_guard_state_id = None
         if whichValidation == 'last':
             validation_returned_states = (validation_returned_states[-1],)
-            base_guard_state_id = meetingConfig.getItemWFValidationLevels(data='state', only_enabled=True)[1]
+            # When using only last validation level, the correct destination
+            # state for the guard is the one from the first validation level
+            # after itemcreated
+            first_guard_state_id = meetingConfig.getItemWFValidationLevels(data='state', only_enabled=True)[1]
         elif whichValidation is None:
             validation_returned_states = ()
         last_returned_state_id = 'returned_to_proposing_group'
@@ -563,7 +571,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             _doWichValidationWithReturnedToProposingGroup(new_state_id=validation_state,
                                                           base_state_id=base_state_id,
                                                           last_returned_state_id=last_returned_state_id,
-                                                          base_guard_state_id=base_guard_state_id
+                                                          first_guard_state_id=first_guard_state_id
                                                           )
             last_returned_state_id = validation_state
 
