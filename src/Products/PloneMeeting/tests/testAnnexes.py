@@ -1247,7 +1247,9 @@ class testAnnexes(PloneMeetingTestCase):
              '{0}-annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex'.format(cfgId),
              '{0}-annexes_types_-_item_annexes_-_overhead-analysis'.format(cfgId),
              '{0}-annexes_types_-_item_annexes_-_overhead-analysis_-_overhead-analysis-sub-annex'.format(cfgId),
-             '{0}-annexes_types_-_item_annexes_-_item-annex'.format(cfgId)])
+             '{0}-annexes_types_-_item_annexes_-_item-annex'.format(cfgId),
+             '{0}-annexes_types_-_item_annexes_-_preview-annex'.format(cfgId),
+             '{0}-annexes_types_-_item_annexes_-_preview-hide-download-annex'.format(cfgId)])
 
         # now for decisionAnnex
         # check with form, context is the MeetingItem
