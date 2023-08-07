@@ -215,9 +215,18 @@ class PMCategorizedChildInfosView(CategorizedChildInfosView):
         """ """
         return _get_filters(self.request)
 
-    def show_preview_link(self):
-        """Show link if preview is enabled, aka the auto_convert in collective.documentviewer."""
-        return self.tool.auto_convert_annexes()
+    def show_preview(self, element):
+        """Show preview if the auto_convert in collective.documentviewer is enabled."""
+        return super(PMCategorizedChildInfosView, self).show_preview(element) or \
+            self.tool.auto_convert_annexes()
+
+    def _show_protected_download(self, element):
+        """When "show_preview" is "2", trigger advanced check.
+           Are allowed to download:
+           - proposingGroup members;
+           - (Meeting)Managers."""
+        return self.tool.isManager(self.cfg) or \
+            self.context.getProposingGroup() in self.tool.get_orgs_for_user()
 
     def show_nothing(self):
         """Do not display the 'Nothing' label."""

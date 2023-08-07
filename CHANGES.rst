@@ -10,6 +10,10 @@ Changelog
 - Removed monkeypatch for `plone.restapi.services.Service` that was done to
   display input/output logging as this was moved to `imio.restapi`.
   [gbastien]
+- Added possibility to enable annex preview on a per annex category basis.
+  When enabled, annex may only be downloaded by proposing group members and
+  (Meeting)Managers.
+  [gbastien]
 
 4.2.4 (2023-07-12)
 ------------------

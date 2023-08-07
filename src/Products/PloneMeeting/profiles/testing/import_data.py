@@ -94,6 +94,12 @@ budgetAnalysisCfg1 = ItemAnnexTypeDescriptor(
 itemAnnex = ItemAnnexTypeDescriptor(
     'item-annex', 'Other annex(es)', u'itemAnnex.png')
 
+previewAnnex = ItemAnnexTypeDescriptor(
+    'preview-annex', 'Preview annex', u'itemAnnex.png', show_preview=1)
+
+previewHideDownloadAnnex = ItemAnnexTypeDescriptor(
+    'preview-hide-download-annex', 'Preview hide download annex', u'itemAnnex.png', show_preview=2)
+
 # Item decision annex
 decisionAnnex = ItemAnnexTypeDescriptor(
     'decision-annex', 'Decision annex(es)', u'decisionAnnex.png', relatedTo='item_decision')
@@ -287,7 +293,8 @@ meetingPma.categories = [development, research, events]
 meetingPma.classifiers = [classifier1, classifier2, classifier3]
 meetingPma.meetingcategories = [mcategory1, mcategory2, mcategory3]
 meetingPma.annexTypes = [financialAnalysis, budgetAnalysisCfg1, overheadAnalysis,
-                         itemAnnex, decisionAnnex, marketingAnalysis,
+                         itemAnnex, previewAnnex, previewHideDownloadAnnex,
+                         decisionAnnex, marketingAnalysis,
                          adviceAnnex, adviceLegalAnalysis, meetingAnnex]
 meetingPma.usedItemAttributes = ('description', 'toDiscuss', 'itemTags', 'itemIsSigned',)
 meetingPma.usedMeetingAttributes = ('assembly', 'assembly_excused', 'assembly_absents',

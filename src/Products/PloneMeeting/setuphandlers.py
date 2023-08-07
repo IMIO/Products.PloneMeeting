@@ -270,6 +270,9 @@ def postInstall(context):
     # do not auto_convert, we will have our own event that will check in portal_plonemeeting
     # if we need to convert the annexes that will be added to an item
     viewer_settings['auto_convert'] = False
+    # this avoids layout "documentviewer" being selected for every content_types
+    # having a file like AnnexType for example
+    viewer_settings['auto_select_layout'] = False
     viewer_settings['pdf_image_format'] = 'jpg'
     viewer_settings['enable_indexation'] = False
     viewer_settings['show_search'] = False

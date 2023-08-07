@@ -10,6 +10,7 @@ from collective.contact.plonegroup.utils import get_plone_group
 from collective.iconifiedcategory.browser.tabview import CategorizedContent
 from collective.iconifiedcategory.event import IconifiedAttrChangedEvent
 from collective.iconifiedcategory.interfaces import IIconifiedPreview
+from collective.iconifiedcategory.utils import _categorized_elements
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
@@ -1246,7 +1247,9 @@ class testAnnexes(PloneMeetingTestCase):
              '{0}-annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex'.format(cfgId),
              '{0}-annexes_types_-_item_annexes_-_overhead-analysis'.format(cfgId),
              '{0}-annexes_types_-_item_annexes_-_overhead-analysis_-_overhead-analysis-sub-annex'.format(cfgId),
-             '{0}-annexes_types_-_item_annexes_-_item-annex'.format(cfgId)])
+             '{0}-annexes_types_-_item_annexes_-_item-annex'.format(cfgId),
+             '{0}-annexes_types_-_item_annexes_-_preview-annex'.format(cfgId),
+             '{0}-annexes_types_-_item_annexes_-_preview-hide-download-annex'.format(cfgId)])
 
         # now for decisionAnnex
         # check with form, context is the MeetingItem
@@ -1741,6 +1744,40 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertFalse('form.widgets.content_category' in rendered)
         self.assertTrue('form.widgets.title' in rendered)
         self.assertTrue('form.widgets.description' in rendered)
+
+    def test_pm_AnnexShowPreview(self):
+        """Test when show_preview is defined on annex type."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        annex0 = self.addAnnex(item)
+        annex1 = self.addAnnex(item, annexType='preview-annex')
+        annex2 = self.addAnnex(item, annexType='preview-hide-download-annex')
+        infos = _categorized_elements(item)
+        # every annexes were converted
+        self.assertEqual(infos[annex0.UID()]['preview_status'], 'not_converted')
+        self.assertEqual(infos[annex1.UID()]['preview_status'], 'converted')
+        self.assertEqual(infos[annex2.UID()]['preview_status'], 'converted')
+        # check who may access the download button
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(View, annex0))
+        self.assertTrue(self.hasPermission(View, annex1))
+        self.assertTrue(self.hasPermission(View, annex2))
+        self.assertTrue(annex0.show_download())
+        self.assertTrue(annex1.show_download())
+        self.assertFalse(annex2.show_download())
+        # trying to download will raise Unauthorized
+        self.assertTrue(annex0.restrictedTraverse('@@download')())
+        self.assertTrue(annex1.restrictedTraverse('@@download')())
+        self.assertRaises(Unauthorized, annex2.restrictedTraverse('@@download'))
+        # but the creator may download
+        self.changeUser('pmCreator1')
+        self.assertTrue(annex0.show_download())
+        self.assertTrue(annex1.show_download())
+        self.assertTrue(annex2.show_download())
+        self.assertTrue(annex0.restrictedTraverse('@@download')())
+        self.assertTrue(annex1.restrictedTraverse('@@download')())
+        self.assertTrue(annex2.restrictedTraverse('@@download')())
 
 
 def test_suite():

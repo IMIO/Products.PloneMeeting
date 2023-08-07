@@ -31,9 +31,4 @@
            visible="True">
     <permission value="Modify portal content"/>
    </action>
- <action title="Download" action_id="download" category="object_buttons" condition_expr=""
-    description="" icon_expr="string:${portal_url}/download_icon.png" link_target="_blank"
-    url_expr="string:${object/absolute_url}/@@download" visible="True">
-  <permission value="View"/>
- </action>
 </object>

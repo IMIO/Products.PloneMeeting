@@ -1817,18 +1817,6 @@ table.cke_dialog {
     position: fixed !important;
 }
 
-/* hide collective.documentviewer message on various portaltypes
-   that says that element is still not converted. Only hide it on the view
-   so error messages are displayed on the edit form. */
-body.template-documentviewer.portaltype-configurablepodtemplate dl.portalMessage.info:last-of-type,
-body.template-documentviewer.portaltype-contentcategory dl.portalMessage.info:last-of-type,
-body.template-documentviewer.portaltype-dashboardpodtemplate dl.portalMessage.info:last-of-type,
-body.template-documentviewer.portaltype-file dl.portalMessage.info:last-of-type,
-body.template-documentviewer.portaltype-itemannexcontentcategory dl.portalMessage.info:last-of-type,
-body.template-documentviewer.portaltype-styletemplate dl.portalMessage.info:last-of-type {
-   display: none;
-}
-
 /* fix width of select2 widget to 400px as when calling initializeSelect2Widgets
  * because when validation fails, the opened widget in fullscreen (out of the overlay)
  * is shrinked */
