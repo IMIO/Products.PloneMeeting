@@ -71,20 +71,25 @@ class Migrate_To_4208(Migrator):
         logger.info('Updating ContentCategory portal_types...')
         data = {
             'ContentCategory':
-            {'model_source': EMPTY_MODEL_SOURCE,
+            {'title': 'ContentCategory',
+             'model_source': EMPTY_MODEL_SOURCE,
              'schema_policy': "schema_policy_pm_content_category"},
             'ContentSubcategory':
-            {'model_source': EMPTY_MODEL_SOURCE,
+            {'title': 'ContentSubcategory',
+             'model_source': EMPTY_MODEL_SOURCE,
              'schema_policy': "schema_policy_pm_content_subcategory"},
             'ItemAnnexContentCategory':
-            {'model_source': EMPTY_MODEL_SOURCE,
+            {'title': 'ItemAnnexContentCategory',
+             'model_source': EMPTY_MODEL_SOURCE,
              'schema_policy': "schema_policy_item_annex_content_category"},
             'ItemAnnexContentSubcategory':
-            {'model_source': EMPTY_MODEL_SOURCE,
+            {'title': 'ItemAnnexContentSubcategory',
+             'model_source': EMPTY_MODEL_SOURCE,
              'schema_policy': "schema_policy_item_annex_content_subcategory"},
         }
         for portal_type, infos in data.items():
             tinfo = self.portal.portal_types[portal_type]
+            tinfo.title = infos['title']
             tinfo.model_source = infos['model_source']
             tinfo.schema_policy = infos['schema_policy']
         logger.info('Done.')
