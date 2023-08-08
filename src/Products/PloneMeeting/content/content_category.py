@@ -22,13 +22,13 @@ from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
 
 
-def validate_other_mc_correspondences(values):
+def other_mc_correspondences_constraint(values):
     ''' '''
     if values:
         tool = api.portal.get_tool('portal_plonemeeting')
         previous_cfg_id = None
         for value in values:
-            cfg = tool.getMeetingConfig(uuidToObject(value))
+            cfg = tool.getMeetingConfig(uuidToObject(value, unrestricted=True))
             if cfg is None:
                 # case of meeting-config-id.annex_not_kept
                 cfg_id = value.split('.')[0]
@@ -70,7 +70,7 @@ class IItemAnnexContentCategory(IPMContentCategory):
             vocabulary="Products.PloneMeeting.content.item_annex_content_category."
             "other_mc_correspondences_vocabulary"),
         required=False,
-        constraint=validate_other_mc_correspondences,
+        constraint=other_mc_correspondences_constraint,
     )
 
     form.widget('only_for_meeting_managers', RadioFieldWidget)
