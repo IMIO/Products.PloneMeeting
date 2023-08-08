@@ -100,6 +100,7 @@ PLACE_OTHER = u"other"
 def assembly_constraint(value):
     """Check that opening [[ has it's closing ]]."""
     value = value and value.output
+    import ipdb; ipdb.set_trace()
     if not validate_item_assembly_value(value):
         request = getRequest()
         msg = translate('Please check that opening "[[" have corresponding closing "]]".',

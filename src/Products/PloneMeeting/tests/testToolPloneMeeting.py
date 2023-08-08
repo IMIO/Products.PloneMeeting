@@ -32,6 +32,7 @@ from Products.CMFCore.permissions import ManagePortal
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.content.content_category import ANNEX_NOT_KEPT
 from Products.PloneMeeting.etags import _modified
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -558,7 +559,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertFalse(annexCfg1Cat.other_mc_correspondences)
         # manipulate annexCfg2 content_category to use one coming from cfg1
         annexCfg2.content_category = annexCfg1.content_category
-        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
+        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg, cfg2))
         # default annex is used
         cfg2NormalAnnexCategories = get_categories(annexCfg2, the_objects=True)
         defaultCfg2NormalAnnexCat = cfg2NormalAnnexCategories[0]
@@ -571,7 +572,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(subCatCfg1.portal_type, 'ItemAnnexContentSubcategory')
         # manipulate annexCfg2 content_category to use the subcategory from cfg1
         annexCfg2.content_category = calculate_category_id(subCatCfg1)
-        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
+        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg, cfg2))
         self.assertEqual(calculate_category_id(defaultCfg2NormalAnnexCat),
                          annexCfg2.content_category)
 
@@ -583,7 +584,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(budgetAnalysisAnnexTypeCfg1.other_mc_correspondences,
                          set([budgetAnalysisAnnexTypeCfg2.UID()]))
         # corresponding annexType has been used
-        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
+        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg, cfg2))
         self.assertEqual(annexCfg2.content_category,
                          '{0}-annexes_types_-_item_annexes_-_budget-analysis'.format(cfg2Id))
 
@@ -594,7 +595,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(overheadAnalysisAnnexTypeCfg1.other_mc_correspondences,
                          set([budgetAnalysisAnnexTypeCfg2['budget-analysis-sub-annex'].UID()]))
         # corresponding annexType has been used, aka the subType
-        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
+        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg, cfg2))
         self.assertEqual(
             annexCfg2.content_category,
             '{0}-annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex'.format(cfg2Id))
@@ -607,7 +608,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(overheadAnalysisSubAnnexTypeCfg1.other_mc_correspondences,
                          set([budgetAnalysisAnnexTypeCfg2.UID()]))
         # corresponding annexType has been used, aka the subType
-        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
+        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg, cfg2))
         self.assertEqual(annexCfg2.content_category,
                          '{0}-annexes_types_-_item_annexes_-_budget-analysis'.format(cfg2Id))
 
@@ -619,7 +620,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(budgetAnalysisSubAnnexTypeCfg1.other_mc_correspondences,
                          set([budgetAnalysisAnnexTypeCfg2['budget-analysis-sub-annex'].UID()]))
         # corresponding annexType has been used, aka the subType
-        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
+        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg, cfg2))
         self.assertEqual(
             annexCfg2.content_category,
             '{0}-annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex'.format(cfg2Id))
@@ -658,7 +659,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(annexCfg2.portal_type, 'annex')
         self.assertEqual(annexCfg2.content_category,
                          '{0}-annexes_types_-_item_annexes_-_financial-analysis'.format(cfgId))
-        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
+        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg, cfg2))
         self.assertEqual(annexCfg2.portal_type, 'annexDecision')
         self.assertEqual(annexCfg2.content_category,
                          '{0}-annexes_types_-_item_decision_annexes_-_decision-annex'.format(cfg2Id))
@@ -669,7 +670,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(annexDecisionCfg2.portal_type, 'annexDecision')
         self.assertEqual(annexDecisionCfg2.content_category,
                          '{0}-annexes_types_-_item_decision_annexes_-_decision-annex'.format(cfgId))
-        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexDecisionCfg2, cfg))
+        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexDecisionCfg2, cfg, cfg2))
         self.assertEqual(annexDecisionCfg2.portal_type, 'annex')
         self.assertEqual(annexDecisionCfg2.content_category,
                          '{0}-annexes_types_-_item_annexes_-_financial-analysis'.format(cfg2Id))
@@ -678,7 +679,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         '''Test the ToolPloneMeeting._updateContentCategoryAfterSentToOtherMeetingConfig method.
            When sending elements to another MC, if a annex_type has no correspondence and
            no annex_type exist in destination MeetingConfig, the annex is not kept.
-           So if a annex_decision type has no correspondence and
+           Likewise if a annex_decision type has no correspondence and
            no annex_decision types exist at all in destination
            configuration, the annex is not kept (it is deleted).
         '''
@@ -710,6 +711,35 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self._removeConfigObjectsFor(cfg2, folders=['annexes_types/item_annexes'])
         clonedItem = item.cloneToOtherMeetingConfig(cfg2Id)
         self.assertEqual([annex.portal_type for annex in get_annexes(clonedItem)], [])
+
+    def test_pm_UpdateContentCategoryAfterSentToOtherMeetingConfigAnnexNotKept(self):
+        '''It is possible to define a correspondence that will not keep the annex.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'),))
+        # adapt other_mc_correspondences to set to nothing
+        annexCat1 = cfg.annexes_types.item_annexes.get(self.annexFileType)
+        annexCat1.other_mc_correspondences = set([ANNEX_NOT_KEPT.format(cfg2Id)])
+
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        item._update_after_edit()
+        self.addAnnex(item)
+        self.addAnnex(item, relatedTo='item_decision')
+        self.assertEqual([annex.portal_type for annex in get_annexes(item)], ['annex', 'annexDecision'])
+
+        # clone item to cfg2, only the decision annex is kept
+        clonedItem = item.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEqual([annex.portal_type for annex in get_annexes(clonedItem)], ['annexDecision'])
+        self.deleteAsManager(clonedItem.UID())
+
+        # works akso with decision annexes
+        annexDecisionCat1 = cfg.annexes_types.item_decision_annexes.get(self.annexFileTypeDecision)
+        annexDecisionCat1.other_mc_correspondences = set([ANNEX_NOT_KEPT.format(cfg2Id)])
+        clonedItem = item.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertFalse(get_annexes(clonedItem))
 
     def test_pm_get_orgs_for_user(self):
         '''get_orgs_for_user check in with Plone subgroups a user is and

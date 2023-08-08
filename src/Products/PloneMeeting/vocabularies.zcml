@@ -75,8 +75,6 @@
            name="Products.PloneMeeting.vocabularies.selectableprivaciesvocabulary" />
   <utility component=".vocabularies.PollTypesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.polltypesvocabulary" />
-  <utility component=".vocabularies.OtherMCCorrespondenceVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.othermccorrespondencevocabulary" />
   <utility component=".vocabularies.StorePodTemplateAsAnnexVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.storepodtemplateasannexvocabulary" />
   <utility component=".vocabularies.ItemTemplatesStorableAsAnnexVocabularyFactory"

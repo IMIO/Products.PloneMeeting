@@ -20,32 +20,12 @@
   <property name="add_permission">cmf.AddPortalContent</property>
   <property name="klass">collective.iconifiedcategory.content.subcategory.Subcategory</property>
   <property name="schema"></property>
-  <property name="model_source">
-     &lt;model xmlns:i18n=&quot;http://xml.zope.org/namespaces/i18n&quot; xmlns:security=&quot;http://namespaces.plone.org/supermodel/security&quot; xmlns:marshal=&quot;http://namespaces.plone.org/supermodel/marshal&quot; xmlns:form=&quot;http://namespaces.plone.org/supermodel/form&quot; xmlns=&quot;http://namespaces.plone.org/supermodel/schema&quot; i18n:domain=&quot;PloneMeeting&quot;&gt;
-       &lt;schema based-on=&quot;collective.iconifiedcategory.content.subcategory.ISubcategory&quot;&gt;
-
-         &lt;field name=&quot;other_mc_correspondences&quot; type=&quot;zope.schema.Set&quot;&gt;
-           &lt;description i18n:translate=&quot;&quot;&gt;other_mc_correspondences_descr&lt;/description&gt;
-           &lt;required&gt;False&lt;/required&gt;
-           &lt;title i18n:translate=&quot;&quot;&gt;PloneMeeting_label_otherMCCorrespondences&lt;/title&gt;
-           &lt;form:widget type="z3c.form.browser.checkbox.CheckBoxWidget"&gt;&lt;/form:widget&gt;
-           &lt;value_type type=&quot;zope.schema.Choice&quot;&gt;
-             &lt;vocabulary&gt;Products.PloneMeeting.vocabularies.othermccorrespondencevocabulary&lt;/vocabulary&gt;
-           &lt;/value_type&gt;
-         &lt;/field&gt;
-
-         &lt;field name=&quot;only_for_meeting_managers&quot; type=&quot;zope.schema.Bool&quot;&gt; 
-           &lt;description i18n:translate=&quot;&quot;&gt;only_for_meeting_managers_descr&lt;/description&gt;
-           &lt;default&gt;False&lt;/default&gt;
-           &lt;required&gt;False&lt;/required&gt;
-           &lt;title i18n:translate=&quot;&quot;&gt;only_for_meeting_managers&lt;/title&gt;
-           &lt;form:widget type="z3c.form.browser.radio.RadioFieldWidget"&gt;&lt;/form:widget&gt;
-         &lt;/field&gt;
-
-       &lt;/schema&gt;
+ <property name="model_source">
+     &lt;model xmlns="http://namespaces.plone.org/supermodel/schema"&gt;
+       &lt;schema/&gt;
      &lt;/model&gt;
-  </property>
-  <property name="schema_policy">subcategory_zamqp_schema_policy</property>
+ </property>
+  <property name="schema_policy">schema_policy_item_annex_content_subcategory</property>
   <property name="behaviors" purge="false">
     <element value="plone.app.content.interfaces.INameFromTitle"/>
     <element value="plone.app.dexterity.behaviors.metadata.IBasic"/>

@@ -77,6 +77,7 @@ from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import PY_DATETIME_WEEKDAYS
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
+from Products.PloneMeeting.content.content_category import ANNEX_NOT_KEPT
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
@@ -1051,7 +1052,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # so it is not necessary to perform some methods
         # like updating advices as it will be removed here under
         self.REQUEST.set('currentlyPastingItems', True)
-        destMeetingConfig = self.getMeetingConfig(destFolder)
+        destCfg = self.getMeetingConfig(destFolder)
         # Current user may not have the right to create object in destFolder.
         # We will grant him the right temporarily
         loggedUserId = get_current_user_id(self.REQUEST)
@@ -1092,7 +1093,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         except Exception:
             raise PloneMeetingError('Could not copy.')
 
-        isManager = self.isManager(destMeetingConfig)
+        isManager = self.isManager(destCfg)
 
         # Let the logged user do everything on the newly created item
         with api.env.adopt_roles(['Manager']):
@@ -1148,8 +1149,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             newItem._at_creation_flag = False
 
             # Set some default values that could not be initialized properly
-            if 'toDiscuss' in copyFields and destMeetingConfig.getToDiscussSetOnItemInsert():
-                toDiscussDefault = destMeetingConfig.getToDiscussDefault()
+            if 'toDiscuss' in copyFields and destCfg.getToDiscussSetOnItemInsert():
+                toDiscussDefault = destCfg.getToDiscussDefault()
                 newItem.setToDiscuss(toDiscussDefault)
 
             # if we have left annexes, we manage it
@@ -1168,28 +1169,28 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     if newPortalType:
                         originCfg = self.getMeetingConfig(copiedItem)
                         new_annex_category = self._updateContentCategoryAfterSentToOtherMeetingConfig(
-                            newAnnex, originCfg)
+                            newAnnex, originCfg, destCfg)
                         if new_annex_category is None:
-                            msg = translate('annex_not_kept_because_no_available_annex_type_warning',
+                            msg = translate('annex_not_kept_item_paste_info',
                                             mapping={'annexTitle': safe_unicode(newAnnex.Title()),
-                                                     'cfg': safe_unicode(destMeetingConfig.Title())},
+                                                     'cfg': safe_unicode(destCfg.Title())},
                                             domain='PloneMeeting',
                                             context=self.REQUEST)
-                            plone_utils.addPortalMessage(msg, 'warning')
+                            plone_utils.addPortalMessage(msg, 'info')
                             unrestrictedRemoveGivenObject(newAnnex)
                             continue
                         elif new_annex_category.only_pdf and \
                                 newAnnex.file.contentType != 'application/pdf':
                             msg = translate('annex_not_kept_because_only_pdf_annex_type_warning',
                                             mapping={'annexTitle': safe_unicode(newAnnex.Title()),
-                                                     'cfg': safe_unicode(destMeetingConfig.Title())},
+                                                     'cfg': safe_unicode(destCfg.Title())},
                                             domain='PloneMeeting',
                                             context=self.REQUEST)
                             plone_utils.addPortalMessage(msg, 'warning')
                             unrestrictedRemoveGivenObject(newAnnex)
                             continue
                     # initialize to_print correctly regarding configuration
-                    if not destMeetingConfig.getKeepOriginalToPrintOfClonedItems():
+                    if not destCfg.getKeepOriginalToPrintOfClonedItems():
                         newAnnex.to_print = \
                             get_category_object(newAnnex, newAnnex.content_category).to_print
 
@@ -1240,7 +1241,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('currentlyPastingItems', False)
         return newItem
 
-    def _updateContentCategoryAfterSentToOtherMeetingConfig(self, annex, originCfg):
+    def _updateContentCategoryAfterSentToOtherMeetingConfig(self, annex, originCfg, destCfg):
         '''
           Update the content_category of the annex while an item is sent from
           a MeetingConfig to another : find a corresponding content_category in the new MeetingConfig :
@@ -1258,6 +1259,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('force_use_item_decision_annexes_group', False)
         else:
             annex_category = get_category_object(originCfg, annex.content_category)
+
+        # special case when annex not kept
+        annex_not_kept = ANNEX_NOT_KEPT.format(destCfg.getId())
+        if annex_not_kept in annex_category.other_mc_correspondences:
+            return None
+
         other_mc_correspondences = []
         if annex_category.other_mc_correspondences:
             annex_cfg_id = tool.getMeetingConfig(annex).getId()
