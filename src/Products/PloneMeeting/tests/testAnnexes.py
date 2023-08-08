@@ -1436,6 +1436,7 @@ class testAnnexes(PloneMeetingTestCase):
                 continue
             mc_title = mc.Title()
             values = [
+                u'{0} ➔ Item annexes ➔ *** Do not keep annex ***'.format(mc_title),
                 u'{0} ➔ Item annexes ➔ Financial analysis'.format(mc_title),
                 u'{0} ➔ Item annexes ➔ Financial analysis '
                 u'➔ Financial analysis sub annex'.format(mc_title),
