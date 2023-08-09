@@ -24,6 +24,10 @@
       name="Products.PloneMeeting.content.category.category_mapping_when_cloning_to_other_mc_vocabulary" />
     <utility name="Products.PloneMeeting.content.meeting.places_vocabulary"
              component=".meeting.PlacesVocabularyFactory" />
+    <utility name="Products.PloneMeeting.content.item_annex_content_category.after_scan_change_annex_type_to_vocabulary"
+             component=".content_category.AfterScanChangeAnnexTypeToVocabularyFactory" />
+    <utility name="Products.PloneMeeting.content.item_annex_content_category.other_mc_correspondences_vocabulary"
+             component=".content_category.OtherMCCorrespondencesVocabularyFactory" />
 
     <!-- Schema policies -->
     <utility factory=".meeting.MeetingSchemaPolicy"
@@ -40,7 +44,16 @@
              name="schema_policy_pm_organization" />
     <utility factory=".person.PMPersonSchemaPolicy"
              name="schema_policy_pm_person" />
+    <utility factory=".content_category.ItemAnnexContentCategorySchemaPolicy"
+             name="schema_policy_item_annex_content_category" />
+    <utility factory=".content_category.ItemAnnexContentSubcategorySchemaPolicy"
+             name="schema_policy_item_annex_content_subcategory" />
+    <utility factory=".content_category.PMContentCategorySchemaPolicy"
+             name="schema_policy_pm_content_category" />
+    <utility factory=".content_category.PMContentSubcategorySchemaPolicy"
+             name="schema_policy_pm_content_subcategory" />
 
+    <!-- Meeting behaves like a PACT ICollection -->
     <adapter for="Products.PloneMeeting.content.meeting.IMeeting"
              factory=".meeting.MeetingCollection"
              provides="plone.app.contenttypes.behaviors.collection.ICollection" />

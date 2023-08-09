@@ -32,6 +32,7 @@ from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.content.content_category import other_mc_correspondences_constraint
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -41,6 +42,7 @@ from time import sleep
 from zope.annotation import IAnnotations
 from zope.component import queryUtility
 from zope.event import notify
+from zope.interface import Invalid
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.schema.interfaces import IVocabularyFactory
 
@@ -1405,6 +1407,20 @@ class testAnnexes(PloneMeetingTestCase):
         view._update()
         self.assertFalse(view.showDecisionAnnexesSection())
 
+    def test_pm_Other_mc_correspondences_constraint(self):
+        """ """
+        self.changeUser('pmManager')
+        cfg = self.meetingConfig
+        annex_type = cfg.annexes_types.item_annexes.get(self.annexFileType)
+        # get vocabulary name
+        type_info = self.portal.portal_types.get(annex_type.portal_type)
+        vocab_name = type_info.lookupSchema()['other_mc_correspondences'].value_type.vocabularyName
+        terms = queryUtility(IVocabularyFactory, vocab_name)(annex_type)._terms
+        self.assertRaises(Invalid, other_mc_correspondences_constraint, [terms[0].value, terms[1].value])
+        self.assertTrue(other_mc_correspondences_constraint([terms[0].value]))
+        self.assertTrue(other_mc_correspondences_constraint([terms[1].value]))
+        self.assertTrue(other_mc_correspondences_constraint([terms[-1].value]))
+
     def test_pm_Other_mc_correspondences_vocabulary(self):
         """ """
         cfg = self.meetingConfig
@@ -1420,6 +1436,7 @@ class testAnnexes(PloneMeetingTestCase):
                 continue
             mc_title = mc.Title()
             values = [
+                u'{0} ➔ Item annexes ➔ *** Do not keep annex ***'.format(mc_title),
                 u'{0} ➔ Item annexes ➔ Financial analysis'.format(mc_title),
                 u'{0} ➔ Item annexes ➔ Financial analysis '
                 u'➔ Financial analysis sub annex'.format(mc_title),

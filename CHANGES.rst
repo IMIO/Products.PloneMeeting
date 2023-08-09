@@ -14,6 +14,11 @@ Changelog
   When enabled, annex may only be downloaded by proposing group members and
   (Meeting)Managers.
   [gbastien]
+- Added possibility to not keep some annexes when item sent to another MC.
+  Needed to refactor override of `ContentCategory`,
+  moved back code from `imio.zamqp.pm`.
+  Added validation for `ContentCategory.other_mc_correspondences`.
+  [gbastien]
 
 4.2.4 (2023-07-12)
 ------------------

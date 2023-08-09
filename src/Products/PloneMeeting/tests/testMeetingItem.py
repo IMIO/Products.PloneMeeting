@@ -891,7 +891,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(len(get_annexes(newItem, portal_types=['annexDecision'])), 1)
         # moreover a message was added
         messages = IStatusMessage(self.request).show()
-        expectedMessage = translate("annex_not_kept_because_no_available_annex_type_warning",
+        expectedMessage = translate("annex_not_kept_item_paste_info",
                                     mapping={'annexTitle': data['annex1'].Title()},
                                     domain='PloneMeeting',
                                     context=self.request)
