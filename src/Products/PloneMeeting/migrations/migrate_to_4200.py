@@ -31,6 +31,7 @@ from Products.PloneMeeting.interfaces import IMeetingItemDashboardBatchActionsMa
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.migrations.migrate_to_4209 import Migrate_To_4209
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.setuphandlers import columnInfos
 from Products.PloneMeeting.setuphandlers import indexInfos
@@ -910,6 +911,12 @@ class Migrate_To_4200(Migrator):
                          'getItemNumber',
                          'linkedMeetingUID',
                          'linkedMeetingDate'])
+
+            # need to update schema policies manually before reinstall
+            # because GS will look for old schema_policy during update and it
+            # does not exist anymore (category_zamqp_schema_policy)
+            migrate_to_4209 = Migrate_To_4209(self.portal)
+            migrate_to_4209._updateContentCategoryPortalTypes()
 
             # reinstall workflows before updating workflowAdaptations
             self.runProfileSteps('Products.PloneMeeting', steps=['workflow'], profile='default')

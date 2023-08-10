@@ -37,6 +37,7 @@ from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
+from Products.PloneMeeting.utils import get_annexes
 from tempfile import mkdtemp
 from time import sleep
 from zope.annotation import IAnnotations
@@ -1795,6 +1796,57 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(annex0.restrictedTraverse('@@download')())
         self.assertTrue(annex1.restrictedTraverse('@@download')())
         self.assertTrue(annex2.restrictedTraverse('@@download')())
+
+    def test_pm_AnnexWithScanIdRemovedWhenItemDuplicated(self):
+        """Annex with scan_id will be removed when an item is duplicated."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.addAnnex(item)
+        annex = self.addAnnex(item)
+        annex.scan_id = '001'
+        self.addAnnex(item, relatedTo='item_decision')
+        annex_decision = self.addAnnex(item, relatedTo='item_decision')
+        annex_decision.scan_id = '002'
+        self.assertEqual(len(get_annexes(item)), 4)
+        # clone
+        newItem = item.clone(copyAnnexes=True, copyDecisionAnnexes=True)
+        self.assertEqual(len(get_annexes(newItem)), 2)
+        self.assertEqual(
+            [anAnnex for anAnnex in get_annexes(newItem)
+             if getattr(anAnnex, 'scan_id', None)],
+            [])
+
+    def test_pm_AnnexWithScanIdWithAnnexTypeCorrespondenceKeptWhenItemSendToOtherMC(self):
+        """Annex with scan_id will be kept when item sent to another MC
+           if an annex_type correspondence is defined."""
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'),))
+        # adapt other_mc_correspondences to set to nothing
+        annexCat1 = cfg.annexes_types.item_annexes.get(self.annexFileType)
+        annexCat2 = cfg2.annexes_types.item_annexes.get(self.annexFileType)
+        annexCat1.other_mc_correspondences = set()
+
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem', otherMeetingConfigsClonableTo=(cfg2Id,))
+        annex = self.addAnnex(item, scan_id='001')
+        decision_annex = self.addAnnex(item, relatedTo='item_decision', scan_id='002')
+        self.assertEqual(len(get_annexes(item)), 2)
+        clonedItem = item.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertFalse(get_annexes(clonedItem))
+        self.deleteAsManager(clonedItem.UID())
+
+        # define a correspondence, then annex is kept but scan_id is removed
+        annexCat1.other_mc_correspondences = set([annexCat2.UID()])
+        clonedItem = item.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEqual(len(get_annexes(clonedItem)), 1)
+        self.assertIsNone(get_annexes(clonedItem)[0].scan_id)
+        # not found in catalog, correctly reindexed
+        self.assertEqual(len(self.catalog(scan_id='001')), 1)
+        self.assertEqual(self.catalog(scan_id='001')[0].UID, annex.UID())
+        self.assertEqual(len(self.catalog(scan_id='002')), 1)
+        self.assertEqual(self.catalog(scan_id='002')[0].UID, decision_annex.UID())
 
 
 def test_suite():
