@@ -1192,12 +1192,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     # annex with a scan_id is deleted if not handled by
                     # _updateContentCategoryAfterSentToOtherMeetingConfig here above
                     if getattr(newAnnex, 'scan_id', None):
-                        unrestrictedRemoveGivenObject(newAnnex)
                         msg = translate('annex_not_kept_because_using_scan_id',
                                         mapping={'annexTitle': safe_unicode(newAnnex.Title())},
                                         domain='PloneMeeting',
                                         context=newItem.REQUEST)
-                        api.portal.show_message(msg, request=newItem.REQUEST, type='warning')
+                        plone_utils.addPortalMessage(msg, type='warning')
+                        unrestrictedRemoveGivenObject(newAnnex)
+                        continue
                     # initialize to_print correctly regarding configuration
                     if not destCfg.getKeepOriginalToPrintOfClonedItems():
                         newAnnex.to_print = \

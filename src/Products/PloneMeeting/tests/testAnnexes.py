@@ -1843,6 +1843,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertEqual(len(get_annexes(clonedItem)), 1)
         self.assertIsNone(get_annexes(clonedItem)[0].scan_id)
         # not found in catalog, correctly reindexed
+        self.assertTrue('scan_id' in self.catalog.Indexes)
         self.assertEqual(len(self.catalog(scan_id='001')), 1)
         self.assertEqual(self.catalog(scan_id='001')[0].UID, annex.UID())
         self.assertEqual(len(self.catalog(scan_id='002')), 1)
