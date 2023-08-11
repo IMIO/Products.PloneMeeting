@@ -741,6 +741,35 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         clonedItem = item.cloneToOtherMeetingConfig(cfg2Id)
         self.assertFalse(get_annexes(clonedItem))
 
+    def test_pm_UpdateContentCategoryAfterSentToOtherMeetingConfigAnnexWithScanId(self):
+        '''Annex with a scan_id is deleted unless a specific correspondence is defined.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'),))
+        # adapt other_mc_correspondences to set to annex not kept
+        annexCat1 = cfg.annexes_types.item_annexes.get(self.annexFileType)
+        annexCat1.other_mc_correspondences = set([ANNEX_NOT_KEPT.format(cfg2Id)])
+
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        item._update_after_edit()
+        self.addAnnex(item)
+        self.addAnnex(item, relatedTo='item_decision')
+        self.assertEqual([annex.portal_type for annex in get_annexes(item)], ['annex', 'annexDecision'])
+
+        # clone item to cfg2, only the decision annex is kept
+        clonedItem = item.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEqual([annex.portal_type for annex in get_annexes(clonedItem)], ['annexDecision'])
+        self.deleteAsManager(clonedItem.UID())
+
+        # works akso with decision annexes
+        annexDecisionCat1 = cfg.annexes_types.item_decision_annexes.get(self.annexFileTypeDecision)
+        annexDecisionCat1.other_mc_correspondences = set([ANNEX_NOT_KEPT.format(cfg2Id)])
+        clonedItem = item.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertFalse(get_annexes(clonedItem))
+
     def test_pm_get_orgs_for_user(self):
         '''get_orgs_for_user check in with Plone subgroups a user is and
            returns corresponding organizations.'''

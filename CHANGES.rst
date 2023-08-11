@@ -19,6 +19,11 @@ Changelog
   moved back code from `imio.zamqp.pm`.
   Added validation for `ContentCategory.other_mc_correspondences`.
   [gbastien]
+- By default, when an item sent to another MC, annexes with a `scan_id`
+  are not kept. Now annexes with a `scan_id` will be kept if a
+  `ContentCategory.other_mc_correspondences` is defined
+  (but `scan_id` is set to `None`).
+  [gbastien]
 
 4.2.4 (2023-07-12)
 ------------------

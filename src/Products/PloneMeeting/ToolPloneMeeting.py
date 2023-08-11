@@ -1161,7 +1161,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 for oldAnnex in oldAnnexes:
                     newAnnex = getattr(newItem, oldAnnex.getId(), None)
                     if not newAnnex:
-                        # this annex was removed
+                        # this annex was removed by another event
                         continue
                     # In case the item is copied from another MeetingConfig, we need
                     # to update every annex.content_category because it still refers
@@ -1189,6 +1189,17 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                             plone_utils.addPortalMessage(msg, 'warning')
                             unrestrictedRemoveGivenObject(newAnnex)
                             continue
+                    # annex with a scan_id is deleted if not newPortalType
+                    # if newPortalType, it is managed here above by
+                    # _updateContentCategoryAfterSentToOtherMeetingConfig
+                    if getattr(newAnnex, 'scan_id', None):
+                        msg = translate('annex_not_kept_because_using_scan_id',
+                                        mapping={'annexTitle': safe_unicode(newAnnex.Title())},
+                                        domain='PloneMeeting',
+                                        context=newItem.REQUEST)
+                        plone_utils.addPortalMessage(msg, type='warning')
+                        unrestrictedRemoveGivenObject(newAnnex)
+                        continue
                     # initialize to_print correctly regarding configuration
                     if not destCfg.getKeepOriginalToPrintOfClonedItems():
                         newAnnex.to_print = \
@@ -1262,7 +1273,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         # special case when annex not kept
         annex_not_kept = ANNEX_NOT_KEPT.format(destCfg.getId())
-        if annex_not_kept in annex_category.other_mc_correspondences:
+        if annex_category.other_mc_correspondences is not None and \
+           annex_not_kept in annex_category.other_mc_correspondences:
             return None
 
         other_mc_correspondences = []
@@ -1273,6 +1285,15 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     UID=tuple(annex_category.other_mc_correspondences),
                     enabled=True)
                 if "/portal_plonemeeting/{0}".format(annex_cfg_id) in brain.getPath()]
+
+        # special case when annex has a scan_id, a correspondence must have been defined
+        if getattr(annex, 'scan_id', None):
+            if not other_mc_correspondences:
+                # this will remove the annex
+                return None
+            annex.scan_id = None
+            annex.reindexObject(idxs=['scan_id'])
+
         if other_mc_correspondences:
             other_mc_correspondence = other_mc_correspondences[0]
             adapted_annex = IconifiedCategorization(annex)

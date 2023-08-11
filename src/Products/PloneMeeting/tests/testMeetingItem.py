@@ -2965,8 +2965,8 @@ class testMeetingItem(PloneMeetingTestCase):
         annex = self.addAnnex(
             item,
             annexTitle=u"Title\"><script>alert(document.domain)</script>\"",
-            annexType=annex_type.id)
-        annex.scan_id = '013999900000001'
+            annexType=annex_type.id,
+            scan_id='013999900000001')
         annex_scan_id_id = annex.getId()
         # add an annex then change annex_type only_pdf to True after
         self.addAnnex(item, annexType='overhead-analysis')
