@@ -1189,8 +1189,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                             plone_utils.addPortalMessage(msg, 'warning')
                             unrestrictedRemoveGivenObject(newAnnex)
                             continue
-                    # annex with a scan_id is deleted if not handled by
-                    # _updateContentCategoryAfterSentToOtherMeetingConfig here above
+                    # annex with a scan_id is deleted if not newPortalType
+                    # if newPortalType, it is managed here above by
+                    # _updateContentCategoryAfterSentToOtherMeetingConfig
                     if getattr(newAnnex, 'scan_id', None):
                         msg = translate('annex_not_kept_because_using_scan_id',
                                         mapping={'annexTitle': safe_unicode(newAnnex.Title())},
@@ -1272,7 +1273,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         # special case when annex not kept
         annex_not_kept = ANNEX_NOT_KEPT.format(destCfg.getId())
-        if annex_category.other_mc_correspondences and \
+        if annex_category.other_mc_correspondences is not None and \
            annex_not_kept in annex_category.other_mc_correspondences:
             return None
 
