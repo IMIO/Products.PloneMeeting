@@ -42,6 +42,7 @@ from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.browser.itemchangeorder import _to_integer
 from Products.PloneMeeting.browser.itemchangeorder import _use_same_integer
 from Products.PloneMeeting.browser.itemvotes import clean_voters_linked_to
+from Products.PloneMeeting.config import MEETING_ATTENDEES_ATTRS
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -1921,18 +1922,11 @@ class Meeting(Container):
             # so we pass
             pass
 
-        # remove item UID from self.item_absents/self.item_excused and self.item_signatories
+        # remove item UID from meeting attendees attributes
         item_uid = item.UID()
-        if item_uid in self.item_absents:
-            del self.item_absents[item_uid]
-        if item_uid in self.item_excused:
-            del self.item_excused[item_uid]
-        if item_uid in self.item_non_attendees:
-            del self.item_non_attendees[item_uid]
-        if item_uid in self.item_signatories:
-            del self.item_signatories[item_uid]
-        if item_uid in self.item_votes:
-            del self.item_votes[item_uid]
+        for attendee_attr in MEETING_ATTENDEES_ATTRS:
+            if item_uid in getattr(self, attendee_attr):
+                del getattr(self, attendee_attr)[item_uid]
 
         # remove item UID from _insert_order_cache
         self._invalidate_insert_order_cache_for(item)

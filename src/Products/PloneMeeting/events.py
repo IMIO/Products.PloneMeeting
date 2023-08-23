@@ -44,6 +44,7 @@ from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_CONFIG
+from Products.PloneMeeting.config import MEETING_ATTENDEES_ATTRS
 from Products.PloneMeeting.config import MEETING_REMOVE_MOG_WFA
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -1206,20 +1207,8 @@ def onMeetingCreated(meeting, event):
        - added."""
     userId = get_current_user_id(meeting.REQUEST)
     meeting.manage_addLocalRoles(userId, ('Owner',))
-    # place to store item absents
-    meeting.item_absents = PersistentMapping()
-    # place to store item excused
-    meeting.item_excused = PersistentMapping()
-    # place to store item non attendees
-    meeting.item_non_attendees = PersistentMapping()
-    # place to store item signatories
-    meeting.item_signatories = PersistentMapping()
-    # place to store item attendees changed position
-    meeting.item_attendees_positions = PersistentMapping()
-    # place to store item attendees changed order
-    meeting.item_attendees_order = PersistentMapping()
-    # place to store item votes
-    meeting.item_votes = PersistentMapping()
+    for attendee_attr in MEETING_ATTENDEES_ATTRS:
+        setattr(meeting, attendee_attr, PersistentMapping())
     # place to store attendees when using contacts
     meeting.ordered_contacts = OrderedDict()
     meeting._number_of_items = 0
