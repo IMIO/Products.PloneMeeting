@@ -24,6 +24,11 @@ Changelog
   `ContentCategory.other_mc_correspondences` is defined
   (but `scan_id` is set to `None`).
   [gbastien]
+- When removing an item from a meeting, make sure item `UID` is removed from
+  `Meeting.item_attendees_positions` and `Meeting.item_attendees_order`.
+  This rely now on `config.MEETING_ATTENDEES_ATTRS` that makes sure that every
+  meeting attendees custom attributes are cleaned when item is removed.
+  [gbastien]
 
 4.2.4 (2023-07-12)
 ------------------

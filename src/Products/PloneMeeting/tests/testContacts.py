@@ -2626,6 +2626,10 @@ class testContacts(PloneMeetingTestCase):
         # still on item1, no more on item2
         self.assertEqual(meeting.get_attendee_position_for(item1_uid, hp1_uid), u"dg")
         self.assertEqual(meeting.get_attendee_position_for(item2_uid, hp1_uid), u"default")
+        # when item removed from meeting, info removed from item_attendees_positions
+        self.assertTrue(item1_uid in meeting.item_attendees_positions)
+        self.backToState(item1, 'validated')
+        self.assertFalse(item1_uid in meeting.item_attendees_positions)
 
     def test_pm_HeldPositionDefaultPosition(self):
         """When adding a held_position, the default position is set to the own organization."""
@@ -2710,6 +2714,12 @@ class testContacts(PloneMeetingTestCase):
         reinit_view = item1.restrictedTraverse('@@item-reinit-attendees-order')
         reinit_view()
         self.assertEqual(invariants.validate(data), ())
+
+        # when item removed from meeting, info removed from item_attendees_positions
+        change_view(attendee_uid=item1.get_all_attendees()[1], position=3)
+        self.assertTrue(item1_uid in meeting.item_attendees_order)
+        self.backToState(item1, 'validated')
+        self.assertFalse(item1_uid in meeting.item_attendees_order)
 
 
 def test_suite():

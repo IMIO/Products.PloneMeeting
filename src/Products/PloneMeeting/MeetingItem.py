@@ -7739,7 +7739,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # If we are here, everything has already been checked before.
         # Just check that the item is myself, a Plone Site or removing a MeetingConfig.
         # We can remove an item directly, not "through" his container.
-        if item.meta_type not in ['Plone Site', 'MeetingConfig', 'MeetingItem', ]:
+        if item.meta_type not in ('Plone Site', 'MeetingConfig', 'MeetingItem'):
             user_id = get_current_user_id(item.REQUEST)
             logger.warn(BEFOREDELETE_ERROR % (user_id, self.id))
             raise BeforeDeleteException(

@@ -380,6 +380,23 @@ REINDEX_NEEDED_MARKER = "_catalog_reindex_needed"
 # prefix used in pm_technical_index to store item initiators
 ITEM_INITIATOR_INDEX_PATTERN = "item_initiator_{0}"
 
+# various place where attendees infos are stored on meeting
+MEETING_ATTENDEES_ATTRS = (
+    # place to store item absents
+    'item_absents',
+    # place to store item excused
+    'item_excused',
+    # place to store item non attendees
+    'item_non_attendees',
+    # place to store item signatories
+    'item_signatories',
+    # place to store item attendees changed position
+    'item_attendees_positions',
+    # place to store item attendees changed order
+    'item_attendees_order',
+    # place to store item votes
+    'item_votes')
+
 
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the
