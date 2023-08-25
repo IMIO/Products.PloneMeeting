@@ -27,6 +27,7 @@ from imio.helpers.content import richtextval
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
+from imio.zamqp.pm.tests.base import DEFAULT_SCAN_ID
 from os import path
 from persistent.mapping import PersistentMapping
 from plone import api
@@ -2966,7 +2967,7 @@ class testMeetingItem(PloneMeetingTestCase):
             item,
             annexTitle=u"Title\"><script>alert(document.domain)</script>\"",
             annexType=annex_type.id,
-            scan_id='013999900000001')
+            scan_id=DEFAULT_SCAN_ID)
         annex_scan_id_id = annex.getId()
         # add an annex then change annex_type only_pdf to True after
         self.addAnnex(item, annexType='overhead-analysis')
