@@ -58,6 +58,16 @@
     url_expr="string:${object/absolute_url}/view" visible="True">
   <permission value="Manage portal"/>
  </action>
+ <action title="View preview" action_id="view_preview" category="object_buttons" condition_expr="python:object.show_preview()"
+    description="" icon_expr="string:${portal_url}/file_icon.png" link_target="_blank"
+    url_expr="string:${object/absolute_url}/documentviewer#document/#/p1" visible="True">
+  <permission value="View"/>
+ </action>
+ <action title="Download" action_id="download" category="object_buttons" condition_expr="python:object.show_download()"
+    description="" icon_expr="string:${portal_url}/download_icon.png" link_target="_blank"
+    url_expr="string:${object/absolute_url}/@@download" visible="True">
+  <permission value="View"/>
+ </action>
  <action title="Insert barcode"
          action_id="insert_barcode"
          category="object_buttons"
@@ -68,10 +78,5 @@
          url_expr="string:${object/absolute_url}/@@insert-barcode"
          visible="True">
   <permission value="Modify portal content"/>
- </action>
- <action title="Download" action_id="download" category="object_buttons" condition_expr="python:object.show_download()"
-    description="" icon_expr="string:${portal_url}/download_icon.png" link_target="_blank"
-    url_expr="string:${object/absolute_url}/@@download" visible="True">
-  <permission value="View"/>
  </action>
 </object>

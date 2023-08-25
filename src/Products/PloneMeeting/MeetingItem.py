@@ -1711,7 +1711,7 @@ schema = Schema((
         name='copyGroups',
         widget=MultiSelectionWidget(
             size=10,
-            condition='python:here.isCopiesEnabled()',
+            condition="python: here.attribute_is_used('copyGroups')",
             description="CopyGroupsItems",
             description_msgid="copy_groups_item_descr",
             format="checkbox",
@@ -1719,6 +1719,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_copyGroups',
             i18n_domain='PloneMeeting',
         ),
+        optional=True,
         enforceVocabulary=True,
         multiValued=1,
         vocabulary_factory='Products.PloneMeeting.vocabularies.itemcopygroupsvocabulary',
@@ -7038,7 +7039,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def _updateCopyGroupsLocalRoles(self, isCreated, cfg, item_state):
         '''Give the 'Reader' local role to the copy groups
            depending on what is defined in the corresponding meetingConfig.'''
-        if not self.isCopiesEnabled():
+        if not self.attribute_is_used('copyGroups'):
             return
         # Check if some copyGroups must be automatically added
         self.addAutoCopyGroups(isCreated=isCreated)
@@ -7170,14 +7171,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             vocab = self.getField('optionalAdvisers').Vocabulary(self)
             res = bool(vocab)
         return res
-
-    security.declarePublic('isCopiesEnabled')
-
-    def isCopiesEnabled(self):
-        '''Is the "copies" functionality enabled for this meeting config?'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        return cfg.getUseCopies()
 
     security.declarePublic('isVotesEnabled')
 
@@ -7352,7 +7345,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 tuple(set(self.getOtherMeetingConfigsClonableTo()).intersection(clonableTo)))
         if 'copyGroups' in copyFields:
             copyGroups = list(self.getCopyGroups())
-            selectableCopyGroups = cfg.getUseCopies() and dest_cfg.getSelectableCopyGroups() or []
+            selectableCopyGroups = 'copygroups' in dest_cfg.getUsedItemAttributes() and dest_cfg.getSelectableCopyGroups() or []
             # make sure we only have selectable copyGroups
             newItem.setCopyGroups(
                 tuple(set(copyGroups).intersection(set(selectableCopyGroups))))

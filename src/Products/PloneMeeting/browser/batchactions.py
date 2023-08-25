@@ -112,7 +112,8 @@ class UpdateGroupsInChargeBatchActionForm(BaseARUOBatchActionForm):
 
     label = _CEBA("Update groups in charge for selected elements")
     modified_attr_name = "groupsInCharge"
-    indexes = ["getGroupsInCharge"]
+    # we manage reindex with update_local_roles in _apply here under
+    indexes = []
     required = True
 
     def available(self):
@@ -127,6 +128,39 @@ class UpdateGroupsInChargeBatchActionForm(BaseARUOBatchActionForm):
 
     def _vocabulary(self):
         return 'Products.PloneMeeting.vocabularies.itemgroupsinchargevocabulary'
+
+    def _apply(self, **data):
+        updated = super(UpdateGroupsInChargeBatchActionForm, self)._apply(**data)
+        for item in updated:
+            item.update_local_roles()
+
+
+class UpdateCopyGroupsBatchActionForm(BaseARUOBatchActionForm):
+    """ """
+
+    label = _CEBA("Update copy groups for selected elements")
+    modified_attr_name = "copyGroups"
+    # we manage reindex with update_local_roles in _apply here under
+    indexes = []
+    required = False
+
+    def available(self):
+        """Only available when using copyGroups to users having operational
+           roles in the application.
+           This is essentially done to hide this to (restricted)powerobservers
+           and to non MeetingManagers on the meeting_view."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        return "copyGroups" in cfg.getUsedItemAttributes() and \
+            _is_operational_user(self.context)
+
+    def _vocabulary(self):
+        return 'Products.PloneMeeting.vocabularies.copygroupsvocabulary'
+
+    def _apply(self, **data):
+        updated = super(UpdateCopyGroupsBatchActionForm, self)._apply(**data)
+        for item in updated:
+            item.update_local_roles()
 
 
 class PMDeleteBatchActionForm(DeleteBatchActionForm):

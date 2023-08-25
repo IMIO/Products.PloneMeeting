@@ -1634,7 +1634,7 @@ class testViews(PloneMeetingTestCase):
     def test_pm_DisplayGroupUsersViewAllPloneGroups(self):
         """It is possible to get every Plone groups."""
         cfg = self.meetingConfig
-        cfg.setUseCopies(True)
+        self._enableField('copyGroups')
         cfg.setItemCopyGroupsStates(('itemcreated', ))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', copyGroups=(self.vendors_reviewers, ))

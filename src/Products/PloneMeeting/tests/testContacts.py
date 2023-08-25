@@ -1770,7 +1770,7 @@ class testContacts(PloneMeetingTestCase):
 
         # check with item having copyGroups
         item.setItemInitiator(())
-        cfg.setUseCopies(True)
+        self._enableField('copyGroups')
         item.setCopyGroups((self.developers_reviewers, ))
         item._update_after_edit()
         transaction.commit()

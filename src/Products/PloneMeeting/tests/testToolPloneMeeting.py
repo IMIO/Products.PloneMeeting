@@ -824,7 +824,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
            First set copy groups may view items in state 'itemcreated' then change to 'proposed'."""
         cfg = self.meetingConfig
         cfg.setSelectableCopyGroups((self.developers_reviewers, self.vendors_reviewers))
-        cfg.setUseCopies(True)
+        self._enableField('copyGroups')
         cfg.setItemCopyGroupsStates(('itemcreated', ))
         # only available to 'Managers'
         self.changeUser('pmCreator1')

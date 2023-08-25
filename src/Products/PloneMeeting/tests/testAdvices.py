@@ -2008,7 +2008,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'),
                                      self._stateMappingFor('proposed'), ))
         cfg.setKeepAccessToItemWhenAdvice("was_giveable")
-        cfg.setUseCopies(True)
+        self._enableField('copyGroups')
         cfg.setItemCopyGroupsStates((self._stateMappingFor('itemcreated'),
                                      self._stateMappingFor('proposed'), ))
         cfg.setEnableAdviceProposingGroupComment(True)
@@ -3999,7 +3999,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setItemAdviceViewStates([self._stateMappingFor('itemcreated'), ])
         cfg.setPowerAdvisersGroups((self.vendors_uid, ))
         self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'), ))
-        cfg.setUseCopies(True)
+        self._enableField('copyGroups')
         cfg.setItemCopyGroupsStates((self._stateMappingFor('itemcreated'), ))
         self._setPowerObserverStates(observer_type='restrictedpowerobservers',
                                      states=('itemcreated', ))

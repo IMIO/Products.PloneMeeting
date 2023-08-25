@@ -2223,19 +2223,6 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
-        name='useCopies',
-        default=defValues.useCopies,
-        widget=BooleanField._properties['widget'](
-            description="UseCopies",
-            description_msgid="use_copies_descr",
-            label='Usecopies',
-            label_msgid='PloneMeeting_label_useCopies',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="advices",
-        write_permission="PloneMeeting: Write risky config",
-    ),
     LinesField(
         name='selectableCopyGroups',
         widget=MultiSelectionWidget(
@@ -3048,7 +3035,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getUseCopies() and tool.userIsAmong(['observers', 'reviewers'])",
+                    'tal_condition': "python: 'copyGroups' in cfg.getUsedItemAttributes() and tool.userIsAmong(['observers', 'reviewers'])",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Unread items in copy
@@ -3070,7 +3057,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getEnableLabels() and cfg.getUseCopies() "
+                    'tal_condition': "python: cfg.getEnableLabels() and 'copyGroups' in cfg.getUsedItemAttributes() "
                         "and tool.userIsAmong(['observers', 'reviewers']) ",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),

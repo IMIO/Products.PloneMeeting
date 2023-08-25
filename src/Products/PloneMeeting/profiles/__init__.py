@@ -657,7 +657,6 @@ class MeetingConfigDescriptor(Descriptor):
         self.itemManualSentToOtherMCStates = []
         self.contentsKeptOnSentToOtherMC = ['annexes', 'decision_annexes']
         self.advicesKeptOnSentToOtherMC = []
-        self.useCopies = False
         self.selectableCopyGroups = []
         self.itemCopyGroupsStates = ['accepted']
         self.hideItemHistoryCommentsToUsersOutsideProposingGroup = False

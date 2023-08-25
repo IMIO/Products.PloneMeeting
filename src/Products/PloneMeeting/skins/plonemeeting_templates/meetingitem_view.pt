@@ -133,7 +133,7 @@
             </div>
 
             <tal:comment replace="nothing">Copy groups for this item</tal:comment>
-            <tal:copyGroups condition="python: context.isCopiesEnabled()">
+            <tal:copyGroups condition="python: context.attribute_is_used('copyGroups')">
                 <div class="discreet" tal:define="copyGroups python: context.getAllCopyGroups();
                                                   copy_groups_have_access python: context.check_copy_groups_have_access();">
                     <span class="item_attribute_label"
