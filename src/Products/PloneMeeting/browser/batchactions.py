@@ -107,60 +107,48 @@ class UpdateLocalRolesBatchActionForm(BaseBatchActionForm):
         api.portal.show_message(msg, request=self.request)
 
 
-class UpdateGroupsInChargeBatchActionForm(BaseARUOBatchActionForm):
+class PMBaseARUOBatchActionForm(BaseARUOBatchActionForm):
+    """ """
+
+    # we manage reindex with update_local_roles in _apply here under
+    indexes = []
+
+    def available(self):
+        """Only available when using the item attr to users having operational
+           roles in the application.
+           This is essentially done to hide this to (restricted)powerobservers
+           and to non MeetingManagers on the meeting_view."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        return self.modified_attr_name in cfg.getUsedItemAttributes() and \
+            _is_operational_user(self.context)
+
+    def _apply(self, **data):
+        updated = super(PMBaseARUOBatchActionForm, self)._apply(**data)
+        for item in updated:
+            item.update_local_roles()
+
+
+class UpdateGroupsInChargeBatchActionForm(PMBaseARUOBatchActionForm):
     """ """
 
     label = _CEBA("Update groups in charge for selected elements")
     modified_attr_name = "groupsInCharge"
-    # we manage reindex with update_local_roles in _apply here under
-    indexes = []
     required = True
-
-    def available(self):
-        """Only available when using groupsInCharge to users having operational
-           roles in the application.
-           This is essentially done to hide this to (restricted)powerobservers
-           and to non MeetingManagers on the meeting_view."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        return "groupsInCharge" in cfg.getUsedItemAttributes() and \
-            _is_operational_user(self.context)
 
     def _vocabulary(self):
         return 'Products.PloneMeeting.vocabularies.itemgroupsinchargevocabulary'
 
-    def _apply(self, **data):
-        updated = super(UpdateGroupsInChargeBatchActionForm, self)._apply(**data)
-        for item in updated:
-            item.update_local_roles()
 
-
-class UpdateCopyGroupsBatchActionForm(BaseARUOBatchActionForm):
+class UpdateCopyGroupsBatchActionForm(PMBaseARUOBatchActionForm):
     """ """
 
     label = _CEBA("Update copy groups for selected elements")
     modified_attr_name = "copyGroups"
-    # we manage reindex with update_local_roles in _apply here under
-    indexes = []
     required = False
-
-    def available(self):
-        """Only available when using copyGroups to users having operational
-           roles in the application.
-           This is essentially done to hide this to (restricted)powerobservers
-           and to non MeetingManagers on the meeting_view."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        return "copyGroups" in cfg.getUsedItemAttributes() and \
-            _is_operational_user(self.context)
 
     def _vocabulary(self):
         return 'Products.PloneMeeting.vocabularies.copygroupsvocabulary'
-
-    def _apply(self, **data):
-        updated = super(UpdateCopyGroupsBatchActionForm, self)._apply(**data)
-        for item in updated:
-            item.update_local_roles()
 
 
 class PMDeleteBatchActionForm(DeleteBatchActionForm):
