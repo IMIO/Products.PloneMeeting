@@ -2878,9 +2878,7 @@ class PMGroupsVocabulary(GroupsVocabulary):
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile(
-            '_users_groups_value')
-        return date
+        return get_cachekey_volatile('_users_groups_value')
 
     @ram.cache(__call___cachekey)
     def PMGroupsVocabulary__call__(self, context):
