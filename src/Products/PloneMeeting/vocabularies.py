@@ -43,6 +43,7 @@ from imio.helpers.content import uuidToObject
 from natsort import humansorted
 from operator import attrgetter
 from plone import api
+from plone.app.vocabularies.security import GroupsVocabulary
 from plone.app.vocabularies.users import UsersFactory
 from plone.memoize import ram
 from Products.CMFPlone.utils import base_hasattr
@@ -2870,6 +2871,26 @@ class PMUsers(UsersFactory):
 
 
 PMUsersFactory = PMUsers()
+
+
+class PMGroupsVocabulary(GroupsVocabulary):
+    """Add caching."""
+
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile(
+            '_users_groups_value')
+        return date
+
+    @ram.cache(__call___cachekey)
+    def PMGroupsVocabulary__call__(self, context):
+        return super(PMGroupsVocabulary, self).__call__(context)
+
+    # do ram.cache have a different key name
+    __call__ = PMGroupsVocabulary__call__
+
+
+PMGroupsVocabularyFactory = PMGroupsVocabulary()
 
 
 class PMPositionTypesVocabulary(PositionTypesVocabulary):

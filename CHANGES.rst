@@ -42,6 +42,8 @@ Changelog
     are correct after groups in charge were changed.
 
   [gbastien]
+- Added `Copy groups` dashboard column.
+  [gbastien]
 
 4.2.4 (2023-07-12)
 ------------------

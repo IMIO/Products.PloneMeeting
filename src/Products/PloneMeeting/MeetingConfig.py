@@ -5521,6 +5521,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate("header_getGroupsInCharge", domain=d, context=self.REQUEST))),
             ("groups_in_charge_acronym", u"{0} (groups_in_charge_acronym)".format(
                 translate("header_groups_in_charge_acronym", domain=d, context=self.REQUEST))),
+            ("copyGroups", u"{0} (copyGroups)".format(
+                translate("header_copyGroups", domain=d, context=self.REQUEST))),
             ("committees_index", u"{0} (committees_index)".format(
                 translate("header_committees_index", domain=d, context=self.REQUEST))),
             ("committees_index_acronym", u"{0} (committees_index_acronym)".format(
