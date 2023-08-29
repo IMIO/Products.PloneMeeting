@@ -7,6 +7,7 @@
 
 from collective.eeafaceted.z3ctable.columns import AbbrColumn
 from collective.eeafaceted.z3ctable.columns import ActionsColumn
+from collective.eeafaceted.z3ctable.columns import AwakeObjectVocabularyColumn
 from collective.eeafaceted.z3ctable.columns import BaseColumn
 from collective.eeafaceted.z3ctable.columns import BrowserViewCallColumn
 from collective.eeafaceted.z3ctable.columns import CheckBoxColumn
@@ -67,7 +68,6 @@ class ItemGroupsInChargeColumn(VocabularyColumn):
     """A column that display the groupsInCharge."""
     attrName = 'getGroupsInCharge'
     vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsvocabulary'
-    header_help = u"header_getGroupsInCharge_help"
 
 
 class ItemGroupsInChargeAcronymColumn(AbbrColumn):
@@ -76,6 +76,12 @@ class ItemGroupsInChargeAcronymColumn(AbbrColumn):
     vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary'
     full_vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsvocabulary'
     header_help = u"header_groups_in_charge_acronym_help"
+
+
+class ItemCopyGroupsColumn(AwakeObjectVocabularyColumn):
+    """A column that display the copyGroups."""
+    sort_index = 'getCopyGroups'
+    vocabulary = u'Products.PloneMeeting.Groups'
 
 
 class ItemAssociatedGroupsColumn(VocabularyColumn):

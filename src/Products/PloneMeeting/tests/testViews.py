@@ -1634,7 +1634,7 @@ class testViews(PloneMeetingTestCase):
     def test_pm_DisplayGroupUsersViewAllPloneGroups(self):
         """It is possible to get every Plone groups."""
         cfg = self.meetingConfig
-        cfg.setUseCopies(True)
+        self._enableField('copyGroups')
         cfg.setItemCopyGroupsStates(('itemcreated', ))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', copyGroups=(self.vendors_reviewers, ))
@@ -1852,6 +1852,8 @@ class testViews(PloneMeetingTestCase):
 
     def test_pm_UpdateGroupsInChargeBatchActionForm(self):
         """This will update groupsInCharge for selected items."""
+        cfg = self.meetingConfig
+        cfg.setItemGroupsInChargeStates(('itemcreated', ))
         # not available when not using groupsInCharge
         self.changeUser('pmCreator1')
         searches_items = self.getMeetingFolder().searches_items
@@ -1890,9 +1892,13 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(self.catalog(getGroupsInCharge=self.vendors_uid, UID=item1_uid))
         self.request['form.widgets.action_choice'] = 'add'
         self.request['form.widgets.added_values'] = [self.vendors_uid]
+        # local_roles not set
+        self.assertFalse(self.vendors_observers in item1.__ac_local_roles__)
         form.handleApply(form, None)
         # was added
         self.assertEqual(item1.getGroupsInCharge(), [self.developers_uid, self.vendors_uid])
+        # local_roles are set
+        self.assertTrue(self.vendors_observers in item1.__ac_local_roles__)
         # already selected, not changed
         self.assertEqual(item2.getGroupsInCharge(), [self.vendors_uid])
         self.assertEqual(item3.getGroupsInCharge(), [self.developers_uid, self.vendors_uid])
@@ -1905,7 +1911,7 @@ class testViews(PloneMeetingTestCase):
         form = searches_items.restrictedTraverse('@@update-groups-in-charge-batch-action')
         form.update()
         form.handleApply(form, None)
-        # was added at first value, order is respected
+        # was added as first value, order is respected
         self.assertEqual(item2.getGroupsInCharge(), [self.developers_uid, self.vendors_uid])
         # already selected, not changed
         self.assertEqual(item1.getGroupsInCharge(), [self.developers_uid, self.vendors_uid])
@@ -1921,6 +1927,60 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(item1.getGroupsInCharge(), [self.developers_uid])
         self.assertEqual(item2.getGroupsInCharge(), [self.developers_uid])
         self.assertEqual(item3.getGroupsInCharge(), [self.developers_uid])
+        # local_roles removed
+        self.assertFalse(self.vendors_observers in item1.__ac_local_roles__)
+
+    def test_pm_UpdateCopyGroupsBatchActionForm(self):
+        """This will update copyGroups for selected items."""
+        cfg = self.meetingConfig
+        cfg.setItemCopyGroupsStates(('itemcreated', ))
+        # not available when not using copyGroups
+        self.changeUser('pmCreator1')
+        searches_items = self.getMeetingFolder().searches_items
+        self.assertFalse(searches_items.unrestrictedTraverse(
+            '@@update-copy-groups-batch-action').available())
+        # enable copyGroups
+        self._enableField('copyGroups')
+        self.assertTrue(searches_items.unrestrictedTraverse(
+            '@@update-copy-groups-batch-action').available())
+
+        # not available to non operational users
+        self.changeUser('powerobserver1')
+        searches_items = self.getMeetingFolder().searches_items
+        self.assertFalse(searches_items.unrestrictedTraverse(
+            '@@update-copy-groups-batch-action').available())
+
+        # create 2 items
+        self.changeUser('pmCreator1')
+        searches_items = self.getMeetingFolder().searches_items
+        item1 = self.create('MeetingItem', copyGroups=[self.developers_reviewers])
+        item1_uid = item1.UID()
+        item2 = self.create('MeetingItem', copyGroups=[self.vendors_reviewers])
+        item2_uid = item2.UID()
+        self.request.form['form.widgets.uids'] = ','.join([item1_uid, item2_uid])
+        form = searches_items.restrictedTraverse('@@update-copy-groups-batch-action')
+        form.update()
+        # values are ordered
+        self.assertEqual(
+            [term.value for term in form.widgets['added_values'].terms.terms._terms],
+            [self.developers_reviewers, self.vendors_reviewers])
+
+        # add vendors
+        # for now item1 not found in catalog
+        self.assertFalse(self.catalog(getCopyGroups=self.vendors_uid, UID=item1_uid))
+        self.request['form.widgets.action_choice'] = 'add'
+        self.request['form.widgets.added_values'] = [self.vendors_reviewers]
+        # local_roles not set
+        self.assertFalse(self.vendors_reviewers in item1.__ac_local_roles__)
+        form.handleApply(form, None)
+        # was added
+        self.assertEqual(item1.getCopyGroups(), (self.developers_reviewers, self.vendors_reviewers))
+        # local_roles are set
+        self.assertTrue(self.vendors_reviewers in item1.__ac_local_roles__)
+        # already selected, not changed
+        self.assertEqual(item2.getCopyGroups(), (self.vendors_reviewers, ))
+        # adapted elements were reindexed
+        self.assertTrue(self.catalog(getCopyGroups=self.vendors_reviewers, UID=item1_uid))
 
     def test_pm_DownloadAnnexesActionForm(self):
         """This batch action will download annexes as a zip file."""

@@ -5,8 +5,8 @@ from collective.documentgenerator.content.style_template import IStyleTemplate
 from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.content.category import ICategory
 from collective.iconifiedcategory.content.subcategory import ISubcategory
+from imio.helpers.setup import load_type_from_package
 from plone.app.blob.interfaces import IATBlob
-from Products.CMFCore.Expression import Expression
 from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
@@ -40,12 +40,12 @@ class Migrate_To_4209(Migrator):
                 obj.manage_delProperties(('layout', ))
         logger.info('Done.')
 
-    def _updateAnnexDecisionDownloadAction(self):
-        """Update the annexDecision portal_type download action condition_expr."""
-        logger.info('Updating annexDecision portal_type download action condition_expr...')
-        annexDecion = self.portal.portal_types['annexDecision']
-        action = annexDecion.getActionObject('object_buttons/download')
-        action.condition = Expression('python:object.show_download()')
+    def _updateAnnexPortalTypes(self):
+        """Update the annex and annexDecision portal_types."""
+        logger.info('Updating annex and annexDecision portal_type...')
+        load_type_from_package('annex', 'imio.annex:default', purge_actions=True)
+        load_type_from_package('annex', 'Products.PloneMeeting:default')
+        load_type_from_package('annexDecision', 'Products.PloneMeeting:default', purge_actions=True)
         logger.info('Done.')
 
     def _updateContentCategoryPortalTypes(self):
@@ -76,15 +76,33 @@ class Migrate_To_4209(Migrator):
             tinfo.schema_policy = infos['schema_policy']
         logger.info('Done.')
 
+    def _removeCfgUseCopies(self):
+        """Field MeetingConfig.useCopies was removed,
+           enable 'copyGroups' in MeetingConfig.usedItemAttributes when relevant."""
+        logger.info('Removing field "MeetingConfig.useCopies" from every MeetingConfigs...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            if not base_hasattr(cfg, 'useCopies'):
+                continue
+            if cfg.useCopies:
+                logger.info("'copyGroups' was enabled for MeetingConfig %s" % cfg.getId())
+                used_item_attrs = list(cfg.getUsedItemAttributes())
+                used_item_attrs.append('copyGroups')
+                cfg.setUsedItemAttributes(used_item_attrs)
+                self.updateTALConditions("cfg.getUseCopies()", "'copyGroups' in cfg.getUsedItemAttributes()")
+            delattr(cfg, 'useCopies')
+        logger.info('Done.')
+
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4209...')
 
         if not from_migration_to_4200:
-            self._updateAnnexDecisionDownloadAction()
+            self._updateAnnexPortalTypes()
             self._updateContentCategoryPortalTypes()
 
         self._fixDocumentviewerLayout()
+        self._removeCfgUseCopies()
+
         logger.info('Migrating to PloneMeeting 4209... Done.')
 
 

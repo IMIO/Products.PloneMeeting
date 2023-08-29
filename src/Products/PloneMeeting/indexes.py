@@ -129,7 +129,7 @@ def getCopyGroups(obj):
     """
       Compute getCopyGroups to take auto copyGroups into account.
     """
-    return obj.getAllCopyGroups(auto_real_plone_group_ids=True)
+    return obj.getAllCopyGroups(auto_real_plone_group_ids=True) or EMPTY_STRING
 
 
 @indexer(IMeetingItem)
@@ -177,7 +177,7 @@ def getGroupsInCharge(obj):
     """
       Indexes the groupsInCharge attribute including auto groups
     """
-    return obj.getGroupsInCharge(includeAuto=True)
+    return obj.getGroupsInCharge(includeAuto=True) or EMPTY_STRING
 
 
 @indexer(IMeetingItem)

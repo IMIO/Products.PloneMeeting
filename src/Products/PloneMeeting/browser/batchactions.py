@@ -107,26 +107,48 @@ class UpdateLocalRolesBatchActionForm(BaseBatchActionForm):
         api.portal.show_message(msg, request=self.request)
 
 
-class UpdateGroupsInChargeBatchActionForm(BaseARUOBatchActionForm):
+class PMBaseARUOBatchActionForm(BaseARUOBatchActionForm):
     """ """
 
-    label = _CEBA("Update groups in charge for selected elements")
-    modified_attr_name = "groupsInCharge"
-    indexes = ["getGroupsInCharge"]
-    required = True
+    # we manage reindex with update_local_roles in _apply here under
+    indexes = []
 
     def available(self):
-        """Only available when using groupsInCharge to users having operational
+        """Only available when using the item attr to users having operational
            roles in the application.
            This is essentially done to hide this to (restricted)powerobservers
            and to non MeetingManagers on the meeting_view."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        return "groupsInCharge" in cfg.getUsedItemAttributes() and \
+        return self.modified_attr_name in cfg.getUsedItemAttributes() and \
             _is_operational_user(self.context)
+
+    def _apply(self, **data):
+        updated = super(PMBaseARUOBatchActionForm, self)._apply(**data)
+        for item in updated:
+            item.update_local_roles()
+
+
+class UpdateGroupsInChargeBatchActionForm(PMBaseARUOBatchActionForm):
+    """ """
+
+    label = _CEBA("Update groups in charge for selected elements")
+    modified_attr_name = "groupsInCharge"
+    required = True
 
     def _vocabulary(self):
         return 'Products.PloneMeeting.vocabularies.itemgroupsinchargevocabulary'
+
+
+class UpdateCopyGroupsBatchActionForm(PMBaseARUOBatchActionForm):
+    """ """
+
+    label = _CEBA("Update copy groups for selected elements")
+    modified_attr_name = "copyGroups"
+    required = False
+
+    def _vocabulary(self):
+        return 'Products.PloneMeeting.vocabularies.copygroupsvocabulary'
 
 
 class PMDeleteBatchActionForm(DeleteBatchActionForm):

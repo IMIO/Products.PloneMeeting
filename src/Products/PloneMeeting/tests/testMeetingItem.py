@@ -2080,7 +2080,7 @@ class testMeetingItem(PloneMeetingTestCase):
            in the TAL expression.  This will allow to restrict an expression to be True only
            at item creation time (at_post_create_script) and not after (at_post_edit_script),
            this will allow for example to add a copy group and being able to unselect it after.'''
-        self.meetingConfig.setUseCopies(True)
+        self._enableField('copyGroups')
         self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
             "pm_utils.org_id_to_uid('developers') and ['reviewers', ] or []"
         self.changeUser('pmManager')
@@ -2163,7 +2163,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_GetAllCopyGroups(self):
         '''Test the MeetingItem.getAllCopyGroups method.  It returns every copyGroups (manual and automatic)
            and may also return real groupId intead of 'auto__' prefixed org_uid.'''
-        # useCopies is enabled in cfg2
+        # copyGroups is enabled in cfg2
         self.setMeetingConfig(self.meetingConfig2.getId())
         self.changeUser('pmManager')
         # add a manual copyGroup
@@ -2206,7 +2206,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # add copy groups and update all local_roles (copy and adviser)
         cfg.setSelectableCopyGroups(
             (self.developers_advisers, self.vendors_advisers))
-        self.meetingConfig.setUseCopies(True)
+        self._enableField('copyGroups')
         i1.setCopyGroups((self.developers_advisers, self.vendors_advisers))
         i1.update_local_roles()
         # first make sure that we still have 'developers_advisers' in local roles
@@ -2244,7 +2244,7 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Test that if a group is set as copyGroups, the item is Viewable.'''
         cfg = self.meetingConfig
         cfg.setSelectableCopyGroups((self.developers_reviewers, self.vendors_reviewers, ))
-        cfg.setUseCopies(True)
+        self._enableField('copyGroups')
         cfg.setItemCopyGroupsStates(('validated', ))
         self.changeUser('pmManager')
         i1 = self.create('MeetingItem')
@@ -2535,7 +2535,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # but the MeetingItem.budgetInfos field will be editable
         cfg = self.meetingConfig
         # we will let copyGroups view items when in state 'validated'
-        cfg.setUseCopies(True)
+        self._enableField('copyGroups')
         cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), 'validated', ))
         cfg.setItemBudgetInfosStates(('validated', ))
         # budget impact editors gets view on an item thru another role
@@ -3064,7 +3064,7 @@ class testMeetingItem(PloneMeetingTestCase):
            if current user is creator for it, or if not, that will switch to
            first proposingGroup of the user."""
         cfg = self.meetingConfig
-        cfg.setUseCopies(True)
+        self._enableField('copyGroups')
         cfg.setSelectableCopyGroups((self.vendors_creators, ))
         cfg.setItemCopyGroupsStates(('itemcreated', 'validated', ))
         cfg.setEnableItemDuplication(True)
@@ -3701,7 +3701,7 @@ class testMeetingItem(PloneMeetingTestCase):
           is no more in the vocabulary, it is still in it tough ;-)
         '''
         cfg = self.meetingConfig
-        cfg.setUseCopies(True)
+        self._enableField('copyGroups')
         self.changeUser('pmManager')
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
@@ -5491,7 +5491,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self._enableField('associatedGroups')
         # configure the itemTemplate
         self.changeUser('siteadmin')
-        cfg.setUseCopies(True)
+        self._enableField('copyGroups')
         itemTemplate = cfg.getItemTemplates(as_brains=False)[0]
         # check that 'title' and 'associatedGroups' field are kept
         # title is in DEFAULT_COPIED_FIELDS and associatedGroups in EXTRA_COPIED_FIELDS_SAME_MC
@@ -5534,7 +5534,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('siteadmin')
         self._enableField('associatedGroups')
-        cfg.setUseCopies(True)
+        self._enableField('copyGroups')
         # just keep one recurring item
         recurringItems = cfg.getRecurringItems()
         toDelete = [item.getId() for item in recurringItems[1:]]
@@ -5559,12 +5559,14 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_CopiedFieldsWhenSentToOtherMC(self):
         '''Test that relevant fields are kept when an item is sent to another mc.
            DEFAULT_COPIED_FIELDS are kept but not EXTRA_COPIED_FIELDS_SAME_MC.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
         self.changeUser('siteadmin')
-        self.meetingConfig.setUseCopies(True)
-        self.meetingConfig2.setUseCopies(True)
-        self.meetingConfig.setUseAdvices(True)
-        self.meetingConfig2.setUseAdvices(True)
-        self._removeConfigObjectsFor(self.meetingConfig)
+        self._enableField('copyGroups')
+        self._enableField('copyGroups', cfg=cfg2)
+        cfg.setUseAdvices(True)
+        cfg2.setUseAdvices(True)
+        self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item.setTitle('Item to be cloned title')
@@ -5574,7 +5576,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setOptionalAdvisers((self.developers_uid,))
         meeting = self.create('Meeting')
         item.setDecision('<p>My decision</p>', mimetype='text/html')
-        cfg2Id = self.meetingConfig2.getId()
+        cfg2Id = cfg2.getId()
         item.setOtherMeetingConfigsClonableTo((cfg2Id,))
         self.presentItem(item)
         self.decideMeeting(meeting)
@@ -5594,8 +5596,8 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
         cfg2 = self.meetingConfig2
         cfg2Id = self.meetingConfig2.getId()
-        cfg.setUseCopies(True)
-        cfg2.setUseCopies(True)
+        self._enableField('copyGroups')
+        self._enableField('copyGroups', cfg=cfg2)
         cfg.setSelectableCopyGroups((self.developers_reviewers, self.vendors_reviewers))
         cfg2.setSelectableCopyGroups((self.vendors_reviewers, ))
         self.changeUser('pmManager')
@@ -5640,7 +5642,7 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Make sure field MeetingItem.copyGroups value correspond to what is
            currently defined in the MeetingConfig.'''
         cfg = self.meetingConfig
-        cfg.setUseCopies(True)
+        self._enableField('copyGroups')
         cfg.setSelectableCopyGroups((self.developers_reviewers, self.vendors_reviewers))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -5652,7 +5654,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # only relevant copyGroups were kept
         self.assertEqual(newItem.getCopyGroups(), (self.vendors_reviewers, ))
         # if we do not use copyGroups anymore, no copyGroups are kept
-        cfg.setUseCopies(False)
+        self._enableField('copyGroups', enable=False)
         newItem2 = item.clone()
         self.assertFalse(newItem2.getCopyGroups())
 
@@ -6428,7 +6430,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # configure so different access are enabled when item is validated
         cfg = self.meetingConfig
         self._enableField("budgetInfos")
-        cfg.setUseCopies(True)
+        self._enableField('copyGroups')
         cfg.setSelectableCopyGroups((self.vendors_creators, ))
         cfg.setUseAdvices(True)
         cfg.setItemCopyGroupsStates(('itemcreated', 'validated', ))
@@ -6803,7 +6805,7 @@ class testMeetingItem(PloneMeetingTestCase):
                 ploneGroup.removeMember('pmManager')
         # make copyGroups able to see item in every states
         cfg.setItemCopyGroupsStates(('validated', ))
-        cfg.setUseCopies(True)
+        self._enableField('copyGroups')
         cfg.setSelectableCopyGroups((self.developers_reviewers, self.vendors_reviewers))
         # make power observers able to see validated items
         self._setPowerObserverStates(states=('validated', ))
@@ -7762,7 +7764,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self._removeUsersFromEveryGroups(self._users_to_remove_for_mailling_list())
         # make utils.sendMailIfRelevant return details
         self.request['debug_sendMailIfRelevant'] = True
-        cfg.setUseCopies(True)
+        self._enableField('copyGroups')
         cfg.setSelectableCopyGroups(cfg.listSelectableCopyGroups().keys())
         cfg.setItemCopyGroupsStates(['validated'])
         cfg.setMailMode("activated")

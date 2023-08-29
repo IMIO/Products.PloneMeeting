@@ -29,6 +29,21 @@ Changelog
   This rely now on `config.MEETING_ATTENDEES_ATTRS` that makes sure that every
   meeting attendees custom attributes are cleaned when item is removed.
   [gbastien]
+- Display the spinner on annex under conversion when `to_print` was set to True.
+  Added `View preview` action on annex and annexDecision that is displayed when
+  a preview is available for the annex.
+  [gbastien]
+- Added batch action to change items copy groups:
+
+  - Removed field `MeetingConfig.useCopies` and `MeetingItem.isCopiesEnabled`,
+    field `MeetingItem.copyGroups` is now an optional field managed by
+    `MeetingConfig.usedItemAttributes`;
+  - Fixed `UpdateGroupsInChargeBatchActionForm`, make sure item `local_roles`
+    are correct after groups in charge were changed.
+
+  [gbastien]
+- Added `Copy groups` dashboard column.
+  [gbastien]
 
 4.2.4 (2023-07-12)
 ------------------

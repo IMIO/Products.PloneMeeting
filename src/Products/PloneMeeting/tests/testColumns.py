@@ -308,6 +308,22 @@ class testColumns(PloneMeetingTestCase):
         # no header to avoid init table DND uselessly
         self.assertEqual(column.renderHeadCell(), u' ')
 
+    def test_pm_CopyGroupsColumn(self):
+        """Will display the item copyGroups.
+           Also because it uses the PMGroups vocabulary."""
+        self._enable_column('copyGroups')
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem', copyGroups=(self.vendors_reviewers, ))
+        meetingFolder = self.getMeetingFolder()
+        faceted_table = meetingFolder.restrictedTraverse('faceted-table-view')
+        faceted_table.initColumns()
+        column = faceted_table.columnByName['copyGroups']
+        item_brain = self.catalog(UID=item.UID())[0]
+        self.assertEqual(column.renderCell(item_brain), u'Vendors (Reviewers)')
+        # value is correct without reindex as we use object stored attr
+        item.setCopyGroups((self.developers_reviewers, self.vendors_reviewers, ))
+        self.assertEqual(column.renderCell(item_brain), u'Developers (Reviewers), Vendors (Reviewers)')
+
 
 def test_suite():
     from unittest import makeSuite

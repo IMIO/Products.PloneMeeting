@@ -2223,19 +2223,6 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
-        name='useCopies',
-        default=defValues.useCopies,
-        widget=BooleanField._properties['widget'](
-            description="UseCopies",
-            description_msgid="use_copies_descr",
-            label='Usecopies',
-            label_msgid='PloneMeeting_label_useCopies',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="advices",
-        write_permission="PloneMeeting: Write risky config",
-    ),
     LinesField(
         name='selectableCopyGroups',
         widget=MultiSelectionWidget(
@@ -3048,7 +3035,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getUseCopies() and tool.userIsAmong(['observers', 'reviewers'])",
+                    'tal_condition': "python: 'copyGroups' in cfg.getUsedItemAttributes() and tool.userIsAmong(['observers', 'reviewers'])",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Unread items in copy
@@ -3070,7 +3057,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getEnableLabels() and cfg.getUseCopies() "
+                    'tal_condition': "python: cfg.getEnableLabels() and 'copyGroups' in cfg.getUsedItemAttributes() "
                         "and tool.userIsAmong(['observers', 'reviewers']) ",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -5534,6 +5521,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate("header_getGroupsInCharge", domain=d, context=self.REQUEST))),
             ("groups_in_charge_acronym", u"{0} (groups_in_charge_acronym)".format(
                 translate("header_groups_in_charge_acronym", domain=d, context=self.REQUEST))),
+            ("copyGroups", u"{0} (copyGroups)".format(
+                translate("header_copyGroups", domain=d, context=self.REQUEST))),
             ("committees_index", u"{0} (committees_index)".format(
                 translate("header_committees_index", domain=d, context=self.REQUEST))),
             ("committees_index_acronym", u"{0} (committees_index_acronym)".format(

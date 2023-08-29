@@ -2008,7 +2008,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(item.getDecision(), '<p>Decision adapted by pmManager</p>')
 
         # but another user that may see the item but not edit it may not see the decision
-        cfg.setUseCopies(True)
+        self._enableField('copyGroups')
         cfg.setItemCopyGroupsStates((item.query_state(), ))
         item.setCopyGroups((self.vendors_reviewers, ))
         item.update_local_roles()

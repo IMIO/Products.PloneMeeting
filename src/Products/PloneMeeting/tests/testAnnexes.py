@@ -177,7 +177,7 @@ class testAnnexes(PloneMeetingTestCase):
         item_initial_state, item, annexes_table, categorized_child, \
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
 
-        cfg.setUseCopies(True)
+        self._enableField('copyGroups')
         cfg.setItemCopyGroupsStates((item_initial_state, ))
         cfg.setItemAnnexConfidentialVisibleFor(('reader_copy_groups', ))
         item.setCopyGroups((self.vendors_reviewers, ))
@@ -428,7 +428,7 @@ class testAnnexes(PloneMeetingTestCase):
         item_initial_state, item, advice, annexes_table, categorized_child, \
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnAdviceAnnexes()
 
-        cfg.setUseCopies(True)
+        self._enableField('copyGroups')
         cfg.setItemCopyGroupsStates((item_initial_state, ))
         cfg.setAdviceAnnexConfidentialVisibleFor(('reader_copy_groups', ))
         item.setCopyGroups((self.vendors_reviewers, ))
@@ -1099,7 +1099,7 @@ class testAnnexes(PloneMeetingTestCase):
     def test_pm_ConfidentialAnnexesWhenItemDuplicated(self):
         """When an item is duplicated, if there were confidential annexes, accesses are correct."""
         cfg = self.meetingConfig
-        cfg.setUseCopies(True)
+        self._enableField('copyGroups')
         cfg.setSelectableCopyGroups((self.vendors_creators, ))
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state

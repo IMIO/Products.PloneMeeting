@@ -111,6 +111,8 @@
            name="Products.PloneMeeting.vocabularies.not_present_type_vocabulary" />
   <utility component=".vocabularies.AnnexRestrictShownAndEditableAttributesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.annex_restrict_shown_and_editable_attributes_vocabulary" />
+  <utility component=".vocabularies.PMGroupsVocabularyFactory"
+           name="Products.PloneMeeting.Groups" />
   <utility component=".vocabularies.PMUsersFactory"
            name="Products.PloneMeeting.Users" />
   <utility name="PMPositionTypes"
