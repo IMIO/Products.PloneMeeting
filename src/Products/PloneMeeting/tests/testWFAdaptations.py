@@ -1707,9 +1707,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.do(item, 'goTo_returned_to_proposing_group_proposed')
 
-    def _get_developers_reviewers_groups(self):
-        return [self.developers_reviewers]
-
     def _return_to_proposing_group_with_validation_active_wf_functionality(self, all=True):
         '''Tests the workflow functionality of using the
            'return_to_proposing_group_with_last_validation' wfAdaptation.'''
@@ -1770,7 +1767,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(item.query_state(), 'itemfrozen')
 
         # test when there is reviewers so item may be returned directly to meeting by the creator
-        self._remove_all_members_from_groups(self._get_developers_reviewers_groups())
+        dev_rev_groups = ['{0}_{1}'.format(self.developers_uid, rev_group)
+                          for rev_group in self.meetingConfig.reviewersFor().keys()]
+        self._remove_all_members_from_groups(dev_rev_groups)
         self.changeUser('pmManager')
         self.do(item, 'return_to_proposing_group')
         # item may be directly returned to the meeting as itemcreated is the last validation level
