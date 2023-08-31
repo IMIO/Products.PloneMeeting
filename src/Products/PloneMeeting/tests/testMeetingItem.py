@@ -6581,23 +6581,23 @@ class testMeetingItem(PloneMeetingTestCase):
             item.getRawDecision(),
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img2.UID()))
 
-        # test using processForm, aka full edit form
-        decision = '<p>Working external image <img src="%s"/>.</p>' % self.external_image3
-        item.setDecision(decision)
+        # test using processForm, aka full edit form, with field "description"
+        descr = '<p>Working external image <img src="%s"/>.</p>' % self.external_image3
+        item.setDescription(descr)
         item.processForm()
         self.assertTrue('1035-600x400.jpg' in item.objectIds())
         img3 = item.get('1035-600x400.jpg')
         # external image link was updated
         self.assertEqual(
-            item.getRawDecision(),
+            item.getRawDescription(),
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img3.UID()))
 
         # link to unknown external image, like during copy/paste of content
         # that has a link to an unexisting image or so
-        decision = '<p>Not working external image <img width="100" height="100" ' \
+        descr = '<p>Not working external image <img width="100" height="100" ' \
             'src="https://fastly.picsum.photos/id/449/400.png">.</p>'
-        item.setDecision(decision)
-        item.at_post_edit_script()
+        item.setDescription(descr)
+        item.processForm()
         img4 = item.get('imagenotfound.jpg')
         expected = '<p>Not working external image <img width="100" height="100" ' \
             'src="resolveuid/{0}">.</p>'.format(img4.UID())
@@ -6606,7 +6606,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertListEqual(
             sorted(item.objectIds()),
             ['1025-400x300.jpg', '1035-600x400.jpg', '22-400x400.jpg', 'imagenotfound.jpg'])
-        self.assertEqual(item.getRawDecision(), expected)
+        self.assertEqual(item.getRawDescription(), expected)
 
     def test_pm_ItemInternalImagesStoredLocallyWhenItemDuplicated(self):
         """When an item is duplicated, images that were stored in original item
