@@ -68,7 +68,6 @@ from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.DCWorkflow.events import TransitionEvent
 from Products.MailHost.MailHost import MailHostError
-from Products.PageTemplates.Expressions import SecureModuleImporter
 from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
@@ -114,6 +113,7 @@ from zope.lifecycleevent import ObjectModifiedEvent
 from zope.location import locate
 from zope.schema import getFieldsInOrder
 from zope.security.interfaces import IPermission
+from Products.PageTemplates.Expressions import SecureModuleImporter
 
 import html
 import itertools
@@ -2321,8 +2321,26 @@ def _base_extra_expr_ctx(obj):
     # member, context and portal are managed by collective.behavior.talcondition
     data = {'tool': tool,
             'cfg': cfg,
-            'pm_utils': SecureModuleImporter['Products.PloneMeeting.safe_utils'],
-            'imio_history_utils': SecureModuleImporter['imio.history.safe_utils'], }
+            # backward compatibility
+            'meetingConfig': cfg,
+            'meeting': obj.getMeeting() if obj.__class__.__name__ == 'MeetingItem' else None,
+            # backward compatibility, "member" will be available by default
+            'user': api.user.get_current(),
+            'catalog': api.portal.get_tool('portal_catalog'),
+            # give ability to access annexes related methods
+            'collective_iconifiedcategory_utils': SecureModuleImporter['collective.iconifiedcategory.safe_utils'],
+            # collective.contact.core.utils
+            'contact_core_utils': SecureModuleImporter['collective.contact.core.safe_utils'],
+            # collective.contact.plonegroup.utils
+            'contact_plonegroup_utils': SecureModuleImporter['collective.contact.plonegroup.safe_utils'],
+            # imio.annex utils
+            'imio_annex_utils': SecureModuleImporter['imio.annex.safe_utils'],
+            # imio.history utils
+            'imio_history_utils': SecureModuleImporter['imio.history.safe_utils'],
+            # make methods defined in utils available
+            # kept as 'utils' for backward compatibility, but we should use 'pm_utils'
+            'utils': SecureModuleImporter['Products.PloneMeeting.safe_utils'],
+            'pm_utils': SecureModuleImporter['Products.PloneMeeting.safe_utils'], }
     return data
 
 
