@@ -50,6 +50,9 @@ ReadDecision = 'PloneMeeting: Read decision'
 WriteDecision = 'PloneMeeting: Write decision'
 ReadObservations = 'PloneMeeting: Read item observations'
 WriteItemMeetingManagerFields = 'PloneMeeting: Write item MeetingManager reserved fields'
+# this makes MeetingManager able to write fields using the WriteItemMeetingManagerFields
+# permission, especially in tests as in the UI, the element is already created and has a WF state
+setDefaultRoles(WriteItemMeetingManagerFields, ('MeetingManager', 'Manager',))
 ReadBudgetInfos = 'PloneMeeting: Read budget infos'
 WriteBudgetInfos = 'PloneMeeting: Write budget infos'
 WriteInternalNotes = 'PloneMeeting: Write internal notes'
