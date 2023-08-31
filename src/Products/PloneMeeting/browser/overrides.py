@@ -1077,7 +1077,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
 
     def get_base_generation_context(self, helper_view, pod_template):
         """ """
-        specific_context = _base_extra_expr_ctx(self.context)
+        specific_context = _base_extra_expr_ctx(self.context, secure_import=False)
         specific_context['self'] = self.context
         specific_context['adap'] = hasattr(self.context, 'adapted') and self.context.adapted() or None
         specific_context['itemUids'] = {}

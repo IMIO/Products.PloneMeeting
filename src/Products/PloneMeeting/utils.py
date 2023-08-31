@@ -116,6 +116,7 @@ from zope.security.interfaces import IPermission
 from Products.PageTemplates.Expressions import SecureModuleImporter
 
 import html
+import importlib
 import itertools
 import logging
 import lxml
@@ -2314,11 +2315,14 @@ def get_next_meeting(meeting_date, cfg, date_gap=0):
     return res
 
 
-def _base_extra_expr_ctx(obj):
+def _base_extra_expr_ctx(obj, secure_import=True):
     """ """
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(obj)
     # member, context and portal are managed by collective.behavior.talcondition
+    importer = importlib.import_module
+    if secure_import:
+        importer = SecureModuleImporter
     data = {'tool': tool,
             'cfg': cfg,
             # backward compatibility
@@ -2327,20 +2331,14 @@ def _base_extra_expr_ctx(obj):
             # backward compatibility, "member" will be available by default
             'user': api.user.get_current(),
             'catalog': api.portal.get_tool('portal_catalog'),
-            # give ability to access annexes related methods
-            'collective_iconifiedcategory_utils': SecureModuleImporter['collective.iconifiedcategory.safe_utils'],
-            # collective.contact.core.utils
-            'contact_core_utils': SecureModuleImporter['collective.contact.core.safe_utils'],
-            # collective.contact.plonegroup.utils
-            'contact_plonegroup_utils': SecureModuleImporter['collective.contact.plonegroup.safe_utils'],
-            # imio.annex utils
-            'imio_annex_utils': SecureModuleImporter['imio.annex.safe_utils'],
-            # imio.history utils
-            'imio_history_utils': SecureModuleImporter['imio.history.safe_utils'],
-            # make methods defined in utils available
-            # kept as 'utils' for backward compatibility, but we should use 'pm_utils'
-            'utils': SecureModuleImporter['Products.PloneMeeting.safe_utils'],
-            'pm_utils': SecureModuleImporter['Products.PloneMeeting.safe_utils'], }
+            # give ability to access annexes some package safe utils
+            'collective_iconifiedcategory_utils': importer('collective.iconifiedcategory.safe_utils'),
+            'contact_core_utils': importer('collective.contact.core.safe_utils'),
+            'contact_plonegroup_utils': importer('collective.contact.plonegroup.safe_utils'),
+            'imio_annex_utils': importer('imio.annex.safe_utils'),
+            'imio_history_utils': importer('imio.history.safe_utils'),
+            'utils': importer('Products.PloneMeeting.safe_utils'),
+            'pm_utils': importer('Products.PloneMeeting.safe_utils'), }
     return data
 
 
