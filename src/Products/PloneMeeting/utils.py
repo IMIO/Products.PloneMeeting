@@ -2322,7 +2322,7 @@ def _base_extra_expr_ctx(obj, secure_import=True):
     # member, context and portal are managed by collective.behavior.talcondition
     importer = importlib.import_module
     if secure_import:
-        importer = SecureModuleImporter
+        importer = SecureModuleImporter.__getitem__
     data = {'tool': tool,
             'cfg': cfg,
             # backward compatibility
