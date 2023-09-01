@@ -1189,7 +1189,9 @@
           </td>
           <td tal:define="field python:here.getField('ownerMayDeleteAnnexDecision')">
             <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>          <td>
+          </td>
+          <td tal:define="field python:here.getField('annexEditorMayInsertBarcode')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
         <tr valign="top">

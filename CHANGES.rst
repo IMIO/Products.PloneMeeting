@@ -48,6 +48,9 @@ Changelog
   Now values available in TAL expressions and in POD templates expressions
   are the same.
   [gbastien]
+- Added parameter `MeetingConfig.annexEditorMayInsertBarcode` to let an annex
+  editor, in addition to the `MeetingManagers`, insert a barcode into an annex.
+  [gbastien]
 
 4.2.4 (2023-07-12)
 ------------------

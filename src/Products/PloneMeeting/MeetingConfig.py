@@ -2364,6 +2364,19 @@ schema = Schema((
         schemata="advices",
         write_permission="PloneMeeting: Write risky config",
     ),
+    BooleanField(
+        name='annexEditorMayInsertBarcode',
+        default=defValues.annexEditorMayInsertBarcode,
+        widget=BooleanField._properties['widget'](
+            description="AnnexEditorMayInsertBarcode",
+            description_msgid="annex_editor_may_insert_barcode_descr",
+            label='Annexeditormayinsertbarcode',
+            label_msgid='PloneMeeting_label_annexEditorMayInsertBarcode',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     LinesField(
         name='itemAnnexConfidentialVisibleFor',
         widget=MultiSelectionWidget(

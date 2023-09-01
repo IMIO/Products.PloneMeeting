@@ -665,6 +665,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.restrictAccessToSecretItemsTo = ['restrictedpowerobservers']
         self.itemWithGivenAdviceIsNotDeletable = False
         self.ownerMayDeleteAnnexDecision = False
+        self.annexEditorMayInsertBarcode = False
 
         # GUI-related parameters -----------------------------------------------
         # When the system displays the list of all meetings (the "all meetings"
