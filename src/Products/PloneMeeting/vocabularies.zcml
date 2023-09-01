@@ -75,8 +75,6 @@
            name="Products.PloneMeeting.vocabularies.selectableprivaciesvocabulary" />
   <utility component=".vocabularies.PollTypesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.polltypesvocabulary" />
-  <utility component=".vocabularies.StorePodTemplateAsAnnexVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.storepodtemplateasannexvocabulary" />
   <utility component=".vocabularies.ItemTemplatesStorableAsAnnexVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary" />
   <utility component=".vocabularies.SelectableHeldPositionsVocabularyFactory"
@@ -119,6 +117,10 @@
            component=".vocabularies.PMPositionTypesVocabularyFactory" />
   <utility name="PMAttendeeRedefinePositionTypes"
            component=".vocabularies.PMAttendeeRedefinePositionTypesVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.item_annex_types_vocabulary"
+           component=".vocabularies.ItemAnnexTypesVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.every_annex_types_vocabulary"
+           component=".vocabularies.EveryAnnexTypesVocabularyFactory" />
 
   <!-- PMHeldPosition vocabularies -->
   <utility component=".vocabularies.HeldPositionUsagesVocabularyFactory"

@@ -46,6 +46,7 @@ class Migrate_To_4209(Migrator):
         load_type_from_package('annex', 'imio.annex:default', purge_actions=True)
         load_type_from_package('annex', 'Products.PloneMeeting:default')
         load_type_from_package('annexDecision', 'Products.PloneMeeting:default', purge_actions=True)
+        load_type_from_package('ConfigurablePODTemplate', 'Products.PloneMeeting:default')
         logger.info('Done.')
 
     def _updateContentCategoryPortalTypes(self):

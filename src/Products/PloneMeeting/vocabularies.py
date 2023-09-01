@@ -1489,13 +1489,13 @@ class PollTypesVocabulary(object):
 PollTypesVocabularyFactory = PollTypesVocabulary()
 
 
-class StorePodTemplateAsAnnexVocabulary(object):
+class EveryAnnexTypesVocabulary(object):
     """
-    Vocabulary factory for 'ConfigurablePodTemplate.store_as_annex' field.
+    Vocabulary returning every annex types (item, meeting, advice).
     """
     implements(IVocabularyFactory)
 
-    def __call__(self, context):
+    def __call__(self, context, filtered_annex_groups=[]):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
@@ -1504,6 +1504,8 @@ class StorePodTemplateAsAnnexVocabulary(object):
             return SimpleVocabulary(res)
 
         for annexes_group in cfg.annexes_types.objectValues():
+            if filtered_annex_groups and annexes_group.getId() not in filtered_annex_groups:
+                continue
             for cat in annexes_group.objectValues():
                 res.append(SimpleTerm(
                     cat.UID(),
@@ -1522,7 +1524,18 @@ class StorePodTemplateAsAnnexVocabulary(object):
         return SimpleVocabulary(res)
 
 
-StorePodTemplateAsAnnexVocabularyFactory = StorePodTemplateAsAnnexVocabulary()
+EveryAnnexTypesVocabularyFactory = EveryAnnexTypesVocabulary()
+
+
+class ItemAnnexTypesVocabulary(EveryAnnexTypesVocabulary):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        return super(ItemAnnexTypesVocabulary, self).__call__(
+            context, filtered_annex_groups=['item_annexes', 'item_decision_annexes'])
+
+
+ItemAnnexTypesVocabularyFactory = ItemAnnexTypesVocabulary()
 
 
 class ItemTemplatesStorableAsAnnexVocabulary(object):
