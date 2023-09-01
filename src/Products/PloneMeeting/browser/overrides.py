@@ -7,8 +7,6 @@ from archetypes.referencebrowserwidget.utils import named_template_adapter
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.ckeditor.browser.ckeditorfinder import CKFinder
 from collective.ckeditor.browser.ckeditorview import AjaxSave
-from collective.contact.core import safe_utils as contact_core_safe_utils
-from collective.contact.plonegroup import utils as contact_plonegroup_safe_utils
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_plone_group_id
@@ -22,14 +20,12 @@ from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
-from imio.annex import safe_utils as imio_annex_safe_utils
 from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import uuidToObject
 from imio.helpers.security import check_zope_admin
-from imio.history import safe_utils as imio_history_safe_utils
 from imio.history.browser.views import IHContentHistoryView
 from imio.history.browser.views import IHDocumentBylineViewlet
 from imio.pyutils.system import get_git_tag
@@ -52,7 +48,6 @@ from Products.CMFPlone.browser.ploneview import Plone
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from Products.PloneMeeting import safe_utils as pm_safe_utils
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import HAS_RESTAPI
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
@@ -1082,35 +1077,13 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
 
     def get_base_generation_context(self, helper_view, pod_template):
         """ """
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        specific_context = {
-            'self': self.context,
-            'adap': hasattr(self.context, 'adapted') and self.context.adapted() or None,
-            'tool': tool,
-            'cfg': cfg,
-            'meetingConfig': cfg,
-            'meeting': self.context.getMeeting()
-            if self.context.__class__.__name__ == 'MeetingItem' else None,
-            'itemUids': {},
-            'user': api.user.get_current(),
-            'podTemplate': pod_template,
-            'catalog': api.portal.get_tool('portal_catalog'),
-            # give ability to access annexes related methods
-            'collective_iconifiedcategory_utils': collective_iconifiedcategory_safe_utils,
-            # collective.contact.core.utils
-            'contact_core_utils': contact_core_safe_utils,
-            # collective.contact.plonegroup.utils
-            'contact_plonegroup_utils': contact_plonegroup_safe_utils,
-            # imio.annex utils
-            'imio_annex_utils': imio_annex_safe_utils,
-            # imio.history utils
-            'imio_history_utils': imio_history_safe_utils,
-            # make methods defined in utils available
-            # kept as 'utils' for backward compatibility, but we should use 'pm_utils'
-            'utils': pm_safe_utils,
-            'pm_utils': pm_safe_utils
-        }
+        specific_context = _base_extra_expr_ctx(self.context, secure_import=False)
+        specific_context['self'] = self.context
+        specific_context['adap'] = hasattr(self.context, 'adapted') and self.context.adapted() or None
+        specific_context['itemUids'] = {}
+        specific_context['podTemplate'] = pod_template
+        # managed by collective.talcondition but not present here
+        specific_context['member'] = specific_context['user']
         return specific_context
 
     def _get_generation_context(self, helper_view, pod_template):

@@ -44,6 +44,10 @@ Changelog
   [gbastien]
 - Added `Copy groups` dashboard column.
   [gbastien]
+- Make more values available in context of TAL expressions.
+  Now values available in TAL expressions and in POD templates expressions
+  are the same.
+  [gbastien]
 
 4.2.4 (2023-07-12)
 ------------------

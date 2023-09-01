@@ -7345,7 +7345,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 tuple(set(self.getOtherMeetingConfigsClonableTo()).intersection(clonableTo)))
         if 'copyGroups' in copyFields:
             copyGroups = list(self.getCopyGroups())
-            selectableCopyGroups = 'copyGroups' in dest_cfg.getUsedItemAttributes() and dest_cfg.getSelectableCopyGroups() or []
+            selectableCopyGroups = 'copyGroups' in dest_cfg.getUsedItemAttributes() and \
+                dest_cfg.getSelectableCopyGroups() or []
             # make sure we only have selectable copyGroups
             newItem.setCopyGroups(
                 tuple(set(copyGroups).intersection(set(selectableCopyGroups))))

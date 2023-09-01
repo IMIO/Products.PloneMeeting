@@ -2318,11 +2318,24 @@ def _base_extra_expr_ctx(obj):
     """ """
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(obj)
-    # member, context and portal are managed by collective.behavior.talcondition
+    # member, context and portal are managed by
+    # collective.behavior.talcondition or collective.documentgenerator
     data = {'tool': tool,
             'cfg': cfg,
-            'pm_utils': SecureModuleImporter['Products.PloneMeeting.safe_utils'],
-            'imio_history_utils': SecureModuleImporter['imio.history.safe_utils'], }
+            # backward compatibility
+            'meetingConfig': cfg,
+            'meeting': obj.getMeeting() if obj.__class__.__name__ == 'MeetingItem' else None,
+            # backward compatibility, "member" will be available by default
+            'user': api.user.get_current(),
+            'catalog': api.portal.get_tool('portal_catalog'),
+            # give ability to access annexes some package safe utils
+            'collective_iconifiedcategory_utils': SecureModuleImporter['collective.iconifiedcategory.safe_utils'],
+            'contact_core_utils': SecureModuleImporter['collective.contact.core.safe_utils'],
+            'contact_plonegroup_utils': SecureModuleImporter['collective.contact.plonegroup.safe_utils'],
+            'imio_annex_utils': SecureModuleImporter['imio.annex.safe_utils'],
+            'imio_history_utils': SecureModuleImporter['imio.history.safe_utils'],
+            'utils': SecureModuleImporter['Products.PloneMeeting.safe_utils'],
+            'pm_utils': SecureModuleImporter['Products.PloneMeeting.safe_utils'], }
     return data
 
 
