@@ -1083,9 +1083,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         specific_context['itemUids'] = {}
         specific_context['podTemplate'] = pod_template
         # managed by collective.talcondition but not present here
-        specific_context['context'] = self.context
         specific_context['member'] = specific_context['user']
-        specific_context['portal'] = api.portal.get()
         return specific_context
 
     def _get_generation_context(self, helper_view, pod_template):
