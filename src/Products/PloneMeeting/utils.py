@@ -68,6 +68,7 @@ from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.DCWorkflow.events import TransitionEvent
 from Products.MailHost.MailHost import MailHostError
+from Products.PageTemplates.Expressions import SecureModuleImporter
 from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
@@ -113,7 +114,6 @@ from zope.lifecycleevent import ObjectModifiedEvent
 from zope.location import locate
 from zope.schema import getFieldsInOrder
 from zope.security.interfaces import IPermission
-from Products.PageTemplates.Expressions import SecureModuleImporter
 
 import html
 import itertools
