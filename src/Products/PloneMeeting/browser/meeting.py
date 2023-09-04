@@ -7,6 +7,7 @@ from collective.contact.plonegroup.utils import get_plone_group_id
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import uuidsToObjects
+from imio.helpers.security import fplog
 from imio.history.utils import getLastWFAction
 from imio.pyutils.utils import sort_by_indexes
 from plone import api
@@ -640,7 +641,9 @@ class MeetingReorderItems(BrowserView):
         items = [item[2] for item in items]
         # set items itemNumber
         itemNumber = 100
+        self._orig_order = []
         for item in items:
+            self._orig_order.append(item.getItemNumber(for_display=True))
             item.setItemNumber(itemNumber)
             itemNumber = itemNumber + 100
         self.context._finalize_item_insert(items_to_update=items)
@@ -650,6 +653,11 @@ class MeetingReorderItems(BrowserView):
         self._recompute_items_order()
         msg = _('Items have been reordered.')
         api.portal.show_message(msg, request=self.request)
+        # add logging message to fingerpointing log
+        extras = 'object={0} original_order={1}'.format(
+            repr(self.context),
+            repr(','.join(self._orig_order)))
+        fplog('meeting_items_reorder', extras=extras)
         return redirect(self.request, self.context.absolute_url())
 
 

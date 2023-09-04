@@ -51,6 +51,9 @@ Changelog
 - Added parameter `MeetingConfig.annexEditorMayInsertBarcode` to let an annex
   editor, in addition to the `MeetingManagers`, insert a barcode into an annex.
   [gbastien]
+- Added `fplog` message when using `@@reorder-items` on a meeting.
+  Original order of items is also logged for examination.
+  [gbastien]
 
 4.2.4 (2023-07-12)
 ------------------
