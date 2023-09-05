@@ -2505,6 +2505,16 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(power_observer_group_id in item.__ac_local_roles__)
         self.assertTrue(power_observer_group_id in meeting.__ac_local_roles__)
 
+        # variable meeting is directly accessible in TAL expr for access_on
+        self._setPowerObserverStates(states=('itemcreated', 'presented'),
+                                     access_on='python:meeting')
+        item._update_after_edit()
+        self.assertEqual(item.query_state(), 'itemcreated')
+        self.assertFalse(power_observer_group_id in item.__ac_local_roles__)
+        self.presentItem(item)
+        self.assertEqual(item.query_state(), 'presented')
+        self.assertTrue(power_observer_group_id in item.__ac_local_roles__)
+
     def test_pm_PowerObserverMayViewItemWhenMeetingNotViewable(self):
         """As a power observer may access an item that is in a not viewable meeting,
            check that accessing the item view works."""
