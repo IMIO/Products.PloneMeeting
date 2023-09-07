@@ -51,6 +51,16 @@ Changelog
 - Added parameter `MeetingConfig.annexEditorMayInsertBarcode` to let an annex
   editor, in addition to the `MeetingManagers`, insert a barcode into an annex.
   [gbastien]
+- Added `fplog` message when using `@@reorder-items` on a meeting.
+  Original order of items is also logged for examination.
+  [gbastien]
+- Fixed CSS for meeting select box, sometimes selecting a value
+  would not click on the link and load the meeting.
+  [gbastien]
+- Fixed `Criteria.compute_criteria`, do not change a value of an
+  existing criterion as it is actually the stored data.
+  Enabled caching for `Criteria.compute_criteria`.
+  [gbastien]
 
 4.2.4 (2023-07-12)
 ------------------

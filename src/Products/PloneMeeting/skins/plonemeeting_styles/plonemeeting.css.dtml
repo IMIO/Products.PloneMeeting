@@ -127,12 +127,11 @@ dl.portlet p.ploneMeetingSelectItem {
     margin: 0px;
     vertical-align: top !important;
     min-height: 18px;
-    padding-left: 5px;
-    padding-top: 2px;
 }
 dl.portlet p.ploneMeetingSelectItem a {
     min-height: 18px;
-    padding-top: 3px;
+    padding-left: 5px;
+    padding-top: 5px;
 }
 dl.portlet p.ploneMeetingSelectItem:hover,
 dl.portlet p.ploneMeetingSelectItem:hover span {
