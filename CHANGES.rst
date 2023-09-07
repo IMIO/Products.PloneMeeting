@@ -54,6 +54,9 @@ Changelog
 - Added `fplog` message when using `@@reorder-items` on a meeting.
   Original order of items is also logged for examination.
   [gbastien]
+- Fixed CSS for meeting select box, sometimes selecting a value
+  would not click on the link and load the meeting.
+  [gbastien]
 
 4.2.4 (2023-07-12)
 ------------------
