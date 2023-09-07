@@ -57,6 +57,10 @@ Changelog
 - Fixed CSS for meeting select box, sometimes selecting a value
   would not click on the link and load the meeting.
   [gbastien]
+- Fixed `Criteria.compute_criteria`, do not change a value of an
+  existing criterion as it is actually the stored data.
+  Enabled caching for `Criteria.compute_criteria`.
+  [gbastien]
 
 4.2.4 (2023-07-12)
 ------------------

@@ -861,66 +861,77 @@ class Criteria(eeaCriteria):
             if not cfg:
                 super(Criteria, self).__init__(context)
                 return self.context, self.criteria
-            # meeting view
-            kept_filters = []
-            resultsperpagedefault = 20
-            meeting_view = False
-            if IMeeting.providedBy(context):
-                meeting_view = True
-                is_displaying_available_items = displaying_available_items(context)
-                self.context = cfg.searches.searches_items
-                if is_displaying_available_items:
-                    kept_filters = cfg.getDashboardMeetingAvailableItemsFilters()
-                    resultsperpagedefault = cfg.getMaxShownAvailableItems()
-                else:
-                    kept_filters = cfg.getDashboardMeetingLinkedItemsFilters()
-                    resultsperpagedefault = cfg.getMaxShownMeetingItems()
             else:
-                # on a faceted?  it is a pmFolder or a subFolder of the pmFolder
-                resultsperpagedefault = cfg.getMaxShownListings()
-                if IFacetedNavigable.providedBy(context):
-                    # keep relevant filters depending on configuration
-                    if context.getId() == 'searches_items':
-                        kept_filters = cfg.getDashboardItemsListingsFilters()
-                        self.context = cfg.searches.searches_items
-                    elif context.getId() == 'searches_meetings':
-                        kept_filters = cfg.getDashboardMeetingsListingsFilters()
-                        self.context = cfg.searches.searches_meetings
-                    elif context.getId() == 'searches_decisions':
-                        kept_filters = cfg.getDashboardMeetingsListingsFilters()
-                        self.context = cfg.searches.searches_decisions
-                    else:
-                        self.context = cfg.searches
-                        self.criteria = self._criteria()
-                        return self.context, self.criteria
-
-            res = PersistentList()
-            for criterion in self._criteria():
-                if meeting_view and criterion.widget == u'sorting':
-                    # keep it only of displaying available items, default sorting
-                    # is set on 'getProposingGroup', if not displaying available items
-                    # the sorting widget is not kept so sorting is disabled for presented items
+                # meeting view
+                kept_filters = []
+                resultsperpagedefault = 20
+                meeting_view = False
+                compute = True
+                if IMeeting.providedBy(context):
+                    meeting_view = True
+                    is_displaying_available_items = displaying_available_items(context)
+                    self.context = cfg.searches.searches_items
                     if is_displaying_available_items:
-                        new_criterion = Criterion()
-                        new_criterion.update(**criterion.__dict__)
-                        new_criterion.default = u'getProposingGroup'
-                        res.append(new_criterion)
-                    continue
-                # ignore the collection widget when on meeting_view
-                if meeting_view and criterion.widget == u'collection-link':
-                    criterion.default = u''
+                        kept_filters = cfg.getDashboardMeetingAvailableItemsFilters()
+                        resultsperpagedefault = cfg.getMaxShownAvailableItems()
+                    else:
+                        kept_filters = cfg.getDashboardMeetingLinkedItemsFilters()
+                        resultsperpagedefault = cfg.getMaxShownMeetingItems()
+                else:
+                    # on a faceted?  it is a pmFolder or a subFolder of the pmFolder
+                    resultsperpagedefault = cfg.getMaxShownListings()
+                    if IFacetedNavigable.providedBy(context):
+                        # keep relevant filters depending on configuration
+                        if context.getId() == 'searches_items':
+                            kept_filters = cfg.getDashboardItemsListingsFilters()
+                            self.context = cfg.searches.searches_items
+                        elif context.getId() == 'searches_meetings':
+                            kept_filters = cfg.getDashboardMeetingsListingsFilters()
+                            self.context = cfg.searches.searches_meetings
+                        elif context.getId() == 'searches_decisions':
+                            kept_filters = cfg.getDashboardMeetingsListingsFilters()
+                            self.context = cfg.searches.searches_decisions
+                        else:
+                            compute = False
+                            self.context = cfg.searches
+                            self.criteria = self._criteria()
 
-                if criterion.section != u'advanced' or \
-                   criterion.__name__ in kept_filters:
-                    # create new object to avoid modifying stored one
-                    new_criterion = Criterion()
-                    new_criterion.update(**criterion.__dict__)
-                    # manage default value for the 'resultsperpage' criterion
-                    if criterion.widget == ResultsPerPageWidget.widget_type:
-                        new_criterion.default = resultsperpagedefault
-                    res.append(new_criterion)
-            self.criteria = res
+                if compute:
+                    res = PersistentList()
+                    for criterion in self._criteria():
+                        # take care that we have the stored criteria here so
+                        # if one need to be changed, we must create a
+                        # new Criterion or the stored value is changed!
+                        if meeting_view and criterion.widget == u'sorting':
+                            # keep it only of displaying available items, default sorting
+                            # is set on 'getProposingGroup', if not displaying available items
+                            # the sorting widget is not kept so sorting is disabled for presented items
+                            if is_displaying_available_items:
+                                new_criterion = Criterion()
+                                new_criterion.update(**criterion.__dict__)
+                                new_criterion.default = u'getProposingGroup'
+                                res.append(new_criterion)
+                            continue
+                        # ignore the collection widget when on meeting_view
+                        if meeting_view and criterion.widget == u'collection-link':
+                            new_criterion = Criterion()
+                            new_criterion.update(**criterion.__dict__)
+                            new_criterion.default = u''
+                            res.append(new_criterion)
+                            continue
 
+                        if criterion.section != u'advanced' or \
+                           criterion.__name__ in kept_filters:
+                            # create new object to avoid modifying stored one
+                            new_criterion = Criterion()
+                            new_criterion.update(**criterion.__dict__)
+                            # manage default value for the 'resultsperpage' criterion
+                            if criterion.widget == ResultsPerPageWidget.widget_type:
+                                new_criterion.default = resultsperpagedefault
+                            res.append(new_criterion)
+                            continue
+                    self.criteria = res
+            cache[key] = self.context, self.criteria
         return self.context, self.criteria
 
 
