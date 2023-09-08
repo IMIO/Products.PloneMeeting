@@ -124,7 +124,7 @@ from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import listifySignatures
-from Products.PloneMeeting.utils import reindex_object
+from imio.helpers.catalog import reindex_object
 from Products.PloneMeeting.utils import translate_list
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator

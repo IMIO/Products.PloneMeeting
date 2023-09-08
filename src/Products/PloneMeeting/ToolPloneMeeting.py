@@ -92,7 +92,7 @@ from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import monthsIds
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import org_id_to_uid
-from Products.PloneMeeting.utils import reindex_object
+from imio.helpers.catalog import reindex_object
 from Products.PloneMeeting.utils import workday
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from ZODB.POSException import ConflictError

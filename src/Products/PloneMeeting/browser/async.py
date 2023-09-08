@@ -18,7 +18,7 @@ from Products.PloneMeeting.browser.meeting import BaseMeetingView
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import WriteBudgetInfos
-from Products.PloneMeeting.utils import reindex_object
+from imio.helpers.catalog import reindex_object
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from zope.i18n import translate
 

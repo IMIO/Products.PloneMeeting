@@ -48,7 +48,7 @@ from Products.PloneMeeting.utils import get_dx_widget
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import get_person_from_userid
 from Products.PloneMeeting.utils import may_view_field
-from Products.PloneMeeting.utils import reindex_object
+from imio.helpers.catalog import reindex_object
 from z3c.form.interfaces import DISPLAY_MODE
 from zope.i18n import translate
 

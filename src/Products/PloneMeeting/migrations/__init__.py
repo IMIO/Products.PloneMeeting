@@ -31,7 +31,7 @@ from Products.PloneMeeting.MeetingConfig import MEETING_WF_TRANSITION_ATTRS
 from Products.PloneMeeting.setuphandlers import columnInfos
 from Products.PloneMeeting.setuphandlers import indexInfos
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
-from Products.PloneMeeting.utils import reindex_object
+from imio.helpers.catalog import reindex_object
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.event import notify
 from zope.i18n import translate

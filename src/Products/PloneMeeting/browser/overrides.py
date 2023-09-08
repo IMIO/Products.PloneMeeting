@@ -14,7 +14,6 @@ from collective.documentgenerator.viewlets.generationlinks import DocumentGenera
 from collective.eeafaceted.collectionwidget.browser.views import FacetedDashboardView
 from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGenerationView
 from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGeneratorLinksViewlet
-from collective.eeafaceted.dashboard.browser.views import RenderTermPortletView
 from collective.iconifiedcategory import safe_utils as collective_iconifiedcategory_safe_utils
 from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedNavigable
@@ -474,29 +473,6 @@ class PMFacetedDashboardView(FacetedDashboardView):
             self.request.RESPONSE.setHeader('location', self.getPloneMeetingFolder().absolute_url() + '/searches_items')
 
         return res
-
-
-class PMRenderTermView(RenderTermPortletView):
-
-    def __call__(self, term, category, widget):
-        rendered_term = super(PMRenderTermView, self).__call__(term, category, widget)
-        # display the searchnotdecidedmeetings/searchlastdecisions as a selection list
-        if self.context.getId() in ['searchnotdecidedmeetings', 'searchlastdecisions']:
-            rendered_term = "<div id='async_search_term_{0}' class='loading' data-collection_uid='{0}'>" \
-                "<img src='{1}/spinner_small.gif' /></div>".format(
-                    self.context.UID(), api.portal.get().absolute_url())
-        return rendered_term
-
-    def number_of_items_cachekey(method, self, init=False):
-        '''cachekey method for self.number_of_items.'''
-        # cache until an item is modified
-        date = get_cachekey_volatile('Products.PloneMeeting.MeetingItem.modified', method)
-        return (repr(self.context), get_plone_groups_for_user(), date, init)
-
-    @ram.cache(number_of_items_cachekey)
-    def number_of_items(self, init=False):
-        """Just added caching until an item is modified results will remain the same."""
-        return super(PMRenderTermView, self).number_of_items(init=init)
 
 
 class PMRenderCategoryView(IDRenderCategoryView):

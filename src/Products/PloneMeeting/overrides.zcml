@@ -165,14 +165,6 @@
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             permission="zope2.View"
             />
-        <browser:page
-            for="OFS.interfaces.IItem"
-            name="render_collection_widget_term"
-            class="Products.PloneMeeting.browser.overrides.PMRenderTermView"
-            template="browser/templates/term.pt"
-            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-            permission="zope2.View"
-            />
     </configure>
 
     <configure package="collective.eeafaceted.z3ctable">

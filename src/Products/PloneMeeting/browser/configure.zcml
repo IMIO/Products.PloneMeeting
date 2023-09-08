@@ -1277,14 +1277,4 @@
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
     </configure>
 
-    <configure package="collective.eeafaceted.dashboard">
-        <browser:page
-            for="OFS.interfaces.IItem"
-            name="render_collection_widget_term_portlet"
-            class="Products.PloneMeeting.browser.overrides.PMRenderTermView"
-            template="browser/templates/term.pt"
-            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-            permission="zope2.View" />
-    </configure>
-
 </configure>
