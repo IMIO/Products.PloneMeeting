@@ -14,6 +14,7 @@ from eea.facetednavigation.interfaces import ICriteria
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
+from imio.helpers.catalog import reindex_object
 from imio.helpers.content import object_values
 from imio.helpers.content import uuidToObject
 from imio.migrator.migrator import Migrator as BaseMigrator
@@ -31,7 +32,6 @@ from Products.PloneMeeting.MeetingConfig import MEETING_WF_TRANSITION_ATTRS
 from Products.PloneMeeting.setuphandlers import columnInfos
 from Products.PloneMeeting.setuphandlers import indexInfos
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
-from imio.helpers.catalog import reindex_object
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.event import notify
 from zope.i18n import translate

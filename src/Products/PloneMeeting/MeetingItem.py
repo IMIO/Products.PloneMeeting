@@ -20,6 +20,7 @@ from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
+from imio.helpers.catalog import reindex_object
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import safe_delattr
@@ -135,7 +136,6 @@ from Products.PloneMeeting.utils import ItemLocalRolesUpdatedEvent
 from Products.PloneMeeting.utils import networkdays
 from Products.PloneMeeting.utils import normalize
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
-from imio.helpers.catalog import reindex_object
 from Products.PloneMeeting.utils import rememberPreviousData
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import sendMailIfRelevant

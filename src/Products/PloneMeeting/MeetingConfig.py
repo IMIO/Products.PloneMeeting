@@ -27,6 +27,7 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
+from imio.helpers.catalog import reindex_object
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToObject
@@ -124,7 +125,6 @@ from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import listifySignatures
-from imio.helpers.catalog import reindex_object
 from Products.PloneMeeting.utils import translate_list
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator

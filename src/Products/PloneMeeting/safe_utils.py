@@ -5,6 +5,7 @@ from datetime import datetime
 from DateTime import DateTime
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
+from imio.helpers.catalog import reindex_object
 from imio.helpers.date import wordizeDate
 from imio.helpers.workflow import update_role_mappings_for
 from imio.history.utils import getLastWFAction
@@ -30,7 +31,6 @@ from Products.PloneMeeting.utils import normalize
 from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import number_word
 from Products.PloneMeeting.utils import org_id_to_uid
-from imio.helpers.catalog import reindex_object
 from Products.PloneMeeting.utils import set_dx_value
 from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.utils import uncapitalize

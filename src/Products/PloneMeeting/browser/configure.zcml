@@ -1277,4 +1277,24 @@
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
     </configure>
 
+    <!-- Override @@render_collection_widget_term in collectionwidget and in dashboard -->
+    <configure package="collective.eeafaceted.collectionwidget">
+        <browser:page
+            for="*"
+            name="render_collection_widget_term"
+            class="Products.PloneMeeting.browser.overrides.PMRenderTermPortletView"
+            template="browser/templates/term.pt"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            permission="zope2.View" />
+    </configure>
+    <configure package="collective.eeafaceted.dashboard">
+        <browser:page
+            for="*"
+            name="render_collection_widget_term_portlet"
+            class="Products.PloneMeeting.browser.overrides.PMRenderTermPortletView"
+            template="browser/templates/term.pt"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            permission="zope2.View" />
+    </configure>
+
 </configure>

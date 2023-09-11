@@ -15,6 +15,7 @@ from collective.documentviewer.async import queueJob
 from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
+from imio.helpers.cache import _generate_modified_portal_type_volatile_name
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanVocabularyCacheFor
 from imio.helpers.cache import get_current_user_id
@@ -174,9 +175,6 @@ def onItemTransition(item, event):
     review_state_related_indexes = item.adapted().getReviewStateRelatedIndexes()
     notifyModifiedAndReindex(
         item, extra_idxs=indexes + review_state_related_indexes)
-    # An item has ben modified, use get_again for portlet_todo
-    invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def onMeetingTransition(meeting, event):
@@ -197,8 +195,6 @@ def onMeetingTransition(meeting, event):
         # no more late, clear item references
         meeting.update_item_references(clear=True)
 
-    # invalidate last meeting modified
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
     # invalidate last meeting review_state changed
     invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.review_state', get_again=True)
 
@@ -799,8 +795,6 @@ def item_added_or_initialized(item):
         noLongerProvides(item, IConfigElement)
         # Manage internal_number if activated in @@internalnumber-settings
         get_internal_number(item, init=True)
-    # An item has ben modified
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def onItemInitialized(item, event):
@@ -851,10 +845,6 @@ def onItemModified(item, event):
                     item._at_creation_flag = True
                     item._renameAfterCreation(check_auto_id=False)
                     item._at_creation_flag = False
-    # An item has ben modified, use get_again for portlet_todo
-    invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.MeetingItem.modified',
-        get_again=True)
 
 
 def storeImagesLocallyDexterity(obj):
@@ -880,7 +870,8 @@ def _advice_update_item(item):
     notifyModifiedAndReindex(item)
     # invalidate portlet_todo cachekey
     invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.MeetingItem.modified', get_again=True)
+        _generate_modified_portal_type_volatile_name(item.portal_type),
+        get_again=True)
 
 
 def onAdviceAdded(advice, event):
@@ -1166,8 +1157,6 @@ def onItemRemoved(item, event):
     # bypass this if we are actually removing the 'Plone Site'
     if event.object.meta_type == 'Plone Site':
         return
-    # An item has ben modified, use get_again for portlet_todo
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def onMeetingAdded(meeting, event):
@@ -1192,8 +1181,6 @@ def onMeetingAdded(meeting, event):
     # a Meeting date changed
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.Meeting.date', get_again=True)
-    invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.Meeting.modified', get_again=True)
     # a Meeting review_state changed
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.Meeting.review_state', get_again=True)
@@ -1253,9 +1240,6 @@ def onMeetingModified(meeting, event):
 
         # update local roles as power observers local roles may vary depending on meeting_access_on
         meeting.update_local_roles()
-        # invalidate last meeting modified
-        invalidate_cachekey_volatile_for(
-            'Products.PloneMeeting.Meeting.modified', get_again=True)
         # invalidate item voters in case new voters (un)selected, assembly async load on meeting
         _invalidateAttendeesRelatedCache(all=False,
                                          get_agains=["itemvotersvocabulary",
@@ -1334,8 +1318,6 @@ def onMeetingRemoved(meeting, event):
     # a Meeting date changed
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.Meeting.date', get_again=True)
-    invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.Meeting.modified', get_again=True)
 
 
 def _notifyContainerModified(child):

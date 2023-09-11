@@ -13,6 +13,7 @@ from collective.documentgenerator.helper.archetypes import ATDocumentGenerationH
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from eea.facetednavigation.interfaces import ICriteria
 from ftw.labels.interfaces import ILabeling
+from imio.helpers.catalog import reindex_object
 from imio.helpers.content import uuidToObject
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.pyutils.utils import get_clusters
@@ -48,7 +49,6 @@ from Products.PloneMeeting.utils import get_dx_widget
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import get_person_from_userid
 from Products.PloneMeeting.utils import may_view_field
-from imio.helpers.catalog import reindex_object
 from z3c.form.interfaces import DISPLAY_MODE
 from zope.i18n import translate
 

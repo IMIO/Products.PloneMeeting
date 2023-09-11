@@ -21,6 +21,7 @@ from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
 from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
+from imio.helpers.browser.views import IMIORenderTermPortletView
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import uuidToObject
@@ -473,6 +474,18 @@ class PMFacetedDashboardView(FacetedDashboardView):
             self.request.RESPONSE.setHeader('location', self.getPloneMeetingFolder().absolute_url() + '/searches_items')
 
         return res
+
+
+class PMRenderTermPortletView(IMIORenderTermPortletView):
+
+    def __call__(self, term, category, widget):
+        rendered_term = super(PMRenderTermPortletView, self).__call__(term, category, widget)
+        # display the searchnotdecidedmeetings/searchlastdecisions as a selection list
+        if self.context.getId() in ['searchnotdecidedmeetings', 'searchlastdecisions']:
+            rendered_term = "<div id='async_search_term_{0}' class='loading' data-collection_uid='{0}'>" \
+                "<img src='{1}/spinner_small.gif' /></div>".format(
+                    self.context.UID(), api.portal.get().absolute_url())
+        return rendered_term
 
 
 class PMRenderCategoryView(IDRenderCategoryView):

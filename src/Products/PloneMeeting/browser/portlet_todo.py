@@ -6,6 +6,7 @@ from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriterion
 from collective.eeafaceted.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
 from eea.facetednavigation.widgets.sorting.widget import Widget as SortingWidget
+from imio.helpers.cache import _generate_modified_portal_type_volatile_name
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_plone_groups_for_user
 from plone import api
@@ -80,7 +81,8 @@ class Renderer(base.Renderer, FacetedRenderer):
         # URL to the item can change if server URL changed
         server_url = self.request.get('SERVER_URL', None)
         # cache until an item is modified
-        date = get_cachekey_volatile('Products.PloneMeeting.MeetingItem.modified')
+        date = get_cachekey_volatile(
+            _generate_modified_portal_type_volatile_name(self.cfg.getItemTypeName()))
         load_portlet_todo = self.request.get('load_portlet_todo', False)
         return (repr(self.cfg),
                 get_plone_groups_for_user(),

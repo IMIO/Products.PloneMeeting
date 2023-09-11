@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
+from imio.helpers.cache import _generate_modified_portal_type_volatile_name
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.catalog import reindex_object
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidToObject
 from plone import api
@@ -18,7 +20,6 @@ from Products.PloneMeeting.browser.meeting import BaseMeetingView
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import WriteBudgetInfos
-from imio.helpers.catalog import reindex_object
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from zope.i18n import translate
 
@@ -289,17 +290,17 @@ class AsyncRenderSearchTerm(BrowserView):
         # URL to the annex_type can change if server URL changed
         server_url = self.request.get('SERVER_URL', None)
         # cache until a meeting is modified
-        date = get_cachekey_volatile('Products.PloneMeeting.Meeting.modified')
+        date = get_cachekey_volatile(
+            _generate_modified_portal_type_volatile_name(self.cfg.getMeetingTypeName()))
         # return meeting.UID if we are on a meeting or None if not
         # as portlet is highlighting the meeting we are on
-        meeting_uid = self.context.__class__.__name__ == 'Meeting' and self.context.UID() or None
-        collection_uid = self.request.get('collection_uid')
+        meeting_uid = self.context.UID() if self.context.__class__.__name__ == 'Meeting' else None
         return (get_plone_groups_for_user(),
                 cfg_modified,
                 server_url,
                 date,
                 meeting_uid,
-                collection_uid)
+                self.request.get('collection_uid'))
 
     @ram.cache(__call___cachekey)
     def AsyncRenderSearchTerm__call__(self):
