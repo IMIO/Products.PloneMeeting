@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.5 (unreleased)
+4.2.5 (2023-09-12)
 ------------------
 
 - Make the `Change groups in charge` batch action available on meetings.
