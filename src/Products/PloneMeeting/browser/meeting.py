@@ -656,7 +656,7 @@ class MeetingReorderItems(BrowserView):
         # add logging message to fingerpointing log
         extras = 'object={0} original_order={1}'.format(
             repr(self.context),
-            repr(','.join(self._orig_order)))
+            ','.join(self._orig_order))
         fplog('meeting_items_reorder', extras=extras)
         return redirect(self.request, self.context.absolute_url())
 
