@@ -9,6 +9,7 @@
 from collections import OrderedDict
 from collective.behavior.talcondition.behavior import ITALCondition
 from collective.documentgenerator.search_replace.pod_template import SearchAndReplacePODTemplates
+from collective.iconifiedcategory.utils import _categorized_elements
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import ICriteria
 from imio.helpers.cache import cleanRamCacheFor
@@ -603,6 +604,32 @@ class Migrator(BaseMigrator):
                 if found:
                     dc.query = adapted_query
                     dc._p_changed = True
+        logger.info('Done.')
+
+    def _removeBrokenAnnexes(self):
+        """Remove annexes that do not have a content_category,
+           that could happen with quickupload."""
+        logger.info("Removing broken annexes, annexes uploaded withtout a content_category...")
+        brains = self.catalog(portal_type=['annex', 'annexDecision'])
+        pghandler = ZLogHandler(steps=1000)
+        pghandler.init('Removing broken annexes', len(brains))
+        i = 0
+        idxs = ['modified', 'ModificationDate', 'Date']
+        for brain in brains:
+            pghandler.report(i)
+            annex = brain.getObject()
+            parent = annex.aq_inner.aq_parent
+            categorized_elements = _categorized_elements(parent)
+            if annex.UID() not in categorized_elements:
+                logger.info('In _removeBrokenAnnexes, removed %s' % brain.getPath())
+                # make sure parent is not modified
+                parent_modified = parent.modified()
+                parent.manage_delObjects(ids=[annex.getId()])
+                parent.setModificationDate(parent_modified)
+                parent.reindexObject(idxs=idxs)
+                i += 1
+        if i:
+            self.warn(logger, 'In _removeBrokenAnnexes, removed %s annexe(s)' % i)
         logger.info('Done.')
 
     def addCKEditorStyle(self, style_name, style_element, style_type="class", style_value=None):

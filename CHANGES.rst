@@ -5,7 +5,13 @@ Changelog
 4.2.6 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fixed migration to 4209:
+
+  - Remove broken annexes before upgrading `collective.iconifiedcategory`;
+  - Migrate `cfg/getUseCopies` in TAL expressions;
+  - Upgrade `imio.annex before` updating annex portal_type.
+
+  [gbastien]
 
 
 4.2.5 (2023-09-12)
