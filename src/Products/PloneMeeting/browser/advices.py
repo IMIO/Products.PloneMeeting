@@ -436,7 +436,6 @@ class AdviceGivenHistoryView(BrowserView):
         """ """
         event = get_event_by_time(self.context, 'advice_given', int_event_time=event_time)
         view = self.context.restrictedTraverse('@@history-event-preview')
-        import ipdb; ipdb.set_trace()
         view._update(event)
         if not view.may_view_historized_data():
             raise Unauthorized
