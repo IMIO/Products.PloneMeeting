@@ -2,11 +2,13 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group_id
+from DateTime import DateTime
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.workflow import get_state_infos
 from imio.history.browser.views import EventPreviewView
 from imio.history.interfaces import IImioHistory
+from imio.history.utils import get_event_by_time
 from plone import api
 from plone.autoform import directives
 from plone.autoform.form import AutoExtensibleForm
@@ -404,7 +406,8 @@ class AdviceConfidentialityView(BrowserView):
 class AdviceEventPreviewView(EventPreviewView):
     """ """
 
-    def __call__(self, event):
+    def _update(self, event):
+        """ """
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.advice_style = self.cfg.getAdviceStyle()
@@ -413,13 +416,36 @@ class AdviceEventPreviewView(EventPreviewView):
         self.advice_type = get_event_field_data(event["advice_data"], "advice_type")
         self.advice_comment = get_event_field_data(event["advice_data"], "advice_comment")
         self.advice_observations = get_event_field_data(event["advice_data"], "advice_observations")
-        self.event = event
         self.event_time = int(event['time'])
+        self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'])
+
+    def __call__(self, event):
+        self._update(event)
         return super(AdviceEventPreviewView, self).__call__(event)
 
-    def may_view_historized_data(self, event):
+    def may_view_historized_data(self):
+        """User is (Meeting)Manager or member of the advice _advisers group."""
+        return self.tool.isManager(self.cfg) or \
+            self.context.advice_group in self.userAdviserOrgUids
+
+
+class AdviceGivenHistoryView(BrowserView):
+    """ """
+
+    def __call__(self, event_time):
         """ """
-        return self.tool.isManager(self.cfg)
+        event = get_event_by_time(self.context, 'advice_given', int_event_time=event_time)
+        view = self.context.restrictedTraverse('@@history-event-preview')
+        import ipdb; ipdb.set_trace()
+        view._update(event)
+        if not view.may_view_historized_data():
+            raise Unauthorized
+        for event in self.context.advice_given_history:
+            if int(event['time']) == event_time:
+                self.advice_data = event['advice_data']
+                self.item_data = event['item_data']
+                break
+        return super(AdviceGivenHistoryView, self).__call__()
 
 
 def _display_asked_again_warning(advice, parent):
@@ -519,16 +545,3 @@ class BaseAdviceInfoForm(AutoExtensibleForm, form.EditForm):
         advice_infos(context._shownAdviceTypeFor(advice_data))
         advice_infos._initAdviceInfos(data['advice_uid'])
         return advice_infos
-
-
-class AdviceGivenHistoryView(BrowserView):
-    """ """
-
-    def __call__(self, event_time):
-        """ """
-        for event in self.context.advice_given_history:
-            if int(event['time']) == event_time:
-                self.advice_data = event['advice_data']
-                self.item_data = event['item_data']
-                break
-        return super(AdviceGivenHistoryView, self).__call__()
