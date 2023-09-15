@@ -418,15 +418,20 @@ class AdviceEventPreviewView(EventPreviewView):
         self.advice_observations = get_event_field_data(event["advice_data"], "advice_observations")
         self.event_time = repr(float(event['time']))
         self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'])
+        self.userOrgUids = self.tool.get_orgs_for_user()
 
     def __call__(self, event):
         self._update(event)
         return super(AdviceEventPreviewView, self).__call__(event)
 
     def may_view_historized_data(self):
-        """User is (Meeting)Manager or member of the advice _advisers group."""
+        """Viewable by:
+           - (Meeting)Managers
+           - proposingGroup members;
+           - advice _advisers group members."""
         return self.tool.isManager(self.cfg) or \
-            self.context.advice_group in self.userAdviserOrgUids
+            self.context.advice_group in self.userAdviserOrgUids or \
+            self.context.aq_parent.getProposingGroup() in self.userOrgUids
 
 
 class AdviceGivenHistoryView(BrowserView):
