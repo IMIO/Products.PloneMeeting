@@ -416,7 +416,7 @@ class AdviceEventPreviewView(EventPreviewView):
         self.advice_type = get_event_field_data(event["advice_data"], "advice_type")
         self.advice_comment = get_event_field_data(event["advice_data"], "advice_comment")
         self.advice_observations = get_event_field_data(event["advice_data"], "advice_observations")
-        self.event_time = int(event['time'])
+        self.event_time = repr(float(event['time']))
         self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'])
 
     def __call__(self, event):
@@ -434,16 +434,13 @@ class AdviceGivenHistoryView(BrowserView):
 
     def __call__(self, event_time):
         """ """
-        event = get_event_by_time(self.context, 'advice_given', int_event_time=event_time)
+        event = get_event_by_time(self.context, 'advice_given', float_event_time=event_time)
         view = self.context.restrictedTraverse('@@history-event-preview')
         view._update(event)
         if not view.may_view_historized_data():
             raise Unauthorized
-        for event in self.context.advice_given_history:
-            if int(event['time']) == event_time:
-                self.advice_data = event['advice_data']
-                self.item_data = event['item_data']
-                break
+        self.advice_data = event['advice_data']
+        self.item_data = event['item_data']
         return super(AdviceGivenHistoryView, self).__call__()
 
 
