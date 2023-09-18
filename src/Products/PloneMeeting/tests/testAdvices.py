@@ -2444,9 +2444,12 @@ class testAdvices(PloneMeetingTestCase):
     def _setUpHistorizedAdvice(self):
         """ """
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates([self._stateMappingFor('itemcreated'), ])
-        cfg.setItemAdviceEditStates([self._stateMappingFor('itemcreated'), ])
-        cfg.setItemAdviceViewStates([self._stateMappingFor('itemcreated'), ])
+        cfg.setItemAdviceStates([self._stateMappingFor('itemcreated')])
+        cfg.setItemAdviceEditStates([self._stateMappingFor('itemcreated')])
+        cfg.setItemAdviceViewStates([self._stateMappingFor('itemcreated'), self._stateMappingFor('proposed')])
+        self._enableField('copyGroups')
+        cfg.setItemCopyGroupsStates([self._stateMappingFor('proposed')])
+        self._setPowerObserverStates(states=(self._stateMappingFor('proposed'), ))
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
@@ -2518,20 +2521,47 @@ class testAdvices(PloneMeetingTestCase):
 
     def test_pm_AdviceHistorizedPreviewAccess(self):
         """By default only (Meeting)Managers may access an historized advice preview."""
+
+        def _check(viewable=True):
+            """ """
+            advice_preview = advice.restrictedTraverse('@@history-event-preview')(last_action)
+            if viewable:
+                self.assertTrue("@@advice_given_history_view" in advice_preview)
+                self.assertTrue(advice.restrictedTraverse('@@advice_given_history_view')(
+                    float(last_action['time'])))
+            else:
+                self.assertFalse("@@advice_given_history_view" in advice_preview)
+                self.assertRaises(
+                    Unauthorized,
+                    advice.restrictedTraverse('@@advice_given_history_view'),
+                    float(last_action['time']))
+
         item, advice = self._setUpHistorizedAdvice()
         # historize advice
         self.changeUser('pmCreator1')
+        item.setCopyGroups((self.vendors_observers, ))
         self.proposeItem(item)
         adapter = getAdapter(advice, IImioHistory, 'advice_given')
         last_action = getLastAction(adapter)
         self.assertTrue(last_action)
-        # preview is not viewable for common user
-        advice_preview = advice.restrictedTraverse('@@history-event-preview')(last_action)
-        self.assertFalse("@@advice_given_history_view" in advice_preview)
-        # preview is viewable for MeetingManagers
+        # viewable for MeetingManagers
         self.changeUser('pmManager')
-        advice_preview = advice.restrictedTraverse('@@history-event-preview')(last_action)
-        self.assertTrue("@@advice_given_history_view" in advice_preview)
+        _check()
+        # viewable for proposingGroup members
+        self.changeUser('pmCreator1')
+        _check()
+        # viewable for the advisers of the asked advice
+        self.changeUser('pmAdviser1')
+        _check()
+        # not viewable for copy groups
+        self.changeUser('pmObserver2')
+        _check(False)
+        # not viewable by powerobservers
+        self.changeUser('powerobserver1')
+        _check(False)
+        # not viewable by other advisers
+        self.changeUser('pmReviewer2')
+        _check(False)
 
     def test_pm_AdviceHistorizedWithItemDataWhenAdviceGiven(self):
         """When an advice is given, it is versioned and relevant item infos are saved.

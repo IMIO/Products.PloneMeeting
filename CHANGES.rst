@@ -12,7 +12,10 @@ Changelog
   - Upgrade `imio.annex before` updating annex portal_type.
 
   [gbastien]
-
+- Advice historized data preview that was only accessible to `MeetingManagers`
+  is now accessible to `advisers` of the historized data advice and
+  proposingGroup members.
+  [gbastien]
 
 4.2.5 (2023-09-12)
 ------------------
