@@ -1932,7 +1932,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(get_annexes(clonedItemWithLink, portal_types=['annexDecision']))
 
     def test_pm_PreviousReviewStateIndex(self):
-        """Test the previous_review_state index, especially when datachange is enabled."""
+        """Test the previous_review_state index, especially when data_changes is enabled."""
         cfg = self.meetingConfig
         cfg.setHistorizedItemAttributes(('decision', ))
         cfg.setRecordItemHistoryStates((self._stateMappingFor('proposed'), ))
@@ -1945,7 +1945,7 @@ class testMeetingItem(PloneMeetingTestCase):
         previous_state = wf_adapter.getHistory()[-2]['review_state']
         self.assertEqual(previous_review_state(item)(), previous_state)
 
-        # now check that it does not interact when datachange is enabled
+        # now check that it does not interact when data_changes is enabled
         set_field_from_ajax(item, 'decision', self.decisionText)
         self.assertEqual(previous_review_state(item)(), previous_state)
 
@@ -1955,8 +1955,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item.workflow_history = PersistentMapping()
         self.assertEqual(previous_review_state(item)(), _marker)
 
-    def test_pm_WFHistoryAndDAtaChangesHistoryAreSeparated(self):
-        """The WF history and datachanges history are separated in 2 adapters."""
+    def test_pm_WFHistoryAndDataChangesHistoryAreSeparated(self):
+        """The WF history and data_changes history are separated in 2 adapters."""
         cfg = self.meetingConfig
         cfg.setHistorizedItemAttributes(('decision', ))
         cfg.setRecordItemHistoryStates((self._stateMappingFor('itemcreated'), ))
@@ -1964,6 +1964,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         wf_adapter = getAdapter(item, IImioHistory, 'workflow')
         datachanges_adapter = getAdapter(item, IImioHistory, 'data_changes')
+        # datachanges adapter highlight_last_comment is not enabled
+        self.assertFalse(datachanges_adapter.highlight_last_comment)
         self.assertFalse('_datachange_' in [event['action'] for event in wf_adapter.getHistory()])
         set_field_from_ajax(item, 'decision', self.decisionText)
         self.assertFalse('_datachange_' in [event['action'] for event in wf_adapter.getHistory()])

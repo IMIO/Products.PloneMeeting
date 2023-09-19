@@ -714,7 +714,7 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
         return userMayAccessComment
 
     def get_history_data(self):
-        """WF hsitory is mixed with datachanges history."""
+        """WF history is mixed with data_changes history."""
         history = super(PMWfHistoryAdapter, self).get_history_data()
         res = []
         for event in history:
@@ -728,9 +728,10 @@ class PMDataChangesHistoryAdapter(ImioWfHistoryAdapter):
     """ """
 
     history_type = 'data_changes'
+    highlight_last_comment = False
 
     def get_history_data(self):
-        """WF history is mixed with datachanges history."""
+        """WF history is mixed with data_changes history."""
         history = super(PMDataChangesHistoryAdapter, self).get_history_data()
         full_datachanges_history = []
         # first pass, keep datachanges
