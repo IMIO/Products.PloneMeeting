@@ -18,10 +18,10 @@
 
           <tal:comment replace="nothing">List of group names</tal:comment>
           <tal:loop repeat="advice python:advicesByType[adviceType]">
-            <fieldset tal:define="dummy python: view._initAdviceInfos(advice['id']);
-                                  adviceHolder python: advice.get('adviceHolder', None) or view.context;
-                                  adviceHolderIsViewable python: adviceHolder.isViewable();
-                                  obj python: advice.get('advice_id', None) and adviceHolder.get(advice['advice_id'], None);
+            <fieldset tal:define="dummy python: view._initAdviceInfos(advice);
+                                  adviceHolder python: view.adviceHolder;
+                                  adviceHolderIsViewable python: view.adviceHolderIsViewable;
+                                  obj python: view.obj;
                                   obj_absolute_url python: obj and obj.absolute_url() or '';
                                   customMessageInfos python: context.adapted().getCustomAdviceMessageFor(advice);
                                   displayAdviceReviewState python: customMessageInfos['displayAdviceReviewState'];
@@ -116,7 +116,7 @@
                               title="to_previous_given_advice"
                               tal:attributes="src string:${portal_url}/advice_${adviceStyle}_asked_again_back_to_previous.png;
                                               onClick string:javascript:$('.tooltipstered').tooltipster('hide');;callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again');;"/></acronym>
-                     <tal:advice-change-delay-condition condition="view/mayChangeDelay">
+                     <tal:advice-change-delay-condition condition="python: view.mayChangeDelay()">
                       <acronym title="Change delay"
                             i18n:domain="PloneMeeting"
                             i18n:attributes="title">
@@ -130,7 +130,7 @@
                          </a>
                       </acronym>
                      </tal:advice-change-delay-condition>
-                     <acronym tal:condition="python: adviceHolderIsViewable and advice.get('advice_id', None)">
+                     <acronym tal:condition="python: view.show_history">
                         <a class="overlay-history"
                            title="History"
                            i18n:domain="plone"

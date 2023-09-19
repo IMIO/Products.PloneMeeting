@@ -200,14 +200,20 @@ class AdvicesIconsInfos(BrowserView):
                     is_proposing_group_editor(org_uid, self.cfg)
                 self.userMayEditItem = _checkPermission(ModifyPortalContent, self.context)
 
-    def _initAdviceInfos(self, advice_id):
+    def _initAdviceInfos(self, advice):
         """ """
-        self.advice_id = advice_id
-        self.memberIsAdviserForGroup = advice_id in self.userAdviserOrgUids
-        self.adviceIsInherited = self.context.adviceIsInherited(advice_id)
+        self.advice_id = advice['id']
+        self.memberIsAdviserForGroup = self.advice_id in self.userAdviserOrgUids
+        self.adviceIsInherited = self.context.adviceIsInherited(self.advice_id)
         self.mayEdit = not self.adviceIsInherited and \
-            ((self.advicesToEdit and advice_id in self.advicesToEdit) or
+            ((self.advicesToEdit and self.advice_id in self.advicesToEdit) or
              (self.isRealManager and not self.adviceType == 'not_given'))
+        self.adviceHolder = advice.get('adviceHolder', None) or self.context
+        self.adviceHolderIsViewable = self.adviceHolder.isViewable()
+        self.obj = advice.get('advice_id', None) and \
+            self.adviceHolder.get(advice['advice_id'], None)
+        self.show_history = self.obj and self.adviceHolderIsViewable and \
+            self.context.restrictedTraverse('@@contenthistory').show_history()
 
     def showLinkToInherited(self, adviceHolder):
         """ """
@@ -466,18 +472,16 @@ class AdviceView(DefaultView):
 
     def __call__(self):
         """Check if viewable by current user in case smart guy call the right url."""
-        parent = self.context.aq_inner.aq_parent
-        self.advice_icons_infos = parent.unrestrictedTraverse('@@advices-icons-infos')
-        advice_type = parent._shownAdviceTypeFor(parent.adviceIndex[self.context.advice_group])
-        self.advice_icons_infos._initAdvicesInfos(advice_type)
-        self.advice_icons_infos._initAdviceInfos(self.context.advice_group)
-        if not self.advice_icons_infos.mayView():
-            raise Unauthorized
-        _display_asked_again_warning(self.context, parent)
-        # set some variables for PageTemplate
-        self.parent = parent
+        self.parent = self.context.aq_inner.aq_parent
         self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
+        self.advice_icons_infos = self.parent.unrestrictedTraverse('@@advices-icons-infos')
+        advice_type = self.parent._shownAdviceTypeFor(self.parent.adviceIndex[self.context.advice_group])
+        self.advice_icons_infos._initAdvicesInfos(advice_type)
+        self.advice_icons_infos._initAdviceInfos(self.parent.adviceIndex[self.context.advice_group])
+        if not self.advice_icons_infos.mayView():
+            raise Unauthorized
+        _display_asked_again_warning(self.context, self.parent)
         return super(AdviceView, self).__call__()
 
 
@@ -532,9 +536,8 @@ class BaseAdviceInfoForm(AutoExtensibleForm, form.EditForm):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.label = translate(self.label,
-                               domain='PloneMeeting',
-                               context=self.request)
+        self.label = translate(
+            self.label, domain='PloneMeeting', context=self.request)
 
     def _advice_infos(self, data, context=None):
         '''Init @@advices-icons-infos and returns it.'''
@@ -544,5 +547,5 @@ class BaseAdviceInfoForm(AutoExtensibleForm, form.EditForm):
         # initialize advice_infos
         advice_data = context.getAdviceDataFor(context, data['advice_uid'])
         advice_infos(context._shownAdviceTypeFor(advice_data))
-        advice_infos._initAdviceInfos(data['advice_uid'])
+        advice_infos._initAdviceInfos(advice_data)
         return advice_infos

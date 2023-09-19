@@ -113,8 +113,6 @@ class AdviceDelaysView(BrowserView):
            advice_uid in userAdviserOrgUids or \
            self.context.getProposingGroup() in self.tool.get_orgs_for_user():
             return True
-        else:
-            return False
 
     def _mayReinitializeDelay(self, advice_uid=None):
         '''May current user reinitialize delau for given advice_uid?

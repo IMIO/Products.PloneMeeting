@@ -19,6 +19,9 @@ Changelog
 - Make sure `data_changes` history does not use `highlight_last_comment` or
   it drastically slows down item view when used.
   [gbastien]
+- Protect history icon in advice popup the same way the history link
+  is protected on the advice view.
+  [gbastien]
 
 4.2.5 (2023-09-12)
 ------------------
