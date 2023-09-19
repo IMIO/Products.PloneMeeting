@@ -232,9 +232,8 @@ class AdviceChangeDelayForm(form.EditForm):
             self.context.adviceIndex[currentAdviceData['org']]['delay_for_automatic_adviser_changed_manually'] = True
         self.context.update_local_roles()
         # add a line to the item's adviceIndex advice delay_changes_history
-        member_id = get_current_user_id()
         history_data = {'action': (currentAdviceData['delay'], newAdviceData['delay']),
-                        'actor': member_id,
+                        'actor': get_current_user_id(),
                         'time': DateTime(),
                         'comments': data['comment']}
         self.context.adviceIndex[currentAdviceData['org']]['delay_changes_history'].append(history_data)
@@ -323,9 +322,8 @@ class AdviceReinitializeDelayView(BrowserView):
             raise Unauthorized
         # reinit delay and add a line to the item's adviceIndex advice delay_changes_history
         _reinit_advice_delay(self.context, advice_uid)
-        member_id = get_current_user_id()
         history_data = {'action': 'Reinitiatlize delay',
-                        'actor': member_id,
+                        'actor': get_current_user_id(),
                         'time': DateTime(),
                         'comments': None}
         adviceInfos = self.context.adviceIndex[advice_uid]

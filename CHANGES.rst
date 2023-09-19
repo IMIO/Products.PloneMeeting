@@ -22,6 +22,10 @@ Changelog
 - Protect history icon in advice popup the same way the history link
   is protected on the advice view.
   [gbastien]
+- Use `imio.history.utils.add_event_to_history` to manage new history event for
+  item `completeness` and `emergency` changes. In views displaying the history
+  use the adapter to get the history instead accessing the stored attribute.
+  [gbastien]
 
 4.2.5 (2023-09-12)
 ------------------

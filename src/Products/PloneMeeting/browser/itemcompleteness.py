@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
-from DateTime import DateTime
-from imio.helpers.cache import get_current_user_id
+from imio.history.interfaces import IImioHistory
+from imio.history.utils import add_event_to_history
 from plone import api
 from Products.Archetypes import DisplayList
 from Products.Five.browser import BrowserView
+from Products.PloneMeeting.config import PMMessageFactory as _
+from zope.component import getAdapter
 
 
 class ItemCompletenessView(BrowserView):
@@ -79,13 +81,15 @@ class ChangeItemCompletenessView(BrowserView):
             raise Unauthorized
         self.context.setCompleteness(new_completeness_value)
         # add a line to the item's completeness_changes_history
-        member_id = get_current_user_id()
-        history_data = {'action': new_completeness_value,
-                        'actor': member_id,
-                        'time': DateTime(),
-                        'comments': comment}
-        self.context.completeness_changes_history.append(history_data)
+        add_event_to_history(
+            self.context,
+            'completeness_changes_history',
+            action=new_completeness_value,
+            comments=comment)
         self.context._update_after_edit(idxs=['getCompleteness'])
+        plone_utils = api.portal.get_tool('plone_utils')
+        plone_utils.addPortalMessage(_("Item completeness changed."))
+        self.request.RESPONSE.redirect(self.context.absolute_url())
 
 
 class ItemCompletenessHistoryView(BrowserView):
@@ -95,6 +99,17 @@ class ItemCompletenessHistoryView(BrowserView):
         self.context = context
         self.request = request
         self.tool = api.portal.get_tool('portal_plonemeeting')
+
+    def getHistory(self, checkMayViewEvent=True, checkMayViewComment=True):
+        """ """
+        adapter = getAdapter(self.context, IImioHistory, 'completeness_changes')
+        history = adapter.getHistory(
+            checkMayViewEvent=checkMayViewEvent,
+            checkMayViewComment=checkMayViewComment)
+        if not history:
+            return []
+        history.sort(key=lambda x: x["time"], reverse=True)
+        return history
 
     def renderComments(self, comments, mimetype='text/plain'):
         """
