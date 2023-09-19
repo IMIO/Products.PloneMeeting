@@ -9,12 +9,12 @@ Changelog
 
   - Remove broken annexes before upgrading `collective.iconifiedcategory`;
   - Migrate `cfg/getUseCopies` in TAL expressions;
-  - Upgrade `imio.annex before` updating annex portal_type.
+  - Upgrade `imio.annex` before updating annex `portal_type`.
 
   [gbastien]
 - Advice historized data preview that was only accessible to `MeetingManagers`
   is now accessible to `advisers` of the historized data advice and
-  proposingGroup members.
+  `proposingGroup` members.
   [gbastien]
 - Make sure `data_changes` history does not use `highlight_last_comment` or
   it drastically slows down item view when used.
