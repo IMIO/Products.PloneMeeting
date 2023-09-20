@@ -84,7 +84,7 @@ dl.portlet .ploneMeetingSelectContainer p {
 
 dl.portlet .ploneMeetingSelectButton {
     cursor: pointer;
-    border: 1px solid &dtml-globalBorderColor;;
+    border: 1px solid #d3d3d3;
     background-color: white;
     color: &dtml-fontColor;;
     text-align: left;
@@ -93,7 +93,6 @@ dl.portlet .ploneMeetingSelectButton {
     padding-right: 24px;
     padding-top: 3px;
     margin-top: 4px;
-    border-style: outset;
 }
 /* selected element */
 dl.portlet .ploneMeetingSelectButton span.ploneMeetingRef,
@@ -103,14 +102,13 @@ dl.portlet p.ploneMeetingSelectItem.selected {
 
 dl.portlet div.ploneMeetingSelectBox {
     cursor: pointer;
-    border-width: 1px;
-    border-color: &dtml-globalBorderColor;;
+    border: 1px solid #d3d3d3;
+    border-top: 0px;
     background-color: white;
     color: &dtml-fontColor;;
     display: none;
     position: absolute;
     padding-top: 0px;
-    border-style: inset;
     height: auto;
     overflow: auto;
     text-align: left;
@@ -1118,23 +1116,25 @@ div[id^="archetypes-fieldname-customAdvisers-"] label.formQuestion {
     display: table-cell;
 }
 
-/* make sure multiselect fields displayed on the edit form are not too long,
-   add padding-bottom: 1em; to avoid displaying scroll when height < 300px */
-div#archetypes-fieldname-associatedGroups,
-div#archetypes-fieldname-categoryMappingsWhenCloningToOtherMC,
-div#archetypes-fieldname-copyGroups,
-div#archetypes-fieldname-groupsInCharge,
-div#archetypes-fieldname-optionalAdvisers,
-div#archetypes-fieldname-itemInitiator,
-div#archetypes-fieldname-otherMCCorrespondences,
-div#archetypes-fieldname-powerAdvisersGroups,
-div#archetypes-fieldname-selectableCopyGroups,
-div#archetypes-fieldname-templateUsingGroups,
-div#archetypes-fieldname-usingGroups {
+/* make sure multiselect fields displayed on the edit form are not too long:
+ * - applied on every fields of item;
+ * - applied on some fields of the MeetingConfig (related to Groups and powerAdvisers). */
+body[class*='portaltype-meetingitem'] div.field.ArchetypesMultiSelectionWidget[id^='archetypes-fieldname-'],
+body.portaltype-meetingconfig div.field.ArchetypesMultiSelectionWidget[id^='archetypes-fieldname-'][id*='Groups'],
+body.portaltype-meetingconfig div.field.ArchetypesMultiSelectionWidget[id^='archetypes-fieldname-powerAdvisers'] {
+    max-width: 500px !important;
+}
+div.field.ArchetypesMultiSelectionWidget[id^='archetypes-fieldname-'] {
     max-height: 500px;
-    max-width: 500px;
     overflow-x: auto;
 }
+div.field.ArchetypesMultiSelectionWidget div.formQuestion.label {
+    position: sticky;
+    top: 0;
+    background: #FFF;
+    padding-bottom: 0.25em;
+}
+
 /* hide some options in the select showing optionalAdvisers */
 div#optionalAdvisers input[value="not_selectable_value_delay_aware_optional_advisers"],
 div#optionalAdvisers input[value="not_selectable_value_non_delay_aware_optional_advisers"] {

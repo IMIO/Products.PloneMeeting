@@ -26,6 +26,13 @@ Changelog
   item `completeness` and `emergency` changes. In views displaying the history
   use the adapter to get the history instead accessing the stored attribute.
   [gbastien]
+- CSS improvements:
+
+  - Refreshed meeting select dropdown;
+  - For long multiselect fields for which max height is fixed to avoid a too
+    long field, fixed the field label so it is always visible.
+
+  [aduchene, gbastien]
 
 4.2.5 (2023-09-12)
 ------------------
