@@ -5,8 +5,9 @@ Changelog
 4.2.7 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Fixed `ItemOptionalAdvicesVocabulary` to manage correctly missing terms when
+  it involves userids.
+  [gbastien]
 
 4.2.6 (2023-09-21)
 ------------------

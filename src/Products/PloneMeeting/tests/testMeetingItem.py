@@ -4063,6 +4063,56 @@ class testMeetingItem(PloneMeetingTestCase):
              '{0}__userid__pmAdviser1'.format(self.developers_uid),
              '{0}__userid__pmManager'.format(self.developers_uid),
              self.vendors_uid])
+        # when selected on an item, available in the vocabulary
+        notify(ObjectEditedEvent(cfg))
+        item.setOptionalAdvisers(('{0}__userid__pmCreator2'.format(self.vendors_uid), ))
+        item._update_after_edit()
+        self.assertEqual(
+            [t.title for t in vocab_factory(item)],
+            [u'Please select among delay-aware advisers',
+             u'Developers - 10 day(s)',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMManager',
+             u'Please select among non delay-aware advisers',
+             u'Developers',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMManager',
+             u'Vendors',
+             # new value correctly sorted, the other users are not listed
+             u'M. PMCreator Two'])
+        # now select on item a user from an org that is no more in the vocabulary
+        item.setOptionalAdvisers(('{0}__userid__pmCreator1'.format(self.endUsers_uid), ))
+        self.assertEqual(
+            [t.title for t in vocab_factory(item)],
+            [u'Please select among delay-aware advisers',
+             u'Developers - 10 day(s)',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMManager',
+             # new value with org and user on one line so it is not possible to select the org
+             u'End users (M. PMCreator One)',
+             u'Please select among non delay-aware advisers',
+             u'Developers',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMManager',
+             u'Vendors'])
+        # add a delay aware value to an existing org but with a no longer existing user
+        item.setOptionalAdvisers((
+            '{0}__userid__pmCreator1'.format(self.endUsers_uid),
+            '{0}__rowid__unique_id_456__userid__pmAdviser2'.format(self.developers_uid)))
+        self.assertEqual(
+            [t.title for t in vocab_factory(item)],
+            [u'Please select among delay-aware advisers',
+             u'Developers - 10 day(s)',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMManager',
+             # new value, just the user as the org exist, and just the user id as user does not exist
+             u'pmAdviser2',
+             u'End users (M. PMCreator One)',
+             u'Please select among non delay-aware advisers',
+             u'Developers',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMManager',
+             u'Vendors'])
 
     def test_pm_OptionalAdvisersDelayAwareAdvisers(self):
         '''
