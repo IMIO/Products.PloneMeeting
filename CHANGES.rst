@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.6 (unreleased)
+4.2.6 (2023-09-21)
 ------------------
 
 - Fixed migration to 4209:
