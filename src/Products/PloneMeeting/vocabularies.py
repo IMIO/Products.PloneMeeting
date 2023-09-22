@@ -46,6 +46,7 @@ from plone import api
 from plone.app.vocabularies.security import GroupsVocabulary
 from plone.app.vocabularies.users import UsersFactory
 from plone.memoize import ram
+from plone.memoize.ram import store_in_cache
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
@@ -926,13 +927,10 @@ class AskedAdvicesVocabulary(object):
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
-        context = get_context_with_request(context) or context
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.askedadvicesvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = None
-        # when creating new Plone Site, context may be the Zope Application...
-        if hasattr(context, 'portal_type'):
-            cfg = tool.getMeetingConfig(context)
+        cfg = tool.getMeetingConfig(context)
+        # invalidate if an org title is changed
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.everyorganizationsvocabulary')
         return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
@@ -988,13 +986,28 @@ AskedAdvicesVocabularyFactory = AskedAdvicesVocabulary()
 class ItemOptionalAdvicesVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call__(self, context, include_selected=True, include_not_selectable_values=True):
+    def __call___cachekey(method, self, context, include_selected=True, include_not_selectable_values=True):
+        '''cachekey method for self.__call__.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        # try to get common vocab, stored with active values
+        key = '%s.%s:%s' % (method.__module__, method.__name__, repr(cfg))
+        vocab = store_in_cache(method).get(key)
+        # no cache or values in vocab
+        if not vocab or not set(context.getOptionalAdvisers()).difference([t.value for t in vocab._terms]):
+            return repr(cfg)
+        else:
+            # in case some values not in vocab, create new entry in vocab
+            return repr(cfg), context.getOptionalAdvisers()
+
+    @ram.cache(__call___cachekey)
+    def ItemOptionalAdvicesVocabulary__call__(self, context, include_selected=True, include_not_selectable_values=True):
         """p_include_selected will make sure values selected on current context are
            in the vocabulary.  Only relevant when context is a MeetingItem.
            p_include_not_selectable_values will include the 'not_selectable_value_...' values,
            useful for display only most of times."""
-        request = getRequest()
 
+        request = context.REQUEST
         def _displayDelayAwareValue(delay_label, org_title, delay):
             org_title = safe_unicode(org_title)
             delay_label = safe_unicode(delay_label)
@@ -1155,6 +1168,9 @@ class ItemOptionalAdvicesVocabulary(object):
                                   'not_selectable_value_non_delay_aware_optional_advisers',
                                   non_delay_aware_optional_advisers_msg))
         return SimpleVocabulary(resDelayAwareAdvisers + resNonDelayAwareAdvisers)
+
+    # do ram.cache have a different key name
+    __call__ = ItemOptionalAdvicesVocabulary__call__
 
 
 ItemOptionalAdvicesVocabularyFactory = ItemOptionalAdvicesVocabulary()

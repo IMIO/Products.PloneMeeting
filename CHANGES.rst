@@ -6,7 +6,7 @@ Changelog
 ------------------
 
 - Fixed `ItemOptionalAdvicesVocabulary` to manage correctly missing terms when
-  it involves userids.
+  it involves userids. Added caching as it is used when editing an item.
   [gbastien]
 
 4.2.6 (2023-09-21)
