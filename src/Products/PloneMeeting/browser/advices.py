@@ -2,7 +2,6 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group_id
-from DateTime import DateTime
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.workflow import get_state_infos

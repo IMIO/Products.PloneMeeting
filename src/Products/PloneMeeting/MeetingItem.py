@@ -5883,6 +5883,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         def _get_adviser_name(adviser):
             """Manage adviser name, will append selected __userid__ if any."""
             name = html.escape(adviser['name'])
+            if adviser['delay_label']:
+                name += u" - {0} ({1})".format(
+                    safe_unicode(html.escape(adviser['delay_label'])),
+                    safe_unicode(adviser['delay']))
             if adviser['userids']:
                 name += u" ({0})".format(
                     self._displayAdviserUsers(adviser['userids'], portal_url, tool))

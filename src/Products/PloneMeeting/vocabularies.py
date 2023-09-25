@@ -990,15 +990,24 @@ class ItemOptionalAdvicesVocabulary(object):
         '''cachekey method for self.__call__.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
+        # first time, we init a cached value with include_not_selectable_values=True and include_selected=False
+        # so it will be the base default vocabulary
+        if not include_selected and include_not_selectable_values:
+            return repr(cfg), False, True, ()
         # try to get common vocab, stored with active values
-        key = '%s.%s:%s' % (method.__module__, method.__name__, repr(cfg))
-        vocab = store_in_cache(method).get(key)
-        # no cache or values in vocab
-        if not vocab or not set(context.getOptionalAdvisers()).difference([t.value for t in vocab._terms]):
-            return repr(cfg)
+        elif include_selected and include_not_selectable_values:
+            key = '%s.%s:%s' % (method.__module__, method.__name__, (repr(cfg), False, True))
+            vocab = store_in_cache(method).get(key)
+            if not vocab:
+                vocab = self(context, False, True)
+            # there are missing values
+            if set(context.getOptionalAdvisers()).difference([t.value for t in vocab._terms]):
+                return repr(cfg), True, True, context.getOptionalAdvisers()
+            else:
+                # no missing values so we can use the default vocabulary
+                return repr(cfg), False, True, ()
         else:
-            # in case some values not in vocab, create new entry in vocab
-            return repr(cfg), context.getOptionalAdvisers()
+            return repr(cfg), False, False
 
     @ram.cache(__call___cachekey)
     def ItemOptionalAdvicesVocabulary__call__(self, context, include_selected=True, include_not_selectable_values=True):
@@ -1008,6 +1017,7 @@ class ItemOptionalAdvicesVocabulary(object):
            useful for display only most of times."""
 
         request = context.REQUEST
+
         def _displayDelayAwareValue(delay_label, org_title, delay):
             org_title = safe_unicode(org_title)
             delay_label = safe_unicode(delay_label)
@@ -1038,11 +1048,12 @@ class ItemOptionalAdvicesVocabulary(object):
                 user_ids = []
                 if org_uid in selectableAdviserUsers:
                     user_ids += get_plone_group(org_uid, "advisers").getGroupMemberIds()
-                # manage missing user ids here so term is grouped with the org term
-                prefix = term_value + '__userid__'
-                missing_user_ids = [oa.replace(prefix, '') for oa in context.getOptionalAdvisers()
-                                    if oa.startswith(prefix)]
-                user_ids += missing_user_ids
+                if include_selected:
+                    # manage missing user ids here so term is grouped with the org term
+                    prefix = term_value + '__userid__'
+                    missing_user_ids = [oa.replace(prefix, '') for oa in context.getOptionalAdvisers()
+                                        if oa.startswith(prefix)]
+                    user_ids += missing_user_ids
                 # manage users in a separate list so we sort it before appending to global res
                 res_users = []
                 for user_id in user_ids:
