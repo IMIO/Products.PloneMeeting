@@ -5,6 +5,7 @@
 # GNU General Public License (GPL)
 #
 
+from collective.contact.plonegroup.browser.tables import OrgaPrettyLinkWithAdditionalInfosColumn
 from collective.eeafaceted.z3ctable.columns import AbbrColumn
 from collective.eeafaceted.z3ctable.columns import ActionsColumn
 from collective.eeafaceted.z3ctable.columns import AwakeObjectVocabularyColumn
@@ -467,3 +468,9 @@ class ReviewStateTitle(I18nColumn):
         """ """
         wf = self._get_workflow(item)
         return wf.states.get(item.review_state).title
+
+
+class PMOrgaPrettyLinkWithAdditionalInfosColumn(OrgaPrettyLinkWithAdditionalInfosColumn):
+    """ """
+
+    ai_reloaded_fields = ['position_type']

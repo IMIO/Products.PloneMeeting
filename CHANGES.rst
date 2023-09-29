@@ -5,8 +5,10 @@ Changelog
 4.2.7 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Override the `org_pretty_link_with_additional_infos` column used in contacts
+  dashboards to reload widget of `held_position.position_type` field as the
+  vocabulary is gender aware, values may change from a `held_position` to another.
+  [gbastien]
 
 4.2.6 (2023-09-21)
 ------------------
