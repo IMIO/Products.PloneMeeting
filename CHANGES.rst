@@ -5,6 +5,10 @@ Changelog
 4.2.7 (unreleased)
 ------------------
 
+- Override the `org_pretty_link_with_additional_infos` column used in contacts
+  dashboards to reload widget of `held_position.position_type` field as the
+  vocabulary is gender aware, values may change from a `held_position` to another.
+  [gbastien]
 - Fixed `ItemOptionalAdvicesVocabulary` to manage correctly missing terms when
   it involves userids. Added caching as it is used when editing an item.
   [gbastien]
