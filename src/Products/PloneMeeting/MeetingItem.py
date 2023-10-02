@@ -6725,13 +6725,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                      domain="PloneMeeting",
                                      context=self.REQUEST)
             else:
-                help_msg = translate('This optional advice was asked by the item creators '
-                                     '(shown by his title being between brackets)',
+                help_msg = translate('This optional advice was asked by the item creators',
                                      domain="PloneMeeting",
                                      context=self.REQUEST)
         else:
-            help_msg = translate('This automatic advice has been asked by the application '
-                                 '(shown by his title not being between brackets)',
+            help_msg = translate('This automatic advice has been asked by the application',
                                  domain="PloneMeeting",
                                  context=self.REQUEST)
             # an additional help message can be provided for automatically asked advices
