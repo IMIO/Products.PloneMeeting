@@ -6,11 +6,11 @@
            xmlns:zcml="http://namespaces.zope.org/zcml"
            i18n_domain="PloneMeeting">
 
-  <!-- load "imio.pm.locales" first so translations are overrided -->
+  <!-- load "imio.pm.locales" and "communesplone.layout" first so translations are overrided -->
   <include package="imio.pm.locales" />
+  <include package="communesplone.layout" />
   <include package="plonetheme.imioapps"/>
   <include package="imio.annex" />
-  <include package="communesplone.layout" />
   <include package="Products.PasswordStrength" />
   <include package="collective.behavior.internalnumber" />
   <include package="collective.ckeditor" />

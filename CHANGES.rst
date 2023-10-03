@@ -9,6 +9,9 @@ Changelog
   dashboards to reload widget of `held_position.position_type` field as the
   vocabulary is gender aware, values may change from a `held_position` to another.
   [gbastien]
+- Load `communesplone.layout` zcml sooner so overrided translations are loaded,
+  this is especially the case for `label_by_author` translation.
+  [gbastien]
 
 4.2.6 (2023-09-21)
 ------------------
