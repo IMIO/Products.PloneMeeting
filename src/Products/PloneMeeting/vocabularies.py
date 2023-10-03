@@ -46,6 +46,7 @@ from plone import api
 from plone.app.vocabularies.security import GroupsVocabulary
 from plone.app.vocabularies.users import UsersFactory
 from plone.memoize import ram
+from plone.memoize.ram import store_in_cache
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
@@ -926,13 +927,10 @@ class AskedAdvicesVocabulary(object):
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
-        context = get_context_with_request(context) or context
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.askedadvicesvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = None
-        # when creating new Plone Site, context may be the Zope Application...
-        if hasattr(context, 'portal_type'):
-            cfg = tool.getMeetingConfig(context)
+        cfg = tool.getMeetingConfig(context)
+        # invalidate if an org title is changed
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.everyorganizationsvocabulary')
         return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
@@ -988,12 +986,37 @@ AskedAdvicesVocabularyFactory = AskedAdvicesVocabulary()
 class ItemOptionalAdvicesVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call__(self, context, include_selected=True, include_not_selectable_values=True):
+    def __call___cachekey(method, self, context, include_selected=True, include_not_selectable_values=True):
+        '''cachekey method for self.__call__.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        # first time, we init a cached value with include_not_selectable_values=True and include_selected=False
+        # so it will be the base default vocabulary
+        if not include_selected and include_not_selectable_values:
+            return repr(cfg), False, True, ()
+        # try to get common vocab, stored with active values
+        elif include_selected and include_not_selectable_values:
+            key = '%s.%s:%s' % (method.__module__, method.__name__, (repr(cfg), False, True))
+            vocab = store_in_cache(method).get(key)
+            if not vocab:
+                vocab = self(context, False, True)
+            # there are missing values
+            if set(context.getOptionalAdvisers()).difference([t.value for t in vocab._terms]):
+                return repr(cfg), True, True, context.getOptionalAdvisers()
+            else:
+                # no missing values so we can use the default vocabulary
+                return repr(cfg), False, True, ()
+        else:
+            return repr(cfg), False, False
+
+    @ram.cache(__call___cachekey)
+    def ItemOptionalAdvicesVocabulary__call__(self, context, include_selected=True, include_not_selectable_values=True):
         """p_include_selected will make sure values selected on current context are
            in the vocabulary.  Only relevant when context is a MeetingItem.
            p_include_not_selectable_values will include the 'not_selectable_value_...' values,
            useful for display only most of times."""
-        request = getRequest()
+
+        request = context.REQUEST
 
         def _displayDelayAwareValue(delay_label, org_title, delay):
             org_title = safe_unicode(org_title)
@@ -1015,30 +1038,34 @@ class ItemOptionalAdvicesVocabulary(object):
                                              context=request)
             return value_to_display
 
-        def _insert_term_and_users(res, term_value, term_title):
+        def _insert_term_and_users(res, term_value, term_title, add_users=True):
             """ """
             term = SimpleTerm(term_value, term_value, term_title)
             term.sortable_title = term_title
             res.append(term)
             org_uid = term_value.split('__rowid__')[0]
-            if org_uid in selectableAdviserUsers:
-                advisers_group = get_plone_group(org_uid, "advisers")
-                for user_id in advisers_group.getGroupMemberIds():
+            if add_users:
+                user_ids = []
+                if org_uid in selectableAdviserUsers:
+                    user_ids += get_plone_group(org_uid, "advisers").getGroupMemberIds()
+                if include_selected:
+                    # manage missing user ids here so term is grouped with the org term
+                    prefix = term_value + '__userid__'
+                    missing_user_ids = [oa.replace(prefix, '') for oa in context.getOptionalAdvisers()
+                                        if oa.startswith(prefix)]
+                    user_ids += missing_user_ids
+                # manage users in a separate list so we sort it before appending to global res
+                res_users = []
+                for user_id in user_ids:
                     user_term_value = "{0}__userid__{1}".format(term_value, user_id)
                     user_title = safe_unicode(tool.getUserName(user_id))
                     user_term = SimpleTerm(user_term_value, user_term_value, user_title)
                     user_term.sortable_title = u"{0} ({1})".format(term_title, user_title)
-                    res.append(user_term)
+                    res_users.append(user_term)
+                res_users = humansorted(res_users, key=attrgetter('title'))
+                res += res_users
             return
 
-        def _getNonDelayAwareAdvisers_cachekey(method, cfg):
-            '''cachekey method for self._getNonDelayAwareAdvisers.'''
-            # this volatile is invalidated when plonegroup config changed
-            date = get_cachekey_volatile(
-                '_users_groups_value')
-            return date, repr(cfg), cfg.modified()
-
-        @ram.cache(_getNonDelayAwareAdvisers_cachekey)
         def _getNonDelayAwareAdvisers(cfg):
             """Separated so it can be cached."""
             resNonDelayAwareAdvisers = []
@@ -1087,23 +1114,42 @@ class ItemOptionalAdvicesVocabulary(object):
                                           [org_infos.token for org_infos in resDelayAwareAdvisers]
                 for optionalAdviser in optionalAdvisers:
                     if optionalAdviser not in optionalAdvisersInVocab:
+                        user_id = org = None
+                        org_uid = optionalAdviser
+                        if '__userid__' in optionalAdviser:
+                            org_uid, user_id = optionalAdviser.split('__userid__')
                         if '__rowid__' in optionalAdviser:
-                            org_uid, row_id = decodeDelayAwareId(optionalAdviser)
+                            org_uid, row_id = decodeDelayAwareId(org_uid)
                             delay = cfg._dataForCustomAdviserRowId(row_id)['delay']
                             delay_label = context.adviceIndex[org_uid]['delay_label']
                             org = get_organization(org_uid)
                             if not org:
                                 continue
-                            org_title = org.get_full_title()
-                            value_to_display = _displayDelayAwareValue(delay_label, org_title, delay)
-                            _insert_term_and_users(
-                                resDelayAwareAdvisers, optionalAdviser, value_to_display)
+                            value_to_display = _displayDelayAwareValue(
+                                delay_label, org.get_full_title(), delay)
+                            if not user_id:
+                                _insert_term_and_users(
+                                    resDelayAwareAdvisers,
+                                    optionalAdviser,
+                                    value_to_display,
+                                    add_users=False)
                         else:
-                            org = get_organization(optionalAdviser)
+                            org = get_organization(org_uid)
                             if not org:
                                 continue
-                            _insert_term_and_users(
-                                resNonDelayAwareAdvisers, optionalAdviser, org.get_full_title())
+                            if not user_id:
+                                _insert_term_and_users(
+                                    resNonDelayAwareAdvisers,
+                                    optionalAdviser,
+                                    org.get_full_title(),
+                                    add_users=False)
+                        # it is a userid, add a special value including the org title
+                        if org and user_id:
+                            user_term_title = safe_unicode(
+                                "{0} ({1})".format(org.get_full_title(), tool.getUserName(user_id)))
+                            user_term = SimpleTerm(optionalAdviser, optionalAdviser, user_term_title)
+                            user_term.sortable_title = user_term_title
+                            resDelayAwareAdvisers.append(user_term)
 
         # now create the listing
         # sort elements by value before potentially prepending a special value here under
@@ -1133,6 +1179,9 @@ class ItemOptionalAdvicesVocabulary(object):
                                   'not_selectable_value_non_delay_aware_optional_advisers',
                                   non_delay_aware_optional_advisers_msg))
         return SimpleVocabulary(resDelayAwareAdvisers + resNonDelayAwareAdvisers)
+
+    # do ram.cache have a different key name
+    __call__ = ItemOptionalAdvicesVocabulary__call__
 
 
 ItemOptionalAdvicesVocabularyFactory = ItemOptionalAdvicesVocabulary()

@@ -12,6 +12,9 @@ Changelog
 - Load `communesplone.layout` zcml sooner so overrided translations are loaded,
   this is especially the case for `label_by_author` translation.
   [gbastien]
+- Fixed `ItemOptionalAdvicesVocabulary` to manage correctly missing terms when
+  it involves userids. Added caching as it is used when editing an item.
+  [gbastien]
 
 4.2.6 (2023-09-21)
 ------------------

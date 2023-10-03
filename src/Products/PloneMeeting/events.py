@@ -34,6 +34,7 @@ from plone import api
 from plone.app.textfield import RichText
 from plone.registry.interfaces import IRecordModifiedEvent
 from plone.restapi.deserializer import json_body
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
@@ -308,8 +309,6 @@ def _invalidateOrgRelatedCachedVocabularies():
         "Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary", get_again=True)
     invalidate_cachekey_volatile_for(
         "Products.PloneMeeting.vocabularies.groupsinchargevocabulary", get_again=True)
-    invalidate_cachekey_volatile_for(
-        "Products.PloneMeeting.vocabularies.askedadvicesvocabulary", get_again=True)
     # also invalidated here, called from organization._invalidateCachedMethods
     invalidate_cachekey_volatile_for('_users_groups_value', get_again=True)
 
@@ -462,19 +461,25 @@ def onRegistryModified(event):
             unselected_org_uids = list(old_set.difference(new_set))
             tool = api.portal.get_tool('portal_plonemeeting')
             for unselected_org_uid in unselected_org_uids:
-                # Remove the org from every meetingConfigs.selectableCopyGroups
-                for mc in tool.objectValues('MeetingConfig'):
-                    selectableCopyGroups = list(mc.getSelectableCopyGroups())
+                # Remove the org from every meetingConfigs.selectableCopyGroups and
+                # from every meetingConfigs.selectableAdvisers
+                for cfg in tool.objectValues('MeetingConfig'):
+                    update_cfg = False
+                    selectableCopyGroups = list(cfg.getSelectableCopyGroups())
                     for plone_group_id in get_plone_groups(unselected_org_uid, ids_only=True):
                         if plone_group_id in selectableCopyGroups:
+                            update_cfg = True
                             selectableCopyGroups.remove(plone_group_id)
-                    mc.setSelectableCopyGroups(selectableCopyGroups)
-                # Remove the org from every meetingConfigs.selectableAdvisers
-                for mc in tool.objectValues('MeetingConfig'):
-                    selectableAdvisers = list(mc.getSelectableAdvisers())
-                    if unselected_org_uid in mc.getSelectableAdvisers():
+                            cfg.setSelectableCopyGroups(selectableCopyGroups)
+                    selectableAdvisers = list(cfg.getSelectableAdvisers())
+                    if unselected_org_uid in cfg.getSelectableAdvisers():
+                        update_cfg = True
                         selectableAdvisers.remove(unselected_org_uid)
-                    mc.setSelectableAdvisers(selectableAdvisers)
+                        cfg.setSelectableAdvisers(selectableAdvisers)
+                    if update_cfg:
+                        # especially invalidate cache
+                        notify(ObjectEditedEvent(cfg))
+
                 # add a portal_message explaining what has been done to the user
                 plone_utils = api.portal.get_tool('plone_utils')
                 plone_utils.addPortalMessage(

@@ -4032,6 +4032,7 @@ class testMeetingItem(PloneMeetingTestCase):
                            'is_linked_to_previous_row': '1',
                            'delay': '10'}]
         cfg.setCustomAdvisers(customAdvisers)
+        notify(ObjectEditedEvent(cfg))
         self.assertFalse('{0}__rowid__unique_id_123'.format(self.developers_uid) in vocab_factory(item))
         self.assertTrue('{0}__rowid__unique_id_456'.format(self.developers_uid) in vocab_factory(item))
         # but if selected, then it appears in the vocabulary, no matter the 'available_on' expression
@@ -4063,6 +4064,55 @@ class testMeetingItem(PloneMeetingTestCase):
              '{0}__userid__pmAdviser1'.format(self.developers_uid),
              '{0}__userid__pmManager'.format(self.developers_uid),
              self.vendors_uid])
+        # when selected on an item, available in the vocabulary
+        item.setOptionalAdvisers(('{0}__userid__pmCreator2'.format(self.vendors_uid), ))
+        item._update_after_edit()
+        self.assertEqual(
+            [t.title for t in vocab_factory(item)],
+            [u'Please select among delay-aware advisers',
+             u'Developers - 10 day(s)',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMManager',
+             u'Please select among non delay-aware advisers',
+             u'Developers',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMManager',
+             u'Vendors',
+             # new value correctly sorted, the other users are not listed
+             u'M. PMCreator Two'])
+        # now select on item a user from an org that is no more in the vocabulary
+        item.setOptionalAdvisers(('{0}__userid__pmCreator1'.format(self.endUsers_uid), ))
+        self.assertEqual(
+            [t.title for t in vocab_factory(item)],
+            [u'Please select among delay-aware advisers',
+             u'Developers - 10 day(s)',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMManager',
+             # new value with org and user on one line so it is not possible to select the org
+             u'End users (M. PMCreator One)',
+             u'Please select among non delay-aware advisers',
+             u'Developers',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMManager',
+             u'Vendors'])
+        # add a delay aware value to an existing org but with a no longer existing user
+        item.setOptionalAdvisers((
+            '{0}__userid__pmCreator1'.format(self.endUsers_uid),
+            '{0}__rowid__unique_id_456__userid__pmAdviser2'.format(self.developers_uid)))
+        self.assertEqual(
+            [t.title for t in vocab_factory(item)],
+            [u'Please select among delay-aware advisers',
+             u'Developers - 10 day(s)',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMManager',
+             # new value, just the user as the org exist, and just the user id as user does not exist
+             u'pmAdviser2',
+             u'End users (M. PMCreator One)',
+             u'Please select among non delay-aware advisers',
+             u'Developers',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMManager',
+             u'Vendors'])
 
     def test_pm_OptionalAdvisersDelayAwareAdvisers(self):
         '''
@@ -4099,6 +4149,7 @@ class testMeetingItem(PloneMeetingTestCase):
                            'for_item_created_from': '2012/01/01',
                            'delay': '10'}, ]
         cfg.setCustomAdvisers(customAdvisers)
+        notify(ObjectEditedEvent(cfg))
         # a special key is prepended that will be disabled in the UI
         # at the beginning of 'both' list (delay-aware and non delay-aware advisers)
         vocab_keys = [term.token for term in vocab_factory(item)._terms]
@@ -4112,6 +4163,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # check that if a 'for_item_created_until' date is passed, it does not appear anymore
         customAdvisers[1]['for_item_created_until'] = '2013/01/01'
         cfg.setCustomAdvisers(customAdvisers)
+        notify(ObjectEditedEvent(cfg))
         vocab_keys = [term.token for term in vocab_factory(item)._terms]
         self.assertEqual(vocab_keys,
                          ['not_selectable_value_delay_aware_optional_advisers',
@@ -4125,6 +4177,7 @@ class testMeetingItem(PloneMeetingTestCase):
         customAdvisers[1]['for_item_created_until'] = ''
         customAdvisers[0]['available_on'] = 'python:False'
         cfg.setCustomAdvisers(customAdvisers)
+        notify(ObjectEditedEvent(cfg))
         vocab_keys = [term.token for term in vocab_factory(item)._terms]
         self.assertEqual(vocab_keys,
                          ['not_selectable_value_delay_aware_optional_advisers',
@@ -4136,6 +4189,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # but the customAdviser is simply not taken into account
         customAdvisers[0]['available_on'] = 'python: here.someMissingMethod(some_parameter=False)'
         cfg.setCustomAdvisers(customAdvisers)
+        notify(ObjectEditedEvent(cfg))
         vocab_keys = [term.token for term in vocab_factory(item)._terms]
         self.assertEqual(vocab_keys,
                          ['not_selectable_value_delay_aware_optional_advisers',

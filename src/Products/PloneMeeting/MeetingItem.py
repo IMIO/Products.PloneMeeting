@@ -5883,6 +5883,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         def _get_adviser_name(adviser):
             """Manage adviser name, will append selected __userid__ if any."""
             name = html.escape(adviser['name'])
+            if adviser['delay_label']:
+                name += u" - {0} ({1})".format(
+                    safe_unicode(html.escape(adviser['delay_label'])),
+                    safe_unicode(adviser['delay']))
             if adviser['userids']:
                 name += u" ({0})".format(
                     self._displayAdviserUsers(adviser['userids'], portal_url, tool))
@@ -6721,13 +6725,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                      domain="PloneMeeting",
                                      context=self.REQUEST)
             else:
-                help_msg = translate('This optional advice was asked by the item creators '
-                                     '(shown by his title being between brackets)',
+                help_msg = translate('This optional advice was asked by the item creators',
                                      domain="PloneMeeting",
                                      context=self.REQUEST)
         else:
-            help_msg = translate('This automatic advice has been asked by the application '
-                                 '(shown by his title not being between brackets)',
+            help_msg = translate('This automatic advice has been asked by the application',
                                  domain="PloneMeeting",
                                  context=self.REQUEST)
             # an additional help message can be provided for automatically asked advices
