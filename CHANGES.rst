@@ -15,6 +15,9 @@ Changelog
 - Fixed `ItemOptionalAdvicesVocabulary` to manage correctly missing terms when
   it involves userids. Added caching as it is used when editing an item.
   [gbastien]
+- Added `imio.helpers.xhtml.unescape_html` to `safe_utils` so it is available in
+  TAL expressions, this will decode an HTML content containing HTML entities.
+  [gbastien]
 
 4.2.6 (2023-09-21)
 ------------------
