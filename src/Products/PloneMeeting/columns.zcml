@@ -60,6 +60,14 @@
        provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
        name="copyGroups" />
 
+  <adapter
+     for="zope.interface.Interface
+          zope.publisher.interfaces.browser.IBrowserRequest
+          collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
+     factory=".columns.ItemMeetingDeadlineDateColumn"
+     provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
+     name="ItemMeetingDeadlineDateColumn" />
+
     <adapter
        for="zope.interface.Interface
             zope.publisher.interfaces.browser.IBrowserRequest
