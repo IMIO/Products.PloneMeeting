@@ -613,8 +613,7 @@ class Migrator(BaseMigrator):
         brains = self.catalog(portal_type=['annex', 'annexDecision'])
         pghandler = ZLogHandler(steps=1000)
         pghandler.init('Removing broken annexes', len(brains))
-        i = 0
-        idxs = ['modified', 'ModificationDate', 'Date']
+        i = found = 0
         for brain in brains:
             pghandler.report(i)
             annex = brain.getObject()
@@ -626,10 +625,11 @@ class Migrator(BaseMigrator):
                 parent_modified = parent.modified()
                 parent.manage_delObjects(ids=[annex.getId()])
                 parent.setModificationDate(parent_modified)
-                parent.reindexObject(idxs=idxs)
-                i += 1
-        if i:
-            self.warn(logger, 'In _removeBrokenAnnexes, removed %s annexe(s)' % i)
+                parent.reindexObject(idxs=['modified', 'ModificationDate', 'Date'])
+                found += 1
+            i += 1
+        if found:
+            self.warn(logger, 'In _removeBrokenAnnexes, removed %s annexe(s)' % found)
         logger.info('Done.')
 
     def addCKEditorStyle(self, style_name, style_element, style_type="class", style_value=None):
