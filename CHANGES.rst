@@ -18,6 +18,11 @@ Changelog
 - Added `imio.helpers.xhtml.unescape_html` to `safe_utils` so it is available in
   TAL expressions, this will decode an HTML content containing HTML entities.
   [gbastien]
+- Added new optional field `MeetingItem.meetingDeadlineDate` and
+  the related faceted dashboard column.
+  [gbastien]
+- Added 2 new advice types `negative_with_remarks` and `back_to_proposing_group`.
+  [gbastien]
 
 4.2.6 (2023-09-21)
 ------------------
