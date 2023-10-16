@@ -5522,7 +5522,7 @@ class testMeetingItem(PloneMeetingTestCase):
             'meetingTransitionInsertingMe', 'inAndOutMoves', 'notes',
             'meetingManagersNotes', 'meetingManagersNotesSuite', 'meetingManagersNotesEnd',
             'marginalNotes', 'observations', 'pollTypeObservations',
-            'preferredMeeting', 'proposingGroup',
+            'preferredMeeting', 'meetingDeadlineDate', 'proposingGroup',
             'takenOverBy', 'templateUsingGroups',
             'toDiscuss', 'committeeObservations', 'committeeTranscript',
             'votesObservations', 'votesResult',

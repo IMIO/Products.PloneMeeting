@@ -3048,7 +3048,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: 'copyGroups' in cfg.getUsedItemAttributes() and tool.userIsAmong(['observers', 'reviewers'])",
+                    'tal_condition':
+                        "python: 'copyGroups' in cfg.getUsedItemAttributes() and "
+                        "tool.userIsAmong(['observers', 'reviewers'])",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Unread items in copy
@@ -5550,6 +5552,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate('header_getItemIsSigned', domain=d, context=self.REQUEST))),
             ("toDiscuss", u"{0} (toDiscuss)".format(
                 translate('header_toDiscuss', domain=d, context=self.REQUEST))),
+            ("item_meeting_deadline_date", u"{0} (meetingDeadlineDate)".format(
+                translate('header_item_meeting_deadline_date', domain=d, context=self.REQUEST))),
             ("actions", u"{0} (actions)".format(
                 translate("header_actions", domain=d, context=self.REQUEST))),
             ("async_actions", u"{0} (async_actions)".format(

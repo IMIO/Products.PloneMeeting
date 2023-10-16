@@ -1130,7 +1130,8 @@ body.portaltype-meetingconfig div.field.ArchetypesMultiSelectionWidget[id^='arch
     max-width: 500px !important;
 }
 div.field.ArchetypesMultiSelectionWidget[id^='archetypes-fieldname-'] {
-    max-height: 500px;
+    /* use 600px so most of fields in config are fully displayed */
+    max-height: 600px;
     overflow-x: auto;
 }
 div.field.ArchetypesMultiSelectionWidget div.formQuestion.label {

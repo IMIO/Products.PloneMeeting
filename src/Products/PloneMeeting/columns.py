@@ -8,7 +8,6 @@
 from collective.contact.plonegroup.browser.tables import OrgaPrettyLinkWithAdditionalInfosColumn
 from collective.eeafaceted.z3ctable.columns import AbbrColumn
 from collective.eeafaceted.z3ctable.columns import ActionsColumn
-from collective.eeafaceted.z3ctable.columns import AwakeObjectVocabularyColumn
 from collective.eeafaceted.z3ctable.columns import BaseColumn
 from collective.eeafaceted.z3ctable.columns import BrowserViewCallColumn
 from collective.eeafaceted.z3ctable.columns import CheckBoxColumn
@@ -80,10 +79,11 @@ class ItemGroupsInChargeAcronymColumn(AbbrColumn):
     header_help = u"header_groups_in_charge_acronym_help"
 
 
-class ItemCopyGroupsColumn(AwakeObjectVocabularyColumn):
+class ItemCopyGroupsColumn(VocabularyColumn):
     """A column that display the copyGroups."""
     sort_index = 'getCopyGroups'
     vocabulary = u'Products.PloneMeeting.Groups'
+    the_object = True
 
 
 class ItemAssociatedGroupsColumn(VocabularyColumn):
@@ -479,4 +479,7 @@ class PMOrgaPrettyLinkWithAdditionalInfosColumn(OrgaPrettyLinkWithAdditionalInfo
 
 class ItemMeetingDeadlineDateColumn(DateColumn):
     """ """
+    sort_index = -1
+    attrName = "meetingDeadlineDate"
     long_format = True
+    the_object = True
