@@ -7,6 +7,7 @@ from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.date import wordizeDate
 from imio.helpers.workflow import update_role_mappings_for
+from imio.helpers.xhtml import unescape_html
 from imio.history.utils import getLastWFAction
 from Products.PloneMeeting.browser.views import is_all_count
 from Products.PloneMeeting.browser.views import print_votes
