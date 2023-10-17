@@ -1651,6 +1651,48 @@ class PMPortalTypesVocabulary(PortalTypesVocabularyFactory):
 PMPortalTypesVocabularyFactory = PMPortalTypesVocabulary()
 
 
+class AdvicePortalTypesVocabulary(object):
+    """Vocabulary listing every existing advice portal_types."""
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        # manage multiple 'meetingadvice' portal_types
+        res = []
+        for portal_type in tool.getAdvicePortalTypes():
+            res.append(SimpleTerm(portal_type.id,
+                                  portal_type.id,
+                                  translate(portal_type.title,
+                                            domain="PloneMeeting",
+                                            context=context.REQUEST)))
+        return SimpleVocabulary(res)
+
+
+AdvicePortalTypesVocabularyFactory = AdvicePortalTypesVocabulary()
+
+
+class TypeWorkflowsVocabulary(object):
+    """Vocabulary listing workflows related to a type of element."""
+    implements(IVocabularyFactory)
+
+    def __init__(self, wf_name_startswith=None):
+        self.wf_name_startswith = wf_name_startswith
+
+    def __call__(self, context):
+        wf_tool = api.portal.get_tool('portal_workflow')
+        res = []
+        for wf_name in wf_tool.listWorkflows():
+            if wf_name.startswith(self.wf_name_startswith) and \
+               '__' not in wf_name:
+                res.append(SimpleTerm(wf_name, wf_name, wf_name))
+        return SimpleVocabulary(res)
+
+
+ItemWorkflowsVocabularyFactory = TypeWorkflowsVocabulary('meetingitem')
+MeetingWorkflowsVocabularyFactory = TypeWorkflowsVocabulary('meeting_')
+AdviceWorkflowsVocabularyFactory = TypeWorkflowsVocabulary('meetingadvice')
+
+
 class PMExistingPODTemplate(ExistingPODTemplateFactory):
     """
     Vocabulary factory for 'pod_template_to_use' field, include MeetingConfig title in term.
@@ -3031,3 +3073,63 @@ class PMDxPortalTypesVocabulary(DxPortalTypesVocabulary):
 
 
 PMDxPortalTypesVocabularyFactory = PMDxPortalTypesVocabulary()
+
+
+class WorkflowAdaptationsVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        tool = api.portal.get_tool("portal_plonemeeting")
+        cfg = tool.getMeetingConfig(context)
+        terms = []
+        for adaptation in self.wf_adaptations:
+            # back transitions from presented to every available item validation
+            # states defined in MeetingConfig.itemWFValidationLevels
+            if adaptation == 'presented_item_back_to_validation_state':
+                for item_validation_level in cfg.getItemWFValidationLevels(only_enabled=True):
+                    adaptation_id = 'presented_item_back_to_{0}'.format(item_validation_level['state'])
+                    translated_item_validation_state = translate(
+                        safe_unicode(item_validation_level['state_title']),
+                        domain='plone',
+                        context=context.REQUEST)
+                    title = translate(
+                        'wa_presented_item_back_to_validation_state',
+                        domain='PloneMeeting',
+                        mapping={'item_state': translated_item_validation_state},
+                        context=context.REQUEST,
+                        default=u'Item back to presented from validation state "{0}"'.format(
+                            translated_item_validation_state))
+                    title = title + " ({0})".format(adaptation_id)
+                    terms.append(SimpleTerm(adaptation_id, adaptation_id, title))
+            else:
+                title = translate('wa_%s' % adaptation, domain='PloneMeeting', context=context.REQUEST)
+                title = title + " ({0})".format(adaptation)
+                terms.append(SimpleTerm(adaptation, adaptation, title))
+        terms = humansorted(terms, key=attrgetter('title'))
+        return SimpleVocabulary(terms)
+
+
+WorkflowAdaptationsVocabularyFactory = WorkflowAdaptationsVocabulary()
+
+
+class AdviceWorkflowAdaptationsVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        tool = api.portal.get_tool("portal_plonemeeting")
+        terms = []
+        for adaptation in tool.advice_wf_adaptations:
+            title = translate('wa_%s' % adaptation, domain='PloneMeeting', context=context.REQUEST)
+            title = title + " ({0})".format(adaptation)
+            terms.append(SimpleTerm(adaptation, adaptation, title))
+        terms = humansorted(terms, key=attrgetter('title'))
+        return SimpleVocabulary(terms)
+
+
+AdviceWorkflowAdaptationsVocabularyFactory = AdviceWorkflowAdaptationsVocabulary()

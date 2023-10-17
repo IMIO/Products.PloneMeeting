@@ -39,7 +39,7 @@ class Migrate_To_4106(Migrator):
         pghandler.finish()
         logger.info('Done.')
 
-    def _remapContactsWokflows(self):
+    def _remapContactsWorkflows(self):
         """Use 'plonemeeting_activity_managers_workflow' instead 'collective_contact_core_workflow'
            for person and held_position portal_types."""
         logger.info("Changing workflow for person and held_position portal_types...")
@@ -57,7 +57,7 @@ class Migrate_To_4106(Migrator):
         logger.info('Migrating to PloneMeeting 4106...')
         self._updateOrgsDashboardCollectionColumns()
         self._umarkCreationFlagForEveryItems()
-        self._remapContactsWokflows()
+        self._remapContactsWorkflows()
 
 
 def migrate(context):

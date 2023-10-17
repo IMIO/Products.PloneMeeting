@@ -1068,7 +1068,7 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         schemata="workflow",
-        vocabulary='listItemWorkflows',
+        vocabulary_factory='ItemWorkflows',
         default=defValues.itemWorkflow,
         required=True,
         write_permission="PloneMeeting: Write risky config",
@@ -1114,7 +1114,7 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         schemata="workflow",
-        vocabulary='listMeetingWorkflows',
+        vocabulary_factory='MeetingWorkflows',
         default=defValues.meetingWorkflow,
         required=True,
         write_permission="PloneMeeting: Write risky config",
@@ -1159,7 +1159,7 @@ schema = Schema((
         ),
         schemata="workflow",
         multiValued=1,
-        vocabulary='listWorkflowAdaptations',
+        vocabulary_factory='WorkflowAdaptations',
         default=defValues.workflowAdaptations,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -1990,7 +1990,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
-        vocabulary='listAdvicePortalTypes',
+        vocabulary_factory='AdvicePortalTypes',
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -3844,15 +3844,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 (search.UID(), search.Title()))
         return DisplayList(res)
 
-    security.declarePrivate('listAdvicePortalTypes')
-
-    def listAdvicePortalTypes(self):
-        """Vocabulary for the MeetingConfig.defaultAdviceHiddenDuringRedaction field."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        advice_portal_types = tool.getAdvicePortalTypes()
-        res = [(portal_type.id, portal_type.title) for portal_type in advice_portal_types]
-        return DisplayList(res)
-
     security.declarePrivate('listSelectableContacts')
 
     def listSelectableContacts(self):
@@ -5380,39 +5371,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 break
         return isAutomaticAdvice, res
 
-    security.declarePrivate('listWorkflowAdaptations')
-
-    def listWorkflowAdaptations(self, sorted=True):
-        '''Lists the available workflow changes.'''
-        res = []
-        for adaptation in self.wfAdaptations:
-            # back transitions from presented to every available item validation
-            # states defined in MeetingConfig.itemWFValidationLevels
-            if adaptation == 'presented_item_back_to_validation_state':
-                for item_validation_level in self.getItemWFValidationLevels(only_enabled=True):
-                    adaptation_id = 'presented_item_back_to_{0}'.format(item_validation_level['state'])
-                    translated_item_validation_state = translate(
-                        safe_unicode(item_validation_level['state_title']),
-                        domain='plone',
-                        context=self.REQUEST)
-                    title = translate(
-                        'wa_presented_item_back_to_validation_state',
-                        domain='PloneMeeting',
-                        mapping={'item_state': translated_item_validation_state},
-                        context=self.REQUEST,
-                        default=u'Item back to presented from validation state "{0}"'.format(
-                            translated_item_validation_state))
-                    title = title + " ({0})".format(adaptation_id)
-                    res.append((adaptation_id, title))
-            else:
-                title = translate('wa_%s' % adaptation, domain='PloneMeeting', context=self.REQUEST)
-                title = title + " ({0})".format(adaptation)
-                res.append((adaptation, title))
-        res = DisplayList(tuple(res))
-        if sorted:
-            res = res.sortedByValue()
-        return res
-
     security.declarePrivate('listValidationLevelsNumbers')
 
     def listValidationLevelsNumbers(self):
@@ -6922,35 +6880,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for reviewSuffix in self.reviewersFor().keys():
             if "_%s'" % reviewSuffix in groupIds:
                 return reviewSuffix
-
-    security.declarePublic('listItemWorkflows')
-
-    def listItemWorkflows(self):
-        '''Lists the workflows available for MeetingItem, it has to :
-           - start with 'meetingitem';
-           - do not contain '__' (it is a duplicated workflow).'''
-        res = []
-        for workflowName in self.portal_workflow.listWorkflows():
-            if workflowName.startswith('meetingitem') and \
-               '__' not in workflowName:
-                res.append((workflowName, workflowName))
-        return DisplayList(tuple(res)).sortedByValue()
-
-    security.declarePublic('listMeetingWorkflows')
-
-    def listMeetingWorkflows(self):
-        '''Lists the workflows available for Meeting, it has to :
-           - start with 'meeting';
-           - do not start with 'meetingadvice' nor 'meetingitem';
-           - do not contain '__' (it is a duplicated workflow).'''
-        res = []
-        for workflowName in self.portal_workflow.listWorkflows():
-            if workflowName.startswith('meeting') and \
-               not workflowName.startswith('meetingadvice') and \
-               not workflowName.startswith('meetingitem') and \
-               '__' not in workflowName:
-                res.append((workflowName, workflowName))
-        return DisplayList(tuple(res)).sortedByValue()
 
     security.declarePublic('listStateIds')
 

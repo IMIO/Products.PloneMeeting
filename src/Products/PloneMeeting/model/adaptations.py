@@ -685,8 +685,8 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
     for wfAdaptation in wfAdaptations:
         # first try to call a performCustomWFAdaptations to see if it manages wfAdaptation
         # it could be a separated one or an overrided one
-        applied = tool.adapted().performCustomWFAdaptations(meetingConfig, wfAdaptation, logger,
-                                                            itemWorkflow, meetingWorkflow)
+        applied = tool.adapted().performCustomWFAdaptations(
+            meetingConfig, wfAdaptation, logger, itemWorkflow, meetingWorkflow)
         # double check if applied is True or False, we need that boolean
         if not isinstance(applied, bool):
             raise Exception('ToolPloneMeeting.performCustomWFAdaptations must return a boolean value!')

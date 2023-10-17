@@ -395,7 +395,7 @@ class ToolInitializer:
                 safe_unicode(cfg.Title()), cfg.getId(), u'\n'.join(errors)))
 
         if not configData.active:
-            self.portal.portal_wokflow.doActionFor(cfg, 'deactivate')
+            self.portal.portal_workflow.doActionFor(cfg, 'deactivate')
         # Adds the sub-objects within the config: categories, classifiers, items in config, ...
         for descr in configData.categories:
             self.addCategory(cfg, descr)

@@ -12,6 +12,8 @@ from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group_id
+from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
+from collective.datagridcolumns.SelectColumn import SelectColumn
 from collective.documentviewer.async import queueJob
 from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.behaviors.iconifiedcategorization import IconifiedCategorization
@@ -274,6 +276,38 @@ schema = Schema((
         multiValued=1,
         vocabulary='listDeferParentReindexes',
     ),
+    DataGridField(
+        name='advisersConfig',
+        widget=DataGridField._properties['widget'](
+            description="AdvisersConfig",
+            description_msgid="advisers_config_descr",
+            columns={
+                'org_uids':
+                    MultiSelectColumn(
+                        "Adviser config org uids",
+                        vocabulary_factory='collective.contact.plonegroup.browser.settings.'
+                                           'SortedSelectedOrganizationsElephantVocabulary'),
+                'portal_type':
+                    SelectColumn(
+                        "Adviser config portal_type",
+                        vocabulary_factory="AdvicePortalTypes"),
+                'base_wf':
+                    SelectColumn(
+                        "Adviser config base workflow",
+                        vocabulary_factory="AdviceWorkflows"),
+                'wf_adaptations':
+                    MultiSelectColumn(
+                        "Adviser config workflow adaptations",
+                        vocabulary_factory="AdviceWorkflowAdaptations"),
+            },
+            label='Advisersconfig',
+            label_msgid='PloneMeeting_label_advisersConfig',
+            i18n_domain='PloneMeeting',
+        ),
+        default=defValues.advisersConfig,
+        columns=('org_uids', 'portal_type', 'base_wf', 'wf_adaptations'),
+        allow_empty_rows=False,
+    ),
 
 ),
 )
@@ -298,6 +332,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     schema["title"].widget.visible = False
 
     ocrLanguages = ('eng', 'fra', 'deu', 'ita', 'nld', 'por', 'spa', 'vie')
+
+    # Names of advice workflow adaptations, ORDER IS IMPORTANT!
+    advice_wf_adaptations = ('add_advicecreated_state', )
 
     # tool should not appear in portal_catalog
     def at_post_edit_script(self):

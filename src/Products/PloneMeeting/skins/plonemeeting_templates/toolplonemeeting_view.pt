@@ -132,13 +132,13 @@
         </legend>
         <table width="100%">
           <tr valign="top">
-            <td tal:define="field python:here.getField('meetingFolderTitle')">
+            <td width="33%" tal:define="field python:here.getField('meetingFolderTitle')">
               <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
-            <td tal:define="field python:here.getField('functionalAdminEmail')">
+            <td width="33%" tal:define="field python:here.getField('functionalAdminEmail')">
               <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
-            <td tal:define="field python:here.getField('functionalAdminName')">
+            <td width="34%" tal:define="field python:here.getField('functionalAdminName')">
               <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
           </tr>
@@ -170,6 +170,11 @@
               <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
             <td tal:define="field python:here.getField('deferParentReindex')">
+              <span metal:use-macro="here/widgets/field/macros/view" />
+            </td>
+          </tr>
+          <tr valign="top">
+            <td colspan="3" tal:define="field python:here.getField('advisersConfig')">
               <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
           </tr>
