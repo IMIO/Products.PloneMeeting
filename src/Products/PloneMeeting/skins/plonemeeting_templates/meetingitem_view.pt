@@ -220,6 +220,16 @@
               <span tal:condition="not:nocall:meeting">-</span>
             </div>
 
+            <tal:comment replace="nothing">Meeting deadline date</tal:comment>
+            <div class="discreet" tal:condition="python: 'meetingDeadlineDate' in usedAttrs">
+                <span class="item_attribute_label"
+                      i18n:translate="PloneMeeting_label_meetingDeadlineDate"></span>:&nbsp;&nbsp;
+                <span style="display: inline-block">
+                  <tal:block metal:use-macro="python: here.widget('meetingDeadlineDate', mode='view')" />
+                </span>
+                <span tal:condition="python: context.getMeetingDeadlineDate() is None">-</span>
+            </div>
+
             <tal:comment replace="nothing">List type</tal:comment>
             <div class="discreet" tal:condition="nocall:meeting">
                 <span data-base_url="#"

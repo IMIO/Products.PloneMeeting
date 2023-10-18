@@ -42,6 +42,7 @@ from plone import api
 from plone.memoize import ram
 from Products.Archetypes.atapi import BaseFolder
 from Products.Archetypes.atapi import BooleanField
+from Products.Archetypes.atapi import DateTimeField
 from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.atapi import IntegerField
 from Products.Archetypes.atapi import LinesField
@@ -1302,6 +1303,18 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         vocabulary='listMeetingsAcceptingItems',
+    ),
+    DateTimeField(
+        name='meetingDeadlineDate',
+        widget=DateTimeField._properties['widget'](
+            condition="python: here.attribute_is_used('meetingDeadlineDate') and not here.isDefinedInTool()",
+            description="MeetingDeadlineDate",
+            description_msgid="meeting_deadline_date_descr",
+            label='Meetingdeadlinedate',
+            label_msgid='PloneMeeting_label_meetingDeadlineDate',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
     ),
     LinesField(
         name='itemTags',
@@ -5556,8 +5569,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def _advicePortalTypeForAdviser(self, org_uid):
         '''See doc in interfaces.py.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        extra_infos = tool.adapted().get_extra_adviser_infos()
-        adviser_infos = extra_infos.get(org_uid, {})
+        adviser_infos = tool.adapted().get_extra_adviser_infos().get(org_uid, {})
         advice_portal_type = adviser_infos.get('portal_type', None)
         return advice_portal_type or 'meetingadvice'
 

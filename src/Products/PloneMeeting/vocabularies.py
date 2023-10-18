@@ -3080,12 +3080,12 @@ class WorkflowAdaptationsVocabulary(object):
 
     implements(IVocabularyFactory)
 
-    def __call__(self, context):
+    def __call__(self, context, sorted=True):
         """ """
         tool = api.portal.get_tool("portal_plonemeeting")
         cfg = tool.getMeetingConfig(context)
         terms = []
-        for adaptation in self.wf_adaptations:
+        for adaptation in cfg.wfAdaptations:
             # back transitions from presented to every available item validation
             # states defined in MeetingConfig.itemWFValidationLevels
             if adaptation == 'presented_item_back_to_validation_state':
@@ -3108,7 +3108,8 @@ class WorkflowAdaptationsVocabulary(object):
                 title = translate('wa_%s' % adaptation, domain='PloneMeeting', context=context.REQUEST)
                 title = title + " ({0})".format(adaptation)
                 terms.append(SimpleTerm(adaptation, adaptation, title))
-        terms = humansorted(terms, key=attrgetter('title'))
+        if sorted:
+            terms = humansorted(terms, key=attrgetter('title'))
         return SimpleVocabulary(terms)
 
 

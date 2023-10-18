@@ -3,6 +3,7 @@
 '''This module allows to perform some standard sets of adaptations in the
    PloneMeeting data structures and workflows.'''
 
+from imio.helpers.content import get_vocab_values
 from imio.helpers.content import object_values
 from imio.pyutils.utils import merge_dicts
 from imio.pyutils.utils import replace_in_list
@@ -38,7 +39,7 @@ RETURN_TO_PROPOSING_GROUP_MAPPINGS = {'backTo_presented_from_returned_to_proposi
 
 WF_APPLIED = 'Workflow adaptation "%s" applied for meetingConfig "%s".'
 WF_APPLIED_CUSTOM = 'Custom Workflow adaptation "%s" applied for meetingConfig "%s".'
-ADVICE_WF_APPLIED_CUSTOM = 'Custom advice Workflow adaptation "%s" applied on WF "%s" for meetingConfig "%s".'
+ADVICE_WF_APPLIED_CUSTOM = 'Custom advice Workflow adaptation "%s" applied on WF "%s" for every meetingConfigs.'
 WF_DOES_NOT_EXIST_WARNING = "Could not apply workflow adaptations because the workflow '%s' does not exist."
 WF_ITEM_VALIDATION_LEVELS_DISABLED = 'No enabled item validation levels found for meetingConfig "%s".'
 
@@ -438,7 +439,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
     # make sure given wfAdaptations are in the right order
     # import MeetingConfig only here so we are sure that the 'wfAdaptations' attr
     # has been updated by subplugins if any
-    ordered_wfAdaptations = meetingConfig.listWorkflowAdaptations(sorted=False).keys()
+    ordered_wfAdaptations = get_vocab_values(meetingConfig, 'WorkflowAdaptations', sorted=False)
     wfAdaptations = list(wfAdaptations)
     wfAdaptations.sort(key=lambda x: ordered_wfAdaptations.index(x))
 
@@ -1104,29 +1105,38 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
 
         logger.info(WF_APPLIED % (wfAdaptation, meetingConfig.getId()))
 
-    # manage meetingadvice related workflow adaptations
+
+def _performAdviceWorkflowAdaptations(logger=logger):
+    '''This function applies advice related workflow adaptations.'''
+    tool = api.portal.get_tool('portal_plonemeeting')
+    # save patched wf_ids as several org uids may use same patched workflow
+    patched_wf_ids = []
     for org_uid, extra_adviser_infos in tool.adapted().get_extra_adviser_infos().items():
-        # first try to call a performCustomAdviceWFAdaptations
         portal_type = extra_adviser_infos['portal_type']
         base_wf = extra_adviser_infos['base_wf']
+        if base_wf in patched_wf_ids:
+            continue
+        patched_wf_ids.append(base_wf)
         advice_wf_id = '{0}__{1}'.format(portal_type, base_wf)
         wfAdaptations = extra_adviser_infos['wf_adaptations']
         for wfAdaptation in wfAdaptations:
+            # first try to call a performCustomAdviceWFAdaptations
             applied = tool.adapted().performCustomAdviceWFAdaptations(
-                meetingConfig, wfAdaptation, logger, advice_wf_id)
+                tool, wfAdaptation, logger, advice_wf_id)
             # double check if applied is True or False, we need that boolean
             if not isinstance(applied, bool):
-                raise Exception('ToolPloneMeeting.performCustomAdviceWFAdaptations must return a boolean value!')
-            # if performCustomAdviceWFAdaptations managed wfAdaptation, continue with next one
+                raise Exception(
+                    'ToolPloneMeeting.performCustomAdviceWFAdaptations must '
+                    'return a boolean value!')
+            # if performCustomAdviceWFAdaptations managed wfAdaptation,
+            # continue with next one
             if applied:
-                logger.info(ADVICE_WF_APPLIED_CUSTOM % (wfAdaptation,
-                                                        advice_wf_id,
-                                                        meetingConfig.getId()))
+                logger.info(ADVICE_WF_APPLIED_CUSTOM % (wfAdaptation, advice_wf_id))
                 continue
             else:
                 # nothing done by default for now
                 raise Exception('ToolPloneMeeting.performCustomAdviceWFAdaptations '
-                                'did not hangle WFAdaptation %s!' % wfAdaptation)
+                                'did not handle WFAdaptation %s!' % wfAdaptation)
 
 
 def _getValidationReturnedStates(cfg):

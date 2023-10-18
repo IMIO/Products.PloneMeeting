@@ -84,10 +84,12 @@ from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingItem
+from Products.PloneMeeting.model.adaptations import _performAdviceWorkflowAdaptations
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import add_wf_history_action
+from Products.PloneMeeting.utils import duplicate_workflow
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
@@ -339,12 +341,34 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     # tool should not appear in portal_catalog
     def at_post_edit_script(self):
         self.unindexObject()
+        # Update MeetingAdvice portal_types if necessary
+        self._updateMeetingAdvicePortalTypes()
+        # Perform advice related workflow adaptations
+        _performAdviceWorkflowAdaptations()
+        # custom onEdit
         self.adapted().onEdit(isCreated=False)
 
     security.declarePrivate('at_post_create_script')
 
     def at_post_create_script(self):
+        # Update MeetingAdvice portal_types if necessary
+        self._updateMeetingAdvicePortalTypes()
+        # Perform advice related workflow adaptations
+        _performAdviceWorkflowAdaptations()
+        # custom onEdit
         self.adapted().onEdit(isCreated=True)
+
+    def _updateMeetingAdvicePortalTypes(self):
+        '''After Meeting/MeetingItem portal_types have been updated,
+           update MeetingAdvice portal_types if necessary.
+           This is the place to duplicate advice workflows
+           to apply workflow adaptations on.'''
+        # create a copy of each 'base_wf', we preprend the portal_type to create a new workflow
+        for org_uids, adviser_infos in self.adapted().get_extra_adviser_infos().items():
+            portal_type = adviser_infos['portal_type']
+            base_wf = adviser_infos['base_wf']
+            advice_wf_id = '{0}__{1}'.format(portal_type, base_wf)
+            duplicate_workflow(base_wf, advice_wf_id, portalTypeNames=[portal_type])
 
     security.declareProtected(ModifyPortalContent, 'setConfigGroups')
 
@@ -1300,7 +1324,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
           Returns True if the content_category was actually updated, False if no correspondence could be found.
         '''
         catalog = api.portal.get_tool('portal_catalog')
-        tool = api.portal.get_tool('portal_plonemeeting')
         if annex.portal_type == 'annexDecision':
             self.REQUEST.set('force_use_item_decision_annexes_group', True)
             annex_category = get_category_object(originCfg, annex.content_category)
@@ -1316,7 +1339,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         other_mc_correspondences = []
         if annex_category.other_mc_correspondences:
-            annex_cfg_id = tool.getMeetingConfig(annex).getId()
+            annex_cfg_id = self.getMeetingConfig(annex).getId()
             other_mc_correspondences = [
                 brain._unrestrictedGetObject() for brain in catalog.unrestrictedSearchResults(
                     UID=tuple(annex_category.other_mc_correspondences),
@@ -1672,7 +1695,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def get_extra_adviser_infos(self):
         '''See doc in interfaces.py.'''
-        return {}
+        res = {}
+        tool = self.getSelf()
+        for row in tool.getAdvisersConfig():
+            for org_uid in row['org_uids']:
+                res[org_uid] = {'portal_type': row['portal_type'],
+                                'base_wf': row['base_wf'],
+                                'wf_adaptations': row['wf_adaptations']}
+        return res
 
     def getAdvicePortalTypeIds_cachekey(method, self):
         '''cachekey method for self.getAdvicePortalTypes.'''

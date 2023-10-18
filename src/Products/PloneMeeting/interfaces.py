@@ -600,11 +600,6 @@ class IMeetingConfigDocumentation:
     def extraAdviceTypes(self):
         '''Method for defining extra advice types, needs to return a list of
            ids that will be used for id and translated for title.'''
-    def _updateMeetingAdvicePortalTypes(self):
-        '''After Meeting/MeetingItem portal_types have been updated,
-           update MeetingAdvice portal_types if necessary.
-           This is the place to duplicate advice workflows
-           to apply workflow adaptations on.'''
     def _adviceConditionsInterfaceFor(self, advice_obj):
         '''Return the interface name to use to get the advice WF conditions adapter.'''
     def _adviceActionsInterfaceFor(self, advice_obj):
@@ -657,8 +652,10 @@ class IToolPloneMeetingDocumentation:
     def performCustomWFAdaptations(meetingConfig, wfAdaptation, logger, itemWorkflow, meetingWorkflow):
         '''This let's a plugin define it's own WFAdaptations to apply.'''
     def get_extra_adviser_infos(self):
-        '''Extra adviser infos giving following information :
-           - master key: adviser organization id
+        '''By default this will use data defined in ToolPloneMeeting.advisersConfig.
+        But this can be overrided and return a similar format, each extra adviser
+        infos must return a dict following information :
+           - master key: an adviser organization uid
            - value : a dict with :
                - 'portal_type' : the portal_type to use to give the advice;
                - 'base_wf' : the name of the base WF used by this portal_type;
