@@ -7,6 +7,8 @@ Changelog
 
 - Added new advice type `Read`.
   [gbastien]
+- Added a new utils `set_internal_number` to be able to change the `internal_number`.
+  [aduchene]
 
 4.2.7 (2023-10-19)
 ------------------
