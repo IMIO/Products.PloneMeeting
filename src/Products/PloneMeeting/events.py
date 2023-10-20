@@ -37,7 +37,6 @@ from plone.restapi.deserializer import json_body
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
-from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_INITIATOR_INDEX_PATTERN
@@ -1032,13 +1031,13 @@ def onAnnexModified(annex, event):
 
 
 def onAnnexFileChanged(annex, event):
-    '''Remove BARCODE_ATTR_ID of annex if any except:
+    '''Remove scan_id of annex if any, except:
        - if ITEM_SCAN_ID_NAME found in the REQUEST in this case, it means that
          we are creating an annex containing a generated document inclucing the barcode;
        - or annex is signed (it means that we are updating the annex thru the AMQP WS).'''
-    if getattr(annex, BARCODE_INSERTED_ATTR_ID, False) and \
+    if annex.scan_id and \
        not (annex.REQUEST.get(ITEM_SCAN_ID_NAME, False) or annex.signed):
-        setattr(annex, BARCODE_INSERTED_ATTR_ID, False)
+        annex.scan_id = None
 
 
 def onAnnexRemoved(annex, event):

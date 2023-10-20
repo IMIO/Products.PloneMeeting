@@ -272,8 +272,6 @@ ADVICE_STATES_ENDED = ('advice_given', )
 
 # name of the variable added to the REQUEST when getting the scan_id
 ITEM_SCAN_ID_NAME = 'item_scan_id'
-# name of the aribale specifying that an annex has been barcoded
-BARCODE_INSERTED_ATTR_ID = '_barcode_inserted'
 
 # Keys used in annotations
 SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY = 'PloneMeeting-sent_to_other_meetingconfig_'
