@@ -5,8 +5,8 @@ Changelog
 4.2.8 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Added new advice type `Read`.
+  [gbastien]
 
 4.2.7 (2023-10-19)
 ------------------
