@@ -1034,9 +1034,16 @@ def onAnnexFileChanged(annex, event):
     '''Remove scan_id of annex if any, except:
        - if ITEM_SCAN_ID_NAME found in the REQUEST in this case, it means that
          we are creating an annex containing a generated document inclucing the barcode;
+       - currently duplicating an item, keeping/removing scan_id is managed by
+         ToolPloneMeeting.pasteItem;
+       - if ++add++annex in REQUEST, should not really happen, it means we are adding
+         a new annex and defining a scan_id for it (power user);
        - or annex is signed (it means that we are updating the annex thru the AMQP WS).'''
     if annex.scan_id and \
-       not (annex.REQUEST.get(ITEM_SCAN_ID_NAME, False) or annex.signed):
+       not (annex.REQUEST.get(ITEM_SCAN_ID_NAME, False) or
+            annex.REQUEST.get('currentlyPastingItems', False) or
+            '/++add++annex' in annex.REQUEST.getURL() or
+            annex.signed):
         annex.scan_id = None
 
 

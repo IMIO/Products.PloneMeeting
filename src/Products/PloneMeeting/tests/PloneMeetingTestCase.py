@@ -36,6 +36,7 @@ from Products.PloneMeeting.browser.meeting import _get_default_signatories
 from Products.PloneMeeting.browser.meeting import _get_default_voters
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
+from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
 from Products.PloneMeeting.Meeting import Meeting_schema
 from Products.PloneMeeting.MeetingItem import MeetingItem_schema
@@ -462,6 +463,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if relatedTo == 'item_decision':
             annexContentType = 'annexDecision'
 
+        # scan_id is removed by default
+        self.request.set(ITEM_SCAN_ID_NAME, scan_id)
         theAnnex = createContentInContainer(
             container=context,
             portal_type=annexContentType,
@@ -474,6 +477,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             signed=signed,
             publishable=publishable,
             scan_id=scan_id)
+        self.request.set(ITEM_SCAN_ID_NAME, None)
         # need to commit the transaction so the stored blob is correct
         # if not done, accessing the blob will raise 'BlobError: Uncommitted changes'
         transaction.commit()
