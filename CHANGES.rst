@@ -2,7 +2,15 @@ Changelog
 =========
 
 
-4.2.7 (unreleased)
+4.2.8 (unreleased)
+------------------
+
+- Added new advice type `Read`.
+  [gbastien]
+- Added a new utils `set_internal_number` to be able to change the `internal_number`.
+  [aduchene]
+
+4.2.7 (2023-10-19)
 ------------------
 
 - Override the `org_pretty_link_with_additional_infos` column used in contacts

@@ -5747,6 +5747,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("negative_with_remarks", translate('negative_with_remarks', domain=d, context=self.REQUEST)),
             ("back_to_proposing_group", translate('back_to_proposing_group', domain=d, context=self.REQUEST)),
             ("nil", translate('nil', domain=d, context=self.REQUEST)),
+            ("read", translate('read', domain=d, context=self.REQUEST)),
         ]
         # add custom extra advice types
         for extra_advice_type in self.adapted().extraAdviceTypes():

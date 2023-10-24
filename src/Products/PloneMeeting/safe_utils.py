@@ -20,6 +20,7 @@ from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_gn_position_name
 from Products.PloneMeeting.utils import get_internal_number
+from Products.PloneMeeting.utils import set_internal_number
 from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import get_prefixed_gn_position_name
 from Products.PloneMeeting.utils import get_public_url
