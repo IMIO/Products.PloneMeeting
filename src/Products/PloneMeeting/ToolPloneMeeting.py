@@ -84,11 +84,12 @@ from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingItem
-from Products.PloneMeeting.model.adaptations import _performAdviceWorkflowAdaptations
 from Products.PloneMeeting.MeetingItem import MeetingItem
+from Products.PloneMeeting.model.adaptations import _performAdviceWorkflowAdaptations
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import add_wf_history_action
+from Products.PloneMeeting.utils import configure_advice_dx_localroles_for
 from Products.PloneMeeting.utils import duplicate_workflow
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -301,13 +302,24 @@ schema = Schema((
                     MultiSelectColumn(
                         "Adviser config workflow adaptations",
                         vocabulary_factory="AdviceWorkflowAdaptations"),
+                'advice_types':
+                    MultiSelectColumn(
+                        "Adviser config advice types",
+                        col_description="Adviser config advice types descr",
+                        vocabulary_factory="ConfigAdviceTypes"),
+                'default_advice_type':
+                    SelectColumn(
+                        "Adviser config default advice type",
+                        vocabulary_factory="ConfigAdviceTypes"),
             },
             label='Advisersconfig',
             label_msgid='PloneMeeting_label_advisersConfig',
             i18n_domain='PloneMeeting',
         ),
         default=defValues.advisersConfig,
-        columns=('org_uids', 'portal_type', 'base_wf', 'wf_adaptations'),
+        columns=(
+            'org_uids', 'portal_type', 'base_wf', 'wf_adaptations',
+            'advice_types', 'default_advice_type'),
         allow_empty_rows=False,
     ),
 
@@ -341,22 +353,27 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     # tool should not appear in portal_catalog
     def at_post_edit_script(self):
         self.unindexObject()
-        # Update MeetingAdvice portal_types if necessary
-        self._updateMeetingAdvicePortalTypes()
-        # Perform advice related workflow adaptations
-        _performAdviceWorkflowAdaptations()
+        # Configure advice portal_types and workflows
+        self.configureAdvices()
         # custom onEdit
         self.adapted().onEdit(isCreated=False)
 
     security.declarePrivate('at_post_create_script')
 
     def at_post_create_script(self):
+        # Configure advice portal_types and workflows
+        self.configureAdvices()
+        # custom onEdit
+        self.adapted().onEdit(isCreated=True)
+
+    def configureAdvices(self):
+        """ """
         # Update MeetingAdvice portal_types if necessary
         self._updateMeetingAdvicePortalTypes()
         # Perform advice related workflow adaptations
         _performAdviceWorkflowAdaptations()
-        # custom onEdit
-        self.adapted().onEdit(isCreated=True)
+        # Finalize advice WF config with DX local roles
+        self._finalizeAdviceWFConfig()
 
     def _updateMeetingAdvicePortalTypes(self):
         '''After Meeting/MeetingItem portal_types have been updated,
@@ -369,6 +386,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             base_wf = adviser_infos['base_wf']
             advice_wf_id = '{0}__{1}'.format(portal_type, base_wf)
             duplicate_workflow(base_wf, advice_wf_id, portalTypeNames=[portal_type])
+
+    def _finalizeAdviceWFConfig(self):
+        """ """
+        for org_uids, adviser_infos in self.adapted().get_extra_adviser_infos().items():
+            configure_advice_dx_localroles_for(
+                adviser_infos['portal_type'], org_uids)
 
     security.declareProtected(ModifyPortalContent, 'setConfigGroups')
 
@@ -1699,10 +1722,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         tool = self.getSelf()
         for row in tool.getAdvisersConfig():
             for org_uid in row['org_uids']:
-                res[org_uid] = {'portal_type': row['portal_type'],
-                                'base_wf': row['base_wf'],
-                                'wf_adaptations': row['wf_adaptations']}
+                # append every existing values
+                res[org_uid] = {k: v for k, v in row.items() if k != 'org_uids'}
         return res
+
+    def extraAdviceTypes(self):
+        '''See doc in interfaces.py.'''
+        return []
 
     def getAdvicePortalTypeIds_cachekey(method, self):
         '''cachekey method for self.getAdvicePortalTypes.'''

@@ -168,6 +168,7 @@ MEETING_GROUP_SUFFIXES = [
      'enabled': False},
 ]
 
+
 # this is made to manage specific suffixes for a particular profile
 # this will be like :
 # [{'fct_title': u'additional_suffix',
@@ -269,6 +270,9 @@ HISTORY_COMMENT_NOT_VIEWABLE = "<span class='discreet'>Access to this comment is
 # this can change if the wf used for advice is different
 ADVICE_STATES_ALIVE = ('advice_under_edit', )
 ADVICE_STATES_ENDED = ('advice_given', )
+# to be monkey patched to extend it
+# this is the mappings between an advice WF state and it's corresponding group prefix
+ADVICE_STATES_MAPPING = {'advice_given': 'advisers', }
 
 # name of the variable added to the REQUEST when getting the scan_id
 ITEM_SCAN_ID_NAME = 'item_scan_id'

@@ -131,6 +131,8 @@
            component=".vocabularies.WorkflowAdaptationsVocabularyFactory" />
   <utility name="AdviceWorkflowAdaptations"
            component=".vocabularies.AdviceWorkflowAdaptationsVocabularyFactory" />
+  <utility name="ConfigAdviceTypes"
+           component=".vocabularies.ConfigAdviceTypesVocabularyFactory" />
 
   <!-- PMHeldPosition vocabularies -->
   <utility component=".vocabularies.HeldPositionUsagesVocabularyFactory"

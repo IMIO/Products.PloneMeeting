@@ -1784,7 +1784,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listAdviceTypes',
+        vocabulary_factory='ConfigAdviceTypes',
         default=defValues.usedAdviceTypes,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -1800,7 +1800,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
-        vocabulary='listAdviceTypes',
+        vocabulary_factory='ConfigAdviceTypes',
         default=defValues.defaultAdviceType,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -5730,36 +5730,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # ("theVoterHimself", translate('the_voter_himself', domain=d, context=self.REQUEST)),
         ))
         return res
-
-    security.declarePrivate('listAdviceTypes')
-
-    def listAdviceTypes(self, include_asked_again=False):
-        d = "PloneMeeting"
-        res = []
-        if include_asked_again:
-            res.append(("asked_again", translate('asked_again', domain=d, context=self.REQUEST)))
-        res += [
-            ("positive", translate('positive', domain=d, context=self.REQUEST)),
-            ("positive_with_comments", translate('positive_with_comments', domain=d, context=self.REQUEST)),
-            ("positive_with_remarks", translate('positive_with_remarks', domain=d, context=self.REQUEST)),
-            ("cautious", translate('cautious', domain=d, context=self.REQUEST)),
-            ("negative", translate('negative', domain=d, context=self.REQUEST)),
-            ("negative_with_remarks", translate('negative_with_remarks', domain=d, context=self.REQUEST)),
-            ("back_to_proposing_group", translate('back_to_proposing_group', domain=d, context=self.REQUEST)),
-            ("nil", translate('nil', domain=d, context=self.REQUEST)),
-            ("read", translate('read', domain=d, context=self.REQUEST)),
-        ]
-        # add custom extra advice types
-        for extra_advice_type in self.adapted().extraAdviceTypes():
-            res.append((extra_advice_type,
-                        translate(extra_advice_type,
-                                  domain=d,
-                                  context=self.REQUEST)))
-        return DisplayList(res)
-
-    def extraAdviceTypes(self):
-        '''See doc in interfaces.py.'''
-        return []
 
     security.declarePrivate('listAdviceStyles')
 

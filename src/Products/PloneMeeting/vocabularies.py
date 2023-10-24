@@ -1188,6 +1188,8 @@ ItemOptionalAdvicesVocabularyFactory = ItemOptionalAdvicesVocabulary()
 
 
 class AdviceTypesVocabulary(object):
+    """Global advice types vocabulary used in faceted criterion."""
+
     implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context):
@@ -3134,3 +3136,45 @@ class AdviceWorkflowAdaptationsVocabulary(object):
 
 
 AdviceWorkflowAdaptationsVocabularyFactory = AdviceWorkflowAdaptationsVocabulary()
+
+
+class ConfigAdviceTypesVocabulary(object):
+    """Expected context is portal_plonemeeting."""
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context, include_asked_again=False):
+        d = "PloneMeeting"
+        terms = []
+        if include_asked_again:
+            terms.append(SimpleTerm(
+                "asked_again",
+                "asked_again",
+                translate('asked_again', domain=d, context=context.REQUEST)))
+        advice_types = [
+            'positive',
+            'positive_with_comments',
+            'positive_with_remarks',
+            'cautious',
+            'negative',
+            'negative_with_remarks',
+            'back_to_proposing_group',
+            'nil',
+            'read']
+        for advice_type in advice_types:
+            terms.append(
+                SimpleTerm(
+                    advice_type,
+                    advice_type,
+                    translate(advice_type, domain=d, context=context.REQUEST)))
+        # add custom extra advice types
+        for extra_advice_type in context.adapted().extraAdviceTypes():
+            terms.append(
+                SimpleTerm(
+                    extra_advice_type,
+                    extra_advice_type,
+                    translate(extra_advice_type, domain=d, context=context.REQUEST)))
+        return SimpleVocabulary(terms)
+
+
+ConfigAdviceTypesVocabularyFactory = ConfigAdviceTypesVocabulary()

@@ -4,6 +4,7 @@ from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group_id
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import get_plone_groups_for_user
+from imio.helpers.content import get_vocab_values
 from imio.helpers.workflow import get_state_infos
 from imio.history.browser.views import EventPreviewView
 from imio.history.interfaces import IImioHistory
@@ -106,6 +107,7 @@ class AdvicesIcons(BrowserView):
             self.portal_url = self.portal.absolute_url()
             self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'])
             self.advice_infos = self.context.getAdviceDataFor(self.context, ordered=True)
+            self.every_advice_types = get_vocab_values(self.tool, 'ConfigAdviceTypes')
             if not self.context.adapted().isPrivacyViewable():
                 return '<div style="display: inline">&nbsp;-&nbsp;&nbsp;&nbsp;</div>'
         return super(AdvicesIcons, self).__call__()

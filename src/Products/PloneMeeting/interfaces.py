@@ -313,10 +313,6 @@ class IMeetingItemDocumentation:
     def _advicePortalTypeForAdviser(org_uid):
         """Advices may use several 'meetingadvice' portal_types.  A portal_type is associated to
            an adviser org_uid, this method will return the advice portal_type used by given p_org_uid."""
-    def _adviceTypesForAdviser(self, meeting_advice_portal_type):
-        """Return the advice types (positive, negative, ...) for given p_meeting_advice_portal_type.
-           By default we always use every MeetingConfig.usedAdviceTypes but this is useful
-           when using several portal_types for meetingadvice and some may use particular advice types."""
     def _adviceDelayWillBeReinitialized(self, org_uid, adviceInfo, isTransitionReinitializingDelays):
         """Will advice delay be reinitialized for given p_ord_uid?
            By default delay is reinitialized if p_isTransitionReinitializingDelays
@@ -597,9 +593,6 @@ class IMeetingConfigDocumentation:
            a plugin that added his own workflowAdaptations validates it.'''
     def onEdit(isCreated):
         '''Called when an object p_isCreated or edited.'''
-    def extraAdviceTypes(self):
-        '''Method for defining extra advice types, needs to return a list of
-           ids that will be used for id and translated for title.'''
     def _adviceConditionsInterfaceFor(self, advice_obj):
         '''Return the interface name to use to get the advice WF conditions adapter.'''
     def _adviceActionsInterfaceFor(self, advice_obj):
@@ -662,6 +655,9 @@ class IToolPloneMeetingDocumentation:
                  will be used to generate a patched_ prefixed WF to apply WFAdaptations on;
                - 'wf_adaptations': a list of workflow adaptations to apply.
         '''
+    def extraAdviceTypes(self):
+        '''Method for defining extra advice types, needs to return a list of
+           ids that will be used for id and translated for title.'''
 
 
 class IToolPloneMeetingCustom(IToolPloneMeeting):

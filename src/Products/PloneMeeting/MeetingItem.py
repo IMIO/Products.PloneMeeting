@@ -5574,11 +5574,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return advice_portal_type or 'meetingadvice'
 
     def _adviceTypesForAdviser(self, meeting_advice_portal_type):
-        '''See doc in interfaces.py.'''
-        item = self.getSelf()
+        """Return the advice types (positive, negative, ...) for given p_meeting_advice_portal_type.
+           By default we will use every MeetingConfig.usedAdviceTypes but check
+           if something is defined in ToolPloneMeeting.advisersConfig."""
         tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(item)
-        return cfg.getUsedAdviceTypes()
+        res = []
+        for org_uids, adviser_infos in tool.adapted().get_extra_adviser_infos().items():
+            if adviser_infos['portal_type'] == meeting_advice_portal_type:
+                res = adviser_infos['advice_types']
+                break
+        if not res:
+            cfg = tool.getMeetingConfig(self)
+            res = cfg.getUsedAdviceTypes()
+        return res
 
     def _adviceIsViewableForCurrentUser(self,
                                         cfg,

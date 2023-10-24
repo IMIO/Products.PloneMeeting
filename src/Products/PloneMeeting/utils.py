@@ -22,6 +22,7 @@ from collective.iconifiedcategory.utils import get_group
 from datetime import datetime
 from datetime import timedelta
 from DateTime import DateTime
+from dexterity.localroles.utils import add_fti_configuration
 from email import Encoders
 from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
@@ -31,6 +32,7 @@ from imio.helpers.content import base_getattr
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_encode
 from imio.helpers.security import fplog
+from imio.helpers.workflow import get_final_states
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import addClassToLastChildren
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
@@ -72,6 +74,7 @@ from Products.PageTemplates.Expressions import SecureModuleImporter
 from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
+from Products.PloneMeeting.config import ADVICE_STATES_MAPPING
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
@@ -2537,12 +2540,14 @@ def get_internal_number(obj, init=False):
             setattr(obj, "internal_number", internal_number)
     return internal_number
 
+
 def set_internal_number(obj, value, update_ref=False):
     """Set the internal_number for a given p_obj. If p_update_ref is True we also
     update the item reference. Will be deprecated when MeetingItem is in DX."""
     setattr(obj, "internal_number", value)
     if update_ref:
         obj.update_item_reference()
+
 
 def _get_category(obj, cat_id, the_object=False, cat_type='categories'):
     """Get the cat_type "category" on an item or meeting.
@@ -2558,6 +2563,55 @@ def _get_category(obj, cat_id, the_object=False, cat_type='categories'):
     else:
         res = cat_id
     return res
+
+
+def configure_advice_dx_localroles_for(portal_type, org_uids=[]):
+    """Configure the DX localroles for an advice portal_type:
+       - initial_state receives no role;
+       - final state receives "Reviewer" role;
+       - other states receive "Editor/Reviewer/Contributor" roles."""
+    wf_tool = api.portal.get_tool('portal_workflow')
+    wf = wf_tool.getWorkflowsFor(portal_type)[0]
+    roles_config = {
+        'advice_group': {}
+    }
+    final_state_ids = get_final_states(wf, ignored_transition_ids='giveAdvice')
+    # compute suffixes
+    suffixes = []
+    if org_uids:
+        for org_uid in org_uids:
+            suffixes += get_all_suffixes(org_uid=org_uid)
+        # remove duplicates
+        suffixes = list(set(suffixes))
+    else:
+        suffixes = get_all_suffixes()
+    for state in wf.states.values():
+        if state.id == 'advice_given':
+            # special case, 'advice_given' is a state always existing in any
+            # advice related workflow and is the technical final state
+            roles_config['advice_group'][state.id] = {
+                'advisers': {'roles': [], 'rel': ''}}
+        else:
+            # get suffix from ADVICE_STATES_MAPPING, if suffix does not exist
+            # in plonegroup, we will use "advisers"
+            suffix = ADVICE_STATES_MAPPING.get(state.id, u'advisers')
+            # make sure suffix is used or we use u'advisers'
+            # this let's have a common ADVICE_STATES_MAPPING with some exceptions
+            suffix = suffix if suffix in suffixes else u'advisers'
+            if state.id in final_state_ids:
+                roles_config['advice_group'][state.id] = {
+                    suffix: {'roles': [u'Reviewer'], 'rel': ''}}
+            else:
+                # any other states, most of states actually
+                roles_config['advice_group'][state.id] = {
+                    suffix: {'roles': [u'Editor', u'Reviewer', u'Contributor'],
+                             'rel': ''}}
+    msg = add_fti_configuration(portal_type=portal_type,
+                                configuration=roles_config['advice_group'],
+                                keyname='advice_group',
+                                force=True)
+    if msg:
+        logger.warn(msg)
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

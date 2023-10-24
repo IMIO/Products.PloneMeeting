@@ -4,6 +4,7 @@ from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organization
 from dexterity.localrolesfield.field import LocalRoleField
+from imio.helpers.content import get_vocab
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastAction
 from imio.history.utils import getLastWFAction
@@ -88,10 +89,18 @@ class IMeetingAdvice(IDXMeetingContent):
 
 @form.default_value(field=IMeetingAdvice['advice_type'])
 def advice_typeDefaultValue(data):
+    res = ''
     tool = api.portal.get_tool('portal_plonemeeting')
-    cfg = tool.getMeetingConfig(data.context)
-    # manage when portal_type accessed from the Dexterity types configuration
-    return cfg and cfg.getDefaultAdviceType() or ''
+    # check ToolPloneMeeting.advisersConfig
+    advice_portal_type = findMeetingAdvicePortalType(data.context)
+    for org_uids, adviser_infos in tool.adapted().get_extra_adviser_infos().items():
+        if adviser_infos['portal_type'] == advice_portal_type:
+            res = adviser_infos['default_advice_type']
+            break
+    if not res:
+        cfg = tool.getMeetingConfig(data.context)
+        res = cfg and cfg.getDefaultAdviceType() or ''
+    return res
 
 
 @form.default_value(field=IMeetingAdvice['advice_hide_during_redaction'])
@@ -331,21 +340,18 @@ class AdviceTypeVocabulary(object):
 
         # manage when portal_type accessed from the Dexterity types configuration
         if cfg:
-            usedAdviceTypes = list(cfg.getUsedAdviceTypes())
-
-            # now wipeout usedAdviceTypes depending on current meetingadvice portal_type
+            # get usedAdviceTypes depending on current meetingadvice portal_type
             itemObj = context.meta_type == 'MeetingItem' and context or context.getParentNode()
-            current_portal_type = findMeetingAdvicePortalType(context)
-            usedAdviceTypes = [
-                usedAdviceType for usedAdviceType in usedAdviceTypes
-                if usedAdviceType in itemObj.adapted()._adviceTypesForAdviser(current_portal_type)]
+            usedAdviceTypes = itemObj._adviceTypesForAdviser(
+                findMeetingAdvicePortalType(context))
 
             # make sure if an adviceType was used for context and it is no more available, it
             # appears in the vocabulary and is so useable...
             if context.portal_type in advicePortalTypeIds and \
                context.advice_type not in usedAdviceTypes:
                 usedAdviceTypes.append(context.advice_type)
-            for advice_id, advice_title in cfg.listAdviceTypes(include_asked_again=True).items():
-                if advice_id in usedAdviceTypes:
-                    terms.append(SimpleTerm(advice_id, advice_id, advice_title))
+            # build vocabulary terms
+            for term in get_vocab(tool, 'ConfigAdviceTypes', include_asked_again=True)._terms:
+                if term.token in usedAdviceTypes:
+                    terms.append(SimpleTerm(term.value, term.token, term.title))
         return SimpleVocabulary(terms)
