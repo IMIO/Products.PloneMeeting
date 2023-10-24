@@ -9,6 +9,9 @@ Changelog
   [gbastien]
 - Added a new utils `set_internal_number` to be able to change the `internal_number`.
   [aduchene]
+- Removed `config.BARCODE_INSERTED_ATTR_ID`, we do not use it anymore to check
+  if a barcode was inserted, we rely on the `scan_id`.
+  [gbastien]
 
 4.2.7 (2023-10-19)
 ------------------
