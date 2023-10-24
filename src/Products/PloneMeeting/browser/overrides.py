@@ -48,7 +48,6 @@ from Products.CMFPlone.browser.ploneview import Plone
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import HAS_RESTAPI
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
@@ -1274,10 +1273,6 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             confidential=confidential_default,
             used_pod_template_id=pod_template.getId(),
             scan_id=scan_id)
-        # if we have a scan_id it means that a barcode has been inserted
-        # in the generated document, we mark stored annex as barcoded
-        if scan_id:
-            setattr(annex, BARCODE_INSERTED_ATTR_ID, True)
 
     def _get_stored_annex_title(self, pod_template):
         """Generates the stored annex title using the ConfigurablePODTemplate.store_as_annex_title_expr.
