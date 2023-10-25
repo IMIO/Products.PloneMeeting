@@ -33,11 +33,18 @@
 
       <tal:author condition="nocall:obj">
         <tal:i18n i18n:domain="plone" i18n:translate="label_by_author">
-        by
+        Created by
         <span tal:content="python: view.tool.getUserName(obj.Creator())"
               i18n:name="author">Roland Barthes</span>
         </tal:i18n>
       </tal:author>
+      <tal:given_by condition="nocall:obj">
+        - <tal:i18n i18n:domain="PloneMeeting" i18n:translate="label_advice_given_by">
+        Given by
+        <span tal:content="python: view.advice_given_by"
+              i18n:name="author">Roland Barthes</span>
+        </tal:i18n>
+      </tal:given_by>
       <tal:delayinfos condition="python: advice['delay'] and advice['delay_started_on']">
         <span tal:condition="nocall:obj"> - </span><span i18n:translate="">Asked on <span i18n:name="advice_asked_on_date" tal:content="python: advice['delay_infos']['delay_started_on_localized']">2013/05/08</span></span>
         <span tal:condition="python: advice['type'] != 'not_given' and not advice['hidden_during_redaction']"> - <span i18n:translate="">Given on <span i18n:name="advice_given_on_date" tal:content="python: advice['advice_given_on_localized']">2013/05/08</span></span><span class="fa show-help" style="margin-left: 2px; cursor: help;" title="help_given_on_before_started_on" i18n:attributes="title" tal:condition="python: advice['advice_given_on'].asdatetime().date() < advice['delay_started_on'].date()"></span></span>
