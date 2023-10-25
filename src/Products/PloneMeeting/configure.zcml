@@ -44,6 +44,7 @@
   <include package="Products.CPUtils"/>
   <include package="Products.cron4plone" />
   <include package="Products.DataGridField" />
+  <include package=".behaviors" />
   <include package=".browser" />
   <include package=".ckeditor" />
   <include package=".content" />

@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 #
-# File: adapters.py
-#
-# Copyright (c) 2019 by Imio.be
-#
 # GNU General Public License (GPL)
 #
 
