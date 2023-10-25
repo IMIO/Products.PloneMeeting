@@ -500,10 +500,10 @@ def _itemAnnexTypes(cfg):
 def onConfigInitialized(cfg, event):
     '''Trigger when new MeetingConfig added.'''
 
-    # Register the portal types that are specific to this meeting config.
-    cfg.registerPortalTypes()
     # Set a property allowing to know in which MeetingConfig we are
     cfg.manage_addProperty(MEETING_CONFIG, cfg.id, 'string')
+    # Register the portal types that are specific to this meeting config.
+    cfg.registerPortalTypes()
     # Create the subfolders
     cfg._createSubFolders()
     # Create the collections related to this meeting config

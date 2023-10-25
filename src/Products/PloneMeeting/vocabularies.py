@@ -3083,15 +3083,13 @@ class WorkflowAdaptationsVocabulary(object):
     implements(IVocabularyFactory)
 
     def __call__(self, context, sorted=True):
-        """ """
-        tool = api.portal.get_tool("portal_plonemeeting")
-        cfg = tool.getMeetingConfig(context)
+        """Received "context" is a MeetingConfig."""
         terms = []
-        for adaptation in cfg.wfAdaptations:
+        for adaptation in context.wfAdaptations:
             # back transitions from presented to every available item validation
             # states defined in MeetingConfig.itemWFValidationLevels
             if adaptation == 'presented_item_back_to_validation_state':
-                for item_validation_level in cfg.getItemWFValidationLevels(only_enabled=True):
+                for item_validation_level in context.getItemWFValidationLevels(only_enabled=True):
                     adaptation_id = 'presented_item_back_to_{0}'.format(item_validation_level['state'])
                     translated_item_validation_state = translate(
                         safe_unicode(item_validation_level['state_title']),
@@ -3168,7 +3166,8 @@ class ConfigAdviceTypesVocabulary(object):
                     advice_type,
                     translate(advice_type, domain=d, context=context.REQUEST)))
         # add custom extra advice types
-        for extra_advice_type in context.adapted().extraAdviceTypes():
+        tool = api.portal.get_tool('portal_plonemeeting')
+        for extra_advice_type in tool.adapted().extraAdviceTypes():
             terms.append(
                 SimpleTerm(
                     extra_advice_type,
