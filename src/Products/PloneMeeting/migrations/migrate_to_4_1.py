@@ -15,6 +15,7 @@ from DateTime import DateTime
 from datetime import date
 from eea.facetednavigation.interfaces import ICriteria
 from ftw.labels.interfaces import ILabelJar
+from imio.helpers.content import get_vocab_values
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.app.contenttypes.migration.dxmigration import migrate_base_class_to_new_class
@@ -215,7 +216,7 @@ class Migrate_To_4_1(Migrator):
         logger.info("Enabling new WFAdaptation 'refused' if relevant...")
         for cfg in self.tool.objectValues('MeetingConfig'):
             item_wf = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
-            if 'refused' in item_wf.states and 'refused' in cfg.listWorkflowAdaptations():
+            if 'refused' in item_wf.states and 'refused' in get_vocab_values(cfg, 'WorkflowAdaptations'):
                 wf_adaptations = list(cfg.getWorkflowAdaptations())
                 if 'refused' in wf_adaptations:
                     logger.info('Already migrated ...')

@@ -17,6 +17,7 @@ from copy import deepcopy
 from datetime import datetime
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import get_vocab_values
 from imio.helpers.content import object_values
 from imio.helpers.testing import testing_logger
 from imio.helpers.workflow import get_transitions
@@ -824,7 +825,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
 
     def _check_wfa_available(self, wfas):
         available = True
-        available_wfas = self.meetingConfig.listWorkflowAdaptations()
+        available_wfas = get_vocab_values(self.meetingConfig, 'WorkflowAdaptations')
         for wfa in wfas:
             if wfa not in available_wfas:
                 available = False

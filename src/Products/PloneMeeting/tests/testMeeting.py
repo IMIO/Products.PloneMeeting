@@ -13,6 +13,7 @@ from datetime import datetime
 from datetime import timedelta
 from eea.facetednavigation.interfaces import IFacetedLayout
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
 from imio.helpers.content import uuidToCatalogBrain
 from os import path
@@ -3164,8 +3165,8 @@ class testMeetingType(PloneMeetingTestCase):
            This test is very WF specific and only works with the base meeting_workflow."""
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
-        if 'no_publication' not in cfg.listWorkflowAdaptations() or \
-           'no_publication' not in cfg2.listWorkflowAdaptations():
+        if 'no_publication' not in get_vocab_values(cfg, 'WorkflowAdaptations') or \
+           'no_publication' not in get_vocab_values(cfg2, 'WorkflowAdaptations'):
             pm_logger.info("Bypassing test test_pm_Get_states_before because "
                            "it needs the 'no_publication' workflow adaptation.")
             return

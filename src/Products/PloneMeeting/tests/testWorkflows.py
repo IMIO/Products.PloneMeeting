@@ -8,6 +8,7 @@
 from AccessControl import Unauthorized
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import get_vocab_values
 from imio.history.utils import getLastWFAction
 from OFS.ObjectManager import BeforeDeleteException
 from Products.Archetypes.event import ObjectEditedEvent
@@ -747,7 +748,7 @@ class testWorkflows(PloneMeetingTestCase):
            is closed, even if item is decided before the meeting is closed.'''
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
-        if 'meetingmanager_correct_closed_meeting' in cfg.listWorkflowAdaptations():
+        if 'meetingmanager_correct_closed_meeting' in get_vocab_values(cfg, 'WorkflowAdaptations'):
             cfg.setWorkflowAdaptations(cfg.getWorkflowAdaptations() +
                                        ('meetingmanager_correct_closed_meeting', ))
         # call.update_local_roles on item only if it not already decided

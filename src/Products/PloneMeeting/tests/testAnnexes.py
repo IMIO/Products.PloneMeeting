@@ -20,6 +20,7 @@ from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.annex.columns import ActionsColumn
 from imio.annex.utils import get_annexes_to_print
+from imio.helpers.content import get_vocab_values
 from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
@@ -1140,7 +1141,7 @@ class testAnnexes(PloneMeetingTestCase):
         # in this case, it will ensure that when validated, the item may not be
         # deleted but annexes may be deleted by item editor
         wfAdaptations = cfg.getWorkflowAdaptations()
-        if 'only_creator_may_delete' in cfg.listWorkflowAdaptations() and \
+        if 'only_creator_may_delete' in get_vocab_values(cfg, 'WorkflowAdaptations') and \
            'only_creator_may_delete' not in wfAdaptations:
             wfAdaptations = wfAdaptations + ('only_creator_may_delete', )
             cfg.setWorkflowAdaptations(wfAdaptations)
@@ -1175,7 +1176,7 @@ class testAnnexes(PloneMeetingTestCase):
                           item.restrictedTraverse('@@delete_givenuid'),
                           annexDecision2.UID())
         self.changeUser('pmReviewer1')
-        if 'only_creator_may_delete' in cfg.listWorkflowAdaptations():
+        if 'only_creator_may_delete' in get_vocab_values(cfg, 'WorkflowAdaptations'):
             self.assertFalse(self.hasPermission(DeleteObjects, item))
         self.assertTrue(IContentDeletable(annex2).mayDelete())
         item.restrictedTraverse('@@delete_givenuid')(annex2.UID())
@@ -1192,7 +1193,7 @@ class testAnnexes(PloneMeetingTestCase):
                           item.restrictedTraverse('@@delete_givenuid'),
                           annexDecision3.UID())
         self.changeUser('pmManager')
-        if 'only_creator_may_delete' in cfg.listWorkflowAdaptations():
+        if 'only_creator_may_delete' in get_vocab_values(cfg, 'WorkflowAdaptations'):
             self.assertFalse(self.hasPermission(DeleteObjects, item))
         self.assertTrue(IContentDeletable(annex3).mayDelete())
         item.restrictedTraverse('@@delete_givenuid')(annex3.UID())

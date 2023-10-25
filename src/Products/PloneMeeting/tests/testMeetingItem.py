@@ -23,6 +23,7 @@ from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import get_vocab
+from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastWFAction
@@ -2374,7 +2375,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # - only restricted power observers may access 'refused' items.
         cfg = self.meetingConfig
         # add state 'refused' to item WF if available in WFAdaptations, if not already applied
-        if 'refused' in cfg.listWorkflowAdaptations() and \
+        if 'refused' in get_vocab_values(cfg, 'WorkflowAdaptations') and \
            'refused' not in cfg.getWorkflowAdaptations():
             cfg.setWorkflowAdaptations(('refused', ))
             notify(ObjectEditedEvent(cfg))
@@ -4435,7 +4436,7 @@ class testMeetingItem(PloneMeetingTestCase):
            'decisions_published' to MeetingManagers."""
         cfg = self.meetingConfig
         # enable 'publish_decisions' WFAdaptation
-        if 'hide_decisions_when_under_writing' not in cfg.listWorkflowAdaptations():
+        if 'hide_decisions_when_under_writing' not in get_vocab_values(cfg, 'WorkflowAdaptations'):
             return
         cfg.setWorkflowAdaptations(('hide_decisions_when_under_writing', ))
         notify(ObjectEditedEvent(cfg))

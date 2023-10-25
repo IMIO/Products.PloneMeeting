@@ -352,7 +352,7 @@ class AdviceTypeVocabulary(object):
             # appears in the vocabulary and is so useable...
             if context.portal_type in advicePortalTypeIds and \
                context.advice_type not in usedAdviceTypes:
-                usedAdviceTypes.append(context.advice_type)
+                usedAdviceTypes += (context.advice_type, )
             # build vocabulary terms
             for term in get_vocab(tool, 'ConfigAdviceTypes', include_asked_again=True)._terms:
                 if term.token in usedAdviceTypes:

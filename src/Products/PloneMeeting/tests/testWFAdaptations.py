@@ -12,6 +12,7 @@ from copy import deepcopy
 from DateTime import DateTime
 from datetime import datetime
 from datetime import timedelta
+from imio.helpers.content import get_vocab_values
 from imio.helpers.workflow import get_leading_transitions
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
@@ -53,7 +54,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def _check_wfa_available(self, wfas):
         available = True
-        available_wfas = self.meetingConfig.listWorkflowAdaptations()
+        available_wfas = get_vocab_values(self.meetingConfig, 'WorkflowAdaptations')
         for wfa in wfas:
             if wfa not in available_wfas:
                 available = False
@@ -65,7 +66,7 @@ class testWFAdaptations(PloneMeetingTestCase):
     def test_pm_WFA_availableWFAdaptations(self):
         '''Test what are the available wfAdaptations.
            This way, if we add a wfAdaptations, the test will 'break' until it is adapted...'''
-        self.assertEqual(sorted(self.meetingConfig.listWorkflowAdaptations().keys()),
+        self.assertEqual(sorted(get_vocab_values(self.meetingConfig, 'WorkflowAdaptations').keys()),
                          ['accepted_but_modified',
                           'accepted_out_of_meeting',
                           'accepted_out_of_meeting_and_duplicated',
