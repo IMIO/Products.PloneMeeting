@@ -4,6 +4,7 @@ from imio.helpers.content import safe_delattr
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 
+
 BARCODE_INSERTED_ATTR_ID = '_barcode_inserted'
 
 

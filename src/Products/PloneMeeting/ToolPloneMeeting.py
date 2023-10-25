@@ -311,6 +311,12 @@ schema = Schema((
                     SelectColumn(
                         "Adviser config default advice type",
                         vocabulary_factory="ConfigAdviceTypes"),
+                'show_advice_on_final_wf_transition':
+                    SelectColumn(
+                        "Adviser config  show advice on final WF transition?",
+                        vocabulary="listBooleanVocabulary",
+                        col_description="Adviser config  show advice on final WF transition descr?",
+                        default='0'),
             },
             label='Advisersconfig',
             label_msgid='PloneMeeting_label_advisersConfig',
@@ -319,7 +325,7 @@ schema = Schema((
         default=defValues.advisersConfig,
         columns=(
             'org_uids', 'portal_type', 'base_wf', 'wf_adaptations',
-            'advice_types', 'default_advice_type'),
+            'advice_types', 'default_advice_type', 'show_advice_on_final_wf_transition'),
         allow_empty_rows=False,
     ),
 
@@ -381,7 +387,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            This is the place to duplicate advice workflows
            to apply workflow adaptations on.'''
         # create a copy of each 'base_wf', we preprend the portal_type to create a new workflow
-        for org_uids, adviser_infos in self.adapted().get_extra_adviser_infos().items():
+        for org_uids, adviser_infos in self.adapted().get_extra_adviser_infos(group_by_org_uids=True).items():
             portal_type = adviser_infos['portal_type']
             base_wf = adviser_infos['base_wf']
             advice_wf_id = '{0}__{1}'.format(portal_type, base_wf)
@@ -389,7 +395,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def _finalizeAdviceWFConfig(self):
         """ """
-        for org_uids, adviser_infos in self.adapted().get_extra_adviser_infos().items():
+        for org_uids, adviser_infos in self.adapted().get_extra_adviser_infos(group_by_org_uids=True).items():
             configure_advice_dx_localroles_for(
                 adviser_infos['portal_type'], org_uids)
 
@@ -1031,6 +1037,20 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         adapted.__init__(obj, **params)
         return adapted.getLink()
+
+    security.declarePrivate('listBooleanVocabulary')
+
+    def listBooleanVocabulary(self):
+        '''Vocabulary generating a boolean behaviour : just 2 values,
+           one yes/True, and the other no/False.
+           This is used in DataGridFields to avoid use of CheckBoxColumn
+           that does not handle validation correctly.'''
+        d = "PloneMeeting"
+        res = DisplayList((
+            ('0', translate('boolean_value_false', domain=d, context=self.REQUEST)),
+            ('1', translate('boolean_value_true', domain=d, context=self.REQUEST)),
+        ))
+        return res
 
     security.declarePrivate('listWeekDays')
 
@@ -1716,14 +1736,17 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return False
 
-    def get_extra_adviser_infos(self):
+    def get_extra_adviser_infos(self, group_by_org_uids=False):
         '''See doc in interfaces.py.'''
         res = {}
         tool = self.getSelf()
         for row in tool.getAdvisersConfig():
-            for org_uid in row['org_uids']:
-                # append every existing values
-                res[org_uid] = {k: v for k, v in row.items() if k != 'org_uids'}
+            if group_by_org_uids:
+                res[tuple(row['org_uids'])] = {k: v for k, v in row.items() if k != 'org_uids'}
+            else:
+                for org_uid in row['org_uids']:
+                    # append every existing values
+                    res[org_uid] = {k: v for k, v in row.items() if k != 'org_uids'}
         return res
 
     def extraAdviceTypes(self):

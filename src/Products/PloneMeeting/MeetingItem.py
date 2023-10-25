@@ -5579,7 +5579,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            if something is defined in ToolPloneMeeting.advisersConfig."""
         tool = api.portal.get_tool('portal_plonemeeting')
         res = []
-        for org_uids, adviser_infos in tool.adapted().get_extra_adviser_infos().items():
+        for org_uid, adviser_infos in tool.adapted().get_extra_adviser_infos().items():
             if adviser_infos['portal_type'] == meeting_advice_portal_type:
                 res = adviser_infos['advice_types']
                 break

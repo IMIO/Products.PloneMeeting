@@ -5878,6 +5878,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         ))
         return res
 
+    security.declarePrivate('listBooleanVocabulary')
+
     def listBooleanVocabulary(self):
         '''Vocabulary generating a boolean behaviour : just 2 values,
            one yes/True, and the other no/False.

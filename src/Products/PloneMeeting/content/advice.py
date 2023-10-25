@@ -93,9 +93,12 @@ def advice_typeDefaultValue(data):
     tool = api.portal.get_tool('portal_plonemeeting')
     # check ToolPloneMeeting.advisersConfig
     advice_portal_type = findMeetingAdvicePortalType(data.context)
-    for org_uids, adviser_infos in tool.adapted().get_extra_adviser_infos().items():
+    for org_uid, adviser_infos in tool.adapted().get_extra_adviser_infos().items():
         if adviser_infos['portal_type'] == advice_portal_type:
-            res = adviser_infos['default_advice_type']
+            # use get in case overrided get_extra_adviser_infos and
+            # 'default_advice_type' not managed, will be removable
+            # when every profiles use new behavior
+            res = adviser_infos.get('default_advice_type', '')
             break
     if not res:
         cfg = tool.getMeetingConfig(data.context)

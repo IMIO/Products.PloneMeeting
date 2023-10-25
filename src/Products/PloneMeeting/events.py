@@ -24,6 +24,7 @@ from imio.helpers.content import get_modified_attrs
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_delattr
 from imio.helpers.security import fplog
+from imio.helpers.workflow import get_final_states
 from imio.helpers.workflow import update_role_mappings_for
 from imio.helpers.xhtml import storeImagesLocally
 from OFS.interfaces import IObjectWillBeAddedEvent
@@ -230,6 +231,19 @@ def onAdviceTransition(advice, event):
     notify(AdviceAfterTransitionEvent(
         event.object, event.workflow, event.old_state, event.new_state,
         event.transition, event.status, event.kwargs))
+
+    # check if need to show the advice
+    if advice.advice_hide_during_redaction is True:
+        tool = api.portal.get_tool('portal_plonemeeting')
+        adviser_infos = tool.adapted().get_extra_adviser_infos().get(advice.advice_group, {})
+        # use get in case overrided get_extra_adviser_infos and
+        # 'show_advice_on_final_wf_transition' not managed, will be removable
+        # when every profiles use new behavior
+        if adviser_infos and adviser_infos.get('show_advice_on_final_wf_transition', '0') == '1':
+            wf_tool = api.portal.get_tool('portal_workflow')
+            wf = wf_tool.getWorkflowsFor(advice.portal_type)[0]
+            if event.new_state.id in get_final_states(wf, ignored_transition_ids='giveAdvice'):
+                advice.advice_hide_during_redaction = False
 
     # update item if transition is not triggered in the MeetingItem._updatedAdvices
     # aka we are already updating the item
