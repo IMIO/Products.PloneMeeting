@@ -66,7 +66,7 @@ class testWFAdaptations(PloneMeetingTestCase):
     def test_pm_WFA_availableWFAdaptations(self):
         '''Test what are the available wfAdaptations.
            This way, if we add a wfAdaptations, the test will 'break' until it is adapted...'''
-        self.assertEqual(sorted(get_vocab_values(self.meetingConfig, 'WorkflowAdaptations').keys()),
+        self.assertEqual(sorted(get_vocab_values(self.meetingConfig, 'WorkflowAdaptations')),
                          ['accepted_but_modified',
                           'accepted_out_of_meeting',
                           'accepted_out_of_meeting_and_duplicated',
