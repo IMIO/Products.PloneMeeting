@@ -12,6 +12,13 @@ Changelog
 - Removed `config.BARCODE_INSERTED_ATTR_ID`, we do not use it anymore to check
   if a barcode was inserted, we rely on the `scan_id`.
   [gbastien]
+- Added advanced advice management using ToolPloneMeeting.advisersConfig:
+
+  - possible to associate a new advice portal_type to some organizations;
+  - reworked advice infos template to add more CSS classes to additional infos;
+  - display the `Advice given by` information.
+
+  [gbastien]
 
 4.2.7 (2023-10-19)
 ------------------

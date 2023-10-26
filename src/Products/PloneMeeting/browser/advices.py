@@ -344,10 +344,12 @@ class AdviceInfos(BrowserView):
 
     def get_advice_given_by(self):
         """The advice was given by advice WF transition before "giveAdvice"."""
-        given_by = "???"
+        given_by = None
         if self.obj:
             last_give_advice_event = getLastWFAction(
-                self.obj, transition='giveAdvice', ignore_previous_event_actions=['backToAdviceInitialState'])
+                self.obj,
+                transition='giveAdvice',
+                ignore_previous_event_actions=['backToAdviceInitialState', 'backToAdviceUnderEdit'])
             if not last_give_advice_event:
                 # if advice still in the giving process, check if we did not reach a final state though
                 wf_tool = api.portal.get_tool('portal_workflow')
