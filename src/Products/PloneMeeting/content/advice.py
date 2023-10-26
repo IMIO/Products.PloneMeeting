@@ -14,6 +14,7 @@ from plone.app.textfield import RichText
 from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
+from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IDXMeetingContent
@@ -260,6 +261,8 @@ class MeetingAdvice(Container):
     def attribute_is_used(self, name):
         '''Necessary for utils._addManagedPermissions for advice for now
            any attribute is used ?'''
+        if name == 'advice_accounting_commitment':
+            return base_hasattr(self, 'advice_accounting_commitment')
         return True
 
     def getIndexesRelatedTo(self, related_to='annex', check_deferred=True):
