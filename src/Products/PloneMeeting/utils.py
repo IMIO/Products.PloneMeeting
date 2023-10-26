@@ -29,6 +29,7 @@ from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.content import base_getattr
+from imio.helpers.content import get_schema_fields
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_encode
 from imio.helpers.security import fplog
@@ -998,13 +999,14 @@ def get_dx_schema(obj=None, portal_type=None):
 
 def get_dx_field(obj, field_name):
     """ """
-    schema = get_dx_schema(obj)
-    field = schema[field_name]
-    return field
+    for schema_field_name, schema_field in get_schema_fields(obj):
+        if schema_field_name == field_name:
+            return schema_field
 
 
 def get_dx_widget(obj, field_name, mode=DISPLAY_MODE):
     """ """
+    field_name = field_name.split('.')[1] if '.' in field_name else field_name
     field = get_dx_field(obj, field_name)
     schema = get_dx_schema(obj)
     autoform_widgets = mergedTaggedValueDict(schema, WIDGETS_KEY)
