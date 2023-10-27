@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-4.2.9 (unreleased)
-------------------
+4.2.9b1 (unreleased)
+--------------------
 
 - Added advanced advice management using ToolPloneMeeting.advisersConfig:
 
