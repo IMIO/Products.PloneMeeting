@@ -24,6 +24,7 @@ class Migrate_To_4210(Migrator):
         logger.info('Migrating to PloneMeeting 4210...')
 
         self._removeBarcodeInsertedAttrOnAnnexes()
+        self.updateHolidays()  # holidays 2024 were added
 
         logger.info('Migrating to PloneMeeting 4210... Done.')
 

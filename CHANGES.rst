@@ -12,6 +12,8 @@ Changelog
 - Removed `config.BARCODE_INSERTED_ATTR_ID`, we do not use it anymore to check
   if a barcode was inserted, we rely on the `scan_id`.
   [gbastien]
+- Added holidays for 2024.
+  [aduchene]
 - Added advanced advice management using ToolPloneMeeting.advisersConfig:
 
   - possible to associate a new advice portal_type to some organizations;
