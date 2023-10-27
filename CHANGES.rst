@@ -5,8 +5,13 @@ Changelog
 4.2.9 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Added advanced advice management using ToolPloneMeeting.advisersConfig:
 
+  - possible to associate a new advice portal_type to some organizations;
+  - reworked advice infos template to add more CSS classes to additional infos;
+  - display the `Advice given by` information.
+
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------
@@ -21,13 +26,6 @@ Changelog
   [gbastien]
 - Added holidays for 2024. Completed upgrade step to 4210.
   [aduchene]
-- Added advanced advice management using ToolPloneMeeting.advisersConfig:
-
-  - possible to associate a new advice portal_type to some organizations;
-  - reworked advice infos template to add more CSS classes to additional infos;
-  - display the `Advice given by` information.
-
-  [gbastien]
 
 4.2.7 (2023-10-19)
 ------------------
