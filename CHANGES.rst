@@ -2,7 +2,13 @@ Changelog
 =========
 
 
-4.2.8 (unreleased)
+4.2.9 (unreleased)
+------------------
+
+- Nothing changed yet.
+
+
+4.2.8 (2023-10-27)
 ------------------
 
 - Added new advice type `Read`.
@@ -11,8 +17,9 @@ Changelog
   [aduchene]
 - Removed `config.BARCODE_INSERTED_ATTR_ID`, we do not use it anymore to check
   if a barcode was inserted, we rely on the `scan_id`.
+  Added upgrade step to 4210.
   [gbastien]
-- Added holidays for 2024.
+- Added holidays for 2024. Completed upgrade step to 4210.
   [aduchene]
 - Added advanced advice management using ToolPloneMeeting.advisersConfig:
 
