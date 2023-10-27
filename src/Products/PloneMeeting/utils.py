@@ -1006,12 +1006,18 @@ def get_dx_field(obj, field_name):
 
 def get_dx_widget(obj, field_name, mode=DISPLAY_MODE):
     """ """
-    field_name = field_name.split('.')[1] if '.' in field_name else field_name
+    orig_field_name = field_name
+    if '.' in field_name:
+        field_name = field_name.split('.')[1]
     field = get_dx_field(obj, field_name)
     schema = get_dx_schema(obj)
     autoform_widgets = mergedTaggedValueDict(schema, WIDGETS_KEY)
     if field_name in autoform_widgets:
         widget = autoform_widgets[field_name](field, obj.REQUEST)
+    elif '.' in orig_field_name:
+        # XXX to be fixed
+        from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
+        widget = PMRichTextFieldWidget(field, obj.REQUEST)
     else:
         widget = getMultiAdapter((field, obj.REQUEST), IFieldWidget)
     widget.context = obj
@@ -1021,7 +1027,8 @@ def get_dx_widget(obj, field_name, mode=DISPLAY_MODE):
     if hasattr(widget.field, "allowed_mime_types"):
         widget.field.allowed_mime_types = ['text/html']
     # this will set widget.__name__
-    locate(widget, None, field_name)
+    locate(widget, None, orig_field_name)
+    widget.name = orig_field_name
     return widget
 
 

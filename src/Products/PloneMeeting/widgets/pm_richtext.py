@@ -59,9 +59,11 @@ class PMRichTextWidget(RichTextWidget):
 
     def js_on_click(self):
         return "if (reloadIfLocked()) {{tag=$('div#hook_{0}')[0];" \
-            "loadContent(tag, load_view='@@richtext-edit?field_name={0}', " \
-            "async=true, base_url='{1}', event_name='ckeditor_prepare_ajax_success');}}".format(
-                self.__name__.replace('.', '\\\.'), self.context.absolute_url())
+            "loadContent(tag, load_view='@@richtext-edit?field_name={1}', " \
+            "async=true, base_url='{2}', event_name='ckeditor_prepare_ajax_success');}}".format(
+                self.__name__.replace('.', '\\\.'),
+                self.__name__,
+                self.context.absolute_url())
 
     def display_value(self, value):
         """ """

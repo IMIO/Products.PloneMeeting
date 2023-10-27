@@ -697,7 +697,7 @@ function saveAndExitCKeditor(field_name, base_url) {
 
 function exitCKeditor(field_name, base_url) {
   CKEDITOR.instances[field_name].destroy();
-  tag=$('div#hook_' + field_name)[0];
+  tag=$('div#hook_' + field_name.replace('.', '\\.'))[0];
   loadContent(tag,
               load_view='@@render-single-widget?field_name=' + field_name,
               async=false,
