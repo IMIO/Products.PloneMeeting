@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.8 (unreleased)
+4.2.8 (2023-10-27)
 ------------------
 
 - Added new advice type `Read`.
