@@ -233,6 +233,7 @@ def onAdviceTransition(advice, event):
         event.transition, event.status, event.kwargs))
 
     # check if need to show the advice
+    item = advice.getParentNode()
     if advice.advice_hide_during_redaction is True:
         tool = api.portal.get_tool('portal_plonemeeting')
         adviser_infos = tool.adapted().get_extra_adviser_infos().get(advice.advice_group, {})
@@ -242,12 +243,14 @@ def onAdviceTransition(advice, event):
         if adviser_infos and adviser_infos.get('show_advice_on_final_wf_transition', '0') == '1':
             wf_tool = api.portal.get_tool('portal_workflow')
             wf = wf_tool.getWorkflowsFor(advice.portal_type)[0]
-            if event.new_state.id in get_final_states(wf, ignored_transition_ids='giveAdvice'):
+            ignored_transition_ids = len(wf.states) > 2 and ['giveAdvice'] or []
+            if event.new_state.id in get_final_states(wf, ignored_transition_ids=ignored_transition_ids):
                 advice.advice_hide_during_redaction = False
+                # update adviceIndex in case we are already updating advices it has already been set
+                item.adviceIndex[advice.advice_group]['hidden_during_redaction'] = False
 
     # update item if transition is not triggered in the MeetingItem._updatedAdvices
     # aka we are already updating the item
-    item = advice.getParentNode()
     if event.transition and not item._is_currently_updating_advices():
         item.update_local_roles()
         _advice_update_item(item)

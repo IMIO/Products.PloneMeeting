@@ -3347,7 +3347,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         changeView = advice.restrictedTraverse('@@change-advice-hidden-during-redaction')
         changeView()
-        self.assertTrue(advice.advice_hide_during_redaction is True)
+        self.assertTrue(advice.advice_hide_during_redaction)
         # by default, hide_advices_under_redaction=True, it hides advice_type and comment
         # access by adviser
         # hidden data

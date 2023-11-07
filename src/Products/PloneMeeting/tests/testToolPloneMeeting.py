@@ -21,6 +21,7 @@ from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_plone_groups_for_user
+from imio.helpers.content import get_vocab_values
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.app.textfield.value import RichTextValue
@@ -1405,6 +1406,73 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(self.tool.get_labels(item), {'label': 'Label', 'suivi': 'Suivi'})
         self.assertEqual(self.tool.get_labels(item, False), {'label': 'Label'})
         self.assertEqual(self.tool.get_labels(item, "only"), {'suivi': 'Suivi'})
+
+    def test_pm_AdvisersConfig(self):
+        """Test the ToolPloneMeeting.advisersConfig.
+           Here test the base behavior, a more complex behavior is tested in
+           Products.MeetingCommunes.tests.testToolPloneMeeting.test_pm_FinancesAdvisersConfig."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'), ))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'), ))
+        self.tool.setAdvisersConfig(
+            ({'advice_types': ['positive',
+                               'positive_with_remarks'],
+              'base_wf': 'meetingadvice_workflow',
+              'default_advice_type': 'positive_with_remarks',
+              'org_uids': [self.vendors_uid],
+              'portal_type': 'meetingadvice',
+              'show_advice_on_final_wf_transition': '1',
+              'wf_adaptations': []}, ))
+        self.tool.at_post_edit_script()
+        # create item and ask 2 advices
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem',
+                           title="Item to advice",
+                           category='development',
+                           optionalAdvisers=(self.vendors_uid, self.developers_uid, ))
+        # advice are giveable
+        self.changeUser('pmAdviser1')
+        dev_advice = createContentInContainer(
+            item,
+            item.adapted()._advicePortalTypeForAdviser(self.developers_uid),
+            **{'advice_group': self.developers_uid,
+               'advice_type': u'positive',
+               'advice_comment': RichTextValue(u'My comment')})
+        self.changeUser('pmReviewer2')
+        vendors_advice = createContentInContainer(
+            item,
+            item.adapted()._advicePortalTypeForAdviser(self.vendors_uid),
+            **{'advice_group': self.vendors_uid,
+               'advice_type': u'positive_with_remarks',
+               'advice_comment': RichTextValue(u'My comment')})
+        self.assertEqual(
+            get_vocab_values(
+                dev_advice,
+                'Products.PloneMeeting.content.advice.advice_type_vocabulary'),
+            ['positive', 'positive_with_remarks'])
+        self.assertEqual(
+            get_vocab_values(
+                vendors_advice,
+                'Products.PloneMeeting.content.advice.advice_type_vocabulary'),
+            ['positive', 'positive_with_remarks'])
+        # unselected values are taken into account
+        vendors_advice.advice_type = 'negative'
+        self.assertEqual(
+            get_vocab_values(
+                vendors_advice,
+                'Products.PloneMeeting.content.advice.advice_type_vocabulary'),
+            ['positive', 'positive_with_remarks', 'negative'])
+        # when advice is given, it is automatically shown
+        self.assertFalse(vendors_advice.advice_hide_during_redaction)
+        vendors_advice.advice_hide_during_redaction = True
+        item.update_local_roles()
+        self.assertTrue(vendors_advice.advice_hide_during_redaction)
+        self.assertTrue(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
+        self.changeUser('pmCreator1')
+        self.proposeItem(item)
+        self.assertFalse(vendors_advice.advice_hide_during_redaction)
+        self.assertFalse(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
 
 
 def test_suite():

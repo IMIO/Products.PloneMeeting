@@ -354,7 +354,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     ocrLanguages = ('eng', 'fra', 'deu', 'ita', 'nld', 'por', 'spa', 'vie')
 
     # Names of advice workflow adaptations, ORDER IS IMPORTANT!
-    advice_wf_adaptations = ('add_advicecreated_state', )
+    advice_wf_adaptations = ()
 
     # tool should not appear in portal_catalog
     def at_post_edit_script(self):

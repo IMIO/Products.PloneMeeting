@@ -271,7 +271,7 @@ HISTORY_COMMENT_NOT_VIEWABLE = "<span class='discreet'>Access to this comment is
 ADVICE_STATES_ALIVE = ('advice_under_edit', )
 ADVICE_STATES_ENDED = ('advice_given', )
 # to be monkey patched to extend it
-# this is the mappings between an advice WF state and it's corresponding group prefix
+# this is the mappings between an advice WF state and it's corresponding group suffix
 ADVICE_STATES_MAPPING = {'advice_given': 'advisers', }
 
 # name of the variable added to the REQUEST when getting the scan_id

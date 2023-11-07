@@ -337,7 +337,6 @@ body:not([class*='section-contacts']) .state-active,
 }
 
 /* red */
-div.viewlet_workflowstate span.state-advicecreated,
 div.viewlet_workflowstate span.state-created,
 div.viewlet_workflowstate span.state-inactive,
 div.viewlet_workflowstate span.state-itemcreated,
@@ -346,7 +345,6 @@ div.viewlet_workflowstate span.state-advice_under_edit {
     background-color: red;
     border-color: red;
 }
-.state-advicecreated,
 .state-created,
 .state-itemcreated,
 #content .pretty_link_content.state-itemcreated_waiting_advices,
