@@ -5,8 +5,18 @@ Changelog
 4.2.9 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Display last transition actor and comment in item mail notifications for mail events:
 
+  - `lateItem`;
+  - `itemUnpresented`;
+  - `itemDelayed`;
+  - `itemPostponedNextMeeting`;
+  - `returnedToProposingGroup`;
+  - `returnedToMeetingManagers`.
+
+  Added new item mail event `itemPostponedNextMeetingOwner`
+  (in addition to `itemPostponedNextMeeting`).
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------
