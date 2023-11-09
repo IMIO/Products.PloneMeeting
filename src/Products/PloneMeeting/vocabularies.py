@@ -990,10 +990,11 @@ class ItemOptionalAdvicesVocabulary(object):
         '''cachekey method for self.__call__.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        # first time, we init a cached value with include_not_selectable_values=True and include_selected=False
-        # so it will be the base default vocabulary
+        daa = self._getDelayAwareAdvisers(context, cfg)
+        # first time, we init a cached value with include_not_selectable_values=True
+        # and include_selected=False so it will be the base default vocabulary
         if not include_selected and include_not_selectable_values:
-            return repr(cfg), False, True, ()
+            return repr(cfg), False, True, (), daa
         # try to get common vocab, stored with active values
         elif include_selected and include_not_selectable_values:
             key = '%s.%s:%s' % (method.__module__, method.__name__, (repr(cfg), False, True))
@@ -1002,12 +1003,25 @@ class ItemOptionalAdvicesVocabulary(object):
                 vocab = self(context, False, True)
             # there are missing values
             if set(context.getOptionalAdvisers()).difference([t.value for t in vocab._terms]):
-                return repr(cfg), True, True, context.getOptionalAdvisers()
+                return repr(cfg), True, True, context.getOptionalAdvisers(), daa
             else:
                 # no missing values so we can use the default vocabulary
-                return repr(cfg), False, True, ()
+                return repr(cfg), False, True, (), daa
         else:
-            return repr(cfg), False, False
+            return repr(cfg), False, False, daa
+
+    def _getDelayAwareAdvisers(self, context, cfg):
+        """Separated so it can be called in cachekey."""
+        # add delay-aware optionalAdvisers
+        # validity_date is used for customAdviser validaty (date from, date to)
+        validity_date = None
+        item = None
+        if context.meta_type == 'MeetingItem':
+            validity_date = context.created()
+            item = context
+        else:
+            validity_date = DateTime()
+        return cfg._optionalDelayAwareAdvisers(validity_date, item)
 
     @ram.cache(__call___cachekey)
     def ItemOptionalAdvicesVocabulary__call__(self, context, include_selected=True, include_not_selectable_values=True):
@@ -1080,16 +1094,7 @@ class ItemOptionalAdvicesVocabulary(object):
         cfg = tool.getMeetingConfig(context)
         selectableAdviserUsers = cfg.getSelectableAdviserUsers()
         resDelayAwareAdvisers = []
-        # add delay-aware optionalAdvisers
-        # validity_date is used for customAdviser validaty (date from, date to)
-        validity_date = None
-        item = None
-        if context.meta_type == 'MeetingItem':
-            validity_date = context.created()
-            item = context
-        else:
-            validity_date = DateTime()
-        delayAwareAdvisers = cfg._optionalDelayAwareAdvisers(validity_date, item)
+        delayAwareAdvisers = self._getDelayAwareAdvisers(context, cfg)
         # a delay-aware adviser has a special id so we can handle it specifically after
         for delayAwareAdviser in delayAwareAdvisers:
             adviserId = "%s__rowid__%s" % \

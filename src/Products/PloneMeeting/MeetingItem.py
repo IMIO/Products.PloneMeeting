@@ -978,7 +978,18 @@ class MeetingItemWorkflowActions(object):
            the copy is automatically validated and will be linked to this one.'''
         clonedItem = self._duplicateAndValidate(cloneEventAction='create_from_postponed_next_meeting')
         # Send, if configured, a mail to the person who created the item
-        sendMailIfRelevant(clonedItem, 'itemPostponedNextMeeting', 'creators', isSuffix=True)
+        sendMailIfRelevant(
+            self.context,
+            'itemPostponedNextMeeting',
+            'creators',
+            mapping={'clonedItemUrl': clonedItem.absolute_url()},
+            isSuffix=True)
+        sendMailIfRelevant(
+            self.context,
+            'itemPostponedNextMeetingOwner',
+            'Owner',
+            mapping={'clonedItemUrl': clonedItem.absolute_url()},
+            isRole=True)
 
     security.declarePrivate('doDelay')
 
@@ -993,8 +1004,18 @@ class MeetingItemWorkflowActions(object):
                                         keepProposingGroup=True,
                                         setCurrentAsPredecessor=True)
         # Send, if configured, a mail to the person who created the item
-        sendMailIfRelevant(clonedItem, 'itemDelayed', 'creators', isSuffix=True)
-        sendMailIfRelevant(clonedItem, 'itemDelayedOwner', 'Owner', isRole=True)
+        sendMailIfRelevant(
+            self.context,
+            'itemDelayed',
+            'creators',
+            mapping={'clonedItemUrl': clonedItem.absolute_url()},
+            isSuffix=True)
+        sendMailIfRelevant(
+            self.context,
+            'itemDelayedOwner',
+            'Owner',
+            mapping={'clonedItemUrl': clonedItem.absolute_url()},
+            isRole=True)
 
     def _get_item_states_removed_from_meeting(self):
         '''Return item states in which an item is considered removed from a meeting.
