@@ -18,11 +18,13 @@ from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
 from datetime import datetime
 from datetime import timedelta
+from DateTime import DateTime
 from ftw.labels.interfaces import ILabeling
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import get_vocab
+from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastWFAction
@@ -4125,12 +4127,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # by default, nothing is defined as delay-aware adviser in the configuration
         cfg = self.meetingConfig
         self.failIf(cfg.getCustomAdvisers())
-        vocab_factory = get_vocab(
-            item,
-            item.getField('optionalAdvisers').vocabulary_factory,
-            only_factory=True)
-        vocab_keys = [term.token for term in vocab_factory(item)._terms]
-        self.assertEqual(vocab_keys, [self.developers_uid, self.vendors_uid])
+        vocab_factory_name = item.getField('optionalAdvisers').vocabulary_factory
+        self.assertEqual(get_vocab_values(item, vocab_factory_name),
+                         [self.developers_uid, self.vendors_uid])
         # now define some delay-aware advisers in MeetingConfig.customAdvisers
         customAdvisers = [{'row_id': 'unique_id_123',
                            'org': self.developers_uid,
@@ -4152,8 +4151,7 @@ class testMeetingItem(PloneMeetingTestCase):
         notify(ObjectEditedEvent(cfg))
         # a special key is prepended that will be disabled in the UI
         # at the beginning of 'both' list (delay-aware and non delay-aware advisers)
-        vocab_keys = [term.token for term in vocab_factory(item)._terms]
-        self.assertEqual(vocab_keys,
+        self.assertEqual(get_vocab_values(item, vocab_factory_name),
                          ['not_selectable_value_delay_aware_optional_advisers',
                           '{0}__rowid__unique_id_123'.format(self.developers_uid),
                           '{0}__rowid__unique_id_456'.format(self.developers_uid),
@@ -4164,8 +4162,7 @@ class testMeetingItem(PloneMeetingTestCase):
         customAdvisers[1]['for_item_created_until'] = '2013/01/01'
         cfg.setCustomAdvisers(customAdvisers)
         notify(ObjectEditedEvent(cfg))
-        vocab_keys = [term.token for term in vocab_factory(item)._terms]
-        self.assertEqual(vocab_keys,
+        self.assertEqual(get_vocab_values(item, vocab_factory_name),
                          ['not_selectable_value_delay_aware_optional_advisers',
                           '{0}__rowid__unique_id_123'.format(self.developers_uid),
                           'not_selectable_value_non_delay_aware_optional_advisers',
@@ -4178,8 +4175,7 @@ class testMeetingItem(PloneMeetingTestCase):
         customAdvisers[0]['available_on'] = 'python:False'
         cfg.setCustomAdvisers(customAdvisers)
         notify(ObjectEditedEvent(cfg))
-        vocab_keys = [term.token for term in vocab_factory(item)._terms]
-        self.assertEqual(vocab_keys,
+        self.assertEqual(get_vocab_values(item, vocab_factory_name),
                          ['not_selectable_value_delay_aware_optional_advisers',
                           '{0}__rowid__unique_id_456'.format(self.developers_uid),
                           'not_selectable_value_non_delay_aware_optional_advisers',
@@ -4190,13 +4186,18 @@ class testMeetingItem(PloneMeetingTestCase):
         customAdvisers[0]['available_on'] = 'python: here.someMissingMethod(some_parameter=False)'
         cfg.setCustomAdvisers(customAdvisers)
         notify(ObjectEditedEvent(cfg))
-        vocab_keys = [term.token for term in vocab_factory(item)._terms]
-        self.assertEqual(vocab_keys,
+        self.assertEqual(get_vocab_values(item, vocab_factory_name),
                          ['not_selectable_value_delay_aware_optional_advisers',
                           '{0}__rowid__unique_id_456'.format(self.developers_uid),
                           'not_selectable_value_non_delay_aware_optional_advisers',
                           self.developers_uid,
                           self.vendors_uid])
+        # cache invalidated of selectable customAdvisers changed
+        item.setCreationDate(DateTime('2010/01/01'))
+        item.reindexObject()
+        # delay aware advices should not be available anymore in the vocabulary
+        self.assertEqual(get_vocab_values(item, vocab_factory_name),
+                         [self.developers_uid, self.vendors_uid])
 
     def test_pm_Validate_optionalAdvisersCanNotSelectSameGroupAdvisers(self):
         '''

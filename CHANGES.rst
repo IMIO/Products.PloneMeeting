@@ -17,6 +17,9 @@ Changelog
   Added new item mail event `itemPostponedNextMeetingOwner`
   (in addition to `itemPostponedNextMeeting`).
   [gbastien]
+- Fixed `ItemOptionalAdvicesVocabulary` caching to take into account delay aware
+  advisers in cachekey as it is computed and depends on context.
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------

@@ -2537,12 +2537,14 @@ def get_internal_number(obj, init=False):
             setattr(obj, "internal_number", internal_number)
     return internal_number
 
+
 def set_internal_number(obj, value, update_ref=False):
     """Set the internal_number for a given p_obj. If p_update_ref is True we also
     update the item reference. Will be deprecated when MeetingItem is in DX."""
     setattr(obj, "internal_number", value)
     if update_ref:
         obj.update_item_reference()
+
 
 def _get_category(obj, cat_id, the_object=False, cat_type='categories'):
     """Get the cat_type "category" on an item or meeting.
