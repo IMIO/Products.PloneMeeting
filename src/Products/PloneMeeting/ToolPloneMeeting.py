@@ -313,7 +313,7 @@ schema = Schema((
                         vocabulary_factory="ConfigAdviceTypes"),
                 'show_advice_on_final_wf_transition':
                     SelectColumn(
-                        "Adviser config  show advice on final WF transition?",
+                        "Adviser config show advice on final WF transition?",
                         vocabulary="listBooleanVocabulary",
                         col_description="Adviser config  show advice on final WF transition descr?",
                         default='0'),
