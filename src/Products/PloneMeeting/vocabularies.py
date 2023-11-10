@@ -1667,11 +1667,14 @@ class AdvicePortalTypesVocabulary(object):
         # manage multiple 'meetingadvice' portal_types
         res = []
         for portal_type in tool.getAdvicePortalTypes():
-            res.append(SimpleTerm(portal_type.id,
-                                  portal_type.id,
-                                  translate(portal_type.title,
-                                            domain="PloneMeeting",
-                                            context=context.REQUEST)))
+            res.append(SimpleTerm(
+                portal_type.id,
+                portal_type.id,
+                u'{0} ({1})'.format(
+                    translate(portal_type.title,
+                              domain="PloneMeeting",
+                              context=context.REQUEST),
+                    portal_type.id)))
         return SimpleVocabulary(res)
 
 
