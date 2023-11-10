@@ -516,6 +516,34 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                  'cfg_title': safe_unicode(cfg.Title()), },
                         context=self.REQUEST)
 
+    def validate_advisersConfig(self, values):
+        '''Validator for field advisersConfig.'''
+        # remove the 'template_row_marker' value
+        values = [v for v in values if not v.get('orderindex_') == 'template_row_marker']
+        # a portal_type can only be selected one time
+        portal_types = [v['portal_type'] for v in values]
+        if len(portal_types) > len(set(portal_types)):
+            return translate(
+                'advisersConfig_several_portal_types_error',
+                domain='PloneMeeting',
+                context=self.REQUEST)
+        # if some advice with portal_type exist, can not change
+        # associated portal_type/base_wf
+        to_save = set([(v['portal_type'], v['base_wf']) for v in values])
+        stored = set([(v['portal_type'], v['base_wf']) for v in self.getAdvisersConfig()])
+        removed = stored.difference(to_save)
+        added = to_save.difference(stored)
+        catalog = api.portal.get_tool('portal_catalog')
+        for portal_type, base_wf in tuple(removed) + tuple(added):
+            brains = catalog(portal_type=portal_type)
+            if brains:
+                return translate(
+                    'advisersConfig_portal_type_in_use_error',
+                    domain='PloneMeeting',
+                    mapping={'portal_type': safe_unicode(portal_type),
+                             'advice_url': brains[0].getURL(), },
+                    context=self.REQUEST)
+
     security.declarePublic('getCustomFields')
 
     def getCustomFields(self, cols):
