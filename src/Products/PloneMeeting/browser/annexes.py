@@ -151,7 +151,7 @@ class PMCategorizedChildView(CategorizedChildView):
         '''cachekey method for self.__call__.'''
         categorized_elements = _categorized_elements(self.context)
         if not categorized_elements:
-            return []
+            return show_nothing
         # value of the annexes faceted filter
         filters = self._filters
         if filters:

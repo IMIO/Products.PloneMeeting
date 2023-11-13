@@ -8,6 +8,7 @@ from App.class_init import InitializeClass
 from appy.gen import No
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collections import OrderedDict
+from collective.behavior.internalnumber.browser.settings import _internal_number_is_used
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
@@ -123,6 +124,7 @@ from Products.PloneMeeting.utils import down_or_up_wf
 from Products.PloneMeeting.utils import escape
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
+from Products.PloneMeeting.utils import get_internal_number
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -141,6 +143,7 @@ from Products.PloneMeeting.utils import rememberPreviousData
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import set_field_from_ajax
+from Products.PloneMeeting.utils import set_internal_number
 from Products.PloneMeeting.utils import transformAllRichTextFields
 from Products.PloneMeeting.utils import translate_list
 from Products.PloneMeeting.utils import updateAnnexesAccess
@@ -943,7 +946,7 @@ class MeetingItemWorkflowActions(object):
                                keepProposingGroup=True,
                                setCurrentAsPredecessor=True)
 
-    def _duplicateAndValidate(self, cloneEventAction):
+    def _duplicateAndValidate(self, cloneEventAction, keep_internal_number=False):
         """Duplicate and keep link self.context and validate the new item."""
         creator = self.context.Creator()
         # We create a copy in the initial item state, in the folder of creator.
@@ -953,6 +956,14 @@ class MeetingItemWorkflowActions(object):
                                         keepProposingGroup=True,
                                         setCurrentAsPredecessor=True,
                                         inheritAdvices=True)
+        # keep internal_number if relevant
+        if keep_internal_number and _internal_number_is_used(clonedItem):
+            set_internal_number(
+                clonedItem,
+                get_internal_number(self.context),
+                update_ref=True,
+                decrement=True)
+
         # set clonedItem to state 'validated'
         wfTool = api.portal.get_tool('portal_workflow')
         wf_comment = _('wf_transition_triggered_by_application')
@@ -976,7 +987,13 @@ class MeetingItemWorkflowActions(object):
     def doPostpone_next_meeting(self, stateChange):
         '''When an item is 'postponed_next_meeting', we will duplicate it:
            the copy is automatically validated and will be linked to this one.'''
-        clonedItem = self._duplicateAndValidate(cloneEventAction='create_from_postponed_next_meeting')
+        # check if need to keep internal_number
+        keep_internal_number = False
+        if "postpone_next_meeting_keep_internal_number" in self.cfg.getWorkflowAdaptations():
+            keep_internal_number = True
+        clonedItem = self._duplicateAndValidate(
+            cloneEventAction='create_from_postponed_next_meeting',
+            keep_internal_number=keep_internal_number)
         # Send, if configured, a mail to the person who created the item
         sendMailIfRelevant(
             self.context,
@@ -7300,7 +7317,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
               setCurrentAsPredecessor=False, manualLinkToPredecessor=False,
               inheritAdvices=False, inheritedAdviceUids=[], keep_ftw_labels=False,
               keptAnnexIds=[], keptDecisionAnnexIds=[], item_attrs={}, reindexNewItem=True):
-        '''Clones me in the PloneMeetingFolder of the current user, or
+        '''Clones me in the PloneMeetingFolder of the current user, ordef clone
            p_newOwnerId if given (this guy will also become owner of this
            item). If there is a p_cloneEventAction, an event will be included
            in the cloned item's history, indicating that is was created from
