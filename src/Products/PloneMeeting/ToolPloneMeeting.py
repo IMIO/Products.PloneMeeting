@@ -305,7 +305,6 @@ schema = Schema((
                 'advice_types':
                     MultiSelectColumn(
                         "Adviser config advice types",
-                        col_description="Adviser config advice types descr",
                         vocabulary_factory="ConfigAdviceTypes"),
                 'default_advice_type':
                     SelectColumn(
@@ -315,7 +314,7 @@ schema = Schema((
                     SelectColumn(
                         "Adviser config show advice on final WF transition?",
                         vocabulary="listBooleanVocabulary",
-                        col_description="Adviser config  show advice on final WF transition descr?",
+                        col_description="Adviser config show advice on final WF transition descr",
                         default='0'),
             },
             label='Advisersconfig',
