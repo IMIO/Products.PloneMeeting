@@ -90,6 +90,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                           'no_publication',
                           'only_creator_may_delete',
                           'postpone_next_meeting',
+                          'postpone_next_meeting_keep_internal_number',
                           'pre_accepted',
                           'presented_item_back_to_itemcreated',
                           'presented_item_back_to_proposed',
