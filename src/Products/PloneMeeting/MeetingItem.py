@@ -5745,6 +5745,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         'comment': advice.advice_comment and advice.advice_comment.output,
                                         'observations':
                                         advice.advice_observations and advice.advice_observations.output,
+                                        # optional field thru behavior
+                                        'accounting_commitment':
+                                        advice.attribute_is_used('advice_accounting_commitment') and \
+                                        advice.advice_accounting_commitment and \
+                                        advice.advice_accounting_commitment.output or None,
                                         'reference': advice.advice_reference,
                                         'row_id': advice.advice_row_id,
                                         'gives_auto_advice_on_help_message': gives_auto_advice_on_help_message,
@@ -6068,6 +6073,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     context=self.REQUEST)
                 data[advId]['comment'] = msg
                 data[advId]['observations'] = msg
+                data[advId]['accounting_commitment'] = msg
 
             # optimize some saved data
             data[advId]['type_translated'] = translate(data[advId]['type'],

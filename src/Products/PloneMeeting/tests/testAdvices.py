@@ -12,12 +12,14 @@ from datetime import datetime
 from datetime import timedelta
 from DateTime import DateTime
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import richtextval
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastAction
 from imio.history.utils import getLastWFAction
 from os import path
 from plone import api
 from plone.app.textfield.value import RichTextValue
+from plone.dexterity.schema import SchemaInvalidatedEvent
 from plone.dexterity.utils import createContentInContainer
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AddPortalContent
@@ -4133,6 +4135,49 @@ class testAdvices(PloneMeetingTestCase):
         # when duplicating item, history is empty
         cloned_item = item.clone()
         self.assertFalse(cloned_item.deleted_children_history)
+
+    def test_pm_AdviceAccountingCommitmentBehavior(self):
+        """The advice_accounting_commitment behavior may be enabled on meetingadvice,
+           this will add field accounting_commitment that is taken into account in
+           adviceIndex and by getAdviceDataFor."""
+        # without the behavior, keys are there but value is None
+        item, advice = self._setupItemWithAdvice()
+        import ipdb; ipdb.set_trace()
+        self.assertIsNone(item.adviceIndex[self.vendors_uid]['accounting_commitment'])
+        self.assertIsNone(item.getAdviceDataFor(item)[self.vendors_uid]['accounting_commitment'])
+        # enable behavior
+        behaviors = self.portal.portal_types[advice.portal_type].behaviors
+        behaviors += ('Products.PloneMeeting.behaviors.advice.IAdviceAccountingCommitmentBehavior', )
+        self.portal.portal_types[advice.portal_type].behaviors = behaviors
+        notify(SchemaInvalidatedEvent(advice.portal_type))
+        item.update_local_roles()
+        self.assertIsNone(item.adviceIndex[self.vendors_uid]['accounting_commitment'])
+        self.assertIsNone(item.getAdviceDataFor(item)[self.vendors_uid]['accounting_commitment'])
+        # define an accounting_commitment
+        advice.advice_accounting_commitment = richtextval(u'My accounting commitment')
+        item.update_local_roles()
+        self.assertEqual(
+            item.adviceIndex[self.vendors_uid]['accounting_commitment'],
+            u'My accounting commitment')
+        self.assertEqual(
+            item.getAdviceDataFor(item)[self.vendors_uid]['accounting_commitment'],
+            u'My accounting commitment')
+        # also managed when 'hidden_during_redaction'
+        item.adviceIndex[self.vendors_uid]['hidden_during_redaction'] = True
+        item.update_local_roles()
+        # visible by advisers
+        self.assertEqual(
+            item.getAdviceDataFor(item)[self.vendors_uid]['accounting_commitment'],
+            u'My accounting commitment')
+        # not visible by non members of the advisers group
+        self.changeUser('pmCreator1')
+        hidden_help_msg = translate(
+            'advice_hidden_during_redaction_help',
+            domain='PloneMeeting',
+            context=self.request)
+        self.assertEqual(
+            item.getAdviceDataFor(item)[self.vendors_uid]['accounting_commitment'],
+            hidden_help_msg)
 
 
 def test_suite():
