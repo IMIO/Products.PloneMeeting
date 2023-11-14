@@ -4142,7 +4142,6 @@ class testAdvices(PloneMeetingTestCase):
            adviceIndex and by getAdviceDataFor."""
         # without the behavior, keys are there but value is None
         item, advice = self._setupItemWithAdvice()
-        import ipdb; ipdb.set_trace()
         self.assertIsNone(item.adviceIndex[self.vendors_uid]['accounting_commitment'])
         self.assertIsNone(item.getAdviceDataFor(item)[self.vendors_uid]['accounting_commitment'])
         # enable behavior
@@ -4163,7 +4162,7 @@ class testAdvices(PloneMeetingTestCase):
             item.getAdviceDataFor(item)[self.vendors_uid]['accounting_commitment'],
             u'My accounting commitment')
         # also managed when 'hidden_during_redaction'
-        item.adviceIndex[self.vendors_uid]['hidden_during_redaction'] = True
+        advice.advice_hide_during_redaction = True
         item.update_local_roles()
         # visible by advisers
         self.assertEqual(
