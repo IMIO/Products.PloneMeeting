@@ -2928,7 +2928,7 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(contenthistory.show_history())
 
         # now configure so powerobservers may not access history
-        self.meetingConfig.setHideHistoryTo(('powerobservers', ))
+        self.meetingConfig.setHideHistoryTo(('MeetingItem.powerobservers', ))
         self.assertFalse(contenthistory.show_history())
 
         # when power observer is also member of the item proposingGroup

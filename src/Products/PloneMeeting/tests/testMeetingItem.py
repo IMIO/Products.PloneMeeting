@@ -4979,7 +4979,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(_sum_entries(), 4)
 
         # special case for powerobservers when using MeetingConfig.hideHistoryTo
-        cfg.setHideHistoryTo(('powerobservers', ))
+        cfg.setHideHistoryTo(('MeetingItem.powerobservers', ))
         self.assertEqual(_sum_entries(), 5)
         # but still ok for others
         self.changeUser('pmReviewer2', clean_memoize=False)

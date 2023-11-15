@@ -3185,3 +3185,47 @@ class ConfigAdviceTypesVocabulary(object):
 
 
 ConfigAdviceTypesVocabularyFactory = ConfigAdviceTypesVocabulary()
+
+
+class ConfigHideHistoryTosVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """Build selectable values for MeetingItem, Meeting and every meetingadvice
+           portal_types so it can be selected on a per meetingadvice portal_type basis."""
+
+        tool = context.aq_inner.aq_parent
+        types_tool = api.portal.get_tool('portal_types')
+
+        terms = []
+        meetingadvice_types = tool.getAdvicePortalTypeIds()
+        translated_everyone = translate(
+            'everyone',
+            domain="PloneMeeting",
+            context=context.REQUEST)
+        for content_type in ['Meeting', 'MeetingItem'] + meetingadvice_types:
+            portal_type = types_tool[content_type]
+            translated_type = translate(
+                portal_type.title,
+                domain=portal_type.i18n_domain,
+                context=context.REQUEST)
+            for po_infos in context.getPowerObservers():
+                terms.append(
+                    SimpleTerm(
+                        "{0}.{1}".format(content_type, po_infos['row_id']),
+                        "{0}.{1}".format(content_type, po_infos['row_id']),
+                        u"{0} ➔ {1}".format(
+                            translated_type, html.escape(po_infos['label']))))
+            # hideable to everybody for meetingadvices except advice advisers
+            if content_type in meetingadvice_types:
+                terms.append(
+                    SimpleTerm(
+                        "{0}.everyone".format(content_type),
+                        "{0}.everyone".format(content_type),
+                        u"{0} ➔ {1}".format(translated_type, translated_everyone)))
+        return SimpleVocabulary(terms)
+
+
+ConfigHideHistoryTosVocabularyFactory = ConfigHideHistoryTosVocabulary()

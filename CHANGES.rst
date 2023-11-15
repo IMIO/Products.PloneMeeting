@@ -28,7 +28,9 @@ Changelog
 
   - possible to associate a new advice portal_type to some organizations;
   - reworked advice infos template to add more CSS classes to additional infos;
-  - display the `Advice given by` information.
+  - display the `Advice given by` information;
+  - added possibility to hide advice history to power observers and to everyone
+    and to hide meeting history to powerobservers.
 
   [gbastien]
 

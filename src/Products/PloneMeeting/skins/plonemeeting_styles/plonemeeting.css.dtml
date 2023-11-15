@@ -857,6 +857,9 @@ body[class^='template-view portaltype-meetingcategory'] div#viewlet-below-conten
 /* MeetingConfig */
 body.template-listing_view div#viewlet-below-content-body,
 body.template-documentviewer div#viewlet-below-content-body,
+body.portaltype-configurablepodtemplate div#viewlet-below-content-body,
+body.portaltype-dashboardpodtemplate div#viewlet-below-content-body,
+body.portaltype-styletemplate div#viewlet-below-content-body,
 body.template-base_view div#viewlet-below-content-body,
 body.template-meeting_view div#viewlet-below-content-body,
 body.template-meetingitem_view div#viewlet-below-content-body {
@@ -885,7 +888,9 @@ body.template-edit div.formControls,
 body.template-meeting div.formControls,
 div.overlay div.formControls,
 body[class^='template-view portaltype-meetingadvice'] div#viewlet-below-content-body,
-body[class^='template-documentviewer portaltype-configurablepodtemplate'] div#viewlet-below-content-body,
+body[class^='template-view portaltype-configurablepodtemplate'] div#viewlet-below-content-body,
+body[class^='template-view portaltype-dashboardpodtemplate'] div#viewlet-below-content-body,
+body[class^='template-view portaltype-styletemplate'] div#viewlet-below-content-body,
 body.template-meetingitem_view div#viewlet-below-content-body {
     position: sticky;
     bottom: 10px;

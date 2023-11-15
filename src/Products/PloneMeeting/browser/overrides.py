@@ -1405,20 +1405,53 @@ class PMContentHistoryView(IHContentHistoryView):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
             hideHistoryTo = cfg.getHideHistoryTo()
-            if hideHistoryTo:
-                check = True
+            if hideHistoryTo and not tool.isManager(cfg):
                 if self.context.__class__.__name__ == "MeetingItem":
-                    # for MeetingItem, take into account that powerobserver
-                    # could also be member of the proposingGroup
-                    # in this case we do not hide the history to the user
-                    item_review_state = self.context.query_state()
-                    proposing_group_uid = self.context._getGroupManagingItem(
-                        item_review_state, theObject=False)
-                    if proposing_group_uid in tool.get_orgs_for_user():
-                        check = False
-                if check and tool.isPowerObserverForCfg(
-                        cfg, power_observer_types=hideHistoryTo):
-                    res = False
+                    # item values are only about powerobservers
+                    item_values = [v.split('.')[1] for v in hideHistoryTo
+                                   if v.startswith('MeetingItem.')]
+                    if item_values:
+                        # for MeetingItem, take into account that powerobserver
+                        # could also be member of the proposingGroup
+                        # in this case we do not hide the history to the user
+                        item_review_state = self.context.query_state()
+                        proposing_group_uid = self.context._getGroupManagingItem(
+                            item_review_state, theObject=False)
+                        if proposing_group_uid not in tool.get_orgs_for_user() and \
+                            tool.isPowerObserverForCfg(
+                                cfg, power_observer_types=item_values):
+                            res = False
+                elif self.context.__class__.__name__ == "Meeting":
+                    # meeting values are only about powerobservers
+                    meeting_values = [v.split('.')[1] for v in hideHistoryTo
+                                      if v.startswith('Meeting.')]
+                    if meeting_values and tool.isPowerObserverForCfg(
+                            cfg, power_observer_types=meeting_values):
+                        res = False
+                elif self.context.__class__.__name__ == "MeetingAdvice":
+                    # values for meetingadvice are portal_type related
+                    # and are about everyone or powerobservers
+                    po_advice_values = [
+                        v.split('.')[1] for v in hideHistoryTo
+                        if v.startswith('{0}.'.format(self.context.portal_type)) and
+                        not v.endswith('.everyone')]
+                    if po_advice_values:
+                        # for meetingadvice, take into account that powerobserver
+                        # could also be member of the item's proposingGroup
+                        # in this case we do not hide the history to the user
+                        item = self.context.aq_inner.aq_parent
+                        item_review_state = item.query_state()
+                        proposing_group_uid = item._getGroupManagingItem(
+                            item_review_state, theObject=False)
+                        if proposing_group_uid not in tool.get_orgs_for_user() and \
+                            tool.isPowerObserverForCfg(
+                                cfg, power_observer_types=item_values):
+                            res = False
+                    if res and '{0}.everyone'.format(self.context.portal_type) in hideHistoryTo:
+                        # hide history to everyone except advice advisers
+                        if self.context.advice_group not in \
+                           tool.get_orgs_for_user(suffixes=['advisers']):
+                            res = False
         return res
 
 

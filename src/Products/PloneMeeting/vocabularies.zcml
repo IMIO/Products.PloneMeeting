@@ -133,6 +133,8 @@
            component=".vocabularies.AdviceWorkflowAdaptationsVocabularyFactory" />
   <utility name="ConfigAdviceTypes"
            component=".vocabularies.ConfigAdviceTypesVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.config_hide_history_to_vocabulary"
+           component=".vocabularies.ConfigHideHistoryTosVocabularyFactory" />
 
   <!-- PMHeldPosition vocabularies -->
   <utility component=".vocabularies.HeldPositionUsagesVocabularyFactory"

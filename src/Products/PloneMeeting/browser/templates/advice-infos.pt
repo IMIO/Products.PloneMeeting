@@ -31,7 +31,7 @@
         <span tal:content="structure python: view.adviser_users(advice)">User ids</span>
       </div>
 
-      <span class="advice_created_by" tal:condition="nocall:obj">
+      <span class="advice_created_by" tal:condition="python: obj and view.show_history">
         <tal:i18n i18n:domain="plone" i18n:translate="label_by_author">
         Created by
         <span tal:content="python: view.tool.getUserName(obj.Creator())"

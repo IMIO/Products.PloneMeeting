@@ -218,7 +218,7 @@ class AdvicesIconsInfos(BrowserView):
         self.obj = advice.get('advice_id', None) and \
             self.adviceHolder.get(advice['advice_id'], None)
         self.show_history = self.obj and self.adviceHolderIsViewable and \
-            self.context.restrictedTraverse('@@contenthistory').show_history()
+            self.obj.restrictedTraverse('@@contenthistory').show_history()
 
     def showLinkToInherited(self, adviceHolder):
         """ """
@@ -332,6 +332,12 @@ class AdviceInfos(BrowserView):
         self.displayedReviewState = displayedReviewState
         self.customMessageInfos = customMessageInfos
         self.advice_given_by = self.get_advice_given_by()
+        if self.obj is not None:
+            # show_history
+            adviceHolder = self.advice.get('adviceHolder', None) or self.obj
+            adviceHolderIsViewable = adviceHolder.isViewable()
+            self.show_history = self.obj and adviceHolderIsViewable and \
+                self.obj.restrictedTraverse('@@contenthistory').show_history()
         return self.index()
 
     def adviser_users(self, advice_info):
