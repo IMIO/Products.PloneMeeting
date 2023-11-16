@@ -707,9 +707,12 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                             org_uids=[group_managing_item_uid])
 
             # powerobservers to manage MeetingConfig.hideHistoryTo
-            hideHistoryTo = self.cfg.getHideHistoryTo()
-            if hideHistoryTo and \
-               self.tool.isPowerObserverForCfg(self.cfg, power_observer_types=hideHistoryTo):
+            hideHistoryTo_item_values = [
+                v.split('.')[1] for v in self.cfg.getHideHistoryTo()
+                if v.startswith('MeetingItem.')]
+            if hideHistoryTo_item_values and \
+               self.tool.isPowerObserverForCfg(
+                    self.cfg, power_observer_types=hideHistoryTo_item_values):
                 # any others
                 isPowerObserverHiddenHistory = True
 
@@ -1262,7 +1265,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         title = self._get_stored_annex_title(pod_template)
         id = normalize_id(title)
         id = INameChooser(self.context).chooseName(id, self.context)
-        annex = api.content.create(
+        api.content.create(
             container=self.context,
             type=annex_portal_type,
             id=id,

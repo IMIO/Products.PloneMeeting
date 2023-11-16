@@ -2915,9 +2915,10 @@ class testViews(PloneMeetingTestCase):
             meeting.get_signatures().split("\n")[1]
         )
 
-    def test_pm_show_history(self):
-        """Test the contenthistory.show_history() that will depend on
-           MeetingConfig.hideHistoryTo parameter."""
+    def test_pm_item_meeting_show_history(self):
+        """Test the contenthistory.show_history() for item and meeting that
+           will depend on MeetingConfig.hideHistoryTo parameter."""
+        cfg = self.meetingConfig
         self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'),))
         self.changeUser('pmCreator1')
         item = self.create("MeetingItem")
@@ -2928,7 +2929,8 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(contenthistory.show_history())
 
         # now configure so powerobservers may not access history
-        self.meetingConfig.setHideHistoryTo(('MeetingItem.powerobservers', ))
+        cfg.setHideHistoryTo(
+            ('Meeting.powerobservers', 'MeetingItem.powerobservers', ))
         self.assertFalse(contenthistory.show_history())
 
         # when power observer is also member of the item proposingGroup
@@ -2944,7 +2946,7 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, meeting))
         self.assertFalse(contenthistory.show_history())
-        self.meetingConfig.setHideHistoryTo(())
+        cfg.setHideHistoryTo(())
         self.assertTrue(contenthistory.show_history())
 
     def test_pm_Get_meeting_assembly_stats(self):
