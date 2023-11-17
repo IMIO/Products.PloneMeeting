@@ -3202,7 +3202,7 @@ class ConfigHideHistoryTosVocabulary(object):
         terms = []
         meetingadvice_types = tool.getAdvicePortalTypeIds()
         translated_everyone = translate(
-            'everyone',
+            'Everyone',
             domain="PloneMeeting",
             context=context.REQUEST)
         for content_type in ['Meeting', 'MeetingItem'] + meetingadvice_types:

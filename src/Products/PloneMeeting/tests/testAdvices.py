@@ -38,6 +38,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
 from Products.statusmessages.interfaces import IStatusMessage
 from zope.component import getAdapter
+from zope.component import getMultiAdapter
 from zope.component import queryUtility
 from zope.event import notify
 from zope.i18n import translate
@@ -4177,6 +4178,62 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(
             item.getAdviceDataFor(item)[self.vendors_uid]['accounting_commitment'],
             hidden_help_msg)
+
+    def test_pm_advice_show_history(self):
+        """Test the contenthistory.show_history() for advice that will depend
+           on MeetingConfig.hideHistoryTo parameter."""
+        cfg = self.meetingConfig
+        # without the behavior, keys are there but value is None
+        item, advice = self._setupItemWithAdvice()
+        # visible by advice advisers, powerobservers, proposingGroup
+        contenthistory = getMultiAdapter((advice, self.request), name='contenthistory')
+        self.assertTrue(contenthistory.show_history())
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, advice))
+        self.assertTrue(contenthistory.show_history())
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, advice))
+        self.assertTrue(contenthistory.show_history())
+        # always visible to MeetingManagers
+        self.changeUser('pmManager')
+        self.assertTrue(self.hasPermission(View, advice))
+        self.assertTrue(contenthistory.show_history())
+
+        # hide it to powerobservers
+        cfg.setHideHistoryTo(('meetingadvice.powerobservers', ))
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, advice))
+        self.assertFalse(contenthistory.show_history())
+        # still visible to advisers, proposing group
+        self.changeUser('pmReviewer2')
+        self.assertTrue(self.hasPermission(View, advice))
+        self.assertTrue(contenthistory.show_history())
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, advice))
+        self.assertTrue(contenthistory.show_history())
+        self.changeUser('pmManager')
+        self.assertTrue(self.hasPermission(View, advice))
+        self.assertTrue(contenthistory.show_history())
+        self.changeUser('pmManager')
+        self.assertTrue(self.hasPermission(View, advice))
+        self.assertTrue(contenthistory.show_history())
+
+        # hide it to everyone
+        cfg.setHideHistoryTo(('meetingadvice.everyone', ))
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, advice))
+        self.assertFalse(contenthistory.show_history())
+        # still visible to advisers
+        self.changeUser('pmReviewer2')
+        self.assertTrue(self.hasPermission(View, advice))
+        self.assertTrue(contenthistory.show_history())
+        # no more visible to proposing group
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, advice))
+        self.assertFalse(contenthistory.show_history())
+        self.changeUser('pmManager')
+        self.assertTrue(self.hasPermission(View, advice))
+        self.assertTrue(contenthistory.show_history())
 
 
 def test_suite():

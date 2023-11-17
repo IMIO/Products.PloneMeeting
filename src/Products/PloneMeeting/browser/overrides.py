@@ -1448,7 +1448,7 @@ class PMContentHistoryView(IHContentHistoryView):
                             item_review_state, theObject=False)
                         if proposing_group_uid not in tool.get_orgs_for_user() and \
                             tool.isPowerObserverForCfg(
-                                cfg, power_observer_types=item_values):
+                                cfg, power_observer_types=po_advice_values):
                             res = False
                     if res and '{0}.everyone'.format(self.context.portal_type) in hideHistoryTo:
                         # hide history to everyone except advice advisers
