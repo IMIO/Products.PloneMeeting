@@ -20,6 +20,9 @@ Changelog
 - Fixed `ItemOptionalAdvicesVocabulary` caching to take into account delay aware
   advisers in cachekey as it is computed and depends on context.
   [gbastien]
+- Added `MeetingConfig.show_copy_groups_search` that is used to protect
+  copyGroups related searches.
+  [gbastien]
 
 4.2.9b1 (2023-10-27)
 --------------------

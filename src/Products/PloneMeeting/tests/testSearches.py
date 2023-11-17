@@ -546,6 +546,23 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         self.failUnless(collection.results())
 
+    def test_pm_show_copy_groups_search(self):
+        """Test MeetingConfig.show_copy_groups_search used to show items in copy searches."""
+        cfg = self.meetingConfig
+        self._enableField('copyGroups')
+        self.assertEqual(cfg.getSelectableCopyGroups(),
+                         (self.developers_reviewers, self.vendors_reviewers))
+        self.changeUser('pmCreator1')
+        self.assertFalse(cfg.show_copy_groups_search())
+        self.changeUser('pmReviewer2')
+        self.assertTrue(cfg.show_copy_groups_search())
+        # not shown if copyGroups not used
+        self._enableField('copyGroups', enable=False)
+        self.changeUser('pmCreator1')
+        self.assertFalse(cfg.show_copy_groups_search())
+        self.changeUser('pmReviewer2')
+        self.assertFalse(cfg.show_copy_groups_search())
+
     def test_pm_SearchMyItemsTakenOver(self):
         '''Test the 'my-items-taken-over' method.  This should return
            a list of items a user has taken over.'''

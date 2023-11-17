@@ -27,6 +27,7 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToObject
@@ -3048,9 +3049,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition':
-                        "python: 'copyGroups' in cfg.getUsedItemAttributes() and "
-                        "tool.userIsAmong(['observers', 'reviewers'])",
+                    'tal_condition': "python: cfg.show_copy_groups_search()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Unread items in copy
@@ -3072,8 +3071,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getEnableLabels() and 'copyGroups' in cfg.getUsedItemAttributes() "
-                        "and tool.userIsAmong(['observers', 'reviewers']) ",
+                    'tal_condition': "python: cfg.getEnableLabels() and "
+                        "cfg.show_copy_groups_search()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to prevalidate
@@ -7906,6 +7905,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             used_attrs = self.getUsedItemAttributes()
         res = tool.isManager(self) and name in used_attrs
         return res
+
+    def show_copy_groups_search(self):
+        '''Condition for showing the searchallitemsincopy DashboardCollection.'''
+        return bool('copyGroups' in self.getUsedItemAttributes() and
+                    set(get_plone_groups_for_user()).intersection(
+                        self.getSelectableCopyGroups()))
 
     def get_orgs_with_as_copy_group_on_expression_cachekey(method, self):
         '''cachekey method for self.get_orgs_with_as_copy_group_on_expression.
