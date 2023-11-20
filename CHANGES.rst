@@ -20,6 +20,9 @@ Changelog
 - Fixed `ItemOptionalAdvicesVocabulary` caching to take into account delay aware
   advisers in cachekey as it is computed and depends on context.
   [gbastien]
+- Make `MeetingItem.meetingDeadlineDate` displayable in dashboards as static info
+  (always visible in the item `Title` column).
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------
