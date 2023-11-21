@@ -7317,7 +7317,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
               setCurrentAsPredecessor=False, manualLinkToPredecessor=False,
               inheritAdvices=False, inheritedAdviceUids=[], keep_ftw_labels=False,
               keptAnnexIds=[], keptDecisionAnnexIds=[], item_attrs={}, reindexNewItem=True):
-        '''Clones me in the PloneMeetingFolder of the current user, ordef clone
+        '''Clones me in the PloneMeetingFolder of the current user, or
            p_newOwnerId if given (this guy will also become owner of this
            item). If there is a p_cloneEventAction, an event will be included
            in the cloned item's history, indicating that is was created from

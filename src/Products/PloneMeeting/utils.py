@@ -2550,8 +2550,8 @@ def set_internal_number(obj, value, update_ref=False, reindex=True, decrement=Fa
     if update_ref:
         obj.update_item_reference()
     if reindex:
-        # XXX is there still an internal_number metadata?
-        reindex_object(obj, idxs=['internal_number'], update_metadata=True)
+        # there is only an index, no metadata related to "internal_number"
+        reindex_object(obj, idxs=['internal_number'], update_metadata=False)
 
 
 def _get_category(obj, cat_id, the_object=False, cat_type='categories'):

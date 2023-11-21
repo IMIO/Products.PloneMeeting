@@ -14,7 +14,7 @@ from copy import deepcopy
 from DateTime import DateTime
 from datetime import datetime
 from datetime import timedelta
-from imio.helpers.content import uuidToCatalogBrain
+from imio.helpers.content import uuidToObject
 from imio.helpers.workflow import get_leading_transitions
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
@@ -2785,16 +2785,16 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(get_internal_number(item.get_successor()), 2)
         # check that brain index and metadata is updated
         self.assertEqual(
-            uuidToCatalogBrain(item.UID(), query={'internal_number': 1}).internal_number, 1)
+            uuidToObject(item.UID(), query={'internal_number': 1}).internal_number, 1)
         self.assertEqual(
-            uuidToCatalogBrain(item.get_successor().UID(),
-                               query={'internal_number': 2}).internal_number, 2)
+            uuidToObject(item.get_successor().UID(),
+                         query={'internal_number': 2}).internal_number, 2)
         self._activate_wfas(('postpone_next_meeting', 'postpone_next_meeting_keep_internal_number'))
         item = self._postpone_next_meeting_active()
         self.assertEqual(get_internal_number(item), 3)
         self.assertEqual(get_internal_number(item.get_successor()), 3)
         self.assertEqual(
-            uuidToCatalogBrain(item.UID(), query={'internal_number': 3}).internal_number, 3)
+            uuidToObject(item.UID(), query={'internal_number': 3}).internal_number, 3)
         # next item internal_number is 4
         self.assertEqual(get_settings()[item.portal_type]['nb'], 4)
 

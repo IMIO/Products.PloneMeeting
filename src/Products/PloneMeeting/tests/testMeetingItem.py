@@ -26,7 +26,7 @@ from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
-from imio.helpers.content import uuidToCatalogBrain
+from imio.helpers.content import uuidToObject
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
@@ -8445,12 +8445,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.internal_number, 1)
         # check that brain index and metadata is updated
         self.assertEqual(
-            uuidToCatalogBrain(item.UID(), query={'internal_number': 1}).internal_number, 1)
+            uuidToObject(item.UID(), query={'internal_number': 1}).internal_number, 1)
         self.assertEqual(get_settings()[item.portal_type]['nb'], 2)
         item = self.create('MeetingItem')
         self.assertEqual(item.internal_number, 2)
         self.assertEqual(
-            uuidToCatalogBrain(item.UID(), query={'internal_number': 2}).internal_number, 2)
+            uuidToObject(item.UID(), query={'internal_number': 2}).internal_number, 2)
         self.assertEqual(get_settings()[item.portal_type]['nb'], 3)
         # decremented if edit cancelled
         item._at_creation_flag = True
@@ -8461,7 +8461,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.assertEqual(item.internal_number, 50000)
         self.assertEqual(
-            uuidToCatalogBrain(item.UID(), query={'internal_number': 50000}).internal_number, 50000)
+            uuidToObject(item.UID(), query={'internal_number': 50000}).internal_number, 50000)
         # not set on items created in configuration
         self.changeUser('siteadmin')
         item_template = self.create('MeetingItemTemplate')
@@ -8491,12 +8491,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.internal_number, 1)
         # check that brain index and metadata is updated
         self.assertEqual(
-            uuidToCatalogBrain(item.UID(), query={'internal_number': 1}).internal_number, 1)
+            uuidToObject(item.UID(), query={'internal_number': 1}).internal_number, 1)
         # clone locally
         cloned_item = item.clone()
         self.assertEqual(cloned_item.internal_number, 2)
         self.assertEqual(
-            uuidToCatalogBrain(cloned_item.UID(), query={'internal_number': 2}).internal_number, 2)
+            uuidToObject(cloned_item.UID(), query={'internal_number': 2}).internal_number, 2)
         # create item from template
         pmFolder = self.getMeetingFolder()
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
@@ -8505,7 +8505,7 @@ class testMeetingItem(PloneMeetingTestCase):
         itemFromTemplate.processForm()
         self.assertEqual(itemFromTemplate.internal_number, 3)
         self.assertEqual(
-            uuidToCatalogBrain(itemFromTemplate.UID(), query={'internal_number': 3}).internal_number, 3)
+            uuidToObject(itemFromTemplate.UID(), query={'internal_number': 3}).internal_number, 3)
         # clone to another cfg, not enabled for now
         itemFromTemplate.setOtherMeetingConfigsClonableTo((cfg2Id, ))
         itemCfg2 = itemFromTemplate.cloneToOtherMeetingConfig(cfg2Id)
@@ -8516,7 +8516,7 @@ class testMeetingItem(PloneMeetingTestCase):
         itemCfg2 = itemFromTemplate.cloneToOtherMeetingConfig(cfg2Id)
         self.assertEqual(itemCfg2.internal_number, 50)
         self.assertEqual(
-            uuidToCatalogBrain(itemCfg2.UID(), query={'internal_number': 50}).internal_number, 50)
+            uuidToObject(itemCfg2.UID(), query={'internal_number': 50}).internal_number, 50)
 
     def test_pm_ItemMailNotificationLateItem(self):
         """Test the "lateItem" notification."""

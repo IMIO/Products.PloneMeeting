@@ -5608,7 +5608,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemsVisibleFields(self):
         '''Vocabulary for the 'itemsVisibleFields' field.
            Every fields available on the MeetingItem can be selectable.'''
-        # insert some static selectable values
+        # insert some static selectable values, ignore static that are also in _listFieldsFor
         res = [(k, v) for k, v in self.listItemRelatedColumns()
                if k.startswith('static_') and k not in ('static_marginalNotes', 'static_budget_infos')]
         res += self._listFieldsFor(MeetingItem,
@@ -5627,7 +5627,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemsNotViewableVisibleFields(self):
         '''Vocabulary for the 'itemsNotViewableVisibleFields' field.
            Every fields available on the MeetingItem can be selectable.'''
-        # insert some static selectable values
+        # insert some static selectable values, ignore static that are also in _listFieldsFor
         res = [(k, v) for k, v in self.listItemRelatedColumns()
                if k.startswith('static_') and k not in ('static_marginalNotes', 'static_budget_infos')]
         res += self._listFieldsFor(MeetingItem,
