@@ -20,9 +20,6 @@ Changelog
 - Fixed `ItemOptionalAdvicesVocabulary` caching to take into account delay aware
   advisers in cachekey as it is computed and depends on context.
   [gbastien]
-- Added `static_labels` and `static_item_reference` to the selectable values for
-  `MeetingConfig.itemsVisibleFields` and `MeetingConfig.itemsNotViewableVisibleFields`.
-  [gbastien]
 - Fixed `PMCategorizedChildView.__call___`, if no categorized elements,
   do not return just [] but the parameter `show_nothing` value,
   as it is rendered differently if True or False.
@@ -30,6 +27,16 @@ Changelog
 - Added complementary WFAdaptation `postpone_next_meeting_keep_internal_number`
   that will keep the `MeetingItem.internal_number` when `postpone_next_meeting`
   an item as the new item is somewhat the same presented again in another meeting.
+  [gbastien]
+- Make `MeetingItem.meetingDeadlineDate` displayable in dashboards as static info
+  (always visible in the item `Title` column).
+  [gbastien]
+- Static info `Item reference` is now selectable in the
+  `MeetingConfig.availableItemsListVisibleColumns` as item reference may now be
+  set before item is inserted into a meeting.
+  [gbastien]
+- Added `static_labels` and `static_item_reference` to the selectable values for
+  `MeetingConfig.itemsVisibleFields` and `MeetingConfig.itemsNotViewableVisibleFields`.
   [gbastien]
 
 4.2.8 (2023-10-27)

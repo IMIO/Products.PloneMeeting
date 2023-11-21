@@ -5507,6 +5507,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate("labels_column", domain=d, context=self.REQUEST))),
             ("static_item_reference", u"{0} (static_item_reference)".format(
                 translate("item_reference_column", domain=d, context=self.REQUEST))),
+            ("static_meetingDeadlineDate", u"{0} (static_meetingDeadlineDate)".format(
+                translate("static_item_meeting_deadline_date", domain=d, context=self.REQUEST))),
             ("static_marginalNotes", u"{0} (static_marginalNotes)".format(
                 translate("marginal_notes_column", domain=d, context=self.REQUEST))),
             ("static_budget_infos", u"{0} (static_budget_infos)".format(
@@ -5576,9 +5578,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             translate('header_preferred_meeting_date',
                       domain='collective.eeafaceted.z3ctable',
                       context=self.REQUEST))))
-        # remove item_reference and review_state
-        res = [v for v in res if v[0] not in
-               ('static_item_reference', 'review_state', 'review_state_title')]
+        # remove review_state columns as items will always be "validated"
+        res = [v for v in res if v[0] not in ('review_state', 'review_state_title')]
         return DisplayList(tuple(res))
 
     security.declarePrivate('listItemsListVisibleColumns')
