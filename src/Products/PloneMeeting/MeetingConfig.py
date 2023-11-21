@@ -5577,9 +5577,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             translate('header_preferred_meeting_date',
                       domain='collective.eeafaceted.z3ctable',
                       context=self.REQUEST))))
-        # remove item_reference and review_state
-        res = [v for v in res if v[0] not in
-               ('static_item_reference', 'review_state', 'review_state_title')]
+        # remove review_state columns as items will always be "validated"
+        res = [v for v in res if v[0] not in ('review_state', 'review_state_title')]
         return DisplayList(tuple(res))
 
     security.declarePrivate('listItemsListVisibleColumns')

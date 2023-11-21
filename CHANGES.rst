@@ -23,6 +23,10 @@ Changelog
 - Make `MeetingItem.meetingDeadlineDate` displayable in dashboards as static info
   (always visible in the item `Title` column).
   [gbastien]
+- Static info `Item reference` is now selectable in the
+  `MeetingConfig.availableItemsListVisibleColumns` as item reference may now be
+  set before item is inserted into a meeting.
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------
