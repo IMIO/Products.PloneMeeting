@@ -360,6 +360,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         self.unindexObject()
         # Configure advice portal_types and workflows
         self.configureAdvices()
+        # Configure documentviewer auto_convert
+        self.configureAutoConvert()
         # custom onEdit
         self.adapted().onEdit(isCreated=False)
 
@@ -368,6 +370,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def at_post_create_script(self):
         # Configure advice portal_types and workflows
         self.configureAdvices()
+        # Configure documentviewer auto_convert
+        self.configureAutoConvert()
         # custom onEdit
         self.adapted().onEdit(isCreated=True)
 
@@ -379,6 +383,19 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         _performAdviceWorkflowAdaptations()
         # Finalize advice WF config with DX local roles
         self._finalizeAdviceWFConfig()
+
+    def configureAutoConvert(self):
+        """ """
+        types_tool = api.portal.get_tool('portal_types')
+        if self.auto_convert_annexes():
+            # make sure annex/annexDecision portal_types use documentviewer
+            # as default layout
+            types_tool['annex'].default_view = "documentviewer"
+            types_tool['annexDecision'].default_view = "documentviewer"
+        else:
+            # make sure annex/annexDecision portal_types use view as default view
+            types_tool['annex'].default_view = "view"
+            types_tool['annexDecision'].default_view = "view"
 
     def _updateMeetingAdvicePortalTypes(self):
         '''After Meeting/MeetingItem portal_types have been updated,

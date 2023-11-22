@@ -737,8 +737,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         """Enable collective.documentviewer auto_convert."""
         gsettings = GlobalSettings(self.portal)
         gsettings.auto_convert = enable
-        gsettings.auto_select_layout = enable
+        # False or every portal_type having a file is converted, like PODTemplate, ...
+        gsettings.auto_select_layout = False
         gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
+        self.tool.at_post_edit_script()
         return gsettings
 
     def _enable_column(self, column_name, cfg=None, related_to='MeetingItem', enable=True):
