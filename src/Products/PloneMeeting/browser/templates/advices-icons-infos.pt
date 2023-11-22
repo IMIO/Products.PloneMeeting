@@ -129,9 +129,8 @@
                          </a>
                       </acronym>
                      </tal:advice-change-delay-condition>
-                     <acronym tal:condition="python: view.show_history">
-                        <a class="overlay-history"
-                           title="History"
+                     <acronym tal:condition="python: view.show_history" class="contentHistory">
+                        <a title="History"
                            i18n:domain="plone"
                            i18n:attributes="title"
                            href="@@historyview"

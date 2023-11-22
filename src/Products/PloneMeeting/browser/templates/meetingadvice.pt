@@ -29,6 +29,7 @@
           <metal:backToItem use-macro='here/@@pm-macros/backToItem' />
           <metal:global_actions use-macro="context/@@pm-macros/global_actions" />
         </tal:back_to_item>
+
         <table class="no-style-table" width="100%">
             <tal:loop repeat="widget view/widgets/values">
             <tr tal:condition="python: widget.mode != 'hidden'"
@@ -89,6 +90,7 @@
         <tal:close_button condition="python: 'ajax_load' in context.REQUEST">
           <div class="visualClear"></div>
           <metal:closeButton use-macro="here/@@pm-macros/closeButtonMacro" />
+          <script>contentHistory();</script>
         </tal:close_button>
 
       </div>
