@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from collective.behavior.internalnumber.browser.settings import get_settings
+from collective.behavior.internalnumber.browser.settings import set_settings
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import select_org_for_function
@@ -12,6 +14,7 @@ from copy import deepcopy
 from DateTime import DateTime
 from datetime import datetime
 from datetime import timedelta
+from imio.helpers.content import uuidToObject
 from imio.helpers.workflow import get_leading_transitions
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
@@ -31,6 +34,7 @@ from Products.PloneMeeting.config import WriteMarginalNotes
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
+from Products.PloneMeeting.utils import get_internal_number
 from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import ObjectModifiedEvent
@@ -86,6 +90,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                           'no_publication',
                           'only_creator_may_delete',
                           'postpone_next_meeting',
+                          'postpone_next_meeting_keep_internal_number',
                           'pre_accepted',
                           'presented_item_back_to_itemcreated',
                           'presented_item_back_to_proposed',
@@ -2759,6 +2764,39 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(item.query_state(), 'postponed_next_meeting')
         # back transition
         self.do(item, 'backToItemPublished')
+        return item
+
+    def test_pm_WFA_postpone_next_meeting_keep_internal_number(self):
+        '''Test the workflowAdaptation 'postpone_next_meeting_keep_internal_number'.'''
+        # ease override by subproducts
+        if not self._check_wfa_available(['postpone_next_meeting_keep_internal_number']):
+            return
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        # enable for internal_number
+        set_settings({cfg.getItemTypeName(): {'u': False, 'nb': 1, 'expr': u'number'}})
+        self.changeUser('pmManager')
+        # check while the _keep_internal_number wfAdaptation is not activated
+        self.assertFalse(
+            'postpone_next_meeting_keep_internal_number' in cfg.getWorkflowAdaptations())
+        self._activate_wfas(('postpone_next_meeting', ))
+        item = self._postpone_next_meeting_active()
+        self.assertEqual(get_internal_number(item), 1)
+        self.assertEqual(get_internal_number(item.get_successor()), 2)
+        # check that brain index and metadata is updated
+        self.assertEqual(
+            uuidToObject(item.UID(), query={'internal_number': 1}).internal_number, 1)
+        self.assertEqual(
+            uuidToObject(item.get_successor().UID(),
+                         query={'internal_number': 2}).internal_number, 2)
+        self._activate_wfas(('postpone_next_meeting', 'postpone_next_meeting_keep_internal_number'))
+        item = self._postpone_next_meeting_active()
+        self.assertEqual(get_internal_number(item), 3)
+        self.assertEqual(get_internal_number(item.get_successor()), 3)
+        self.assertEqual(
+            uuidToObject(item.UID(), query={'internal_number': 3}).internal_number, 3)
+        # next item internal_number is 4
+        self.assertEqual(get_settings()[item.portal_type]['nb'], 4)
 
     def test_pm_WFA_postpone_next_meeting_back_transition(self):
         '''The back transition may vary if using additional WFAdaptations,

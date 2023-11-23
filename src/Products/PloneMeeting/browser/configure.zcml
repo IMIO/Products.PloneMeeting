@@ -607,6 +607,11 @@
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         template="templates/item_linked_items.pt"
         permission="zope2.View" />
+    <browser:view
+        name="load-linked-items-infos"
+        class=".async.AsyncLoadLinkedItemsInfos"
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        permission="zope2.View" />
 
     <browser:page
         for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"

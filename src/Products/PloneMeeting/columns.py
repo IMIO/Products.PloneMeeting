@@ -223,14 +223,13 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                 staticInfos = obj.restrictedTraverse('@@static-infos')(
                     visibleColumns=visibleColumns)
                 if self.showMoreInfos:
-                    moreInfos = obj.restrictedTraverse('@@item-more-infos')(
-                        visibleColumns=visibleColumns)
+                    moreInfos = obj.restrictedTraverse('@@item-more-infos')()
 
                 # display annexes
                 annexes = render_item_annexes(obj, tool)
         elif obj.getTagName() == 'Meeting':
-            visibleColumns = cfg.getMeetingColumns()
-            staticInfos = obj.restrictedTraverse('@@static-infos')(visibleColumns=visibleColumns)
+            staticInfos = obj.restrictedTraverse('@@static-infos')(
+                visibleColumns=cfg.getMeetingColumns())
             # check_can_view=True because permission check is not enough
             annexes += obj.restrictedTraverse('@@categorized-childs')(
                 portal_type='annex', check_can_view=True)

@@ -2898,6 +2898,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      # then define added item decided states
                      'accepted_but_modified',
                      'postpone_next_meeting',
+                     'postpone_next_meeting_keep_internal_number',
                      'mark_not_applicable',
                      'removed',
                      'removed_and_duplicated',
@@ -5607,9 +5608,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemsVisibleFields(self):
         '''Vocabulary for the 'itemsVisibleFields' field.
            Every fields available on the MeetingItem can be selectable.'''
-        res = self._listFieldsFor(MeetingItem,
-                                  ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
-                                  hide_not_visible=True)
+        # insert some static selectable values, ignore static that are also in _listFieldsFor
+        res = [(k, v) for k, v in self.listItemRelatedColumns()
+               if k.startswith('static_') and k not in ('static_marginalNotes', 'static_budget_infos')]
+        res += self._listFieldsFor(MeetingItem,
+                                   ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
+                                   hide_not_visible=True)
         res.insert(0, ('MeetingItem.annexes',
                        translate('existing_annexes',
                                  domain='PloneMeeting',
@@ -5623,9 +5627,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemsNotViewableVisibleFields(self):
         '''Vocabulary for the 'itemsNotViewableVisibleFields' field.
            Every fields available on the MeetingItem can be selectable.'''
-        res = self._listFieldsFor(MeetingItem,
-                                  ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
-                                  hide_not_visible=True)
+        # insert some static selectable values, ignore static that are also in _listFieldsFor
+        res = [(k, v) for k, v in self.listItemRelatedColumns()
+               if k.startswith('static_') and k not in ('static_marginalNotes', 'static_budget_infos')]
+        res += self._listFieldsFor(MeetingItem,
+                                   ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
+                                   hide_not_visible=True)
         res.insert(0, ('MeetingItem.annexes',
                        translate('not_confidential_annexes',
                                  domain='PloneMeeting',

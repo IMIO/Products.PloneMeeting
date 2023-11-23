@@ -98,9 +98,8 @@ class ItemMoreInfosView(BrowserView):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
-    def __call__(self, visibleColumns=[], fieldsConfigAttr='itemsListVisibleFields', currentCfgId=None):
+    def __call__(self, fieldsConfigAttr='itemsListVisibleFields', currentCfgId=None):
         """ """
-        self.visibleColumns = visibleColumns
         self.visibleFields = self.cfg.getField(fieldsConfigAttr).get(self.cfg)
         # if current user may not see the item, use another fieldsConfigAttr
         if not _checkPermission(View, self.context):
@@ -128,6 +127,9 @@ class ItemMoreInfosView(BrowserView):
         # keep order of displayed fields
         res = OrderedDict()
         for visibleField in self.visibleFields:
+            # ignore static_ fields
+            if visibleField.startswith('static_'):
+                continue
             visibleFieldName = visibleField.split('.')[1]
             # if nothing is defined, the default rendering macro will be used
             # this is made to be overrided
@@ -142,7 +144,7 @@ class ItemMoreInfosView(BrowserView):
     def render_annexes(self):
         """ """
         return render_item_annexes(
-            self.context, self.tool, show_nothing=True, check_can_view=True)
+            self.context, self.tool, show_nothing=False, check_can_view=True).strip() or '-'
 
 
 class BaseStaticInfosView(BrowserView):

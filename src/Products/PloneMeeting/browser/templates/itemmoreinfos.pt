@@ -9,7 +9,7 @@
                           visibleFieldRenderer python: visibleFieldInfos[1];
                           field python: context.getField(visibleFieldName);"
               tal:condition="python: field and not context.fieldIsEmpty(visibleFieldName) and ((visibleFieldName == 'budgetInfos' and
-                             context.getBudgetRelated() or not visibleFieldName == 'budgetInfos') and True or False) and not visibleFieldName in view.visibleColumns">
+                             context.getBudgetRelated() or not visibleFieldName == 'budgetInfos') and True or False)">
             <tal:displayed define="global displayed python:True">
                 <tal:customRenderer condition="visibleFieldRenderer">
                     <span tal:replace="structure python: context.unrestrictedTraverse(visibleFieldRenderer)(visibleFieldName)" />
