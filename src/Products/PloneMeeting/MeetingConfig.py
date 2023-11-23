@@ -2899,6 +2899,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'accepted_but_modified',
                      'postpone_next_meeting',
                      'postpone_next_meeting_keep_internal_number',
+                     'postpone_next_meeting_transfer_annex_scan_id',
                      'mark_not_applicable',
                      'removed',
                      'removed_and_duplicated',
