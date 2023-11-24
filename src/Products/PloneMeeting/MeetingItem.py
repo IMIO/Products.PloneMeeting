@@ -946,16 +946,21 @@ class MeetingItemWorkflowActions(object):
                                keepProposingGroup=True,
                                setCurrentAsPredecessor=True)
 
-    def _duplicateAndValidate(self, cloneEventAction, keep_internal_number=False):
+    def _duplicateAndValidate(self,
+                              cloneEventAction,
+                              keep_internal_number=False,
+                              transfertAnnexWithScanIdTypes=[]):
         """Duplicate and keep link self.context and validate the new item."""
         creator = self.context.Creator()
         # We create a copy in the initial item state, in the folder of creator.
-        clonedItem = self.context.clone(copyAnnexes=True,
-                                        newOwnerId=creator,
-                                        cloneEventAction=cloneEventAction,
-                                        keepProposingGroup=True,
-                                        setCurrentAsPredecessor=True,
-                                        inheritAdvices=True)
+        clonedItem = self.context.clone(
+            copyAnnexes=True,
+            newOwnerId=creator,
+            cloneEventAction=cloneEventAction,
+            keepProposingGroup=True,
+            setCurrentAsPredecessor=True,
+            inheritAdvices=True,
+            transfertAnnexWithScanIdTypes=transfertAnnexWithScanIdTypes)
         # keep internal_number if relevant
         if keep_internal_number and _internal_number_is_used(clonedItem):
             set_internal_number(
@@ -991,9 +996,16 @@ class MeetingItemWorkflowActions(object):
         keep_internal_number = False
         if "postpone_next_meeting_keep_internal_number" in self.cfg.getWorkflowAdaptations():
             keep_internal_number = True
+
+        # check if need to transfert annex scan_id
+        transfertAnnexWithScanIdTypes = []
+        if "postpone_next_meeting_transfer_annex_scan_id" in self.cfg.getWorkflowAdaptations():
+            transfertAnnexWithScanIdTypes.append('annex')
+
         clonedItem = self._duplicateAndValidate(
             cloneEventAction='create_from_postponed_next_meeting',
-            keep_internal_number=keep_internal_number)
+            keep_internal_number=keep_internal_number,
+            transfertAnnexWithScanIdTypes=transfertAnnexWithScanIdTypes)
         # Send, if configured, a mail to the person who created the item
         sendMailIfRelevant(
             self.context,
@@ -7316,7 +7328,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
               copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None, keepProposingGroup=False,
               setCurrentAsPredecessor=False, manualLinkToPredecessor=False,
               inheritAdvices=False, inheritedAdviceUids=[], keep_ftw_labels=False,
-              keptAnnexIds=[], keptDecisionAnnexIds=[], item_attrs={}, reindexNewItem=True):
+              keptAnnexIds=[], keptDecisionAnnexIds=[], item_attrs={}, reindexNewItem=True,
+              transfertAnnexWithScanIdTypes=[]):
         '''Clones me in the PloneMeetingFolder of the current user, or
            p_newOwnerId if given (this guy will also become owner of this
            item). If there is a p_cloneEventAction, an event will be included
@@ -7337,7 +7350,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            When p_copyAnnexes=True, we may give a p_keptAnnexIds, if so, only annexes
            with those ids are kept, if not, every annexes are kept.
            Same for p_copyDecisionAnnexes/p_keptDecisionAnnexIds.
-           The given p_item_attrs will be arbitrary set on new item before it is reindexed.'''
+           The given p_item_attrs will be arbitrary set on new item before it is reindexed.
+           If some annex portal_types are given in transfertAnnexWithScanIdTypes, then
+           annexes of this portal_type that have a scan_id will be kept and the scan_id
+           is transfered from original annex to new annex.'''
 
         # check if may clone
         self._mayClone(cloneEventAction)
@@ -7384,7 +7400,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                  keepProposingGroup=keepProposingGroup,
                                  keep_ftw_labels=keep_ftw_labels,
                                  keptAnnexIds=keptAnnexIds,
-                                 keptDecisionAnnexIds=keptDecisionAnnexIds)
+                                 keptDecisionAnnexIds=keptDecisionAnnexIds,
+                                 transfertAnnexWithScanIdTypes=transfertAnnexWithScanIdTypes)
         self.portal_type = original_portal_type
 
         # special handling for some fields kept when cloned_to_same_mc
