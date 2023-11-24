@@ -2,9 +2,7 @@
 
 from AccessControl import Unauthorized
 from collections import OrderedDict
-from collective.behavior.internalnumber.browser.settings import _internal_number_is_used
 from collective.behavior.internalnumber.browser.settings import decrement_if_last_nb
-from collective.behavior.internalnumber.browser.settings import decrement_nb_for
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
@@ -1137,9 +1135,8 @@ def onItemEditCancelled(item, event):
        the _at_creation to True, it means we are creating an item from a template,
        we need to delete it if first edit was cancelled.'''
     if item._at_creation_flag and not item.isTemporary():
-        # rollback internal_number if used and defined
-        if _internal_number_is_used(item):
-            decrement_nb_for(item.portal_type)
+        # decrement internal_number if it was the last added item
+        decrement_if_last_nb(item.portal_type)
         parent = item.getParentNode()
         parent.manage_delObjects(ids=[item.getId()])
 

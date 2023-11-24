@@ -1189,7 +1189,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                   newOwnerId=None, copyFields=DEFAULT_COPIED_FIELDS,
                   newPortalType=None, keepProposingGroup=False, keep_ftw_labels=False,
                   keptAnnexIds=[], keptDecisionAnnexIds=[],
-                  ignoreUsingGroupsForMeetingManagers=True):
+                  ignoreUsingGroupsForMeetingManagers=True,
+                  transfertAnnexWithScanIdTypes=[]):
         '''Paste objects (previously copied) in destFolder. If p_newOwnerId
            is specified, it will become the new owner of the item.
            This method does NOT manage after creation calls like at_post_create_script.
@@ -1337,10 +1338,21 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                             plone_utils.addPortalMessage(msg, 'warning')
                             unrestrictedRemoveGivenObject(newAnnex)
                             continue
-                    # annex with a scan_id is deleted if not newPortalType
+
+                    # if not newPortalType, annex with a scan_id is deleted
+                    # if annex portal_type not defined in transfertAnnexWithScanIdTypes
                     # if newPortalType, it is managed here above by
                     # _updateContentCategoryAfterSentToOtherMeetingConfig
-                    if getattr(newAnnex, 'scan_id', None):
+                    # annex is removed we do not reach this point
+                    if newAnnex.portal_type in transfertAnnexWithScanIdTypes and \
+                       getattr(oldAnnex, 'scan_id', None):
+                        # transfer annex scan_id, it was copied to newAnnex, do not touch
+                        # but we remove it from oldAnnex and we reindex
+                        oldAnnex.scan_id = None
+                        oldAnnex.reindexObject(idxs=['scan_id'])
+                        # reindex parent because SearchableText still contains the annex scan_id
+                        reindex_object(copiedItem, update_metadata=False, mark_to_reindex=True)
+                    elif getattr(newAnnex, 'scan_id', None):
                         msg = translate('annex_not_kept_because_using_scan_id',
                                         mapping={'annexTitle': safe_unicode(newAnnex.Title())},
                                         domain='PloneMeeting',
@@ -1348,6 +1360,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         plone_utils.addPortalMessage(msg, type='warning')
                         unrestrictedRemoveGivenObject(newAnnex)
                         continue
+
                     # initialize to_print correctly regarding configuration
                     if not destCfg.getKeepOriginalToPrintOfClonedItems():
                         newAnnex.to_print = \

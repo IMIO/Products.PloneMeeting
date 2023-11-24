@@ -327,6 +327,26 @@ class AsyncLoadLinkedItems(BrowserView):
         return self.index()
 
 
+class AsyncLoadLinkedItemsInfos(BrowserView):
+
+    def __call__(self, fieldsConfigAttr, currentCfgId):
+        """ """
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+        self.portal_url = api.portal.get().absolute_url()
+        # more infos, compute it first to have fields/static fields to show
+        more_infos_view = self.context.restrictedTraverse('@@item-more-infos')
+        more_infos = more_infos_view(fieldsConfigAttr, currentCfgId)
+        # static infos
+        static_infos = ''
+        visibleColumns = [field for field in more_infos_view.visibleFields
+                          if field.startswith('static_')]
+        if visibleColumns:
+            static_infos = self.context.restrictedTraverse('@@static-infos')(
+                visibleColumns=visibleColumns)
+        return static_infos + more_infos
+
+
 class AsyncLoadItemAssemblyAndSignatures(BrowserView):
     """ """
 

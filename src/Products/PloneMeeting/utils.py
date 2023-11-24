@@ -6,6 +6,7 @@ from Acquisition import aq_base
 from appy.pod.xhtml2odt import XhtmlPreprocessor
 from appy.shared.diff import HtmlDiff
 from bs4 import BeautifulSoup
+from collective.behavior.internalnumber.browser.settings import decrement_if_last_nb
 from collective.behavior.internalnumber.browser.settings import increment_nb_for
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.core.utils import get_gender_and_number
@@ -2550,12 +2551,19 @@ def get_internal_number(obj, init=False):
     return internal_number
 
 
-def set_internal_number(obj, value, update_ref=False):
+def set_internal_number(obj, value, update_ref=False, reindex=True, decrement=False):
     """Set the internal_number for a given p_obj. If p_update_ref is True we also
-    update the item reference. Will be deprecated when MeetingItem is in DX."""
+    update the item reference. If reindex is True, we reindex the internal_number index.
+    If decrement is True, we decrement global counter if it was last value."""
+    # manage decrement before setting value
+    if decrement:
+        decrement_if_last_nb(obj)
     setattr(obj, "internal_number", value)
     if update_ref:
         obj.update_item_reference()
+    if reindex:
+        # there is only an index, no metadata related to "internal_number"
+        reindex_object(obj, idxs=['internal_number'], update_metadata=False)
 
 
 def _get_category(obj, cat_id, the_object=False, cat_type='categories'):

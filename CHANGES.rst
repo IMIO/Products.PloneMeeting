@@ -23,6 +23,10 @@ Changelog
 - Added `MeetingConfig.show_copy_groups_search` that is used to protect
   copyGroups related searches.
   [gbastien]
+- Fixed `PMCategorizedChildView.__call___`, if no categorized elements,
+  do not return just [] but the parameter `show_nothing` value,
+  as it is rendered differently if True or False.
+  [gbastien]
 - Make `MeetingItem.meetingDeadlineDate` displayable in dashboards as static info
   (always visible in the item `Title` column).
   [gbastien]
@@ -30,17 +34,30 @@ Changelog
   `MeetingConfig.availableItemsListVisibleColumns` as item reference may now be
   set before item is inserted into a meeting.
   [gbastien]
+- Added `static_labels` and `static_item_reference` to the selectable values for
+  `MeetingConfig.itemsVisibleFields` and `MeetingConfig.itemsNotViewableVisibleFields`.
+  [gbastien]
+- Added complementary WFAdaptation `postpone_next_meeting_keep_internal_number`
+  that will keep the `MeetingItem.internal_number` when `postpone_next_meeting`
+  an item as the new item is somewhat the same presented again in another meeting.
+  [gbastien]
+- Added complementary WFAdaptation `postpone_next_meeting_transfer_annex_scan_id`
+  that will keep the annexes with a `scan_id` but transfer this `scan_id` from
+  original annexes (where `scan_id` is set to None) to new annexes.
+  [gbastien]
 
 4.2.9b1 (2023-10-27)
 --------------------
 
-- Added advanced advice management using ToolPloneMeeting.advisersConfig:
+- Added advanced advice management using `ToolPloneMeeting.advisersConfig`:
 
-  - possible to associate a new advice portal_type to some organizations;
+  - possible to associate a new advice `portal_type` to some organizations;
   - reworked advice infos template to add more CSS classes to additional infos;
   - display the `Advice given by` information;
   - added possibility to hide advice history to power observers and to everyone
     and to hide meeting history to powerobservers.
+
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------

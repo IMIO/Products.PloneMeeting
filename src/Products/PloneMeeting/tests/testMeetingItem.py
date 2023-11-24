@@ -26,6 +26,7 @@ from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
+from imio.helpers.content import uuidToObject
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
@@ -8442,11 +8443,14 @@ class testMeetingItem(PloneMeetingTestCase):
         set_settings({cfg.getItemTypeName(): {'u': False, 'nb': 1, 'expr': u'number'}})
         item = self.create('MeetingItem')
         self.assertEqual(item.internal_number, 1)
-        self.assertEqual(self.catalog(internal_number=1)[0].UID, item.UID())
+        # check that brain index and metadata is updated
+        self.assertEqual(
+            uuidToObject(item.UID(), query={'internal_number': 1}).internal_number, 1)
         self.assertEqual(get_settings()[item.portal_type]['nb'], 2)
         item = self.create('MeetingItem')
         self.assertEqual(item.internal_number, 2)
-        self.assertEqual(self.catalog(internal_number=2)[0].UID, item.UID())
+        self.assertEqual(
+            uuidToObject(item.UID(), query={'internal_number': 2}).internal_number, 2)
         self.assertEqual(get_settings()[item.portal_type]['nb'], 3)
         # decremented if edit cancelled
         item._at_creation_flag = True
@@ -8456,7 +8460,8 @@ class testMeetingItem(PloneMeetingTestCase):
         set_settings({cfg.getItemTypeName(): {'u': False, 'nb': 50000, 'expr': u'number'}})
         item = self.create('MeetingItem')
         self.assertEqual(item.internal_number, 50000)
-        self.assertEqual(self.catalog(internal_number=50000)[0].UID, item.UID())
+        self.assertEqual(
+            uuidToObject(item.UID(), query={'internal_number': 50000}).internal_number, 50000)
         # not set on items created in configuration
         self.changeUser('siteadmin')
         item_template = self.create('MeetingItemTemplate')
@@ -8484,10 +8489,14 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.assertEqual(item.internal_number, 1)
+        # check that brain index and metadata is updated
+        self.assertEqual(
+            uuidToObject(item.UID(), query={'internal_number': 1}).internal_number, 1)
         # clone locally
         cloned_item = item.clone()
         self.assertEqual(cloned_item.internal_number, 2)
-        self.assertEqual(self.catalog(internal_number=2)[0].UID, cloned_item.UID())
+        self.assertEqual(
+            uuidToObject(cloned_item.UID(), query={'internal_number': 2}).internal_number, 2)
         # create item from template
         pmFolder = self.getMeetingFolder()
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
@@ -8495,7 +8504,8 @@ class testMeetingItem(PloneMeetingTestCase):
         itemFromTemplate = view.createItemFromTemplate(itemTemplate.UID())
         itemFromTemplate.processForm()
         self.assertEqual(itemFromTemplate.internal_number, 3)
-        self.assertEqual(self.catalog(internal_number=3)[0].UID, itemFromTemplate.UID())
+        self.assertEqual(
+            uuidToObject(itemFromTemplate.UID(), query={'internal_number': 3}).internal_number, 3)
         # clone to another cfg, not enabled for now
         itemFromTemplate.setOtherMeetingConfigsClonableTo((cfg2Id, ))
         itemCfg2 = itemFromTemplate.cloneToOtherMeetingConfig(cfg2Id)
@@ -8505,7 +8515,8 @@ class testMeetingItem(PloneMeetingTestCase):
             cfg2.getItemTypeName(): {'u': False, 'nb': 50, 'expr': u'number'}})
         itemCfg2 = itemFromTemplate.cloneToOtherMeetingConfig(cfg2Id)
         self.assertEqual(itemCfg2.internal_number, 50)
-        self.assertEqual(self.catalog(internal_number=50)[0].UID, itemCfg2.UID())
+        self.assertEqual(
+            uuidToObject(itemCfg2.UID(), query={'internal_number': 50}).internal_number, 50)
 
     def test_pm_ItemMailNotificationLateItem(self):
         """Test the "lateItem" notification."""

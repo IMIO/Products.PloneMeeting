@@ -1889,8 +1889,9 @@ div.faceted-daterange-widget form div input {
 #content div#labeling-viewlet {
    padding-top: 0.3em;
 }
-/* labels displayed in the dashboards */
-#content div#faceted-results div#labeling-viewlet ul {
+/* labels displayed in the dashboards and linked items */
+#content div#faceted-results div#labeling-viewlet ul,
+#content div#collapsible-linked-items div#labeling-viewlet ul {
    display: inline-block;
 }
 
