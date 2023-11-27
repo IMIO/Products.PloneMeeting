@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.9b2 (unreleased)
+4.2.9b2 (2023-11-27)
 --------------------
 
 - Display last transition actor and comment in item mail notifications for mail events:
