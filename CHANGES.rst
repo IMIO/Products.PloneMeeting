@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.9b3 (unreleased)
+4.2.9b3 (2023-11-27)
 --------------------
 
 - Fixed `MeetingConfig.listTransitionsUntilPresented` that was raising
