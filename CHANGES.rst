@@ -5,8 +5,9 @@ Changelog
 4.2.9b4 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Mail notifications `adviceEdited` and `adviceEditedOwner` are no more sent
+  if advice is hidden during redaction.
+  [gbastien]
 
 4.2.9b3 (2023-11-27)
 --------------------

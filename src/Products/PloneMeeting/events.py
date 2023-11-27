@@ -937,9 +937,10 @@ def onAdviceAdded(advice, event):
     # update item
     _advice_update_item(item)
 
-    # Send mail if relevant
-    sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
-    sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
+    if not advice.advice_hide_during_redaction:
+        # Send mail if relevant
+        sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
+        sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
 
 
 def onAdviceModified(advice, event):
@@ -963,9 +964,10 @@ def onAdviceModified(advice, event):
     # update item
     _advice_update_item(item)
 
-    # Send mail if relevant
-    sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
-    sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
+    if not advice.advice_hide_during_redaction:
+        # Send mail if relevant
+        sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
+        sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
 
 
 def onAdviceEditFinished(advice, event):

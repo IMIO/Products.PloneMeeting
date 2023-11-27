@@ -6241,14 +6241,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Invalidate all advices. Send notification mail(s) if configured.
             for org_uid, adviceInfo in self.adviceIndex.iteritems():
                 advice_obj = self.getAdviceObj(adviceInfo['id'])
-                if advice_obj:
-                    # Send a mail to the group that can give the advice.
-                    if 'adviceInvalidated' in cfg.getMailItemEvents():
-                        plone_group_id = get_plone_group_id(org_uid, 'advisers')
-                        sendMailIfRelevant(self,
-                                           'adviceInvalidated',
-                                           [plone_group_id],
-                                           isGroupIds=True)
+                # Send a mail to the group that can give the advice.
+                if advice_obj and 'adviceInvalidated' in cfg.getMailItemEvents():
+                    plone_group_id = get_plone_group_id(org_uid, 'advisers')
+                    sendMailIfRelevant(self,
+                                       'adviceInvalidated',
+                                       [plone_group_id],
+                                       isGroupIds=True)
             plone_utils.addPortalMessage(translate('advices_invalidated',
                                                    domain="PloneMeeting",
                                                    context=self.REQUEST),
