@@ -5,8 +5,10 @@ Changelog
 4.2.9b3 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Fixed `MeetingConfig.listTransitionsUntilPresented` that was raising
+  `UnicodeDecodeError` now that we use unicode arrow in term title.
+  Use unicode arrow in `utils.get_dx_attrs` when `as_display_list=True`.
+  [gbastien]
 
 4.2.9b2 (2023-11-27)
 --------------------

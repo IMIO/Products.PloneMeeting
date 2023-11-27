@@ -972,7 +972,7 @@ def get_dx_attrs(portal_type,
                 key = "{0}.{1}".format(prefix, key)
                 display_list_tuples.append(
                     (key,
-                     '%s -> %s' % (key,
+                     u'%s ➔ %s' % (key,
                                    translate("title_{0}".format(field_name),
                                              domain="PloneMeeting",
                                              context=request))

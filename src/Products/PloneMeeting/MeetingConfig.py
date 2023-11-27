@@ -6942,7 +6942,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             cfgId = cfg.getId()
             cfgTitle = unicode(cfg.Title(), 'utf-8')
             for tr in cfg.getTransitionsForPresentingAnItem():
-                text = '%s ➔ %s' % (
+                text = u'%s ➔ %s' % (
                     cfgTitle,
                     availableItemTransitionTitles[availableItemTransitionIds.index(tr)])
                 res.append(('%s.%s' % (cfgId, tr), text))
