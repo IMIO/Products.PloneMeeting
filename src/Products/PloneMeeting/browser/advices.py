@@ -7,6 +7,7 @@ from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.workflow import get_state_infos
 from imio.history.browser.views import EventPreviewView
 from imio.history.interfaces import IImioHistory
+from imio.history.utils import add_event_to_history
 from imio.history.utils import get_event_by_time
 from plone import api
 from plone.autoform import directives
@@ -28,6 +29,7 @@ from zope.component import getAdapter
 from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.i18n import translate
+from zope.lifecycleevent import Attributes
 from zope.lifecycleevent import ObjectModifiedEvent
 
 import json
@@ -346,7 +348,10 @@ class ChangeAdviceHiddenDuringRedactionView(BrowserView):
         else:
             # toggle the value
             self.context.advice_hide_during_redaction = not bool(self.context.advice_hide_during_redaction)
-            notify(ObjectModifiedEvent(self.context))
+            # when advice_hide_during_redaction, it is handled by ObjectModifiedEvent
+            notify(ObjectModifiedEvent(
+                self.context,
+                Attributes(None, 'advice_hide_during_redaction')))
             if self.request.RESPONSE.status != 200:
                 self.request.RESPONSE.status = 200
                 if self.request.get('HTTP_REFERER') != self.request.RESPONSE.getHeader('location'):

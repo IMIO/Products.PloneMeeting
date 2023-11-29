@@ -802,6 +802,13 @@ class PMCompletenessChangesHistoryAdapter(BaseImioHistoryAdapter):
     history_attr_name = 'completeness_changes_history'
 
 
+class PMAdviceHideDuringRedactionHistoryAdapter(BaseImioHistoryAdapter):
+    """ """
+
+    history_type = 'advice_hide_during_redaction'
+    history_attr_name = 'advice_hide_during_redaction_history'
+
+
 class PMAdviceGivenHistoryAdapter(BaseImioHistoryAdapter):
     """ """
 

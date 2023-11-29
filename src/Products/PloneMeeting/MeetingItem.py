@@ -32,6 +32,7 @@ from imio.helpers.security import fplog
 from imio.helpers.workflow import do_transitions
 from imio.helpers.workflow import get_transitions
 from imio.helpers.xhtml import is_html
+from imio.history.utils import add_event_to_wf_history
 from imio.history.utils import get_all_history_attr
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
@@ -113,7 +114,6 @@ from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _clear_local_roles
 from Products.PloneMeeting.utils import _get_category
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
-from Products.PloneMeeting.utils import add_wf_history_action
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
 from Products.PloneMeeting.utils import checkMayQuickEdit
@@ -7454,10 +7454,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # because it was cleaned by ToolPloneMeeting.pasteItem
             # use cloneEventActionLabel or generate a msgid based on cloneEventAction
             action_label = cloneEventActionLabel or cloneEventAction + '_comments'
-            add_wf_history_action(newItem,
-                                  action_name=cloneEventAction,
-                                  action_label=action_label,
-                                  user_id=userId)
+            add_event_to_wf_history(newItem,
+                                    action=cloneEventAction,
+                                    actor=userId,
+                                    comments=action_label)
 
         newItem.at_post_create_script(inheritedAdviserUids=inheritedAdviserUids)
 
@@ -7689,14 +7689,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # it was sent to another meetingConfig.  The 'new item' already have
         # a line added to his workflow_history.
         # add a line to the original item history
-        action_label = translate(
+        comments = translate(
             'sentto_othermeetingconfig',
             domain="PloneMeeting",
             context=self.REQUEST,
             mapping={'meetingConfigTitle': safe_unicode(destMeetingConfig.Title())})
-        action_name = destMeetingConfig._getCloneToOtherMCActionTitle(destMeetingConfig.Title())
+        action = destMeetingConfig._getCloneToOtherMCActionTitle(destMeetingConfig.Title())
         # add an event to the workflow history
-        add_wf_history_action(self, action_name=action_name, action_label=action_label)
+        add_event_to_wf_history(self, action=action, comments=comments)
 
         # Send an email to the user being able to modify the new item if relevant
         mapping = {'originMeetingConfigTitle': safe_unicode(cfg.Title()), }

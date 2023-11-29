@@ -42,6 +42,12 @@ Changelog
   that will keep the annexes with a `scan_id` but transfer this `scan_id` from
   original annexes (where `scan_id` is set to None) to new annexes.
   [gbastien]
+- Added `advice_hide_during_redaction_history` to store
+  `advice.advice_hide_during_redaction` changes by user.
+  [gbastien]
+- Moved `ToolPloneMeeting.showMeetingView` to `MeetingFacetedView.show_page`
+  as it is only used there.
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------

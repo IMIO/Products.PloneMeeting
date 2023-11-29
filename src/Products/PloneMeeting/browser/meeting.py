@@ -496,8 +496,18 @@ class MeetingFacetedView(BaseMeetingFacetedView):
         return super(MeetingFacetedView, self).__call__()
 
     def show_page(self):
-        """Display page to current user?"""
-        return self.tool.showMeetingView(self.context)
+        '''If PloneMeeting is in "Restrict users" mode, the "Meeting view" page
+           must not be shown to some users: users that do not have role
+           MeetingManager and are not listed in a specific list.'''
+        restrictMode = self.tool.getRestrictUsers()
+        res = True
+        if restrictMode:
+            if not self.is_manager:
+                # Check if the user is in specific list
+                if self.member.getId() not in [
+                        u.strip() for u in self.tool.getUnrestrictedUsers().split('\n')]:
+                    res = False
+        return res
 
     def _display_available_items_to(self):
         """Check if current user profile is selected in MeetingConfig.displayAvailableItemsTo."""

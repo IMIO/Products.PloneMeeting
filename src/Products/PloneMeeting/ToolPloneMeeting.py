@@ -39,6 +39,7 @@ from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.security import check_zope_admin
 from imio.helpers.security import fplog
+from imio.history.utils import add_event_to_wf_history
 from imio.migrator.utils import end_time
 from imio.prettylink.interfaces import IPrettyLink
 from OFS import CopySupport
@@ -85,7 +86,6 @@ from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
-from Products.PloneMeeting.utils import add_wf_history_action
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
@@ -1016,24 +1016,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         unavailable_days = [day for day in PY_DATETIME_WEEKDAYS if day in delayUnavailableEndDays]
         return [PY_DATETIME_WEEKDAYS.index(unavailable_day) for unavailable_day in unavailable_days]
 
-    security.declarePublic('showMeetingView')
-
-    def showMeetingView(self, meeting):
-        '''If PloneMeeting is in "Restrict users" mode, the "Meeting view" page
-           must not be shown to some users: users that do not have role
-           MeetingManager and are not listed in a specific list
-           (self.unrestrictedUsers).'''
-        restrictMode = self.getRestrictUsers()
-        res = True
-        if restrictMode:
-            cfg = self.getMeetingConfig(meeting)
-            if not self.isManager(cfg):
-                user_id = get_current_user_id(self.REQUEST)
-                # Check if the user is in specific list
-                if user_id not in [u.strip() for u in self.getUnrestrictedUsers().split('\n')]:
-                    res = False
-        return res
-
     security.declarePrivate('pasteItem')
 
     def pasteItem(self, destFolder, copiedData,
@@ -1250,10 +1232,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # of the cloned object then add the 'Creation' event.
             wfName = wftool.getWorkflowsFor(newItem)[0].id
             newItem.workflow_history[wfName] = ()
-            add_wf_history_action(newItem,
-                                  action_name=None,
-                                  action_label=None,
-                                  user_id=newOwnerId or newItem.Creator())
+            add_event_to_wf_history(newItem,
+                                    action=None,
+                                    actor=newOwnerId or newItem.Creator(),
+                                    comments=None)
 
             # The copy/paste has transferred annotations,
             # remove ones related to item sent to other MC

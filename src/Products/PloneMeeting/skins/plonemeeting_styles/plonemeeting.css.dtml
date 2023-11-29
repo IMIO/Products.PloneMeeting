@@ -350,6 +350,7 @@ div.viewlet_workflowstate span.state-advice_under_edit {
 .state-created,
 .state-itemcreated,
 #content .pretty_link_content.state-itemcreated_waiting_advices,
+.state-to_hidden_during_redaction_action,
 .state-advice_under_edit {color: red !important;}
 /* DarkOrange, special management for itemcreated_waiting_advices that is red */
 div.viewlet_workflowstate span[class^='state-proposed'],
@@ -442,6 +443,7 @@ div.viewlet_workflowstate span.state-pre_accepted {
 .state-accepted_but_modified,
 .state-accepted_out_of_meeting,
 .state-accepted_out_of_meeting_emergency,
+.state-to_not_hidden_during_redaction_action,
 .state-pre_accepted {
    color: green !important;
 }

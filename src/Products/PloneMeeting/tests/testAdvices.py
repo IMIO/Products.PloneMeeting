@@ -24,6 +24,7 @@ from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
+from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import AddAnnex
@@ -2290,8 +2291,12 @@ class testAdvices(PloneMeetingTestCase):
         # 'pmReviewer2', as adviser, is able to toggle advice_hide_during_redaction
         self.assertFalse(advice.advice_hide_during_redaction)
         self.assertFalse(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
+        # historized
+        history_name = 'advice_hide_during_redaction_history'
+        self.assertFalse(base_hasattr(advice, history_name))
         changeView = advice.restrictedTraverse('@@change-advice-hidden-during-redaction')
         changeView()
+        self.assertEqual(getattr(advice, history_name)[0]['action'], 'to_hidden_during_redaction_action')
         self.assertTrue(advice.advice_hide_during_redaction)
         self.assertTrue(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
         # when advice is hidden, trying to access the view will raise Unauthorized
@@ -2300,6 +2305,8 @@ class testAdvices(PloneMeetingTestCase):
         # back to not hidden
         self.changeUser('pmReviewer2')
         changeView()
+        self.assertEqual(getattr(advice, history_name)[0]['action'], 'to_hidden_during_redaction_action')
+        self.assertEqual(getattr(advice, history_name)[1]['action'], 'to_not_hidden_during_redaction_action')
         self.assertFalse(advice.advice_hide_during_redaction)
         self.assertFalse(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
         # to use the change view, user must be able to edit the advice,
