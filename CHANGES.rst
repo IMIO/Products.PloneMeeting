@@ -45,8 +45,14 @@ Changelog
 - Added `advice_hide_during_redaction_history` to store
   `advice.advice_hide_during_redaction` changes by user.
   [gbastien]
-- Moved `ToolPloneMeeting.showMeetingView` to `MeetingFacetedView.show_page`
-  as it is only used there.
+- Simplified `ToolPloneMeeting` to be able to move it to a registry adapter as
+  light as possible, so remove most functionnalities from it:
+
+  - Moved `ToolPloneMeeting.showMeetingView` to `MeetingFacetedView.show_page`
+    as it is only used there;
+  - Removed `TooPloneMeeting.getColoredLink`, use `MeetingItem.getPrettyLink`;
+  - Moved `ToolPloneMeeting.getMailRecipient` to utils.
+
   [gbastien]
 
 4.2.8 (2023-10-27)

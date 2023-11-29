@@ -58,6 +58,7 @@ from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_next_meeting
+from Products.PloneMeeting.utils import getMailRecipient
 from Products.PloneMeeting.utils import is_editing
 from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import sendMail
@@ -1294,7 +1295,6 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         userIdsOrEmailAddresses = []
         extra_expr_ctx = _base_extra_expr_ctx(self.context)
         extra_expr_ctx.update({'obj': self.context, })
-        tool = extra_expr_ctx['tool']
         for value in values.strip().split(','):
             # value may be a TAL expression returning a list of userIds or email addresses
             # or a group (of users)
@@ -1314,7 +1314,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         # now we have userIds or email address, we want email addresses
         for userIdOrEmailAddress in userIdsOrEmailAddresses:
             recipient = '@' in userIdOrEmailAddress and userIdOrEmailAddress or \
-                tool.getMailRecipient(userIdOrEmailAddress.strip())
+                getMailRecipient(userIdOrEmailAddress.strip())
             if not recipient:
                 continue
             if recipient not in recipients:

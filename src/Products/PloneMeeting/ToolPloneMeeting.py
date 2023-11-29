@@ -897,57 +897,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res = res + " ({0})".format(userId)
         return res
 
-    security.declarePublic('getColoredLink')
-
-    def getColoredLink(self, obj, showColors=True, showContentIcon=False, contentValue='',
-                       target='_self', maxLength=0, inMeeting=True,
-                       meeting=None, appendToUrl='', additionalCSSClasses='',
-                       tag_title=None):
-        '''Produces the link to an item or annex with the right color (if the
-           colors must be shown depending on p_showColors). p_target optionally
-           specifies the 'target' attribute of the 'a' tag. p_maxLength
-           defines the number of characters to display if the content of the
-           link is too long.
-
-           p_inMeeting and p_meeting will be passed to the used item.getIcons
-           method here above.
-
-           If obj is an item which is not privacyViewable, the method does not
-           return a link (<a>) but a simple <div>.
-
-            If p_appendToUrl is given, the string will be appended at the end of the
-            returned link url.
-            If p_additionalCSSClasses is given, the given additional CSS classes will
-            be used for the 'class' attribute of the returned link.
-            If p_tag_title is given, it will be translated and used as return link
-            title tag.
-        '''
-        # we may receive a brain
-        if isinstance(obj, AbstractCatalogBrain):
-            # we get the object unrestrictedly as we test for isViewable here under
-            obj = obj._unrestrictedGetObject()
-
-        adapted = IPrettyLink(obj)
-        params = {}
-        params['showColors'] = showColors
-        params['showContentIcon'] = showContentIcon
-        params['contentValue'] = contentValue
-        params['target'] = target
-        params['maxLength'] = maxLength
-        params['appendToUrl'] = appendToUrl
-        params['additionalClasses'] = additionalCSSClasses
-        if tag_title:
-            tag_title = translate(tag_title,
-                                  domain='PloneMeeting',
-                                  context=self.REQUEST).encode('utf-8')
-            params['tag_title'] = tag_title
-        # Is this a not-privacy-viewable item?
-        if obj.meta_type == 'MeetingItem' and not obj.adapted().isPrivacyViewable():
-            params['isViewable'] = False
-
-        adapted.__init__(obj, **params)
-        return adapted.getLink()
-
     security.declarePrivate('listWeekDays')
 
     def listWeekDays(self):
@@ -1337,26 +1286,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
         pass
-
-    security.declarePublic('getMailRecipient')
-
-    def getMailRecipient(self, userIdOrInfo, enc='utf-8'):
-        '''This method returns the mail recipient (=string based on email and
-           fullname if present) from a user id or UserInfo retrieved from a
-           call to portal_membership.getMemberById.'''
-        if isinstance(userIdOrInfo, basestring):
-            # It is a user ID. Get the corresponding UserInfo instance
-            userInfo = api.user.get(userIdOrInfo)
-        else:
-            userInfo = userIdOrInfo
-        # We return None if the user does not exist or has no defined email.
-        if not userInfo or not userInfo.getProperty('email'):
-            return None
-        # Compute the mail recipient string
-        fullname = self.getUserName(userInfo.id)
-        name = fullname.decode(enc)
-        res = name + u' <%s>' % userInfo.getProperty('email').decode(enc)
-        return safe_unicode(res)
 
     security.declarePublic('format_date')
 

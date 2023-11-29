@@ -3516,15 +3516,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def displayLinkedItem(self, item):
         '''Return a HTML structure to display a linked item.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        meeting = item.hasMeeting()
         # display the meeting date if the item is linked to a meeting
-        if meeting:
-            title = item.Title(withMeetingDate=True)
-            return tool.getColoredLink(item,
-                                       showColors=True,
-                                       showContentIcon=True,
-                                       contentValue=title)
+        if item.hasMeeting():
+            return item.getPrettyLink(contentValue=item.Title(withMeetingDate=True))
         else:
             # try to share cache of getPrettyLink
             return item.getPrettyLink()

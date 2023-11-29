@@ -29,6 +29,7 @@ from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.content import base_getattr
+from imio.helpers.content import get_user_fullname
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_encode
 from imio.helpers.security import fplog
@@ -695,7 +696,7 @@ def sendMailIfRelevant(obj,
             if not user.has_role(value, obj):
                 continue
 
-        recipient = tool.getMailRecipient(user)
+        recipient = getMailRecipient(user)
         # After all, we will add this guy to the list of recipients.
         recipients.append(recipient)
     mail_subject = mail_body = None
@@ -714,6 +715,24 @@ def sendMailIfRelevant(obj,
     if debug:
         return recipients, mail_subject, mail_body
     return True
+
+
+def getMailRecipient(userIdOrInfo):
+    '''This method returns the mail recipient (=string based on email and
+       fullname if present) from a user id or UserInfo retrieved from a
+       call to portal_membership.getMemberById.'''
+    if isinstance(userIdOrInfo, basestring):
+        # It is a user ID. Get the corresponding UserInfo instance
+        userInfo = api.user.get(userIdOrInfo)
+    else:
+        userInfo = userIdOrInfo
+    # We return None if the user does not exist or has no defined email.
+    if not userInfo or not userInfo.getProperty('email'):
+        return None
+    # Compute the mail recipient string: Firstname Lastname <email@email.org>
+    res = u'{0} <{1}>'.format(
+        get_user_fullname(userInfo.id), safe_unicode(userInfo.getProperty('email')))
+    return res
 
 
 def getCustomSchemaFields(baseSchema, completedSchema, cols):
