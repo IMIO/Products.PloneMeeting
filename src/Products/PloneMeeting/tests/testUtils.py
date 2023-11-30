@@ -7,12 +7,14 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group
+from ftw.labels.interfaces import ILabeling
 from imio.helpers.content import richtextval
 from os import path
 from plone.app.controlpanel.events import ConfigurationChangedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
+from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import duplicate_portal_type
 from Products.PloneMeeting.utils import escape
@@ -346,6 +348,19 @@ class testUtils(PloneMeetingTestCase):
         self.presentItem(item)
         self.freezeMeeting(meeting)
         self.assertEqual(meeting.meeting_number, 25)
+
+    def test_pm_get_labels(self):
+        """Test the ToolPloneMeeting.get_labels method
+           that will return ftw.labels active_labels."""
+        self.changeUser("pmCreator1")
+        item = self.create("MeetingItem")
+        self.assertEqual(get_labels(item), {})
+        labeling = ILabeling(item)
+        labeling.update(['label'])
+        labeling.pers_update(['suivi'], True)
+        self.assertEqual(get_labels(item), {'label': 'Label', 'suivi': 'Suivi'})
+        self.assertEqual(get_labels(item, False), {'label': 'Label'})
+        self.assertEqual(get_labels(item, "only"), {'suivi': 'Suivi'})
 
 
 def test_suite():

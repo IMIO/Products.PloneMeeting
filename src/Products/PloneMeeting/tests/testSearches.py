@@ -22,6 +22,7 @@ from Products.CMFCore.permissions import View
 from Products.PloneMeeting.adapters import _find_nothing_query
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
+from Products.PloneMeeting.utils import getAdvicePortalTypes
 from zope.component import getAdapter
 from zope.component import getAdapters
 from zope.event import notify
@@ -315,7 +316,7 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmAdviser1')
         indexAdvisers = []
         adviceStates = []
-        for portal_type in self.tool.getAdvicePortalTypes():
+        for portal_type in getAdvicePortalTypes():
             adviceWF = self.wfTool.getWorkflowsFor(portal_type.id)[0]
             adviceStates += adviceWF.states.keys()
         # remove duplicates
@@ -412,7 +413,7 @@ class testSearches(PloneMeetingTestCase):
         # as adviser, query is correct
         self.changeUser('pmAdviser1')
         adviceStates = []
-        for portal_type in self.tool.getAdvicePortalTypes():
+        for portal_type in getAdvicePortalTypes():
             adviceWF = self.wfTool.getWorkflowsFor(portal_type.id)[0]
             adviceStates += adviceWF.states.keys()
         # remove duplicates

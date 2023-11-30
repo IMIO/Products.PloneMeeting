@@ -313,8 +313,8 @@ def createOrUpdatePloneGroup(groupId, groupTitle, groupSuffix):
        and p_groupSuffix, if group already exists, it will just update it's title.'''
     properties = api.portal.get_tool('portal_properties')
     enc = properties.site_properties.getProperty('default_charset')
-    groupTitle = '%s (%s)' % (
-        groupTitle.decode(enc),
+    groupTitle = u'%s (%s)' % (
+        safe_unicode(groupTitle),
         translate(groupSuffix, domain='PloneMeeting', context=getRequest()))
     # a default Plone group title is NOT unicode.  If a Plone group title is
     # edited TTW, his title is no more unicode if it was previously...
@@ -469,8 +469,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         return
     # Compute user name
     pms = api.portal.get_tool('portal_membership')
-    userInfo = pms.getAuthenticatedMember()
-    userName = safe_unicode(tool.getUserName(userInfo.getId()))
+    user = pms.getAuthenticatedMember()
     # Compute list of MeetingGroups for this user
     userGroups = ', '.join([g.Title() for g in tool.get_orgs_for_user(the_objects=True)])
     # Create the message parts
@@ -496,11 +495,11 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         'meetingTitle': '',
         'meetingLongTitle': '',
         'itemTitle': '',
-        'user': userName,
+        'user': get_user_fullname(user.getId()),
         'groups': safe_unicode(userGroups),
         'meetingConfigTitle': safe_unicode(cfg.Title()),
         'transitionActor': wf_action and
-        safe_unicode(tool.getUserName(wf_action['actor'], withUserId=True)) or u'-',
+        get_user_fullname(wf_action['actor'], with_user_id=True) or u'-',
         'transitionTitle': wf_action and
         translate(wf_action['action'], domain="plone", context=obj.REQUEST) or u'-',
         'transitionComments': wf_action and safe_unicode(wf_action['comments']) or u'-',
@@ -939,10 +938,8 @@ def findNewValue(obj, name, history, stopIndex):
 def getHistoryTexts(obj, event):
     '''Returns a tuple (insertText, deleteText) containing texts to show on,
        respectively, inserted and deleted chunks of text.'''
-    tool = api.portal.get_tool(TOOL_ID)
     toLocalizedTime = obj.restrictedTraverse('@@plone').toLocalizedTime
-    userName = tool.getUserName(event['actor'])
-    mapping = {'userName': userName.decode('utf-8')}
+    mapping = {'userName': get_user_fullname(event['actor'])}
     res = []
     for type in ('insert', 'delete'):
         msg = translate('history_%s' % type,
@@ -1836,10 +1833,33 @@ def getTransitionToReachState(obj, state):
     return res
 
 
+def getAdvicePortalTypeIds_cachekey(method):
+    '''cachekey method for getAdvicePortalTypes.'''
+    return True
+
+
+@ram.cache(getAdvicePortalTypeIds_cachekey)
+def getAdvicePortalTypeIds():
+    """We may have several 'meetingadvice' portal_types,
+       return it as ids."""
+    return getAdvicePortalTypes(as_ids=True)
+
+
+def getAdvicePortalTypes(as_ids=False):
+    """We may have several 'meetingadvice' portal_types."""
+    typesTool = api.portal.get_tool('portal_types')
+    res = []
+    for portal_type in typesTool.listTypeInfo():
+        if portal_type.id.startswith('meetingadvice'):
+            res.append(portal_type)
+    if as_ids:
+        res = [p.id for p in res]
+    return res
+
+
 def findMeetingAdvicePortalType(context):
     """ """
-    tool = api.portal.get_tool('portal_plonemeeting')
-    advicePortalTypeIds = tool.getAdvicePortalTypeIds()
+    advicePortalTypeIds = getAdvicePortalTypeIds()
     if context.portal_type in advicePortalTypeIds:
         return context.portal_type
 
@@ -1867,6 +1887,32 @@ def findMeetingAdvicePortalType(context):
     else:
         current_portal_type = published.portal_type
     return current_portal_type
+
+
+def getAvailableMailingLists(obj, pod_template):
+    '''Gets the names of the (currently active) mailing lists defined for
+       this template.'''
+    res = []
+    mailing_lists = pod_template.mailing_lists and pod_template.mailing_lists.strip()
+    if not mailing_lists:
+        return res
+    try:
+        extra_expr_ctx = _base_extra_expr_ctx(obj)
+        extra_expr_ctx.update({'obj': obj, })
+        for line in mailing_lists.split('\n'):
+            name, expression, userIds = line.split(';')
+            if not expression or _evaluateExpression(obj,
+                                                     expression,
+                                                     roles_bypassing_expression=[],
+                                                     extra_expr_ctx=extra_expr_ctx,
+                                                     raise_on_error=True):
+                res.append(name.strip())
+    except Exception, exc:
+        res.append(translate('Mailing lists are not correctly defined, original error is \"${error}\"',
+                             domain='PloneMeeting',
+                             mapping={'error': str(exc)},
+                             context=obj.REQUEST))
+    return res
 
 
 def displaying_available_items(context):

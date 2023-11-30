@@ -194,9 +194,10 @@ document.location.reload(true);
 </tal:comment>
 <metal:takenOverBy define-macro="takenOverBy" i18n:domain="PloneMeeting"
                     tal:define="mayEdit python: ajaxEdit==False and False or meetingItem.adapted().mayTakeOver();
-                                memberId member/getId;
-                                takenOverBy meetingItem/getTakenOverBy;
-                                takenOverByCurrentUser python: takenOverBy == memberId;">
+                                memberId python: member.getId();
+                                takenOverBy python: meetingItem.getTakenOverBy();
+                                takenOverByCurrentUser python: takenOverBy == memberId;
+                                safe_utils python: modules['Products.PloneMeeting'].safe_utils">
   <span id="marker_toggle_takenoverby_UID#"
         tal:attributes="id string:marker_toggle_takenoverby_$UID;"
         tal:define="UID meetingItem/UID;
@@ -210,7 +211,7 @@ document.location.reload(true);
                       onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_item_taken_over_by?takenOverByFrom='+takenOverBy+'\', baseSelector=\'#marker_toggle_takenoverby_\')';"
           tal:attributes="onClick python: onClickPattern % onClick;
                           class python: 'takenOverByEditable ' + (takenOverByCurrentUser and 'takenOverByCurrentUser' or 'takenOverByOtherUser')"
-          i18n:translate="">Taken over by <span i18n:name="fullname" tal:content="python: tool.getUserName(takenOverBy)">
+          i18n:translate="">Taken over by <span i18n:name="fullname" tal:content="python: safe_utils.get_user_fullname(takenOverBy)">
           Full name</span>
     </span>
 
@@ -230,7 +231,7 @@ document.location.reload(true);
           title="taken_over_by_yes"
           i18n:attributes="title"
           tal:attributes="class python: takenOverByCurrentUser and 'takenOverByCurrentUser' or 'takenOverByOtherUser'"
-          i18n:translate="">Taken over by <span i18n:name="fullname" tal:content="python: tool.getUserName(takenOverBy)">
+          i18n:translate="">Taken over by <span i18n:name="fullname" tal:content="python: safe_utils.get_user_fullname(takenOverBy)">
           Full name</span>
     </span>
     <span class="takenOverByNobody"

@@ -1579,21 +1579,6 @@ div.advice_popup_actions span.pmHelp {
     font-size: 110%;
 }
 
-/* hide some elements on the versions_history_form */
-body.template-versions_history_form[class*="portaltype-meetingadvice"] table[summary="Content history"],
-body.template-versions_history_form[class*="portaltype-meetingadvice"] form[action$="saveasnewversion"],
-body.template-versions_history_form[class*="portaltype-meetingadvice"] #content div#plone-document-byline,
-body.template-versions_history_form[class*="portaltype-meetingadvice"] #content div.viewlet_workflowstate,
-body.template-versions_history_form[class*="portaltype-meetingadvice"] #content fieldset#folder-listing {
-    display: none;
-}
-body.template-versions_history_form[class*="portaltype-meetingadvice"] #content-core > div:first-of-type {
-    border: 0px solid transparent !important;
-}
-body.template-versions_history_form[class*="portaltype-meetingadvice"] #content-core {
-    margin-top: 1em;
-}
-
 /* display table with align="center"... centered... */
 table[align="center"] {
    margin-left: auto;
@@ -2332,10 +2317,6 @@ body#content.cke_editable div p {
 
 /* hide the 'scan' tab on annex to every roles but Manager and MeetingManager */
 body:not(.userrole-manager):not(.userrole-meetingmanager) a#fieldsetlegend-scan {
-    display: none;
-}
-
-body.template-versions_history_form[class*="portaltype-meetingadvice"] #content div.viewlet_workflowstate {
     display: none;
 }
 

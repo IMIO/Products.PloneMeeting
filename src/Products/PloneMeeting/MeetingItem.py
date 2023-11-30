@@ -23,6 +23,8 @@ from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
+from imio.helpers.content import get_user_fullname
+from imio.helpers.content import object_values
 from imio.helpers.content import safe_delattr
 from imio.helpers.content import safe_encode
 from imio.helpers.content import uuidsToObjects
@@ -126,6 +128,7 @@ from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_internal_number
 from Products.PloneMeeting.utils import get_states_before
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getFieldVersion
@@ -4956,8 +4959,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             decision = ' '.join(decision)
             res = normalize(safe_unicode(decision))
         elif insertMethod == 'on_item_creator':
-            creator_fullname = safe_unicode(tool.getUserName(self.Creator()))
-            res = normalize(creator_fullname)
+            res = normalize(get_user_fullname(self.Creator()))
         else:
             res = self.adapted()._findCustomOrderFor(insertMethod)
         return res
@@ -5547,13 +5549,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getAdvices(self):
         '''Returns a list of contained meetingadvice objects.'''
-        res = []
-        tool = api.portal.get_tool('portal_plonemeeting')
-        advicePortalTypeIds = tool.getAdvicePortalTypeIds()
-        for obj in self.objectValues('Dexterity Container'):
-            if obj.portal_type in advicePortalTypeIds:
-                res.append(obj)
-        return res
+        return object_values(self, getAdvicePortalTypeIds())
 
     def _doClearDayFrom(self, date):
         '''Change the given p_date (that is a datetime instance)
@@ -5922,10 +5918,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              context=self.REQUEST)
         for userid in userids:
             rendered_users.append(
-                userid_pattern.format(
-                    escape(help_msg),
-                    portal_url,
-                    safe_unicode(tool.getUserName(userid))))
+                userid_pattern.format(escape(help_msg),
+                                      portal_url,
+                                      get_user_fullname(userid)))
         res = u", ".join(rendered_users)
         return res
 
@@ -6097,7 +6092,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             data[advId]['creator_fullname'] = None
             if given_advice:
                 creator_id = given_advice.Creator()
-                creator_fullname = tool.getUserName(creator_id)
+                creator_fullname = get_user_fullname(creator_id)
                 data[advId]['creator_id'] = creator_id
                 data[advId]['creator_fullname'] = creator_fullname
 

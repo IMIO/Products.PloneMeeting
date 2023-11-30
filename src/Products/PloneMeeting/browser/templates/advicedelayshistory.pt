@@ -48,7 +48,7 @@
                 </tal:other_action>
 
                 <td tal:define="actorid python:historyInfo.get('actor');
-                                username python:view.tool.getUserName(actorid);"
+                                username python:view.get_user_fullname(actorid);"
                     tal:content="python:username"/>
                 <td tal:content="python:context.unrestrictedTraverse('@@plone').toLocalizedTime(historyInfo['time'],long_format=True)"/>
                 <td>

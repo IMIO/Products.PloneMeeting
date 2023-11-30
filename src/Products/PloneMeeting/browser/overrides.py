@@ -58,6 +58,8 @@ from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_next_meeting
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
+from Products.PloneMeeting.utils import getAvailableMailingLists
 from Products.PloneMeeting.utils import getMailRecipient
 from Products.PloneMeeting.utils import is_editing
 from Products.PloneMeeting.utils import normalize_id
@@ -271,8 +273,7 @@ class BaseGeneratorLinksViewlet(object):
     def getAvailableMailingLists(self, pod_template):
         '''Gets the names of the (currently active) mailing lists defined for
            this template.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        return tool.getAvailableMailingLists(self.context, pod_template)
+        return getAvailableMailingLists(self.context, pod_template)
 
     def displayStoreAsAnnexSection(self):
         """ """
@@ -1140,7 +1141,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         mapping = {
             'item_annexes': [cfg.getItemTypeName()],
             'item_decision_annexes': [cfg.getItemTypeName()],
-            'advice_annexes': tool.getAdvicePortalTypeIds(),
+            'advice_annexes': getAdvicePortalTypeIds(),
             'meeting_annexes': [cfg.getMeetingTypeName()],
         }
         return mapping
@@ -1263,7 +1264,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         title = self._get_stored_annex_title(pod_template)
         id = normalize_id(title)
         id = INameChooser(self.context).chooseName(id, self.context)
-        annex = api.content.create(
+        api.content.create(
             container=self.context,
             type=annex_portal_type,
             id=id,
@@ -1323,11 +1324,10 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
 
     def _sendPodTemplate(self, rendered_template):
         '''Sends, by email, a p_rendered_template.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
         # Preamble: ensure that the mailingList is really active.
         mailinglist_name = safe_unicode(self.request.get('mailinglist_name'))
         pod_template = self.get_pod_template(self.request.get('template_uid'))
-        if mailinglist_name not in tool.getAvailableMailingLists(self.context, pod_template):
+        if mailinglist_name not in getAvailableMailingLists(self.context, pod_template):
             raise Unauthorized
         # Retrieve mailing list recipients
         recipients = []

@@ -4,10 +4,10 @@ from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group_id
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import get_plone_groups_for_user
+from imio.helpers.content import get_user_fullname
 from imio.helpers.workflow import get_state_infos
 from imio.history.browser.views import EventPreviewView
 from imio.history.interfaces import IImioHistory
-from imio.history.utils import add_event_to_history
 from imio.history.utils import get_event_by_time
 from plone import api
 from plone.autoform import directives
@@ -336,6 +336,9 @@ class AdviceInfos(BrowserView):
             res = self.context._displayAdviserUsers(
                 advice_info['userids'], self.portal_url, self.tool)
         return res
+
+    def get_user_fullname(self, user_id):
+        return get_user_fullname(user_id)
 
 
 class ChangeAdviceHiddenDuringRedactionView(BrowserView):

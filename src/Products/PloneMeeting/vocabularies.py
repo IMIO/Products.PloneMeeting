@@ -38,6 +38,7 @@ from imio.annex.content.annex import IAnnex
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import find
+from imio.helpers.content import get_user_fullname
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToObject
@@ -64,6 +65,7 @@ from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import get_context_with_request
 from Products.PloneMeeting.utils import get_datagridfield_column_value
+from Products.PloneMeeting.utils import getAdvicePortalTypes
 from Products.PloneMeeting.utils import number_word
 from Products.PloneMeeting.utils import split_gender_and_number
 from z3c.form.interfaces import NO_VALUE
@@ -733,10 +735,9 @@ class CreatorsVocabulary(object):
     def CreatorsVocabulary__call__(self, context):
         """ """
         catalog = api.portal.get_tool('portal_catalog')
-        tool = api.portal.get_tool('portal_plonemeeting')
         res = []
         for creator in catalog.uniqueValuesFor('Creator'):
-            value = tool.getUserName(creator)
+            value = get_user_fullname(creator)
             res.append(SimpleTerm(creator,
                                   creator,
                                   safe_unicode(value))
@@ -776,7 +777,7 @@ class CreatorsForFacetedFilterVocabulary(object):
                             if creator not in creatorsToHide]
 
         for creator in filteredCreators:
-            value = tool.getUserName(creator)
+            value = get_user_fullname(creator)
             res.append(SimpleTerm(creator,
                                   creator,
                                   safe_unicode(value))
@@ -1072,7 +1073,7 @@ class ItemOptionalAdvicesVocabulary(object):
                 res_users = []
                 for user_id in user_ids:
                     user_term_value = "{0}__userid__{1}".format(term_value, user_id)
-                    user_title = safe_unicode(tool.getUserName(user_id))
+                    user_title = get_user_fullname(user_id)
                     user_term = SimpleTerm(user_term_value, user_term_value, user_title)
                     user_term.sortable_title = u"{0} ({1})".format(term_title, user_title)
                     res_users.append(user_term)
@@ -1150,8 +1151,8 @@ class ItemOptionalAdvicesVocabulary(object):
                                     add_users=False)
                         # it is a userid, add a special value including the org title
                         if org and user_id:
-                            user_term_title = safe_unicode(
-                                "{0} ({1})".format(org.get_full_title(), tool.getUserName(user_id)))
+                            user_term_title = u"{0} ({1})".format(
+                                org.get_full_title(), get_user_fullname(user_id))
                             user_term = SimpleTerm(optionalAdviser, optionalAdviser, user_term_title)
                             user_term.sortable_title = user_term_title
                             resDelayAwareAdvisers.append(user_term)
@@ -1642,7 +1643,7 @@ class PMPortalTypesVocabulary(PortalTypesVocabularyFactory):
                                             domain="plone",
                                             context=context.REQUEST)))
             # manage multiple 'meetingadvice' portal_types
-            for portal_type in tool.getAdvicePortalTypes():
+            for portal_type in getAdvicePortalTypes():
                 res.append(SimpleTerm(portal_type.id,
                                       portal_type.id,
                                       translate(portal_type.title,
@@ -2899,7 +2900,6 @@ class PMUsers(UsersFactory):
 
     @ram.cache(__call___cachekey)
     def PMUsers__call__(self, context, query=''):
-        tool = api.portal.get_tool('portal_plonemeeting')
         acl_users = api.portal.get_tool('acl_users')
         users = acl_users.searchUsers(sort_by='')
         terms = []
@@ -2914,7 +2914,7 @@ class PMUsers(UsersFactory):
                     unicode(user_id)
                 except UnicodeDecodeError:
                     continue
-                term_title = safe_unicode(tool.getUserName(user_id, withUserId=True))
+                term_title = get_user_fullname(user_id, with_user_id=True)
                 term = SimpleTerm(user_id, user_id, term_title)
                 terms.append(term)
         terms = humansorted(terms, key=attrgetter('title'))

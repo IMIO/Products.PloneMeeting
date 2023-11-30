@@ -13,6 +13,7 @@ from datetime import datetime
 from datetime import timedelta
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.content import get_user_fullname
 from plone import api
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.utils import _checkPermission
@@ -801,18 +802,18 @@ class testPerformances(PloneMeetingTestCase):
         for time in range(times):
             membership.getMemberInfo("pmManager")
 
-    def test_pm_SpeedToolGetUserName(self):
-        '''Test ToolPloneMeeting.getUserName.'''
+    def test_pm_SpeedGetUserFullname(self):
+        '''Test imio.helpers.content.get_user_fullname.'''
         self.changeUser('pmManager')
-        # call getUserName 1000 times
-        self._getUserName(times=1000)
+        # call get_user_fullname 1000 times
+        self._get_user_fullname(times=1000)
 
     @timecall
-    def _getUserName(self, userId="pmManager", times=1):
+    def _get_user_fullname(self, userId="pmManager", times=1):
         ''' '''
         pm_logger.info('Call {0} times'.format(times))
         for time in range(times):
-            self.tool.getUserName(userId)
+            get_user_fullname(userId)
 
     def test_pm_SpeedItemQueryState(self):
         '''Test MeetingItem.query_state.'''

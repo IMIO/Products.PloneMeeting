@@ -12,6 +12,7 @@ from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.setuphandlers import _configurePortalRepository
 from Products.PloneMeeting.utils import get_dx_data
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.event import notify
 
@@ -115,7 +116,7 @@ class Migrate_To_4205(Migrator):
             self.portal.portal_historiesstorage._shadowStorage._storage.clear()
         self.portal.portal_historiesstorage.zvc_repo._histories.clear()
         # remove every meetingadvice portal_types from portal_repository
-        _configurePortalRepository(removed_types=self.tool.getAdvicePortalTypeIds())
+        _configurePortalRepository(removed_types=getAdvicePortalTypeIds())
         # MeetingConfig.versionateAdviceIfGivenAndItemModified was renamed to
         # MeetingConfig.historizeAdviceIfGivenAndItemModified
         self.cleanMeetingConfigs(

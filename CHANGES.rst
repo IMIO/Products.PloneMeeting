@@ -51,7 +51,11 @@ Changelog
   - Moved `ToolPloneMeeting.showMeetingView` to `MeetingFacetedView.show_page`
     as it is only used there;
   - Removed `TooPloneMeeting.getColoredLink`, use `MeetingItem.getPrettyLink`;
-  - Moved `ToolPloneMeeting.getMailRecipient` to utils.
+  - Moved `ToolPloneMeeting.getMailRecipient` to utils;
+  - Moved `ToolPloneMeeting.getAdvicePortalTypes` and
+    `ToolPloneMeeting.getAdvicePortalTypeIds` to utils;
+  - Moved `ToolPloneMeeting.getAvailableMailingLists` to utils;
+  - Removed no more used `versions_history_form.pt`.
 
   [gbastien]
 

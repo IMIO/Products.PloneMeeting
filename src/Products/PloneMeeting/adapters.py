@@ -30,6 +30,7 @@ from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.catalog import merge_queries
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
+from imio.helpers.content import get_user_fullname
 from imio.helpers.content import richtextval
 from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.adapters import BaseImioHistoryAdapter
@@ -68,6 +69,7 @@ from Products.PloneMeeting.utils import findNewValue
 from Products.PloneMeeting.utils import get_context_with_request
 from Products.PloneMeeting.utils import get_dx_attrs
 from Products.PloneMeeting.utils import get_referer_obj
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getHistoryTexts
 from Products.PloneMeeting.utils import is_transition_before_date
@@ -592,7 +594,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                 iconName = takenOverByCurrentUser and 'takenOverByCurrentUser.png' or 'takenOverByOtherUser.png'
                 res.append((iconName, translate(u'Taken over by ${fullname}',
                                                 domain="PloneMeeting",
-                                                mapping={'fullname': safe_unicode(self.tool.getUserName(takenOverBy))},
+                                                mapping={'fullname': get_user_fullname(takenOverBy)},
                                                 context=self.request)))
 
         if self.context.getIsAcceptableOutOfMeeting():
@@ -1477,7 +1479,7 @@ class AdvisedItemsAdapter(CompoundCriterionBaseAdapter):
         wfTool = api.portal.get_tool('portal_workflow')
         adviceStates = []
         # manage multiple 'meetingadvice' portal_types
-        for portal_type_id in self.tool.getAdvicePortalTypeIds():
+        for portal_type_id in getAdvicePortalTypeIds():
             adviceWF = wfTool.getWorkflowsFor(portal_type_id)[0]
             adviceStates += adviceWF.states.keys()
         # remove duplicates
@@ -1510,7 +1512,7 @@ class AdvisedItemsWithDelayAdapter(CompoundCriterionBaseAdapter):
         wfTool = api.portal.get_tool('portal_workflow')
         adviceStates = []
         # manage multiple 'meetingadvice' portal_types
-        for portal_type_id in self.tool.getAdvicePortalTypeIds():
+        for portal_type_id in getAdvicePortalTypeIds():
             adviceWF = wfTool.getWorkflowsFor(portal_type_id)[0]
             adviceStates += adviceWF.states.keys()
         # remove duplicates
@@ -1676,7 +1678,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
            "every _creators groups" and it is not possible to give the
            'AnnexReader' role to all these _creators groups."""
         if self.parent.getTagName() == 'MeetingItem' or \
-           self.parent.portal_type in self.tool.getAdvicePortalTypeIds():
+           self.parent.portal_type in getAdvicePortalTypeIds():
             # reinitialize permissions in case no more confidential
             # or confidentiality configuration changed
             self.context.__ac_local_roles_block__ = False
