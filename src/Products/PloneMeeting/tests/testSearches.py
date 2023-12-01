@@ -722,6 +722,7 @@ class testSearches(PloneMeetingTestCase):
         reviewers = cfg.reviewersFor()
         if not len(reviewers) > 1:
             self._enablePrevalidation(cfg)
+        reviewers = cfg.reviewersFor()
         if not len(reviewers) > 1:
             pm_logger.info("Could not launch test 'test_pm_SearchItemsToValidateOfMyReviewerGroups' "
                            "because we need at least 2 levels of item validation.")
