@@ -8,7 +8,6 @@ from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from Acquisition import aq_base
 from collections import OrderedDict
-from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group_id
@@ -24,7 +23,6 @@ from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from datetime import datetime
 from DateTime import DateTime
-from ftw.labels.interfaces import ILabeling
 from ftw.labels.labeling import ANNOTATION_KEY as FTW_LABELS_ANNOTATION_KEY
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import cleanForeverCache
@@ -34,14 +32,12 @@ from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.cache import invalidate_cachekey_volatile_for
-from imio.helpers.content import get_user_fullname
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.security import check_zope_admin
 from imio.helpers.security import fplog
 from imio.history.utils import add_event_to_wf_history
 from imio.migrator.utils import end_time
-from imio.prettylink.interfaces import IPrettyLink
 from OFS import CopySupport
 from persistent.mapping import PersistentMapping
 from plone import api
@@ -85,16 +81,15 @@ from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
-from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import monthsIds
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import reindex_object
 from Products.PloneMeeting.utils import workday
-from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from ZODB.POSException import ConflictError
 from zope.annotation.interfaces import IAnnotations
 from zope.i18n import translate
@@ -442,7 +437,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if api.content.get_state(cfg) == 'active' and \
                (not check_access or
                 (self.checkMayView(cfg) and
-                    (self.isManager(cfg) or self.isPowerObserverForCfg(cfg) or
+                    (self.isManager(cfg) or isPowerObserverForCfg(cfg) or
                         (check_using_groups and self.get_orgs_for_user(
                             using_groups=cfg.getUsingGroups()))))):
                 res.append(cfg)
@@ -823,33 +818,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res = "Manager" in user.getRoles()
         return res
 
-    def isPowerObserverForCfg_cachekey(method, self, cfg, power_observer_types=[]):
-        '''cachekey method for self.isPowerObserverForCfg.'''
-        return (get_plone_groups_for_user(),
-                repr(cfg),
-                power_observer_types)
-
-    security.declarePublic('isPowerObserverForCfg')
-
-    # not ramcached perf tests says it does not change anything
-    # and this avoid useless entry in cache
-    # @ram.cache(isPowerObserverForCfg_cachekey)
-    def isPowerObserverForCfg(self, cfg, power_observer_types=[]):
-        """
-          Returns True if the current user is a power observer
-          for the given p_itemOrMeeting.
-          It is a power observer if member of the corresponding
-          p_power_observer_types suffixed groups.
-          If no p_power_observer_types we check every existing power_observers groups.
-        """
-        user_plone_groups = get_plone_groups_for_user()
-        for po_infos in cfg.getPowerObservers():
-            if not power_observer_types or po_infos['row_id'] in power_observer_types:
-                groupId = "{0}_{1}".format(cfg.getId(), po_infos['row_id'])
-                if groupId in user_plone_groups:
-                    return True
-        return False
-
     def showPloneMeetingTab_cachekey(method, self, cfg):
         '''cachekey method for self.showPloneMeetingTab.'''
         if api.user.is_anonymous():
@@ -876,26 +844,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             return False
         else:
             return True
-
-    def getUserName_cachekey(method, self, userId, withUserId=False):
-        '''cachekey method for self.getUserName.'''
-        return userId, withUserId
-
-    security.declarePublic('getUserName')
-
-    # @ram.cache(getUserName_cachekey)
-    def getUserName(self, userId, withUserId=False):
-        '''Returns the full name of user having id p_userId.
-           Performance test does not show that ram.cache is necessary.'''
-        res = get_user_fullname(userId)
-        # fullname of a Zope user (admin) is returned as unicode
-        # and fullname of a Plone user is returned as utf-8...
-        # always return as utf-8!
-        if isinstance(res, unicode):
-            res = res.encode('utf-8')
-        if withUserId:
-            res = res + " ({0})".format(userId)
-        return res
 
     security.declarePrivate('listWeekDays')
 
@@ -1509,31 +1457,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 history.append(event)
         obj.workflow_history[workflow_name] = tuple(history)
 
-    def getAvailableMailingLists(self, obj, pod_template):
-        '''Gets the names of the (currently active) mailing lists defined for
-           this template.'''
-        res = []
-        mailing_lists = pod_template.mailing_lists and pod_template.mailing_lists.strip()
-        if not mailing_lists:
-            return res
-        try:
-            extra_expr_ctx = _base_extra_expr_ctx(obj)
-            extra_expr_ctx.update({'obj': obj, })
-            for line in mailing_lists.split('\n'):
-                name, expression, userIds = line.split(';')
-                if not expression or _evaluateExpression(obj,
-                                                         expression,
-                                                         roles_bypassing_expression=[],
-                                                         extra_expr_ctx=extra_expr_ctx,
-                                                         raise_on_error=True):
-                    res.append(name.strip())
-        except Exception, exc:
-            res.append(translate('Mailing lists are not correctly defined, original error is \"${error}\"',
-                                 domain='PloneMeeting',
-                                 mapping={'error': str(exc)},
-                                 context=self.REQUEST))
-        return res
-
     def showHolidaysWarning(self, cfg):
         """Condition for showing the 'holidays_waring_message'."""
         if cfg is not None and cfg.__class__.__name__ == "MeetingConfig":
@@ -1560,31 +1483,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def get_extra_adviser_infos(self):
         '''See doc in interfaces.py.'''
         return {}
-
-    def getAdvicePortalTypeIds_cachekey(method, self):
-        '''cachekey method for self.getAdvicePortalTypes.'''
-        return True
-
-    security.declarePublic('getAdvicePortalTypeIds')
-
-    @ram.cache(getAdvicePortalTypeIds_cachekey)
-    def getAdvicePortalTypeIds(self):
-        """We may have several 'meetingadvice' portal_types,
-           return it as ids."""
-        return self.getAdvicePortalTypes(as_ids=True)
-
-    security.declarePublic('getAdvicePortalTypes')
-
-    def getAdvicePortalTypes(self, as_ids=False):
-        """We may have several 'meetingadvice' portal_types."""
-        typesTool = api.portal.get_tool('portal_types')
-        res = []
-        for portal_type in typesTool.listTypeInfo():
-            if portal_type.id.startswith('meetingadvice'):
-                res.append(portal_type)
-        if as_ids:
-            res = [p.id for p in res]
-        return res
 
     def getGroupedConfigs_cachekey(method, self, config_group=None, check_access=True, as_items=False):
         '''cachekey method for self.getGroupedConfigs.'''
@@ -1633,22 +1531,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = True
         if not check_zope_admin():
             res = False
-        return res
-
-    def get_labels(self, obj, include_personal_labels=True):
-        """Return active labels for p_obj.
-           p_include_personal_labels may be:
-           - True: returns every labels, personal or not;
-           - False: personal labels not returned;
-           - "only": only personal labels returned."""
-        res = {}
-        labeling = ILabeling(obj)
-        labels = labeling.active_labels()
-        for label in labels:
-            if (include_personal_labels == "only" and not label['by_user']) or \
-               (include_personal_labels is False and label['by_user']):
-                continue
-            res[label['label_id']] = label['title']
         return res
 
 

@@ -1,5 +1,5 @@
 <div>
-    <tal:loop tal:repeat="name view/getAvailableMailingLists">
+    <tal:loop tal:repeat="name python: view.getAvailableMailingLists()">
         <span class="fa fa-angle-double-right" />
         <a href="#"
            class="template_send_mailing_list"

@@ -4,10 +4,10 @@ from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group_id
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import get_plone_groups_for_user
+from imio.helpers.content import get_user_fullname
 from imio.helpers.workflow import get_state_infos
 from imio.history.browser.views import EventPreviewView
 from imio.history.interfaces import IImioHistory
-from imio.history.utils import add_event_to_history
 from imio.history.utils import get_event_by_time
 from plone import api
 from plone.autoform import directives
@@ -23,6 +23,7 @@ from Products.PloneMeeting.browser.advicechangedelay import _reinit_advice_delay
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import get_event_field_data
 from Products.PloneMeeting.utils import is_proposing_group_editor
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from z3c.form import form
 from zope import schema
 from zope.component import getAdapter
@@ -87,7 +88,7 @@ class AdvicesIcons(BrowserView):
                                         not get_plone_group_id(advice["id"], "advisers") in
                                         get_plone_groups_for_user()]
                 may_view_confidential_advices = not confidential_advices or \
-                    not tool.isPowerObserverForCfg(cfg, power_observer_types=cfg.getAdviceConfidentialFor())
+                    not isPowerObserverForCfg(cfg, power_observer_types=cfg.getAdviceConfidentialFor())
         return (repr(self.context),
                 self.context.adviceIndex._p_mtime,
                 server_url,
@@ -336,6 +337,9 @@ class AdviceInfos(BrowserView):
             res = self.context._displayAdviserUsers(
                 advice_info['userids'], self.portal_url, self.tool)
         return res
+
+    def get_user_fullname(self, user_id):
+        return get_user_fullname(user_id)
 
 
 class ChangeAdviceHiddenDuringRedactionView(BrowserView):

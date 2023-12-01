@@ -5,6 +5,7 @@ from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.content import get_user_fullname
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidToObject
 from plone import api
@@ -130,8 +131,7 @@ class TakenOverBy(BrowserView):
                 self.context.translate("The item you tried to take over was already taken "
                                        "over in between by ${fullname}. You can take it over "
                                        "now if you are sure that the other user do not handle it.",
-                                       mapping={'fullname': unicode(tool.getUserName(currentlyTakenOverBy),
-                                                                    'utf-8')},
+                                       mapping={'fullname': get_user_fullname(currentlyTakenOverBy)},
                                        domain="PloneMeeting"),
                 type='warning')
             self.request.RESPONSE.status = 500
@@ -162,8 +162,7 @@ class TakenOverBy(BrowserView):
 
         if newlyTakenOverBy:
             taken_over_by = translate('Taken over by ${fullname}',
-                                      mapping={'fullname': unicode(tool.getUserName(memberId),
-                                                                   'utf-8')},
+                                      mapping={'fullname': get_user_fullname(memberId)},
                                       domain="PloneMeeting",
                                       default="Taken over by ${fullname}",
                                       context=self.request)

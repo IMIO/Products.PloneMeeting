@@ -121,6 +121,8 @@ from Products.PloneMeeting.utils import get_datagridfield_column_value
 from Products.PloneMeeting.utils import get_dx_attrs
 from Products.PloneMeeting.utils import get_dx_schema
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
+from Products.PloneMeeting.utils import getAdvicePortalTypes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import listifySignatures
@@ -3852,10 +3854,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listAdvicePortalTypes(self):
         """Vocabulary for the MeetingConfig.defaultAdviceHiddenDuringRedaction field."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        advice_portal_types = tool.getAdvicePortalTypes()
-        res = [(portal_type.id, portal_type.title) for portal_type in advice_portal_types]
-        return DisplayList(res)
+        return DisplayList([(portal_type.id, portal_type.title)
+                            for portal_type in getAdvicePortalTypes()])
 
     security.declarePrivate('listSelectableContacts')
 
@@ -6298,7 +6298,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _updatePortalTypes(self):
         '''Reupdates the portal_types in this meeting config.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
         typesTool = api.portal.get_tool('portal_types')
         props = api.portal.get_tool('portal_properties').site_properties
         wfTool = api.portal.get_tool('portal_workflow')
@@ -6362,7 +6361,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             portalType.allowed_content_types = basePortalType.allowed_content_types
             # for MeetingItem, make sure every 'meetingadvice' portal_types are in allowed_types
             if basePortalType.id == 'MeetingItem':
-                advice_portal_types = tool.getAdvicePortalTypeIds()
+                advice_portal_types = getAdvicePortalTypeIds()
                 allowed = tuple(set(portalType.allowed_content_types + tuple(advice_portal_types)))
                 portalType.allowed_content_types = allowed
             # Meeting is DX
@@ -7608,7 +7607,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         portal_types = []
         portal_types.append(self.getItemTypeName())
         portal_types.append(self.getMeetingTypeName())
-        portal_types += tool.getAdvicePortalTypeIds()
+        portal_types += getAdvicePortalTypeIds()
         self._updateAnnexConfidentiality(portal_types=portal_types)
 
         api.portal.show_message('Done.', request=self.REQUEST)

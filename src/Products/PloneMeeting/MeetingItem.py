@@ -21,8 +21,10 @@ from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
+from imio.helpers.content import get_user_fullname
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
+from imio.helpers.content import object_values
 from imio.helpers.content import safe_delattr
 from imio.helpers.content import safe_encode
 from imio.helpers.content import uuidsToObjects
@@ -126,12 +128,14 @@ from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_internal_number
 from Products.PloneMeeting.utils import get_states_before
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import is_editing
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import ItemDuplicatedEvent
 from Products.PloneMeeting.utils import ItemDuplicatedToOtherMCEvent
 from Products.PloneMeeting.utils import ItemLocalRolesUpdatedEvent
@@ -2620,7 +2624,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             cfg = tool.getMeetingConfig(item)
             res = tool.isManager(cfg)
             if not res:
-                res = tool.isPowerObserverForCfg(cfg) or item.is_decided(cfg)
+                res = isPowerObserverForCfg(cfg) or item.is_decided(cfg)
         return res
 
     security.declarePublic('showIsAcceptableOutOfMeeting')
@@ -3653,11 +3657,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # check if current user is a power observer in MeetingConfig.restrictAccessToSecretItemsTo
         restricted_power_obs = cfg.getRestrictAccessToSecretItemsTo()
         if restricted_power_obs and \
-           tool.isPowerObserverForCfg(cfg, power_observer_types=restricted_power_obs):
+           isPowerObserverForCfg(cfg, power_observer_types=restricted_power_obs):
             return False
 
         # a power observer not in restrictAccessToSecretItemsTo?
-        if tool.isPowerObserverForCfg(cfg):
+        if isPowerObserverForCfg(cfg):
             return True
 
     def isViewable(self):
@@ -4956,8 +4960,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             decision = ' '.join(decision)
             res = normalize(safe_unicode(decision))
         elif insertMethod == 'on_item_creator':
-            creator_fullname = safe_unicode(tool.getUserName(self.Creator()))
-            res = normalize(creator_fullname)
+            res = normalize(get_user_fullname(self.Creator()))
         else:
             res = self.adapted()._findCustomOrderFor(insertMethod)
         return res
@@ -5547,13 +5550,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getAdvices(self):
         '''Returns a list of contained meetingadvice objects.'''
-        res = []
-        tool = api.portal.get_tool('portal_plonemeeting')
-        advicePortalTypeIds = tool.getAdvicePortalTypeIds()
-        for obj in self.objectValues('Dexterity Container'):
-            if obj.portal_type in advicePortalTypeIds:
-                res.append(obj)
-        return res
+        return object_values(self, 'MeetingAdvice')
 
     def _doClearDayFrom(self, date):
         '''Change the given p_date (that is a datetime instance)
@@ -5664,7 +5661,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = {}
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        is_confidential_power_observer = tool.isPowerObserverForCfg(
+        is_confidential_power_observer = isPowerObserverForCfg(
             cfg, cfg.getAdviceConfidentialFor())
         for groupId, adviceInfo in self.adviceIndex.iteritems():
             if not include_not_asked and adviceInfo['not_asked']:
@@ -5922,10 +5919,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              context=self.REQUEST)
         for userid in userids:
             rendered_users.append(
-                userid_pattern.format(
-                    escape(help_msg),
-                    portal_url,
-                    safe_unicode(tool.getUserName(userid))))
+                userid_pattern.format(escape(help_msg),
+                                      portal_url,
+                                      get_user_fullname(userid)))
         res = u", ".join(rendered_users)
         return res
 
@@ -6097,7 +6093,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             data[advId]['creator_fullname'] = None
             if given_advice:
                 creator_id = given_advice.Creator()
-                creator_fullname = tool.getUserName(creator_id)
+                creator_fullname = get_user_fullname(creator_id)
                 data[advId]['creator_id'] = creator_id
                 data[advId]['creator_fullname'] = creator_fullname
 
@@ -7880,7 +7876,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         hideNotViewableLinkedItemsTo = cfg.getHideNotViewableLinkedItemsTo()
         if hideNotViewableLinkedItemsTo and \
-           tool.isPowerObserverForCfg(cfg, power_observer_types=hideNotViewableLinkedItemsTo) and \
+           isPowerObserverForCfg(cfg, power_observer_types=hideNotViewableLinkedItemsTo) and \
            not _checkPermission(View, item):
             return False
         return True

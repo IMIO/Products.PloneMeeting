@@ -29,6 +29,7 @@ from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import field_is_empty
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import redirect
 from z3c.form.contentprovider import ContentProviders
 from z3c.form.interfaces import HIDDEN_MODE
@@ -174,7 +175,7 @@ class BaseMeetingView(object):
            meeting managers and power observers.'''
         res = self.tool.isManager(self.cfg)
         if not res:
-            res = self.tool.isPowerObserverForCfg(self.cfg) or \
+            res = isPowerObserverForCfg(self.cfg) or \
                 (self.context.__class__.__name__ == 'Meeting' and
                  self.context.adapted().is_decided())
         return res

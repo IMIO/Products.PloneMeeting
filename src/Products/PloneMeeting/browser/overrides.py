@@ -58,8 +58,11 @@ from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_next_meeting
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
+from Products.PloneMeeting.utils import getAvailableMailingLists
 from Products.PloneMeeting.utils import getMailRecipient
 from Products.PloneMeeting.utils import is_editing
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import set_field_from_ajax
@@ -271,8 +274,7 @@ class BaseGeneratorLinksViewlet(object):
     def getAvailableMailingLists(self, pod_template):
         '''Gets the names of the (currently active) mailing lists defined for
            this template.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        return tool.getAvailableMailingLists(self.context, pod_template)
+        return getAvailableMailingLists(self.context, pod_template)
 
     def displayStoreAsAnnexSection(self):
         """ """
@@ -710,7 +712,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             # powerobservers to manage MeetingConfig.hideHistoryTo
             hideHistoryTo = self.cfg.getHideHistoryTo()
             if hideHistoryTo and \
-               self.tool.isPowerObserverForCfg(self.cfg, power_observer_types=hideHistoryTo):
+               isPowerObserverForCfg(self.cfg, power_observer_types=hideHistoryTo):
                 # any others
                 isPowerObserverHiddenHistory = True
 
@@ -1140,7 +1142,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         mapping = {
             'item_annexes': [cfg.getItemTypeName()],
             'item_decision_annexes': [cfg.getItemTypeName()],
-            'advice_annexes': tool.getAdvicePortalTypeIds(),
+            'advice_annexes': getAdvicePortalTypeIds(),
             'meeting_annexes': [cfg.getMeetingTypeName()],
         }
         return mapping
@@ -1263,7 +1265,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         title = self._get_stored_annex_title(pod_template)
         id = normalize_id(title)
         id = INameChooser(self.context).chooseName(id, self.context)
-        annex = api.content.create(
+        api.content.create(
             container=self.context,
             type=annex_portal_type,
             id=id,
@@ -1323,11 +1325,10 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
 
     def _sendPodTemplate(self, rendered_template):
         '''Sends, by email, a p_rendered_template.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
         # Preamble: ensure that the mailingList is really active.
         mailinglist_name = safe_unicode(self.request.get('mailinglist_name'))
         pod_template = self.get_pod_template(self.request.get('template_uid'))
-        if mailinglist_name not in tool.getAvailableMailingLists(self.context, pod_template):
+        if mailinglist_name not in getAvailableMailingLists(self.context, pod_template):
             raise Unauthorized
         # Retrieve mailing list recipients
         recipients = []
@@ -1419,7 +1420,7 @@ class PMContentHistoryView(IHContentHistoryView):
                         item_review_state, theObject=False)
                     if proposing_group_uid in tool.get_orgs_for_user():
                         check = False
-                if check and tool.isPowerObserverForCfg(
+                if check and isPowerObserverForCfg(
                         cfg, power_observer_types=hideHistoryTo):
                     res = False
         return res

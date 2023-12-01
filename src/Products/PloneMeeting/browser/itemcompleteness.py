@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
+from imio.helpers.content import get_user_fullname
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import add_event_to_history
 from plone import api
@@ -118,3 +119,6 @@ class ItemCompletenessHistoryView(BrowserView):
         transformsTool = api.portal.get_tool('portal_transforms')
         data = transformsTool.convertTo('text/x-html-safe', comments, mimetype=mimetype)
         return data.getData()
+
+    def get_user_fullname(self, user_id):
+        return get_user_fullname(user_id)

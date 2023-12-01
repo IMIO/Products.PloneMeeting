@@ -13,6 +13,7 @@ from collective.documentgenerator.helper.archetypes import ATDocumentGenerationH
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from eea.facetednavigation.interfaces import ICriteria
 from ftw.labels.interfaces import ILabeling
+from imio.helpers.content import get_user_fullname
 from imio.helpers.content import uuidToObject
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.pyutils.utils import get_clusters
@@ -47,6 +48,7 @@ from Products.PloneMeeting.utils import get_dx_field
 from Products.PloneMeeting.utils import get_dx_widget
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import get_person_from_userid
+from Products.PloneMeeting.utils import getAvailableMailingLists
 from Products.PloneMeeting.utils import may_view_field
 from Products.PloneMeeting.utils import reindex_object
 from z3c.form.interfaces import DISPLAY_MODE
@@ -808,11 +810,10 @@ class BaseDGHV(object):
                 if withAuthor and not adviceType == NOT_GIVEN_ADVICE_VALUE:
                     adviceHolder = advice.get('adviceHolder', item)
                     adviceObj = adviceHolder.getAdviceObj(advice['id'])
-                    author = tool.getUserName(adviceObj.Creator())
                     res = res + u"<br /><u>%s :</u> <i>%s</i>" % (translate('Advice given by',
                                                                   domain='PloneMeeting',
                                                                   context=self.request),
-                                                                  cgi.escape(safe_unicode(author)), )
+                                                                  cgi.escape(get_user_fullname(adviceObj.Creator())), )
 
                     adviceComment = advice['comment'] and self.printXhtml(adviceObj, advice['comment']) or '-'
                     res = res + (u"<br /><u>%s :</u> %s<p></p>" % (translate('Advice comment',
@@ -867,8 +868,7 @@ class BaseDGHV(object):
 
     def print_fullname(self, user_id):
         """ """
-        tool = api.portal.get_tool('portal_plonemeeting')
-        return tool.getUserName(user_id)
+        return get_user_fullname(user_id)
 
     def print_assembly(self, striked=True, use_print_attendees_by_type=True, **kwargs):
         '''Returns the assembly for this meeting or item.
@@ -2439,9 +2439,8 @@ class PODTemplateMailingLists(BrowserView):
 
     def getAvailableMailingLists(self):
         '''Gets the names of the (currently active) mailing lists defined for template_uid.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
         pod_template = api.content.find(UID=self.template_uid)[0].getObject()
-        return tool.getAvailableMailingLists(self.context, pod_template)
+        return getAvailableMailingLists(self.context, pod_template)
 
 
 class RenderSingleWidgetView(BrowserView):

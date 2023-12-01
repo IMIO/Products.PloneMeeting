@@ -32,6 +32,7 @@ from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.utils import get_public_url
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.PloneMeeting.utils import updateCollectionCriterion
 from Products.PlonePAS.tools.groupdata import GroupData
 from z3c.relationfield.relation import RelationValue
@@ -1151,7 +1152,7 @@ class Migrate_To_4_1(Migrator):
     def _migrateMeetingConfigDefaultAdviceHiddenDuringRedaction(self):
         """MeetingConfig.defaultAdviceHiddenDuringRedaction was a boolean, now it is a list."""
         logger.info('Migrating value for MeetingConfig.defaultAdviceHiddenDuringRedaction for every configs...')
-        advice_portal_types = self.tool.getAdvicePortalTypeIds()
+        advice_portal_types = getAdvicePortalTypeIds()
         for cfg in self.tool.objectValues('MeetingConfig'):
             defaultAdviceHiddenDuringRedaction = cfg.defaultAdviceHiddenDuringRedaction
             if isinstance(defaultAdviceHiddenDuringRedaction, bool):
