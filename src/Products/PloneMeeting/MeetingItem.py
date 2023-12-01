@@ -5550,7 +5550,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getAdvices(self):
         '''Returns a list of contained meetingadvice objects.'''
-        return object_values(self, getAdvicePortalTypeIds())
+        return object_values(self, 'MeetingAdvice')
 
     def _doClearDayFrom(self, date):
         '''Change the given p_date (that is a datetime instance)
