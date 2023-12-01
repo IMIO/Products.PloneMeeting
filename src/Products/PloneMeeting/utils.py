@@ -28,8 +28,8 @@ from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from imio.helpers.cache import get_current_user_id
-from imio.helpers.content import base_getattr
 from imio.helpers.cache import get_plone_groups_for_user
+from imio.helpers.content import base_getattr
 from imio.helpers.content import get_user_fullname
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_encode
