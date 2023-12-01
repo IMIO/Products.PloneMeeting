@@ -22,6 +22,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import down_or_up_wf
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from profilehooks import timecall
 from zope.event import notify
 
@@ -836,7 +837,7 @@ class testPerformances(PloneMeetingTestCase):
             item.query_state()
 
     def test_pm_SpeedIsPowerObserverForCfg(self):
-        '''Test ToolPloneMeeting.isPowerObserverForCfg.'''
+        '''Test utils.isPowerObserverForCfg.'''
         self.changeUser('pmManager')
         # call it 1000 times
         self._isPowerObserverForCfg(times=1000)
@@ -844,15 +845,13 @@ class testPerformances(PloneMeetingTestCase):
     @timecall
     def _isPowerObserverForCfg(self, times=1):
         ''' '''
+        cfg = self.meetingConfig
         pm_logger.info('Call {0} times'.format(times))
         for time in range(times):
-            self.tool.isPowerObserverForCfg(self.meetingConfig)
-            self.tool.isPowerObserverForCfg(self.meetingConfig,
-                                            ["powerobservers"])
-            self.tool.isPowerObserverForCfg(self.meetingConfig,
-                                            ["restrictedpowerobservers"])
-            self.tool.isPowerObserverForCfg(self.meetingConfig,
-                                            ["powerobservers", "restrictedpowerobservers"])
+            isPowerObserverForCfg(cfg)
+            isPowerObserverForCfg(cfg, ["powerobservers"])
+            isPowerObserverForCfg(cfg, ["restrictedpowerobservers"])
+            isPowerObserverForCfg(cfg, ["powerobservers", "restrictedpowerobservers"])
 
     def test_pm_SpeedUserIsAmong(self):
         '''Test ToolPloneMeeting.userIsAmong.'''

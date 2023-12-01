@@ -8,7 +8,6 @@ from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from Acquisition import aq_base
 from collections import OrderedDict
-from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group_id
@@ -33,7 +32,6 @@ from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.cache import invalidate_cachekey_volatile_for
-from imio.helpers.content import get_user_fullname
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.security import check_zope_admin
@@ -83,10 +81,10 @@ from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
-from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import monthsIds
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import org_id_to_uid
@@ -439,7 +437,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if api.content.get_state(cfg) == 'active' and \
                (not check_access or
                 (self.checkMayView(cfg) and
-                    (self.isManager(cfg) or self.isPowerObserverForCfg(cfg) or
+                    (self.isManager(cfg) or isPowerObserverForCfg(cfg) or
                         (check_using_groups and self.get_orgs_for_user(
                             using_groups=cfg.getUsingGroups()))))):
                 res.append(cfg)
@@ -819,33 +817,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             user = api.user.get_current()
             res = "Manager" in user.getRoles()
         return res
-
-    def isPowerObserverForCfg_cachekey(method, self, cfg, power_observer_types=[]):
-        '''cachekey method for self.isPowerObserverForCfg.'''
-        return (get_plone_groups_for_user(),
-                repr(cfg),
-                power_observer_types)
-
-    security.declarePublic('isPowerObserverForCfg')
-
-    # not ramcached perf tests says it does not change anything
-    # and this avoid useless entry in cache
-    # @ram.cache(isPowerObserverForCfg_cachekey)
-    def isPowerObserverForCfg(self, cfg, power_observer_types=[]):
-        """
-          Returns True if the current user is a power observer
-          for the given p_itemOrMeeting.
-          It is a power observer if member of the corresponding
-          p_power_observer_types suffixed groups.
-          If no p_power_observer_types we check every existing power_observers groups.
-        """
-        user_plone_groups = get_plone_groups_for_user()
-        for po_infos in cfg.getPowerObservers():
-            if not power_observer_types or po_infos['row_id'] in power_observer_types:
-                groupId = "{0}_{1}".format(cfg.getId(), po_infos['row_id'])
-                if groupId in user_plone_groups:
-                    return True
-        return False
 
     def showPloneMeetingTab_cachekey(method, self, cfg):
         '''cachekey method for self.showPloneMeetingTab.'''

@@ -1,8 +1,11 @@
+# -*- coding: utf-8 -*-
+
 from imio.helpers.xhtml import removeCssClasses
 from plone import api
 from plone.outputfilters.interfaces import IFilter
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from zope.interface import implements
 
 
@@ -28,9 +31,9 @@ class HighlightRemover(object):
     def _hideCssClasses(self, hideCssClassesTo):
         """Hide regarding MeetingConfig.hideCssClassesTo."""
         pos = [po["row_id"] for po in self.cfg.getPowerObservers()
-                    if po["row_id"] in hideCssClassesTo]
+               if po["row_id"] in hideCssClassesTo]
         if pos and \
-           self.tool.isPowerObserverForCfg(self.cfg, power_observer_types=pos):
+           isPowerObserverForCfg(self.cfg, power_observer_types=pos):
             return True
         return False
 

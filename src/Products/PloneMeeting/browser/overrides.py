@@ -62,6 +62,7 @@ from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.PloneMeeting.utils import getAvailableMailingLists
 from Products.PloneMeeting.utils import getMailRecipient
 from Products.PloneMeeting.utils import is_editing
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import set_field_from_ajax
@@ -711,7 +712,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             # powerobservers to manage MeetingConfig.hideHistoryTo
             hideHistoryTo = self.cfg.getHideHistoryTo()
             if hideHistoryTo and \
-               self.tool.isPowerObserverForCfg(self.cfg, power_observer_types=hideHistoryTo):
+               isPowerObserverForCfg(self.cfg, power_observer_types=hideHistoryTo):
                 # any others
                 isPowerObserverHiddenHistory = True
 
@@ -1419,7 +1420,7 @@ class PMContentHistoryView(IHContentHistoryView):
                         item_review_state, theObject=False)
                     if proposing_group_uid in tool.get_orgs_for_user():
                         check = False
-                if check and tool.isPowerObserverForCfg(
+                if check and isPowerObserverForCfg(
                         cfg, power_observer_types=hideHistoryTo):
                     res = False
         return res

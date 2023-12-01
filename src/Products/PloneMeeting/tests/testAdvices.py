@@ -35,6 +35,7 @@ from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.statusmessages.interfaces import IStatusMessage
 from zope.component import getAdapter
 from zope.component import queryUtility
@@ -1558,7 +1559,7 @@ class testAdvices(PloneMeetingTestCase):
         # for now, it is not the case, the 'View' is not given automatically to power advisers
         self.changeUser('pmAdviser1')
         # pmAdviser1 is not power adviser
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg))
+        self.assertFalse(isPowerObserverForCfg(cfg))
         self.assertTrue(self.developers_uid not in item.adviceIndex)
         # he may not see item
         self.failIf(self.hasPermission(View, item))

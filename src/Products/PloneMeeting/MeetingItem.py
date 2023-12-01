@@ -135,6 +135,7 @@ from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import is_editing
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import ItemDuplicatedEvent
 from Products.PloneMeeting.utils import ItemDuplicatedToOtherMCEvent
 from Products.PloneMeeting.utils import ItemLocalRolesUpdatedEvent
@@ -2623,7 +2624,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             cfg = tool.getMeetingConfig(item)
             res = tool.isManager(cfg)
             if not res:
-                res = tool.isPowerObserverForCfg(cfg) or item.is_decided(cfg)
+                res = isPowerObserverForCfg(cfg) or item.is_decided(cfg)
         return res
 
     security.declarePublic('showIsAcceptableOutOfMeeting')
@@ -3656,11 +3657,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # check if current user is a power observer in MeetingConfig.restrictAccessToSecretItemsTo
         restricted_power_obs = cfg.getRestrictAccessToSecretItemsTo()
         if restricted_power_obs and \
-           tool.isPowerObserverForCfg(cfg, power_observer_types=restricted_power_obs):
+           isPowerObserverForCfg(cfg, power_observer_types=restricted_power_obs):
             return False
 
         # a power observer not in restrictAccessToSecretItemsTo?
-        if tool.isPowerObserverForCfg(cfg):
+        if isPowerObserverForCfg(cfg):
             return True
 
     def isViewable(self):
@@ -5660,7 +5661,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = {}
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        is_confidential_power_observer = tool.isPowerObserverForCfg(
+        is_confidential_power_observer = isPowerObserverForCfg(
             cfg, cfg.getAdviceConfidentialFor())
         for groupId, adviceInfo in self.adviceIndex.iteritems():
             if not include_not_asked and adviceInfo['not_asked']:
@@ -7875,7 +7876,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         hideNotViewableLinkedItemsTo = cfg.getHideNotViewableLinkedItemsTo()
         if hideNotViewableLinkedItemsTo and \
-           tool.isPowerObserverForCfg(cfg, power_observer_types=hideNotViewableLinkedItemsTo) and \
+           isPowerObserverForCfg(cfg, power_observer_types=hideNotViewableLinkedItemsTo) and \
            not _checkPermission(View, item):
             return False
         return True

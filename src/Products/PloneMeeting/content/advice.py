@@ -22,6 +22,7 @@ from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import historize_object_data
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
@@ -151,11 +152,9 @@ class MeetingAdvice(Container):
            and parent.adviceIndex[self.advice_group]['isConfidential']:
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
-            is_confidential_power_observer = tool.isPowerObserverForCfg(
-                cfg, cfg.getAdviceConfidentialFor())
             if not parent._adviceIsViewableForCurrentUser(
                cfg,
-               is_confidential_power_observer,
+               isPowerObserverForCfg(cfg, cfg.getAdviceConfidentialFor()),
                parent.adviceIndex[self.advice_group]):
                 raise Unauthorized
 

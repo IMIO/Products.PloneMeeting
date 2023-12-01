@@ -1232,40 +1232,6 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         browser.open(pmFolder.absolute_url() + '/searches_items')
         self.assertTrue(tool_new_modified in browser.headers['etag'])
 
-    def test_pm_IsPowerObserverForCfg(self):
-        """ """
-        cfg = self.meetingConfig
-        self.changeUser('pmManager')
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg))
-        self.assertFalse(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['powerobservers']))
-        self.assertFalse(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['restrictedpowerobservers']))
-        self.assertFalse(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['powerobservers', 'restrictedpowerobservers']))
-        self.assertFalse(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['unknown']))
-        self.changeUser('powerobserver1')
-        self.assertTrue(self.tool.isPowerObserverForCfg(cfg))
-        self.assertTrue(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['powerobservers']))
-        self.assertFalse(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['restrictedpowerobservers']))
-        self.assertTrue(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['powerobservers', 'restrictedpowerobservers']))
-        self.assertFalse(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['unknown']))
-        self.changeUser('restrictedpowerobserver1')
-        self.assertTrue(self.tool.isPowerObserverForCfg(cfg))
-        self.assertFalse(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['powerobservers']))
-        self.assertTrue(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['restrictedpowerobservers']))
-        self.assertTrue(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['powerobservers', 'restrictedpowerobservers']))
-        self.assertFalse(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['unknown']))
-
     def test_pm_ToolAccessibleByUsersWithoutGroups(self):
         """Whe a user without any group logs in, he may access methods on portal_plonemeeting,
            often use to manage shown CSS and tabs."""

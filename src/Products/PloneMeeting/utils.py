@@ -29,6 +29,7 @@ from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.content import base_getattr
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_user_fullname
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_encode
@@ -2526,6 +2527,32 @@ def convert2xhtml(obj,
         xhtmlFinal = XhtmlPreprocessor.html2xhtml(xhtmlFinal)
 
     return xhtmlFinal
+
+
+def isPowerObserverForCfg_cachekey(method, cfg, power_observer_types=[]):
+    '''cachekey method for isPowerObserverForCfg.'''
+    return (get_plone_groups_for_user(),
+            repr(cfg),
+            power_observer_types)
+
+# not ramcached perf tests says it does not change anything
+# and this avoid useless entry in cache
+# @ram.cache(isPowerObserverForCfg_cachekey)
+def isPowerObserverForCfg(cfg, power_observer_types=[]):
+    """
+      Returns True if the current user is a power observer
+      for the given p_itemOrMeeting.
+      It is a power observer if member of the corresponding
+      p_power_observer_types suffixed groups.
+      If no p_power_observer_types we check every existing power_observers groups.
+    """
+    user_plone_groups = get_plone_groups_for_user()
+    for po_infos in cfg.getPowerObservers():
+        if not power_observer_types or po_infos['row_id'] in power_observer_types:
+            groupId = "{0}_{1}".format(cfg.getId(), po_infos['row_id'])
+            if groupId in user_plone_groups:
+                return True
+    return False
 
 
 def get_annexes_config(context, portal_type="annex", annex_group=False):

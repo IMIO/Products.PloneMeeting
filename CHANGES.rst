@@ -55,7 +55,8 @@ Changelog
   - Moved `ToolPloneMeeting.getAdvicePortalTypes` and
     `ToolPloneMeeting.getAdvicePortalTypeIds` to utils;
   - Moved `ToolPloneMeeting.getAvailableMailingLists` to utils;
-  - Removed no more used `versions_history_form.pt`.
+  - Removed no more used `versions_history_form.pt`;
+  - Moved `ToolPloneMeeting.isPowerObserverForCfg` to `utils.isPowerObserverForCfg`.
 
   [gbastien]
 
