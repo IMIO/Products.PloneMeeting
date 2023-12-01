@@ -9,9 +9,9 @@
 <body>
 
     <metal:main fill-slot="main">
-        <h1 class="documentFirstHeading" i18n:translate="">
+        <h2 i18n:translate="">
             History of emergency changes
-        </h1>
+        </h2>
 
         <div id="content-core"
              tal:define="events python: view.getHistory();">

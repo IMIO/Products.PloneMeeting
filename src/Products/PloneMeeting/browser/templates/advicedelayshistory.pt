@@ -10,9 +10,9 @@
 
     <metal:main fill-slot="main">
         <tal:defines define="infos view/getHistoryInfos">
-            <h1 class="documentFirstHeading" i18n:translate="">
+            <h2 i18n:translate="">
                 History of delay changes for <span i18n:name="advice" tal:content="infos/name">advice</span>
-            </h1>
+            </h2>
 
             <div id="content-core"
                  tal:define="historyInfos infos/delay_changes_history;
