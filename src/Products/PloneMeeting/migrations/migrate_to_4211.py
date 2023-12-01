@@ -15,15 +15,17 @@ class Migrate_To_4211(Migrator):
                     'obj.portal_plonemeeting',
                     'self.portal_plonemeeting',
                     'portal_plonemeeting')
-        method_names = ('get_labels', 'getAdvicePortalTypeIds')
+        method_names = {'get_labels': 'get_labels',
+                        'getAdvicePortalTypeIds': 'getAdvicePortalTypeIds',
+                        'getUserName': 'get_user_fullname'}
         replacements = {}
         for prefix in prefixes:
-            for method_name in method_names:
+            for orig_method_name, new_method_name in method_names.items():
                 # TAL expressions
                 self.updateTALConditions(
-                    "{0}.{1}".format(prefix, method_name), "utils.{0}".format(method_name))
+                    "{0}.{1}".format(prefix, orig_method_name), "utils.{0}".format(new_method_name))
                 # compute replacements for POD templates
-                replacements["{0}.{1}".format(prefix, method_name)] = "utils.{0}".format(method_name)
+                replacements["{0}.{1}".format(prefix, orig_method_name)] = "utils.{0}".format(new_method_name)
 
         # POD templates
         self.updatePODTemplatesCode(replacements)

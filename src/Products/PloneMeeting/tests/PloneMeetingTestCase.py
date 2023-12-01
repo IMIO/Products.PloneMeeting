@@ -38,8 +38,6 @@ from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
-from Products.PloneMeeting.Meeting import Meeting_schema
-from Products.PloneMeeting.MeetingItem import MeetingItem_schema
 from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
 from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
 from Products.PloneMeeting.utils import cleanMemoize
@@ -122,8 +120,6 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     # Some default content
     descriptionText = '<p>Some description</p>'
     decisionText = '<p>Some decision.</p>'
-    schemas = {'MeetingItem': MeetingItem_schema,
-               'Meeting': Meeting_schema}
     subproductIgnoredTestFiles = ['testPerformances.py',
                                   'test_robot.py']
 
