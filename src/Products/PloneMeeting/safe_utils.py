@@ -28,6 +28,7 @@ from Products.PloneMeeting.utils import get_public_url
 from Products.PloneMeeting.utils import get_referer_obj
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import is_transition_before_date
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.utils import normalize
 from Products.PloneMeeting.utils import normalize_id

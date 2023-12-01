@@ -17,7 +17,8 @@ class Migrate_To_4211(Migrator):
                     'portal_plonemeeting')
         method_names = {'get_labels': 'get_labels',
                         'getAdvicePortalTypeIds': 'getAdvicePortalTypeIds',
-                        'getUserName': 'get_user_fullname'}
+                        'getUserName': 'get_user_fullname',
+                        'isPowerObserverForCfg': 'isPowerObserverForCfg'}
         replacements = {}
         for prefix in prefixes:
             for orig_method_name, new_method_name in method_names.items():
