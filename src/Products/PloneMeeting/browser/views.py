@@ -763,7 +763,6 @@ class BaseDGHV(object):
                             withAuthor=True,
                             ordered=True):
         '''Helper method to have a printable version of advices.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
         res = ""
         if withAdvicesTitle:
             res += "<p class='pmAdvices'><u><b>%s :</b></u></p>" % \
@@ -2351,14 +2350,19 @@ class DisplayMeetingItemVoters(BrowserView):
         self.show_voted_items = show_voted_items
         return self.index()
 
-    def getNonVotedItems(self):
+    def get_non_voted_items(self):
         """Returns the list of items the voter_uid did not vote for."""
         items = self.context.get_items(ordered=True)
         res = {'public': [],
-               'secret': []}
+               'secret': [],
+               'no_vote': []}
         for item in items:
             data = {}
-            for item_vote in item.get_item_votes():
+            item_votes = item.get_item_votes()
+            if not item_votes:
+                res['no_vote'].append(item)
+                continue
+            for item_vote in item_votes:
                 vote_number = item_vote['vote_number']
                 is_secret = item_vote['poll_type'].startswith('secret')
                 if not is_secret:
@@ -2385,21 +2389,27 @@ class DisplayMeetingItemVoters(BrowserView):
                         break
         return res
 
-    def getVotedItems(self):
+    def get_voted_items(self):
         """ """
-        non_voted_items = self.getNonVotedItems()
+        non_voted_items = self.get_non_voted_items()
         items = self.context.get_items(ordered=True)
         res = {
             'public': [
                 item for item in items
                 if item not in non_voted_items['public'] and
                 item not in non_voted_items['secret'] and
+                item not in non_voted_items['no_vote'] and
                 not item.get_votes_are_secret()],
             'secret': [
                 item for item in items
                 if item not in non_voted_items['secret'] and
                 item not in non_voted_items['public'] and
-                item.get_votes_are_secret()]}
+                item not in non_voted_items['no_vote'] and
+                item.get_votes_are_secret()],
+            'no_vote': [
+                item for item in items
+                if item in non_voted_items['no_vote']],
+        }
         return res
 
 

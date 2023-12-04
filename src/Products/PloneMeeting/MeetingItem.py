@@ -4602,17 +4602,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         elif len(item_votes) - 1 >= vote_number:
             votes.append(item_votes[vote_number])
 
+        # include_unexisting
         # secret votes
-        if self.get_vote_is_secret(vote_number):
-            if include_unexisting and not votes:
-                votes = self._build_unexisting_vote(True, vote_number, poll_type)
-        # public votes
-        else:
-            # add an empty vote in case nothing in itemVotes
-            # this is useful when no votes encoded, new voters selected, ...
-            if include_unexisting:
-                # first or not existing
-                if not votes:
+        if poll_type != 'no_vote':
+            if self.get_vote_is_secret(vote_number):
+                if include_unexisting and not votes:
+                    votes = self._build_unexisting_vote(True, vote_number, poll_type)
+            # public votes
+            else:
+                # add an empty vote in case nothing in itemVotes
+                # this is useful when no votes encoded, new voters selected, ...
+                if include_unexisting and not votes:
                     votes = self._build_unexisting_vote(False, vote_number, poll_type)
 
         i = 0 if vote_number == 'all' else vote_number

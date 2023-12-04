@@ -26,6 +26,7 @@ from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import get_prefixed_gn_position_name
 from Products.PloneMeeting.utils import get_public_url
 from Products.PloneMeeting.utils import get_referer_obj
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import is_transition_before_date
 from Products.PloneMeeting.utils import isPowerObserverForCfg

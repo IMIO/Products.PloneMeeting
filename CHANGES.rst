@@ -56,8 +56,15 @@ Changelog
     `ToolPloneMeeting.getAdvicePortalTypeIds` to utils;
   - Moved `ToolPloneMeeting.getAvailableMailingLists` to utils;
   - Removed no more used `versions_history_form.pt`;
-  - Moved `ToolPloneMeeting.isPowerObserverForCfg` to `utils.isPowerObserverForCfg`.
+  - Moved `ToolPloneMeeting.isPowerObserverForCfg` to
+  `utils.isPowerObserverForCfg`;
+  - Replaced `ToolPloneMeeting.getUserName` by
+  `imio.helpers.content.get_user_fullname` everywhere it was used.
 
+  [gbastien]
+- Adapted `DisplayMeetingItemVoters` helper view on meeting to display items
+  with `No vote` separately than items with `public` and `secret` votes and to
+  not display it in non voted items anymore.
   [gbastien]
 
 4.2.8 (2023-10-27)
