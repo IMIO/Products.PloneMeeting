@@ -730,13 +730,13 @@ class testVotes(PloneMeetingTestCase):
         # for now every voters voted
         # non voted
         non_voted_view = meeting.restrictedTraverse('@@display-meeting-item-voters')
-        self.assertEqual(non_voted_view.getNonVotedItems(),
-                         {'secret': [], 'public': []})
+        self.assertEqual(non_voted_view.get_non_voted_items(),
+                         {'no_vote': [], 'secret': [], 'public': []})
         non_voted_view()
         # voted
         voted_view = meeting.restrictedTraverse('@@display-meeting-item-voters')
         voted_view.show_voted_items = True
-        voted_items = voted_view.getVotedItems()
+        voted_items = voted_view.get_voted_items()
         self.assertTrue(public_item in voted_items['public'])
         self.assertTrue(yes_public_item in voted_items['public'])
         self.assertTrue(secret_item in voted_items['secret'])
@@ -754,14 +754,22 @@ class testVotes(PloneMeetingTestCase):
         secret_votes['votes']['yes'] = 0
         meeting.set_item_secret_vote(secret_item, secret_votes, 0)
         # non voted
-        non_voted_items = non_voted_view.getNonVotedItems()
+        non_voted_items = non_voted_view.get_non_voted_items()
         self.assertTrue(public_item in non_voted_items['public'])
         self.assertTrue(secret_item in non_voted_items['secret'])
         non_voted_view()
         # voted
-        voted_items = voted_view.getVotedItems()
+        voted_items = voted_view.get_voted_items()
         self.assertFalse(public_item in voted_items['public'])
         self.assertFalse(secret_item in voted_items['secret'])
+        voted_view()
+        # no_vote
+        public_item.setPollType('no_vote')
+        del meeting.item_votes[public_item.UID()]
+        self.assertEqual(public_item.get_item_votes(), [])
+        self.assertTrue(public_item in voted_view.get_non_voted_items()['no_vote'])
+        self.assertTrue(public_item in voted_view.get_voted_items()['no_vote'])
+        non_voted_view()
         voted_view()
 
     def test_pm_ChangePollTypeView(self):
