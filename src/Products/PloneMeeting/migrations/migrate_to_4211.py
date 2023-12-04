@@ -35,13 +35,16 @@ class Migrate_To_4211(Migrator):
 
         logger.info('Migrating to PloneMeeting 4211...')
         self._updateDataRelatedToToolPloneMeetingSimplification()
+        # add text criterion on item title only
+        self.updateFacetedFilters(xml_filename='upgrade_step_4211_add_item_widgets.xml')
         logger.info('Migrating to PloneMeeting 4211... Done.')
 
 
 def migrate(context):
     '''This migration function will:
 
-       1) Update code regarding removal of methods that were available on portal_plonemeeting.
+       1) Update code regarding removal of methods that were available on portal_plonemeeting;
+       2) Add c32 faceted criterion (search on item title only).
     '''
     migrator = Migrate_To_4211(context)
     migrator.run()

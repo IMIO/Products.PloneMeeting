@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <metadata>
-  <version>4210</version>
+  <version>4211</version>
   <dependencies>
     <dependency>profile-Products.CMFPlacefulWorkflow:CMFPlacefulWorkflow</dependency>
     <dependency>profile-imio.dashboard:default</dependency>

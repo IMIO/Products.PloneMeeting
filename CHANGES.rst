@@ -66,6 +66,9 @@ Changelog
   with `No vote` separately than items with `public` and `secret` votes and to
   not display it in non voted items anymore.
   [gbastien]
+- Added faceted filter criterion `Item title only` to query items on
+  items's title only using the `Title` index.
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------
