@@ -193,8 +193,11 @@ def onMeetingTransition(meeting, event):
         # freshly late
         meeting.update_item_references()
     elif event.old_state.id not in beforeLateStates and event.new_state.id in beforeLateStates:
-        # no more late, clear item references
-        meeting.update_item_references(clear=True)
+        # no more late, clear item references if necessary
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(meeting)
+        if not cfg.getComputeItemReferenceForItemsOutOfMeeting():
+            meeting.update_item_references(clear=True)
 
     # invalidate last meeting modified
     invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)

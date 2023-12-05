@@ -69,6 +69,10 @@ Changelog
 - Added faceted filter criterion `Item title only` to query items on
   items's title only using the `Title` index.
   [gbastien]
+- When using `MeetingConfig.computeItemReferenceForItemsOutOfMeeting`, do not clear
+  item reference when meeting back to `created` or when item back to `validated`.
+  Renamed `MeetingItem.mustShowItemReference` to `MeetingItem.show_item_reference`.
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------

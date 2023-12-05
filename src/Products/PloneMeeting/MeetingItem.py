@@ -1075,9 +1075,9 @@ class MeetingItemWorkflowActions(object):
             sendMailIfRelevant(self.context, 'itemUnpresentedOwner', 'Owner', isRole=True)
             # remove the item from the meeting
             self.context.getMeeting().remove_item(self.context)
-        # back to validated from "accepted_out_of_meeting"
+        # recompute when back to validated, this could be coming from a "accepted_out_of_meeting" like state
         if stateChange.new_state.id == "validated" and self.context.getItemReference():
-            self.context.update_item_reference(clear=True)
+            self.context.update_item_reference()
         # if an item was returned to proposing group for corrections and that
         # this proposing group sends the item back to the meeting managers, we
         # send an email to warn the MeetingManagers if relevant
@@ -4747,9 +4747,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res['attendee_again_after'] = attendee_again_after
         return res
 
-    security.declarePublic('mustShowItemReference')
+    security.declarePublic('show_item_reference')
 
-    def mustShowItemReference(self):
+    def show_item_reference(self):
         '''See doc in interfaces.py'''
         res = False
         item = self.getSelf()
