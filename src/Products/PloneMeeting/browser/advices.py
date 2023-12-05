@@ -7,6 +7,7 @@ from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_vocab_values
 from imio.helpers.workflow import get_final_states
 from imio.helpers.workflow import get_leading_transitions
+from imio.helpers.content import get_user_fullname
 from imio.helpers.workflow import get_state_infos
 from imio.history.browser.views import EventPreviewView
 from imio.history.interfaces import IImioHistory
@@ -27,12 +28,14 @@ from Products.PloneMeeting.browser.advicechangedelay import _reinit_advice_delay
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import get_event_field_data
 from Products.PloneMeeting.utils import is_proposing_group_editor
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from z3c.form import form
 from zope import schema
 from zope.component import getAdapter
 from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.i18n import translate
+from zope.lifecycleevent import Attributes
 from zope.lifecycleevent import ObjectModifiedEvent
 
 import json
@@ -90,7 +93,7 @@ class AdvicesIcons(BrowserView):
                                         not get_plone_group_id(advice["id"], "advisers") in
                                         get_plone_groups_for_user()]
                 may_view_confidential_advices = not confidential_advices or \
-                    not tool.isPowerObserverForCfg(cfg, power_observer_types=cfg.getAdviceConfidentialFor())
+                    not isPowerObserverForCfg(cfg, power_observer_types=cfg.getAdviceConfidentialFor())
         return (repr(self.context),
                 self.context.adviceIndex._p_mtime,
                 server_url,
@@ -372,6 +375,9 @@ class AdviceInfos(BrowserView):
                 given_by = self.tool.getUserName(previous_event["actor"])
         return given_by
 
+    def get_user_fullname(self, user_id):
+        return get_user_fullname(user_id)
+
 
 class ChangeAdviceHiddenDuringRedactionView(BrowserView):
     """View that toggle the advice.advice_hide_during_redaction attribute."""
@@ -383,7 +389,10 @@ class ChangeAdviceHiddenDuringRedactionView(BrowserView):
         else:
             # toggle the value
             self.context.advice_hide_during_redaction = not bool(self.context.advice_hide_during_redaction)
-            notify(ObjectModifiedEvent(self.context))
+            # when advice_hide_during_redaction, it is handled by ObjectModifiedEvent
+            notify(ObjectModifiedEvent(
+                self.context,
+                Attributes(None, 'advice_hide_during_redaction')))
             if self.request.RESPONSE.status != 200:
                 self.request.RESPONSE.status = 200
                 if self.request.get('HTTP_REFERER') != self.request.RESPONSE.getHeader('location'):

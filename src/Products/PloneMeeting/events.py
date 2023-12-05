@@ -25,6 +25,7 @@ from imio.helpers.security import fplog
 from imio.helpers.workflow import get_final_states
 from imio.helpers.workflow import update_role_mappings_for
 from imio.helpers.xhtml import storeImagesLocally
+from imio.history.utils import add_event_to_history
 from OFS.interfaces import IObjectWillBeAddedEvent
 from OFS.ObjectManager import BeforeDeleteException
 from persistent.list import PersistentList
@@ -193,8 +194,11 @@ def onMeetingTransition(meeting, event):
         # freshly late
         meeting.update_item_references()
     elif event.old_state.id not in beforeLateStates and event.new_state.id in beforeLateStates:
-        # no more late, clear item references
-        meeting.update_item_references(clear=True)
+        # no more late, clear item references if necessary
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(meeting)
+        if not cfg.getComputeItemReferenceForItemsOutOfMeeting():
+            meeting.update_item_references(clear=True)
 
     # invalidate last meeting modified
     invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
@@ -948,21 +952,36 @@ def onAdviceModified(advice, event):
     if advice.REQUEST.get('currentlyStoringExternalImages', False) is True:
         return
 
-    # update advice_row_id
-    advice._updateAdviceRowId()
+    if not isinstance(event, ContainerModifiedEvent):
+        mod_attrs = get_modified_attrs(event)
+        if 'advice_hide_during_redaction' in mod_attrs:
+            # add a line to the advice's wf history
+            action = 'to_hidden_during_redaction_action'
+            comments = 'to_hidden_during_redaction_comments'
+            if advice.advice_hide_during_redaction is False:
+                action = 'to_not_hidden_during_redaction_action'
+                comments = 'to_not_hidden_during_redaction_comments'
+            add_event_to_history(
+                advice,
+                'advice_hide_during_redaction_history',
+                action=action,
+                comments=comments)
 
-    item = advice.getParentNode()
-    item.update_local_roles()
+        # update advice_row_id
+        advice._updateAdviceRowId()
 
-    # make sure external images used in RichText fields are stored locally
-    storeImagesLocallyDexterity(advice)
+        item = advice.getParentNode()
+        item.update_local_roles()
 
-    # notify our own PM event so we are sure that this event is called
-    # after the onAviceModified event
-    notify(AdviceAfterModifyEvent(advice))
+        # make sure external images used in RichText fields are stored locally
+        storeImagesLocallyDexterity(advice)
 
-    # update item
-    _advice_update_item(item)
+        # notify our own PM event so we are sure that this event is called
+        # after the onAviceModified event
+        notify(AdviceAfterModifyEvent(advice))
+
+        # update item
+        _advice_update_item(item)
 
     if not advice.advice_hide_during_redaction:
         # Send mail if relevant

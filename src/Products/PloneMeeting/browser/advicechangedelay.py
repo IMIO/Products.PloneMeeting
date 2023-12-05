@@ -4,6 +4,7 @@ from AccessControl import Unauthorized
 from copy import deepcopy
 from DateTime import DateTime
 from imio.helpers.cache import get_current_user_id
+from imio.helpers.content import get_user_fullname
 from plone import api
 from plone.z3cform.layout import wrap_form
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -297,6 +298,9 @@ class AdviceChangeDelayHistoryView(BrowserView):
         if not delayChangesView._mayAccessDelayChangesHistory():
             raise Unauthorized
         return deepcopy(self.context.adviceIndex[advice_uid])
+
+    def get_user_fullname(self, user_id):
+        return get_user_fullname(user_id)
 
 
 def _reinit_advice_delay(item, advice_uid):

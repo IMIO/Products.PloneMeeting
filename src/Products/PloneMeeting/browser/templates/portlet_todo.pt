@@ -3,8 +3,8 @@
    <dt class="portletHeader" i18n:translate="To do">To do</dt>
 
    <tal:load condition="request/load_portlet_todo|nothing">
-      <tal:defines define="wid view/getCollectionWidgetId;">
-         <tal:loop repeat="collection_path view/getSearches">
+      <tal:defines define="wid python: view.getCollectionWidgetId();">
+         <tal:loop repeat="collection_path python: view.getSearches()">
             <tal:block define="search_infos python: view.doSearch(collection_path=collection_path);
                                brains python:search_infos[0];
                                collection python:search_infos[1];">
@@ -16,7 +16,7 @@
                      title="see_everything"
                      i18n:attributes="title"
                      i18n:translate=""
-                     tal:content="collection/Title">Search title</a>
+                     tal:content="python: collection.Title()">Search title</a>
                </dd>
                <span tal:attributes="id string:todo_${collection/UID}">
                   <dd class="portletCell" tal:condition="not: brains">
@@ -30,7 +30,7 @@
                                      dummy python: oddrow and 'portletCell pmLink odd' or 'portletCell pmLink even';
                                      class python: lastRow and dummy + ' lastRow' or dummy;"
                          tal:attributes="class class">
-                        <tal:showTitle replace="structure python: view.getColoredLink(brain)"/>
+                        <tal:showTitle replace="structure python: view.getPrettyLink(brain)"/>
                      </dd>
                   </tal:loop>
                </span>

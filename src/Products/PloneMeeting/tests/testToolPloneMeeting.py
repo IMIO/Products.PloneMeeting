@@ -17,7 +17,6 @@ from datetime import date
 from datetime import datetime
 from datetime import timedelta
 from DateTime import DateTime
-from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_plone_groups_for_user
@@ -1235,40 +1234,6 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         browser.open(pmFolder.absolute_url() + '/searches_items')
         self.assertTrue(tool_new_modified in browser.headers['etag'])
 
-    def test_pm_IsPowerObserverForCfg(self):
-        """ """
-        cfg = self.meetingConfig
-        self.changeUser('pmManager')
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg))
-        self.assertFalse(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['powerobservers']))
-        self.assertFalse(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['restrictedpowerobservers']))
-        self.assertFalse(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['powerobservers', 'restrictedpowerobservers']))
-        self.assertFalse(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['unknown']))
-        self.changeUser('powerobserver1')
-        self.assertTrue(self.tool.isPowerObserverForCfg(cfg))
-        self.assertTrue(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['powerobservers']))
-        self.assertFalse(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['restrictedpowerobservers']))
-        self.assertTrue(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['powerobservers', 'restrictedpowerobservers']))
-        self.assertFalse(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['unknown']))
-        self.changeUser('restrictedpowerobserver1')
-        self.assertTrue(self.tool.isPowerObserverForCfg(cfg))
-        self.assertFalse(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['powerobservers']))
-        self.assertTrue(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['restrictedpowerobservers']))
-        self.assertTrue(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['powerobservers', 'restrictedpowerobservers']))
-        self.assertFalse(self.tool.isPowerObserverForCfg(
-            cfg, power_observer_types=['unknown']))
-
     def test_pm_ToolAccessibleByUsersWithoutGroups(self):
         """Whe a user without any group logs in, he may access methods on portal_plonemeeting,
            often use to manage shown CSS and tabs."""
@@ -1394,19 +1359,6 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # omitted_suffixes
         self.assertFalse(self.tool.user_is_in_org(self.developers.id, omitted_suffixes=["creators"]))
         self.assertTrue(self.tool.user_is_in_org(self.developers.id, omitted_suffixes=["observers"]))
-
-    def test_pm_get_labels(self):
-        """Test the ToolPloneMeeting.get_labels method
-           that will return ftw.labels active_labels."""
-        self.changeUser("pmCreator1")
-        item = self.create("MeetingItem")
-        self.assertEqual(self.tool.get_labels(item), {})
-        labeling = ILabeling(item)
-        labeling.update(['label'])
-        labeling.pers_update(['suivi'], True)
-        self.assertEqual(self.tool.get_labels(item), {'label': 'Label', 'suivi': 'Suivi'})
-        self.assertEqual(self.tool.get_labels(item, False), {'label': 'Label'})
-        self.assertEqual(self.tool.get_labels(item, "only"), {'suivi': 'Suivi'})
 
     def test_pm_AdvisersConfig(self):
         """Test the ToolPloneMeeting.advisersConfig.

@@ -10,9 +10,9 @@
 
     <metal:main fill-slot="main">
         <tal:defines define="infos view/getHistoryInfos">
-            <h1 class="documentFirstHeading" i18n:translate="">
+            <h2 i18n:translate="">
                 History of delay changes for <span i18n:name="advice" tal:content="infos/name">advice</span>
-            </h1>
+            </h2>
 
             <div id="content-core"
                  tal:define="historyInfos infos/delay_changes_history;
@@ -48,7 +48,7 @@
                 </tal:other_action>
 
                 <td tal:define="actorid python:historyInfo.get('actor');
-                                username python:view.tool.getUserName(actorid);"
+                                username python:view.get_user_fullname(actorid);"
                     tal:content="python:username"/>
                 <td tal:content="python:context.unrestrictedTraverse('@@plone').toLocalizedTime(historyInfo['time'],long_format=True)"/>
                 <td>

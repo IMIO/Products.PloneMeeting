@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<object name="searches" meta_type="ATFolder"
+        xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+        i18n:domain="eea">
+ <criteria purge="False">
+
+  <!-- advanced widgets -->
+  <criterion name="c32" i18n:attributes="title">
+   <property name="widget">text</property>
+   <property name="title">Title only</property>
+   <property name="position">top</property>
+   <property name="section">advanced</property>
+   <property name="hidden">False</property>
+   <property name="index">Title</property>
+   <property name="default"/>
+   <property name="onlyallelements">True</property>
+   <property name="wildcard">True</property>
+  </criterion>
+
+ </criteria>
+</object>

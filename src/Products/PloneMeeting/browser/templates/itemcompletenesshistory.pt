@@ -9,9 +9,9 @@
 <body>
 
     <metal:main fill-slot="main">
-        <h1 class="documentFirstHeading" i18n:translate="">
+        <h2 i18n:translate="">
             History of completeness changes
-        </h1>
+        </h2>
 
         <div id="content-core"
              tal:define="events python: view.getHistory();">
@@ -39,7 +39,7 @@
                       tal:attributes="class string:item_${event/action};">Action</span>
             </td>
             <td tal:define="actorid python:event.get('actor');
-                            username python:view.tool.getUserName(actorid);"
+                            username python:view.get_user_fullname(actorid);"
                 tal:content="python:username"/>
             <td tal:content="python:context.unrestrictedTraverse('@@plone').toLocalizedTime(event['time'],long_format=True)"/>
             <td>

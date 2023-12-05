@@ -29,8 +29,10 @@ from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from imio.helpers.cache import get_current_user_id
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import base_getattr
 from imio.helpers.content import get_schema_fields
+from imio.helpers.content import get_user_fullname
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_encode
 from imio.helpers.security import fplog
@@ -316,8 +318,8 @@ def createOrUpdatePloneGroup(groupId, groupTitle, groupSuffix):
        and p_groupSuffix, if group already exists, it will just update it's title.'''
     properties = api.portal.get_tool('portal_properties')
     enc = properties.site_properties.getProperty('default_charset')
-    groupTitle = '%s (%s)' % (
-        groupTitle.decode(enc),
+    groupTitle = u'%s (%s)' % (
+        safe_unicode(groupTitle),
         translate(groupSuffix, domain='PloneMeeting', context=getRequest()))
     # a default Plone group title is NOT unicode.  If a Plone group title is
     # edited TTW, his title is no more unicode if it was previously...
@@ -472,8 +474,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         return
     # Compute user name
     pms = api.portal.get_tool('portal_membership')
-    userInfo = pms.getAuthenticatedMember()
-    userName = safe_unicode(tool.getUserName(userInfo.getId()))
+    user = pms.getAuthenticatedMember()
     # Compute list of MeetingGroups for this user
     userGroups = ', '.join([g.Title() for g in tool.get_orgs_for_user(the_objects=True)])
     # Create the message parts
@@ -499,11 +500,11 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         'meetingTitle': '',
         'meetingLongTitle': '',
         'itemTitle': '',
-        'user': userName,
+        'user': get_user_fullname(user.getId()),
         'groups': safe_unicode(userGroups),
         'meetingConfigTitle': safe_unicode(cfg.Title()),
         'transitionActor': wf_action and
-        safe_unicode(tool.getUserName(wf_action['actor'], withUserId=True)) or u'-',
+        get_user_fullname(wf_action['actor'], with_user_id=True) or u'-',
         'transitionTitle': wf_action and
         translate(wf_action['action'], domain="plone", context=obj.REQUEST) or u'-',
         'transitionComments': wf_action and safe_unicode(wf_action['comments']) or u'-',
@@ -699,7 +700,7 @@ def sendMailIfRelevant(obj,
             if not user.has_role(value, obj):
                 continue
 
-        recipient = tool.getMailRecipient(user)
+        recipient = getMailRecipient(user)
         # After all, we will add this guy to the list of recipients.
         recipients.append(recipient)
     mail_subject = mail_body = None
@@ -718,6 +719,24 @@ def sendMailIfRelevant(obj,
     if debug:
         return recipients, mail_subject, mail_body
     return True
+
+
+def getMailRecipient(userIdOrInfo):
+    '''This method returns the mail recipient (=string based on email and
+       fullname if present) from a user id or UserInfo retrieved from a
+       call to portal_membership.getMemberById.'''
+    if isinstance(userIdOrInfo, basestring):
+        # It is a user ID. Get the corresponding UserInfo instance
+        userInfo = api.user.get(userIdOrInfo)
+    else:
+        userInfo = userIdOrInfo
+    # We return None if the user does not exist or has no defined email.
+    if not userInfo or not userInfo.getProperty('email'):
+        return None
+    # Compute the mail recipient string: Firstname Lastname <email@email.org>
+    res = u'{0} <{1}>'.format(
+        get_user_fullname(userInfo.id), safe_unicode(userInfo.getProperty('email')))
+    return res
 
 
 def getCustomSchemaFields(baseSchema, completedSchema, cols):
@@ -924,10 +943,8 @@ def findNewValue(obj, name, history, stopIndex):
 def getHistoryTexts(obj, event):
     '''Returns a tuple (insertText, deleteText) containing texts to show on,
        respectively, inserted and deleted chunks of text.'''
-    tool = api.portal.get_tool(TOOL_ID)
     toLocalizedTime = obj.restrictedTraverse('@@plone').toLocalizedTime
-    userName = tool.getUserName(event['actor'])
-    mapping = {'userName': userName.decode('utf-8')}
+    mapping = {'userName': get_user_fullname(event['actor'])}
     res = []
     for type in ('insert', 'delete'):
         msg = translate('history_%s' % type,
@@ -1829,10 +1846,33 @@ def getTransitionToReachState(obj, state):
     return res
 
 
+def getAdvicePortalTypeIds_cachekey(method):
+    '''cachekey method for getAdvicePortalTypes.'''
+    return True
+
+
+@ram.cache(getAdvicePortalTypeIds_cachekey)
+def getAdvicePortalTypeIds():
+    """We may have several 'meetingadvice' portal_types,
+       return it as ids."""
+    return getAdvicePortalTypes(as_ids=True)
+
+
+def getAdvicePortalTypes(as_ids=False):
+    """We may have several 'meetingadvice' portal_types."""
+    typesTool = api.portal.get_tool('portal_types')
+    res = []
+    for portal_type in typesTool.listTypeInfo():
+        if portal_type.id.startswith('meetingadvice'):
+            res.append(portal_type)
+    if as_ids:
+        res = [p.id for p in res]
+    return res
+
+
 def findMeetingAdvicePortalType(context):
     """ """
-    tool = api.portal.get_tool('portal_plonemeeting')
-    advicePortalTypeIds = tool.getAdvicePortalTypeIds()
+    advicePortalTypeIds = getAdvicePortalTypeIds()
     if context.portal_type in advicePortalTypeIds:
         return context.portal_type
 
@@ -1860,6 +1900,32 @@ def findMeetingAdvicePortalType(context):
     else:
         current_portal_type = published.portal_type
     return current_portal_type
+
+
+def getAvailableMailingLists(obj, pod_template):
+    '''Gets the names of the (currently active) mailing lists defined for
+       this template.'''
+    res = []
+    mailing_lists = pod_template.mailing_lists and pod_template.mailing_lists.strip()
+    if not mailing_lists:
+        return res
+    try:
+        extra_expr_ctx = _base_extra_expr_ctx(obj)
+        extra_expr_ctx.update({'obj': obj, })
+        for line in mailing_lists.split('\n'):
+            name, expression, userIds = line.split(';')
+            if not expression or _evaluateExpression(obj,
+                                                     expression,
+                                                     roles_bypassing_expression=[],
+                                                     extra_expr_ctx=extra_expr_ctx,
+                                                     raise_on_error=True):
+                res.append(name.strip())
+    except Exception, exc:
+        res.append(translate('Mailing lists are not correctly defined, original error is \"${error}\"',
+                             domain='PloneMeeting',
+                             mapping={'error': str(exc)},
+                             context=obj.REQUEST))
+    return res
 
 
 def displaying_available_items(context):
@@ -2255,40 +2321,6 @@ def _clear_local_roles(obj):
     return old_local_roles
 
 
-def add_wf_history_action(obj, action_name, action_label, user_id=None, insert_index=None):
-    wfTool = api.portal.get_tool('portal_workflow')
-    wfs = wfTool.getWorkflowsFor(obj)
-    if not wfs:
-        return
-    wf = wfs[0]
-    wfName = wf.id
-    # get review_state from last event if any
-    events = list(obj.workflow_history[wfName]) or []
-    if events:
-        previousEvent = events[-1]
-        review_state_id = previousEvent['review_state']
-    else:
-        # use initial_state
-        review_state_id = wf.initial_state
-    # action comments must be translated in the imio.history domain
-    newEvent = {}
-    newEvent['comments'] = action_label or ''
-    # action_name must be translated in the plone domain
-    newEvent['action'] = action_name
-    newEvent['actor'] = user_id or get_current_user_id(obj.REQUEST)
-    # if an insert_index is defined, use same 'time' as previous as
-    # events are sorted on 'time' and just add 1 millisecond
-    if insert_index is not None:
-        newEvent['time'] = events[insert_index]['time'] + 0.000000001
-        newEvent['review_state'] = events[insert_index]['review_state']
-        events.insert(insert_index, newEvent)
-    else:
-        newEvent['time'] = DateTime()
-        newEvent['review_state'] = review_state_id
-        events.insert(len(events), newEvent)
-    obj.workflow_history[wfName] = events
-
-
 def is_editing(cfg):
     """Return True if currently editing something."""
     request = getRequest()
@@ -2507,6 +2539,32 @@ def convert2xhtml(obj,
         xhtmlFinal = XhtmlPreprocessor.html2xhtml(xhtmlFinal)
 
     return xhtmlFinal
+
+
+def isPowerObserverForCfg_cachekey(method, cfg, power_observer_types=[]):
+    '''cachekey method for isPowerObserverForCfg.'''
+    return (get_plone_groups_for_user(),
+            repr(cfg),
+            power_observer_types)
+
+# not ramcached perf tests says it does not change anything
+# and this avoid useless entry in cache
+# @ram.cache(isPowerObserverForCfg_cachekey)
+def isPowerObserverForCfg(cfg, power_observer_types=[]):
+    """
+      Returns True if the current user is a power observer
+      for the given p_itemOrMeeting.
+      It is a power observer if member of the corresponding
+      p_power_observer_types suffixed groups.
+      If no p_power_observer_types we check every existing power_observers groups.
+    """
+    user_plone_groups = get_plone_groups_for_user()
+    for po_infos in cfg.getPowerObservers():
+        if not power_observer_types or po_infos['row_id'] in power_observer_types:
+            groupId = "{0}_{1}".format(cfg.getId(), po_infos['row_id'])
+            if groupId in user_plone_groups:
+                return True
+    return False
 
 
 def get_annexes_config(context, portal_type="annex", annex_group=False):

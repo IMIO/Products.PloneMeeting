@@ -12,6 +12,7 @@ from datetime import datetime
 from datetime import timedelta
 from DateTime import DateTime
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import get_user_fullname
 from imio.helpers.content import richtextval
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastAction
@@ -26,7 +27,7 @@ from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
-from Products.CMFPlone.utils import safe_unicode
+from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
@@ -36,6 +37,7 @@ from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.statusmessages.interfaces import IStatusMessage
 from zope.component import getAdapter
 from zope.component import getMultiAdapter
@@ -1560,7 +1562,7 @@ class testAdvices(PloneMeetingTestCase):
         # for now, it is not the case, the 'View' is not given automatically to power advisers
         self.changeUser('pmAdviser1')
         # pmAdviser1 is not power adviser
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg))
+        self.assertFalse(isPowerObserverForCfg(cfg))
         self.assertTrue(self.developers_uid not in item.adviceIndex)
         # he may not see item
         self.failIf(self.hasPermission(View, item))
@@ -2293,8 +2295,12 @@ class testAdvices(PloneMeetingTestCase):
         # 'pmReviewer2', as adviser, is able to toggle advice_hide_during_redaction
         self.assertFalse(advice.advice_hide_during_redaction)
         self.assertFalse(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
+        # historized
+        history_name = 'advice_hide_during_redaction_history'
+        self.assertFalse(base_hasattr(advice, history_name))
         changeView = advice.restrictedTraverse('@@change-advice-hidden-during-redaction')
         changeView()
+        self.assertEqual(getattr(advice, history_name)[0]['action'], 'to_hidden_during_redaction_action')
         self.assertTrue(advice.advice_hide_during_redaction)
         self.assertTrue(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
         # when advice is hidden, trying to access the view will raise Unauthorized
@@ -2303,6 +2309,8 @@ class testAdvices(PloneMeetingTestCase):
         # back to not hidden
         self.changeUser('pmReviewer2')
         changeView()
+        self.assertEqual(getattr(advice, history_name)[0]['action'], 'to_hidden_during_redaction_action')
+        self.assertEqual(getattr(advice, history_name)[1]['action'], 'to_not_hidden_during_redaction_action')
         self.assertFalse(advice.advice_hide_during_redaction)
         self.assertFalse(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
         # to use the change view, user must be able to edit the advice,
@@ -3724,8 +3732,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue("Add an advice" in advices_icons())
         # before advice is given, creator is obviously not displayed
         advices_icons_infos = item.restrictedTraverse('@@advices-icons-infos')
-        adviser_fullname = u'<span>{0}</span>'.format(
-            safe_unicode(self.tool.getUserName(self.member.getId())))
+        adviser_fullname = u'<span>{0}</span>'.format(get_user_fullname(self.member.getId()))
         self.assertFalse(adviser_fullname in advices_icons_infos(adviceType=u'not_given'))
         createContentInContainer(
             item,

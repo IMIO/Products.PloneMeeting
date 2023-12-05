@@ -60,6 +60,37 @@ Changelog
   that will keep the annexes with a `scan_id` but transfer this `scan_id` from
   original annexes (where `scan_id` is set to None) to new annexes.
   [gbastien]
+- Added `advice_hide_during_redaction_history` to store
+  `advice.advice_hide_during_redaction` changes by user.
+  [gbastien]
+- Simplified `ToolPloneMeeting` to be able to move it to a registry adapter as
+  light as possible, so remove most functionnalities from it:
+
+  - Moved `ToolPloneMeeting.showMeetingView` to `MeetingFacetedView.show_page`
+    as it is only used there;
+  - Removed `TooPloneMeeting.getColoredLink`, use `MeetingItem.getPrettyLink`;
+  - Moved `ToolPloneMeeting.getMailRecipient` to utils;
+  - Moved `ToolPloneMeeting.getAdvicePortalTypes` and
+    `ToolPloneMeeting.getAdvicePortalTypeIds` to utils;
+  - Moved `ToolPloneMeeting.getAvailableMailingLists` to utils;
+  - Removed no more used `versions_history_form.pt`;
+  - Moved `ToolPloneMeeting.isPowerObserverForCfg` to
+  `utils.isPowerObserverForCfg`;
+  - Replaced `ToolPloneMeeting.getUserName` by
+  `imio.helpers.content.get_user_fullname` everywhere it was used.
+
+  [gbastien]
+- Adapted `DisplayMeetingItemVoters` helper view on meeting to display items
+  with `No vote` separately than items with `public` and `secret` votes and to
+  not display it in non voted items anymore.
+  [gbastien]
+- Added faceted filter criterion `Item title only` to query items on
+  items's title only using the `Title` index.
+  [gbastien]
+- When using `MeetingConfig.computeItemReferenceForItemsOutOfMeeting`, do not clear
+  item reference when meeting back to `created` or when item back to `validated`.
+  Renamed `MeetingItem.mustShowItemReference` to `MeetingItem.show_item_reference`.
+  [gbastien]
 
 4.2.9b1 (2023-10-27)
 --------------------

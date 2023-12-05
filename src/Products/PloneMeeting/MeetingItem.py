@@ -21,8 +21,10 @@ from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
+from imio.helpers.content import get_user_fullname
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
+from imio.helpers.content import object_values
 from imio.helpers.content import safe_delattr
 from imio.helpers.content import safe_encode
 from imio.helpers.content import uuidsToObjects
@@ -32,6 +34,7 @@ from imio.helpers.security import fplog
 from imio.helpers.workflow import do_transitions
 from imio.helpers.workflow import get_transitions
 from imio.helpers.xhtml import is_html
+from imio.history.utils import add_event_to_wf_history
 from imio.history.utils import get_all_history_attr
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
@@ -113,7 +116,6 @@ from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _clear_local_roles
 from Products.PloneMeeting.utils import _get_category
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
-from Products.PloneMeeting.utils import add_wf_history_action
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
 from Products.PloneMeeting.utils import checkMayQuickEdit
@@ -126,12 +128,14 @@ from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_internal_number
 from Products.PloneMeeting.utils import get_states_before
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import is_editing
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import ItemDuplicatedEvent
 from Products.PloneMeeting.utils import ItemDuplicatedToOtherMCEvent
 from Products.PloneMeeting.utils import ItemLocalRolesUpdatedEvent
@@ -1071,9 +1075,9 @@ class MeetingItemWorkflowActions(object):
             sendMailIfRelevant(self.context, 'itemUnpresentedOwner', 'Owner', isRole=True)
             # remove the item from the meeting
             self.context.getMeeting().remove_item(self.context)
-        # back to validated from "accepted_out_of_meeting"
+        # recompute when back to validated, this could be coming from a "accepted_out_of_meeting" like state
         if stateChange.new_state.id == "validated" and self.context.getItemReference():
-            self.context.update_item_reference(clear=True)
+            self.context.update_item_reference()
         # if an item was returned to proposing group for corrections and that
         # this proposing group sends the item back to the meeting managers, we
         # send an email to warn the MeetingManagers if relevant
@@ -2620,7 +2624,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             cfg = tool.getMeetingConfig(item)
             res = tool.isManager(cfg)
             if not res:
-                res = tool.isPowerObserverForCfg(cfg) or item.is_decided(cfg)
+                res = isPowerObserverForCfg(cfg) or item.is_decided(cfg)
         return res
 
     security.declarePublic('showIsAcceptableOutOfMeeting')
@@ -3516,15 +3520,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def displayLinkedItem(self, item):
         '''Return a HTML structure to display a linked item.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        meeting = item.hasMeeting()
         # display the meeting date if the item is linked to a meeting
-        if meeting:
-            title = item.Title(withMeetingDate=True)
-            return tool.getColoredLink(item,
-                                       showColors=True,
-                                       showContentIcon=True,
-                                       contentValue=title)
+        if item.hasMeeting():
+            return item.getPrettyLink(contentValue=item.Title(withMeetingDate=True))
         else:
             # try to share cache of getPrettyLink
             return item.getPrettyLink()
@@ -3659,11 +3657,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # check if current user is a power observer in MeetingConfig.restrictAccessToSecretItemsTo
         restricted_power_obs = cfg.getRestrictAccessToSecretItemsTo()
         if restricted_power_obs and \
-           tool.isPowerObserverForCfg(cfg, power_observer_types=restricted_power_obs):
+           isPowerObserverForCfg(cfg, power_observer_types=restricted_power_obs):
             return False
 
         # a power observer not in restrictAccessToSecretItemsTo?
-        if tool.isPowerObserverForCfg(cfg):
+        if isPowerObserverForCfg(cfg):
             return True
 
     def isViewable(self):
@@ -4604,17 +4602,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         elif len(item_votes) - 1 >= vote_number:
             votes.append(item_votes[vote_number])
 
+        # include_unexisting
         # secret votes
-        if self.get_vote_is_secret(vote_number):
-            if include_unexisting and not votes:
-                votes = self._build_unexisting_vote(True, vote_number, poll_type)
-        # public votes
-        else:
-            # add an empty vote in case nothing in itemVotes
-            # this is useful when no votes encoded, new voters selected, ...
-            if include_unexisting:
-                # first or not existing
-                if not votes:
+        if poll_type != 'no_vote':
+            if self.get_vote_is_secret(vote_number):
+                if include_unexisting and not votes:
+                    votes = self._build_unexisting_vote(True, vote_number, poll_type)
+            # public votes
+            else:
+                # add an empty vote in case nothing in itemVotes
+                # this is useful when no votes encoded, new voters selected, ...
+                if include_unexisting and not votes:
                     votes = self._build_unexisting_vote(False, vote_number, poll_type)
 
         i = 0 if vote_number == 'all' else vote_number
@@ -4749,9 +4747,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res['attendee_again_after'] = attendee_again_after
         return res
 
-    security.declarePublic('mustShowItemReference')
+    security.declarePublic('show_item_reference')
 
-    def mustShowItemReference(self):
+    def show_item_reference(self):
         '''See doc in interfaces.py'''
         res = False
         item = self.getSelf()
@@ -4962,8 +4960,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             decision = ' '.join(decision)
             res = normalize(safe_unicode(decision))
         elif insertMethod == 'on_item_creator':
-            creator_fullname = safe_unicode(tool.getUserName(self.Creator()))
-            res = normalize(creator_fullname)
+            res = normalize(get_user_fullname(self.Creator()))
         else:
             res = self.adapted()._findCustomOrderFor(insertMethod)
         return res
@@ -5553,13 +5550,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getAdvices(self):
         '''Returns a list of contained meetingadvice objects.'''
-        res = []
-        tool = api.portal.get_tool('portal_plonemeeting')
-        advicePortalTypeIds = tool.getAdvicePortalTypeIds()
-        for obj in self.objectValues('Dexterity Container'):
-            if obj.portal_type in advicePortalTypeIds:
-                res.append(obj)
-        return res
+        return object_values(self, 'MeetingAdvice')
 
     def _doClearDayFrom(self, date):
         '''Change the given p_date (that is a datetime instance)
@@ -5677,7 +5668,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = {}
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        is_confidential_power_observer = tool.isPowerObserverForCfg(
+        is_confidential_power_observer = isPowerObserverForCfg(
             cfg, cfg.getAdviceConfidentialFor())
         for groupId, adviceInfo in self.adviceIndex.iteritems():
             if not include_not_asked and adviceInfo['not_asked']:
@@ -5940,10 +5931,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              context=self.REQUEST)
         for userid in userids:
             rendered_users.append(
-                userid_pattern.format(
-                    escape(help_msg),
-                    portal_url,
-                    safe_unicode(tool.getUserName(userid))))
+                userid_pattern.format(escape(help_msg),
+                                      portal_url,
+                                      get_user_fullname(userid)))
         res = u", ".join(rendered_users)
         return res
 
@@ -6116,7 +6106,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             data[advId]['creator_fullname'] = None
             if given_advice:
                 creator_id = given_advice.Creator()
-                creator_fullname = tool.getUserName(creator_id)
+                creator_fullname = get_user_fullname(creator_id)
                 data[advId]['creator_id'] = creator_id
                 data[advId]['creator_fullname'] = creator_fullname
 
@@ -7466,10 +7456,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # because it was cleaned by ToolPloneMeeting.pasteItem
             # use cloneEventActionLabel or generate a msgid based on cloneEventAction
             action_label = cloneEventActionLabel or cloneEventAction + '_comments'
-            add_wf_history_action(newItem,
-                                  action_name=cloneEventAction,
-                                  action_label=action_label,
-                                  user_id=userId)
+            add_event_to_wf_history(newItem,
+                                    action=cloneEventAction,
+                                    actor=userId,
+                                    comments=action_label)
 
         newItem.at_post_create_script(inheritedAdviserUids=inheritedAdviserUids)
 
@@ -7701,14 +7691,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # it was sent to another meetingConfig.  The 'new item' already have
         # a line added to his workflow_history.
         # add a line to the original item history
-        action_label = translate(
+        comments = translate(
             'sentto_othermeetingconfig',
             domain="PloneMeeting",
             context=self.REQUEST,
             mapping={'meetingConfigTitle': safe_unicode(destMeetingConfig.Title())})
-        action_name = destMeetingConfig._getCloneToOtherMCActionTitle(destMeetingConfig.Title())
+        action = destMeetingConfig._getCloneToOtherMCActionTitle(destMeetingConfig.Title())
         # add an event to the workflow history
-        add_wf_history_action(self, action_name=action_name, action_label=action_label)
+        add_event_to_wf_history(self, action=action, comments=comments)
 
         # Send an email to the user being able to modify the new item if relevant
         mapping = {'originMeetingConfigTitle': safe_unicode(cfg.Title()), }
@@ -7898,7 +7888,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         hideNotViewableLinkedItemsTo = cfg.getHideNotViewableLinkedItemsTo()
         if hideNotViewableLinkedItemsTo and \
-           tool.isPowerObserverForCfg(cfg, power_observer_types=hideNotViewableLinkedItemsTo) and \
+           isPowerObserverForCfg(cfg, power_observer_types=hideNotViewableLinkedItemsTo) and \
            not _checkPermission(View, item):
             return False
         return True

@@ -58,7 +58,11 @@ from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_next_meeting
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
+from Products.PloneMeeting.utils import getAvailableMailingLists
+from Products.PloneMeeting.utils import getMailRecipient
 from Products.PloneMeeting.utils import is_editing
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import set_field_from_ajax
@@ -270,8 +274,7 @@ class BaseGeneratorLinksViewlet(object):
     def getAvailableMailingLists(self, pod_template):
         '''Gets the names of the (currently active) mailing lists defined for
            this template.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        return tool.getAvailableMailingLists(self.context, pod_template)
+        return getAvailableMailingLists(self.context, pod_template)
 
     def displayStoreAsAnnexSection(self):
         """ """
@@ -711,7 +714,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                 v.split('.')[1] for v in self.cfg.getHideHistoryTo()
                 if v.startswith('MeetingItem.')]
             if hideHistoryTo_item_values and \
-               self.tool.isPowerObserverForCfg(
+               isPowerObserverForCfg(
                     self.cfg, power_observer_types=hideHistoryTo_item_values):
                 # any others
                 isPowerObserverHiddenHistory = True
@@ -1142,7 +1145,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         mapping = {
             'item_annexes': [cfg.getItemTypeName()],
             'item_decision_annexes': [cfg.getItemTypeName()],
-            'advice_annexes': tool.getAdvicePortalTypeIds(),
+            'advice_annexes': getAdvicePortalTypeIds(),
             'meeting_annexes': [cfg.getMeetingTypeName()],
         }
         return mapping
@@ -1297,7 +1300,6 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         userIdsOrEmailAddresses = []
         extra_expr_ctx = _base_extra_expr_ctx(self.context)
         extra_expr_ctx.update({'obj': self.context, })
-        tool = extra_expr_ctx['tool']
         for value in values.strip().split(','):
             # value may be a TAL expression returning a list of userIds or email addresses
             # or a group (of users)
@@ -1317,7 +1319,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         # now we have userIds or email address, we want email addresses
         for userIdOrEmailAddress in userIdsOrEmailAddresses:
             recipient = '@' in userIdOrEmailAddress and userIdOrEmailAddress or \
-                tool.getMailRecipient(userIdOrEmailAddress.strip())
+                getMailRecipient(userIdOrEmailAddress.strip())
             if not recipient:
                 continue
             if recipient not in recipients:
@@ -1326,11 +1328,10 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
 
     def _sendPodTemplate(self, rendered_template):
         '''Sends, by email, a p_rendered_template.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
         # Preamble: ensure that the mailingList is really active.
         mailinglist_name = safe_unicode(self.request.get('mailinglist_name'))
         pod_template = self.get_pod_template(self.request.get('template_uid'))
-        if mailinglist_name not in tool.getAvailableMailingLists(self.context, pod_template):
+        if mailinglist_name not in getAvailableMailingLists(self.context, pod_template):
             raise Unauthorized
         # Retrieve mailing list recipients
         recipients = []
@@ -1398,7 +1399,10 @@ class PMContentHistoryView(IHContentHistoryView):
       Overrides the ContentHistoryView template to use our own.
       We want to display the content_history as a table.
     '''
-    histories_to_handle = (u'revision', u'workflow', u'data_changes', u'deleted_children')
+    histories_to_handle = (u'revision',
+                           u'workflow',
+                           u'data_changes',
+                           u'deleted_children')
 
     def show_history(self):
         """Override to take MeetingConfig.hideHistoryTo into account."""
@@ -1421,14 +1425,14 @@ class PMContentHistoryView(IHContentHistoryView):
                         proposing_group_uid = self.context._getGroupManagingItem(
                             item_review_state, theObject=False)
                         if proposing_group_uid not in tool.get_orgs_for_user() and \
-                            tool.isPowerObserverForCfg(
+                            isPowerObserverForCfg(
                                 cfg, power_observer_types=item_values):
                             res = False
                 elif self.context.__class__.__name__ == "Meeting":
                     # meeting values are only about powerobservers
                     meeting_values = [v.split('.')[1] for v in hideHistoryTo
                                       if v.startswith('Meeting.')]
-                    if meeting_values and tool.isPowerObserverForCfg(
+                    if meeting_values and isPowerObserverForCfg(
                             cfg, power_observer_types=meeting_values):
                         res = False
                 elif self.context.__class__.__name__ == "MeetingAdvice":
@@ -1447,7 +1451,7 @@ class PMContentHistoryView(IHContentHistoryView):
                         proposing_group_uid = item._getGroupManagingItem(
                             item_review_state, theObject=False)
                         if proposing_group_uid not in tool.get_orgs_for_user() and \
-                            tool.isPowerObserverForCfg(
+                            isPowerObserverForCfg(
                                 cfg, power_observer_types=po_advice_values):
                             res = False
                     if res and '{0}.everyone'.format(self.context.portal_type) in hideHistoryTo:
@@ -1460,7 +1464,10 @@ class PMContentHistoryView(IHContentHistoryView):
 
 class AdviceContentHistoryView(PMContentHistoryView):
     """ """
-    histories_to_handle = (u'revision', u'workflow', u'advice_given')
+    histories_to_handle = (u'revision',
+                           u'workflow',
+                           u'advice_given',
+                           u'advice_hide_during_redaction')
 
     def show_preview(self, event):
         """ """

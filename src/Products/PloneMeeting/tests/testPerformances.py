@@ -13,6 +13,7 @@ from datetime import datetime
 from datetime import timedelta
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.content import get_user_fullname
 from plone import api
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.utils import _checkPermission
@@ -21,6 +22,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import down_or_up_wf
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from profilehooks import timecall
 from zope.event import notify
 
@@ -801,18 +803,18 @@ class testPerformances(PloneMeetingTestCase):
         for time in range(times):
             membership.getMemberInfo("pmManager")
 
-    def test_pm_SpeedToolGetUserName(self):
-        '''Test ToolPloneMeeting.getUserName.'''
+    def test_pm_SpeedGetUserFullname(self):
+        '''Test imio.helpers.content.get_user_fullname.'''
         self.changeUser('pmManager')
-        # call getUserName 1000 times
-        self._getUserName(times=1000)
+        # call get_user_fullname 1000 times
+        self._get_user_fullname(times=1000)
 
     @timecall
-    def _getUserName(self, userId="pmManager", times=1):
+    def _get_user_fullname(self, userId="pmManager", times=1):
         ''' '''
         pm_logger.info('Call {0} times'.format(times))
         for time in range(times):
-            self.tool.getUserName(userId)
+            get_user_fullname(userId)
 
     def test_pm_SpeedItemQueryState(self):
         '''Test MeetingItem.query_state.'''
@@ -835,7 +837,7 @@ class testPerformances(PloneMeetingTestCase):
             item.query_state()
 
     def test_pm_SpeedIsPowerObserverForCfg(self):
-        '''Test ToolPloneMeeting.isPowerObserverForCfg.'''
+        '''Test utils.isPowerObserverForCfg.'''
         self.changeUser('pmManager')
         # call it 1000 times
         self._isPowerObserverForCfg(times=1000)
@@ -843,15 +845,13 @@ class testPerformances(PloneMeetingTestCase):
     @timecall
     def _isPowerObserverForCfg(self, times=1):
         ''' '''
+        cfg = self.meetingConfig
         pm_logger.info('Call {0} times'.format(times))
         for time in range(times):
-            self.tool.isPowerObserverForCfg(self.meetingConfig)
-            self.tool.isPowerObserverForCfg(self.meetingConfig,
-                                            ["powerobservers"])
-            self.tool.isPowerObserverForCfg(self.meetingConfig,
-                                            ["restrictedpowerobservers"])
-            self.tool.isPowerObserverForCfg(self.meetingConfig,
-                                            ["powerobservers", "restrictedpowerobservers"])
+            isPowerObserverForCfg(cfg)
+            isPowerObserverForCfg(cfg, ["powerobservers"])
+            isPowerObserverForCfg(cfg, ["restrictedpowerobservers"])
+            isPowerObserverForCfg(cfg, ["powerobservers", "restrictedpowerobservers"])
 
     def test_pm_SpeedUserIsAmong(self):
         '''Test ToolPloneMeeting.userIsAmong.'''

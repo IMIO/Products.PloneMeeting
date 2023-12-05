@@ -34,7 +34,7 @@
       <span class="advice_created_by" tal:condition="python: obj and view.show_history">
         <tal:i18n i18n:domain="plone" i18n:translate="label_by_author">
         Created by
-        <span tal:content="python: view.tool.getUserName(obj.Creator())"
+        <span tal:content="python: view.get_user_fullname(obj.Creator())"
               i18n:name="author">Roland Barthes</span>
         </tal:i18n><span tal:condition="python: view.advice_given_by or advice['delay'] and advice['delay_started_on']" class="separator"> - </span>
       </span>

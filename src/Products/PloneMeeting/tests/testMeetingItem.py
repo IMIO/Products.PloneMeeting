@@ -7218,8 +7218,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.getItemReference(), '')
         self.freezeMeeting(meeting)
         self.assertEqual(item.getItemReference(), 'Ref. 20170303/1')
-
-        # set meeting back to created, items references are updated to ''
+        # set meeting back to created, items references are cleared to ''
         self.backToState(meeting, 'created')
         self.assertEqual(item.getItemReference(), '')
 
@@ -7560,40 +7559,62 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item._may_update_item_reference())
         cfg.setComputeItemReferenceForItemsOutOfMeeting(True)
         # set a referenceFormat expecting a meeting
-        cfg.setItemReferenceFormat(
-            "python: item.getMeeting().getLinkedMeetingDate().strftime('%Y%m%d') + '/1'")
+        cfg.setItemReferenceFormat("python: item.getMeeting().Title()")
         item.update_item_reference()
         self.assertEqual(item.getItemReference(), '')
         # set a referenceFormat compatible with no meeting
         cfg.setItemReferenceFormat(
             "python: item.hasMeeting() and "
-            "item.getMeeting().getLinkedMeetingDate().strftime('%Y%m%d') + '/1' "
-            "or 'Ref/1'")
+            "item.restrictedTraverse('@@pm_unrestricted_methods')."
+            "getLinkedMeetingDate().strftime('%Y%m%d') + '/1' "
+            "or (item.query_state() == 'accepted_out_of_meeting' and 'Ref/1') or 'No/Ref'")
         item.update_item_reference()
         self.assertEqual(item.getItemReference(), 'Ref/1')
-        # back to validated and accept out of meeting again, reference is correct
+        # back to validated and accept out of meeting again,
+        # reference is not cleared but recomputed
         self.do(item, "backToValidatedFromAcceptedOutOfMeeting")
-        self.assertEqual(item.getItemReference(), '')
+        self.assertEqual(item.getItemReference(), 'No/Ref')
         self.do(item, "accept_out_of_meeting")
         self.assertEqual(item.getItemReference(), 'Ref/1')
         # reference viewable on item view
         self.assertTrue(item.getItemReference() in item())
-        # reference is shown in every states
+        # reference is shown in every states and never cleared
         item = self.create('MeetingItem')
-        self.assertTrue(item.adapted().mustShowItemReference())
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
         self.proposeItem(item)
-        self.assertTrue(item.adapted().mustShowItemReference())
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
         self.validateItem(item)
-        self.assertTrue(item.adapted().mustShowItemReference())
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
         meeting = self.create('Meeting')
         self.presentItem(item)
-        self.assertTrue(item.adapted().mustShowItemReference())
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
         self.freezeMeeting(meeting)
-        self.assertTrue(item.adapted().mustShowItemReference())
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
         self.decideMeeting(meeting)
-        self.assertTrue(item.adapted().mustShowItemReference())
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
         self.closeMeeting(meeting)
-        self.assertTrue(item.adapted().mustShowItemReference())
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
+        self.changeUser('siteadmin')
+        self.backToState(meeting, 'decided')
+        self.changeUser('pmManager')
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
+        self.backToState(meeting, 'published')
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
+        self.backToState(meeting, 'frozen')
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
+        self.backToState(meeting, 'created')
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
 
     def test_pm_ItemNotDeletableWhenContainingGivenAdvices(self):
         """If MeetingConfig.itemWithGivenAdviceIsNotDeletable is True,

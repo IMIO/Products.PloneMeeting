@@ -13,6 +13,7 @@ from datetime import datetime
 from datetime import timedelta
 from eea.facetednavigation.interfaces import IFacetedLayout
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import get_user_fullname
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
 from imio.helpers.content import uuidToCatalogBrain
@@ -1639,7 +1640,7 @@ class testMeetingType(PloneMeetingTestCase):
         for item in [item1, item2, item9, item7, item6, item5, item4, item8, item3]:
             self.presentItem(item)
         self.assertEqual(
-            [self.tool.getUserName(anItem.Creator()) for anItem in meeting.get_items(ordered=True)],
+            [get_user_fullname(anItem.Creator()) for anItem in meeting.get_items(ordered=True)],
             ['M. PMCreator One', 'M. PMCreator One', 'M. PMCreator One',
              'M. PMCreator Two', 'M. PMCreator Two', 'M. PMCreator Two',
              'M. PMManager', 'M. PMManager', 'M. PMManager', 'M. PMManager', 'M. PMManager'])

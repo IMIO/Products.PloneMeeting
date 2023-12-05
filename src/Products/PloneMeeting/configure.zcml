@@ -347,6 +347,11 @@
            provides="imio.history.interfaces.IImioHistory" />
 
   <adapter for="OFS.interfaces.IItem"
+           factory=".adapters.PMAdviceHideDuringRedactionHistoryAdapter"
+           name="advice_hide_during_redaction"
+           provides="imio.history.interfaces.IImioHistory" />
+
+  <adapter for="OFS.interfaces.IItem"
            factory=".adapters.PMDataChangesHistoryAdapter"
            name="data_changes"
            provides="imio.history.interfaces.IImioHistory" />
