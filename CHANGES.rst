@@ -8,6 +8,9 @@ Changelog
 - Mail notifications `adviceEdited` and `adviceEditedOwner` are no more sent
   if advice is hidden during redaction.
   [gbastien]
+- Fixed `AdvicesIcons.get_advice_given_by` to only return a value when using
+  custom WF (more than one initial state) and if WF reached it's final state.
+  [gbastien]
 
 4.2.9b3 (2023-11-27)
 --------------------

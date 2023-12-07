@@ -65,6 +65,7 @@ from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import get_context_with_request
 from Products.PloneMeeting.utils import get_datagridfield_column_value
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.PloneMeeting.utils import getAdvicePortalTypes
 from Products.PloneMeeting.utils import number_word
 from Products.PloneMeeting.utils import split_gender_and_number
@@ -1664,10 +1665,9 @@ class AdvicePortalTypesVocabulary(object):
     implements(IVocabularyFactory)
 
     def __call__(self, context):
-        tool = api.portal.get_tool('portal_plonemeeting')
         # manage multiple 'meetingadvice' portal_types
         res = []
-        for portal_type in tool.getAdvicePortalTypes():
+        for portal_type in getAdvicePortalTypes():
             res.append(SimpleTerm(
                 portal_type.id,
                 portal_type.id,
@@ -3195,12 +3195,9 @@ class ConfigHideHistoryTosVocabulary(object):
     def __call__(self, context):
         """Build selectable values for MeetingItem, Meeting and every meetingadvice
            portal_types so it can be selected on a per meetingadvice portal_type basis."""
-
-        tool = context.aq_inner.aq_parent
-        types_tool = api.portal.get_tool('portal_types')
-
         terms = []
-        meetingadvice_types = tool.getAdvicePortalTypeIds()
+        types_tool = api.portal.get_tool('portal_types')
+        meetingadvice_types = getAdvicePortalTypeIds()
         translated_everyone = translate(
             'Everyone',
             domain="PloneMeeting",

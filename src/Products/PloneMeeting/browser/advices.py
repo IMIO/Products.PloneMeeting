@@ -4,16 +4,15 @@ from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group_id
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import get_plone_groups_for_user
+from imio.helpers.content import get_user_fullname
 from imio.helpers.content import get_vocab_values
 from imio.helpers.workflow import get_final_states
 from imio.helpers.workflow import get_leading_transitions
-from imio.helpers.content import get_user_fullname
 from imio.helpers.workflow import get_state_infos
 from imio.history.browser.views import EventPreviewView
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import get_event_by_time
 from imio.history.utils import getLastWFAction
-from imio.history.utils import getPreviousEvent
 from plone import api
 from plone.autoform import directives
 from plone.autoform.form import AutoExtensibleForm
@@ -355,24 +354,21 @@ class AdviceInfos(BrowserView):
         """The advice was given by advice WF transition before "giveAdvice"."""
         given_by = None
         if self.obj:
-            last_give_advice_event = getLastWFAction(
-                self.obj,
-                transition='giveAdvice',
-                ignore_previous_event_actions=['backToAdviceInitialState', 'backToAdviceUnderEdit'])
-            if not last_give_advice_event:
-                # if advice still in the giving process, check if we did not reach a final state though
-                wf_tool = api.portal.get_tool('portal_workflow')
-                wf = wf_tool.getWorkflowsFor(self.obj.portal_type)[0]
-                final_state_ids = get_final_states(wf, ignored_transition_ids='giveAdvice')
-                for final_state_id in final_state_ids:
-                    transition = get_leading_transitions(wf, final_state_id)[0].id
-                    last_before_give_advice_event = getLastWFAction(
-                        self.obj, transition=transition, ignore_previous_event_actions=['backToAdviceInitialState'])
-                    if last_before_give_advice_event:
-                        given_by = self.tool.getUserName(last_before_give_advice_event["actor"])
-            else:
-                previous_event = getPreviousEvent(self.obj, last_give_advice_event)
-                given_by = self.tool.getUserName(previous_event["actor"])
+            wf_tool = api.portal.get_tool('portal_workflow')
+            wf = wf_tool.getWorkflowsFor(self.obj.portal_type)[0]
+            final_state_ids = get_final_states(wf, ignored_transition_ids='giveAdvice')
+            final_state_ids = len(final_state_ids) > 1 and \
+                [state_id for state_id in final_state_ids if state_id != "advice_given"] or \
+                final_state_ids
+            final_state_id = final_state_ids[0]
+            # if final_state_id is actually the initial_state we can not compute given_by
+            # we are only able to know who created the advice
+            if wf.initial_state != final_state_id:
+                transition = get_leading_transitions(wf, final_state_id)[0].id
+                last_before_give_advice_event = getLastWFAction(
+                    self.obj, transition=transition, ignore_previous_event_actions=['backToAdviceInitialState'])
+                if last_before_give_advice_event:
+                    given_by = get_user_fullname(last_before_give_advice_event["actor"])
         return given_by
 
     def get_user_fullname(self, user_id):

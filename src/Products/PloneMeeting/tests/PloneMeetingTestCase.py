@@ -821,9 +821,13 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             notify(ObjectModifiedEvent(obj))
         self.cleanMemoize()
 
-    def _check_wfa_available(self, wfas):
+    def _check_wfa_available(self, wfas, related_to='MeetingItem'):
         available = True
-        available_wfas = get_vocab_values(self.meetingConfig, 'WorkflowAdaptations')
+        if related_to == 'MeetingItem':
+            available_wfas = get_vocab_values(self.meetingConfig, 'WorkflowAdaptations')
+        elif related_to == 'MeetingAdvice':
+            available_wfas = get_vocab_values(self.tool, 'AdviceWorkflowAdaptations')
+
         for wfa in wfas:
             if wfa not in available_wfas:
                 available = False

@@ -59,17 +59,6 @@ class testWFAdaptations(PloneMeetingTestCase):
     def _wait_advice_from_proposed_state_back_transition(self):
         return 'backTo_' + self._stateMappingFor('proposed') + '_from_waiting_advices'
 
-    def _check_wfa_available(self, wfas):
-        available = True
-        available_wfas = get_vocab_values(self.meetingConfig, 'WorkflowAdaptations')
-        for wfa in wfas:
-            if wfa not in available_wfas:
-                available = False
-                pm_logger.info('Bypassing "{0}" because WFAdaptation "{1}" is not available!'.format(
-                    self._testMethodName, wfa))
-                break
-        return available
-
     def test_pm_WFA_availableWFAdaptations(self):
         '''Test what are the available wfAdaptations.
            This way, if we add a wfAdaptations, the test will 'break' until it is adapted...'''

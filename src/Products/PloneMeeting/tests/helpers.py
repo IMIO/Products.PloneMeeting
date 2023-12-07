@@ -455,7 +455,7 @@ class PloneMeetingTestingHelpers(object):
         self.changeUser('pmReviewer2')
         advice = createContentInContainer(
             item,
-            'meetingadvice',
+            item.adapted()._advicePortalTypeForAdviser(self.vendors_uid),
             **{'advice_group': self.vendors_uid,
                'advice_type': u'positive',
                'advice_comment': RichTextValue(u'My comment')})
