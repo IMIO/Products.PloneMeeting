@@ -5524,14 +5524,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate('header_review_state', domain=d, context=self.REQUEST))),
             ("review_state_title", u"{0} (review_state_title)".format(
                 translate('header_review_state_title_descr', domain=d, context=self.REQUEST))),
-            ("getCategory", u"{0} (getCategory)".format(
-                translate("header_getCategory", domain=d, context=self.REQUEST))),
-            ("getRawClassifier", u"{0} (getRawClassifier)".format(
-                translate("header_getRawClassifier", domain=d, context=self.REQUEST))),
             ("getProposingGroup", u"{0} (getProposingGroup)".format(
                 translate("header_getProposingGroup", domain=d, context=self.REQUEST))),
             ("proposing_group_acronym", u"{0} (proposing_group_acronym)".format(
                 translate("header_proposing_group_acronym", domain=d, context=self.REQUEST))),
+            ("getCategory", u"{0} (getCategory)".format(
+                translate("header_getCategory", domain=d, context=self.REQUEST))),
+            ("getRawClassifier", u"{0} (getRawClassifier)".format(
+                translate("header_getRawClassifier", domain=d, context=self.REQUEST))),
             ("getAssociatedGroups", u"{0} (getAssociatedGroups)".format(
                 translate("header_getAssociatedGroups", domain=d, context=self.REQUEST))),
             ("associated_groups_acronym", u"{0} (associated_groups_acronym)".format(
