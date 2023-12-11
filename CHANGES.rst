@@ -76,6 +76,9 @@ Changelog
 - In dashboards displaying items, display `Proposing group` before `Category`
   and `Classifier`.
   [gbastien]
+- Fixed update `categorized_elements` of advices when advice moved as
+  stored path changed.
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------

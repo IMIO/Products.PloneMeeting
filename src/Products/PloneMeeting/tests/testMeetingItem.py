@@ -6421,15 +6421,30 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemRenamedUpdatesCategorizedElements(self):
         """As path is stored in the categorized_elements, make sure
-           it behaves correctly when the item was renamed"""
+           it behaves correctly when the item was renamed.
+           Item annexes and advice annexes are handled."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates(('itemcreated', 'validated', ))
+        cfg.setItemAdviceEditStates(('itemcreated', 'validated', ))
+        cfg.setItemAdviceViewStates(('itemcreated', 'validated', ))
+
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
+        item = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
         annex = self.addAnnex(item)
+        self.changeUser('pmReviewer2')
+        advice = createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': self.vendors_uid,
+               'advice_type': u'positive',
+               'advice_comment': richtextval(u'My comment')})
+        advice_annex = self.addAnnex(advice)
         item.setTitle('New title')
         notify(ObjectModifiedEvent(item))
 
-        # id was updated as well as categorized_elements
+        # id was updated
         self.assertEqual(item.getId(), 'new-title')
+        # as well as categorized_elements on item
         self.assertEqual(
             item.categorized_elements.values()[0]['download_url'],
             u'{0}/@@download'.format(
@@ -6438,6 +6453,16 @@ class testMeetingItem(PloneMeetingTestCase):
         download_view = self.portal.unrestrictedTraverse(
             str(item.categorized_elements.values()[0]['download_url']))
         self.assertEqual(download_view().read(), 'Testing file\n')
+        # and categorized_elements on advice
+        self.assertEqual(
+            advice.categorized_elements.values()[0]['download_url'],
+            u'{0}/@@download'.format(
+                self.portal.portal_url.getRelativeContentURL(advice_annex)))
+        # file is correctly downloadable with given download_url
+        download_view = self.portal.unrestrictedTraverse(
+            str(advice.categorized_elements.values()[0]['download_url']))
+        self.assertEqual(download_view().read(), 'Testing file\n')
+
 
     def test_pm_ItemRenamedExceptedDefaultItemTemplate(self):
         """The default item template id is never changed, but other item templates do."""
