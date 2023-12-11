@@ -94,6 +94,9 @@ Changelog
   item reference when meeting back to `created` or when item back to `validated`.
   Renamed `MeetingItem.mustShowItemReference` to `MeetingItem.show_item_reference`.
   [gbastien]
+- In dashboards displaying items, display `Proposing group` before `Category`
+  and `Classifier`.
+  [gbastien]
 
 4.2.9b1 (2023-10-27)
 --------------------
