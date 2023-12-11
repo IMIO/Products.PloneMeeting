@@ -78,9 +78,9 @@ Changelog
   - Moved `ToolPloneMeeting.getAvailableMailingLists` to utils;
   - Removed no more used `versions_history_form.pt`;
   - Moved `ToolPloneMeeting.isPowerObserverForCfg` to
-  `utils.isPowerObserverForCfg`;
+    `utils.isPowerObserverForCfg`;
   - Replaced `ToolPloneMeeting.getUserName` by
-  `imio.helpers.content.get_user_fullname` everywhere it was used.
+    `imio.helpers.content.get_user_fullname` everywhere it was used.
 
   [gbastien]
 - Adapted `DisplayMeetingItemVoters` helper view on meeting to display items
