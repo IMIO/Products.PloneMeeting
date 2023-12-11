@@ -758,6 +758,9 @@ def onItemMoved(item, event):
     # update elements depending on item path as it changed
     if item._at_creation_flag:
         update_all_categorized_elements(item)
+        # update also categorized_elements of advices
+        for advice in item.getAdvices():
+            update_all_categorized_elements(advice)
         for successor in item.get_successors():
             successor._update_predecessor(item)
 
