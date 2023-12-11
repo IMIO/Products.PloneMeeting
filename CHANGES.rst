@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.9b4 (unreleased)
+4.2.9b4 (2023-12-11)
 --------------------
 
 - Mail notifications `adviceEdited` and `adviceEditedOwner` are no more sent
