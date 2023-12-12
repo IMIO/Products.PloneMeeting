@@ -33,7 +33,7 @@ class Migrate_To_4211(Migrator):
         self.updatePODTemplatesCode(replacements)
         logger.info('Done.')
 
-    def _updateItemSearchedSortOn(self):
+    def _updateItemSearchesSortOn(self):
         """Make sure every item related searches use sort_on=modified."""
         logger.info('Updating item searches sort_on...')
         for cfg in self.tool.objectValues('MeetingConfig'):
@@ -45,7 +45,7 @@ class Migrate_To_4211(Migrator):
 
         logger.info('Migrating to PloneMeeting 4211...')
         self._updateDataRelatedToToolPloneMeetingSimplification()
-        self._updateItemSearchedSortOn()
+        self._updateItemSearchesSortOn()
         # add text criterion on item title only
         self.updateFacetedFilters(xml_filename='upgrade_step_4211_add_item_widgets.xml')
         logger.info('Migrating to PloneMeeting 4211... Done.')
