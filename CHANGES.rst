@@ -79,6 +79,10 @@ Changelog
 - Fixed update `categorized_elements` of advices when advice moved as
   stored path changed.
   [gbastien]
+- Make sure every item related searches (Collection) use `sort_on` modified
+  as this is not visible in the application because faceted `sort_on` overrides
+  it but it is now taken into account when using restapi with a `base_search_uid`.
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------
