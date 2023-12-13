@@ -2996,9 +2996,9 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # terms are disabled
         annex_vocab = get_vocab(
-            item, u"Products.PloneMeeting.vocabularies.contained_annexes_vocabulary")
+            item, u"Products.PloneMeeting.vocabularies.item_duplication_contained_annexes_vocabulary")
         annex_decision_vocab = get_vocab(
-            item, u"Products.PloneMeeting.vocabularies.contained_decision_annexes_vocabulary")
+            item, u"Products.PloneMeeting.vocabularies.item_duplication_contained_decision_annexes_vocabulary")
         self.assertEqual(len(annex_vocab), 2)
         self.assertTrue(annex_vocab._terms[0].disabled)
         self.assertTrue(annex_vocab._terms[1].disabled)
@@ -3028,9 +3028,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # able to keep annex_decision_meeting_manager for pmManager
         self.changeUser('pmManager')
         annex_vocab = get_vocab(
-            item, u"Products.PloneMeeting.vocabularies.contained_annexes_vocabulary")
+            item, u"Products.PloneMeeting.vocabularies.item_duplication_contained_annexes_vocabulary")
         annex_decision_vocab = get_vocab(
-            item, u"Products.PloneMeeting.vocabularies.contained_decision_annexes_vocabulary")
+            item, u"Products.PloneMeeting.vocabularies.item_duplication_contained_decision_annexes_vocabulary")
         self.assertEqual(len(annex_vocab), 2)
         self.assertTrue(annex_vocab._terms[0].disabled)
         self.assertTrue(annex_vocab._terms[1].disabled)

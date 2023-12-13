@@ -33,7 +33,7 @@ def annex_ids_default(context):
     """Select every annexes by default."""
     vocab = get_vocab(
         context,
-        u"Products.PloneMeeting.vocabularies.contained_annexes_vocabulary")
+        u"Products.PloneMeeting.vocabularies.item_duplication_contained_annexes_vocabulary")
     return vocab.by_token.keys()
 
 
@@ -53,7 +53,7 @@ class IDuplicateItem(form.Schema):
         required=False,
         defaultFactory=annex_ids_default,
         value_type=schema.Choice(
-            vocabulary=u"Products.PloneMeeting.vocabularies.contained_annexes_vocabulary"),
+            vocabulary=u"Products.PloneMeeting.vocabularies.item_duplication_contained_annexes_vocabulary"),
     )
 
     annex_decision_ids = schema.List(
@@ -61,7 +61,7 @@ class IDuplicateItem(form.Schema):
         description=_(u""),
         required=False,
         value_type=schema.Choice(
-            vocabulary=u"Products.PloneMeeting.vocabularies.contained_decision_annexes_vocabulary"),
+            vocabulary=u"Products.PloneMeeting.vocabularies.item_duplication_contained_decision_annexes_vocabulary"),
     )
 
 

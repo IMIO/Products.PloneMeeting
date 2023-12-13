@@ -128,7 +128,6 @@ from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_internal_number
 from Products.PloneMeeting.utils import get_states_before
-from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getFieldVersion
@@ -7279,7 +7278,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('showDuplicateItemAction')
 
     def showDuplicateItemAction(self):
-        '''Condition for displaying the 'duplicate' action in the interface.
+        '''Condition for displaying the 'Duplicate' action in the interface.
            Returns True if the user can duplicate the item.'''
         # Conditions for being able to see the "duplicate an item" action:
         # - the functionnality is enabled in MeetingConfig;
@@ -7294,6 +7293,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            not tool.userIsAmong(['creators'], cfg=cfg) or \
            not self.adapted().isPrivacyViewable():
             return False
+        return True
+
+    security.declarePublic('show_export_pdf_action')
+
+    def show_export_pdf_action(self):
+        '''Condition for displaying the 'Export pdf' action in the interface.'''
         return True
 
     def _mayClone(self, cloneEventAction=None):

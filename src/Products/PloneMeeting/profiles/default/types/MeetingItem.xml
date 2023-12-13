@@ -73,6 +73,16 @@
          visible="True">
   <permission value="Copy or Move"/>
  </action>
+ <action title="Export PDF"
+         i18n:attributes="title"
+         action_id="export_pdf"
+         category="object_buttons"
+         condition_expr="python:object.show_export_pdf_action()"
+         icon_expr="string:${portal_url}/pdf.gif"
+         url_expr="string:${object_url}/@@item-export-pdf-form"
+         visible="True">
+  <permission value="View"/>
+ </action>
  <action action_id="duplicate_and_keep_link"
          category="object_buttons"
          remove="True">

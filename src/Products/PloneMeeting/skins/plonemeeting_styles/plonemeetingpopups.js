@@ -181,6 +181,17 @@ function duplicateItem() {
 }
 
 
+// the item export pdf action
+function itemExportPDF() {
+    jQuery(function($) {
+        // Content history popup
+        $('.apButtonAction_form_export_pdf').prepOverlay({
+           subtype: 'ajax',
+           closeselector: '[name="form.buttons.cancel"]',
+        });
+  });
+}
+
 // common overlays
 // the content history popup
 function pmCommonOverlays(selector_prefix='') {
@@ -245,6 +256,7 @@ jQuery(document).ready(function($) {
     completenessChange();
     availableMailingLists();
     duplicateItem();
+    itemExportPDF();
 
     // inserting methods infos on meeting_view
     tooltipster_helper(selector='.tooltipster-inserting-methods-helper-msg',
@@ -277,6 +289,7 @@ function initializeDashboard(){
     adviceAddEdit();
     contentHistory();
     duplicateItem();
+    itemExportPDF();
     pmCommonOverlays();
     listTypeChange();
     actionsPanelTooltipster();
@@ -478,6 +491,7 @@ function initializeActionsPanelTooltipster_callback() {
         initializeOverlays();
         preventDefaultClick();
         duplicateItem();
+        itemExportPDF();
     });
 }
 
