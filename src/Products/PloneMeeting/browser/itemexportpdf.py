@@ -9,7 +9,10 @@ from plone.directives import form
 from plone.z3cform.layout import wrap_form
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
+from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
+from PyPDF2 import PdfReader
+from PyPDF2 import PdfFileWriter
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form as z3c_form
@@ -109,6 +112,25 @@ class ItemExportPDFForm(z3c_form.Form):
         self._check_data(data)
         self.request.response.setHeader('Content-Type', 'application/pdf')
         self.request.response.setHeader('Content-disposition', 'attachment;filename=file.pdf')
+        kept_annexes_ids = data['annex_ids'] + data['annex_decision_ids']
+        annex_paths = [annex.file._blob._p_blob_committed for annex in get_annexes(self.context)
+                       if annex.getId() in kept_annexes_ids]
+
+        output_writer = PdfFileWriter()
+        stamp = PdfFileReader(open(stamp_path, 'rb'))
+        content_file = open(self.filepath, 'rb')
+        content = PdfFileReader(content_file)
+        counter = 0
+        for page in content.pages:
+            if counter == 0:
+                stamp_content = stamp.getPage(0)
+                page.mergePage(stamp_content)
+            output_writer.addPage(page)
+            counter += 1
+        output_writer.write(self.output)
+        os.remove(stamp_path)
+
+
         return "123456"
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')

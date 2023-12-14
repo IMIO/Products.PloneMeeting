@@ -180,16 +180,26 @@ function duplicateItem() {
   });
 }
 
-
 // the item export pdf action
 function itemExportPDF() {
-    jQuery(function($) {
-        // Content history popup
-        $('.apButtonAction_form_export_pdf').prepOverlay({
-           subtype: 'ajax',
-           closeselector: '[name="form.buttons.cancel"]',
-        });
-  });
+    // Content history popup
+    $('.apButtonAction_form_export_pdf').prepOverlay({
+       subtype: 'ajax',
+       closeselector: '[name="form.buttons.cancel"]',
+       config: {
+            onBeforeLoad : function(e) {
+                // close on Apply as we download a file
+                var apply_button = $("input#form-buttons-apply_export_pdf");
+                apply_button.click(function(e) {
+                    $('input#form-buttons-cancel').click();
+                });
+                // open in new tab so user see that download is on the way
+                var form = $("form#form");
+                form.attr('target', 'blank');
+                return true;
+          },
+        },
+    });
 }
 
 // common overlays
