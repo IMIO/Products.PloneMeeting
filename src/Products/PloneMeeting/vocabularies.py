@@ -1067,7 +1067,7 @@ class ItemOptionalAdvicesVocabulary(object):
                     # manage missing user ids here so term is grouped with the org term
                     prefix = term_value + '__userid__'
                     missing_user_ids = [oa.replace(prefix, '') for oa in context.getOptionalAdvisers()
-                                        if oa.startswith(prefix)]
+                                        if oa.startswith(prefix) and oa.replace(prefix, '') not in user_ids]
                     user_ids += missing_user_ids
                 # manage users in a separate list so we sort it before appending to global res
                 res_users = []
