@@ -5,13 +5,16 @@
 
 from AccessControl import Unauthorized
 from imio.helpers.content import get_vocab
+from io import BytesIO
+from plone import api
 from plone.directives import form
 from plone.z3cform.layout import wrap_form
+from Products.CMFPlone import PloneMessageFactory as PMF
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
-from PyPDF2 import PdfReader
+from PyPDF2 import PdfFileReader
 from PyPDF2 import PdfFileWriter
 from z3c.form import button
 from z3c.form import field
@@ -35,7 +38,7 @@ class IDuplicateItem(form.Schema):
     """ """
 
     pod_template_uids = schema.List(
-        title=_(u"Document to generate"),
+        title=_(u"Documents to generate"),
         description=_(u""),
         required=False,
         value_type=schema.Choice(
@@ -69,16 +72,13 @@ class ItemExportPDFForm(z3c_form.Form):
 
     ignoreContext = True  # don't use context to get widget data
 
-    label = _(u"Export PDF")
-    description = _('Disabled (greyed) annexes are not PDF documents.')
+    label = PMF(u"Export PDF")
+    description = _('export_pdf_descr')
     _finished = False
 
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.label = translate('Export PDF',
-                               domain='PloneMeeting',
-                               context=self.request)
 
     @button.buttonAndHandler(_('Apply'), name='apply_export_pdf')
     def handleApply(self, action):
@@ -107,38 +107,35 @@ class ItemExportPDFForm(z3c_form.Form):
                 raise Unauthorized
 
     def _doApply(self, data):
-        """ """
-        # make sure data is correct
         self._check_data(data)
-        self.request.response.setHeader('Content-Type', 'application/pdf')
-        self.request.response.setHeader('Content-disposition', 'attachment;filename=file.pdf')
+        return self._do_export_pdf(data)
+
+    def _do_export_pdf(self, data):
+        # pod templates
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        view = self.context.restrictedTraverse('@@document-generation')
+        generated_pod_templates = [view(template_uid=template_uid, output_format='pdf')
+                                   for template_uid in data['pod_template_uids']]
+        # annexes
         kept_annexes_ids = data['annex_ids'] + data['annex_decision_ids']
-        annex_paths = [annex.file._blob._p_blob_committed for annex in get_annexes(self.context)
-                       if annex.getId() in kept_annexes_ids]
-
+        annexes = [annex.file.data for annex in get_annexes(self.context)
+                   if annex.getId() in kept_annexes_ids]
+        # create unique PDF file
         output_writer = PdfFileWriter()
-        stamp = PdfFileReader(open(stamp_path, 'rb'))
-        content_file = open(self.filepath, 'rb')
-        content = PdfFileReader(content_file)
-        counter = 0
-        for page in content.pages:
-            if counter == 0:
-                stamp_content = stamp.getPage(0)
-                page.mergePage(stamp_content)
-            output_writer.addPage(page)
-            counter += 1
-        output_writer.write(self.output)
-        os.remove(stamp_path)
-
-
-        return "123456"
+        for pdf_content in generated_pod_templates + annexes:
+            output_writer.appendPagesFromReader(
+                PdfFileReader(BytesIO(pdf_content)))
+        pdf_file_content = BytesIO()
+        output_writer.write(pdf_file_content)
+        self.request.set('pdf_file_content', pdf_file_content)
+        return pdf_file_content
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
     def handleCancel(self, action):
         self._finished = True
 
     def update(self):
-        """ """
         self._check_auth()
         super(ItemExportPDFForm, self).update()
         # after calling parent's update, self.actions are available
@@ -150,6 +147,13 @@ class ItemExportPDFForm(z3c_form.Form):
             raise Unauthorized
 
     def render(self):
+        if 'pdf_file_content' in self.request:
+            self.request.response.setHeader('Content-Type', 'application/pdf')
+            self.request.response.setHeader('Content-disposition', 'attachment;filename=file.pdf')
+            pdf_file_content = self.request['pdf_file_content']
+            pdf_file_content.seek(0)
+            return pdf_file_content.read()
+
         if self._finished:
             IRedirect(self.request).redirect(self.context.absolute_url())
             return ""

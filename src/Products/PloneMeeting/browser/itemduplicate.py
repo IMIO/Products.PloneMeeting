@@ -11,6 +11,7 @@ from imio.helpers.content import get_vocab
 from plone import api
 from plone.directives import form
 from plone.z3cform.layout import wrap_form
+from Products.CMFPlone import PloneMessageFactory as PMF
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -74,16 +75,13 @@ class DuplicateItemForm(z3c_form.Form):
 
     ignoreContext = True  # don't use context to get widget data
 
-    label = _(u"Duplicate item")
+    label = PMF(u"Duplicate")
     description = _('Disabled (greyed) annexes will not be kept on the new duplicated item.')
     _finished = False
 
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.label = translate('Duplicate item',
-                               domain='PloneMeeting',
-                               context=self.request)
 
     @button.buttonAndHandler(_('Apply'), name='apply_duplicate_item')
     def handleApply(self, action):

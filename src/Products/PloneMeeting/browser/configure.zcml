@@ -1034,7 +1034,7 @@
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         name="item-export-pdf-form"
-        class=".itemexportpdf.ItemExportPDFFormWrapper"
+        class=".itemexportpdf.ItemExportPDFForm"
         permission="zope2.View" />
 
     <!-- Display the go_to_meeting imgSelectBox in the plonemeeting portlet -->

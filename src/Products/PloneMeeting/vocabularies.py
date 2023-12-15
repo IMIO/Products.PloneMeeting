@@ -19,6 +19,7 @@ from collective.documentgenerator.content.vocabulary import ExistingPODTemplateF
 from collective.documentgenerator.content.vocabulary import MergeTemplatesVocabularyFactory
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
 from collective.documentgenerator.content.vocabulary import StyleTemplatesVocabularyFactory
+from collective.documentgenerator.interfaces import IGenerablePODTemplates
 from collective.eeafaceted.collectionwidget.content.dashboardcollection import IDashboardCollection
 from collective.eeafaceted.collectionwidget.vocabulary import CachedCollectionVocabulary
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
@@ -70,14 +71,13 @@ from Products.PloneMeeting.utils import number_word
 from Products.PloneMeeting.utils import split_gender_and_number
 from z3c.form.interfaces import NO_VALUE
 from zope.annotation import IAnnotations
+from zope.component import getAdapter
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
-from collective.documentgenerator.interfaces import IGenerablePODTemplates
-from zope.component import getAdapter
 
 import html
 import itertools
@@ -2951,10 +2951,10 @@ class GenerablePODTemplatesVocabulary(object):
         """ """
         terms = []
         for pod_template in self._get_generable_templates(context, output_formats):
-            term_id = pod_template.getId()
+            term_token = pod_template.UID()
             terms.append(
-                SimpleTerm(term_id,
-                           term_id,
+                SimpleTerm(term_token,
+                           term_token,
                            safe_unicode(pod_template.Title()))
             )
         return SimpleVocabulary(terms)

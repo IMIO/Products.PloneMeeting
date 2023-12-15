@@ -78,7 +78,7 @@
          action_id="export_pdf"
          category="object_buttons"
          condition_expr="python:object.show_export_pdf_action()"
-         icon_expr="string:${portal_url}/pdf.gif"
+         icon_expr="string:${portal_url}/++resource++collective.documentgenerator/pdf.svg"
          url_expr="string:${object_url}/@@item-export-pdf-form"
          visible="True">
   <permission value="View"/>

@@ -1065,6 +1065,11 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
     background-image: url("group.png");
 }
 
+.apButtonAction_export_pdf {
+    background-image: url("++resource++collective.documentgenerator/pdf.svg");
+    background-size: 16px;
+}
+
 /* style for the 'Back' link displayed in the elements of the configuration next to the 'de/activate' button
    We use same height as .apButton height */
 .pm_back_to_tool_link {
