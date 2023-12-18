@@ -86,7 +86,7 @@ class ItemExportPDFForm(z3c_form.Form):
         if errors:
             self.status = self.formErrorsMessage
             return
-        self._doApply(data)
+        return self._doApply(data)
 
     def _check_data(self, data):
         """Make sure annex_ids/annex_decision_ids are correct.

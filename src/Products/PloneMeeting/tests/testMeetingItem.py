@@ -2983,9 +2983,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.request['form.widgets.annex_ids'] = [annex.getId()]
         self.request['form.widgets.annex_decision_ids'] = [annex_dec.getId()]
         form.update()
-        data, errors = form.extractData()
+        res = form.handleApply(form, None)
         # this generated a 3 pages PDF, 1 page per element
-        res = form._doApply(data)
         res.seek(0)
         self.assertTrue("Pages\n/Count 3" in res.read())
         self.assertEqual(self.request.RESPONSE.getHeader('content-type'), 'application/pdf')
