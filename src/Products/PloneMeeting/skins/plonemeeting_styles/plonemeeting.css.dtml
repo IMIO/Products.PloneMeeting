@@ -1567,7 +1567,7 @@ p.item-before-budget-related {
 }
 
 div.advice_popup_label {
-    display: inline-block;
+    display: initial;
     vertical-align: middle;
     max-width: 520px;
 }
