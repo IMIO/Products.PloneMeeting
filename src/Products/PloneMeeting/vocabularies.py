@@ -2028,6 +2028,24 @@ class KeepAccessToItemWhenAdviceVocabulary(object):
 KeepAccessToItemWhenAdviceVocabularyFactory = KeepAccessToItemWhenAdviceVocabulary()
 
 
+class EnabledItemActionsVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        res = []
+        for value in ('duplication', 'export_pdf'):
+            res.append(
+                SimpleTerm(value, value, translate(
+                    'item_action_' + value,
+                    domain='PloneMeeting',
+                    context=context.REQUEST)))
+        return SimpleVocabulary(res)
+
+
+EnabledItemActionsVocabularyFactory = EnabledItemActionsVocabulary()
+
+
 class PMMergeTemplatesVocabulary(MergeTemplatesVocabularyFactory):
     """Override pod_template.merge_templates vocabulary to display the MeetingConfig title."""
     implements(IVocabularyFactory)

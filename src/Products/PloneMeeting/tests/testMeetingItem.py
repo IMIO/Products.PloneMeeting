@@ -2877,8 +2877,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_ItemDuplicateForm(self):
         """Test the @@item_duplicate_form"""
         cfg = self.meetingConfig
-        cfg.setEnableItemDuplication(False)
-
+        self._enable_action('duplication', enable=False)
         self.changeUser('pmCreator1')
         pm_folder = self.getMeetingFolder()
         item = self.create('MeetingItem')
@@ -2889,7 +2888,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, form.update)
 
         # enables it and check again
-        cfg.setEnableItemDuplication(True)
+        self._enable_action('duplication')
         # clean cache as showDuplicateItemAction is ram cached
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.showDuplicateItemAction')
         self.assertTrue(item.showDuplicateItemAction())
@@ -2962,13 +2961,42 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, form)
         self.assertRaises(Unauthorized, form.update)
 
+    def test_pm_ItemExportPDFForm(self):
+        """Test the @@item-export-pdf-form."""
+        cfg = self.meetingConfig
+        self._enable_action('export_pdf', enable=False)
+        self.changeUser('pmCreator1')
+        pm_folder = self.getMeetingFolder()
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item, annexFile=self.annexFilePDF)
+        annex_dec = self.addAnnex(item, relatedTo='item_decision', annexFile=self.annexFilePDF)
+        # unable to export PDF as functionnality disabled
+        form = item.restrictedTraverse('@@item-export-pdf-form')
+        self.assertFalse(item.show_export_pdf_action())
+        self.assertRaises(Unauthorized, form)
+        self.assertRaises(Unauthorized, form.update)
+        # enable and test
+        self._enable_action('export_pdf')
+        template = cfg.podtemplates.itemTemplate
+        template.pod_formats = ['pdf']
+        self.request['form.widgets.pod_template_uids'] = [template.UID()]
+        self.request['form.widgets.annex_ids'] = [annex.getId()]
+        self.request['form.widgets.annex_decision_ids'] = [annex_dec.getId()]
+        form.update()
+        data, errors = form.extractData()
+        # this generated a 3 pages PDF, 1 page per element
+        res = form._doApply(data)
+        res.seek(0)
+        self.assertTrue("Pages\n/Count 3" in res.read())
+        self.assertEqual(self.request.RESPONSE.getHeader('content-type'), 'application/pdf')
+
     def test_pm_ItemDuplicateFormOnlyKeepRelevantAnnexes(self):
         """Test the @@item_duplicate_form that will only let keep annexes that :
            - have no scan_id;
            - have a PDF file if annex_type only_pdf is True;
            - use an annex_type that current user may use."""
         cfg = self.meetingConfig
-        cfg.setEnableItemDuplication(True)
+        self._enable_action('duplication')
         annex_type = cfg.annexes_types.item_annexes.get('item-annex')
         annex_type.title = u"Annex type\"><script>alert(document.domain)</script>\""
         dec_annex_type = cfg.annexes_types.item_decision_annexes.get('decision-annex')
@@ -3050,7 +3078,7 @@ class testMeetingItem(PloneMeetingTestCase):
         """Test the @@item_duplicate_form that will only let keep annexes if
            current user has 'Add annex' permission on future created item."""
         cfg = self.meetingConfig
-        cfg.setEnableItemDuplication(True)
+        self._enable_action('duplication')
         # create item and check that annexes are disabled
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -3082,7 +3110,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self._enableField('copyGroups')
         cfg.setSelectableCopyGroups((self.vendors_creators, ))
         cfg.setItemCopyGroupsStates(('itemcreated', 'validated', ))
-        cfg.setEnableItemDuplication(True)
+        self._enable_action('duplication')
         self._addPrincipalToGroup('pmCreator1', self.vendors_creators)
         # pmCreator1 may create items for both groups
         self.changeUser('pmCreator1')

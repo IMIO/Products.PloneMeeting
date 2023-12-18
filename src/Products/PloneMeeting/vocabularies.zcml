@@ -119,6 +119,8 @@
            component=".vocabularies.PMPositionTypesVocabularyFactory" />
   <utility name="PMAttendeeRedefinePositionTypes"
            component=".vocabularies.PMAttendeeRedefinePositionTypesVocabularyFactory" />
+  <utility name="EnabledItemActions"
+           component=".vocabularies.EnabledItemActionsVocabularyFactory" />
 
   <!-- PMHeldPosition vocabularies -->
   <utility component=".vocabularies.HeldPositionUsagesVocabularyFactory"

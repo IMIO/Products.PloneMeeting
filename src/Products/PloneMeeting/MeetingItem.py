@@ -7288,7 +7288,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # The user will duplicate the item in his own folder.
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        if not cfg.getEnableItemDuplication() or \
+        if 'duplication' not in cfg.getEnabledItemActions() or \
            self.isDefinedInTool() or \
            not tool.userIsAmong(['creators'], cfg=cfg) or \
            not self.adapted().isPrivacyViewable():
@@ -7299,7 +7299,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def show_export_pdf_action(self):
         '''Condition for displaying the 'Export pdf' action in the interface.'''
-        return True
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        return 'export_pdf' in cfg.getEnabledItemActions()
 
     def _mayClone(self, cloneEventAction=None):
         """ """

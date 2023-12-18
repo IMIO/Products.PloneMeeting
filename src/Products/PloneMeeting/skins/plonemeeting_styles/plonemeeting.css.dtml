@@ -2343,22 +2343,6 @@ div.pm_checkbox_widget span#form-widgets-annex_ids span.option {
    margin-top: 0.5em;
    margin-bottom: 0.5em;
 }
-/* skin item_duplicate_form */
-form.kssattr-formname-item_duplicate_form div.field {
-   margin-top: 1.25em;
-}
-form.kssattr-formname-item_duplicate_form div.field > label {
-    font-size: 120%;
-    display: block;
-    padding-bottom: 0.25em;
-}
-form.kssattr-formname-item_duplicate_form div.field > label > img {
-    max-width: 16px;
-    max-height: 16px;
-}
-form.kssattr-formname-item_duplicate_form div#formfield-form-widgets-keep_link span.label {
-   font-weight: bold;
-}
 
 /* hide the edit yellow pencil on person and held_position in the viewlet-above-content-title next to workflow_state */
 body.portaltype-person a.edit-person,

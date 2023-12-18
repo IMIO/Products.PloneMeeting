@@ -8,7 +8,6 @@ from imio.helpers.content import get_vocab
 from io import BytesIO
 from plone import api
 from plone.directives import form
-from plone.z3cform.layout import wrap_form
 from Products.CMFPlone import PloneMessageFactory as PMF
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
@@ -34,7 +33,7 @@ def annex_ids_default(context):
     return vocab.by_token.keys()
 
 
-class IDuplicateItem(form.Schema):
+class IItemExportPDF(form.Schema):
     """ """
 
     pod_template_uids = schema.List(
@@ -65,7 +64,7 @@ class IDuplicateItem(form.Schema):
 
 class ItemExportPDFForm(z3c_form.Form):
     """ """
-    fields = field.Fields(IDuplicateItem)
+    fields = field.Fields(IItemExportPDF)
     fields["pod_template_uids"].widgetFactory = PMCheckBoxFieldWidget
     fields["annex_ids"].widgetFactory = PMCheckBoxFieldWidget
     fields["annex_decision_ids"].widgetFactory = PMCheckBoxFieldWidget
@@ -142,7 +141,7 @@ class ItemExportPDFForm(z3c_form.Form):
         self.actions.get('cancel').addClass('standalone')
 
     def _check_auth(self):
-        """Raise Unauthorized if current user may not duplicate the item."""
+        """Raise Unauthorized if current user may not export to PDF."""
         if not self.context.show_export_pdf_action():
             raise Unauthorized
 
@@ -158,6 +157,3 @@ class ItemExportPDFForm(z3c_form.Form):
             IRedirect(self.request).redirect(self.context.absolute_url())
             return ""
         return super(ItemExportPDFForm, self).render()
-
-
-ItemExportPDFFormWrapper = wrap_form(ItemExportPDFForm)

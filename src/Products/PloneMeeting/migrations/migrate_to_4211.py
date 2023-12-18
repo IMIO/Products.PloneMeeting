@@ -2,6 +2,7 @@
 
 from imio.helpers.setup import load_type_from_package
 from Products.Archetypes.event import ObjectEditedEvent
+from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from zope.event import notify
@@ -44,13 +45,21 @@ class Migrate_To_4211(Migrator):
                 collection.sort_on = u'modified'
         logger.info('Done.')
 
-    def _reloadItemTypes(self):
-        """Reload MeetingItem portal_types to add the item-export-pdf-form action."""
-        logger.info('Reloading MeetingItem portal_types...')
+    def _updateForItemExportPDFAction(self):
+        """Update related to new export PDF action on item:
+           - Reload MeetingItem portal_types to add the item-export-pdf-form action;
+           - MeetingConfig.enableItemDuplication is moved to MeetingConfig.enabledItemActions."""
+        logger.info('Updating for new export PDF action on item...')
+        # update MeetingItem portal_types
         # first update MeetingItem base portal_type
         load_type_from_package('MeetingItem', 'Products.PloneMeeting:default')
         for cfg in self.tool.objectValues('MeetingConfig'):
             notify(ObjectEditedEvent(cfg))
+            # migrate the MeetingConfig.enableItemDuplication attribute
+            if base_hasattr(cfg, 'enableItemDuplication'):
+                if cfg.enableItemDuplication:
+                    cfg.setEnabledItemActions(('duplication', ))
+                delattr(cfg, 'enableItemDuplication')
         logger.info('Done.')
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):
@@ -58,7 +67,7 @@ class Migrate_To_4211(Migrator):
         logger.info('Migrating to PloneMeeting 4211...')
         self._updateDataRelatedToToolPloneMeetingSimplification()
         self._updateItemSearchesSortOn()
-        self._reloadItemTypes()
+        self._updateForItemExportPDFAction()
         # add text criterion on item title only
         self.updateFacetedFilters(xml_filename='upgrade_step_4211_add_item_widgets.xml')
         logger.info('Migrating to PloneMeeting 4211... Done.')
@@ -69,7 +78,7 @@ def migrate(context):
 
        1) Update code regarding removal of methods that were available on portal_plonemeeting;
        2) Update every item related searches to use sort_on=modified;
-       3) Reload MeetingItem portal_type to add item-export-pdf action;
+       3) Update related to new export PDF action on item;
        4) Add c32 faceted criterion (search on item title only).
     '''
     migrator = Migrate_To_4211(context)
