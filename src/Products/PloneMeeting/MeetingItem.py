@@ -6755,11 +6755,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # advice already given, or left_delay negative left_delay shown is delay
         # so left_delay displayed on the advices popup is not something like '-547'
-        # only show left delay if advice in under redaction, aka not really given...
-        if not adviceInfos['hidden_during_redaction'] and \
-           (adviceInfos['advice_given_on'] or data['left_delay'] < 0):
+        # only show left delay if advice in under redaction/asked_again,
+        # aka not really given...
+        if data['left_delay'] < 0 or \
+           (not adviceInfos['hidden_during_redaction'] and
+            not adviceInfos['type'] == 'asked_again' and
+            adviceInfos['advice_given_on']):
             data['left_delay'] = delay
-            return data
 
         return data
 

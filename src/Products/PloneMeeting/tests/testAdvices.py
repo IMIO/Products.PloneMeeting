@@ -1129,7 +1129,7 @@ class testAdvices(PloneMeetingTestCase):
         item._update_after_edit()
         # the automatic advice is asked
         self.assertTrue(self.vendors_uid in item.adviceIndex)
-        self.assertTrue(not item.adviceIndex[self.vendors_uid]['optional'])
+        self.assertFalse(item.adviceIndex[self.vendors_uid]['optional'])
         self.assertEqual(item.getAutomaticAdvisersData()[0]['org_uid'], self.vendors_uid)
         # now give the advice
         self.proposeItem(item)
@@ -1143,8 +1143,8 @@ class testAdvices(PloneMeetingTestCase):
         item._update_after_edit()
         # the automatic advice is still there even if no more returned by getAutomaticAdvisersData
         self.assertTrue(self.vendors_uid in item.adviceIndex)
-        self.assertTrue(not item.adviceIndex[self.vendors_uid]['optional'])
-        self.assertTrue(not item.getAutomaticAdvisersData())
+        self.assertFalse(item.adviceIndex[self.vendors_uid]['optional'])
+        self.assertFalse(item.getAutomaticAdvisersData())
 
     def test_pm_GetAutomaticAdvisers(self):
         '''Test the getAutomaticAdvisersData method that compute automatic advices to ask.'''
@@ -1464,7 +1464,20 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(item.getDelayInfosForAdvice(self.vendors_uid)['left_delay'], 5)
         # 'delay_status' is 'timed_out'
         self.assertEqual(item.getDelayInfosForAdvice(self.vendors_uid)['delay_status'], 'timed_out')
-        self.assertTrue(not self.hasPermission(ModifyPortalContent, advice))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, advice))
+        self.changeUser('pmReviewer1')
+        changeView = advice.restrictedTraverse('@@change-advice-asked-again')
+        changeView()
+        # if left_delay < 0, set to delay
+        item.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime(2012, 1, 1)
+        item.update_local_roles()
+        self.assertEqual(item.getDelayInfosForAdvice(self.vendors_uid)['left_delay'], 5)
+        # but if still time left, correct delay is displayed
+        item.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime.now() - timedelta(3)
+        item.update_local_roles()
+        # depending on when test is launched
+        self.assertTrue(item.getDelayInfosForAdvice(self.vendors_uid)['left_delay'] > 0 and
+                        item.getDelayInfosForAdvice(self.vendors_uid)['left_delay'] < 5)
 
     def test_pm_OrgDefinedItemAdviceStatesValuesOverridesMeetingConfigValues(self):
         '''Advices are giveable/editable/viewable depending on defined item states on the MeetingConfig,
@@ -1473,7 +1486,7 @@ class testAdvices(PloneMeetingTestCase):
         # by default, nothing defined on the organization, the MeetingConfig states are used
         # getItemAdviceStates on a organziation returns values of the meetingConfig
         # if nothing is defined on the organziation
-        self.assertTrue(not self.vendors.get_item_advice_states())
+        self.assertFalse(self.vendors.get_item_advice_states())
         # make advice giveable when item is proposed
         cfg = self.meetingConfig
         cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
