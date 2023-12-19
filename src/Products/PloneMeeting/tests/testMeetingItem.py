@@ -4143,6 +4143,33 @@ class testMeetingItem(PloneMeetingTestCase):
              u'M. PMAdviser One (H\xe9)',
              u'M. PMManager',
              u'Vendors'])
+        # now remove from advisers group a userid selected on the item
+        # this will enable include_selected=True, this test a bug that occured
+        # and caused ValueError: term values must be unique developers__userid__pmCreator1
+        cfg.setSelectableAdvisers((self.vendors_uid, self.developers_uid, self.endUsers_uid))
+        cfg.setSelectableAdviserUsers((self.vendors_uid, self.developers_uid, self.endUsers_uid))
+        item.setOptionalAdvisers((
+            '{0}__userid__pmCreator1'.format(self.endUsers_uid),
+            '{0}__userid__pmCreator1'.format(self.developers_uid)))
+        self._addPrincipalToGroup('pmCreator1', self.developers_advisers)
+        self._removePrincipalFromGroups('pmCreator1', [self.endUsers_advisers])
+        self.assertEqual(
+            [t.title for t in vocab_factory(item)],
+            [u'Please select among delay-aware advisers',
+             u'Developers - 10 day(s)',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMCreator One',
+             u'M. PMManager',
+             u'Please select among non delay-aware advisers',
+             u'Developers',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMCreator One',
+             u'M. PMManager',
+             u'End users',
+             u'M. PMCreator One',
+             u'Vendors',
+             u'M. PMManager',
+             u'M. PMReviewer Two'])
 
     def test_pm_OptionalAdvisersDelayAwareAdvisers(self):
         '''

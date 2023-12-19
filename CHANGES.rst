@@ -19,6 +19,8 @@ Changelog
   [gbastien]
 - Fixed `ItemOptionalAdvicesVocabulary` caching to take into account delay aware
   advisers in cachekey as it is computed and depends on context.
+  Fixed also a bug when some `__userid__` selected values were no more in the
+  vocabulary with other values still in the vocabulary.
   [gbastien]
 - Fixed `PMCategorizedChildView.__call___`, if no categorized elements,
   do not return just [] but the parameter `show_nothing` value,
