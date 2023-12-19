@@ -36,6 +36,7 @@ class Migrate_To_4211(Migrator):
     def _updateDataRelatedToToolPloneMeetingSimplification(self):
         """ToolPloneMeeting will be moved to the registry,
            most methods are moved or removed, update stored data."""
+        logger.info('Updating portal_plonemeeting related data...')
         prefixes = ('tool',
                     'context.portal_plonemeeting',
                     'here.portal_plonemeeting',
@@ -57,6 +58,15 @@ class Migrate_To_4211(Migrator):
 
         # POD templates
         self.updatePODTemplatesCode(replacements)
+        logger.info('Done.')
+
+    def _updateItemSearchesSortOn(self):
+        """Make sure every item related searches use sort_on=modified."""
+        logger.info('Updating item searches sort_on...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            for collection in cfg.searches.searches_items.objectValues():
+                collection.sort_on = u'modified'
+        logger.info('Done.')
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
@@ -65,6 +75,7 @@ class Migrate_To_4211(Migrator):
         self._migrateConfigHideHistoryTo()
         self._updateSearchCopyGroupsSearchesCondition()
         self._updateDataRelatedToToolPloneMeetingSimplification()
+        self._updateItemSearchesSortOn()
         # add text criterion on item title only
         self.updateFacetedFilters(xml_filename='upgrade_step_4211_add_item_widgets.xml')
         logger.info('Migrating to PloneMeeting 4211... Done.')
@@ -77,6 +88,7 @@ def migrate(context):
        2) Update searchallcopygroups/searchunreaditemsincopy searches tal_condition;
        3) Update code regarding removal of methods that were available on portal_plonemeeting;
        4) Add c32 faceted criterion (search on item title only).
+       5) Update every item related searches to use sort_on=modified.
     '''
     migrator = Migrate_To_4211(context)
     migrator.run()

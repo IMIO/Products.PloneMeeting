@@ -43,6 +43,8 @@ Changelog
   [gbastien]
 - Fixed `ItemOptionalAdvicesVocabulary` caching to take into account delay aware
   advisers in cachekey as it is computed and depends on context.
+  Fixed also a bug when some `__userid__` selected values were no more in the
+  vocabulary with other values still in the vocabulary.
   [gbastien]
 - Added `MeetingConfig.show_copy_groups_search` that is used to protect
   copyGroups related searches.
@@ -105,6 +107,10 @@ Changelog
   [gbastien]
 - Fixed update `categorized_elements` of advices when advice moved as
   stored path changed.
+  [gbastien]
+- Make sure every item related searches (Collection) use `sort_on` modified
+  as this is not visible in the application because faceted `sort_on` overrides
+  it but it is now taken into account when using restapi with a `base_search_uid`.
   [gbastien]
 
 4.2.9b1 (2023-10-27)
