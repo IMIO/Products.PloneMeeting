@@ -1011,8 +1011,7 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         name="manage_item_assembly_form"
         class=".itemassembly.ManageItemAssemblyFormWrapper"
-        permission="zope2.View"
-      />
+        permission="zope2.View" />
 
     <!-- Form that manage item signatures -->
     <browser:page
@@ -1020,8 +1019,7 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         name="manage_item_signatures_form"
         class=".itemsignatures.ManageItemSignaturesFormWrapper"
-        permission="zope2.View"
-      />
+        permission="zope2.View" />
 
     <!-- Form that manage item duplication -->
     <browser:page
@@ -1029,8 +1027,15 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         name="item_duplicate_form"
         class=".itemduplicate.DuplicateItemFormWrapper"
-        permission="zope2.View"
-      />
+        permission="zope2.View" />
+
+    <!-- Form that manage item export PDF -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        name="item-export-pdf-form"
+        class=".itemexportpdf.ItemExportPDFForm"
+        permission="zope2.View" />
 
     <!-- Display the go_to_meeting imgSelectBox in the plonemeeting portlet -->
     <browser:page
@@ -1039,8 +1044,7 @@
         name="go_to_meeting_img_select_box"
         class=".imgselectbox.GoToMeetingImgSelectBoxView"
         template="templates/imgselectbox.pt"
-        permission="zope2.View"
-      />
+        permission="zope2.View" />
 
     <!-- special view that make it possible to redirect from an overlay
          and show status messages afterward -->
@@ -1049,13 +1053,11 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         name="redirect_view"
         class=".redirect.RedirectView"
-        permission="zope2.View"
-        />
+        permission="zope2.View" />
     <adapter
         for="zope.publisher.interfaces.browser.IBrowserRequest"
         provides="Products.PloneMeeting.interfaces.IRedirect"
-        factory=".redirect.Redirect"
-        />
+        factory=".redirect.Redirect" />
 
     <!-- PloneMeeting-specific portlets -->
     <include package="plone.app.portlets" />
@@ -1099,8 +1101,7 @@
             manager="plone.app.layout.viewlets.interfaces.IAboveContentBody"
             class="Products.PloneMeeting.browser.overrides.PMDocumentGeneratorLinksViewlet"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-            permission="zope2.View"
-            />
+            permission="zope2.View" />
     </configure>
 
     <!-- collective.documentgenerator helper view for Folder -->
@@ -1108,22 +1109,19 @@
         for="Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
         class=".views.FolderDocumentGenerationHelperView"
         permission="zope2.View"
-        name="document_generation_helper_view"
-     />
+        name="document_generation_helper_view" />
     <!-- collective.documentgenerator helper view for Meeting -->
     <browser:page
         for="Products.PloneMeeting.content.meeting.IMeeting"
         class=".views.MeetingDocumentGenerationHelperView"
         permission="zope2.View"
-        name="document_generation_helper_view"
-     />
+        name="document_generation_helper_view" />
     <!-- collective.documentgenerator helper view for MeetingItem -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         class=".views.ItemDocumentGenerationHelperView"
         permission="zope2.View"
-        name="document_generation_helper_view"
-     />
+        name="document_generation_helper_view" />
 
     <!-- collective.documentgenerator helper view for MeetingAdvice -->
     <browser:page

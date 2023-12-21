@@ -19,6 +19,7 @@ from collective.documentgenerator.content.vocabulary import ExistingPODTemplateF
 from collective.documentgenerator.content.vocabulary import MergeTemplatesVocabularyFactory
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
 from collective.documentgenerator.content.vocabulary import StyleTemplatesVocabularyFactory
+from collective.documentgenerator.interfaces import IGenerablePODTemplates
 from collective.eeafaceted.collectionwidget.content.dashboardcollection import IDashboardCollection
 from collective.eeafaceted.collectionwidget.vocabulary import CachedCollectionVocabulary
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
@@ -71,6 +72,7 @@ from Products.PloneMeeting.utils import number_word
 from Products.PloneMeeting.utils import split_gender_and_number
 from z3c.form.interfaces import NO_VALUE
 from zope.annotation import IAnnotations
+from zope.component import getAdapter
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
@@ -2073,6 +2075,24 @@ class KeepAccessToItemWhenAdviceVocabulary(object):
 KeepAccessToItemWhenAdviceVocabularyFactory = KeepAccessToItemWhenAdviceVocabulary()
 
 
+class EnabledItemActionsVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        res = []
+        for value in ('duplication', 'export_pdf'):
+            res.append(
+                SimpleTerm(value, value, translate(
+                    'item_action_' + value,
+                    domain='PloneMeeting',
+                    context=context.REQUEST)))
+        return SimpleVocabulary(res)
+
+
+EnabledItemActionsVocabularyFactory = EnabledItemActionsVocabulary()
+
+
 class PMMergeTemplatesVocabulary(MergeTemplatesVocabularyFactory):
     """Override pod_template.merge_templates vocabulary to display the MeetingConfig title."""
     implements(IVocabularyFactory)
@@ -2860,8 +2880,9 @@ class OtherMCsClonableToPrivacyVocabulary(OtherMCsClonableToVocabulary):
 OtherMCsClonableToPrivacyVocabularyFactory = OtherMCsClonableToPrivacyVocabulary()
 
 
-class ContainedAnnexesVocabulary(object):
-    """ """
+class BaseContainedAnnexesVocabulary(object):
+    """Base vocabulary that manages displaying contained annexes with
+       a functionnality that will let disable some annexes."""
 
     implements(IVocabularyFactory)
 
@@ -2888,52 +2909,123 @@ class ContainedAnnexesVocabulary(object):
                 if annex['warn_filesize']:
                     term_title += u' ({0})'.format(render_filesize(annex['filesize']))
                 term = SimpleTerm(annex['id'], annex['id'], term_title)
-                # check if user able to keep this annex :
-                # - annex may not hold a scan_id
-                annex_obj = getattr(context, annex['id'])
-                if getattr(annex_obj, 'scan_id', None):
-                    term.disabled = True
-                    term.title += translate(' [holds scan_id]',
-                                            domain='PloneMeeting',
-                                            context=context.REQUEST)
-                # - annexType must be among current user selectable annex types
-                elif annex['category_uid'] not in categories_vocab:
-                    term.disabled = True
-                    term.title += translate(' [reserved MeetingManagers]',
-                                            domain='PloneMeeting',
-                                            context=context.REQUEST)
-                # annexType ask a PDF but the file is not a PDF
-                # could happen if configuration changed after creation of annex
-                elif get_category_object(annex_obj, annex_obj.content_category).only_pdf and \
-                        annex_obj.file.contentType != 'application/pdf':
-                    term.disabled = True
-                    term.title += translate(' [PDF required]',
-                                            domain='PloneMeeting',
-                                            context=context.REQUEST)
-                else:
-                    term.disabled = False
+                # check if need to disable term
+                self._check_disable_term(context, annex, categories_vocab, term)
                 terms.append(term)
         return SimpleVocabulary(terms)
 
+    def _check_disable_term(self, context, annex, categories_vocab, term):
+        """ """
+        return
 
-ContainedAnnexesVocabularyFactory = ContainedAnnexesVocabulary()
 
-
-class ContainedDecisionAnnexesVocabulary(ContainedAnnexesVocabulary):
+class ItemDuplicationContainedAnnexesVocabulary(BaseContainedAnnexesVocabulary):
     """ """
 
-    implements(IVocabularyFactory)
+    def _check_disable_term(self, context, annex, categories_vocab, term):
+        # check if user able to keep this annex :
+        # - annex may not hold a scan_id
+        term.disabled = False
+        annex_obj = getattr(context, annex['id'])
+        if getattr(annex_obj, 'scan_id', None):
+            term.disabled = True
+            term.title += translate(' [holds scan_id]',
+                                    domain='PloneMeeting',
+                                    context=context.REQUEST)
+        # - annexType must be among current user selectable annex types
+        elif annex['category_uid'] not in categories_vocab:
+            term.disabled = True
+            term.title += translate(' [reserved MeetingManagers]',
+                                    domain='PloneMeeting',
+                                    context=context.REQUEST)
+        # annexType ask a PDF but the file is not a PDF
+        # could happen if configuration changed after creation of annex
+        elif get_category_object(annex_obj, annex_obj.content_category).only_pdf and \
+                annex_obj.file.contentType != 'application/pdf':
+            term.disabled = True
+            term.title += translate(' [PDF required]',
+                                    domain='PloneMeeting',
+                                    context=context.REQUEST)
+
+
+ItemDuplicationContainedAnnexesVocabularyFactory = ItemDuplicationContainedAnnexesVocabulary()
+
+
+class ItemDuplicationContainedDecisionAnnexesVocabulary(ItemDuplicationContainedAnnexesVocabulary):
+    """ """
 
     def __call__(self, context, portal_type='annexDecision'):
         """ """
         context.REQUEST['force_use_item_decision_annexes_group'] = True
-        terms = super(ContainedDecisionAnnexesVocabulary, self).__call__(
+        terms = super(ItemDuplicationContainedDecisionAnnexesVocabulary, self).__call__(
             context, portal_type=portal_type)
         context.REQUEST['force_use_item_decision_annexes_group'] = False
         return terms
 
 
-ContainedDecisionAnnexesVocabularyFactory = ContainedDecisionAnnexesVocabulary()
+ItemDuplicationContainedDecisionAnnexesVocabularyFactory = ItemDuplicationContainedDecisionAnnexesVocabulary()
+
+
+class ItemExportPDFContainedAnnexesVocabulary(BaseContainedAnnexesVocabulary):
+    """ """
+
+    def _check_disable_term(self, context, annex, categories_vocab, term):
+        # check if user able to export this annex :
+        # - annex must be PDF
+        term.disabled = False
+        annex_obj = getattr(context, annex['id'])
+        if annex_obj.file.contentType != 'application/pdf':
+            term.disabled = True
+            term.title += translate(' [PDF required]',
+                                    domain='PloneMeeting',
+                                    context=context.REQUEST)
+
+
+ItemExportPDFContainedAnnexesVocabularyFactory = ItemExportPDFContainedAnnexesVocabulary()
+
+
+class ItemExportPDFContainedDecisionAnnexesVocabulary(ItemExportPDFContainedAnnexesVocabulary):
+    """ """
+
+    def __call__(self, context, portal_type='annexDecision'):
+        """ """
+        context.REQUEST['force_use_item_decision_annexes_group'] = True
+        terms = super(ItemExportPDFContainedDecisionAnnexesVocabulary, self).__call__(
+            context, portal_type=portal_type)
+        context.REQUEST['force_use_item_decision_annexes_group'] = False
+        return terms
+
+
+ItemExportPDFContainedDecisionAnnexesVocabularyFactory = ItemExportPDFContainedDecisionAnnexesVocabulary()
+
+
+class GenerablePODTemplatesVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def _get_generable_templates(self, context, output_formats):
+        res = []
+        adapter = getAdapter(context, IGenerablePODTemplates)
+        pod_templates = adapter.get_generable_templates()
+        for pod_template in pod_templates:
+            if not output_formats or \
+               set(output_formats).intersection(pod_template.get_available_formats()):
+                res.append(pod_template)
+        return res
+
+    def __call__(self, context, output_formats=['pdf']):
+        """ """
+        terms = []
+        for pod_template in self._get_generable_templates(context, output_formats):
+            term_token = pod_template.UID()
+            terms.append(
+                SimpleTerm(term_token,
+                           term_token,
+                           safe_unicode(pod_template.Title()))
+            )
+        return SimpleVocabulary(terms)
+
+
+GenerablePODTemplatesVocabularyFactory = GenerablePODTemplatesVocabulary()
 
 
 class PMUsers(UsersFactory):

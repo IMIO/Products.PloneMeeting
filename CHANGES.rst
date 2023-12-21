@@ -5,8 +5,14 @@ Changelog
 4.2.9b5 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- When advice is `asked_again` display left delay correctly, full delay is displayed
+  when advice is supposed given, but when is it `asked_again` it is not the case.
+  [gbastien]
+- Added `Export PDF` action on item to be able to export in a single PDF file
+  several selected PDF generated POD templates and PDF annexes.
+  [gbastien]
+- Fixed CSS of advice popup label when very long.
+  [gbastien]
 
 4.2.9b4 (2023-12-11)
 --------------------
@@ -112,9 +118,6 @@ Changelog
   as this is not visible in the application because faceted `sort_on` overrides
   it but it is now taken into account when using restapi with a `base_search_uid`.
   [gbastien]
-- When advice is `asked_again` display left delay correctly, full delay is displayed
-  when advice is supposed given, but when is it `asked_again` it is not the case.
-  [gbastien]
 
 4.2.9b1 (2023-10-27)
 --------------------
@@ -126,8 +129,6 @@ Changelog
   - display the `Advice given by` information;
   - added possibility to hide advice history to power observers and to everyone
     and to hide meeting history to powerobservers.
-
-  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------

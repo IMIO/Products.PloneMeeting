@@ -135,6 +135,8 @@
            component=".vocabularies.ConfigAdviceTypesVocabularyFactory" />
   <utility name="Products.PloneMeeting.vocabularies.config_hide_history_to_vocabulary"
            component=".vocabularies.ConfigHideHistoryTosVocabularyFactory" />
+  <utility name="EnabledItemActions"
+           component=".vocabularies.EnabledItemActionsVocabularyFactory" />
 
   <!-- PMHeldPosition vocabularies -->
   <utility component=".vocabularies.HeldPositionUsagesVocabularyFactory"
@@ -157,9 +159,17 @@
            name="Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary" />
 
   <!-- Vocabularies used in item_duplicate_form -->
-  <utility component=".vocabularies.ContainedAnnexesVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.contained_annexes_vocabulary" />
-  <utility component=".vocabularies.ContainedDecisionAnnexesVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.contained_decision_annexes_vocabulary" />
+  <utility component=".vocabularies.ItemDuplicationContainedAnnexesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.item_duplication_contained_annexes_vocabulary" />
+  <utility component=".vocabularies.ItemDuplicationContainedDecisionAnnexesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.item_duplication_contained_decision_annexes_vocabulary" />
+
+  <!-- Vocabularies used in item-export-pdf-form -->
+  <utility component=".vocabularies.GenerablePODTemplatesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.generable_pdf_documents_vocabulary" />
+  <utility component=".vocabularies.ItemExportPDFContainedAnnexesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.item_export_pdf_contained_annexes_vocabulary" />
+  <utility component=".vocabularies.ItemExportPDFContainedDecisionAnnexesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.item_export_pdf_contained_decision_annexes_vocabulary" />
 
 </configure>

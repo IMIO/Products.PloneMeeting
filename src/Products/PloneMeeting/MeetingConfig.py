@@ -1046,16 +1046,17 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
-        name='enableItemDuplication',
-        default=defValues.enableItemDuplication,
-        widget=BooleanField._properties['widget'](
-            description="EnableItemDuplication",
-            description_msgid="enable_item_duplication_descr",
-            label='enableitemduplication',
-            label_msgid='PloneMeeting_label_enableItemDuplication',
+    LinesField(
+        name='enabledItemActions',
+        default=defValues.enabledItemActions,
+        widget=MultiSelectionWidget(
+            format="checkbox",
+            label='enableditemactions',
+            label_msgid='PloneMeeting_label_enabledItemActions',
             i18n_domain='PloneMeeting',
         ),
+        enforceVocabulary=True,
+        vocabulary_factory='EnabledItemActions',
         schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),

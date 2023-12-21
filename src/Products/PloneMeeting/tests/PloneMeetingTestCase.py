@@ -807,6 +807,20 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         attr_name = "{0}_activated".format(param)
         setattr(annex_group, attr_name, enable)
 
+    def _enable_action(self, action, related_to="MeetingItem", enable=True):
+        """Enable an action for given p_related_to element."""
+        cfg = self.meetingConfig
+        if related_to == "MeetingItem":
+            if enable and action not in cfg.getEnabledItemActions():
+                actions = cfg.getEnabledItemActions() + (action, )
+                cfg.setEnabledItemActions(actions)
+                notify(ObjectEditedEvent(cfg))
+            elif not enable and action in cfg.getEnabledItemActions():
+                actions = list(cfg.getEnabledItemActions())
+                actions.remove(action)
+                cfg.setEnabledItemActions(actions)
+                notify(ObjectEditedEvent(cfg))
+
     def _disableObj(self, obj, notify_event=True):
         """ """
         # using field 'enabled'
