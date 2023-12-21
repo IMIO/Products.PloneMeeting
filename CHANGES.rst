@@ -13,6 +13,8 @@ Changelog
   [gbastien]
 - Fixed CSS of advice popup label when very long.
   [gbastien]
+- When `copyGroups` have access to item, highlight full `Copy groups` label in green.
+  [gbastien]
 
 4.2.9b4 (2023-12-11)
 --------------------
@@ -129,6 +131,8 @@ Changelog
   - display the `Advice given by` information;
   - added possibility to hide advice history to power observers and to everyone
     and to hide meeting history to powerobservers.
+
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------
