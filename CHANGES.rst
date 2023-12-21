@@ -85,6 +85,11 @@ Changelog
   as this is not visible in the application because faceted `sort_on` overrides
   it but it is now taken into account when using restapi with a `base_search_uid`.
   [gbastien]
+- Added `Export PDF` action on item to be able to export in a single PDF file
+  several selected PDF generated POD templates and PDF annexes.
+  [gbastien]
+- Fixed CSS of advice popup label when very long.
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------

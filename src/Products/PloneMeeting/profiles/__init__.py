@@ -463,7 +463,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.removeAnnexesPreviewsOnMeetingClosure = False
         self.cssClassesToHide = 'highlight\nhighlight-red'
         self.hideCssClassesTo = ()
-        self.enableItemDuplication = True
+        self.enabledItemActions = ('duplication', 'export_pdf')
         self.enabledAnnexesBatchActions = ['download-annexes']
 
         # Data-related parameters ----------------------------------------------

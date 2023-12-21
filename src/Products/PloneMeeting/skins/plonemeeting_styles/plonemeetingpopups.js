@@ -180,6 +180,27 @@ function duplicateItem() {
   });
 }
 
+// the item export pdf action
+function itemExportPDF() {
+    // Content history popup
+    $('.apButtonAction_form_export_pdf').prepOverlay({
+       subtype: 'ajax',
+       closeselector: '[name="form.buttons.cancel"]',
+       config: {
+            onBeforeLoad : function(e) {
+                // close on Apply as we download a file
+                var apply_button = $("input#form-buttons-apply_export_pdf");
+                apply_button.click(function(e) {
+                    $('input#form-buttons-cancel').click();
+                });
+                // open in new tab so user see that download is on the way
+                var form = $("form#form");
+                form.attr('target', 'blank');
+                return true;
+          },
+        },
+    });
+}
 
 // common overlays
 // the content history popup
@@ -245,6 +266,7 @@ jQuery(document).ready(function($) {
     completenessChange();
     availableMailingLists();
     duplicateItem();
+    itemExportPDF();
 
     // inserting methods infos on meeting_view
     tooltipster_helper(selector='.tooltipster-inserting-methods-helper-msg',
@@ -277,6 +299,7 @@ function initializeDashboard(){
     adviceAddEdit();
     contentHistory();
     duplicateItem();
+    itemExportPDF();
     pmCommonOverlays();
     listTypeChange();
     actionsPanelTooltipster();
@@ -478,6 +501,7 @@ function initializeActionsPanelTooltipster_callback() {
         initializeOverlays();
         preventDefaultClick();
         duplicateItem();
+        itemExportPDF();
     });
 }
 

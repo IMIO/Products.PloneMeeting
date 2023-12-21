@@ -11,6 +11,7 @@ from imio.helpers.content import get_vocab
 from plone import api
 from plone.directives import form
 from plone.z3cform.layout import wrap_form
+from Products.CMFPlone import PloneMessageFactory as PMF
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -33,7 +34,7 @@ def annex_ids_default(context):
     """Select every annexes by default."""
     vocab = get_vocab(
         context,
-        u"Products.PloneMeeting.vocabularies.contained_annexes_vocabulary")
+        u"Products.PloneMeeting.vocabularies.item_duplication_contained_annexes_vocabulary")
     return vocab.by_token.keys()
 
 
@@ -53,7 +54,7 @@ class IDuplicateItem(form.Schema):
         required=False,
         defaultFactory=annex_ids_default,
         value_type=schema.Choice(
-            vocabulary=u"Products.PloneMeeting.vocabularies.contained_annexes_vocabulary"),
+            vocabulary=u"Products.PloneMeeting.vocabularies.item_duplication_contained_annexes_vocabulary"),
     )
 
     annex_decision_ids = schema.List(
@@ -61,7 +62,7 @@ class IDuplicateItem(form.Schema):
         description=_(u""),
         required=False,
         value_type=schema.Choice(
-            vocabulary=u"Products.PloneMeeting.vocabularies.contained_decision_annexes_vocabulary"),
+            vocabulary=u"Products.PloneMeeting.vocabularies.item_duplication_contained_decision_annexes_vocabulary"),
     )
 
 
@@ -74,16 +75,13 @@ class DuplicateItemForm(z3c_form.Form):
 
     ignoreContext = True  # don't use context to get widget data
 
-    label = _(u"Duplicate item")
+    label = PMF(u"Duplicate")
     description = _('Disabled (greyed) annexes will not be kept on the new duplicated item.')
     _finished = False
 
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.label = translate('Duplicate item',
-                               domain='PloneMeeting',
-                               context=self.request)
 
     @button.buttonAndHandler(_('Apply'), name='apply_duplicate_item')
     def handleApply(self, action):
