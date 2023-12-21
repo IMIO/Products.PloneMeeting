@@ -24,6 +24,7 @@ from collective.eeafaceted.collectionwidget.content.dashboardcollection import I
 from collective.eeafaceted.collectionwidget.vocabulary import CachedCollectionVocabulary
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
 from collective.eeafaceted.z3ctable.columns import EMPTY_STRING
+from collective.iconifiedcategory.config import get_sort_categorized_tab
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
@@ -2827,7 +2828,8 @@ class OtherMCsClonableToPrivacyVocabulary(OtherMCsClonableToVocabulary):
         term_title = translate('Secret while presenting in other MC?',
                                domain='PloneMeeting',
                                context=context.REQUEST)
-        return super(OtherMCsClonableToPrivacyVocabulary, self).__call__(context, term_title)
+        return super(OtherMCsClonableToPrivacyVocabulary, self).__call__(
+            context, term_title)
 
 
 OtherMCsClonableToPrivacyVocabularyFactory = OtherMCsClonableToPrivacyVocabulary()
@@ -2844,7 +2846,10 @@ class BaseContainedAnnexesVocabulary(object):
         portal_url = api.portal.get().absolute_url()
         terms = []
         i = 1
-        annexes = get_categorized_elements(context, portal_type=portal_type)
+        sort_on = 'getObjPositionInParent' if \
+            get_sort_categorized_tab() is False else None
+        annexes = get_categorized_elements(
+            context, portal_type=portal_type, sort_on=sort_on)
         if annexes:
             categories_vocab = get_vocab(
                 context,
