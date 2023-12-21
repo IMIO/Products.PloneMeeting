@@ -90,6 +90,8 @@ Changelog
   [gbastien]
 - Fixed CSS of advice popup label when very long.
   [gbastien]
+- When `copyGroups` have access to item, highlight full `Copy groups` label in green.
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------

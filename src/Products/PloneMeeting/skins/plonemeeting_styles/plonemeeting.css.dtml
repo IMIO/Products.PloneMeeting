@@ -2119,7 +2119,11 @@ div.tooltipster-content table.actionspanel-no-style-table td.noPadding {
 #content span.fa.disabled-dark:hover {
     opacity: 1;
 }
-#content span.fa.green-colored {
+#content span.fa.green-colored,
+#content span.green-colored span {
+    color: green;
+}
+{
     color: green;
 }
 #content span.fa.red-colored {
