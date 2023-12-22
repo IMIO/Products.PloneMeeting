@@ -86,7 +86,9 @@ class ItemExportPDFForm(z3c_form.Form):
         if errors:
             self.status = self.formErrorsMessage
             return
-        return self._doApply(data)
+
+        self._check_data(data)
+        return self._do_export_pdf(data)
 
     def _check_data(self, data):
         """Make sure annex_ids/annex_decision_ids are correct.
@@ -105,9 +107,11 @@ class ItemExportPDFForm(z3c_form.Form):
             if decision_annex_id not in decision_annex_term_ids:
                 raise Unauthorized
 
-    def _doApply(self, data):
-        self._check_data(data)
-        return self._do_export_pdf(data)
+    def updateWidgets(self):
+        super(ItemExportPDFForm, self).updateWidgets()
+        self.widgets['pod_template_uids'].sortable = True
+        self.widgets['annex_ids'].sortable = True
+        self.widgets['annex_decision_ids'].sortable = True
 
     def _do_export_pdf(self, data):
         # pod templates
@@ -118,8 +122,8 @@ class ItemExportPDFForm(z3c_form.Form):
                                    for template_uid in data['pod_template_uids']]
         # annexes
         kept_annexes_ids = data['annex_ids'] + data['annex_decision_ids']
-        annexes = [annex.file.data for annex in get_annexes(self.context)
-                   if annex.getId() in kept_annexes_ids]
+        # get annexes in kept_annexes_ids order
+        annexes = [self.context.get(annex_id).file.data for annex_id in kept_annexes_ids]
         # create unique PDF file
         output_writer = PdfFileWriter()
         for pdf_content in generated_pod_templates + annexes:

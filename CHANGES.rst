@@ -15,6 +15,9 @@ Changelog
   [gbastien]
 - When `copyGroups` have access to item, highlight full `Copy groups` label in green.
   [gbastien]
+- Added `sortable` functionnality to the `PMCheckBoxWidget`, use it in the item
+  `Export PDF` form to be able to reorder exported elements.
+  [gbastien]
 
 4.2.9b4 (2023-12-11)
 --------------------
