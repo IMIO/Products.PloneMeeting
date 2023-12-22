@@ -2,8 +2,48 @@ Changelog
 =========
 
 
+<<<<<<< HEAD
 4.2.9 (unreleased)
 ------------------
+=======
+4.2.9b5 (unreleased)
+--------------------
+
+- When advice is `asked_again` display left delay correctly, full delay is displayed
+  when advice is supposed given, but when is it `asked_again` it is not the case.
+  [gbastien]
+- Added `Export PDF` action on item to be able to export in a single PDF file
+  several selected PDF generated POD templates and PDF annexes.
+  [gbastien]
+- Fixed CSS of advice popup label when very long.
+  [gbastien]
+- When `copyGroups` have access to item, highlight full `Copy groups` label in green.
+  [gbastien]
+- Added `sortable` functionnality to the `PMCheckBoxWidget`, use it in the item
+  `Export PDF` form to be able to reorder exported elements.
+  [gbastien]
+
+4.2.9b4 (2023-12-11)
+--------------------
+
+- Mail notifications `adviceEdited` and `adviceEditedOwner` are no more sent
+  if advice is hidden during redaction.
+  [gbastien]
+- Fixed `AdvicesIcons.get_advice_given_by` to only return a value when using
+  custom WF (more than one initial state) and if WF reached it's final state.
+  [gbastien]
+
+4.2.9b3 (2023-11-27)
+--------------------
+
+- Fixed `MeetingConfig.listTransitionsUntilPresented` that was raising
+  `UnicodeDecodeError` now that we use unicode arrow in term title.
+  Use unicode arrow in `utils.get_dx_attrs` when `as_display_list=True`.
+  [gbastien]
+
+4.2.9b2 (2023-11-27)
+--------------------
+>>>>>>> 494f62e0... Added `sortable` functionnality to the `PMCheckBoxWidget`, use it in the item `Export PDF` form to be able to reorder exported elements.
 
 - Display last transition actor and comment in item mail notifications for mail events:
 
