@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.9b5 (unreleased)
+4.2.9b5 (2024-01-02)
 --------------------
 
 - When advice is `asked_again` display left delay correctly, full delay is displayed
