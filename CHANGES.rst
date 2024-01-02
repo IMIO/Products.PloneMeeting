@@ -11,12 +11,12 @@ Changelog
 - Added `Export PDF` action on item to be able to export in a single PDF file
   several selected PDF generated POD templates and PDF annexes.
   [gbastien]
+- Added `sortable` functionnality to the `PMCheckBoxWidget`, use it in the item
+  `Export PDF` form to be able to reorder exported elements.
+  [gbastien]
 - Fixed CSS of advice popup label when very long.
   [gbastien]
 - When `copyGroups` have access to item, highlight full `Copy groups` label in green.
-  [gbastien]
-- Added `sortable` functionnality to the `PMCheckBoxWidget`, use it in the item
-  `Export PDF` form to be able to reorder exported elements.
   [gbastien]
 
 4.2.9b4 (2023-12-11)
