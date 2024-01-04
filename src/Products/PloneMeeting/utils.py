@@ -78,6 +78,7 @@ from Products.PageTemplates.Expressions import SecureModuleImporter
 from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
+from Products.PloneMeeting.config import ADVICE_STATES_ENDED
 from Products.PloneMeeting.config import ADVICE_STATES_MAPPING
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -989,10 +990,11 @@ def get_dx_attrs(portal_type,
                 key = "{0}.{1}".format(prefix, key)
                 display_list_tuples.append(
                     (key,
-                     u'%s ➔ %s' % (key,
-                                   translate("title_{0}".format(field_name),
-                                             domain="PloneMeeting",
-                                             context=request))
+                     u'%s ➔ %s' % (
+                         key,
+                         translate("title_{0}".format(field_name),
+                                   domain="PloneMeeting",
+                                   context=request))
                      ))
             else:
                 display_list_tuples.append(
@@ -1902,6 +1904,17 @@ def findMeetingAdvicePortalType(context):
     return current_portal_type
 
 
+def get_advice_alive_states():
+    """Return every WF states considered as alive states (WF not ended)."""
+    res = []
+    wf_tool = api.portal.get_tool('portal_workflow')
+    for adv_pt in getAdvicePortalTypeIds():
+        res += wf_tool.getWorkflowsFor(adv_pt)[0].states.keys()
+    # remove the ADVICE_STATES_ENDED and duplicates
+    return tuple(set([state_id for state_id in res
+                      if state_id not in ADVICE_STATES_ENDED]))
+
+
 def getAvailableMailingLists(obj, pod_template):
     '''Gets the names of the (currently active) mailing lists defined for
        this template.'''
@@ -2546,6 +2559,7 @@ def isPowerObserverForCfg_cachekey(method, cfg, power_observer_types=[]):
     return (get_plone_groups_for_user(),
             repr(cfg),
             power_observer_types)
+
 
 # not ramcached perf tests says it does not change anything
 # and this avoid useless entry in cache

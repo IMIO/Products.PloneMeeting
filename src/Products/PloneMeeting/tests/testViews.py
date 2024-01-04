@@ -30,7 +30,6 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.Five import zcml
 from Products.PloneMeeting.browser.views import SEVERAL_SAME_BARCODE_ERROR
-from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.content.meeting import PLACE_OTHER
@@ -42,6 +41,7 @@ from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import IMG_BASE64_DATA
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import get_advice_alive_states
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_widget
 from Products.PloneMeeting.utils import getAvailableMailingLists
@@ -593,6 +593,7 @@ class testViews(PloneMeetingTestCase):
         '''
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
+        advice_alive_states = get_advice_alive_states()
         self.changeUser('admin')
         # for now, no customAdvisers
         for mc in self.tool.objectValues('MeetingConfig'):
@@ -619,7 +620,7 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(
             query,
             {'indexAdvisers': ['delay__{0}_{1}'.format(self.vendors_uid, advice_state)
-                               for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE]})
+                               for advice_state in ('advice_not_given', ) + advice_alive_states]})
         # define customAdvisers in cfg2, also for vendors
         cfg2.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
@@ -642,7 +643,7 @@ class testViews(PloneMeetingTestCase):
             sorted(query),
             sorted({'indexAdvisers':
                    ['delay__{0}_{1}'.format(self.vendors_uid, advice_state)
-                    for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE]}))
+                    for advice_state in ('advice_not_given', ) + advice_alive_states]}))
         # now define customAdvisers for developers
         cfg2.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
@@ -661,14 +662,14 @@ class testViews(PloneMeetingTestCase):
               'delay_label': '10 days'}, ])
         query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
         # check len because sorted removes duplicates
-        self.assertEqual(len(query['indexAdvisers']), 2 * (1 + len(ADVICE_STATES_ALIVE)))
+        self.assertEqual(len(query['indexAdvisers']), 2 * (1 + len(advice_alive_states)))
         self.assertEqual(
             sorted(query),
             sorted({'indexAdvisers':
                     ['delay__{0}_{1}'.format(self.vendors_uid, advice_state)
-                     for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE] +
+                     for advice_state in ('advice_not_given', ) + advice_alive_states] +
                     ['delay__{0}_{1}'.format(self.developers_uid, advice_state)
-                     for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE]}))
+                     for advice_state in ('advice_not_given', ) + advice_alive_states]}))
         # if org delay aware in several MeetingConfigs, line is only shown one time
         cfg2.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
@@ -686,14 +687,14 @@ class testViews(PloneMeetingTestCase):
               'delay': '10',
               'delay_label': '10 days'}, ])
         query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
-        self.assertEqual(len(query['indexAdvisers']), 2 * (1 + len(ADVICE_STATES_ALIVE)))
+        self.assertEqual(len(query['indexAdvisers']), 2 * (1 + len(advice_alive_states)))
         self.assertEqual(
             sorted(query),
             sorted({'indexAdvisers':
                     ['delay__{0}_{1}'.format(self.vendors_uid, advice_state)
-                     for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE] +
+                     for advice_state in ('advice_not_given', ) + advice_alive_states] +
                     ['delay__{0}_{1}'.format(self.developers_uid, advice_state)
-                     for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE]}))
+                     for advice_state in ('advice_not_given', ) + advice_alive_states]}))
 
     def test_pm_UpdateDelayAwareAdvicesUpdateAllAdvices(self):
         """Test the _updateAllAdvices method that update every advices.

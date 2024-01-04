@@ -31,11 +31,11 @@ from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
-from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ADVICE_STATES_ENDED
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import get_advice_alive_states
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
 from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.statusmessages.interfaces import IStatusMessage
@@ -2159,16 +2159,14 @@ class testAdvices(PloneMeetingTestCase):
 
     def test_pm_ConfigAdviceStates(self):
         '''
-          This test that states defined in config.py in two constants
-          ADVICE_STATES_ALIVE and ADVICE_STATES_ENDED
-          consider every states of the workflow used for content_type 'meetingadvice'.
+          This test alive and ended states consider every states of the workflow
+          used for portal_types 'meetingadvice'.
         '''
         adviceWF = self.wfTool.getWorkflowsFor('meetingadvice')
         # we have only one workflow for 'meetingadvice'
         self.assertEqual(len(adviceWF), 1)
-        adviceWF = adviceWF[0]
-        everyStates = adviceWF.states.keys()
-        statesOfConfig = ADVICE_STATES_ALIVE + ADVICE_STATES_ENDED
+        everyStates = adviceWF[0].states.keys()
+        statesOfConfig = get_advice_alive_states() + ADVICE_STATES_ENDED
         # statesOfConfig are all in everyStates
         self.assertFalse(set(everyStates).difference(set(statesOfConfig)))
 

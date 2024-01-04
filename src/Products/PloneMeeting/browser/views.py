@@ -33,7 +33,6 @@ from Products.PloneMeeting import logger
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.browser.itemvotes import _get_linked_item_vote_numbers
 from Products.PloneMeeting.columns import render_item_annexes
-from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
@@ -43,6 +42,7 @@ from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import convert2xhtml
+from Products.PloneMeeting.utils import get_advice_alive_states
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_field
 from Products.PloneMeeting.utils import get_dx_widget
@@ -486,6 +486,7 @@ class UpdateDelayAwareAdvicesView(BrowserView):
         # ...
         indexAdvisers = []
         tool = api.portal.get_tool('portal_plonemeeting')
+        advice_alive_states = get_advice_alive_states()
         for cfg in tool.objectValues('MeetingConfig'):
             for row in cfg.getCustomAdvisers():
                 isDelayAware = bool(row['delay'])
@@ -498,7 +499,7 @@ class UpdateDelayAwareAdvicesView(BrowserView):
                         continue
                     indexAdvisers.append(advice_not_given_value)
                     # now advice given and still editable
-                    for advice_state in ADVICE_STATES_ALIVE:
+                    for advice_state in advice_alive_states:
                         indexAdvisers.append("delay__{0}_{1}".format(org_uid, advice_state))
         query = {}
         # if no indexAdvisers, query on 'dummy' to avoid query on empty value

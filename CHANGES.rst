@@ -5,8 +5,10 @@ Changelog
 4.2.9b6 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Removed constant `config.ADVICE_STATES_ALIVE`, it is now managed automatically
+  by `utils.get_advice_alive_states` and it will ne more be necessary to
+  override it in custom profiles.
+  [gbastien]
 
 4.2.9b5 (2024-01-02)
 --------------------
