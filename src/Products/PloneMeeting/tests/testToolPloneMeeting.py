@@ -21,9 +21,9 @@ from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_vocab_values
+from imio.helpers.content import richtextval
 from persistent.mapping import PersistentMapping
 from plone import api
-from plone.app.textfield.value import RichTextValue
 from plone.dexterity.interfaces import IDexterityContent
 from plone.dexterity.utils import createContentInContainer
 from plone.testing.z2 import Browser
@@ -354,7 +354,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmCreator1')
         destFolder = item1.getParentNode()
         # Copy items
@@ -1391,14 +1391,14 @@ class testToolPloneMeeting(PloneMeetingTestCase):
             item.adapted()._advicePortalTypeForAdviser(self.developers_uid),
             **{'advice_group': self.developers_uid,
                'advice_type': u'positive',
-               'advice_comment': RichTextValue(u'My comment')})
+               'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmReviewer2')
         vendors_advice = createContentInContainer(
             item,
             item.adapted()._advicePortalTypeForAdviser(self.vendors_uid),
             **{'advice_group': self.vendors_uid,
                'advice_type': u'positive_with_remarks',
-               'advice_comment': RichTextValue(u'My comment')})
+               'advice_comment': richtextval(u'My comment')})
         self.assertEqual(
             get_vocab_values(
                 dev_advice,
@@ -1499,7 +1499,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
             item.adapted()._advicePortalTypeForAdviser(self.developers_uid),
             **{'advice_group': self.developers_uid,
                'advice_type': u'positive',
-               'advice_comment': RichTextValue(u'My comment')})
+               'advice_comment': richtextval(u'My comment')})
         msg = translate(u'advisersConfig_portal_type_in_use_error',
                         domain='PloneMeeting',
                         mapping={'portal_type': u'meetingadvice',

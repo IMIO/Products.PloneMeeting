@@ -5,7 +5,6 @@ from copy import deepcopy
 from imio.helpers.content import richtextval
 from plone import api
 from plone.app.testing import logout
-from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -458,7 +457,7 @@ class PloneMeetingTestingHelpers(object):
             item.adapted()._advicePortalTypeForAdviser(self.vendors_uid),
             **{'advice_group': self.vendors_uid,
                'advice_type': u'positive',
-               'advice_comment': RichTextValue(u'My comment')})
+               'advice_comment': richtextval(u'My comment')})
         return item, advice
 
     def _setUpGroupsInCharge(self, item, groups=[]):

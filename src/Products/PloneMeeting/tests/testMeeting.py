@@ -19,7 +19,6 @@ from imio.helpers.content import richtextval
 from imio.helpers.content import uuidToCatalogBrain
 from os import path
 from plone.app.querystring.querybuilder import queryparser
-from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products import PloneMeeting as products_plonemeeting
 from Products.Archetypes.event import ObjectEditedEvent
@@ -2517,16 +2516,16 @@ class testMeetingType(PloneMeetingTestCase):
         # constraint used for "assembly" field
         self.assertEqual(IMeeting['assembly'].constraint, assembly_constraint)
         # correct value
-        self.assertTrue(assembly_constraint(RichTextValue(ASSEMBLY_CORRECT_VALUE)))
+        self.assertTrue(assembly_constraint(richtextval(ASSEMBLY_CORRECT_VALUE)))
         # wrong value
         with self.assertRaises(Invalid) as cm:
-            assembly_constraint(RichTextValue(ASSEMBLY_WRONG_VALUE))
+            assembly_constraint(richtextval(ASSEMBLY_WRONG_VALUE))
         self.assertEqual(cm.exception.message, validation_error_msg)
 
         # we have a special case, if REQUEST contains 'initial_edit', then validation
         # is bypassed, this let's edit an old wrong value
         self.request.set('initial_edit', u'1')
-        self.assertTrue(assembly_constraint(RichTextValue(ASSEMBLY_WRONG_VALUE)))
+        self.assertTrue(assembly_constraint(richtextval(ASSEMBLY_WRONG_VALUE)))
 
     def test_pm_TitleUpdatedOnEdit(self):
         '''
@@ -2662,7 +2661,7 @@ class testMeetingType(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmManager')
         meetingParentFolder = meeting.getParentNode()
         self.assertEqual(set(meetingParentFolder.objectValues('MeetingItem')), set(meeting.get_items()))
@@ -2913,13 +2912,13 @@ class testMeetingType(PloneMeetingTestCase):
         view()
         helper = view.get_generation_context_helper()
 
-        meeting.assembly = RichTextValue('Simple assembly')
+        meeting.assembly = richtextval('Simple assembly')
         self.assertEqual(helper.print_assembly(),
                          '<p>Simple assembly</p>')
-        meeting.assembly = RichTextValue('Assembly with [[striked]] part')
+        meeting.assembly = richtextval('Assembly with [[striked]] part')
         self.assertEqual(helper.print_assembly(),
                          '<p>Assembly with <strike>striked</strike> part</p>')
-        meeting.assembly = RichTextValue('Assembly with [[striked]] part1\r\nAssembly part2')
+        meeting.assembly = richtextval('Assembly with [[striked]] part1\r\nAssembly part2')
         self.assertEqual(helper.print_assembly(),
                          '<p>Assembly with <strike>striked</strike> part1<br />Assembly part2</p>')
 
@@ -3081,7 +3080,7 @@ class testMeetingType(PloneMeetingTestCase):
         meetingId = pmFolder.invokeFactory(cfg.getMeetingTypeName(),
                                            id='meeting',
                                            date=datetime(2015, 5, 5),
-                                           observations=RichTextValue(text))
+                                           observations=richtextval(text))
         meeting = getattr(pmFolder, meetingId)
         self.assertIn('1062-600x500.jpg', meeting.objectIds())
         img = meeting.get('1062-600x500.jpg')
@@ -3111,7 +3110,7 @@ class testMeetingType(PloneMeetingTestCase):
 
         # test using processForm, aka full edit form
         text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image1
-        meeting.observations = RichTextValue(text)
+        meeting.observations = richtextval(text)
         notify(ObjectModifiedEvent(meeting, Attributes(Interface, 'observations')))
         self.assertIn('22-400x400.jpg', meeting.objectIds())
         img3 = meeting.get('22-400x400.jpg')
@@ -3391,7 +3390,7 @@ class testMeetingType(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # references where not updated
         self.assertEqual(
             [brain._unrestrictedGetObject().getItemReference() for
@@ -4015,12 +4014,12 @@ class testMeetingType(PloneMeetingTestCase):
         cfg = self.meetingConfig
         four_lines_signatures = "Person 1,\nFunction 1\nPerson 1,\nFunction 1"
         cfg.setSignatures(four_lines_signatures)
-        meeting.assembly = RichTextValue("Person 1, Person 2")
-        meeting.signatures = RichTextValue(four_lines_signatures)
+        meeting.assembly = richtextval("Person 1, Person 2")
+        meeting.signatures = richtextval(four_lines_signatures)
         self.assertFalse(view.warn_assembly(using_attendees=False))
         # remove one line of signature
         three_lines_signatures = "Person 1,\nFunction 1\nPerson 1"
-        meeting.signatures = RichTextValue(three_lines_signatures)
+        meeting.signatures = richtextval(three_lines_signatures)
         self.assertTrue(view.warn_assembly(using_attendees=False))
         cfg.setSignatures(three_lines_signatures)
         self.assertFalse(view.warn_assembly(using_attendees=False))

@@ -13,13 +13,13 @@ from datetime import datetime
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import richtextval
 from imio.history.utils import getLastWFAction
 from imio.zamqp.pm.tests.base import DEFAULT_SCAN_ID
 from os import path
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.app.testing import logout
-from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from plone.locking.interfaces import ILockable
 from plone.testing.z2 import Browser
@@ -546,7 +546,7 @@ class testViews(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['advice_addable'])
         self.assertTrue(itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['advice_editable'])
         # an editable item will found by the query
@@ -1311,7 +1311,7 @@ class testViews(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # mixes advice given and not given
         self.assertEqual(
             helper.print_advices_infos(item),
@@ -2356,7 +2356,7 @@ class testViews(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmManager')
         assert_results(item, advisorIdsToBeReturned=[self.developers_uid])
         assert_results(item, [self.vendors_uid])
@@ -2367,7 +2367,7 @@ class testViews(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'negative',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
 
         self.changeUser('pmManager')
         assert_results(item,
@@ -2738,7 +2738,7 @@ class testViews(PloneMeetingTestCase):
             'meetingadvice',
             **{'advice_group': self.developers_uid,
                'advice_type': u'positive',
-               'advice_comment': RichTextValue(u'My comment')})
+               'advice_comment': richtextval(u'My comment')})
         # adapters
         # item
         item_adapter = getAdapter(item, IGenerablePODTemplates)
@@ -2902,7 +2902,7 @@ class testViews(PloneMeetingTestCase):
         """
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
-        meeting.signatures = RichTextValue('my name\n'
+        meeting.signatures = richtextval('my name\n'
                                            'my signature')
         view = meeting.restrictedTraverse("document-generation")
         helper = view.get_generation_context_helper()

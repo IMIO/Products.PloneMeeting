@@ -13,9 +13,9 @@ from datetime import timedelta
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import get_vocab_values
+from imio.helpers.content import richtextval
 from plone import api
 from plone.app.querystring.querybuilder import queryparser
-from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -146,7 +146,7 @@ class testSearches(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
         self.failIf(collection.results())
         # pmReviewer2 is adviser for 'vendors', delay-aware advices are also returned
@@ -160,7 +160,7 @@ class testSearches(PloneMeetingTestCase):
                                           'meetingadvice',
                                           **{'advice_group': self.vendors_uid,
                                              'advice_type': u'negative',
-                                             'advice_comment': RichTextValue(u'My comment')})
+                                             'advice_comment': richtextval(u'My comment')})
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
         self.failIf(collection.results())
 
@@ -351,7 +351,7 @@ class testSearches(PloneMeetingTestCase):
                                           'meetingadvice',
                                           **{'advice_group': self.developers_uid,
                                              'advice_type': u'positive',
-                                             'advice_comment': RichTextValue(u'My comment')})
+                                             'advice_comment': richtextval(u'My comment')})
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
         self.failUnless(collection.results())
         # another user will not see given advices
@@ -373,7 +373,7 @@ class testSearches(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # pmManager will see 2 items and pmAdviser1, just one, none for a non adviser
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
         self.failUnless(len(collection.results()) == 2)
@@ -446,7 +446,7 @@ class testSearches(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # non delay-aware advices are not found
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditemswithdelay')
         self.failIf(collection.results())
@@ -471,7 +471,7 @@ class testSearches(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # pmManager will see 2 items and pmAdviser1, just one, none for a non adviser
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditemswithdelay')
         self.failUnless(len(collection.results()) == 1)

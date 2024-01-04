@@ -19,6 +19,7 @@ from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import object_values
+from imio.helpers.content import richtextval
 from imio.helpers.testing import testing_logger
 from imio.helpers.workflow import get_transitions
 from plone import api
@@ -27,7 +28,6 @@ from plone.app.testing import login
 from plone.app.testing import logout
 from plone.app.testing.bbb import _createMemberarea
 from plone.app.testing.helpers import setRoles
-from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFPlone.utils import base_hasattr
@@ -533,7 +533,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             **{'advice_group': advice_group,
                'advice_type': advice_type,
                'advice_hide_during_redaction': advice_hide_during_redaction,
-               'advice_comment': RichTextValue(advice_comment)})
+               'advice_comment': richtextval(advice_comment)})
         return advice
 
     def deleteAsManager(self, uid):

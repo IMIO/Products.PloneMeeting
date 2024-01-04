@@ -19,7 +19,6 @@ from imio.history.utils import getLastAction
 from imio.history.utils import getLastWFAction
 from os import path
 from plone import api
-from plone.app.textfield.value import RichTextValue
 from plone.dexterity.schema import SchemaInvalidatedEvent
 from plone.dexterity.utils import createContentInContainer
 from Products.Archetypes.event import ObjectEditedEvent
@@ -201,7 +200,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(len(data), len(form.fields))
         form.request.form['advice_group'] = self.vendors_uid
         form.request.form['advice_type'] = u'positive'
-        form.request.form['advice_comment'] = RichTextValue(u'My comment')
+        form.request.form['advice_comment'] = richtextval(u'My comment')
         form.createAndAdd(form.request.form)
         self.assertEqual(item1.hasAdvices(), True)
         # 'pmReviewer2' has no more addable advice (as already given) but has now an editable advice
@@ -278,7 +277,7 @@ class testAdvices(PloneMeetingTestCase):
                                           'meetingadvice',
                                           **{'advice_group': self.vendors_uid,
                                              'advice_type': u'positive',
-                                             'advice_comment': RichTextValue(u'My comment')})
+                                             'advice_comment': richtextval(u'My comment')})
         # annexes are addable if advice is editable
         self.assertTrue(self.hasPermission(ModifyPortalContent, advice))
         self.assertTrue(self.hasPermission(DeleteObjects, advice))
@@ -314,7 +313,7 @@ class testAdvices(PloneMeetingTestCase):
                                                      'meetingadvice',
                                                      **{'advice_group': self.developers_uid,
                                                         'advice_type': u'positive',
-                                                        'advice_comment': RichTextValue(u'My comment')})
+                                                        'advice_comment': richtextval(u'My comment')})
         # can view/edit/delete is own advice
         self.assertTrue(self.hasPermission(View, developers_advice))
         self.assertTrue(self.hasPermission(ModifyPortalContent, developers_advice))
@@ -329,7 +328,7 @@ class testAdvices(PloneMeetingTestCase):
                                                   'meetingadvice',
                                                   **{'advice_group': self.vendors_uid,
                                                      'advice_type': u'positive',
-                                                     'advice_comment': RichTextValue(u'My comment')})
+                                                     'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmAdviser1')
         # can view
         self.assertTrue(self.hasPermission(View, vendors_advice))
@@ -406,7 +405,7 @@ class testAdvices(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # login as an user that can actually edit the item because not 'validated'
         self.changeUser('pmReviewer1')
         self.failUnless(self.hasPermission(ModifyPortalContent, item))
@@ -439,7 +438,7 @@ class testAdvices(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmManager')
         self.validateItem(item)
         self.failUnless(item.hasAdvices())
@@ -456,7 +455,7 @@ class testAdvices(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmManager')
         self.validateItem(item)
         self.failUnless(item.hasAdvices())
@@ -474,7 +473,7 @@ class testAdvices(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmManager')
         self.validateItem(item)
         self.failUnless(item.hasAdvices())
@@ -579,7 +578,7 @@ class testAdvices(PloneMeetingTestCase):
             'meetingadvice',
             **{'advice_group': self.developers_uid,
                'advice_type': u'positive',
-               'advice_comment': RichTextValue(u'My comment')})
+               'advice_comment': richtextval(u'My comment')})
         # now that an advice has been given for the developers group, the indexAdvisers has been updated
         self.assertEqual(
             sorted(indexAdvisers.callable(item)),
@@ -949,7 +948,7 @@ class testAdvices(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # query not given and positive advices
         self.changeUser('pmCreator1')
         # item1 still have vendors advice not given
@@ -987,7 +986,7 @@ class testAdvices(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'negative',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # query not given and positive advices
         self.assertEqual(
             set([brain.UID for brain in self.catalog(
@@ -1081,7 +1080,7 @@ class testAdvices(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
 
     def test_pm_AdviceAskedAutomaticallyWithGroupsInCharge(self):
         '''Advice asked when organization in charge of proposingGroup,
@@ -1138,7 +1137,7 @@ class testAdvices(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         item.setBudgetRelated(False)
         item._update_after_edit()
         # the automatic advice is still there even if no more returned by getAutomaticAdvisersData
@@ -1258,7 +1257,7 @@ class testAdvices(PloneMeetingTestCase):
                                           'meetingadvice',
                                           **{'advice_group': self.developers_uid,
                                              'advice_type': u'positive',
-                                             'advice_comment': RichTextValue(u'My comment')})
+                                             'advice_comment': richtextval(u'My comment')})
         self.assertEqual(advice.advice_row_id, '')
         self.assertEqual(item.adviceIndex[advice.advice_group]['row_id'], '')
 
@@ -1276,7 +1275,7 @@ class testAdvices(PloneMeetingTestCase):
                                           'meetingadvice',
                                           **{'advice_group': self.developers_uid,
                                              'advice_type': u'positive',
-                                             'advice_comment': RichTextValue(u'My comment')})
+                                             'advice_comment': richtextval(u'My comment')})
         self.assertEqual(advice.advice_row_id, 'unique_id_123')
         self.assertEqual(item.adviceIndex[advice.advice_group]['row_id'], 'unique_id_123')
 
@@ -1294,7 +1293,7 @@ class testAdvices(PloneMeetingTestCase):
                                           'meetingadvice',
                                           **{'advice_group': self.vendors_uid,
                                              'advice_type': u'negative',
-                                             'advice_comment': RichTextValue(u'My comment')})
+                                             'advice_comment': richtextval(u'My comment')})
         self.assertEqual(item.adviceIndex[self.vendors_uid]['row_id'], 'unique_id_456')
         automatic_advice_obj = getattr(item, item.adviceIndex[self.vendors_uid]['advice_id'])
         self.assertEqual(automatic_advice_obj.advice_row_id, 'unique_id_456')
@@ -1450,7 +1449,7 @@ class testAdvices(PloneMeetingTestCase):
                                           'meetingadvice',
                                           **{'advice_group': self.vendors_uid,
                                              'advice_type': u'negative',
-                                             'advice_comment': RichTextValue(u'My comment')})
+                                             'advice_comment': richtextval(u'My comment')})
         self.assertEqual(item.adviceIndex[self.vendors_uid]['row_id'], 'unique_id_123')
         # advice is editable as delay is not exceeded
         self.assertTrue(item.getDelayInfosForAdvice(self.vendors_uid)['left_delay'] > 0)
@@ -1599,7 +1598,7 @@ class testAdvices(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
 
         # he can give advice for every groups he is adviser for
         # here as only adviser for 'developers', he can not give an advice anymore
@@ -2220,7 +2219,7 @@ class testAdvices(PloneMeetingTestCase):
                                                      'meetingadvice',
                                                      **{'advice_group': self.developers_uid,
                                                         'advice_type': u'positive',
-                                                        'advice_comment': RichTextValue(u'My comment')})
+                                                        'advice_comment': richtextval(u'My comment')})
         # if powerobserver tries to access the Title of the confidential advice
         # displayed in particular on the advice view, it raises Unauthorized
         self.changeUser('powerobserver1')
@@ -2266,7 +2265,7 @@ class testAdvices(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # make sure if a MeetingManager send the item back to 'proposed' it works...
         self.changeUser('pmManager')
         # do the back transition that send the item back to 'proposed'
@@ -2302,7 +2301,7 @@ class testAdvices(PloneMeetingTestCase):
                                           **{'advice_group': self.vendors_uid,
                                              'advice_type': u'positive',
                                              'advice_hide_during_redaction': False,
-                                             'advice_comment': RichTextValue(u'My comment')})
+                                             'advice_comment': richtextval(u'My comment')})
         # 'pmReviewer2', as adviser, is able to toggle advice_hide_during_redaction
         self.assertFalse(advice.advice_hide_during_redaction)
         self.assertFalse(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
@@ -2355,7 +2354,7 @@ class testAdvices(PloneMeetingTestCase):
                                           **{'advice_group': self.vendors_uid,
                                              'advice_type': u'negative',
                                              'advice_hide_during_redaction': False,
-                                             'advice_comment': RichTextValue(u'My comment')})
+                                             'advice_comment': richtextval(u'My comment')})
         changeView = advice.restrictedTraverse('@@change-advice-asked-again')
         # 'asked_again' is always enabled
         self.assertFalse('asked_again' in cfg.getUsedAdviceTypes())
@@ -2488,7 +2487,7 @@ class testAdvices(PloneMeetingTestCase):
             **{'advice_group': self.developers_uid,
                'advice_type': u'positive',
                'advice_hide_during_redaction': False,
-               'advice_comment': RichTextValue(u'My comment')})
+               'advice_comment': richtextval(u'My comment')})
         return item, advice
 
     def test_pm_HistorizedAdviceIsNotDeletable(self):
@@ -2508,7 +2507,7 @@ class testAdvices(PloneMeetingTestCase):
             **{'advice_group': self.vendors_uid,
                'advice_type': u'negative',
                'advice_hide_during_redaction': False,
-               'advice_comment': RichTextValue(u'My comment')})
+               'advice_comment': richtextval(u'My comment')})
         # for now advice is deletable
         advices_icons_infos = item.restrictedTraverse('@@advices-icons-infos')
         # some values are initialized when view is called (__call__)
@@ -2618,7 +2617,7 @@ class testAdvices(PloneMeetingTestCase):
                                           **{'advice_group': self.vendors_uid,
                                              'advice_type': u'negative',
                                              'advice_hide_during_redaction': False,
-                                             'advice_comment': RichTextValue(u'My comment')})
+                                             'advice_comment': richtextval(u'My comment')})
         # advice is historized when it is given, aka transition giveAdvice has been triggered
         adapter = getAdapter(advice, IImioHistory, 'advice_given')
         self.assertIsNone(getLastAction(adapter))
@@ -2679,7 +2678,7 @@ class testAdvices(PloneMeetingTestCase):
                                           **{'advice_group': self.vendors_uid,
                                              'advice_type': u'negative',
                                              'advice_hide_during_redaction': False,
-                                             'advice_comment': RichTextValue(u'My comment')})
+                                             'advice_comment': richtextval(u'My comment')})
 
         # advice is versioned when it is given, aka transition giveAdvice has been triggered
         self.changeUser('pmReviewer1')
@@ -2713,7 +2712,7 @@ class testAdvices(PloneMeetingTestCase):
                                           **{'advice_group': self.vendors_uid,
                                              'advice_type': u'negative',
                                              'advice_hide_during_redaction': False,
-                                             'advice_comment': RichTextValue(u'My comment')})
+                                             'advice_comment': richtextval(u'My comment')})
 
         advice_modified = advice.modified()
         self.assertEqual(advice.get_advice_given_on(), advice_modified)
@@ -2765,7 +2764,7 @@ class testAdvices(PloneMeetingTestCase):
                                           **{'advice_group': self.vendors_uid,
                                              'advice_type': u'negative',
                                              'advice_hide_during_redaction': False,
-                                             'advice_comment': RichTextValue(u'My comment')})
+                                             'advice_comment': richtextval(u'My comment')})
         # advice will be versioned if the item is edited
         # this is only the case if cfg.historizeAdviceIfGivenAndItemModified is True
         self.changeUser('siteadmin')
@@ -2922,7 +2921,7 @@ class testAdvices(PloneMeetingTestCase):
                 **{'advice_group': self.vendors_uid,
                    'advice_type': u'positive',
                    'advice_hide_during_redaction': False,
-                   'advice_comment': RichTextValue(u'My comment')})
+                   'advice_comment': richtextval(u'My comment')})
         developers_advice = None
         if 'developers' in give_advices_for:
             self.changeUser('pmAdviser1')
@@ -2932,7 +2931,7 @@ class testAdvices(PloneMeetingTestCase):
                 **{'advice_group': self.developers_uid,
                    'advice_type': u'positive',
                    'advice_hide_during_redaction': False,
-                   'advice_comment': RichTextValue(u'My comment')})
+                   'advice_comment': richtextval(u'My comment')})
         return item, vendors_advice, developers_advice
 
     def test_pm_KeepAccessToItemWhenAdviceIsGiven(self):
@@ -3064,7 +3063,7 @@ class testAdvices(PloneMeetingTestCase):
                                                   **{'advice_group': self.vendors_uid,
                                                      'advice_type': u'positive',
                                                      'advice_hide_during_redaction': False,
-                                                     'advice_comment': RichTextValue(u'My comment')})
+                                                     'advice_comment': richtextval(u'My comment')})
         self.assertTrue(self.hasPermission('ATContentTypes: Add Image', vendors_advice))
         self.assertTrue(self.hasPermission(AddPortalContent, vendors_advice))
         vendors_advice.invokeFactory('Image', id='img1', title='Image1', file=data.read())
@@ -3104,12 +3103,12 @@ class testAdvices(PloneMeetingTestCase):
                                           **{'advice_group': self.vendors_uid,
                                              'advice_type': u'positive',
                                              'advice_hide_during_redaction': False,
-                                             'advice_comment': RichTextValue(text)})
+                                             'advice_comment': richtextval(text)})
         self.assertTrue('1025-400x300.jpg' in advice.objectIds())
 
         # test using IObjectModifiedEvent event, aka using edit form
         text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image4
-        advice.advice_comment = RichTextValue(text)
+        advice.advice_comment = richtextval(text)
         # notify modified
         notify(ObjectModifiedEvent(advice))
         self.assertTrue('1062-600x500.jpg' in advice.objectIds())
@@ -3135,7 +3134,7 @@ class testAdvices(PloneMeetingTestCase):
                                                   **{'advice_group': self.vendors_uid,
                                                      'advice_type': u'positive',
                                                      'advice_hide_during_redaction': False,
-                                                     'advice_comment': RichTextValue(u'My comment')})
+                                                     'advice_comment': richtextval(u'My comment')})
         self.assertEqual(item.getAdviceObj(self.vendors_uid), vendors_advice)
         self.assertIsNone(item.getAdviceObj(self.developers_uid))
 
@@ -3175,7 +3174,7 @@ class testAdvices(PloneMeetingTestCase):
             **{'advice_group': self.developers_uid,
                'advice_type': u'positive',
                'advice_hide_during_redaction': False,
-               'advice_comment': RichTextValue(u'My comment')})
+               'advice_comment': richtextval(u'My comment')})
         if addAnnexesToVendorsAdvice:
             self._enable_annex_config(vendors_advice)
             annexNotConfidential = self.addAnnex(vendors_advice, annexTitle='Annex not confidential')
@@ -3190,7 +3189,7 @@ class testAdvices(PloneMeetingTestCase):
             **{'advice_group': self.vendors_uid,
                'advice_type': u'positive',
                'advice_hide_during_redaction': False,
-               'advice_comment': RichTextValue(u'My comment')})
+               'advice_comment': richtextval(u'My comment')})
 
         if addEndUsersAdvice:
             self._setupEndUsersPowerAdvisers()
@@ -3202,7 +3201,7 @@ class testAdvices(PloneMeetingTestCase):
                 **{'advice_group': self.endUsers_uid,
                    'advice_type': u'positive',
                    'advice_hide_during_redaction': False,
-                   'advice_comment': RichTextValue(u'My comment')})
+                   'advice_comment': richtextval(u'My comment')})
 
         # link items and inherit
         self.changeUser('pmCreator1')
@@ -3349,8 +3348,8 @@ class testAdvices(PloneMeetingTestCase):
                                           **{'advice_group': self.vendors_uid,
                                              'advice_type': u'positive',
                                              'advice_hide_during_redaction': False,
-                                             'advice_comment': RichTextValue(u'My comment'),
-                                             'advice_observations': RichTextValue(u'My observations'), })
+                                             'advice_comment': richtextval(u'My comment'),
+                                             'advice_observations': richtextval(u'My observations'), })
 
         # if advice is not hidden, advisers as well as any other user may access advice comment
         advice_data = item.getAdviceDataFor(item, adviser_uid=self.vendors_uid)
@@ -3484,7 +3483,7 @@ class testAdvices(PloneMeetingTestCase):
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         self.assertTrue(item2WithAdvices.getInheritedAdviceInfo(self.vendors_uid))
         self.assertTrue(item2WithAdvices.getInheritedAdviceInfo(self.developers_uid))
 
@@ -3591,7 +3590,7 @@ class testAdvices(PloneMeetingTestCase):
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # send item to cfg2, this will keep power adviser advice instead asking delay aware advice
         item2 = item1.cloneToOtherMeetingConfig(cfg2Id)
         self.assertTrue(item2.adviceIndex[self.developers_uid]['inherited'])
@@ -3751,7 +3750,7 @@ class testAdvices(PloneMeetingTestCase):
             **{'advice_group': self.developers_uid,
                'advice_type': u'positive',
                'advice_hide_during_redaction': False,
-               'advice_comment': RichTextValue(u'My comment')})
+               'advice_comment': richtextval(u'My comment')})
         self.assertTrue(adviser_fullname in advices_icons_infos(adviceType=u'positive'))
 
     def test_pm_RemoveInheritedAdviceByMeetingManager(self):
@@ -3926,7 +3925,7 @@ class testAdvices(PloneMeetingTestCase):
                                           'meetingadvice',
                                           **{'advice_group': self.vendors_uid,
                                              'advice_type': u'positive',
-                                             'advice_comment': RichTextValue(u'My comment')})
+                                             'advice_comment': richtextval(u'My comment')})
         item_modified_advice_new = item.modified()
         self.assertNotEqual(item_modified_no_advice, item_modified_advice_new)
         # edit advice
@@ -3977,7 +3976,7 @@ class testAdvices(PloneMeetingTestCase):
             'meetingadvice',
             **{'advice_group': self.vendors_uid,
                'advice_type': u'positive',
-               'advice_comment': RichTextValue(u'My comment')})
+               'advice_comment': richtextval(u'My comment')})
         self.backToState(item, 'itemcreated')
         # advice delay of not given advice was reinitialized
         self.assertTrue(item._advice_is_given(self.vendors_uid))

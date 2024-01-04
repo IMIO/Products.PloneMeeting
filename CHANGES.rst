@@ -9,6 +9,8 @@ Changelog
   by `utils.get_advice_alive_states` and it will ne more be necessary to
   override it in custom profiles.
   [gbastien]
+- In tests, use `imio.helpers.content.richtextval` everywhere a `RichTextValue` is used.
+  [gbastien]
 
 4.2.9b5 (2024-01-02)
 --------------------
