@@ -92,6 +92,10 @@ Changelog
   [gbastien]
 - When `copyGroups` have access to item, highlight full `Copy groups` label in green.
   [gbastien]
+- Use `CompoundCriterion` adapter `living-items` for the `searchlivingitems`
+  Collection so selected states are always correct if item workflow
+  configuration changed.
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------
