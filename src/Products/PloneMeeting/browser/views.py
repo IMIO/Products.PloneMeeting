@@ -1104,6 +1104,11 @@ class BaseDGHV(object):
                                 show_item_grouped_attendee_type=True,
                                 custom_grouped_attendee_type_patterns={},
                                 adapt_for_videoconference=True,
+                                include_in=False,
+                                include_in_pattern=" (sauf {})",
+                                include_out=False,
+                                include_out_pattern=" ({})",
+                                include_in_out_absent_type=['absent', 'excused', 'non_attendee'],
                                 show_replaced_by=True,
                                 replaced_by_format={'M': u'{0}, <strong>remplacé par {1}</strong>',
                                                     'F': u'{0}, <strong>remplacée par {1}</strong>'},
@@ -1122,7 +1127,25 @@ class BaseDGHV(object):
         is_item = self.context.getTagName() == "MeetingItem"
 
         def _buildContactsValue(meeting, contacts):
-            """ """
+            """
+            Method: _buildContactsValue
+
+            Parameters:
+            - meeting: The meeting object.
+            - contacts: A list of contact objects.
+
+            Returns:
+            - grouped_contacts_value: A list of contact values with additional information.
+
+            Description:
+            This method takes a meeting object and a list of contact objects as input. It iterates over each contact
+            and builds their contact value based on various parameters provided. The contact value is then added to a
+            list of grouped contact values. The list of grouped contact values is returned as the output.
+
+            Note:
+            - The method is a nested function within the print_attendees_by_type method of the BaseDGHV class.
+            - The method does not have a return statement. The return statement shown is from the nested function's scope.
+            """
             grouped_contacts_value = []
             for contact in contacts:
                 forced_position_type_value = None
@@ -1146,6 +1169,27 @@ class BaseDGHV(object):
                             replaced[contact_uid],
                             include_held_position_label=include_replace_by_held_position_label,
                             include_sub_organizations=False))
+                absent_item_uids = []
+                if include_out or include_in:
+                    # Find the items for which contact_uid is considered absent according to
+                    # include_in_out_absent_type
+                    if 'absent' in include_in_out_absent_type:
+                        absent_item_uids += meeting.get_item_absents(by_persons=True).get(contact_uid, [])
+                    elif 'excused' in include_in_out_absent_type:
+                        absent_item_uids += meeting.get_item_excused(by_persons=True).get(contact_uid, [])
+                    elif 'non_attendee' in include_in_out_absent_type:
+                        absent_item_uids += meeting.get_item_non_attendees(by_persons=True).get(contact_uid, [])
+                if include_out:
+                    numbers = [item.getItemNumber(for_display=True)
+                               for item in meeting.get_items(ordered=True) if item.UID() in absent_item_uids]
+                    numbers = [int(number) if '.' not in number else float(number) for number in numbers]
+                    if len(numbers) > 0:
+                        contact_value += include_out_pattern.format(get_clusters(numbers))
+                if include_in and len(absent_item_uids) > 0:
+                    numbers = [item.getItemNumber(for_display=True)
+                               for item in meeting.get_items(ordered=True) if item.UID() not in absent_item_uids]
+                    numbers = [int(number) if '.' not in number else float(number) for number in numbers]
+                    contact_value += include_in_pattern.format(get_clusters(numbers))
                 if unbreakable_contact_value:
                     contact_value = contact_value.replace(" ", "&nbsp;")
                 grouped_contacts_value.append(contact_value)
@@ -1195,7 +1239,7 @@ class BaseDGHV(object):
                     else:
                         grouped_contacts_value = _buildContactsValue(meeting, contact_infos)
                         grouped_contacts_value = pos_attendee_separator.join(grouped_contacts_value) + \
-                            single_pos_attendee_ender
+                                                 single_pos_attendee_ender
                         every_contacts.extend(contact_infos)
                         sub_res.append(grouped_contacts_value)
                     if end_type_character and global_contact_infos.keys()[-1] == org:
@@ -1285,12 +1329,12 @@ class BaseDGHV(object):
             if ignore_non_attendees and contact_uid in item_non_attendees:
                 continue
             contact_attendee_type = contact_uid in item_non_attendees and 'item_non_attendee' or \
-                contact_uid in item_absents and 'item_absent' or \
-                contact_uid in item_excused and 'item_excused' or \
-                contact_uid in attendees and 'attendee' or \
-                contact_uid in excused and 'excused' or \
-                contact_uid in absents and 'absent' or \
-                contact_uid in replaced and 'replaced'
+                                    contact_uid in item_absents and 'item_absent' or \
+                                    contact_uid in item_excused and 'item_excused' or \
+                                    contact_uid in attendees and 'attendee' or \
+                                    contact_uid in excused and 'excused' or \
+                                    contact_uid in absents and 'absent' or \
+                                    contact_uid in replaced and 'replaced'
             if (contact_attendee_type == 'attendee' or contact_attendee_type in striked_attendee_types) and \
                     'attendee' in included_attendee_types:
                 if contact_attendee_type in striked_attendee_types:
@@ -1307,7 +1351,7 @@ class BaseDGHV(object):
             for contact in contacts:
                 # include organization to have same format when using by_parent_org or not
                 org = by_parent_org and contact.get_organization() or \
-                    self.portal.contacts.get(PLONEGROUP_ORG)
+                      self.portal.contacts.get(PLONEGROUP_ORG)
                 if org not in by_suborg_res:
                     by_suborg_res[org] = []
                 by_suborg_res[org].append(contact)
@@ -1341,6 +1385,7 @@ class BaseDGHV(object):
             res = _render_as_html(res,
                                   by_parent_org=by_parent_org,
                                   group_position_type=group_position_type)
+
         return res
 
     def sub_context(self, obj, sub_pod_template):

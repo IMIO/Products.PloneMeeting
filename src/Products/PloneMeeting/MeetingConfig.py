@@ -7251,6 +7251,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                   domain=d,
                                   context=self.REQUEST)))
 
+        # mail notifications regarding late items presented in a meeting
+        res.append(("late_item_presented_in_a_meeting__owner",
+                    translate("late_item_presented_in_a_meeting__creators",
+                              domain=d,
+                              context=self.REQUEST)))
+
+        res.append(("late_item_presented_in_a_meeting__creators",
+                    translate("late_item_presented_in_a_meeting__creators",
+                              domain=d,
+                              context=self.REQUEST)))
+
+        res.append(("late_item_presented_in_a_meeting__meetingmanagers",
+                    translate("late_item_presented_in_a_meeting__creators",
+                              domain=d,
+                              context=self.REQUEST)))
+
+        res.append(("late_item_presented_in_a_meeting__powerobservers",
+                    translate("late_item_presented_in_a_meeting__creators",
+                              domain=d,
+                              context=self.REQUEST)))
+
+
         # a notification can also be sent on every item transition
         # create a separated result (res_transitions) so we can easily sort it
         item_transitions = self.listTransitions('Item')
