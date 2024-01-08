@@ -2947,11 +2947,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         """Informations used to create DashboardCollections in the searches."""
         itemType = self.getItemTypeName()
         meetingType = self.getMeetingTypeName()
-        # compute states to use in the searchlivingitems collection
-        wfTool = api.portal.get_tool('portal_workflow')
-        itemWF = wfTool.getWorkflowsFor(itemType)[0]
-        livingItemStates = [state for state in itemWF.states
-                            if state not in self.getItemDecidedStates()]
         infos = OrderedDict(
             [
                 # My items
@@ -2994,12 +2989,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'active': True,
                     'query':
                     [
-                        {'i': 'portal_type',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': [itemType, ]},
-                        {'i': 'review_state',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': livingItemStates}
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'living-items'},
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
@@ -3685,7 +3677,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             'accepted_but_modified',
             'accepted_out_of_meeting',
             'accepted_out_of_meeting_emergency',
-            'delayed',
             'delayed',
             'marked_not_applicable',
             'postponed_next_meeting',

@@ -64,12 +64,18 @@ class Migrate_To_4211(Migrator):
         self.updatePODTemplatesCode(replacements)
         logger.info('Done.')
 
-    def _updateItemSearchesSortOn(self):
+    def _updateItemSearches(self):
         """Make sure every item related searches use sort_on=modified."""
         logger.info('Updating item searches sort_on...')
         for cfg in self.tool.objectValues('MeetingConfig'):
             for collection in cfg.searches.searches_items.objectValues():
                 collection.sort_on = u'modified'
+            livingitems = cfg.searches.searches_items.get('searchlivingitems')
+            if livingitems:
+                livingitems.query = [
+                    {'i': 'CompoundCriterion',
+                     'o': 'plone.app.querystring.operation.compound.is',
+                     'v': 'living-items'}]
         logger.info('Done.')
 
     def _updateForItemExportPDFAction(self):
@@ -96,7 +102,7 @@ class Migrate_To_4211(Migrator):
         self._migrateConfigHideHistoryTo()
         self._updateSearchCopyGroupsSearchesCondition()
         self._updateDataRelatedToToolPloneMeetingSimplification()
-        self._updateItemSearchesSortOn()
+        self._updateItemSearches()
         self._updateForItemExportPDFAction()
         # add text criterion on item title only
         self.updateFacetedFilters(xml_filename='upgrade_step_4211_add_item_widgets.xml')
@@ -110,8 +116,9 @@ def migrate(context):
        2) Update searchallcopygroups/searchunreaditemsincopy searches tal_condition;
        3) Update code regarding removal of methods that were available on portal_plonemeeting;
        4) Update related to new export PDF action on item;
-       5) Add c32 faceted criterion (search on item title only).
-       6) Update every item related searches to use sort_on=modified.
+       5) Add c32 faceted criterion (search on item title only);
+       6) Update every item related searches to use sort_on=modified and
+          the searchlivingitems to use the 'living-items' compound criterion adapter.
     '''
     migrator = Migrate_To_4211(context)
     migrator.run()

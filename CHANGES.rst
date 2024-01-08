@@ -146,6 +146,10 @@ Changelog
     and to hide meeting history to powerobservers.
 
   [gbastien]
+- Use `CompoundCriterion` adapter `living-items` for the `searchlivingitems`
+  Collection so selected states are always correct if item workflow
+  configuration changed.
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------

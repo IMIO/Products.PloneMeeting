@@ -193,12 +193,14 @@
            factory="Products.PloneMeeting.adapters.AdvisedItemsWithDelayAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="advised-items-with-delay" />
-
   <adapter for="*"
            factory="Products.PloneMeeting.adapters.DecidedItemsAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="decided-items" />
-
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.LivingItemsAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="living-items" />
   <adapter for="*"
            factory="Products.PloneMeeting.adapters.PersonalLabelsAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
