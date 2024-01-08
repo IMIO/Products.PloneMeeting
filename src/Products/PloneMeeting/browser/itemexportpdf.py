@@ -6,12 +6,10 @@
 from AccessControl import Unauthorized
 from imio.helpers.content import get_vocab
 from io import BytesIO
-from plone import api
 from plone.directives import form
 from Products.CMFPlone import PloneMessageFactory as PMF
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
-from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from PyPDF2 import PdfFileReader
 from PyPDF2 import PdfFileWriter
@@ -19,7 +17,6 @@ from z3c.form import button
 from z3c.form import field
 from z3c.form import form as z3c_form
 from zope import schema
-from zope.i18n import translate
 from zope.interface import provider
 from zope.schema._bootstrapinterfaces import IContextAwareDefaultFactory
 
@@ -115,8 +112,6 @@ class ItemExportPDFForm(z3c_form.Form):
 
     def _do_export_pdf(self, data):
         # pod templates
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
         view = self.context.restrictedTraverse('@@document-generation')
         generated_pod_templates = [view(template_uid=template_uid, output_format='pdf')
                                    for template_uid in data['pod_template_uids']]
@@ -151,8 +146,9 @@ class ItemExportPDFForm(z3c_form.Form):
 
     def render(self):
         if 'pdf_file_content' in self.request:
+            filename = "export_pdf_%s" % self.context.getId()
             self.request.response.setHeader('Content-Type', 'application/pdf')
-            self.request.response.setHeader('Content-disposition', 'attachment;filename=file.pdf')
+            self.request.response.setHeader('Content-disposition', 'attachment;filename=%s.pdf' % filename)
             pdf_file_content = self.request['pdf_file_content']
             pdf_file_content.seek(0)
             return pdf_file_content.read()
