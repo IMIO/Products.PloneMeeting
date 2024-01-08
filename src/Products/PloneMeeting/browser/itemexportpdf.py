@@ -53,11 +53,22 @@ class ItemExportPDFForm(z3c_form.Form):
         if errors:
             self.status = self.formErrorsMessage
             return
+        self._check_data(data)
         return self._do_export_pdf(data)
 
     def updateWidgets(self):
         super(ItemExportPDFForm, self).updateWidgets()
         self.widgets['elements'].sortable = True
+
+    def _check_data(self, data):
+        """Make sure elements are selectable.
+           As some values are disabled in the UI, a user could try
+           to surround this, raise Unauthorized in this case."""
+        selectable = [term.token for term in self.widgets['elements'].terms
+                      if not getattr(term, 'disabled', False)]
+        for elt_id in data['elements']:
+            if elt_id not in selectable:
+                raise Unauthorized
 
     def _do_export_pdf(self, data):
         # pod templates
