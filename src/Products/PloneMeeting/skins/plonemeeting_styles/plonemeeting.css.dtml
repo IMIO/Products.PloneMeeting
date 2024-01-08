@@ -2347,6 +2347,9 @@ div.pm_checkbox_widget span#form-widgets-annex_ids span.option {
    margin-top: 0.5em;
    margin-bottom: 0.5em;
 }
+div.pm_checkbox_widget span.option label {
+    display: inline;
+}
 
 /* hide the edit yellow pencil on person and held_position in the viewlet-above-content-title next to workflow_state */
 body.portaltype-person a.edit-person,
