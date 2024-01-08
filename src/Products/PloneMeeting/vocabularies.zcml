@@ -167,9 +167,7 @@
   <!-- Vocabularies used in item-export-pdf-form -->
   <utility component=".vocabularies.GenerablePODTemplatesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.generable_pdf_documents_vocabulary" />
-  <utility component=".vocabularies.ItemExportPDFContainedAnnexesVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.item_export_pdf_contained_annexes_vocabulary" />
-  <utility component=".vocabularies.ItemExportPDFContainedDecisionAnnexesVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.item_export_pdf_contained_decision_annexes_vocabulary" />
+  <utility component=".vocabularies.ItemExportPDFElementsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.item_export_pdf_elements_vocabulary" />
 
 </configure>
