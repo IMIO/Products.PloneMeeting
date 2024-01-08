@@ -1158,9 +1158,9 @@ class BaseDGHV(object):
                     # contact_uid is considered not present
                     if 'item_absent' in in_out_attendee_types:
                         not_present_item_uids += meeting.get_item_absents(by_persons=True).get(contact_uid, [])
-                    elif 'item_excused' in in_out_attendee_types:
+                    if 'item_excused' in in_out_attendee_types:
                         not_present_item_uids += meeting.get_item_excused(by_persons=True).get(contact_uid, [])
-                    elif 'non_attendee' in in_out_attendee_types:
+                    if 'non_attendee' in in_out_attendee_types:
                         not_present_item_uids += meeting.get_item_non_attendees(by_persons=True).get(contact_uid, [])
                 if include_out_count and len(not_present_item_uids) > 0:
                     catalog = api.portal.get_tool('portal_catalog')
