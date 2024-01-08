@@ -2876,7 +2876,6 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemDuplicateForm(self):
         """Test the @@item_duplicate_form"""
-        cfg = self.meetingConfig
         self._enable_action('duplication', enable=False)
         self.changeUser('pmCreator1')
         pm_folder = self.getMeetingFolder()
@@ -2966,7 +2965,6 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self._enable_action('export_pdf', enable=False)
         self.changeUser('pmCreator1')
-        pm_folder = self.getMeetingFolder()
         item = self.create('MeetingItem')
         annex = self.addAnnex(item, annexFile=self.annexFilePDF)
         annex_dec = self.addAnnex(item, relatedTo='item_decision', annexFile=self.annexFilePDF)
@@ -2979,9 +2977,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self._enable_action('export_pdf')
         template = cfg.podtemplates.itemTemplate
         template.pod_formats = ['pdf']
-        self.request['form.widgets.pod_template_uids'] = [template.UID()]
-        self.request['form.widgets.annex_ids'] = [annex.getId()]
-        self.request['form.widgets.annex_decision_ids'] = [annex_dec.getId()]
+        self.request['form.widgets.elements'] = [template.UID(), annex.getId(), annex_dec.getId()]
         form.update()
         res = form.handleApply(form, None)
         # this generated a 3 pages PDF, 1 page per element
