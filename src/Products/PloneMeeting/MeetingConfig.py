@@ -122,6 +122,8 @@ from Products.PloneMeeting.utils import get_datagridfield_column_value
 from Products.PloneMeeting.utils import get_dx_attrs
 from Products.PloneMeeting.utils import get_dx_schema
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
+from Products.PloneMeeting.utils import getAdvicePortalTypes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import listifySignatures
@@ -1043,16 +1045,17 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
-        name='enableItemDuplication',
-        default=defValues.enableItemDuplication,
-        widget=BooleanField._properties['widget'](
-            description="EnableItemDuplication",
-            description_msgid="enable_item_duplication_descr",
-            label='enableitemduplication',
-            label_msgid='PloneMeeting_label_enableItemDuplication',
+    LinesField(
+        name='enabledItemActions',
+        default=defValues.enabledItemActions,
+        widget=MultiSelectionWidget(
+            format="checkbox",
+            label='enableditemactions',
+            label_msgid='PloneMeeting_label_enabledItemActions',
             i18n_domain='PloneMeeting',
         ),
+        enforceVocabulary=True,
+        vocabulary_factory='EnabledItemActions',
         schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -2898,6 +2901,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      # then define added item decided states
                      'accepted_but_modified',
                      'postpone_next_meeting',
+                     'postpone_next_meeting_keep_internal_number',
+                     'postpone_next_meeting_transfer_annex_scan_id',
                      'mark_not_applicable',
                      'removed',
                      'removed_and_duplicated',
@@ -2941,11 +2946,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         """Informations used to create DashboardCollections in the searches."""
         itemType = self.getItemTypeName()
         meetingType = self.getMeetingTypeName()
-        # compute states to use in the searchlivingitems collection
-        wfTool = api.portal.get_tool('portal_workflow')
-        itemWF = wfTool.getWorkflowsFor(itemType)[0]
-        livingItemStates = [state for state in itemWF.states
-                            if state not in self.getItemDecidedStates()]
         infos = OrderedDict(
             [
                 # My items
@@ -2988,12 +2988,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'active': True,
                     'query':
                     [
-                        {'i': 'portal_type',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': [itemType, ]},
-                        {'i': 'review_state',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': livingItemStates}
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'living-items'},
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
@@ -3048,7 +3045,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: 'copyGroups' in cfg.getUsedItemAttributes() and tool.userIsAmong(['observers', 'reviewers'])",
+                    'tal_condition':
+                        "python: 'copyGroups' in cfg.getUsedItemAttributes() and "
+                        "tool.userIsAmong(['observers', 'reviewers'])",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Unread items in copy
@@ -3680,7 +3679,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             'accepted_out_of_meeting',
             'accepted_out_of_meeting_emergency',
             'delayed',
-            'delayed',
             'marked_not_applicable',
             'postponed_next_meeting',
             'refused',
@@ -3848,10 +3846,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listAdvicePortalTypes(self):
         """Vocabulary for the MeetingConfig.defaultAdviceHiddenDuringRedaction field."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        advice_portal_types = tool.getAdvicePortalTypes()
-        res = [(portal_type.id, portal_type.title) for portal_type in advice_portal_types]
-        return DisplayList(res)
+        return DisplayList([(portal_type.id, portal_type.title)
+                            for portal_type in getAdvicePortalTypes()])
 
     security.declarePrivate('listSelectableContacts')
 
@@ -5504,6 +5500,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate("labels_column", domain=d, context=self.REQUEST))),
             ("static_item_reference", u"{0} (static_item_reference)".format(
                 translate("item_reference_column", domain=d, context=self.REQUEST))),
+            ("static_meetingDeadlineDate", u"{0} (static_meetingDeadlineDate)".format(
+                translate("static_item_meeting_deadline_date", domain=d, context=self.REQUEST))),
             ("static_marginalNotes", u"{0} (static_marginalNotes)".format(
                 translate("marginal_notes_column", domain=d, context=self.REQUEST))),
             ("static_budget_infos", u"{0} (static_budget_infos)".format(
@@ -5518,14 +5516,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate('header_review_state', domain=d, context=self.REQUEST))),
             ("review_state_title", u"{0} (review_state_title)".format(
                 translate('header_review_state_title_descr', domain=d, context=self.REQUEST))),
-            ("getCategory", u"{0} (getCategory)".format(
-                translate("header_getCategory", domain=d, context=self.REQUEST))),
-            ("getRawClassifier", u"{0} (getRawClassifier)".format(
-                translate("header_getRawClassifier", domain=d, context=self.REQUEST))),
             ("getProposingGroup", u"{0} (getProposingGroup)".format(
                 translate("header_getProposingGroup", domain=d, context=self.REQUEST))),
             ("proposing_group_acronym", u"{0} (proposing_group_acronym)".format(
                 translate("header_proposing_group_acronym", domain=d, context=self.REQUEST))),
+            ("getCategory", u"{0} (getCategory)".format(
+                translate("header_getCategory", domain=d, context=self.REQUEST))),
+            ("getRawClassifier", u"{0} (getRawClassifier)".format(
+                translate("header_getRawClassifier", domain=d, context=self.REQUEST))),
             ("getAssociatedGroups", u"{0} (getAssociatedGroups)".format(
                 translate("header_getAssociatedGroups", domain=d, context=self.REQUEST))),
             ("associated_groups_acronym", u"{0} (associated_groups_acronym)".format(
@@ -5550,6 +5548,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate('header_getItemIsSigned', domain=d, context=self.REQUEST))),
             ("toDiscuss", u"{0} (toDiscuss)".format(
                 translate('header_toDiscuss', domain=d, context=self.REQUEST))),
+            ("item_meeting_deadline_date", u"{0} (meetingDeadlineDate)".format(
+                translate('header_item_meeting_deadline_date', domain=d, context=self.REQUEST))),
             ("actions", u"{0} (actions)".format(
                 translate("header_actions", domain=d, context=self.REQUEST))),
             ("async_actions", u"{0} (async_actions)".format(
@@ -5571,9 +5571,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             translate('header_preferred_meeting_date',
                       domain='collective.eeafaceted.z3ctable',
                       context=self.REQUEST))))
-        # remove item_reference and review_state
-        res = [v for v in res if v[0] not in
-               ('static_item_reference', 'review_state', 'review_state_title')]
+        # remove review_state columns as items will always be "validated"
+        res = [v for v in res if v[0] not in ('review_state', 'review_state_title')]
         return DisplayList(tuple(res))
 
     security.declarePrivate('listItemsListVisibleColumns')
@@ -5602,9 +5601,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemsVisibleFields(self):
         '''Vocabulary for the 'itemsVisibleFields' field.
            Every fields available on the MeetingItem can be selectable.'''
-        res = self._listFieldsFor(MeetingItem,
-                                  ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
-                                  hide_not_visible=True)
+        # insert some static selectable values, ignore static that are also in _listFieldsFor
+        res = [(k, v) for k, v in self.listItemRelatedColumns()
+               if k.startswith('static_') and k not in ('static_marginalNotes', 'static_budget_infos')]
+        res += self._listFieldsFor(MeetingItem,
+                                   ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
+                                   hide_not_visible=True)
         res.insert(0, ('MeetingItem.annexes',
                        translate('existing_annexes',
                                  domain='PloneMeeting',
@@ -5618,9 +5620,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemsNotViewableVisibleFields(self):
         '''Vocabulary for the 'itemsNotViewableVisibleFields' field.
            Every fields available on the MeetingItem can be selectable.'''
-        res = self._listFieldsFor(MeetingItem,
-                                  ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
-                                  hide_not_visible=True)
+        # insert some static selectable values, ignore static that are also in _listFieldsFor
+        res = [(k, v) for k, v in self.listItemRelatedColumns()
+               if k.startswith('static_') and k not in ('static_marginalNotes', 'static_budget_infos')]
+        res += self._listFieldsFor(MeetingItem,
+                                   ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
+                                   hide_not_visible=True)
         res.insert(0, ('MeetingItem.annexes',
                        translate('not_confidential_annexes',
                                  domain='PloneMeeting',
@@ -5782,7 +5787,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("positive_with_remarks", translate('positive_with_remarks', domain=d, context=self.REQUEST)),
             ("cautious", translate('cautious', domain=d, context=self.REQUEST)),
             ("negative", translate('negative', domain=d, context=self.REQUEST)),
+            ("negative_with_remarks", translate('negative_with_remarks', domain=d, context=self.REQUEST)),
+            ("back_to_proposing_group", translate('back_to_proposing_group', domain=d, context=self.REQUEST)),
             ("nil", translate('nil', domain=d, context=self.REQUEST)),
+            ("read", translate('read', domain=d, context=self.REQUEST)),
         ]
         # add custom extra advice types
         for extra_advice_type in self.adapted().extraAdviceTypes():
@@ -6282,7 +6290,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _updatePortalTypes(self):
         '''Reupdates the portal_types in this meeting config.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
         typesTool = api.portal.get_tool('portal_types')
         props = api.portal.get_tool('portal_properties').site_properties
         wfTool = api.portal.get_tool('portal_workflow')
@@ -6346,7 +6353,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             portalType.allowed_content_types = basePortalType.allowed_content_types
             # for MeetingItem, make sure every 'meetingadvice' portal_types are in allowed_types
             if basePortalType.id == 'MeetingItem':
-                advice_portal_types = tool.getAdvicePortalTypeIds()
+                advice_portal_types = getAdvicePortalTypeIds()
                 allowed = tuple(set(portalType.allowed_content_types + tuple(advice_portal_types)))
                 portalType.allowed_content_types = allowed
             # Meeting is DX
@@ -7171,9 +7178,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("itemDelayedOwner", translate('event_item_delayed_owner',
                                            domain=d,
                                            context=self.REQUEST)),
-            ("itemPostponedNextMeeting", translate('event_item_postponed_next_meeting',
-                                                   domain=d,
-                                                   context=self.REQUEST)),
+            ("itemPostponedNextMeeting",
+             translate('event_item_postponed_next_meeting',
+                       domain=d,
+                       context=self.REQUEST)),
+            ("itemPostponedNextMeetingOwner",
+             translate('event_item_postponed_next_meeting_owner',
+                       domain=d,
+                       context=self.REQUEST)),
             ("annexAdded", translate('event_add_annex',
                                      domain=d,
                                      context=self.REQUEST)),
@@ -7587,7 +7599,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         portal_types = []
         portal_types.append(self.getItemTypeName())
         portal_types.append(self.getMeetingTypeName())
-        portal_types += tool.getAdvicePortalTypeIds()
+        portal_types += getAdvicePortalTypeIds()
         self._updateAnnexConfidentiality(portal_types=portal_types)
 
         api.portal.show_message('Done.', request=self.REQUEST)

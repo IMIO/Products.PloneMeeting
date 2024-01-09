@@ -8,6 +8,7 @@ from App.class_init import InitializeClass
 from appy.gen import No
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collections import OrderedDict
+from collective.behavior.internalnumber.browser.settings import _internal_number_is_used
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
@@ -21,8 +22,10 @@ from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.catalog import reindex_object
+from imio.helpers.content import get_user_fullname
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
+from imio.helpers.content import object_values
 from imio.helpers.content import safe_delattr
 from imio.helpers.content import safe_encode
 from imio.helpers.content import uuidsToObjects
@@ -32,6 +35,7 @@ from imio.helpers.security import fplog
 from imio.helpers.workflow import do_transitions
 from imio.helpers.workflow import get_transitions
 from imio.helpers.xhtml import is_html
+from imio.history.utils import add_event_to_wf_history
 from imio.history.utils import get_all_history_attr
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
@@ -43,6 +47,7 @@ from plone import api
 from plone.memoize import ram
 from Products.Archetypes.atapi import BaseFolder
 from Products.Archetypes.atapi import BooleanField
+from Products.Archetypes.atapi import DateTimeField
 from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.atapi import IntegerField
 from Products.Archetypes.atapi import LinesField
@@ -112,7 +117,6 @@ from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _clear_local_roles
 from Products.PloneMeeting.utils import _get_category
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
-from Products.PloneMeeting.utils import add_wf_history_action
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
 from Products.PloneMeeting.utils import checkMayQuickEdit
@@ -123,6 +127,7 @@ from Products.PloneMeeting.utils import down_or_up_wf
 from Products.PloneMeeting.utils import escape
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
+from Products.PloneMeeting.utils import get_internal_number
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -130,6 +135,7 @@ from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import is_editing
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import ItemDuplicatedEvent
 from Products.PloneMeeting.utils import ItemDuplicatedToOtherMCEvent
 from Products.PloneMeeting.utils import ItemLocalRolesUpdatedEvent
@@ -140,6 +146,7 @@ from Products.PloneMeeting.utils import rememberPreviousData
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import set_field_from_ajax
+from Products.PloneMeeting.utils import set_internal_number
 from Products.PloneMeeting.utils import transformAllRichTextFields
 from Products.PloneMeeting.utils import translate_list
 from Products.PloneMeeting.utils import updateAnnexesAccess
@@ -942,16 +949,29 @@ class MeetingItemWorkflowActions(object):
                                keepProposingGroup=True,
                                setCurrentAsPredecessor=True)
 
-    def _duplicateAndValidate(self, cloneEventAction):
+    def _duplicateAndValidate(self,
+                              cloneEventAction,
+                              keep_internal_number=False,
+                              transfertAnnexWithScanIdTypes=[]):
         """Duplicate and keep link self.context and validate the new item."""
         creator = self.context.Creator()
         # We create a copy in the initial item state, in the folder of creator.
-        clonedItem = self.context.clone(copyAnnexes=True,
-                                        newOwnerId=creator,
-                                        cloneEventAction=cloneEventAction,
-                                        keepProposingGroup=True,
-                                        setCurrentAsPredecessor=True,
-                                        inheritAdvices=True)
+        clonedItem = self.context.clone(
+            copyAnnexes=True,
+            newOwnerId=creator,
+            cloneEventAction=cloneEventAction,
+            keepProposingGroup=True,
+            setCurrentAsPredecessor=True,
+            inheritAdvices=True,
+            transfertAnnexWithScanIdTypes=transfertAnnexWithScanIdTypes)
+        # keep internal_number if relevant
+        if keep_internal_number and _internal_number_is_used(clonedItem):
+            set_internal_number(
+                clonedItem,
+                get_internal_number(self.context),
+                update_ref=True,
+                decrement=True)
+
         # set clonedItem to state 'validated'
         wfTool = api.portal.get_tool('portal_workflow')
         wf_comment = _('wf_transition_triggered_by_application')
@@ -975,9 +995,33 @@ class MeetingItemWorkflowActions(object):
     def doPostpone_next_meeting(self, stateChange):
         '''When an item is 'postponed_next_meeting', we will duplicate it:
            the copy is automatically validated and will be linked to this one.'''
-        clonedItem = self._duplicateAndValidate(cloneEventAction='create_from_postponed_next_meeting')
+        # check if need to keep internal_number
+        keep_internal_number = False
+        if "postpone_next_meeting_keep_internal_number" in self.cfg.getWorkflowAdaptations():
+            keep_internal_number = True
+
+        # check if need to transfert annex scan_id
+        transfertAnnexWithScanIdTypes = []
+        if "postpone_next_meeting_transfer_annex_scan_id" in self.cfg.getWorkflowAdaptations():
+            transfertAnnexWithScanIdTypes.append('annex')
+
+        clonedItem = self._duplicateAndValidate(
+            cloneEventAction='create_from_postponed_next_meeting',
+            keep_internal_number=keep_internal_number,
+            transfertAnnexWithScanIdTypes=transfertAnnexWithScanIdTypes)
         # Send, if configured, a mail to the person who created the item
-        sendMailIfRelevant(clonedItem, 'itemPostponedNextMeeting', 'creators', isSuffix=True)
+        sendMailIfRelevant(
+            self.context,
+            'itemPostponedNextMeeting',
+            'creators',
+            mapping={'clonedItemUrl': clonedItem.absolute_url()},
+            isSuffix=True)
+        sendMailIfRelevant(
+            self.context,
+            'itemPostponedNextMeetingOwner',
+            'Owner',
+            mapping={'clonedItemUrl': clonedItem.absolute_url()},
+            isRole=True)
 
     security.declarePrivate('doDelay')
 
@@ -992,8 +1036,18 @@ class MeetingItemWorkflowActions(object):
                                         keepProposingGroup=True,
                                         setCurrentAsPredecessor=True)
         # Send, if configured, a mail to the person who created the item
-        sendMailIfRelevant(clonedItem, 'itemDelayed', 'creators', isSuffix=True)
-        sendMailIfRelevant(clonedItem, 'itemDelayedOwner', 'Owner', isRole=True)
+        sendMailIfRelevant(
+            self.context,
+            'itemDelayed',
+            'creators',
+            mapping={'clonedItemUrl': clonedItem.absolute_url()},
+            isSuffix=True)
+        sendMailIfRelevant(
+            self.context,
+            'itemDelayedOwner',
+            'Owner',
+            mapping={'clonedItemUrl': clonedItem.absolute_url()},
+            isRole=True)
 
     def _get_item_states_removed_from_meeting(self):
         '''Return item states in which an item is considered removed from a meeting.
@@ -1020,9 +1074,9 @@ class MeetingItemWorkflowActions(object):
             sendMailIfRelevant(self.context, 'itemUnpresentedOwner', 'Owner', isRole=True)
             # remove the item from the meeting
             self.context.getMeeting().remove_item(self.context)
-        # back to validated from "accepted_out_of_meeting"
+        # recompute when back to validated, this could be coming from a "accepted_out_of_meeting" like state
         if stateChange.new_state.id == "validated" and self.context.getItemReference():
-            self.context.update_item_reference(clear=True)
+            self.context.update_item_reference()
         # if an item was returned to proposing group for corrections and that
         # this proposing group sends the item back to the meeting managers, we
         # send an email to warn the MeetingManagers if relevant
@@ -1302,6 +1356,18 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         vocabulary='listMeetingsAcceptingItems',
+    ),
+    DateTimeField(
+        name='meetingDeadlineDate',
+        widget=DateTimeField._properties['widget'](
+            condition="python: here.attribute_is_used('meetingDeadlineDate') and not here.isDefinedInTool()",
+            description="MeetingDeadlineDate",
+            description_msgid="meeting_deadline_date_descr",
+            label='Meetingdeadlinedate',
+            label_msgid='PloneMeeting_label_meetingDeadlineDate',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
     ),
     LinesField(
         name='itemTags',
@@ -2557,7 +2623,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             cfg = tool.getMeetingConfig(item)
             res = tool.isManager(cfg)
             if not res:
-                res = tool.isPowerObserverForCfg(cfg) or item.is_decided(cfg)
+                res = isPowerObserverForCfg(cfg) or item.is_decided(cfg)
         return res
 
     security.declarePublic('showIsAcceptableOutOfMeeting')
@@ -3453,15 +3519,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def displayLinkedItem(self, item):
         '''Return a HTML structure to display a linked item.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        meeting = item.hasMeeting()
         # display the meeting date if the item is linked to a meeting
-        if meeting:
-            title = item.Title(withMeetingDate=True)
-            return tool.getColoredLink(item,
-                                       showColors=True,
-                                       showContentIcon=True,
-                                       contentValue=title)
+        if item.hasMeeting():
+            return item.getPrettyLink(contentValue=item.Title(withMeetingDate=True))
         else:
             # try to share cache of getPrettyLink
             return item.getPrettyLink()
@@ -3596,11 +3656,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # check if current user is a power observer in MeetingConfig.restrictAccessToSecretItemsTo
         restricted_power_obs = cfg.getRestrictAccessToSecretItemsTo()
         if restricted_power_obs and \
-           tool.isPowerObserverForCfg(cfg, power_observer_types=restricted_power_obs):
+           isPowerObserverForCfg(cfg, power_observer_types=restricted_power_obs):
             return False
 
         # a power observer not in restrictAccessToSecretItemsTo?
-        if tool.isPowerObserverForCfg(cfg):
+        if isPowerObserverForCfg(cfg):
             return True
 
     def isViewable(self):
@@ -4541,17 +4601,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         elif len(item_votes) - 1 >= vote_number:
             votes.append(item_votes[vote_number])
 
+        # include_unexisting
         # secret votes
-        if self.get_vote_is_secret(vote_number):
-            if include_unexisting and not votes:
-                votes = self._build_unexisting_vote(True, vote_number, poll_type)
-        # public votes
-        else:
-            # add an empty vote in case nothing in itemVotes
-            # this is useful when no votes encoded, new voters selected, ...
-            if include_unexisting:
-                # first or not existing
-                if not votes:
+        if poll_type != 'no_vote':
+            if self.get_vote_is_secret(vote_number):
+                if include_unexisting and not votes:
+                    votes = self._build_unexisting_vote(True, vote_number, poll_type)
+            # public votes
+            else:
+                # add an empty vote in case nothing in itemVotes
+                # this is useful when no votes encoded, new voters selected, ...
+                if include_unexisting and not votes:
                     votes = self._build_unexisting_vote(False, vote_number, poll_type)
 
         i = 0 if vote_number == 'all' else vote_number
@@ -4686,9 +4746,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res['attendee_again_after'] = attendee_again_after
         return res
 
-    security.declarePublic('mustShowItemReference')
+    security.declarePublic('show_item_reference')
 
-    def mustShowItemReference(self):
+    def show_item_reference(self):
         '''See doc in interfaces.py'''
         res = False
         item = self.getSelf()
@@ -4899,8 +4959,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             decision = ' '.join(decision)
             res = normalize(safe_unicode(decision))
         elif insertMethod == 'on_item_creator':
-            creator_fullname = safe_unicode(tool.getUserName(self.Creator()))
-            res = normalize(creator_fullname)
+            res = normalize(get_user_fullname(self.Creator()))
         else:
             res = self.adapted()._findCustomOrderFor(insertMethod)
         return res
@@ -5490,13 +5549,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getAdvices(self):
         '''Returns a list of contained meetingadvice objects.'''
-        res = []
-        tool = api.portal.get_tool('portal_plonemeeting')
-        advicePortalTypeIds = tool.getAdvicePortalTypeIds()
-        for obj in self.objectValues('Dexterity Container'):
-            if obj.portal_type in advicePortalTypeIds:
-                res.append(obj)
-        return res
+        return object_values(self, 'MeetingAdvice')
 
     def _doClearDayFrom(self, date):
         '''Change the given p_date (that is a datetime instance)
@@ -5607,7 +5660,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = {}
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        is_confidential_power_observer = tool.isPowerObserverForCfg(
+        is_confidential_power_observer = isPowerObserverForCfg(
             cfg, cfg.getAdviceConfidentialFor())
         for groupId, adviceInfo in self.adviceIndex.iteritems():
             if not include_not_asked and adviceInfo['not_asked']:
@@ -5865,10 +5918,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              context=self.REQUEST)
         for userid in userids:
             rendered_users.append(
-                userid_pattern.format(
-                    escape(help_msg),
-                    portal_url,
-                    safe_unicode(tool.getUserName(userid))))
+                userid_pattern.format(escape(help_msg),
+                                      portal_url,
+                                      get_user_fullname(userid)))
         res = u", ".join(rendered_users)
         return res
 
@@ -5883,6 +5935,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         def _get_adviser_name(adviser):
             """Manage adviser name, will append selected __userid__ if any."""
             name = html.escape(adviser['name'])
+            if adviser['delay_label']:
+                name += u" - {0} ({1})".format(
+                    safe_unicode(html.escape(adviser['delay_label'])),
+                    safe_unicode(adviser['delay']))
             if adviser['userids']:
                 name += u" ({0})".format(
                     self._displayAdviserUsers(adviser['userids'], portal_url, tool))
@@ -6036,7 +6092,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             data[advId]['creator_fullname'] = None
             if given_advice:
                 creator_id = given_advice.Creator()
-                creator_fullname = tool.getUserName(creator_id)
+                creator_fullname = get_user_fullname(creator_id)
                 data[advId]['creator_id'] = creator_id
                 data[advId]['creator_fullname'] = creator_fullname
 
@@ -6721,13 +6777,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                      domain="PloneMeeting",
                                      context=self.REQUEST)
             else:
-                help_msg = translate('This optional advice was asked by the item creators '
-                                     '(shown by his title being between brackets)',
+                help_msg = translate('This optional advice was asked by the item creators',
                                      domain="PloneMeeting",
                                      context=self.REQUEST)
         else:
-            help_msg = translate('This automatic advice has been asked by the application '
-                                 '(shown by his title not being between brackets)',
+            help_msg = translate('This automatic advice has been asked by the application',
                                  domain="PloneMeeting",
                                  context=self.REQUEST)
             # an additional help message can be provided for automatically asked advices
@@ -7224,7 +7278,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('showDuplicateItemAction')
 
     def showDuplicateItemAction(self):
-        '''Condition for displaying the 'duplicate' action in the interface.
+        '''Condition for displaying the 'Duplicate' action in the interface.
            Returns True if the user can duplicate the item.'''
         # Conditions for being able to see the "duplicate an item" action:
         # - the functionnality is enabled in MeetingConfig;
@@ -7234,12 +7288,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # The user will duplicate the item in his own folder.
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        if not cfg.getEnableItemDuplication() or \
+        if 'duplication' not in cfg.getEnabledItemActions() or \
            self.isDefinedInTool() or \
            not tool.userIsAmong(['creators'], cfg=cfg) or \
            not self.adapted().isPrivacyViewable():
             return False
         return True
+
+    security.declarePublic('show_export_pdf_action')
+
+    def show_export_pdf_action(self):
+        '''Condition for displaying the 'Export pdf' action in the interface.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        return 'export_pdf' in cfg.getEnabledItemActions()
 
     def _mayClone(self, cloneEventAction=None):
         """ """
@@ -7263,7 +7325,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
               copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None, keepProposingGroup=False,
               setCurrentAsPredecessor=False, manualLinkToPredecessor=False,
               inheritAdvices=False, inheritedAdviceUids=[], keep_ftw_labels=False,
-              keptAnnexIds=[], keptDecisionAnnexIds=[], item_attrs={}, reindexNewItem=True):
+              keptAnnexIds=[], keptDecisionAnnexIds=[], item_attrs={}, reindexNewItem=True,
+              transfertAnnexWithScanIdTypes=[]):
         '''Clones me in the PloneMeetingFolder of the current user, or
            p_newOwnerId if given (this guy will also become owner of this
            item). If there is a p_cloneEventAction, an event will be included
@@ -7284,7 +7347,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            When p_copyAnnexes=True, we may give a p_keptAnnexIds, if so, only annexes
            with those ids are kept, if not, every annexes are kept.
            Same for p_copyDecisionAnnexes/p_keptDecisionAnnexIds.
-           The given p_item_attrs will be arbitrary set on new item before it is reindexed.'''
+           The given p_item_attrs will be arbitrary set on new item before it is reindexed.
+           If some annex portal_types are given in transfertAnnexWithScanIdTypes, then
+           annexes of this portal_type that have a scan_id will be kept and the scan_id
+           is transfered from original annex to new annex.'''
 
         # check if may clone
         self._mayClone(cloneEventAction)
@@ -7331,7 +7397,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                  keepProposingGroup=keepProposingGroup,
                                  keep_ftw_labels=keep_ftw_labels,
                                  keptAnnexIds=keptAnnexIds,
-                                 keptDecisionAnnexIds=keptDecisionAnnexIds)
+                                 keptDecisionAnnexIds=keptDecisionAnnexIds,
+                                 transfertAnnexWithScanIdTypes=transfertAnnexWithScanIdTypes)
         self.portal_type = original_portal_type
 
         # special handling for some fields kept when cloned_to_same_mc
@@ -7384,10 +7451,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # because it was cleaned by ToolPloneMeeting.pasteItem
             # use cloneEventActionLabel or generate a msgid based on cloneEventAction
             action_label = cloneEventActionLabel or cloneEventAction + '_comments'
-            add_wf_history_action(newItem,
-                                  action_name=cloneEventAction,
-                                  action_label=action_label,
-                                  user_id=userId)
+            add_event_to_wf_history(newItem,
+                                    action=cloneEventAction,
+                                    actor=userId,
+                                    comments=action_label)
 
         newItem.at_post_create_script(inheritedAdviserUids=inheritedAdviserUids)
 
@@ -7619,14 +7686,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # it was sent to another meetingConfig.  The 'new item' already have
         # a line added to his workflow_history.
         # add a line to the original item history
-        action_label = translate(
+        comments = translate(
             'sentto_othermeetingconfig',
             domain="PloneMeeting",
             context=self.REQUEST,
             mapping={'meetingConfigTitle': safe_unicode(destMeetingConfig.Title())})
-        action_name = destMeetingConfig._getCloneToOtherMCActionTitle(destMeetingConfig.Title())
+        action = destMeetingConfig._getCloneToOtherMCActionTitle(destMeetingConfig.Title())
         # add an event to the workflow history
-        add_wf_history_action(self, action_name=action_name, action_label=action_label)
+        add_event_to_wf_history(self, action=action, comments=comments)
 
         # Send an email to the user being able to modify the new item if relevant
         mapping = {'originMeetingConfigTitle': safe_unicode(cfg.Title()), }
@@ -7816,7 +7883,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         hideNotViewableLinkedItemsTo = cfg.getHideNotViewableLinkedItemsTo()
         if hideNotViewableLinkedItemsTo and \
-           tool.isPowerObserverForCfg(cfg, power_observer_types=hideNotViewableLinkedItemsTo) and \
+           isPowerObserverForCfg(cfg, power_observer_types=hideNotViewableLinkedItemsTo) and \
            not _checkPermission(View, item):
             return False
         return True

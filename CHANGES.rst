@@ -2,7 +2,188 @@ Changelog
 =========
 
 
-4.2.5 (unreleased)
+4.2.9 (unreleased)
+------------------
+
+- Display last transition actor and comment in item mail notifications for mail events:
+
+  - `lateItem`;
+  - `itemUnpresented`;
+  - `itemDelayed`;
+  - `itemPostponedNextMeeting`;
+  - `returnedToProposingGroup`;
+  - `returnedToMeetingManagers`.
+
+  Added new item mail event `itemPostponedNextMeetingOwner`
+  (in addition to `itemPostponedNextMeeting`).
+  [gbastien]
+- Fixed `ItemOptionalAdvicesVocabulary` caching to take into account delay aware
+  advisers in cachekey as it is computed and depends on context.
+  Fixed also a bug when some `__userid__` selected values were no more in the
+  vocabulary with other values still in the vocabulary.
+  [gbastien]
+- Fixed `PMCategorizedChildView.__call___`, if no categorized elements,
+  do not return just [] but the parameter `show_nothing` value,
+  as it is rendered differently if True or False.
+  [gbastien]
+- Make `MeetingItem.meetingDeadlineDate` displayable in dashboards as static info
+  (always visible in the item `Title` column).
+  [gbastien]
+- Static info `Item reference` is now selectable in the
+  `MeetingConfig.availableItemsListVisibleColumns` as item reference may now be
+  set before item is inserted into a meeting.
+  [gbastien]
+- Added `static_labels` and `static_item_reference` to the selectable values for
+  `MeetingConfig.itemsVisibleFields` and `MeetingConfig.itemsNotViewableVisibleFields`.
+  [gbastien]
+- Added complementary WFAdaptation `postpone_next_meeting_keep_internal_number`
+  that will keep the `MeetingItem.internal_number` when `postpone_next_meeting`
+  an item as the new item is somewhat the same presented again in another meeting.
+  [gbastien]
+- Added complementary WFAdaptation `postpone_next_meeting_transfer_annex_scan_id`
+  that will keep the annexes with a `scan_id` but transfer this `scan_id` from
+  original annexes (where `scan_id` is set to None) to new annexes.
+  [gbastien]
+- Added `advice_hide_during_redaction_history` to store
+  `advice.advice_hide_during_redaction` changes by user.
+  [gbastien]
+- Simplified `ToolPloneMeeting` to be able to move it to a registry adapter as
+  light as possible, so remove most functionnalities from it:
+
+  - Moved `ToolPloneMeeting.showMeetingView` to `MeetingFacetedView.show_page`
+    as it is only used there;
+  - Removed `TooPloneMeeting.getColoredLink`, use `MeetingItem.getPrettyLink`;
+  - Moved `ToolPloneMeeting.getMailRecipient` to utils;
+  - Moved `ToolPloneMeeting.getAdvicePortalTypes` and
+    `ToolPloneMeeting.getAdvicePortalTypeIds` to utils;
+  - Moved `ToolPloneMeeting.getAvailableMailingLists` to utils;
+  - Removed no more used `versions_history_form.pt`;
+  - Moved `ToolPloneMeeting.isPowerObserverForCfg` to
+  `utils.isPowerObserverForCfg`;
+  - Replaced `ToolPloneMeeting.getUserName` by
+  `imio.helpers.content.get_user_fullname` everywhere it was used.
+
+  [gbastien]
+- Adapted `DisplayMeetingItemVoters` helper view on meeting to display items
+  with `No vote` separately than items with `public` and `secret` votes and to
+  not display it in non voted items anymore.
+  [gbastien]
+- Added faceted filter criterion `Item title only` to query items on
+  items's title only using the `Title` index.
+  [gbastien]
+- When using `MeetingConfig.computeItemReferenceForItemsOutOfMeeting`, do not clear
+  item reference when meeting back to `created` or when item back to `validated`.
+  Renamed `MeetingItem.mustShowItemReference` to `MeetingItem.show_item_reference`.
+  [gbastien]
+- In dashboards displaying items, display `Proposing group` before `Category`
+  and `Classifier`.
+  [gbastien]
+- Fixed update `categorized_elements` of advices when advice moved as
+  stored path changed.
+  [gbastien]
+- Make sure every item related searches (Collection) use `sort_on` modified
+  as this is not visible in the application because faceted `sort_on` overrides
+  it but it is now taken into account when using restapi with a `base_search_uid`.
+  [gbastien]
+- Added `Export PDF` action on item to be able to export in a single PDF file
+  several selected PDF generated POD templates and PDF annexes.
+  [gbastien]
+- Fixed CSS of advice popup label when very long.
+  [gbastien]
+- When `copyGroups` have access to item, highlight full `Copy groups` label in green.
+  [gbastien]
+- Use `CompoundCriterion` adapter `living-items` for the `searchlivingitems`
+  Collection so selected states are always correct if item workflow
+  configuration changed.
+  [gbastien]
+- When advice is `asked_again` display left delay correctly, full delay is displayed
+  when advice is supposed given, but when is it `asked_again` it is not the case.
+  [gbastien]
+- Added `sortable` functionnality to the `PMCheckBoxWidget`, use it in the item
+  `Export PDF` form to be able to reorder exported elements.
+  [gbastien]
+- Mail notifications `adviceEdited` and `adviceEditedOwner` are no more sent
+  if advice is hidden during redaction.
+  [gbastien]
+- Fixed `AdvicesIcons.get_advice_given_by` to only return a value when using
+  custom WF (more than one initial state) and if WF reached it's final state.
+  [gbastien]
+- Fixed `MeetingConfig.listTransitionsUntilPresented` that was raising
+  `UnicodeDecodeError` now that we use unicode arrow in term title.
+  Use unicode arrow in `utils.get_dx_attrs` when `as_display_list=True`.
+  [gbastien]
+- Check user is creator in item `actions_panel` caching invalidation.
+  [gbastien]
+
+4.2.8 (2023-10-27)
+------------------
+
+- Added new advice type `Read`.
+  [gbastien]
+- Added a new utils `set_internal_number` to be able to change the `internal_number`.
+  [aduchene]
+- Removed `config.BARCODE_INSERTED_ATTR_ID`, we do not use it anymore to check
+  if a barcode was inserted, we rely on the `scan_id`.
+  Added upgrade step to 4210.
+  [gbastien]
+- Added holidays for 2024. Completed upgrade step to 4210.
+  [aduchene]
+
+4.2.7 (2023-10-19)
+------------------
+
+- Override the `org_pretty_link_with_additional_infos` column used in contacts
+  dashboards to reload widget of `held_position.position_type` field as the
+  vocabulary is gender aware, values may change from a `held_position` to another.
+  [gbastien]
+- Load `communesplone.layout` zcml sooner so overrided translations are loaded,
+  this is especially the case for `label_by_author` translation.
+  [gbastien]
+- Fixed `ItemOptionalAdvicesVocabulary` to manage correctly missing terms when
+  it involves userids. Added caching as it is used when editing an item.
+  [gbastien]
+- Added `imio.helpers.xhtml.unescape_html` to `safe_utils` so it is available in
+  TAL expressions, this will decode an HTML content containing HTML entities.
+  [gbastien]
+- Added new optional field `MeetingItem.meetingDeadlineDate` and
+  the related faceted dashboard column.
+  [gbastien]
+- Added 2 new advice types `negative_with_remarks` and `back_to_proposing_group`.
+  [gbastien]
+
+4.2.6 (2023-09-21)
+------------------
+
+- Fixed migration to 4209:
+
+  - Remove broken annexes before upgrading `collective.iconifiedcategory`;
+  - Migrate `cfg/getUseCopies` in TAL expressions;
+  - Upgrade `imio.annex` before updating annex `portal_type`.
+
+  [gbastien]
+- Advice historized data preview that was only accessible to `MeetingManagers`
+  is now accessible to `advisers` of the historized data advice and
+  `proposingGroup` members.
+  [gbastien]
+- Make sure `data_changes` history does not use `highlight_last_comment` or
+  it drastically slows down item view when used.
+  [gbastien]
+- Protect history icon in advice popup the same way the history link
+  is protected on the advice view.
+  [gbastien]
+- Use `imio.history.utils.add_event_to_history` to manage new history event for
+  item `completeness` and `emergency` changes. In views displaying the history
+  use the adapter to get the history instead accessing the stored attribute.
+  [gbastien]
+- CSS improvements:
+
+  - Refreshed meeting select dropdown;
+  - For long multiselect fields for which max height is fixed to avoid a too
+    long field, fixed the field label so it is always visible.
+
+  [aduchene, gbastien]
+
+4.2.5 (2023-09-12)
 ------------------
 
 - Make the `Change groups in charge` batch action available on meetings.

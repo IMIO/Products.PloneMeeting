@@ -9,7 +9,7 @@
     <span tal:content="structure python: context.getPrettyLink()">Pretty title</span>
     <tal:itemRef define="dummy python: context.checkPrivacyViewable();
                          itemReference python: context.getItemReference();"
-                 condition="python: context.adapted().mustShowItemReference()">
+                 condition="python: context.adapted().show_item_reference()">
         <br />
         <span class="discreet itemReference"
               tal:condition="nocall:itemReference"

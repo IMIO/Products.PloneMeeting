@@ -142,7 +142,7 @@ class Renderer(base.Renderer, FacetedRenderer):
         return collection.results(**{'limit': self.data.batch_size,
                                      'sort_on': sort_on}), collection
 
-    def getColoredLink(self, brain):
+    def getPrettyLink(self, brain):
         """
           Get the colored link for current item.
           In some case, due to current roles changes, the brain.getObject
@@ -150,9 +150,7 @@ class Renderer(base.Renderer, FacetedRenderer):
         """
         # received brain is a plone.app.contentlisting.catalog.CatalogContentListingObject instance
         brain = getattr(brain, '_brain', brain)
-        item = brain.getObject()
-        return self.tool.getColoredLink(
-            item, showColors=True, showContentIcon=True, maxLength=self.data.title_length)
+        return brain._unrestrictedGetObject().getPrettyLink(maxLength=self.data.title_length)
 
     def getCollectionWidgetId(self):
         """Returns the collection widget id to be used in the URL generated on the collection link."""

@@ -205,7 +205,11 @@
 </div>
 
 <tal:notShow_page condition="python:not show_page">
-  <p i18n:translate="hide_meeting_view_page">This page is currently not accessible. Meeting managers will soon allow you to access it again. Sorry for the inconvenience.</p>
+  <p class="highlightValue">
+    <strong i18n:translate="hide_meeting_view_page">
+      This page is currently not accessible. Meeting managers will soon allow you to access it again. Sorry for the inconvenience.
+    </strong>
+  </p>
 </tal:notShow_page>
 
 <metal:global_actions use-macro="context/@@pm-macros/global_actions" />

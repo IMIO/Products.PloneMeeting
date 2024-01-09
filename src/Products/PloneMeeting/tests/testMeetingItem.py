@@ -18,12 +18,15 @@ from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
 from datetime import datetime
 from datetime import timedelta
+from DateTime import DateTime
 from ftw.labels.interfaces import ILabeling
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import get_vocab
+from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
+from imio.helpers.content import uuidToObject
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
@@ -1932,7 +1935,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(get_annexes(clonedItemWithLink, portal_types=['annexDecision']))
 
     def test_pm_PreviousReviewStateIndex(self):
-        """Test the previous_review_state index, especially when datachange is enabled."""
+        """Test the previous_review_state index, especially when data_changes is enabled."""
         cfg = self.meetingConfig
         cfg.setHistorizedItemAttributes(('decision', ))
         cfg.setRecordItemHistoryStates((self._stateMappingFor('proposed'), ))
@@ -1945,7 +1948,7 @@ class testMeetingItem(PloneMeetingTestCase):
         previous_state = wf_adapter.getHistory()[-2]['review_state']
         self.assertEqual(previous_review_state(item)(), previous_state)
 
-        # now check that it does not interact when datachange is enabled
+        # now check that it does not interact when data_changes is enabled
         set_field_from_ajax(item, 'decision', self.decisionText)
         self.assertEqual(previous_review_state(item)(), previous_state)
 
@@ -1955,8 +1958,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item.workflow_history = PersistentMapping()
         self.assertEqual(previous_review_state(item)(), _marker)
 
-    def test_pm_WFHistoryAndDAtaChangesHistoryAreSeparated(self):
-        """The WF history and datachanges history are separated in 2 adapters."""
+    def test_pm_WFHistoryAndDataChangesHistoryAreSeparated(self):
+        """The WF history and data_changes history are separated in 2 adapters."""
         cfg = self.meetingConfig
         cfg.setHistorizedItemAttributes(('decision', ))
         cfg.setRecordItemHistoryStates((self._stateMappingFor('itemcreated'), ))
@@ -1964,6 +1967,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         wf_adapter = getAdapter(item, IImioHistory, 'workflow')
         datachanges_adapter = getAdapter(item, IImioHistory, 'data_changes')
+        # datachanges adapter highlight_last_comment is not enabled
+        self.assertFalse(datachanges_adapter.highlight_last_comment)
         self.assertFalse('_datachange_' in [event['action'] for event in wf_adapter.getHistory()])
         set_field_from_ajax(item, 'decision', self.decisionText)
         self.assertFalse('_datachange_' in [event['action'] for event in wf_adapter.getHistory()])
@@ -2871,9 +2876,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemDuplicateForm(self):
         """Test the @@item_duplicate_form"""
-        cfg = self.meetingConfig
-        cfg.setEnableItemDuplication(False)
-
+        self._enable_action('duplication', enable=False)
         self.changeUser('pmCreator1')
         pm_folder = self.getMeetingFolder()
         item = self.create('MeetingItem')
@@ -2884,7 +2887,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, form.update)
 
         # enables it and check again
-        cfg.setEnableItemDuplication(True)
+        self._enable_action('duplication')
         # clean cache as showDuplicateItemAction is ram cached
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.showDuplicateItemAction')
         self.assertTrue(item.showDuplicateItemAction())
@@ -2957,13 +2960,38 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, form)
         self.assertRaises(Unauthorized, form.update)
 
+    def test_pm_ItemExportPDFForm(self):
+        """Test the @@item-export-pdf-form."""
+        cfg = self.meetingConfig
+        self._enable_action('export_pdf', enable=False)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item, annexFile=self.annexFilePDF)
+        annex_dec = self.addAnnex(item, relatedTo='item_decision', annexFile=self.annexFilePDF)
+        # unable to export PDF as functionnality disabled
+        form = item.restrictedTraverse('@@item-export-pdf-form')
+        self.assertFalse(item.show_export_pdf_action())
+        self.assertRaises(Unauthorized, form)
+        self.assertRaises(Unauthorized, form.update)
+        # enable and test
+        self._enable_action('export_pdf')
+        template = cfg.podtemplates.itemTemplate
+        template.pod_formats = ['pdf']
+        self.request['form.widgets.elements'] = [template.UID(), annex.getId(), annex_dec.getId()]
+        form.update()
+        res = form.handleApply(form, None)
+        # this generated a 3 pages PDF, 1 page per element
+        res.seek(0)
+        self.assertTrue("Pages\n/Count 3" in res.read())
+        self.assertEqual(self.request.RESPONSE.getHeader('content-type'), 'application/pdf')
+
     def test_pm_ItemDuplicateFormOnlyKeepRelevantAnnexes(self):
         """Test the @@item_duplicate_form that will only let keep annexes that :
            - have no scan_id;
            - have a PDF file if annex_type only_pdf is True;
            - use an annex_type that current user may use."""
         cfg = self.meetingConfig
-        cfg.setEnableItemDuplication(True)
+        self._enable_action('duplication')
         annex_type = cfg.annexes_types.item_annexes.get('item-annex')
         annex_type.title = u"Annex type\"><script>alert(document.domain)</script>\""
         dec_annex_type = cfg.annexes_types.item_decision_annexes.get('decision-annex')
@@ -2991,9 +3019,9 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # terms are disabled
         annex_vocab = get_vocab(
-            item, u"Products.PloneMeeting.vocabularies.contained_annexes_vocabulary")
+            item, u"Products.PloneMeeting.vocabularies.item_duplication_contained_annexes_vocabulary")
         annex_decision_vocab = get_vocab(
-            item, u"Products.PloneMeeting.vocabularies.contained_decision_annexes_vocabulary")
+            item, u"Products.PloneMeeting.vocabularies.item_duplication_contained_decision_annexes_vocabulary")
         self.assertEqual(len(annex_vocab), 2)
         self.assertTrue(annex_vocab._terms[0].disabled)
         self.assertTrue(annex_vocab._terms[1].disabled)
@@ -3023,9 +3051,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # able to keep annex_decision_meeting_manager for pmManager
         self.changeUser('pmManager')
         annex_vocab = get_vocab(
-            item, u"Products.PloneMeeting.vocabularies.contained_annexes_vocabulary")
+            item, u"Products.PloneMeeting.vocabularies.item_duplication_contained_annexes_vocabulary")
         annex_decision_vocab = get_vocab(
-            item, u"Products.PloneMeeting.vocabularies.contained_decision_annexes_vocabulary")
+            item, u"Products.PloneMeeting.vocabularies.item_duplication_contained_decision_annexes_vocabulary")
         self.assertEqual(len(annex_vocab), 2)
         self.assertTrue(annex_vocab._terms[0].disabled)
         self.assertTrue(annex_vocab._terms[1].disabled)
@@ -3045,7 +3073,7 @@ class testMeetingItem(PloneMeetingTestCase):
         """Test the @@item_duplicate_form that will only let keep annexes if
            current user has 'Add annex' permission on future created item."""
         cfg = self.meetingConfig
-        cfg.setEnableItemDuplication(True)
+        self._enable_action('duplication')
         # create item and check that annexes are disabled
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -3077,7 +3105,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self._enableField('copyGroups')
         cfg.setSelectableCopyGroups((self.vendors_creators, ))
         cfg.setItemCopyGroupsStates(('itemcreated', 'validated', ))
-        cfg.setEnableItemDuplication(True)
+        self._enable_action('duplication')
         self._addPrincipalToGroup('pmCreator1', self.vendors_creators)
         # pmCreator1 may create items for both groups
         self.changeUser('pmCreator1')
@@ -4030,6 +4058,7 @@ class testMeetingItem(PloneMeetingTestCase):
                            'is_linked_to_previous_row': '1',
                            'delay': '10'}]
         cfg.setCustomAdvisers(customAdvisers)
+        notify(ObjectEditedEvent(cfg))
         self.assertFalse('{0}__rowid__unique_id_123'.format(self.developers_uid) in vocab_factory(item))
         self.assertTrue('{0}__rowid__unique_id_456'.format(self.developers_uid) in vocab_factory(item))
         # but if selected, then it appears in the vocabulary, no matter the 'available_on' expression
@@ -4061,6 +4090,82 @@ class testMeetingItem(PloneMeetingTestCase):
              '{0}__userid__pmAdviser1'.format(self.developers_uid),
              '{0}__userid__pmManager'.format(self.developers_uid),
              self.vendors_uid])
+        # when selected on an item, available in the vocabulary
+        item.setOptionalAdvisers(('{0}__userid__pmCreator2'.format(self.vendors_uid), ))
+        item._update_after_edit()
+        self.assertEqual(
+            [t.title for t in vocab_factory(item)],
+            [u'Please select among delay-aware advisers',
+             u'Developers - 10 day(s)',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMManager',
+             u'Please select among non delay-aware advisers',
+             u'Developers',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMManager',
+             u'Vendors',
+             # new value correctly sorted, the other users are not listed
+             u'M. PMCreator Two'])
+        # now select on item a user from an org that is no more in the vocabulary
+        item.setOptionalAdvisers(('{0}__userid__pmCreator1'.format(self.endUsers_uid), ))
+        self.assertEqual(
+            [t.title for t in vocab_factory(item)],
+            [u'Please select among delay-aware advisers',
+             u'Developers - 10 day(s)',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMManager',
+             # new value with org and user on one line so it is not possible to select the org
+             u'End users (M. PMCreator One)',
+             u'Please select among non delay-aware advisers',
+             u'Developers',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMManager',
+             u'Vendors'])
+        # add a delay aware value to an existing org but with a no longer existing user
+        item.setOptionalAdvisers((
+            '{0}__userid__pmCreator1'.format(self.endUsers_uid),
+            '{0}__rowid__unique_id_456__userid__pmAdviser2'.format(self.developers_uid)))
+        self.assertEqual(
+            [t.title for t in vocab_factory(item)],
+            [u'Please select among delay-aware advisers',
+             u'Developers - 10 day(s)',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMManager',
+             # new value, just the user as the org exist, and just the user id as user does not exist
+             u'pmAdviser2',
+             u'End users (M. PMCreator One)',
+             u'Please select among non delay-aware advisers',
+             u'Developers',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMManager',
+             u'Vendors'])
+        # now remove from advisers group a userid selected on the item
+        # this will enable include_selected=True, this test a bug that occured
+        # and caused ValueError: term values must be unique developers__userid__pmCreator1
+        cfg.setSelectableAdvisers((self.vendors_uid, self.developers_uid, self.endUsers_uid))
+        cfg.setSelectableAdviserUsers((self.vendors_uid, self.developers_uid, self.endUsers_uid))
+        item.setOptionalAdvisers((
+            '{0}__userid__pmCreator1'.format(self.endUsers_uid),
+            '{0}__userid__pmCreator1'.format(self.developers_uid)))
+        self._addPrincipalToGroup('pmCreator1', self.developers_advisers)
+        self._removePrincipalFromGroups('pmCreator1', [self.endUsers_advisers])
+        self.assertEqual(
+            [t.title for t in vocab_factory(item)],
+            [u'Please select among delay-aware advisers',
+             u'Developers - 10 day(s)',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMCreator One',
+             u'M. PMManager',
+             u'Please select among non delay-aware advisers',
+             u'Developers',
+             u'M. PMAdviser One (H\xe9)',
+             u'M. PMCreator One',
+             u'M. PMManager',
+             u'End users',
+             u'M. PMCreator One',
+             u'Vendors',
+             u'M. PMManager',
+             u'M. PMReviewer Two'])
 
     def test_pm_OptionalAdvisersDelayAwareAdvisers(self):
         '''
@@ -4073,12 +4178,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # by default, nothing is defined as delay-aware adviser in the configuration
         cfg = self.meetingConfig
         self.failIf(cfg.getCustomAdvisers())
-        vocab_factory = get_vocab(
-            item,
-            item.getField('optionalAdvisers').vocabulary_factory,
-            only_factory=True)
-        vocab_keys = [term.token for term in vocab_factory(item)._terms]
-        self.assertEqual(vocab_keys, [self.developers_uid, self.vendors_uid])
+        vocab_factory_name = item.getField('optionalAdvisers').vocabulary_factory
+        self.assertEqual(get_vocab_values(item, vocab_factory_name),
+                         [self.developers_uid, self.vendors_uid])
         # now define some delay-aware advisers in MeetingConfig.customAdvisers
         customAdvisers = [{'row_id': 'unique_id_123',
                            'org': self.developers_uid,
@@ -4097,10 +4199,10 @@ class testMeetingItem(PloneMeetingTestCase):
                            'for_item_created_from': '2012/01/01',
                            'delay': '10'}, ]
         cfg.setCustomAdvisers(customAdvisers)
+        notify(ObjectEditedEvent(cfg))
         # a special key is prepended that will be disabled in the UI
         # at the beginning of 'both' list (delay-aware and non delay-aware advisers)
-        vocab_keys = [term.token for term in vocab_factory(item)._terms]
-        self.assertEqual(vocab_keys,
+        self.assertEqual(get_vocab_values(item, vocab_factory_name),
                          ['not_selectable_value_delay_aware_optional_advisers',
                           '{0}__rowid__unique_id_123'.format(self.developers_uid),
                           '{0}__rowid__unique_id_456'.format(self.developers_uid),
@@ -4110,8 +4212,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # check that if a 'for_item_created_until' date is passed, it does not appear anymore
         customAdvisers[1]['for_item_created_until'] = '2013/01/01'
         cfg.setCustomAdvisers(customAdvisers)
-        vocab_keys = [term.token for term in vocab_factory(item)._terms]
-        self.assertEqual(vocab_keys,
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(get_vocab_values(item, vocab_factory_name),
                          ['not_selectable_value_delay_aware_optional_advisers',
                           '{0}__rowid__unique_id_123'.format(self.developers_uid),
                           'not_selectable_value_non_delay_aware_optional_advisers',
@@ -4123,8 +4225,8 @@ class testMeetingItem(PloneMeetingTestCase):
         customAdvisers[1]['for_item_created_until'] = ''
         customAdvisers[0]['available_on'] = 'python:False'
         cfg.setCustomAdvisers(customAdvisers)
-        vocab_keys = [term.token for term in vocab_factory(item)._terms]
-        self.assertEqual(vocab_keys,
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(get_vocab_values(item, vocab_factory_name),
                          ['not_selectable_value_delay_aware_optional_advisers',
                           '{0}__rowid__unique_id_456'.format(self.developers_uid),
                           'not_selectable_value_non_delay_aware_optional_advisers',
@@ -4134,13 +4236,19 @@ class testMeetingItem(PloneMeetingTestCase):
         # but the customAdviser is simply not taken into account
         customAdvisers[0]['available_on'] = 'python: here.someMissingMethod(some_parameter=False)'
         cfg.setCustomAdvisers(customAdvisers)
-        vocab_keys = [term.token for term in vocab_factory(item)._terms]
-        self.assertEqual(vocab_keys,
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(get_vocab_values(item, vocab_factory_name),
                          ['not_selectable_value_delay_aware_optional_advisers',
                           '{0}__rowid__unique_id_456'.format(self.developers_uid),
                           'not_selectable_value_non_delay_aware_optional_advisers',
                           self.developers_uid,
                           self.vendors_uid])
+        # cache invalidated of selectable customAdvisers changed
+        item.setCreationDate(DateTime('2010/01/01'))
+        item.reindexObject()
+        # delay aware advices should not be available anymore in the vocabulary
+        self.assertEqual(get_vocab_values(item, vocab_factory_name),
+                         [self.developers_uid, self.vendors_uid])
 
     def test_pm_Validate_optionalAdvisersCanNotSelectSameGroupAdvisers(self):
         '''
@@ -4691,22 +4799,34 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemActionsPanelCachingInvalidatedWhenUserChanged(self):
         """Actions panel cache is invalidated when user changed."""
+        self._setPowerObserverStates(states=('validated', ))
+        self.meetingConfig.setItemActionsColumnConfig(('duplicate', ))
         item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
         # invalidated when user changed
         # 'pmReviewer1' may validate the item, the rendered panel will not be the same
         self.proposeItem(item)
-        actions_panel._transitions = None
+        actions_panel = item.restrictedTraverse('@@actions_panel')
         proposedItemForCreator_rendered_actions_panel = actions_panel()
         self.changeUser('pmReviewer1')
-        actions_panel._transitions = None
+        actions_panel = item.restrictedTraverse('@@actions_panel')
         proposedItemForReviewer_rendered_actions_panel = actions_panel()
         self.assertNotEqual(proposedItemForCreator_rendered_actions_panel,
                             proposedItemForReviewer_rendered_actions_panel)
         self.validateItem(item)
-        actions_panel._transitions = None
+        actions_panel = item.restrictedTraverse('@@actions_panel')
         validatedItemForReviewer_rendered_actions_panel = actions_panel()
         self.assertNotEqual(proposedItemForReviewer_rendered_actions_panel,
                             validatedItemForReviewer_rendered_actions_panel)
+        # when only the duplicate action is available, not available to powerobservers
+        # but will be available to creators
+        self._setPowerObserverStates(states=('validated', ))
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        actions_panel = item.restrictedTraverse('@@actions_panel')
+        power_observer_rendered_actions_panel = actions_panel()
+        self.changeUser('pmCreator1')
+        actions_panel = item.restrictedTraverse('@@actions_panel')
+        self.assertNotEqual(power_observer_rendered_actions_panel, actions_panel())
 
     def test_pm_ItemActionsPanelCachingInvalidatedWhenItemTurnsToPresentable(self):
         """Actions panel cache is invalidated when the item turns to presentable."""
@@ -5466,7 +5586,7 @@ class testMeetingItem(PloneMeetingTestCase):
             'meetingTransitionInsertingMe', 'inAndOutMoves', 'notes',
             'meetingManagersNotes', 'meetingManagersNotesSuite', 'meetingManagersNotesEnd',
             'marginalNotes', 'observations', 'pollTypeObservations',
-            'preferredMeeting', 'proposingGroup',
+            'preferredMeeting', 'meetingDeadlineDate', 'proposingGroup',
             'takenOverBy', 'templateUsingGroups',
             'toDiscuss', 'committeeObservations', 'committeeTranscript',
             'votesObservations', 'votesResult',
@@ -6363,15 +6483,30 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemRenamedUpdatesCategorizedElements(self):
         """As path is stored in the categorized_elements, make sure
-           it behaves correctly when the item was renamed"""
+           it behaves correctly when the item was renamed.
+           Item annexes and advice annexes are handled."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates(('itemcreated', 'validated', ))
+        cfg.setItemAdviceEditStates(('itemcreated', 'validated', ))
+        cfg.setItemAdviceViewStates(('itemcreated', 'validated', ))
+
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
+        item = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
         annex = self.addAnnex(item)
+        self.changeUser('pmReviewer2')
+        advice = createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': self.vendors_uid,
+               'advice_type': u'positive',
+               'advice_comment': richtextval(u'My comment')})
+        advice_annex = self.addAnnex(advice)
         item.setTitle('New title')
         notify(ObjectModifiedEvent(item))
 
-        # id was updated as well as categorized_elements
+        # id was updated
         self.assertEqual(item.getId(), 'new-title')
+        # as well as categorized_elements on item
         self.assertEqual(
             item.categorized_elements.values()[0]['download_url'],
             u'{0}/@@download'.format(
@@ -6380,6 +6515,16 @@ class testMeetingItem(PloneMeetingTestCase):
         download_view = self.portal.unrestrictedTraverse(
             str(item.categorized_elements.values()[0]['download_url']))
         self.assertEqual(download_view().read(), 'Testing file\n')
+        # and categorized_elements on advice
+        self.assertEqual(
+            advice.categorized_elements.values()[0]['download_url'],
+            u'{0}/@@download'.format(
+                self.portal.portal_url.getRelativeContentURL(advice_annex)))
+        # file is correctly downloadable with given download_url
+        download_view = self.portal.unrestrictedTraverse(
+            str(advice.categorized_elements.values()[0]['download_url']))
+        self.assertEqual(download_view().read(), 'Testing file\n')
+
 
     def test_pm_ItemRenamedExceptedDefaultItemTemplate(self):
         """The default item template id is never changed, but other item templates do."""
@@ -7160,8 +7305,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.getItemReference(), '')
         self.freezeMeeting(meeting)
         self.assertEqual(item.getItemReference(), 'Ref. 20170303/1')
-
-        # set meeting back to created, items references are updated to ''
+        # set meeting back to created, items references are cleared to ''
         self.backToState(meeting, 'created')
         self.assertEqual(item.getItemReference(), '')
 
@@ -7502,40 +7646,62 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item._may_update_item_reference())
         cfg.setComputeItemReferenceForItemsOutOfMeeting(True)
         # set a referenceFormat expecting a meeting
-        cfg.setItemReferenceFormat(
-            "python: item.getMeeting().getLinkedMeetingDate().strftime('%Y%m%d') + '/1'")
+        cfg.setItemReferenceFormat("python: item.getMeeting().Title()")
         item.update_item_reference()
         self.assertEqual(item.getItemReference(), '')
         # set a referenceFormat compatible with no meeting
         cfg.setItemReferenceFormat(
             "python: item.hasMeeting() and "
-            "item.getMeeting().getLinkedMeetingDate().strftime('%Y%m%d') + '/1' "
-            "or 'Ref/1'")
+            "item.restrictedTraverse('@@pm_unrestricted_methods')."
+            "getLinkedMeetingDate().strftime('%Y%m%d') + '/1' "
+            "or (item.query_state() == 'accepted_out_of_meeting' and 'Ref/1') or 'No/Ref'")
         item.update_item_reference()
         self.assertEqual(item.getItemReference(), 'Ref/1')
-        # back to validated and accept out of meeting again, reference is correct
+        # back to validated and accept out of meeting again,
+        # reference is not cleared but recomputed
         self.do(item, "backToValidatedFromAcceptedOutOfMeeting")
-        self.assertEqual(item.getItemReference(), '')
+        self.assertEqual(item.getItemReference(), 'No/Ref')
         self.do(item, "accept_out_of_meeting")
         self.assertEqual(item.getItemReference(), 'Ref/1')
         # reference viewable on item view
         self.assertTrue(item.getItemReference() in item())
-        # reference is shown in every states
+        # reference is shown in every states and never cleared
         item = self.create('MeetingItem')
-        self.assertTrue(item.adapted().mustShowItemReference())
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
         self.proposeItem(item)
-        self.assertTrue(item.adapted().mustShowItemReference())
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
         self.validateItem(item)
-        self.assertTrue(item.adapted().mustShowItemReference())
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
         meeting = self.create('Meeting')
         self.presentItem(item)
-        self.assertTrue(item.adapted().mustShowItemReference())
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
         self.freezeMeeting(meeting)
-        self.assertTrue(item.adapted().mustShowItemReference())
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
         self.decideMeeting(meeting)
-        self.assertTrue(item.adapted().mustShowItemReference())
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
         self.closeMeeting(meeting)
-        self.assertTrue(item.adapted().mustShowItemReference())
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
+        self.changeUser('siteadmin')
+        self.backToState(meeting, 'decided')
+        self.changeUser('pmManager')
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
+        self.backToState(meeting, 'published')
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
+        self.backToState(meeting, 'frozen')
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
+        self.backToState(meeting, 'created')
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
 
     def test_pm_ItemNotDeletableWhenContainingGivenAdvices(self):
         """If MeetingConfig.itemWithGivenAdviceIsNotDeletable is True,
@@ -8385,11 +8551,14 @@ class testMeetingItem(PloneMeetingTestCase):
         set_settings({cfg.getItemTypeName(): {'u': False, 'nb': 1, 'expr': u'number'}})
         item = self.create('MeetingItem')
         self.assertEqual(item.internal_number, 1)
-        self.assertEqual(self.catalog(internal_number=1)[0].UID, item.UID())
+        # check that brain index and metadata is updated
+        self.assertEqual(
+            uuidToObject(item.UID(), query={'internal_number': 1}).internal_number, 1)
         self.assertEqual(get_settings()[item.portal_type]['nb'], 2)
         item = self.create('MeetingItem')
         self.assertEqual(item.internal_number, 2)
-        self.assertEqual(self.catalog(internal_number=2)[0].UID, item.UID())
+        self.assertEqual(
+            uuidToObject(item.UID(), query={'internal_number': 2}).internal_number, 2)
         self.assertEqual(get_settings()[item.portal_type]['nb'], 3)
         # decremented if edit cancelled
         item._at_creation_flag = True
@@ -8399,7 +8568,8 @@ class testMeetingItem(PloneMeetingTestCase):
         set_settings({cfg.getItemTypeName(): {'u': False, 'nb': 50000, 'expr': u'number'}})
         item = self.create('MeetingItem')
         self.assertEqual(item.internal_number, 50000)
-        self.assertEqual(self.catalog(internal_number=50000)[0].UID, item.UID())
+        self.assertEqual(
+            uuidToObject(item.UID(), query={'internal_number': 50000}).internal_number, 50000)
         # not set on items created in configuration
         self.changeUser('siteadmin')
         item_template = self.create('MeetingItemTemplate')
@@ -8427,10 +8597,14 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.assertEqual(item.internal_number, 1)
+        # check that brain index and metadata is updated
+        self.assertEqual(
+            uuidToObject(item.UID(), query={'internal_number': 1}).internal_number, 1)
         # clone locally
         cloned_item = item.clone()
         self.assertEqual(cloned_item.internal_number, 2)
-        self.assertEqual(self.catalog(internal_number=2)[0].UID, cloned_item.UID())
+        self.assertEqual(
+            uuidToObject(cloned_item.UID(), query={'internal_number': 2}).internal_number, 2)
         # create item from template
         pmFolder = self.getMeetingFolder()
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
@@ -8438,7 +8612,8 @@ class testMeetingItem(PloneMeetingTestCase):
         itemFromTemplate = view.createItemFromTemplate(itemTemplate.UID())
         itemFromTemplate.processForm()
         self.assertEqual(itemFromTemplate.internal_number, 3)
-        self.assertEqual(self.catalog(internal_number=3)[0].UID, itemFromTemplate.UID())
+        self.assertEqual(
+            uuidToObject(itemFromTemplate.UID(), query={'internal_number': 3}).internal_number, 3)
         # clone to another cfg, not enabled for now
         itemFromTemplate.setOtherMeetingConfigsClonableTo((cfg2Id, ))
         itemCfg2 = itemFromTemplate.cloneToOtherMeetingConfig(cfg2Id)
@@ -8448,7 +8623,8 @@ class testMeetingItem(PloneMeetingTestCase):
             cfg2.getItemTypeName(): {'u': False, 'nb': 50, 'expr': u'number'}})
         itemCfg2 = itemFromTemplate.cloneToOtherMeetingConfig(cfg2Id)
         self.assertEqual(itemCfg2.internal_number, 50)
-        self.assertEqual(self.catalog(internal_number=50)[0].UID, itemCfg2.UID())
+        self.assertEqual(
+            uuidToObject(itemCfg2.UID(), query={'internal_number': 50}).internal_number, 50)
 
     def test_pm_ItemMailNotificationLateItem(self):
         """Test the "lateItem" notification."""

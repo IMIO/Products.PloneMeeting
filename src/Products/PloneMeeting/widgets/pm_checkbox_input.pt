@@ -32,78 +32,86 @@
   <span class="label" i18n:translate="select_unselect_items">Select/Unselect all</span>
  </label>
  </div>
-
- <span class="option"
-       tal:repeat="item items"
-       tal:attributes="id python:single_checkbox and view.id or None">
-  <input type="checkbox" id="" name="" class="" alt="" title=""
-         tabindex="" disabled="" readonly="" accesskey="" value=""
-         checked="checked"
-         tal:condition="item/checked"
-         tal:attributes="id item/id;
-                         name item/name;
-                         class view/klass;
-                         value item/value;
-                         style view/style;
-                         title view/title;
-                         lang view/lang;
-                         onclick view/onclick;
-                         ondblclick view/ondblclick;
-                         onmousedown view/onmousedown;
-                         onmouseup view/onmouseup;
-                         onmouseover view/onmouseover;
-                         onmousemove view/onmousemove;
-                         onmouseout view/onmouseout;
-                         onkeypress view/onkeypress;
-                         onkeydown view/onkeydown;
-                         onkeyup view/onkeyup;
-                         disabled python: view.disabled or item['disabled'] or False;
-                         tabindex view/tabindex;
-                         onfocus view/onfocus;
-                         onblur view/onblur;
-                         onchange view/onchange;
-                         readonly python: view.readonly or item['readonly'] or False;
-                         alt view/alt;
-                         accesskey view/accesskey;
-                         onselect view/onselect"
-  /><input id="" name="" class="" alt="" title="" tabindex=""
-           disabled="" readonly="" accesskey="" value=""
-           type="checkbox"
-         tal:condition="not:item/checked"
-         tal:attributes="id item/id;
-                         name item/name;
-                         class view/klass;
-                         value item/value;
-                         style view/style;
-                         title view/title;
-                         lang view/lang;
-                         onclick view/onclick;
-                         ondblclick view/ondblclick;
-                         onmousedown view/onmousedown;
-                         onmouseup view/onmouseup;
-                         onmouseover view/onmouseover;
-                         onmousemove view/onmousemove;
-                         onmouseout view/onmouseout;
-                         onkeypress view/onkeypress;
-                         onkeydown view/onkeydown;
-                         onkeyup view/onkeyup;
-                         disabled python: view.disabled or item['disabled'] or False;
-                         tabindex view/tabindex;
-                         onfocus view/onfocus;
-                         onblur view/onblur;
-                         onchange view/onchange;
-                         readonly python: view.readonly or item['readonly'] or False;
-                         alt view/alt;
-                         accesskey view/accesskey;
-                         onselect view/onselect" />
-  <label for=""
-         tal:attributes="for item/id">
-    <tal:comment replace="nothing">XXX PloneMeeting, added 'structure' to render label when it is HTML</tal:comment>
-    <span class="label" tal:content="structure item/label">Label</span>
-  </label>
+ <span class="options">
+  <span class="option"
+        tal:repeat="item items"
+        tal:attributes="id python:single_checkbox and view.id or None">
+   <span tal:condition="python: view.sortable" class="draggable">⣿</span>
+   <input type="checkbox" id="" name="" class="" alt="" title=""
+          tabindex="" disabled="" readonly="" accesskey="" value=""
+          checked="checked"
+          tal:condition="item/checked"
+          tal:attributes="id item/id;
+                          name item/name;
+                          class view/klass;
+                          value item/value;
+                          style view/style;
+                          title view/title;
+                          lang view/lang;
+                          onclick view/onclick;
+                          ondblclick view/ondblclick;
+                          onmousedown view/onmousedown;
+                          onmouseup view/onmouseup;
+                          onmouseover view/onmouseover;
+                          onmousemove view/onmousemove;
+                          onmouseout view/onmouseout;
+                          onkeypress view/onkeypress;
+                          onkeydown view/onkeydown;
+                          onkeyup view/onkeyup;
+                          disabled python: view.disabled or item['disabled'] or False;
+                          tabindex view/tabindex;
+                          onfocus view/onfocus;
+                          onblur view/onblur;
+                          onchange view/onchange;
+                          readonly python: view.readonly or item['readonly'] or False;
+                          alt view/alt;
+                          accesskey view/accesskey;
+                          onselect view/onselect"
+   /><input id="" name="" class="" alt="" title="" tabindex=""
+            disabled="" readonly="" accesskey="" value=""
+            type="checkbox"
+          tal:condition="not:item/checked"
+          tal:attributes="id item/id;
+                          name item/name;
+                          class view/klass;
+                          value item/value;
+                          style view/style;
+                          title view/title;
+                          lang view/lang;
+                          onclick view/onclick;
+                          ondblclick view/ondblclick;
+                          onmousedown view/onmousedown;
+                          onmouseup view/onmouseup;
+                          onmouseover view/onmouseover;
+                          onmousemove view/onmousemove;
+                          onmouseout view/onmouseout;
+                          onkeypress view/onkeypress;
+                          onkeydown view/onkeydown;
+                          onkeyup view/onkeyup;
+                          disabled python: view.disabled or item['disabled'] or False;
+                          tabindex view/tabindex;
+                          onfocus view/onfocus;
+                          onblur view/onblur;
+                          onchange view/onchange;
+                          readonly python: view.readonly or item['readonly'] or False;
+                          alt view/alt;
+                          accesskey view/accesskey;
+                          onselect view/onselect" />
+   <label for=""
+          tal:attributes="for item/id">
+     <tal:comment replace="nothing">XXX PloneMeeting, added 'structure' to render label when it is HTML</tal:comment>
+     <span class="label" tal:content="structure item/label">Label</span>
+   </label>
+  </span>
  </span>
 </span>
 <input name="field-empty-marker" type="hidden" value="1"
        tal:attributes="name string:${view/name}-empty-marker" />
+<script type="text/javascript" tal:condition="python: view.sortable">
+    $(document).ready(function() {
+        // initialize drag and drop
+        $('span.options').sortable();
+    });
+</script>
 </div>
 </html>

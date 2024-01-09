@@ -463,7 +463,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.removeAnnexesPreviewsOnMeetingClosure = False
         self.cssClassesToHide = 'highlight\nhighlight-red'
         self.hideCssClassesTo = ()
-        self.enableItemDuplication = True
+        self.enabledItemActions = ('duplication', 'export_pdf')
         self.enabledAnnexesBatchActions = ['download-annexes']
 
         # Data-related parameters ----------------------------------------------
@@ -896,6 +896,18 @@ class PloneMeetingConfiguration(Descriptor):
             {'date': '2023/11/15', },
             {'date': '2023/12/25', },
 
+            {'date': '2024/01/01', },  # 2024
+            {'date': '2024/04/01', },
+            {'date': '2024/05/01', },
+            {'date': '2024/05/09', },
+            {'date': '2024/05/20', },
+            {'date': '2024/07/21', },
+            {'date': '2024/08/15', },
+            {'date': '2024/09/27', },
+            {'date': '2024/11/01', },
+            {'date': '2024/11/11', },
+            {'date': '2024/11/15', },
+            {'date': '2024/12/25', },
         ]
         self.delayUnavailableEndDays = ()
         self.configGroups = ()

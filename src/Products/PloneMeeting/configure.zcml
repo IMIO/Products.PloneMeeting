@@ -6,11 +6,11 @@
            xmlns:zcml="http://namespaces.zope.org/zcml"
            i18n_domain="PloneMeeting">
 
-  <!-- load "imio.pm.locales" first so translations are overrided -->
+  <!-- load "imio.pm.locales" and "communesplone.layout" first so translations are overrided -->
   <include package="imio.pm.locales" />
+  <include package="communesplone.layout" />
   <include package="plonetheme.imioapps"/>
   <include package="imio.annex" />
-  <include package="communesplone.layout" />
   <include package="Products.PasswordStrength" />
   <include package="collective.behavior.internalnumber" />
   <include package="collective.ckeditor" />
@@ -192,12 +192,14 @@
            factory="Products.PloneMeeting.adapters.AdvisedItemsWithDelayAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="advised-items-with-delay" />
-
   <adapter for="*"
            factory="Products.PloneMeeting.adapters.DecidedItemsAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="decided-items" />
-
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.LivingItemsAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="living-items" />
   <adapter for="*"
            factory="Products.PloneMeeting.adapters.PersonalLabelsAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
@@ -343,6 +345,11 @@
   <adapter for="OFS.interfaces.IItem"
            factory=".adapters.PMEmergencyChangesHistoryAdapter"
            name="emergency_changes"
+           provides="imio.history.interfaces.IImioHistory" />
+
+  <adapter for="OFS.interfaces.IItem"
+           factory=".adapters.PMAdviceHideDuringRedactionHistoryAdapter"
+           name="advice_hide_during_redaction"
            provides="imio.history.interfaces.IImioHistory" />
 
   <adapter for="OFS.interfaces.IItem"

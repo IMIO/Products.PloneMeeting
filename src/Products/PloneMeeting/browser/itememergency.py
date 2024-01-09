@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
-from DateTime import DateTime
-from imio.helpers.cache import get_current_user_id
+from imio.helpers.content import get_user_fullname
+from imio.history.interfaces import IImioHistory
+from imio.history.utils import add_event_to_history
 from plone import api
 from plone.z3cform.layout import wrap_form
 from Products.Archetypes import DisplayList
@@ -14,6 +15,7 @@ from z3c.form import field
 from z3c.form import form
 from zope import interface
 from zope import schema
+from zope.component import getAdapter
 from zope.component.hooks import getSite
 from zope.i18n import translate
 
@@ -63,6 +65,17 @@ class ItemEmergencyHistoryView(BrowserView):
         self.request = request
         self.tool = api.portal.get_tool('portal_plonemeeting')
 
+    def getHistory(self, checkMayViewEvent=True, checkMayViewComment=True):
+        """ """
+        adapter = getAdapter(self.context, IImioHistory, 'emergency_changes')
+        history = adapter.getHistory(
+            checkMayViewEvent=checkMayViewEvent,
+            checkMayViewComment=checkMayViewComment)
+        if not history:
+            return []
+        history.sort(key=lambda x: x["time"], reverse=True)
+        return history
+
     def renderComments(self, comments, mimetype='text/plain'):
         """
           Borrowed from imio.history.
@@ -70,6 +83,9 @@ class ItemEmergencyHistoryView(BrowserView):
         transformsTool = api.portal.get_tool('portal_transforms')
         data = transformsTool.convertTo('text/x-html-safe', comments, mimetype=mimetype)
         return data.getData()
+
+    def get_user_fullname(self, user_id):
+        return get_user_fullname(user_id)
 
 
 def new_emergency_value_default():
@@ -126,12 +142,11 @@ class ItemEmergencyChangeForm(form.Form):
             raise Unauthorized
         self.context.setEmergency(new_emergency_value)
         # add a line to the item's emergency_change_history
-        member_id = get_current_user_id()
-        history_data = {'action': new_emergency_value,
-                        'actor': member_id,
-                        'time': DateTime(),
-                        'comments': data['comment']}
-        self.context.emergency_changes_history.append(history_data)
+        add_event_to_history(
+            self.context,
+            'emergency_changes_history',
+            action=new_emergency_value,
+            comments=data['comment'])
         # update item
         self.context._update_after_edit(idxs=[])
         plone_utils = api.portal.get_tool('plone_utils')

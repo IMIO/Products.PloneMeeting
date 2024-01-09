@@ -22,6 +22,7 @@ from Products.CMFCore.permissions import View
 from Products.PloneMeeting.adapters import _find_nothing_query
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
+from Products.PloneMeeting.utils import getAdvicePortalTypes
 from zope.component import getAdapter
 from zope.component import getAdapters
 from zope.event import notify
@@ -315,7 +316,7 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmAdviser1')
         indexAdvisers = []
         adviceStates = []
-        for portal_type in self.tool.getAdvicePortalTypes():
+        for portal_type in getAdvicePortalTypes():
             adviceWF = self.wfTool.getWorkflowsFor(portal_type.id)[0]
             adviceStates += adviceWF.states.keys()
         # remove duplicates
@@ -412,7 +413,7 @@ class testSearches(PloneMeetingTestCase):
         # as adviser, query is correct
         self.changeUser('pmAdviser1')
         adviceStates = []
-        for portal_type in self.tool.getAdvicePortalTypes():
+        for portal_type in getAdvicePortalTypes():
             adviceWF = self.wfTool.getWorkflowsFor(portal_type.id)[0]
             adviceStates += adviceWF.states.keys()
         # remove duplicates
@@ -721,6 +722,7 @@ class testSearches(PloneMeetingTestCase):
         reviewers = cfg.reviewersFor()
         if not len(reviewers) > 1:
             self._enablePrevalidation(cfg)
+        reviewers = cfg.reviewersFor()
         if not len(reviewers) > 1:
             pm_logger.info("Could not launch test 'test_pm_SearchItemsToValidateOfMyReviewerGroups' "
                            "because we need at least 2 levels of item validation.")
@@ -1366,6 +1368,25 @@ class testSearches(PloneMeetingTestCase):
         res = collection.results()
         self.assertEqual(len(res), 1)
         self.assertEqual(res[0].UID, editable_item.UID())
+
+    def test_pm_SearchLivingItems(self):
+        '''Test the 'living-items' CompoundCriterion adapter.
+           Returns every items that are not decided.'''
+        cfg = self.meetingConfig
+        collection = cfg.searches.searches_items.searchlivingitems
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem', decision=self.decisionText)
+        self.assertTrue(item.UID() in [brain.UID for brain in collection.results()])
+        meeting = self.create('Meeting')
+        self.presentItem(item)
+        self.freezeMeeting(meeting)
+        self.assertTrue(item.UID() in [brain.UID for brain in collection.results()])
+        self.decideMeeting(meeting)
+        self.assertTrue(item.UID() in [brain.UID for brain in collection.results()])
+        self.closeMeeting(meeting)
+        self.assertEqual(item.query_state(), 'accepted')
+        self.assertTrue(item.query_state() in cfg.getItemDecidedStates())
+        self.assertFalse(item.UID() in [brain.UID for brain in collection.results()])
 
 
 def test_suite():

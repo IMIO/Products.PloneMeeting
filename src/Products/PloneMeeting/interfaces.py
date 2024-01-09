@@ -187,7 +187,7 @@ class IMeetingItemDocumentation:
     def showObservations():
         '''Condition to show field observations, by default shown if in
            MeetingConfig.usedItemAttributes.'''
-    def mustShowItemReference():
+    def show_item_reference():
         '''When must I show the item reference ? In the default implementation,
            item references are shown as soon as a meeting is frozen or when
            using MeetingConfig.computeItemReferenceForItemsOutOfMeeting.'''

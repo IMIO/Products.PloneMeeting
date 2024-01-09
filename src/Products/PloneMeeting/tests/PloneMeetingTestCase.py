@@ -36,9 +36,8 @@ from Products.PloneMeeting.browser.meeting import _get_default_signatories
 from Products.PloneMeeting.browser.meeting import _get_default_voters
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
+from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
-from Products.PloneMeeting.Meeting import Meeting_schema
-from Products.PloneMeeting.MeetingItem import MeetingItem_schema
 from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
 from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
 from Products.PloneMeeting.utils import cleanMemoize
@@ -121,8 +120,6 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     # Some default content
     descriptionText = '<p>Some description</p>'
     decisionText = '<p>Some decision.</p>'
-    schemas = {'MeetingItem': MeetingItem_schema,
-               'Meeting': Meeting_schema}
     subproductIgnoredTestFiles = ['testPerformances.py',
                                   'test_robot.py']
 
@@ -462,6 +459,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if relatedTo == 'item_decision':
             annexContentType = 'annexDecision'
 
+        # scan_id is removed by default
+        self.request.set(ITEM_SCAN_ID_NAME, scan_id)
         theAnnex = createContentInContainer(
             container=context,
             portal_type=annexContentType,
@@ -474,6 +473,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             signed=signed,
             publishable=publishable,
             scan_id=scan_id)
+        self.request.set(ITEM_SCAN_ID_NAME, None)
         # need to commit the transaction so the stored blob is correct
         # if not done, accessing the blob will raise 'BlobError: Uncommitted changes'
         transaction.commit()
@@ -803,6 +803,20 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         annex_group = get_group(annexes_config_root, obj)
         attr_name = "{0}_activated".format(param)
         setattr(annex_group, attr_name, enable)
+
+    def _enable_action(self, action, related_to="MeetingItem", enable=True):
+        """Enable an action for given p_related_to element."""
+        cfg = self.meetingConfig
+        if related_to == "MeetingItem":
+            if enable and action not in cfg.getEnabledItemActions():
+                actions = cfg.getEnabledItemActions() + (action, )
+                cfg.setEnabledItemActions(actions)
+                notify(ObjectEditedEvent(cfg))
+            elif not enable and action in cfg.getEnabledItemActions():
+                actions = list(cfg.getEnabledItemActions())
+                actions.remove(action)
+                cfg.setEnabledItemActions(actions)
+                notify(ObjectEditedEvent(cfg))
 
     def _disableObj(self, obj, notify_event=True):
         """ """

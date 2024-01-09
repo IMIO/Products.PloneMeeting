@@ -29,6 +29,7 @@ from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import field_is_empty
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import redirect
 from z3c.form.contentprovider import ContentProviders
 from z3c.form.interfaces import HIDDEN_MODE
@@ -174,7 +175,7 @@ class BaseMeetingView(object):
            meeting managers and power observers.'''
         res = self.tool.isManager(self.cfg)
         if not res:
-            res = self.tool.isPowerObserverForCfg(self.cfg) or \
+            res = isPowerObserverForCfg(self.cfg) or \
                 (self.context.__class__.__name__ == 'Meeting' and
                  self.context.adapted().is_decided())
         return res
@@ -496,8 +497,18 @@ class MeetingFacetedView(BaseMeetingFacetedView):
         return super(MeetingFacetedView, self).__call__()
 
     def show_page(self):
-        """Display page to current user?"""
-        return self.tool.showMeetingView(self.context)
+        '''If PloneMeeting is in "Restrict users" mode, the "Meeting view" page
+           must not be shown to some users: users that do not have role
+           MeetingManager and are not listed in a specific list.'''
+        restrictMode = self.tool.getRestrictUsers()
+        res = True
+        if restrictMode:
+            if not self.is_manager:
+                # Check if the user is in specific list
+                if self.member.getId() not in [
+                        u.strip() for u in self.tool.getUnrestrictedUsers().split('\n')]:
+                    res = False
+        return res
 
     def _display_available_items_to(self):
         """Check if current user profile is selected in MeetingConfig.displayAvailableItemsTo."""
@@ -656,7 +667,7 @@ class MeetingReorderItems(BrowserView):
         # add logging message to fingerpointing log
         extras = 'object={0} original_order={1}'.format(
             repr(self.context),
-            repr(','.join(self._orig_order)))
+            ','.join(self._orig_order))
         fplog('meeting_items_reorder', extras=extras)
         return redirect(self.request, self.context.absolute_url())
 

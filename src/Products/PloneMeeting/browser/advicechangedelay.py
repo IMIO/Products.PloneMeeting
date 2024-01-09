@@ -4,6 +4,7 @@ from AccessControl import Unauthorized
 from copy import deepcopy
 from DateTime import DateTime
 from imio.helpers.cache import get_current_user_id
+from imio.helpers.content import get_user_fullname
 from plone import api
 from plone.z3cform.layout import wrap_form
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -113,8 +114,6 @@ class AdviceDelaysView(BrowserView):
            advice_uid in userAdviserOrgUids or \
            self.context.getProposingGroup() in self.tool.get_orgs_for_user():
             return True
-        else:
-            return False
 
     def _mayReinitializeDelay(self, advice_uid=None):
         '''May current user reinitialize delau for given advice_uid?
@@ -234,9 +233,8 @@ class AdviceChangeDelayForm(form.EditForm):
             self.context.adviceIndex[currentAdviceData['org']]['delay_for_automatic_adviser_changed_manually'] = True
         self.context.update_local_roles()
         # add a line to the item's adviceIndex advice delay_changes_history
-        member_id = get_current_user_id()
         history_data = {'action': (currentAdviceData['delay'], newAdviceData['delay']),
-                        'actor': member_id,
+                        'actor': get_current_user_id(),
                         'time': DateTime(),
                         'comments': data['comment']}
         self.context.adviceIndex[currentAdviceData['org']]['delay_changes_history'].append(history_data)
@@ -301,6 +299,9 @@ class AdviceChangeDelayHistoryView(BrowserView):
             raise Unauthorized
         return deepcopy(self.context.adviceIndex[advice_uid])
 
+    def get_user_fullname(self, user_id):
+        return get_user_fullname(user_id)
+
 
 def _reinit_advice_delay(item, advice_uid):
     '''Reinitialize advice delay for given p_item p_advice_uid.'''
@@ -325,9 +326,8 @@ class AdviceReinitializeDelayView(BrowserView):
             raise Unauthorized
         # reinit delay and add a line to the item's adviceIndex advice delay_changes_history
         _reinit_advice_delay(self.context, advice_uid)
-        member_id = get_current_user_id()
         history_data = {'action': 'Reinitiatlize delay',
-                        'actor': member_id,
+                        'actor': get_current_user_id(),
                         'time': DateTime(),
                         'comments': None}
         adviceInfos = self.context.adviceIndex[advice_uid]

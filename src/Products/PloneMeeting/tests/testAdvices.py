@@ -12,6 +12,7 @@ from datetime import datetime
 from datetime import timedelta
 from DateTime import DateTime
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import get_user_fullname
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastAction
 from imio.history.utils import getLastWFAction
@@ -24,7 +25,7 @@ from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
-from Products.CMFPlone.utils import safe_unicode
+from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
@@ -34,6 +35,7 @@ from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.statusmessages.interfaces import IStatusMessage
 from zope.component import getAdapter
 from zope.component import queryUtility
@@ -1557,7 +1559,7 @@ class testAdvices(PloneMeetingTestCase):
         # for now, it is not the case, the 'View' is not given automatically to power advisers
         self.changeUser('pmAdviser1')
         # pmAdviser1 is not power adviser
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg))
+        self.assertFalse(isPowerObserverForCfg(cfg))
         self.assertTrue(self.developers_uid not in item.adviceIndex)
         # he may not see item
         self.failIf(self.hasPermission(View, item))
@@ -2290,8 +2292,12 @@ class testAdvices(PloneMeetingTestCase):
         # 'pmReviewer2', as adviser, is able to toggle advice_hide_during_redaction
         self.assertFalse(advice.advice_hide_during_redaction)
         self.assertFalse(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
+        # historized
+        history_name = 'advice_hide_during_redaction_history'
+        self.assertFalse(base_hasattr(advice, history_name))
         changeView = advice.restrictedTraverse('@@change-advice-hidden-during-redaction')
         changeView()
+        self.assertEqual(getattr(advice, history_name)[0]['action'], 'to_hidden_during_redaction_action')
         self.assertTrue(advice.advice_hide_during_redaction)
         self.assertTrue(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
         # when advice is hidden, trying to access the view will raise Unauthorized
@@ -2300,6 +2306,8 @@ class testAdvices(PloneMeetingTestCase):
         # back to not hidden
         self.changeUser('pmReviewer2')
         changeView()
+        self.assertEqual(getattr(advice, history_name)[0]['action'], 'to_hidden_during_redaction_action')
+        self.assertEqual(getattr(advice, history_name)[1]['action'], 'to_not_hidden_during_redaction_action')
         self.assertFalse(advice.advice_hide_during_redaction)
         self.assertFalse(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
         # to use the change view, user must be able to edit the advice,
@@ -2444,9 +2452,12 @@ class testAdvices(PloneMeetingTestCase):
     def _setUpHistorizedAdvice(self):
         """ """
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates([self._stateMappingFor('itemcreated'), ])
-        cfg.setItemAdviceEditStates([self._stateMappingFor('itemcreated'), ])
-        cfg.setItemAdviceViewStates([self._stateMappingFor('itemcreated'), ])
+        cfg.setItemAdviceStates([self._stateMappingFor('itemcreated')])
+        cfg.setItemAdviceEditStates([self._stateMappingFor('itemcreated')])
+        cfg.setItemAdviceViewStates([self._stateMappingFor('itemcreated'), self._stateMappingFor('proposed')])
+        self._enableField('copyGroups')
+        cfg.setItemCopyGroupsStates([self._stateMappingFor('proposed')])
+        self._setPowerObserverStates(states=(self._stateMappingFor('proposed'), ))
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
@@ -2518,20 +2529,47 @@ class testAdvices(PloneMeetingTestCase):
 
     def test_pm_AdviceHistorizedPreviewAccess(self):
         """By default only (Meeting)Managers may access an historized advice preview."""
+
+        def _check(viewable=True):
+            """ """
+            advice_preview = advice.restrictedTraverse('@@history-event-preview')(last_action)
+            if viewable:
+                self.assertTrue("@@advice_given_history_view" in advice_preview)
+                self.assertTrue(advice.restrictedTraverse('@@advice_given_history_view')(
+                    float(last_action['time'])))
+            else:
+                self.assertFalse("@@advice_given_history_view" in advice_preview)
+                self.assertRaises(
+                    Unauthorized,
+                    advice.restrictedTraverse('@@advice_given_history_view'),
+                    float(last_action['time']))
+
         item, advice = self._setUpHistorizedAdvice()
         # historize advice
         self.changeUser('pmCreator1')
+        item.setCopyGroups((self.vendors_observers, ))
         self.proposeItem(item)
         adapter = getAdapter(advice, IImioHistory, 'advice_given')
         last_action = getLastAction(adapter)
         self.assertTrue(last_action)
-        # preview is not viewable for common user
-        advice_preview = advice.restrictedTraverse('@@history-event-preview')(last_action)
-        self.assertFalse("@@advice_given_history_view" in advice_preview)
-        # preview is viewable for MeetingManagers
+        # viewable for MeetingManagers
         self.changeUser('pmManager')
-        advice_preview = advice.restrictedTraverse('@@history-event-preview')(last_action)
-        self.assertTrue("@@advice_given_history_view" in advice_preview)
+        _check()
+        # viewable for proposingGroup members
+        self.changeUser('pmCreator1')
+        _check()
+        # viewable for the advisers of the asked advice
+        self.changeUser('pmAdviser1')
+        _check()
+        # not viewable for copy groups
+        self.changeUser('pmObserver2')
+        _check(False)
+        # not viewable by powerobservers
+        self.changeUser('powerobserver1')
+        _check(False)
+        # not viewable by other advisers
+        self.changeUser('pmReviewer2')
+        _check(False)
 
     def test_pm_AdviceHistorizedWithItemDataWhenAdviceGiven(self):
         """When an advice is given, it is versioned and relevant item infos are saved.
@@ -3691,8 +3729,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue("Add an advice" in advices_icons())
         # before advice is given, creator is obviously not displayed
         advices_icons_infos = item.restrictedTraverse('@@advices-icons-infos')
-        adviser_fullname = u'<span>{0}</span>'.format(
-            safe_unicode(self.tool.getUserName(self.member.getId())))
+        adviser_fullname = u'<span>{0}</span>'.format(get_user_fullname(self.member.getId()))
         self.assertFalse(adviser_fullname in advices_icons_infos(adviceType=u'not_given'))
         createContentInContainer(
             item,

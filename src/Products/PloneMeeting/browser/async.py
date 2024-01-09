@@ -7,6 +7,7 @@ from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.catalog import reindex_object
+from imio.helpers.content import get_user_fullname
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidToObject
 from plone import api
@@ -120,8 +121,6 @@ class TakenOverBy(BrowserView):
             raise Unauthorized
 
         memberId = get_current_user_id()
-
-        tool = api.portal.get_tool('portal_plonemeeting')
         currentlyTakenOverBy = self.context.getTakenOverBy()
         if currentlyTakenOverBy and \
            not currentlyTakenOverBy == takenOverByFrom and \
@@ -131,8 +130,7 @@ class TakenOverBy(BrowserView):
                 self.context.translate("The item you tried to take over was already taken "
                                        "over in between by ${fullname}. You can take it over "
                                        "now if you are sure that the other user do not handle it.",
-                                       mapping={'fullname': unicode(tool.getUserName(currentlyTakenOverBy),
-                                                                    'utf-8')},
+                                       mapping={'fullname': get_user_fullname(currentlyTakenOverBy)},
                                        domain="PloneMeeting"),
                 type='warning')
             self.request.RESPONSE.status = 500
@@ -163,8 +161,7 @@ class TakenOverBy(BrowserView):
 
         if newlyTakenOverBy:
             taken_over_by = translate('Taken over by ${fullname}',
-                                      mapping={'fullname': unicode(tool.getUserName(memberId),
-                                                                   'utf-8')},
+                                      mapping={'fullname': get_user_fullname(memberId)},
                                       domain="PloneMeeting",
                                       default="Taken over by ${fullname}",
                                       context=self.request)
@@ -325,6 +322,26 @@ class AsyncLoadLinkedItems(BrowserView):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.portal_url = api.portal.get().absolute_url()
         return self.index()
+
+
+class AsyncLoadLinkedItemsInfos(BrowserView):
+
+    def __call__(self, fieldsConfigAttr, currentCfgId):
+        """ """
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+        self.portal_url = api.portal.get().absolute_url()
+        # more infos, compute it first to have fields/static fields to show
+        more_infos_view = self.context.restrictedTraverse('@@item-more-infos')
+        more_infos = more_infos_view(fieldsConfigAttr, currentCfgId)
+        # static infos
+        static_infos = ''
+        visibleColumns = [field for field in more_infos_view.visibleFields
+                          if field.startswith('static_')]
+        if visibleColumns:
+            static_infos = self.context.restrictedTraverse('@@static-infos')(
+                visibleColumns=visibleColumns)
+        return static_infos + more_infos
 
 
 class AsyncLoadItemAssemblyAndSignatures(BrowserView):

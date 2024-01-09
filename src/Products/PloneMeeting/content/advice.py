@@ -18,9 +18,11 @@ from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IDXMeetingContent
 from Products.PloneMeeting.utils import findMeetingAdvicePortalType
 from Products.PloneMeeting.utils import get_event_field_data
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import historize_object_data
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
@@ -150,11 +152,9 @@ class MeetingAdvice(Container):
            and parent.adviceIndex[self.advice_group]['isConfidential']:
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
-            is_confidential_power_observer = tool.isPowerObserverForCfg(
-                cfg, cfg.getAdviceConfidentialFor())
             if not parent._adviceIsViewableForCurrentUser(
                cfg,
-               is_confidential_power_observer,
+               isPowerObserverForCfg(cfg, cfg.getAdviceConfidentialFor()),
                parent.adviceIndex[self.advice_group]):
                 raise Unauthorized
 
@@ -286,8 +286,7 @@ class AdviceGroupVocabulary(object):
     def __call__(self, context):
         """"""
         terms = []
-        tool = api.portal.get_tool('portal_plonemeeting')
-        advicePortalTypeIds = tool.getAdvicePortalTypeIds()
+        advicePortalTypeIds = getAdvicePortalTypeIds()
 
         # take into account groups for wich user can add an advice
         # while adding an advice, the context is his parent, aka a MeetingItem
@@ -327,7 +326,6 @@ class AdviceTypeVocabulary(object):
         terms = []
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        advicePortalTypeIds = tool.getAdvicePortalTypeIds()
 
         # manage when portal_type accessed from the Dexterity types configuration
         if cfg:
@@ -342,7 +340,7 @@ class AdviceTypeVocabulary(object):
 
             # make sure if an adviceType was used for context and it is no more available, it
             # appears in the vocabulary and is so useable...
-            if context.portal_type in advicePortalTypeIds and \
+            if context.portal_type in getAdvicePortalTypeIds() and \
                context.advice_type not in usedAdviceTypes:
                 usedAdviceTypes.append(context.advice_type)
             for advice_id, advice_title in cfg.listAdviceTypes(include_asked_again=True).items():
