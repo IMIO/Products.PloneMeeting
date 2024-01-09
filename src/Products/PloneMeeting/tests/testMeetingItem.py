@@ -4799,22 +4799,34 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemActionsPanelCachingInvalidatedWhenUserChanged(self):
         """Actions panel cache is invalidated when user changed."""
+        self._setPowerObserverStates(states=('validated', ))
+        self.meetingConfig.setItemActionsColumnConfig(('duplicate', ))
         item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
         # invalidated when user changed
         # 'pmReviewer1' may validate the item, the rendered panel will not be the same
         self.proposeItem(item)
-        actions_panel._transitions = None
+        actions_panel = item.restrictedTraverse('@@actions_panel')
         proposedItemForCreator_rendered_actions_panel = actions_panel()
         self.changeUser('pmReviewer1')
-        actions_panel._transitions = None
+        actions_panel = item.restrictedTraverse('@@actions_panel')
         proposedItemForReviewer_rendered_actions_panel = actions_panel()
         self.assertNotEqual(proposedItemForCreator_rendered_actions_panel,
                             proposedItemForReviewer_rendered_actions_panel)
         self.validateItem(item)
-        actions_panel._transitions = None
+        actions_panel = item.restrictedTraverse('@@actions_panel')
         validatedItemForReviewer_rendered_actions_panel = actions_panel()
         self.assertNotEqual(proposedItemForReviewer_rendered_actions_panel,
                             validatedItemForReviewer_rendered_actions_panel)
+        # when only the duplicate action is available, not available to powerobservers
+        # but will be available to creators
+        self._setPowerObserverStates(states=('validated', ))
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        actions_panel = item.restrictedTraverse('@@actions_panel')
+        power_observer_rendered_actions_panel = actions_panel()
+        self.changeUser('pmCreator1')
+        actions_panel = item.restrictedTraverse('@@actions_panel')
+        self.assertNotEqual(power_observer_rendered_actions_panel, actions_panel())
 
     def test_pm_ItemActionsPanelCachingInvalidatedWhenItemTurnsToPresentable(self):
         """Actions panel cache is invalidated when the item turns to presentable."""

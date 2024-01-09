@@ -680,13 +680,16 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
 
         # try to share cache among user "profiles"
         isRealManager = isManager = isEditorUser = advicesIndexModified = \
-            userAbleToCorrectItemWaitingAdvices = isPowerObserverHiddenHistory = None
+            userAbleToCorrectItemWaitingAdvices = isPowerObserverHiddenHistory = \
+            isCreator = None
         # Manager
         isRealManager = self.tool.isManager(realManagers=True)
         # MeetingManager, necessary for MeetingConfig.itemActionsColumnConfig for example
         isManager = self.tool.isManager(self.cfg)
         item_state = None
         if not isRealManager:
+            # manage showing/hidding duplicate item action reserved to creators
+            isCreator = self.tool.userIsAmong(['creators'])
             item_state = self.context.query_state()
             # member able to edit item, manage isEditorUser/userAbleToCorrectItemWaitingAdvices
             if _checkPermission(ModifyPortalContent, self.context):
@@ -728,7 +731,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         # check also portal_url in case application is accessed thru different URI
         return (repr(self.context), self.context.modified(), advicesIndexModified, date,
                 sent_to,
-                isRealManager, isManager, isEditorUser,
+                isRealManager, isManager, isEditorUser, isCreator,
                 userAbleToCorrectItemWaitingAdvices, isPowerObserverHiddenHistory,
                 meeting_review_state, useIcons, showTransitions, appendTypeNameToTransitionLabel,
                 showEdit, showOwnDelete, showOwnDeleteWithComments, showActions,
