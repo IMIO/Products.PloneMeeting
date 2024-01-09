@@ -11,6 +11,8 @@ Changelog
   [gbastien]
 - In tests, use `imio.helpers.content.richtextval` everywhere a `RichTextValue` is used.
   [gbastien]
+- Check user is creator in item `actions_panel` caching invalidation.
+  [gbastien]
 
 4.2.9b5 (2024-01-02)
 --------------------
@@ -149,6 +151,24 @@ Changelog
 - Use `CompoundCriterion` adapter `living-items` for the `searchlivingitems`
   Collection so selected states are always correct if item workflow
   configuration changed.
+  [gbastien]
+- When advice is `asked_again` display left delay correctly, full delay is displayed
+  when advice is supposed given, but when is it `asked_again` it is not the case.
+  [gbastien]
+- Added `sortable` functionnality to the `PMCheckBoxWidget`, use it in the item
+  `Export PDF` form to be able to reorder exported elements.
+  [gbastien]
+- Mail notifications `adviceEdited` and `adviceEditedOwner` are no more sent
+  if advice is hidden during redaction.
+  [gbastien]
+- Fixed `AdvicesIcons.get_advice_given_by` to only return a value when using
+  custom WF (more than one initial state) and if WF reached it's final state.
+  [gbastien]
+- Fixed `MeetingConfig.listTransitionsUntilPresented` that was raising
+  `UnicodeDecodeError` now that we use unicode arrow in term title.
+  Use unicode arrow in `utils.get_dx_attrs` when `as_display_list=True`.
+  [gbastien]
+- Check user is creator in item `actions_panel` caching invalidation.
   [gbastien]
 
 4.2.8 (2023-10-27)
