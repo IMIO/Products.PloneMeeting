@@ -729,7 +729,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         date = get_cachekey_volatile('_users_groups_value')
 
         # check also portal_url in case application is accessed thru different URI
-        return (repr(self.context), self.context.modified(), advicesIndexModified, date,
+        return (repr(self.context), repr(self.context.modified()), advicesIndexModified, repr(date),
                 sent_to,
                 isRealManager, isManager, isEditorUser, isCreator,
                 userAbleToCorrectItemWaitingAdvices, isPowerObserverHiddenHistory,
