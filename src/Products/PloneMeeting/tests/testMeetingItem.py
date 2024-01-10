@@ -4991,9 +4991,8 @@ class testMeetingItem(PloneMeetingTestCase):
         def _call_actions_panel():
             item_actions = item.restrictedTraverse('@@actions_panel')
             # there is cache in request in imio.actionspanel
-            self.request.set('actionspanel_member_cachekey', None)
-            item_actions()
-            return item_actions
+            self.request.set('imio.actionspanel_member_cachekey', None)
+            return item_actions()
 
         def _sum_entries(call_actions_panel=True):
             if call_actions_panel:
@@ -5023,7 +5022,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('powerobserver1', clean_memoize=False)
         self.assertEqual(_sum_entries(), 2)
 
-        # propose item, pmReviewer1 has hand on item, other are Readers
+        # propose item, cache invalidated because item modified
+        # pmReviewer1 has hand on item, other are Readers
         self.changeUser('pmCreator1', clean_memoize=False)
         self.proposeItem(item, clean_memoize=False)
         self.assertEqual(_sum_entries(False), 2)
@@ -5031,47 +5031,47 @@ class testMeetingItem(PloneMeetingTestCase):
         # reviewer, has hand on item
         self.changeUser('pmReviewer1', clean_memoize=False)
         self.assertEqual(_sum_entries(), 4)
-        # observer, Reader
+        # observer, Reader, can not duplicate, action is hidden
         self.changeUser('pmObserver1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 4)
+        self.assertEqual(_sum_entries(), 5)
         # copyGroups or optionalAdvisers, Reader
         self.changeUser('pmReviewer2', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 4)
-        # powerobserver,Reader
+        self.assertEqual(_sum_entries(), 5)
+        # powerobserver, Reader
         self.changeUser('powerobserver1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 4)
+        self.assertEqual(_sum_entries(), 5)
 
         # special case for powerobservers when using MeetingConfig.hideHistoryTo
         cfg.setHideHistoryTo(('MeetingItem.powerobservers', ))
-        self.assertEqual(_sum_entries(), 5)
+        self.assertEqual(_sum_entries(), 6)
         # but still ok for others
         self.changeUser('pmReviewer2', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 5)
+        self.assertEqual(_sum_entries(), 6)
 
         # now test as a MeetingManager that has access when item validated
         self.changeUser('pmReviewer1', clean_memoize=False)
         self.validateItem(item, as_manager=False, clean_memoize=False)
-        self.assertEqual(_sum_entries(), 6)
+        self.assertEqual(_sum_entries(), 7)
         # without meeting, MeetingManager may edit
         self.changeUser('pmManager', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 7)
+        self.assertEqual(_sum_entries(), 8)
         self.create('Meeting')
-        self.assertEqual(_sum_entries(), 8)
-        # does not change for others
+        self.assertEqual(_sum_entries(), 9)
+        # 'pmReviewer1' is not creator, so new value for 'pmCreator1'
         self.changeUser('pmCreator1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 8)
+        self.assertEqual(_sum_entries(), 10)
         # reviewer, has hand on item
         self.changeUser('pmReviewer1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 8)
+        self.assertEqual(_sum_entries(), 10)
         # observer, Reader
         self.changeUser('pmObserver1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 8)
+        self.assertEqual(_sum_entries(), 10)
         # copyGroups or optionalAdvisers, Reader
         self.changeUser('pmReviewer2', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 8)
+        self.assertEqual(_sum_entries(), 10)
         # powerobserver, Reader but changed as using MeetingConfig.hideHistoryTo
         self.changeUser('powerobserver1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 9)
+        self.assertEqual(_sum_entries(), 11)
 
     def test_pm_HistoryCommentViewability(self):
         '''Test the MeetingConfig.hideItemHistoryCommentsToUsersOutsideProposingGroup parameter
@@ -6524,7 +6524,6 @@ class testMeetingItem(PloneMeetingTestCase):
         download_view = self.portal.unrestrictedTraverse(
             str(advice.categorized_elements.values()[0]['download_url']))
         self.assertEqual(download_view().read(), 'Testing file\n')
-
 
     def test_pm_ItemRenamedExceptedDefaultItemTemplate(self):
         """The default item template id is never changed, but other item templates do."""
