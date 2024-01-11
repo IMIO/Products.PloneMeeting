@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.9b6 (unreleased)
+4.2.9b6 (2024-01-11)
 --------------------
 
 - Removed constant `config.ADVICE_STATES_ALIVE`, it is now managed automatically
