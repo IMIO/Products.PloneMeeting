@@ -758,7 +758,8 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         """
         # check actions to display in icons mode
         if useIcons:
-            # hide 'duplicate' actions when showing icons if not in cfg.itemActionsColumnConfig
+            # hide 'duplicate/export_pdf/delete/history' actions from dashboard
+            # if not in cfg.itemActionsColumnConfig
             itemActionsColumnConfig = self.cfg.getItemActionsColumnConfig()
             isMeetingManager = self.tool.isManager(self.cfg)
             isManager = self.tool.isManager(realManagers=True)
@@ -767,6 +768,11 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                 (isManager and 'manager_duplicate' in itemActionsColumnConfig) or
                     ('duplicate' in itemActionsColumnConfig)):
                 self.IGNORABLE_ACTIONS += ('duplicate', )
+            if not (
+                (isMeetingManager and 'meetingmanager_export_pdf' in itemActionsColumnConfig) or
+                (isManager and 'manager_export_pdf' in itemActionsColumnConfig) or
+                    ('export_pdf' in itemActionsColumnConfig)):
+                self.IGNORABLE_ACTIONS += ('export_pdf', )
             if not (
                 (isMeetingManager and 'meetingmanager_delete' in itemActionsColumnConfig) or
                 (isManager and 'manager_delete' in itemActionsColumnConfig) or

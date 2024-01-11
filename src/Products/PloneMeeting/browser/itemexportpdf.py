@@ -23,7 +23,7 @@ class IItemExportPDF(form.Schema):
     """ """
 
     elements = schema.List(
-        title=_(u"Elements to keep"),
+        title=_(u"Elements to export in PDF"),
         description=_(u""),
         required=False,
         value_type=schema.Choice(
