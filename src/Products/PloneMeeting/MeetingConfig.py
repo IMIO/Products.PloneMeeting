@@ -5721,6 +5721,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     translate('Item action duplicate' + translatable_value, domain=d, context=self.REQUEST))
             res.add(prefix + "history",
                     translate('Item action history' + translatable_value, domain=d, context=self.REQUEST))
+            res.add(prefix + "export_pdf",
+                    translate('Item action export PDF' + translatable_value, domain=d, context=self.REQUEST))
         return res
 
     security.declarePrivate('listVotesEncoders')

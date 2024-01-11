@@ -5,8 +5,8 @@ Changelog
 4.2.9b7 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Added `Export PDF` action to `MeetingConfig.itemActionsColumnConfig`.
+  [gbastien]
 
 4.2.9b6 (2024-01-11)
 --------------------
