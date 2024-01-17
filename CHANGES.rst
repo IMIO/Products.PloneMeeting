@@ -5,8 +5,10 @@ Changelog
 4.2.9b8 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Do not `show_advice_on_final_wf_transition` when item is set in a wf state
+  in which advice can not be edited anymore if advice did not reached it's final
+  state (when using advice custom worklow).
+  [gbastien]
 
 4.2.9b7 (2024-01-11)
 --------------------

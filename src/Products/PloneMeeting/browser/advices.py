@@ -356,7 +356,7 @@ class AdviceInfos(BrowserView):
         if self.obj:
             wf_tool = api.portal.get_tool('portal_workflow')
             wf = wf_tool.getWorkflowsFor(self.obj.portal_type)[0]
-            final_state_ids = get_final_states(wf, ignored_transition_ids='giveAdvice')
+            final_state_ids = get_final_states(wf, ignored_transition_ids=['giveAdvice'])
             final_state_ids = len(final_state_ids) > 1 and \
                 [state_id for state_id in final_state_ids if state_id != "advice_given"] or \
                 final_state_ids

@@ -2664,7 +2664,7 @@ def configure_advice_dx_localroles_for(portal_type, org_uids=[]):
     roles_config = {
         'advice_group': {}
     }
-    final_state_ids = get_final_states(wf, ignored_transition_ids='giveAdvice')
+    final_state_ids = get_final_states(wf, ignored_transition_ids=['giveAdvice'])
     # compute suffixes
     suffixes = []
     if org_uids:

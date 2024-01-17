@@ -245,8 +245,10 @@ def onAdviceTransition(advice, event):
         if adviser_infos and adviser_infos.get('show_advice_on_final_wf_transition', '0') == '1':
             wf_tool = api.portal.get_tool('portal_workflow')
             wf = wf_tool.getWorkflowsFor(advice.portal_type)[0]
+            # manage custom workflows where final state is not 'advice_given'
             ignored_transition_ids = len(wf.states) > 2 and ['giveAdvice'] or []
-            if event.new_state.id in get_final_states(wf, ignored_transition_ids=ignored_transition_ids):
+            if event.new_state.id in get_final_states(wf, ignored_transition_ids=ignored_transition_ids) and \
+               (not ignored_transition_ids or event.new_state.id != 'advice_given'):
                 advice.advice_hide_during_redaction = False
                 # update adviceIndex in case we are already updating advices it has already been set
                 item.adviceIndex[advice.advice_group]['hidden_during_redaction'] = False
