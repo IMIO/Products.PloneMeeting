@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.9b8 (unreleased)
+4.2.9b8 (2024-01-18)
 --------------------
 
 - Do not `show_advice_on_final_wf_transition` when item is set in a wf state
