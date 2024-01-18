@@ -114,6 +114,9 @@ Changelog
   [gbastien]
 - Check user is creator in item `actions_panel` caching invalidation.
   [gbastien]
+- Display `created/modified` dates on `MeetingConfig view` for `categories`,
+  `classifiers`, `recurring items`, `searches` and `pod templates`.
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------
