@@ -707,12 +707,10 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
         userMayAccessComment = True
         if self.context.getTagName() == 'MeetingItem':
             if self.cfg.getHideItemHistoryCommentsToUsersOutsideProposingGroup() and \
-               not self.tool.isManager(self.cfg):
-                userOrgUids = self.tool.get_orgs_for_user()
-                group_managing_item_uid = \
-                    self.context.adapted()._getGroupManagingItem(event['review_state'])
-                if group_managing_item_uid not in userOrgUids:
-                    userMayAccessComment = False
+               not self.tool.isManager(self.cfg) and \
+               not set(self.tool.get_orgs_for_user()).intersection(
+                    self.context._getGroupManagingItem(event['review_state'])):
+                userMayAccessComment = False
         return userMayAccessComment
 
     def get_history_data(self):
@@ -1785,8 +1783,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
     def _suffix_proposinggroup(self, visible_fors, item):
         """ """
         res = []
-        groups_managing_item_uids = item.adapted()._getAllGroupsManagingItem(
-            item.query_state())
+        groups_managing_item_uids = item._getAllGroupsManagingItem(item.query_state())
         for visible_for in visible_fors:
             if visible_for.startswith(PROPOSINGGROUPPREFIX):
                 suffix = visible_for.replace(PROPOSINGGROUPPREFIX, '')

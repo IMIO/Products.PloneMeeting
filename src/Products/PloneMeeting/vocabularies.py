@@ -664,6 +664,21 @@ class PMSortedSelectedOrganizationsElephantVocabulary(SortedSelectedOrganization
 PMSortedSelectedOrganizationsElephantVocabularyFactory = PMSortedSelectedOrganizationsElephantVocabulary()
 
 
+class GroupsManagingItemVocabulary(SortedSelectedOrganizationsElephantVocabulary):
+    """ """
+
+    def GroupsManagingItemVocabulary__call__(self, context):
+        terms = super(GroupsManagingItemVocabulary, self).__call__(context)
+        terms._terms.insert(0, SimpleTerm('proposing_group', 'proposing_group', 'Proposing group'))
+        return terms
+
+    # do ram.cache have a different key name
+    __call__ = GroupsManagingItemVocabulary__call__
+
+
+GroupsManagingItemVocabularyFactory = GroupsManagingItemVocabulary()
+
+
 class MeetingReviewStatesVocabulary(object):
     implements(IVocabularyFactory)
 
@@ -2857,7 +2872,9 @@ class BaseContainedAnnexesVocabulary(object):
                 'collective.iconifiedcategory.categories',
                 use_category_uid_as_token=True)
             prefix = u'%s - ' % translate(
-                portal.portal_types[portal_type].title, domain="imio.annex", context=context.REQUEST) if prefixed else ''
+                portal.portal_types[portal_type].title,
+                domain="imio.annex",
+                context=context.REQUEST) if prefixed else ''
 
             for annex in annexes:
                 # term title is annex icon, number and title

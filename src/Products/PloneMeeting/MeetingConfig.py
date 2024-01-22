@@ -1206,6 +1206,12 @@ schema = Schema((
                             "Item WF validation levels extra suffixes",
                             vocabulary_factory=u'collective.contact.plonegroup.functions',
                             col_description="Item WF validation levels extra suffixes description."),
+                     'groups_managing_item':
+                        MultiSelectColumn(
+                            "Item WF validation levels groups managing item",
+                            vocabulary_factory=u'Products.PloneMeeting.vocabularies.'
+                            'groups_managing_item_vocabulary',
+                            col_description="Item WF validation levels groups managing item description."),
                      'enabled':
                         SelectColumn("Item WF validation levels enabled",
                                      vocabulary="listBooleanVocabulary",
@@ -1228,6 +1234,7 @@ schema = Schema((
                  'back_transition_title',
                  'suffix',
                  'extra_suffixes',
+                 'groups_managing_item',
                  'enabled'),
         allow_empty_rows=False,
     ),

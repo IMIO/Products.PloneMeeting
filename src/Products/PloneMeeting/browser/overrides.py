@@ -706,11 +706,11 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                 if "waiting_advices_proposing_group_send_back" in wfas:
                     # convenience, return every user proposingGroup suffixes
                     # user able to do this depends on state to go to
-                    group_managing_item_uid = self.context.adapted()._getGroupManagingItem(
+                    groups_managing_item_uids = self.context._getGroupsManagingItem(
                         item_state, theObject=False)
                     userAbleToCorrectItemWaitingAdvices += \
                         self.tool.get_filtered_plone_groups_for_user(
-                            org_uids=[group_managing_item_uid])
+                            org_uids=groups_managing_item_uids)
 
             # powerobservers to manage MeetingConfig.hideHistoryTo
             hideHistoryTo = self.cfg.getHideHistoryTo()
@@ -1425,9 +1425,9 @@ class PMContentHistoryView(IHContentHistoryView):
                     # could also be member of the proposingGroup
                     # in this case we do not hide the history to the user
                     item_review_state = self.context.query_state()
-                    proposing_group_uid = self.context._getGroupManagingItem(
+                    org_uids = self.context._getGroupsManagingItem(
                         item_review_state, theObject=False)
-                    if proposing_group_uid in tool.get_orgs_for_user():
+                    if set(org_uids).intersection(tool.get_orgs_for_user()):
                         check = False
                 if check and isPowerObserverForCfg(
                         cfg, power_observer_types=hideHistoryTo):

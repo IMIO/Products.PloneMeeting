@@ -121,6 +121,8 @@
            component=".vocabularies.PMAttendeeRedefinePositionTypesVocabularyFactory" />
   <utility name="EnabledItemActions"
            component=".vocabularies.EnabledItemActionsVocabularyFactory" />
+  <utility component=".vocabularies.GroupsManagingItemVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.groups_managing_item_vocabulary" />
 
   <!-- PMHeldPosition vocabularies -->
   <utility component=".vocabularies.HeldPositionUsagesVocabularyFactory"

@@ -648,13 +648,13 @@ def sendMailIfRelevant(obj,
     userIds = []
     membershipTool = api.portal.get_tool('portal_membership')
     if isSuffix:
-        org_uid = obj.adapted()._getGroupManagingItem(obj.query_state(), theObject=False)
-        plone_group = get_plone_group(org_uid, value)
-        if not plone_group:
-            # maybe the suffix is a MeetingConfig related suffix, like _meetingmanagers
-            plone_group = get_plone_group(cfg.getId(), value)
-        if plone_group:
-            userIds = plone_group.getGroupMemberIds()
+        for org_uid in obj._getGroupsManagingItem(obj.query_state()):
+            plone_group = get_plone_group(org_uid, value)
+            if not plone_group:
+                # maybe the suffix is a MeetingConfig related suffix, like _meetingmanagers
+                plone_group = get_plone_group(cfg.getId(), value)
+            if plone_group:
+                userIds += list(plone_group.getGroupMemberIds())
     elif isRole:
         if value == 'Owner':
             userIds = [obj.Creator()]
@@ -2144,14 +2144,14 @@ def get_item_validation_wf_suffixes(cfg, org_uid=None, only_enabled=True):
     return suffixes
 
 
-def compute_item_roles_to_assign_to_suffixes_cachekey(method, cfg, item, item_state, org_uid=None):
+def compute_item_roles_to_assign_to_suffixes_cachekey(method, cfg, item, item_state, org_uids=[]):
     '''cachekey method for compute_item_roles_to_assign_to_suffixes.'''
     # we do not use item in the key, cfg and item_state is sufficient
-    return cfg.getId(), cfg.modified(), item_state, org_uid
+    return cfg.getId(), cfg.modified(), item_state, org_uids
 
 
 @ram.cache(compute_item_roles_to_assign_to_suffixes_cachekey)
-def compute_item_roles_to_assign_to_suffixes(cfg, item, item_state, org_uid=None):
+def compute_item_roles_to_assign_to_suffixes(cfg, item, item_state, org_uids=[]):
     """ """
     apply_meetingmanagers_access = True
     suffix_roles = {}
@@ -2212,11 +2212,12 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item, item_state, org_uid=None
         # we also give the Contributor except to 'observers'
         # so every editors roles get the "PloneMeeting: Add decision annex"
         # permission that let add decision annex
-        for suffix in get_item_validation_wf_suffixes(cfg, org_uid):
-            given_roles = ['Reader']
-            if item.may_add_annex_decision(cfg, item_state) and suffix != 'observers':
-                given_roles.append('Contributor')
-            suffix_roles[suffix] = given_roles
+        for org_uid in org_uids:
+            for suffix in get_item_validation_wf_suffixes(cfg, org_uid):
+                given_roles = ['Reader']
+                if item.may_add_annex_decision(cfg, item_state) and suffix != 'observers':
+                    given_roles.append('Contributor')
+                suffix_roles[suffix] = given_roles
 
     return apply_meetingmanagers_access, suffix_roles
 
@@ -2534,6 +2535,7 @@ def isPowerObserverForCfg_cachekey(method, cfg, power_observer_types=[]):
     return (get_plone_groups_for_user(),
             repr(cfg),
             power_observer_types)
+
 
 # not ramcached perf tests says it does not change anything
 # and this avoid useless entry in cache
