@@ -983,42 +983,32 @@ class BaseDGHV(object):
                 first = False
             return u'<br />'.join(res)
 
-        attendee_type_values = {
-            "attendee": {"M": u"présent", "F": u"présente"},
-            "excused": {"M": u"excusé", "F": u"excusée"},
-            "absent": {"M": u"absent", "F": u"absente"},
-            "replaced": {"M": u"remplacé", "F": u"remplacée"},
-            "item_absent": {"M": u"absent pour ce point", "F": u"absente pour ce point"},
-            "item_excused": {"M": u"excusé pour ce point", "F": u"excusée pour ce point"},
-            "item_non_attendee": {"M": u"ne participe pas à ce point", "F": u"ne participe pas à ce point"},
-        }
+        attendee_type_values = {'attendee': {'M': u'présent',
+                                             'F': u'présente'},
+                                'excused': {'M': u'excusé',
+                                            'F': u'excusée'},
+                                'absent': {'M': u'absent',
+                                           'F': u'absente'},
+                                'replaced': {'M': u'remplacé',
+                                             'F': u'remplacée'},
+                                'item_absent': {'M': u'absent pour ce point',
+                                                'F': u'absente pour ce point'},
+                                'item_excused': {'M': u'excusé pour ce point',
+                                                 'F': u'excusée pour ce point'},
+                                'item_non_attendee': {'M': u'ne participe pas à ce point',
+                                                      'F': u'ne participe pas à ce point'},
+                                }
         attendee_type_values.update(custom_attendee_type_values)
-
         # initial values
-        (
-            meeting,
-            attendees,
-            item_absents,
-            item_excused,
-            item_non_attendees,
-            contacts,
-            excused,
-            absents,
-            replaced,
-        ) = self._get_attendees(committee_id)
+        meeting, attendees, item_absents, item_excused, item_non_attendees, \
+            contacts, excused, absents, replaced = self._get_attendees(committee_id)
         context_uid = self.context.UID()
 
         if adapt_for_videoconference:
-            self._update_patterns_for_videoconference(
-                meeting,
-                attendee_type_values,
-                {
-                    "attendee": {
-                        "M": u"connecté",
-                        "F": u"connectée",
-                    }
-                },
-            )
+            self._update_patterns_for_videoconference(meeting, attendee_type_values, {'attendee': {
+                'M': u'connecté',
+                'F': u'connectée',
+            }})
 
         res = OrderedDict()
         for contact in contacts:
