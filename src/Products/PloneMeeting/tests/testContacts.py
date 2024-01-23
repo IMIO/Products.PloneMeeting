@@ -1464,6 +1464,27 @@ class testContacts(PloneMeetingTestCase):
             u'Madame Person3FirstName Person3LastName, Assembly member 3, '
             u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5;')
 
+        self.assertIn(
+            "Monsieur Person1FirstName Person1LastName, Assembly member 1 (2-3)",
+            helper.print_attendees_by_type(include_in_count=True),
+        )
+
+        self.assertIn(
+            "Monsieur Person1FirstName Person1LastName, Assembly member 1 (1)",
+            helper.print_attendees_by_type(include_out_count=True),
+        )
+
+        self.assertIn(
+            "Monsieur Person1FirstName Person1LastName, Assembly member 1",
+            helper.print_attendees_by_type(include_out_count=True, in_out_attendee_types=["item_excused"]),
+        )
+
+        self.assertIn(
+            "Monsieur Person1FirstName Person1LastName, Assembly member 1 [sauf 1]",
+            helper.print_attendees_by_type(include_out_count=True, in_out_attendee_types=["item_absent"],
+                                           out_count_pattern=" [sauf {}]"),
+        )
+
     def test_pm_Print_attendees_by_type_committee_id(self):
         """Print Meeting committee attendees by type."""
         self.changeUser('pmManager')

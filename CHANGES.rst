@@ -117,6 +117,8 @@ Changelog
 - Display `created/modified` dates on `MeetingConfig view` for `categories`,
   `classifiers`, `recurring items`, `searches` and `pod templates`.
   [gbastien]
+- Added in and out count to `print_attendees_by_type`.
+  [aduchene]
 
 4.2.8 (2023-10-27)
 ------------------
