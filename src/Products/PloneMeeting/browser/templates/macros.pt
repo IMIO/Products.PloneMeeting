@@ -935,15 +935,17 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
 <table class="listing nosort" align="right" width="100%">
   <tr>
     <th class="nosort" i18n:translate="listingheader_title">Title</th>
+    <th class="nosort" i18n:translate="header_CreationDate" i18n:domain="collective.eeafaceted.z3ctable">Created</th>
+    <th class="nosort" i18n:translate="header_ModificationDate" i18n:domain="collective.eeafaceted.z3ctable">Modified</th>
     <th class="nosort" width="20%" i18n:translate="PloneMeeting_label_categoryId">Category id</th>
     <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
     <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
   </tr>
   <tr tal:condition="not: objs">
-    <td colspan="4" align="center" i18n:translate="">no_category</td>
+    <td colspan="6" align="center" i18n:translate="">no_category</td>
   </tr>
   <tr tal:condition="too_much_cats">
-    <td colspan="4" align="center">
+    <td colspan="6" align="center">
      <span i18n:translate="too_many_categories_use_folder_contents" style="color: red; font-style: italic;">
       There are too much categories to display.
      </span>
@@ -962,6 +964,12 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
                     excludedFields python: ('title', )">
             <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
         </tal:additionalInformations>
+    </td>
+    <td>
+      <span tal:content="python: toLocalizedTime(obj.created(), long_format=True)">Created</span>
+    </td>
+    <td>
+      <span tal:content="python: toLocalizedTime(obj.modified(), long_format=True)">Modified</span>
     </td>
     <td tal:content="obj/category_id"></td>
     <td i18n:domain="plone">

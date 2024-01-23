@@ -1902,14 +1902,21 @@ div.grouped-configs span.fa.selected::before {
 
 /* meeting_users table on meeting_edit */
 table#meeting_users td {
-   padding: 0.35em;
+    padding: 0.35em;
 }
 table#meeting_users td.draggable,
 table#faceted_table td.draggable {
-   cursor: ns-resize;
+    cursor: ns-resize;
 }
+span.draggable {
+    cursor: ns-resize;
+    padding: 0.25em;
+    text-shadow: white 1px 1px 1px;
+    background-color: #ddd;
+}
+
 table#meeting_users select[id$="_replacement"] {
-   width: 500px;
+    width: 500px;
 }
 
 #content table#meeting_users.listing tbody tr.even,
@@ -2338,14 +2345,17 @@ div.pm_checkbox_widget div.checkbox_widget_select_all {
    margin-top: 0.25em;
    margin-bottom: 0.25em;
 }
+
+/* checkboxes in item duplicate/item export pdf forms popup */
 div.pm_checkbox_widget input.checkbox-widget {
    margin-left: 0.25em;
 }
-/* space between checkboxes in item duplicate form popup */
-div.pm_checkbox_widget span#form-widgets-annex_decision_ids span.option,
-div.pm_checkbox_widget span#form-widgets-annex_ids span.option {
+div.pm_checkbox_widget span.option {
    margin-top: 0.5em;
    margin-bottom: 0.5em;
+}
+div.pm_checkbox_widget span.option label {
+    display: inline;
 }
 
 /* hide the edit yellow pencil on person and held_position in the viewlet-above-content-title next to workflow_state */

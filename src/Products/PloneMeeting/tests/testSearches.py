@@ -1369,6 +1369,25 @@ class testSearches(PloneMeetingTestCase):
         self.assertEqual(len(res), 1)
         self.assertEqual(res[0].UID, editable_item.UID())
 
+    def test_pm_SearchLivingItems(self):
+        '''Test the 'living-items' CompoundCriterion adapter.
+           Returns every items that are not decided.'''
+        cfg = self.meetingConfig
+        collection = cfg.searches.searches_items.searchlivingitems
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem', decision=self.decisionText)
+        self.assertTrue(item.UID() in [brain.UID for brain in collection.results()])
+        meeting = self.create('Meeting')
+        self.presentItem(item)
+        self.freezeMeeting(meeting)
+        self.assertTrue(item.UID() in [brain.UID for brain in collection.results()])
+        self.decideMeeting(meeting)
+        self.assertTrue(item.UID() in [brain.UID for brain in collection.results()])
+        self.closeMeeting(meeting)
+        self.assertEqual(item.query_state(), 'accepted')
+        self.assertTrue(item.query_state() in cfg.getItemDecidedStates())
+        self.assertFalse(item.UID() in [brain.UID for brain in collection.results()])
+
 
 def test_suite():
     from unittest import makeSuite

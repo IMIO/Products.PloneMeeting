@@ -92,6 +92,31 @@ Changelog
   [gbastien]
 - When `copyGroups` have access to item, highlight full `Copy groups` label in green.
   [gbastien]
+- Use `CompoundCriterion` adapter `living-items` for the `searchlivingitems`
+  Collection so selected states are always correct if item workflow
+  configuration changed.
+  [gbastien]
+- When advice is `asked_again` display left delay correctly, full delay is displayed
+  when advice is supposed given, but when is it `asked_again` it is not the case.
+  [gbastien]
+- Added `sortable` functionnality to the `PMCheckBoxWidget`, use it in the item
+  `Export PDF` form to be able to reorder exported elements.
+  [gbastien]
+- Mail notifications `adviceEdited` and `adviceEditedOwner` are no more sent
+  if advice is hidden during redaction.
+  [gbastien]
+- Fixed `AdvicesIcons.get_advice_given_by` to only return a value when using
+  custom WF (more than one initial state) and if WF reached it's final state.
+  [gbastien]
+- Fixed `MeetingConfig.listTransitionsUntilPresented` that was raising
+  `UnicodeDecodeError` now that we use unicode arrow in term title.
+  Use unicode arrow in `utils.get_dx_attrs` when `as_display_list=True`.
+  [gbastien]
+- Check user is creator in item `actions_panel` caching invalidation.
+  [gbastien]
+- Display `created/modified` dates on `MeetingConfig view` for `categories`,
+  `classifiers`, `recurring items`, `searches` and `pod templates`.
+  [gbastien]
 - Added in and out count to `print_attendees_by_type`.
   [aduchene]
 

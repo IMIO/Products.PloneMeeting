@@ -680,13 +680,16 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
 
         # try to share cache among user "profiles"
         isRealManager = isManager = isEditorUser = advicesIndexModified = \
-            userAbleToCorrectItemWaitingAdvices = isPowerObserverHiddenHistory = None
+            userAbleToCorrectItemWaitingAdvices = isPowerObserverHiddenHistory = \
+            isCreator = None
         # Manager
         isRealManager = self.tool.isManager(realManagers=True)
         # MeetingManager, necessary for MeetingConfig.itemActionsColumnConfig for example
         isManager = self.tool.isManager(self.cfg)
         item_state = None
         if not isRealManager:
+            # manage showing/hidding duplicate item action reserved to creators
+            isCreator = self.tool.userIsAmong(['creators'])
             item_state = self.context.query_state()
             # member able to edit item, manage isEditorUser/userAbleToCorrectItemWaitingAdvices
             if _checkPermission(ModifyPortalContent, self.context):
@@ -726,9 +729,9 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         date = get_cachekey_volatile('_users_groups_value')
 
         # check also portal_url in case application is accessed thru different URI
-        return (repr(self.context), self.context.modified(), advicesIndexModified, date,
+        return (repr(self.context), repr(self.context.modified()), advicesIndexModified, repr(date),
                 sent_to,
-                isRealManager, isManager, isEditorUser,
+                isRealManager, isManager, isEditorUser, isCreator,
                 userAbleToCorrectItemWaitingAdvices, isPowerObserverHiddenHistory,
                 meeting_review_state, useIcons, showTransitions, appendTypeNameToTransitionLabel,
                 showEdit, showOwnDelete, showOwnDeleteWithComments, showActions,
@@ -755,7 +758,8 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         """
         # check actions to display in icons mode
         if useIcons:
-            # hide 'duplicate' actions when showing icons if not in cfg.itemActionsColumnConfig
+            # hide 'duplicate/export_pdf/delete/history' actions from dashboard
+            # if not in cfg.itemActionsColumnConfig
             itemActionsColumnConfig = self.cfg.getItemActionsColumnConfig()
             isMeetingManager = self.tool.isManager(self.cfg)
             isManager = self.tool.isManager(realManagers=True)
@@ -764,6 +768,11 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                 (isManager and 'manager_duplicate' in itemActionsColumnConfig) or
                     ('duplicate' in itemActionsColumnConfig)):
                 self.IGNORABLE_ACTIONS += ('duplicate', )
+            if not (
+                (isMeetingManager and 'meetingmanager_export_pdf' in itemActionsColumnConfig) or
+                (isManager and 'manager_export_pdf' in itemActionsColumnConfig) or
+                    ('export_pdf' in itemActionsColumnConfig)):
+                self.IGNORABLE_ACTIONS += ('export_pdf', )
             if not (
                 (isMeetingManager and 'meetingmanager_delete' in itemActionsColumnConfig) or
                 (isManager and 'manager_delete' in itemActionsColumnConfig) or

@@ -2841,9 +2841,10 @@ class BaseContainedAnnexesVocabulary(object):
 
     implements(IVocabularyFactory)
 
-    def __call__(self, context, portal_type='annex'):
+    def __call__(self, context, portal_type='annex', prefixed=False):
         """ """
-        portal_url = api.portal.get().absolute_url()
+        portal = api.portal.get()
+        portal_url = portal.absolute_url()
         terms = []
         i = 1
         sort_on = 'getObjPositionInParent' if \
@@ -2855,9 +2856,13 @@ class BaseContainedAnnexesVocabulary(object):
                 context,
                 'collective.iconifiedcategory.categories',
                 use_category_uid_as_token=True)
+            prefix = u'%s - ' % translate(
+                portal.portal_types[portal_type].title, domain="imio.annex", context=context.REQUEST) if prefixed else ''
+
             for annex in annexes:
                 # term title is annex icon, number and title
-                term_title = u'{0}. <img src="{1}/{2}" title="{3}"> {4}'.format(
+                term_title = u'{0}{1}. <img src="{2}/{3}" title="{4}"> {5}'.format(
+                    prefix,
                     str(i),
                     portal_url,
                     annex['icon_url'],
@@ -2924,7 +2929,7 @@ class ItemDuplicationContainedDecisionAnnexesVocabulary(ItemDuplicationContained
 ItemDuplicationContainedDecisionAnnexesVocabularyFactory = ItemDuplicationContainedDecisionAnnexesVocabulary()
 
 
-class ItemExportPDFContainedAnnexesVocabulary(BaseContainedAnnexesVocabulary):
+class ItemExportPDFElementsVocabulary(BaseContainedAnnexesVocabulary):
     """ """
 
     def _check_disable_term(self, context, annex, categories_vocab, term):
@@ -2938,23 +2943,25 @@ class ItemExportPDFContainedAnnexesVocabulary(BaseContainedAnnexesVocabulary):
                                     domain='PloneMeeting',
                                     context=context.REQUEST)
 
-
-ItemExportPDFContainedAnnexesVocabularyFactory = ItemExportPDFContainedAnnexesVocabulary()
-
-
-class ItemExportPDFContainedDecisionAnnexesVocabulary(ItemExportPDFContainedAnnexesVocabulary):
-    """ """
-
-    def __call__(self, context, portal_type='annexDecision'):
+    def __call__(self, context):
         """ """
+        # pod templates
+        terms = get_vocab(
+            context,
+            'Products.PloneMeeting.vocabularies.'
+            'generable_pdf_documents_vocabulary')._terms
+        # annexes
+        terms += super(ItemExportPDFElementsVocabulary, self).__call__(
+            context, prefixed=True)
+        # decision annexes
         context.REQUEST['force_use_item_decision_annexes_group'] = True
-        terms = super(ItemExportPDFContainedDecisionAnnexesVocabulary, self).__call__(
-            context, portal_type=portal_type)
+        terms += super(ItemExportPDFElementsVocabulary, self).__call__(
+            context, portal_type='annexDecision', prefixed=True)
         context.REQUEST['force_use_item_decision_annexes_group'] = False
-        return terms
+        return SimpleVocabulary(terms)
 
 
-ItemExportPDFContainedDecisionAnnexesVocabularyFactory = ItemExportPDFContainedDecisionAnnexesVocabulary()
+ItemExportPDFElementsVocabularyFactory = ItemExportPDFElementsVocabulary()
 
 
 class GenerablePODTemplatesVocabulary(object):

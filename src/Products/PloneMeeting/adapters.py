@@ -1544,6 +1544,21 @@ class DecidedItemsAdapter(CompoundCriterionBaseAdapter):
     query = query_decideditems
 
 
+class LivingItemsAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    @ram.cache(query_meeting_config_modified_cachekey)
+    def query_livingitems(self):
+        '''Queries living items, items not decided yet.'''
+        if not self.cfg:
+            return {}
+        return {'portal_type': {'query': self.cfg.getItemTypeName()},
+                'review_state': {'not': self.cfg.getItemDecidedStates()}, }
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_livingitems
+
+
 class PersonalLabelsAdapter(CompoundCriterionBaseAdapter):
 
     @property

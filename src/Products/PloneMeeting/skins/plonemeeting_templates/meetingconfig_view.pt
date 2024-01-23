@@ -27,7 +27,8 @@
                                   pageName request/pageName|string:default;
                                   schematas python: here.Schemata();
                                   fieldsets python:[key for key in schematas.keys() if (key not in ('metadata', 'settings'))];
-                                  displayable_fieldsets python: list(fieldsets);">
+                                  displayable_fieldsets python: list(fieldsets);
+                                  toLocalizedTime python:context.restrictedTraverse('@@plone').toLocalizedTime">
 
     <tal:hideToNonManagers condition="nocall:isManager">
 
@@ -648,9 +649,11 @@
         <p class="discreet" i18n:translate="recurring_items_descr"></p><br />
         <table class="listing nosort" align="right" width="100%"
                tal:define="rFolder python:context.recurringitems;
-                           rFolderUrl rFolder/absolute_url;">
+                           rFolderUrl python:rFolder.absolute_url();">
           <tr>
             <th class="nosort" width="50%" i18n:translate="listingheader_title">Title</th>
+            <th class="nosort" i18n:translate="header_CreationDate" i18n:domain="collective.eeafaceted.z3ctable">Created</th>
+            <th class="nosort" i18n:translate="header_ModificationDate" i18n:domain="collective.eeafaceted.z3ctable">Modified</th>
             <th class="nosort" i18n:translate="PloneMeeting_label_meetingTransitionInsertingMe">Meeting transition inserting me</th>
             <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
           </tr>
@@ -663,7 +666,13 @@
                           classOddEven python: oddrow and 'even' or 'odd';" valign="top"
                 tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
                 class="#">
-            <td><h5><a tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a></h5></td>
+            <td><h5><a tal:attributes="href python: obj.absolute_url()" tal:content="python: obj.Title()"></a></h5></td>
+            <td>
+              <span tal:content="python: toLocalizedTime(obj.created(), long_format=True)">Created</span>
+            </td>
+            <td>
+              <span tal:content="python: toLocalizedTime(obj.modified(), long_format=True)">Modified</span>
+            </td>
             <td><span tal:content="python: obj.getMeetingTransitionInsertingMe() or '-'" i18n:domain="plone" i18n:translate="">Transition inserting me</span></td>
             <td align="right">
               <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=True, showArrows=True)" />
@@ -902,6 +911,8 @@
                  title="add_object" i18n:attributes="title"
                  tal:condition="isRealManager"/>
                 </th>
+                <th class="nosort" i18n:translate="header_CreationDate" i18n:domain="collective.eeafaceted.z3ctable">Created</th>
+                <th class="nosort" i18n:translate="header_ModificationDate" i18n:domain="collective.eeafaceted.z3ctable">Modified</th>
                 <th class="nosort" width="400px" i18n:translate="heading_criteria">Criteria</th>
                 <th class="nosort" i18n:translate="">Condition</th>
                 <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
@@ -917,12 +928,18 @@
                   tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
                   valign="top">
                 <td>
-                  <h5><a tal:attributes="href obj/absolute_url" tal:content="obj/Title">Collection title</a></h5>
-                  (<span tal:content="obj/getId">Collection id</span>)
-                  <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr">Collection description</div>
+                  <h5><a tal:attributes="href python: obj.absolute_url()" tal:content="python: obj.Title()">Collection title</a></h5>
+                  (<span tal:content="python: obj.getId()">Collection id</span>)
+                  <div class="discreet" tal:define="descr python: obj.Description()" tal:condition="descr" tal:content="descr">Collection description</div>
                 </td>
                 <td>
-                  <span tal:content="obj/query">Criteria</span>
+                  <span tal:content="python: toLocalizedTime(obj.created(), long_format=True)">Created</span>
+                </td>
+                <td>
+                  <span tal:content="python: toLocalizedTime(obj.modified(), long_format=True)">Modified</span>
+                </td>
+                <td>
+                  <span tal:content="python: obj.query">Criteria</span>
                   <div>
                     <label class="formQuestion">
                       <span i18n:translate="" i18n:domain="plone">Sort the collection on this index</span>
@@ -1331,6 +1348,8 @@
           <tr>
             <th class="nosort" width="20px"></th>
             <th class="nosort" i18n:translate="listingheader_title">Title</th>
+            <th class="nosort" i18n:translate="header_CreationDate" i18n:domain="collective.eeafaceted.z3ctable">Created</th>
+            <th class="nosort" i18n:translate="header_ModificationDate" i18n:domain="collective.eeafaceted.z3ctable">Modified</th>
             <th class="nosort" width="130px"  i18n:translate="heading_actions">Actions</th>
           </tr>
           <tr tal:condition="python: not templates">
@@ -1347,8 +1366,8 @@
                      tal:attributes="src string:$portal_url/++resource++collective.documentgenerator/style.svg"/></td>
             <td>
                 <h5>
-                  <a tal:attributes="href obj/absolute_url;">
-                    <span tal:content="obj/Title" />
+                  <a tal:attributes="href python:obj.absolute_url();">
+                    <span tal:content="python:obj.Title()" />
                   </a>
                 </h5>
                 <tal:additionalInformations
@@ -1357,6 +1376,12 @@
                             excludedFields python: ()">
                     <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
                 </tal:additionalInformations>
+            </td>
+            <td>
+              <span tal:content="python: toLocalizedTime(obj.created(), long_format=True)">Created</span>
+            </td>
+            <td>
+              <span tal:content="python: toLocalizedTime(obj.modified(), long_format=True)">Modified</span>
             </td>
             <td align="right">
               <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=False)" />
@@ -1371,13 +1396,15 @@
           <tr>
             <th class="nosort" width="20px"></th>
             <th class="nosort" i18n:translate="listingheader_title">Title</th>
+            <th class="nosort" i18n:translate="header_CreationDate" i18n:domain="collective.eeafaceted.z3ctable">Created</th>
+            <th class="nosort" i18n:translate="header_ModificationDate" i18n:domain="collective.eeafaceted.z3ctable">Modified</th>
             <th class="nosort" width="200px" i18n:translate="listingheader_pod_template_or_odt_file">POD template or odt_file</th>
             <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
             <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
           </tr>
           <tal:comment replace="nothing">No template is defined.</tal:comment>
           <tr tal:condition="python: not pFolder.objectValues()">
-            <td colspan="4" align="center" i18n:translate="">no_pod_folder</td>
+            <td colspan="6" align="center" i18n:translate="">no_pod_folder</td>
           </tr>
           <tal:loop repeat="obj templates">
           <tr tal:define="oddrow repeat/obj/odd;
@@ -1431,6 +1458,12 @@
                             excludedFields python: ('pod_formats', 'enabled')">
                     <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
                 </tal:additionalInformations>
+            </td>
+            <td>
+              <span tal:content="python: toLocalizedTime(obj.created(), long_format=True)">Created</span>
+            </td>
+            <td>
+              <span tal:content="python: toLocalizedTime(obj.modified(), long_format=True)">Modified</span>
             </td>
             <td>
               <a tal:attributes="href string:${obj/absolute_url}/view/++widget++form.widgets.odt_file/@@download"
