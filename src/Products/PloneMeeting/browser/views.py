@@ -999,7 +999,7 @@ class BaseDGHV(object):
                                                       'F': u'ne participe pas à ce point'},
                                 }
         attendee_type_values.update(custom_attendee_type_values)
-        
+
         # initial values
         meeting, attendees, item_absents, item_excused, item_non_attendees, \
             contacts, excused, absents, replaced = self._get_attendees(committee_id)
