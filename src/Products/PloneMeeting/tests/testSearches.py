@@ -864,7 +864,7 @@ class testSearches(PloneMeetingTestCase):
         self.failUnless(len(collection.results()) == 1)
         self.failUnless(collection.results()[0].UID == item2.UID())
 
-    def test_pm_SearchItemsToCorrect(self):
+    def test_pm_SearchItemsToCorrectDefault(self):
         '''Test the 'items-to-correct' CompoundCriterion adapter.  This should return
            a list of items in state 'returned_to_proposing_group' the current user is able to edit.'''
         cfg = self.meetingConfig

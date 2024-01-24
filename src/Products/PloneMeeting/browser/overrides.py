@@ -707,7 +707,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                     # convenience, return every user proposingGroup suffixes
                     # user able to do this depends on state to go to
                     groups_managing_item_uids = self.context._getGroupsManagingItem(
-                        item_state, theObject=False)
+                        item_state, theObjects=False)
                     userAbleToCorrectItemWaitingAdvices += \
                         self.tool.get_filtered_plone_groups_for_user(
                             org_uids=groups_managing_item_uids)
@@ -1426,7 +1426,7 @@ class PMContentHistoryView(IHContentHistoryView):
                     # in this case we do not hide the history to the user
                     item_review_state = self.context.query_state()
                     org_uids = self.context._getGroupsManagingItem(
-                        item_review_state, theObject=False)
+                        item_review_state, theObjects=False)
                     if set(org_uids).intersection(tool.get_orgs_for_user()):
                         check = False
                 if check and isPowerObserverForCfg(

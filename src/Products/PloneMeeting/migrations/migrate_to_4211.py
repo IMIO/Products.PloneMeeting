@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
+from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.setup import load_type_from_package
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.setuphandlers import indexInfos
 from zope.event import notify
 
 
@@ -90,6 +92,9 @@ class Migrate_To_4211(Migrator):
         self._addGroupsManagingItemToCfgItemWFValidationLevels()
         # add text criterion on item title only
         self.updateFacetedFilters(xml_filename='upgrade_step_4211_add_item_widgets.xml')
+        # need to change the reviewProcessInfo index from FieldIndex to KeywordIndex
+        # as it may contains several values now (several groups managing item at same time
+        addOrUpdateIndexes(self.portal, indexInfos)
         logger.info('Migrating to PloneMeeting 4211... Done.')
 
 
