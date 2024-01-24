@@ -1249,9 +1249,10 @@ def applyOnTransitionFieldTransform(obj, transitionId):
     cfg = extra_expr_ctx['cfg']
     for transform in cfg.getOnTransitionFieldTransforms():
         tal_expr = transform['tal_expression'].strip()
-        if tal_expr and \
-           transform['transition'] == transitionId and \
-           transform['field_name'].split('.')[0] == obj.getTagName():
+        # transform a field or execute the TAL expression
+        if tal_expr and transform['transition'] == transitionId and \
+           ('.' not in transform['field_name'] or
+                transform['field_name'].split('.')[0] == obj.getTagName()):
             try:
                 extra_expr_ctx.update({'item': obj, })
                 res = _evaluateExpression(
@@ -1261,14 +1262,16 @@ def applyOnTransitionFieldTransform(obj, transitionId):
                     extra_expr_ctx=extra_expr_ctx,
                     empty_expr_is_true=False,
                     raise_on_error=True)
-                field = obj.getField(transform['field_name'].split('.')[1])
-                field.set(obj, res, mimetype='text/html')
-                idxs.append(field.accessor)
+                # transform a field
+                if '.' in transform['field_name']:
+                    field = obj.getField(transform['field_name'].split('.')[1])
+                    field.set(obj, res, mimetype='text/html')
+                    idxs.append(field.accessor)
             except Exception, e:
                 plone_utils = api.portal.get_tool('plone_utils')
                 plone_utils.addPortalMessage(
                     ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR % (
-                        transform['field_name'].split('.')[1], str(e)),
+                        transform['field_name'], str(e)),
                     type='warning')
                 break
     # if something changed, pass supposed indexes + SearchableText
@@ -2534,6 +2537,7 @@ def isPowerObserverForCfg_cachekey(method, cfg, power_observer_types=[]):
     return (get_plone_groups_for_user(),
             repr(cfg),
             power_observer_types)
+
 
 # not ramcached perf tests says it does not change anything
 # and this avoid useless entry in cache

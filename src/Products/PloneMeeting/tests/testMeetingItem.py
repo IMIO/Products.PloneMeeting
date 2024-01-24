@@ -4616,6 +4616,17 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(item, 'delay')
         self.assertEqual(item.getDecision(), '<p>Generic comment.</p>')
 
+    def test_pm_OnTransitionFieldTransformsExecuteTALExpression(self):
+        '''Can be used just to execute the given TAL expression.'''
+        cfg = self.meetingConfig
+        wfAdaptations = list(cfg.getWorkflowAdaptations())
+        if 'no_publication' not in wfAdaptations:
+            wfAdaptations.append('no_publication')
+            cfg.setWorkflowAdaptations(wfAdaptations)
+            notify(ObjectEditedEvent(cfg))
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems()
+
     def test_pm_TakenOverBy(self):
         '''Test the view that manage the MeetingItem.takenOverBy toggle.
            - by default, an item can be taken over by users having the 'Review portal content' permission;
