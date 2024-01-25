@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.8.2 (unreleased)
+4.2.8.2 (2024-01-25)
 --------------------
 
 - Fixed `test_pm_PreviousReviewStateIndex`.
