@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.8.1 (unreleased)
+4.2.8.1 (2024-01-25)
 --------------------
 
 - In `utils.set_field_from_ajax`, check again that user may actually edit given
