@@ -1950,6 +1950,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(previous_review_state(item)(), previous_state)
 
         # now check that it does not interact when data_changes is enabled
+        self.changeUser('pmReviewer1')
         set_field_from_ajax(item, 'decision', self.decisionText)
         self.assertEqual(previous_review_state(item)(), previous_state)
 
