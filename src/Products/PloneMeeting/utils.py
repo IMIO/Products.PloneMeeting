@@ -1084,8 +1084,15 @@ def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True
        new value is p_fieldValue. This method is called by Ajax pages.'''
 
     if IDexterityContent.providedBy(obj):
+        widget = get_dx_widget(obj, field_name=field_name)
+        if not widget.may_edit():
+            raise Unauthorized
         setattr(obj, field_name, richtextval(new_value))
     else:
+        # only used for AT MeetingItem
+        if not obj.mayQuickEdit(field_name):
+            raise Unauthorized
+
         field = obj.getField(field_name)
         if remember:
             # Keep old value, we might need to historize it.
@@ -2534,6 +2541,7 @@ def isPowerObserverForCfg_cachekey(method, cfg, power_observer_types=[]):
     return (get_plone_groups_for_user(),
             repr(cfg),
             power_observer_types)
+
 
 # not ramcached perf tests says it does not change anything
 # and this avoid useless entry in cache
