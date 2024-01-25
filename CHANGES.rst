@@ -117,6 +117,11 @@ Changelog
 - Display `created/modified` dates on `MeetingConfig view` for `categories`,
   `classifiers`, `recurring items`, `searches` and `pod templates`.
   [gbastien]
+- Added new value `execute_tal_expression` for
+  `MeetingConfig.onTransitionFieldTransforms.field_name`, this way it is now
+  possible to define a TAL expression to execute after an item WF transition
+  that will not change the content of a richtext field.
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------
