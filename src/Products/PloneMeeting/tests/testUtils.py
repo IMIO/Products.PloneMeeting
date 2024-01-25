@@ -60,9 +60,9 @@ class testUtils(PloneMeetingTestCase):
     def test_pm_Set_field_from_ajax(self):
         """Work on AT and DX."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'), ))
-        cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'), ))
+        cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('proposed'), ))
 
         # item
         self.changeUser('pmCreator1')
@@ -76,6 +76,9 @@ class testUtils(PloneMeetingTestCase):
         self.assertEqual(item.Description(), new_value)
         self.assertEqual(self.catalog(Description="my item description")[0].UID, item.UID())
         self.assertEqual(self.catalog(SearchableText="my item description")[0].UID, item.UID())
+        # will raise Unauthorized if user can not edit
+        self.proposeItem(item)
+        self.assertRaises(Unauthorized, set_field_from_ajax, item, 'description', new_value)
 
         # meeting
         self.changeUser('pmManager')
@@ -86,6 +89,9 @@ class testUtils(PloneMeetingTestCase):
         set_field_from_ajax(meeting, 'notes', new_value)
         self.assertEqual(meeting.notes.output, new_value)
         self.assertEqual(self.catalog(SearchableText="my meeting notes")[0].UID, meeting.UID())
+        # will raise Unauthorized if user can not edit
+        self.closeMeeting(meeting)
+        self.assertRaises(Unauthorized, set_field_from_ajax, meeting, 'notes', new_value)
 
         # advice
         self.changeUser('pmReviewer2')
@@ -95,6 +101,9 @@ class testUtils(PloneMeetingTestCase):
         self.assertFalse(self.catalog(SearchableText="my advice comment"))
         set_field_from_ajax(advice, 'advice_comment', new_value)
         self.assertEqual(advice.advice_comment.output, new_value)
+        # will raise Unauthorized if user can not edit
+        self.validateItem(item)
+        self.assertRaises(Unauthorized, set_field_from_ajax, item, 'description', new_value)
 
     def test_pm_SendMailIfRelevant(self):
         """ """

@@ -2,10 +2,12 @@ Changelog
 =========
 
 
-4.2.9 (unreleased)
-------------------
+4.2.8.1 (unreleased)
+--------------------
 
-- Nothing changed yet.
+- In `utils.set_field_from_ajax`, check again that user may actually edit given
+  `field_name` to avoid malicious or erroneous use of it.
+  [gbastien]
 
 
 4.2.8 (2023-10-27)
