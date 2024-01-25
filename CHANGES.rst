@@ -9,7 +9,6 @@ Changelog
   `field_name` to avoid malicious or erroneous use of it.
   [gbastien]
 
-
 4.2.8 (2023-10-27)
 ------------------
 
