@@ -5,8 +5,8 @@ Changelog
 4.2.8.2 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Fixed `test_pm_PreviousReviewStateIndex`.
+  [gbastien]
 
 4.2.8.1 (2024-01-25)
 --------------------
