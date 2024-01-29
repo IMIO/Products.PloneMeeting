@@ -232,14 +232,19 @@ class MeetingAdvice(Container):
         self.advice_row_id = row_id
 
     def _get_final_state_id(self):
-        """ """
+        """By default final state is 'advice_given', but when using a custom WF,
+           final state is the real final state in the WF."""
         wf_tool = api.portal.get_tool('portal_workflow')
         wf = wf_tool.getWorkflowsFor(self.portal_type)[0]
         final_state_ids = get_final_states(wf, ignored_transition_ids=['giveAdvice'])
         final_state_ids = len(final_state_ids) > 1 and \
             [state_id for state_id in final_state_ids if state_id != "advice_given"] or \
             final_state_ids
-        return final_state_ids[0]
+        final_state_id = final_state_ids[0]
+        if wf.initial_state == final_state_id:
+            return 'advice_given'
+        else:
+            return final_state_id
 
     def _get_final_transition_id(self):
         """Return the filal WF transition, useful when using a custom workflow,
