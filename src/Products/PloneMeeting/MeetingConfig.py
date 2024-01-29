@@ -7008,8 +7008,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if objectType == 'MeetingItem':
                 objectType = 'Item'
             for id, text in self.listTransitions(objectType):
-                res.append(('%s.%s' % (metaType, id),
-                            '%s -> %s' % (metaType, text)))
+                res.append((u'%s.%s' % (metaType, id),
+                            u'%s ➔ %s' % (metaType, text)))
         return DisplayList(tuple(res)).sortedByValue()
 
     security.declarePrivate('listMeetingConfigsToCloneTo')
@@ -7048,7 +7048,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             cfgId = cfg.getId()
             cfgTitle = unicode(cfg.Title(), 'utf-8')
             for tr in cfg.getTransitionsForPresentingAnItem():
-                text = '%s -> %s' % (cfgTitle,
+                text = u'%s ➔ %s' % (cfgTitle,
                                      availableItemTransitionTitles[availableItemTransitionIds.index(tr)])
                 res.append(('%s.%s' % (cfgId, tr), text))
         return DisplayList(tuple(res))
@@ -7107,7 +7107,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listItemRichTextFields(self):
         '''Lists all rich-text fields belonging to MeetingItem schema.'''
-        res = self._listRichTextFieldFor(MeetingItem)
+        res = [(EXECUTE_EXPR_VALUE, _(EXECUTE_EXPR_VALUE))]
+        res += self._listRichTextFieldFor(MeetingItem)
         return DisplayList(tuple(res))
 
     def _listRichTextFieldFor(self, baseClass):
@@ -7125,7 +7126,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                (not widget_type or field.widget.getName() == widget_type) and \
                (not hide_not_visible or field.widget.visible):
                 label_msgid = getattr(field.widget, 'label_msgid', field.widget.label)
-                msg = '%s.%s -> %s' % (baseClass.__name__, fieldName,
+                msg = u'%s.%s ➔ %s' % (baseClass.__name__, fieldName,
                                        translate(label_msgid, domain=d, context=self.REQUEST))
                 res.append(('%s.%s' % (baseClass.__name__, fieldName), msg))
         return res

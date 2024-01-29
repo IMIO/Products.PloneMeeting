@@ -5,6 +5,7 @@ from datetime import datetime
 from DateTime import DateTime
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
+from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.content import get_user_fullname
 from imio.helpers.date import wordizeDate
 from imio.helpers.workflow import update_role_mappings_for

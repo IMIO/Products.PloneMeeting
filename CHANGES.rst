@@ -122,6 +122,11 @@ Changelog
 - In `utils.set_field_from_ajax`, check again that user may actually edit given
   `field_name` to avoid malicious or erroneous use of it.
   [gbastien]
+- Added new value `execute_tal_expression` for
+  `MeetingConfig.onTransitionFieldTransforms.field_name`, this way it is now
+  possible to define a TAL expression to execute after an item WF transition
+  that will not change the content of a richtext field.
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------
