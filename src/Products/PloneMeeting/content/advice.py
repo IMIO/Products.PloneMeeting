@@ -5,6 +5,8 @@ from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organization
 from dexterity.localrolesfield.field import LocalRoleField
 from imio.helpers.content import get_vocab
+from imio.helpers.workflow import get_final_states
+from imio.helpers.workflow import get_leading_transitions
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastAction
 from imio.history.utils import getLastWFAction
@@ -229,18 +231,42 @@ class MeetingAdvice(Container):
                 raise KeyError('Not able to find a value to set for advice row_id!')
         self.advice_row_id = row_id
 
+    def _get_final_state_id(self):
+        """ """
+        wf_tool = api.portal.get_tool('portal_workflow')
+        wf = wf_tool.getWorkflowsFor(self.portal_type)[0]
+        final_state_ids = get_final_states(wf, ignored_transition_ids=['giveAdvice'])
+        final_state_ids = len(final_state_ids) > 1 and \
+            [state_id for state_id in final_state_ids if state_id != "advice_given"] or \
+            final_state_ids
+        return final_state_ids[0]
+
+    def _get_final_transition_id(self):
+        """Return the filal WF transition, useful when using a custom workflow,
+           by default this will be the 'giveAdvice' transition."""
+        wf_tool = api.portal.get_tool('portal_workflow')
+        wf = wf_tool.getWorkflowsFor(self.portal_type)[0]
+        return get_leading_transitions(wf, self._get_final_state_id())[0].id
+
     def get_advice_given_on(self):
         '''Return the date the advice was given on.
-           Returns the smallest date between modified() and last event 'giveAdvice'.
+           If we do not use a custom workflow, returns the smallest date
+           between modified() and last event 'giveAdvice'.
            This manages case when advice is edited after it is given, for example
            when a MeetingManager corrects a typo, the advice_given_on date will be
            the 'giveAdvice' date.'''
-        lastEvent = getLastWFAction(self, 'giveAdvice')
+        final_transition_id = self._get_final_transition_id()
+        lastEvent = getLastWFAction(self, final_transition_id)
         modified = self.modified()
         if not lastEvent:
             return modified
         else:
-            return min(lastEvent['time'], modified)
+            # common case
+            if final_transition_id == 'giveAdvice':
+                return min(lastEvent['time'], modified)
+            # custom advice WF with a real final state
+            else:
+                return lastEvent['time']
 
     def historize_if_relevant(self, comment):
         """Historize if self was never historized or
