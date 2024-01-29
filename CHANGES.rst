@@ -190,6 +190,14 @@ Changelog
   [gbastien]
 - Check user is creator in item `actions_panel` caching invalidation.
   [gbastien]
+- Display `created/modified` dates on `MeetingConfig view` for `categories`,
+  `classifiers`, `recurring items`, `searches` and `pod templates`.
+  [gbastien]
+- Added in and out count to `print_attendees_by_type`.
+  [aduchene]
+- In `utils.set_field_from_ajax`, check again that user may actually edit given
+  `field_name` to avoid malicious or erroneous use of it.
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------

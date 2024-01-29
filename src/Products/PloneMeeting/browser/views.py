@@ -1111,6 +1111,11 @@ class BaseDGHV(object):
                                 include_replace_by_held_position_label=True,
                                 ignored_pos_type_ids=['default'],
                                 include_person_title=True,
+                                include_in_count=False,
+                                include_out_count=False,
+                                in_out_attendee_types=['item_excused', 'item_absent'],
+                                out_count_pattern=" ({})",
+                                in_count_pattern=" ({})",
                                 abbreviate_firstname=False,
                                 included_attendee_types=['attendee', 'excused', 'absent', 'replaced',
                                                          'item_excused', 'item_absent', 'item_non_attendee'],
@@ -1147,6 +1152,29 @@ class BaseDGHV(object):
                             replaced[contact_uid],
                             include_held_position_label=include_replace_by_held_position_label,
                             include_sub_organizations=False))
+
+
+                if include_out_count or include_in_count:
+                    # Get the list if item uids for which current
+                    # contact_uid is considered not present
+                    not_present_item_uids = []
+                    if 'item_absent' in in_out_attendee_types:
+                        not_present_item_uids += meeting.get_item_absents(by_persons=True).get(contact_uid, [])
+                    if 'item_excused' in in_out_attendee_types:
+                        not_present_item_uids += meeting.get_item_excused(by_persons=True).get(contact_uid, [])
+                    if 'non_attendee' in in_out_attendee_types:
+                        not_present_item_uids += meeting.get_item_non_attendees(by_persons=True).get(contact_uid, [])
+                    if include_out_count and len(not_present_item_uids) > 0:
+                        catalog = api.portal.get_tool('portal_catalog')
+                        brains = catalog(UID=not_present_item_uids, sort_on='getItemNumber')
+                        numbers = [brain.getObject().getItemNumber(for_display=True) for brain in brains]
+                        numbers = [int(number) if '.' not in number else float(number) for number in numbers]
+                        contact_value += out_count_pattern.format(get_clusters(numbers))
+                    if include_in_count and len(not_present_item_uids) > 0:
+                        numbers = [item.getItemNumber(for_display=True)
+                                   for item in meeting.get_items(ordered=True) if item.UID() not in not_present_item_uids]
+                        numbers = [int(number) if '.' not in number else float(number) for number in numbers]
+                        contact_value += in_count_pattern.format(get_clusters(numbers))
                 if unbreakable_contact_value:
                     contact_value = contact_value.replace(" ", "&nbsp;")
                 grouped_contacts_value.append(contact_value)
