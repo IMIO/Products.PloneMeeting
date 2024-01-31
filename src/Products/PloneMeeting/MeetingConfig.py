@@ -6299,6 +6299,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             portalTypeName = '%s%s' % (metaTypeName, self.getShortName())
             portalType = getattr(typesTool, portalTypeName)
             basePortalType = getattr(typesTool, metaTypeName)
+            portalType.title = "{0} {1}".format(
+                translate(metaTypeName, domain='plone', context=self.REQUEST).encode('utf-8'),
+                self.Title(include_config_group=True))
             portalType.i18n_domain = basePortalType.i18n_domain
             # base portal_types 'Meeting' and 'MeetingItem' are global_allow=False
             portalType.global_allow = True
@@ -7048,8 +7051,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             cfgId = cfg.getId()
             cfgTitle = unicode(cfg.Title(), 'utf-8')
             for tr in cfg.getTransitionsForPresentingAnItem():
-                text = u'%s ➔ %s' % (cfgTitle,
-                                     availableItemTransitionTitles[availableItemTransitionIds.index(tr)])
+                text = u'%s ➔ %s' % (
+                    cfgTitle,
+                    availableItemTransitionTitles[
+                        availableItemTransitionIds.index(tr)])
                 res.append(('%s.%s' % (cfgId, tr), text))
         return DisplayList(tuple(res))
 
@@ -7116,7 +7121,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''
         return self._listFieldsFor(baseClass, widget_type='RichWidget')
 
-    def _listFieldsFor(self, baseClass, widget_type=None, ignored_field_ids=[], hide_not_visible=False):
+    def _listFieldsFor(self,
+                       baseClass,
+                       widget_type=None,
+                       ignored_field_ids=[],
+                       hide_not_visible=False):
         """ """
         d = 'PloneMeeting'
         res = []
@@ -7125,9 +7134,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if fieldName not in ignored_field_ids and \
                (not widget_type or field.widget.getName() == widget_type) and \
                (not hide_not_visible or field.widget.visible):
-                label_msgid = getattr(field.widget, 'label_msgid', field.widget.label)
-                msg = u'%s.%s ➔ %s' % (baseClass.__name__, fieldName,
-                                       translate(label_msgid, domain=d, context=self.REQUEST))
+                label_msgid = getattr(
+                    field.widget, 'label_msgid', field.widget.label)
+                msg = u'%s.%s ➔ %s' % (
+                    baseClass.__name__, fieldName,
+                    translate(label_msgid, domain=d, context=self.REQUEST))
                 res.append(('%s.%s' % (baseClass.__name__, fieldName), msg))
         return res
 

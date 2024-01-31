@@ -68,12 +68,20 @@ class Migrate_To_4211(Migrator):
                 delattr(cfg, 'enableItemDuplication')
         logger.info('Done.')
 
+    def _updatePortalTypesTitle(self):
+        """Meeting/MeetingItem portal_types title is now the translated version."""
+        logger.info('Updating every Meeting/MeetingItem portal_types title...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            cfg.registerPortalTypes()
+        logger.info('Done.')
+
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4211...')
         self._updateDataRelatedToToolPloneMeetingSimplification()
         self._updateItemSearches()
         self._updateForItemExportPDFAction()
+        self._updatePortalTypesTitle()
         # add text criterion on item title only
         self.updateFacetedFilters(xml_filename='upgrade_step_4211_add_item_widgets.xml')
         logger.info('Migrating to PloneMeeting 4211... Done.')
@@ -86,7 +94,8 @@ def migrate(context):
        2) Update every item related searches to use sort_on=modified and
           the searchlivingitems to use the 'living-items' compound criterion adapter;
        3) Update related to new export PDF action on item;
-       4) Add c32 faceted criterion (search on item title only).
+       4) Update portal_types title;
+       5) Add c32 faceted criterion (search on item title only).
     '''
     migrator = Migrate_To_4211(context)
     migrator.run()
