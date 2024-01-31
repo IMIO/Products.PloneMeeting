@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.9b9 (unreleased)
+4.2.9b9 (2024-01-31)
 --------------------
 
 - Make the advice `given_on` date use final WF state when using a custom WF.
