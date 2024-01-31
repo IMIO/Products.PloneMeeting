@@ -6897,7 +6897,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if objectType == 'MeetingItem':
                 objectType = 'Item'
             for id, text in self.listTransitions(objectType):
-                res.append(('%s.%s' % (metaType, id),
+                res.append((u'%s.%s' % (metaType, id),
                             u'%s ➔ %s' % (metaType, text)))
         return DisplayList(tuple(res)).sortedByValue()
 
@@ -6997,7 +6997,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listItemRichTextFields(self):
         '''Lists all rich-text fields belonging to MeetingItem schema.'''
-        res = self._listRichTextFieldFor(MeetingItem)
+        res = [(EXECUTE_EXPR_VALUE, _(EXECUTE_EXPR_VALUE))]
+        res += self._listRichTextFieldFor(MeetingItem)
         return DisplayList(tuple(res))
 
     def _listRichTextFieldFor(self, baseClass):

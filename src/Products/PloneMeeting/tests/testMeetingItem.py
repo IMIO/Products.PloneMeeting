@@ -52,6 +52,7 @@ from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
+from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
@@ -4565,7 +4566,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # a portal_message is displayed to the user that triggered the transition
         messages = IStatusMessage(self.request).show()
         self.assertEqual(messages[-1].message, ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %
-                         ('decision', "'some_wrong_tal_expression'"))
+                         ('MeetingItem.decision', "'some_wrong_tal_expression'"))
         # if the TAL expression returns something else than a string, it does not break
         cfg.setOnTransitionFieldTransforms(
             ({'transition': 'accept',
@@ -4578,7 +4579,9 @@ class testMeetingItem(PloneMeetingTestCase):
         messages = IStatusMessage(self.request).show()
         self.assertEqual(
             messages[-1].message, ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %
-            ('decision', "Value is not File or String (<type 'bool'> - <type 'bool'>)"))
+            ('MeetingItem.decision', "Value is not File or String (<type 'bool'> - <type 'bool'>)"))
+        self.assertEqual(item5.query_state(), 'accepted')
+        # when returning None
         cfg.setOnTransitionFieldTransforms(
             ({'transition': 'accept',
               'field_name': 'MeetingItem.decision',
@@ -4588,6 +4591,19 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(IStatusMessage(self.request).show())
         self.assertEqual(item6.getDecision(), '')
         self.assertEqual(item6.decision.mimetype, 'text/html')
+        self.assertEqual(item6.query_state(), 'accepted')
+        # when using EXECUTE_EXPR_VALUE
+        cfg.setOnTransitionFieldTransforms(
+            ({'transition': 'accept',
+              'field_name': EXECUTE_EXPR_VALUE,
+              'tal_expression': 'python: wrong_expression'},))
+        item7 = items[6]
+        self.do(item7, 'accept')
+        messages = IStatusMessage(self.request).show()
+        self.assertEqual(
+            messages[-1].message, ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %
+            (EXECUTE_EXPR_VALUE, "name 'wrong_expression' is not defined"))
+        self.assertEqual(item7.query_state(), 'accepted')
 
     def test_pm_OnTransitionFieldTransformsUseLastCommentFromHistory(self):
         '''Use comment of last WF transition in expression.'''
@@ -4616,6 +4632,29 @@ class testMeetingItem(PloneMeetingTestCase):
         self.backToState(item, 'itemfrozen')
         self.do(item, 'delay')
         self.assertEqual(item.getDecision(), '<p>Generic comment.</p>')
+
+    def test_pm_OnTransitionFieldTransformsExecuteTALExpression(self):
+        '''Can be used just to execute the given TAL expression.
+           Here example will be generating and storing an annex when item is 'presented'.'''
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        template = cfg.podtemplates.itemTemplate
+        template.store_as_annex = cfg.annexes_types.item_annexes.get('financial-analysis').UID()
+
+        cfg.setOnTransitionFieldTransforms(
+            ({'transition': 'present',
+              'field_name': EXECUTE_EXPR_VALUE,
+              # expression to enable store_as_annex and generate the pod template
+              'tal_expression': "python: context.REQUEST.set('store_as_annex', '1') or "
+              "context.restrictedTraverse('@@document-generation')(template_uid='%s', output_format='odt')"
+              % template.UID()}, ))
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.create('Meeting')
+        self.validateItem(item)
+        self.assertFalse(get_annexes(item))
+        self.do(item, 'present')
+        self.assertTrue(get_annexes(item))
 
     def test_pm_TakenOverBy(self):
         '''Test the view that manage the MeetingItem.takenOverBy toggle.
