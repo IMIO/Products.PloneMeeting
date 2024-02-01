@@ -6924,8 +6924,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # if "proposing_group" is selected, it means we want the proposing_group and
         # others groups to manage the item in given p_review_state
         if 'proposing_group' in res:
-            res.pop('proposing_group')
-            res.add(self.getProposingGroup())
+            res.remove('proposing_group')
+            res.append(self.getProposingGroup())
         if not res:
             res = [self.getProposingGroup()]
         return uuidsToObjects(res) if theObjects else res
@@ -6945,6 +6945,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     break
         # remove duplicates
         res = list(set(res))
+        # remove special value "proposing_group"
+        if 'proposing_group' in res:
+            res.remove('proposing_group')
         return uuidsToObjects(res) if theObjects else res
 
     def _assign_roles_to_group_suffixes(self, org_uid, suffix_roles):
