@@ -55,6 +55,7 @@ from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.config import GROUPS_MANAGING_ITEM_GP_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NO_COMMITTEE
@@ -669,7 +670,8 @@ class GroupsManagingItemVocabulary(SortedSelectedOrganizationsElephantVocabulary
 
     def GroupsManagingItemVocabulary__call__(self, context):
         terms = super(GroupsManagingItemVocabulary, self).__call__(context)
-        terms._terms.insert(0, SimpleTerm('proposing_group', 'proposing_group', 'Proposing group'))
+        terms._terms.insert(0, SimpleTerm(
+            GROUPS_MANAGING_ITEM_GP_VALUE, GROUPS_MANAGING_ITEM_GP_VALUE, 'Proposing group'))
         return terms
 
     # do ram.cache have a different key name

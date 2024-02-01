@@ -80,6 +80,7 @@ from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
+from Products.PloneMeeting.config import GROUPS_MANAGING_ITEM_GP_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import INSERTING_ON_ITEM_DECISION_FIRST_WORDS_NB
@@ -6921,10 +6922,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         res = cfg.getItemWFValidationLevels(
             states=[review_state], data='groups_managing_item', only_enabled=True)
-        # if "proposing_group" is selected, it means we want the proposing_group and
+        # if 'proposing_group' is selected, it means we want the proposing_group and
         # others groups to manage the item in given p_review_state
-        if 'proposing_group' in res:
-            res.remove('proposing_group')
+        if GROUPS_MANAGING_ITEM_GP_VALUE in res:
+            res.remove(GROUPS_MANAGING_ITEM_GP_VALUE)
             res.append(self.getProposingGroup())
         if not res:
             res = [self.getProposingGroup()]
@@ -6945,9 +6946,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     break
         # remove duplicates
         res = list(set(res))
-        # remove special value "proposing_group"
-        if 'proposing_group' in res:
-            res.remove('proposing_group')
+        # remove special value 'proposing_group'
+        if GROUPS_MANAGING_ITEM_GP_VALUE in res:
+            res.remove(GROUPS_MANAGING_ITEM_GP_VALUE)
         return uuidsToObjects(res) if theObjects else res
 
     def _assign_roles_to_group_suffixes(self, org_uid, suffix_roles):
