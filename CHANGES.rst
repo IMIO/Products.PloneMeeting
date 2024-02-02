@@ -127,6 +127,9 @@ Changelog
   possible to define a TAL expression to execute after an item WF transition
   that will not change the content of a richtext field.
   [gbastien]
+- Prevent a siteadmin from renaming an item linked to a meeting (an item that
+  is no more in it's WF initial state) or it breaks the link with the meeting.
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------
