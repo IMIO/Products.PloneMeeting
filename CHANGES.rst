@@ -5,8 +5,8 @@ Changelog
 4.2.9b10 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Adapted portal tabs sub menu styling to make more `sub menu`.
+  [gbastien]
 
 4.2.9b9 (2024-01-31)
 --------------------
