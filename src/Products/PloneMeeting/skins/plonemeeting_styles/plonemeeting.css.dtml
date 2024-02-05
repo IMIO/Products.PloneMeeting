@@ -1113,6 +1113,12 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
 #datagridwidget-table-committees .datagridwidget-column-11 {
    width: 1%;
 }
+/* height of groups_managing_item datagrid column */
+#datagridwidget-table-itemWFValidationLevels .datagridwidget-column-9 {
+  display: block;
+  max-height: 350px;
+  overflow-x: hidden;
+}
 
 /* display DX datagrid column in grey */
 .datagridwidget-table-view {

@@ -671,7 +671,9 @@ class GroupsManagingItemVocabulary(SortedSelectedOrganizationsElephantVocabulary
     def GroupsManagingItemVocabulary__call__(self, context):
         terms = super(GroupsManagingItemVocabulary, self).__call__(context)
         terms._terms.insert(0, SimpleTerm(
-            GROUPS_MANAGING_ITEM_PG_VALUE, GROUPS_MANAGING_ITEM_PG_VALUE, 'Proposing group'))
+            GROUPS_MANAGING_ITEM_PG_VALUE,
+            GROUPS_MANAGING_ITEM_PG_VALUE,
+            translate('The proposing group', domain="PloneMeeting", context=context.REQUEST)))
         return terms
 
     # do ram.cache have a different key name
