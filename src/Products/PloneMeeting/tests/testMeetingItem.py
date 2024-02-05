@@ -55,7 +55,7 @@ from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
-from Products.PloneMeeting.config import GROUPS_MANAGING_ITEM_GP_VALUE
+from Products.PloneMeeting.config import GROUPS_MANAGING_ITEM_PG_VALUE
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -7954,7 +7954,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # adapt configuration, makes proposing_group and vendors manage item
         itemWFValidationLevels = cfg.getItemWFValidationLevels()
         itemWFValidationLevels[0]['groups_managing_item'] = [
-            GROUPS_MANAGING_ITEM_GP_VALUE, self.vendors_uid]
+            GROUPS_MANAGING_ITEM_PG_VALUE, self.vendors_uid]
         cfg.setItemWFValidationLevels(itemWFValidationLevels)
         notify(ObjectEditedEvent(cfg))
         item.update_local_roles()
