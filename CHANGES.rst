@@ -127,6 +127,8 @@ Changelog
   possible to define a TAL expression to execute after an item WF transition
   that will not change the content of a richtext field.
   [gbastien]
+- Adapted portal tabs sub menu styling to make more `sub menu`.
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------
