@@ -129,6 +129,10 @@ Changelog
   [gbastien]
 - Adapted portal tabs sub menu styling to make more `sub menu`.
   [gbastien]
+- Added column `groups_managing_item` in `MeetingConfig.itemWFValidationLevels`,
+  this will manage cases when another group than the proposing group is managing
+  the item, several groups may be selected including the proposing group or not.
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------
