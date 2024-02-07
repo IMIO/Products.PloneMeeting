@@ -57,6 +57,7 @@ from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
+from Products.PloneMeeting.config import ITEM_MOVAL_PREVENTED
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
@@ -6593,6 +6594,27 @@ class testMeetingItem(PloneMeetingTestCase):
         # save button
         newItem.processForm()
         self.assertEqual(newItem.getId(), 'my-new-item-title')
+
+    def test_pm_ItemRenamedManuallyOnlyPossibleInInitialState(self):
+        """If an administrator renames an item, it will be only possible
+           if item is in it's WF initial_state."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.aq_parent.manage_renameObject(item.getId(), 'new-id')
+        self.assertEqual(item.getId(), 'new-id')
+        self.proposeItem(item)
+        # raise Unauthorized for a user because not able to edit parent (Folder)
+        self.changeUser('pmReviewer1')
+        self.assertRaises(
+            Unauthorized,
+            item.aq_parent.manage_renameObject,
+            item.getId(),
+            'new-id-2')
+        self.changeUser('siteadmin')
+        # raise ValueError because item is no more "itemcreated"
+        with self.assertRaises(ValueError) as cm:
+            item.aq_parent.manage_renameObject(item.getId(), 'new-id-2')
+        self.assertEqual(cm.exception.message, ITEM_MOVAL_PREVENTED)
 
     def test_pm_ItemTemplateImage(self):
         """We can use an image in an item template and when used,

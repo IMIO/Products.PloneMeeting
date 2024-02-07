@@ -409,13 +409,6 @@ def _getEmailAddress(name, email):
 def _sendMail(obj, body, recipients, fromAddress, subject, format,
               attachments=None):
     '''Sends a mail. p_mto can be a single email or a list of emails.'''
-    bcc = None
-    # Hide the whole list of recipients if we must send the mail to many.
-    if not isinstance(recipients, basestring):
-        # mbcc passed parameter must be utf-8 encoded
-        bcc = [rec.encode('utf-8') for rec in recipients]
-        recipients = fromAddress
-    # Construct the data structures for the attachments if relevant
     if attachments:
         msg = MIMEMultipart()
         if isinstance(body, unicode):
@@ -439,8 +432,8 @@ def _sendMail(obj, body, recipients, fromAddress, subject, format,
                             'attachment; filename="%s"' % fileName)
             body.attach(part)
     try:
-        obj.MailHost.secureSend(body, recipients, fromAddress, subject, mbcc=bcc,
-                                subtype=format, charset='utf-8')
+        obj.MailHost.send(
+            body, recipients, fromAddress, subject, charset='utf-8', msg_type=format)
     except socket.error, sg:
         raise EmailError(SENDMAIL_ERROR % str(sg))
     except UnicodeDecodeError, ue:
@@ -587,7 +580,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         logger.info('Body is [%s]' % body)
     else:
         # Use 'plain' for mail format so the email client will turn links to clickable links
-        mailFormat = 'plain'
+        mailFormat = 'text/plain'
         # Send the mail(s)
         try:
             if not attachments:
@@ -1966,7 +1959,7 @@ def updateAnnexesAccess(container):
     """ """
     portal = api.portal.get()
     adapter = None
-    for k, v in getattr(container, 'categorized_elements', {}).items():
+    for k, v in base_getattr(container, 'categorized_elements', {}).items():
         # do not fail on 'Members', use unrestrictedTraverse
         try:
             annex = portal.unrestrictedTraverse(v['relative_url'])

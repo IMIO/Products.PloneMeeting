@@ -3235,10 +3235,6 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=datetime(2015, 5, 5, 12, 35))
         self.portal.portal_languages.setDefaultLanguage('en')
-        translatedMeetingTypeTitle = translate(
-            self.portal.portal_types[meeting.portal_type].title,
-            domain='plone',
-            context=self.portal.REQUEST)
         self.assertEqual(
             meeting.get_pretty_link(showContentIcon=True, prefixed=True),
             u"<a class='pretty_link' title='Meeting of 05/05/2015 (12:35)' "
@@ -3248,7 +3244,8 @@ class testMeetingType(PloneMeetingTestCase):
             "style=\"width: 16px; height: 16px;\" /></span>"
             "<span class='pretty_link_content state-created'>"
             "Meeting of 05/05/2015 (12:35)</span></a>".format(
-                self.meetingConfig.getId(), translatedMeetingTypeTitle))
+                self.meetingConfig.getId(),
+                self.portal.portal_types[meeting.portal_type].Title()))
 
     def test_pm_MeetingManagerReservedFields(self):
         """Make sure a list of fields is not viewable on meeting except by MeetingManagers."""

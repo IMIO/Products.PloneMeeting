@@ -7,6 +7,20 @@ Changelog
 
 - Adapted portal tabs sub menu styling to make more `sub menu`.
   [gbastien]
+- Adapted portal tabs sub menu styling to make more `sub menu`.
+  [gbastien]
+- Fixed critical bug while sending mail that was preventing to use the MailHost
+  mail_queue because using `secureSend` from `Products.CMFPlone` that is
+  deprecated and that use `immediate=True`.
+  Now emails will be correctly using the mail_queue and start it when necessary.
+  [gbastien]
+- In `utils.updateAnnexesAccess`, make sure we do not acquire attribute
+  `categorized_elements` or update is done several times, this is the case when
+  called on an advice, the parent item attribute was used.
+  [gbastien]
+- Prevent a siteadmin from renaming an item linked to a meeting (an item that
+  is no more in it's WF initial state) or it breaks the link with the meeting.
+  [gbastien]
 
 4.2.9b9 (2024-01-31)
 --------------------

@@ -40,6 +40,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_INITIATOR_INDEX_PATTERN
+from Products.PloneMeeting.config import ITEM_MOVAL_PREVENTED
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
@@ -1188,6 +1189,16 @@ def onItemWillBeMoved(item, event):
     # If we are trying to move the whole MeetingConfig, bypass this hook.
     if event.object.meta_type in ['Plone Site', 'MeetingConfig']:
         return
+
+    # prevent renaming an item manually if it is not "itemcreated"
+    # this avoid call to MeetingItem.manage_beforeDelete that will remove
+    # item from meeting and we can not avoid this for now in AT
+    if getattr(event, "newName", None) is not None:
+        wfTool = api.portal.get_tool('portal_workflow')
+        itemWF = wfTool.getWorkflowsFor(item)[0]
+        if not item.query_state() == itemWF.initial_state:
+            logger.warn(ITEM_MOVAL_PREVENTED)
+            raise ValueError(ITEM_MOVAL_PREVENTED)
 
     return _redirect_if_default_item_template(item)
 
