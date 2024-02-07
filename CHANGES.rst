@@ -129,6 +129,11 @@ Changelog
   [gbastien]
 - Adapted portal tabs sub menu styling to make more `sub menu`.
   [gbastien]
+- Fixed critical bug while sending mail that was preventing to use the MailHost
+  mail_queue because using `secureSend` from `Products.CMFPlone` that is
+  deprecated and that use `immediate=True`.
+  Now emails will be correctly using the mail_queue and start it when necessary.
+  [gbastien]
 
 4.2.8 (2023-10-27)
 ------------------
