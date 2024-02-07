@@ -1934,7 +1934,7 @@ def updateAnnexesAccess(container):
     """ """
     portal = api.portal.get()
     adapter = None
-    for k, v in getattr(container, 'categorized_elements', {}).items():
+    for k, v in base_getattr(container, 'categorized_elements', {}).items():
         # do not fail on 'Members', use unrestrictedTraverse
         try:
             annex = portal.unrestrictedTraverse(v['relative_url'])
