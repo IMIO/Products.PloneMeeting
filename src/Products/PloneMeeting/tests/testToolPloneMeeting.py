@@ -20,9 +20,10 @@ from DateTime import DateTime
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_plone_groups_for_user
+from imio.helpers.content import get_vocab_values
+from imio.helpers.content import richtextval
 from persistent.mapping import PersistentMapping
 from plone import api
-from plone.app.textfield.value import RichTextValue
 from plone.dexterity.interfaces import IDexterityContent
 from plone.dexterity.utils import createContentInContainer
 from plone.testing.z2 import Browser
@@ -35,6 +36,7 @@ from Products.PloneMeeting.content.content_category import ANNEX_NOT_KEPT
 from Products.PloneMeeting.etags import _modified
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import duplicate_workflow
 from Products.PloneMeeting.utils import get_annexes
 from zope.event import notify
 from zope.i18n import translate
@@ -352,7 +354,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmCreator1')
         destFolder = item1.getParentNode()
         # Copy items
@@ -1357,6 +1359,171 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # omitted_suffixes
         self.assertFalse(self.tool.user_is_in_org(self.developers.id, omitted_suffixes=["creators"]))
         self.assertTrue(self.tool.user_is_in_org(self.developers.id, omitted_suffixes=["observers"]))
+
+    def test_pm_AdvisersConfig(self):
+        """Test the ToolPloneMeeting.advisersConfig.
+           Here test the base behavior, a more complex behavior is tested in
+           Products.MeetingCommunes.tests.testToolPloneMeeting.test_pm_FinancesAdvisersConfig."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'), ))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'), ))
+        self.tool.setAdvisersConfig(
+            ({'advice_types': ['positive',
+                               'positive_with_remarks'],
+              'base_wf': 'meetingadvice_workflow',
+              'default_advice_type': 'positive_with_remarks',
+              'org_uids': [self.vendors_uid],
+              'portal_type': 'meetingadvice',
+              'show_advice_on_final_wf_transition': '1',
+              'wf_adaptations': []}, ))
+        self.tool.at_post_edit_script()
+        # create item and ask 2 advices
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem',
+                           title="Item to advice",
+                           category='development',
+                           optionalAdvisers=(self.vendors_uid, self.developers_uid, ))
+        # advice are giveable
+        self.changeUser('pmAdviser1')
+        dev_advice = createContentInContainer(
+            item,
+            item.adapted()._advicePortalTypeForAdviser(self.developers_uid),
+            **{'advice_group': self.developers_uid,
+               'advice_type': u'positive',
+               'advice_comment': richtextval(u'My comment')})
+        self.changeUser('pmReviewer2')
+        vendors_advice = createContentInContainer(
+            item,
+            item.adapted()._advicePortalTypeForAdviser(self.vendors_uid),
+            **{'advice_group': self.vendors_uid,
+               'advice_type': u'positive_with_remarks',
+               'advice_comment': richtextval(u'My comment')})
+        self.assertEqual(
+            get_vocab_values(
+                dev_advice,
+                'Products.PloneMeeting.content.advice.advice_type_vocabulary'),
+            ['positive', 'positive_with_remarks'])
+        self.assertEqual(
+            get_vocab_values(
+                vendors_advice,
+                'Products.PloneMeeting.content.advice.advice_type_vocabulary'),
+            ['positive', 'positive_with_remarks'])
+        # unselected values are taken into account
+        vendors_advice.advice_type = 'negative'
+        self.assertEqual(
+            get_vocab_values(
+                vendors_advice,
+                'Products.PloneMeeting.content.advice.advice_type_vocabulary'),
+            ['positive', 'positive_with_remarks', 'negative'])
+        # when advice is given, it is automatically shown
+        self.assertFalse(vendors_advice.advice_hide_during_redaction)
+        vendors_advice.advice_hide_during_redaction = True
+        item.update_local_roles()
+        self.assertTrue(vendors_advice.advice_hide_during_redaction)
+        self.assertTrue(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
+        self.changeUser('pmCreator1')
+        self.proposeItem(item)
+        self.assertFalse(vendors_advice.advice_hide_during_redaction)
+        self.assertFalse(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
+
+    def test_pm_ValidateAdvisersConfig(self):
+        """Test the ToolPloneMeeting.validate_advisersConfig."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'), ))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'), ))
+        # can not set config several times for same portal_type
+        values = (
+            ({'advice_types': [],
+              'base_wf': 'meetingadvice_workflow',
+              'default_advice_type': 'positive',
+              'org_uids': [],
+              'portal_type': 'meetingadvice',
+              'show_advice_on_final_wf_transition': '1',
+              'wf_adaptations': []},
+             {'advice_types': [],
+              'base_wf': 'meetingadvice_workflow',
+              'default_advice_type': 'negative',
+              'org_uids': [],
+              'portal_type': 'meetingadvice',
+              'show_advice_on_final_wf_transition': '1',
+              'wf_adaptations': []},))
+        msg = translate(u'advisersConfig_several_portal_types_error',
+                        domain='PloneMeeting',
+                        context=self.request)
+        self.assertEqual(self.tool.validate_advisersConfig(values), msg)
+
+        # can not add/change/remove config if used
+        # by default not used
+        # NOT USED, add
+        self.failIf(self.tool.validate_advisersConfig(
+            ({'advice_types': [],
+              'base_wf': 'meetingadvice_workflow',
+              'default_advice_type': 'positive',
+              'org_uids': [],
+              'portal_type': 'meetingadvice',
+              'show_advice_on_final_wf_transition': '1',
+              'wf_adaptations': []},)))
+        # NOT USED, change
+        self.tool.setAdvisersConfig(
+            ({'advice_types': [],
+              'base_wf': 'meetingadvice_workflow',
+              'default_advice_type': 'positive',
+              'org_uids': [],
+              'portal_type': 'meetingadvice',
+              'show_advice_on_final_wf_transition': '1',
+              'wf_adaptations': []},))
+        duplicate_workflow('meetingadvice_workflow', 'meetingadvicecustom_workflow')
+        self.failIf(self.tool.validate_advisersConfig(
+            ({'advice_types': [],
+              'base_wf': 'meetingadvicecustom_workflow',
+              'default_advice_type': 'positive',
+              'org_uids': [],
+              'portal_type': 'meetingadvice',
+              'show_advice_on_final_wf_transition': '1',
+              'wf_adaptations': []},)))
+        # NOT USED, remove
+        self.failIf(self.tool.validate_advisersConfig(()))
+        self.tool.setAdvisersConfig(())
+
+        # USED, add
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem',
+                           title="Item to advice",
+                           category='development',
+                           optionalAdvisers=(self.vendors_uid, self.developers_uid, ))
+        self.changeUser('pmAdviser1')
+        dev_advice = createContentInContainer(
+            item,
+            item.adapted()._advicePortalTypeForAdviser(self.developers_uid),
+            **{'advice_group': self.developers_uid,
+               'advice_type': u'positive',
+               'advice_comment': richtextval(u'My comment')})
+        msg = translate(u'advisersConfig_portal_type_in_use_error',
+                        domain='PloneMeeting',
+                        mapping={'portal_type': u'meetingadvice',
+                                 'advice_url': dev_advice.absolute_url()},
+                        context=self.request)
+        values = (
+            {'advice_types': [],
+             'base_wf': 'meetingadvice_workflow',
+             'default_advice_type': 'positive',
+             'org_uids': [],
+             'portal_type': 'meetingadvice',
+             'show_advice_on_final_wf_transition': '1',
+             'wf_adaptations': []},)
+        self.assertEqual(self.tool.validate_advisersConfig(values), msg)
+        # USED, change
+        self.tool.setAdvisersConfig(values)
+        values[0]['base_wf'] = 'meetingadvicecustom_workflow'
+        self.assertEqual(self.tool.validate_advisersConfig(values), msg)
+
+        # USED, remove
+        self.assertEqual(self.tool.validate_advisersConfig(()), msg)
+        values[0]['base_wf'] = 'meetingadvice_workflow'
+        # same values still validate
+        self.failIf(self.tool.validate_advisersConfig(values))
 
 
 def test_suite():

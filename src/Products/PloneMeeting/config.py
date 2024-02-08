@@ -168,6 +168,7 @@ MEETING_GROUP_SUFFIXES = [
      'enabled': False},
 ]
 
+
 # this is made to manage specific suffixes for a particular profile
 # this will be like :
 # [{'fct_title': u'additional_suffix',
@@ -264,11 +265,11 @@ ALL_ADVISERS_GROUP_VALUE = 'entireadvisersgroup'
 # value displayed in the object history table if a comment is not viewable
 HISTORY_COMMENT_NOT_VIEWABLE = "<span class='discreet'>Access to this comment is restricted.</span>"
 
-# the 2 lists here under are showing advice review_states
-# in which an advice is still considered 'alive' or advice is considered 'ended'
-# this can change if the wf used for advice is different
-ADVICE_STATES_ALIVE = ('advice_under_edit', )
+# states in which advice WF is considered 'ended'
 ADVICE_STATES_ENDED = ('advice_given', )
+# to be monkey patched to extend it
+# this is the mappings between an advice WF state and it's corresponding group suffix
+ADVICE_STATES_MAPPING = {'advice_given': 'advisers', }
 
 # name of the variable added to the REQUEST when getting the scan_id
 ITEM_SCAN_ID_NAME = 'item_scan_id'

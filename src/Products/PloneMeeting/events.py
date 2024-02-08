@@ -22,6 +22,7 @@ from imio.helpers.content import get_modified_attrs
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_delattr
 from imio.helpers.security import fplog
+from imio.helpers.workflow import get_final_states
 from imio.helpers.workflow import update_role_mappings_for
 from imio.helpers.xhtml import storeImagesLocally
 from imio.history.utils import add_event_to_history
@@ -234,9 +235,27 @@ def onAdviceTransition(advice, event):
         event.object, event.workflow, event.old_state, event.new_state,
         event.transition, event.status, event.kwargs))
 
+    # check if need to show the advice
+    item = advice.getParentNode()
+    if advice.advice_hide_during_redaction is True:
+        tool = api.portal.get_tool('portal_plonemeeting')
+        adviser_infos = tool.adapted().get_extra_adviser_infos().get(advice.advice_group, {})
+        # use get in case overrided get_extra_adviser_infos and
+        # 'show_advice_on_final_wf_transition' not managed, will be removable
+        # when every profiles use new behavior
+        if adviser_infos and adviser_infos.get('show_advice_on_final_wf_transition', '0') == '1':
+            wf_tool = api.portal.get_tool('portal_workflow')
+            wf = wf_tool.getWorkflowsFor(advice.portal_type)[0]
+            # manage custom workflows where final state is not 'advice_given'
+            ignored_transition_ids = len(wf.states) > 2 and ['giveAdvice'] or []
+            if event.new_state.id in get_final_states(wf, ignored_transition_ids=ignored_transition_ids) and \
+               (not ignored_transition_ids or event.new_state.id != 'advice_given'):
+                advice.advice_hide_during_redaction = False
+                # update adviceIndex in case we are already updating advices it has already been set
+                item.adviceIndex[advice.advice_group]['hidden_during_redaction'] = False
+
     # update item if transition is not triggered in the MeetingItem._updatedAdvices
     # aka we are already updating the item
-    item = advice.getParentNode()
     if event.transition and not item._is_currently_updating_advices():
         item.update_local_roles()
         _advice_update_item(item)
@@ -503,10 +522,10 @@ def _itemAnnexTypes(cfg):
 def onConfigInitialized(cfg, event):
     '''Trigger when new MeetingConfig added.'''
 
-    # Register the portal types that are specific to this meeting config.
-    cfg.registerPortalTypes()
     # Set a property allowing to know in which MeetingConfig we are
     cfg.manage_addProperty(MEETING_CONFIG, cfg.id, 'string')
+    # Register the portal types that are specific to this meeting config.
+    cfg.registerPortalTypes()
     # Create the subfolders
     cfg._createSubFolders()
     # Create the collections related to this meeting config
@@ -928,9 +947,10 @@ def onAdviceAdded(advice, event):
     # update item
     _advice_update_item(item)
 
-    # Send mail if relevant
-    sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
-    sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
+    if not advice.advice_hide_during_redaction:
+        # Send mail if relevant
+        sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
+        sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
 
 
 def onAdviceModified(advice, event):
@@ -969,9 +989,10 @@ def onAdviceModified(advice, event):
         # update item
         _advice_update_item(item)
 
-        # Send mail if relevant
-        sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
-        sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
+        if not advice.advice_hide_during_redaction:
+            # Send mail if relevant
+            sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
+            sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
 
 
 def onAdviceEditFinished(advice, event):

@@ -2,8 +2,95 @@ Changelog
 =========
 
 
-4.2.9 (unreleased)
-------------------
+4.2.9b10 (unreleased)
+---------------------
+
+- Adapted portal tabs sub menu styling to make more `sub menu`.
+  [gbastien]
+- Adapted portal tabs sub menu styling to make more `sub menu`.
+  [gbastien]
+- Fixed critical bug while sending mail that was preventing to use the MailHost
+  mail_queue because using `secureSend` from `Products.CMFPlone` that is
+  deprecated and that use `immediate=True`.
+  Now emails will be correctly using the mail_queue and start it when necessary.
+  [gbastien]
+- In `utils.updateAnnexesAccess`, make sure we do not acquire attribute
+  `categorized_elements` or update is done several times, this is the case when
+  called on an advice, the parent item attribute was used.
+  [gbastien]
+- Prevent a siteadmin from renaming an item linked to a meeting (an item that
+  is no more in it's WF initial state) or it breaks the link with the meeting.
+  [gbastien]
+
+4.2.9b9 (2024-01-31)
+--------------------
+
+- Make the advice `given_on` date use final WF state when using a custom WF.
+  [gbastien]
+
+4.2.9b8 (2024-01-18)
+--------------------
+
+- Do not `show_advice_on_final_wf_transition` when item is set in a wf state
+  in which advice can not be edited anymore if advice did not reached it's final
+  state (when using advice custom worklow).
+  [gbastien]
+
+4.2.9b7 (2024-01-11)
+--------------------
+
+- Added `Export PDF` action to `MeetingConfig.itemActionsColumnConfig`.
+  [gbastien]
+
+4.2.9b6 (2024-01-11)
+--------------------
+
+- Removed constant `config.ADVICE_STATES_ALIVE`, it is now managed automatically
+  by `utils.get_advice_alive_states` and it will ne more be necessary to
+  override it in custom profiles.
+  [gbastien]
+- In tests, use `imio.helpers.content.richtextval` everywhere a `RichTextValue` is used.
+  [gbastien]
+- Check user is creator in item `actions_panel` caching invalidation.
+  [gbastien]
+
+4.2.9b5 (2024-01-02)
+--------------------
+
+- When advice is `asked_again` display left delay correctly, full delay is displayed
+  when advice is supposed given, but when is it `asked_again` it is not the case.
+  [gbastien]
+- Added `Export PDF` action on item to be able to export in a single PDF file
+  several selected PDF generated POD templates and PDF annexes.
+  [gbastien]
+- Added `sortable` functionnality to the `PMCheckBoxWidget`, use it in the item
+  `Export PDF` form to be able to reorder exported elements.
+  [gbastien]
+- Fixed CSS of advice popup label when very long.
+  [gbastien]
+- When `copyGroups` have access to item, highlight full `Copy groups` label in green.
+  [gbastien]
+
+4.2.9b4 (2023-12-11)
+--------------------
+
+- Mail notifications `adviceEdited` and `adviceEditedOwner` are no more sent
+  if advice is hidden during redaction.
+  [gbastien]
+- Fixed `AdvicesIcons.get_advice_given_by` to only return a value when using
+  custom WF (more than one initial state) and if WF reached it's final state.
+  [gbastien]
+
+4.2.9b3 (2023-11-27)
+--------------------
+
+- Fixed `MeetingConfig.listTransitionsUntilPresented` that was raising
+  `UnicodeDecodeError` now that we use unicode arrow in term title.
+  Use unicode arrow in `utils.get_dx_attrs` when `as_display_list=True`.
+  [gbastien]
+
+4.2.9b2 (2023-11-27)
+--------------------
 
 - Display last transition actor and comment in item mail notifications for mail events:
 
@@ -21,6 +108,9 @@ Changelog
   advisers in cachekey as it is computed and depends on context.
   Fixed also a bug when some `__userid__` selected values were no more in the
   vocabulary with other values still in the vocabulary.
+  [gbastien]
+- Added `MeetingConfig.show_copy_groups_search` that is used to protect
+  copyGroups related searches.
   [gbastien]
 - Fixed `PMCategorizedChildView.__call___`, if no categorized elements,
   do not return just [] but the parameter `show_nothing` value,
@@ -59,9 +149,9 @@ Changelog
   - Moved `ToolPloneMeeting.getAvailableMailingLists` to utils;
   - Removed no more used `versions_history_form.pt`;
   - Moved `ToolPloneMeeting.isPowerObserverForCfg` to
-  `utils.isPowerObserverForCfg`;
+    `utils.isPowerObserverForCfg`;
   - Replaced `ToolPloneMeeting.getUserName` by
-  `imio.helpers.content.get_user_fullname` everywhere it was used.
+    `imio.helpers.content.get_user_fullname` everywhere it was used.
 
   [gbastien]
 - Adapted `DisplayMeetingItemVoters` helper view on meeting to display items
@@ -85,12 +175,18 @@ Changelog
   as this is not visible in the application because faceted `sort_on` overrides
   it but it is now taken into account when using restapi with a `base_search_uid`.
   [gbastien]
-- Added `Export PDF` action on item to be able to export in a single PDF file
-  several selected PDF generated POD templates and PDF annexes.
-  [gbastien]
-- Fixed CSS of advice popup label when very long.
-  [gbastien]
-- When `copyGroups` have access to item, highlight full `Copy groups` label in green.
+
+4.2.9b1 (2023-10-27)
+--------------------
+
+- Added advanced advice management using `ToolPloneMeeting.advisersConfig`:
+
+  - possible to associate a new advice `portal_type` to some organizations;
+  - reworked advice infos template to add more CSS classes to additional infos;
+  - display the `Advice given by` information;
+  - added possibility to hide advice history to power observers and to everyone
+    and to hide meeting history to powerobservers.
+
   [gbastien]
 - Use `CompoundCriterion` adapter `living-items` for the `searchlivingitems`
   Collection so selected states are always correct if item workflow
@@ -126,20 +222,6 @@ Changelog
   `MeetingConfig.onTransitionFieldTransforms.field_name`, this way it is now
   possible to define a TAL expression to execute after an item WF transition
   that will not change the content of a richtext field.
-  [gbastien]
-- Adapted portal tabs sub menu styling to make more `sub menu`.
-  [gbastien]
-- Fixed critical bug while sending mail that was preventing to use the MailHost
-  mail_queue because using `secureSend` from `Products.CMFPlone` that is
-  deprecated and that use `immediate=True`.
-  Now emails will be correctly using the mail_queue and start it when necessary.
-  [gbastien]
-- In `utils.updateAnnexesAccess`, make sure we do not acquire attribute
-  `categorized_elements` or update is done several times, this is the case when
-  called on an advice, the parent item attribute was used.
-  [gbastien]
-- Prevent a siteadmin from renaming an item linked to a meeting (an item that
-  is no more in it's WF initial state) or it breaks the link with the meeting.
   [gbastien]
 
 4.2.8 (2023-10-27)

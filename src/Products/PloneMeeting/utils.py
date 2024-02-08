@@ -23,6 +23,7 @@ from collective.iconifiedcategory.utils import get_group
 from datetime import datetime
 from datetime import timedelta
 from DateTime import DateTime
+from dexterity.localroles.utils import add_fti_configuration
 from email import Encoders
 from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
@@ -30,10 +31,12 @@ from email.MIMEText import MIMEText
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import base_getattr
+from imio.helpers.content import get_schema_fields
 from imio.helpers.content import get_user_fullname
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_encode
 from imio.helpers.security import fplog
+from imio.helpers.workflow import get_final_states
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import addClassToLastChildren
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
@@ -75,6 +78,8 @@ from Products.PageTemplates.Expressions import SecureModuleImporter
 from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
+from Products.PloneMeeting.config import ADVICE_STATES_ENDED
+from Products.PloneMeeting.config import ADVICE_STATES_MAPPING
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
@@ -978,10 +983,11 @@ def get_dx_attrs(portal_type,
                 key = "{0}.{1}".format(prefix, key)
                 display_list_tuples.append(
                     (key,
-                     '%s -> %s' % (key,
-                                   translate("title_{0}".format(field_name),
-                                             domain="PloneMeeting",
-                                             context=request))
+                     u'%s ➔ %s' % (
+                         key,
+                         translate("title_{0}".format(field_name),
+                                   domain="PloneMeeting",
+                                   context=request))
                      ))
             else:
                 display_list_tuples.append(
@@ -1006,18 +1012,25 @@ def get_dx_schema(obj=None, portal_type=None):
 
 def get_dx_field(obj, field_name):
     """ """
-    schema = get_dx_schema(obj)
-    field = schema[field_name]
-    return field
+    for schema_field_name, schema_field in get_schema_fields(obj):
+        if schema_field_name == field_name:
+            return schema_field
 
 
 def get_dx_widget(obj, field_name, mode=DISPLAY_MODE):
     """ """
+    orig_field_name = field_name
+    if '.' in field_name:
+        field_name = field_name.split('.')[1]
     field = get_dx_field(obj, field_name)
     schema = get_dx_schema(obj)
     autoform_widgets = mergedTaggedValueDict(schema, WIDGETS_KEY)
     if field_name in autoform_widgets:
         widget = autoform_widgets[field_name](field, obj.REQUEST)
+    elif '.' in orig_field_name:
+        # XXX to be fixed
+        from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
+        widget = PMRichTextFieldWidget(field, obj.REQUEST)
     else:
         widget = getMultiAdapter((field, obj.REQUEST), IFieldWidget)
     widget.context = obj
@@ -1027,7 +1040,8 @@ def get_dx_widget(obj, field_name, mode=DISPLAY_MODE):
     if hasattr(widget.field, "allowed_mime_types"):
         widget.field.allowed_mime_types = ['text/html']
     # this will set widget.__name__
-    locate(widget, None, field_name)
+    locate(widget, None, orig_field_name)
+    widget.name = orig_field_name
     return widget
 
 
@@ -1893,6 +1907,17 @@ def findMeetingAdvicePortalType(context):
     return current_portal_type
 
 
+def get_advice_alive_states():
+    """Return every WF states considered as alive states (WF not ended)."""
+    res = []
+    wf_tool = api.portal.get_tool('portal_workflow')
+    for adv_pt in getAdvicePortalTypeIds():
+        res += wf_tool.getWorkflowsFor(adv_pt)[0].states.keys()
+    # remove the ADVICE_STATES_ENDED and duplicates
+    return tuple(set([state_id for state_id in res
+                      if state_id not in ADVICE_STATES_ENDED]))
+
+
 def getAvailableMailingLists(obj, pod_template):
     '''Gets the names of the (currently active) mailing lists defined for
        this template.'''
@@ -2630,6 +2655,55 @@ def _get_category(obj, cat_id, the_object=False, cat_type='categories'):
     else:
         res = cat_id
     return res
+
+
+def configure_advice_dx_localroles_for(portal_type, org_uids=[]):
+    """Configure the DX localroles for an advice portal_type:
+       - initial_state receives no role;
+       - final state receives "Reviewer" role;
+       - other states receive "Editor/Reviewer/Contributor" roles."""
+    wf_tool = api.portal.get_tool('portal_workflow')
+    wf = wf_tool.getWorkflowsFor(portal_type)[0]
+    roles_config = {
+        'advice_group': {}
+    }
+    final_state_ids = get_final_states(wf, ignored_transition_ids=['giveAdvice'])
+    # compute suffixes
+    suffixes = []
+    if org_uids:
+        for org_uid in org_uids:
+            suffixes += get_all_suffixes(org_uid=org_uid)
+        # remove duplicates
+        suffixes = list(set(suffixes))
+    else:
+        suffixes = get_all_suffixes()
+    for state in wf.states.values():
+        if state.id == 'advice_given':
+            # special case, 'advice_given' is a state always existing in any
+            # advice related workflow and is the technical final state
+            roles_config['advice_group'][state.id] = {
+                'advisers': {'roles': [], 'rel': ''}}
+        else:
+            # get suffix from ADVICE_STATES_MAPPING, if suffix does not exist
+            # in plonegroup, we will use "advisers"
+            suffix = ADVICE_STATES_MAPPING.get(state.id, u'advisers')
+            # make sure suffix is used or we use u'advisers'
+            # this let's have a common ADVICE_STATES_MAPPING with some exceptions
+            suffix = suffix if suffix in suffixes else u'advisers'
+            if state.id in final_state_ids:
+                roles_config['advice_group'][state.id] = {
+                    suffix: {'roles': [u'Reviewer'], 'rel': ''}}
+            else:
+                # any other states, most of states actually
+                roles_config['advice_group'][state.id] = {
+                    suffix: {'roles': [u'Editor', u'Reviewer', u'Contributor'],
+                             'rel': ''}}
+    msg = add_fti_configuration(portal_type=portal_type,
+                                configuration=roles_config['advice_group'],
+                                keyname='advice_group',
+                                force=True)
+    if msg:
+        logger.warn(msg)
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

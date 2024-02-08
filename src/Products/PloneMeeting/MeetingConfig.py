@@ -27,6 +27,7 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToObject
@@ -1071,7 +1072,7 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         schemata="workflow",
-        vocabulary='listItemWorkflows',
+        vocabulary_factory='ItemWorkflows',
         default=defValues.itemWorkflow,
         required=True,
         write_permission="PloneMeeting: Write risky config",
@@ -1117,7 +1118,7 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         schemata="workflow",
-        vocabulary='listMeetingWorkflows',
+        vocabulary_factory='MeetingWorkflows',
         default=defValues.meetingWorkflow,
         required=True,
         write_permission="PloneMeeting: Write risky config",
@@ -1162,7 +1163,7 @@ schema = Schema((
         ),
         schemata="workflow",
         multiValued=1,
-        vocabulary='listWorkflowAdaptations',
+        vocabulary_factory='WorkflowAdaptations',
         default=defValues.workflowAdaptations,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -1787,7 +1788,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listAdviceTypes',
+        vocabulary_factory='ConfigAdviceTypes',
         default=defValues.usedAdviceTypes,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -1803,7 +1804,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
-        vocabulary='listAdviceTypes',
+        vocabulary_factory='ConfigAdviceTypes',
         default=defValues.defaultAdviceType,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -1993,7 +1994,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
-        vocabulary='listAdvicePortalTypes',
+        vocabulary_factory='AdvicePortalTypes',
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -2273,7 +2274,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listPowerObserversTypes',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.config_hide_history_to_vocabulary',
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -3045,9 +3046,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition':
-                        "python: 'copyGroups' in cfg.getUsedItemAttributes() and "
-                        "tool.userIsAmong(['observers', 'reviewers'])",
+                    'tal_condition': "python: cfg.show_copy_groups_search()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Unread items in copy
@@ -3069,8 +3068,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getEnableLabels() and 'copyGroups' in cfg.getUsedItemAttributes() "
-                        "and tool.userIsAmong(['observers', 'reviewers']) ",
+                    'tal_condition': "python: cfg.getEnableLabels() and "
+                        "cfg.show_copy_groups_search()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to prevalidate
@@ -3841,13 +3840,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res.append(
                 (search.UID(), search.Title()))
         return DisplayList(res)
-
-    security.declarePrivate('listAdvicePortalTypes')
-
-    def listAdvicePortalTypes(self):
-        """Vocabulary for the MeetingConfig.defaultAdviceHiddenDuringRedaction field."""
-        return DisplayList([(portal_type.id, portal_type.title)
-                            for portal_type in getAdvicePortalTypes()])
 
     security.declarePrivate('listSelectableContacts')
 
@@ -5376,39 +5368,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 break
         return isAutomaticAdvice, res
 
-    security.declarePrivate('listWorkflowAdaptations')
-
-    def listWorkflowAdaptations(self, sorted=True):
-        '''Lists the available workflow changes.'''
-        res = []
-        for adaptation in self.wfAdaptations:
-            # back transitions from presented to every available item validation
-            # states defined in MeetingConfig.itemWFValidationLevels
-            if adaptation == 'presented_item_back_to_validation_state':
-                for item_validation_level in self.getItemWFValidationLevels(only_enabled=True):
-                    adaptation_id = 'presented_item_back_to_{0}'.format(item_validation_level['state'])
-                    translated_item_validation_state = translate(
-                        safe_unicode(item_validation_level['state_title']),
-                        domain='plone',
-                        context=self.REQUEST)
-                    title = translate(
-                        'wa_presented_item_back_to_validation_state',
-                        domain='PloneMeeting',
-                        mapping={'item_state': translated_item_validation_state},
-                        context=self.REQUEST,
-                        default=u'Item back to presented from validation state "{0}"'.format(
-                            translated_item_validation_state))
-                    title = title + " ({0})".format(adaptation_id)
-                    res.append((adaptation_id, title))
-            else:
-                title = translate('wa_%s' % adaptation, domain='PloneMeeting', context=self.REQUEST)
-                title = title + " ({0})".format(adaptation)
-                res.append((adaptation, title))
-        res = DisplayList(tuple(res))
-        if sorted:
-            res = res.sortedByValue()
-        return res
-
     security.declarePrivate('listValidationLevelsNumbers')
 
     def listValidationLevelsNumbers(self):
@@ -5776,36 +5735,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         ))
         return res
 
-    security.declarePrivate('listAdviceTypes')
-
-    def listAdviceTypes(self, include_asked_again=False):
-        d = "PloneMeeting"
-        res = []
-        if include_asked_again:
-            res.append(("asked_again", translate('asked_again', domain=d, context=self.REQUEST)))
-        res += [
-            ("positive", translate('positive', domain=d, context=self.REQUEST)),
-            ("positive_with_comments", translate('positive_with_comments', domain=d, context=self.REQUEST)),
-            ("positive_with_remarks", translate('positive_with_remarks', domain=d, context=self.REQUEST)),
-            ("cautious", translate('cautious', domain=d, context=self.REQUEST)),
-            ("negative", translate('negative', domain=d, context=self.REQUEST)),
-            ("negative_with_remarks", translate('negative_with_remarks', domain=d, context=self.REQUEST)),
-            ("back_to_proposing_group", translate('back_to_proposing_group', domain=d, context=self.REQUEST)),
-            ("nil", translate('nil', domain=d, context=self.REQUEST)),
-            ("read", translate('read', domain=d, context=self.REQUEST)),
-        ]
-        # add custom extra advice types
-        for extra_advice_type in self.adapted().extraAdviceTypes():
-            res.append((extra_advice_type,
-                        translate(extra_advice_type,
-                                  domain=d,
-                                  context=self.REQUEST)))
-        return DisplayList(res)
-
-    def extraAdviceTypes(self):
-        '''See doc in interfaces.py.'''
-        return []
-
     security.declarePrivate('listAdviceStyles')
 
     def listAdviceStyles(self):
@@ -5952,6 +5881,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                          context=self.REQUEST)),
         ))
         return res
+
+    security.declarePrivate('listBooleanVocabulary')
 
     def listBooleanVocabulary(self):
         '''Vocabulary generating a boolean behaviour : just 2 values,
@@ -6287,7 +6218,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Update the factory tool with the list of types to register
         portal_factory.manage_setPortalFactoryTypes(
             listOfTypeIds=factoryTypesToRegister + registeredFactoryTypes)
-        # Perform workflow adaptations if required
+        # Perform workflow adaptations
         _performWorkflowAdaptations(self)
 
     def _updatePortalTypes(self):
@@ -6372,21 +6303,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             portalType.view_methods = basePortalType.view_methods
             portalType._aliases = basePortalType._aliases
             portalType._actions = tuple(basePortalType._cloneActions())
-        # Update MeetingAdvice portal_types if necessary
-        self._updateMeetingAdvicePortalTypes()
         # Update the cloneToOtherMeetingConfig actions visibility
         self._updateCloneToOtherMCActions()
-
-    def _updateMeetingAdvicePortalTypes(self):
-        '''See doc in interfaces.py.'''
-        # create a copy of each 'base_wf', we preprend the portal_type to create a new workflow
-        tool = api.portal.get_tool('portal_plonemeeting')
-        extra_adviser_infos = tool.adapted().get_extra_adviser_infos()
-        for org_uid, adviser_infos in extra_adviser_infos.items():
-            portal_type = adviser_infos['portal_type']
-            base_wf = adviser_infos['base_wf']
-            advice_wf_id = '{0}__{1}'.format(portal_type, base_wf)
-            duplicate_workflow(base_wf, advice_wf_id, portalTypeNames=[portal_type])
 
     security.declarePrivate('createSearches')
 
@@ -6932,35 +6850,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if "_%s'" % reviewSuffix in groupIds:
                 return reviewSuffix
 
-    security.declarePublic('listItemWorkflows')
-
-    def listItemWorkflows(self):
-        '''Lists the workflows available for MeetingItem, it has to :
-           - start with 'meetingitem';
-           - do not contain '__' (it is a duplicated workflow).'''
-        res = []
-        for workflowName in self.portal_workflow.listWorkflows():
-            if workflowName.startswith('meetingitem') and \
-               '__' not in workflowName:
-                res.append((workflowName, workflowName))
-        return DisplayList(tuple(res)).sortedByValue()
-
-    security.declarePublic('listMeetingWorkflows')
-
-    def listMeetingWorkflows(self):
-        '''Lists the workflows available for Meeting, it has to :
-           - start with 'meeting';
-           - do not start with 'meetingadvice' nor 'meetingitem';
-           - do not contain '__' (it is a duplicated workflow).'''
-        res = []
-        for workflowName in self.portal_workflow.listWorkflows():
-            if workflowName.startswith('meeting') and \
-               not workflowName.startswith('meetingadvice') and \
-               not workflowName.startswith('meetingitem') and \
-               '__' not in workflowName:
-                res.append((workflowName, workflowName))
-        return DisplayList(tuple(res)).sortedByValue()
-
     security.declarePublic('listStateIds')
 
     def listStateIds(self, objectType, excepted=None):
@@ -7048,8 +6937,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             cfgId = cfg.getId()
             cfgTitle = unicode(cfg.Title(), 'utf-8')
             for tr in cfg.getTransitionsForPresentingAnItem():
-                text = u'%s ➔ %s' % (cfgTitle,
-                                     availableItemTransitionTitles[availableItemTransitionIds.index(tr)])
+                text = u'%s ➔ %s' % (
+                    cfgTitle,
+                    availableItemTransitionTitles[availableItemTransitionIds.index(tr)])
                 res.append(('%s.%s' % (cfgId, tr), text))
         return DisplayList(tuple(res))
 
@@ -7126,8 +7016,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                (not widget_type or field.widget.getName() == widget_type) and \
                (not hide_not_visible or field.widget.visible):
                 label_msgid = getattr(field.widget, 'label_msgid', field.widget.label)
-                msg = u'%s.%s ➔ %s' % (baseClass.__name__, fieldName,
-                                       translate(label_msgid, domain=d, context=self.REQUEST))
+                msg = u'%s.%s ➔ %s' % (
+                    baseClass.__name__,
+                    fieldName,
+                    translate(label_msgid, domain=d, context=self.REQUEST))
                 res.append(('%s.%s' % (baseClass.__name__, fieldName), msg))
         return res
 
@@ -8018,6 +7910,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             used_attrs = self.getUsedItemAttributes()
         res = tool.isManager(self) and name in used_attrs
         return res
+
+    def show_copy_groups_search(self):
+        '''Condition for showing the searchallitemsincopy DashboardCollection.'''
+        return bool('copyGroups' in self.getUsedItemAttributes() and
+                    set(get_plone_groups_for_user()).intersection(
+                        self.getSelectableCopyGroups()))
 
     def get_orgs_with_as_copy_group_on_expression_cachekey(method, self):
         '''cachekey method for self.get_orgs_with_as_copy_group_on_expression.

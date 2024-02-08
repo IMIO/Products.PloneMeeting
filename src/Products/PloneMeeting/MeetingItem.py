@@ -5609,17 +5609,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def _advicePortalTypeForAdviser(self, org_uid):
         '''See doc in interfaces.py.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        extra_infos = tool.adapted().get_extra_adviser_infos()
-        adviser_infos = extra_infos.get(org_uid, {})
+        adviser_infos = tool.adapted().get_extra_adviser_infos().get(org_uid, {})
         advice_portal_type = adviser_infos.get('portal_type', None)
         return advice_portal_type or 'meetingadvice'
 
     def _adviceTypesForAdviser(self, meeting_advice_portal_type):
-        '''See doc in interfaces.py.'''
-        item = self.getSelf()
+        """Return the advice types (positive, negative, ...) for given p_meeting_advice_portal_type.
+           By default we will use every MeetingConfig.usedAdviceTypes but check
+           if something is defined in ToolPloneMeeting.advisersConfig."""
         tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(item)
-        return cfg.getUsedAdviceTypes()
+        res = []
+        for org_uid, adviser_infos in tool.adapted().get_extra_adviser_infos().items():
+            if adviser_infos['portal_type'] == meeting_advice_portal_type:
+                res = adviser_infos['advice_types']
+                break
+        if not res:
+            cfg = tool.getMeetingConfig(self)
+            res = cfg.getUsedAdviceTypes()
+        return res
 
     def _adviceIsViewableForCurrentUser(self,
                                         cfg,
@@ -5757,6 +5764,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         'comment': advice.advice_comment and advice.advice_comment.output,
                                         'observations':
                                         advice.advice_observations and advice.advice_observations.output,
+                                        # optional field thru behavior
+                                        'accounting_commitment':
+                                        advice.attribute_is_used('advice_accounting_commitment') and \
+                                        advice.advice_accounting_commitment and \
+                                        advice.advice_accounting_commitment.output or None,
                                         'reference': advice.advice_reference,
                                         'row_id': advice.advice_row_id,
                                         'gives_auto_advice_on_help_message': gives_auto_advice_on_help_message,
@@ -6079,6 +6091,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     context=self.REQUEST)
                 data[advId]['comment'] = msg
                 data[advId]['observations'] = msg
+                data[advId]['accounting_commitment'] = msg
 
             # optimize some saved data
             data[advId]['type_translated'] = translate(data[advId]['type'],
@@ -6217,14 +6230,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Invalidate all advices. Send notification mail(s) if configured.
             for org_uid, adviceInfo in self.adviceIndex.iteritems():
                 advice_obj = self.getAdviceObj(adviceInfo['id'])
-                if advice_obj:
-                    # Send a mail to the group that can give the advice.
-                    if 'adviceInvalidated' in cfg.getMailItemEvents():
-                        plone_group_id = get_plone_group_id(org_uid, 'advisers')
-                        sendMailIfRelevant(self,
-                                           'adviceInvalidated',
-                                           [plone_group_id],
-                                           isGroupIds=True)
+                # Send a mail to the group that can give the advice.
+                if advice_obj and 'adviceInvalidated' in cfg.getMailItemEvents():
+                    plone_group_id = get_plone_group_id(org_uid, 'advisers')
+                    sendMailIfRelevant(self,
+                                       'adviceInvalidated',
+                                       [plone_group_id],
+                                       isGroupIds=True)
             plone_utils.addPortalMessage(translate('advices_invalidated',
                                                    domain="PloneMeeting",
                                                    context=self.REQUEST),
@@ -6742,11 +6754,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # advice already given, or left_delay negative left_delay shown is delay
         # so left_delay displayed on the advices popup is not something like '-547'
-        # only show left delay if advice in under redaction, aka not really given...
-        if not adviceInfos['hidden_during_redaction'] and \
-           (adviceInfos['advice_given_on'] or data['left_delay'] < 0):
+        # only show left delay if advice in under redaction/asked_again,
+        # aka not really given...
+        if data['left_delay'] < 0 or \
+           (not adviceInfos['hidden_during_redaction'] and
+            not adviceInfos['type'] == 'asked_again' and
+            adviceInfos['advice_given_on']):
             data['left_delay'] = delay
-            return data
 
         return data
 

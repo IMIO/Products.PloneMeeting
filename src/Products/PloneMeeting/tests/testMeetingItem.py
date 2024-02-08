@@ -2380,7 +2380,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # - only restricted power observers may access 'refused' items.
         cfg = self.meetingConfig
         # add state 'refused' to item WF if available in WFAdaptations, if not already applied
-        if 'refused' in cfg.listWorkflowAdaptations() and \
+        if 'refused' in get_vocab_values(cfg, 'WorkflowAdaptations') and \
            'refused' not in cfg.getWorkflowAdaptations():
             cfg.setWorkflowAdaptations(('refused', ))
             notify(ObjectEditedEvent(cfg))
@@ -4490,7 +4490,7 @@ class testMeetingItem(PloneMeetingTestCase):
            'decisions_published' to MeetingManagers."""
         cfg = self.meetingConfig
         # enable 'publish_decisions' WFAdaptation
-        if 'hide_decisions_when_under_writing' not in cfg.listWorkflowAdaptations():
+        if 'hide_decisions_when_under_writing' not in get_vocab_values(cfg, 'WorkflowAdaptations'):
             return
         cfg.setWorkflowAdaptations(('hide_decisions_when_under_writing', ))
         notify(ObjectEditedEvent(cfg))
@@ -5083,7 +5083,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(_sum_entries(), 5)
 
         # special case for powerobservers when using MeetingConfig.hideHistoryTo
-        cfg.setHideHistoryTo(('powerobservers', ))
+        cfg.setHideHistoryTo(('MeetingItem.powerobservers', ))
         self.assertEqual(_sum_entries(), 6)
         # but still ok for others
         self.changeUser('pmReviewer2', clean_memoize=False)

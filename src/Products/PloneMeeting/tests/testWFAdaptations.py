@@ -14,11 +14,12 @@ from copy import deepcopy
 from DateTime import DateTime
 from datetime import datetime
 from datetime import timedelta
+from imio.helpers.content import get_vocab_values
+from imio.helpers.content import richtextval
 from imio.helpers.content import uuidToObject
 from imio.helpers.workflow import get_leading_transitions
 from imio.zamqp.core.utils import next_scan_id
 from imio.zamqp.pm.tests.base import DEFAULT_SCAN_ID
-from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import DeleteObjects
@@ -35,7 +36,6 @@ from Products.PloneMeeting.config import WriteItemMeetingManagerFields
 from Products.PloneMeeting.config import WriteMarginalNotes
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
-from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_internal_number
 from zope.event import notify
@@ -58,21 +58,10 @@ class testWFAdaptations(PloneMeetingTestCase):
     def _wait_advice_from_proposed_state_back_transition(self):
         return 'backTo_' + self._stateMappingFor('proposed') + '_from_waiting_advices'
 
-    def _check_wfa_available(self, wfas):
-        available = True
-        available_wfas = self.meetingConfig.listWorkflowAdaptations()
-        for wfa in wfas:
-            if wfa not in available_wfas:
-                available = False
-                pm_logger.info('Bypassing "{0}" because WFAdaptation "{1}" is not available!'.format(
-                    self._testMethodName, wfa))
-                break
-        return available
-
     def test_pm_WFA_availableWFAdaptations(self):
         '''Test what are the available wfAdaptations.
            This way, if we add a wfAdaptations, the test will 'break' until it is adapted...'''
-        self.assertEqual(sorted(self.meetingConfig.listWorkflowAdaptations().keys()),
+        self.assertEqual(sorted(get_vocab_values(self.meetingConfig, 'WorkflowAdaptations')),
                          ['accepted_but_modified',
                           'accepted_out_of_meeting',
                           'accepted_out_of_meeting_and_duplicated',
@@ -2931,21 +2920,21 @@ class testWFAdaptations(PloneMeetingTestCase):
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmReviewer2')
         createContentInContainer(item,
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmAdviser1')
         createContentInContainer(item,
                                  'meetingadvice',
                                  **{'advice_group': org3_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
 
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
