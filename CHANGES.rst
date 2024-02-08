@@ -2,11 +2,9 @@ Changelog
 =========
 
 
-4.2.9b10 (unreleased)
+4.2.9rc1 (unreleased)
 ---------------------
 
-- Adapted portal tabs sub menu styling to make more `sub menu`.
-  [gbastien]
 - Adapted portal tabs sub menu styling to make more `sub menu`.
   [gbastien]
 - Fixed critical bug while sending mail that was preventing to use the MailHost
