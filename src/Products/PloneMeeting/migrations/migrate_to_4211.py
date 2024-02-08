@@ -98,7 +98,8 @@ class Migrate_To_4211(Migrator):
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4211...')
-
+        self.upgradeAll(omit=['Products.PloneMeeting:default',
+                              self.profile_name.replace('profile-', '')])
         self._migrateConfigHideHistoryTo()
         self._updateSearchCopyGroupsSearchesCondition()
         self._updateDataRelatedToToolPloneMeetingSimplification()
