@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.9rc1 (unreleased)
+4.2.9rc1 (2024-02-08)
 ---------------------
 
 - Adapted portal tabs sub menu styling to make more `sub menu`.
