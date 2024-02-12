@@ -31,7 +31,7 @@ from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.content import uuidToObject
 from imio.helpers.security import fplog
-from imio.helpers.workflow import do_transitions
+from imio.helpers.workflow import get_leading_transitions
 from imio.helpers.workflow import get_transitions
 from imio.helpers.xhtml import is_html
 from imio.history.utils import add_event_to_wf_history
@@ -138,6 +138,7 @@ from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import ItemDuplicatedEvent
 from Products.PloneMeeting.utils import ItemDuplicatedToOtherMCEvent
 from Products.PloneMeeting.utils import ItemLocalRolesUpdatedEvent
+from Products.PloneMeeting.utils import meetingExecuteActionOnLinkedItems
 from Products.PloneMeeting.utils import networkdays
 from Products.PloneMeeting.utils import normalize
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
@@ -860,15 +861,15 @@ class MeetingItemWorkflowActions(object):
         # If the meeting is already in a late state and this item is a "late" item,
         # I must set automatically the item to the first "late state" (itemfrozen by default).
         if meeting.is_late():
-            do_transitions(self.context, self._latePresentedItemTransitions())
+            self._latePresentItem(meeting)
 
-    def _latePresentedItemTransitions(self):
-        """Return the transitions to execute on a late item.
-           By default, this will freeze, publish or decide the item."""
-        # can can not base this on MeetingConfig.onMeetingTransitionItemActionToExecute
-        # because sometimes for performance reasons, freezing items when
-        # freezing the meeting is disabled but we want a late item to be auto frozen...
-        return ('itemfreeze', 'itempublish', 'itemdecide')
+    def _latePresentItem(self, meeting):
+        """Present a late item based on MeetingConfig.onMeetingTransitionItemActionToExecute."""
+        # trigger in meetingExecuteActionOnLinkedItems every transitionId
+        # until current meeting state
+        for transition in get_leading_transitions(
+                self.cfg.getMeetingWorkflow(True), meeting.query_state(), not_starting_with='back'):
+            meetingExecuteActionOnLinkedItems(meeting, transition.id, [self.context])
 
     security.declarePrivate('doItemFreeze')
 
@@ -6759,9 +6760,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if data['left_delay'] < 0 or \
            (not adviceInfos['hidden_during_redaction'] and
             not adviceInfos['type'] == 'asked_again' and
-            adviceInfos['advice_given_on']):
+                adviceInfos['advice_given_on']):
             data['left_delay'] = delay
-
         return data
 
     security.declarePublic('getCopyGroupsHelpMsg')

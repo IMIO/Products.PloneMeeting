@@ -7242,6 +7242,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             transitions = res
         return transitions
 
+    security.declarePublic('getTransitionsToCloseAMeeting')
+
+    def getTransitionsToCloseAMeeting(self):
+        """Return the transitions to close a meeting.
+           WF always go from "created" to "closed"."""
+        res = []
+        meeting_wf = self.getMeetingWorkflow(True)
+        state = meeting_wf.states["created"]
+        while state.id != "closed":
+            transition = [tr for tr in state.transitions
+                          if not tr.startswith("back")][0]
+            res.append(transition)
+            state = meeting_wf.states[
+                meeting_wf.transitions[transition].new_state_id]
+        return res
+
     security.declarePublic('getCertifiedSignatures')
 
     def getCertifiedSignatures(self, computed=False, listify=False, **kwargs):

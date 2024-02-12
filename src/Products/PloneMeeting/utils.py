@@ -1295,7 +1295,7 @@ def applyOnTransitionFieldTransform(obj, transitionId):
 
 
 # ------------------------------------------------------------------------------
-def meetingExecuteActionOnLinkedItems(meeting, transitionId):
+def meetingExecuteActionOnLinkedItems(meeting, transitionId, items=[]):
     '''
       When the given p_transitionId is triggered on the given p_meeting,
       check if we need to trigger an action on linked items
@@ -1305,10 +1305,12 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId):
     cfg = extra_expr_ctx['cfg']
     wfTool = api.portal.get_tool('portal_workflow')
     wf_comment = _('wf_transition_triggered_by_application')
+    if not items:
+        items = meeting.get_items()
     for action in cfg.getOnMeetingTransitionItemActionToExecute():
         if action['meeting_transition'] == transitionId:
             is_transition = not action['tal_expression']
-            for item in meeting.get_items():
+            for item in items:
                 if is_transition:
                     # do not fail if a transition could not be triggered, just add an
                     # info message to the log so configuration can be adapted to avoid this
