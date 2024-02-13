@@ -123,7 +123,6 @@ from Products.PloneMeeting.utils import get_dx_attrs
 from Products.PloneMeeting.utils import get_dx_schema
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import getAdvicePortalTypeIds
-from Products.PloneMeeting.utils import getAdvicePortalTypes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import listifySignatures
@@ -7241,6 +7240,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(transition)
             transitions = res
         return transitions
+
+    security.declarePublic('get_transitions_to_close_a_meeting')
+
+    def get_transitions_to_close_a_meeting(self):
+        """Return the transitions to close a meeting.
+           WF always go from "created" to "closed"."""
+        res = []
+        meeting_wf = self.getMeetingWorkflow(True)
+        state = meeting_wf.states["created"]
+        while state.id != "closed":
+            transition = [tr for tr in state.transitions
+                          if not tr.startswith("back")][0]
+            res.append(transition)
+            state = meeting_wf.states[
+                meeting_wf.transitions[transition].new_state_id]
+        return res
 
     security.declarePublic('getCertifiedSignatures')
 
