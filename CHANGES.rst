@@ -7,6 +7,8 @@ Changelog
 
 - Added `imio.helpers.date.formatDate` to `safe_utils` so it is available in
   TAL expressions.
+  Removed adaptable method `MeetingItemWorkflowActions._latePresentedItemTransitions`
+  no more necessary as this is managed automatically now.
   [gbastien]
 
 4.2.9rc1 (2024-02-08)

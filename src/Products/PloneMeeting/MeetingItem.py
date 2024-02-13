@@ -849,27 +849,30 @@ class MeetingItemWorkflowActions(object):
             # find meetings accepting items in the future
             meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
         # insert the item into the meeting
-        self._insertItem(meeting)
+        self._insert_item(meeting)
         # We may have to send a mail.
         sendMailIfRelevant(self.context, 'itemPresented', 'creators', isSuffix=True)
         sendMailIfRelevant(self.context, 'itemPresentedOwner', 'Owner', isRole=True)
 
-    def _insertItem(self, meeting):
+    def _insert_item(self, meeting):
         """ """
         self.context.REQUEST.set('currentlyInsertedItem', self.context)
         meeting.insert_item(self.context, force_normal=self._forceInsertNormal())
         # If the meeting is already in a late state and this item is a "late" item,
         # I must set automatically the item to the first "late state" (itemfrozen by default).
         if meeting.is_late():
-            self._latePresentItem(meeting)
+            self._present_late_item(meeting)
 
-    def _latePresentItem(self, meeting):
+    def _present_late_item(self, meeting):
         """Present a late item based on MeetingConfig.onMeetingTransitionItemActionToExecute."""
         # trigger in meetingExecuteActionOnLinkedItems every transitionId
         # until current meeting state
         for transition in get_leading_transitions(
-                self.cfg.getMeetingWorkflow(True), meeting.query_state(), not_starting_with='back'):
-            meetingExecuteActionOnLinkedItems(meeting, transition.id, [self.context])
+                self.cfg.getMeetingWorkflow(True),
+                meeting.query_state(),
+                not_starting_with='back'):
+            meetingExecuteActionOnLinkedItems(
+                meeting, transition.id, [self.context])
 
     security.declarePrivate('doItemFreeze')
 

@@ -453,11 +453,7 @@ class IMeetingItemWorkflowActions(Interface):
     def doDelay(stateChange):
         '''Executes when an item is delayed.'''
     def doCorrect(stateChange):
-        '''Executes when the user performs a wrong action and needs to undo
-           it.'''
-    def _latePresentedItemTransitions():
-        '''The list of transitions to trigger on an item when presented into
-        a late meeting.'''
+        '''Executes when the user performs a wrong action and needs to undo it.'''
 
 
 class IMeetingItemCustom(IMeetingItem):
