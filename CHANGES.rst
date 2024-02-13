@@ -5,8 +5,9 @@ Changelog
 4.2.9rc2 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Added `imio.helpers.date.formatDate` to `safe_utils` so it is available in
+  TAL expressions.
+  [gbastien]
 
 4.2.9rc1 (2024-02-08)
 ---------------------
