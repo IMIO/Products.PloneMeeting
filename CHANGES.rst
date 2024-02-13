@@ -5,6 +5,8 @@ Changelog
 4.2.9rc2 (unreleased)
 ---------------------
 
+- Added helper `MeetingConfig.get_transitions_to_close_a_meeting`.
+  [gbastien]
 - Added `imio.helpers.date.formatDate` to `safe_utils` so it is available in
   TAL expressions.
   Removed adaptable method `MeetingItemWorkflowActions._latePresentedItemTransitions`

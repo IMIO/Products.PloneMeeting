@@ -2640,6 +2640,26 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertTrue(ven_creator2_mail in recipients)
         self.assertTrue(ven_reviewer2_mail in recipients)
 
+    def test_pm_Get_transitions_to_close_a_meeting(self):
+        """Suite of transitions to close a meeting."""
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        self.assertEqual(cfg.get_transitions_to_close_a_meeting(),
+                         ['freeze', 'publish', 'decide', 'close'])
+        self.assertEqual(cfg2.get_transitions_to_close_a_meeting(),
+                         ['freeze', 'publish', 'decide', 'close'])
+        self._activate_wfas(['no_publication'])
+        self.assertEqual(cfg.get_transitions_to_close_a_meeting(),
+                         ['freeze', 'decide', 'close'])
+        self._activate_wfas(['no_freeze'])
+        self.assertEqual(cfg.get_transitions_to_close_a_meeting(),
+                         ['publish', 'decide', 'close'])
+        self._activate_wfas(['no_freeze', 'no_publication'])
+        self.assertEqual(cfg.get_transitions_to_close_a_meeting(),
+                         ['decide', 'close'])
+        self._activate_wfas(['no_freeze', 'no_publication', 'no_decide'])
+        self.assertEqual(cfg.get_transitions_to_close_a_meeting(), ['close'])
+
 
 def test_suite():
     from unittest import makeSuite

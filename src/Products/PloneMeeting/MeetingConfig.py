@@ -7242,9 +7242,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             transitions = res
         return transitions
 
-    security.declarePublic('getTransitionsToCloseAMeeting')
+    security.declarePublic('get_transitions_to_close_a_meeting')
 
-    def getTransitionsToCloseAMeeting(self):
+    def get_transitions_to_close_a_meeting(self):
         """Return the transitions to close a meeting.
            WF always go from "created" to "closed"."""
         res = []
