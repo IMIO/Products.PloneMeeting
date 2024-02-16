@@ -1952,7 +1952,7 @@ def print_votes(item,
                     all.insert(0, begin_rendered_values)
                 rendered += main_pattern.format(separator.join(all))
 
-    return render_as_html and (rendered or no_votes_marker) or vote_infos
+    return (rendered or no_votes_marker) if render_as_html else vote_infos
 
 
 class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):

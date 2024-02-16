@@ -12,6 +12,8 @@ Changelog
   Removed adaptable method `MeetingItemWorkflowActions._latePresentedItemTransitions`
   no more necessary as this is managed automatically now.
   [gbastien]
+- Make sure `print_votes` always return a string when `render_as_html=True`.
+  [gbastien]
 
 4.2.9rc1 (2024-02-08)
 ---------------------
@@ -178,7 +180,8 @@ Changelog
   and `Classifier`.
   [gbastien]
 - Fixed update `categorized_elements` of advices when advice moved as
-  stored path changed.
+  stored path changed (when advice is given on an item that is `itemcreated` and
+  that is renamed).
   [gbastien]
 - Make sure every item related searches (Collection) use `sort_on` modified
   as this is not visible in the application because faceted `sort_on` overrides
