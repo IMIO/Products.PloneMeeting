@@ -10,6 +10,7 @@ from Acquisition import aq_base
 from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
+from collective.contact.plonegroup.utils import get_person_from_userid
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
 from collective.datagridcolumns.SelectColumn import SelectColumn
@@ -1248,20 +1249,33 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # Change the proposing group if the item owner does not belong to
             # the defined proposing group, except if p_keepProposingGroup is True
             if not keepProposingGroup:
+                # use a primary_organization if possible
+                person = get_person_from_userid(get_current_user_id())
+                primary_org = person.primary_organization if person else None
                 # proposingGroupWithGroupInCharge
                 if newItem.attribute_is_used('proposingGroupWithGroupInCharge'):
                     field = newItem.getField('proposingGroupWithGroupInCharge')
                     vocab = get_vocab(newItem, field.vocabulary_factory, only_factory=True)
                     userProposingGroupTerms = vocab(newItem, include_stored=False)._terms
                     if userProposingGroupTerms:
-                        newItem.setProposingGroupWithGroupInCharge(userProposingGroupTerms[0].token)
+                        token = userProposingGroupTerms[0].token
+                        if primary_org:
+                            tokens = [term.token for term in userProposingGroupTerms
+                                      if term.token.startswith(primary_org)]
+                            token = tokens[0] if tokens else userProposingGroupTerms[0].token
+                        newItem.setProposingGroupWithGroupInCharge(token)
                 else:
                     # proposingGroup
                     field = newItem.getField('proposingGroup')
-                    vocab = get_vocab(newItem, field.vocabulary_factory, only_factory=True)
-                    userProposingGroupTerms = vocab(newItem, include_stored=False)._terms
-                    if userProposingGroupTerms:
-                        newItem.setProposingGroup(userProposingGroupTerms[0].token)
+                    vocab = get_vocab(newItem, field.vocabulary_factory, include_stored=False)
+                    if vocab._terms:
+                        token = vocab._terms[0].token
+                        if primary_org:
+                            try:
+                                token = vocab.getTermByToken(primary_org).token
+                            except LookupError:
+                                pass
+                        newItem.setProposingGroup(token)
 
             if newOwnerId != loggedUserId:
                 plone_utils.changeOwnershipOf(newItem, newOwnerId)

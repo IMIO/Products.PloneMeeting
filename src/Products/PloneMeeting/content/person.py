@@ -4,7 +4,6 @@ from collective.contact.core.content.person import IPerson
 from collective.contact.core.content.person import Person
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
-from plone.supermodel import model
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.events import _invalidateAttendeesRelatedCache
 from zope import schema
@@ -19,22 +18,7 @@ class IPMPerson(IPerson):
         required=False,
     )
 
-    form.read_permission(userid='PloneMeeting.write_userid_field')
-    form.write_permission(userid='PloneMeeting.write_userid_field')
-    userid = schema.Choice(
-        title=_(u'Plone user'),
-        description=_(u'If you need to use this person data in the '
-                      u'application like for example scanned signature or '
-                      u'telephone number, select it here.'),
-        required=False,
-        vocabulary=u'Products.PloneMeeting.Users',
-    )
-
     form.order_before(signature='photo')
-
-    model.fieldset('app_parameters',
-                   label=_(u"Application parameters"),
-                   fields=['userid'])
 
 
 class PMPerson(Person):

@@ -8,6 +8,7 @@ from collective.contact.plonegroup.browser.tables import DisplayGroupUsersView
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.utils import get_person_from_userid
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
@@ -47,7 +48,6 @@ from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_field
 from Products.PloneMeeting.utils import get_dx_widget
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
-from Products.PloneMeeting.utils import get_person_from_userid
 from Products.PloneMeeting.utils import getAvailableMailingLists
 from Products.PloneMeeting.utils import may_view_field
 from Products.PloneMeeting.utils import reindex_object
@@ -1153,7 +1153,6 @@ class BaseDGHV(object):
                             include_held_position_label=include_replace_by_held_position_label,
                             include_sub_organizations=False))
 
-
                 if include_out_count or include_in_count:
                     # Get the list if item uids for which current
                     # contact_uid is considered not present
@@ -1172,7 +1171,8 @@ class BaseDGHV(object):
                         contact_value += out_count_pattern.format(get_clusters(numbers))
                     if include_in_count and len(not_present_item_uids) > 0:
                         numbers = [item.getItemNumber(for_display=True)
-                                   for item in meeting.get_items(ordered=True) if item.UID() not in not_present_item_uids]
+                                   for item in meeting.get_items(ordered=True)
+                                   if item.UID() not in not_present_item_uids]
                         numbers = [int(number) if '.' not in number else float(number) for number in numbers]
                         contact_value += in_count_pattern.format(get_clusters(numbers))
                 if unbreakable_contact_value:
