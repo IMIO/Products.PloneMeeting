@@ -6637,6 +6637,49 @@ class testMeetingItem(PloneMeetingTestCase):
         image_resolveuid = "resolveuid/%s" % newItem.objectValues()[0].UID()
         self.assertEqual(newItem.getRawDecision(), text_pattern % image_resolveuid)
 
+    def test_pm_ItemTemplateDefaultProposingGroup(self):
+        """If a primary_organization is defined for a userid, then it is used
+           as default proposingGroup when creating an item from a template for
+           which no proposingGroup is defined."""
+        self.changeUser('siteadmin')
+        # setup, define endUsers as primary organization for pmCreator2
+        self._select_organization(self.endUsers_uid)
+        self._addPrincipalToGroup('pmCreator2', self.endUsers_creators)
+        person = self.portal.contacts.get('person1')
+        person.userid = 'pmCreator2'
+        person.primary_organization = self.endUsers_uid
+        person.reindexObject(idxs=['userid'])
+        # we have 2 templates, one without a proposingGroup, will use primary org
+        # if defined, one with "vendors", will be used if creator for it
+        cfg = self.meetingConfig
+        no_pg_template = cfg.itemtemplates.get(ITEM_DEFAULT_TEMPLATE_ID)
+        no_pg_template_uid = no_pg_template.UID()
+        self.assertEqual(no_pg_template.getProposingGroup(), '')
+        vendors_template = cfg.itemtemplates.template2
+        vendors_template_uid = vendors_template.UID()
+        self.assertEqual(vendors_template.getProposingGroup(), self.vendors_uid)
+
+        # as pmCreator1, no primary organization, creating items will use
+        # it's default group (first found)
+        self.changeUser('pmCreator1')
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        item_from_no_pg_template = view.createItemFromTemplate(no_pg_template_uid)
+        self.assertEqual(item_from_no_pg_template.getProposingGroup(), self.developers_uid)
+        item_from_vendors_template = view.createItemFromTemplate(vendors_template_uid)
+        self.assertEqual(item_from_vendors_template.getProposingGroup(), self.developers_uid)
+        # as pmCreator2, primary organization to endUsers
+        # creating item will use it if no group defined
+        self.changeUser('pmCreator2')
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        item_from_no_pg_template = view.createItemFromTemplate(no_pg_template_uid)
+        # will use primary_organization
+        self.assertEqual(item_from_no_pg_template.getProposingGroup(), self.endUsers_uid)
+        item_from_vendors_template = view.createItemFromTemplate(vendors_template_uid)
+        # use vendors_uid as used on template
+        self.assertEqual(item_from_vendors_template.getProposingGroup(), self.vendors_uid)
+
     def _notAbleToAddSubContent(self, item):
         for add_subcontent_perm in ADD_SUBCONTENT_PERMISSIONS:
             self.assertFalse(self.hasPermission(add_subcontent_perm, item))

@@ -67,7 +67,6 @@ AddItem = 'PloneMeeting: Add MeetingItem'
 AddMeeting = 'PloneMeeting: Add Meeting'
 ManageOwnOrganizationFields = 'PloneMeeting: Manage internal organization fields'
 ManageItemCategoryFields = 'PloneMeeting: Manage item category fields'
-WriteUseridField = 'PloneMeeting: Write userid field'
 setDefaultRoles(ReadDecision, ('Manager',))
 setDefaultRoles(WriteDecision, ('Manager',))
 setDefaultRoles(AddAnnex, ('Manager',))
@@ -76,9 +75,9 @@ setDefaultRoles(WriteMarginalNotes, ('Manager',))
 # given to nobody by default, is only given on /contacts/plonegroup-organization folder
 setDefaultRoles(ManageOwnOrganizationFields, ())
 # given to nobody by default, is only given on .../meeting-config-id/categories
-# and .../meeting-config-id/classifiers folder
+# and .../meeting-config-id/classifiers folder but not on .../meeting-config-id/meetingcategories
+# this is done to hide some category fields for meeting categories
 setDefaultRoles(ManageItemCategoryFields, ())
-setDefaultRoles(WriteUseridField, ('Manager', ))
 MEETING_REMOVE_MOG_WFA = 'meeting_remove_global_access'
 
 # Permissions
