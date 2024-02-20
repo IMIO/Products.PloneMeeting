@@ -6680,6 +6680,38 @@ class testMeetingItem(PloneMeetingTestCase):
         # use vendors_uid as used on template
         self.assertEqual(item_from_vendors_template.getProposingGroup(), self.vendors_uid)
 
+        # when using proposingGroupWithGroupInCharge
+        self._enableField('proposingGroupWithGroupInCharge')
+        self.developers.groups_in_charge = (self.vendors_uid, )
+        self.vendors.groups_in_charge = (self.developers_uid, )
+        self.endUsers.groups_in_charge = (self.endUsers_uid, )
+        ven_dev = '{0}__groupincharge__{1}'.format(self.vendors_uid, self.developers_uid)
+        vendors_template.setProposingGroupWithGroupInCharge(ven_dev)
+        # as pmCreator1, no primary organization, creating items will use
+        # it's default group (first found)
+        self.changeUser('pmCreator1')
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        item_from_no_pg_template = view.createItemFromTemplate(no_pg_template_uid)
+        self.assertEqual(item_from_no_pg_template.getProposingGroup(), self.developers_uid)
+        self.assertEqual(item_from_no_pg_template.getGroupsInCharge(), [self.vendors_uid])
+        item_from_vendors_template = view.createItemFromTemplate(vendors_template_uid)
+        self.assertEqual(item_from_vendors_template.getProposingGroup(), self.developers_uid)
+        self.assertEqual(item_from_vendors_template.getGroupsInCharge(), [self.vendors_uid])
+        # as pmCreator2, primary organization to endUsers
+        # creating item will use it if no group defined
+        self.changeUser('pmCreator2')
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        item_from_no_pg_template = view.createItemFromTemplate(no_pg_template_uid)
+        # will use primary_organization
+        self.assertEqual(item_from_no_pg_template.getProposingGroup(), self.endUsers_uid)
+        self.assertEqual(item_from_no_pg_template.getGroupsInCharge(), [self.endUsers_uid])
+        item_from_vendors_template = view.createItemFromTemplate(vendors_template_uid)
+        # use vendors_uid as used on template
+        self.assertEqual(item_from_vendors_template.getProposingGroup(), self.vendors_uid)
+        self.assertEqual(item_from_vendors_template.getGroupsInCharge(), [self.developers_uid])
+
     def _notAbleToAddSubContent(self, item):
         for add_subcontent_perm in ADD_SUBCONTENT_PERMISSIONS:
             self.assertFalse(self.hasPermission(add_subcontent_perm, item))
