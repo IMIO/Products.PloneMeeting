@@ -5,10 +5,12 @@ from collective.contact.plonegroup.utils import get_plone_group_id
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_user_fullname
+from imio.helpers.content import get_vocab_values
 from imio.helpers.workflow import get_state_infos
 from imio.history.browser.views import EventPreviewView
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import get_event_by_time
+from imio.history.utils import getLastWFAction
 from plone import api
 from plone.autoform import directives
 from plone.autoform.form import AutoExtensibleForm
@@ -109,6 +111,7 @@ class AdvicesIcons(BrowserView):
             self.portal_url = self.portal.absolute_url()
             self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'])
             self.advice_infos = self.context.getAdviceDataFor(self.context, ordered=True)
+            self.every_advice_types = get_vocab_values(self.tool, 'ConfigAdviceTypes')
             if not self.context.adapted().isPrivacyViewable():
                 return '<div style="display: inline">&nbsp;-&nbsp;&nbsp;&nbsp;</div>'
         return super(AdvicesIcons, self).__call__()
@@ -215,7 +218,7 @@ class AdvicesIconsInfos(BrowserView):
         self.obj = advice.get('advice_id', None) and \
             self.adviceHolder.get(advice['advice_id'], None)
         self.show_history = self.obj and self.adviceHolderIsViewable and \
-            self.context.restrictedTraverse('@@contenthistory').show_history()
+            self.obj.restrictedTraverse('@@contenthistory').show_history()
 
     def showLinkToInherited(self, adviceHolder):
         """ """
@@ -328,6 +331,13 @@ class AdviceInfos(BrowserView):
             self.advice.get('advice_id', None) else None
         self.displayedReviewState = displayedReviewState
         self.customMessageInfos = customMessageInfos
+        self.advice_given_by = self.get_advice_given_by()
+        if self.obj is not None:
+            # show_history
+            adviceHolder = self.advice.get('adviceHolder', None) or self.obj
+            adviceHolderIsViewable = adviceHolder.isViewable()
+            self.show_history = self.obj and adviceHolderIsViewable and \
+                self.obj.restrictedTraverse('@@contenthistory').show_history()
         return self.index()
 
     def adviser_users(self, advice_info):
@@ -337,6 +347,24 @@ class AdviceInfos(BrowserView):
             res = self.context._displayAdviserUsers(
                 advice_info['userids'], self.portal_url, self.tool)
         return res
+
+    def get_advice_given_by(self):
+        """The advice was given by advice WF transition before "giveAdvice"."""
+        given_by = None
+        if self.obj:
+            wf_tool = api.portal.get_tool('portal_workflow')
+            wf = wf_tool.getWorkflowsFor(self.obj.portal_type)[0]
+            final_state_id = self.obj._get_final_state_id()
+            # if final_state_id is actually the initial_state we can not compute given_by
+            # we are only able to know who created the advice
+            if wf.initial_state != final_state_id:
+                last_before_give_advice_event = getLastWFAction(
+                    self.obj,
+                    transition=self.obj._get_final_transition_id(),
+                    ignore_previous_event_actions=['backToAdviceInitialState'])
+                if last_before_give_advice_event:
+                    given_by = get_user_fullname(last_before_give_advice_event["actor"])
+        return given_by
 
     def get_user_fullname(self, user_id):
         return get_user_fullname(user_id)

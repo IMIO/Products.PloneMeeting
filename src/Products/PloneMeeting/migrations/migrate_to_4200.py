@@ -7,6 +7,7 @@ from eea.facetednavigation.criteria.interfaces import ICriteria
 from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.content import get_vocab
+from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_delattr
 from imio.pyutils.utils import replace_in_list
@@ -320,10 +321,10 @@ class Migrate_To_4200(Migrator):
             self._doConfigureItemWFValidationLevels(cfg)
             # clean stored workflowAdaptations
             cleaned_wfas = [wfa for wfa in cfg.getWorkflowAdaptations()
-                            if wfa in cfg.listWorkflowAdaptations()]
+                            if wfa in get_vocab_values(cfg, 'WorkflowAdaptations')]
             # make sure new wfAdaptations are enabled (were default, now optional)
             cleaned_wfas += [wfa for wfa in ('pre_accepted', 'delayed', 'accepted_but_modified', )
-                             if wfa in cfg.listWorkflowAdaptations()]
+                             if wfa in get_vocab_values(cfg, 'WorkflowAdaptations')]
             # when using "waiting_advices", and not other "waiting_advices_" wfas are enabled
             # enable the "waiting_advices_proposing_group_send_back" as it was the
             # default behaviour before and now it is configurable

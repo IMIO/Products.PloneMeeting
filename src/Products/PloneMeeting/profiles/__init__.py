@@ -919,6 +919,7 @@ class PloneMeetingConfiguration(Descriptor):
         ]
         self.delayUnavailableEndDays = ()
         self.configGroups = ()
+        self.advisersConfig = ()
 
         # non stored values
         self.meetingConfigs = meetingConfigs  # ~[MeetingConfigDescriptor]~

@@ -8,6 +8,7 @@
 from AccessControl import Unauthorized
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import get_vocab_values
 from imio.history.utils import getLastWFAction
 from OFS.ObjectManager import BeforeDeleteException
 from Products.Archetypes.event import ObjectEditedEvent
@@ -747,7 +748,7 @@ class testWorkflows(PloneMeetingTestCase):
            is closed, even if item is decided before the meeting is closed.'''
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
-        if 'meetingmanager_correct_closed_meeting' in cfg.listWorkflowAdaptations():
+        if 'meetingmanager_correct_closed_meeting' in get_vocab_values(cfg, 'WorkflowAdaptations'):
             cfg.setWorkflowAdaptations(cfg.getWorkflowAdaptations() +
                                        ('meetingmanager_correct_closed_meeting', ))
         # call.update_local_roles on item only if it not already decided
@@ -825,6 +826,65 @@ class testWorkflows(PloneMeetingTestCase):
         self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, item1))
         self.assertTrue(self.hasPermission(View, item2))
+
+    def test_pm_MeetingExecuteActionOnLinkedItemsFreezeLateItemsOrNot(self):
+        """By default, a late item is frozen depending on meetingExecuteActionOnLinkedItems
+           but in some case, we only want late items to be frozen because freezing
+           the full meeting must not freeze items, or on contrary, freezing a full meeting
+           must freeze the items but when a late item is presented."""
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        # by default, freezing a meeting or inserting a late item will freeze the item
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        meeting = self.create('Meeting')
+        self.presentItem(item)
+        # freeze meeting, default item frozen
+        self.do(meeting, 'freeze')
+        self.assertEqual(meeting.query_state(), 'frozen')
+        self.assertEqual(item.query_state(), 'itemfrozen')
+        # present a late item, default item frozen
+        late_item = self.create('MeetingItem', preferredMeeting=meeting.UID())
+        self.presentItem(late_item)
+        self.assertEqual(late_item.query_state(), 'itemfrozen')
+
+        # only late item is frozen, not freezing whole meeting
+        cfg.setOnMeetingTransitionItemActionToExecute(
+            [{'meeting_transition': 'freeze',
+              'item_action': EXECUTE_EXPR_VALUE,
+              'tal_expression': 'python: item.isLate() and '
+                'item.query_state() == "presented" and '
+                'portal.portal_workflow.doActionFor(item, "itemfreeze")'}])
+        item2 = self.create('MeetingItem')
+        meeting2 = self.create('Meeting')
+        self.presentItem(item2)
+        # freeze meeting, item not frozen
+        self.do(meeting2, 'freeze')
+        self.assertEqual(meeting2.query_state(), 'frozen')
+        self.assertEqual(item2.query_state(), 'presented')
+        # present a late item, item frozen
+        late_item2 = self.create('MeetingItem', preferredMeeting=meeting2.UID())
+        self.presentItem(late_item2)
+        self.assertEqual(late_item2.query_state(), 'itemfrozen')
+
+        # items frozen when meeting frozen but not late items
+        cfg.setOnMeetingTransitionItemActionToExecute(
+            [{'meeting_transition': 'freeze',
+              'item_action': EXECUTE_EXPR_VALUE,
+              'tal_expression': 'python: not item.isLate() and '
+                'item.query_state() == "presented" and '
+                'portal.portal_workflow.doActionFor(item, "itemfreeze")'}])
+        item3 = self.create('MeetingItem')
+        meeting3 = self.create('Meeting')
+        self.presentItem(item3)
+        # freeze meeting, item frozen
+        self.do(meeting3, 'freeze')
+        self.assertEqual(meeting3.query_state(), 'frozen')
+        self.assertEqual(item3.query_state(), 'itemfrozen')
+        # present a late item, item not frozen
+        late_item3 = self.create('MeetingItem', preferredMeeting=meeting3.UID())
+        self.presentItem(late_item3)
+        self.assertEqual(late_item3.query_state(), 'presented')
 
     def test_pm_MeetingNotClosableIfItemStillReturnedToProposingGroup(self):
         """If there are items in state 'returned_to_proposing_group', a meeting may not be closed."""

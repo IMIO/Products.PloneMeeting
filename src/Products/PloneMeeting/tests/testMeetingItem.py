@@ -58,6 +58,7 @@ from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import GROUPS_MANAGING_ITEM_PG_VALUE
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
+from Products.PloneMeeting.config import ITEM_MOVAL_PREVENTED
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
@@ -2380,7 +2381,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # - only restricted power observers may access 'refused' items.
         cfg = self.meetingConfig
         # add state 'refused' to item WF if available in WFAdaptations, if not already applied
-        if 'refused' in cfg.listWorkflowAdaptations() and \
+        if 'refused' in get_vocab_values(cfg, 'WorkflowAdaptations') and \
            'refused' not in cfg.getWorkflowAdaptations():
             cfg.setWorkflowAdaptations(('refused', ))
             notify(ObjectEditedEvent(cfg))
@@ -4490,7 +4491,7 @@ class testMeetingItem(PloneMeetingTestCase):
            'decisions_published' to MeetingManagers."""
         cfg = self.meetingConfig
         # enable 'publish_decisions' WFAdaptation
-        if 'hide_decisions_when_under_writing' not in cfg.listWorkflowAdaptations():
+        if 'hide_decisions_when_under_writing' not in get_vocab_values(cfg, 'WorkflowAdaptations'):
             return
         cfg.setWorkflowAdaptations(('hide_decisions_when_under_writing', ))
         notify(ObjectEditedEvent(cfg))
@@ -5083,7 +5084,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(_sum_entries(), 5)
 
         # special case for powerobservers when using MeetingConfig.hideHistoryTo
-        cfg.setHideHistoryTo(('powerobservers', ))
+        cfg.setHideHistoryTo(('MeetingItem.powerobservers', ))
         self.assertEqual(_sum_entries(), 6)
         # but still ok for others
         self.changeUser('pmReviewer2', clean_memoize=False)
@@ -6595,6 +6596,27 @@ class testMeetingItem(PloneMeetingTestCase):
         newItem.processForm()
         self.assertEqual(newItem.getId(), 'my-new-item-title')
 
+    def test_pm_ItemRenamedManuallyOnlyPossibleInInitialState(self):
+        """If an administrator renames an item, it will be only possible
+           if item is in it's WF initial_state."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.aq_parent.manage_renameObject(item.getId(), 'new-id')
+        self.assertEqual(item.getId(), 'new-id')
+        self.proposeItem(item)
+        # raise Unauthorized for a user because not able to edit parent (Folder)
+        self.changeUser('pmReviewer1')
+        self.assertRaises(
+            Unauthorized,
+            item.aq_parent.manage_renameObject,
+            item.getId(),
+            'new-id-2')
+        self.changeUser('siteadmin')
+        # raise ValueError because item is no more "itemcreated"
+        with self.assertRaises(ValueError) as cm:
+            item.aq_parent.manage_renameObject(item.getId(), 'new-id-2')
+        self.assertEqual(cm.exception.message, ITEM_MOVAL_PREVENTED)
+
     def test_pm_ItemTemplateImage(self):
         """We can use an image in an item template and when used,
            the image is correctly duplicated into the new item."""
@@ -6615,6 +6637,81 @@ class testMeetingItem(PloneMeetingTestCase):
         newItem = view.createItemFromTemplate(default_template.UID())
         image_resolveuid = "resolveuid/%s" % newItem.objectValues()[0].UID()
         self.assertEqual(newItem.getRawDecision(), text_pattern % image_resolveuid)
+
+    def test_pm_ItemTemplateDefaultProposingGroup(self):
+        """If a primary_organization is defined for a userid, then it is used
+           as default proposingGroup when creating an item from a template for
+           which no proposingGroup is defined."""
+        self.changeUser('siteadmin')
+        # setup, define endUsers as primary organization for pmCreator2
+        self._select_organization(self.endUsers_uid)
+        self._addPrincipalToGroup('pmCreator2', self.endUsers_creators)
+        person = self.portal.contacts.get('person1')
+        person.userid = 'pmCreator2'
+        person.primary_organization = self.endUsers_uid
+        person.reindexObject(idxs=['userid'])
+        # we have 2 templates, one without a proposingGroup, will use primary org
+        # if defined, one with "vendors", will be used if creator for it
+        cfg = self.meetingConfig
+        no_pg_template = cfg.itemtemplates.get(ITEM_DEFAULT_TEMPLATE_ID)
+        no_pg_template_uid = no_pg_template.UID()
+        self.assertEqual(no_pg_template.getProposingGroup(), '')
+        vendors_template = cfg.itemtemplates.template2
+        vendors_template_uid = vendors_template.UID()
+        self.assertEqual(vendors_template.getProposingGroup(), self.vendors_uid)
+
+        # as pmCreator1, no primary organization, creating items will use
+        # it's default group (first found)
+        self.changeUser('pmCreator1')
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        item_from_no_pg_template = view.createItemFromTemplate(no_pg_template_uid)
+        self.assertEqual(item_from_no_pg_template.getProposingGroup(), self.developers_uid)
+        item_from_vendors_template = view.createItemFromTemplate(vendors_template_uid)
+        self.assertEqual(item_from_vendors_template.getProposingGroup(), self.developers_uid)
+        # as pmCreator2, primary organization to endUsers
+        # creating item will use it if no group defined
+        self.changeUser('pmCreator2')
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        item_from_no_pg_template = view.createItemFromTemplate(no_pg_template_uid)
+        # will use primary_organization
+        self.assertEqual(item_from_no_pg_template.getProposingGroup(), self.endUsers_uid)
+        item_from_vendors_template = view.createItemFromTemplate(vendors_template_uid)
+        # use vendors_uid as used on template
+        self.assertEqual(item_from_vendors_template.getProposingGroup(), self.vendors_uid)
+
+        # when using proposingGroupWithGroupInCharge
+        self._enableField('proposingGroupWithGroupInCharge')
+        self.developers.groups_in_charge = (self.vendors_uid, )
+        self.vendors.groups_in_charge = (self.developers_uid, )
+        self.endUsers.groups_in_charge = (self.endUsers_uid, )
+        ven_dev = '{0}__groupincharge__{1}'.format(self.vendors_uid, self.developers_uid)
+        vendors_template.setProposingGroupWithGroupInCharge(ven_dev)
+        # as pmCreator1, no primary organization, creating items will use
+        # it's default group (first found)
+        self.changeUser('pmCreator1')
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        item_from_no_pg_template = view.createItemFromTemplate(no_pg_template_uid)
+        self.assertEqual(item_from_no_pg_template.getProposingGroup(), self.developers_uid)
+        self.assertEqual(item_from_no_pg_template.getGroupsInCharge(), [self.vendors_uid])
+        item_from_vendors_template = view.createItemFromTemplate(vendors_template_uid)
+        self.assertEqual(item_from_vendors_template.getProposingGroup(), self.developers_uid)
+        self.assertEqual(item_from_vendors_template.getGroupsInCharge(), [self.vendors_uid])
+        # as pmCreator2, primary organization to endUsers
+        # creating item will use it if no group defined
+        self.changeUser('pmCreator2')
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        item_from_no_pg_template = view.createItemFromTemplate(no_pg_template_uid)
+        # will use primary_organization
+        self.assertEqual(item_from_no_pg_template.getProposingGroup(), self.endUsers_uid)
+        self.assertEqual(item_from_no_pg_template.getGroupsInCharge(), [self.endUsers_uid])
+        item_from_vendors_template = view.createItemFromTemplate(vendors_template_uid)
+        # use vendors_uid as used on template
+        self.assertEqual(item_from_vendors_template.getProposingGroup(), self.vendors_uid)
+        self.assertEqual(item_from_vendors_template.getGroupsInCharge(), [self.developers_uid])
 
     def _notAbleToAddSubContent(self, item):
         for add_subcontent_perm in ADD_SUBCONTENT_PERMISSIONS:

@@ -160,7 +160,7 @@ function onsuccessManageAttendees(data) {
 function contentHistory() {
     jQuery(function($) {
         // Content history popup
-        $('a.overlay-history').prepOverlay({
+        $('.contentHistory a').prepOverlay({
            subtype: 'ajax',
            filter: 'h2, #content-history',
            urlmatch: '@@historyview',

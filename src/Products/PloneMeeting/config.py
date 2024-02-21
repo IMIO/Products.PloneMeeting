@@ -67,7 +67,6 @@ AddItem = 'PloneMeeting: Add MeetingItem'
 AddMeeting = 'PloneMeeting: Add Meeting'
 ManageOwnOrganizationFields = 'PloneMeeting: Manage internal organization fields'
 ManageItemCategoryFields = 'PloneMeeting: Manage item category fields'
-WriteUseridField = 'PloneMeeting: Write userid field'
 setDefaultRoles(ReadDecision, ('Manager',))
 setDefaultRoles(WriteDecision, ('Manager',))
 setDefaultRoles(AddAnnex, ('Manager',))
@@ -76,9 +75,9 @@ setDefaultRoles(WriteMarginalNotes, ('Manager',))
 # given to nobody by default, is only given on /contacts/plonegroup-organization folder
 setDefaultRoles(ManageOwnOrganizationFields, ())
 # given to nobody by default, is only given on .../meeting-config-id/categories
-# and .../meeting-config-id/classifiers folder
+# and .../meeting-config-id/classifiers folder but not on .../meeting-config-id/meetingcategories
+# this is done to hide some category fields for meeting categories
 setDefaultRoles(ManageItemCategoryFields, ())
-setDefaultRoles(WriteUseridField, ('Manager', ))
 MEETING_REMOVE_MOG_WFA = 'meeting_remove_global_access'
 
 # Permissions
@@ -167,6 +166,7 @@ MEETING_GROUP_SUFFIXES = [
      'fct_management': False,
      'enabled': False},
 ]
+
 
 # this is made to manage specific suffixes for a particular profile
 # this will be like :
@@ -264,11 +264,11 @@ ALL_ADVISERS_GROUP_VALUE = 'entireadvisersgroup'
 # value displayed in the object history table if a comment is not viewable
 HISTORY_COMMENT_NOT_VIEWABLE = "<span class='discreet'>Access to this comment is restricted.</span>"
 
-# the 2 lists here under are showing advice review_states
-# in which an advice is still considered 'alive' or advice is considered 'ended'
-# this can change if the wf used for advice is different
-ADVICE_STATES_ALIVE = ('advice_under_edit', )
+# states in which advice WF is considered 'ended'
 ADVICE_STATES_ENDED = ('advice_given', )
+# to be monkey patched to extend it
+# this is the mappings between an advice WF state and it's corresponding group suffix
+ADVICE_STATES_MAPPING = {'advice_given': 'advisers', }
 
 # name of the variable added to the REQUEST when getting the scan_id
 ITEM_SCAN_ID_NAME = 'item_scan_id'
@@ -372,6 +372,8 @@ EXECUTE_EXPR_VALUE = 'execute_tal_expression'
 NO_COMMITTEE = u"no_committee"
 
 GROUPS_MANAGING_ITEM_PG_VALUE = 'proposing_group'
+
+ITEM_MOVAL_PREVENTED = "Prevented to rename item no more in initial_state!"
 
 # for performance reason we do not dynamically get the annexes criterion id
 FACETED_ANNEXES_CRITERION_ID = 'c20'

@@ -12,9 +12,10 @@ from datetime import datetime
 from datetime import timedelta
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import get_vocab_values
+from imio.helpers.content import richtextval
 from plone import api
 from plone.app.querystring.querybuilder import queryparser
-from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -145,7 +146,7 @@ class testSearches(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
         self.failIf(collection.results())
         # pmReviewer2 is adviser for 'vendors', delay-aware advices are also returned
@@ -159,7 +160,7 @@ class testSearches(PloneMeetingTestCase):
                                           'meetingadvice',
                                           **{'advice_group': self.vendors_uid,
                                              'advice_type': u'negative',
-                                             'advice_comment': RichTextValue(u'My comment')})
+                                             'advice_comment': richtextval(u'My comment')})
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
         self.failIf(collection.results())
 
@@ -350,7 +351,7 @@ class testSearches(PloneMeetingTestCase):
                                           'meetingadvice',
                                           **{'advice_group': self.developers_uid,
                                              'advice_type': u'positive',
-                                             'advice_comment': RichTextValue(u'My comment')})
+                                             'advice_comment': richtextval(u'My comment')})
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
         self.failUnless(collection.results())
         # another user will not see given advices
@@ -372,7 +373,7 @@ class testSearches(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # pmManager will see 2 items and pmAdviser1, just one, none for a non adviser
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
         self.failUnless(len(collection.results()) == 2)
@@ -445,7 +446,7 @@ class testSearches(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # non delay-aware advices are not found
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditemswithdelay')
         self.failIf(collection.results())
@@ -470,7 +471,7 @@ class testSearches(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # pmManager will see 2 items and pmAdviser1, just one, none for a non adviser
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditemswithdelay')
         self.failUnless(len(collection.results()) == 1)
@@ -545,6 +546,23 @@ class testSearches(PloneMeetingTestCase):
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
         self.failUnless(collection.results())
+
+    def test_pm_show_copy_groups_search(self):
+        """Test MeetingConfig.show_copy_groups_search used to show items in copy searches."""
+        cfg = self.meetingConfig
+        self._enableField('copyGroups')
+        self.assertEqual(cfg.getSelectableCopyGroups(),
+                         (self.developers_reviewers, self.vendors_reviewers))
+        self.changeUser('pmCreator1')
+        self.assertFalse(cfg.show_copy_groups_search())
+        self.changeUser('pmReviewer2')
+        self.assertTrue(cfg.show_copy_groups_search())
+        # not shown if copyGroups not used
+        self._enableField('copyGroups', enable=False)
+        self.changeUser('pmCreator1')
+        self.assertFalse(cfg.show_copy_groups_search())
+        self.changeUser('pmReviewer2')
+        self.assertFalse(cfg.show_copy_groups_search())
 
     def test_pm_SearchMyItemsTakenOver(self):
         '''Test the 'my-items-taken-over' method.  This should return
@@ -868,7 +886,7 @@ class testSearches(PloneMeetingTestCase):
         '''Test the 'items-to-correct' CompoundCriterion adapter.  This should return
            a list of items in state 'returned_to_proposing_group' the current user is able to edit.'''
         cfg = self.meetingConfig
-        if 'return_to_proposing_group' not in cfg.listWorkflowAdaptations():
+        if 'return_to_proposing_group' not in get_vocab_values(cfg, 'WorkflowAdaptations'):
             pm_logger.info("Bypassing test test_pm_SearchItemsToCorrect because it "
                            "needs the 'return_to_proposing_group' wfAdaptation.")
             return
@@ -942,7 +960,7 @@ class testSearches(PloneMeetingTestCase):
            CompoundCriterion adapter. This should return a list of items in state
            'returned_to_proposing_group_proposed' the current user is able to edit.'''
         cfg = self.meetingConfig
-        if 'return_to_proposing_group_with_last_validation' not in cfg.listWorkflowAdaptations():
+        if 'return_to_proposing_group_with_last_validation' not in get_vocab_values(cfg, 'WorkflowAdaptations'):
             pm_logger.info(
                 "Bypassing test test_pm_SearchItemsToCorrectToValidateHighestHierarchicLevel because it "
                 "needs the 'return_to_proposing_group_with_last_validation' wfAdaptation.")
@@ -1024,7 +1042,7 @@ class testSearches(PloneMeetingTestCase):
            so items that are 'proposed' and items that are 'returned_to_proposing_group_proposed'.'''
         # specify that copyGroups can see the item when it is proposed
         cfg = self.meetingConfig
-        if 'return_to_proposing_group_with_last_validation' not in cfg.listWorkflowAdaptations():
+        if 'return_to_proposing_group_with_last_validation' not in get_vocab_values(cfg, 'WorkflowAdaptations'):
             pm_logger.info(
                 "Bypassing test test_pm_SearchAllItemsToValidateHighestHierarchicLevel because it "
                 "needs the 'return_to_proposing_group_with_last_validation' wfAdaptation.")
@@ -1093,7 +1111,7 @@ class testSearches(PloneMeetingTestCase):
            CompoundCriterion adapter.  This should return a list of items in state
            'returned_to_proposing_group_proposed' the current user is able to edit.'''
         cfg = self.meetingConfig
-        if 'return_to_proposing_group_with_all_validations' not in cfg.listWorkflowAdaptations():
+        if 'return_to_proposing_group_with_all_validations' not in get_vocab_values(cfg, 'WorkflowAdaptations'):
             pm_logger.info(
                 "Bypassing test test_pm_SearchItemsToCorrectToValidateOfEveryReviewerGroups because it "
                 "needs the 'return_to_proposing_group_with_all_validations' wfAdaptation.")
@@ -1163,7 +1181,7 @@ class testSearches(PloneMeetingTestCase):
            CompoundCriterion adapter. This should return every items the user is able to validate
            so items that are 'proposed' and items that are 'returned_to_proposing_group_proposed'.'''
         cfg = self.meetingConfig
-        if 'return_to_proposing_group_with_all_validations' not in cfg.listWorkflowAdaptations():
+        if 'return_to_proposing_group_with_all_validations' not in get_vocab_values(cfg, 'WorkflowAdaptations'):
             pm_logger.info(
                 "Bypassing test test_pm_SearchAllItemsToValidateOfEveryReviewerGroups because it "
                 "needs the 'return_to_proposing_group_with_all_validations' wfAdaptation.")

@@ -22,6 +22,7 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
 from imio.helpers.content import get_vocab
+from imio.helpers.content import get_vocab_values
 from imio.helpers.workflow import get_leading_transitions
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
@@ -1694,9 +1695,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg_item_type_name = cfg.getItemTypeName()
         cfg2_item_type_name = cfg2.getItemTypeName()
         cfg3_item_type_name = cfg3.getItemTypeName()
-        if 'return_to_proposing_group' in cfg.listWorkflowAdaptations() and \
-           'return_to_proposing_group' in cfg2.listWorkflowAdaptations() and \
-           'return_to_proposing_group' in cfg3.listWorkflowAdaptations():
+        if 'return_to_proposing_group' in get_vocab_values(cfg, 'WorkflowAdaptations') and \
+           'return_to_proposing_group' in get_vocab_values(cfg2, 'WorkflowAdaptations') and \
+           'return_to_proposing_group' in get_vocab_values(cfg3, 'WorkflowAdaptations'):
             wfFor = self.wfTool.getWorkflowsFor
             self.assertFalse('returned_to_proposing_group' in wfFor(cfg_item_type_name)[0].states)
             self.assertFalse('returned_to_proposing_group' in wfFor(cfg2_item_type_name)[0].states)
@@ -2638,6 +2639,26 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertFalse(dev_reviewer1_mail in recipients)
         self.assertTrue(ven_creator2_mail in recipients)
         self.assertTrue(ven_reviewer2_mail in recipients)
+
+    def test_pm_Get_transitions_to_close_a_meeting(self):
+        """Suite of transitions to close a meeting."""
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        self.assertEqual(cfg.get_transitions_to_close_a_meeting(),
+                         ['freeze', 'publish', 'decide', 'close'])
+        self.assertEqual(cfg2.get_transitions_to_close_a_meeting(),
+                         ['freeze', 'publish', 'decide', 'close'])
+        self._activate_wfas(['no_publication'])
+        self.assertEqual(cfg.get_transitions_to_close_a_meeting(),
+                         ['freeze', 'decide', 'close'])
+        self._activate_wfas(['no_freeze'])
+        self.assertEqual(cfg.get_transitions_to_close_a_meeting(),
+                         ['publish', 'decide', 'close'])
+        self._activate_wfas(['no_freeze', 'no_publication'])
+        self.assertEqual(cfg.get_transitions_to_close_a_meeting(),
+                         ['decide', 'close'])
+        self._activate_wfas(['no_freeze', 'no_publication', 'no_decide'])
+        self.assertEqual(cfg.get_transitions_to_close_a_meeting(), ['close'])
 
 
 def test_suite():
