@@ -1430,11 +1430,10 @@ class PMContentHistoryView(IHContentHistoryView):
                         # for MeetingItem, take into account that powerobserver
                         # could also be member of the proposingGroup
                         # in this case we do not hide the history to the user
-                        item_review_state = self.context.query_state()
                         org_uids = self.context._getGroupsManagingItem(
-                            item_review_state, theObject=False)
+                            self.context.query_state(), theObjects=False)
                         if not set(org_uids).intersection(tool.get_orgs_for_user()) and \
-                           isPowerObserverForCfg(cfg, power_observer_types=hideHistoryTo):
+                           isPowerObserverForCfg(cfg, power_observer_types=item_values):
                             res = False
                 elif self.context.__class__.__name__ == "Meeting":
                     # meeting values are only about powerobservers
@@ -1456,11 +1455,10 @@ class PMContentHistoryView(IHContentHistoryView):
                         # in this case we do not hide the history to the user
                         item = self.context.aq_inner.aq_parent
                         item_review_state = item.query_state()
-                        proposing_group_uid = item._getGroupManagingItem(
-                            item_review_state, theObject=False)
-                        if proposing_group_uid not in tool.get_orgs_for_user() and \
-                            isPowerObserverForCfg(
-                                cfg, power_observer_types=po_advice_values):
+                        org_uids = item._getGroupsManagingItem(
+                            item_review_state, theObjects=False)
+                        if not set(org_uids).intersection(tool.get_orgs_for_user()) and \
+                           isPowerObserverForCfg(cfg, power_observer_types=po_advice_values):
                             res = False
                     if res and '{0}.everyone'.format(self.context.portal_type) in hideHistoryTo:
                         # hide history to everyone except advice advisers
