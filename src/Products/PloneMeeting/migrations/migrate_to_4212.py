@@ -15,6 +15,19 @@ class Migrate_To_4212(Migrator):
         self.reindexIndexesFor(idxs=['userid'], **{'portal_type': ['person']})
         logger.info('Done.')
 
+    def _addGroupsManagingItemToCfgItemWFValidationLevels(self):
+        """Update existing MeetingConfig.itemWFValidationLevels to add empty
+           "groups_managing_item"."""
+        logger.info('Updating MeetingConfig.itemWFValidationLevels to add "groups_managing_item"...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            stored = getattr(cfg, 'itemWFValidationLevels', [])
+            for level in stored:
+                if 'groups_managing_item' in level:
+                    return self._already_migrated()
+                level['groups_managing_item'] = []
+            cfg.setItemWFValidationLevels(stored)
+        logger.info('Done.')
+
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4212...')
@@ -23,13 +36,15 @@ class Migrate_To_4212(Migrator):
             self.upgradeAll(omit=['Products.PloneMeeting:default',
                                   self.profile_name.replace('profile-', '')])
             self._enableUseridBehaviorForPerson()
+            self._addGroupsManagingItemToCfgItemWFValidationLevels()
         logger.info('Migrating to PloneMeeting 4212... Done.')
 
 
 def migrate(context):
     '''This migration function will:
 
-       1) Enable "userid" behavior for "person".
+       1) Enable "userid" behavior for "person";
+       2) Add "groups_managing_item" to every MeetingConfig.itemWFValidationLevels.
     '''
     migrator = Migrate_To_4212(context)
     migrator.run()

@@ -97,19 +97,6 @@ class Migrate_To_4211(Migrator):
                 delattr(cfg, 'enableItemDuplication')
         logger.info('Done.')
 
-    def _addGroupsManagingItemToCfgItemWFValidationLevels(self):
-        """Update existing MeetingConfig.itemWFValidationLevels to add empty
-           "groups_managing_item"."""
-        logger.info('Updating MeetingConfig.itemWFValidationLevels to add "groups_managing_item"...')
-        for cfg in self.tool.objectValues('MeetingConfig'):
-            stored = getattr(cfg, 'itemWFValidationLevels', [])
-            for level in stored:
-                if 'groups_managing_item' in level:
-                    return self._already_migrated()
-                level['groups_managing_item'] = []
-            cfg.setItemWFValidationLevels(stored)
-        logger.info('Done.')
-
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4211...')
@@ -120,7 +107,6 @@ class Migrate_To_4211(Migrator):
         self._updateDataRelatedToToolPloneMeetingSimplification()
         self._updateItemSearches()
         self._updateForItemExportPDFAction()
-        self._addGroupsManagingItemToCfgItemWFValidationLevels()
         # add text criterion on item title only
         self.updateFacetedFilters(xml_filename='upgrade_step_4211_add_item_widgets.xml')
         # need to change the reviewProcessInfo index from FieldIndex to KeywordIndex
@@ -138,8 +124,7 @@ def migrate(context):
        4) Update related to new export PDF action on item;
        5) Add c32 faceted criterion (search on item title only);
        6) Update every item related searches to use sort_on=modified and
-          the searchlivingitems to use the 'living-items' compound criterion adapter;
-       7) Add "groups_managing_item" to every MeetingConfig.itemWFValidationLevels.
+          the searchlivingitems to use the 'living-items' compound criterion adapter.
     '''
     migrator = Migrate_To_4211(context)
     migrator.run()
