@@ -14,6 +14,11 @@ Changelog
   [gbastien]
 - Make sure `print_votes` always return a string when `render_as_html=True`.
   [gbastien]
+- Removed field `IPMPerson.userid`, instead use behavior
+  `collective.contact.plonegroup.behaviors.IPlonegroupUserLink` that will add
+  fields `userid` and `primary_organization`.  We use `primary_organization` as
+  a way to manage default `proposingGroup` when creating an item.
+  [gbastien]
 
 4.2.9rc1 (2024-02-08)
 ---------------------
