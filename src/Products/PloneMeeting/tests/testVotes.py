@@ -221,6 +221,7 @@ class testVotes(PloneMeetingTestCase):
                          "There is no votes")
         self.assertEqual(helper_public.print_votes(no_votes_marker="Aucun vote encodé."),
                          "Aucun vote encodé.")
+        self.assertEqual(helper_public.print_votes(no_votes_marker=""), "")
 
     def test_pm_ItemDeleteVoteView(self):
         """This view will remove a vote, only doable by MeetingManagers."""

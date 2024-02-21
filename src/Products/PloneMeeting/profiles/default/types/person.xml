@@ -2,5 +2,12 @@
 <object name="person" meta_type="Dexterity FTI" i18n:domain="collective.contact.core"
    xmlns:i18n="http://xml.zope.org/namespaces/i18n">
  <property name="klass">Products.PloneMeeting.content.person.PMPerson</property>
+ <property name="behaviors" purge="False">
+  <element value="plone.app.content.interfaces.INameFromTitle"/>
+  <element value="collective.contact.core.behaviors.IContactDetails" />
+  <element value="collective.contact.core.behaviors.IBirthday" />
+  <element value="collective.contact.plonegroup.behaviors.IPlonegroupUserLink" />
+  <element value="collective.dexteritytextindexer.behavior.IDexterityTextIndexer" />
+ </property>
  <property name="schema_policy">schema_policy_pm_person</property>
 </object>

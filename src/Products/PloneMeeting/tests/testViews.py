@@ -2626,12 +2626,13 @@ class testViews(PloneMeetingTestCase):
             {'token': 'default', 'name': u'DefaultA|DefaultB|DefaultC|DefaultD'},
             {'token': 'default2', 'name': u'Default2A|Default2B|Default2C|Default2D'}, ]
         person = self.portal.contacts.get('person1')
+        person.userid = 'pmManager'
+        person.reindexObject(idxs=['userid'])
         org = get_own_organization()
         newhp = api.content.create(
             container=person, type='held_position', label=u'New held position',
             title='New held position', position=self._relation(org),
             usages=['assemblyMember'], position_type='default2')
-        person.userid = 'pmManager'
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         view = item.restrictedTraverse('document-generation')
@@ -2902,8 +2903,7 @@ class testViews(PloneMeetingTestCase):
         """
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
-        meeting.signatures = richtextval('my name\n'
-                                           'my signature')
+        meeting.signatures = richtextval('my name\nmy signature')
         view = meeting.restrictedTraverse("document-generation")
         helper = view.get_generation_context_helper()
 
