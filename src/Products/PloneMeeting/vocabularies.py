@@ -2904,7 +2904,9 @@ class BaseContainedAnnexesVocabulary(object):
                 'collective.iconifiedcategory.categories',
                 use_category_uid_as_token=True)
             prefix = u'%s - ' % translate(
-                portal.portal_types[portal_type].title, domain="imio.annex", context=context.REQUEST) if prefixed else ''
+                portal.portal_types[portal_type].title,
+                domain="imio.annex",
+                context=context.REQUEST) if prefixed else ''
 
             for annex in annexes:
                 # term title is annex icon, number and title

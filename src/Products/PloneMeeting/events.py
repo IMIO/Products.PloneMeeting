@@ -229,12 +229,6 @@ def onAdviceTransition(advice, event):
             action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
         do(action, event)
 
-    # notify an AdviceAfterTransitionEvent for subplugins so we are sure
-    # that it is called after PloneMeeting advice transition
-    notify(AdviceAfterTransitionEvent(
-        event.object, event.workflow, event.old_state, event.new_state,
-        event.transition, event.status, event.kwargs))
-
     # check if need to show the advice
     item = advice.getParentNode()
     if advice.advice_hide_during_redaction is True:
@@ -259,6 +253,12 @@ def onAdviceTransition(advice, event):
     if event.transition and not item._is_currently_updating_advices():
         item.update_local_roles()
         _advice_update_item(item)
+
+    # notify an AdviceAfterTransitionEvent for subplugins so we are sure
+    # that it is called after PloneMeeting advice transition
+    notify(AdviceAfterTransitionEvent(
+        event.object, event.workflow, event.old_state, event.new_state,
+        event.transition, event.status, event.kwargs))
 
 
 def onItemBeforeTransition(item, event):

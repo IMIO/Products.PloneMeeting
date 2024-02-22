@@ -34,6 +34,7 @@ from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.content.content_category import ANNEX_NOT_KEPT
 from Products.PloneMeeting.etags import _modified
+from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import duplicate_workflow
@@ -1422,6 +1423,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         item.update_local_roles()
         self.assertTrue(vendors_advice.advice_hide_during_redaction)
         self.assertTrue(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
+        item.reindexObject()
         self.changeUser('pmCreator1')
         self.proposeItem(item)
         self.assertFalse(vendors_advice.advice_hide_during_redaction)
