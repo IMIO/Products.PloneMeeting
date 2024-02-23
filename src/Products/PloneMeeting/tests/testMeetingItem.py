@@ -8222,7 +8222,7 @@ class testMeetingItem(PloneMeetingTestCase):
             u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>'
         ])
 
-    def test_pm__send_history_aware_mail_if_relevant(self):
+    def test_pm_send_history_aware_mail_if_relevant(self):
         """Check history aware mail notifications."""
         if not self._check_wfa_available(['presented_item_back_to_itemcreated']) or \
            not self._check_wfa_available(['presented_item_back_to_proposed']):
@@ -8776,6 +8776,35 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(recipients, [u'M. PMManager <pmmanager@plonemeeting.org>'])
         self.assertEqual(subject, u'PloneMeeting assembly - A "late" item has been validated.')
 
+    def test_pm_send_powerobservers_mail_if_relevant(self):
+        cfg = self.meetingConfig
+        cfg.setMailItemEvents(('late_item_in_meeting__powerobservers',))
+
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.request['debug_sendMailIfRelevant'] = True
+        # TODO: add recipients, subject, body to REQUEST object when debugging
+        sent = item.send_powerobservers_mail_if_relevant("late_item_in_meeting")
+        self.assertEqual(len(sent), 1)
+        self.assertIn(u'M. Power Observer1 <powerobserver1@plonemeeting.org>', sent[0][0])
+
+        cfg.setMailItemEvents(())
+        sent = item.send_powerobservers_mail_if_relevant("late_item_in_meeting")
+        self.assertEqual(len(sent), 0)
+
+    def test_pm_send_suffixes_mail_if_relevant(self):
+        cfg = self.meetingConfig
+        cfg.setMailItemEvents(('advice_edited__reviewers',))
+
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.request['debug_sendMailIfRelevant'] = True
+        sent = item.send_suffixes_mail_if_relevant("advice_edited")
+        self.assertEqual(len(sent), 1)
+        self.assertIn( u'M. PMReviewer One <pmreviewer1@plonemeeting.org>', sent[0][0])
+        cfg.setMailItemEvents(())
+        sent = item.send_suffixes_mail_if_relevant("advice_edited")
+        self.assertEqual(len(sent), 0)
 
 def test_suite():
     from unittest import makeSuite

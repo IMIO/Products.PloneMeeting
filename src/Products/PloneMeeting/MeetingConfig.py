@@ -7181,6 +7181,41 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res_transitions.append((id, translated_msg))
         res = res + DisplayList(res_transitions).sortedByValue()
 
+
+        # suffixes related notifications
+        suffixes = list(self.getItemWFValidationLevels(data='suffix', only_enabled=True))
+
+        res_suffixes = []
+        for suffix in suffixes:
+            id = "advice_edited__%s" % suffix
+            translated_msg = translate("event_advice_edited",
+                                       domain="PloneMeeting",
+                                       mapping={"suffix": suffix},
+                                       context=self.REQUEST)
+            res_suffixes.append((id, translated_msg))
+        res = res + DisplayList(res_suffixes).sortedByValue()
+
+        res_suffixes = []
+        for suffix in suffixes:
+            id = "advice_edited_in_meeting__%s" % suffix
+            translated_msg = translate("event_advice_edited_in_meeting",
+                                       domain="PloneMeeting",
+                                       mapping={"suffix": suffix},
+                                       context=self.REQUEST)
+            res_suffixes.append((id, translated_msg))
+        res = res + DisplayList(res_suffixes).sortedByValue()
+
+        # power observers related notification
+        res_po = []
+        for po_infos in self.getPowerObservers():
+            id = "late_item_in_meeting__%s" % po_infos["row_id"]
+            translated_msg = translate("event_late_item_in_meeting",
+                                       domain="PloneMeeting",
+                                       mapping={"label": po_infos["label"]},
+                                       context=self.REQUEST)
+            res_po.append((id, translated_msg))
+        res = res + DisplayList(res_po).sortedByValue()
+
         return res
 
     security.declarePublic('listMeetingEvents')

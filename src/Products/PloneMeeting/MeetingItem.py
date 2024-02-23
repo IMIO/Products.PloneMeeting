@@ -873,7 +873,7 @@ class MeetingItemWorkflowActions(object):
                 not_starting_with='back'):
             meetingExecuteActionOnLinkedItems(
                 meeting, transition.id, [self.context])
-
+        self.context.send_powerobservers_mail_if_relevant('late_item_in_meeting')
     security.declarePrivate('doItemFreeze')
 
     def doItemFreeze(self, stateChange):
@@ -5280,6 +5280,38 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             )
 
         return sendMailIfRelevant(self, mail_event_id, notified_user_ids, isUserIds=True)
+
+    def send_powerobservers_mail_if_relevant(self, po_mail_event_id):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        res = []
+        for po_infos in cfg.getPowerObservers():
+            mail_event_id = "{}__{}".format(po_mail_event_id, po_infos['row_id'])
+            if mail_event_id in cfg.getMailItemEvents():
+                group_id = "{0}_{1}".format(cfg.getId(), po_infos['row_id'])
+                res.append(sendMailIfRelevant(self,
+                                              po_mail_event_id,
+                                              [group_id],
+                                              customEvent=True,
+                                              isGroupIds=True
+                                              ))
+        return res
+
+    def send_suffixes_mail_if_relevant(self, suffix_mail_event_id):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        suffixes = list(cfg.getItemWFValidationLevels(data='suffix', only_enabled=True))
+        res = []
+        for suffix in suffixes:
+            mail_event_id = "{}__{}".format(suffix_mail_event_id, suffix)
+            if mail_event_id in cfg.getMailItemEvents():
+                res.append(sendMailIfRelevant(self,
+                                              suffix_mail_event_id,
+                                              suffix,
+                                              customEvent=True,
+                                              isSuffix=True
+                                              ))
+        return res
 
     security.declarePublic('sendAdviceDelayWarningMailIfRelevant')
 

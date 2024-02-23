@@ -77,6 +77,9 @@ class ChangeItemListTypeView(BrowserView):
         old_listType = self.context.getListType()
         self.context.setListType(new_value)
         self.context._update_after_edit(idxs=['listType'])
+        if new_value == 'late':
+            self.context.send_powerobservers_mail_if_relevant('late_item_in_meeting')
+
         try:
             notify(ItemListTypeChangedEvent(self.context, old_listType))
         except PloneMeetingError, msg:
