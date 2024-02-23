@@ -4861,8 +4861,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         customAdviceMessage = None
         if advice['hidden_during_redaction']:
             context = self.getSelf()
-            customAdviceMessage = translate(
-                'hidden_during_redaction', domain='PloneMeeting', context=context.REQUEST)
+            if advice['advice_editable']:
+                customAdviceMessage = translate(
+                    'hidden_during_redaction',
+                    domain='PloneMeeting',
+                    context=context.REQUEST)
+            else:
+                customAdviceMessage = translate(
+                    'considered_not_given_hidden_during_redaction',
+                    domain='PloneMeeting',
+                    context=context.REQUEST)
         return {'displayDefaultComplementaryMessage': True,
                 'displayAdviceReviewState': False,
                 'customAdviceMessage': customAdviceMessage}
