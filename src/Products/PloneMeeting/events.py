@@ -248,17 +248,17 @@ def onAdviceTransition(advice, event):
                 # update adviceIndex in case we are already updating advices it has already been set
                 item.adviceIndex[advice.advice_group]['hidden_during_redaction'] = False
 
-    # update item if transition is not triggered in the MeetingItem._updatedAdvices
-    # aka we are already updating the item
-    if event.transition and not item._is_currently_updating_advices():
-        item.update_local_roles()
-        _advice_update_item(item)
-
     # notify an AdviceAfterTransitionEvent for subplugins so we are sure
     # that it is called after PloneMeeting advice transition
     notify(AdviceAfterTransitionEvent(
         event.object, event.workflow, event.old_state, event.new_state,
         event.transition, event.status, event.kwargs))
+
+    # update item if transition is not triggered in the MeetingItem._updatedAdvices
+    # aka we are already updating the item
+    if event.transition and not item._is_currently_updating_advices():
+        item.update_local_roles()
+        _advice_update_item(item)
 
 
 def onItemBeforeTransition(item, event):
