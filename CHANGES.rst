@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.9rc2 (unreleased)
+4.2.9rc2 (2024-02-26)
 ---------------------
 
 - Added helper `MeetingConfig.get_transitions_to_close_a_meeting`.
