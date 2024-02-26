@@ -19,6 +19,10 @@ Changelog
   fields `userid` and `primary_organization`.  We use `primary_organization` as
   a way to manage default `proposingGroup` when creating an item.
   [gbastien]
+- Fixed `utils._sendMail` to avoid `UnicodeDecodeError`.
+  Also refactored it so the loop on recipients is managed by `utils._sendMail`
+  and one mail is sent by recipient in any case (attachments or not).
+  [gbastien]
 
 4.2.9rc1 (2024-02-08)
 ---------------------
