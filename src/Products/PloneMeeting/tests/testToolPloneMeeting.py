@@ -1423,7 +1423,6 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         item.update_local_roles()
         self.assertTrue(vendors_advice.advice_hide_during_redaction)
         self.assertTrue(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
-        item.reindexObject()
         self.changeUser('pmCreator1')
         self.proposeItem(item)
         self.assertFalse(vendors_advice.advice_hide_during_redaction)
