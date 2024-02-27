@@ -2644,6 +2644,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         """Suite of transitions to close a meeting."""
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
+        # apply a default set of WFAs
+        self._activate_wfas(['delayed'])
         self.assertEqual(cfg.get_transitions_to_close_a_meeting(),
                          ['freeze', 'publish', 'decide', 'close'])
         self.assertEqual(cfg2.get_transitions_to_close_a_meeting(),
