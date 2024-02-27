@@ -4263,6 +4263,20 @@ class testAdvices(PloneMeetingTestCase):
         # as we only know who created the advice
         self.assertIsNone(view.get_advice_given_by())
 
+    def test_pm_AdviceMandatoriness(self):
+        """When using MeetingConfig.enforceAdviceMandatoriness, an item
+           may only be presented if auto or delay-aware advices are positive."""
+        cfg = self.meetingConfig
+        cfg.setEnforceAdviceMandatoriness(True)
+        item1, item2, vendors_advice, developers_advice = \
+            self._setupInheritedAdvice()
+        self.changeUser('pmManager')
+        self.create('Meeting')
+        self.presentItem(item1)
+        self.assertEqual(item1.query_state(), 'presented')
+        self.presentItem(item2)
+        self.assertEqual(item2.query_state(), 'presented')
+
 
 def test_suite():
     from unittest import makeSuite

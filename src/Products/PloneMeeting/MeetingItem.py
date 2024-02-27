@@ -5352,9 +5352,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         for adviserUid in adviserUids:
             # adviserId could not exist if we removed an inherited initiative advice for example
-            if not predecessor.adviceIndex.get(adviserUid, None):
-                continue
-            if (optional and not predecessor.adviceIndex[adviserUid]['optional']):
+            if not predecessor.adviceIndex.get(adviserUid, None) or \
+               not predecessor.adviceIndex[adviserUid]['optional'] == optional:
                 continue
             res.append(
                 {'org_uid': predecessor.adviceIndex[adviserUid]['id'],
@@ -6053,7 +6052,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def mandatoryAdvicesAreOk(self):
         '''Returns True if all mandatory advices for this item have been given and are all positive.'''
         if not hasattr(self, 'isRecurringItem'):
-            for advice in self.adviceIndex.itervalues():
+            for advice in self.adviceIndex.values():
                 if not advice['optional'] and \
                    not advice['type'].startswith('positive'):
                     return False
@@ -6330,6 +6329,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             org_uid for org_uid in self.adviceIndex
             if self.adviceIndex[org_uid].get('inherited', False) and
             org_uid not in handledAdviserUids]
+        # remove duplicates
+        unhandledAdviserUids = list(set(unhandledAdviserUids))
         if unhandledAdviserUids:
             optionalAdvisers += self.getUnhandledInheritedAdvisersData(
                 unhandledAdviserUids, optional=True)

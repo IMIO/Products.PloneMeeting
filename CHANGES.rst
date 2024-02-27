@@ -21,6 +21,10 @@ Changelog
   [gbastien]
 - Added some padding top of custom advice message on advice view.
   [gbastien]
+- Optimized `MeetingItem._updateAdvices` to avoid several computation of
+  advisers when using inherited advices. This also fixes problem with optional
+  key that was wrongly initialized for inherited advices.
+  [gbastien]
 
 4.2.9rc2 (2024-02-26)
 ---------------------
