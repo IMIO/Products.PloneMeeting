@@ -8,6 +8,7 @@ from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.utils import get_registry_functions
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_groups
@@ -7183,24 +7184,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
 
         # suffixes related notifications
-        suffixes = list(self.getItemWFValidationLevels(data='suffix', only_enabled=True))
+        functions = [fct for fct in get_registry_functions() if fct['enabled']]
 
         res_suffixes = []
-        for suffix in suffixes:
-            id = "advice_edited__%s" % suffix
+        for fct in functions:
+            id = "advice_edited__%s" % fct['fct_id']
             translated_msg = translate("event_advice_edited",
                                        domain="PloneMeeting",
-                                       mapping={"suffix": suffix},
+                                       mapping={"suffix": fct['fct_title']},
                                        context=self.REQUEST)
             res_suffixes.append((id, translated_msg))
         res = res + DisplayList(res_suffixes).sortedByValue()
 
         res_suffixes = []
-        for suffix in suffixes:
-            id = "advice_edited_in_meeting__%s" % suffix
+        for fct in functions:
+            id = "advice_edited_in_meeting__%s" % fct['fct_id']
             translated_msg = translate("event_advice_edited_in_meeting",
                                        domain="PloneMeeting",
-                                       mapping={"suffix": suffix},
+                                       mapping={"suffix": fct['fct_title']},
                                        context=self.REQUEST)
             res_suffixes.append((id, translated_msg))
         res = res + DisplayList(res_suffixes).sortedByValue()
@@ -7211,7 +7212,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             id = "late_item_in_meeting__%s" % po_infos["row_id"]
             translated_msg = translate("event_late_item_in_meeting",
                                        domain="PloneMeeting",
-                                       mapping={"label": po_infos["label"]},
+                                       mapping={"po_label": po_infos["label"]},
                                        context=self.REQUEST)
             res_po.append((id, translated_msg))
         res = res + DisplayList(res_po).sortedByValue()

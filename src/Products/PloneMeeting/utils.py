@@ -711,6 +711,7 @@ def sendMailIfRelevant(obj,
         mail_subject, mail_body = sendMail(unique_email_recipients, obj, event, mapping=mapping)
     debug = debug or obj.REQUEST.get('debug_sendMailIfRelevant', False)
     if debug:
+        obj.REQUEST.set('debug_sendMailIfRelevant_result', (recipients, mail_subject, mail_body))
         return recipients, mail_subject, mail_body
     return True
 

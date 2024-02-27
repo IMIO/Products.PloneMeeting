@@ -5285,6 +5285,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         res = []
+        meeting_title = self.hasMeeting() and self.getMeeting().Title() or ""
         for po_infos in cfg.getPowerObservers():
             mail_event_id = "{}__{}".format(po_mail_event_id, po_infos['row_id'])
             if mail_event_id in cfg.getMailItemEvents():
@@ -5293,8 +5294,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                               po_mail_event_id,
                                               [group_id],
                                               customEvent=True,
-                                              isGroupIds=True
-                                              ))
+                                              isGroupIds=True,
+                                              mapping = {
+                                                  "itemTitle": self.Title(),
+                                                  "meetingConfigTitle": cfg.Title(),
+                                                  "meetingTitle": meeting_title
+                                              }))
         return res
 
     def send_suffixes_mail_if_relevant(self, suffix_mail_event_id):
