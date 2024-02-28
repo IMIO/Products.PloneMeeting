@@ -2,15 +2,22 @@ Changelog
 =========
 
 
-4.2.9rc2 (unreleased)
+4.2.9rc3 (unreleased)
+---------------------
+
+- Nothing changed yet.
+
+
+4.2.9rc2 (2024-02-26)
 ---------------------
 
 - Added helper `MeetingConfig.get_transitions_to_close_a_meeting`.
+  Removed adaptable method `MeetingItemWorkflowActions._latePresentedItemTransitions`
+  no more necessary as this is managed automatically now based on
+  `MeetingConfig.onMeetingTransitionItemActionToExecute`.
   [gbastien]
 - Added `imio.helpers.date.formatDate` to `safe_utils` so it is available in
   TAL expressions.
-  Removed adaptable method `MeetingItemWorkflowActions._latePresentedItemTransitions`
-  no more necessary as this is managed automatically now.
   [gbastien]
 - Make sure `print_votes` always return a string when `render_as_html=True`.
   [gbastien]
