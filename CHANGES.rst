@@ -5,8 +5,14 @@ Changelog
 4.2.9rc3 (unreleased)
 ---------------------
 
-- Nothing changed yet.
+- Fixed custom advice WF UI:
 
+  - do not display `given_by` information when using the default advice workflow;
+  - in `onAdviceTransition` event, notify `AdviceAfterTransitionEvent` after
+    `hidden_during_redaction` auto set to `False` management;
+  - adapted import_data to manage `advisersConfig`.
+
+  [gbastien]
 
 4.2.9rc2 (2024-02-26)
 ---------------------
@@ -29,14 +35,6 @@ Changelog
 - Fixed `utils._sendMail` to avoid `UnicodeDecodeError`.
   Also refactored it so the loop on recipients is managed by `utils._sendMail`
   and one mail is sent by recipient in any case (attachments or not).
-  [gbastien]
-- Fixed custom advice WF UI:
-
-  - do not display `given_by` information when using the default advice workflow;
-  - in `onAdviceTransition` event, notify `AdviceAfterTransitionEvent` after
-    `hidden_during_redaction` auto set to `False` management;
-  - adapted import_data to manage `advisersConfig`.
-
   [gbastien]
 
 4.2.9rc1 (2024-02-08)
