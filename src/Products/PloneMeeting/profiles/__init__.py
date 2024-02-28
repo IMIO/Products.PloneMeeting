@@ -2,10 +2,11 @@
 #
 # GNU General Public License (GPL)
 #
+from collections import OrderedDict
 
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from plone.api.validation import at_least_one_of
-from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
+from Products.PloneMeeting.config import DEFAULT_LIST_TYPES, ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 
@@ -51,48 +52,90 @@ class Descriptor(object):
         return res
 
 
-class RecurringItemDescriptor(Descriptor):
-    excludedFields = ['title']
+class ItemAdviceDescriptor(Descriptor):
 
-    def __init__(self, id, title, proposingGroup='', groupsInCharge=(), proposingGroupWithGroupInCharge='',
-                 description='', category='', associatedGroups=(), decision='',
-                 itemKeywords='', itemTags=(), meetingTransitionInsertingMe='_init_', privacy='public'):
-        self.id = id
-        self.title = title
-        self.proposingGroup = proposingGroup
-        self.groupsInCharge = groupsInCharge
-        self.proposingGroupWithGroupInCharge = proposingGroupWithGroupInCharge
-        self.description = description
-        self.category = category
-        self.associatedGroups = associatedGroups
-        self.decision = decision
-        self.itemKeywords = itemKeywords
-        self.itemTags = itemTags
-        self.meetingTransitionInsertingMe = meetingTransitionInsertingMe
-        self.privacy = privacy
+    def __init__(self, adviser_group, adviser, delay=None, delay_started_on=None, delay_ended_on=None,
+                 advice_type=None):
+        self.adviser_group = adviser_group
+        self.delay = delay
+        self.delay_started_on = delay_started_on
+        self.delay_ended_on = delay_ended_on
+        self.adviser = adviser
+        self.advice_type = advice_type
 
 
-class ItemTemplateDescriptor(Descriptor):
+class ItemDescriptor(Descriptor):
     excludedFields = ['title']
 
     @at_least_one_of('proposingGroup', 'proposingGroupWithGroupInCharge')
-    def __init__(self, id, title, proposingGroup='', groupsInCharge=(), proposingGroupWithGroupInCharge='',
-                 description='', category='', associatedGroups=(), decision='',
-                 itemKeywords='', itemTags=(), templateUsingGroups=[], privacy='public'):
-        self.id = id
+    def __init__(self, title, creator, proposingGroup='', groupsInCharge=(), proposingGroupWithGroupInCharge='',
+                 itemTemplate=ITEM_DEFAULT_TEMPLATE_ID, description='', category='', classifier='', associatedGroups=(), motivation='',
+                 decision='', itemKeywords='', itemTags=(), privacy='public', listType='normal', to_state='validated',
+                 advices=[], annexes=[], budget_related=False):
         self.title = title
+        self.creator = creator
         # the proposingGroup can be empty ('') for itemtemplate
         self.proposingGroup = proposingGroup
         self.groupsInCharge = groupsInCharge
         self.proposingGroupWithGroupInCharge = proposingGroupWithGroupInCharge
+        self.itemTemplate = itemTemplate
         self.description = description
         self.category = category
+        self.classifier = classifier
         self.associatedGroups = associatedGroups
+        self.motivation = motivation
         self.decision = decision
         self.itemKeywords = itemKeywords
         self.itemTags = itemTags
-        self.templateUsingGroups = templateUsingGroups
         self.privacy = privacy
+        self.listType = listType
+        self.to_state = to_state
+        self.budget_related = budget_related
+        self.advices = advices
+        self.annexes = annexes
+
+
+class RecurringItemDescriptor(ItemDescriptor):
+    excludedFields = ['title']
+
+    @at_least_one_of('proposingGroup', 'proposingGroupWithGroupInCharge')
+    def __init__(self, id, title, creator='dgen', proposingGroup='', groupsInCharge=(), proposingGroupWithGroupInCharge='',
+                 description='', category='', classifier='', associatedGroups=(), motivation='', decision='',
+                 itemKeywords='', itemTags=(), meetingTransitionInsertingMe='_init_', privacy='public'):
+        super(RecurringItemDescriptor, self).__init__(title, creator, proposingGroup, groupsInCharge,
+                                                      proposingGroupWithGroupInCharge, description, category,
+                                                      classifier, associatedGroups, motivation, decision, itemKeywords,
+                                                      itemTags, privacy)
+        self.id = id
+        self.meetingTransitionInsertingMe = meetingTransitionInsertingMe
+
+
+class ItemTemplateDescriptor(ItemDescriptor):
+    excludedFields = ['title']
+
+    @at_least_one_of('proposingGroup', 'proposingGroupWithGroupInCharge')
+    def __init__(self, id, title,  creator='dgen', proposingGroup='', groupsInCharge=(), proposingGroupWithGroupInCharge='',
+                 description='', category='', associatedGroups=(), decision='', itemKeywords='', itemTags=(),
+                 templateUsingGroups=[], privacy='public'):
+        super(ItemTemplateDescriptor, self).__init__(title, creator, proposingGroup, groupsInCharge,
+                                                     proposingGroupWithGroupInCharge, description, category,
+                                                     associatedGroups, decision, itemKeywords, itemTags, privacy)
+        self.id = id
+        self.templateUsingGroups = templateUsingGroups
+
+
+class MeetingDescriptor(Descriptor):
+    def __init__(self, date, creator='dgen', start_date=None, end_date=None, observations=None, items=[],
+                 attendees=OrderedDict({}), signatories={}, to_state='closed'):
+        self.date = date
+        self.creator = creator
+        self.start_date = start_date
+        self.end_date = end_date
+        self.observations = observations
+        self.items = items
+        self.attendees = attendees
+        self.signatories = signatories
+        self.to_state = to_state
 
 
 class CategoryDescriptor(Descriptor):
@@ -365,6 +408,7 @@ class OrgDescriptor(Descriptor):
         if not klass.instance:
             klass.instance = OrgDescriptor(None, None, None)
         return klass.instance
+
     get = classmethod(get)
 
     def __init__(self, id, title, acronym, description=u'',
@@ -425,9 +469,10 @@ class MeetingConfigDescriptor(Descriptor):
         if not klass.instance:
             klass.instance = MeetingConfigDescriptor(None, None, None)
         return klass.instance
+
     get = classmethod(get)
 
-    def __init__(self, id, title, folderTitle, isDefault=False, active=True):
+    def __init__(self, id, title, folderTitle, isDefault=False, active=True, meetings=[], items=[]):
         self.id = id  # Identifier of the meeting config.
         self.title = title
         self.active = active
@@ -829,6 +874,8 @@ class MeetingConfigDescriptor(Descriptor):
 
         # content_category_groups parameters -----------------------------------
         self.category_group_activated_attrs = {}
+        self.meetings = meetings
+        self.items = items
 
 
 class PloneMeetingConfiguration(Descriptor):
@@ -845,6 +892,7 @@ class PloneMeetingConfiguration(Descriptor):
         if not klass.instance:
             klass.instance = PloneMeetingConfiguration('My meetings', [], [])
         return klass.instance
+
     get = classmethod(get)
 
     def __init__(self, meetingFolderTitle, meetingConfigs, orgs):
