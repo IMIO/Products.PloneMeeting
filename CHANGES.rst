@@ -13,6 +13,8 @@ Changelog
   - adapted import_data to manage `advisersConfig`.
 
   [gbastien]
+- Display advice type id when using vocabulary `ConfigAdviceTypes` in the configuration.
+  [gbastien]
 
 4.2.9rc2 (2024-02-26)
 ---------------------
