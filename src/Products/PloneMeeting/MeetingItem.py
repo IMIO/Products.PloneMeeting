@@ -4858,9 +4858,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getCustomAdviceMessageFor(self, advice):
         '''See doc in interfaces.py.'''
+        customAdviceMessage = None
+        if advice['hidden_during_redaction']:
+            context = self.getSelf()
+            if advice['advice_editable']:
+                customAdviceMessage = translate(
+                    'hidden_during_redaction',
+                    domain='PloneMeeting',
+                    context=context.REQUEST)
+            else:
+                customAdviceMessage = translate(
+                    'considered_not_given_hidden_during_redaction',
+                    domain='PloneMeeting',
+                    context=context.REQUEST)
         return {'displayDefaultComplementaryMessage': True,
                 'displayAdviceReviewState': False,
-                'customAdviceMessage': None}
+                'customAdviceMessage': customAdviceMessage}
 
     def _getInsertOrder(self, cfg):
         '''When inserting an item into a meeting, several "methods" are

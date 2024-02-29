@@ -4256,7 +4256,9 @@ class testAdvices(PloneMeetingTestCase):
         """Show info "Given by" on advice."""
         item, advice = self._setupItemWithAdvice()
         view = item.restrictedTraverse('@@advice-infos')
-        view(advice.advice_group, False, item.adapted().getCustomAdviceMessageFor(advice))
+        view(advice.advice_group, False,
+             item.adapted().getCustomAdviceMessageFor(
+                item.adviceIndex[advice.advice_group]))
         # with default advice workflow, we do not manage advice_given_by
         # as we only know who created the advice
         self.assertIsNone(view.get_advice_given_by())
