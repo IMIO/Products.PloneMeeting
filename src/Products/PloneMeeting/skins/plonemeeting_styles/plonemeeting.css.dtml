@@ -1741,6 +1741,10 @@ h2.check_pod_template_clean {
 div.customAdviceMessage {
     color: red;
 }
+/* some padding when on advice view */
+div#visual-portal-wrapper div.customAdviceMessage {
+    padding-top: 0.5em;
+}
 
 #content-core p.tool_pm_descr,
 #content-core p.backToItem {

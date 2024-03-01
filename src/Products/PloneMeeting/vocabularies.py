@@ -3274,14 +3274,14 @@ class ConfigAdviceTypesVocabulary(object):
 
     implements(IVocabularyFactory)
 
-    def __call__(self, context, include_asked_again=False):
+    def __call__(self, context, include_asked_again=False, include_term_id=True):
         d = "PloneMeeting"
         terms = []
         if include_asked_again:
-            terms.append(SimpleTerm(
-                "asked_again",
-                "asked_again",
-                translate('asked_again', domain=d, context=context.REQUEST)))
+            term_title = translate('asked_again', domain=d, context=context.REQUEST)
+            if include_term_id:
+                term_title += " (asked_again)"
+            terms.append(SimpleTerm("asked_again", "asked_again", term_title))
         advice_types = [
             'positive',
             'positive_with_comments',
@@ -3293,19 +3293,18 @@ class ConfigAdviceTypesVocabulary(object):
             'nil',
             'read']
         for advice_type in advice_types:
-            terms.append(
-                SimpleTerm(
-                    advice_type,
-                    advice_type,
-                    translate(advice_type, domain=d, context=context.REQUEST)))
+            term_title = translate(advice_type, domain=d, context=context.REQUEST)
+            if include_term_id:
+                term_title += " (%s)" % advice_type
+            terms.append(SimpleTerm(advice_type, advice_type, term_title))
         # add custom extra advice types
         tool = api.portal.get_tool('portal_plonemeeting')
         for extra_advice_type in tool.adapted().extraAdviceTypes():
+            term_title = translate(extra_advice_type, domain=d, context=context.REQUEST)
+            if include_term_id:
+                term_title += " (%s)" % extra_advice_type
             terms.append(
-                SimpleTerm(
-                    extra_advice_type,
-                    extra_advice_type,
-                    translate(extra_advice_type, domain=d, context=context.REQUEST)))
+                SimpleTerm(extra_advice_type, extra_advice_type, term_title))
         return SimpleVocabulary(terms)
 
 
