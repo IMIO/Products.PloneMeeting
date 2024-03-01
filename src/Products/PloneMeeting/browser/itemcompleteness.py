@@ -90,7 +90,6 @@ class ChangeItemCompletenessView(BrowserView):
         self.context._update_after_edit(idxs=['getCompleteness'])
         plone_utils = api.portal.get_tool('plone_utils')
         plone_utils.addPortalMessage(_("Item completeness changed."))
-        self.request.RESPONSE.redirect(self.context.absolute_url())
 
 
 class ItemCompletenessHistoryView(BrowserView):

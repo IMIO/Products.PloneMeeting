@@ -15,6 +15,12 @@ Changelog
   [gbastien]
 - Display advice type id when using vocabulary `ConfigAdviceTypes` in the configuration.
   [gbastien]
+- Removed redirect from `ChangeItemCompletenessView._changeCompleteness`, this
+  is already managed in the `__call__` method, this avoid a redirect when calling
+  `_changeCompleteness` directly from another code, like an event.
+  [gbastien]
+- Added some padding top of custom advice message on advice view.
+  [gbastien]
 
 4.2.9rc2 (2024-02-26)
 ---------------------
