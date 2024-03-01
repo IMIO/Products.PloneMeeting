@@ -5,6 +5,22 @@ Changelog
 4.2.9rc3 (unreleased)
 ---------------------
 
+- Fixed custom advice WF UI:
+
+  - do not display `given_by` information when using the default advice workflow;
+  - in `onAdviceTransition` event, notify `AdviceAfterTransitionEvent` after
+    `hidden_during_redaction` auto set to `False` management;
+  - adapted import_data to manage `advisersConfig`.
+
+  [gbastien]
+- Display advice type id when using vocabulary `ConfigAdviceTypes` in the configuration.
+  [gbastien]
+- Removed redirect from `ChangeItemCompletenessView._changeCompleteness`, this
+  is already managed in the `__call__` method, this avoid a redirect when calling
+  `_changeCompleteness` directly from another code, like an event.
+  [gbastien]
+- Added some padding top of custom advice message on advice view.
+  [gbastien]
 - Optimized `MeetingItem._updateAdvices` to avoid several computation of
   advisers when using inherited advices. This also fixes problem with optional
   key that was wrongly initialized for inherited advices.
