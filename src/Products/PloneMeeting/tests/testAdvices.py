@@ -3594,7 +3594,7 @@ class testAdvices(PloneMeetingTestCase):
         # send item to cfg2, this will keep power adviser advice instead asking delay aware advice
         item2 = item1.cloneToOtherMeetingConfig(cfg2Id)
         self.assertTrue(item2.adviceIndex[self.developers_uid]['inherited'])
-        self.assertEqual(item2.adviceIndex[self.developers_uid]['delay'], '')
+        self.assertEqual(item2.adviceIndex[self.developers_uid]['delay'], '5')
         # advice infos are displayed correctly on item
         self.assertTrue(
             item2.restrictedTraverse('@@advices-icons')())
