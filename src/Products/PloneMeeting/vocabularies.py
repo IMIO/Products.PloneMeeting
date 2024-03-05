@@ -32,8 +32,6 @@ from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import render_filesize
 from collective.iconifiedcategory.vocabularies import CategoryTitleVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryVocabulary
-from collective.iconifiedcategory.vocabularies import EveryCategoryTitleVocabulary
-from collective.iconifiedcategory.vocabularies import EveryCategoryVocabulary
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
@@ -1877,54 +1875,6 @@ class PMCategoryTitleVocabulary(CategoryTitleVocabulary, PMCategoryVocabulary):
 
     # do ram.cache have a different key name
     __call__ = PMCategoryTitleVocabulary__call__
-
-
-class PMEveryCategoryVocabulary(EveryCategoryVocabulary):
-    """Override to add ram.cache."""
-
-    def __call___cachekey(method, self, context, use_category_uid_as_token=False, only_enabled=False):
-        '''cachekey method for self.__call__.'''
-        annex_config = get_config_root(context)
-        annex_group = get_group(annex_config, context)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(context)
-        # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
-        cfg_modified = cfg.modified()
-        return annex_group.getId(), use_category_uid_as_token, cfg_modified, only_enabled
-
-    @ram.cache(__call___cachekey)
-    def PMEveryCategoryVocabulary__call__(
-            self, context, use_category_uid_as_token=False, only_enabled=False):
-        return super(PMEveryCategoryVocabulary, self).__call__(
-            context,
-            use_category_uid_as_token=use_category_uid_as_token,
-            only_enabled=only_enabled)
-
-    # do ram.cache have a different key name
-    __call__ = PMEveryCategoryVocabulary__call__
-
-
-class PMEveryCategoryTitleVocabulary(EveryCategoryTitleVocabulary):
-    """Override to add ram.cache."""
-
-    def __call___cachekey(method, self, context, use_category_uid_as_token=False, only_enabled=False):
-        '''cachekey method for self.__call__.'''
-        annex_config = get_config_root(context)
-        annex_group = get_group(annex_config, context)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(context)
-        # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
-        cfg_modified = cfg.modified()
-        return annex_group.getId(), use_category_uid_as_token, cfg_modified, only_enabled
-
-    @ram.cache(__call___cachekey)
-    def PMEveryCategoryTitleVocabulary__call__(self, context, only_enabled=False):
-        return super(PMEveryCategoryTitleVocabulary, self).__call__(
-            context,
-            only_enabled=only_enabled)
-
-    # do ram.cache have a different key name
-    __call__ = PMEveryCategoryTitleVocabulary__call__
 
 
 class HeldPositionUsagesVocabulary(object):
