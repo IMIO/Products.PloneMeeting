@@ -371,6 +371,8 @@ EXECUTE_EXPR_VALUE = 'execute_tal_expression'
 
 NO_COMMITTEE = u"no_committee"
 
+GROUPS_MANAGING_ITEM_PG_VALUE = 'proposing_group'
+
 ITEM_MOVAL_PREVENTED = "Prevented to rename item no more in initial_state!"
 
 # for performance reason we do not dynamically get the annexes criterion id

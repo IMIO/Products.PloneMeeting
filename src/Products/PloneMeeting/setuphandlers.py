@@ -67,7 +67,7 @@ indexInfos = {
     'indexAdvisers': ('KeywordIndex', {}),
     'meeting_uid': ('FieldIndex', {}),
     'previous_review_state': ('FieldIndex', {}),
-    'reviewProcessInfo': ('FieldIndex', {}),
+    'reviewProcessInfo': ('KeywordIndex', {}),
     'send_to_authority': ('FieldIndex', {}),
     'sentToInfos': ('KeywordIndex', {}),
     'templateUsingGroups': ('KeywordIndex', {}),

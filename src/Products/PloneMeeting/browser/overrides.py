@@ -706,11 +706,11 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                 if "waiting_advices_proposing_group_send_back" in wfas:
                     # convenience, return every user proposingGroup suffixes
                     # user able to do this depends on state to go to
-                    group_managing_item_uid = self.context.adapted()._getGroupManagingItem(
-                        item_state, theObject=False)
+                    groups_managing_item_uids = self.context._getGroupsManagingItem(
+                        item_state, theObjects=False)
                     userAbleToCorrectItemWaitingAdvices += \
                         self.tool.get_filtered_plone_groups_for_user(
-                            org_uids=[group_managing_item_uid])
+                            org_uids=groups_managing_item_uids)
 
             # powerobservers to manage MeetingConfig.hideHistoryTo
             hideHistoryTo_item_values = [
@@ -1430,12 +1430,10 @@ class PMContentHistoryView(IHContentHistoryView):
                         # for MeetingItem, take into account that powerobserver
                         # could also be member of the proposingGroup
                         # in this case we do not hide the history to the user
-                        item_review_state = self.context.query_state()
-                        proposing_group_uid = self.context._getGroupManagingItem(
-                            item_review_state, theObject=False)
-                        if proposing_group_uid not in tool.get_orgs_for_user() and \
-                            isPowerObserverForCfg(
-                                cfg, power_observer_types=item_values):
+                        org_uids = self.context._getGroupsManagingItem(
+                            self.context.query_state(), theObjects=False)
+                        if not set(org_uids).intersection(tool.get_orgs_for_user()) and \
+                           isPowerObserverForCfg(cfg, power_observer_types=item_values):
                             res = False
                 elif self.context.__class__.__name__ == "Meeting":
                     # meeting values are only about powerobservers
@@ -1457,11 +1455,10 @@ class PMContentHistoryView(IHContentHistoryView):
                         # in this case we do not hide the history to the user
                         item = self.context.aq_inner.aq_parent
                         item_review_state = item.query_state()
-                        proposing_group_uid = item._getGroupManagingItem(
-                            item_review_state, theObject=False)
-                        if proposing_group_uid not in tool.get_orgs_for_user() and \
-                            isPowerObserverForCfg(
-                                cfg, power_observer_types=po_advice_values):
+                        org_uids = item._getGroupsManagingItem(
+                            item_review_state, theObjects=False)
+                        if not set(org_uids).intersection(tool.get_orgs_for_user()) and \
+                           isPowerObserverForCfg(cfg, power_observer_types=po_advice_values):
                             res = False
                     if res and '{0}.everyone'.format(self.context.portal_type) in hideHistoryTo:
                         # hide history to everyone except advice advisers

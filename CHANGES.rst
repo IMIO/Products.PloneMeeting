@@ -25,6 +25,10 @@ Changelog
   advisers when using inherited advices. This also fixes problem with optional
   key that was wrongly initialized for inherited advices.
   [gbastien]
+- Added column `groups_managing_item` in `MeetingConfig.itemWFValidationLevels`,
+  this will manage cases when another group than the proposing group is managing
+  the item, several groups may be selected including the proposing group or not.
+  [gbastien]
 
 4.2.9rc2 (2024-02-26)
 ---------------------

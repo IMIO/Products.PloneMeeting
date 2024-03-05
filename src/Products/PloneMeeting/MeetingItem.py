@@ -80,6 +80,7 @@ from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
+from Products.PloneMeeting.config import GROUPS_MANAGING_ITEM_PG_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import INSERTING_ON_ITEM_DECISION_FIRST_WORDS_NB
@@ -284,16 +285,18 @@ class MeetingItemWorkflowConditions(object):
                 states=[previous_val_state], data='suffix', only_enabled=True)
             previous_suffixes.append(previous_main_suffix)
             previous_suffixes = tuple(set(previous_suffixes))
-            previous_group_managing_item_uid = self.context.adapted()._getGroupManagingItem(
+            previous_groups_managing_item_uids = self.context._getGroupsManagingItem(
                 previous_val_state)
             res = bool(self.tool.get_filtered_plone_groups_for_user(
-                org_uids=[previous_group_managing_item_uid], suffixes=previous_suffixes))
+                org_uids=previous_groups_managing_item_uids, suffixes=previous_suffixes))
             # when previous_val_state group suffix is empty, we replay _mayShortcutToValidationLevel
             # but with this previous state as destinationState
             # XXX TO BE CONFIRMED
-            if not res and not self.tool.group_is_not_empty(
-               previous_group_managing_item_uid, previous_main_suffix):
-                return self._mayShortcutToValidationLevel(previous_val_state)
+            if not res:
+                for previous_group_managing_item_uid in previous_groups_managing_item_uids:
+                    if not self.tool.group_is_not_empty(
+                            previous_group_managing_item_uid, previous_main_suffix):
+                        return self._mayShortcutToValidationLevel(previous_val_state)
         else:
             res = True
         return res
@@ -306,9 +309,13 @@ class MeetingItemWorkflowConditions(object):
         if _checkPermission(ReviewPortalContent, self.context):
             suffix = self.cfg.getItemWFValidationLevels(
                 states=[destinationState], data='suffix', only_enabled=True)
-            group_managing_item_uid = self.context.adapted()._getGroupManagingItem(destinationState)
+            groups_managing_item_uids = self.context._getGroupsManagingItem(destinationState)
             # check if next validation level suffixed Plone group is not empty
-            res = self.tool.group_is_not_empty(group_managing_item_uid, suffix)
+            res = False
+            for group_managing_item_uid in groups_managing_item_uids:
+                res = self.tool.group_is_not_empty(group_managing_item_uid, suffix)
+                if res:
+                    break
             # shortcuts are available to (Meeting)Managers
             if res and not self.tool.isManager(self.cfg):
                 # check that when using shortcuts, this is available
@@ -2782,8 +2789,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             cfg = tool.getMeetingConfig(item)
             item_state = item.query_state()
             if self.is_decided(cfg, item_state) and \
-               item.adapted()._getGroupManagingItem(item_state, theObject=False) in \
-               tool.get_orgs_for_user():
+               set(item._getGroupsManagingItem(item_state)
+                   ).intersection(tool.get_orgs_for_user()):
                 res = True
         return res
 
@@ -2975,7 +2982,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            item.adviceIndex[adviser_uid]["advice_editable"]:
             # check that current user is member of the proposingGroup suffix
             # to which the item state could go back to
-            org_uid = self._getGroupManagingItem(item_state)
+            org_uids = self._getGroupsManagingItem(item_state)
             # get the "back" states, item_state is like "proposed_waiting_advices"
             # of "itemcreated__or__proposed_waiting_advices"
             # or when using WAITING_ADVICES_FROM_STATES 'new_state_id',
@@ -2994,8 +3001,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     states = [states]
             suffixes = cfg.getItemWFValidationLevels(
                 states=states, data='suffix', only_enabled=True, return_state_singleton=False)
-            if tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes):
-                return True
+            for org_uid in org_uids:
+                if tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes):
+                    return True
         return False
 
     security.declarePublic('mayBackToPreviousAdvice')
@@ -6936,19 +6944,43 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Add the event to item's history
             self.itemHistory.append(event)
 
-    def _getGroupManagingItem(self, review_state, theObject=False):
-        '''See doc in interfaces.py.'''
-        item = self.getSelf()
-        return item.getProposingGroup(theObject=theObject)
+    def _getGroupsManagingItem(self, review_state, theObjects=False):
+        """Returns the groups managing the item.
+           By default this will be the proposingGroup only.
+           Given p_review_state may be used to know what group manage item in which review_state.
+           This method must return organization UIDs (or organizations when theObjects=True)."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        res = cfg.getItemWFValidationLevels(
+            states=[review_state], data='groups_managing_item', only_enabled=True)
+        # if 'proposing_group' is selected, it means we want the proposing_group and
+        # others groups to manage the item in given p_review_state
+        if GROUPS_MANAGING_ITEM_PG_VALUE in res:
+            res.remove(GROUPS_MANAGING_ITEM_PG_VALUE)
+            res.append(self.getProposingGroup())
+        if not res:
+            res = [self.getProposingGroup()]
+        return uuidsToObjects(res) if theObjects else res
 
     def _getAllGroupsManagingItem(self, review_state, theObjects=False):
-        '''See doc in interfaces.py.'''
-        res = []
-        item = self.getSelf()
-        proposingGroup = item.getProposingGroup(theObject=theObjects)
-        if proposingGroup:
-            res.append(proposingGroup)
-        return res
+        """Returns the list of groups that managed the item until given p_review_state.
+           Returns a list of organizations UIDs (or organizations when theObjects=True).
+           See _getGroupsManagingItem docstring for more informations."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        res = [self.getProposingGroup()]
+        if review_state in cfg.getItemWFValidationLevels(data="state", only_enabled=True):
+            levels = cfg.getItemWFValidationLevels(only_enabled=True)
+            for level in levels:
+                res += level['groups_managing_item']
+                if level['state'] == review_state:
+                    break
+        # remove duplicates
+        res = list(set(res))
+        # remove special value 'proposing_group'
+        if GROUPS_MANAGING_ITEM_PG_VALUE in res:
+            res.remove(GROUPS_MANAGING_ITEM_PG_VALUE)
+        return uuidsToObjects(res) if theObjects else res
 
     def _assign_roles_to_group_suffixes(self, org_uid, suffix_roles):
         """Helper that applies local_roles for org_uid to p_sufix_roles.
@@ -6968,7 +7000,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                            cfg,
                                                            item_state,
                                                            org_uids,
-                                                           org_uid):
+                                                           all_org_uid):
         '''See doc in interfaces.py.'''
         # by default, every suffixes receive Reader role
         item = self.getSelf()
@@ -6988,23 +7020,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            - validation levels
            For unknown states, method _get_corresponding_state_to_assign_local_roles
            will be used to determinate a known configuration to take into ccount"""
-        adapted = self.adapted()
         # Add the local roles corresponding to the group managing the item
-        org_uid = adapted._getGroupManagingItem(item_state, theObject=False)
+        groups_managing_item_uids = self._getGroupsManagingItem(item_state)
         # in some case like ItemTemplate, we have no proposing group
-        if not org_uid:
+        if not groups_managing_item_uids:
             return
         apply_meetingmanagers_access, suffix_roles = compute_item_roles_to_assign_to_suffixes(
-            cfg, self, item_state, org_uid)
+            cfg, self, item_state, groups_managing_item_uids)
 
         # apply local roles to computed suffixes
-        self._assign_roles_to_group_suffixes(org_uid, suffix_roles)
+        for org_uid in groups_managing_item_uids:
+            self._assign_roles_to_group_suffixes(org_uid, suffix_roles)
 
         # when more than one group managing item, make sure every groups get access
-        org_uids = adapted._getAllGroupsManagingItem(item_state)
-        if len(org_uids) > 1:
+        adapted = self.adapted()
+        all_groups_managing_item_uids = self._getAllGroupsManagingItem(item_state)
+        if len(all_groups_managing_item_uids) > 1:
             adapted._assign_roles_to_all_groups_managing_item_suffixes(
-                cfg, item_state, org_uids, org_uid)
+                cfg, item_state, all_groups_managing_item_uids, groups_managing_item_uids)
 
         # MeetingManagers get access if item at least validated or decided
         # decided will include states "decided out of meeting"
