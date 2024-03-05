@@ -759,7 +759,9 @@ def onItemMoved(item, event):
         return
 
     # update elements depending on item path as it changed
-    if item._at_creation_flag:
+    # be defensive regarding attribute _at_creation_flag that sometimes does
+    # not exist for plonemeeting.restapi tests...
+    if getattr(item, '_at_creation_flag', False):
         update_all_categorized_elements(item)
         # update also categorized_elements of advices
         for advice in item.getAdvices():
