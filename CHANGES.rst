@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.9rc3 (unreleased)
+4.2.9rc3 (2024-03-05)
 ---------------------
 
 - Fixed custom advice WF UI:
