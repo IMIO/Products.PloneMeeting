@@ -11,6 +11,9 @@ Changelog
 - Adapted `MeetingCategory.is_selectable`, will no more be selectable if
   functionnality not enabled in `MeetingConfig`.
   [gbastien]
+- Added warning on MeetingConfig view in the POD templates section to warn user
+  to edit templates only if relevant and to never user MS Word.
+  [gbastien]
 
 4.2.9rc3 (2024-03-05)
 ---------------------
