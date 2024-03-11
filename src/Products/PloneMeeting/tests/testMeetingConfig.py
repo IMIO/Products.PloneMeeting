@@ -2497,12 +2497,20 @@ class testMeetingConfig(PloneMeetingTestCase):
         # onlySelectable=True by default
         cfg_cat_ids = [cat.getId() for cat in cfg.getCategories()]
         cfg2_cat_ids = [cat.getId() for cat in cfg2.getCategories()]
+        # categories are not enabled in cfg
+        self.assertFalse('category' in cfg.getUsedItemAttributes())
+        self.assertFalse(cfg_cat_ids)
+        self._enableField('category', reload=True)
+        self.assertTrue('category' in cfg.getUsedItemAttributes())
+        cfg_cat_ids = [cat.getId() for cat in cfg.getCategories()]
         self.assertEqual(cfg_cat_ids,
                          ['development', 'research', 'events'])
         self.assertEqual(cfg2_cat_ids,
                          ['deployment', 'maintenance', 'development',
                           'events', 'research', 'projects'])
-        # onlySelectable=False
+        # onlySelectable=False, returned even if not enabled
+        self._enableField('category', enable=False, reload=True)
+        self.assertFalse('category' in cfg.getUsedItemAttributes())
         cfg_cat_ids = [cat.getId() for cat in cfg.getCategories(onlySelectable=False)]
         cfg2_cat_ids = [cat.getId() for cat in cfg2.getCategories(onlySelectable=False)]
         self.assertEqual(cfg_cat_ids,

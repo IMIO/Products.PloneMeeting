@@ -115,6 +115,11 @@ class testMeetingItem(PloneMeetingTestCase):
         expectedClassifiers = ['classifier1', 'classifier2', 'classifier3', ]
         # By default, every categories are selectable
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
+        # classifiers are not enabled
+        self.assertFalse('classifier' in cfg.getUsedItemAttributes())
+        self.assertFalse([cat.id for cat in cfg.getCategories(catType='classifiers')])
+        self._enableField('classifier', reload=True)
+        self.assertTrue('classifier' in cfg.getUsedItemAttributes())
         self.assertEqual([cat.id for cat in cfg.getCategories(catType='classifiers')], expectedClassifiers)
         # Deactivate a category
         self.changeUser('admin')
@@ -152,13 +157,6 @@ class testMeetingItem(PloneMeetingTestCase):
         notify(ObjectModifiedEvent(cfg.categories.subproducts))
         expectedCategories.remove('subproducts')
         self.assertEqual([cat.id for cat in cfg.getCategories(userId='pmCreator2')], expectedCategories)
-
-        # if not using 'category', getCategories will still return categories
-        self._enableField("category", enable=False)
-        expectedCategories.remove('maintenance')
-        expectedCategories.append('subproducts')
-        self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
-        self.assertEqual([cat.id for cat in cfg.getCategories(catType='classifiers')], expectedClassifiers)
 
     def test_pm_ItemProposingGroupsVocabulary(self):
         '''Check MeetingItem.proposingGroup vocabulary.'''
