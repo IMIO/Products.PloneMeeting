@@ -5506,7 +5506,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         extra_expr_ctx = _base_extra_expr_ctx(self)
         cfg = extra_expr_ctx['cfg']
         for org_uid, expr in cfg.get_orgs_with_as_copy_group_on_expression().items():
-            extra_expr_ctx.update({'item': self, 'isCreated': isCreated})
+            extra_expr_ctx.update({'item': self,
+                                   'isCreated': isCreated,
+                                   'org_uid': org_uid})
             suffixes = _evaluateExpression(
                 self,
                 expression=expr,

@@ -5,8 +5,12 @@ Changelog
 4.2.9rc4 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Added `org_uid` to elements available when evaluating the TAL expression on an
+  organization to compute `as_copy_groups_on`.
+  [gbastien]
+- Adapted `MeetingCategory.is_selectable`, will no more be selectable if
+  functionnality not enabled in `MeetingConfig`.
+  [gbastien]
 
 4.2.9rc3 (2024-03-05)
 ---------------------
