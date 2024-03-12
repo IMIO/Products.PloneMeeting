@@ -106,7 +106,7 @@ class ToolInitializer:
             # contacts DashboardPODTemplate
             for descr in self.profileData.contactsTemplates:
                 if descr.id not in self.portal.contacts:
-                        self.addPodTemplate(self.portal.contacts, descr, source=self.profilePath)
+                    self.addPodTemplate(self.portal.contacts, descr, source=self.profilePath)
             # this will especially apply advisersConfig
             self.tool.at_post_edit_script()
 
