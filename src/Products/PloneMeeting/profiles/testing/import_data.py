@@ -417,7 +417,7 @@ meetingPma.powerObservers = (
      'meeting_access_on': u'',
      'orderindex_': '1'},
     {'row_id': 'restrictedpowerobservers',
-     'label': 'Restricted power observers',
+     'label': 'Restricted power observers spécial',
      'item_states': [],
      'item_access_on': u'',
      'meeting_states': [],
