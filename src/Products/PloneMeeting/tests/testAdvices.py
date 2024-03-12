@@ -3576,7 +3576,37 @@ class testAdvices(PloneMeetingTestCase):
             [{'row_id': 'unique_id_123',
               'org': self.developers_uid,
               'gives_auto_advice_on': 'python:True',
-              'for_item_created_from': '2016/08/08',
+                 def test_pm_send_late_item_in_meeting_mail_if_relevant(self):
+        """Test the "late_item_in_meeting" notification to powerobservers."""
+        cfg = self.meetingConfig
+        cfg.setMailItemEvents(('late_item_in_meeting__powerobservers',))
+        self.request['debug_sendMailIfRelevant'] = True
+        self.changeUser('pmManager')
+
+        meeting = self.create('Meeting')
+        normal_item = self.create('MeetingItem', preferredMeeting=meeting.UID())
+
+        self.request["debug_sendMailIfRelevant_result"] = None
+        self.presentItem(normal_item)
+        self.assertIsNone(self.request["debug_sendMailIfRelevant_result"])
+        self.do(meeting, 'freeze')
+        late_item = self.create('MeetingItem', preferredMeeting=meeting.UID())
+        self.presentItem(late_item)
+        self.assertIn(u'M. Power Observer1 <powerobserver1@plonemeeting.org>',
+                      self.request["debug_sendMailIfRelevant_result"][0])
+
+        change_view = normal_item.unrestrictedTraverse('@@change-item-listtype')
+        change_view('late')
+        self.assertIn(u'M. Power Observer1 <powerobserver1@plonemeeting.org>',
+                      self.request["debug_sendMailIfRelevant_result"][0])
+
+        cfg.setMailItemEvents(())
+        self.request["debug_sendMailIfRelevant_result"] = None
+        late_item2 = self.create('MeetingItem', preferredMeeting=meeting.UID())
+        self.presentItem(late_item2)
+        self.assertIsNone(self.request["debug_sendMailIfRelevant_result"])
+
+ 'for_item_created_from': '2016/08/08',
               'delay': '5',
               'delay_label': ''}, ])
 
@@ -3594,7 +3624,7 @@ class testAdvices(PloneMeetingTestCase):
         # send item to cfg2, this will keep power adviser advice instead asking delay aware advice
         item2 = item1.cloneToOtherMeetingConfig(cfg2Id)
         self.assertTrue(item2.adviceIndex[self.developers_uid]['inherited'])
-        self.assertEqual(item2.adviceIndex[self.developers_uid]['delay'], '')
+        self.assertEqual(item2.adviceIndex[self.developers_uid]['delay'], '5')
         # advice infos are displayed correctly on item
         self.assertTrue(
             item2.restrictedTraverse('@@advices-icons')())
@@ -4256,7 +4286,9 @@ class testAdvices(PloneMeetingTestCase):
         """Show info "Given by" on advice."""
         item, advice = self._setupItemWithAdvice()
         view = item.restrictedTraverse('@@advice-infos')
-        view(advice.advice_group, False, item.adapted().getCustomAdviceMessageFor(advice))
+        view(advice.advice_group, False,
+             item.adapted().getCustomAdviceMessageFor(
+                item.adviceIndex[advice.advice_group]))
         # with default advice workflow, we do not manage advice_given_by
         # as we only know who created the advice
         self.assertIsNone(view.get_advice_given_by())
@@ -4317,6 +4349,21 @@ class testAdvices(PloneMeetingTestCase):
                                                      'advice_hide_during_redaction': False,
                                                      'advice_comment': richtextval(u'My comment')})
         self.assertIsNone(self.request["debug_sendMailIfRelevant_result"])
+ 
+    def test_pm_AdviceMandatoriness(self):
+        """When using MeetingConfig.enforceAdviceMandatoriness, an item
+           may only be presented if auto or delay-aware advices are positive."""
+        cfg = self.meetingConfig
+        cfg.setEnforceAdviceMandatoriness(True)
+        item1, item2, vendors_advice, developers_advice = \
+            self._setupInheritedAdvice()
+        self.changeUser('pmManager')
+        self.create('Meeting')
+        self.presentItem(item1)
+        self.assertEqual(item1.query_state(), 'presented')
+        self.presentItem(item2)
+        self.assertEqual(item2.query_state(), 'presented')
+
 
 def test_suite():
     from unittest import makeSuite

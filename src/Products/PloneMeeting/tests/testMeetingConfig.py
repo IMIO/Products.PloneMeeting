@@ -2497,12 +2497,20 @@ class testMeetingConfig(PloneMeetingTestCase):
         # onlySelectable=True by default
         cfg_cat_ids = [cat.getId() for cat in cfg.getCategories()]
         cfg2_cat_ids = [cat.getId() for cat in cfg2.getCategories()]
+        # categories are not enabled in cfg
+        self.assertFalse('category' in cfg.getUsedItemAttributes())
+        self.assertFalse(cfg_cat_ids)
+        self._enableField('category', reload=True)
+        self.assertTrue('category' in cfg.getUsedItemAttributes())
+        cfg_cat_ids = [cat.getId() for cat in cfg.getCategories()]
         self.assertEqual(cfg_cat_ids,
                          ['development', 'research', 'events'])
         self.assertEqual(cfg2_cat_ids,
                          ['deployment', 'maintenance', 'development',
                           'events', 'research', 'projects'])
-        # onlySelectable=False
+        # onlySelectable=False, returned even if not enabled
+        self._enableField('category', enable=False, reload=True)
+        self.assertFalse('category' in cfg.getUsedItemAttributes())
         cfg_cat_ids = [cat.getId() for cat in cfg.getCategories(onlySelectable=False)]
         cfg2_cat_ids = [cat.getId() for cat in cfg2.getCategories(onlySelectable=False)]
         self.assertEqual(cfg_cat_ids,
@@ -2644,6 +2652,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         """Suite of transitions to close a meeting."""
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
+        # apply a default set of WFAs
+        self._activate_wfas(['delayed'])
+        self._activate_wfas(['delayed'], cfg=cfg2)
         self.assertEqual(cfg.get_transitions_to_close_a_meeting(),
                          ['freeze', 'publish', 'decide', 'close'])
         self.assertEqual(cfg2.get_transitions_to_close_a_meeting(),

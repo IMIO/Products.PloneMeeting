@@ -2,15 +2,56 @@ Changelog
 =========
 
 
-4.2.9rc2 (unreleased)
+4.2.9rc4 (unreleased)
+---------------------
+
+- Added `org_uid` to elements available when evaluating the TAL expression on an
+  organization to compute `as_copy_groups_on`.
+  [gbastien]
+- Adapted `MeetingCategory.is_selectable`, will no more be selectable if
+  functionnality not enabled in `MeetingConfig`.
+  [gbastien]
+- Added warning on MeetingConfig view in the POD templates section to warn user
+  to edit templates only if relevant and to never user MS Word.
+  [gbastien]
+
+4.2.9rc3 (2024-03-05)
+---------------------
+
+- Fixed custom advice WF UI:
+
+  - do not display `given_by` information when using the default advice workflow;
+  - in `onAdviceTransition` event, notify `AdviceAfterTransitionEvent` after
+    `hidden_during_redaction` auto set to `False` management;
+  - adapted import_data to manage `advisersConfig`.
+
+  [gbastien]
+- Display advice type id when using vocabulary `ConfigAdviceTypes` in the configuration.
+  [gbastien]
+- Removed redirect from `ChangeItemCompletenessView._changeCompleteness`, this
+  is already managed in the `__call__` method, this avoid a redirect when calling
+  `_changeCompleteness` directly from another code, like an event.
+  [gbastien]
+- Added some padding top of custom advice message on advice view.
+  [gbastien]
+- Optimized `MeetingItem._updateAdvices` to avoid several computation of
+  advisers when using inherited advices. This also fixes problem with optional
+  key that was wrongly initialized for inherited advices.
+  [gbastien]
+- Removed unused vocabularies `PMEveryCategoryVocabulary` and
+  `PMEveryCategoryTitleVocabulary`.
+  [gbastien]
+
+4.2.9rc2 (2024-02-26)
 ---------------------
 
 - Added helper `MeetingConfig.get_transitions_to_close_a_meeting`.
+  Removed adaptable method `MeetingItemWorkflowActions._latePresentedItemTransitions`
+  no more necessary as this is managed automatically now based on
+  `MeetingConfig.onMeetingTransitionItemActionToExecute`.
   [gbastien]
 - Added `imio.helpers.date.formatDate` to `safe_utils` so it is available in
   TAL expressions.
-  Removed adaptable method `MeetingItemWorkflowActions._latePresentedItemTransitions`
-  no more necessary as this is managed automatically now.
   [gbastien]
 - Make sure `print_votes` always return a string when `render_as_html=True`.
   [gbastien]
@@ -18,6 +59,10 @@ Changelog
   `collective.contact.plonegroup.behaviors.IPlonegroupUserLink` that will add
   fields `userid` and `primary_organization`.  We use `primary_organization` as
   a way to manage default `proposingGroup` when creating an item.
+  [gbastien]
+- Fixed `utils._sendMail` to avoid `UnicodeDecodeError`.
+  Also refactored it so the loop on recipients is managed by `utils._sendMail`
+  and one mail is sent by recipient in any case (attachments or not).
   [gbastien]
 
 4.2.9rc1 (2024-02-08)

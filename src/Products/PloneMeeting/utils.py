@@ -432,8 +432,11 @@ def _sendMail(obj, body, recipients, fromAddress, subject, format,
                             'attachment; filename="%s"' % fileName)
             body.attach(part)
     try:
-        obj.MailHost.send(
-            body, recipients, fromAddress, subject, charset='utf-8', msg_type=format)
+        # make sure recipients are utf-8 encoded strings
+        for recipient in recipients:
+            recipient = safe_encode(recipient)
+            obj.MailHost.send(
+                body, recipient, fromAddress, subject, charset='utf-8', msg_type=format)
     except socket.error, sg:
         raise EmailError(SENDMAIL_ERROR % str(sg))
     except UnicodeDecodeError, ue:
@@ -467,8 +470,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     if mailMode == 'deactivated':
         return
     # Compute user name
-    pms = api.portal.get_tool('portal_membership')
-    user = pms.getAuthenticatedMember()
+    user = api.user.get_current()
     # Compute list of MeetingGroups for this user
     userGroups = ', '.join([g.Title() for g in tool.get_orgs_for_user(the_objects=True)])
     # Create the message parts
@@ -583,15 +585,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         mailFormat = 'text/plain'
         # Send the mail(s)
         try:
-            if not attachments:
-                # Send a personalized email for every user.
-                for recipient in recipients:
-                    _sendMail(obj, body, recipient, fromAddress, subject, mailFormat)
-            else:
-                # Send a single mail with everybody in bcc, for performance reasons
-                # (avoid to duplicate the attached file(s)).
-                _sendMail(obj, body, recipients, fromAddress, subject, mailFormat,
-                          attachments)
+            _sendMail(obj, body, recipients, fromAddress, subject, mailFormat, attachments)
         except EmailError, ee:
             logger.warn(str(ee))
     # add a fingerpointing log message

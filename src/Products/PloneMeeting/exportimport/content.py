@@ -84,21 +84,31 @@ class ToolInitializer:
                            domain='PloneMeeting',
                            context=self.request))
         self.profileData = self.getProfileData()
+
+    def _init_tool(self, force=False):
         # Initialize the tool if we have data
         if not self.profileData:
             return
         # initialize the tool and configure the contacts directory
         # only if it was not already done before
         # by another profile, it is the case if some MeetingConfigs exist
-        if not self.tool.objectIds('MeetingConfig'):
+        if force or not self.tool.objectIds('MeetingConfig'):
             for k, v in self.profileData.getData().iteritems():
+                if k == 'advisersConfig':
+                    # turn org id into uid
+                    for adviserConfig in v:
+                        adviserConfig['org_uids'] = [
+                            org_id_to_uid(org_id) for org_id in adviserConfig['org_uids']]
                 exec 'self.tool.set%s%s(v)' % (k[0].upper(), k[1:])
             # contacts directory
             if self.profileData.directory_position_types:
                 self.portal.contacts.position_types = self.profileData.directory_position_types
             # contacts DashboardPODTemplate
             for descr in self.profileData.contactsTemplates:
-                self.addPodTemplate(self.portal.contacts, descr, source=self.profilePath)
+                if descr.id not in self.portal.contacts:
+                    self.addPodTemplate(self.portal.contacts, descr, source=self.profilePath)
+            # this will especially apply advisersConfig
+            self.tool.at_post_edit_script()
 
     def getProfileData(self):
         '''Loads, from the current profile, the data to import into the tool:
@@ -170,6 +180,9 @@ class ToolInitializer:
             self.addUsers(self.data.orgs)
             # 5) now that organizations are created, we add persons and held_positions
             self.addPersonsAndHeldPositions(self.data.persons, source=self.profilePath)
+
+        # initialize the tool when organizations have been created
+        self._init_tool()
 
         created_cfgs = []
         for mConfig in self.data.meetingConfigs:

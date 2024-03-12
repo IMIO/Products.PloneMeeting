@@ -32,8 +32,6 @@ from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import render_filesize
 from collective.iconifiedcategory.vocabularies import CategoryTitleVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryVocabulary
-from collective.iconifiedcategory.vocabularies import EveryCategoryTitleVocabulary
-from collective.iconifiedcategory.vocabularies import EveryCategoryVocabulary
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
@@ -1879,54 +1877,6 @@ class PMCategoryTitleVocabulary(CategoryTitleVocabulary, PMCategoryVocabulary):
     __call__ = PMCategoryTitleVocabulary__call__
 
 
-class PMEveryCategoryVocabulary(EveryCategoryVocabulary):
-    """Override to add ram.cache."""
-
-    def __call___cachekey(method, self, context, use_category_uid_as_token=False, only_enabled=False):
-        '''cachekey method for self.__call__.'''
-        annex_config = get_config_root(context)
-        annex_group = get_group(annex_config, context)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(context)
-        # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
-        cfg_modified = cfg.modified()
-        return annex_group.getId(), use_category_uid_as_token, cfg_modified, only_enabled
-
-    @ram.cache(__call___cachekey)
-    def PMEveryCategoryVocabulary__call__(
-            self, context, use_category_uid_as_token=False, only_enabled=False):
-        return super(PMEveryCategoryVocabulary, self).__call__(
-            context,
-            use_category_uid_as_token=use_category_uid_as_token,
-            only_enabled=only_enabled)
-
-    # do ram.cache have a different key name
-    __call__ = PMEveryCategoryVocabulary__call__
-
-
-class PMEveryCategoryTitleVocabulary(EveryCategoryTitleVocabulary):
-    """Override to add ram.cache."""
-
-    def __call___cachekey(method, self, context, use_category_uid_as_token=False, only_enabled=False):
-        '''cachekey method for self.__call__.'''
-        annex_config = get_config_root(context)
-        annex_group = get_group(annex_config, context)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(context)
-        # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
-        cfg_modified = cfg.modified()
-        return annex_group.getId(), use_category_uid_as_token, cfg_modified, only_enabled
-
-    @ram.cache(__call___cachekey)
-    def PMEveryCategoryTitleVocabulary__call__(self, context, only_enabled=False):
-        return super(PMEveryCategoryTitleVocabulary, self).__call__(
-            context,
-            only_enabled=only_enabled)
-
-    # do ram.cache have a different key name
-    __call__ = PMEveryCategoryTitleVocabulary__call__
-
-
 class HeldPositionUsagesVocabulary(object):
     """ """
     implements(IVocabularyFactory)
@@ -2904,7 +2854,9 @@ class BaseContainedAnnexesVocabulary(object):
                 'collective.iconifiedcategory.categories',
                 use_category_uid_as_token=True)
             prefix = u'%s - ' % translate(
-                portal.portal_types[portal_type].title, domain="imio.annex", context=context.REQUEST) if prefixed else ''
+                portal.portal_types[portal_type].title,
+                domain="imio.annex",
+                context=context.REQUEST) if prefixed else ''
 
             for annex in annexes:
                 # term title is annex icon, number and title
@@ -3253,14 +3205,14 @@ class ConfigAdviceTypesVocabulary(object):
 
     implements(IVocabularyFactory)
 
-    def __call__(self, context, include_asked_again=False):
+    def __call__(self, context, include_asked_again=False, include_term_id=True):
         d = "PloneMeeting"
         terms = []
         if include_asked_again:
-            terms.append(SimpleTerm(
-                "asked_again",
-                "asked_again",
-                translate('asked_again', domain=d, context=context.REQUEST)))
+            term_title = translate('asked_again', domain=d, context=context.REQUEST)
+            if include_term_id:
+                term_title += " (asked_again)"
+            terms.append(SimpleTerm("asked_again", "asked_again", term_title))
         advice_types = [
             'positive',
             'positive_with_comments',
@@ -3272,19 +3224,18 @@ class ConfigAdviceTypesVocabulary(object):
             'nil',
             'read']
         for advice_type in advice_types:
-            terms.append(
-                SimpleTerm(
-                    advice_type,
-                    advice_type,
-                    translate(advice_type, domain=d, context=context.REQUEST)))
+            term_title = translate(advice_type, domain=d, context=context.REQUEST)
+            if include_term_id:
+                term_title += " (%s)" % advice_type
+            terms.append(SimpleTerm(advice_type, advice_type, term_title))
         # add custom extra advice types
         tool = api.portal.get_tool('portal_plonemeeting')
         for extra_advice_type in tool.adapted().extraAdviceTypes():
+            term_title = translate(extra_advice_type, domain=d, context=context.REQUEST)
+            if include_term_id:
+                term_title += " (%s)" % extra_advice_type
             terms.append(
-                SimpleTerm(
-                    extra_advice_type,
-                    extra_advice_type,
-                    translate(extra_advice_type, domain=d, context=context.REQUEST)))
+                SimpleTerm(extra_advice_type, extra_advice_type, term_title))
         return SimpleVocabulary(terms)
 
 

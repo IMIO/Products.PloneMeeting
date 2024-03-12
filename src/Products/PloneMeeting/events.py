@@ -229,12 +229,6 @@ def onAdviceTransition(advice, event):
             action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
         do(action, event)
 
-    # notify an AdviceAfterTransitionEvent for subplugins so we are sure
-    # that it is called after PloneMeeting advice transition
-    notify(AdviceAfterTransitionEvent(
-        event.object, event.workflow, event.old_state, event.new_state,
-        event.transition, event.status, event.kwargs))
-
     # check if need to show the advice
     item = advice.getParentNode()
     if advice.advice_hide_during_redaction is True:
@@ -253,6 +247,12 @@ def onAdviceTransition(advice, event):
                 advice.advice_hide_during_redaction = False
                 # update adviceIndex in case we are already updating advices it has already been set
                 item.adviceIndex[advice.advice_group]['hidden_during_redaction'] = False
+
+    # notify an AdviceAfterTransitionEvent for subplugins so we are sure
+    # that it is called after PloneMeeting advice transition
+    notify(AdviceAfterTransitionEvent(
+        event.object, event.workflow, event.old_state, event.new_state,
+        event.transition, event.status, event.kwargs))
 
     # update item if transition is not triggered in the MeetingItem._updatedAdvices
     # aka we are already updating the item
@@ -759,7 +759,9 @@ def onItemMoved(item, event):
         return
 
     # update elements depending on item path as it changed
-    if item._at_creation_flag:
+    # be defensive regarding attribute _at_creation_flag that sometimes does
+    # not exist for plonemeeting.restapi tests...
+    if getattr(item, '_at_creation_flag', False):
         update_all_categorized_elements(item)
         # update also categorized_elements of advices
         for advice in item.getAdvices():

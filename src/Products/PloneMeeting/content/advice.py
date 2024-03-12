@@ -386,7 +386,11 @@ class AdviceTypeVocabulary(object):
                context.advice_type not in usedAdviceTypes:
                 usedAdviceTypes += (context.advice_type, )
             # build vocabulary terms
-            for term in get_vocab(tool, 'ConfigAdviceTypes', include_asked_again=True)._terms:
+            for term in get_vocab(
+                    tool,
+                    'ConfigAdviceTypes',
+                    include_asked_again=True,
+                    include_term_id=False)._terms:
                 if term.token in usedAdviceTypes:
                     terms.append(SimpleTerm(term.value, term.token, term.title))
         return SimpleVocabulary(terms)

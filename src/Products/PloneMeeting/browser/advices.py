@@ -351,19 +351,15 @@ class AdviceInfos(BrowserView):
     def get_advice_given_by(self):
         """The advice was given by advice WF transition before "giveAdvice"."""
         given_by = None
-        if self.obj:
-            wf_tool = api.portal.get_tool('portal_workflow')
-            wf = wf_tool.getWorkflowsFor(self.obj.portal_type)[0]
-            final_state_id = self.obj._get_final_state_id()
-            # if final_state_id is actually the initial_state we can not compute given_by
-            # we are only able to know who created the advice
-            if wf.initial_state != final_state_id:
-                last_before_give_advice_event = getLastWFAction(
-                    self.obj,
-                    transition=self.obj._get_final_transition_id(),
-                    ignore_previous_event_actions=['backToAdviceInitialState'])
-                if last_before_give_advice_event:
-                    given_by = get_user_fullname(last_before_give_advice_event["actor"])
+        if self.obj and self.obj._get_final_state_id() != 'advice_given':
+            # if final_state_id is actually 'advice_given' we can not compute
+            # given_by we are only able to know who created the advice
+            last_before_give_advice_event = getLastWFAction(
+                self.obj,
+                transition=self.obj._get_final_transition_id(),
+                ignore_previous_event_actions=['backToAdviceInitialState'])
+            if last_before_give_advice_event:
+                given_by = get_user_fullname(last_before_give_advice_event["actor"])
         return given_by
 
     def get_user_fullname(self, user_id):
