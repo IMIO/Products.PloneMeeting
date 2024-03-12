@@ -3269,7 +3269,8 @@ class ConfigHideHistoryTosVocabulary(object):
                         "{0}.{1}".format(content_type, po_infos['row_id']),
                         "{0}.{1}".format(content_type, po_infos['row_id']),
                         u"{0} ➔ {1}".format(
-                            translated_type, html.escape(po_infos['label']))))
+                            translated_type, safe_unicode(
+                                html.escape(po_infos['label'])))))
             # hideable to everybody for meetingadvices except advice advisers
             if content_type in meetingadvice_types:
                 terms.append(
