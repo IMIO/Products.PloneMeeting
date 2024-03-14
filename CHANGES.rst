@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.9rc5 (unreleased)
+4.2.9rc5 (2024-03-14)
 ---------------------
 
 - Added upgrade step to 4213 to fix POD templates that were using
