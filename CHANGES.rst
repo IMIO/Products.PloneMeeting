@@ -5,8 +5,10 @@ Changelog
 4.2.9rc5 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Added upgrade step to 4213 to fix POD templates that were using
+  `.adapted().getCertifiedSignatures()` to `.getCertifiedSignatures()`,
+  `MeetingItem.getCertifiedSignatures` is no more an adaptable method.
+  [gbastien]
 
 4.2.9rc4 (2024-03-14)
 ---------------------
