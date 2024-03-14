@@ -16,6 +16,8 @@ Changelog
   [gbastien]
 - Avoid `UnicodeDecodeError` in `ConfigHideHistoryTosVocabulary`.
   [gbastien]
+- `MeetingItem.getCertifiedSignatures` is no more an adaptable method.
+  [gbastien]
 
 4.2.9rc3 (2024-03-05)
 ---------------------

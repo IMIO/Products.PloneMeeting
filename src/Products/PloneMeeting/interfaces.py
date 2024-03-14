@@ -282,12 +282,6 @@ class IMeetingItemDocumentation:
            will be cloned to the same meeting config, and is False if item is
            actually sent to another meeting config.  The parameter p_cloned_from_item_template
            is True if we are actually creating an item from an item template.'''
-    def getCertifiedSignatures(forceUseCertifiedSignaturesOnMeetingConfig=False):
-        '''Gets the certified signatures for this item.
-           Either use signatures defined on the proposing MeetingGroup if exists,
-           or use the meetingConfig certified signatures.
-           If p_forceUseCertifiedSignaturesOnMeetingConfig, signatures defined on
-           the MeetingConfig will be used, no matter signatures are defined on the proposing group.'''
     def mayEditAdviceConfidentiality():
         '''Condition for being able to edit the confidentiality of asked advices.
            By default, only MeetingManagers able to edit the item may change advice confidentiality.'''

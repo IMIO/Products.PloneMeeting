@@ -4237,21 +4237,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                forceUseCertifiedSignaturesOnMeetingConfig=False,
                                from_group_in_charge=False,
                                listify=True):
-        '''See docstring in interfaces.py.'''
-        item = self.getSelf()
+        '''Gets the certified signatures for this item.
+           Either use signatures defined on the proposing MeetingGroup if exists,
+           or use the meetingConfig certified signatures.
+           If p_forceUseCertifiedSignaturesOnMeetingConfig, signatures defined on
+           the MeetingConfig will be used, no matter signatures are defined on the proposing group.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(item)
+        cfg = tool.getMeetingConfig(self)
         if forceUseCertifiedSignaturesOnMeetingConfig:
             return cfg.getCertifiedSignatures(computed=True, listify=listify)
 
         selected_group_in_charge = None
         if from_group_in_charge:
-            selected_group_in_charge = item.getGroupsInCharge(
+            selected_group_in_charge = self.getGroupsInCharge(
                 theObjects=True, fromOrgIfEmpty=True, fromCatIfEmpty=True, first=True)
         # get certified signatures computed, this will return a list with pair
-        # of function/signatures, so ['function1', 'name1', 'function2', 'name2', 'function3', 'name3', ]
+        # of function/signatures, so ['function1', 'name1', 'function2', 'name2']
         # this list is ordered by signature number defined on the organization/MeetingConfig
-        return item.getProposingGroup(theObject=True).get_certified_signatures(
+        return self.getProposingGroup(theObject=True).get_certified_signatures(
             computed=True, cfg=cfg, group_in_charge=selected_group_in_charge, listify=listify)
 
     def is_assembly_field_used(self, field_name):

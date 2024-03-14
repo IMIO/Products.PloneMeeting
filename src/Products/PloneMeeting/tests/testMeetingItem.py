@@ -5191,14 +5191,14 @@ class testMeetingItem(PloneMeetingTestCase):
         # item proposing group is "developers"
         self.assertEqual(item.getProposingGroup(), self.developers_uid)
         # getting certified signatures for item will return signatures defined on proposing group
-        self.assertEqual(item.adapted().getCertifiedSignatures(),
+        self.assertEqual(item.getCertifiedSignatures(),
                          ['Group Function1', 'Group Name1', 'Group Function2', 'Group Name2'])
         # we can force to get signatures from the MeetingConfig
-        self.assertEqual(item.adapted().getCertifiedSignatures(forceUseCertifiedSignaturesOnMeetingConfig=True),
+        self.assertEqual(item.getCertifiedSignatures(forceUseCertifiedSignaturesOnMeetingConfig=True),
                          [u'Function1', u'Name1', u'Function2', u'Name2'])
         # if no signatures on the organization, signatures of the MeetingConfig are used
         self.developers.certified_signatures = []
-        self.assertEqual(item.adapted().getCertifiedSignatures(),
+        self.assertEqual(item.getCertifiedSignatures(),
                          [u'Function1', u'Name1', u'Function2', u'Name2'])
 
         # now test behaviour of periodic signatures
@@ -5237,7 +5237,7 @@ class testMeetingItem(PloneMeetingTestCase):
              },
         ]
         cfg.setCertifiedSignatures(certified)
-        self.assertEqual(item.adapted().getCertifiedSignatures(),
+        self.assertEqual(item.getCertifiedSignatures(),
                          [u'Function1', u'Name1',
                           u'Function2', u'Name2',
                           u'Function3', u'Name3',
@@ -5269,7 +5269,7 @@ class testMeetingItem(PloneMeetingTestCase):
              }
         ]
         cfg.setCertifiedSignatures(certified)
-        self.assertEqual(item.adapted().getCertifiedSignatures(),
+        self.assertEqual(item.getCertifiedSignatures(),
                          [u'Function1', u'Name1', u'Function2', u'Name2'])
 
         # no valid signature number 1 at all, every timed out
@@ -5297,7 +5297,7 @@ class testMeetingItem(PloneMeetingTestCase):
              }
         ]
         cfg.setCertifiedSignatures(certified)
-        self.assertEqual(item.adapted().getCertifiedSignatures(), [u'Function2', u'Name2'])
+        self.assertEqual(item.getCertifiedSignatures(), [u'Function2', u'Name2'])
 
         # first discovered valid is used
         # defined for signature number 1, one passed, one valid, one always valid
@@ -5349,7 +5349,7 @@ class testMeetingItem(PloneMeetingTestCase):
              }
         ]
         cfg.setCertifiedSignatures(certified)
-        self.assertEqual(item.adapted().getCertifiedSignatures(),
+        self.assertEqual(item.getCertifiedSignatures(),
                          [u'Function1valid', u'Name1valid', u'Function2', u'Name2'])
 
         # validity dates can be same day (same date_from and date_to)
@@ -5384,7 +5384,7 @@ class testMeetingItem(PloneMeetingTestCase):
              },
         ]
         cfg.setCertifiedSignatures(certified)
-        self.assertEqual(item.adapted().getCertifiedSignatures(),
+        self.assertEqual(item.getCertifiedSignatures(),
                          [u'Function1valid', u'Name1valid'])
 
     def test_pm_GetCertifiedSignaturesFromGroupInCharge(self):
