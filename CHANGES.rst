@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.9rc4 (unreleased)
+4.2.9rc4 (2024-03-14)
 ---------------------
 
 - Added `org_uid` to elements available when evaluating the TAL expression on an
