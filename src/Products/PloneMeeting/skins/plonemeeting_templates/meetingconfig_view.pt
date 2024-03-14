@@ -1340,6 +1340,12 @@
          </a>
         </legend>
         <p class="discreet" i18n:translate="pod_templates_descr"></p>
+        <p i18n:translate="warning_meetingconfig_edit_section_descr" style="color: red;">
+          DO NOT CHANGE PARAMETERS DEFINED IN THIS SECTION UNLESS YOU ARE REALLY SURE WHAT YOU ARE DOING!
+        </p>
+        <p i18n:translate="warning_meetingconfig_edit_podtemplate_descr" style="color: red;">
+          POD TEMPLATES MUST BE EDITED USING LIBREOFFICE ONLY, DO NOT USE MICROSOFT WORD TO EDIT THESE TEMPLATES!
+        </p>
         <h3 i18n:translate="">Style templates</h3>
         <table class="listing nosort"
                align="right"

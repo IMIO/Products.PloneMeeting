@@ -10,7 +10,10 @@ from Acquisition import aq_base
 from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
+from collective.contact.plonegroup.utils import get_person_from_userid
 from collective.contact.plonegroup.utils import get_plone_group_id
+from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
+from collective.datagridcolumns.SelectColumn import SelectColumn
 from collective.documentviewer.async import queueJob
 from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.behaviors.iconifiedcategorization import IconifiedCategorization
@@ -80,7 +83,10 @@ from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.MeetingItem import MeetingItem
+from Products.PloneMeeting.model.adaptations import _performAdviceWorkflowAdaptations
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
+from Products.PloneMeeting.utils import configure_advice_dx_localroles_for
+from Products.PloneMeeting.utils import duplicate_workflow
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
@@ -269,6 +275,54 @@ schema = Schema((
         multiValued=1,
         vocabulary='listDeferParentReindexes',
     ),
+    DataGridField(
+        name='advisersConfig',
+        widget=DataGridField._properties['widget'](
+            description="AdvisersConfig",
+            description_msgid="advisers_config_descr",
+            columns={
+                'org_uids':
+                    MultiSelectColumn(
+                        "Adviser config org uids",
+                        vocabulary_factory='collective.contact.plonegroup.browser.settings.'
+                                           'SortedSelectedOrganizationsElephantVocabulary'),
+                'portal_type':
+                    SelectColumn(
+                        "Adviser config portal_type",
+                        vocabulary_factory="AdvicePortalTypes"),
+                'base_wf':
+                    SelectColumn(
+                        "Adviser config base workflow",
+                        vocabulary_factory="AdviceWorkflows"),
+                'wf_adaptations':
+                    MultiSelectColumn(
+                        "Adviser config workflow adaptations",
+                        vocabulary_factory="AdviceWorkflowAdaptations"),
+                'advice_types':
+                    MultiSelectColumn(
+                        "Adviser config advice types",
+                        vocabulary_factory="ConfigAdviceTypes"),
+                'default_advice_type':
+                    SelectColumn(
+                        "Adviser config default advice type",
+                        vocabulary_factory="ConfigAdviceTypes"),
+                'show_advice_on_final_wf_transition':
+                    SelectColumn(
+                        "Adviser config show advice on final WF transition?",
+                        vocabulary="listBooleanVocabulary",
+                        col_description="Adviser config show advice on final WF transition descr",
+                        default='0'),
+            },
+            label='Advisersconfig',
+            label_msgid='PloneMeeting_label_advisersConfig',
+            i18n_domain='PloneMeeting',
+        ),
+        default=defValues.advisersConfig,
+        columns=(
+            'org_uids', 'portal_type', 'base_wf', 'wf_adaptations',
+            'advice_types', 'default_advice_type', 'show_advice_on_final_wf_transition'),
+        allow_empty_rows=False,
+    ),
 
 ),
 )
@@ -294,15 +348,68 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     ocrLanguages = ('eng', 'fra', 'deu', 'ita', 'nld', 'por', 'spa', 'vie')
 
+    # Names of advice workflow adaptations, ORDER IS IMPORTANT!
+    advice_wf_adaptations = ()
+
     # tool should not appear in portal_catalog
     def at_post_edit_script(self):
         self.unindexObject()
+        # Configure advice portal_types and workflows
+        self.configureAdvices()
+        # Configure documentviewer auto_convert
+        self.configureAutoConvert()
+        # custom onEdit
         self.adapted().onEdit(isCreated=False)
 
     security.declarePrivate('at_post_create_script')
 
     def at_post_create_script(self):
+        # Configure advice portal_types and workflows
+        self.configureAdvices()
+        # Configure documentviewer auto_convert
+        self.configureAutoConvert()
+        # custom onEdit
         self.adapted().onEdit(isCreated=True)
+
+    def configureAdvices(self):
+        """ """
+        # Update MeetingAdvice portal_types if necessary
+        self._updateMeetingAdvicePortalTypes()
+        # Perform advice related workflow adaptations
+        _performAdviceWorkflowAdaptations()
+        # Finalize advice WF config with DX local roles
+        self._finalizeAdviceWFConfig()
+
+    def configureAutoConvert(self):
+        """ """
+        types_tool = api.portal.get_tool('portal_types')
+        if self.auto_convert_annexes():
+            # make sure annex/annexDecision portal_types use documentviewer
+            # as default layout
+            types_tool['annex'].default_view = "documentviewer"
+            types_tool['annexDecision'].default_view = "documentviewer"
+        else:
+            # make sure annex/annexDecision portal_types use view as default view
+            types_tool['annex'].default_view = "view"
+            types_tool['annexDecision'].default_view = "view"
+
+    def _updateMeetingAdvicePortalTypes(self):
+        '''After Meeting/MeetingItem portal_types have been updated,
+           update MeetingAdvice portal_types if necessary.
+           This is the place to duplicate advice workflows
+           to apply workflow adaptations on.'''
+        # create a copy of each 'base_wf', we preprend the portal_type to create a new workflow
+        for org_uids, adviser_infos in self.adapted().get_extra_adviser_infos(group_by_org_uids=True).items():
+            portal_type = adviser_infos['portal_type']
+            base_wf = adviser_infos['base_wf']
+            advice_wf_id = '{0}__{1}'.format(portal_type, base_wf)
+            duplicate_workflow(base_wf, advice_wf_id, portalTypeNames=[portal_type])
+
+    def _finalizeAdviceWFConfig(self):
+        """ """
+        for org_uids, adviser_infos in self.adapted().get_extra_adviser_infos(group_by_org_uids=True).items():
+            configure_advice_dx_localroles_for(
+                adviser_infos['portal_type'], org_uids)
 
     security.declareProtected(ModifyPortalContent, 'setConfigGroups')
 
@@ -420,6 +527,34 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         mapping={'config_group_title': safe_unicode(config_group_title),
                                  'cfg_title': safe_unicode(cfg.Title()), },
                         context=self.REQUEST)
+
+    def validate_advisersConfig(self, values):
+        '''Validator for field advisersConfig.'''
+        # remove the 'template_row_marker' value
+        values = [v for v in values if not v.get('orderindex_') == 'template_row_marker']
+        # a portal_type can only be selected one time
+        portal_types = [v['portal_type'] for v in values]
+        if len(portal_types) > len(set(portal_types)):
+            return translate(
+                'advisersConfig_several_portal_types_error',
+                domain='PloneMeeting',
+                context=self.REQUEST)
+        # if some advice with portal_type exist, can not change
+        # associated portal_type/base_wf
+        to_save = set([(v['portal_type'], v['base_wf']) for v in values])
+        stored = set([(v['portal_type'], v['base_wf']) for v in self.getAdvisersConfig()])
+        removed = stored.difference(to_save)
+        added = to_save.difference(stored)
+        catalog = api.portal.get_tool('portal_catalog')
+        for portal_type, base_wf in tuple(removed) + tuple(added):
+            brains = catalog(portal_type=portal_type)
+            if brains:
+                return translate(
+                    'advisersConfig_portal_type_in_use_error',
+                    domain='PloneMeeting',
+                    mapping={'portal_type': safe_unicode(portal_type),
+                             'advice_url': brains[0].getURL(), },
+                    context=self.REQUEST)
 
     security.declarePublic('getCustomFields')
 
@@ -845,6 +980,20 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         else:
             return True
 
+    security.declarePrivate('listBooleanVocabulary')
+
+    def listBooleanVocabulary(self):
+        '''Vocabulary generating a boolean behaviour : just 2 values,
+           one yes/True, and the other no/False.
+           This is used in DataGridFields to avoid use of CheckBoxColumn
+           that does not handle validation correctly.'''
+        d = "PloneMeeting"
+        res = DisplayList((
+            ('0', translate('boolean_value_false', domain=d, context=self.REQUEST)),
+            ('1', translate('boolean_value_true', domain=d, context=self.REQUEST)),
+        ))
+        return res
+
     security.declarePrivate('listWeekDays')
 
     def listWeekDays(self):
@@ -1100,20 +1249,33 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # Change the proposing group if the item owner does not belong to
             # the defined proposing group, except if p_keepProposingGroup is True
             if not keepProposingGroup:
+                # use a primary_organization if possible
+                person = get_person_from_userid(get_current_user_id())
+                primary_org = person.primary_organization if person else None
                 # proposingGroupWithGroupInCharge
                 if newItem.attribute_is_used('proposingGroupWithGroupInCharge'):
                     field = newItem.getField('proposingGroupWithGroupInCharge')
                     vocab = get_vocab(newItem, field.vocabulary_factory, only_factory=True)
                     userProposingGroupTerms = vocab(newItem, include_stored=False)._terms
                     if userProposingGroupTerms:
-                        newItem.setProposingGroupWithGroupInCharge(userProposingGroupTerms[0].token)
+                        token = userProposingGroupTerms[0].token
+                        if primary_org:
+                            tokens = [term.token for term in userProposingGroupTerms
+                                      if term.token.startswith(primary_org)]
+                            token = tokens[0] if tokens else token
+                        newItem.setProposingGroupWithGroupInCharge(token)
                 else:
                     # proposingGroup
                     field = newItem.getField('proposingGroup')
-                    vocab = get_vocab(newItem, field.vocabulary_factory, only_factory=True)
-                    userProposingGroupTerms = vocab(newItem, include_stored=False)._terms
-                    if userProposingGroupTerms:
-                        newItem.setProposingGroup(userProposingGroupTerms[0].token)
+                    vocab = get_vocab(newItem, field.vocabulary_factory, include_stored=False)
+                    if vocab._terms:
+                        token = vocab._terms[0].token
+                        if primary_org:
+                            try:
+                                token = vocab.getTermByToken(primary_org).token
+                            except LookupError:
+                                pass
+                        newItem.setProposingGroup(token)
 
             if newOwnerId != loggedUserId:
                 plone_utils.changeOwnershipOf(newItem, newOwnerId)
@@ -1155,7 +1317,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
           Returns True if the content_category was actually updated, False if no correspondence could be found.
         '''
         catalog = api.portal.get_tool('portal_catalog')
-        tool = api.portal.get_tool('portal_plonemeeting')
         if annex.portal_type == 'annexDecision':
             self.REQUEST.set('force_use_item_decision_annexes_group', True)
             annex_category = get_category_object(originCfg, annex.content_category)
@@ -1171,7 +1332,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         other_mc_correspondences = []
         if annex_category.other_mc_correspondences:
-            annex_cfg_id = tool.getMeetingConfig(annex).getId()
+            annex_cfg_id = self.getMeetingConfig(annex).getId()
             other_mc_correspondences = [
                 brain._unrestrictedGetObject() for brain in catalog.unrestrictedSearchResults(
                     UID=tuple(annex_category.other_mc_correspondences),
@@ -1480,9 +1641,22 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return False
 
-    def get_extra_adviser_infos(self):
+    def get_extra_adviser_infos(self, group_by_org_uids=False):
         '''See doc in interfaces.py.'''
-        return {}
+        res = {}
+        tool = self.getSelf()
+        for row in tool.getAdvisersConfig():
+            if group_by_org_uids:
+                res[tuple(row['org_uids'])] = {k: v for k, v in row.items() if k != 'org_uids'}
+            else:
+                for org_uid in row['org_uids']:
+                    # append every existing values
+                    res[org_uid] = {k: v for k, v in row.items() if k != 'org_uids'}
+        return res
+
+    def extraAdviceTypes(self):
+        '''See doc in interfaces.py.'''
+        return []
 
     def getGroupedConfigs_cachekey(method, self, config_group=None, check_access=True, as_items=False):
         '''cachekey method for self.getGroupedConfigs.'''

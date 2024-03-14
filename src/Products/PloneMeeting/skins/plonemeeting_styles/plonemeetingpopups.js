@@ -160,7 +160,7 @@ function onsuccessManageAttendees(data) {
 function contentHistory() {
     jQuery(function($) {
         // Content history popup
-        $('a.overlay-history').prepOverlay({
+        $('.contentHistory a').prepOverlay({
            subtype: 'ajax',
            filter: 'h2, #content-history',
            urlmatch: '@@historyview',
@@ -493,7 +493,13 @@ function advicesInfos() {
 function groupedConfigs() {
     tooltipster_helper(selector='li[id*="portaltab-mc_config_group_"] a',
                        view_name='@@display-grouped-configs',
-                       data_parameters=['config_group']);
+                       data_parameters=['config_group'],
+                       options={
+                        theme: 'tooltipster-light sub-portaltab',
+                        arrow: false,
+                        functionPosition_callback: function (instance, helper, position){
+                            position.coord.top -= 6;return position;},
+                        });
 }
 
 function initializeActionsPanelTooltipster_callback() {

@@ -8,6 +8,7 @@ from collective.contact.plonegroup.browser.tables import DisplayGroupUsersView
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.utils import get_person_from_userid
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
@@ -33,7 +34,6 @@ from Products.PloneMeeting import logger
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.browser.itemvotes import _get_linked_item_vote_numbers
 from Products.PloneMeeting.columns import render_item_annexes
-from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
@@ -43,11 +43,11 @@ from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import convert2xhtml
+from Products.PloneMeeting.utils import get_advice_alive_states
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_field
 from Products.PloneMeeting.utils import get_dx_widget
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
-from Products.PloneMeeting.utils import get_person_from_userid
 from Products.PloneMeeting.utils import getAvailableMailingLists
 from Products.PloneMeeting.utils import may_view_field
 from Products.PloneMeeting.utils import reindex_object
@@ -486,6 +486,7 @@ class UpdateDelayAwareAdvicesView(BrowserView):
         # ...
         indexAdvisers = []
         tool = api.portal.get_tool('portal_plonemeeting')
+        advice_alive_states = get_advice_alive_states()
         for cfg in tool.objectValues('MeetingConfig'):
             for row in cfg.getCustomAdvisers():
                 isDelayAware = bool(row['delay'])
@@ -498,7 +499,7 @@ class UpdateDelayAwareAdvicesView(BrowserView):
                         continue
                     indexAdvisers.append(advice_not_given_value)
                     # now advice given and still editable
-                    for advice_state in ADVICE_STATES_ALIVE:
+                    for advice_state in advice_alive_states:
                         indexAdvisers.append("delay__{0}_{1}".format(org_uid, advice_state))
         query = {}
         # if no indexAdvisers, query on 'dummy' to avoid query on empty value
@@ -1152,7 +1153,6 @@ class BaseDGHV(object):
                             include_held_position_label=include_replace_by_held_position_label,
                             include_sub_organizations=False))
 
-
                 if include_out_count or include_in_count:
                     # Get the list if item uids for which current
                     # contact_uid is considered not present
@@ -1171,7 +1171,8 @@ class BaseDGHV(object):
                         contact_value += out_count_pattern.format(get_clusters(numbers))
                     if include_in_count and len(not_present_item_uids) > 0:
                         numbers = [item.getItemNumber(for_display=True)
-                                   for item in meeting.get_items(ordered=True) if item.UID() not in not_present_item_uids]
+                                   for item in meeting.get_items(ordered=True)
+                                   if item.UID() not in not_present_item_uids]
                         numbers = [int(number) if '.' not in number else float(number) for number in numbers]
                         contact_value += in_count_pattern.format(get_clusters(numbers))
                 if unbreakable_contact_value:
@@ -1951,7 +1952,7 @@ def print_votes(item,
                     all.insert(0, begin_rendered_values)
                 rendered += main_pattern.format(separator.join(all))
 
-    return render_as_html and (rendered or no_votes_marker) or vote_infos
+    return (rendered or no_votes_marker) if render_as_html else vote_infos
 
 
 class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):

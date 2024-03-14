@@ -4,6 +4,9 @@ from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organization
 from dexterity.localrolesfield.field import LocalRoleField
+from imio.helpers.content import get_vocab
+from imio.helpers.workflow import get_final_states
+from imio.helpers.workflow import get_leading_transitions
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastAction
 from imio.history.utils import getLastWFAction
@@ -13,6 +16,7 @@ from plone.app.textfield import RichText
 from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
+from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IDXMeetingContent
@@ -90,10 +94,21 @@ class IMeetingAdvice(IDXMeetingContent):
 
 @form.default_value(field=IMeetingAdvice['advice_type'])
 def advice_typeDefaultValue(data):
+    res = ''
     tool = api.portal.get_tool('portal_plonemeeting')
-    cfg = tool.getMeetingConfig(data.context)
-    # manage when portal_type accessed from the Dexterity types configuration
-    return cfg and cfg.getDefaultAdviceType() or ''
+    # check ToolPloneMeeting.advisersConfig
+    advice_portal_type = findMeetingAdvicePortalType(data.context)
+    for org_uid, adviser_infos in tool.adapted().get_extra_adviser_infos().items():
+        if adviser_infos['portal_type'] == advice_portal_type:
+            # use get in case overrided get_extra_adviser_infos and
+            # 'default_advice_type' not managed, will be removable
+            # when every profiles use new behavior
+            res = adviser_infos.get('default_advice_type', '')
+            break
+    if not res:
+        cfg = tool.getMeetingConfig(data.context)
+        res = cfg and cfg.getDefaultAdviceType() or ''
+    return res
 
 
 @form.default_value(field=IMeetingAdvice['advice_hide_during_redaction'])
@@ -216,18 +231,47 @@ class MeetingAdvice(Container):
                 raise KeyError('Not able to find a value to set for advice row_id!')
         self.advice_row_id = row_id
 
+    def _get_final_state_id(self):
+        """By default final state is 'advice_given', but when using a custom WF,
+           final state is the real final state in the WF."""
+        wf_tool = api.portal.get_tool('portal_workflow')
+        wf = wf_tool.getWorkflowsFor(self.portal_type)[0]
+        final_state_ids = get_final_states(wf, ignored_transition_ids=['giveAdvice'])
+        final_state_ids = len(final_state_ids) > 1 and \
+            [state_id for state_id in final_state_ids if state_id != "advice_given"] or \
+            final_state_ids
+        final_state_id = final_state_ids[0]
+        if wf.initial_state == final_state_id:
+            return 'advice_given'
+        else:
+            return final_state_id
+
+    def _get_final_transition_id(self):
+        """Return the filal WF transition, useful when using a custom workflow,
+           by default this will be the 'giveAdvice' transition."""
+        wf_tool = api.portal.get_tool('portal_workflow')
+        wf = wf_tool.getWorkflowsFor(self.portal_type)[0]
+        return get_leading_transitions(wf, self._get_final_state_id())[0].id
+
     def get_advice_given_on(self):
         '''Return the date the advice was given on.
-           Returns the smallest date between modified() and last event 'giveAdvice'.
+           If we do not use a custom workflow, returns the smallest date
+           between modified() and last event 'giveAdvice'.
            This manages case when advice is edited after it is given, for example
            when a MeetingManager corrects a typo, the advice_given_on date will be
            the 'giveAdvice' date.'''
-        lastEvent = getLastWFAction(self, 'giveAdvice')
+        final_transition_id = self._get_final_transition_id()
+        lastEvent = getLastWFAction(self, final_transition_id)
         modified = self.modified()
         if not lastEvent:
             return modified
         else:
-            return min(lastEvent['time'], modified)
+            # common case
+            if final_transition_id == 'giveAdvice':
+                return min(lastEvent['time'], modified)
+            # custom advice WF with a real final state
+            else:
+                return lastEvent['time']
 
     def historize_if_relevant(self, comment):
         """Historize if self was never historized or
@@ -248,6 +292,8 @@ class MeetingAdvice(Container):
     def attribute_is_used(self, name):
         '''Necessary for utils._addManagedPermissions for advice for now
            any attribute is used ?'''
+        if name == 'advice_accounting_commitment':
+            return base_hasattr(self, 'advice_accounting_commitment')
         return True
 
     def getIndexesRelatedTo(self, related_to='annex', check_deferred=True):
@@ -329,21 +375,22 @@ class AdviceTypeVocabulary(object):
 
         # manage when portal_type accessed from the Dexterity types configuration
         if cfg:
-            usedAdviceTypes = list(cfg.getUsedAdviceTypes())
-
-            # now wipeout usedAdviceTypes depending on current meetingadvice portal_type
+            # get usedAdviceTypes depending on current meetingadvice portal_type
             itemObj = context.meta_type == 'MeetingItem' and context or context.getParentNode()
-            current_portal_type = findMeetingAdvicePortalType(context)
-            usedAdviceTypes = [
-                usedAdviceType for usedAdviceType in usedAdviceTypes
-                if usedAdviceType in itemObj.adapted()._adviceTypesForAdviser(current_portal_type)]
+            usedAdviceTypes = itemObj._adviceTypesForAdviser(
+                findMeetingAdvicePortalType(context))
 
             # make sure if an adviceType was used for context and it is no more available, it
             # appears in the vocabulary and is so useable...
             if context.portal_type in getAdvicePortalTypeIds() and \
                context.advice_type not in usedAdviceTypes:
-                usedAdviceTypes.append(context.advice_type)
-            for advice_id, advice_title in cfg.listAdviceTypes(include_asked_again=True).items():
-                if advice_id in usedAdviceTypes:
-                    terms.append(SimpleTerm(advice_id, advice_id, advice_title))
+                usedAdviceTypes += (context.advice_type, )
+            # build vocabulary terms
+            for term in get_vocab(
+                    tool,
+                    'ConfigAdviceTypes',
+                    include_asked_again=True,
+                    include_term_id=False)._terms:
+                if term.token in usedAdviceTypes:
+                    terms.append(SimpleTerm(term.value, term.token, term.title))
         return SimpleVocabulary(terms)

@@ -282,12 +282,6 @@ class IMeetingItemDocumentation:
            will be cloned to the same meeting config, and is False if item is
            actually sent to another meeting config.  The parameter p_cloned_from_item_template
            is True if we are actually creating an item from an item template.'''
-    def getCertifiedSignatures(forceUseCertifiedSignaturesOnMeetingConfig=False):
-        '''Gets the certified signatures for this item.
-           Either use signatures defined on the proposing MeetingGroup if exists,
-           or use the meetingConfig certified signatures.
-           If p_forceUseCertifiedSignaturesOnMeetingConfig, signatures defined on
-           the MeetingConfig will be used, no matter signatures are defined on the proposing group.'''
     def mayEditAdviceConfidentiality():
         '''Condition for being able to edit the confidentiality of asked advices.
            By default, only MeetingManagers able to edit the item may change advice confidentiality.'''
@@ -313,10 +307,6 @@ class IMeetingItemDocumentation:
     def _advicePortalTypeForAdviser(org_uid):
         """Advices may use several 'meetingadvice' portal_types.  A portal_type is associated to
            an adviser org_uid, this method will return the advice portal_type used by given p_org_uid."""
-    def _adviceTypesForAdviser(self, meeting_advice_portal_type):
-        """Return the advice types (positive, negative, ...) for given p_meeting_advice_portal_type.
-           By default we always use every MeetingConfig.usedAdviceTypes but this is useful
-           when using several portal_types for meetingadvice and some may use particular advice types."""
     def _adviceDelayWillBeReinitialized(self, org_uid, adviceInfo, isTransitionReinitializingDelays):
         """Will advice delay be reinitialized for given p_ord_uid?
            By default delay is reinitialized if p_isTransitionReinitializingDelays
@@ -457,11 +447,7 @@ class IMeetingItemWorkflowActions(Interface):
     def doDelay(stateChange):
         '''Executes when an item is delayed.'''
     def doCorrect(stateChange):
-        '''Executes when the user performs a wrong action and needs to undo
-           it.'''
-    def _latePresentedItemTransitions():
-        '''The list of transitions to trigger on an item when presented into
-        a late meeting.'''
+        '''Executes when the user performs a wrong action and needs to undo it.'''
 
 
 class IMeetingItemCustom(IMeetingItem):
@@ -597,14 +583,6 @@ class IMeetingConfigDocumentation:
            a plugin that added his own workflowAdaptations validates it.'''
     def onEdit(isCreated):
         '''Called when an object p_isCreated or edited.'''
-    def extraAdviceTypes(self):
-        '''Method for defining extra advice types, needs to return a list of
-           ids that will be used for id and translated for title.'''
-    def _updateMeetingAdvicePortalTypes(self):
-        '''After Meeting/MeetingItem portal_types have been updated,
-           update MeetingAdvice portal_types if necessary.
-           This is the place to duplicate advice workflows
-           to apply workflow adaptations on.'''
     def _adviceConditionsInterfaceFor(self, advice_obj):
         '''Return the interface name to use to get the advice WF conditions adapter.'''
     def _adviceActionsInterfaceFor(self, advice_obj):
@@ -656,15 +634,21 @@ class IToolPloneMeetingDocumentation:
         '''Called when the tool p_isCreated or edited.'''
     def performCustomWFAdaptations(meetingConfig, wfAdaptation, logger, itemWorkflow, meetingWorkflow):
         '''This let's a plugin define it's own WFAdaptations to apply.'''
-    def get_extra_adviser_infos(self):
-        '''Extra adviser infos giving following information :
-           - master key: adviser organization id
+    def get_extra_adviser_infos(self, group_by_org_uids=False):
+        '''By default this will use data defined in ToolPloneMeeting.advisersConfig.
+        But this can be overrided and return a similar format, each extra adviser
+        infos must return a dict following information :
+           - master key: an adviser organization uid, or a list of org uids when
+             p_group_by_org_uids=True
            - value : a dict with :
                - 'portal_type' : the portal_type to use to give the advice;
                - 'base_wf' : the name of the base WF used by this portal_type;
                  will be used to generate a patched_ prefixed WF to apply WFAdaptations on;
                - 'wf_adaptations': a list of workflow adaptations to apply.
         '''
+    def extraAdviceTypes(self):
+        '''Method for defining extra advice types, needs to return a list of
+           ids that will be used for id and translated for title.'''
 
 
 class IToolPloneMeetingCustom(IToolPloneMeeting):

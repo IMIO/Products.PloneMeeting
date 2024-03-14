@@ -13,13 +13,13 @@ from datetime import datetime
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import richtextval
 from imio.history.utils import getLastWFAction
 from imio.zamqp.pm.tests.base import DEFAULT_SCAN_ID
 from os import path
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.app.testing import logout
-from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from plone.locking.interfaces import ILockable
 from plone.testing.z2 import Browser
@@ -30,7 +30,6 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.Five import zcml
 from Products.PloneMeeting.browser.views import SEVERAL_SAME_BARCODE_ERROR
-from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.content.meeting import PLACE_OTHER
@@ -42,6 +41,7 @@ from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import IMG_BASE64_DATA
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import get_advice_alive_states
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_widget
 from Products.PloneMeeting.utils import getAvailableMailingLists
@@ -546,7 +546,7 @@ class testViews(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['advice_addable'])
         self.assertTrue(itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['advice_editable'])
         # an editable item will found by the query
@@ -593,6 +593,7 @@ class testViews(PloneMeetingTestCase):
         '''
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
+        advice_alive_states = get_advice_alive_states()
         self.changeUser('admin')
         # for now, no customAdvisers
         for mc in self.tool.objectValues('MeetingConfig'):
@@ -619,7 +620,7 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(
             query,
             {'indexAdvisers': ['delay__{0}_{1}'.format(self.vendors_uid, advice_state)
-                               for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE]})
+                               for advice_state in ('advice_not_given', ) + advice_alive_states]})
         # define customAdvisers in cfg2, also for vendors
         cfg2.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
@@ -642,7 +643,7 @@ class testViews(PloneMeetingTestCase):
             sorted(query),
             sorted({'indexAdvisers':
                    ['delay__{0}_{1}'.format(self.vendors_uid, advice_state)
-                    for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE]}))
+                    for advice_state in ('advice_not_given', ) + advice_alive_states]}))
         # now define customAdvisers for developers
         cfg2.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
@@ -661,14 +662,14 @@ class testViews(PloneMeetingTestCase):
               'delay_label': '10 days'}, ])
         query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
         # check len because sorted removes duplicates
-        self.assertEqual(len(query['indexAdvisers']), 2 * (1 + len(ADVICE_STATES_ALIVE)))
+        self.assertEqual(len(query['indexAdvisers']), 2 * (1 + len(advice_alive_states)))
         self.assertEqual(
             sorted(query),
             sorted({'indexAdvisers':
                     ['delay__{0}_{1}'.format(self.vendors_uid, advice_state)
-                     for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE] +
+                     for advice_state in ('advice_not_given', ) + advice_alive_states] +
                     ['delay__{0}_{1}'.format(self.developers_uid, advice_state)
-                     for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE]}))
+                     for advice_state in ('advice_not_given', ) + advice_alive_states]}))
         # if org delay aware in several MeetingConfigs, line is only shown one time
         cfg2.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
@@ -686,14 +687,14 @@ class testViews(PloneMeetingTestCase):
               'delay': '10',
               'delay_label': '10 days'}, ])
         query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
-        self.assertEqual(len(query['indexAdvisers']), 2 * (1 + len(ADVICE_STATES_ALIVE)))
+        self.assertEqual(len(query['indexAdvisers']), 2 * (1 + len(advice_alive_states)))
         self.assertEqual(
             sorted(query),
             sorted({'indexAdvisers':
                     ['delay__{0}_{1}'.format(self.vendors_uid, advice_state)
-                     for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE] +
+                     for advice_state in ('advice_not_given', ) + advice_alive_states] +
                     ['delay__{0}_{1}'.format(self.developers_uid, advice_state)
-                     for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE]}))
+                     for advice_state in ('advice_not_given', ) + advice_alive_states]}))
 
     def test_pm_UpdateDelayAwareAdvicesUpdateAllAdvices(self):
         """Test the _updateAllAdvices method that update every advices.
@@ -1310,7 +1311,7 @@ class testViews(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # mixes advice given and not given
         self.assertEqual(
             helper.print_advices_infos(item),
@@ -2355,7 +2356,7 @@ class testViews(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmManager')
         assert_results(item, advisorIdsToBeReturned=[self.developers_uid])
         assert_results(item, [self.vendors_uid])
@@ -2366,7 +2367,7 @@ class testViews(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'negative',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
 
         self.changeUser('pmManager')
         assert_results(item,
@@ -2625,12 +2626,13 @@ class testViews(PloneMeetingTestCase):
             {'token': 'default', 'name': u'DefaultA|DefaultB|DefaultC|DefaultD'},
             {'token': 'default2', 'name': u'Default2A|Default2B|Default2C|Default2D'}, ]
         person = self.portal.contacts.get('person1')
+        person.userid = 'pmManager'
+        person.reindexObject(idxs=['userid'])
         org = get_own_organization()
         newhp = api.content.create(
             container=person, type='held_position', label=u'New held position',
             title='New held position', position=self._relation(org),
             usages=['assemblyMember'], position_type='default2')
-        person.userid = 'pmManager'
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         view = item.restrictedTraverse('document-generation')
@@ -2737,7 +2739,7 @@ class testViews(PloneMeetingTestCase):
             'meetingadvice',
             **{'advice_group': self.developers_uid,
                'advice_type': u'positive',
-               'advice_comment': RichTextValue(u'My comment')})
+               'advice_comment': richtextval(u'My comment')})
         # adapters
         # item
         item_adapter = getAdapter(item, IGenerablePODTemplates)
@@ -2901,8 +2903,7 @@ class testViews(PloneMeetingTestCase):
         """
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
-        meeting.signatures = RichTextValue('my name\n'
-                                           'my signature')
+        meeting.signatures = richtextval('my name\nmy signature')
         view = meeting.restrictedTraverse("document-generation")
         helper = view.get_generation_context_helper()
 
@@ -2916,9 +2917,10 @@ class testViews(PloneMeetingTestCase):
             meeting.get_signatures().split("\n")[1]
         )
 
-    def test_pm_show_history(self):
-        """Test the contenthistory.show_history() that will depend on
-           MeetingConfig.hideHistoryTo parameter."""
+    def test_pm_item_meeting_show_history(self):
+        """Test the contenthistory.show_history() for item and meeting that
+           will depend on MeetingConfig.hideHistoryTo parameter."""
+        cfg = self.meetingConfig
         self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'),))
         self.changeUser('pmCreator1')
         item = self.create("MeetingItem")
@@ -2929,7 +2931,8 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(contenthistory.show_history())
 
         # now configure so powerobservers may not access history
-        self.meetingConfig.setHideHistoryTo(('powerobservers', ))
+        cfg.setHideHistoryTo(
+            ('Meeting.powerobservers', 'MeetingItem.powerobservers', ))
         self.assertFalse(contenthistory.show_history())
 
         # when power observer is also member of the item proposingGroup
@@ -2945,7 +2948,7 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, meeting))
         self.assertFalse(contenthistory.show_history())
-        self.meetingConfig.setHideHistoryTo(())
+        cfg.setHideHistoryTo(())
         self.assertTrue(contenthistory.show_history())
 
     def test_pm_Get_meeting_assembly_stats(self):

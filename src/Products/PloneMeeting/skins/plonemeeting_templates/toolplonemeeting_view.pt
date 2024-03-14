@@ -123,6 +123,15 @@
             <span style='color: green;'>Annexes preview is disabled in the <a i18n:name="documentviewer_url" i18n:domain="collective.documentviewer" i18n:translate="heading_documentviewer_global_settings_form" href="" tal:attributes="href string:${portal_url}/@@global-documentviewer-settings">Global Document Viewer Settings</a>.</span>
           </p>
         </tal:auto_convert_enabled>
+
+          <dl class="portalMessage warning">
+            <dt i18n:domain="plone" i18n:translate="Warning">Warning</dt>
+            <dd>
+                <p i18n:domain="PloneMeeting" i18n:translate="annexes_preview_config">
+                  When you enable or disable the auto convertsion, please <a href="./edit">edit</a> and save the PloneMeeting configuration so some parameters are automatically configured.
+                </p>
+            </dd>
+        </dl>
       </fieldset>
 
       <!-- Misc -->
@@ -132,13 +141,13 @@
         </legend>
         <table width="100%">
           <tr valign="top">
-            <td tal:define="field python:here.getField('meetingFolderTitle')">
+            <td width="33%" tal:define="field python:here.getField('meetingFolderTitle')">
               <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
-            <td tal:define="field python:here.getField('functionalAdminEmail')">
+            <td width="33%" tal:define="field python:here.getField('functionalAdminEmail')">
               <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
-            <td tal:define="field python:here.getField('functionalAdminName')">
+            <td width="34%" tal:define="field python:here.getField('functionalAdminName')">
               <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
           </tr>
@@ -170,6 +179,11 @@
               <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
             <td tal:define="field python:here.getField('deferParentReindex')">
+              <span metal:use-macro="here/widgets/field/macros/view" />
+            </td>
+          </tr>
+          <tr valign="top">
+            <td colspan="3" tal:define="field python:here.getField('advisersConfig')">
               <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
           </tr>

@@ -24,7 +24,7 @@
   <utility component=".vocabularies.EveryOrganizationsAcronymsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary" />
   <utility component=".vocabularies.PMSortedSelectedOrganizationsElephantVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.sortedselectedorganizationsvocabulary" />
+           name="PMSortedSelectedOrganizationsVocabulary" />
   <utility component=".vocabularies.AssociatedGroupsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.associatedgroupsvocabulary" />
   <utility component=".vocabularies.ItemAssociatedGroupsVocabularyFactory"
@@ -119,6 +119,22 @@
            component=".vocabularies.PMPositionTypesVocabularyFactory" />
   <utility name="PMAttendeeRedefinePositionTypes"
            component=".vocabularies.PMAttendeeRedefinePositionTypesVocabularyFactory" />
+  <utility name="AdvicePortalTypes"
+           component=".vocabularies.AdvicePortalTypesVocabularyFactory" />
+  <utility name="ItemWorkflows"
+           component=".vocabularies.ItemWorkflowsVocabularyFactory" />
+  <utility name="MeetingWorkflows"
+           component=".vocabularies.MeetingWorkflowsVocabularyFactory" />
+  <utility name="AdviceWorkflows"
+           component=".vocabularies.AdviceWorkflowsVocabularyFactory" />
+  <utility name="WorkflowAdaptations"
+           component=".vocabularies.WorkflowAdaptationsVocabularyFactory" />
+  <utility name="AdviceWorkflowAdaptations"
+           component=".vocabularies.AdviceWorkflowAdaptationsVocabularyFactory" />
+  <utility name="ConfigAdviceTypes"
+           component=".vocabularies.ConfigAdviceTypesVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.config_hide_history_to_vocabulary"
+           component=".vocabularies.ConfigHideHistoryTosVocabularyFactory" />
   <utility name="EnabledItemActions"
            component=".vocabularies.EnabledItemActionsVocabularyFactory" />
 

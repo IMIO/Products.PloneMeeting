@@ -22,6 +22,7 @@ from imio.helpers.content import get_modified_attrs
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_delattr
 from imio.helpers.security import fplog
+from imio.helpers.workflow import get_final_states
 from imio.helpers.workflow import update_role_mappings_for
 from imio.helpers.xhtml import storeImagesLocally
 from imio.history.utils import add_event_to_history
@@ -39,6 +40,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_INITIATOR_INDEX_PATTERN
+from Products.PloneMeeting.config import ITEM_MOVAL_PREVENTED
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
@@ -227,6 +229,25 @@ def onAdviceTransition(advice, event):
             action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
         do(action, event)
 
+    # check if need to show the advice
+    item = advice.getParentNode()
+    if advice.advice_hide_during_redaction is True:
+        tool = api.portal.get_tool('portal_plonemeeting')
+        adviser_infos = tool.adapted().get_extra_adviser_infos().get(advice.advice_group, {})
+        # use get in case overrided get_extra_adviser_infos and
+        # 'show_advice_on_final_wf_transition' not managed, will be removable
+        # when every profiles use new behavior
+        if adviser_infos and adviser_infos.get('show_advice_on_final_wf_transition', '0') == '1':
+            wf_tool = api.portal.get_tool('portal_workflow')
+            wf = wf_tool.getWorkflowsFor(advice.portal_type)[0]
+            # manage custom workflows where final state is not 'advice_given'
+            ignored_transition_ids = len(wf.states) > 2 and ['giveAdvice'] or []
+            if event.new_state.id in get_final_states(wf, ignored_transition_ids=ignored_transition_ids) and \
+               (not ignored_transition_ids or event.new_state.id != 'advice_given'):
+                advice.advice_hide_during_redaction = False
+                # update adviceIndex in case we are already updating advices it has already been set
+                item.adviceIndex[advice.advice_group]['hidden_during_redaction'] = False
+
     # notify an AdviceAfterTransitionEvent for subplugins so we are sure
     # that it is called after PloneMeeting advice transition
     notify(AdviceAfterTransitionEvent(
@@ -235,7 +256,6 @@ def onAdviceTransition(advice, event):
 
     # update item if transition is not triggered in the MeetingItem._updatedAdvices
     # aka we are already updating the item
-    item = advice.getParentNode()
     if event.transition and not item._is_currently_updating_advices():
         item.update_local_roles()
         _advice_update_item(item)
@@ -502,10 +522,10 @@ def _itemAnnexTypes(cfg):
 def onConfigInitialized(cfg, event):
     '''Trigger when new MeetingConfig added.'''
 
-    # Register the portal types that are specific to this meeting config.
-    cfg.registerPortalTypes()
     # Set a property allowing to know in which MeetingConfig we are
     cfg.manage_addProperty(MEETING_CONFIG, cfg.id, 'string')
+    # Register the portal types that are specific to this meeting config.
+    cfg.registerPortalTypes()
     # Create the subfolders
     cfg._createSubFolders()
     # Create the collections related to this meeting config
@@ -739,7 +759,9 @@ def onItemMoved(item, event):
         return
 
     # update elements depending on item path as it changed
-    if item._at_creation_flag:
+    # be defensive regarding attribute _at_creation_flag that sometimes does
+    # not exist for plonemeeting.restapi tests...
+    if getattr(item, '_at_creation_flag', False):
         update_all_categorized_elements(item)
         # update also categorized_elements of advices
         for advice in item.getAdvices():
@@ -927,9 +949,10 @@ def onAdviceAdded(advice, event):
     # update item
     _advice_update_item(item)
 
-    # Send mail if relevant
-    sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
-    sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
+    if not advice.advice_hide_during_redaction:
+        # Send mail if relevant
+        sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
+        sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
 
 
 def onAdviceModified(advice, event):
@@ -968,9 +991,10 @@ def onAdviceModified(advice, event):
         # update item
         _advice_update_item(item)
 
-        # Send mail if relevant
-        sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
-        sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
+        if not advice.advice_hide_during_redaction:
+            # Send mail if relevant
+            sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
+            sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
 
 
 def onAdviceEditFinished(advice, event):
@@ -1167,6 +1191,16 @@ def onItemWillBeMoved(item, event):
     # If we are trying to move the whole MeetingConfig, bypass this hook.
     if event.object.meta_type in ['Plone Site', 'MeetingConfig']:
         return
+
+    # prevent renaming an item manually if it is not "itemcreated"
+    # this avoid call to MeetingItem.manage_beforeDelete that will remove
+    # item from meeting and we can not avoid this for now in AT
+    if getattr(event, "newName", None) is not None:
+        wfTool = api.portal.get_tool('portal_workflow')
+        itemWF = wfTool.getWorkflowsFor(item)[0]
+        if not item.query_state() == itemWF.initial_state:
+            logger.warn(ITEM_MOVAL_PREVENTED)
+            raise ValueError(ITEM_MOVAL_PREVENTED)
 
     return _redirect_if_default_item_template(item)
 

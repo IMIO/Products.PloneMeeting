@@ -2,8 +2,178 @@ Changelog
 =========
 
 
-4.2.9 (unreleased)
-------------------
+4.2.9rc6 (unreleased)
+---------------------
+
+- Nothing changed yet.
+
+
+4.2.9rc5 (2024-03-14)
+---------------------
+
+- Added upgrade step to 4213 to fix POD templates that were using
+  `.adapted().getCertifiedSignatures()` to `.getCertifiedSignatures()`,
+  `MeetingItem.getCertifiedSignatures` is no more an adaptable method.
+  [gbastien]
+
+4.2.9rc4 (2024-03-14)
+---------------------
+
+- Added `org_uid` to elements available when evaluating the TAL expression on an
+  organization to compute `as_copy_groups_on`.
+  [gbastien]
+- Adapted `MeetingCategory.is_selectable`, will no more be selectable if
+  functionnality not enabled in `MeetingConfig`.
+  [gbastien]
+- Added warning on MeetingConfig view in the POD templates section to warn user
+  to edit templates only if relevant and to never user MS Word.
+  [gbastien]
+- Avoid `UnicodeDecodeError` in `ConfigHideHistoryTosVocabulary`.
+  [gbastien]
+- `MeetingItem.getCertifiedSignatures` is no more an adaptable method.
+  [gbastien]
+- Moved field `advice.advice_reference` under `advice.advice_accounting_commitment`
+  so `RichText` fields are grouped together.
+  Display `advice_reference` in advice tooltipster when not empty.
+  [gbastien]
+
+4.2.9rc3 (2024-03-05)
+---------------------
+
+- Fixed custom advice WF UI:
+
+  - do not display `given_by` information when using the default advice workflow;
+  - in `onAdviceTransition` event, notify `AdviceAfterTransitionEvent` after
+    `hidden_during_redaction` auto set to `False` management;
+  - adapted import_data to manage `advisersConfig`.
+
+  [gbastien]
+- Display advice type id when using vocabulary `ConfigAdviceTypes` in the configuration.
+  [gbastien]
+- Removed redirect from `ChangeItemCompletenessView._changeCompleteness`, this
+  is already managed in the `__call__` method, this avoid a redirect when calling
+  `_changeCompleteness` directly from another code, like an event.
+  [gbastien]
+- Added some padding top of custom advice message on advice view.
+  [gbastien]
+- Optimized `MeetingItem._updateAdvices` to avoid several computation of
+  advisers when using inherited advices. This also fixes problem with optional
+  key that was wrongly initialized for inherited advices.
+  [gbastien]
+- Removed unused vocabularies `PMEveryCategoryVocabulary` and
+  `PMEveryCategoryTitleVocabulary`.
+  [gbastien]
+
+4.2.9rc2 (2024-02-26)
+---------------------
+
+- Added helper `MeetingConfig.get_transitions_to_close_a_meeting`.
+  Removed adaptable method `MeetingItemWorkflowActions._latePresentedItemTransitions`
+  no more necessary as this is managed automatically now based on
+  `MeetingConfig.onMeetingTransitionItemActionToExecute`.
+  [gbastien]
+- Added `imio.helpers.date.formatDate` to `safe_utils` so it is available in
+  TAL expressions.
+  [gbastien]
+- Make sure `print_votes` always return a string when `render_as_html=True`.
+  [gbastien]
+- Removed field `IPMPerson.userid`, instead use behavior
+  `collective.contact.plonegroup.behaviors.IPlonegroupUserLink` that will add
+  fields `userid` and `primary_organization`.  We use `primary_organization` as
+  a way to manage default `proposingGroup` when creating an item.
+  [gbastien]
+- Fixed `utils._sendMail` to avoid `UnicodeDecodeError`.
+  Also refactored it so the loop on recipients is managed by `utils._sendMail`
+  and one mail is sent by recipient in any case (attachments or not).
+  [gbastien]
+
+4.2.9rc1 (2024-02-08)
+---------------------
+
+- Adapted portal tabs sub menu styling to make more `sub menu`.
+  [gbastien]
+- Fixed critical bug while sending mail that was preventing to use the MailHost
+  mail_queue because using `secureSend` from `Products.CMFPlone` that is
+  deprecated and that use `immediate=True`.
+  Now emails will be correctly using the mail_queue and start it when necessary.
+  [gbastien]
+- In `utils.updateAnnexesAccess`, make sure we do not acquire attribute
+  `categorized_elements` or update is done several times, this is the case when
+  called on an advice, the parent item attribute was used.
+  [gbastien]
+- Prevent a siteadmin from renaming an item linked to a meeting (an item that
+  is no more in it's WF initial state) or it breaks the link with the meeting.
+  [gbastien]
+
+4.2.9b9 (2024-01-31)
+--------------------
+
+- Make the advice `given_on` date use final WF state when using a custom WF.
+  [gbastien]
+
+4.2.9b8 (2024-01-18)
+--------------------
+
+- Do not `show_advice_on_final_wf_transition` when item is set in a wf state
+  in which advice can not be edited anymore if advice did not reached it's final
+  state (when using advice custom worklow).
+  [gbastien]
+
+4.2.9b7 (2024-01-11)
+--------------------
+
+- Added `Export PDF` action to `MeetingConfig.itemActionsColumnConfig`.
+  [gbastien]
+
+4.2.9b6 (2024-01-11)
+--------------------
+
+- Removed constant `config.ADVICE_STATES_ALIVE`, it is now managed automatically
+  by `utils.get_advice_alive_states` and it will ne more be necessary to
+  override it in custom profiles.
+  [gbastien]
+- In tests, use `imio.helpers.content.richtextval` everywhere a `RichTextValue` is used.
+  [gbastien]
+- Check user is creator in item `actions_panel` caching invalidation.
+  [gbastien]
+
+4.2.9b5 (2024-01-02)
+--------------------
+
+- When advice is `asked_again` display left delay correctly, full delay is displayed
+  when advice is supposed given, but when is it `asked_again` it is not the case.
+  [gbastien]
+- Added `Export PDF` action on item to be able to export in a single PDF file
+  several selected PDF generated POD templates and PDF annexes.
+  [gbastien]
+- Added `sortable` functionnality to the `PMCheckBoxWidget`, use it in the item
+  `Export PDF` form to be able to reorder exported elements.
+  [gbastien]
+- Fixed CSS of advice popup label when very long.
+  [gbastien]
+- When `copyGroups` have access to item, highlight full `Copy groups` label in green.
+  [gbastien]
+
+4.2.9b4 (2023-12-11)
+--------------------
+
+- Mail notifications `adviceEdited` and `adviceEditedOwner` are no more sent
+  if advice is hidden during redaction.
+  [gbastien]
+- Fixed `AdvicesIcons.get_advice_given_by` to only return a value when using
+  custom WF (more than one initial state) and if WF reached it's final state.
+  [gbastien]
+
+4.2.9b3 (2023-11-27)
+--------------------
+
+- Fixed `MeetingConfig.listTransitionsUntilPresented` that was raising
+  `UnicodeDecodeError` now that we use unicode arrow in term title.
+  Use unicode arrow in `utils.get_dx_attrs` when `as_display_list=True`.
+  [gbastien]
+
+4.2.9b2 (2023-11-27)
+--------------------
 
 - Display last transition actor and comment in item mail notifications for mail events:
 
@@ -21,6 +191,9 @@ Changelog
   advisers in cachekey as it is computed and depends on context.
   Fixed also a bug when some `__userid__` selected values were no more in the
   vocabulary with other values still in the vocabulary.
+  [gbastien]
+- Added `MeetingConfig.show_copy_groups_search` that is used to protect
+  copyGroups related searches.
   [gbastien]
 - Fixed `PMCategorizedChildView.__call___`, if no categorized elements,
   do not return just [] but the parameter `show_nothing` value,
@@ -59,9 +232,9 @@ Changelog
   - Moved `ToolPloneMeeting.getAvailableMailingLists` to utils;
   - Removed no more used `versions_history_form.pt`;
   - Moved `ToolPloneMeeting.isPowerObserverForCfg` to
-  `utils.isPowerObserverForCfg`;
+    `utils.isPowerObserverForCfg`;
   - Replaced `ToolPloneMeeting.getUserName` by
-  `imio.helpers.content.get_user_fullname` everywhere it was used.
+    `imio.helpers.content.get_user_fullname` everywhere it was used.
 
   [gbastien]
 - Adapted `DisplayMeetingItemVoters` helper view on meeting to display items
@@ -79,18 +252,25 @@ Changelog
   and `Classifier`.
   [gbastien]
 - Fixed update `categorized_elements` of advices when advice moved as
-  stored path changed.
+  stored path changed (when advice is given on an item that is `itemcreated` and
+  that is renamed).
   [gbastien]
 - Make sure every item related searches (Collection) use `sort_on` modified
   as this is not visible in the application because faceted `sort_on` overrides
   it but it is now taken into account when using restapi with a `base_search_uid`.
   [gbastien]
-- Added `Export PDF` action on item to be able to export in a single PDF file
-  several selected PDF generated POD templates and PDF annexes.
-  [gbastien]
-- Fixed CSS of advice popup label when very long.
-  [gbastien]
-- When `copyGroups` have access to item, highlight full `Copy groups` label in green.
+
+4.2.9b1 (2023-10-27)
+--------------------
+
+- Added advanced advice management using `ToolPloneMeeting.advisersConfig`:
+
+  - possible to associate a new advice `portal_type` to some organizations;
+  - reworked advice infos template to add more CSS classes to additional infos;
+  - display the `Advice given by` information;
+  - added possibility to hide advice history to power observers and to everyone
+    and to hide meeting history to powerobservers.
+
   [gbastien]
 - Use `CompoundCriterion` adapter `living-items` for the `searchlivingitems`
   Collection so selected states are always correct if item workflow

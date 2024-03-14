@@ -90,7 +90,7 @@ class IPMHeldPosition(IHeldPosition):
         default=[],
         description=_("Select organizations the current held position is representative for."),
         value_type=RelationChoice(
-            vocabulary="Products.PloneMeeting.vocabularies.sortedselectedorganizationsvocabulary"),
+            vocabulary="PMSortedSelectedOrganizationsVocabulary"),
         required=False,
     )
 

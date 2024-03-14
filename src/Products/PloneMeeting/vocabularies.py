@@ -32,8 +32,6 @@ from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import render_filesize
 from collective.iconifiedcategory.vocabularies import CategoryTitleVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryVocabulary
-from collective.iconifiedcategory.vocabularies import EveryCategoryTitleVocabulary
-from collective.iconifiedcategory.vocabularies import EveryCategoryVocabulary
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
@@ -67,6 +65,7 @@ from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import get_context_with_request
 from Products.PloneMeeting.utils import get_datagridfield_column_value
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.PloneMeeting.utils import getAdvicePortalTypes
 from Products.PloneMeeting.utils import number_word
 from Products.PloneMeeting.utils import split_gender_and_number
@@ -1197,6 +1196,8 @@ ItemOptionalAdvicesVocabularyFactory = ItemOptionalAdvicesVocabulary()
 
 
 class AdviceTypesVocabulary(object):
+    """Global advice types vocabulary used in faceted criterion."""
+
     implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context):
@@ -1660,6 +1661,50 @@ class PMPortalTypesVocabulary(PortalTypesVocabularyFactory):
 PMPortalTypesVocabularyFactory = PMPortalTypesVocabulary()
 
 
+class AdvicePortalTypesVocabulary(object):
+    """Vocabulary listing every existing advice portal_types."""
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        # manage multiple 'meetingadvice' portal_types
+        res = []
+        for portal_type in getAdvicePortalTypes():
+            res.append(SimpleTerm(
+                portal_type.id,
+                portal_type.id,
+                u'{0} ({1})'.format(
+                    translate(portal_type.title,
+                              domain="PloneMeeting",
+                              context=context.REQUEST),
+                    portal_type.id)))
+        return SimpleVocabulary(res)
+
+
+AdvicePortalTypesVocabularyFactory = AdvicePortalTypesVocabulary()
+
+
+class TypeWorkflowsVocabulary(object):
+    """Vocabulary listing workflows related to a type of element."""
+    implements(IVocabularyFactory)
+
+    def __init__(self, wf_name_startswith=None):
+        self.wf_name_startswith = wf_name_startswith
+
+    def __call__(self, context):
+        wf_tool = api.portal.get_tool('portal_workflow')
+        res = []
+        for wf_name in wf_tool.listWorkflows():
+            if wf_name.startswith(self.wf_name_startswith) and \
+               '__' not in wf_name:
+                res.append(SimpleTerm(wf_name, wf_name, wf_name))
+        return SimpleVocabulary(res)
+
+
+ItemWorkflowsVocabularyFactory = TypeWorkflowsVocabulary('meetingitem')
+MeetingWorkflowsVocabularyFactory = TypeWorkflowsVocabulary('meeting_')
+AdviceWorkflowsVocabularyFactory = TypeWorkflowsVocabulary('meetingadvice')
+
+
 class PMExistingPODTemplate(ExistingPODTemplateFactory):
     """
     Vocabulary factory for 'pod_template_to_use' field, include MeetingConfig title in term.
@@ -1830,54 +1875,6 @@ class PMCategoryTitleVocabulary(CategoryTitleVocabulary, PMCategoryVocabulary):
 
     # do ram.cache have a different key name
     __call__ = PMCategoryTitleVocabulary__call__
-
-
-class PMEveryCategoryVocabulary(EveryCategoryVocabulary):
-    """Override to add ram.cache."""
-
-    def __call___cachekey(method, self, context, use_category_uid_as_token=False, only_enabled=False):
-        '''cachekey method for self.__call__.'''
-        annex_config = get_config_root(context)
-        annex_group = get_group(annex_config, context)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(context)
-        # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
-        cfg_modified = cfg.modified()
-        return annex_group.getId(), use_category_uid_as_token, cfg_modified, only_enabled
-
-    @ram.cache(__call___cachekey)
-    def PMEveryCategoryVocabulary__call__(
-            self, context, use_category_uid_as_token=False, only_enabled=False):
-        return super(PMEveryCategoryVocabulary, self).__call__(
-            context,
-            use_category_uid_as_token=use_category_uid_as_token,
-            only_enabled=only_enabled)
-
-    # do ram.cache have a different key name
-    __call__ = PMEveryCategoryVocabulary__call__
-
-
-class PMEveryCategoryTitleVocabulary(EveryCategoryTitleVocabulary):
-    """Override to add ram.cache."""
-
-    def __call___cachekey(method, self, context, use_category_uid_as_token=False, only_enabled=False):
-        '''cachekey method for self.__call__.'''
-        annex_config = get_config_root(context)
-        annex_group = get_group(annex_config, context)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(context)
-        # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
-        cfg_modified = cfg.modified()
-        return annex_group.getId(), use_category_uid_as_token, cfg_modified, only_enabled
-
-    @ram.cache(__call___cachekey)
-    def PMEveryCategoryTitleVocabulary__call__(self, context, only_enabled=False):
-        return super(PMEveryCategoryTitleVocabulary, self).__call__(
-            context,
-            only_enabled=only_enabled)
-
-    # do ram.cache have a different key name
-    __call__ = PMEveryCategoryTitleVocabulary__call__
 
 
 class HeldPositionUsagesVocabulary(object):
@@ -2857,7 +2854,9 @@ class BaseContainedAnnexesVocabulary(object):
                 'collective.iconifiedcategory.categories',
                 use_category_uid_as_token=True)
             prefix = u'%s - ' % translate(
-                portal.portal_types[portal_type].title, domain="imio.annex", context=context.REQUEST) if prefixed else ''
+                portal.portal_types[portal_type].title,
+                domain="imio.annex",
+                context=context.REQUEST) if prefixed else ''
 
             for annex in annexes:
                 # term title is annex icon, number and title
@@ -3140,3 +3139,146 @@ class PMDxPortalTypesVocabulary(DxPortalTypesVocabulary):
 
 
 PMDxPortalTypesVocabularyFactory = PMDxPortalTypesVocabulary()
+
+
+class WorkflowAdaptationsVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context, sorted=True):
+        """Received "context" is a MeetingConfig."""
+        terms = []
+        for adaptation in context.wfAdaptations:
+            # back transitions from presented to every available item validation
+            # states defined in MeetingConfig.itemWFValidationLevels
+            if adaptation == 'presented_item_back_to_validation_state':
+                for item_validation_level in context.getItemWFValidationLevels(only_enabled=True):
+                    adaptation_id = 'presented_item_back_to_{0}'.format(item_validation_level['state'])
+                    translated_item_validation_state = translate(
+                        safe_unicode(item_validation_level['state_title']),
+                        domain='plone',
+                        context=context.REQUEST)
+                    title = translate(
+                        'wa_presented_item_back_to_validation_state',
+                        domain='PloneMeeting',
+                        mapping={'item_state': translated_item_validation_state},
+                        context=context.REQUEST,
+                        default=u'Item back to presented from validation state "{0}"'.format(
+                            translated_item_validation_state))
+                    title = title + " ({0})".format(adaptation_id)
+                    terms.append(SimpleTerm(adaptation_id, adaptation_id, title))
+            else:
+                title = translate('wa_%s' % adaptation, domain='PloneMeeting', context=context.REQUEST)
+                title = title + " ({0})".format(adaptation)
+                terms.append(SimpleTerm(adaptation, adaptation, title))
+        if sorted:
+            terms = humansorted(terms, key=attrgetter('title'))
+        return SimpleVocabulary(terms)
+
+
+WorkflowAdaptationsVocabularyFactory = WorkflowAdaptationsVocabulary()
+
+
+class AdviceWorkflowAdaptationsVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        tool = api.portal.get_tool("portal_plonemeeting")
+        terms = []
+        for adaptation in tool.advice_wf_adaptations:
+            title = translate('wa_%s' % adaptation, domain='PloneMeeting', context=context.REQUEST)
+            title = title + " ({0})".format(adaptation)
+            terms.append(SimpleTerm(adaptation, adaptation, title))
+        terms = humansorted(terms, key=attrgetter('title'))
+        return SimpleVocabulary(terms)
+
+
+AdviceWorkflowAdaptationsVocabularyFactory = AdviceWorkflowAdaptationsVocabulary()
+
+
+class ConfigAdviceTypesVocabulary(object):
+    """Expected context is portal_plonemeeting."""
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context, include_asked_again=False, include_term_id=True):
+        d = "PloneMeeting"
+        terms = []
+        if include_asked_again:
+            term_title = translate('asked_again', domain=d, context=context.REQUEST)
+            if include_term_id:
+                term_title += " (asked_again)"
+            terms.append(SimpleTerm("asked_again", "asked_again", term_title))
+        advice_types = [
+            'positive',
+            'positive_with_comments',
+            'positive_with_remarks',
+            'cautious',
+            'negative',
+            'negative_with_remarks',
+            'back_to_proposing_group',
+            'nil',
+            'read']
+        for advice_type in advice_types:
+            term_title = translate(advice_type, domain=d, context=context.REQUEST)
+            if include_term_id:
+                term_title += " (%s)" % advice_type
+            terms.append(SimpleTerm(advice_type, advice_type, term_title))
+        # add custom extra advice types
+        tool = api.portal.get_tool('portal_plonemeeting')
+        for extra_advice_type in tool.adapted().extraAdviceTypes():
+            term_title = translate(extra_advice_type, domain=d, context=context.REQUEST)
+            if include_term_id:
+                term_title += " (%s)" % extra_advice_type
+            terms.append(
+                SimpleTerm(extra_advice_type, extra_advice_type, term_title))
+        return SimpleVocabulary(terms)
+
+
+ConfigAdviceTypesVocabularyFactory = ConfigAdviceTypesVocabulary()
+
+
+class ConfigHideHistoryTosVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """Build selectable values for MeetingItem, Meeting and every meetingadvice
+           portal_types so it can be selected on a per meetingadvice portal_type basis."""
+        terms = []
+        types_tool = api.portal.get_tool('portal_types')
+        meetingadvice_types = getAdvicePortalTypeIds()
+        translated_everyone = translate(
+            'Everyone',
+            domain="PloneMeeting",
+            context=context.REQUEST)
+        for content_type in ['Meeting', 'MeetingItem'] + meetingadvice_types:
+            portal_type = types_tool[content_type]
+            translated_type = translate(
+                portal_type.title,
+                domain=portal_type.i18n_domain,
+                context=context.REQUEST)
+            for po_infos in context.getPowerObservers():
+                terms.append(
+                    SimpleTerm(
+                        "{0}.{1}".format(content_type, po_infos['row_id']),
+                        "{0}.{1}".format(content_type, po_infos['row_id']),
+                        u"{0} ➔ {1}".format(
+                            translated_type, safe_unicode(
+                                html.escape(po_infos['label'])))))
+            # hideable to everybody for meetingadvices except advice advisers
+            if content_type in meetingadvice_types:
+                terms.append(
+                    SimpleTerm(
+                        "{0}.everyone".format(content_type),
+                        "{0}.everyone".format(content_type),
+                        u"{0} ➔ {1}".format(translated_type, translated_everyone)))
+        return SimpleVocabulary(terms)
+
+
+ConfigHideHistoryTosVocabularyFactory = ConfigHideHistoryTosVocabulary()
