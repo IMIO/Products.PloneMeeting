@@ -263,6 +263,14 @@
                                          </tal:observations>
                                     </fieldset>
 
+                                    <div class="discreet advice_reference" tal:condition="python: advice['reference']">
+                                      <span class="table_widget_label">
+                                        <label i18n:translate="title_advice_reference">Reference</label>:
+                                      </span>
+                                      <span class="table_widget_value"
+                                          tal:content="python: advice['reference']"></span>
+                                    </div>
+
                                 </tal:defines>
                             </tal:infos_advice_given_only>
                             <tal:infos_any_advices
