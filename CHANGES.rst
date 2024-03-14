@@ -18,6 +18,10 @@ Changelog
   [gbastien]
 - `MeetingItem.getCertifiedSignatures` is no more an adaptable method.
   [gbastien]
+- Moved field `advice.advice_reference` under `advice.advice_accounting_commitment`
+  so `RichText` fields are grouped together.
+  Display `advice_reference` in advice tooltipster when not empty.
+  [gbastien]
 
 4.2.9rc3 (2024-03-05)
 ---------------------
