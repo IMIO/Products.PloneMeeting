@@ -7,6 +7,10 @@ Changelog
 
 - Moved field `Meeting.pre_observations` before `Meeting.observations`.
   [gbastien]
+- Make `test_pm_WFA_availableWFAdaptations` more robust by generating the
+  `presented_item_back_to_` WF adaptations as it relies on defined
+  `MeetingConfig.itemWFValidationLevels`.
+  [gbastien]
 
 4.2.9rc5 (2024-03-14)
 ---------------------
