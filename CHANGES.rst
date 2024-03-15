@@ -5,8 +5,8 @@ Changelog
 4.2.9rc6 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Moved field `Meeting.pre_observations` before `Meeting.observations`.
+  [gbastien]
 
 4.2.9rc5 (2024-03-14)
 ---------------------
