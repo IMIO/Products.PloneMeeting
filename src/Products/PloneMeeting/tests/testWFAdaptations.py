@@ -66,7 +66,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         pibs = [
             'presented_item_back_to_%s' % item_val_state for item_val_state in
             cfg.getItemWFValidationLevels(data='state', only_enabled=True)]
-        import ipdb; ipdb.set_trace()
         self.assertEqual(
             sorted(get_vocab_values(self.meetingConfig, 'WorkflowAdaptations')),
             sorted(['accepted_but_modified',
