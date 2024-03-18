@@ -418,7 +418,7 @@ class testAdvices(PloneMeetingTestCase):
         # adding an annex or editing a field thru ajax does not invalidate the item because not 'validated'
         annex1 = self.addAnnex(item)
         self.failUnless(item.hasAdvices())
-        item.setFieldFromAjax('decision', item.getDecision() + '<p>Another new line</p>')
+        item.setFieldFromAjax('description', item.getDecision() + '<p>Another new line</p>')
         # validate the item
         self.validateItem(item)
         # login as a user that can edit the item when it is 'validated'

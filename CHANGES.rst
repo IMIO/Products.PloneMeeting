@@ -11,6 +11,10 @@ Changelog
   `presented_item_back_to_` WF adaptations as it relies on defined
   `MeetingConfig.itemWFValidationLevels`.
   [gbastien]
+- Make tests using `utils.set_field_from_ajax` more robust by using field
+  `description` instead `decision` as in some case (subplugin), `decision`
+  field is not writable.
+  [gbastien]
 
 4.2.9rc5 (2024-03-14)
 ---------------------
