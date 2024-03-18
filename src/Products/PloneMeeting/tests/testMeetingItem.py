@@ -1937,7 +1937,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_PreviousReviewStateIndex(self):
         """Test the previous_review_state index, especially when data_changes is enabled."""
         cfg = self.meetingConfig
-        cfg.setHistorizedItemAttributes(('decision', ))
+        cfg.setHistorizedItemAttributes(('description', ))
         cfg.setRecordItemHistoryStates((self._stateMappingFor('proposed'), ))
 
         self.changeUser('pmCreator1')
@@ -1950,7 +1950,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # now check that it does not interact when data_changes is enabled
         self.changeUser('pmReviewer1')
-        set_field_from_ajax(item, 'decision', self.decisionText)
+        set_field_from_ajax(item, 'description', self.decisionText)
         self.assertEqual(previous_review_state(item)(), previous_state)
 
         # does not fail if no workflow_history
@@ -1962,7 +1962,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_WFHistoryAndDataChangesHistoryAreSeparated(self):
         """The WF history and data_changes history are separated in 2 adapters."""
         cfg = self.meetingConfig
-        cfg.setHistorizedItemAttributes(('decision', ))
+        cfg.setHistorizedItemAttributes(('description', ))
         cfg.setRecordItemHistoryStates((self._stateMappingFor('itemcreated'), ))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -1971,19 +1971,19 @@ class testMeetingItem(PloneMeetingTestCase):
         # datachanges adapter highlight_last_comment is not enabled
         self.assertFalse(datachanges_adapter.highlight_last_comment)
         self.assertFalse('_datachange_' in [event['action'] for event in wf_adapter.getHistory()])
-        set_field_from_ajax(item, 'decision', self.decisionText)
+        set_field_from_ajax(item, 'description', self.decisionText)
         self.assertFalse('_datachange_' in [event['action'] for event in wf_adapter.getHistory()])
         self.assertTrue('_datachange_' in [event['action'] for event in datachanges_adapter.getHistory()])
 
     def test_pm_DataChangesHistory(self):
         """Test the datachanges history adapter."""
         cfg = self.meetingConfig
-        cfg.setHistorizedItemAttributes(('decision', ))
+        cfg.setHistorizedItemAttributes(('description', ))
         cfg.setRecordItemHistoryStates((self._stateMappingFor('itemcreated'), ))
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem', decision="<p>test</p>")
-        set_field_from_ajax(item, 'decision', "<p>tralala</p>")
-        set_field_from_ajax(item, 'decision', "<p>abcedfgijklm</p>")
+        item = self.create('MeetingItem', description="<p>test</p>")
+        set_field_from_ajax(item, 'description', "<p>tralala</p>")
+        set_field_from_ajax(item, 'description', "<p>abcedfgijklm</p>")
         self.proposeItem(item)
         self.changeUser('pmReviewer1')
         self.do(item, 'validate')
@@ -1995,7 +1995,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # Test if the values are correct
         for event in datachanges:
             self.assertEqual(event["actor"], "pmCreator1")
-            self.assertIn("M. PMCreator One", event["changes"]["decision"])
+            self.assertIn("M. PMCreator One", event["changes"]["description"])
 
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
@@ -6861,13 +6861,13 @@ class testMeetingItem(PloneMeetingTestCase):
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img.UID()))
 
         # test using the quickedit, test with field 'decision' where getRaw was overrided
-        decision = '<p>Working external image <img src="%s"/>.</p>' % self.external_image2
-        set_field_from_ajax(item, 'decision', decision)
+        description = '<p>Working external image <img src="%s"/>.</p>' % self.external_image2
+        set_field_from_ajax(item, 'description', description)
         self.assertTrue('1025-400x300.jpg' in item.objectIds())
         img2 = item.get('1025-400x300.jpg')
         # external image link was updated
         self.assertEqual(
-            item.getRawDecision(),
+            item.getRawDescription(),
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img2.UID()))
 
         # test using processForm, aka full edit form, with field "description"
