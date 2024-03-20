@@ -2053,7 +2053,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         transition = itemWorkflow.transitions[ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION]
         self.assertEqual(transition.new_state_id, item.query_state())
 
-    def test_pm_WFA_waiting_advices(self):
+    def test_pm_WFA_waiting_advices_base(self):
         '''Test the workflowAdaptation 'waiting_advices'.'''
         # ease override by subproducts
         if not self._check_wfa_available(['waiting_advices']):

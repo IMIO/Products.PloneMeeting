@@ -19,6 +19,13 @@ Changelog
   `MeetingConfig.transitionsReinitializingDelays` if delay was timed out,
   this will have to be done manually.
   [gbastien]
+- Renamed `test_pm_WFA_waiting_advices` to `test_pm_WFA_waiting_advices_base`
+  so it can be executed separately than other `test_pm_WFA_waiting_advices_`
+  tests.
+  Completed `test_pm_ItemActionsPanelCachingProfiles` to check when reviewer
+  may also edit crated item (when using `extra_suffixes`), this way we may
+  remove `_reviewers_may_edit_itemcreated` helper.
+  [gbastien]
 
 4.2.9rc5 (2024-03-14)
 ---------------------
