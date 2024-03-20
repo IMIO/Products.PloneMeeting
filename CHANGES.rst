@@ -15,6 +15,10 @@ Changelog
   `description` instead `decision` as in some case (subplugin), `decision`
   field is not writable.
   [gbastien]
+- Do not automatically reinitialize the delay of an advice during the
+  `MeetingConfig.transitionsReinitializingDelays` if delay was timed out,
+  this will have to be done manually.
+  [gbastien]
 
 4.2.9rc5 (2024-03-14)
 ---------------------

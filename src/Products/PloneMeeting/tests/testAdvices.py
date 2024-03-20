@@ -3988,6 +3988,16 @@ class testAdvices(PloneMeetingTestCase):
         changeView()
         self.assertFalse(item._advice_is_given(self.vendors_uid))
         self.assertIsNone(item.adviceIndex[self.vendors_uid]['delay_started_on'])
+        # the delay is only reinitialized if it was not timed out
+        self.proposeItem(item)
+        item.adviceIndex[self.developers_uid]['delay_started_on'] = \
+            item.adviceIndex[self.developers_uid]['delay_started_on'] - timedelta(days=20)
+        saved_delay_started_on = item.adviceIndex[self.developers_uid]['delay_started_on']
+        self.backToState(item, 'itemcreated')
+        self.assertFalse(item._advice_is_given(self.developers_uid))
+        # delay was not reinitialized
+        self.assertEqual(item.adviceIndex[self.developers_uid]['delay_started_on'],
+                         saved_delay_started_on)
 
     def test_pm_AutoAdviceAfterClone(self):
         '''Test that when an item is cloned and new item does not
@@ -4256,9 +4266,10 @@ class testAdvices(PloneMeetingTestCase):
         """Show info "Given by" on advice."""
         item, advice = self._setupItemWithAdvice()
         view = item.restrictedTraverse('@@advice-infos')
-        view(advice.advice_group, False,
+        view(advice.advice_group,
+             False,
              item.adapted().getCustomAdviceMessageFor(
-                item.adviceIndex[advice.advice_group]))
+                 item.adviceIndex[advice.advice_group]))
         # with default advice workflow, we do not manage advice_given_by
         # as we only know who created the advice
         self.assertIsNone(view.get_advice_given_by())
