@@ -309,8 +309,8 @@ class IMeetingItemDocumentation:
            an adviser org_uid, this method will return the advice portal_type used by given p_org_uid."""
     def _adviceDelayWillBeReinitialized(self, org_uid, adviceInfo, isTransitionReinitializingDelays):
         """Will advice delay be reinitialized for given p_ord_uid?
-           By default delay is reinitialized if p_isTransitionReinitializingDelays
-           and if _advice_is_given."""
+           By default delay is reinitialized if p_isTransitionReinitializingDelays,
+           but if advice was not given and/or advice delay was not timed out."""
     def extraItemEvents(self):
         """Method for defining extra item events, needs to return a list of
            ids that will be used for id and translated for title."""
