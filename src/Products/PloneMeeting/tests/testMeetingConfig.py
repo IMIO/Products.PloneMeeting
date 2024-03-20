@@ -2032,7 +2032,18 @@ class testMeetingConfig(PloneMeetingTestCase):
             return
 
         proposed_state = self._stateMappingFor('proposed')
-        # config
+        # config, fix original_WAITING_ADVICES_FROM_STATES when called from subplugin
+        from Products.PloneMeeting.model import adaptations
+        original_WAITING_ADVICES_FROM_STATES = deepcopy(adaptations.WAITING_ADVICES_FROM_STATES)
+        adaptations.WAITING_ADVICES_FROM_STATES = {'*': (
+            {'from_states': (proposed_state, ),
+             'back_states': (proposed_state, ),
+             'perm_cloned_states': (proposed_state, ),
+             'remove_modify_access': True,
+             'use_custom_icon': False,
+             'use_custom_back_transition_title_for': (),
+             'use_custom_state_title': True, },), }
+
         waiting_advices_proposed_state = '{0}_waiting_advices'.format(
             proposed_state)
         cfg.setItemAdviceStates((waiting_advices_proposed_state, ))
@@ -2062,6 +2073,8 @@ class testMeetingConfig(PloneMeetingTestCase):
                 context=self.request)
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
                          level_removed_error)
+        # back to original configuration
+        adaptations.WAITING_ADVICES_FROM_STATES = original_WAITING_ADVICES_FROM_STATES
 
     def test_pm_Validate_itemWFValidationLevels_removed_used_state_in_config(self):
         """Test MeetingConfig.validate_itemWFValidationLevels, if we remove a validation
