@@ -28,6 +28,10 @@ Changelog
   [gbastien]
 - Fixed `test_pm_ItemMailNotificationLateItem` when called from subplugins.
   [gbastien]
+- Make `test_pm_Validate_itemWFValidationLevels_removed_depending_used_state_item`
+  and `test_pm_SearchItemsToCorrectToValidateOfEveryReviewerGroups` more robust
+  when called from subplugin.
+  [gbastien]
 
 4.2.9rc5 (2024-03-14)
 ---------------------
