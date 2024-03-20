@@ -43,6 +43,7 @@ from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
+from Products.CMFPlone.utils import safe_unicode
 from Products.Five import zcml
 from Products.PloneMeeting.browser.itemassembly import item_assembly_default
 from Products.PloneMeeting.browser.itemassembly import validate_item_assembly
@@ -8773,7 +8774,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         recipients, subject, body = item.wfActions().doValidate(None)
         self.assertEqual(recipients, [u'M. PMManager <pmmanager@plonemeeting.org>'])
-        self.assertEqual(subject, u'PloneMeeting assembly - A "late" item has been validated.')
+        self.assertEqual(subject, u'%s - A "late" item has been validated.' %
+                         safe_unicode(cfg.Title()))
 
     def test_pm_send_late_item_in_meeting_mail_if_relevant(self):
         """Test the "late_item_in_meeting" notification to powerobservers."""

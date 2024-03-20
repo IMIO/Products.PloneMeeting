@@ -26,6 +26,8 @@ Changelog
   may also edit crated item (when using `extra_suffixes`), this way we may
   remove `_reviewers_may_edit_itemcreated` helper.
   [gbastien]
+- Fixed `test_pm_ItemMailNotificationLateItem` when called from subplugins.
+  [gbastien]
 
 4.2.9rc5 (2024-03-14)
 ---------------------
