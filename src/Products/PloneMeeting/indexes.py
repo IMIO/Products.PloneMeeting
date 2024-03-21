@@ -6,6 +6,7 @@
 #
 
 from collective.contact.core.content.organization import IOrganization
+from collective.eeafaceted.z3ctable.columns import EMPTY_STRING
 from collective.iconifiedcategory.indexes import content_category_uid
 from datetime import datetime
 from imio.annex.content.annex import IAnnex
@@ -18,7 +19,6 @@ from OFS.interfaces import IItem
 from plone import api
 from plone.indexer import indexer
 from Products.PloneMeeting.config import ALL_ADVISERS_GROUP_VALUE
-from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_INITIATOR_INDEX_PATTERN
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE

@@ -69,6 +69,7 @@ from Products.PloneMeeting.utils import getDateFromDelta
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import hasHistory
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import ItemDuplicatedFromConfigEvent
 from Products.PloneMeeting.utils import MeetingLocalRolesUpdatedEvent
 from Products.PloneMeeting.utils import rememberPreviousData
@@ -2230,7 +2231,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         res = tool.isManager(meeting)
         if not res:
             cfg = tool.getMeetingConfig(meeting)
-            res = tool.isPowerObserverForCfg(cfg) or \
+            res = isPowerObserverForCfg(cfg) or \
                 meeting.adapted().isDecided()
         return res
 

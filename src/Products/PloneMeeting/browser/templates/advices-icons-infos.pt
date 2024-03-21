@@ -18,10 +18,10 @@
 
           <tal:comment replace="nothing">List of group names</tal:comment>
           <tal:loop repeat="advice python:advicesByType[adviceType]">
-            <fieldset tal:define="dummy python: view._initAdviceInfos(advice['id']);
-                                  adviceHolder python: advice.get('adviceHolder', None) or view.context;
-                                  adviceHolderIsViewable python: adviceHolder.isViewable();
-                                  obj python: advice.get('advice_id', None) and adviceHolder.get(advice['advice_id'], None);
+            <fieldset tal:define="dummy python: view._initAdviceInfos(advice);
+                                  adviceHolder python: view.adviceHolder;
+                                  adviceHolderIsViewable python: view.adviceHolderIsViewable;
+                                  obj python: view.obj;
                                   obj_absolute_url python: obj and obj.absolute_url() or '';
                                   customMessageInfos python: context.adapted().getCustomAdviceMessageFor(advice);
                                   displayAdviceReviewState python: customMessageInfos['displayAdviceReviewState'];
@@ -78,12 +78,11 @@
                       </acronym>
                   </tal:inherited_advice>
                   <div class="advice_popup_label">
-                    <span tal:condition="advice/optional">(</span>
                     <span class="advice-name" tal:content="advice/name"></span>
                     <tal:showDelayLabel condition="python: advice['delay'] and advice['delay_label']">
                     - <span class="advice-label" tal:content="advice/delay_label"></span>
                     </tal:showDelayLabel>
-                    <span tal:condition="advice/optional">)</span>
+                    <span tal:condition="python: not advice['optional']">[auto]</span>
                   </div>
                   <div class="advice_popup_actions">
                      &nbsp;&nbsp;
@@ -116,7 +115,7 @@
                               title="to_previous_given_advice"
                               tal:attributes="src string:${portal_url}/advice_${adviceStyle}_asked_again_back_to_previous.png;
                                               onClick string:javascript:$('.tooltipstered').tooltipster('hide');;callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again');;"/></acronym>
-                     <tal:advice-change-delay-condition condition="view/mayChangeDelay">
+                     <tal:advice-change-delay-condition condition="python: view.mayChangeDelay()">
                       <acronym title="Change delay"
                             i18n:domain="PloneMeeting"
                             i18n:attributes="title">
@@ -130,9 +129,8 @@
                          </a>
                       </acronym>
                      </tal:advice-change-delay-condition>
-                     <acronym tal:condition="python: adviceHolderIsViewable and advice.get('advice_id', None)">
-                        <a class="overlay-history"
-                           title="History"
+                     <acronym tal:condition="python: view.show_history" class="contentHistory">
+                        <a title="History"
                            i18n:domain="plone"
                            i18n:attributes="title"
                            href="@@historyview"
@@ -222,7 +220,9 @@
                                 condition="python: adviceType != 'not_given'">
                                 <tal:defines
                                     define="comment python: obj.advice_comment and obj.advice_comment.output;
-                                            observations python: obj.advice_observations and obj.advice_observations.output;">
+                                            observations python: obj.advice_observations and obj.advice_observations.output;
+                                            use_accounting_commitment python: obj.attribute_is_used('advice_accounting_commitment');
+                                            accounting_commitment python:use_accounting_commitment and obj.advice_accounting_commitment and obj.advice_accounting_commitment.output;">
                                     <img tal:attributes="src string:${portal_url}/advice_${adviceStyle}_${advice/type}.png;
                                                          title string:${advice/type};"
                                          i18n:attributes="title" title=""/>
@@ -255,6 +255,22 @@
                                            <metal:readmorable use-macro='readmorable' />
                                          </tal:observations>
                                     </fieldset>
+
+                                    <fieldset class="advice_accounting_commitment" tal:condition="use_accounting_commitment">
+                                         <legend i18n:translate="title_advice_accounting_commitment">Advice accounting commitment</legend>
+                                         <tal:observations define="readmore_text accounting_commitment">
+                                           <metal:readmorable use-macro='readmorable' />
+                                         </tal:observations>
+                                    </fieldset>
+
+                                    <div class="discreet advice_reference" tal:condition="python: advice['reference']">
+                                      <span class="table_widget_label">
+                                        <label i18n:translate="title_advice_reference">Reference</label>:
+                                      </span>
+                                      <span class="table_widget_value"
+                                          tal:content="python: advice['reference']"></span>
+                                    </div>
+
                                 </tal:defines>
                             </tal:infos_advice_given_only>
                             <tal:infos_any_advices

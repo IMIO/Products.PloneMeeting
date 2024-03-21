@@ -12,9 +12,9 @@ from datetime import datetime
 from datetime import timedelta
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import richtextval
 from plone import api
 from plone.app.querystring.querybuilder import queryparser
-from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -22,6 +22,7 @@ from Products.CMFCore.permissions import View
 from Products.PloneMeeting.adapters import _find_nothing_query
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
+from Products.PloneMeeting.utils import getAdvicePortalTypes
 from zope.component import getAdapter
 from zope.component import getAdapters
 from zope.event import notify
@@ -144,7 +145,7 @@ class testSearches(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
         self.failIf(collection.results())
         # pmReviewer2 is adviser for 'vendors', delay-aware advices are also returned
@@ -158,7 +159,7 @@ class testSearches(PloneMeetingTestCase):
                                           'meetingadvice',
                                           **{'advice_group': self.vendors_uid,
                                              'advice_type': u'negative',
-                                             'advice_comment': RichTextValue(u'My comment')})
+                                             'advice_comment': richtextval(u'My comment')})
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
         self.failIf(collection.results())
 
@@ -315,7 +316,7 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmAdviser1')
         indexAdvisers = []
         adviceStates = []
-        for portal_type in self.tool.getAdvicePortalTypes():
+        for portal_type in getAdvicePortalTypes():
             adviceWF = self.wfTool.getWorkflowsFor(portal_type.id)[0]
             adviceStates += adviceWF.states.keys()
         # remove duplicates
@@ -349,7 +350,7 @@ class testSearches(PloneMeetingTestCase):
                                           'meetingadvice',
                                           **{'advice_group': self.developers_uid,
                                              'advice_type': u'positive',
-                                             'advice_comment': RichTextValue(u'My comment')})
+                                             'advice_comment': richtextval(u'My comment')})
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
         self.failUnless(collection.results())
         # another user will not see given advices
@@ -371,7 +372,7 @@ class testSearches(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # pmManager will see 2 items and pmAdviser1, just one, none for a non adviser
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
         self.failUnless(len(collection.results()) == 2)
@@ -412,7 +413,7 @@ class testSearches(PloneMeetingTestCase):
         # as adviser, query is correct
         self.changeUser('pmAdviser1')
         adviceStates = []
-        for portal_type in self.tool.getAdvicePortalTypes():
+        for portal_type in getAdvicePortalTypes():
             adviceWF = self.wfTool.getWorkflowsFor(portal_type.id)[0]
             adviceStates += adviceWF.states.keys()
         # remove duplicates
@@ -444,7 +445,7 @@ class testSearches(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # non delay-aware advices are not found
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditemswithdelay')
         self.failIf(collection.results())
@@ -469,7 +470,7 @@ class testSearches(PloneMeetingTestCase):
                                  'meetingadvice',
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         # pmManager will see 2 items and pmAdviser1, just one, none for a non adviser
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditemswithdelay')
         self.failUnless(len(collection.results()) == 1)
@@ -544,6 +545,23 @@ class testSearches(PloneMeetingTestCase):
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
         self.failUnless(collection.results())
+
+    def test_pm_show_copy_groups_search(self):
+        """Test MeetingConfig.show_copy_groups_search used to show items in copy searches."""
+        cfg = self.meetingConfig
+        self._enableField('copyGroups')
+        self.assertEqual(cfg.getSelectableCopyGroups(),
+                         (self.developers_reviewers, self.vendors_reviewers))
+        self.changeUser('pmCreator1')
+        self.assertFalse(cfg.show_copy_groups_search())
+        self.changeUser('pmReviewer2')
+        self.assertTrue(cfg.show_copy_groups_search())
+        # not shown if copyGroups not used
+        self._enableField('copyGroups', enable=False)
+        self.changeUser('pmCreator1')
+        self.assertFalse(cfg.show_copy_groups_search())
+        self.changeUser('pmReviewer2')
+        self.assertFalse(cfg.show_copy_groups_search())
 
     def test_pm_SearchMyItemsTakenOver(self):
         '''Test the 'my-items-taken-over' method.  This should return
@@ -721,6 +739,7 @@ class testSearches(PloneMeetingTestCase):
         reviewers = cfg.reviewersFor()
         if not len(reviewers) > 1:
             self._enablePrevalidation(cfg)
+        reviewers = cfg.reviewersFor()
         if not len(reviewers) > 1:
             pm_logger.info("Could not launch test 'test_pm_SearchItemsToValidateOfMyReviewerGroups' "
                            "because we need at least 2 levels of item validation.")
@@ -866,7 +885,7 @@ class testSearches(PloneMeetingTestCase):
         '''Test the 'items-to-correct' CompoundCriterion adapter.  This should return
            a list of items in state 'returned_to_proposing_group' the current user is able to edit.'''
         cfg = self.meetingConfig
-        if 'return_to_proposing_group' not in cfg.listWorkflowAdaptations():
+        if not self._check_wfa_available(['return_to_proposing_group']):
             pm_logger.info("Bypassing test test_pm_SearchItemsToCorrect because it "
                            "needs the 'return_to_proposing_group' wfAdaptation.")
             return
@@ -940,7 +959,7 @@ class testSearches(PloneMeetingTestCase):
            CompoundCriterion adapter. This should return a list of items in state
            'returned_to_proposing_group_proposed' the current user is able to edit.'''
         cfg = self.meetingConfig
-        if 'return_to_proposing_group_with_last_validation' not in cfg.listWorkflowAdaptations():
+        if not self._check_wfa_available(['return_to_proposing_group_with_last_validation']):
             pm_logger.info(
                 "Bypassing test test_pm_SearchItemsToCorrectToValidateHighestHierarchicLevel because it "
                 "needs the 'return_to_proposing_group_with_last_validation' wfAdaptation.")
@@ -1022,7 +1041,7 @@ class testSearches(PloneMeetingTestCase):
            so items that are 'proposed' and items that are 'returned_to_proposing_group_proposed'.'''
         # specify that copyGroups can see the item when it is proposed
         cfg = self.meetingConfig
-        if 'return_to_proposing_group_with_last_validation' not in cfg.listWorkflowAdaptations():
+        if not self._check_wfa_available(['return_to_proposing_group_with_last_validation']):
             pm_logger.info(
                 "Bypassing test test_pm_SearchAllItemsToValidateHighestHierarchicLevel because it "
                 "needs the 'return_to_proposing_group_with_last_validation' wfAdaptation.")
@@ -1090,13 +1109,13 @@ class testSearches(PloneMeetingTestCase):
         '''Test the 'items-to-correct-to-validate-of-every-reviewer-groups'
            CompoundCriterion adapter.  This should return a list of items in state
            'returned_to_proposing_group_proposed' the current user is able to edit.'''
-        cfg = self.meetingConfig
-        if 'return_to_proposing_group_with_all_validations' not in cfg.listWorkflowAdaptations():
+        if not self._check_wfa_available(['return_to_proposing_group_with_all_validations']):
             pm_logger.info(
                 "Bypassing test test_pm_SearchItemsToCorrectToValidateOfEveryReviewerGroups because it "
                 "needs the 'return_to_proposing_group_with_all_validations' wfAdaptation.")
             return
 
+        cfg = self.meetingConfig
         itemTypeName = cfg.getItemTypeName()
 
         self.changeUser('siteadmin')
@@ -1114,6 +1133,7 @@ class testSearches(PloneMeetingTestCase):
             wfAdaptations.remove('return_to_proposing_group')
         cfg.setWorkflowAdaptations(wfAdaptations)
         self._enablePrevalidation(cfg)
+        notify(ObjectEditedEvent(cfg))
 
         # normally this search is not available to users that are not able to review items
         # nevertheless, if a user is in not able to edit items to correct in proposed, the special
@@ -1161,7 +1181,7 @@ class testSearches(PloneMeetingTestCase):
            CompoundCriterion adapter. This should return every items the user is able to validate
            so items that are 'proposed' and items that are 'returned_to_proposing_group_proposed'.'''
         cfg = self.meetingConfig
-        if 'return_to_proposing_group_with_all_validations' not in cfg.listWorkflowAdaptations():
+        if not self._check_wfa_available(['return_to_proposing_group_with_all_validations']):
             pm_logger.info(
                 "Bypassing test test_pm_SearchAllItemsToValidateOfEveryReviewerGroups because it "
                 "needs the 'return_to_proposing_group_with_all_validations' wfAdaptation.")
@@ -1366,6 +1386,25 @@ class testSearches(PloneMeetingTestCase):
         res = collection.results()
         self.assertEqual(len(res), 1)
         self.assertEqual(res[0].UID, editable_item.UID())
+
+    def test_pm_SearchLivingItems(self):
+        '''Test the 'living-items' CompoundCriterion adapter.
+           Returns every items that are not decided.'''
+        cfg = self.meetingConfig
+        collection = cfg.searches.searches_items.searchlivingitems
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem', decision=self.decisionText)
+        self.assertTrue(item.UID() in [brain.UID for brain in collection.results()])
+        meeting = self.create('Meeting')
+        self.presentItem(item)
+        self.freezeMeeting(meeting)
+        self.assertTrue(item.UID() in [brain.UID for brain in collection.results()])
+        self.decideMeeting(meeting)
+        self.assertTrue(item.UID() in [brain.UID for brain in collection.results()])
+        self.closeMeeting(meeting)
+        self.assertEqual(item.query_state(), 'accepted')
+        self.assertTrue(item.query_state() in cfg.getItemDecidedStates())
+        self.assertFalse(item.UID() in [brain.UID for brain in collection.results()])
 
 
 def test_suite():

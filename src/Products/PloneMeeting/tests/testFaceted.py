@@ -634,6 +634,7 @@ class testFaceted(PloneMeetingTestCase):
         new_org = self.create('organization', title='New organization', acronym='N.G.')
         new_org_uid = new_org.UID()
         cfg.setSelectableAdvisers(cfg.getSelectableAdvisers() + (new_org_uid, ))
+        notify(ObjectEditedEvent(cfg))
         # cache was cleaned
         self.assertEqual(len(vocab(pmFolder)), 7)
         # edit an organization

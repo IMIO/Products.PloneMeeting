@@ -6,6 +6,7 @@ from Acquisition import aq_base
 from appy.pod.xhtml2odt import XhtmlPreprocessor
 from appy.shared.diff import HtmlDiff
 from bs4 import BeautifulSoup
+from collective.behavior.internalnumber.browser.settings import decrement_if_last_nb
 from collective.behavior.internalnumber.browser.settings import increment_nb_for
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.core.utils import get_gender_and_number
@@ -22,15 +23,20 @@ from collective.iconifiedcategory.utils import get_group
 from datetime import datetime
 from datetime import timedelta
 from DateTime import DateTime
+from dexterity.localroles.utils import add_fti_configuration
 from email import Encoders
 from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from imio.helpers.cache import get_current_user_id
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import base_getattr
+from imio.helpers.content import get_schema_fields
+from imio.helpers.content import get_user_fullname
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_encode
 from imio.helpers.security import fplog
+from imio.helpers.workflow import get_final_states
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import addClassToLastChildren
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
@@ -72,6 +78,8 @@ from Products.PageTemplates.Expressions import SecureModuleImporter
 from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
+from Products.PloneMeeting.config import ADVICE_STATES_ENDED
+from Products.PloneMeeting.config import ADVICE_STATES_MAPPING
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
@@ -311,8 +319,8 @@ def createOrUpdatePloneGroup(groupId, groupTitle, groupSuffix):
        and p_groupSuffix, if group already exists, it will just update it's title.'''
     properties = api.portal.get_tool('portal_properties')
     enc = properties.site_properties.getProperty('default_charset')
-    groupTitle = '%s (%s)' % (
-        groupTitle.decode(enc),
+    groupTitle = u'%s (%s)' % (
+        safe_unicode(groupTitle),
         translate(groupSuffix, domain='PloneMeeting', context=getRequest()))
     # a default Plone group title is NOT unicode.  If a Plone group title is
     # edited TTW, his title is no more unicode if it was previously...
@@ -401,13 +409,6 @@ def _getEmailAddress(name, email):
 def _sendMail(obj, body, recipients, fromAddress, subject, format,
               attachments=None):
     '''Sends a mail. p_mto can be a single email or a list of emails.'''
-    bcc = None
-    # Hide the whole list of recipients if we must send the mail to many.
-    if not isinstance(recipients, basestring):
-        # mbcc passed parameter must be utf-8 encoded
-        bcc = [rec.encode('utf-8') for rec in recipients]
-        recipients = fromAddress
-    # Construct the data structures for the attachments if relevant
     if attachments:
         msg = MIMEMultipart()
         if isinstance(body, unicode):
@@ -431,8 +432,11 @@ def _sendMail(obj, body, recipients, fromAddress, subject, format,
                             'attachment; filename="%s"' % fileName)
             body.attach(part)
     try:
-        obj.MailHost.secureSend(body, recipients, fromAddress, subject, mbcc=bcc,
-                                subtype=format, charset='utf-8')
+        # make sure recipients are utf-8 encoded strings
+        for recipient in recipients:
+            recipient = safe_encode(recipient)
+            obj.MailHost.send(
+                body, recipient, fromAddress, subject, charset='utf-8', msg_type=format)
     except socket.error, sg:
         raise EmailError(SENDMAIL_ERROR % str(sg))
     except UnicodeDecodeError, ue:
@@ -466,9 +470,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     if mailMode == 'deactivated':
         return
     # Compute user name
-    pms = api.portal.get_tool('portal_membership')
-    userInfo = pms.getAuthenticatedMember()
-    userName = safe_unicode(tool.getUserName(userInfo.getId()))
+    user = api.user.get_current()
     # Compute list of MeetingGroups for this user
     userGroups = ', '.join([g.Title() for g in tool.get_orgs_for_user(the_objects=True)])
     # Create the message parts
@@ -494,11 +496,11 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         'meetingTitle': '',
         'meetingLongTitle': '',
         'itemTitle': '',
-        'user': userName,
+        'user': get_user_fullname(user.getId()),
         'groups': safe_unicode(userGroups),
         'meetingConfigTitle': safe_unicode(cfg.Title()),
         'transitionActor': wf_action and
-        safe_unicode(tool.getUserName(wf_action['actor'], withUserId=True)) or u'-',
+        get_user_fullname(wf_action['actor'], with_user_id=True) or u'-',
         'transitionTitle': wf_action and
         translate(wf_action['action'], domain="plone", context=obj.REQUEST) or u'-',
         'transitionComments': wf_action and safe_unicode(wf_action['comments']) or u'-',
@@ -580,18 +582,10 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         logger.info('Body is [%s]' % body)
     else:
         # Use 'plain' for mail format so the email client will turn links to clickable links
-        mailFormat = 'plain'
+        mailFormat = 'text/plain'
         # Send the mail(s)
         try:
-            if not attachments:
-                # Send a personalized email for every user.
-                for recipient in recipients:
-                    _sendMail(obj, body, recipient, fromAddress, subject, mailFormat)
-            else:
-                # Send a single mail with everybody in bcc, for performance reasons
-                # (avoid to duplicate the attached file(s)).
-                _sendMail(obj, body, recipients, fromAddress, subject, mailFormat,
-                          attachments)
+            _sendMail(obj, body, recipients, fromAddress, subject, mailFormat, attachments)
         except EmailError, ee:
             logger.warn(str(ee))
     # add a fingerpointing log message
@@ -694,7 +688,7 @@ def sendMailIfRelevant(obj,
             if not user.has_role(value, obj):
                 continue
 
-        recipient = tool.getMailRecipient(user)
+        recipient = getMailRecipient(user)
         # After all, we will add this guy to the list of recipients.
         recipients.append(recipient)
     mail_subject = mail_body = None
@@ -713,6 +707,24 @@ def sendMailIfRelevant(obj,
     if debug:
         return recipients, mail_subject, mail_body
     return True
+
+
+def getMailRecipient(userIdOrInfo):
+    '''This method returns the mail recipient (=string based on email and
+       fullname if present) from a user id or UserInfo retrieved from a
+       call to portal_membership.getMemberById.'''
+    if isinstance(userIdOrInfo, basestring):
+        # It is a user ID. Get the corresponding UserInfo instance
+        userInfo = api.user.get(userIdOrInfo)
+    else:
+        userInfo = userIdOrInfo
+    # We return None if the user does not exist or has no defined email.
+    if not userInfo or not userInfo.getProperty('email'):
+        return None
+    # Compute the mail recipient string: Firstname Lastname <email@email.org>
+    res = u'{0} <{1}>'.format(
+        get_user_fullname(userInfo.id), safe_unicode(userInfo.getProperty('email')))
+    return res
 
 
 def getCustomSchemaFields(baseSchema, completedSchema, cols):
@@ -919,10 +931,8 @@ def findNewValue(obj, name, history, stopIndex):
 def getHistoryTexts(obj, event):
     '''Returns a tuple (insertText, deleteText) containing texts to show on,
        respectively, inserted and deleted chunks of text.'''
-    tool = api.portal.get_tool(TOOL_ID)
     toLocalizedTime = obj.restrictedTraverse('@@plone').toLocalizedTime
-    userName = tool.getUserName(event['actor'])
-    mapping = {'userName': userName.decode('utf-8')}
+    mapping = {'userName': get_user_fullname(event['actor'])}
     res = []
     for type in ('insert', 'delete'):
         msg = translate('history_%s' % type,
@@ -967,10 +977,11 @@ def get_dx_attrs(portal_type,
                 key = "{0}.{1}".format(prefix, key)
                 display_list_tuples.append(
                     (key,
-                     '%s -> %s' % (key,
-                                   translate("title_{0}".format(field_name),
-                                             domain="PloneMeeting",
-                                             context=request))
+                     u'%s ➔ %s' % (
+                         key,
+                         translate("title_{0}".format(field_name),
+                                   domain="PloneMeeting",
+                                   context=request))
                      ))
             else:
                 display_list_tuples.append(
@@ -995,18 +1006,25 @@ def get_dx_schema(obj=None, portal_type=None):
 
 def get_dx_field(obj, field_name):
     """ """
-    schema = get_dx_schema(obj)
-    field = schema[field_name]
-    return field
+    for schema_field_name, schema_field in get_schema_fields(obj):
+        if schema_field_name == field_name:
+            return schema_field
 
 
 def get_dx_widget(obj, field_name, mode=DISPLAY_MODE):
     """ """
+    orig_field_name = field_name
+    if '.' in field_name:
+        field_name = field_name.split('.')[1]
     field = get_dx_field(obj, field_name)
     schema = get_dx_schema(obj)
     autoform_widgets = mergedTaggedValueDict(schema, WIDGETS_KEY)
     if field_name in autoform_widgets:
         widget = autoform_widgets[field_name](field, obj.REQUEST)
+    elif '.' in orig_field_name:
+        # XXX to be fixed
+        from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
+        widget = PMRichTextFieldWidget(field, obj.REQUEST)
     else:
         widget = getMultiAdapter((field, obj.REQUEST), IFieldWidget)
     widget.context = obj
@@ -1016,7 +1034,8 @@ def get_dx_widget(obj, field_name, mode=DISPLAY_MODE):
     if hasattr(widget.field, "allowed_mime_types"):
         widget.field.allowed_mime_types = ['text/html']
     # this will set widget.__name__
-    locate(widget, None, field_name)
+    locate(widget, None, orig_field_name)
+    widget.name = orig_field_name
     return widget
 
 
@@ -1066,8 +1085,15 @@ def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True
        new value is p_fieldValue. This method is called by Ajax pages.'''
 
     if IDexterityContent.providedBy(obj):
+        widget = get_dx_widget(obj, field_name=field_name)
+        if not widget.may_edit():
+            raise Unauthorized
         setattr(obj, field_name, richtextval(new_value))
     else:
+        # only used for AT MeetingItem
+        if not obj.mayQuickEdit(field_name):
+            raise Unauthorized
+
         field = obj.getField(field_name)
         if remember:
             # Keep old value, we might need to historize it.
@@ -1231,9 +1257,10 @@ def applyOnTransitionFieldTransform(obj, transitionId):
     cfg = extra_expr_ctx['cfg']
     for transform in cfg.getOnTransitionFieldTransforms():
         tal_expr = transform['tal_expression'].strip()
-        if tal_expr and \
-           transform['transition'] == transitionId and \
-           transform['field_name'].split('.')[0] == obj.getTagName():
+        # transform a field or execute the TAL expression
+        if tal_expr and transform['transition'] == transitionId and \
+           ('.' not in transform['field_name'] or
+                transform['field_name'].split('.')[0] == obj.getTagName()):
             try:
                 extra_expr_ctx.update({'item': obj, })
                 res = _evaluateExpression(
@@ -1243,14 +1270,16 @@ def applyOnTransitionFieldTransform(obj, transitionId):
                     extra_expr_ctx=extra_expr_ctx,
                     empty_expr_is_true=False,
                     raise_on_error=True)
-                field = obj.getField(transform['field_name'].split('.')[1])
-                field.set(obj, res, mimetype='text/html')
-                idxs.append(field.accessor)
+                # transform a field
+                if '.' in transform['field_name']:
+                    field = obj.getField(transform['field_name'].split('.')[1])
+                    field.set(obj, res, mimetype='text/html')
+                    idxs.append(field.accessor)
             except Exception, e:
                 plone_utils = api.portal.get_tool('plone_utils')
                 plone_utils.addPortalMessage(
                     ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR % (
-                        transform['field_name'].split('.')[1], str(e)),
+                        transform['field_name'], str(e)),
                     type='warning')
                 break
     # if something changed, pass supposed indexes + SearchableText
@@ -1260,7 +1289,7 @@ def applyOnTransitionFieldTransform(obj, transitionId):
 
 
 # ------------------------------------------------------------------------------
-def meetingExecuteActionOnLinkedItems(meeting, transitionId):
+def meetingExecuteActionOnLinkedItems(meeting, transitionId, items=[]):
     '''
       When the given p_transitionId is triggered on the given p_meeting,
       check if we need to trigger an action on linked items
@@ -1270,10 +1299,12 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId):
     cfg = extra_expr_ctx['cfg']
     wfTool = api.portal.get_tool('portal_workflow')
     wf_comment = _('wf_transition_triggered_by_application')
+    if not items:
+        items = meeting.get_items()
     for action in cfg.getOnMeetingTransitionItemActionToExecute():
         if action['meeting_transition'] == transitionId:
             is_transition = not action['tal_expression']
-            for item in meeting.get_items():
+            for item in items:
                 if is_transition:
                     # do not fail if a transition could not be triggered, just add an
                     # info message to the log so configuration can be adapted to avoid this
@@ -1816,10 +1847,33 @@ def getTransitionToReachState(obj, state):
     return res
 
 
+def getAdvicePortalTypeIds_cachekey(method):
+    '''cachekey method for getAdvicePortalTypes.'''
+    return True
+
+
+@ram.cache(getAdvicePortalTypeIds_cachekey)
+def getAdvicePortalTypeIds():
+    """We may have several 'meetingadvice' portal_types,
+       return it as ids."""
+    return getAdvicePortalTypes(as_ids=True)
+
+
+def getAdvicePortalTypes(as_ids=False):
+    """We may have several 'meetingadvice' portal_types."""
+    typesTool = api.portal.get_tool('portal_types')
+    res = []
+    for portal_type in typesTool.listTypeInfo():
+        if portal_type.id.startswith('meetingadvice'):
+            res.append(portal_type)
+    if as_ids:
+        res = [p.id for p in res]
+    return res
+
+
 def findMeetingAdvicePortalType(context):
     """ """
-    tool = api.portal.get_tool('portal_plonemeeting')
-    advicePortalTypeIds = tool.getAdvicePortalTypeIds()
+    advicePortalTypeIds = getAdvicePortalTypeIds()
     if context.portal_type in advicePortalTypeIds:
         return context.portal_type
 
@@ -1849,6 +1903,43 @@ def findMeetingAdvicePortalType(context):
     return current_portal_type
 
 
+def get_advice_alive_states():
+    """Return every WF states considered as alive states (WF not ended)."""
+    res = []
+    wf_tool = api.portal.get_tool('portal_workflow')
+    for adv_pt in getAdvicePortalTypeIds():
+        res += wf_tool.getWorkflowsFor(adv_pt)[0].states.keys()
+    # remove the ADVICE_STATES_ENDED and duplicates
+    return tuple(set([state_id for state_id in res
+                      if state_id not in ADVICE_STATES_ENDED]))
+
+
+def getAvailableMailingLists(obj, pod_template):
+    '''Gets the names of the (currently active) mailing lists defined for
+       this template.'''
+    res = []
+    mailing_lists = pod_template.mailing_lists and pod_template.mailing_lists.strip()
+    if not mailing_lists:
+        return res
+    try:
+        extra_expr_ctx = _base_extra_expr_ctx(obj)
+        extra_expr_ctx.update({'obj': obj, })
+        for line in mailing_lists.split('\n'):
+            name, expression, userIds = line.split(';')
+            if not expression or _evaluateExpression(obj,
+                                                     expression,
+                                                     roles_bypassing_expression=[],
+                                                     extra_expr_ctx=extra_expr_ctx,
+                                                     raise_on_error=True):
+                res.append(name.strip())
+    except Exception, exc:
+        res.append(translate('Mailing lists are not correctly defined, original error is \"${error}\"',
+                             domain='PloneMeeting',
+                             mapping={'error': str(exc)},
+                             context=obj.REQUEST))
+    return res
+
+
 def displaying_available_items(context):
     """Is the meeting view displaying available items?"""
     return bool("@@meeting_available_items_view" in context.REQUEST['HTTP_REFERER'] or
@@ -1864,7 +1955,7 @@ def updateAnnexesAccess(container):
     """ """
     portal = api.portal.get()
     adapter = None
-    for k, v in getattr(container, 'categorized_elements', {}).items():
+    for k, v in base_getattr(container, 'categorized_elements', {}).items():
         # do not fail on 'Members', use unrestrictedTraverse
         try:
             annex = portal.unrestrictedTraverse(v['relative_url'])
@@ -2188,19 +2279,6 @@ def org_id_to_uid(org_info, raise_on_error=True, ignore_underscore=False):
             return None
 
 
-def get_person_from_userid(userid, only_active=True):
-    """Return the person having given p_userid."""
-    catalog = api.portal.get_tool('portal_catalog')
-    query = {'portal_type': 'person'}
-    if only_active:
-        query['review_state'] = 'active'
-    brains = catalog.unrestrictedSearchResults(**query)
-    for brain in brains:
-        person = brain.getObject()
-        if person.userid == userid:
-            return person
-
-
 def decodeDelayAwareId(delayAwareId):
     """Decode a 'delay-aware' id, we receive something like
        'orgauid__rowid__myuniquerowid.20141215'.
@@ -2240,40 +2318,6 @@ def _clear_local_roles(obj):
     # add 'Owner' local role
     obj.manage_addLocalRoles(obj.owner_info()['id'], ('Owner',))
     return old_local_roles
-
-
-def add_wf_history_action(obj, action_name, action_label, user_id=None, insert_index=None):
-    wfTool = api.portal.get_tool('portal_workflow')
-    wfs = wfTool.getWorkflowsFor(obj)
-    if not wfs:
-        return
-    wf = wfs[0]
-    wfName = wf.id
-    # get review_state from last event if any
-    events = list(obj.workflow_history[wfName]) or []
-    if events:
-        previousEvent = events[-1]
-        review_state_id = previousEvent['review_state']
-    else:
-        # use initial_state
-        review_state_id = wf.initial_state
-    # action comments must be translated in the imio.history domain
-    newEvent = {}
-    newEvent['comments'] = action_label or ''
-    # action_name must be translated in the plone domain
-    newEvent['action'] = action_name
-    newEvent['actor'] = user_id or get_current_user_id(obj.REQUEST)
-    # if an insert_index is defined, use same 'time' as previous as
-    # events are sorted on 'time' and just add 1 millisecond
-    if insert_index is not None:
-        newEvent['time'] = events[insert_index]['time'] + 0.000000001
-        newEvent['review_state'] = events[insert_index]['review_state']
-        events.insert(insert_index, newEvent)
-    else:
-        newEvent['time'] = DateTime()
-        newEvent['review_state'] = review_state_id
-        events.insert(len(events), newEvent)
-    obj.workflow_history[wfName] = events
 
 
 def is_editing(cfg):
@@ -2496,6 +2540,33 @@ def convert2xhtml(obj,
     return xhtmlFinal
 
 
+def isPowerObserverForCfg_cachekey(method, cfg, power_observer_types=[]):
+    '''cachekey method for isPowerObserverForCfg.'''
+    return (get_plone_groups_for_user(),
+            repr(cfg),
+            power_observer_types)
+
+
+# not ramcached perf tests says it does not change anything
+# and this avoid useless entry in cache
+# @ram.cache(isPowerObserverForCfg_cachekey)
+def isPowerObserverForCfg(cfg, power_observer_types=[]):
+    """
+      Returns True if the current user is a power observer
+      for the given p_itemOrMeeting.
+      It is a power observer if member of the corresponding
+      p_power_observer_types suffixed groups.
+      If no p_power_observer_types we check every existing power_observers groups.
+    """
+    user_plone_groups = get_plone_groups_for_user()
+    for po_infos in cfg.getPowerObservers():
+        if not power_observer_types or po_infos['row_id'] in power_observer_types:
+            groupId = "{0}_{1}".format(cfg.getId(), po_infos['row_id'])
+            if groupId in user_plone_groups:
+                return True
+    return False
+
+
 def get_annexes_config(context, portal_type="annex", annex_group=False):
     """ """
     if portal_type == 'annexDecision':
@@ -2538,6 +2609,21 @@ def get_internal_number(obj, init=False):
     return internal_number
 
 
+def set_internal_number(obj, value, update_ref=False, reindex=True, decrement=False):
+    """Set the internal_number for a given p_obj. If p_update_ref is True we also
+    update the item reference. If reindex is True, we reindex the internal_number index.
+    If decrement is True, we decrement global counter if it was last value."""
+    # manage decrement before setting value
+    if decrement:
+        decrement_if_last_nb(obj)
+    setattr(obj, "internal_number", value)
+    if update_ref:
+        obj.update_item_reference()
+    if reindex:
+        # there is only an index, no metadata related to "internal_number"
+        reindex_object(obj, idxs=['internal_number'], update_metadata=False)
+
+
 def _get_category(obj, cat_id, the_object=False, cat_type='categories'):
     """Get the cat_type "category" on an item or meeting.
        p_cat_type may be "categories", "classifiers" or "meetingcategories"."""
@@ -2552,6 +2638,55 @@ def _get_category(obj, cat_id, the_object=False, cat_type='categories'):
     else:
         res = cat_id
     return res
+
+
+def configure_advice_dx_localroles_for(portal_type, org_uids=[]):
+    """Configure the DX localroles for an advice portal_type:
+       - initial_state receives no role;
+       - final state receives "Reviewer" role;
+       - other states receive "Editor/Reviewer/Contributor" roles."""
+    wf_tool = api.portal.get_tool('portal_workflow')
+    wf = wf_tool.getWorkflowsFor(portal_type)[0]
+    roles_config = {
+        'advice_group': {}
+    }
+    final_state_ids = get_final_states(wf, ignored_transition_ids=['giveAdvice'])
+    # compute suffixes
+    suffixes = []
+    if org_uids:
+        for org_uid in org_uids:
+            suffixes += get_all_suffixes(org_uid=org_uid)
+        # remove duplicates
+        suffixes = list(set(suffixes))
+    else:
+        suffixes = get_all_suffixes()
+    for state in wf.states.values():
+        if state.id == 'advice_given':
+            # special case, 'advice_given' is a state always existing in any
+            # advice related workflow and is the technical final state
+            roles_config['advice_group'][state.id] = {
+                'advisers': {'roles': [], 'rel': ''}}
+        else:
+            # get suffix from ADVICE_STATES_MAPPING, if suffix does not exist
+            # in plonegroup, we will use "advisers"
+            suffix = ADVICE_STATES_MAPPING.get(state.id, u'advisers')
+            # make sure suffix is used or we use u'advisers'
+            # this let's have a common ADVICE_STATES_MAPPING with some exceptions
+            suffix = suffix if suffix in suffixes else u'advisers'
+            if state.id in final_state_ids:
+                roles_config['advice_group'][state.id] = {
+                    suffix: {'roles': [u'Reviewer'], 'rel': ''}}
+            else:
+                # any other states, most of states actually
+                roles_config['advice_group'][state.id] = {
+                    suffix: {'roles': [u'Editor', u'Reviewer', u'Contributor'],
+                             'rel': ''}}
+    msg = add_fti_configuration(portal_type=portal_type,
+                                configuration=roles_config['advice_group'],
+                                keyname='advice_group',
+                                force=True)
+    if msg:
+        logger.warn(msg)
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

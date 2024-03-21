@@ -8,6 +8,7 @@ from imio.helpers.cache import get_plone_groups_for_user
 from plone import api
 from plone.app.caching.interfaces import IETagValue
 from plone.app.caching.operations.utils import getContext
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from zope.component import adapts
 from zope.interface import implements
 from zope.interface import Interface
@@ -75,9 +76,8 @@ class ParentModified(object):
 
     def __call__(self):
         context = getContext(self.published)
-        tool = api.portal.get_tool('portal_plonemeeting')
         res = 'pm_0'
-        if context.portal_type in tool.getAdvicePortalTypeIds():
+        if context.portal_type in getAdvicePortalTypeIds():
             parent = context.aq_inner.aq_parent
             res = 'pm_' + _modified(parent)
         return res

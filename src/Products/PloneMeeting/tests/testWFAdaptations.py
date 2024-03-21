@@ -5,6 +5,8 @@
 # GNU General Public License (GPL)
 #
 
+from collective.behavior.internalnumber.browser.settings import get_settings
+from collective.behavior.internalnumber.browser.settings import set_settings
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import select_org_for_function
@@ -12,8 +14,12 @@ from copy import deepcopy
 from DateTime import DateTime
 from datetime import datetime
 from datetime import timedelta
+from imio.helpers.content import get_vocab_values
+from imio.helpers.content import richtextval
+from imio.helpers.content import uuidToObject
 from imio.helpers.workflow import get_leading_transitions
-from plone.app.textfield.value import RichTextValue
+from imio.zamqp.core.utils import next_scan_id
+from imio.zamqp.pm.tests.base import DEFAULT_SCAN_ID
 from plone.dexterity.utils import createContentInContainer
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import DeleteObjects
@@ -30,7 +36,8 @@ from Products.PloneMeeting.config import WriteItemMeetingManagerFields
 from Products.PloneMeeting.config import WriteMarginalNotes
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
-from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
+from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_internal_number
 from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import ObjectModifiedEvent
@@ -51,62 +58,57 @@ class testWFAdaptations(PloneMeetingTestCase):
     def _wait_advice_from_proposed_state_back_transition(self):
         return 'backTo_' + self._stateMappingFor('proposed') + '_from_waiting_advices'
 
-    def _check_wfa_available(self, wfas):
-        available = True
-        available_wfas = self.meetingConfig.listWorkflowAdaptations()
-        for wfa in wfas:
-            if wfa not in available_wfas:
-                available = False
-                pm_logger.info('Bypassing "{0}" because WFAdaptation "{1}" is not available!'.format(
-                    self._testMethodName, wfa))
-                break
-        return available
-
     def test_pm_WFA_availableWFAdaptations(self):
         '''Test what are the available wfAdaptations.
            This way, if we add a wfAdaptations, the test will 'break' until it is adapted...'''
-        self.assertEqual(sorted(self.meetingConfig.listWorkflowAdaptations().keys()),
-                         ['accepted_but_modified',
-                          'accepted_out_of_meeting',
-                          'accepted_out_of_meeting_and_duplicated',
-                          'accepted_out_of_meeting_emergency',
-                          'accepted_out_of_meeting_emergency_and_duplicated',
-                          'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
-                          'delayed',
-                          'hide_decisions_when_under_writing',
-                          'hide_decisions_when_under_writing_check_returned_to_proposing_group',
-                          'item_validation_no_validate_shortcuts',
-                          'item_validation_shortcuts',
-                          'itemdecided',
-                          'mark_not_applicable',
-                          MEETING_REMOVE_MOG_WFA,
-                          'meetingmanager_correct_closed_meeting',
-                          'no_decide',
-                          'no_freeze',
-                          'no_publication',
-                          'only_creator_may_delete',
-                          'postpone_next_meeting',
-                          'pre_accepted',
-                          'presented_item_back_to_itemcreated',
-                          'presented_item_back_to_proposed',
-                          'refused',
-                          'removed',
-                          'removed_and_duplicated',
-                          'return_to_proposing_group',
-                          'return_to_proposing_group_with_all_validations',
-                          'return_to_proposing_group_with_last_validation',
-                          'reviewers_take_back_validated_item',
-                          'transfered',
-                          'transfered_and_duplicated',
-                          'waiting_advices',
-                          'waiting_advices_adviser_may_validate',
-                          'waiting_advices_adviser_send_back',
-                          'waiting_advices_from_before_last_val_level',
-                          'waiting_advices_from_every_val_levels',
-                          'waiting_advices_from_last_val_level',
-                          'waiting_advices_given_advices_required_to_validate',
-                          'waiting_advices_given_and_signed_advices_required_to_validate',
-                          'waiting_advices_proposing_group_send_back'])
+        cfg = self.meetingConfig
+        # generate the presented_item_back_to_ WFAs
+        pibs = [
+            'presented_item_back_to_%s' % item_val_state for item_val_state in
+            cfg.getItemWFValidationLevels(data='state', only_enabled=True)]
+        self.assertEqual(
+            sorted(get_vocab_values(self.meetingConfig, 'WorkflowAdaptations')),
+            sorted(['accepted_but_modified',
+                    'accepted_out_of_meeting',
+                    'accepted_out_of_meeting_and_duplicated',
+                    'accepted_out_of_meeting_emergency',
+                    'accepted_out_of_meeting_emergency_and_duplicated',
+                    'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
+                    'delayed',
+                    'hide_decisions_when_under_writing',
+                    'hide_decisions_when_under_writing_check_returned_to_proposing_group',
+                    'item_validation_no_validate_shortcuts',
+                    'item_validation_shortcuts',
+                    'itemdecided',
+                    'mark_not_applicable',
+                    MEETING_REMOVE_MOG_WFA,
+                    'meetingmanager_correct_closed_meeting',
+                    'no_decide',
+                    'no_freeze',
+                    'no_publication',
+                    'only_creator_may_delete',
+                    'postpone_next_meeting',
+                    'postpone_next_meeting_keep_internal_number',
+                    'postpone_next_meeting_transfer_annex_scan_id',
+                    'pre_accepted',
+                    'refused',
+                    'removed',
+                    'removed_and_duplicated',
+                    'return_to_proposing_group',
+                    'return_to_proposing_group_with_all_validations',
+                    'return_to_proposing_group_with_last_validation',
+                    'reviewers_take_back_validated_item',
+                    'transfered',
+                    'transfered_and_duplicated',
+                    'waiting_advices',
+                    'waiting_advices_adviser_may_validate',
+                    'waiting_advices_adviser_send_back',
+                    'waiting_advices_from_before_last_val_level',
+                    'waiting_advices_from_every_val_levels',
+                    'waiting_advices_from_last_val_level',
+                    'waiting_advices_given_advices_required_to_validate',
+                    'waiting_advices_given_and_signed_advices_required_to_validate',
+                    'waiting_advices_proposing_group_send_back'] + pibs))
 
     def test_pm_WFA_appliedOnMeetingConfigEdit(self):
         """WFAdpatations are applied when the MeetingConfig is edited."""
@@ -2051,7 +2053,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         transition = itemWorkflow.transitions[ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION]
         self.assertEqual(transition.new_state_id, item.query_state())
 
-    def test_pm_WFA_waiting_advices(self):
+    def test_pm_WFA_waiting_advices_base(self):
         '''Test the workflowAdaptation 'waiting_advices'.'''
         # ease override by subproducts
         if not self._check_wfa_available(['waiting_advices']):
@@ -2744,7 +2746,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse('postpone_next_meeting' in itemWF.transitions)
         self.assertFalse('postponed_next_meeting' in itemWF.states)
 
-    def _postpone_next_meeting_active(self):
+    def _postpone_next_meeting_active(self, add_annexes=False, scan_id=DEFAULT_SCAN_ID):
         '''Tests while 'postpone_next_meeting' wfAdaptation is active.'''
         itemWF = self.meetingConfig.getItemWorkflow(True)
         self.assertTrue('postpone_next_meeting' in itemWF.transitions)
@@ -2753,12 +2755,91 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         item = self.create('MeetingItem', decision=self.decisionText)
+        if add_annexes:
+            self.addAnnex(item)
+            self.addAnnex(item, scan_id=scan_id)
+        # add an annex with scan_id and one without
         self.presentItem(item)
         self.decideMeeting(meeting)
         self.do(item, 'postpone_next_meeting')
         self.assertEqual(item.query_state(), 'postponed_next_meeting')
         # back transition
         self.do(item, 'backToItemPublished')
+        return item
+
+    def test_pm_WFA_postpone_next_meeting_keep_internal_number(self):
+        '''Test the workflowAdaptation 'postpone_next_meeting_keep_internal_number'.'''
+        # ease override by subproducts
+        if not self._check_wfa_available(['postpone_next_meeting_keep_internal_number']):
+            return
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        # enable for internal_number
+        set_settings({cfg.getItemTypeName(): {'u': False, 'nb': 1, 'expr': u'number'}})
+        self.changeUser('pmManager')
+        # check while the _keep_internal_number wfAdaptation is not activated
+        self.assertFalse(
+            'postpone_next_meeting_keep_internal_number' in cfg.getWorkflowAdaptations())
+        self._activate_wfas(('postpone_next_meeting', ))
+        item = self._postpone_next_meeting_active()
+        self.assertEqual(get_internal_number(item), 1)
+        self.assertEqual(get_internal_number(item.get_successor()), 2)
+        # check that brain index and metadata is updated
+        self.assertEqual(
+            uuidToObject(item.UID(), query={'internal_number': 1}).internal_number, 1)
+        self.assertEqual(
+            uuidToObject(item.get_successor().UID(),
+                         query={'internal_number': 2}).internal_number, 2)
+        # check when activated
+        self._activate_wfas(('postpone_next_meeting', 'postpone_next_meeting_keep_internal_number'))
+        item = self._postpone_next_meeting_active()
+        self.assertEqual(get_internal_number(item), 3)
+        self.assertEqual(get_internal_number(item.get_successor()), 3)
+        self.assertEqual(
+            uuidToObject(item.UID(), query={'internal_number': 3}).internal_number, 3)
+        # next item internal_number is 4
+        self.assertEqual(get_settings()[item.portal_type]['nb'], 4)
+
+    def test_pm_WFA_postpone_next_meeting_transfer_annex_scan_id(self):
+        '''Test the workflowAdaptation 'postpone_next_meeting_transfer_annex_scan_id'.'''
+        # ease override by subproducts
+        if not self._check_wfa_available(['postpone_next_meeting_transfer_annex_scan_id']):
+            return
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        self.changeUser('pmManager')
+        # check while the _transfer_annex_scan_id wfAdaptation is not activated
+        self.assertFalse(
+            'postpone_next_meeting_transfer_annex_scan_id' in cfg.getWorkflowAdaptations())
+        self._activate_wfas(('postpone_next_meeting', ))
+        item = self._postpone_next_meeting_active(add_annexes=True)
+        successor = item.get_successor()
+        # annex with scan_id was removed
+        self.assertEqual(len(get_annexes(successor)), 1)
+        self.assertIsNone(get_annexes(successor)[0].scan_id)
+        # original annexes are left untouched
+        self.assertEqual(len(get_annexes(item)), 2)
+        self.assertIsNone(get_annexes(item)[0].scan_id)
+        self.assertEqual(get_annexes(item)[1].scan_id, DEFAULT_SCAN_ID)
+        # one annex with scan_id
+        self.assertEqual(len(self.catalog(scan_id=DEFAULT_SCAN_ID)), 1)
+        self.assertEqual(self.catalog(scan_id=DEFAULT_SCAN_ID)[0].UID, get_annexes(item)[1].UID())
+        # check when activated
+        self._activate_wfas(('postpone_next_meeting', 'postpone_next_meeting_transfer_annex_scan_id'))
+        scan_id = next_scan_id(file_portal_types=['annex', 'annexDecision'])
+        item = self._postpone_next_meeting_active(add_annexes=True, scan_id=scan_id)
+        successor = item.get_successor()
+        # annex with scan_id was transfered
+        self.assertEqual(len(get_annexes(successor)), 2)
+        self.assertIsNone(get_annexes(successor)[0].scan_id)
+        self.assertEqual(get_annexes(successor)[1].scan_id, scan_id)
+        # original annexes are left, but without any scan_id
+        self.assertEqual(len(get_annexes(item)), 2)
+        self.assertIsNone(get_annexes(item)[0].scan_id)
+        self.assertIsNone(get_annexes(item)[1].scan_id)
+        # one annex with scan_id, the transfered scan_id
+        self.assertEqual(len(self.catalog(scan_id=scan_id)), 1)
+        self.assertEqual(self.catalog(scan_id=scan_id)[0].UID, get_annexes(successor)[1].UID())
 
     def test_pm_WFA_postpone_next_meeting_back_transition(self):
         '''The back transition may vary if using additional WFAdaptations,
@@ -2843,21 +2924,21 @@ class testWFAdaptations(PloneMeetingTestCase):
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmReviewer2')
         createContentInContainer(item,
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmAdviser1')
         createContentInContainer(item,
                                  'meetingadvice',
                                  **{'advice_group': org3_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
-                                    'advice_comment': RichTextValue(u'My comment')})
+                                    'advice_comment': richtextval(u'My comment')})
 
         self.changeUser('pmManager')
         meeting = self.create('Meeting')

@@ -8,11 +8,13 @@ from collective.contact.plonegroup.browser.tables import DisplayGroupUsersView
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.utils import get_person_from_userid
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from eea.facetednavigation.interfaces import ICriteria
 from ftw.labels.interfaces import ILabeling
+from imio.helpers.content import get_user_fullname
 from imio.helpers.content import uuidToObject
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.pyutils.utils import get_clusters
@@ -32,7 +34,6 @@ from Products.PloneMeeting import logger
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.browser.itemvotes import _get_linked_item_vote_numbers
 from Products.PloneMeeting.columns import render_item_annexes
-from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
@@ -42,11 +43,12 @@ from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import convert2xhtml
+from Products.PloneMeeting.utils import get_advice_alive_states
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_field
 from Products.PloneMeeting.utils import get_dx_widget
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
-from Products.PloneMeeting.utils import get_person_from_userid
+from Products.PloneMeeting.utils import getAvailableMailingLists
 from Products.PloneMeeting.utils import may_view_field
 from Products.PloneMeeting.utils import reindex_object
 from z3c.form.interfaces import DISPLAY_MODE
@@ -98,9 +100,8 @@ class ItemMoreInfosView(BrowserView):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
-    def __call__(self, visibleColumns=[], fieldsConfigAttr='itemsListVisibleFields', currentCfgId=None):
+    def __call__(self, fieldsConfigAttr='itemsListVisibleFields', currentCfgId=None):
         """ """
-        self.visibleColumns = visibleColumns
         self.visibleFields = self.cfg.getField(fieldsConfigAttr).get(self.cfg)
         # if current user may not see the item, use another fieldsConfigAttr
         if not _checkPermission(View, self.context):
@@ -128,6 +129,9 @@ class ItemMoreInfosView(BrowserView):
         # keep order of displayed fields
         res = OrderedDict()
         for visibleField in self.visibleFields:
+            # ignore static_ fields
+            if visibleField.startswith('static_'):
+                continue
             visibleFieldName = visibleField.split('.')[1]
             # if nothing is defined, the default rendering macro will be used
             # this is made to be overrided
@@ -142,7 +146,7 @@ class ItemMoreInfosView(BrowserView):
     def render_annexes(self):
         """ """
         return render_item_annexes(
-            self.context, self.tool, show_nothing=True, check_can_view=True)
+            self.context, self.tool, show_nothing=False, check_can_view=True).strip() or '-'
 
 
 class BaseStaticInfosView(BrowserView):
@@ -482,6 +486,7 @@ class UpdateDelayAwareAdvicesView(BrowserView):
         # ...
         indexAdvisers = []
         tool = api.portal.get_tool('portal_plonemeeting')
+        advice_alive_states = get_advice_alive_states()
         for cfg in tool.objectValues('MeetingConfig'):
             for row in cfg.getCustomAdvisers():
                 isDelayAware = bool(row['delay'])
@@ -494,7 +499,7 @@ class UpdateDelayAwareAdvicesView(BrowserView):
                         continue
                     indexAdvisers.append(advice_not_given_value)
                     # now advice given and still editable
-                    for advice_state in ADVICE_STATES_ALIVE:
+                    for advice_state in advice_alive_states:
                         indexAdvisers.append("delay__{0}_{1}".format(org_uid, advice_state))
         query = {}
         # if no indexAdvisers, query on 'dummy' to avoid query on empty value
@@ -759,7 +764,6 @@ class BaseDGHV(object):
                             withAuthor=True,
                             ordered=True):
         '''Helper method to have a printable version of advices.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
         res = ""
         if withAdvicesTitle:
             res += "<p class='pmAdvices'><u><b>%s :</b></u></p>" % \
@@ -806,11 +810,10 @@ class BaseDGHV(object):
                 if withAuthor and not adviceType == NOT_GIVEN_ADVICE_VALUE:
                     adviceHolder = advice.get('adviceHolder', item)
                     adviceObj = adviceHolder.getAdviceObj(advice['id'])
-                    author = tool.getUserName(adviceObj.Creator())
                     res = res + u"<br /><u>%s :</u> <i>%s</i>" % (translate('Advice given by',
                                                                   domain='PloneMeeting',
                                                                   context=self.request),
-                                                                  cgi.escape(safe_unicode(author)), )
+                                                                  cgi.escape(get_user_fullname(adviceObj.Creator())), )
 
                     adviceComment = advice['comment'] and self.printXhtml(adviceObj, advice['comment']) or '-'
                     res = res + (u"<br /><u>%s :</u> %s<p></p>" % (translate('Advice comment',
@@ -865,8 +868,7 @@ class BaseDGHV(object):
 
     def print_fullname(self, user_id):
         """ """
-        tool = api.portal.get_tool('portal_plonemeeting')
-        return tool.getUserName(user_id)
+        return get_user_fullname(user_id)
 
     def print_assembly(self, striked=True, use_print_attendees_by_type=True, **kwargs):
         '''Returns the assembly for this meeting or item.
@@ -1109,6 +1111,11 @@ class BaseDGHV(object):
                                 include_replace_by_held_position_label=True,
                                 ignored_pos_type_ids=['default'],
                                 include_person_title=True,
+                                include_in_count=False,
+                                include_out_count=False,
+                                in_out_attendee_types=['item_excused', 'item_absent'],
+                                out_count_pattern=" ({})",
+                                in_count_pattern=" ({})",
                                 abbreviate_firstname=False,
                                 included_attendee_types=['attendee', 'excused', 'absent', 'replaced',
                                                          'item_excused', 'item_absent', 'item_non_attendee'],
@@ -1145,6 +1152,29 @@ class BaseDGHV(object):
                             replaced[contact_uid],
                             include_held_position_label=include_replace_by_held_position_label,
                             include_sub_organizations=False))
+
+                if include_out_count or include_in_count:
+                    # Get the list if item uids for which current
+                    # contact_uid is considered not present
+                    not_present_item_uids = []
+                    if 'item_absent' in in_out_attendee_types:
+                        not_present_item_uids += meeting.get_item_absents(by_persons=True).get(contact_uid, [])
+                    if 'item_excused' in in_out_attendee_types:
+                        not_present_item_uids += meeting.get_item_excused(by_persons=True).get(contact_uid, [])
+                    if 'non_attendee' in in_out_attendee_types:
+                        not_present_item_uids += meeting.get_item_non_attendees(by_persons=True).get(contact_uid, [])
+                    if include_out_count and len(not_present_item_uids) > 0:
+                        catalog = api.portal.get_tool('portal_catalog')
+                        brains = catalog(UID=not_present_item_uids, sort_on='getItemNumber')
+                        numbers = [brain.getObject().getItemNumber(for_display=True) for brain in brains]
+                        numbers = [int(number) if '.' not in number else float(number) for number in numbers]
+                        contact_value += out_count_pattern.format(get_clusters(numbers))
+                    if include_in_count and len(not_present_item_uids) > 0:
+                        numbers = [item.getItemNumber(for_display=True)
+                                   for item in meeting.get_items(ordered=True)
+                                   if item.UID() not in not_present_item_uids]
+                        numbers = [int(number) if '.' not in number else float(number) for number in numbers]
+                        contact_value += in_count_pattern.format(get_clusters(numbers))
                 if unbreakable_contact_value:
                     contact_value = contact_value.replace(" ", "&nbsp;")
                 grouped_contacts_value.append(contact_value)
@@ -1922,7 +1952,7 @@ def print_votes(item,
                     all.insert(0, begin_rendered_values)
                 rendered += main_pattern.format(separator.join(all))
 
-    return render_as_html and (rendered or no_votes_marker) or vote_infos
+    return (rendered or no_votes_marker) if render_as_html else vote_infos
 
 
 class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
@@ -2349,14 +2379,19 @@ class DisplayMeetingItemVoters(BrowserView):
         self.show_voted_items = show_voted_items
         return self.index()
 
-    def getNonVotedItems(self):
+    def get_non_voted_items(self):
         """Returns the list of items the voter_uid did not vote for."""
         items = self.context.get_items(ordered=True)
         res = {'public': [],
-               'secret': []}
+               'secret': [],
+               'no_vote': []}
         for item in items:
             data = {}
-            for item_vote in item.get_item_votes():
+            item_votes = item.get_item_votes()
+            if not item_votes:
+                res['no_vote'].append(item)
+                continue
+            for item_vote in item_votes:
                 vote_number = item_vote['vote_number']
                 is_secret = item_vote['poll_type'].startswith('secret')
                 if not is_secret:
@@ -2383,21 +2418,27 @@ class DisplayMeetingItemVoters(BrowserView):
                         break
         return res
 
-    def getVotedItems(self):
+    def get_voted_items(self):
         """ """
-        non_voted_items = self.getNonVotedItems()
+        non_voted_items = self.get_non_voted_items()
         items = self.context.get_items(ordered=True)
         res = {
             'public': [
                 item for item in items
                 if item not in non_voted_items['public'] and
                 item not in non_voted_items['secret'] and
+                item not in non_voted_items['no_vote'] and
                 not item.get_votes_are_secret()],
             'secret': [
                 item for item in items
                 if item not in non_voted_items['secret'] and
                 item not in non_voted_items['public'] and
-                item.get_votes_are_secret()]}
+                item not in non_voted_items['no_vote'] and
+                item.get_votes_are_secret()],
+            'no_vote': [
+                item for item in items
+                if item in non_voted_items['no_vote']],
+        }
         return res
 
 
@@ -2437,9 +2478,8 @@ class PODTemplateMailingLists(BrowserView):
 
     def getAvailableMailingLists(self):
         '''Gets the names of the (currently active) mailing lists defined for template_uid.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
         pod_template = api.content.find(UID=self.template_uid)[0].getObject()
-        return tool.getAvailableMailingLists(self.context, pod_template)
+        return getAvailableMailingLists(self.context, pod_template)
 
 
 class RenderSingleWidgetView(BrowserView):

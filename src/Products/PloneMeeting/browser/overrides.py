@@ -48,7 +48,6 @@ from Products.CMFPlone.browser.ploneview import Plone
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import HAS_RESTAPI
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
@@ -59,7 +58,11 @@ from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_next_meeting
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
+from Products.PloneMeeting.utils import getAvailableMailingLists
+from Products.PloneMeeting.utils import getMailRecipient
 from Products.PloneMeeting.utils import is_editing
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import set_field_from_ajax
@@ -271,8 +274,7 @@ class BaseGeneratorLinksViewlet(object):
     def getAvailableMailingLists(self, pod_template):
         '''Gets the names of the (currently active) mailing lists defined for
            this template.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        return tool.getAvailableMailingLists(self.context, pod_template)
+        return getAvailableMailingLists(self.context, pod_template)
 
     def displayStoreAsAnnexSection(self):
         """ """
@@ -678,13 +680,16 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
 
         # try to share cache among user "profiles"
         isRealManager = isManager = isEditorUser = advicesIndexModified = \
-            userAbleToCorrectItemWaitingAdvices = isPowerObserverHiddenHistory = None
+            userAbleToCorrectItemWaitingAdvices = isPowerObserverHiddenHistory = \
+            isCreator = None
         # Manager
         isRealManager = self.tool.isManager(realManagers=True)
         # MeetingManager, necessary for MeetingConfig.itemActionsColumnConfig for example
         isManager = self.tool.isManager(self.cfg)
         item_state = None
         if not isRealManager:
+            # manage showing/hidding duplicate item action reserved to creators
+            isCreator = self.tool.userIsAmong(['creators'])
             item_state = self.context.query_state()
             # member able to edit item, manage isEditorUser/userAbleToCorrectItemWaitingAdvices
             if _checkPermission(ModifyPortalContent, self.context):
@@ -708,9 +713,12 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                             org_uids=[group_managing_item_uid])
 
             # powerobservers to manage MeetingConfig.hideHistoryTo
-            hideHistoryTo = self.cfg.getHideHistoryTo()
-            if hideHistoryTo and \
-               self.tool.isPowerObserverForCfg(self.cfg, power_observer_types=hideHistoryTo):
+            hideHistoryTo_item_values = [
+                v.split('.')[1] for v in self.cfg.getHideHistoryTo()
+                if v.startswith('MeetingItem.')]
+            if hideHistoryTo_item_values and \
+               isPowerObserverForCfg(
+                    self.cfg, power_observer_types=hideHistoryTo_item_values):
                 # any others
                 isPowerObserverHiddenHistory = True
 
@@ -724,9 +732,9 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         date = get_cachekey_volatile('_users_groups_value')
 
         # check also portal_url in case application is accessed thru different URI
-        return (repr(self.context), self.context.modified(), advicesIndexModified, date,
+        return (repr(self.context), repr(self.context.modified()), advicesIndexModified, repr(date),
                 sent_to,
-                isRealManager, isManager, isEditorUser,
+                isRealManager, isManager, isEditorUser, isCreator,
                 userAbleToCorrectItemWaitingAdvices, isPowerObserverHiddenHistory,
                 meeting_review_state, useIcons, showTransitions, appendTypeNameToTransitionLabel,
                 showEdit, showOwnDelete, showOwnDeleteWithComments, showActions,
@@ -753,7 +761,8 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         """
         # check actions to display in icons mode
         if useIcons:
-            # hide 'duplicate' actions when showing icons if not in cfg.itemActionsColumnConfig
+            # hide 'duplicate/export_pdf/delete/history' actions from dashboard
+            # if not in cfg.itemActionsColumnConfig
             itemActionsColumnConfig = self.cfg.getItemActionsColumnConfig()
             isMeetingManager = self.tool.isManager(self.cfg)
             isManager = self.tool.isManager(realManagers=True)
@@ -762,6 +771,11 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                 (isManager and 'manager_duplicate' in itemActionsColumnConfig) or
                     ('duplicate' in itemActionsColumnConfig)):
                 self.IGNORABLE_ACTIONS += ('duplicate', )
+            if not (
+                (isMeetingManager and 'meetingmanager_export_pdf' in itemActionsColumnConfig) or
+                (isManager and 'manager_export_pdf' in itemActionsColumnConfig) or
+                    ('export_pdf' in itemActionsColumnConfig)):
+                self.IGNORABLE_ACTIONS += ('export_pdf', )
             if not (
                 (isMeetingManager and 'meetingmanager_delete' in itemActionsColumnConfig) or
                 (isManager and 'manager_delete' in itemActionsColumnConfig) or
@@ -1140,7 +1154,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         mapping = {
             'item_annexes': [cfg.getItemTypeName()],
             'item_decision_annexes': [cfg.getItemTypeName()],
-            'advice_annexes': tool.getAdvicePortalTypeIds(),
+            'advice_annexes': getAdvicePortalTypeIds(),
             'meeting_annexes': [cfg.getMeetingTypeName()],
         }
         return mapping
@@ -1263,7 +1277,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         title = self._get_stored_annex_title(pod_template)
         id = normalize_id(title)
         id = INameChooser(self.context).chooseName(id, self.context)
-        annex = api.content.create(
+        api.content.create(
             container=self.context,
             type=annex_portal_type,
             id=id,
@@ -1274,10 +1288,6 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             confidential=confidential_default,
             used_pod_template_id=pod_template.getId(),
             scan_id=scan_id)
-        # if we have a scan_id it means that a barcode has been inserted
-        # in the generated document, we mark stored annex as barcoded
-        if scan_id:
-            setattr(annex, BARCODE_INSERTED_ATTR_ID, True)
 
     def _get_stored_annex_title(self, pod_template):
         """Generates the stored annex title using the ConfigurablePODTemplate.store_as_annex_title_expr.
@@ -1299,7 +1309,6 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         userIdsOrEmailAddresses = []
         extra_expr_ctx = _base_extra_expr_ctx(self.context)
         extra_expr_ctx.update({'obj': self.context, })
-        tool = extra_expr_ctx['tool']
         for value in values.strip().split(','):
             # value may be a TAL expression returning a list of userIds or email addresses
             # or a group (of users)
@@ -1319,7 +1328,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         # now we have userIds or email address, we want email addresses
         for userIdOrEmailAddress in userIdsOrEmailAddresses:
             recipient = '@' in userIdOrEmailAddress and userIdOrEmailAddress or \
-                tool.getMailRecipient(userIdOrEmailAddress.strip())
+                getMailRecipient(userIdOrEmailAddress.strip())
             if not recipient:
                 continue
             if recipient not in recipients:
@@ -1328,11 +1337,10 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
 
     def _sendPodTemplate(self, rendered_template):
         '''Sends, by email, a p_rendered_template.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
         # Preamble: ensure that the mailingList is really active.
         mailinglist_name = safe_unicode(self.request.get('mailinglist_name'))
         pod_template = self.get_pod_template(self.request.get('template_uid'))
-        if mailinglist_name not in tool.getAvailableMailingLists(self.context, pod_template):
+        if mailinglist_name not in getAvailableMailingLists(self.context, pod_template):
             raise Unauthorized
         # Retrieve mailing list recipients
         recipients = []
@@ -1400,7 +1408,10 @@ class PMContentHistoryView(IHContentHistoryView):
       Overrides the ContentHistoryView template to use our own.
       We want to display the content_history as a table.
     '''
-    histories_to_handle = (u'revision', u'workflow', u'data_changes', u'deleted_children')
+    histories_to_handle = (u'revision',
+                           u'workflow',
+                           u'data_changes',
+                           u'deleted_children')
 
     def show_history(self):
         """Override to take MeetingConfig.hideHistoryTo into account."""
@@ -1410,26 +1421,62 @@ class PMContentHistoryView(IHContentHistoryView):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
             hideHistoryTo = cfg.getHideHistoryTo()
-            if hideHistoryTo:
-                check = True
+            if hideHistoryTo and not tool.isManager(cfg):
                 if self.context.__class__.__name__ == "MeetingItem":
-                    # for MeetingItem, take into account that powerobserver
-                    # could also be member of the proposingGroup
-                    # in this case we do not hide the history to the user
-                    item_review_state = self.context.query_state()
-                    proposing_group_uid = self.context._getGroupManagingItem(
-                        item_review_state, theObject=False)
-                    if proposing_group_uid in tool.get_orgs_for_user():
-                        check = False
-                if check and tool.isPowerObserverForCfg(
-                        cfg, power_observer_types=hideHistoryTo):
-                    res = False
+                    # item values are only about powerobservers
+                    item_values = [v.split('.')[1] for v in hideHistoryTo
+                                   if v.startswith('MeetingItem.')]
+                    if item_values:
+                        # for MeetingItem, take into account that powerobserver
+                        # could also be member of the proposingGroup
+                        # in this case we do not hide the history to the user
+                        item_review_state = self.context.query_state()
+                        proposing_group_uid = self.context._getGroupManagingItem(
+                            item_review_state, theObject=False)
+                        if proposing_group_uid not in tool.get_orgs_for_user() and \
+                            isPowerObserverForCfg(
+                                cfg, power_observer_types=item_values):
+                            res = False
+                elif self.context.__class__.__name__ == "Meeting":
+                    # meeting values are only about powerobservers
+                    meeting_values = [v.split('.')[1] for v in hideHistoryTo
+                                      if v.startswith('Meeting.')]
+                    if meeting_values and isPowerObserverForCfg(
+                            cfg, power_observer_types=meeting_values):
+                        res = False
+                elif self.context.__class__.__name__ == "MeetingAdvice":
+                    # values for meetingadvice are portal_type related
+                    # and are about everyone or powerobservers
+                    po_advice_values = [
+                        v.split('.')[1] for v in hideHistoryTo
+                        if v.startswith('{0}.'.format(self.context.portal_type)) and
+                        not v.endswith('.everyone')]
+                    if po_advice_values:
+                        # for meetingadvice, take into account that powerobserver
+                        # could also be member of the item's proposingGroup
+                        # in this case we do not hide the history to the user
+                        item = self.context.aq_inner.aq_parent
+                        item_review_state = item.query_state()
+                        proposing_group_uid = item._getGroupManagingItem(
+                            item_review_state, theObject=False)
+                        if proposing_group_uid not in tool.get_orgs_for_user() and \
+                            isPowerObserverForCfg(
+                                cfg, power_observer_types=po_advice_values):
+                            res = False
+                    if res and '{0}.everyone'.format(self.context.portal_type) in hideHistoryTo:
+                        # hide history to everyone except advice advisers
+                        if self.context.advice_group not in \
+                           tool.get_orgs_for_user(suffixes=['advisers']):
+                            res = False
         return res
 
 
 class AdviceContentHistoryView(PMContentHistoryView):
     """ """
-    histories_to_handle = (u'revision', u'workflow', u'advice_given')
+    histories_to_handle = (u'revision',
+                           u'workflow',
+                           u'advice_given',
+                           u'advice_hide_during_redaction')
 
     def show_preview(self, event):
         """ """

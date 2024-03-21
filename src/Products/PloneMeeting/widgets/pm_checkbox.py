@@ -8,14 +8,23 @@ from z3c.form.widget import FieldWidget
 from zope.interface import implementer
 from zope.interface import implementer_only
 
+import zope.schema
+
 
 class IPMCheckBoxWidget(ICheckBoxWidget):
     """Marker interface for PM checkbox widget"""
+
+    sortable = zope.schema.Bool(
+        title=u'Sortable',
+        description=u"",
+        default=False)
 
 
 @implementer_only(IPMCheckBoxWidget)
 class PMCheckBoxWidget(CheckBoxWidget):
     """ """
+
+    sortable = False
 
     @property
     def portal_url(self):

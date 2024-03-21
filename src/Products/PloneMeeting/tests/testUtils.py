@@ -7,15 +7,19 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group
+from ftw.labels.interfaces import ILabeling
 from imio.helpers.content import richtextval
 from os import path
 from plone.app.controlpanel.events import ConfigurationChangedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
+from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import duplicate_portal_type
 from Products.PloneMeeting.utils import escape
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import set_dx_value
@@ -60,9 +64,9 @@ class testUtils(PloneMeetingTestCase):
     def test_pm_Set_field_from_ajax(self):
         """Work on AT and DX."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'), ))
-        cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'), ))
+        cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('proposed'), ))
 
         # item
         self.changeUser('pmCreator1')
@@ -76,6 +80,9 @@ class testUtils(PloneMeetingTestCase):
         self.assertEqual(item.Description(), new_value)
         self.assertEqual(self.catalog(Description="my item description")[0].UID, item.UID())
         self.assertEqual(self.catalog(SearchableText="my item description")[0].UID, item.UID())
+        # will raise Unauthorized if user can not edit
+        self.proposeItem(item)
+        self.assertRaises(Unauthorized, set_field_from_ajax, item, 'description', new_value)
 
         # meeting
         self.changeUser('pmManager')
@@ -86,6 +93,9 @@ class testUtils(PloneMeetingTestCase):
         set_field_from_ajax(meeting, 'notes', new_value)
         self.assertEqual(meeting.notes.output, new_value)
         self.assertEqual(self.catalog(SearchableText="my meeting notes")[0].UID, meeting.UID())
+        # will raise Unauthorized if user can not edit
+        self.closeMeeting(meeting)
+        self.assertRaises(Unauthorized, set_field_from_ajax, meeting, 'notes', new_value)
 
         # advice
         self.changeUser('pmReviewer2')
@@ -95,6 +105,9 @@ class testUtils(PloneMeetingTestCase):
         self.assertFalse(self.catalog(SearchableText="my advice comment"))
         set_field_from_ajax(advice, 'advice_comment', new_value)
         self.assertEqual(advice.advice_comment.output, new_value)
+        # will raise Unauthorized if user can not edit
+        self.validateItem(item)
+        self.assertRaises(Unauthorized, set_field_from_ajax, item, 'description', new_value)
 
     def test_pm_SendMailIfRelevant(self):
         """ """
@@ -126,7 +139,7 @@ class testUtils(PloneMeetingTestCase):
         self.assertEqual(
             subject,
             u"{0} - Item has been inserted into a meeting - My item".format(
-                cfg.Title()))
+                safe_unicode(cfg.Title())))
         self.assertEqual(
             body,
             u"This meeting may still be under construction and is potentially inaccessible.  "
@@ -346,6 +359,53 @@ class testUtils(PloneMeetingTestCase):
         self.presentItem(item)
         self.freezeMeeting(meeting)
         self.assertEqual(meeting.meeting_number, 25)
+
+    def test_pm_get_labels(self):
+        """Test the ToolPloneMeeting.get_labels method
+           that will return ftw.labels active_labels."""
+        self.changeUser("pmCreator1")
+        item = self.create("MeetingItem")
+        self.assertEqual(get_labels(item), {})
+        labeling = ILabeling(item)
+        labeling.update(['label'])
+        labeling.pers_update(['suivi'], True)
+        self.assertEqual(get_labels(item), {'label': 'Label', 'suivi': 'Suivi'})
+        self.assertEqual(get_labels(item, False), {'label': 'Label'})
+        self.assertEqual(get_labels(item, "only"), {'suivi': 'Suivi'})
+
+    def test_pm_IsPowerObserverForCfg(self):
+        """ """
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        self.assertFalse(isPowerObserverForCfg(cfg))
+        self.assertFalse(isPowerObserverForCfg(
+            cfg, power_observer_types=['powerobservers']))
+        self.assertFalse(isPowerObserverForCfg(
+            cfg, power_observer_types=['restrictedpowerobservers']))
+        self.assertFalse(isPowerObserverForCfg(
+            cfg, power_observer_types=['powerobservers', 'restrictedpowerobservers']))
+        self.assertFalse(isPowerObserverForCfg(
+            cfg, power_observer_types=['unknown']))
+        self.changeUser('powerobserver1')
+        self.assertTrue(isPowerObserverForCfg(cfg))
+        self.assertTrue(isPowerObserverForCfg(
+            cfg, power_observer_types=['powerobservers']))
+        self.assertFalse(isPowerObserverForCfg(
+            cfg, power_observer_types=['restrictedpowerobservers']))
+        self.assertTrue(isPowerObserverForCfg(
+            cfg, power_observer_types=['powerobservers', 'restrictedpowerobservers']))
+        self.assertFalse(isPowerObserverForCfg(
+            cfg, power_observer_types=['unknown']))
+        self.changeUser('restrictedpowerobserver1')
+        self.assertTrue(isPowerObserverForCfg(cfg))
+        self.assertFalse(isPowerObserverForCfg(
+            cfg, power_observer_types=['powerobservers']))
+        self.assertTrue(isPowerObserverForCfg(
+            cfg, power_observer_types=['restrictedpowerobservers']))
+        self.assertTrue(isPowerObserverForCfg(
+            cfg, power_observer_types=['powerobservers', 'restrictedpowerobservers']))
+        self.assertFalse(isPowerObserverForCfg(
+            cfg, power_observer_types=['unknown']))
 
 
 def test_suite():

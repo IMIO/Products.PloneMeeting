@@ -22,6 +22,7 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
 from imio.helpers.content import get_vocab
+from imio.helpers.content import get_vocab_values
 from imio.helpers.workflow import get_leading_transitions
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
@@ -1694,9 +1695,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg_item_type_name = cfg.getItemTypeName()
         cfg2_item_type_name = cfg2.getItemTypeName()
         cfg3_item_type_name = cfg3.getItemTypeName()
-        if 'return_to_proposing_group' in cfg.listWorkflowAdaptations() and \
-           'return_to_proposing_group' in cfg2.listWorkflowAdaptations() and \
-           'return_to_proposing_group' in cfg3.listWorkflowAdaptations():
+        if 'return_to_proposing_group' in get_vocab_values(cfg, 'WorkflowAdaptations') and \
+           'return_to_proposing_group' in get_vocab_values(cfg2, 'WorkflowAdaptations') and \
+           'return_to_proposing_group' in get_vocab_values(cfg3, 'WorkflowAdaptations'):
             wfFor = self.wfTool.getWorkflowsFor
             self.assertFalse('returned_to_proposing_group' in wfFor(cfg_item_type_name)[0].states)
             self.assertFalse('returned_to_proposing_group' in wfFor(cfg2_item_type_name)[0].states)
@@ -2031,7 +2032,18 @@ class testMeetingConfig(PloneMeetingTestCase):
             return
 
         proposed_state = self._stateMappingFor('proposed')
-        # config
+        # config, fix original_WAITING_ADVICES_FROM_STATES when called from subplugin
+        from Products.PloneMeeting.model import adaptations
+        original_WAITING_ADVICES_FROM_STATES = deepcopy(adaptations.WAITING_ADVICES_FROM_STATES)
+        adaptations.WAITING_ADVICES_FROM_STATES = {'*': (
+            {'from_states': (proposed_state, ),
+             'back_states': (proposed_state, ),
+             'perm_cloned_states': (proposed_state, ),
+             'remove_modify_access': True,
+             'use_custom_icon': False,
+             'use_custom_back_transition_title_for': (),
+             'use_custom_state_title': True, },), }
+
         waiting_advices_proposed_state = '{0}_waiting_advices'.format(
             proposed_state)
         cfg.setItemAdviceStates((waiting_advices_proposed_state, ))
@@ -2061,6 +2073,8 @@ class testMeetingConfig(PloneMeetingTestCase):
                 context=self.request)
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
                          level_removed_error)
+        # back to original configuration
+        adaptations.WAITING_ADVICES_FROM_STATES = original_WAITING_ADVICES_FROM_STATES
 
     def test_pm_Validate_itemWFValidationLevels_removed_used_state_in_config(self):
         """Test MeetingConfig.validate_itemWFValidationLevels, if we remove a validation
@@ -2496,12 +2510,20 @@ class testMeetingConfig(PloneMeetingTestCase):
         # onlySelectable=True by default
         cfg_cat_ids = [cat.getId() for cat in cfg.getCategories()]
         cfg2_cat_ids = [cat.getId() for cat in cfg2.getCategories()]
+        # categories are not enabled in cfg
+        self.assertFalse('category' in cfg.getUsedItemAttributes())
+        self.assertFalse(cfg_cat_ids)
+        self._enableField('category', reload=True)
+        self.assertTrue('category' in cfg.getUsedItemAttributes())
+        cfg_cat_ids = [cat.getId() for cat in cfg.getCategories()]
         self.assertEqual(cfg_cat_ids,
                          ['development', 'research', 'events'])
         self.assertEqual(cfg2_cat_ids,
                          ['deployment', 'maintenance', 'development',
                           'events', 'research', 'projects'])
-        # onlySelectable=False
+        # onlySelectable=False, returned even if not enabled
+        self._enableField('category', enable=False, reload=True)
+        self.assertFalse('category' in cfg.getUsedItemAttributes())
         cfg_cat_ids = [cat.getId() for cat in cfg.getCategories(onlySelectable=False)]
         cfg2_cat_ids = [cat.getId() for cat in cfg2.getCategories(onlySelectable=False)]
         self.assertEqual(cfg_cat_ids,
@@ -2638,6 +2660,29 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertFalse(dev_reviewer1_mail in recipients)
         self.assertTrue(ven_creator2_mail in recipients)
         self.assertTrue(ven_reviewer2_mail in recipients)
+
+    def test_pm_Get_transitions_to_close_a_meeting(self):
+        """Suite of transitions to close a meeting."""
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        # apply a default set of WFAs
+        self._activate_wfas(['delayed'])
+        self._activate_wfas(['delayed'], cfg=cfg2)
+        self.assertEqual(cfg.get_transitions_to_close_a_meeting(),
+                         ['freeze', 'publish', 'decide', 'close'])
+        self.assertEqual(cfg2.get_transitions_to_close_a_meeting(),
+                         ['freeze', 'publish', 'decide', 'close'])
+        self._activate_wfas(['no_publication'])
+        self.assertEqual(cfg.get_transitions_to_close_a_meeting(),
+                         ['freeze', 'decide', 'close'])
+        self._activate_wfas(['no_freeze'])
+        self.assertEqual(cfg.get_transitions_to_close_a_meeting(),
+                         ['publish', 'decide', 'close'])
+        self._activate_wfas(['no_freeze', 'no_publication'])
+        self.assertEqual(cfg.get_transitions_to_close_a_meeting(),
+                         ['decide', 'close'])
+        self._activate_wfas(['no_freeze', 'no_publication', 'no_decide'])
+        self.assertEqual(cfg.get_transitions_to_close_a_meeting(), ['close'])
 
 
 def test_suite():

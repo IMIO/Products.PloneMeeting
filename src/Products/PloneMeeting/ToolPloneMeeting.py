@@ -8,10 +8,12 @@ from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from Acquisition import aq_base
 from collections import OrderedDict
-from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
+from collective.contact.plonegroup.utils import get_person_from_userid
 from collective.contact.plonegroup.utils import get_plone_group_id
+from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
+from collective.datagridcolumns.SelectColumn import SelectColumn
 from collective.documentviewer.async import queueJob
 from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.behaviors.iconifiedcategorization import IconifiedCategorization
@@ -24,7 +26,6 @@ from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from datetime import datetime
 from DateTime import DateTime
-from ftw.labels.interfaces import ILabeling
 from ftw.labels.labeling import ANNOTATION_KEY as FTW_LABELS_ANNOTATION_KEY
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import cleanForeverCache
@@ -34,13 +35,12 @@ from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.cache import invalidate_cachekey_volatile_for
-from imio.helpers.content import get_user_fullname
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.security import check_zope_admin
 from imio.helpers.security import fplog
+from imio.history.utils import add_event_to_wf_history
 from imio.migrator.utils import end_time
-from imio.prettylink.interfaces import IPrettyLink
 from OFS import CopySupport
 from persistent.mapping import PersistentMapping
 from plone import api
@@ -83,18 +83,19 @@ from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.MeetingItem import MeetingItem
+from Products.PloneMeeting.model.adaptations import _performAdviceWorkflowAdaptations
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
-from Products.PloneMeeting.utils import _base_extra_expr_ctx
-from Products.PloneMeeting.utils import add_wf_history_action
+from Products.PloneMeeting.utils import configure_advice_dx_localroles_for
+from Products.PloneMeeting.utils import duplicate_workflow
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import monthsIds
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import reindex_object
 from Products.PloneMeeting.utils import workday
-from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from ZODB.POSException import ConflictError
 from zope.annotation.interfaces import IAnnotations
 from zope.i18n import translate
@@ -274,6 +275,54 @@ schema = Schema((
         multiValued=1,
         vocabulary='listDeferParentReindexes',
     ),
+    DataGridField(
+        name='advisersConfig',
+        widget=DataGridField._properties['widget'](
+            description="AdvisersConfig",
+            description_msgid="advisers_config_descr",
+            columns={
+                'org_uids':
+                    MultiSelectColumn(
+                        "Adviser config org uids",
+                        vocabulary_factory='collective.contact.plonegroup.browser.settings.'
+                                           'SortedSelectedOrganizationsElephantVocabulary'),
+                'portal_type':
+                    SelectColumn(
+                        "Adviser config portal_type",
+                        vocabulary_factory="AdvicePortalTypes"),
+                'base_wf':
+                    SelectColumn(
+                        "Adviser config base workflow",
+                        vocabulary_factory="AdviceWorkflows"),
+                'wf_adaptations':
+                    MultiSelectColumn(
+                        "Adviser config workflow adaptations",
+                        vocabulary_factory="AdviceWorkflowAdaptations"),
+                'advice_types':
+                    MultiSelectColumn(
+                        "Adviser config advice types",
+                        vocabulary_factory="ConfigAdviceTypes"),
+                'default_advice_type':
+                    SelectColumn(
+                        "Adviser config default advice type",
+                        vocabulary_factory="ConfigAdviceTypes"),
+                'show_advice_on_final_wf_transition':
+                    SelectColumn(
+                        "Adviser config show advice on final WF transition?",
+                        vocabulary="listBooleanVocabulary",
+                        col_description="Adviser config show advice on final WF transition descr",
+                        default='0'),
+            },
+            label='Advisersconfig',
+            label_msgid='PloneMeeting_label_advisersConfig',
+            i18n_domain='PloneMeeting',
+        ),
+        default=defValues.advisersConfig,
+        columns=(
+            'org_uids', 'portal_type', 'base_wf', 'wf_adaptations',
+            'advice_types', 'default_advice_type', 'show_advice_on_final_wf_transition'),
+        allow_empty_rows=False,
+    ),
 
 ),
 )
@@ -299,15 +348,68 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     ocrLanguages = ('eng', 'fra', 'deu', 'ita', 'nld', 'por', 'spa', 'vie')
 
+    # Names of advice workflow adaptations, ORDER IS IMPORTANT!
+    advice_wf_adaptations = ()
+
     # tool should not appear in portal_catalog
     def at_post_edit_script(self):
         self.unindexObject()
+        # Configure advice portal_types and workflows
+        self.configureAdvices()
+        # Configure documentviewer auto_convert
+        self.configureAutoConvert()
+        # custom onEdit
         self.adapted().onEdit(isCreated=False)
 
     security.declarePrivate('at_post_create_script')
 
     def at_post_create_script(self):
+        # Configure advice portal_types and workflows
+        self.configureAdvices()
+        # Configure documentviewer auto_convert
+        self.configureAutoConvert()
+        # custom onEdit
         self.adapted().onEdit(isCreated=True)
+
+    def configureAdvices(self):
+        """ """
+        # Update MeetingAdvice portal_types if necessary
+        self._updateMeetingAdvicePortalTypes()
+        # Perform advice related workflow adaptations
+        _performAdviceWorkflowAdaptations()
+        # Finalize advice WF config with DX local roles
+        self._finalizeAdviceWFConfig()
+
+    def configureAutoConvert(self):
+        """ """
+        types_tool = api.portal.get_tool('portal_types')
+        if self.auto_convert_annexes():
+            # make sure annex/annexDecision portal_types use documentviewer
+            # as default layout
+            types_tool['annex'].default_view = "documentviewer"
+            types_tool['annexDecision'].default_view = "documentviewer"
+        else:
+            # make sure annex/annexDecision portal_types use view as default view
+            types_tool['annex'].default_view = "view"
+            types_tool['annexDecision'].default_view = "view"
+
+    def _updateMeetingAdvicePortalTypes(self):
+        '''After Meeting/MeetingItem portal_types have been updated,
+           update MeetingAdvice portal_types if necessary.
+           This is the place to duplicate advice workflows
+           to apply workflow adaptations on.'''
+        # create a copy of each 'base_wf', we preprend the portal_type to create a new workflow
+        for org_uids, adviser_infos in self.adapted().get_extra_adviser_infos(group_by_org_uids=True).items():
+            portal_type = adviser_infos['portal_type']
+            base_wf = adviser_infos['base_wf']
+            advice_wf_id = '{0}__{1}'.format(portal_type, base_wf)
+            duplicate_workflow(base_wf, advice_wf_id, portalTypeNames=[portal_type])
+
+    def _finalizeAdviceWFConfig(self):
+        """ """
+        for org_uids, adviser_infos in self.adapted().get_extra_adviser_infos(group_by_org_uids=True).items():
+            configure_advice_dx_localroles_for(
+                adviser_infos['portal_type'], org_uids)
 
     security.declareProtected(ModifyPortalContent, 'setConfigGroups')
 
@@ -426,6 +528,34 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                  'cfg_title': safe_unicode(cfg.Title()), },
                         context=self.REQUEST)
 
+    def validate_advisersConfig(self, values):
+        '''Validator for field advisersConfig.'''
+        # remove the 'template_row_marker' value
+        values = [v for v in values if not v.get('orderindex_') == 'template_row_marker']
+        # a portal_type can only be selected one time
+        portal_types = [v['portal_type'] for v in values]
+        if len(portal_types) > len(set(portal_types)):
+            return translate(
+                'advisersConfig_several_portal_types_error',
+                domain='PloneMeeting',
+                context=self.REQUEST)
+        # if some advice with portal_type exist, can not change
+        # associated portal_type/base_wf
+        to_save = set([(v['portal_type'], v['base_wf']) for v in values])
+        stored = set([(v['portal_type'], v['base_wf']) for v in self.getAdvisersConfig()])
+        removed = stored.difference(to_save)
+        added = to_save.difference(stored)
+        catalog = api.portal.get_tool('portal_catalog')
+        for portal_type, base_wf in tuple(removed) + tuple(added):
+            brains = catalog(portal_type=portal_type)
+            if brains:
+                return translate(
+                    'advisersConfig_portal_type_in_use_error',
+                    domain='PloneMeeting',
+                    mapping={'portal_type': safe_unicode(portal_type),
+                             'advice_url': brains[0].getURL(), },
+                    context=self.REQUEST)
+
     security.declarePublic('getCustomFields')
 
     def getCustomFields(self, cols):
@@ -442,7 +572,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if api.content.get_state(cfg) == 'active' and \
                (not check_access or
                 (self.checkMayView(cfg) and
-                    (self.isManager(cfg) or self.isPowerObserverForCfg(cfg) or
+                    (self.isManager(cfg) or isPowerObserverForCfg(cfg) or
                         (check_using_groups and self.get_orgs_for_user(
                             using_groups=cfg.getUsingGroups()))))):
                 res.append(cfg)
@@ -823,33 +953,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res = "Manager" in user.getRoles()
         return res
 
-    def isPowerObserverForCfg_cachekey(method, self, cfg, power_observer_types=[]):
-        '''cachekey method for self.isPowerObserverForCfg.'''
-        return (get_plone_groups_for_user(),
-                repr(cfg),
-                power_observer_types)
-
-    security.declarePublic('isPowerObserverForCfg')
-
-    # not ramcached perf tests says it does not change anything
-    # and this avoid useless entry in cache
-    # @ram.cache(isPowerObserverForCfg_cachekey)
-    def isPowerObserverForCfg(self, cfg, power_observer_types=[]):
-        """
-          Returns True if the current user is a power observer
-          for the given p_itemOrMeeting.
-          It is a power observer if member of the corresponding
-          p_power_observer_types suffixed groups.
-          If no p_power_observer_types we check every existing power_observers groups.
-        """
-        user_plone_groups = get_plone_groups_for_user()
-        for po_infos in cfg.getPowerObservers():
-            if not power_observer_types or po_infos['row_id'] in power_observer_types:
-                groupId = "{0}_{1}".format(cfg.getId(), po_infos['row_id'])
-                if groupId in user_plone_groups:
-                    return True
-        return False
-
     def showPloneMeetingTab_cachekey(method, self, cfg):
         '''cachekey method for self.showPloneMeetingTab.'''
         if api.user.is_anonymous():
@@ -877,76 +980,19 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         else:
             return True
 
-    def getUserName_cachekey(method, self, userId, withUserId=False):
-        '''cachekey method for self.getUserName.'''
-        return userId, withUserId
+    security.declarePrivate('listBooleanVocabulary')
 
-    security.declarePublic('getUserName')
-
-    # @ram.cache(getUserName_cachekey)
-    def getUserName(self, userId, withUserId=False):
-        '''Returns the full name of user having id p_userId.
-           Performance test does not show that ram.cache is necessary.'''
-        res = get_user_fullname(userId)
-        # fullname of a Zope user (admin) is returned as unicode
-        # and fullname of a Plone user is returned as utf-8...
-        # always return as utf-8!
-        if isinstance(res, unicode):
-            res = res.encode('utf-8')
-        if withUserId:
-            res = res + " ({0})".format(userId)
+    def listBooleanVocabulary(self):
+        '''Vocabulary generating a boolean behaviour : just 2 values,
+           one yes/True, and the other no/False.
+           This is used in DataGridFields to avoid use of CheckBoxColumn
+           that does not handle validation correctly.'''
+        d = "PloneMeeting"
+        res = DisplayList((
+            ('0', translate('boolean_value_false', domain=d, context=self.REQUEST)),
+            ('1', translate('boolean_value_true', domain=d, context=self.REQUEST)),
+        ))
         return res
-
-    security.declarePublic('getColoredLink')
-
-    def getColoredLink(self, obj, showColors=True, showContentIcon=False, contentValue='',
-                       target='_self', maxLength=0, inMeeting=True,
-                       meeting=None, appendToUrl='', additionalCSSClasses='',
-                       tag_title=None):
-        '''Produces the link to an item or annex with the right color (if the
-           colors must be shown depending on p_showColors). p_target optionally
-           specifies the 'target' attribute of the 'a' tag. p_maxLength
-           defines the number of characters to display if the content of the
-           link is too long.
-
-           p_inMeeting and p_meeting will be passed to the used item.getIcons
-           method here above.
-
-           If obj is an item which is not privacyViewable, the method does not
-           return a link (<a>) but a simple <div>.
-
-            If p_appendToUrl is given, the string will be appended at the end of the
-            returned link url.
-            If p_additionalCSSClasses is given, the given additional CSS classes will
-            be used for the 'class' attribute of the returned link.
-            If p_tag_title is given, it will be translated and used as return link
-            title tag.
-        '''
-        # we may receive a brain
-        if isinstance(obj, AbstractCatalogBrain):
-            # we get the object unrestrictedly as we test for isViewable here under
-            obj = obj._unrestrictedGetObject()
-
-        adapted = IPrettyLink(obj)
-        params = {}
-        params['showColors'] = showColors
-        params['showContentIcon'] = showContentIcon
-        params['contentValue'] = contentValue
-        params['target'] = target
-        params['maxLength'] = maxLength
-        params['appendToUrl'] = appendToUrl
-        params['additionalClasses'] = additionalCSSClasses
-        if tag_title:
-            tag_title = translate(tag_title,
-                                  domain='PloneMeeting',
-                                  context=self.REQUEST).encode('utf-8')
-            params['tag_title'] = tag_title
-        # Is this a not-privacy-viewable item?
-        if obj.meta_type == 'MeetingItem' and not obj.adapted().isPrivacyViewable():
-            params['isViewable'] = False
-
-        adapted.__init__(obj, **params)
-        return adapted.getLink()
 
     security.declarePrivate('listWeekDays')
 
@@ -1016,24 +1062,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         unavailable_days = [day for day in PY_DATETIME_WEEKDAYS if day in delayUnavailableEndDays]
         return [PY_DATETIME_WEEKDAYS.index(unavailable_day) for unavailable_day in unavailable_days]
 
-    security.declarePublic('showMeetingView')
-
-    def showMeetingView(self, meeting):
-        '''If PloneMeeting is in "Restrict users" mode, the "Meeting view" page
-           must not be shown to some users: users that do not have role
-           MeetingManager and are not listed in a specific list
-           (self.unrestrictedUsers).'''
-        restrictMode = self.getRestrictUsers()
-        res = True
-        if restrictMode:
-            cfg = self.getMeetingConfig(meeting)
-            if not self.isManager(cfg):
-                user_id = get_current_user_id(self.REQUEST)
-                # Check if the user is in specific list
-                if user_id not in [u.strip() for u in self.getUnrestrictedUsers().split('\n')]:
-                    res = False
-        return res
-
     security.declarePrivate('pasteItem')
 
     def pasteItem(self, destFolder, copiedData,
@@ -1041,7 +1069,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                   newOwnerId=None, copyFields=DEFAULT_COPIED_FIELDS,
                   newPortalType=None, keepProposingGroup=False, keep_ftw_labels=False,
                   keptAnnexIds=[], keptDecisionAnnexIds=[],
-                  ignoreUsingGroupsForMeetingManagers=True):
+                  ignoreUsingGroupsForMeetingManagers=True,
+                  transfertAnnexWithScanIdTypes=[]):
         '''Paste objects (previously copied) in destFolder. If p_newOwnerId
            is specified, it will become the new owner of the item.
            This method does NOT manage after creation calls like at_post_create_script.
@@ -1189,10 +1218,21 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                             plone_utils.addPortalMessage(msg, 'warning')
                             unrestrictedRemoveGivenObject(newAnnex)
                             continue
-                    # annex with a scan_id is deleted if not newPortalType
+
+                    # if not newPortalType, annex with a scan_id is deleted
+                    # if annex portal_type not defined in transfertAnnexWithScanIdTypes
                     # if newPortalType, it is managed here above by
                     # _updateContentCategoryAfterSentToOtherMeetingConfig
-                    if getattr(newAnnex, 'scan_id', None):
+                    # annex is removed we do not reach this point
+                    if newAnnex.portal_type in transfertAnnexWithScanIdTypes and \
+                       getattr(oldAnnex, 'scan_id', None):
+                        # transfer annex scan_id, it was copied to newAnnex, do not touch
+                        # but we remove it from oldAnnex and we reindex
+                        oldAnnex.scan_id = None
+                        oldAnnex.reindexObject(idxs=['scan_id'])
+                        # reindex parent because SearchableText still contains the annex scan_id
+                        reindex_object(copiedItem, update_metadata=False, mark_to_reindex=True)
+                    elif getattr(newAnnex, 'scan_id', None):
                         msg = translate('annex_not_kept_because_using_scan_id',
                                         mapping={'annexTitle': safe_unicode(newAnnex.Title())},
                                         domain='PloneMeeting',
@@ -1200,6 +1240,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         plone_utils.addPortalMessage(msg, type='warning')
                         unrestrictedRemoveGivenObject(newAnnex)
                         continue
+
                     # initialize to_print correctly regarding configuration
                     if not destCfg.getKeepOriginalToPrintOfClonedItems():
                         newAnnex.to_print = \
@@ -1208,20 +1249,33 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # Change the proposing group if the item owner does not belong to
             # the defined proposing group, except if p_keepProposingGroup is True
             if not keepProposingGroup:
+                # use a primary_organization if possible
+                person = get_person_from_userid(get_current_user_id())
+                primary_org = person.primary_organization if person else None
                 # proposingGroupWithGroupInCharge
                 if newItem.attribute_is_used('proposingGroupWithGroupInCharge'):
                     field = newItem.getField('proposingGroupWithGroupInCharge')
                     vocab = get_vocab(newItem, field.vocabulary_factory, only_factory=True)
                     userProposingGroupTerms = vocab(newItem, include_stored=False)._terms
                     if userProposingGroupTerms:
-                        newItem.setProposingGroupWithGroupInCharge(userProposingGroupTerms[0].token)
+                        token = userProposingGroupTerms[0].token
+                        if primary_org:
+                            tokens = [term.token for term in userProposingGroupTerms
+                                      if term.token.startswith(primary_org)]
+                            token = tokens[0] if tokens else token
+                        newItem.setProposingGroupWithGroupInCharge(token)
                 else:
                     # proposingGroup
                     field = newItem.getField('proposingGroup')
-                    vocab = get_vocab(newItem, field.vocabulary_factory, only_factory=True)
-                    userProposingGroupTerms = vocab(newItem, include_stored=False)._terms
-                    if userProposingGroupTerms:
-                        newItem.setProposingGroup(userProposingGroupTerms[0].token)
+                    vocab = get_vocab(newItem, field.vocabulary_factory, include_stored=False)
+                    if vocab._terms:
+                        token = vocab._terms[0].token
+                        if primary_org:
+                            try:
+                                token = vocab.getTermByToken(primary_org).token
+                            except LookupError:
+                                pass
+                        newItem.setProposingGroup(token)
 
             if newOwnerId != loggedUserId:
                 plone_utils.changeOwnershipOf(newItem, newOwnerId)
@@ -1237,10 +1291,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # of the cloned object then add the 'Creation' event.
             wfName = wftool.getWorkflowsFor(newItem)[0].id
             newItem.workflow_history[wfName] = ()
-            add_wf_history_action(newItem,
-                                  action_name=None,
-                                  action_label=None,
-                                  user_id=newOwnerId or newItem.Creator())
+            add_event_to_wf_history(newItem,
+                                    action=None,
+                                    actor=newOwnerId or newItem.Creator(),
+                                    comments=None)
 
             # The copy/paste has transferred annotations,
             # remove ones related to item sent to other MC
@@ -1263,7 +1317,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
           Returns True if the content_category was actually updated, False if no correspondence could be found.
         '''
         catalog = api.portal.get_tool('portal_catalog')
-        tool = api.portal.get_tool('portal_plonemeeting')
         if annex.portal_type == 'annexDecision':
             self.REQUEST.set('force_use_item_decision_annexes_group', True)
             annex_category = get_category_object(originCfg, annex.content_category)
@@ -1279,7 +1332,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         other_mc_correspondences = []
         if annex_category.other_mc_correspondences:
-            annex_cfg_id = tool.getMeetingConfig(annex).getId()
+            annex_cfg_id = self.getMeetingConfig(annex).getId()
             other_mc_correspondences = [
                 brain._unrestrictedGetObject() for brain in catalog.unrestrictedSearchResults(
                     UID=tuple(annex_category.other_mc_correspondences),
@@ -1342,26 +1395,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
         pass
-
-    security.declarePublic('getMailRecipient')
-
-    def getMailRecipient(self, userIdOrInfo, enc='utf-8'):
-        '''This method returns the mail recipient (=string based on email and
-           fullname if present) from a user id or UserInfo retrieved from a
-           call to portal_membership.getMemberById.'''
-        if isinstance(userIdOrInfo, basestring):
-            # It is a user ID. Get the corresponding UserInfo instance
-            userInfo = api.user.get(userIdOrInfo)
-        else:
-            userInfo = userIdOrInfo
-        # We return None if the user does not exist or has no defined email.
-        if not userInfo or not userInfo.getProperty('email'):
-            return None
-        # Compute the mail recipient string
-        fullname = self.getUserName(userInfo.id)
-        name = fullname.decode(enc)
-        res = name + u' <%s>' % userInfo.getProperty('email').decode(enc)
-        return safe_unicode(res)
 
     security.declarePublic('format_date')
 
@@ -1585,31 +1618,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 history.append(event)
         obj.workflow_history[workflow_name] = tuple(history)
 
-    def getAvailableMailingLists(self, obj, pod_template):
-        '''Gets the names of the (currently active) mailing lists defined for
-           this template.'''
-        res = []
-        mailing_lists = pod_template.mailing_lists and pod_template.mailing_lists.strip()
-        if not mailing_lists:
-            return res
-        try:
-            extra_expr_ctx = _base_extra_expr_ctx(obj)
-            extra_expr_ctx.update({'obj': obj, })
-            for line in mailing_lists.split('\n'):
-                name, expression, userIds = line.split(';')
-                if not expression or _evaluateExpression(obj,
-                                                         expression,
-                                                         roles_bypassing_expression=[],
-                                                         extra_expr_ctx=extra_expr_ctx,
-                                                         raise_on_error=True):
-                    res.append(name.strip())
-        except Exception, exc:
-            res.append(translate('Mailing lists are not correctly defined, original error is \"${error}\"',
-                                 domain='PloneMeeting',
-                                 mapping={'error': str(exc)},
-                                 context=self.REQUEST))
-        return res
-
     def showHolidaysWarning(self, cfg):
         """Condition for showing the 'holidays_waring_message'."""
         if cfg is not None and cfg.__class__.__name__ == "MeetingConfig":
@@ -1633,34 +1641,22 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return False
 
-    def get_extra_adviser_infos(self):
+    def get_extra_adviser_infos(self, group_by_org_uids=False):
         '''See doc in interfaces.py.'''
-        return {}
-
-    def getAdvicePortalTypeIds_cachekey(method, self):
-        '''cachekey method for self.getAdvicePortalTypes.'''
-        return True
-
-    security.declarePublic('getAdvicePortalTypeIds')
-
-    @ram.cache(getAdvicePortalTypeIds_cachekey)
-    def getAdvicePortalTypeIds(self):
-        """We may have several 'meetingadvice' portal_types,
-           return it as ids."""
-        return self.getAdvicePortalTypes(as_ids=True)
-
-    security.declarePublic('getAdvicePortalTypes')
-
-    def getAdvicePortalTypes(self, as_ids=False):
-        """We may have several 'meetingadvice' portal_types."""
-        typesTool = api.portal.get_tool('portal_types')
-        res = []
-        for portal_type in typesTool.listTypeInfo():
-            if portal_type.id.startswith('meetingadvice'):
-                res.append(portal_type)
-        if as_ids:
-            res = [p.id for p in res]
+        res = {}
+        tool = self.getSelf()
+        for row in tool.getAdvisersConfig():
+            if group_by_org_uids:
+                res[tuple(row['org_uids'])] = {k: v for k, v in row.items() if k != 'org_uids'}
+            else:
+                for org_uid in row['org_uids']:
+                    # append every existing values
+                    res[org_uid] = {k: v for k, v in row.items() if k != 'org_uids'}
         return res
+
+    def extraAdviceTypes(self):
+        '''See doc in interfaces.py.'''
+        return []
 
     def getGroupedConfigs_cachekey(method, self, config_group=None, check_access=True, as_items=False):
         '''cachekey method for self.getGroupedConfigs.'''
@@ -1709,22 +1705,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = True
         if not check_zope_admin():
             res = False
-        return res
-
-    def get_labels(self, obj, include_personal_labels=True):
-        """Return active labels for p_obj.
-           p_include_personal_labels may be:
-           - True: returns every labels, personal or not;
-           - False: personal labels not returned;
-           - "only": only personal labels returned."""
-        res = {}
-        labeling = ILabeling(obj)
-        labels = labeling.active_labels()
-        for label in labels:
-            if (include_personal_labels == "only" and not label['by_user']) or \
-               (include_personal_labels is False and label['by_user']):
-                continue
-            res[label['label_id']] = label['title']
         return res
 
 

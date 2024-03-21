@@ -6,10 +6,10 @@
 #
 
 from collective.iconifiedcategory.browser.tabview import CategorizedContent
-from collective.iconifiedcategory.interfaces import IIconifiedCategorySettings
+from collective.iconifiedcategory.config import get_sort_categorized_tab
+from collective.iconifiedcategory.config import set_sort_categorized_tab
 from collective.iconifiedcategory.utils import get_categorized_elements
 from imio.helpers.cache import cleanRamCacheFor
-from plone import api
 from Products.PloneMeeting.columns import ItemLinkedMeetingColumn
 from Products.PloneMeeting.columns import PMAnnexActionsColumn
 from Products.PloneMeeting.columns import PMPrettyLinkColumn
@@ -90,8 +90,6 @@ class testColumns(PloneMeetingTestCase):
         # annexes
         self.assertTrue(' class="pmMoreInfo">' in publicBrainPrettyLinkColumn)
         # the secret item is not accessible
-        item_portal_type_title = translate(
-            self.portal.portal_types[secretItem.portal_type].Title())
         self.assertEqual(
             secretBrainPrettyLinkColumn,
             u"<div class='pretty_link' title='Secret item title'>"
@@ -100,7 +98,7 @@ class testColumns(PloneMeetingTestCase):
             u"style=\"width: 16px; height: 16px;\" /></span>"
             u"<span class='pretty_link_content state-itemcreated'>Secret item title "
             u"<span class='discreet no_access'>(You can not access this element)</span>"
-            u"</span></div>".format(item_portal_type_title))
+            u"</span></div>".format(self.portal.portal_types[secretItem.portal_type].Title()))
 
     def test_pm_AnnexActionsColumnShowArrows(self):
         """Arrows are only shown if annex or annexDecision are orderable.
@@ -126,16 +124,10 @@ class testColumns(PloneMeetingTestCase):
         renderedColumnAnnex2 = column.renderCell(annex2_content)
         self.assertTrue(self.hasPermission(AddAnnex, item))
         # sort_categorized_tab must be False to show arrows
-        sort_categorized_tab = api.portal.get_registry_record(
-            'sort_categorized_tab',
-            interface=IIconifiedCategorySettings,
-        )
-        self.assertTrue(sort_categorized_tab)
+        self.assertTrue(get_sort_categorized_tab())
         self.assertFalse('folder_position_typeaware?position=down' in renderedColumnAnnex1)
         self.assertFalse('folder_position_typeaware?position=up' in renderedColumnAnnex2)
-        api.portal.set_registry_record('sort_categorized_tab',
-                                       False,
-                                       interface=IIconifiedCategorySettings)
+        set_sort_categorized_tab(False)
         renderedColumnAnnex1 = column.renderCell(annex1_content)
         renderedColumnAnnex2 = column.renderCell(annex2_content)
         self.assertTrue('folder_position_typeaware?position=down' in renderedColumnAnnex1)

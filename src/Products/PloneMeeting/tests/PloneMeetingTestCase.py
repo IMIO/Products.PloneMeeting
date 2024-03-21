@@ -17,7 +17,9 @@ from copy import deepcopy
 from datetime import datetime
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import get_vocab_values
 from imio.helpers.content import object_values
+from imio.helpers.content import richtextval
 from imio.helpers.testing import testing_logger
 from imio.helpers.workflow import get_transitions
 from plone import api
@@ -26,7 +28,6 @@ from plone.app.testing import login
 from plone.app.testing import logout
 from plone.app.testing.bbb import _createMemberarea
 from plone.app.testing.helpers import setRoles
-from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFPlone.utils import base_hasattr
@@ -36,9 +37,8 @@ from Products.PloneMeeting.browser.meeting import _get_default_signatories
 from Products.PloneMeeting.browser.meeting import _get_default_voters
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
+from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
-from Products.PloneMeeting.Meeting import Meeting_schema
-from Products.PloneMeeting.MeetingItem import MeetingItem_schema
 from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
 from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
 from Products.PloneMeeting.utils import cleanMemoize
@@ -121,8 +121,6 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     # Some default content
     descriptionText = '<p>Some description</p>'
     decisionText = '<p>Some decision.</p>'
-    schemas = {'MeetingItem': MeetingItem_schema,
-               'Meeting': Meeting_schema}
     subproductIgnoredTestFiles = ['testPerformances.py',
                                   'test_robot.py']
 
@@ -462,6 +460,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if relatedTo == 'item_decision':
             annexContentType = 'annexDecision'
 
+        # scan_id is removed by default
+        self.request.set(ITEM_SCAN_ID_NAME, scan_id)
         theAnnex = createContentInContainer(
             container=context,
             portal_type=annexContentType,
@@ -474,6 +474,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             signed=signed,
             publishable=publishable,
             scan_id=scan_id)
+        self.request.set(ITEM_SCAN_ID_NAME, None)
         # need to commit the transaction so the stored blob is correct
         # if not done, accessing the blob will raise 'BlobError: Uncommitted changes'
         transaction.commit()
@@ -532,7 +533,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             **{'advice_group': advice_group,
                'advice_type': advice_type,
                'advice_hide_during_redaction': advice_hide_during_redaction,
-               'advice_comment': RichTextValue(advice_comment)})
+               'advice_comment': richtextval(advice_comment)})
         return advice
 
     def deleteAsManager(self, uid):
@@ -732,8 +733,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         """Enable collective.documentviewer auto_convert."""
         gsettings = GlobalSettings(self.portal)
         gsettings.auto_convert = enable
-        gsettings.auto_select_layout = enable
+        # False or every portal_type having a file is converted, like PODTemplate, ...
+        gsettings.auto_select_layout = False
         gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
+        self.tool.at_post_edit_script()
         return gsettings
 
     def _enable_column(self, column_name, cfg=None, related_to='MeetingItem', enable=True):
@@ -804,6 +807,20 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         attr_name = "{0}_activated".format(param)
         setattr(annex_group, attr_name, enable)
 
+    def _enable_action(self, action, related_to="MeetingItem", enable=True):
+        """Enable an action for given p_related_to element."""
+        cfg = self.meetingConfig
+        if related_to == "MeetingItem":
+            if enable and action not in cfg.getEnabledItemActions():
+                actions = cfg.getEnabledItemActions() + (action, )
+                cfg.setEnabledItemActions(actions)
+                notify(ObjectEditedEvent(cfg))
+            elif not enable and action in cfg.getEnabledItemActions():
+                actions = list(cfg.getEnabledItemActions())
+                actions.remove(action)
+                cfg.setEnabledItemActions(actions)
+                notify(ObjectEditedEvent(cfg))
+
     def _disableObj(self, obj, notify_event=True):
         """ """
         # using field 'enabled'
@@ -818,9 +835,13 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             notify(ObjectModifiedEvent(obj))
         self.cleanMemoize()
 
-    def _check_wfa_available(self, wfas):
+    def _check_wfa_available(self, wfas, related_to='MeetingItem'):
         available = True
-        available_wfas = self.meetingConfig.listWorkflowAdaptations()
+        if related_to == 'MeetingItem':
+            available_wfas = get_vocab_values(self.meetingConfig, 'WorkflowAdaptations')
+        elif related_to == 'MeetingAdvice':
+            available_wfas = get_vocab_values(self.tool, 'AdviceWorkflowAdaptations')
+
         for wfa in wfas:
             if wfa not in available_wfas:
                 available = False

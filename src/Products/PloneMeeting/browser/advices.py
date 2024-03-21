@@ -4,9 +4,13 @@ from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group_id
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import get_plone_groups_for_user
+from imio.helpers.content import get_user_fullname
+from imio.helpers.content import get_vocab_values
 from imio.helpers.workflow import get_state_infos
 from imio.history.browser.views import EventPreviewView
 from imio.history.interfaces import IImioHistory
+from imio.history.utils import get_event_by_time
+from imio.history.utils import getLastWFAction
 from plone import api
 from plone.autoform import directives
 from plone.autoform.form import AutoExtensibleForm
@@ -21,12 +25,14 @@ from Products.PloneMeeting.browser.advicechangedelay import _reinit_advice_delay
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import get_event_field_data
 from Products.PloneMeeting.utils import is_proposing_group_editor
+from Products.PloneMeeting.utils import isPowerObserverForCfg
 from z3c.form import form
 from zope import schema
 from zope.component import getAdapter
 from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.i18n import translate
+from zope.lifecycleevent import Attributes
 from zope.lifecycleevent import ObjectModifiedEvent
 
 import json
@@ -84,7 +90,7 @@ class AdvicesIcons(BrowserView):
                                         not get_plone_group_id(advice["id"], "advisers") in
                                         get_plone_groups_for_user()]
                 may_view_confidential_advices = not confidential_advices or \
-                    not tool.isPowerObserverForCfg(cfg, power_observer_types=cfg.getAdviceConfidentialFor())
+                    not isPowerObserverForCfg(cfg, power_observer_types=cfg.getAdviceConfidentialFor())
         return (repr(self.context),
                 self.context.adviceIndex._p_mtime,
                 server_url,
@@ -105,6 +111,7 @@ class AdvicesIcons(BrowserView):
             self.portal_url = self.portal.absolute_url()
             self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'])
             self.advice_infos = self.context.getAdviceDataFor(self.context, ordered=True)
+            self.every_advice_types = get_vocab_values(self.tool, 'ConfigAdviceTypes')
             if not self.context.adapted().isPrivacyViewable():
                 return '<div style="display: inline">&nbsp;-&nbsp;&nbsp;&nbsp;</div>'
         return super(AdvicesIcons, self).__call__()
@@ -198,14 +205,20 @@ class AdvicesIconsInfos(BrowserView):
                     is_proposing_group_editor(org_uid, self.cfg)
                 self.userMayEditItem = _checkPermission(ModifyPortalContent, self.context)
 
-    def _initAdviceInfos(self, advice_id):
+    def _initAdviceInfos(self, advice):
         """ """
-        self.advice_id = advice_id
-        self.memberIsAdviserForGroup = advice_id in self.userAdviserOrgUids
-        self.adviceIsInherited = self.context.adviceIsInherited(advice_id)
+        self.advice_id = advice['id']
+        self.memberIsAdviserForGroup = self.advice_id in self.userAdviserOrgUids
+        self.adviceIsInherited = self.context.adviceIsInherited(self.advice_id)
         self.mayEdit = not self.adviceIsInherited and \
-            ((self.advicesToEdit and advice_id in self.advicesToEdit) or
+            ((self.advicesToEdit and self.advice_id in self.advicesToEdit) or
              (self.isRealManager and not self.adviceType == 'not_given'))
+        self.adviceHolder = advice.get('adviceHolder', None) or self.context
+        self.adviceHolderIsViewable = self.adviceHolder.isViewable()
+        self.obj = advice.get('advice_id', None) and \
+            self.adviceHolder.get(advice['advice_id'], None)
+        self.show_history = self.obj and self.adviceHolderIsViewable and \
+            self.obj.restrictedTraverse('@@contenthistory').show_history()
 
     def showLinkToInherited(self, adviceHolder):
         """ """
@@ -318,6 +331,13 @@ class AdviceInfos(BrowserView):
             self.advice.get('advice_id', None) else None
         self.displayedReviewState = displayedReviewState
         self.customMessageInfos = customMessageInfos
+        self.advice_given_by = self.get_advice_given_by()
+        if self.obj is not None:
+            # show_history
+            adviceHolder = self.advice.get('adviceHolder', None) or self.obj
+            adviceHolderIsViewable = adviceHolder.isViewable()
+            self.show_history = self.obj and adviceHolderIsViewable and \
+                self.obj.restrictedTraverse('@@contenthistory').show_history()
         return self.index()
 
     def adviser_users(self, advice_info):
@@ -327,6 +347,23 @@ class AdviceInfos(BrowserView):
             res = self.context._displayAdviserUsers(
                 advice_info['userids'], self.portal_url, self.tool)
         return res
+
+    def get_advice_given_by(self):
+        """The advice was given by advice WF transition before "giveAdvice"."""
+        given_by = None
+        if self.obj and self.obj._get_final_state_id() != 'advice_given':
+            # if final_state_id is actually 'advice_given' we can not compute
+            # given_by we are only able to know who created the advice
+            last_before_give_advice_event = getLastWFAction(
+                self.obj,
+                transition=self.obj._get_final_transition_id(),
+                ignore_previous_event_actions=['backToAdviceInitialState'])
+            if last_before_give_advice_event:
+                given_by = get_user_fullname(last_before_give_advice_event["actor"])
+        return given_by
+
+    def get_user_fullname(self, user_id):
+        return get_user_fullname(user_id)
 
 
 class ChangeAdviceHiddenDuringRedactionView(BrowserView):
@@ -339,7 +376,10 @@ class ChangeAdviceHiddenDuringRedactionView(BrowserView):
         else:
             # toggle the value
             self.context.advice_hide_during_redaction = not bool(self.context.advice_hide_during_redaction)
-            notify(ObjectModifiedEvent(self.context))
+            # when advice_hide_during_redaction, it is handled by ObjectModifiedEvent
+            notify(ObjectModifiedEvent(
+                self.context,
+                Attributes(None, 'advice_hide_during_redaction')))
             if self.request.RESPONSE.status != 200:
                 self.request.RESPONSE.status = 200
                 if self.request.get('HTTP_REFERER') != self.request.RESPONSE.getHeader('location'):
@@ -404,7 +444,8 @@ class AdviceConfidentialityView(BrowserView):
 class AdviceEventPreviewView(EventPreviewView):
     """ """
 
-    def __call__(self, event):
+    def _update(self, event):
+        """ """
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.advice_style = self.cfg.getAdviceStyle()
@@ -413,13 +454,37 @@ class AdviceEventPreviewView(EventPreviewView):
         self.advice_type = get_event_field_data(event["advice_data"], "advice_type")
         self.advice_comment = get_event_field_data(event["advice_data"], "advice_comment")
         self.advice_observations = get_event_field_data(event["advice_data"], "advice_observations")
-        self.event = event
-        self.event_time = int(event['time'])
+        self.event_time = repr(float(event['time']))
+        self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'])
+        self.userOrgUids = self.tool.get_orgs_for_user()
+
+    def __call__(self, event):
+        self._update(event)
         return super(AdviceEventPreviewView, self).__call__(event)
 
-    def may_view_historized_data(self, event):
+    def may_view_historized_data(self):
+        """Viewable by:
+           - (Meeting)Managers
+           - proposingGroup members;
+           - advice _advisers group members."""
+        return self.tool.isManager(self.cfg) or \
+            self.context.advice_group in self.userAdviserOrgUids or \
+            self.context.aq_parent.getProposingGroup() in self.userOrgUids
+
+
+class AdviceGivenHistoryView(BrowserView):
+    """ """
+
+    def __call__(self, event_time):
         """ """
-        return self.tool.isManager(self.cfg)
+        event = get_event_by_time(self.context, 'advice_given', float_event_time=event_time)
+        view = self.context.restrictedTraverse('@@history-event-preview')
+        view._update(event)
+        if not view.may_view_historized_data():
+            raise Unauthorized
+        self.advice_data = event['advice_data']
+        self.item_data = event['item_data']
+        return super(AdviceGivenHistoryView, self).__call__()
 
 
 def _display_asked_again_warning(advice, parent):
@@ -439,18 +504,16 @@ class AdviceView(DefaultView):
 
     def __call__(self):
         """Check if viewable by current user in case smart guy call the right url."""
-        parent = self.context.aq_inner.aq_parent
-        self.advice_icons_infos = parent.unrestrictedTraverse('@@advices-icons-infos')
-        advice_type = parent._shownAdviceTypeFor(parent.adviceIndex[self.context.advice_group])
-        self.advice_icons_infos._initAdvicesInfos(advice_type)
-        self.advice_icons_infos._initAdviceInfos(self.context.advice_group)
-        if not self.advice_icons_infos.mayView():
-            raise Unauthorized
-        _display_asked_again_warning(self.context, parent)
-        # set some variables for PageTemplate
-        self.parent = parent
+        self.parent = self.context.aq_inner.aq_parent
         self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
+        self.advice_icons_infos = self.parent.unrestrictedTraverse('@@advices-icons-infos')
+        advice_type = self.parent._shownAdviceTypeFor(self.parent.adviceIndex[self.context.advice_group])
+        self.advice_icons_infos._initAdvicesInfos(advice_type)
+        self.advice_icons_infos._initAdviceInfos(self.parent.adviceIndex[self.context.advice_group])
+        if not self.advice_icons_infos.mayView():
+            raise Unauthorized
+        _display_asked_again_warning(self.context, self.parent)
         return super(AdviceView, self).__call__()
 
 
@@ -505,9 +568,8 @@ class BaseAdviceInfoForm(AutoExtensibleForm, form.EditForm):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.label = translate(self.label,
-                               domain='PloneMeeting',
-                               context=self.request)
+        self.label = translate(
+            self.label, domain='PloneMeeting', context=self.request)
 
     def _advice_infos(self, data, context=None):
         '''Init @@advices-icons-infos and returns it.'''
@@ -517,18 +579,5 @@ class BaseAdviceInfoForm(AutoExtensibleForm, form.EditForm):
         # initialize advice_infos
         advice_data = context.getAdviceDataFor(context, data['advice_uid'])
         advice_infos(context._shownAdviceTypeFor(advice_data))
-        advice_infos._initAdviceInfos(data['advice_uid'])
+        advice_infos._initAdviceInfos(advice_data)
         return advice_infos
-
-
-class AdviceGivenHistoryView(BrowserView):
-    """ """
-
-    def __call__(self, event_time):
-        """ """
-        for event in self.context.advice_given_history:
-            if int(event['time']) == event_time:
-                self.advice_data = event['advice_data']
-                self.item_data = event['item_data']
-                break
-        return super(AdviceGivenHistoryView, self).__call__()

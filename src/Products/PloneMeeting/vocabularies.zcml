@@ -24,7 +24,7 @@
   <utility component=".vocabularies.EveryOrganizationsAcronymsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary" />
   <utility component=".vocabularies.PMSortedSelectedOrganizationsElephantVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.sortedselectedorganizationsvocabulary" />
+           name="PMSortedSelectedOrganizationsVocabulary" />
   <utility component=".vocabularies.AssociatedGroupsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.associatedgroupsvocabulary" />
   <utility component=".vocabularies.ItemAssociatedGroupsVocabularyFactory"
@@ -121,6 +121,24 @@
            component=".vocabularies.ItemAnnexTypesVocabularyFactory" />
   <utility name="Products.PloneMeeting.vocabularies.every_annex_types_vocabulary"
            component=".vocabularies.EveryAnnexTypesVocabularyFactory" />
+  <utility name="AdvicePortalTypes"
+           component=".vocabularies.AdvicePortalTypesVocabularyFactory" />
+  <utility name="ItemWorkflows"
+           component=".vocabularies.ItemWorkflowsVocabularyFactory" />
+  <utility name="MeetingWorkflows"
+           component=".vocabularies.MeetingWorkflowsVocabularyFactory" />
+  <utility name="AdviceWorkflows"
+           component=".vocabularies.AdviceWorkflowsVocabularyFactory" />
+  <utility name="WorkflowAdaptations"
+           component=".vocabularies.WorkflowAdaptationsVocabularyFactory" />
+  <utility name="AdviceWorkflowAdaptations"
+           component=".vocabularies.AdviceWorkflowAdaptationsVocabularyFactory" />
+  <utility name="ConfigAdviceTypes"
+           component=".vocabularies.ConfigAdviceTypesVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.config_hide_history_to_vocabulary"
+           component=".vocabularies.ConfigHideHistoryTosVocabularyFactory" />
+  <utility name="EnabledItemActions"
+           component=".vocabularies.EnabledItemActionsVocabularyFactory" />
 
   <!-- PMHeldPosition vocabularies -->
   <utility component=".vocabularies.HeldPositionUsagesVocabularyFactory"
@@ -143,9 +161,15 @@
            name="Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary" />
 
   <!-- Vocabularies used in item_duplicate_form -->
-  <utility component=".vocabularies.ContainedAnnexesVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.contained_annexes_vocabulary" />
-  <utility component=".vocabularies.ContainedDecisionAnnexesVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.contained_decision_annexes_vocabulary" />
+  <utility component=".vocabularies.ItemDuplicationContainedAnnexesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.item_duplication_contained_annexes_vocabulary" />
+  <utility component=".vocabularies.ItemDuplicationContainedDecisionAnnexesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.item_duplication_contained_decision_annexes_vocabulary" />
+
+  <!-- Vocabularies used in item-export-pdf-form -->
+  <utility component=".vocabularies.GenerablePODTemplatesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.generable_pdf_documents_vocabulary" />
+  <utility component=".vocabularies.ItemExportPDFElementsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.item_export_pdf_elements_vocabulary" />
 
 </configure>

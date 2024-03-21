@@ -19,9 +19,12 @@ from collective.documentgenerator.content.vocabulary import ExistingPODTemplateF
 from collective.documentgenerator.content.vocabulary import MergeTemplatesVocabularyFactory
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
 from collective.documentgenerator.content.vocabulary import StyleTemplatesVocabularyFactory
+from collective.documentgenerator.interfaces import IGenerablePODTemplates
 from collective.eeafaceted.collectionwidget.content.dashboardcollection import IDashboardCollection
 from collective.eeafaceted.collectionwidget.vocabulary import CachedCollectionVocabulary
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
+from collective.eeafaceted.z3ctable.columns import EMPTY_STRING
+from collective.iconifiedcategory.config import get_sort_categorized_tab
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
@@ -29,14 +32,13 @@ from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import render_filesize
 from collective.iconifiedcategory.vocabularies import CategoryTitleVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryVocabulary
-from collective.iconifiedcategory.vocabularies import EveryCategoryTitleVocabulary
-from collective.iconifiedcategory.vocabularies import EveryCategoryVocabulary
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import find
+from imio.helpers.content import get_user_fullname
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToObject
@@ -46,11 +48,11 @@ from plone import api
 from plone.app.vocabularies.security import GroupsVocabulary
 from plone.app.vocabularies.users import UsersFactory
 from plone.memoize import ram
+from plone.memoize.ram import store_in_cache
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
-from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NO_COMMITTEE
@@ -63,10 +65,13 @@ from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import get_context_with_request
 from Products.PloneMeeting.utils import get_datagridfield_column_value
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
+from Products.PloneMeeting.utils import getAdvicePortalTypes
 from Products.PloneMeeting.utils import number_word
 from Products.PloneMeeting.utils import split_gender_and_number
 from z3c.form.interfaces import NO_VALUE
 from zope.annotation import IAnnotations
+from zope.component import getAdapter
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
@@ -732,10 +737,9 @@ class CreatorsVocabulary(object):
     def CreatorsVocabulary__call__(self, context):
         """ """
         catalog = api.portal.get_tool('portal_catalog')
-        tool = api.portal.get_tool('portal_plonemeeting')
         res = []
         for creator in catalog.uniqueValuesFor('Creator'):
-            value = tool.getUserName(creator)
+            value = get_user_fullname(creator)
             res.append(SimpleTerm(creator,
                                   creator,
                                   safe_unicode(value))
@@ -775,7 +779,7 @@ class CreatorsForFacetedFilterVocabulary(object):
                             if creator not in creatorsToHide]
 
         for creator in filteredCreators:
-            value = tool.getUserName(creator)
+            value = get_user_fullname(creator)
             res.append(SimpleTerm(creator,
                                   creator,
                                   safe_unicode(value))
@@ -926,13 +930,10 @@ class AskedAdvicesVocabulary(object):
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
-        context = get_context_with_request(context) or context
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.askedadvicesvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = None
-        # when creating new Plone Site, context may be the Zope Application...
-        if hasattr(context, 'portal_type'):
-            cfg = tool.getMeetingConfig(context)
+        cfg = tool.getMeetingConfig(context)
+        # invalidate if an org title is changed
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.everyorganizationsvocabulary')
         return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
@@ -988,12 +989,51 @@ AskedAdvicesVocabularyFactory = AskedAdvicesVocabulary()
 class ItemOptionalAdvicesVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call__(self, context, include_selected=True, include_not_selectable_values=True):
+    def __call___cachekey(method, self, context, include_selected=True, include_not_selectable_values=True):
+        '''cachekey method for self.__call__.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        daa = self._getDelayAwareAdvisers(context, cfg)
+        # first time, we init a cached value with include_not_selectable_values=True
+        # and include_selected=False so it will be the base default vocabulary
+        if not include_selected and include_not_selectable_values:
+            return repr(cfg), False, True, (), daa
+        # try to get common vocab, stored with active values
+        elif include_selected and include_not_selectable_values:
+            key = '%s.%s:%s' % (method.__module__, method.__name__, (repr(cfg), False, True))
+            vocab = store_in_cache(method).get(key)
+            if not vocab:
+                vocab = self(context, False, True)
+            # there are missing values
+            if set(context.getOptionalAdvisers()).difference([t.value for t in vocab._terms]):
+                return repr(cfg), True, True, context.getOptionalAdvisers(), daa
+            else:
+                # no missing values so we can use the default vocabulary
+                return repr(cfg), False, True, (), daa
+        else:
+            return repr(cfg), False, False, daa
+
+    def _getDelayAwareAdvisers(self, context, cfg):
+        """Separated so it can be called in cachekey."""
+        # add delay-aware optionalAdvisers
+        # validity_date is used for customAdviser validaty (date from, date to)
+        validity_date = None
+        item = None
+        if context.meta_type == 'MeetingItem':
+            validity_date = context.created()
+            item = context
+        else:
+            validity_date = DateTime()
+        return cfg._optionalDelayAwareAdvisers(validity_date, item)
+
+    @ram.cache(__call___cachekey)
+    def ItemOptionalAdvicesVocabulary__call__(self, context, include_selected=True, include_not_selectable_values=True):
         """p_include_selected will make sure values selected on current context are
            in the vocabulary.  Only relevant when context is a MeetingItem.
            p_include_not_selectable_values will include the 'not_selectable_value_...' values,
            useful for display only most of times."""
-        request = getRequest()
+
+        request = context.REQUEST
 
         def _displayDelayAwareValue(delay_label, org_title, delay):
             org_title = safe_unicode(org_title)
@@ -1015,30 +1055,34 @@ class ItemOptionalAdvicesVocabulary(object):
                                              context=request)
             return value_to_display
 
-        def _insert_term_and_users(res, term_value, term_title):
+        def _insert_term_and_users(res, term_value, term_title, add_users=True):
             """ """
             term = SimpleTerm(term_value, term_value, term_title)
             term.sortable_title = term_title
             res.append(term)
             org_uid = term_value.split('__rowid__')[0]
-            if org_uid in selectableAdviserUsers:
-                advisers_group = get_plone_group(org_uid, "advisers")
-                for user_id in advisers_group.getGroupMemberIds():
+            if add_users:
+                user_ids = []
+                if org_uid in selectableAdviserUsers:
+                    user_ids += get_plone_group(org_uid, "advisers").getGroupMemberIds()
+                if include_selected:
+                    # manage missing user ids here so term is grouped with the org term
+                    prefix = term_value + '__userid__'
+                    missing_user_ids = [oa.replace(prefix, '') for oa in context.getOptionalAdvisers()
+                                        if oa.startswith(prefix) and oa.replace(prefix, '') not in user_ids]
+                    user_ids += missing_user_ids
+                # manage users in a separate list so we sort it before appending to global res
+                res_users = []
+                for user_id in user_ids:
                     user_term_value = "{0}__userid__{1}".format(term_value, user_id)
-                    user_title = safe_unicode(tool.getUserName(user_id))
+                    user_title = get_user_fullname(user_id)
                     user_term = SimpleTerm(user_term_value, user_term_value, user_title)
                     user_term.sortable_title = u"{0} ({1})".format(term_title, user_title)
-                    res.append(user_term)
+                    res_users.append(user_term)
+                res_users = humansorted(res_users, key=attrgetter('title'))
+                res += res_users
             return
 
-        def _getNonDelayAwareAdvisers_cachekey(method, cfg):
-            '''cachekey method for self._getNonDelayAwareAdvisers.'''
-            # this volatile is invalidated when plonegroup config changed
-            date = get_cachekey_volatile(
-                '_users_groups_value')
-            return date, repr(cfg), cfg.modified()
-
-        @ram.cache(_getNonDelayAwareAdvisers_cachekey)
         def _getNonDelayAwareAdvisers(cfg):
             """Separated so it can be cached."""
             resNonDelayAwareAdvisers = []
@@ -1053,16 +1097,7 @@ class ItemOptionalAdvicesVocabulary(object):
         cfg = tool.getMeetingConfig(context)
         selectableAdviserUsers = cfg.getSelectableAdviserUsers()
         resDelayAwareAdvisers = []
-        # add delay-aware optionalAdvisers
-        # validity_date is used for customAdviser validaty (date from, date to)
-        validity_date = None
-        item = None
-        if context.meta_type == 'MeetingItem':
-            validity_date = context.created()
-            item = context
-        else:
-            validity_date = DateTime()
-        delayAwareAdvisers = cfg._optionalDelayAwareAdvisers(validity_date, item)
+        delayAwareAdvisers = self._getDelayAwareAdvisers(context, cfg)
         # a delay-aware adviser has a special id so we can handle it specifically after
         for delayAwareAdviser in delayAwareAdvisers:
             adviserId = "%s__rowid__%s" % \
@@ -1087,23 +1122,42 @@ class ItemOptionalAdvicesVocabulary(object):
                                           [org_infos.token for org_infos in resDelayAwareAdvisers]
                 for optionalAdviser in optionalAdvisers:
                     if optionalAdviser not in optionalAdvisersInVocab:
+                        user_id = org = None
+                        org_uid = optionalAdviser
+                        if '__userid__' in optionalAdviser:
+                            org_uid, user_id = optionalAdviser.split('__userid__')
                         if '__rowid__' in optionalAdviser:
-                            org_uid, row_id = decodeDelayAwareId(optionalAdviser)
+                            org_uid, row_id = decodeDelayAwareId(org_uid)
                             delay = cfg._dataForCustomAdviserRowId(row_id)['delay']
                             delay_label = context.adviceIndex[org_uid]['delay_label']
                             org = get_organization(org_uid)
                             if not org:
                                 continue
-                            org_title = org.get_full_title()
-                            value_to_display = _displayDelayAwareValue(delay_label, org_title, delay)
-                            _insert_term_and_users(
-                                resDelayAwareAdvisers, optionalAdviser, value_to_display)
+                            value_to_display = _displayDelayAwareValue(
+                                delay_label, org.get_full_title(), delay)
+                            if not user_id:
+                                _insert_term_and_users(
+                                    resDelayAwareAdvisers,
+                                    optionalAdviser,
+                                    value_to_display,
+                                    add_users=False)
                         else:
-                            org = get_organization(optionalAdviser)
+                            org = get_organization(org_uid)
                             if not org:
                                 continue
-                            _insert_term_and_users(
-                                resNonDelayAwareAdvisers, optionalAdviser, org.get_full_title())
+                            if not user_id:
+                                _insert_term_and_users(
+                                    resNonDelayAwareAdvisers,
+                                    optionalAdviser,
+                                    org.get_full_title(),
+                                    add_users=False)
+                        # it is a userid, add a special value including the org title
+                        if org and user_id:
+                            user_term_title = u"{0} ({1})".format(
+                                org.get_full_title(), get_user_fullname(user_id))
+                            user_term = SimpleTerm(optionalAdviser, optionalAdviser, user_term_title)
+                            user_term.sortable_title = user_term_title
+                            resDelayAwareAdvisers.append(user_term)
 
         # now create the listing
         # sort elements by value before potentially prepending a special value here under
@@ -1134,11 +1188,16 @@ class ItemOptionalAdvicesVocabulary(object):
                                   non_delay_aware_optional_advisers_msg))
         return SimpleVocabulary(resDelayAwareAdvisers + resNonDelayAwareAdvisers)
 
+    # do ram.cache have a different key name
+    __call__ = ItemOptionalAdvicesVocabulary__call__
+
 
 ItemOptionalAdvicesVocabularyFactory = ItemOptionalAdvicesVocabulary()
 
 
 class AdviceTypesVocabulary(object):
+    """Global advice types vocabulary used in faceted criterion."""
+
     implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context):
@@ -1601,7 +1660,7 @@ class PMPortalTypesVocabulary(PortalTypesVocabularyFactory):
                                             domain="plone",
                                             context=context.REQUEST)))
             # manage multiple 'meetingadvice' portal_types
-            for portal_type in tool.getAdvicePortalTypes():
+            for portal_type in getAdvicePortalTypes():
                 res.append(SimpleTerm(portal_type.id,
                                       portal_type.id,
                                       translate(portal_type.title,
@@ -1613,6 +1672,50 @@ class PMPortalTypesVocabulary(PortalTypesVocabularyFactory):
 
 
 PMPortalTypesVocabularyFactory = PMPortalTypesVocabulary()
+
+
+class AdvicePortalTypesVocabulary(object):
+    """Vocabulary listing every existing advice portal_types."""
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        # manage multiple 'meetingadvice' portal_types
+        res = []
+        for portal_type in getAdvicePortalTypes():
+            res.append(SimpleTerm(
+                portal_type.id,
+                portal_type.id,
+                u'{0} ({1})'.format(
+                    translate(portal_type.title,
+                              domain="PloneMeeting",
+                              context=context.REQUEST),
+                    portal_type.id)))
+        return SimpleVocabulary(res)
+
+
+AdvicePortalTypesVocabularyFactory = AdvicePortalTypesVocabulary()
+
+
+class TypeWorkflowsVocabulary(object):
+    """Vocabulary listing workflows related to a type of element."""
+    implements(IVocabularyFactory)
+
+    def __init__(self, wf_name_startswith=None):
+        self.wf_name_startswith = wf_name_startswith
+
+    def __call__(self, context):
+        wf_tool = api.portal.get_tool('portal_workflow')
+        res = []
+        for wf_name in wf_tool.listWorkflows():
+            if wf_name.startswith(self.wf_name_startswith) and \
+               '__' not in wf_name:
+                res.append(SimpleTerm(wf_name, wf_name, wf_name))
+        return SimpleVocabulary(res)
+
+
+ItemWorkflowsVocabularyFactory = TypeWorkflowsVocabulary('meetingitem')
+MeetingWorkflowsVocabularyFactory = TypeWorkflowsVocabulary('meeting_')
+AdviceWorkflowsVocabularyFactory = TypeWorkflowsVocabulary('meetingadvice')
 
 
 class PMExistingPODTemplate(ExistingPODTemplateFactory):
@@ -1787,54 +1890,6 @@ class PMCategoryTitleVocabulary(CategoryTitleVocabulary, PMCategoryVocabulary):
     __call__ = PMCategoryTitleVocabulary__call__
 
 
-class PMEveryCategoryVocabulary(EveryCategoryVocabulary):
-    """Override to add ram.cache."""
-
-    def __call___cachekey(method, self, context, use_category_uid_as_token=False, only_enabled=False):
-        '''cachekey method for self.__call__.'''
-        annex_config = get_config_root(context)
-        annex_group = get_group(annex_config, context)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(context)
-        # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
-        cfg_modified = cfg.modified()
-        return annex_group.getId(), use_category_uid_as_token, cfg_modified, only_enabled
-
-    @ram.cache(__call___cachekey)
-    def PMEveryCategoryVocabulary__call__(
-            self, context, use_category_uid_as_token=False, only_enabled=False):
-        return super(PMEveryCategoryVocabulary, self).__call__(
-            context,
-            use_category_uid_as_token=use_category_uid_as_token,
-            only_enabled=only_enabled)
-
-    # do ram.cache have a different key name
-    __call__ = PMEveryCategoryVocabulary__call__
-
-
-class PMEveryCategoryTitleVocabulary(EveryCategoryTitleVocabulary):
-    """Override to add ram.cache."""
-
-    def __call___cachekey(method, self, context, use_category_uid_as_token=False, only_enabled=False):
-        '''cachekey method for self.__call__.'''
-        annex_config = get_config_root(context)
-        annex_group = get_group(annex_config, context)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(context)
-        # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
-        cfg_modified = cfg.modified()
-        return annex_group.getId(), use_category_uid_as_token, cfg_modified, only_enabled
-
-    @ram.cache(__call___cachekey)
-    def PMEveryCategoryTitleVocabulary__call__(self, context, only_enabled=False):
-        return super(PMEveryCategoryTitleVocabulary, self).__call__(
-            context,
-            only_enabled=only_enabled)
-
-    # do ram.cache have a different key name
-    __call__ = PMEveryCategoryTitleVocabulary__call__
-
-
 class HeldPositionUsagesVocabulary(object):
     """ """
     implements(IVocabularyFactory)
@@ -1982,6 +2037,24 @@ class KeepAccessToItemWhenAdviceVocabulary(object):
 
 
 KeepAccessToItemWhenAdviceVocabularyFactory = KeepAccessToItemWhenAdviceVocabulary()
+
+
+class EnabledItemActionsVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        res = []
+        for value in ('duplication', 'export_pdf'):
+            res.append(
+                SimpleTerm(value, value, translate(
+                    'item_action_' + value,
+                    domain='PloneMeeting',
+                    context=context.REQUEST)))
+        return SimpleVocabulary(res)
+
+
+EnabledItemActionsVocabularyFactory = EnabledItemActionsVocabulary()
 
 
 class PMMergeTemplatesVocabulary(MergeTemplatesVocabularyFactory):
@@ -2765,31 +2838,43 @@ class OtherMCsClonableToPrivacyVocabulary(OtherMCsClonableToVocabulary):
         term_title = translate('Secret while presenting in other MC?',
                                domain='PloneMeeting',
                                context=context.REQUEST)
-        return super(OtherMCsClonableToPrivacyVocabulary, self).__call__(context, term_title)
+        return super(OtherMCsClonableToPrivacyVocabulary, self).__call__(
+            context, term_title)
 
 
 OtherMCsClonableToPrivacyVocabularyFactory = OtherMCsClonableToPrivacyVocabulary()
 
 
-class ContainedAnnexesVocabulary(object):
-    """ """
+class BaseContainedAnnexesVocabulary(object):
+    """Base vocabulary that manages displaying contained annexes with
+       a functionnality that will let disable some annexes."""
 
     implements(IVocabularyFactory)
 
-    def __call__(self, context, portal_type='annex'):
+    def __call__(self, context, portal_type='annex', prefixed=False):
         """ """
-        portal_url = api.portal.get().absolute_url()
+        portal = api.portal.get()
+        portal_url = portal.absolute_url()
         terms = []
         i = 1
-        annexes = get_categorized_elements(context, portal_type=portal_type)
+        sort_on = 'getObjPositionInParent' if \
+            get_sort_categorized_tab() is False else None
+        annexes = get_categorized_elements(
+            context, portal_type=portal_type, sort_on=sort_on)
         if annexes:
             categories_vocab = get_vocab(
                 context,
                 'collective.iconifiedcategory.categories',
                 use_category_uid_as_token=True)
+            prefix = u'%s - ' % translate(
+                portal.portal_types[portal_type].title,
+                domain="imio.annex",
+                context=context.REQUEST) if prefixed else ''
+
             for annex in annexes:
                 # term title is annex icon, number and title
-                term_title = u'{0}. <img src="{1}/{2}" title="{3}"> {4}'.format(
+                term_title = u'{0}{1}. <img src="{2}/{3}" title="{4}"> {5}'.format(
+                    prefix,
                     str(i),
                     portal_url,
                     annex['icon_url'],
@@ -2799,52 +2884,125 @@ class ContainedAnnexesVocabulary(object):
                 if annex['warn_filesize']:
                     term_title += u' ({0})'.format(render_filesize(annex['filesize']))
                 term = SimpleTerm(annex['id'], annex['id'], term_title)
-                # check if user able to keep this annex :
-                # - annex may not hold a scan_id
-                annex_obj = getattr(context, annex['id'])
-                if getattr(annex_obj, 'scan_id', None):
-                    term.disabled = True
-                    term.title += translate(' [holds scan_id]',
-                                            domain='PloneMeeting',
-                                            context=context.REQUEST)
-                # - annexType must be among current user selectable annex types
-                elif annex['category_uid'] not in categories_vocab:
-                    term.disabled = True
-                    term.title += translate(' [reserved MeetingManagers]',
-                                            domain='PloneMeeting',
-                                            context=context.REQUEST)
-                # annexType ask a PDF but the file is not a PDF
-                # could happen if configuration changed after creation of annex
-                elif get_category_object(annex_obj, annex_obj.content_category).only_pdf and \
-                        annex_obj.file.contentType != 'application/pdf':
-                    term.disabled = True
-                    term.title += translate(' [PDF required]',
-                                            domain='PloneMeeting',
-                                            context=context.REQUEST)
-                else:
-                    term.disabled = False
+                # check if need to disable term
+                self._check_disable_term(context, annex, categories_vocab, term)
                 terms.append(term)
         return SimpleVocabulary(terms)
 
+    def _check_disable_term(self, context, annex, categories_vocab, term):
+        """ """
+        return
 
-ContainedAnnexesVocabularyFactory = ContainedAnnexesVocabulary()
 
-
-class ContainedDecisionAnnexesVocabulary(ContainedAnnexesVocabulary):
+class ItemDuplicationContainedAnnexesVocabulary(BaseContainedAnnexesVocabulary):
     """ """
 
-    implements(IVocabularyFactory)
+    def _check_disable_term(self, context, annex, categories_vocab, term):
+        # check if user able to keep this annex :
+        # - annex may not hold a scan_id
+        term.disabled = False
+        annex_obj = getattr(context, annex['id'])
+        if getattr(annex_obj, 'scan_id', None):
+            term.disabled = True
+            term.title += translate(' [holds scan_id]',
+                                    domain='PloneMeeting',
+                                    context=context.REQUEST)
+        # - annexType must be among current user selectable annex types
+        elif annex['category_uid'] not in categories_vocab:
+            term.disabled = True
+            term.title += translate(' [reserved MeetingManagers]',
+                                    domain='PloneMeeting',
+                                    context=context.REQUEST)
+        # annexType ask a PDF but the file is not a PDF
+        # could happen if configuration changed after creation of annex
+        elif get_category_object(annex_obj, annex_obj.content_category).only_pdf and \
+                annex_obj.file.contentType != 'application/pdf':
+            term.disabled = True
+            term.title += translate(' [PDF required]',
+                                    domain='PloneMeeting',
+                                    context=context.REQUEST)
+
+
+ItemDuplicationContainedAnnexesVocabularyFactory = ItemDuplicationContainedAnnexesVocabulary()
+
+
+class ItemDuplicationContainedDecisionAnnexesVocabulary(ItemDuplicationContainedAnnexesVocabulary):
+    """ """
 
     def __call__(self, context, portal_type='annexDecision'):
         """ """
         context.REQUEST['force_use_item_decision_annexes_group'] = True
-        terms = super(ContainedDecisionAnnexesVocabulary, self).__call__(
+        terms = super(ItemDuplicationContainedDecisionAnnexesVocabulary, self).__call__(
             context, portal_type=portal_type)
         context.REQUEST['force_use_item_decision_annexes_group'] = False
         return terms
 
 
-ContainedDecisionAnnexesVocabularyFactory = ContainedDecisionAnnexesVocabulary()
+ItemDuplicationContainedDecisionAnnexesVocabularyFactory = ItemDuplicationContainedDecisionAnnexesVocabulary()
+
+
+class ItemExportPDFElementsVocabulary(BaseContainedAnnexesVocabulary):
+    """ """
+
+    def _check_disable_term(self, context, annex, categories_vocab, term):
+        # check if user able to export this annex :
+        # - annex must be PDF
+        term.disabled = False
+        annex_obj = getattr(context, annex['id'])
+        if annex_obj.file.contentType != 'application/pdf':
+            term.disabled = True
+            term.title += translate(' [PDF required]',
+                                    domain='PloneMeeting',
+                                    context=context.REQUEST)
+
+    def __call__(self, context):
+        """ """
+        # pod templates
+        terms = get_vocab(
+            context,
+            'Products.PloneMeeting.vocabularies.'
+            'generable_pdf_documents_vocabulary')._terms
+        # annexes
+        terms += super(ItemExportPDFElementsVocabulary, self).__call__(
+            context, prefixed=True)
+        # decision annexes
+        context.REQUEST['force_use_item_decision_annexes_group'] = True
+        terms += super(ItemExportPDFElementsVocabulary, self).__call__(
+            context, portal_type='annexDecision', prefixed=True)
+        context.REQUEST['force_use_item_decision_annexes_group'] = False
+        return SimpleVocabulary(terms)
+
+
+ItemExportPDFElementsVocabularyFactory = ItemExportPDFElementsVocabulary()
+
+
+class GenerablePODTemplatesVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def _get_generable_templates(self, context, output_formats):
+        res = []
+        adapter = getAdapter(context, IGenerablePODTemplates)
+        pod_templates = adapter.get_generable_templates()
+        for pod_template in pod_templates:
+            if not output_formats or \
+               set(output_formats).intersection(pod_template.get_available_formats()):
+                res.append(pod_template)
+        return res
+
+    def __call__(self, context, output_formats=['pdf']):
+        """ """
+        terms = []
+        for pod_template in self._get_generable_templates(context, output_formats):
+            term_token = pod_template.UID()
+            terms.append(
+                SimpleTerm(term_token,
+                           term_token,
+                           safe_unicode(pod_template.Title()))
+            )
+        return SimpleVocabulary(terms)
+
+
+GenerablePODTemplatesVocabularyFactory = GenerablePODTemplatesVocabulary()
 
 
 class PMUsers(UsersFactory):
@@ -2858,7 +3016,6 @@ class PMUsers(UsersFactory):
 
     @ram.cache(__call___cachekey)
     def PMUsers__call__(self, context, query=''):
-        tool = api.portal.get_tool('portal_plonemeeting')
         acl_users = api.portal.get_tool('acl_users')
         users = acl_users.searchUsers(sort_by='')
         terms = []
@@ -2873,7 +3030,7 @@ class PMUsers(UsersFactory):
                     unicode(user_id)
                 except UnicodeDecodeError:
                     continue
-                term_title = safe_unicode(tool.getUserName(user_id, withUserId=True))
+                term_title = get_user_fullname(user_id, with_user_id=True)
                 term = SimpleTerm(user_id, user_id, term_title)
                 terms.append(term)
         terms = humansorted(terms, key=attrgetter('title'))
@@ -2995,3 +3152,146 @@ class PMDxPortalTypesVocabulary(DxPortalTypesVocabulary):
 
 
 PMDxPortalTypesVocabularyFactory = PMDxPortalTypesVocabulary()
+
+
+class WorkflowAdaptationsVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context, sorted=True):
+        """Received "context" is a MeetingConfig."""
+        terms = []
+        for adaptation in context.wfAdaptations:
+            # back transitions from presented to every available item validation
+            # states defined in MeetingConfig.itemWFValidationLevels
+            if adaptation == 'presented_item_back_to_validation_state':
+                for item_validation_level in context.getItemWFValidationLevels(only_enabled=True):
+                    adaptation_id = 'presented_item_back_to_{0}'.format(item_validation_level['state'])
+                    translated_item_validation_state = translate(
+                        safe_unicode(item_validation_level['state_title']),
+                        domain='plone',
+                        context=context.REQUEST)
+                    title = translate(
+                        'wa_presented_item_back_to_validation_state',
+                        domain='PloneMeeting',
+                        mapping={'item_state': translated_item_validation_state},
+                        context=context.REQUEST,
+                        default=u'Item back to presented from validation state "{0}"'.format(
+                            translated_item_validation_state))
+                    title = title + " ({0})".format(adaptation_id)
+                    terms.append(SimpleTerm(adaptation_id, adaptation_id, title))
+            else:
+                title = translate('wa_%s' % adaptation, domain='PloneMeeting', context=context.REQUEST)
+                title = title + " ({0})".format(adaptation)
+                terms.append(SimpleTerm(adaptation, adaptation, title))
+        if sorted:
+            terms = humansorted(terms, key=attrgetter('title'))
+        return SimpleVocabulary(terms)
+
+
+WorkflowAdaptationsVocabularyFactory = WorkflowAdaptationsVocabulary()
+
+
+class AdviceWorkflowAdaptationsVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        tool = api.portal.get_tool("portal_plonemeeting")
+        terms = []
+        for adaptation in tool.advice_wf_adaptations:
+            title = translate('wa_%s' % adaptation, domain='PloneMeeting', context=context.REQUEST)
+            title = title + " ({0})".format(adaptation)
+            terms.append(SimpleTerm(adaptation, adaptation, title))
+        terms = humansorted(terms, key=attrgetter('title'))
+        return SimpleVocabulary(terms)
+
+
+AdviceWorkflowAdaptationsVocabularyFactory = AdviceWorkflowAdaptationsVocabulary()
+
+
+class ConfigAdviceTypesVocabulary(object):
+    """Expected context is portal_plonemeeting."""
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context, include_asked_again=False, include_term_id=True):
+        d = "PloneMeeting"
+        terms = []
+        if include_asked_again:
+            term_title = translate('asked_again', domain=d, context=context.REQUEST)
+            if include_term_id:
+                term_title += " (asked_again)"
+            terms.append(SimpleTerm("asked_again", "asked_again", term_title))
+        advice_types = [
+            'positive',
+            'positive_with_comments',
+            'positive_with_remarks',
+            'cautious',
+            'negative',
+            'negative_with_remarks',
+            'back_to_proposing_group',
+            'nil',
+            'read']
+        for advice_type in advice_types:
+            term_title = translate(advice_type, domain=d, context=context.REQUEST)
+            if include_term_id:
+                term_title += " (%s)" % advice_type
+            terms.append(SimpleTerm(advice_type, advice_type, term_title))
+        # add custom extra advice types
+        tool = api.portal.get_tool('portal_plonemeeting')
+        for extra_advice_type in tool.adapted().extraAdviceTypes():
+            term_title = translate(extra_advice_type, domain=d, context=context.REQUEST)
+            if include_term_id:
+                term_title += " (%s)" % extra_advice_type
+            terms.append(
+                SimpleTerm(extra_advice_type, extra_advice_type, term_title))
+        return SimpleVocabulary(terms)
+
+
+ConfigAdviceTypesVocabularyFactory = ConfigAdviceTypesVocabulary()
+
+
+class ConfigHideHistoryTosVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """Build selectable values for MeetingItem, Meeting and every meetingadvice
+           portal_types so it can be selected on a per meetingadvice portal_type basis."""
+        terms = []
+        types_tool = api.portal.get_tool('portal_types')
+        meetingadvice_types = getAdvicePortalTypeIds()
+        translated_everyone = translate(
+            'Everyone',
+            domain="PloneMeeting",
+            context=context.REQUEST)
+        for content_type in ['Meeting', 'MeetingItem'] + meetingadvice_types:
+            portal_type = types_tool[content_type]
+            translated_type = translate(
+                portal_type.title,
+                domain=portal_type.i18n_domain,
+                context=context.REQUEST)
+            for po_infos in context.getPowerObservers():
+                terms.append(
+                    SimpleTerm(
+                        "{0}.{1}".format(content_type, po_infos['row_id']),
+                        "{0}.{1}".format(content_type, po_infos['row_id']),
+                        u"{0} ➔ {1}".format(
+                            translated_type, safe_unicode(
+                                html.escape(po_infos['label'])))))
+            # hideable to everybody for meetingadvices except advice advisers
+            if content_type in meetingadvice_types:
+                terms.append(
+                    SimpleTerm(
+                        "{0}.everyone".format(content_type),
+                        "{0}.everyone".format(content_type),
+                        u"{0} ➔ {1}".format(translated_type, translated_everyone)))
+        return SimpleVocabulary(terms)
+
+
+ConfigHideHistoryTosVocabularyFactory = ConfigHideHistoryTosVocabulary()

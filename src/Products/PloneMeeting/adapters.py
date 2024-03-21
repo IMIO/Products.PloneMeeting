@@ -11,6 +11,7 @@ from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentgenerator.adapters import GenerablePODTemplatesAdapter
 from collective.eeafaceted.dashboard.adapters import DashboardGenerablePODTemplatesAdapter
 from collective.eeafaceted.dashboard.content.pod_template import IDashboardPODTemplate
+from collective.eeafaceted.z3ctable.columns import EMPTY_STRING
 from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
 from collective.iconifiedcategory.adapter import CategorizedObjectInfoAdapter
 from collective.iconifiedcategory.utils import get_categories
@@ -27,6 +28,7 @@ from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.catalog import merge_queries
+from imio.helpers.content import get_user_fullname
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
@@ -51,7 +53,6 @@ from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import ALL_ADVISERS_GROUP_VALUE
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
-from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
@@ -68,6 +69,7 @@ from Products.PloneMeeting.utils import findNewValue
 from Products.PloneMeeting.utils import get_context_with_request
 from Products.PloneMeeting.utils import get_dx_attrs
 from Products.PloneMeeting.utils import get_referer_obj
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getHistoryTexts
 from Products.PloneMeeting.utils import is_transition_before_date
@@ -592,7 +594,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                 iconName = takenOverByCurrentUser and 'takenOverByCurrentUser.png' or 'takenOverByOtherUser.png'
                 res.append((iconName, translate(u'Taken over by ${fullname}',
                                                 domain="PloneMeeting",
-                                                mapping={'fullname': safe_unicode(self.tool.getUserName(takenOverBy))},
+                                                mapping={'fullname': get_user_fullname(takenOverBy)},
                                                 context=self.request)))
 
         if self.context.getIsAcceptableOutOfMeeting():
@@ -714,7 +716,7 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
         return userMayAccessComment
 
     def get_history_data(self):
-        """WF hsitory is mixed with datachanges history."""
+        """WF history is mixed with data_changes history."""
         history = super(PMWfHistoryAdapter, self).get_history_data()
         res = []
         for event in history:
@@ -728,9 +730,10 @@ class PMDataChangesHistoryAdapter(ImioWfHistoryAdapter):
     """ """
 
     history_type = 'data_changes'
+    highlight_last_comment = False
 
     def get_history_data(self):
-        """WF history is mixed with datachanges history."""
+        """WF history is mixed with data_changes history."""
         history = super(PMDataChangesHistoryAdapter, self).get_history_data()
         full_datachanges_history = []
         # first pass, keep datachanges
@@ -801,6 +804,13 @@ class PMCompletenessChangesHistoryAdapter(BaseImioHistoryAdapter):
     history_attr_name = 'completeness_changes_history'
 
 
+class PMAdviceHideDuringRedactionHistoryAdapter(BaseImioHistoryAdapter):
+    """ """
+
+    history_type = 'advice_hide_during_redaction'
+    history_attr_name = 'advice_hide_during_redaction_history'
+
+
 class PMAdviceGivenHistoryAdapter(BaseImioHistoryAdapter):
     """ """
 
@@ -861,66 +871,77 @@ class Criteria(eeaCriteria):
             if not cfg:
                 super(Criteria, self).__init__(context)
                 return self.context, self.criteria
-            # meeting view
-            kept_filters = []
-            resultsperpagedefault = 20
-            meeting_view = False
-            if IMeeting.providedBy(context):
-                meeting_view = True
-                is_displaying_available_items = displaying_available_items(context)
-                self.context = cfg.searches.searches_items
-                if is_displaying_available_items:
-                    kept_filters = cfg.getDashboardMeetingAvailableItemsFilters()
-                    resultsperpagedefault = cfg.getMaxShownAvailableItems()
-                else:
-                    kept_filters = cfg.getDashboardMeetingLinkedItemsFilters()
-                    resultsperpagedefault = cfg.getMaxShownMeetingItems()
             else:
-                # on a faceted?  it is a pmFolder or a subFolder of the pmFolder
-                resultsperpagedefault = cfg.getMaxShownListings()
-                if IFacetedNavigable.providedBy(context):
-                    # keep relevant filters depending on configuration
-                    if context.getId() == 'searches_items':
-                        kept_filters = cfg.getDashboardItemsListingsFilters()
-                        self.context = cfg.searches.searches_items
-                    elif context.getId() == 'searches_meetings':
-                        kept_filters = cfg.getDashboardMeetingsListingsFilters()
-                        self.context = cfg.searches.searches_meetings
-                    elif context.getId() == 'searches_decisions':
-                        kept_filters = cfg.getDashboardMeetingsListingsFilters()
-                        self.context = cfg.searches.searches_decisions
-                    else:
-                        self.context = cfg.searches
-                        self.criteria = self._criteria()
-                        return self.context, self.criteria
-
-            res = PersistentList()
-            for criterion in self._criteria():
-                if meeting_view and criterion.widget == u'sorting':
-                    # keep it only of displaying available items, default sorting
-                    # is set on 'getProposingGroup', if not displaying available items
-                    # the sorting widget is not kept so sorting is disabled for presented items
+                # meeting view
+                kept_filters = []
+                resultsperpagedefault = 20
+                meeting_view = False
+                compute = True
+                if IMeeting.providedBy(context):
+                    meeting_view = True
+                    is_displaying_available_items = displaying_available_items(context)
+                    self.context = cfg.searches.searches_items
                     if is_displaying_available_items:
-                        new_criterion = Criterion()
-                        new_criterion.update(**criterion.__dict__)
-                        new_criterion.default = u'getProposingGroup'
-                        res.append(new_criterion)
-                    continue
-                # ignore the collection widget when on meeting_view
-                if meeting_view and criterion.widget == u'collection-link':
-                    criterion.default = u''
+                        kept_filters = cfg.getDashboardMeetingAvailableItemsFilters()
+                        resultsperpagedefault = cfg.getMaxShownAvailableItems()
+                    else:
+                        kept_filters = cfg.getDashboardMeetingLinkedItemsFilters()
+                        resultsperpagedefault = cfg.getMaxShownMeetingItems()
+                else:
+                    # on a faceted?  it is a pmFolder or a subFolder of the pmFolder
+                    resultsperpagedefault = cfg.getMaxShownListings()
+                    if IFacetedNavigable.providedBy(context):
+                        # keep relevant filters depending on configuration
+                        if context.getId() == 'searches_items':
+                            kept_filters = cfg.getDashboardItemsListingsFilters()
+                            self.context = cfg.searches.searches_items
+                        elif context.getId() == 'searches_meetings':
+                            kept_filters = cfg.getDashboardMeetingsListingsFilters()
+                            self.context = cfg.searches.searches_meetings
+                        elif context.getId() == 'searches_decisions':
+                            kept_filters = cfg.getDashboardMeetingsListingsFilters()
+                            self.context = cfg.searches.searches_decisions
+                        else:
+                            compute = False
+                            self.context = cfg.searches
+                            self.criteria = self._criteria()
 
-                if criterion.section != u'advanced' or \
-                   criterion.__name__ in kept_filters:
-                    # create new object to avoid modifying stored one
-                    new_criterion = Criterion()
-                    new_criterion.update(**criterion.__dict__)
-                    # manage default value for the 'resultsperpage' criterion
-                    if criterion.widget == ResultsPerPageWidget.widget_type:
-                        new_criterion.default = resultsperpagedefault
-                    res.append(new_criterion)
-            self.criteria = res
+                if compute:
+                    res = PersistentList()
+                    for criterion in self._criteria():
+                        # take care that we have the stored criteria here so
+                        # if one need to be changed, we must create a
+                        # new Criterion or the stored value is changed!
+                        if meeting_view and criterion.widget == u'sorting':
+                            # keep it only of displaying available items, default sorting
+                            # is set on 'getProposingGroup', if not displaying available items
+                            # the sorting widget is not kept so sorting is disabled for presented items
+                            if is_displaying_available_items:
+                                new_criterion = Criterion()
+                                new_criterion.update(**criterion.__dict__)
+                                new_criterion.default = u'getProposingGroup'
+                                res.append(new_criterion)
+                            continue
+                        # ignore the collection widget when on meeting_view
+                        if meeting_view and criterion.widget == u'collection-link':
+                            new_criterion = Criterion()
+                            new_criterion.update(**criterion.__dict__)
+                            new_criterion.default = u''
+                            res.append(new_criterion)
+                            continue
 
+                        if criterion.section != u'advanced' or \
+                           criterion.__name__ in kept_filters:
+                            # create new object to avoid modifying stored one
+                            new_criterion = Criterion()
+                            new_criterion.update(**criterion.__dict__)
+                            # manage default value for the 'resultsperpage' criterion
+                            if criterion.widget == ResultsPerPageWidget.widget_type:
+                                new_criterion.default = resultsperpagedefault
+                            res.append(new_criterion)
+                            continue
+                    self.criteria = res
+            cache[key] = self.context, self.criteria
         return self.context, self.criteria
 
 
@@ -1458,7 +1479,7 @@ class AdvisedItemsAdapter(CompoundCriterionBaseAdapter):
         wfTool = api.portal.get_tool('portal_workflow')
         adviceStates = []
         # manage multiple 'meetingadvice' portal_types
-        for portal_type_id in self.tool.getAdvicePortalTypeIds():
+        for portal_type_id in getAdvicePortalTypeIds():
             adviceWF = wfTool.getWorkflowsFor(portal_type_id)[0]
             adviceStates += adviceWF.states.keys()
         # remove duplicates
@@ -1491,7 +1512,7 @@ class AdvisedItemsWithDelayAdapter(CompoundCriterionBaseAdapter):
         wfTool = api.portal.get_tool('portal_workflow')
         adviceStates = []
         # manage multiple 'meetingadvice' portal_types
-        for portal_type_id in self.tool.getAdvicePortalTypeIds():
+        for portal_type_id in getAdvicePortalTypeIds():
             adviceWF = wfTool.getWorkflowsFor(portal_type_id)[0]
             adviceStates += adviceWF.states.keys()
         # remove duplicates
@@ -1521,6 +1542,21 @@ class DecidedItemsAdapter(CompoundCriterionBaseAdapter):
 
     # we may not ram.cache methods in same file with same name...
     query = query_decideditems
+
+
+class LivingItemsAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    @ram.cache(query_meeting_config_modified_cachekey)
+    def query_livingitems(self):
+        '''Queries living items, items not decided yet.'''
+        if not self.cfg:
+            return {}
+        return {'portal_type': {'query': self.cfg.getItemTypeName()},
+                'review_state': {'not': self.cfg.getItemDecidedStates()}, }
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_livingitems
 
 
 class PersonalLabelsAdapter(CompoundCriterionBaseAdapter):
@@ -1657,7 +1693,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
            "every _creators groups" and it is not possible to give the
            'AnnexReader' role to all these _creators groups."""
         if self.parent.getTagName() == 'MeetingItem' or \
-           self.parent.portal_type in self.tool.getAdvicePortalTypeIds():
+           self.parent.portal_type in getAdvicePortalTypeIds():
             # reinitialize permissions in case no more confidential
             # or confidentiality configuration changed
             self.context.__ac_local_roles_block__ = False

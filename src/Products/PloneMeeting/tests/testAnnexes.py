@@ -20,8 +20,10 @@ from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.annex.columns import ActionsColumn
 from imio.annex.utils import get_annexes_to_print
+from imio.helpers.content import get_vocab
+from imio.helpers.content import get_vocab_values
+from imio.helpers.content import richtextval
 from plone import api
-from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from plone.indexer.wrapper import IndexableObjectWrapper
 from Products.Archetypes.event import ObjectEditedEvent
@@ -41,11 +43,9 @@ from Products.PloneMeeting.utils import get_annexes
 from tempfile import mkdtemp
 from time import sleep
 from zope.annotation import IAnnotations
-from zope.component import queryUtility
 from zope.event import notify
 from zope.interface import Invalid
 from zope.lifecycleevent import ObjectModifiedEvent
-from zope.schema.interfaces import IVocabularyFactory
 
 
 class testAnnexes(PloneMeetingTestCase):
@@ -361,7 +361,7 @@ class testAnnexes(PloneMeetingTestCase):
             'meetingadvice',
             **{'advice_group': self.vendors_uid,
                'advice_type': u'positive',
-               'advice_comment': RichTextValue(u'My comment')})
+               'advice_comment': richtextval(u'My comment')})
         # enable confidentiality
         self._enable_annex_config(advice)
         annexes_table = advice.restrictedTraverse('@@iconifiedcategory')
@@ -1140,7 +1140,7 @@ class testAnnexes(PloneMeetingTestCase):
         # in this case, it will ensure that when validated, the item may not be
         # deleted but annexes may be deleted by item editor
         wfAdaptations = cfg.getWorkflowAdaptations()
-        if 'only_creator_may_delete' in cfg.listWorkflowAdaptations() and \
+        if 'only_creator_may_delete' in get_vocab_values(cfg, 'WorkflowAdaptations') and \
            'only_creator_may_delete' not in wfAdaptations:
             wfAdaptations = wfAdaptations + ('only_creator_may_delete', )
             cfg.setWorkflowAdaptations(wfAdaptations)
@@ -1175,7 +1175,7 @@ class testAnnexes(PloneMeetingTestCase):
                           item.restrictedTraverse('@@delete_givenuid'),
                           annexDecision2.UID())
         self.changeUser('pmReviewer1')
-        if 'only_creator_may_delete' in cfg.listWorkflowAdaptations():
+        if 'only_creator_may_delete' in get_vocab_values(cfg, 'WorkflowAdaptations'):
             self.assertFalse(self.hasPermission(DeleteObjects, item))
         self.assertTrue(IContentDeletable(annex2).mayDelete())
         item.restrictedTraverse('@@delete_givenuid')(annex2.UID())
@@ -1192,7 +1192,7 @@ class testAnnexes(PloneMeetingTestCase):
                           item.restrictedTraverse('@@delete_givenuid'),
                           annexDecision3.UID())
         self.changeUser('pmManager')
-        if 'only_creator_may_delete' in cfg.listWorkflowAdaptations():
+        if 'only_creator_may_delete' in get_vocab_values(cfg, 'WorkflowAdaptations'):
             self.assertFalse(self.hasPermission(DeleteObjects, item))
         self.assertTrue(IContentDeletable(annex3).mayDelete())
         item.restrictedTraverse('@@delete_givenuid')(annex3.UID())
@@ -1416,7 +1416,7 @@ class testAnnexes(PloneMeetingTestCase):
         # get vocabulary name
         type_info = self.portal.portal_types.get(annex_type.portal_type)
         vocab_name = type_info.lookupSchema()['other_mc_correspondences'].value_type.vocabularyName
-        terms = queryUtility(IVocabularyFactory, vocab_name)(annex_type)._terms
+        terms = get_vocab(annex_type, vocab_name)._terms
         self.assertRaises(Invalid, other_mc_correspondences_constraint, [terms[0].value, terms[1].value])
         self.assertTrue(other_mc_correspondences_constraint([terms[0].value]))
         self.assertTrue(other_mc_correspondences_constraint([terms[1].value]))
@@ -1429,7 +1429,6 @@ class testAnnexes(PloneMeetingTestCase):
         # get vocabulary name
         type_info = self.portal.portal_types.get(annex_type.portal_type)
         vocab_name = type_info.lookupSchema()['other_mc_correspondences'].value_type.vocabularyName
-        vocab = queryUtility(IVocabularyFactory, vocab_name)
         # build expected result depending on existing MC
         expected = []
         for mc in self.tool.objectValues('MeetingConfig'):
@@ -1448,12 +1447,14 @@ class testAnnexes(PloneMeetingTestCase):
                 u'{0} ➔ Item annexes ➔ Other annex(es)'.format(mc_title),
                 u'{0} ➔ Item decision annexes ➔ Decision annex(es)'.format(mc_title)]
             expected.extend(values)
-        self.assertEqual([term.title for term in vocab(annex_type)._terms], expected)
+        self.assertEqual(
+            [term.title for term in get_vocab(annex_type, vocab_name)._terms],
+            expected)
 
     def test_pm_Annex_type_only_for_meeting_managers(self):
         """An ItemAnnexContentCategory may be defined only selectable by MeetingManagers."""
         cfg = self.meetingConfig
-        vocab = queryUtility(IVocabularyFactory, 'collective.iconifiedcategory.categories')
+        vocab = get_vocab(None, 'collective.iconifiedcategory.categories', only_factory=True)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
@@ -1707,7 +1708,7 @@ class testAnnexes(PloneMeetingTestCase):
             'meetingadvice',
             **{'advice_group': self.developers_uid,
                'advice_type': u'positive',
-               'advice_comment': RichTextValue(u'My comment')})
+               'advice_comment': richtextval(u'My comment')})
         _check_catalog()
         advice_annex = self.addAnnex(advice)
         _check_catalog()

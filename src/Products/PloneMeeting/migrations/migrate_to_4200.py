@@ -2,12 +2,12 @@
 
 from collective.contact.plonegroup.utils import get_organizations
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
-from collective.iconifiedcategory.utils import _categorized_elements
 from copy import deepcopy
 from eea.facetednavigation.criteria.interfaces import ICriteria
 from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.content import get_vocab
+from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_delattr
 from imio.pyutils.utils import replace_in_list
@@ -321,10 +321,10 @@ class Migrate_To_4200(Migrator):
             self._doConfigureItemWFValidationLevels(cfg)
             # clean stored workflowAdaptations
             cleaned_wfas = [wfa for wfa in cfg.getWorkflowAdaptations()
-                            if wfa in cfg.listWorkflowAdaptations()]
+                            if wfa in get_vocab_values(cfg, 'WorkflowAdaptations')]
             # make sure new wfAdaptations are enabled (were default, now optional)
             cleaned_wfas += [wfa for wfa in ('pre_accepted', 'delayed', 'accepted_but_modified', )
-                             if wfa in cfg.listWorkflowAdaptations()]
+                             if wfa in get_vocab_values(cfg, 'WorkflowAdaptations')]
             # when using "waiting_advices", and not other "waiting_advices_" wfas are enabled
             # enable the "waiting_advices_proposing_group_send_back" as it was the
             # default behaviour before and now it is configurable
@@ -822,29 +822,6 @@ class Migrate_To_4200(Migrator):
                 values = ['{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix)
                           for suffix in suffixes]
                 cfg.setItemInternalNotesEditableBy(values)
-        logger.info('Done.')
-
-    def _removeBrokenAnnexes(self):
-        """Remove annexes that do not have a content_category,
-           that could happen with quickupload."""
-        logger.info("Removing broken annexes, annexes uploaded withtout a content_category...")
-        brains = self.catalog(portal_type=['annex', 'annexDecision'])
-        i = 0
-        idxs = ['modified', 'ModificationDate', 'Date']
-        for brain in brains:
-            annex = brain.getObject()
-            parent = annex.aq_inner.aq_parent
-            categorized_elements = _categorized_elements(parent)
-            if annex.UID() not in categorized_elements:
-                logger.info('In _removeBrokenAnnexes, removed %s' % brain.getPath())
-                # make sure parent is not modified
-                parent_modified = parent.modified()
-                parent.manage_delObjects(ids=[annex.getId()])
-                parent.setModificationDate(parent_modified)
-                parent.reindexObject(idxs=idxs)
-                i += 1
-        if i:
-            self.warn(logger, 'In _removeBrokenAnnexes, removed %s annexe(s)' % i)
         logger.info('Done.')
 
     def _correctAccessToPODTemplates(self):

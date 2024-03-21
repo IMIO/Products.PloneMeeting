@@ -2,9 +2,7 @@
 
 from AccessControl import Unauthorized
 from collections import OrderedDict
-from collective.behavior.internalnumber.browser.settings import _internal_number_is_used
 from collective.behavior.internalnumber.browser.settings import decrement_if_last_nb
-from collective.behavior.internalnumber.browser.settings import decrement_nb_for
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
@@ -24,8 +22,10 @@ from imio.helpers.content import get_modified_attrs
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_delattr
 from imio.helpers.security import fplog
+from imio.helpers.workflow import get_final_states
 from imio.helpers.workflow import update_role_mappings_for
 from imio.helpers.xhtml import storeImagesLocally
+from imio.history.utils import add_event_to_history
 from OFS.interfaces import IObjectWillBeAddedEvent
 from OFS.ObjectManager import BeforeDeleteException
 from persistent.list import PersistentList
@@ -34,12 +34,13 @@ from plone import api
 from plone.app.textfield import RichText
 from plone.registry.interfaces import IRecordModifiedEvent
 from plone.restapi.deserializer import json_body
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
-from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_INITIATOR_INDEX_PATTERN
+from Products.PloneMeeting.config import ITEM_MOVAL_PREVENTED
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
@@ -194,8 +195,11 @@ def onMeetingTransition(meeting, event):
         # freshly late
         meeting.update_item_references()
     elif event.old_state.id not in beforeLateStates and event.new_state.id in beforeLateStates:
-        # no more late, clear item references
-        meeting.update_item_references(clear=True)
+        # no more late, clear item references if necessary
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(meeting)
+        if not cfg.getComputeItemReferenceForItemsOutOfMeeting():
+            meeting.update_item_references(clear=True)
 
     # invalidate last meeting modified
     invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
@@ -225,6 +229,25 @@ def onAdviceTransition(advice, event):
             action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
         do(action, event)
 
+    # check if need to show the advice
+    item = advice.getParentNode()
+    if advice.advice_hide_during_redaction is True:
+        tool = api.portal.get_tool('portal_plonemeeting')
+        adviser_infos = tool.adapted().get_extra_adviser_infos().get(advice.advice_group, {})
+        # use get in case overrided get_extra_adviser_infos and
+        # 'show_advice_on_final_wf_transition' not managed, will be removable
+        # when every profiles use new behavior
+        if adviser_infos and adviser_infos.get('show_advice_on_final_wf_transition', '0') == '1':
+            wf_tool = api.portal.get_tool('portal_workflow')
+            wf = wf_tool.getWorkflowsFor(advice.portal_type)[0]
+            # manage custom workflows where final state is not 'advice_given'
+            ignored_transition_ids = len(wf.states) > 2 and ['giveAdvice'] or []
+            if event.new_state.id in get_final_states(wf, ignored_transition_ids=ignored_transition_ids) and \
+               (not ignored_transition_ids or event.new_state.id != 'advice_given'):
+                advice.advice_hide_during_redaction = False
+                # update adviceIndex in case we are already updating advices it has already been set
+                item.adviceIndex[advice.advice_group]['hidden_during_redaction'] = False
+
     # notify an AdviceAfterTransitionEvent for subplugins so we are sure
     # that it is called after PloneMeeting advice transition
     notify(AdviceAfterTransitionEvent(
@@ -233,7 +256,6 @@ def onAdviceTransition(advice, event):
 
     # update item if transition is not triggered in the MeetingItem._updatedAdvices
     # aka we are already updating the item
-    item = advice.getParentNode()
     if event.transition and not item._is_currently_updating_advices():
         item.update_local_roles()
         _advice_update_item(item)
@@ -308,8 +330,6 @@ def _invalidateOrgRelatedCachedVocabularies():
         "Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary", get_again=True)
     invalidate_cachekey_volatile_for(
         "Products.PloneMeeting.vocabularies.groupsinchargevocabulary", get_again=True)
-    invalidate_cachekey_volatile_for(
-        "Products.PloneMeeting.vocabularies.askedadvicesvocabulary", get_again=True)
     # also invalidated here, called from organization._invalidateCachedMethods
     invalidate_cachekey_volatile_for('_users_groups_value', get_again=True)
 
@@ -462,19 +482,25 @@ def onRegistryModified(event):
             unselected_org_uids = list(old_set.difference(new_set))
             tool = api.portal.get_tool('portal_plonemeeting')
             for unselected_org_uid in unselected_org_uids:
-                # Remove the org from every meetingConfigs.selectableCopyGroups
-                for mc in tool.objectValues('MeetingConfig'):
-                    selectableCopyGroups = list(mc.getSelectableCopyGroups())
+                # Remove the org from every meetingConfigs.selectableCopyGroups and
+                # from every meetingConfigs.selectableAdvisers
+                for cfg in tool.objectValues('MeetingConfig'):
+                    update_cfg = False
+                    selectableCopyGroups = list(cfg.getSelectableCopyGroups())
                     for plone_group_id in get_plone_groups(unselected_org_uid, ids_only=True):
                         if plone_group_id in selectableCopyGroups:
+                            update_cfg = True
                             selectableCopyGroups.remove(plone_group_id)
-                    mc.setSelectableCopyGroups(selectableCopyGroups)
-                # Remove the org from every meetingConfigs.selectableAdvisers
-                for mc in tool.objectValues('MeetingConfig'):
-                    selectableAdvisers = list(mc.getSelectableAdvisers())
-                    if unselected_org_uid in mc.getSelectableAdvisers():
+                            cfg.setSelectableCopyGroups(selectableCopyGroups)
+                    selectableAdvisers = list(cfg.getSelectableAdvisers())
+                    if unselected_org_uid in cfg.getSelectableAdvisers():
+                        update_cfg = True
                         selectableAdvisers.remove(unselected_org_uid)
-                    mc.setSelectableAdvisers(selectableAdvisers)
+                        cfg.setSelectableAdvisers(selectableAdvisers)
+                    if update_cfg:
+                        # especially invalidate cache
+                        notify(ObjectEditedEvent(cfg))
+
                 # add a portal_message explaining what has been done to the user
                 plone_utils = api.portal.get_tool('plone_utils')
                 plone_utils.addPortalMessage(
@@ -496,10 +522,10 @@ def _itemAnnexTypes(cfg):
 def onConfigInitialized(cfg, event):
     '''Trigger when new MeetingConfig added.'''
 
-    # Register the portal types that are specific to this meeting config.
-    cfg.registerPortalTypes()
     # Set a property allowing to know in which MeetingConfig we are
     cfg.manage_addProperty(MEETING_CONFIG, cfg.id, 'string')
+    # Register the portal types that are specific to this meeting config.
+    cfg.registerPortalTypes()
     # Create the subfolders
     cfg._createSubFolders()
     # Create the collections related to this meeting config
@@ -733,8 +759,13 @@ def onItemMoved(item, event):
         return
 
     # update elements depending on item path as it changed
-    if item._at_creation_flag:
+    # be defensive regarding attribute _at_creation_flag that sometimes does
+    # not exist for plonemeeting.restapi tests...
+    if getattr(item, '_at_creation_flag', False):
         update_all_categorized_elements(item)
+        # update also categorized_elements of advices
+        for advice in item.getAdvices():
+            update_all_categorized_elements(advice)
         for successor in item.get_successors():
             successor._update_predecessor(item)
 
@@ -918,9 +949,10 @@ def onAdviceAdded(advice, event):
     # update item
     _advice_update_item(item)
 
-    # Send mail if relevant
-    sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
-    sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
+    if not advice.advice_hide_during_redaction:
+        # Send mail if relevant
+        sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
+        sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
 
 
 def onAdviceModified(advice, event):
@@ -928,25 +960,41 @@ def onAdviceModified(advice, event):
     if advice.REQUEST.get('currentlyStoringExternalImages', False) is True:
         return
 
-    # update advice_row_id
-    advice._updateAdviceRowId()
+    if not isinstance(event, ContainerModifiedEvent):
+        mod_attrs = get_modified_attrs(event)
+        if 'advice_hide_during_redaction' in mod_attrs:
+            # add a line to the advice's wf history
+            action = 'to_hidden_during_redaction_action'
+            comments = 'to_hidden_during_redaction_comments'
+            if advice.advice_hide_during_redaction is False:
+                action = 'to_not_hidden_during_redaction_action'
+                comments = 'to_not_hidden_during_redaction_comments'
+            add_event_to_history(
+                advice,
+                'advice_hide_during_redaction_history',
+                action=action,
+                comments=comments)
 
-    item = advice.getParentNode()
-    item.update_local_roles()
+        # update advice_row_id
+        advice._updateAdviceRowId()
 
-    # make sure external images used in RichText fields are stored locally
-    storeImagesLocallyDexterity(advice)
+        item = advice.getParentNode()
+        item.update_local_roles()
 
-    # notify our own PM event so we are sure that this event is called
-    # after the onAviceModified event
-    notify(AdviceAfterModifyEvent(advice))
+        # make sure external images used in RichText fields are stored locally
+        storeImagesLocallyDexterity(advice)
 
-    # update item
-    _advice_update_item(item)
+        # notify our own PM event so we are sure that this event is called
+        # after the onAviceModified event
+        notify(AdviceAfterModifyEvent(advice))
 
-    # Send mail if relevant
-    sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
-    sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
+        # update item
+        _advice_update_item(item)
+
+        if not advice.advice_hide_during_redaction:
+            # Send mail if relevant
+            sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
+            sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
 
 
 def onAdviceEditFinished(advice, event):
@@ -1027,13 +1075,20 @@ def onAnnexModified(annex, event):
 
 
 def onAnnexFileChanged(annex, event):
-    '''Remove BARCODE_ATTR_ID of annex if any except:
+    '''Remove scan_id of annex if any, except:
        - if ITEM_SCAN_ID_NAME found in the REQUEST in this case, it means that
          we are creating an annex containing a generated document inclucing the barcode;
+       - currently duplicating an item, keeping/removing scan_id is managed by
+         ToolPloneMeeting.pasteItem;
+       - if ++add++annex in REQUEST, should not really happen, it means we are adding
+         a new annex and defining a scan_id for it (power user);
        - or annex is signed (it means that we are updating the annex thru the AMQP WS).'''
-    if getattr(annex, BARCODE_INSERTED_ATTR_ID, False) and \
-       not (annex.REQUEST.get(ITEM_SCAN_ID_NAME, False) or annex.signed):
-        setattr(annex, BARCODE_INSERTED_ATTR_ID, False)
+    if annex.scan_id and \
+       not (annex.REQUEST.get(ITEM_SCAN_ID_NAME, False) or
+            annex.REQUEST.get('currentlyPastingItems', False) or
+            '/++add++annex' in annex.REQUEST.getURL() or
+            annex.signed):
+        annex.scan_id = None
 
 
 def onAnnexRemoved(annex, event):
@@ -1109,9 +1164,8 @@ def onItemEditCancelled(item, event):
        the _at_creation to True, it means we are creating an item from a template,
        we need to delete it if first edit was cancelled.'''
     if item._at_creation_flag and not item.isTemporary():
-        # rollback internal_number if used and defined
-        if _internal_number_is_used(item):
-            decrement_nb_for(item.portal_type)
+        # decrement internal_number if it was the last added item
+        decrement_if_last_nb(item.portal_type)
         parent = item.getParentNode()
         parent.manage_delObjects(ids=[item.getId()])
 
@@ -1137,6 +1191,16 @@ def onItemWillBeMoved(item, event):
     # If we are trying to move the whole MeetingConfig, bypass this hook.
     if event.object.meta_type in ['Plone Site', 'MeetingConfig']:
         return
+
+    # prevent renaming an item manually if it is not "itemcreated"
+    # this avoid call to MeetingItem.manage_beforeDelete that will remove
+    # item from meeting and we can not avoid this for now in AT
+    if getattr(event, "newName", None) is not None:
+        wfTool = api.portal.get_tool('portal_workflow')
+        itemWF = wfTool.getWorkflowsFor(item)[0]
+        if not item.query_state() == itemWF.initial_state:
+            logger.warn(ITEM_MOVAL_PREVENTED)
+            raise ValueError(ITEM_MOVAL_PREVENTED)
 
     return _redirect_if_default_item_template(item)
 

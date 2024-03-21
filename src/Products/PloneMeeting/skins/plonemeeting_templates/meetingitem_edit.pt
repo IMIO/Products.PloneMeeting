@@ -41,6 +41,7 @@
     <metal:field use-macro="python:here.widget('copyGroups', mode='edit')"/>
 
     <metal:field use-macro="python:here.widget('preferredMeeting', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('meetingDeadlineDate', mode='edit')"/>
     <metal:field use-macro="python:here.widget('sendToAuthority', mode='edit')"/>
 
     <tal:comment replace="nothing">Clonable to other cfg when not using extra fields</tal:comment>

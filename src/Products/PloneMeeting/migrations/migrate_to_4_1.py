@@ -15,6 +15,7 @@ from DateTime import DateTime
 from datetime import date
 from eea.facetednavigation.interfaces import ICriteria
 from ftw.labels.interfaces import ILabelJar
+from imio.helpers.content import get_vocab_values
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.app.contenttypes.migration.dxmigration import migrate_base_class_to_new_class
@@ -32,6 +33,7 @@ from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.utils import get_public_url
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.PloneMeeting.utils import updateCollectionCriterion
 from Products.PlonePAS.tools.groupdata import GroupData
 from z3c.relationfield.relation import RelationValue
@@ -215,7 +217,7 @@ class Migrate_To_4_1(Migrator):
         logger.info("Enabling new WFAdaptation 'refused' if relevant...")
         for cfg in self.tool.objectValues('MeetingConfig'):
             item_wf = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
-            if 'refused' in item_wf.states and 'refused' in cfg.listWorkflowAdaptations():
+            if 'refused' in item_wf.states and 'refused' in get_vocab_values(cfg, 'WorkflowAdaptations'):
                 wf_adaptations = list(cfg.getWorkflowAdaptations())
                 if 'refused' in wf_adaptations:
                     logger.info('Already migrated ...')
@@ -1151,7 +1153,7 @@ class Migrate_To_4_1(Migrator):
     def _migrateMeetingConfigDefaultAdviceHiddenDuringRedaction(self):
         """MeetingConfig.defaultAdviceHiddenDuringRedaction was a boolean, now it is a list."""
         logger.info('Migrating value for MeetingConfig.defaultAdviceHiddenDuringRedaction for every configs...')
-        advice_portal_types = self.tool.getAdvicePortalTypeIds()
+        advice_portal_types = getAdvicePortalTypeIds()
         for cfg in self.tool.objectValues('MeetingConfig'):
             defaultAdviceHiddenDuringRedaction = cfg.defaultAdviceHiddenDuringRedaction
             if isinstance(defaultAdviceHiddenDuringRedaction, bool):

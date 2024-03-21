@@ -90,7 +90,7 @@ class IPMHeldPosition(IHeldPosition):
         default=[],
         description=_("Select organizations the current held position is representative for."),
         value_type=RelationChoice(
-            vocabulary="Products.PloneMeeting.vocabularies.sortedselectedorganizationsvocabulary"),
+            vocabulary="PMSortedSelectedOrganizationsVocabulary"),
         required=False,
     )
 
@@ -240,8 +240,8 @@ class PMHeldPosition(HeldPosition):
                                              forced_position_type_value=None):
         """Split the position_type and generates a dict with gender and number possibilities."""
         value = forced_position_type_value or \
-            (position_type_attr and getattr(self, position_type_attr)) or \
-            (fallback_position_type_attr and getattr(self, fallback_position_type_attr))
+            (position_type_attr and getattr(self, position_type_attr, None)) or \
+            (fallback_position_type_attr and getattr(self, fallback_position_type_attr, None))
         if value:
             try:
                 directory = get_directory(self)

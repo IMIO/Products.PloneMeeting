@@ -194,9 +194,10 @@ document.location.reload(true);
 </tal:comment>
 <metal:takenOverBy define-macro="takenOverBy" i18n:domain="PloneMeeting"
                     tal:define="mayEdit python: ajaxEdit==False and False or meetingItem.adapted().mayTakeOver();
-                                memberId member/getId;
-                                takenOverBy meetingItem/getTakenOverBy;
-                                takenOverByCurrentUser python: takenOverBy == memberId;">
+                                memberId python: member.getId();
+                                takenOverBy python: meetingItem.getTakenOverBy();
+                                takenOverByCurrentUser python: takenOverBy == memberId;
+                                safe_utils python: modules['Products.PloneMeeting'].safe_utils">
   <span id="marker_toggle_takenoverby_UID#"
         tal:attributes="id string:marker_toggle_takenoverby_$UID;"
         tal:define="UID meetingItem/UID;
@@ -210,7 +211,7 @@ document.location.reload(true);
                       onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_item_taken_over_by?takenOverByFrom='+takenOverBy+'\', baseSelector=\'#marker_toggle_takenoverby_\')';"
           tal:attributes="onClick python: onClickPattern % onClick;
                           class python: 'takenOverByEditable ' + (takenOverByCurrentUser and 'takenOverByCurrentUser' or 'takenOverByOtherUser')"
-          i18n:translate="">Taken over by <span i18n:name="fullname" tal:content="python: tool.getUserName(takenOverBy)">
+          i18n:translate="">Taken over by <span i18n:name="fullname" tal:content="python: safe_utils.get_user_fullname(takenOverBy)">
           Full name</span>
     </span>
 
@@ -230,7 +231,7 @@ document.location.reload(true);
           title="taken_over_by_yes"
           i18n:attributes="title"
           tal:attributes="class python: takenOverByCurrentUser and 'takenOverByCurrentUser' or 'takenOverByOtherUser'"
-          i18n:translate="">Taken over by <span i18n:name="fullname" tal:content="python: tool.getUserName(takenOverBy)">
+          i18n:translate="">Taken over by <span i18n:name="fullname" tal:content="python: safe_utils.get_user_fullname(takenOverBy)">
           Full name</span>
     </span>
     <span class="takenOverByNobody"
@@ -934,15 +935,17 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
 <table class="listing nosort" align="right" width="100%">
   <tr>
     <th class="nosort" i18n:translate="listingheader_title">Title</th>
+    <th class="nosort" i18n:translate="header_CreationDate" i18n:domain="collective.eeafaceted.z3ctable">Created</th>
+    <th class="nosort" i18n:translate="header_ModificationDate" i18n:domain="collective.eeafaceted.z3ctable">Modified</th>
     <th class="nosort" width="20%" i18n:translate="PloneMeeting_label_categoryId">Category id</th>
     <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
     <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
   </tr>
   <tr tal:condition="not: objs">
-    <td colspan="4" align="center" i18n:translate="">no_category</td>
+    <td colspan="6" align="center" i18n:translate="">no_category</td>
   </tr>
   <tr tal:condition="too_much_cats">
-    <td colspan="4" align="center">
+    <td colspan="6" align="center">
      <span i18n:translate="too_many_categories_use_folder_contents" style="color: red; font-style: italic;">
       There are too much categories to display.
      </span>
@@ -961,6 +964,12 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
                     excludedFields python: ('title', )">
             <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
         </tal:additionalInformations>
+    </td>
+    <td>
+      <span tal:content="python: toLocalizedTime(obj.created(), long_format=True)">Created</span>
+    </td>
+    <td>
+      <span tal:content="python: toLocalizedTime(obj.modified(), long_format=True)">Modified</span>
     </td>
     <td tal:content="obj/category_id"></td>
     <td i18n:domain="plone">
@@ -1006,7 +1015,7 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
            <div class="collapsible"
                 tal:attributes="onclick string:toggleDetails('collapsible-text-linkeditem-${linkedItem_uid}',
                                 toggle_parent_active=true, parent_tag=this,
-                                load_view='@@item-more-infos?fieldsConfigAttr=itemsVisibleFields&currentCfgId=${view/cfg/getId}', base_url='${linkedItem_url}');">
+                                load_view='@@load-linked-items-infos?fieldsConfigAttr=itemsVisibleFields&currentCfgId=${view/cfg/getId}', base_url='${linkedItem_url}');">
            </div>
            <div class="collapsible-pretty-title" style="display: inline;" tal:content="structure python: context.displayLinkedItem(linkedItem)"></div>
            <div style="clear: both;"></div>
