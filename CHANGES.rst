@@ -5,8 +5,33 @@ Changelog
 4.2.9rc6 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Moved field `Meeting.pre_observations` before `Meeting.observations`.
+  [gbastien]
+- Make `test_pm_WFA_availableWFAdaptations` more robust by generating the
+  `presented_item_back_to_` WF adaptations as it relies on defined
+  `MeetingConfig.itemWFValidationLevels`.
+  [gbastien]
+- Make tests using `utils.set_field_from_ajax` more robust by using field
+  `description` instead `decision` as in some case (subplugin), `decision`
+  field is not writable.
+  [gbastien]
+- Do not automatically reinitialize the delay of an advice during the
+  `MeetingConfig.transitionsReinitializingDelays` if delay was timed out,
+  this will have to be done manually.
+  [gbastien]
+- Renamed `test_pm_WFA_waiting_advices` to `test_pm_WFA_waiting_advices_base`
+  so it can be executed separately than other `test_pm_WFA_waiting_advices_`
+  tests.
+  Completed `test_pm_ItemActionsPanelCachingProfiles` to check when reviewer
+  may also edit crated item (when using `extra_suffixes`), this way we may
+  remove `_reviewers_may_edit_itemcreated` helper.
+  [gbastien]
+- Fixed `test_pm_ItemMailNotificationLateItem` when called from subplugins.
+  [gbastien]
+- Make `test_pm_Validate_itemWFValidationLevels_removed_depending_used_state_item`
+  and `test_pm_SearchItemsToCorrectToValidateOfEveryReviewerGroups` more robust
+  when called from subplugin.
+  [gbastien]
 
 4.2.9rc5 (2024-03-14)
 ---------------------

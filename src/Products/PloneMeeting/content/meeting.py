@@ -392,18 +392,18 @@ class IMeeting(IDXMeetingContent):
         required=False,
         allowed_mime_types=(u"text/html", ))
 
-    searchable("observations")
-    form.widget('observations', PMRichTextFieldWidget)
-    observations = RichText(
-        title=_(u"title_observations"),
-        description=_("descr_field_vieawable_by_everyone"),
-        required=False,
-        allowed_mime_types=(u"text/html", ))
-
     searchable("pre_observations")
     form.widget('pre_observations', PMRichTextFieldWidget)
     pre_observations = RichText(
         title=_(u"title_pre_observations"),
+        description=_("descr_field_vieawable_by_everyone"),
+        required=False,
+        allowed_mime_types=(u"text/html", ))
+
+    searchable("observations")
+    form.widget('observations', PMRichTextFieldWidget)
+    observations = RichText(
+        title=_(u"title_observations"),
         description=_("descr_field_vieawable_by_everyone"),
         required=False,
         allowed_mime_types=(u"text/html", ))
@@ -483,8 +483,8 @@ class IMeeting(IDXMeetingContent):
 
     model.fieldset('informations',
                    label=_(u"fieldset_informations"),
-                   fields=['in_and_out_moves', 'notes', 'observations',
-                           'pre_observations',
+                   fields=['in_and_out_moves', 'notes',
+                           'pre_observations', 'observations',
                            'votes_observations', 'public_meeting_observations',
                            'secret_meeting_observations', 'authority_notice',
                            'meetingmanagers_notes'])

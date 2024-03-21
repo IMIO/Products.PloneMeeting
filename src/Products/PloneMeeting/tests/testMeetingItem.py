@@ -43,6 +43,7 @@ from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
+from Products.CMFPlone.utils import safe_unicode
 from Products.Five import zcml
 from Products.PloneMeeting.browser.itemassembly import item_assembly_default
 from Products.PloneMeeting.browser.itemassembly import validate_item_assembly
@@ -1937,7 +1938,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_PreviousReviewStateIndex(self):
         """Test the previous_review_state index, especially when data_changes is enabled."""
         cfg = self.meetingConfig
-        cfg.setHistorizedItemAttributes(('decision', ))
+        cfg.setHistorizedItemAttributes(('description', ))
         cfg.setRecordItemHistoryStates((self._stateMappingFor('proposed'), ))
 
         self.changeUser('pmCreator1')
@@ -1950,7 +1951,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # now check that it does not interact when data_changes is enabled
         self.changeUser('pmReviewer1')
-        set_field_from_ajax(item, 'decision', self.decisionText)
+        set_field_from_ajax(item, 'description', self.decisionText)
         self.assertEqual(previous_review_state(item)(), previous_state)
 
         # does not fail if no workflow_history
@@ -1962,7 +1963,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_WFHistoryAndDataChangesHistoryAreSeparated(self):
         """The WF history and data_changes history are separated in 2 adapters."""
         cfg = self.meetingConfig
-        cfg.setHistorizedItemAttributes(('decision', ))
+        cfg.setHistorizedItemAttributes(('description', ))
         cfg.setRecordItemHistoryStates((self._stateMappingFor('itemcreated'), ))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -1971,19 +1972,19 @@ class testMeetingItem(PloneMeetingTestCase):
         # datachanges adapter highlight_last_comment is not enabled
         self.assertFalse(datachanges_adapter.highlight_last_comment)
         self.assertFalse('_datachange_' in [event['action'] for event in wf_adapter.getHistory()])
-        set_field_from_ajax(item, 'decision', self.decisionText)
+        set_field_from_ajax(item, 'description', self.decisionText)
         self.assertFalse('_datachange_' in [event['action'] for event in wf_adapter.getHistory()])
         self.assertTrue('_datachange_' in [event['action'] for event in datachanges_adapter.getHistory()])
 
     def test_pm_DataChangesHistory(self):
         """Test the datachanges history adapter."""
         cfg = self.meetingConfig
-        cfg.setHistorizedItemAttributes(('decision', ))
+        cfg.setHistorizedItemAttributes(('description', ))
         cfg.setRecordItemHistoryStates((self._stateMappingFor('itemcreated'), ))
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem', decision="<p>test</p>")
-        set_field_from_ajax(item, 'decision', "<p>tralala</p>")
-        set_field_from_ajax(item, 'decision', "<p>abcedfgijklm</p>")
+        item = self.create('MeetingItem', description="<p>test</p>")
+        set_field_from_ajax(item, 'description', "<p>tralala</p>")
+        set_field_from_ajax(item, 'description', "<p>abcedfgijklm</p>")
         self.proposeItem(item)
         self.changeUser('pmReviewer1')
         self.do(item, 'validate')
@@ -1995,7 +1996,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # Test if the values are correct
         for event in datachanges:
             self.assertEqual(event["actor"], "pmCreator1")
-            self.assertIn("M. PMCreator One", event["changes"]["decision"])
+            self.assertIn("M. PMCreator One", event["changes"]["description"])
 
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
@@ -5001,9 +5002,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertNotEqual(beforeUserGroupsEdit_rendered_actions_panel,
                             afterUserGroupsEdit_rendered_actions_panel)
 
-    def _reviewers_may_edit_itemcreated(self):
-        return False
-
     def test_pm_ItemActionsPanelCachingProfiles(self):
         """Actions panel cache is generated for various profiles, check
            that is works as expected, profiles are:
@@ -5019,6 +5017,13 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setItemAdviceStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
         cfg.setItemAdviceEditStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
         cfg.setItemAdviceViewStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
+        # make reviewer able to edit when itemcreated so this will generate another cached value
+        # creator is also able to duplicate, and after, an observer will have a different value as well
+        itemWFValLevels = cfg.getItemWFValidationLevels()
+        itemWFValLevels[0]['extra_suffixes'] = cfg.getItemWFValidationLevels(
+            states=[self._stateMappingFor('proposed')], data="suffix", return_state_singleton=False)
+        cfg.setItemWFValidationLevels(itemWFValLevels)
+        notify(ObjectEditedEvent(cfg))
 
         # create item
         self.changeUser('pmCreator1')
@@ -5045,72 +5050,69 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(_sum_entries(False), 0)
         self.assertEqual(_sum_entries(), 1)
         self.changeUser('pmReviewer1', clean_memoize=False)
-        if self._reviewers_may_edit_itemcreated():
-            # reviewer, have the hand on item, view as a Reader
-            self.assertEqual(_sum_entries(), 1)
-        else:
-            # reviewer, does not have the hand on item, view as a Reader
-            self.assertEqual(_sum_entries(), 2)
-        # observer, Reader
-        self.changeUser('pmObserver1', clean_memoize=False)
+        # as reviewer is not creator, cache is invalidated to manage the "duplicate" action
         self.assertEqual(_sum_entries(), 2)
+        # observer, Reader
+        # as creator/reviewer are editor, another value for reader
+        self.changeUser('pmObserver1', clean_memoize=False)
+        self.assertEqual(_sum_entries(), 3)
         # copyGroups or optionalAdvisers, Reader
         self.changeUser('pmReviewer2', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 2)
+        self.assertEqual(_sum_entries(), 3)
         # powerobserver, Reader
         self.changeUser('powerobserver1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 2)
+        self.assertEqual(_sum_entries(), 3)
 
         # propose item, cache invalidated because item modified
         # pmReviewer1 has hand on item, other are Readers
         self.changeUser('pmCreator1', clean_memoize=False)
         self.proposeItem(item, clean_memoize=False)
-        self.assertEqual(_sum_entries(False), 2)
-        self.assertEqual(_sum_entries(), 3)
+        self.assertEqual(_sum_entries(False), 3)
+        self.assertEqual(_sum_entries(), 4)
         # reviewer, has hand on item
         self.changeUser('pmReviewer1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 4)
+        self.assertEqual(_sum_entries(), 5)
         # observer, Reader, can not duplicate, action is hidden
         self.changeUser('pmObserver1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 5)
+        self.assertEqual(_sum_entries(), 6)
         # copyGroups or optionalAdvisers, Reader
         self.changeUser('pmReviewer2', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 5)
+        self.assertEqual(_sum_entries(), 6)
         # powerobserver, Reader
         self.changeUser('powerobserver1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 5)
+        self.assertEqual(_sum_entries(), 6)
 
         # special case for powerobservers when using MeetingConfig.hideHistoryTo
         cfg.setHideHistoryTo(('MeetingItem.powerobservers', ))
-        self.assertEqual(_sum_entries(), 6)
+        self.assertEqual(_sum_entries(), 7)
         # but still ok for others
         self.changeUser('pmReviewer2', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 6)
+        self.assertEqual(_sum_entries(), 7)
 
         # now test as a MeetingManager that has access when item validated
         self.changeUser('pmReviewer1', clean_memoize=False)
         self.validateItem(item, as_manager=False, clean_memoize=False)
-        self.assertEqual(_sum_entries(), 7)
+        self.assertEqual(_sum_entries(), 8)
         # without meeting, MeetingManager may edit
         self.changeUser('pmManager', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 8)
-        self.create('Meeting')
         self.assertEqual(_sum_entries(), 9)
+        self.create('Meeting')
+        self.assertEqual(_sum_entries(), 10)
         # 'pmReviewer1' is not creator, so new value for 'pmCreator1'
         self.changeUser('pmCreator1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 10)
+        self.assertEqual(_sum_entries(), 11)
         # reviewer, has hand on item
         self.changeUser('pmReviewer1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 10)
+        self.assertEqual(_sum_entries(), 11)
         # observer, Reader
         self.changeUser('pmObserver1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 10)
+        self.assertEqual(_sum_entries(), 11)
         # copyGroups or optionalAdvisers, Reader
         self.changeUser('pmReviewer2', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 10)
+        self.assertEqual(_sum_entries(), 11)
         # powerobserver, Reader but changed as using MeetingConfig.hideHistoryTo
         self.changeUser('powerobserver1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 11)
+        self.assertEqual(_sum_entries(), 12)
 
     def test_pm_HistoryCommentViewability(self):
         '''Test the MeetingConfig.hideItemHistoryCommentsToUsersOutsideProposingGroup parameter
@@ -6861,13 +6863,13 @@ class testMeetingItem(PloneMeetingTestCase):
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img.UID()))
 
         # test using the quickedit, test with field 'decision' where getRaw was overrided
-        decision = '<p>Working external image <img src="%s"/>.</p>' % self.external_image2
-        set_field_from_ajax(item, 'decision', decision)
+        description = '<p>Working external image <img src="%s"/>.</p>' % self.external_image2
+        set_field_from_ajax(item, 'description', description)
         self.assertTrue('1025-400x300.jpg' in item.objectIds())
         img2 = item.get('1025-400x300.jpg')
         # external image link was updated
         self.assertEqual(
-            item.getRawDecision(),
+            item.getRawDescription(),
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img2.UID()))
 
         # test using processForm, aka full edit form, with field "description"
@@ -7364,7 +7366,7 @@ class testMeetingItem(PloneMeetingTestCase):
             u'<img title=\'Sent from {0}, original item is "{1}".\' '
             u'src=\'http://nohost/plone/cloned_not_decided.png\' '
             u'style="width: 16px; height: 16px;" />'.format(
-                cfg.Title(),
+                safe_unicode(cfg.Title()),
                 translate(item.query_state(), domain="plone", context=self.request)
             )
             in IPrettyLink(item2).getLink())
@@ -7374,7 +7376,7 @@ class testMeetingItem(PloneMeetingTestCase):
             u'<img title=\'Sent from {0}, original item is "{1}".\' '
             u'src=\'http://nohost/plone/cloned_not_decided.png\' '
             u'style="width: 16px; height: 16px;" />'.format(
-                cfg.Title(),
+                safe_unicode(cfg.Title()),
                 translate(item.query_state(), domain="plone", context=self.request)
             )
             in IPrettyLink(item2).getLink())
@@ -8146,7 +8148,8 @@ class testMeetingItem(PloneMeetingTestCase):
                           u'M. PMManager <pmmanager@plonemeeting.org>',
                           u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
         self.assertEqual(subject,
-                         u'{0} - Your advice is requested - My item'.format(cfg_title))
+                         u'{0} - Your advice is requested - My item'.format(
+                            safe_unicode(cfg_title)))
         self.assertEqual(body,
                          u'The item is entitled "My item". '
                          u'You can access this item here: {0}.'.format(item_url))
@@ -8303,7 +8306,7 @@ class testMeetingItem(PloneMeetingTestCase):
             subject,
             u'{0} - Item in state "Proposed" '
             u'(following "Back to \'Proposed\'") - '
-            u'My item that notify when propose'.format(cfg.Title()))
+            u'My item that notify when propose'.format(safe_unicode(cfg.Title())))
         self.assertEqual(
             body,
             u'The item is entitled "My item that notify when propose". '
@@ -8772,7 +8775,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         recipients, subject, body = item.wfActions().doValidate(None)
         self.assertEqual(recipients, [u'M. PMManager <pmmanager@plonemeeting.org>'])
-        self.assertEqual(subject, u'PloneMeeting assembly - A "late" item has been validated.')
+        self.assertEqual(subject, u'%s - A "late" item has been validated.' %
+                         safe_unicode(cfg.Title()))
 
 
 def test_suite():

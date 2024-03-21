@@ -61,50 +61,54 @@ class testWFAdaptations(PloneMeetingTestCase):
     def test_pm_WFA_availableWFAdaptations(self):
         '''Test what are the available wfAdaptations.
            This way, if we add a wfAdaptations, the test will 'break' until it is adapted...'''
-        self.assertEqual(sorted(get_vocab_values(self.meetingConfig, 'WorkflowAdaptations')),
-                         ['accepted_but_modified',
-                          'accepted_out_of_meeting',
-                          'accepted_out_of_meeting_and_duplicated',
-                          'accepted_out_of_meeting_emergency',
-                          'accepted_out_of_meeting_emergency_and_duplicated',
-                          'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
-                          'delayed',
-                          'hide_decisions_when_under_writing',
-                          'hide_decisions_when_under_writing_check_returned_to_proposing_group',
-                          'item_validation_no_validate_shortcuts',
-                          'item_validation_shortcuts',
-                          'itemdecided',
-                          'mark_not_applicable',
-                          MEETING_REMOVE_MOG_WFA,
-                          'meetingmanager_correct_closed_meeting',
-                          'no_decide',
-                          'no_freeze',
-                          'no_publication',
-                          'only_creator_may_delete',
-                          'postpone_next_meeting',
-                          'postpone_next_meeting_keep_internal_number',
-                          'postpone_next_meeting_transfer_annex_scan_id',
-                          'pre_accepted',
-                          'presented_item_back_to_itemcreated',
-                          'presented_item_back_to_proposed',
-                          'refused',
-                          'removed',
-                          'removed_and_duplicated',
-                          'return_to_proposing_group',
-                          'return_to_proposing_group_with_all_validations',
-                          'return_to_proposing_group_with_last_validation',
-                          'reviewers_take_back_validated_item',
-                          'transfered',
-                          'transfered_and_duplicated',
-                          'waiting_advices',
-                          'waiting_advices_adviser_may_validate',
-                          'waiting_advices_adviser_send_back',
-                          'waiting_advices_from_before_last_val_level',
-                          'waiting_advices_from_every_val_levels',
-                          'waiting_advices_from_last_val_level',
-                          'waiting_advices_given_advices_required_to_validate',
-                          'waiting_advices_given_and_signed_advices_required_to_validate',
-                          'waiting_advices_proposing_group_send_back'])
+        cfg = self.meetingConfig
+        # generate the presented_item_back_to_ WFAs
+        pibs = [
+            'presented_item_back_to_%s' % item_val_state for item_val_state in
+            cfg.getItemWFValidationLevels(data='state', only_enabled=True)]
+        self.assertEqual(
+            sorted(get_vocab_values(self.meetingConfig, 'WorkflowAdaptations')),
+            sorted(['accepted_but_modified',
+                    'accepted_out_of_meeting',
+                    'accepted_out_of_meeting_and_duplicated',
+                    'accepted_out_of_meeting_emergency',
+                    'accepted_out_of_meeting_emergency_and_duplicated',
+                    'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
+                    'delayed',
+                    'hide_decisions_when_under_writing',
+                    'hide_decisions_when_under_writing_check_returned_to_proposing_group',
+                    'item_validation_no_validate_shortcuts',
+                    'item_validation_shortcuts',
+                    'itemdecided',
+                    'mark_not_applicable',
+                    MEETING_REMOVE_MOG_WFA,
+                    'meetingmanager_correct_closed_meeting',
+                    'no_decide',
+                    'no_freeze',
+                    'no_publication',
+                    'only_creator_may_delete',
+                    'postpone_next_meeting',
+                    'postpone_next_meeting_keep_internal_number',
+                    'postpone_next_meeting_transfer_annex_scan_id',
+                    'pre_accepted',
+                    'refused',
+                    'removed',
+                    'removed_and_duplicated',
+                    'return_to_proposing_group',
+                    'return_to_proposing_group_with_all_validations',
+                    'return_to_proposing_group_with_last_validation',
+                    'reviewers_take_back_validated_item',
+                    'transfered',
+                    'transfered_and_duplicated',
+                    'waiting_advices',
+                    'waiting_advices_adviser_may_validate',
+                    'waiting_advices_adviser_send_back',
+                    'waiting_advices_from_before_last_val_level',
+                    'waiting_advices_from_every_val_levels',
+                    'waiting_advices_from_last_val_level',
+                    'waiting_advices_given_advices_required_to_validate',
+                    'waiting_advices_given_and_signed_advices_required_to_validate',
+                    'waiting_advices_proposing_group_send_back'] + pibs))
 
     def test_pm_WFA_appliedOnMeetingConfigEdit(self):
         """WFAdpatations are applied when the MeetingConfig is edited."""
@@ -2049,7 +2053,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         transition = itemWorkflow.transitions[ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION]
         self.assertEqual(transition.new_state_id, item.query_state())
 
-    def test_pm_WFA_waiting_advices(self):
+    def test_pm_WFA_waiting_advices_base(self):
         '''Test the workflowAdaptation 'waiting_advices'.'''
         # ease override by subproducts
         if not self._check_wfa_available(['waiting_advices']):

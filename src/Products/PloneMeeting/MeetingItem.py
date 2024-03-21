@@ -6180,19 +6180,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for advice in self.getAdvices():
             self._delObject(advice.getId(), suppress_events=suppress_events)
 
-    def _adviceDelayIsTimedOut(self, groupId, computeNewDelayInfos=False):
+    def _adviceDelayIsTimedOut(self, groupId, computeNewDelayInfos=False, adviceInfo=None):
         """Returns True if given p_advice is delay-aware and delay is timed out.
            If p_computeNewDelayInfos is True, we will not take delay_infos from the
            adviceIndex but call getDelayInfosForAdvice to get fresh data."""
-        if not self.adviceIndex[groupId]['delay']:
+        adviceInfo = adviceInfo or self.adviceIndex[groupId]
+        if not adviceInfo['delay']:
             return False
         # in some case, when creating advice, if adviserIndex is reindexed before
         # _updateAdvices is finished, we do not have the 'delay_infos' in the adviceIndex
         # in this case, no matter p_computeNewDelayInfos we use getDelayInfosForAdvice
-        if computeNewDelayInfos or 'delay_infos' not in self.adviceIndex[groupId]:
+        if computeNewDelayInfos or 'delay_infos' not in adviceInfo:
             delay_infos = self.getDelayInfosForAdvice(groupId)
         else:
-            delay_infos = self.adviceIndex[groupId]['delay_infos']
+            delay_infos = adviceInfo['delay_infos']
         return delay_infos['delay_status'] == 'timed_out' or \
             delay_infos['delay_status_when_stopped'] == 'stopped_timed_out'
 
@@ -6281,7 +6282,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         adapted = self.adapted()
         for org_uid, adviceInfo in self.adviceIndex.iteritems():
             saved_stored_data[org_uid] = {}
-            reinit_delay = adapted._adviceDelayWillBeReinitialized(
+            reinit_delay = self._adviceDelayWillBeReinitialized(
                 org_uid, adviceInfo, isTransitionReinitializingDelays)
             if reinit_delay or org_uid in inheritedAdviserUids:
                 saved_stored_data[org_uid]['delay_started_on'] = None
@@ -6671,9 +6672,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         adviceInfo,
                                         isTransitionReinitializingDelays):
         '''See doc in interfaces.py.'''
-        item = self.getSelf()
         reinit_delay = False
-        if isTransitionReinitializingDelays and not item._advice_is_given(org_uid):
+        if isTransitionReinitializingDelays and \
+           not self._advice_is_given(org_uid) and \
+           not self._adviceDelayIsTimedOut(
+                org_uid, computeNewDelayInfos=True, adviceInfo=adviceInfo):
             reinit_delay = True
         return reinit_delay
 
