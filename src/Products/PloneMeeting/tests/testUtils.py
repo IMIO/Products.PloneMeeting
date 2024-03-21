@@ -13,6 +13,7 @@ from os import path
 from plone.app.controlpanel.events import ConfigurationChangedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
 from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -138,7 +139,7 @@ class testUtils(PloneMeetingTestCase):
         self.assertEqual(
             subject,
             u"{0} - Item has been inserted into a meeting - My item".format(
-                cfg.Title()))
+                safe_unicode(cfg.Title())))
         self.assertEqual(
             body,
             u"This meeting may still be under construction and is potentially inaccessible.  "

@@ -7366,7 +7366,7 @@ class testMeetingItem(PloneMeetingTestCase):
             u'<img title=\'Sent from {0}, original item is "{1}".\' '
             u'src=\'http://nohost/plone/cloned_not_decided.png\' '
             u'style="width: 16px; height: 16px;" />'.format(
-                cfg.Title(),
+                safe_unicode(cfg.Title()),
                 translate(item.query_state(), domain="plone", context=self.request)
             )
             in IPrettyLink(item2).getLink())
@@ -7376,7 +7376,7 @@ class testMeetingItem(PloneMeetingTestCase):
             u'<img title=\'Sent from {0}, original item is "{1}".\' '
             u'src=\'http://nohost/plone/cloned_not_decided.png\' '
             u'style="width: 16px; height: 16px;" />'.format(
-                cfg.Title(),
+                safe_unicode(cfg.Title()),
                 translate(item.query_state(), domain="plone", context=self.request)
             )
             in IPrettyLink(item2).getLink())
@@ -8148,7 +8148,8 @@ class testMeetingItem(PloneMeetingTestCase):
                           u'M. PMManager <pmmanager@plonemeeting.org>',
                           u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
         self.assertEqual(subject,
-                         u'{0} - Your advice is requested - My item'.format(cfg_title))
+                         u'{0} - Your advice is requested - My item'.format(
+                            safe_unicode(cfg_title)))
         self.assertEqual(body,
                          u'The item is entitled "My item". '
                          u'You can access this item here: {0}.'.format(item_url))
@@ -8305,7 +8306,7 @@ class testMeetingItem(PloneMeetingTestCase):
             subject,
             u'{0} - Item in state "Proposed" '
             u'(following "Back to \'Proposed\'") - '
-            u'My item that notify when propose'.format(cfg.Title()))
+            u'My item that notify when propose'.format(safe_unicode(cfg.Title())))
         self.assertEqual(
             body,
             u'The item is entitled "My item that notify when propose". '
