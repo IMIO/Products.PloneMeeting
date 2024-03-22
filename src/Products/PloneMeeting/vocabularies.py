@@ -52,6 +52,7 @@ from plone.memoize.ram import store_in_cache
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
+from Products.PloneMeeting.config import ADVICE_TYPES
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -1195,6 +1196,38 @@ class ItemOptionalAdvicesVocabulary(object):
 ItemOptionalAdvicesVocabularyFactory = ItemOptionalAdvicesVocabulary()
 
 
+class ConfigAdviceTypesVocabulary(object):
+    """Expected context is portal_plonemeeting."""
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context, include_asked_again=False, include_term_id=True):
+        d = "PloneMeeting"
+        terms = []
+        if include_asked_again:
+            term_title = translate('asked_again', domain=d, context=context.REQUEST)
+            if include_term_id:
+                term_title += " (asked_again)"
+            terms.append(SimpleTerm("asked_again", "asked_again", term_title))
+        for advice_type in ADVICE_TYPES:
+            term_title = translate(advice_type, domain=d, context=context.REQUEST)
+            if include_term_id:
+                term_title += " (%s)" % advice_type
+            terms.append(SimpleTerm(advice_type, advice_type, term_title))
+        # add custom extra advice types
+        tool = api.portal.get_tool('portal_plonemeeting')
+        for extra_advice_type in tool.adapted().extraAdviceTypes():
+            term_title = translate(extra_advice_type, domain=d, context=context.REQUEST)
+            if include_term_id:
+                term_title += " (%s)" % extra_advice_type
+            terms.append(
+                SimpleTerm(extra_advice_type, extra_advice_type, term_title))
+        return SimpleVocabulary(terms)
+
+
+ConfigAdviceTypesVocabularyFactory = ConfigAdviceTypesVocabulary()
+
+
 class AdviceTypesVocabulary(object):
     """Global advice types vocabulary used in faceted criterion."""
 
@@ -1212,43 +1245,31 @@ class AdviceTypesVocabulary(object):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        res = []
+        res = OrderedDict()
         # add the 'not_given' advice_type
-        res.append(SimpleTerm(NOT_GIVEN_ADVICE_VALUE,
-                              NOT_GIVEN_ADVICE_VALUE,
-                              translate(NOT_GIVEN_ADVICE_VALUE,
-                                        domain='PloneMeeting',
-                                        context=context.REQUEST))
-                   )
+        res[NOT_GIVEN_ADVICE_VALUE] = translate(
+            NOT_GIVEN_ADVICE_VALUE, domain='PloneMeeting', context=context.REQUEST)
         # add the 'asked_again' advice_type
-        res.append(SimpleTerm("asked_again",
-                              "asked_again",
-                              translate("asked_again",
-                                        domain='PloneMeeting',
-                                        context=context.REQUEST))
-                   )
+        res["asked_again"] = translate(
+            "asked_again", domain='PloneMeeting', context=context.REQUEST)
+        # MeetingConfig.usedAdviceTypes
         for advice_type in cfg.getUsedAdviceTypes():
-            res.append(SimpleTerm(advice_type,
-                                  advice_type,
-                                  translate(advice_type,
-                                            domain='PloneMeeting',
-                                            context=context.REQUEST))
-                       )
+            res[advice_type] = translate(
+                advice_type, domain='PloneMeeting', context=context.REQUEST)
+        # ToolPloneMeeting.advisersConfig.advice_types
+        for row in tool.getAdvisersConfig():
+            for advice_type in row['advice_types']:
+                res[advice_type] = translate(
+                    advice_type, domain='PloneMeeting', context=context.REQUEST)
         # finally add the 'hidden_during_redaction' and
         # 'considered_not_given_hidden_during_redaction' advice_types
-        res.append(SimpleTerm(HIDDEN_DURING_REDACTION_ADVICE_VALUE,
-                              HIDDEN_DURING_REDACTION_ADVICE_VALUE,
-                              translate(HIDDEN_DURING_REDACTION_ADVICE_VALUE,
-                                        domain='PloneMeeting',
-                                        context=context.REQUEST))
-                   )
-        res.append(SimpleTerm(CONSIDERED_NOT_GIVEN_ADVICE_VALUE,
-                              CONSIDERED_NOT_GIVEN_ADVICE_VALUE,
-                              translate(CONSIDERED_NOT_GIVEN_ADVICE_VALUE,
-                                        domain='PloneMeeting',
-                                        context=context.REQUEST))
-                   )
-        return SimpleVocabulary(res)
+        res[HIDDEN_DURING_REDACTION_ADVICE_VALUE] = translate(
+            HIDDEN_DURING_REDACTION_ADVICE_VALUE, domain='PloneMeeting', context=context.REQUEST)
+        res[CONSIDERED_NOT_GIVEN_ADVICE_VALUE] = translate(
+            CONSIDERED_NOT_GIVEN_ADVICE_VALUE, domain='PloneMeeting', context=context.REQUEST)
+
+        return SimpleVocabulary([SimpleTerm(token, token, value)
+                                 for token, value in res.items()])
 
     # do ram.cache have a different key name
     __call__ = AdviceTypesVocabulary__call__
@@ -3198,48 +3219,6 @@ class AdviceWorkflowAdaptationsVocabulary(object):
 
 
 AdviceWorkflowAdaptationsVocabularyFactory = AdviceWorkflowAdaptationsVocabulary()
-
-
-class ConfigAdviceTypesVocabulary(object):
-    """Expected context is portal_plonemeeting."""
-
-    implements(IVocabularyFactory)
-
-    def __call__(self, context, include_asked_again=False, include_term_id=True):
-        d = "PloneMeeting"
-        terms = []
-        if include_asked_again:
-            term_title = translate('asked_again', domain=d, context=context.REQUEST)
-            if include_term_id:
-                term_title += " (asked_again)"
-            terms.append(SimpleTerm("asked_again", "asked_again", term_title))
-        advice_types = [
-            'positive',
-            'positive_with_comments',
-            'positive_with_remarks',
-            'cautious',
-            'negative',
-            'negative_with_remarks',
-            'back_to_proposing_group',
-            'nil',
-            'read']
-        for advice_type in advice_types:
-            term_title = translate(advice_type, domain=d, context=context.REQUEST)
-            if include_term_id:
-                term_title += " (%s)" % advice_type
-            terms.append(SimpleTerm(advice_type, advice_type, term_title))
-        # add custom extra advice types
-        tool = api.portal.get_tool('portal_plonemeeting')
-        for extra_advice_type in tool.adapted().extraAdviceTypes():
-            term_title = translate(extra_advice_type, domain=d, context=context.REQUEST)
-            if include_term_id:
-                term_title += " (%s)" % extra_advice_type
-            terms.append(
-                SimpleTerm(extra_advice_type, extra_advice_type, term_title))
-        return SimpleVocabulary(terms)
-
-
-ConfigAdviceTypesVocabularyFactory = ConfigAdviceTypesVocabulary()
 
 
 class ConfigHideHistoryTosVocabulary(object):
