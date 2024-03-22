@@ -270,6 +270,17 @@ ADVICE_STATES_ENDED = ('advice_given', )
 # this is the mappings between an advice WF state and it's corresponding group suffix
 ADVICE_STATES_MAPPING = {'advice_given': 'advisers', }
 
+ADVICE_TYPES = [
+    'positive',
+    'positive_with_comments',
+    'positive_with_remarks',
+    'cautious',
+    'negative',
+    'negative_with_remarks',
+    'back_to_proposing_group',
+    'nil',
+    'read']
+
 # name of the variable added to the REQUEST when getting the scan_id
 ITEM_SCAN_ID_NAME = 'item_scan_id'
 
