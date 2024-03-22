@@ -32,6 +32,10 @@ Changelog
   and `test_pm_SearchItemsToCorrectToValidateOfEveryReviewerGroups` more robust
   when called from subplugin.
   [gbastien]
+- Adapted `Products.PloneMeeting.vocabularies.advicetypesvocabulary`, used in
+  advice types faceted filter to take into account
+  `ToolPloneMeeting.advisersConfig.advice_types`.
+  [gbastien]
 
 4.2.9rc5 (2024-03-14)
 ---------------------
