@@ -995,9 +995,9 @@ def onAdviceModified(advice, event):
             # Send mail if relevant
             sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
             sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
-            item.send_suffixes_mail_if_relevant("advice_edited")
+            item.send_suffixes_and_owner_mail_if_relevant("advice_edited")
             if item.hasMeeting():
-                item.send_suffixes_mail_if_relevant("advice_edited_in_meeting")
+                item.send_suffixes_and_owner_mail_if_relevant("advice_edited_in_meeting")
 
 
 def onAdviceEditFinished(advice, event):

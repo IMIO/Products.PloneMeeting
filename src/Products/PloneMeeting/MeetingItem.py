@@ -5295,17 +5295,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         return sendMailIfRelevant(self, mail_event_id, notified_user_ids, isUserIds=True)
 
-    def send_powerobservers_mail_if_relevant(self, po_mail_event_id):
+    def send_powerobservers_mail_if_relevant(self, mail_event_type):
+        """
+        Send mail to powerobservers if event is enabled in the configuration.
+        mail_event_type is the event to send and is the left-handed part of the mail event id.
+        """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         res = []
         meeting_title = self.hasMeeting() and self.getMeeting().Title() or ""
         for po_infos in cfg.getPowerObservers():
-            mail_event_id = "{}__{}".format(po_mail_event_id, po_infos['row_id'])
+            mail_event_id = "{}__{}".format(mail_event_type, po_infos['row_id'])
             if mail_event_id in cfg.getMailItemEvents():
                 group_id = "{0}_{1}".format(cfg.getId(), po_infos['row_id'])
                 res.append(sendMailIfRelevant(self,
-                                              po_mail_event_id,
+                                              mail_event_type,
                                               [group_id],
                                               customEvent=True,
                                               isGroupIds=True,
@@ -5316,19 +5320,27 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                               }))
         return res
 
-    def send_suffixes_mail_if_relevant(self, suffix_mail_event_id):
+    def send_suffixes_and_owner_mail_if_relevant(self, mail_event_type):
+        """
+        Send mail to suffixes and owner if event is enabled in the configuration.
+        mail_event_type is the event to send and is the left-handed part of the mail event id.
+        """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         suffixes = [fct['fct_id'] for fct in get_registry_functions() if fct['enabled']]
+        roles = ["Owner"]  # To be completed ?
+        targets = suffixes + roles
         res = []
-        for suffix in suffixes:
-            mail_event_id = "{}__{}".format(suffix_mail_event_id, suffix)
+
+        for target in targets:
+            mail_event_id = "{}__{}".format(mail_event_type, target)
             if mail_event_id in cfg.getMailItemEvents():
                 res.append(sendMailIfRelevant(self,
-                                              suffix_mail_event_id,
-                                              suffix,
+                                              mail_event_id,
+                                              target,
                                               customEvent=True,
-                                              isSuffix=True
+                                              isRole=target in roles,
+                                              isSuffix=target in suffixes,
                                               ))
         return res
 

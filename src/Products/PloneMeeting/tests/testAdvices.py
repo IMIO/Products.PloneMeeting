@@ -4271,11 +4271,11 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         self.request['debug_sendMailIfRelevant'] = True
-        sent = item.send_suffixes_mail_if_relevant("advice_edited")
+        sent = item.send_suffixes_and_owner_mail_if_relevant("advice_edited")
         self.assertEqual(len(sent), 1)
         self.assertIn(u'M. PMReviewer One <pmreviewer1@plonemeeting.org>', sent[0][0])
         cfg.setMailItemEvents(())
-        sent = item.send_suffixes_mail_if_relevant("advice_edited")
+        sent = item.send_suffixes_and_owner_mail_if_relevant("advice_edited")
         self.assertEqual(len(sent), 0)
 
         cfg.setMailItemEvents(('advice_edited__reviewers',))
