@@ -10,6 +10,7 @@ from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collections import OrderedDict
 from collective.behavior.internalnumber.browser.settings import _internal_number_is_used
 from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.contact.plonegroup.config import get_registry_functions
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
@@ -5318,7 +5319,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def send_suffixes_mail_if_relevant(self, suffix_mail_event_id):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        suffixes = list(cfg.getItemWFValidationLevels(data='suffix', only_enabled=True))
+        suffixes = [fct['fct_id'] for fct in get_registry_functions() if fct['enabled']]
         res = []
         for suffix in suffixes:
             mail_event_id = "{}__{}".format(suffix_mail_event_id, suffix)
