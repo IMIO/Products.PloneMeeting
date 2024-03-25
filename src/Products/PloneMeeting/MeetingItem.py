@@ -5302,6 +5302,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
+        
         res = []
         meeting_title = self.hasMeeting() and self.getMeeting().Title() or ""
         for po_infos in cfg.getPowerObservers():
@@ -5330,8 +5331,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         suffixes = [fct['fct_id'] for fct in get_registry_functions() if fct['enabled']]
         roles = ["Owner"]  # To be completed ?
         targets = suffixes + roles
-        res = []
 
+        res = []
         for target in targets:
             mail_event_id = "{}__{}".format(mail_event_type, target)
             if mail_event_id in cfg.getMailItemEvents():
