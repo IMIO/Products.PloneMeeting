@@ -4278,7 +4278,6 @@ class testAdvices(PloneMeetingTestCase):
         """Test that the mail is sent when an advice is edited."""
         cfg = self.meetingConfig
         cfg.setMailItemEvents(('advice_edited__reviewers',))
-
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         self.request['debug_sendMailIfRelevant'] = True
@@ -4288,15 +4287,11 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setMailItemEvents(())
         sent = item.send_suffixes_and_owner_mail_if_relevant("advice_edited")
         self.assertEqual(len(sent), 0)
-
         cfg.setMailItemEvents(('advice_edited__reviewers',))
-
-
         cfg.setCustomAdvisers([])
         cfg.setItemAdviceStates(('itemcreated', ))
         cfg.setItemAdviceEditStates(('itemcreated', ))
         cfg.setItemAdviceViewStates(('itemcreated', ))
-
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers((self.vendors_uid, self.developers_uid, ))
@@ -4304,15 +4299,14 @@ class testAdvices(PloneMeetingTestCase):
 
         # give 'vendors' advice and test
         self.changeUser('pmReviewer2')
-        vendors_advice = createContentInContainer(item,
-                                                  'meetingadvice',
-                                                  **{'advice_group': self.vendors_uid,
-                                                     'advice_type': u'positive',
-                                                     'advice_hide_during_redaction': False,
-                                                     'advice_comment': richtextval(u'My comment')})
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': self.vendors_uid,
+                                    'advice_type': u'positive',
+                                    'advice_hide_during_redaction': False,
+                                    'advice_comment': richtextval(u'My comment')})
         self.assertIn(u'M. PMReviewer One <pmreviewer1@plonemeeting.org>',
                       self.request["debug_sendMailIfRelevant_result"][0])
-
 
         cfg.setMailItemEvents(())
         self.request["debug_sendMailIfRelevant_result"] = None
@@ -4323,14 +4317,20 @@ class testAdvices(PloneMeetingTestCase):
 
         # give 'vendors' advice and test
         self.changeUser('pmReviewer2')
-        vendors_advice = createContentInContainer(item,
-                                                  'meetingadvice',
-                                                  **{'advice_group': self.vendors_uid,
-                                                     'advice_type': u'positive',
-                                                     'advice_hide_during_redaction': False,
-                                                     'advice_comment': richtextval(u'My comment')})
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': self.vendors_uid,
+                                    'advice_type': u'positive',
+                                    'advice_hide_during_redaction': False,
+                                    'advice_comment': richtextval(u'My comment')})
         self.assertIsNone(self.request["debug_sendMailIfRelevant_result"])
- 
+        # owner
+        cfg.setMailItemEvents(('advice_edited__Owner',))
+        self.changeUser('pmManager')
+        sent = item.send_suffixes_and_owner_mail_if_relevant("advice_edited")
+        self.assertEqual(len(sent), 1)
+        self.assertEqual(sent[0][0][0], u'M. PMCreator One <pmcreator1@plonemeeting.org>')
+
     def test_pm_AdviceMandatoriness(self):
         """When using MeetingConfig.enforceAdviceMandatoriness, an item
            may only be presented if auto or delay-aware advices are positive."""

@@ -5305,9 +5305,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        
+
         res = []
-        meeting_title = self.hasMeeting() and self.getMeeting().Title() or ""
         for po_infos in cfg.getPowerObservers():
             mail_event_id = "{}__{}".format(mail_event_type, po_infos['row_id'])
             if mail_event_id in cfg.getMailItemEvents():
@@ -5316,12 +5315,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                               mail_event_type,
                                               [group_id],
                                               customEvent=True,
-                                              isGroupIds=True,
-                                              mapping = {
-                                                  "itemTitle": self.Title(),
-                                                  "meetingConfigTitle": cfg.Title(),
-                                                  "meetingTitle": meeting_title
-                                              }))
+                                              isGroupIds=True))
         return res
 
     def send_suffixes_and_owner_mail_if_relevant(self, mail_event_type):
@@ -5340,7 +5334,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             mail_event_id = "{}__{}".format(mail_event_type, target)
             if mail_event_id in cfg.getMailItemEvents():
                 res.append(sendMailIfRelevant(self,
-                                              mail_event_id,
+                                              mail_event_type,
                                               target,
                                               customEvent=True,
                                               isRole=target in roles,
