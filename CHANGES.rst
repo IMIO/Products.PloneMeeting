@@ -36,6 +36,10 @@ Changelog
   advice types faceted filter to take into account
   `ToolPloneMeeting.advisersConfig.advice_types`.
   [gbastien]
+- Add two types of email notifications to suffixes about given advices.
+  [aduchene]
+- Add a notification to power observers about late items.
+  [aduchene]
 
 4.2.9rc5 (2024-03-14)
 ---------------------
@@ -147,10 +151,6 @@ Changelog
   in which advice can not be edited anymore if advice did not reached it's final
   state (when using advice custom worklow).
   [gbastien]
-- Add two types of email notifications to suffixes about given advices.
-  [aduchene]
-- Add a notification to power observers about late items.
-  [aduchene]
 
 4.2.9b7 (2024-01-11)
 --------------------
