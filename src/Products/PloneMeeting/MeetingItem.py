@@ -5331,7 +5331,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        # get every suffixes, not only the ones selected in MeetingConfig.itemWFValidationLevels
         suffixes = [fct['fct_id'] for fct in get_registry_functions() if fct['enabled']]
         roles = ["Owner"]  # To be completed ?
         targets = suffixes + roles
@@ -5340,14 +5339,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for target in targets:
             mail_event_id = "{}__{}".format(mail_event_type, target)
             if mail_event_id in cfg.getMailItemEvents():
-                # pass customEvent=True to be able to use suffix_mail_event_id
-                # as we checked here that is is actually enabled in cfg.getMailItemEvents()
                 res.append(sendMailIfRelevant(self,
                                               mail_event_id,
                                               target,
                                               customEvent=True,
                                               isRole=target in roles,
-                                              isSuffix=target in suffixes))
+                                              isSuffix=target in suffixes,
+                                              ))
         return res
 
     security.declarePublic('sendAdviceDelayWarningMailIfRelevant')

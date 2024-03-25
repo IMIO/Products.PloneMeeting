@@ -8,7 +8,7 @@ class Migrate_To_4213(Migrator):
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
-        logger.info('Migrating to PloneMeeting 4213...')
+        logger.info('Migrating to PloneMeeting 4212...')
         self.updatePODTemplatesCode(
             replacements={
                 '.adapted().getCertifiedSignatures(': ".getCertifiedSignatures("})

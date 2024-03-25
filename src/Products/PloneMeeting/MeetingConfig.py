@@ -7091,10 +7091,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("adviceToGiveByUser", translate('event_advice_to_give_by_user',
                                              domain=d,
                                              context=self.REQUEST)),
-            ("advice_edited_in_meeting__Owner",
-             translate('event_advice_edited_in_meeting_owner',
-                       domain=d,
-                       context=self.REQUEST)),
+            ("advice_edited__Owner", translate('event_advice_edited',
+                                            domain=d,
+                                            mapping={"suffix": "Owner"},
+                                            context=self.REQUEST)),
             ("adviceInvalidated", translate('event_invalidate_advice',
                                             domain=d,
                                             context=self.REQUEST)),
@@ -7180,6 +7180,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res_transitions.append((id, translated_msg))
         res = res + DisplayList(res_transitions).sortedByValue()
 
+
         # suffixes related notifications
         functions = [fct for fct in get_registry_functions() if fct['enabled']]
 
@@ -7191,10 +7192,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                        mapping={"suffix": fct['fct_title']},
                                        context=self.REQUEST)
             res_suffixes.append((id, translated_msg))
-        res_suffixes.append(("advice_edited__Owner",
-                             translate('event_advice_edited_owner',
-                                       domain=d,
-                                       context=self.REQUEST)))
         res = res + DisplayList(res_suffixes).sortedByValue()
 
         res_suffixes = []
@@ -7205,10 +7202,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                        mapping={"suffix": fct['fct_title']},
                                        context=self.REQUEST)
             res_suffixes.append((id, translated_msg))
-        res_suffixes.append(("advice_edited_in_meeting__Owner",
-                            translate('event_advice_edited_in_meeting_owner',
-                                      domain=d,
-                                      context=self.REQUEST)))
         res = res + DisplayList(res_suffixes).sortedByValue()
 
         # power observers related notification
@@ -7218,10 +7211,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             translated_msg = translate("event_late_item_in_meeting",
                                        domain="PloneMeeting",
                                        mapping={"po_label": po_infos["label"]},
-                                       context=self.REQUEST,
-                                       default="event_late_item_in_meeting_%s" % po_infos["row_id"])
+                                       context=self.REQUEST)
             res_po.append((id, translated_msg))
         res = res + DisplayList(res_po).sortedByValue()
+
         return res
 
     security.declarePublic('listMeetingEvents')

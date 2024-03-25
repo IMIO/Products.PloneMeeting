@@ -575,18 +575,11 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
                                        tool.getFunctionalAdminEmail())
     if not recipients:
         recipients = [adminFromAddress]
-
-    # add a fingerpointing log message
-    extras = u'event={0} subject="{1}" recipients=[{2}]'.format(
-        event, subject, ", ".join(recipients))
-    fplog('send_mail', extras=safe_encode(extras))
-
     if mailMode == 'test':
         # Instead of sending mail, in test mode, we log data about the mailing.
         logger.info('Test mode / we should send mail to %s' % str(recipients))
         logger.info('Subject is [%s]' % subject)
         logger.info('Body is [%s]' % body)
-        api.portal.show_message(extras, request=obj.REQUEST)
     else:
         # Use 'plain' for mail format so the email client will turn links to clickable links
         mailFormat = 'text/plain'
@@ -595,6 +588,10 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
             _sendMail(obj, body, recipients, fromAddress, subject, mailFormat, attachments)
         except EmailError, ee:
             logger.warn(str(ee))
+    # add a fingerpointing log message
+    extras = u'event={0} subject="{1}" recipients=[{2}]'.format(
+        event, subject, ", ".join(recipients))
+    fplog('send_mail', extras=safe_encode(extras))
     return subject, body
 
 
@@ -628,6 +625,7 @@ def sendMailIfRelevant(obj,
        A plug-in may use this method for sending custom events that are not
        defined in the MeetingConfig. In this case, you must specify
        p_customEvent = True.'''
+
     tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(obj)
     # Do not send the mail if mail mode is "deactivated".
