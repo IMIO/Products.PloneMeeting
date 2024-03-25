@@ -990,12 +990,9 @@ def onAdviceModified(advice, event):
 
         # update item
         _advice_update_item(item)
-
         if not advice.advice_hide_during_redaction:
             # Send mail if relevant
-            sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
-            sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
-            item.send_suffixes_and_owner_mail_if_relevant("advice_edited")
+            item.send_suffixes_mail_if_relevant("advice_edited")
             if item.hasMeeting():
                 item.send_suffixes_and_owner_mail_if_relevant("advice_edited_in_meeting")
 
