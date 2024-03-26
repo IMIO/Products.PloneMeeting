@@ -8778,7 +8778,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(subject, u'%s - A "late" item has been validated.' %
                          safe_unicode(cfg.Title()))
 
-    def test_pm_send_late_item_in_meeting_mail_if_relevant(self):
+    def test_pm_send_powerobservers_mail_if_relevant(self):
         """Test the "late_item_in_meeting" notification to powerobservers."""
         cfg = self.meetingConfig
         cfg.setMailItemEvents(('late_item_in_meeting__powerobservers',))
