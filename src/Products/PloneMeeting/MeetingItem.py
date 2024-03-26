@@ -5338,8 +5338,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                               target,
                                               customEvent=True,
                                               isRole=target in roles,
-                                              isSuffix=target in suffixes,
-                                              ))
+                                              isSuffix=target in suffixes))
         return res
 
     security.declarePublic('sendAdviceDelayWarningMailIfRelevant')
