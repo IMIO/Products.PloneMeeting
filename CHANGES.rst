@@ -118,6 +118,9 @@ Changelog
   Also refactored it so the loop on recipients is managed by `utils._sendMail`
   and one mail is sent by recipient in any case (attachments or not).
   [gbastien]
+- Use ZLogHandler in `ToolPloneMeeting.update_all_local_roles`.
+  [aduchene]
+
 
 4.2.9rc1 (2024-02-08)
 ---------------------
