@@ -8,8 +8,6 @@ from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from Acquisition import aq_base
 from collections import OrderedDict
-
-from Products.ZCatalog.ProgressHandler import ZLogHandler
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_person_from_userid
@@ -98,6 +96,7 @@ from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import reindex_object
 from Products.PloneMeeting.utils import workday
+from Products.ZCatalog.ProgressHandler import ZLogHandler
 from ZODB.POSException import ConflictError
 from zope.annotation.interfaces import IAnnotations
 from zope.i18n import translate
