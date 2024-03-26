@@ -36,6 +36,9 @@ Changelog
   advice types faceted filter to take into account
   `ToolPloneMeeting.advisersConfig.advice_types`.
   [gbastien]
+- Do not break in `MeetingConfig` POD templates when some reusable POD templates
+  were deleted or marked no more reusable.
+  [gbastien]
 
 4.2.9rc5 (2024-03-14)
 ---------------------

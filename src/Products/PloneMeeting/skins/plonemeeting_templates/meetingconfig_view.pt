@@ -1452,7 +1452,9 @@
                        <label class="horizontal" i18n:domain="plone" i18n:translate="">File</label>
                        <div>
                          <span class="text-widget textline-field"
-                               tal:content="python: obj.get_filename()">Filename</span>
+                               tal:content="python: obj.get_filename()"
+                               tal:on-error="structure python: '<strong class=\'highlightValue\'>NOT FOUND?</strong>'"
+                               >Filename</span>
                        </div>
                      </div>
 
@@ -1481,7 +1483,8 @@
               </a>
               <a tal:define="podTemplateHolder python: obj.get_pod_template_to_use();
                              otherCfg python: tool.getMeetingConfig(podTemplateHolder)"
-                 tal:attributes="href string:${podTemplateHolder/absolute_url}"
+                 tal:attributes="href python: podTemplateHolder.absolute_url()"
+                 tal:on-error="python: obj.pod_template_to_use"
                  tal:condition="python: obj.odt_file is None"
                  tal:content="string:${otherCfg/title} ➔ ${podTemplateHolder/Title}">File holder</a>
             </td>
