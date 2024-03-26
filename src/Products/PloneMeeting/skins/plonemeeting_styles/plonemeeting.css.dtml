@@ -674,6 +674,7 @@ div.hsGrey {
 /* Highlight that a value has been modified, for example
    the itemAssembly is overriden on a MeetingItem */
 a.highlightValue,
+strong.highlightValue,
 p.highlightValue,
 span.highlightValue,
 dt.highlightValue span,
