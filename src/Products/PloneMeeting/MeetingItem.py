@@ -5307,10 +5307,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
 
         res = []
+        cfg_id = cfg.getId()
         for po_infos in cfg.getPowerObservers():
-            mail_event_id = "{}__{}".format(mail_event_type, po_infos['row_id'])
+            mail_event_id = "{0}__{1}".format(mail_event_type, po_infos['row_id'])
             if mail_event_id in cfg.getMailItemEvents():
-                group_id = "{0}_{1}".format(cfg.getId(), po_infos['row_id'])
+                group_id = "{0}_{1}".format(cfg_id, po_infos['row_id'])
                 res.append(sendMailIfRelevant(self,
                                               mail_event_type,
                                               [group_id],
@@ -5331,7 +5332,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         res = []
         for target in targets:
-            mail_event_id = "{}__{}".format(mail_event_type, target)
+            mail_event_id = "{0}__{1}".format(mail_event_type, target)
             if mail_event_id in cfg.getMailItemEvents():
                 res.append(sendMailIfRelevant(self,
                                               mail_event_type,
