@@ -4328,13 +4328,13 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setMailItemEvents(('advice_edited__Owner',))
         self.changeUser('pmManager')
         sent = item.send_suffixes_and_owner_mail_if_relevant("advice_edited")
-        self.assertEqual(len(sent), 1)
+        self.assertEqual(len(sent[0][0]), 1)
         self.assertEqual(sent[0][0][0], u'M. PMCreator One <pmcreator1@plonemeeting.org>')
 
         # in meeting, not necessary to put in meeting, just testing the mail event
         cfg.setMailItemEvents(('advice_edited__Owner', 'advice_edited_in_meeting__creators'))
         sent = item.send_suffixes_and_owner_mail_if_relevant("advice_edited_in_meeting")
-        self.assertEqual(len(sent), 2)
+        self.assertEqual(len(sent[0][0]), 2)
         self.assertEqual(sent[0][0][0], u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>')
         self.assertEqual(sent[0][0][1], u'M. PMCreator One <pmcreator1@plonemeeting.org>')
 

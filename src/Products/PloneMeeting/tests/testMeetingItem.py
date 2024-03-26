@@ -8149,7 +8149,7 @@ class testMeetingItem(PloneMeetingTestCase):
                           u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
         self.assertEqual(subject,
                          u'{0} - Your advice is requested - My item'.format(
-                            safe_unicode(cfg_title)))
+                             safe_unicode(cfg_title)))
         self.assertEqual(body,
                          u'The item is entitled "My item". '
                          u'You can access this item here: {0}.'.format(item_url))
