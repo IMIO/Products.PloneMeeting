@@ -44,6 +44,9 @@ Changelog
 - When `MeetingConfig.mailMode` is set to `test`, display the sent mail `subject`
   and `recipients` in a portal message.
   [gbastien]
+- Do not break in `MeetingConfig` POD templates when some reusable POD templates
+  were deleted or marked no more reusable.
+  [gbastien]
 
 4.2.9rc5 (2024-03-14)
 ---------------------
