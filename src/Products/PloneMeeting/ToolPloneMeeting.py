@@ -8,6 +8,8 @@ from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from Acquisition import aq_base
 from collections import OrderedDict
+
+from Products.ZCatalog.ProgressHandler import ZLogHandler
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_person_from_userid
@@ -1534,7 +1536,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                portal_type=(),
                                brains=[],
                                log=True,
-                               log_steps=1,
                                redirect=True,
                                **kw):
         '''Update local_roles on Meeting and MeetingItem,
@@ -1560,9 +1561,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if log:
             extras = 'number_of_elements={0}'.format(numberOfBrains)
             fplog('update_all_localroles', extras=extras)
-        if log_steps > 1:
-            pghandler = ZLogHandler(steps=log_steps)
-            pghandler.init('Updating local roles...', len(brains))
+
+        pghandler = ZLogHandler(steps=1000)
+        pghandler.init('Updating local roles...', len(brains))
         for brain in brains:
             try:
                 itemOrMeeting = brain.getObject()
@@ -1571,18 +1572,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 warnings.append(warning)
                 logger.warn(warning)
                 continue
-            if log_steps > 1:
-                pghandler.report(i)
-            else:
-                logger.info('%d/%d Updating local roles of %s at %s' %
-                            (i,
-                             numberOfBrains,
-                             brain.portal_type,
-                             '/'.join(itemOrMeeting.getPhysicalPath())))
+
+            pghandler.report(i)
             i = i + 1
             itemOrMeeting.update_local_roles(avoid_reindex=True)
-        if log_steps > 1:
-            pghandler.finish()
+
+        pghandler.finish()
         logger.info(end_time(
             startTime,
             base_msg="update_all_local_roles finished in ",
