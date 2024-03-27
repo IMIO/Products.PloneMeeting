@@ -8149,7 +8149,7 @@ class testMeetingItem(PloneMeetingTestCase):
                           u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
         self.assertEqual(subject,
                          u'{0} - Your advice is requested - My item'.format(
-                            safe_unicode(cfg_title)))
+                             safe_unicode(cfg_title)))
         self.assertEqual(body,
                          u'The item is entitled "My item". '
                          u'You can access this item here: {0}.'.format(item_url))
@@ -8777,6 +8777,25 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(recipients, [u'M. PMManager <pmmanager@plonemeeting.org>'])
         self.assertEqual(subject, u'%s - A "late" item has been validated.' %
                          safe_unicode(cfg.Title()))
+
+    def test_pm_ItemTitle(self):
+        """Test the MeetingItem.Title method."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', title="My title héhé")
+        self.assertEqual(item.Title(), "My title héhé")
+        self.assertEqual(item.Title(withMeetingDate=True), "My title héhé")
+        self.assertEqual(item.Title(withItemNumber=True), "My title héhé")
+        self.assertEqual(item.Title(withMeetingDate=True, withItemNumber=True),
+                         "My title héhé")
+        self.changeUser('pmManager')
+        self.create('Meeting', date=datetime(2024, 3, 27, 15, 30))
+        self.presentItem(item)
+        self.assertEqual(item.Title(), "My title héhé")
+        self.assertEqual(item.Title(withMeetingDate=True),
+                         "My title héhé (27 march 2024 (15:30))")
+        self.assertEqual(item.Title(withItemNumber=True), "3. My title héhé")
+        self.assertEqual(item.Title(withMeetingDate=True, withItemNumber=True),
+                         "3. My title héhé (27 march 2024 (15:30))")
 
 
 def test_suite():

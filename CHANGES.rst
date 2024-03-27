@@ -39,6 +39,9 @@ Changelog
 - Do not break in `MeetingConfig` POD templates when some reusable POD templates
   were deleted or marked no more reusable.
   [gbastien]
+- Added parameter `withItemNumber=False` to `MeetingItem.Title` to have the
+  item title prefixed with item number.
+  [gbastien]
 
 4.2.9rc5 (2024-03-14)
 ---------------------
