@@ -47,6 +47,8 @@ Changelog
 - Do not break in `MeetingConfig` POD templates when some reusable POD templates
   were deleted or marked no more reusable.
   [gbastien]
+- Import `safe_encode` from `imio.pyutils` instead `imio.helpers`.
+  [gbastien]
 
 4.2.9rc5 (2024-03-14)
 ---------------------

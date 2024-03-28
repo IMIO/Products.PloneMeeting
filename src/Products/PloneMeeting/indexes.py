@@ -13,8 +13,8 @@ from imio.annex.content.annex import IAnnex
 from imio.helpers.content import _contained_objects
 from imio.helpers.content import base_getattr
 from imio.helpers.content import safe_delattr
-from imio.helpers.content import safe_encode
 from imio.history.utils import getLastWFAction
+from imio.pyutils.utils import safe_encode
 from OFS.interfaces import IItem
 from plone import api
 from plone.indexer import indexer

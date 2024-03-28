@@ -27,7 +27,6 @@ from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import object_values
 from imio.helpers.content import safe_delattr
-from imio.helpers.content import safe_encode
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.content import uuidToObject
@@ -39,6 +38,7 @@ from imio.history.utils import add_event_to_wf_history
 from imio.history.utils import get_all_history_attr
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
+from imio.pyutils.utils import safe_encode
 from natsort import humansorted
 from OFS.ObjectManager import BeforeDeleteException
 from persistent.list import PersistentList

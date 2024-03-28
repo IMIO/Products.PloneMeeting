@@ -34,7 +34,6 @@ from imio.helpers.content import base_getattr
 from imio.helpers.content import get_schema_fields
 from imio.helpers.content import get_user_fullname
 from imio.helpers.content import richtextval
-from imio.helpers.content import safe_encode
 from imio.helpers.security import fplog
 from imio.helpers.workflow import get_final_states
 from imio.helpers.xhtml import addClassToContent
@@ -53,6 +52,7 @@ from imio.history.utils import add_event_to_history
 from imio.history.utils import getLastAction
 from imio.history.utils import getLastWFAction
 from imio.history.utils import getPreviousEvent
+from imio.pyutils.utils import safe_encode
 from plone import api
 from plone.app.textfield import RichText
 from plone.app.textfield.value import RichTextValue
