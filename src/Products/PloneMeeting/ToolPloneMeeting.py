@@ -96,6 +96,7 @@ from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import reindex_object
 from Products.PloneMeeting.utils import workday
+from Products.ZCatalog.ProgressHandler import ZLogHandler
 from ZODB.POSException import ConflictError
 from zope.annotation.interfaces import IAnnotations
 from zope.i18n import translate
@@ -1559,6 +1560,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if log:
             extras = 'number_of_elements={0}'.format(numberOfBrains)
             fplog('update_all_localroles', extras=extras)
+
+        pghandler = ZLogHandler(steps=1000)
+        pghandler.init('Updating local roles...', len(brains))
         for brain in brains:
             try:
                 itemOrMeeting = brain.getObject()
@@ -1567,14 +1571,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 warnings.append(warning)
                 logger.warn(warning)
                 continue
-            logger.info('%d/%d Updating local roles of %s at %s' %
-                        (i,
-                         numberOfBrains,
-                         brain.portal_type,
-                         '/'.join(itemOrMeeting.getPhysicalPath())))
+
+            pghandler.report(i)
             i = i + 1
             itemOrMeeting.update_local_roles(avoid_reindex=True)
 
+        pghandler.finish()
         logger.info(end_time(
             startTime,
             base_msg="update_all_local_roles finished in ",
