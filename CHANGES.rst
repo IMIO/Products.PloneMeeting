@@ -49,6 +49,13 @@ Changelog
   [gbastien]
 - Import `safe_encode` from `imio.pyutils` instead `imio.helpers`.
   [gbastien]
+- Now that `@@folder_contents` works on `DashboardCollection`,
+  added `test_pm_Folder_contents` to confirm it.
+  [gbastien]
+- Added `tobytes` and `fileSize` from `Products.CPUtils` to `safe_utils`, this
+  is necessary to convert `portal_catalog` `getObjSize` format to `bytes` and
+  `bytes` to a human readable format.
+  [gbastien]
 
 4.2.9rc5 (2024-03-14)
 ---------------------

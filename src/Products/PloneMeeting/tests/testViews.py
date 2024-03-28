@@ -3008,6 +3008,26 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(sorted(absents), [[0, 0, 0, 2], [0, 0, 0, 2], [0, 0, 2, 2]])
         self.assertEqual(sorted(excused), [[0, 0, 0, 0], [0, 0, 0, 2], [0, 0, 0, 2]])
 
+    def test_pm_Folder_contents(self):
+        """Test the @@folder_contents, especially for DashboardCollection
+           as it is overrided in imio.helpers."""
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        meeting = self.create('Meeting')
+        # working in Folder folder_contents
+        folder = self.getMeetingFolder()
+        self.assertTrue(
+            '/'.join(item.getPhysicalPath()) in folder.restrictedTraverse('@@folder_contents')())
+        self.assertTrue(
+            '/'.join(meeting.getPhysicalPath()) in folder.restrictedTraverse('@@folder_contents')())
+        # working with item or meeting related DashboardCollections
+        item_collection = self.meetingConfig.searches.searches_items.searchallitems
+        self.assertTrue(
+            '/'.join(item.getPhysicalPath()) in item_collection.restrictedTraverse('@@folder_contents')())
+        meeting_collection = self.meetingConfig.searches.searches_meetings.searchnotdecidedmeetings
+        self.assertTrue(
+            '/'.join(meeting.getPhysicalPath()) in meeting_collection.restrictedTraverse('@@folder_contents')())
+
 
 def test_suite():
     from unittest import makeSuite
