@@ -36,6 +36,14 @@ Changelog
   advice types faceted filter to take into account
   `ToolPloneMeeting.advisersConfig.advice_types`.
   [gbastien]
+- Add two types of email notifications to suffixes about given advices.
+  Added upgrade step to 4214 to update `MeetingConfig.mailItemEvents`.
+  [aduchene]
+- Add a notification to power observers about late items.
+  [aduchene]
+- When `MeetingConfig.mailMode` is set to `test`, display the sent mail `subject`
+  and `recipients` in a portal message.
+  [gbastien]
 - Do not break in `MeetingConfig` POD templates when some reusable POD templates
   were deleted or marked no more reusable.
   [gbastien]

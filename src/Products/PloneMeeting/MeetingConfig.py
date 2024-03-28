@@ -11,6 +11,7 @@ from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_groups
+from collective.contact.plonegroup.utils import get_registry_functions
 from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
 from collective.datagridcolumns.SelectColumn import SelectColumn
 from collective.datagridcolumns.TextAreaColumn import TextAreaColumn
@@ -7090,12 +7091,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("adviceToGiveByUser", translate('event_advice_to_give_by_user',
                                              domain=d,
                                              context=self.REQUEST)),
-            ("adviceEdited", translate('event_add_advice',
-                                       domain=d,
-                                       context=self.REQUEST)),
-            ("adviceEditedOwner", translate('event_add_advice_owner',
-                                            domain=d,
-                                            context=self.REQUEST)),
             ("adviceInvalidated", translate('event_invalidate_advice',
                                             domain=d,
                                             context=self.REQUEST)),
@@ -7181,6 +7176,48 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res_transitions.append((id, translated_msg))
         res = res + DisplayList(res_transitions).sortedByValue()
 
+        # suffixes related notifications
+        functions = [fct for fct in get_registry_functions() if fct['enabled']]
+
+        res_suffixes = []
+        for fct in functions:
+            id = "advice_edited__%s" % fct['fct_id']
+            translated_msg = translate("event_advice_edited",
+                                       domain="PloneMeeting",
+                                       mapping={"suffix": fct['fct_title']},
+                                       context=self.REQUEST)
+            res_suffixes.append((id, translated_msg))
+        res_suffixes.append(("advice_edited__Owner",
+                             translate('event_advice_edited_owner',
+                                       domain=d,
+                                       context=self.REQUEST)))
+        res = res + DisplayList(res_suffixes).sortedByValue()
+
+        res_suffixes = []
+        for fct in functions:
+            id = "advice_edited_in_meeting__%s" % fct['fct_id']
+            translated_msg = translate("event_advice_edited_in_meeting",
+                                       domain="PloneMeeting",
+                                       mapping={"suffix": fct['fct_title']},
+                                       context=self.REQUEST)
+            res_suffixes.append((id, translated_msg))
+        res_suffixes.append(("advice_edited_in_meeting__Owner",
+                            translate('event_advice_edited_in_meeting_owner',
+                                      domain=d,
+                                      context=self.REQUEST)))
+        res = res + DisplayList(res_suffixes).sortedByValue()
+
+        # power observers related notification
+        res_po = []
+        for po_infos in self.getPowerObservers():
+            id = "late_item_in_meeting__%s" % po_infos["row_id"]
+            translated_msg = translate("event_late_item_in_meeting",
+                                       domain="PloneMeeting",
+                                       mapping={"po_label": po_infos["label"]},
+                                       context=self.REQUEST,
+                                       default="event_late_item_in_meeting_%s" % po_infos["row_id"])
+            res_po.append((id, translated_msg))
+        res = res + DisplayList(res_po).sortedByValue()
         return res
 
     security.declarePublic('listMeetingEvents')
