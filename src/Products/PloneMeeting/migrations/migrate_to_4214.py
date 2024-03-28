@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from imio.pyutils.utils import replace_in_list
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 
@@ -11,14 +12,14 @@ class Migrate_To_4214(Migrator):
            and "adviceEditedOwner" is replaced by "advice_edited__owner"."""
         logger.info('Migrating "adviceEdited" in "MeetingConfig.mailItemEvents"...')
         for cfg in self.tool.objectValues('MeetingConfig'):
-            mailItemEvents = cfg.getMailItemEvents()
+            mailItemEvents = list(cfg.getMailItemEvents())
             if "adviceEdited" in mailItemEvents:
-                mailItemEvents.remove("adviceEdited")
-                mailItemEvents.append("advice_edited__creators")
+                mailItemEvents = replace_in_list(
+                    mailItemEvents, "adviceEdited", "advice_edited__creators")
                 cfg.setMailItemEvents(mailItemEvents)
             if "adviceEditedOwner" in mailItemEvents:
-                mailItemEvents.remove("adviceEditedOwner")
-                mailItemEvents.append("advice_edited__owner")
+                mailItemEvents = replace_in_list(
+                    mailItemEvents, "adviceEditedOwner", "advice_edited__Owner")
                 cfg.setMailItemEvents(mailItemEvents)
         logger.info('Done.')
 
