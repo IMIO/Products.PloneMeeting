@@ -29,6 +29,7 @@ from plone.app.testing import logout
 from plone.app.testing.bbb import _createMemberarea
 from plone.app.testing.helpers import setRoles
 from plone.dexterity.utils import createContentInContainer
+from plone.dexterity.utils import iterSchemata
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFPlone.utils import base_hasattr
 from Products.Five.browser import BrowserView
@@ -462,7 +463,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
 
         # scan_id is removed by default
         self.request.set(ITEM_SCAN_ID_NAME, scan_id)
-        theAnnex = createContentInContainer(
+        annex = createContentInContainer(
             container=context,
             portal_type=annexContentType,
             title=annexTitle or 'Annex',
@@ -475,10 +476,21 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             publishable=publishable,
             scan_id=scan_id)
         self.request.set(ITEM_SCAN_ID_NAME, None)
+
+        class DummyData(object):
+            def __init__(self, context, contentType, content_category):
+                self.__context__ = context
+                self.contentType = contentType
+                self.content_category = content_category
+
+        data = DummyData(annex, annex.file.contentType, annex.content_category)
+        for schema in iterSchemata(annex):
+            schema.validateInvariants(data, [])
+
         # need to commit the transaction so the stored blob is correct
         # if not done, accessing the blob will raise 'BlobError: Uncommitted changes'
         transaction.commit()
-        return theAnnex
+        return annex
 
     def addAnnexType(self,
                      id,

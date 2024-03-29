@@ -56,8 +56,9 @@ Changelog
   is necessary to convert `portal_catalog` `getObjSize` format to `bytes` and
   `bytes` to a human readable format.
   [gbastien]
-- Added parameter `withItemNumber=False` to `MeetingItem.Title` to have the
-  item title prefixed with item number.
+- Added parameters `withItemNumber=False` and `withItemReference=False` to
+  `MeetingItem.Title` to have the item title prefixed with item reference
+  and/or item number.
   [gbastien]
 
 4.2.9rc5 (2024-03-14)

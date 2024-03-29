@@ -2171,8 +2171,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                       self.Title(withMeetingDate=True))
         return self.Title(withMeetingDate=True)
 
-    def Title(self, withMeetingDate=False, withItemNumber=False, **kwargs):
+    def Title(self, withMeetingDate=False, withItemNumber=False, withItemReference=False, **kwargs):
         title = self.getField('title').get(self, **kwargs)
+        if withItemReference and self.getItemReference():
+            title = "[{0}] {1}".format(self.getItemReference(), title)
         if self.hasMeeting():
             if withItemNumber:
                 title = "{0}. {1}".format(self.getItemNumber(for_display=True), title)
