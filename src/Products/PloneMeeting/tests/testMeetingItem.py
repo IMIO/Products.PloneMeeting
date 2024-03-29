@@ -8778,6 +8778,36 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(subject, u'%s - A "late" item has been validated.' %
                          safe_unicode(cfg.Title()))
 
+    def test_pm_send_powerobservers_mail_if_relevant(self):
+        """Test the "late_item_in_meeting" notification to powerobservers."""
+        cfg = self.meetingConfig
+        cfg.setMailItemEvents(('late_item_in_meeting__powerobservers',))
+        self.request['debug_sendMailIfRelevant'] = True
+        self.changeUser('pmManager')
+
+        meeting = self.create('Meeting')
+        normal_item = self.create('MeetingItem', preferredMeeting=meeting.UID())
+
+        self.request["debug_sendMailIfRelevant_result"] = None
+        self.presentItem(normal_item)
+        self.assertIsNone(self.request["debug_sendMailIfRelevant_result"])
+        self.do(meeting, 'freeze')
+        late_item = self.create('MeetingItem', preferredMeeting=meeting.UID())
+        self.presentItem(late_item)
+        self.assertIn(u'M. Power Observer1 <powerobserver1@plonemeeting.org>',
+                      self.request["debug_sendMailIfRelevant_result"][0])
+
+        change_view = normal_item.unrestrictedTraverse('@@change-item-listtype')
+        change_view('late')
+        self.assertIn(u'M. Power Observer1 <powerobserver1@plonemeeting.org>',
+                      self.request["debug_sendMailIfRelevant_result"][0])
+
+        cfg.setMailItemEvents(())
+        self.request["debug_sendMailIfRelevant_result"] = None
+        late_item2 = self.create('MeetingItem', preferredMeeting=meeting.UID())
+        self.presentItem(late_item2)
+        self.assertIsNone(self.request["debug_sendMailIfRelevant_result"])
+
     def test_pm_ItemTitle(self):
         """Test the MeetingItem.Title method."""
         self.changeUser('pmCreator1')

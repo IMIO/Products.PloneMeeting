@@ -36,8 +36,25 @@ Changelog
   advice types faceted filter to take into account
   `ToolPloneMeeting.advisersConfig.advice_types`.
   [gbastien]
+- Add two types of email notifications to suffixes about given advices.
+  Added upgrade step to 4214 to update `MeetingConfig.mailItemEvents`.
+  [aduchene]
+- Add a notification to power observers about late items.
+  [aduchene]
+- When `MeetingConfig.mailMode` is set to `test`, display the sent mail `subject`
+  and `recipients` in a portal message.
+  [gbastien]
 - Do not break in `MeetingConfig` POD templates when some reusable POD templates
   were deleted or marked no more reusable.
+  [gbastien]
+- Import `safe_encode` from `imio.pyutils` instead `imio.helpers`.
+  [gbastien]
+- Now that `@@folder_contents` works on `DashboardCollection`,
+  added `test_pm_Folder_contents` to confirm it.
+  [gbastien]
+- Added `tobytes` and `fileSize` from `Products.CPUtils` to `safe_utils`, this
+  is necessary to convert `portal_catalog` `getObjSize` format to `bytes` and
+  `bytes` to a human readable format.
   [gbastien]
 - Added parameter `withItemNumber=False` to `MeetingItem.Title` to have the
   item title prefixed with item number.

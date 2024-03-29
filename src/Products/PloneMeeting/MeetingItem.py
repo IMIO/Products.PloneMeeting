@@ -10,6 +10,7 @@ from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collections import OrderedDict
 from collective.behavior.internalnumber.browser.settings import _internal_number_is_used
 from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.contact.plonegroup.config import get_registry_functions
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
@@ -26,7 +27,6 @@ from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import object_values
 from imio.helpers.content import safe_delattr
-from imio.helpers.content import safe_encode
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.content import uuidToObject
@@ -38,6 +38,7 @@ from imio.history.utils import add_event_to_wf_history
 from imio.history.utils import get_all_history_attr
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
+from imio.pyutils.utils import safe_encode
 from natsort import humansorted
 from OFS.ObjectManager import BeforeDeleteException
 from persistent.list import PersistentList
@@ -873,7 +874,7 @@ class MeetingItemWorkflowActions(object):
                 not_starting_with='back'):
             meetingExecuteActionOnLinkedItems(
                 meeting, transition.id, [self.context])
-
+        self.context.send_powerobservers_mail_if_relevant('late_item_in_meeting')
     security.declarePrivate('doItemFreeze')
 
     def doItemFreeze(self, stateChange):
@@ -5295,6 +5296,50 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             )
 
         return sendMailIfRelevant(self, mail_event_id, notified_user_ids, isUserIds=True)
+
+    def send_powerobservers_mail_if_relevant(self, mail_event_type):
+        """
+        Send mail to powerobservers if event is enabled in the configuration.
+        mail_event_type is the event to send and is the left-handed part of the mail event id.
+        """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+
+        res = []
+        cfg_id = cfg.getId()
+        for po_infos in cfg.getPowerObservers():
+            mail_event_id = "{0}__{1}".format(mail_event_type, po_infos['row_id'])
+            if mail_event_id in cfg.getMailItemEvents():
+                group_id = "{0}_{1}".format(cfg_id, po_infos['row_id'])
+                res.append(sendMailIfRelevant(self,
+                                              mail_event_type,
+                                              [group_id],
+                                              customEvent=True,
+                                              isGroupIds=True))
+        return res
+
+    def send_suffixes_and_owner_mail_if_relevant(self, mail_event_type):
+        """
+        Send mail to suffixes and owner if event is enabled in the configuration.
+        mail_event_type is the event to send and is the left-handed part of the mail event id.
+        """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        suffixes = [fct['fct_id'] for fct in get_registry_functions() if fct['enabled']]
+        roles = ["Owner"]  # To be completed ?
+        targets = suffixes + roles
+
+        res = []
+        for target in targets:
+            mail_event_id = "{0}__{1}".format(mail_event_type, target)
+            if mail_event_id in cfg.getMailItemEvents():
+                res.append(sendMailIfRelevant(self,
+                                              mail_event_type,
+                                              target,
+                                              customEvent=True,
+                                              isRole=target in roles,
+                                              isSuffix=target in suffixes))
+        return res
 
     security.declarePublic('sendAdviceDelayWarningMailIfRelevant')
 

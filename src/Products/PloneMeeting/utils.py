@@ -34,7 +34,6 @@ from imio.helpers.content import base_getattr
 from imio.helpers.content import get_schema_fields
 from imio.helpers.content import get_user_fullname
 from imio.helpers.content import richtextval
-from imio.helpers.content import safe_encode
 from imio.helpers.security import fplog
 from imio.helpers.workflow import get_final_states
 from imio.helpers.xhtml import addClassToContent
@@ -52,6 +51,8 @@ from imio.history.interfaces import IImioHistory
 from imio.history.utils import add_event_to_history
 from imio.history.utils import getLastAction
 from imio.history.utils import getLastWFAction
+from imio.history.utils import getPreviousEvent
+from imio.pyutils.utils import safe_encode
 from plone import api
 from plone.app.textfield import RichText
 from plone.app.textfield.value import RichTextValue
@@ -486,7 +487,13 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     else:
         translationMapping = {}
 
+    # get last WF action but specifically manage when an transition was
+    # triggered automatilcally, the comments is in the previous transition
     wf_action = getLastWFAction(obj)
+    comments = wf_action['comments']
+    while comments == 'wf_transition_triggered_by_application':
+        wf_action = getPreviousEvent(obj, wf_action)
+        comments = wf_action['comments']
 
     translationMapping.update({
         'portalUrl': portalUrl,
@@ -518,6 +525,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
                                                     context=obj.REQUEST)
         meeting = obj.getMeeting()
         if meeting:
+            translationMapping['meetingUrl'] = get_public_url(meeting)
             translationMapping['meetingTitle'] = safe_unicode(meeting.Title())
             translationMapping['meetingLongTitle'] = tool.format_date(meeting.date, prefixed=True)
             translationMapping['itemNumber'] = obj.getItemNumber(
@@ -575,11 +583,18 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
                                        tool.getFunctionalAdminEmail())
     if not recipients:
         recipients = [adminFromAddress]
+
+    # add a fingerpointing log message
+    extras = u'event={0} subject="{1}" recipients=[{2}]'.format(
+        event, subject, ", ".join(recipients))
+    fplog('send_mail', extras=safe_encode(extras))
+
     if mailMode == 'test':
         # Instead of sending mail, in test mode, we log data about the mailing.
         logger.info('Test mode / we should send mail to %s' % str(recipients))
         logger.info('Subject is [%s]' % subject)
         logger.info('Body is [%s]' % body)
+        api.portal.show_message(extras, request=obj.REQUEST)
     else:
         # Use 'plain' for mail format so the email client will turn links to clickable links
         mailFormat = 'text/plain'
@@ -588,10 +603,6 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
             _sendMail(obj, body, recipients, fromAddress, subject, mailFormat, attachments)
         except EmailError, ee:
             logger.warn(str(ee))
-    # add a fingerpointing log message
-    extras = u'event={0} subject="{1}" recipients=[{2}]'.format(
-        event, subject, ", ".join(recipients))
-    fplog('send_mail', extras=safe_encode(extras))
     return subject, body
 
 
@@ -625,7 +636,6 @@ def sendMailIfRelevant(obj,
        A plug-in may use this method for sending custom events that are not
        defined in the MeetingConfig. In this case, you must specify
        p_customEvent = True.'''
-
     tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(obj)
     # Do not send the mail if mail mode is "deactivated".
@@ -705,6 +715,7 @@ def sendMailIfRelevant(obj,
         mail_subject, mail_body = sendMail(unique_email_recipients, obj, event, mapping=mapping)
     debug = debug or obj.REQUEST.get('debug_sendMailIfRelevant', False)
     if debug:
+        obj.REQUEST.set('debug_sendMailIfRelevant_result', (recipients, mail_subject, mail_body))
         return recipients, mail_subject, mail_body
     return True
 
