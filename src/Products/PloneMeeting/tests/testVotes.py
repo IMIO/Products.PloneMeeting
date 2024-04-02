@@ -214,6 +214,43 @@ class testVotes(PloneMeetingTestCase):
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
             u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5</p>,</p>')
 
+        # other possible vote values
+        cfg = self.meetingConfig
+        cfg.setUsedVoteValues(
+            ('yes', 'no', 'abstain', 'does_not_vote', 'not_found', 'invalid', 'blank'))
+
+        voters = meeting.get_voters()
+        # public votes
+        public_votes = public_item.get_item_votes()[0]
+        public_votes['voters'][voters[0]] = "blank"
+        public_votes['voters'][voters[1]] = "invalid"
+        public_votes['voters'][voters[2]] = "does_not_vote"
+        public_votes['voters'][voters[3]] = "not_found"
+        meeting.set_item_public_vote(public_item, public_votes, 0)
+        # encode secret votes
+        secret_votes = secret_item.get_item_votes()[0]
+        secret_votes['votes']['blank'] = 1
+        secret_votes['votes']['invalid'] = 1
+        secret_votes['votes']['does_not_vote'] = 1
+        secret_votes['votes']['not_found'] = 1
+        meeting.set_item_secret_vote(secret_item, secret_votes, 0)
+        self.assertEqual(
+            helper_public.print_votes(),
+            u'<p>Par un bulletin "ne vote pas", un bulletin non trouv\xe9 dans l\'urne, '
+            u'un bulletin invalide et un vote blanc,</p>')
+        self.assertEqual(
+            helper_public.print_votes(used_patterns="counts", single_vote_value="1"),
+            u'<p>Par <p><strong>Ne vote pas: 1</strong></p>, '
+            u'<p><strong>Bulletin non trouv\xe9: 1</strong></p>, '
+            u'<p><strong>Bulletin invalide: 1</strong></p> et '
+            u'<p><strong>Vote blanc: 1</strong></p>,</p>')
+        self.assertEqual(
+            helper_public.print_votes(used_patterns="counts_persons", single_vote_value="1"),
+            u"<p>Par <p><strong>N'a pas vot\xe9: 1</strong></p>, "
+            u"<p><strong>Bulletin non trouv\xe9: 1</strong></p>, "
+            u"<p><strong>Bulletin invalide: 1</strong></p> et "
+            u"<p><strong>A vot\xe9 blanc: 1</strong></p>,</p>")
+
         # no votes
         meeting.item_votes[public_item.UID()] = []
         self.assertEqual(helper_public.print_votes(no_votes_marker="-"), "-")

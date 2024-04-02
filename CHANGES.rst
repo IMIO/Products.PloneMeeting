@@ -60,6 +60,11 @@ Changelog
   with attachment, send it only one time to every recipients instead sending
   it one time by recipient.
   [gbastien]
+- Completed `print_votes` so it manages every `vote_values`
+  (`does_not_vote`, `not_found`, `invalid`, `blank`).
+  Adapted parameter `single_vote_value` so we can define a single value or
+  a different value for each `vote_values`.
+  [gbastien]
 
 4.2.9rc5 (2024-03-14)
 ---------------------
