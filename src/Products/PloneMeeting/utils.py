@@ -433,11 +433,18 @@ def _sendMail(obj, body, recipients, fromAddress, subject, format,
                             'attachment; filename="%s"' % fileName)
             body.attach(part)
     try:
-        # make sure recipients are utf-8 encoded strings
-        for recipient in recipients:
-            recipient = safe_encode(recipient)
+        # make sure recipients are utf-8 encoded
+        recipients = [safe_encode(recipient) for recipient in recipients]
+        if attachments:
+            # Send a single mail to everybody, for performance reasons
+            # (avoid to duplicate the attached file(s))
             obj.MailHost.send(
-                body, recipient, fromAddress, subject, charset='utf-8', msg_type=format)
+                body, recipients, fromAddress, subject, charset='utf-8', msg_type=format)
+        else:
+            # Send a personalized email for every user
+            for recipient in recipients:
+                obj.MailHost.send(
+                    body, recipient, fromAddress, subject, charset='utf-8', msg_type=format)
     except socket.error, sg:
         raise EmailError(SENDMAIL_ERROR % str(sg))
     except UnicodeDecodeError, ue:

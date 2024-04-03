@@ -56,6 +56,10 @@ Changelog
   is necessary to convert `portal_catalog` `getObjSize` format to `bytes` and
   `bytes` to a human readable format.
   [gbastien]
+- Back to previous behavior in `utils._sendMail`, when sending an email
+  with attachment, send it only one time to every recipients instead sending
+  it one time by recipient.
+  [gbastien]
 - Added parameters `withItemNumber=False` and `withItemReference=False` to
   `MeetingItem.Title` to have the item title prefixed with item reference
   and/or item number.
