@@ -238,6 +238,11 @@ class testVotes(PloneMeetingTestCase):
             helper_public.print_votes(),
             u'<p>Par un bulletin "ne vote pas", un bulletin non trouv\xe9 dans l\'urne, '
             u'un bulletin invalide et un vote blanc,</p>')
+        # if single_vote_value is uncomplete dict, fallback to "1"
+        self.assertEqual(
+            helper_public.print_votes(single_vote_value={'yes': 'one'}),
+            u'<p>Par 1 bulletin "ne vote pas", 1 bulletin non trouv\xe9 dans l\'urne, '
+            u'1 bulletin invalide et 1 vote blanc,</p>')
         self.assertEqual(
             helper_public.print_votes(used_patterns="counts", single_vote_value="1"),
             u'<p>Par <p><strong>Ne vote pas: 1</strong></p>, '

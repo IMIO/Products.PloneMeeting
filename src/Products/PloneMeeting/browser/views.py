@@ -1970,7 +1970,7 @@ def print_votes(item,
                     if vote_count == 1:
                         if isinstance(single_vote_value, dict):
                             vote_count = single_vote_value.get(
-                                vote_value, single_vote_value.get('default', ''))
+                                vote_value, single_vote_value.get('default', '1'))
                         else:
                             vote_count = single_vote_value
                     value = patterns[pattern_value].format(vote_count)
