@@ -60,6 +60,12 @@ Changelog
   with attachment, send it only one time to every recipients instead sending
   it one time by recipient.
   [gbastien]
+- Avoid vocabulary `AskedAdvicesVocabulary` being empty when cached because
+  `MeetingConfig` could not be obtained.
+  [gbastien]
+- Display `MeetingConfig.usingGroups` field on `MeetingConfig` view home page
+  under `Groups and users` to identify easily a MeetingConfig using this parameter.
+  [gbastien]
 - Added parameters `withItemNumber=False` and `withItemReference=False` to
   `MeetingItem.Title` to have the item title prefixed with item reference
   and/or item number.

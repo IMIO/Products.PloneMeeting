@@ -913,28 +913,33 @@ class AskedAdvicesVocabulary(object):
             org = get_organization(org_uid)
             org_title = org.get_full_title()
             if delay_label:
-                termTitle = translate('advice_delay_with_label',
-                                      domain='PloneMeeting',
-                                      mapping={'org_title': org_title,
-                                               'delay': delay,
-                                               'delay_label': delay_label},
-                                      default='${group_name} - ${delay} day(s) (${delay_label})',
-                                      context=self.request)
+                termTitle = translate(
+                    'advice_delay_with_label',
+                    domain='PloneMeeting',
+                    mapping={'org_title': org_title,
+                             'delay': delay,
+                             'delay_label': delay_label},
+                    default='${group_name} - ${delay} day(s) (${delay_label})',
+                    context=self.request)
             else:
-                termTitle = translate('advice_delay_without_label',
-                                      domain='PloneMeeting',
-                                      mapping={'org_title': org_title,
-                                               'delay': delay},
-                                      default='${group_name} - ${delay} day(s)',
-                                      context=self.request)
+                termTitle = translate(
+                    'advice_delay_without_label',
+                    domain='PloneMeeting',
+                    mapping={'org_title': org_title,
+                             'delay': delay},
+                    default='${group_name} - ${delay} day(s)',
+                    context=self.request)
         return termTitle
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
+        if cfg is None:
+            raise ram.DontCache
         # invalidate if an org title is changed
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.everyorganizationsvocabulary')
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.vocabularies.everyorganizationsvocabulary')
         return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
