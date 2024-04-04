@@ -60,6 +60,9 @@ Changelog
   with attachment, send it only one time to every recipients instead sending
   it one time by recipient.
   [gbastien]
+- Avoid vocabulary `AskedAdvicesVocabulary` being empty when cached because
+  `MeetingConfig` could not be obtained.
+  [gbastien]
 
 4.2.9rc5 (2024-03-14)
 ---------------------
