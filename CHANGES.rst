@@ -63,6 +63,9 @@ Changelog
 - Avoid vocabulary `AskedAdvicesVocabulary` being empty when cached because
   `MeetingConfig` could not be obtained.
   [gbastien]
+- Display `MeetingConfig.usingGroups` field on `MeetingConfig` view home page
+  under `Groups and users` to identify easily a MeetingConfig using this parameter.
+  [gbastien]
 
 4.2.9rc5 (2024-03-14)
 ---------------------
