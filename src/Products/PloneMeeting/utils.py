@@ -438,6 +438,9 @@ def _sendMail(obj, body, recipients, fromAddress, subject, format,
         if attachments:
             # Send a single mail to everybody, for performance reasons
             # (avoid to duplicate the attached file(s))
+            # Hide the whole list of recipients if we must send the mail to many.
+            # every emails in recipients not in 'To' will be bcc
+            body['To'] = fromAddress
             obj.MailHost.send(
                 body, recipients, fromAddress, subject, charset='utf-8', msg_type=format)
         else:

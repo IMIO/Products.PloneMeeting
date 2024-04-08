@@ -70,6 +70,9 @@ Changelog
   `MeetingItem.Title` to have the item title prefixed with item reference
   and/or item number.
   [gbastien]
+- Adapted `utils._sendMail` to use `bcc` (`blind carbon copy`) when sending
+  an email with attachment (one email sent to several recipients).
+  [gbastien]
 
 4.2.9rc5 (2024-03-14)
 ---------------------
