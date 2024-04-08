@@ -196,7 +196,7 @@ class PMConcatenateAnnexesBatchActionForm(ConcatenateAnnexesBatchActionForm):
             return True
 
     def _annex_types_vocabulary(self):
-        return "Products.PloneMeeting.vocabularies.item_annex_types_vocabulary"
+        return "Products.PloneMeeting.vocabularies.icon_item_annex_types_vocabulary"
 
     def _error_obj_title(self, obj):
         """ """
