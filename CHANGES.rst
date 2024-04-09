@@ -73,6 +73,9 @@ Changelog
 - Adapted `utils._sendMail` to use `bcc` (`blind carbon copy`) when sending
   an email with attachment (one email sent to several recipients).
   [gbastien]
+- Display `TAL condition` by default on `MeetingConfig` view in
+  `POD templates` section.
+  [gbastien]
 
 4.2.9rc5 (2024-03-14)
 ---------------------

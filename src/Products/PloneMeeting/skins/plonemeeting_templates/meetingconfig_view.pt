@@ -1460,13 +1460,23 @@
                                >Filename</span>
                        </div>
                      </div>
-
+                    <div class="discreet"
+                         tal:define="tal_condition python: obj.tal_condition"
+                         tal:condition="tal_condition">
+                       <label i18n:translate=""
+                              i18n:domain="collective.behavior.talcondition"
+                              class="horizontal">TAL condition expression</label>
+                       <div>
+                         <span class="text-widget textline-field"
+                               tal:content="tal_condition">TAL condition</span>
+                       </div>
+                     </div>
                 </tal:baseInformations>
                 <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
                 <tal:additionalInformations
                     condition="show_details"
                     define="context python: obj;
-                            excludedFields python: ('pod_formats', 'enabled')">
+                            excludedFields python: ('pod_formats', 'enabled', 'tal_condition')">
                     <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
                 </tal:additionalInformations>
             </td>
