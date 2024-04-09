@@ -2929,7 +2929,7 @@ class BaseContainedAnnexesVocabulary(object):
             for annex in annexes:
                 # term title is annex icon, number and title
                 term_title = u'<img src="{0}/{1}" title="{2}" ' \
-                    u'width="16px" height="16px"> {3} {4}. {5}'.format(
+                    u'width="16px" height="16px"> {3}{4}. {5}'.format(
                         portal_url,
                         annex['icon_url'],
                         html.escape(safe_unicode(annex['category_title'])),
