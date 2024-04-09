@@ -20,6 +20,7 @@
     <dependency>profile-imio.annex:default</dependency>
     <dependency>profile-imio.helpers:default</dependency>
     <dependency>profile-imio.pm.ws:default</dependency>
+    <dependency>profile-imio.webspellchecker:default</dependency>
     <dependency>profile-plone.app.versioningbehavior:default</dependency>
     <dependency>profile-plonetheme.imioapps:plonemeetingskin</dependency>
     <dependency>profile-Products.CPUtils:default</dependency>

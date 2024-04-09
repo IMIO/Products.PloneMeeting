@@ -251,6 +251,8 @@ def postInstall(context):
 
     _configureQuickupload(site)
 
+    _configureWebspellchecker(site)
+
     # manage safe_html
     _congfigureSafeHtml(site)
 
@@ -432,7 +434,7 @@ def _configureCKeditor(site):
        CKeditor custom styles are kept during migrations using the _before_reinstall/_after_reinstall hooks.'''
     logger.info('Defining CKeditor as the new default editor for every users and configuring it (styles)...')
     # this will install collective.ckeditor if it is not already the case...
-    configure_ckeditor(site, custom='plonemeeting', forceTextPaste=0, scayt=1, removeWsc=1)
+    configure_ckeditor(site, custom='plonemeeting', forceTextPaste=0, scayt=0, removeWsc=1)
     # remove every styles defined by default and add the custom styles if not already done...
     cke_props = site.portal_properties.ckeditor_properties
     if cke_props.menuStyles.find(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG) == -1:
@@ -526,6 +528,19 @@ def _configureQuickupload(site):
     qu_props.id_as_title = False
     qu_props.sim_upload_limit = 1
     logger.info('Done.')
+
+
+def _configureWebspellchecker(site):
+    '''Make sure imio.webspellchecker disallowed_portal_types is correctly configured.'''
+    portal_types = api.portal.get_tool('portal_types')
+    disallowed_portal_types = [pt for pt in portal_types.listContentTypes()
+                               if not pt.lower().startswith('meeting') and
+                               not pt.starswith('annex') and
+                               pt not in ('Message', 'Document', )]
+    api.portal.set_registry_record(
+        "imio.webspellchecker.browser.controlpanel."
+        "IWebspellcheckerControlPanelSchema.disallowed_portal_types",
+        disallowed_portal_types)
 
 
 def _congfigureSafeHtml(site):
