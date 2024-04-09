@@ -1661,10 +1661,9 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
-        form.update()
         self.assertTrue(self.hasPermission(ModifyPortalContent, meeting))
         self.assertFalse(form.available())
-        self.assertRaises(Unauthorized, form.handleApply, form, None)
+        self.assertRaises(Unauthorized, form)
 
         # configure MeetingConfig.meetingItemTemplatesToStoreAsAnnex
         # values are taking POD templates having a store_as_annex
@@ -1677,6 +1676,7 @@ class testViews(PloneMeetingTestCase):
             cfg.getField('meetingItemTemplatesToStoreAsAnnex').Vocabulary(cfg).keys(),
             ['itemTemplate__output_format__odt'])
         cfg.setMeetingItemTemplatesToStoreAsAnnex('itemTemplate__output_format__odt')
+        form.update()
         self.assertTrue(form.available())
 
         # may_store is False if user not able to edit meeting
@@ -1998,11 +1998,11 @@ class testViews(PloneMeetingTestCase):
 
         # available when activated
         form = item.restrictedTraverse('@@download-annexes-batch-action')
-        form.update()
+        self.assertRaises(Unauthorized, form)
         self.assertFalse(form.available())
         cfg.setEnabledAnnexesBatchActions(['download-annexes'])
-        self.assertTrue(form.available())
         form.update()
+        self.assertTrue(form.available())
         data = form.handleApply(form, None)
         # headers are set
         self.assertEqual(self.request.response.getHeader('content-type'), 'application/zip')
@@ -2034,9 +2034,10 @@ class testViews(PloneMeetingTestCase):
 
         # available when activated
         form = item.restrictedTraverse('@@delete-batch-action')
-        form.update()
+        self.assertRaises(Unauthorized, form)
         self.assertFalse(form.available())
         cfg.setEnabledAnnexesBatchActions(['delete'])
+        form.update()
         self.assertTrue(form.available())
         # action not avilable when not able to edit item
         self.changeUser('pmObserver1')
