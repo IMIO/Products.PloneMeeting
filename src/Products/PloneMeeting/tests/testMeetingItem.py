@@ -8808,6 +8808,30 @@ class testMeetingItem(PloneMeetingTestCase):
         self.presentItem(late_item2)
         self.assertIsNone(self.request["debug_sendMailIfRelevant_result"])
 
+    def test_pm_ItemTitle(self):
+        """Test the MeetingItem.Title method."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', title="My title héhé")
+        self.assertEqual(item.Title(), "My title héhé")
+        self.assertEqual(item.Title(withMeetingDate=True), "My title héhé")
+        self.assertEqual(item.Title(withItemNumber=True), "My title héhé")
+        self.assertEqual(item.Title(withItemReference=True), "My title héhé")
+        self.assertEqual(
+            item.Title(withMeetingDate=True, withItemNumber=True, withItemReference=True),
+            "My title héhé")
+        self.changeUser('pmManager')
+        self.create('Meeting', date=datetime(2024, 3, 27, 15, 30))
+        self.presentItem(item)
+        item.update_item_reference()
+        self.assertEqual(item.Title(), "My title héhé")
+        self.assertEqual(item.Title(withMeetingDate=True),
+                         "My title héhé (27 march 2024 (15:30))")
+        self.assertEqual(item.Title(withItemNumber=True), "3. My title héhé")
+        self.assertEqual(item.Title(withItemReference=True), "[Ref. 20240327/3] My title héhé")
+        self.assertEqual(
+            item.Title(withMeetingDate=True, withItemNumber=True, withItemReference=True),
+            "3. [Ref. 20240327/3] My title héhé (27 march 2024 (15:30))")
+
 
 def test_suite():
     from unittest import makeSuite

@@ -66,6 +66,13 @@ Changelog
 - Display `MeetingConfig.usingGroups` field on `MeetingConfig` view home page
   under `Groups and users` to identify easily a MeetingConfig using this parameter.
   [gbastien]
+- Added parameters `withItemNumber=False` and `withItemReference=False` to
+  `MeetingItem.Title` to have the item title prefixed with item reference
+  and/or item number.
+  [gbastien]
+- Adapted `utils._sendMail` to use `bcc` (`blind carbon copy`) when sending
+  an email with attachment (one email sent to several recipients).
+  [gbastien]
 
 4.2.9rc5 (2024-03-14)
 ---------------------
