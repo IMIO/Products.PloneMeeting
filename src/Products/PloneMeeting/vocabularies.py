@@ -27,6 +27,7 @@ from collective.eeafaceted.z3ctable.columns import EMPTY_STRING
 from collective.iconifiedcategory.config import get_sort_categorized_tab
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
+from collective.iconifiedcategory.utils import get_category_icon_url
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import render_filesize
@@ -1588,7 +1589,7 @@ class EveryAnnexTypesVocabulary(object):
         if not cfg:
             return SimpleVocabulary(res)
 
-        portal_url = api.portal.get_tool('portal_url')
+        portal_url = api.portal.get().absolute_url()
         for annexes_group in cfg.annexes_types.objectValues():
             if filtered_annex_groups and annexes_group.getId() not in filtered_annex_groups:
                 continue
@@ -1598,10 +1599,10 @@ class EveryAnnexTypesVocabulary(object):
                         safe_unicode(annexes_group.Title()),
                         safe_unicode(cat.Title())))
                 if include_icon:
-                    cat_url = portal_url.getRelativeUrl(cat)
-                    term_title = u'<img src="{0}/@@download" width="16px" ' \
+                    cat_icon_url = "{0}/{1}".format(portal_url, get_category_icon_url(cat))
+                    term_title = u'<img src="{0}" width="16px" ' \
                         u'height="16px" title="{1}"> {2}'.format(
-                            cat_url, term_title, term_title)
+                            cat_icon_url, term_title, term_title)
                 cat_uid = cat.UID()
                 res.append(SimpleTerm(cat_uid, cat_uid, term_title))
                 for subcat in cat.objectValues():
@@ -1611,9 +1612,9 @@ class EveryAnnexTypesVocabulary(object):
                             safe_unicode(cat.Title()),
                             safe_unicode(subcat.Title())))
                     if include_icon:
-                        term_title = u'<img src="{0}/@@download" width="16px" ' \
+                        term_title = u'<img src="{0}" width="16px" ' \
                             u'height="16px" title="{1}"> {2}'.format(
-                                cat_url, term_title, term_title)
+                                cat_icon_url, term_title, term_title)
                     subcat_uid = subcat.UID()
                     res.append(SimpleTerm(subcat_uid, subcat_uid, term_title))
         return SimpleVocabulary(res)
