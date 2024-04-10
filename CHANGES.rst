@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.9rc6 (unreleased)
+4.2.9rc6 (2024-04-10)
 ---------------------
 
 - Moved field `Meeting.pre_observations` before `Meeting.observations`.
