@@ -5,8 +5,9 @@ Changelog
 4.2.9rc7 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- In `EveryAnnexTypesVocabulary` use `content_category` icon image scale
+  instead `portal_url.getRelativeUrl` so it is cached.
+  [gbastien]
 
 4.2.9rc6 (2024-04-10)
 ---------------------
