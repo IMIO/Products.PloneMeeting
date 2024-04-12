@@ -18,6 +18,7 @@ from imio.dashboard.setuphandlers import add_orgs_searches
 from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.emailer import get_mail_host
+from imio.webspellchecker import config as wsc_config
 from plone import api
 from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import WorkflowPolicyConfig_id
 from Products.CMFPlone.utils import base_hasattr
@@ -532,15 +533,17 @@ def _configureQuickupload(site):
 
 def _configureWebspellchecker(site):
     '''Make sure imio.webspellchecker disallowed_portal_types is correctly configured.'''
+    wsc_config.set_enabled(True)
+    wsc_config.set_hide_branding(True)
+    wsc_config.set_theme('gray')
+    wsc_config.set_js_bundle_url(u'https://wsc.imio-app.be/wscservice/wscbundle/wscbundle.js')
+    wsc_config.set_service_url(u'https://wsc.imio-app.be/wscservice/api/scripts/ssrv.cgi')
     portal_types = api.portal.get_tool('portal_types')
     disallowed_portal_types = [pt for pt in portal_types.listContentTypes()
                                if not pt.lower().startswith('meeting') and
                                not pt.startswith('annex') and
-                               pt not in ('Message', 'Document', )]
-    api.portal.set_registry_record(
-        "imio.webspellchecker.browser.controlpanel."
-        "IWebspellcheckerControlPanelSchema.disallowed_portal_types",
-        disallowed_portal_types)
+                               pt not in ('Message', 'Document', 'News Item', 'Event')]
+    wsc_config.set_disallowed_portal_types(disallowed_portal_types)
 
 
 def _congfigureSafeHtml(site):
