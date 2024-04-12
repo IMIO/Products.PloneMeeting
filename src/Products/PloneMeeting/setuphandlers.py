@@ -535,7 +535,7 @@ def _configureWebspellchecker(site):
     portal_types = api.portal.get_tool('portal_types')
     disallowed_portal_types = [pt for pt in portal_types.listContentTypes()
                                if not pt.lower().startswith('meeting') and
-                               not pt.starswith('annex') and
+                               not pt.startswith('annex') and
                                pt not in ('Message', 'Document', )]
     api.portal.set_registry_record(
         "imio.webspellchecker.browser.controlpanel."
