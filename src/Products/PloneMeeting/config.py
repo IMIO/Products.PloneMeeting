@@ -193,6 +193,7 @@ ITEMTEMPLATESMANAGERS_GROUP_SUFFIX = 'itemtemplatesmanagers'
 # If a special usecase needs to use another role, it can be specified in a sub-plugin
 READER_USECASES = {
     'copy_groups': 'Reader',
+    'restricted_copy_groups': 'Reader',
     'advices': 'Reader',
     'powerobservers': 'Reader',
     'itemtemplatesmanagers': 'Reader',

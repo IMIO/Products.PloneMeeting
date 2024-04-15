@@ -667,6 +667,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.advicesKeptOnSentToOtherMC = []
         self.selectableCopyGroups = []
         self.itemCopyGroupsStates = ['accepted']
+        self.selectableRestrictedCopyGroups = []
+        self.itemRestrictedCopyGroupsStates = []
         self.hideItemHistoryCommentsToUsersOutsideProposingGroup = False
         self.hideHistoryTo = ()
         self.restrictAccessToSecretItems = False
