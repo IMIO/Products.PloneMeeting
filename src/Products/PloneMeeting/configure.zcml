@@ -32,7 +32,8 @@
   <include package="ftw.labels" />
   <include package="imio.pm.ws" />
   <include package="imio.dashboard" />
-  <include zcml:condition="installed imio.zamqp.pm" package="imio.zamqp.pm" />
+  <include package="imio.webspellchecker" />
+  <include package="imio.zamqp.pm" />
   <include package="plone.app.caching" />
   <include package="plone.app.contenttypes" />
   <include package="plone.app.dexterity" />
