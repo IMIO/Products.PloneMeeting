@@ -34,23 +34,23 @@ class Migrate_To_4214(Migrator):
         cke_props.enableScaytOnStartup = False
         toolbar_Custom = cke_props.toolbar_Custom
         scayt_values = OrderedDict(
-            [(",'-','Scayt']", "]"),
-             # space after ","
-             (", '-','Scayt']", "]"),
-             (",'-', 'Scayt']", "]"),
-             (", '-', 'Scayt']", "]"),
-             # space before "]"
-             (", '-','Scayt' ]", "]"),
-             (",'-', 'Scayt' ]", "]"),
-             (", '-', 'Scayt' ]", "]"),
-             # other possibilities, 'Scayt' in the middle
-             (",'Scayt',", ","),
-             (", 'Scayt',", ",")
-         ])
-
+            [
+                (",'-','Scayt']", "]"),
+                # space after ","
+                (", '-','Scayt']", "]"),
+                (",'-', 'Scayt']", "]"),
+                (", '-', 'Scayt']", "]"),
+                # space before "]"
+                (", '-','Scayt' ]", "]"),
+                (",'-', 'Scayt' ]", "]"),
+                (", '-', 'Scayt' ]", "]"),
+                # other possibilities, 'Scayt' in the middle
+                (",'Scayt',", ","),
+                (", 'Scayt',", ",")
+            ])
         replaced = False
         for k, v in scayt_values.items():
-            if toolbar_Custom.find(k):
+            if toolbar_Custom.find(k) != -1:
                 replaced = True
                 toolbar_Custom = toolbar_Custom.replace(k, v)
                 cke_props.toolbar_Custom = toolbar_Custom
