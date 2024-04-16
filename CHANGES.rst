@@ -8,6 +8,13 @@ Changelog
 - In `EveryAnnexTypesVocabulary` use `content_category` icon image scale
   instead `portal_url.getRelativeUrl` so it is cached.
   [gbastien]
+- Execute `upgrade_step_4211_add_item_widgets.xml` adding faceted criterion
+  `title only` again in upgrade to `4214` as it was not in
+  `default_dashboard_items_widgets.xml`, new `MeetingConfig` added since
+  profile version `4211` are missing this criterion.
+  [gbastien]
+- Integrate `imio.webspellchecker` to replace `Scayt` for `CKeditor`.
+  [gbastien]
 
 4.2.9rc6 (2024-04-10)
 ---------------------
