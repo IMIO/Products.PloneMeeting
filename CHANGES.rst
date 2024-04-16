@@ -13,7 +13,9 @@ Changelog
   `default_dashboard_items_widgets.xml`, new `MeetingConfig` added since
   profile version `4211` are missing this criterion.
   [gbastien]
-- Integrate `imio.webspellchecker` to replace `Scayt` for `CKeditor`.
+- Integrate `imio.webspellchecker` to replace `Scayt` for `CKEditor`.
+  As `WSC` is started when focus is set in `CKEditor` field, set focus on
+  field when using quick edit.
   [gbastien]
 
 4.2.9rc6 (2024-04-10)

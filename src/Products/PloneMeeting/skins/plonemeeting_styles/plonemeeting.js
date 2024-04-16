@@ -411,8 +411,10 @@ function initRichTextField(rq, hook) {
     }
     else { eval(scriptContent); }
   }
-  // Initialize CKeditor
+  // Initialize CKeditor and set focus on it so wsc is started
   jQuery(launchCKInstances([fieldName,]));
+  CKEDITOR.instances[fieldName].config.startupFocus = true;
+
   // Enable unload protection, avoid loosing unsaved changes if user click somewhere else
   var tool = window.onbeforeunload && window.onbeforeunload.tool;
   if (tool!==null) {
