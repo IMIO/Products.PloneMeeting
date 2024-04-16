@@ -2,7 +2,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 
-version = '4.2.9rc7-wsc.dev0'
+version = '4.2.9rc7-wsc'
 
 setup(name='Products.PloneMeeting',
       version=version,
