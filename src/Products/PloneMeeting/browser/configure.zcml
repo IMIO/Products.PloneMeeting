@@ -289,6 +289,11 @@
         name="update-local-roles-batch-action"
         class=".batchactions.UpdateLocalRolesBatchActionForm"
         permission="cmf.ManagePortal" />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItemDashboardBatchActionsMarker"
+        name="concatenate-annexes-batch-action"
+        class=".batchactions.PMConcatenateAnnexesBatchActionForm"
+        permission="zope2.View" />
     <!-- Batch actions Meeting -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
@@ -315,6 +320,11 @@
         name="update-local-roles-batch-action"
         class=".batchactions.UpdateLocalRolesBatchActionForm"
         permission="cmf.ManagePortal" />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
+        name="concatenate-annexes-batch-action"
+        class=".batchactions.PMConcatenateAnnexesBatchActionForm"
+        permission="zope2.View" />
     <!-- Batch actions MeetingItem -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingContentBatchActionsMarker"

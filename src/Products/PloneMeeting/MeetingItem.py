@@ -2171,15 +2171,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                       self.Title(withMeetingDate=True))
         return self.Title(withMeetingDate=True)
 
-    def Title(self, withMeetingDate=False, **kwargs):
+    def Title(self, withMeetingDate=False, withItemNumber=False, withItemReference=False, **kwargs):
         title = self.getField('title').get(self, **kwargs)
-        if withMeetingDate:
-            meeting = self.getMeeting()
-            # XXX check on datetime to be removed after Meeting migration to DX
-            if meeting and isinstance(meeting.date, datetime):
-                tool = api.portal.get_tool('portal_plonemeeting')
-                return "{0} ({1})".format(
-                    title, tool.format_date(meeting.date, with_hour=True).encode('utf-8'))
+        if withItemReference and self.getItemReference():
+            title = "[{0}] {1}".format(self.getItemReference(), title)
+        if self.hasMeeting():
+            if withItemNumber:
+                title = "{0}. {1}".format(self.getItemNumber(for_display=True), title)
+            if withMeetingDate:
+                meeting = self.getMeeting()
+                # XXX check on datetime to be removed after Meeting migration to DX
+                if meeting and isinstance(meeting.date, datetime):
+                    tool = api.portal.get_tool('portal_plonemeeting')
+                    title = "{0} ({1})".format(
+                        title, tool.format_date(meeting.date, with_hour=True).encode('utf-8'))
         return title
 
     security.declarePublic('getPrettyLink')
@@ -3523,13 +3528,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('displayLinkedItem')
 
     def displayLinkedItem(self, item):
-        '''Return a HTML structure to display a linked item.'''
-        # display the meeting date if the item is linked to a meeting
-        if item.hasMeeting():
-            return item.getPrettyLink(contentValue=item.Title(withMeetingDate=True))
-        else:
-            # try to share cache of getPrettyLink
-            return item.getPrettyLink()
+        '''Return a HTML structure to display a linked item.
+           If linked to a meeting, display the meeting date.'''
+        return item.getPrettyLink(contentValue=item.Title(withMeetingDate=True))
 
     def getMeeting(self, only_uid=False, caching=True):
         '''Returns the linked meeting if it exists.'''

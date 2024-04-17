@@ -27,6 +27,7 @@ from collective.eeafaceted.z3ctable.columns import EMPTY_STRING
 from collective.iconifiedcategory.config import get_sort_categorized_tab
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
+from collective.iconifiedcategory.utils import get_category_icon_url
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import render_filesize
@@ -913,28 +914,33 @@ class AskedAdvicesVocabulary(object):
             org = get_organization(org_uid)
             org_title = org.get_full_title()
             if delay_label:
-                termTitle = translate('advice_delay_with_label',
-                                      domain='PloneMeeting',
-                                      mapping={'org_title': org_title,
-                                               'delay': delay,
-                                               'delay_label': delay_label},
-                                      default='${group_name} - ${delay} day(s) (${delay_label})',
-                                      context=self.request)
+                termTitle = translate(
+                    'advice_delay_with_label',
+                    domain='PloneMeeting',
+                    mapping={'org_title': org_title,
+                             'delay': delay,
+                             'delay_label': delay_label},
+                    default='${group_name} - ${delay} day(s) (${delay_label})',
+                    context=self.request)
             else:
-                termTitle = translate('advice_delay_without_label',
-                                      domain='PloneMeeting',
-                                      mapping={'org_title': org_title,
-                                               'delay': delay},
-                                      default='${group_name} - ${delay} day(s)',
-                                      context=self.request)
+                termTitle = translate(
+                    'advice_delay_without_label',
+                    domain='PloneMeeting',
+                    mapping={'org_title': org_title,
+                             'delay': delay},
+                    default='${group_name} - ${delay} day(s)',
+                    context=self.request)
         return termTitle
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
+        if cfg is None:
+            raise ram.DontCache
         # invalidate if an org title is changed
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.everyorganizationsvocabulary')
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.vocabularies.everyorganizationsvocabulary')
         return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
@@ -1569,13 +1575,13 @@ class PollTypesVocabulary(object):
 PollTypesVocabularyFactory = PollTypesVocabulary()
 
 
-class StorePodTemplateAsAnnexVocabulary(object):
+class EveryAnnexTypesVocabulary(object):
     """
-    Vocabulary factory for 'ConfigurablePodTemplate.store_as_annex' field.
+    Vocabulary returning every annex types (item, meeting, advice).
     """
     implements(IVocabularyFactory)
 
-    def __call__(self, context):
+    def __call__(self, context, filtered_annex_groups=[], include_icon=False):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
@@ -1583,26 +1589,68 @@ class StorePodTemplateAsAnnexVocabulary(object):
         if not cfg:
             return SimpleVocabulary(res)
 
+        portal_url = api.portal.get().absolute_url()
         for annexes_group in cfg.annexes_types.objectValues():
+            if filtered_annex_groups and annexes_group.getId() not in filtered_annex_groups:
+                continue
             for cat in annexes_group.objectValues():
-                res.append(SimpleTerm(
-                    cat.UID(),
-                    cat.UID(),
+                term_title = html.escape(
                     u'{0} ➔ {1}'.format(
                         safe_unicode(annexes_group.Title()),
-                        safe_unicode(cat.Title()))))
+                        safe_unicode(cat.Title())))
+                if include_icon:
+                    cat_icon_url = "{0}/{1}".format(portal_url, get_category_icon_url(cat))
+                    term_title = u'<img src="{0}" width="16px" ' \
+                        u'height="16px" title="{1}"> {2}'.format(
+                            cat_icon_url, term_title, term_title)
+                cat_uid = cat.UID()
+                res.append(SimpleTerm(cat_uid, cat_uid, term_title))
                 for subcat in cat.objectValues():
-                    res.append(SimpleTerm(
-                        subcat.UID(),
-                        subcat.UID(),
+                    term_title = html.escape(
                         u'{0} ➔ {1} ➔ {2}'.format(
                             safe_unicode(annexes_group.Title()),
                             safe_unicode(cat.Title()),
-                            safe_unicode(subcat.Title()))))
+                            safe_unicode(subcat.Title())))
+                    if include_icon:
+                        term_title = u'<img src="{0}" width="16px" ' \
+                            u'height="16px" title="{1}"> {2}'.format(
+                                cat_icon_url, term_title, term_title)
+                    subcat_uid = subcat.UID()
+                    res.append(SimpleTerm(subcat_uid, subcat_uid, term_title))
         return SimpleVocabulary(res)
 
 
-StorePodTemplateAsAnnexVocabularyFactory = StorePodTemplateAsAnnexVocabulary()
+EveryAnnexTypesVocabularyFactory = EveryAnnexTypesVocabulary()
+
+
+class ItemAnnexTypesVocabulary(EveryAnnexTypesVocabulary):
+
+    def __call__(self,
+                 context,
+                 filtered_annex_groups=['item_annexes', 'item_decision_annexes'],
+                 include_icon=False):
+        return super(ItemAnnexTypesVocabulary, self).__call__(
+            context,
+            filtered_annex_groups=filtered_annex_groups,
+            include_icon=include_icon)
+
+
+ItemAnnexTypesVocabularyFactory = ItemAnnexTypesVocabulary()
+
+
+class IconItemAnnexTypesVocabulary(ItemAnnexTypesVocabulary):
+
+    def __call__(self,
+                 context,
+                 filtered_annex_groups=['item_annexes', 'item_decision_annexes'],
+                 include_icon=True):
+        return super(IconItemAnnexTypesVocabulary, self).__call__(
+            context,
+            filtered_annex_groups=filtered_annex_groups,
+            include_icon=include_icon)
+
+
+IconItemAnnexTypesVocabularyFactory = IconItemAnnexTypesVocabulary()
 
 
 class ItemTemplatesStorableAsAnnexVocabulary(object):
@@ -2874,20 +2922,21 @@ class BaseContainedAnnexesVocabulary(object):
                 context,
                 'collective.iconifiedcategory.categories',
                 use_category_uid_as_token=True)
-            prefix = u'%s - ' % translate(
+            portal_type_title = u'%s - ' % translate(
                 portal.portal_types[portal_type].title,
                 domain="imio.annex",
                 context=context.REQUEST) if prefixed else ''
 
             for annex in annexes:
                 # term title is annex icon, number and title
-                term_title = u'{0}{1}. <img src="{2}/{3}" title="{4}"> {5}'.format(
-                    prefix,
-                    str(i),
-                    portal_url,
-                    annex['icon_url'],
-                    html.escape(safe_unicode(annex['category_title'])),
-                    html.escape(safe_unicode(annex['title'])))
+                term_title = u'<img src="{0}/{1}" title="{2}" ' \
+                    u'width="16px" height="16px"> {3}{4}. {5}'.format(
+                        portal_url,
+                        annex['icon_url'],
+                        html.escape(safe_unicode(annex['category_title'])),
+                        portal_type_title,
+                        str(i),
+                        html.escape(safe_unicode(annex['title'])))
                 i += 1
                 if annex['warn_filesize']:
                     term_title += u' ({0})'.format(render_filesize(annex['filesize']))

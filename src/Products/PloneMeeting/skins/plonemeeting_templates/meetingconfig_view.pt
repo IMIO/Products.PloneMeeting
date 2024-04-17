@@ -124,14 +124,17 @@
     </tal:customFields>
 
     <div class="configActions">
-      <table tal:condition="isManager">
+      <table tal:condition="isManager" class="discreet">
         <tr valign="top">
           <td>
             <tal:comment replace="nothing">Display groups and users linked to this MeetingConfig</tal:comment>
             <fieldset>
               <legend i18n:translate="" i18n:domain="collective.contact.plonegroup">Groups and users</legend>
               <p i18n:translate="meetingconfig_display_groups_and_users_descr" class='pageNameDescr'></p>
-              <tal:groupsAndUsers tal:replace="structure context/displayGroupsAndUsers" />
+              <tal:groupsAndUsers tal:replace="structure python: context.displayGroupsAndUsers()" />
+              <span tal:define="field python:here.getField('usingGroups')">
+                <metal:block use-macro="here/widgets/field/macros/view" />
+              </span>
             </fieldset>
           </td>
           <td tal:condition="isRealManager" style="padding-left: 0.75em;">
@@ -1457,13 +1460,23 @@
                                >Filename</span>
                        </div>
                      </div>
-
+                    <div class="discreet"
+                         tal:define="tal_condition python: obj.tal_condition"
+                         tal:condition="tal_condition">
+                       <label i18n:translate=""
+                              i18n:domain="collective.behavior.talcondition"
+                              class="horizontal">TAL condition expression</label>
+                       <div>
+                         <span class="text-widget textline-field"
+                               tal:content="tal_condition">TAL condition</span>
+                       </div>
+                     </div>
                 </tal:baseInformations>
                 <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
                 <tal:additionalInformations
                     condition="show_details"
                     define="context python: obj;
-                            excludedFields python: ('pod_formats', 'enabled')">
+                            excludedFields python: ('pod_formats', 'enabled', 'tal_condition')">
                     <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
                 </tal:additionalInformations>
             </td>

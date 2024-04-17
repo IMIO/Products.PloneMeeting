@@ -88,7 +88,7 @@ class ItemExportPDFForm(z3c_form.Form):
         output_writer = PdfFileWriter()
         for element_id in data['elements']:
             output_writer.appendPagesFromReader(
-                PdfFileReader(BytesIO(content[element_id])))
+                PdfFileReader(BytesIO(content[element_id]), strict=False))
         pdf_file_content = BytesIO()
         output_writer.write(pdf_file_content)
         self.request.set('pdf_file_content', pdf_file_content)

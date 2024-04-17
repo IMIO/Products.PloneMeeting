@@ -126,7 +126,8 @@ class AnnexTypeDescriptor(Descriptor):
                  confidential=False,
                  to_print=False,
                  show_preview=0,
-                 description=u''):
+                 description=u'',
+                 only_pdf=False):
         self.id = id
         self.title = title
         self.icon = icon
@@ -142,6 +143,7 @@ class AnnexTypeDescriptor(Descriptor):
         self.show_preview = show_preview
         self.enabled = enabled
         self.description = description
+        self.only_pdf = only_pdf
 
 
 class ItemAnnexTypeDescriptor(AnnexTypeDescriptor):
@@ -161,7 +163,8 @@ class ItemAnnexTypeDescriptor(AnnexTypeDescriptor):
                  to_print=False,
                  show_preview=0,
                  description=u'',
-                 only_for_meeting_managers=False):
+                 only_for_meeting_managers=False,
+                 only_pdf=False):
         super(ItemAnnexTypeDescriptor, self).__init__(
             id=id,
             title=title,
@@ -175,7 +178,8 @@ class ItemAnnexTypeDescriptor(AnnexTypeDescriptor):
             confidential=confidential,
             to_print=to_print,
             show_preview=show_preview,
-            description=description)
+            description=description,
+            only_pdf=only_pdf)
         self.other_mc_correspondences = other_mc_correspondences
         self.only_for_meeting_managers = only_for_meeting_managers
 
@@ -190,7 +194,8 @@ class AnnexSubTypeDescriptor(Descriptor):
                  signed=False,
                  enabled=True,
                  confidential=False,
-                 to_print=False):
+                 to_print=False,
+                 only_pdf=False):
         self.id = id
         self.title = title
         self.predefined_title = predefined_title
@@ -199,6 +204,7 @@ class AnnexSubTypeDescriptor(Descriptor):
         self.to_sign = to_sign
         self.signed = signed
         self.enabled = enabled
+        self.only_pdf = only_pdf
 
 
 class ItemAnnexSubTypeDescriptor(AnnexSubTypeDescriptor):
@@ -213,7 +219,8 @@ class ItemAnnexSubTypeDescriptor(AnnexSubTypeDescriptor):
                  enabled=True,
                  confidential=False,
                  to_print=False,
-                 only_for_meeting_managers=False):
+                 only_for_meeting_managers=False,
+                 only_pdf=False):
         super(ItemAnnexSubTypeDescriptor, self).__init__(
             id=id,
             title=title,
@@ -222,7 +229,8 @@ class ItemAnnexSubTypeDescriptor(AnnexSubTypeDescriptor):
             signed=signed,
             enabled=enabled,
             confidential=confidential,
-            to_print=to_print)
+            to_print=to_print,
+            only_pdf=only_pdf)
         self.other_mc_correspondences = other_mc_correspondences
         self.only_for_meeting_managers = only_for_meeting_managers
 

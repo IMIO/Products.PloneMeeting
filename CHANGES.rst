@@ -2,7 +2,24 @@ Changelog
 =========
 
 
-4.2.9rc6 (unreleased)
+4.2.9rc7 (unreleased)
+---------------------
+
+- In `EveryAnnexTypesVocabulary` use `content_category` icon image scale
+  instead `portal_url.getRelativeUrl` so it is cached.
+  [gbastien]
+- Execute `upgrade_step_4211_add_item_widgets.xml` adding faceted criterion
+  `title only` again in upgrade to `4214` as it was not in
+  `default_dashboard_items_widgets.xml`, new `MeetingConfig` added since
+  profile version `4211` are missing this criterion.
+  [gbastien]
+- Completed `print_votes` so it manages every `vote_values`
+  (`does_not_vote`, `not_found`, `invalid`, `blank`).
+  Adapted parameter `single_vote_value` so we can define a single value or
+  a different value for each `vote_values`.
+  [gbastien]
+
+4.2.9rc6 (2024-04-10)
 ---------------------
 
 - Moved field `Meeting.pre_observations` before `Meeting.observations`.
@@ -60,10 +77,21 @@ Changelog
   with attachment, send it only one time to every recipients instead sending
   it one time by recipient.
   [gbastien]
-- Completed `print_votes` so it manages every `vote_values`
-  (`does_not_vote`, `not_found`, `invalid`, `blank`).
-  Adapted parameter `single_vote_value` so we can define a single value or
-  a different value for each `vote_values`.
+- Avoid vocabulary `AskedAdvicesVocabulary` being empty when cached because
+  `MeetingConfig` could not be obtained.
+  [gbastien]
+- Display `MeetingConfig.usingGroups` field on `MeetingConfig` view home page
+  under `Groups and users` to identify easily a MeetingConfig using this parameter.
+  [gbastien]
+- Added parameters `withItemNumber=False` and `withItemReference=False` to
+  `MeetingItem.Title` to have the item title prefixed with item reference
+  and/or item number.
+  [gbastien]
+- Adapted `utils._sendMail` to use `bcc` (`blind carbon copy`) when sending
+  an email with attachment (one email sent to several recipients).
+  [gbastien]
+- Display `TAL condition` by default on `MeetingConfig` view in
+  `POD templates` section.
   [gbastien]
 
 4.2.9rc5 (2024-03-14)

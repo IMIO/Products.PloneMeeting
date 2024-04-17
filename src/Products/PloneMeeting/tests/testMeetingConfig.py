@@ -2224,7 +2224,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         annex = self.addAnnex(item)
         annex_decision = self.addAnnex(item, relatedTo='item_decision')
         # preview for this will not be removed
-        preview_annex = self.addAnnex(item, annexType='preview-annex')
+        preview_annex = self.addAnnex(
+            item, annexType='preview-annex', annexFile=self.annexFilePDF)
         infos = _categorized_elements(item)
         self.assertEqual(infos[annex.UID()]['preview_status'], 'converted')
         self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'converted')
