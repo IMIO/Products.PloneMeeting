@@ -2286,8 +2286,8 @@ schema = Schema((
             description="ItemRestrictedCopyGroupsStates",
             description_msgid="item_restricted_copy_groups_states_descr",
             format="checkbox",
-            label='IterRestrictedcopygroupsstates',
-            label_msgid='PloneMeeting_label_itemCopyRestrictedGroupsStates',
+            label='Itemrestrictedcopygroupsstates',
+            label_msgid='PloneMeeting_label_itemRestrictedCopyGroupsStates',
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
@@ -8005,21 +8005,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     set(get_plone_groups_for_user()).intersection(
                         self.getSelectableCopyGroups()))
 
-    def get_orgs_with_as_copy_group_on_expression_cachekey(method, self):
+    def get_orgs_with_as_copy_group_on_expression_cachekey(method, self, restricted=False):
         '''cachekey method for self.get_orgs_with_as_copy_group_on_expression.
            MeetingConfig.modified is updated when an organization added/removed/edited.'''
         # the volatile is invalidated when an organization changed
-        return repr(self), self.modified(), get_cachekey_volatile('_users_groups_value')
+        return repr(self), self.modified(), get_cachekey_volatile('_users_groups_value'), restricted
 
     @ram.cache(get_orgs_with_as_copy_group_on_expression_cachekey)
-    def get_orgs_with_as_copy_group_on_expression(self):
+    def get_orgs_with_as_copy_group_on_expression(self, restricted=False):
         """Returns a dict with organizations having a as_copy_group_on TAL expression."""
         orgs = self.getUsingGroups(theObjects=True)
         # keep order as new and old item local_roles are compared
         # to check if other updates must be done
         data = OrderedDict()
         for org in orgs:
-            expr = org.as_copy_group_on
+            if restricted:
+                expr = org.as_restricted_copy_group_on
+            else:
+                expr = org.as_copy_group_on
             if not expr or not expr.strip():
                 continue
             data[org.UID()] = expr

@@ -2556,7 +2556,7 @@ CopyGroupsVocabularyFactory = CopyGroupsVocabulary()
 class ItemCopyGroupsVocabulary(BaseCopyGroupsVocabulary):
     """Manage missing terms if context is a MeetingItem."""
 
-    def __call__(self, context, include_auto=False, restricted=False):
+    def __call__(self, context, include_auto=False, restricted=False, include_both=False):
         """This is not ram.cached."""
         terms = super(ItemCopyGroupsVocabulary, self).__call__(context)._terms
         # make sure we have a copy of _terms because we will add some
@@ -2609,7 +2609,7 @@ class ItemRestrictedCopyGroupsVocabulary(BaseCopyGroupsVocabulary):
     def __call__(self, context, include_auto=False, restricted=True):
         """This is not ram.cached."""
         return super(ItemRestrictedCopyGroupsVocabulary, self).__call__(
-            context, include_auto=include_auto, restricted=restricted)
+            context, restricted=restricted)
 
 
 ItemRestrictedCopyGroupsVocabularyFactory = ItemRestrictedCopyGroupsVocabulary()

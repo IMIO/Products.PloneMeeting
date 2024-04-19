@@ -131,11 +131,8 @@ def getCopyGroups(obj):
       restrictedCopyGroups are prefixed by restricted__ so it can be displayed differently
       in dashboard filter and column.
     """
-    copyGroups = obj.getAllCopyGroups(auto_real_plone_group_ids=True)
-    restrictedCopyGroups = [
-        "restricted__%s" % group_id
-        for group_id in obj.getAllRestrictedCopyGroups(auto_real_plone_group_ids=True)]
-    return (copyGroups + restrictedCopyGroups) or EMPTY_STRING
+    return obj.getAllCopyGroups(auto_real_plone_group_ids=True) + \
+        obj.getAllRestrictedCopyGroups(auto_real_plone_group_ids=True) or EMPTY_STRING
 
 
 @indexer(IMeetingItem)

@@ -18,6 +18,9 @@ Changelog
   Adapted parameter `single_vote_value` so we can define a single value or
   a different value for each `vote_values`.
   [gbastien]
+- Added field `MeetingItem.restrictedCopyGroups`, a secondary `copyGroups` field
+  where we can define other groups having access to item in other (later) states.
+  [gbastien]
 
 4.2.9rc6 (2024-04-10)
 ---------------------

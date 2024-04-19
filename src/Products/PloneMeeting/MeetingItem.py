@@ -3719,6 +3719,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             allGroups += tuple(autoRestrictedCopyGroups)
         return allGroups
 
+    security.declarePublic('getAllBothCopyGroups')
+
+    def getAllBothCopyGroups(self, auto_real_plone_group_ids=True):
+        """Get all both common and restricted copy groups."""
+        return self.getAllCopyGroups(auto_real_plone_group_ids=auto_real_plone_group_ids) + \
+            self.getAllRestrictedCopyGroups(auto_real_plone_group_ids=auto_real_plone_group_ids)
+
     def check_copy_groups_have_access(self, restricted=False):
         """Return True if copyGroups have access in current review_state."""
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -5619,7 +5626,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         attr = getattr(self, attr_name)
         extra_expr_ctx = _base_extra_expr_ctx(self)
         cfg = extra_expr_ctx['cfg']
-        for org_uid, expr in cfg.get_orgs_with_as_copy_group_on_expression().items():
+        for org_uid, expr in cfg.get_orgs_with_as_copy_group_on_expression(
+                restricted=restricted).items():
             extra_expr_ctx.update({'item': self,
                                    'isCreated': isCreated,
                                    'org_uid': org_uid})
@@ -6905,8 +6913,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getCopyGroupsHelpMsg(self, cfg, restricted=False):
         '''Help message regarding copy groups configuration.'''
-        translated_states = translate_list(cfg.getItemCopyGroupsStates())
-        msg = translate(msgid="copy_groups_help_msg",
+        if restricted:
+            translated_states = translate_list(cfg.getItemRestrictedCopyGroupsStates())
+            msgid = "restricted_copy_groups_help_msg"
+        else:
+            translated_states = translate_list(cfg.getItemCopyGroupsStates())
+            msgid = "copy_groups_help_msg"
+        msg = translate(msgid=msgid,
                         domain="PloneMeeting",
                         mapping={"states": translated_states},
                         context=self.REQUEST)
