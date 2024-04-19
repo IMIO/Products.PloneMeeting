@@ -13,6 +13,11 @@ Changelog
   `default_dashboard_items_widgets.xml`, new `MeetingConfig` added since
   profile version `4211` are missing this criterion.
   [gbastien]
+- Completed `print_votes` so it manages every `vote_values`
+  (`does_not_vote`, `not_found`, `invalid`, `blank`).
+  Adapted parameter `single_vote_value` so we can define a single value or
+  a different value for each `vote_values`.
+  [gbastien]
 
 4.2.9rc6 (2024-04-10)
 ---------------------
