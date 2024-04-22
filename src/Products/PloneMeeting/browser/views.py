@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
@@ -13,6 +12,7 @@ from collective.contact.plonegroup.utils import get_plone_groups
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from eea.facetednavigation.interfaces import ICriteria
+from fnmatch import fnmatch
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.content import get_user_fullname
 from imio.helpers.content import uuidToObject
@@ -1165,17 +1165,11 @@ class BaseDGHV(object):
                     elif 'non_attendee' in in_out_attendee_types:
                         not_present_item_uids += meeting.get_item_non_attendees(by_persons=True).get(contact_uid, [])
 
-
-                    pattern_key = contact.gender or 'M' + "S" if len(not_present_item_uids) > 1 else "P"
-
-                    def find_matching_keys(dictionary, needle):
-                        import fnmatch
-                        res = []
-                        for pattern in dictionary.keys():
-                            if fnmatch.fnmatch(needle, pattern):
-                                res += pattern
-                        return res
-
+                    # A glob pattern is used to minimize the size of the dict the user have to pass
+                    # in out_count_patterns and in_count_patterns.
+                    # If you don't care, you can use "*" as the first and/or second part of the key
+                    # "M" stands for masculine and "F" for feminine genre of the contact
+                    # "S" stands for singular and "P" for plural items
 
                     if include_out_count and len(not_present_item_uids) > 0:
                         catalog = api.portal.get_tool('portal_catalog')
@@ -1183,13 +1177,18 @@ class BaseDGHV(object):
                         numbers = [brain.getObject().getItemNumber(for_display=True) for brain in brains]
                         numbers = [int(number) if '.' not in number else float(number) for number in numbers]
                         cluster = get_clusters(numbers).replace("-", in_out_cluster_seperator)
-                        contact_value += out_count_patterns.get(find_matching_keys(in_count_patterns, pattern_key)[0]).format(cluster)
+                        pattern = (str(contact.gender) or 'M') + ('S' if len(numbers) == 1 else 'P')
+                        pattern_key = filter(lambda x: fnmatch(pattern, x), out_count_patterns.keys())[0]
+                        contact_value += out_count_patterns.get(pattern_key).format(cluster)
                     if include_in_count and len(not_present_item_uids) > 0:
                         numbers = [item.getItemNumber(for_display=True)
                                    for item in meeting.get_items(ordered=True) if item.UID() not in not_present_item_uids]
                         numbers = [int(number) if '.' not in number else float(number) for number in numbers]
                         cluster = get_clusters(numbers).replace("-", in_out_cluster_seperator)
-                        contact_value += in_count_patterns.get(find_matching_keys(in_count_patterns, pattern_key)[0]).format(cluster)
+                        pattern = (str(contact.gender) or 'M') + ('S' if len(numbers) == 1 else 'P')
+                        pattern_key = filter(lambda x: fnmatch(pattern, x), in_count_patterns.keys())[0]
+                        contact_value += in_count_patterns.get(pattern_key).format(cluster)
+
                 if unbreakable_contact_value:
                     contact_value = contact_value.replace(" ", "&nbsp;")
                 grouped_contacts_value.append(contact_value)

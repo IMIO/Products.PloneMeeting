@@ -1486,7 +1486,7 @@ class testContacts(PloneMeetingTestCase):
         )
 
         self.assertIn(
-            u"Monsieur Person1FirstName Person1LastName, Assembly member 1 [éàè 1]",
+            u"Monsieur Person1FirstName Person1LastName, Assembly member 1 [éàè@%1ê 1]",
             helper.print_attendees_by_type(include_out_count=True, in_out_attendee_types=["item_absent"],
                                            out_count_patterns={"*": u" [éàè@%1ê {}]"}),
         )
@@ -1502,16 +1502,15 @@ class testContacts(PloneMeetingTestCase):
 
         self.assertIn(
             "Monsieur Person1FirstName Person1LastName, Assembly member 1 - only for these: 2 to 3",
-            helper.print_attendees_by_type(include_out_count=True,
+            helper.print_attendees_by_type(include_in_count=True,
                                            in_out_cluster_seperator=" to ",
-                                           in_count_patterns={
-                                               "MS": " - only for: {}",
-                                               "MP": " - only for these: {}",
-                                               "*S": "I'm being ignored",
-                                               "*": "{}"
-                                           }),
-
-        )
+                                           in_count_patterns=OrderedDict([
+                                               ("MS", " - only for: {}"),
+                                               ("MP", " - only for these: {}"),
+                                               ("*S", "I'm being ignored"),
+                                               ("*", "{}")
+                                           ]))
+        )  # Here we make sure to use an ordered dict to keep the order of the patterns in py2
 
 
     def test_pm_Print_attendees_by_type_committee_id(self):
