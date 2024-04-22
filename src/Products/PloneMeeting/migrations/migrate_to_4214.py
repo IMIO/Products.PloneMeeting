@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
+from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.setup import load_type_from_package
 from imio.pyutils.utils import replace_in_list
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.setuphandlers import indexInfos
 
 
 class Migrate_To_4214(Migrator):
@@ -24,6 +26,19 @@ class Migrate_To_4214(Migrator):
                 cfg.setMailItemEvents(mailItemEvents)
         logger.info('Done.')
 
+    def _addGroupsManagingItemToCfgItemWFValidationLevels(self):
+        """Update existing MeetingConfig.itemWFValidationLevels to add empty
+           "groups_managing_item"."""
+        logger.info('Updating MeetingConfig.itemWFValidationLevels to add "groups_managing_item"...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            stored = getattr(cfg, 'itemWFValidationLevels', [])
+            for level in stored:
+                if 'groups_managing_item' in level:
+                    return self._already_migrated()
+                level['groups_managing_item'] = []
+            cfg.setItemWFValidationLevels(stored)
+        logger.info('Done.')
+
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4214...')
@@ -34,14 +49,22 @@ class Migrate_To_4214(Migrator):
         # dashboard faceted criteria, new MeetingConfigs created manually in between
         # are missing this new criterion
         self.updateFacetedFilters(xml_filename='upgrade_step_4211_add_item_widgets.xml')
+        self._addGroupsManagingItemToCfgItemWFValidationLevels()
+        # need to change the reviewProcessInfo index from FieldIndex to KeywordIndex
+        # as it may contains several values now (several groups managing item at same time)
+        addOrUpdateIndexes(self.portal, indexInfos)
         logger.info('Migrating to PloneMeeting 4214... Done.')
 
 
 def migrate(context):
     '''This migration function will:
 
-       1) Update values of MeetingConfig.itemMailEvents as format
-          of "adviceEdited" values changed.
+       1) Reload type ConfigurablePODTemplate as store_as_annex vocabluary changed;
+       2) Update values of MeetingConfig.itemMailEvents as format
+       of "adviceEdited" values changed;
+       3) Add "item title only" search criterion again;
+       4) Add "groups_managing_item" to every MeetingConfig.itemWFValidationLevels;
+       5) Adapt reviewProcessInfo catalog index from FieldIndex to KeywordIndex.
     '''
     migrator = Migrate_To_4214(context)
     migrator.run()
