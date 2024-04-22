@@ -10,6 +10,7 @@ from collective.eeafaceted.batchactions.browser.views import LabelsBatchActionFo
 from collective.eeafaceted.batchactions.browser.views import TransitionBatchActionForm
 from collective.eeafaceted.batchactions.utils import listify_uids
 from imio.actionspanel.interfaces import IContentDeletable
+from imio.annex.browser.views import ConcatenateAnnexesBatchActionForm
 from imio.annex.browser.views import DownloadAnnexesBatchActionForm
 from plone import api
 from Products.CMFCore.permissions import ManagePortal
@@ -151,6 +152,11 @@ class UpdateCopyGroupsBatchActionForm(PMBaseARUOBatchActionForm):
         return 'Products.PloneMeeting.vocabularies.copygroupsvocabulary'
 
 
+#
+#
+#  Overrides
+#
+#
 class PMDeleteBatchActionForm(DeleteBatchActionForm):
     """ """
 
@@ -174,6 +180,29 @@ class PMDeleteBatchActionForm(DeleteBatchActionForm):
                 if IContentDeletable(obj).mayDelete()]
 
 
+class PMConcatenateAnnexesBatchActionForm(ConcatenateAnnexesBatchActionForm):
+    """ """
+
+    def __init__(self, context, request):
+        super(PMConcatenateAnnexesBatchActionForm, self).__init__(context, request)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(context)
+
+    def available(self):
+        """ """
+        # super() will check for self.available_permission
+        if self.cfg.isManager(self.cfg) and \
+           super(ConcatenateAnnexesBatchActionForm, self).available():
+            return True
+
+    def _annex_types_vocabulary(self):
+        return "Products.PloneMeeting.vocabularies.icon_item_annex_types_vocabulary"
+
+    def _error_obj_title(self, obj):
+        """ """
+        return obj.Title(withItemNumber=True, withItemReference=True)
+
+
 class PMDownloadAnnexesBatchActionForm(DownloadAnnexesBatchActionForm):
     """ """
 
@@ -187,11 +216,6 @@ class PMDownloadAnnexesBatchActionForm(DownloadAnnexesBatchActionForm):
         return "download-annexes" in self.cfg.getEnabledAnnexesBatchActions()
 
 
-#
-#
-#  Overrides
-#
-#
 class PMLabelsBatchActionForm(LabelsBatchActionForm):
     """ """
 

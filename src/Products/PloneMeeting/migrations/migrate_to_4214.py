@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from imio.helpers.setup import load_type_from_package
 from imio.pyutils.utils import replace_in_list
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
@@ -26,7 +27,13 @@ class Migrate_To_4214(Migrator):
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4214...')
+        # reload ConfigurablePODTemplate to use every_annex_types_vocabulary for field store_as_annex
+        load_type_from_package('ConfigurablePODTemplate', 'Products.PloneMeeting:default')
         self._migrateAdviceEditedItemMailEvents()
+        # add text criterion on "item title only" again as it was not in default
+        # dashboard faceted criteria, new MeetingConfigs created manually in between
+        # are missing this new criterion
+        self.updateFacetedFilters(xml_filename='upgrade_step_4211_add_item_widgets.xml')
         logger.info('Migrating to PloneMeeting 4214... Done.')
 
 

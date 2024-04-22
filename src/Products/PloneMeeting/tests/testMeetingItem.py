@@ -2190,6 +2190,40 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.getAllCopyGroups(auto_real_plone_group_ids=True),
                          (self.developers_reviewers, self.vendors_reviewers))
 
+    def test_pm_RestrictedCopyGroupes(self):
+        """Test MeetingItem.restrictedCopyGroups, a second level
+           of copy groups complementary to MeetingItem.copyGroups."""
+        self._enableField(('copyGroups', 'restrictedCopyGroups'))
+        self.vendors.as_copy_group_on = "python: ['creators']"
+        self.developers.as_restricted_copy_group_on = "python: ['creators']"
+        cfg = self.meetingConfig
+        cfg.setItemCopyGroupsStates(('itemcreated', ))
+        cfg.setSelectableRestrictedCopyGroups((self.developers_observers, self.vendors_observers))
+        cfg.setItemRestrictedCopyGroupsStates(('validated', ))
+        # create item for vendors
+        self.changeUser('pmCreator2')
+        item = self.create('MeetingItem',
+                           copyGroups=(self.developers_reviewers, ),
+                           restrictedCopyGroups=(self.developers_observers, ))
+        self.assertEqual(item.getAllCopyGroups(True),
+                         (self.developers_reviewers, self.vendors_creators))
+        self.assertEqual(item.getAllRestrictedCopyGroups(True),
+                         (self.developers_observers, self.developers_creators))
+        # no access for now for restricted copy groups
+        # copyGroups
+        self.assertTrue(self.developers_reviewers in item.__ac_local_roles__)
+        self.assertTrue(self.vendors_creators in item.__ac_local_roles__)
+        # restrictedCopyGroups
+        self.assertFalse(self.developers_observers in item.__ac_local_roles__)
+        self.assertFalse(self.developers_creators in item.__ac_local_roles__)
+        self.validateItem(item)
+        # copyGroups, vendors_creators still access as vendors is proposingGroup
+        self.assertFalse(self.developers_reviewers in item.__ac_local_roles__)
+        self.assertTrue(self.vendors_creators in item.__ac_local_roles__)
+        # restrictedCopyGroups
+        self.assertTrue(self.developers_observers in item.__ac_local_roles__)
+        self.assertTrue(self.developers_creators in item.__ac_local_roles__)
+
     def test_pm_UpdateAdvices(self):
         '''Test if local roles for adviser groups, are still correct when an item is edited
            Only 'power observers' corresponding local role local should be impacted.
@@ -3032,10 +3066,10 @@ class testMeetingItem(PloneMeetingTestCase):
         # terms are escaped
         annex_term_title = annex_vocab._terms[1].title
         self.assertTrue("Annex type&quot;&gt;&lt;script&gt;alert" in annex_term_title)
-        self.assertTrue("> Title&quot;&gt;&lt;script" in annex_term_title)
+        self.assertTrue("> 2. Title&quot;&gt;&lt;script" in annex_term_title)
         annex_decision_term_title = annex_decision_vocab._terms[0].title
         self.assertTrue("Annex decision type&quot;&gt;&lt;script&gt;alert" in annex_decision_term_title)
-        self.assertTrue("> Decision title&quot;&gt;&lt;script" in annex_decision_term_title)
+        self.assertTrue("> 1. Decision title&quot;&gt;&lt;script" in annex_decision_term_title)
         # trying to duplicate an item with those annexes will raise Unauthorized for pmCreator
         form = item.restrictedTraverse('@@item_duplicate_form').form_instance
         data = {'keep_link': False, 'annex_ids': [], 'annex_decision_ids': []}
@@ -8807,6 +8841,30 @@ class testMeetingItem(PloneMeetingTestCase):
         late_item2 = self.create('MeetingItem', preferredMeeting=meeting.UID())
         self.presentItem(late_item2)
         self.assertIsNone(self.request["debug_sendMailIfRelevant_result"])
+
+    def test_pm_ItemTitle(self):
+        """Test the MeetingItem.Title method."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', title="My title héhé")
+        self.assertEqual(item.Title(), "My title héhé")
+        self.assertEqual(item.Title(withMeetingDate=True), "My title héhé")
+        self.assertEqual(item.Title(withItemNumber=True), "My title héhé")
+        self.assertEqual(item.Title(withItemReference=True), "My title héhé")
+        self.assertEqual(
+            item.Title(withMeetingDate=True, withItemNumber=True, withItemReference=True),
+            "My title héhé")
+        self.changeUser('pmManager')
+        self.create('Meeting', date=datetime(2024, 3, 27, 15, 30))
+        self.presentItem(item)
+        item.update_item_reference()
+        self.assertEqual(item.Title(), "My title héhé")
+        self.assertEqual(item.Title(withMeetingDate=True),
+                         "My title héhé (27 march 2024 (15:30))")
+        self.assertEqual(item.Title(withItemNumber=True), "3. My title héhé")
+        self.assertEqual(item.Title(withItemReference=True), "[Ref. 20240327/3] My title héhé")
+        self.assertEqual(
+            item.Title(withMeetingDate=True, withItemNumber=True, withItemReference=True),
+            "3. [Ref. 20240327/3] My title héhé (27 march 2024 (15:30))")
 
 
 def test_suite():

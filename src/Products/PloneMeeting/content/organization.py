@@ -138,6 +138,14 @@ class IPMOrganization(IOrganization):
         required=False,
     )
 
+    form.read_permission(as_restricted_copy_group_on='PloneMeeting.manage_internal_organization_fields')
+    form.write_permission(as_copy_group_on='PloneMeeting.manage_internal_organization_fields')
+    as_restricted_copy_group_on = schema.TextLine(
+        title=_("PloneMeeting_label_asRestrictedCopyGroupOn"),
+        description=_("as_restricted_copy_group_on_descr"),
+        required=False,
+    )
+
     form.read_permission(certified_signatures='PloneMeeting.manage_internal_organization_fields')
     form.write_permission(certified_signatures='PloneMeeting.manage_internal_organization_fields')
     form.widget('certified_signatures', DataGridFieldFactory, allow_reorder=True)
@@ -169,7 +177,8 @@ class IPMOrganization(IOrganization):
                    label=_(u"Application parameters"),
                    fields=['acronym', 'item_advice_states',
                            'item_advice_edit_states', 'item_advice_view_states',
-                           'keep_access_to_item_when_advice', 'as_copy_group_on',
+                           'keep_access_to_item_when_advice',
+                           'as_copy_group_on', 'as_restricted_copy_group_on',
                            'certified_signatures', 'groups_in_charge'])
 
 

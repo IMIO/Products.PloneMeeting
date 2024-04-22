@@ -1819,7 +1819,14 @@ def print_votes(item,
                 main_pattern=u"<p>Par {0},</p>",
                 separator=u", ",
                 last_separator=u" et ",
-                single_vote_value=u"une",
+                single_vote_value={'yes': u"une",
+                                   'no': u"une",
+                                   'abstain': u"une",
+                                   'does_not_vote': u"un",
+                                   'not_found': u"un",
+                                   'invalid': u"un",
+                                   'blank': u"un",
+                                   'default': u"1"},
                 secret_intro=u"<p>Au scrutin secret,</p>",
                 public_intro=u"",
                 total_voters_pattern=u"<p>Il y a {0} votants.</p>",
@@ -1845,6 +1852,9 @@ def print_votes(item,
        When using p_render_as_html=True :
        - p_main_pattern is the main pattern the votes will be rendered;
        - p_separator is used to separate vote values;
+       - p_single_vote_value is a dict with a value when the given vote result is "1",
+         it can be a dict with an entry for each vote value or a single value like "one" or "1".
+         A special value "default" will be used if vote value not defined;
        - p_last_separator is used to separate last vote value from others;
        - p_secret_intro will be included before rendered vote_values if votes are secret;
        - p_public_intro will be included before rendered vote_values if votes are public;
@@ -1893,7 +1903,16 @@ def print_votes(item,
             'no': u"{0} voix contre",
             'no_multiple': u"{0} voix contre",
             'abstain': u"{0} abstention",
-            'abstain_multiple': u"{0} abstentions"}
+            'abstain_multiple': u"{0} abstentions",
+            'does_not_vote': u"{0} bulletin \"ne vote pas\"",
+            'does_not_vote_multiple': u"{0} bulletins \"ne vote pas\"",
+            'not_found': u"{0} bulletin non trouvé dans l'urne",
+            'not_found_multiple': u"{0} bulletins non trouvés dans l'urne",
+            'invalid': u"{0} bulletin invalide",
+            'invalid_multiple': u"{0} bulletins invalides",
+            'blank': u"{0} vote blanc",
+            'blank_multiple': u"{0} votes blancs",
+        }
     elif used_patterns == "counts":
         patterns = {
             'yes': u"<p><strong>Pour: {0}</strong></p>",
@@ -1901,7 +1920,16 @@ def print_votes(item,
             'no': u"<p><strong>Contre: {0}</strong></p>",
             'no_multiple': u"<p><strong>Contre: {0}</strong></p>",
             'abstain': u"<p><strong>Abstention: {0}</strong></p>",
-            'abstain_multiple': u"<p><strong>Abstentions: {0}</strong></p>"}
+            'abstain_multiple': u"<p><strong>Abstentions: {0}</strong></p>",
+            'does_not_vote': u"<p><strong>Ne vote pas: {0}</strong></p>",
+            'does_not_vote_multiple': u"<p><strong>Ne votent pas: {0}</strong></p>",
+            'not_found': u"<p><strong>Bulletin non trouvé: {0}</strong></p>",
+            'not_found_multiple': u"<p><strong>Bulletins non trouvés: {0}</strong></p>",
+            'invalid': u"<p><strong>Bulletin invalide: {0}</strong></p>",
+            'invalid_multiple': u"<p><strong>Bulletins invalides: {0}</strong></p>",
+            'blank': u"<p><strong>Vote blanc: {0}</strong></p>",
+            'blank_multiple': u"<p><strong>Votes blancs: {0}</strong></p>",
+        }
     elif used_patterns == "counts_persons":
         patterns = {
             'yes': u"<p><strong>A voté pour: {0}</strong></p>",
@@ -1909,7 +1937,16 @@ def print_votes(item,
             'no': u"<p><strong>A voté contre: {0}</strong></p>",
             'no_multiple': u"<p><strong>Ont voté contre: {0}</strong></p>",
             'abstain': u"<p><strong>S'est abstenu(e): {0}</strong></p>",
-            'abstain_multiple': u"<p><strong>Se sont abstenu(e)s: {0}</strong></p>"}
+            'abstain_multiple': u"<p><strong>Se sont abstenu(e)s: {0}</strong></p>",
+            'does_not_vote': u"<p><strong>N'a pas voté: {0}</strong></p>",
+            'does_not_vote_multiple': u"<p><strong>N'ont pas voté: {0}</strong></p>",
+            'not_found': u"<p><strong>Bulletin non trouvé: {0}</strong></p>",
+            'not_found_multiple': u"<p><strong>Bulletins non trouvés: {0}</strong></p>",
+            'invalid': u"<p><strong>Bulletin invalide: {0}</strong></p>",
+            'invalid_multiple': u"<p><strong>Bulletins invalides: {0}</strong></p>",
+            'blank': u"<p><strong>A voté blanc: {0}</strong></p>",
+            'blank_multiple': u"<p><strong>Ont voté blanc: {0}</strong></p>",
+        }
     patterns.update(custom_patterns)
     # get votes
     rendered = u""
@@ -1945,7 +1982,11 @@ def print_votes(item,
                     # use _multiple suffixed pattern?
                     pattern_value = vote_count > 1 and vote_value + '_multiple' or vote_value
                     if vote_count == 1:
-                        vote_count = single_vote_value
+                        if isinstance(single_vote_value, dict):
+                            vote_count = single_vote_value.get(
+                                vote_value, single_vote_value.get('default', '1'))
+                        else:
+                            vote_count = single_vote_value
                     value = patterns[pattern_value].format(vote_count)
                     # prepare voters if necessary
                     if include_voters and not secret:

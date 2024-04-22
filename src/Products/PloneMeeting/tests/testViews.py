@@ -1661,10 +1661,9 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
-        form.update()
         self.assertTrue(self.hasPermission(ModifyPortalContent, meeting))
         self.assertFalse(form.available())
-        self.assertRaises(Unauthorized, form.handleApply, form, None)
+        self.assertRaises(Unauthorized, form)
 
         # configure MeetingConfig.meetingItemTemplatesToStoreAsAnnex
         # values are taking POD templates having a store_as_annex
@@ -1677,6 +1676,7 @@ class testViews(PloneMeetingTestCase):
             cfg.getField('meetingItemTemplatesToStoreAsAnnex').Vocabulary(cfg).keys(),
             ['itemTemplate__output_format__odt'])
         cfg.setMeetingItemTemplatesToStoreAsAnnex('itemTemplate__output_format__odt')
+        form.update()
         self.assertTrue(form.available())
 
         # may_store is False if user not able to edit meeting
@@ -1998,11 +1998,11 @@ class testViews(PloneMeetingTestCase):
 
         # available when activated
         form = item.restrictedTraverse('@@download-annexes-batch-action')
-        form.update()
+        self.assertRaises(Unauthorized, form)
         self.assertFalse(form.available())
         cfg.setEnabledAnnexesBatchActions(['download-annexes'])
-        self.assertTrue(form.available())
         form.update()
+        self.assertTrue(form.available())
         data = form.handleApply(form, None)
         # headers are set
         self.assertEqual(self.request.response.getHeader('content-type'), 'application/zip')
@@ -2034,9 +2034,10 @@ class testViews(PloneMeetingTestCase):
 
         # available when activated
         form = item.restrictedTraverse('@@delete-batch-action')
-        form.update()
+        self.assertRaises(Unauthorized, form)
         self.assertFalse(form.available())
         cfg.setEnabledAnnexesBatchActions(['delete'])
+        form.update()
         self.assertTrue(form.available())
         # action not avilable when not able to edit item
         self.changeUser('pmObserver1')
@@ -2063,6 +2064,37 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(get_annexes(item), [annex])
         form.handleApply(form, None)
         self.assertEqual(get_annexes(item), [])
+
+    def test_pm_DownloadAnnexesBatchActionForm(self):
+        """Batch action to download annexes of a given annex_type for selected elements."""
+        self.changeUser('pmCreator1')
+        item1 = self.create('MeetingItem')
+        # only PDF annexes will be considered, we have 2 PDF of 1 page each
+        annex = self.addAnnex(item1, annexFile=self.annexFilePDF)
+        self.addAnnex(item1)
+        self.addAnnex(item1, annexType='overhead-analysis')
+        item2 = self.create('MeetingItem')
+        self.addAnnex(item2, annexFile=self.annexFilePDF)
+        self.addAnnex(item2, annexType='overhead-analysis')
+        self.request.form['form.widgets.uids'] = ','.join([item1.UID(), item2.UID()])
+        searches_items = self.getMeetingFolder().searches_items
+        # not available as not MeetingManager
+        form = searches_items.unrestrictedTraverse('@@concatenate-annexes-batch-action')
+        self.assertRaises(Unauthorized, form)
+        # as MeetingManager
+        self.changeUser('pmManager')
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.unrestrictedTraverse('@@concatenate-annexes-batch-action')
+        self.request['form.widgets.annex_types'] = [
+            item1.categorized_elements[annex.UID()]['category_uid']]
+        self.assertFalse(self.request.get('pdf_file_content'))
+        self.assertTrue(form())
+        form.handleApply(form, None)
+        self.assertTrue('Pages\n/Count 2' in self.request.get('pdf_file_content').getvalue())
+        # when using two_sided, a blank page is inserted
+        self.request['form.widgets.two_sided'] = 'true'
+        form.handleApply(form, None)
+        self.assertTrue('Pages\n/Count 3' in self.request.get('pdf_file_content').getvalue())
 
     def test_pm_ftw_labels_viewlet_available(self):
         """Only available on items if enabled in MeetingConfig."""

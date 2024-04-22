@@ -1773,7 +1773,9 @@ class testAnnexes(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         annex0 = self.addAnnex(item)
-        annex1 = self.addAnnex(item, annexType='preview-annex')
+        # must be PDF
+        self.assertRaises(Invalid, self.addAnnex, item, annexType='preview-annex')
+        annex1 = self.addAnnex(item, annexType='preview-annex', annexFile=self.annexFilePDF)
         annex2 = self.addAnnex(item, annexType='preview-hide-download-annex')
         infos = _categorized_elements(item)
         # every annexes were converted
