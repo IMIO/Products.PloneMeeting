@@ -2190,6 +2190,40 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.getAllCopyGroups(auto_real_plone_group_ids=True),
                          (self.developers_reviewers, self.vendors_reviewers))
 
+    def test_pm_RestrictedCopyGroupes(self):
+        """Test MeetingItem.restrictedCopyGroups, a second level
+           of copy groups complementary to MeetingItem.copyGroups."""
+        self._enableField(('copyGroups', 'restrictedCopyGroups'))
+        self.vendors.as_copy_group_on = "python: ['creators']"
+        self.developers.as_restricted_copy_group_on = "python: ['creators']"
+        cfg = self.meetingConfig
+        cfg.setItemCopyGroupsStates(('itemcreated', ))
+        cfg.setSelectableRestrictedCopyGroups((self.developers_observers, self.vendors_observers))
+        cfg.setItemRestrictedCopyGroupsStates(('validated', ))
+        # create item for vendors
+        self.changeUser('pmCreator2')
+        item = self.create('MeetingItem',
+                           copyGroups=(self.developers_reviewers, ),
+                           restrictedCopyGroups=(self.developers_observers, ))
+        self.assertEqual(item.getAllCopyGroups(True),
+                         (self.developers_reviewers, self.vendors_creators))
+        self.assertEqual(item.getAllRestrictedCopyGroups(True),
+                         (self.developers_observers, self.developers_creators))
+        # no access for now for restricted copy groups
+        # copyGroups
+        self.assertTrue(self.developers_reviewers in item.__ac_local_roles__)
+        self.assertTrue(self.vendors_creators in item.__ac_local_roles__)
+        # restrictedCopyGroups
+        self.assertFalse(self.developers_observers in item.__ac_local_roles__)
+        self.assertFalse(self.developers_creators in item.__ac_local_roles__)
+        self.validateItem(item)
+        # copyGroups, vendors_creators still access as vendors is proposingGroup
+        self.assertFalse(self.developers_reviewers in item.__ac_local_roles__)
+        self.assertTrue(self.vendors_creators in item.__ac_local_roles__)
+        # restrictedCopyGroups
+        self.assertTrue(self.developers_observers in item.__ac_local_roles__)
+        self.assertTrue(self.developers_creators in item.__ac_local_roles__)
+
     def test_pm_UpdateAdvices(self):
         '''Test if local roles for adviser groups, are still correct when an item is edited
            Only 'power observers' corresponding local role local should be impacted.

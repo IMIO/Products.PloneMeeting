@@ -1795,6 +1795,23 @@ schema = Schema((
         multiValued=1,
         vocabulary_factory='Products.PloneMeeting.vocabularies.itemcopygroupsvocabulary',
     ),
+    LinesField(
+        name='restrictedCopyGroups',
+        widget=MultiSelectionWidget(
+            size=10,
+            condition="python: here.attribute_is_used('restrictedCopyGroups')",
+            description="RestrictedCopyGroupsItems",
+            description_msgid="restricted_groups_item_descr",
+            format="checkbox",
+            label='Restrictedcopygroups',
+            label_msgid='PloneMeeting_label_restrictedCopyGroups',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+        enforceVocabulary=True,
+        multiValued=1,
+        vocabulary_factory='Products.PloneMeeting.vocabularies.itemrestrictedcopygroupsvocabulary',
+    ),
     StringField(
         name='pollType',
         widget=SelectionWidget(
@@ -3687,11 +3704,34 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             allGroups += tuple(self.autoCopyGroups)
         return allGroups
 
-    def check_copy_groups_have_access(self):
+    security.declarePublic('getAllRestrictedCopyGroups')
+
+    def getAllRestrictedCopyGroups(self, auto_real_plone_group_ids=False):
+        """Return manually selected restrictedCopyGroups and automatically added ones.
+           If p_auto_real_plone_group_ids is True, the real Plone group id is returned for
+           automatically added groups instead of the AUTO_COPY_GROUP_PREFIX prefixed name."""
+        allGroups = self.getRestrictedCopyGroups()
+        autoRestrictedCopyGroups = getattr(self, 'autoRestrictedCopyGroups', [])
+        if auto_real_plone_group_ids:
+            allGroups += tuple([self._realCopyGroupId(plone_group_id)
+                                for plone_group_id in autoRestrictedCopyGroups])
+        else:
+            allGroups += tuple(autoRestrictedCopyGroups)
+        return allGroups
+
+    security.declarePublic('getAllBothCopyGroups')
+
+    def getAllBothCopyGroups(self, auto_real_plone_group_ids=True):
+        """Get all both common and restricted copy groups."""
+        return self.getAllCopyGroups(auto_real_plone_group_ids=auto_real_plone_group_ids) + \
+            self.getAllRestrictedCopyGroups(auto_real_plone_group_ids=auto_real_plone_group_ids)
+
+    def check_copy_groups_have_access(self, restricted=False):
         """Return True if copyGroups have access in current review_state."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        return self.query_state() in cfg.getItemCopyGroupsStates()
+        return self.query_state() in cfg.getItemRestrictedCopyGroupsStates() \
+            if restricted else self.query_state() in cfg.getItemCopyGroupsStates()
 
     security.declarePublic('checkPrivacyViewable')
 
@@ -5085,6 +5125,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """Send notifications that depends on old/new review_state."""
         self._sendAdviceToGiveMailIfRelevant(old_review_state, new_review_state)
         self._sendCopyGroupsMailIfRelevant(old_review_state, new_review_state)
+        self._sendRestrictedCopyGroupsMailIfRelevant(old_review_state, new_review_state)
         # send e-mail to group suffix
         # both notitifications may be enabled in configuration to manage when item
         # back to itemcreated from presented (when using WFA
@@ -5162,6 +5203,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """See docstring in interfaces.py"""
         return True
 
+    def _sendCopyGroupsToGroup(self, groupId):
+        """See docstring in interfaces.py"""
+        return True
+
     def _sendCopyGroupsMailIfRelevant(self, old_review_state, new_review_state):
         '''A transition was fired on self, check if, in the new item state,
            copy groups have now access to the item.'''
@@ -5186,9 +5231,34 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if plone_group_ids:
             return sendMailIfRelevant(self, 'copyGroups', plone_group_ids, isGroupIds=True)
 
-    def _sendCopyGroupsToGroup(self, groupId):
+    def _sendRestrictedCopyGroupsToGroup(self, groupId):
         """See docstring in interfaces.py"""
         return True
+
+    def _sendRestrictedCopyGroupsMailIfRelevant(self, old_review_state, new_review_state):
+        '''A transition was fired on self, check if, in the new item state,
+           restricted copy groups have now access to the item.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        if 'restrictedCopyGroups' not in cfg.getMailItemEvents():
+            return
+
+        restrictedCopyGroupsStates = cfg.getItemRestrictedCopyGroupsStates()
+        # Ignore if current state not in restrictedCopyGroupsStates
+        # Ignore if restrictedCopyGroups had already access in previous state
+        if new_review_state not in restrictedCopyGroupsStates or \
+           old_review_state in restrictedCopyGroupsStates:
+            return
+        # Send a mail to every person from getAllRestrictedCopyGroups
+        plone_group_ids = []
+        for plone_group_id in self.getAllRestrictedCopyGroups(auto_real_plone_group_ids=True):
+            # call hook '_sendRestrictedCopyGroupsToGroup' to be able to bypass
+            # send of this notification to some defined groups
+            if not self.adapted()._sendRestrictedCopyGroupsToGroup(plone_group_id):
+                continue
+            plone_group_ids.append(plone_group_id)
+        if plone_group_ids:
+            return sendMailIfRelevant(self, 'restrictedCopyGroups', plone_group_ids, isGroupIds=True)
 
     def _get_proposing_group_suffix_notified_user_ids_for_review_state(
             self,
@@ -5544,17 +5614,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('addAutoCopyGroups')
 
-    def addAutoCopyGroups(self, isCreated):
+    def addAutoCopyGroups(self, isCreated, restricted=False):
         '''What group should be automatically set as copyGroups for this item?
            We get it by evaluating the TAL expression on every active
            organization.as_copy_group_on. The expression returns a list of suffixes
            or an empty list.  The method update existing copyGroups and add groups
            prefixed with AUTO_COPY_GROUP_PREFIX.'''
         # empty stored autoCopyGroups
-        self.autoCopyGroups = PersistentList()
+        attr_name = 'autoRestrictedCopyGroups' if restricted else 'autoCopyGroups'
+        setattr(self, attr_name, PersistentList())
+        attr = getattr(self, attr_name)
         extra_expr_ctx = _base_extra_expr_ctx(self)
         cfg = extra_expr_ctx['cfg']
-        for org_uid, expr in cfg.get_orgs_with_as_copy_group_on_expression().items():
+        for org_uid, expr in cfg.get_orgs_with_as_copy_group_on_expression(
+                restricted=restricted).items():
             extra_expr_ctx.update({'item': self,
                                    'isCreated': isCreated,
                                    'org_uid': org_uid})
@@ -5577,7 +5650,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     continue
                 plone_group_id = get_plone_group_id(org_uid, suffix)
                 auto_plone_group_id = '{0}{1}'.format(AUTO_COPY_GROUP_PREFIX, plone_group_id)
-                self.autoCopyGroups.append(auto_plone_group_id)
+                attr.append(auto_plone_group_id)
 
     def _evalAdviceAvailableOn(self, available_on_expr, mayEdit=True):
         """ """
@@ -5958,15 +6031,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('displayCopyGroups')
 
-    def displayCopyGroups(self):
+    def displayCopyGroups(self, restricted=False):
         '''Display copy groups on the item view, especially the link showing users of a group.'''
         portal_url = api.portal.get().absolute_url()
+        field_name = 'restrictedCopyGroups' if restricted else 'copyGroups'
         copyGroupsVocab = get_vocab(
             self,
-            self.getField('copyGroups').vocabulary_factory,
+            self.getField(field_name).vocabulary_factory,
             **{'include_auto': True, })
         res = []
-        allCopyGroups = self.getAllCopyGroups()
+        allCopyGroups = self.getAllRestrictedCopyGroups() if restricted else self.getAllCopyGroups()
         for term in copyGroupsVocab._terms:
             if term.value not in allCopyGroups:
                 continue
@@ -6837,10 +6911,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getCopyGroupsHelpMsg')
 
-    def getCopyGroupsHelpMsg(self, cfg):
+    def getCopyGroupsHelpMsg(self, cfg, restricted=False):
         '''Help message regarding copy groups configuration.'''
-        translated_states = translate_list(cfg.getItemCopyGroupsStates())
-        msg = translate(msgid="copy_groups_help_msg",
+        if restricted:
+            translated_states = translate_list(cfg.getItemRestrictedCopyGroupsStates())
+            msgid = "restricted_copy_groups_help_msg"
+        else:
+            translated_states = translate_list(cfg.getItemCopyGroupsStates())
+            msgid = "copy_groups_help_msg"
+        msg = translate(msgid=msgid,
                         domain="PloneMeeting",
                         mapping={"states": translated_states},
                         context=self.REQUEST)
@@ -6889,7 +6968,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item_advice_states = cfg.getItemAdviceStatesForOrg(adviceInfos['id'])
         translated_item_advice_states = translate_list(item_advice_states)
         advice_states_msg = translate(
-            'This advice is addable in following states : ${item_advice_states}.',
+            'This advice is addable in following states: ${item_advice_states}.',
             mapping={'item_advice_states': translated_item_advice_states},
             domain="PloneMeeting",
             context=self.REQUEST)
@@ -7102,6 +7181,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # update local roles regarding copyGroups
         isCreated = kwargs.get('isCreated', None)
         self._updateCopyGroupsLocalRoles(isCreated, cfg, item_state)
+        self._updateRestrictedCopyGroupsLocalRoles(isCreated, cfg, item_state)
         # Update advices after update_local_roles because it
         # reinitialize existing local roles
         triggered_by_transition = kwargs.get('triggered_by_transition', None)
@@ -7192,6 +7272,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         copyGroupIds = self.getAllCopyGroups(auto_real_plone_group_ids=True)
         for copyGroupId in copyGroupIds:
             self.manage_addLocalRoles(copyGroupId, (READER_USECASES['copy_groups'],))
+
+    def _updateRestrictedCopyGroupsLocalRoles(self, isCreated, cfg, item_state):
+        '''Give the 'Reader' local role to the restricted copy groups
+           depending on what is defined in the corresponding meetingConfig.'''
+        if not self.attribute_is_used('restrictedCopyGroups'):
+            return
+        # Check if some copyGroups must be automatically added
+        self.addAutoCopyGroups(isCreated=isCreated, restricted=True)
+
+        # check if copyGroups should have access to this item for current review state
+        if item_state not in cfg.getItemRestrictedCopyGroupsStates():
+            return
+        # Add the local roles corresponding to the selected restrictedCopyGroups.
+        # We give the 'Reader' role to the selected groups.
+        # This will give them a read-only access to the item.
+        restrictedCopyGroupIds = self.getAllRestrictedCopyGroups(auto_real_plone_group_ids=True)
+        for restrictedCopyGroupId in restrictedCopyGroupIds:
+            self.manage_addLocalRoles(
+                restrictedCopyGroupId, (READER_USECASES['restricted_copy_groups'],))
 
     def _updatePowerObserversLocalRoles(self, cfg, item_state):
         '''Give local roles to the groups defined in MeetingConfig.powerObservers.'''

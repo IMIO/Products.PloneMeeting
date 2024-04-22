@@ -127,9 +127,12 @@ def Description(obj):
 @indexer(IMeetingItem)
 def getCopyGroups(obj):
     """
-      Compute getCopyGroups to take auto copyGroups into account.
+      Compute copyGroups and restrictedCopyGroups to take auto copyGroups into account.
+      restrictedCopyGroups are prefixed by restricted__ so it can be displayed differently
+      in dashboard filter and column.
     """
-    return obj.getAllCopyGroups(auto_real_plone_group_ids=True) or EMPTY_STRING
+    return obj.getAllCopyGroups(auto_real_plone_group_ids=True) + \
+        obj.getAllRestrictedCopyGroups(auto_real_plone_group_ids=True) or EMPTY_STRING
 
 
 @indexer(IMeetingItem)

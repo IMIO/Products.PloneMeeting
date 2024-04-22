@@ -132,7 +132,7 @@
                      i18n:translate="legend_details" i18n:domain="plone">Details</a>
             </div>
 
-            <tal:comment replace="nothing">Copy groups for this item</tal:comment>
+            <tal:comment replace="nothing">Copy groups</tal:comment>
             <tal:copyGroups condition="python: context.attribute_is_used('copyGroups')">
                 <div class="discreet" tal:define="copyGroups python: context.getAllCopyGroups();
                                                   copy_groups_have_access python: context.check_copy_groups_have_access();">
@@ -149,6 +149,24 @@
                     <span tal:condition="not: copyGroups">-</span>
                 </div>
             </tal:copyGroups>
+
+            <tal:comment replace="nothing">Restricted copy groups</tal:comment>
+            <tal:restrictedCopyGroups condition="python: context.attribute_is_used('restrictedCopyGroups')">
+                <div class="discreet" tal:define="restrictedCopyGroups python: context.getAllRestrictedCopyGroups();
+                                                  restricted_copy_groups_have_access python: context.check_copy_groups_have_access(restricted=True);">
+                    <span tal:attributes="class python: restricted_copy_groups_have_access and 'green-colored pmHelp' or 'pmHelp';
+                                          title python: context.getCopyGroupsHelpMsg(cfg, restricted=True);"
+                          i18n:attributes="title">
+                      <span class="item_attribute_label"
+                            i18n:translate="PloneMeeting_label_restrictedCopyGroups"></span>
+                      <span class="fa fa-question-circle help-doc"></span>
+                    </span>:&nbsp;&nbsp;
+                    <tal:displayRestrictedCopyGroups condition="restrictedCopyGroups">
+                        <span tal:replace="structure python: context.displayCopyGroups(restricted=True)">Restricted copy groups</span>
+                    </tal:displayRestrictedCopyGroups>
+                    <span tal:condition="not: restrictedCopyGroups">-</span>
+                </div>
+            </tal:restrictedCopyGroups>
 
             <tal:comment replace="nothing">Item is signed?</tal:comment>
             <div class="discreet"

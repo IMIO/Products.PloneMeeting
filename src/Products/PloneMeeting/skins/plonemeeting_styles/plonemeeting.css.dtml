@@ -556,10 +556,6 @@ div#content.advice_infos_tooltipster legend {
    height: auto;
 }
 
-div#content.advice_infos_tooltipster legend acronym {
-   margin-right: 0.25em;
-}
-
 /* align [+][-] with following text and icons */
 div#content.advice_infos_tooltipster div.collapsible {
     vertical-align: bottom;

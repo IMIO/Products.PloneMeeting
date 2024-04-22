@@ -2506,27 +2506,32 @@ class ItemAssociatedGroupsVocabulary(AssociatedGroupsVocabulary):
 ItemAssociatedGroupsVocabularyFactory = ItemAssociatedGroupsVocabulary()
 
 
-class CopyGroupsVocabulary(object):
+class BaseCopyGroupsVocabulary(object):
     """ """
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context):
+    def __call___cachekey(method, self, context, restricted=False, include_both=False):
         '''cachekey method for self.__call__.'''
         # this volatile is invalidated when plonegroup config changed
         date = get_cachekey_volatile(
             '_users_groups_value')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, repr(cfg)
+        return date, repr(cfg), restricted, include_both
 
     @ram.cache(__call___cachekey)
-    def CopyGroupsVocabulary__call__(self, context):
+    def CopyGroupsVocabulary__call__(self, context, restricted=False, include_both=False):
         '''Lists the groups that will be selectable to be in copy for this item.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         portal_groups = api.portal.get_tool('portal_groups')
         terms = []
-        for groupId in cfg.getSelectableCopyGroups():
+        if include_both:
+            groupIds = cfg.getSelectableCopyGroups() + cfg.getSelectableRestrictedCopyGroups()
+        else:
+            groupIds = cfg.getSelectableRestrictedCopyGroups() if restricted \
+                else cfg.getSelectableCopyGroups()
+        for groupId in groupIds:
             group = portal_groups.getGroupById(groupId)
             terms.append(SimpleTerm(groupId, groupId, safe_unicode(group.getProperty('title'))))
 
@@ -2537,23 +2542,30 @@ class CopyGroupsVocabulary(object):
     __call__ = CopyGroupsVocabulary__call__
 
 
+class CopyGroupsVocabulary(BaseCopyGroupsVocabulary):
+
+    def __call__(self, context, restricted=False, include_both=True):
+        """ """
+        return super(CopyGroupsVocabulary, self).__call__(
+            context, restricted=restricted, include_both=include_both)
+
+
 CopyGroupsVocabularyFactory = CopyGroupsVocabulary()
 
 
-class ItemCopyGroupsVocabulary(CopyGroupsVocabulary):
+class ItemCopyGroupsVocabulary(BaseCopyGroupsVocabulary):
     """Manage missing terms if context is a MeetingItem."""
 
-    implements(IVocabularyFactory)
-
-    def __call__(self, context, include_auto=False):
+    def __call__(self, context, include_auto=False, restricted=False, include_both=False):
         """This is not ram.cached."""
         terms = super(ItemCopyGroupsVocabulary, self).__call__(context)._terms
         # make sure we have a copy of _terms because we will add some
         terms = list(terms)
         # include terms for autoCopyGroups if relevant
         portal_groups = api.portal.get_tool('portal_groups')
-        if include_auto and context.autoCopyGroups:
-            for autoGroupId in context.autoCopyGroups:
+        auto_attr_name = 'autoRestrictedCopyGroups' if restricted else 'autoCopyGroups'
+        if include_auto:
+            for autoGroupId in getattr(context, auto_attr_name):
                 groupId = context._realCopyGroupId(autoGroupId)
                 group = portal_groups.getGroupById(groupId)
                 if group:
@@ -2564,7 +2576,7 @@ class ItemCopyGroupsVocabulary(CopyGroupsVocabulary):
                     terms.append(SimpleTerm(autoGroupId, autoGroupId, autoGroupId))
 
         # manage missing terms
-        copyGroups = context.getCopyGroups()
+        copyGroups = context.getRestrictedCopyGroups() if restricted else context.getCopyGroups()
         if copyGroups:
             copyGroupsInVocab = [term.value for term in terms]
             for groupId in copyGroups:
@@ -2589,6 +2601,18 @@ class ItemCopyGroupsVocabulary(CopyGroupsVocabulary):
 
 
 ItemCopyGroupsVocabularyFactory = ItemCopyGroupsVocabulary()
+
+
+class ItemRestrictedCopyGroupsVocabulary(BaseCopyGroupsVocabulary):
+    """Manage missing terms for restricted copy groups if context is a MeetingItem."""
+
+    def __call__(self, context, include_auto=False, restricted=True):
+        """This is not ram.cached."""
+        return super(ItemRestrictedCopyGroupsVocabulary, self).__call__(
+            context, restricted=restricted)
+
+
+ItemRestrictedCopyGroupsVocabularyFactory = ItemRestrictedCopyGroupsVocabulary()
 
 
 class SelectableCommitteesVocabulary(object):

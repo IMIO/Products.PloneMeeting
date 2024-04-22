@@ -1184,6 +1184,15 @@
           <td></td>
         </tr>
         <tr valign="top">
+          <td tal:define="field python:here.getField('selectableRestrictedCopyGroups')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('itemRestrictedCopyGroupsStates')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td></td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('hideHistoryTo')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
