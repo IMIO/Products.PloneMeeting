@@ -16,6 +16,7 @@ from zope.interface import alsoProvides
 
 class IAdviceAccountingCommitmentBehavior(model.Schema):
 
+    form.order_before(advice_accounting_commitment='advice_reference')
     form.widget('advice_accounting_commitment', PMRichTextFieldWidget)
     advice_accounting_commitment = RichText(
         title=_(u"title_advice_accounting_commitment"),

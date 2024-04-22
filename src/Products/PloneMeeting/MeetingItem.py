@@ -10,6 +10,7 @@ from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collections import OrderedDict
 from collective.behavior.internalnumber.browser.settings import _internal_number_is_used
 from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.contact.plonegroup.config import get_registry_functions
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
@@ -26,7 +27,6 @@ from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import object_values
 from imio.helpers.content import safe_delattr
-from imio.helpers.content import safe_encode
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.content import uuidToObject
@@ -38,6 +38,7 @@ from imio.history.utils import add_event_to_wf_history
 from imio.history.utils import get_all_history_attr
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
+from imio.pyutils.utils import safe_encode
 from natsort import humansorted
 from OFS.ObjectManager import BeforeDeleteException
 from persistent.list import PersistentList
@@ -880,7 +881,7 @@ class MeetingItemWorkflowActions(object):
                 not_starting_with='back'):
             meetingExecuteActionOnLinkedItems(
                 meeting, transition.id, [self.context])
-
+        self.context.send_powerobservers_mail_if_relevant('late_item_in_meeting')
     security.declarePrivate('doItemFreeze')
 
     def doItemFreeze(self, stateChange):
@@ -1801,6 +1802,23 @@ schema = Schema((
         multiValued=1,
         vocabulary_factory='Products.PloneMeeting.vocabularies.itemcopygroupsvocabulary',
     ),
+    LinesField(
+        name='restrictedCopyGroups',
+        widget=MultiSelectionWidget(
+            size=10,
+            condition="python: here.attribute_is_used('restrictedCopyGroups')",
+            description="RestrictedCopyGroupsItems",
+            description_msgid="restricted_groups_item_descr",
+            format="checkbox",
+            label='Restrictedcopygroups',
+            label_msgid='PloneMeeting_label_restrictedCopyGroups',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+        enforceVocabulary=True,
+        multiValued=1,
+        vocabulary_factory='Products.PloneMeeting.vocabularies.itemrestrictedcopygroupsvocabulary',
+    ),
     StringField(
         name='pollType',
         widget=SelectionWidget(
@@ -2177,15 +2195,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                       self.Title(withMeetingDate=True))
         return self.Title(withMeetingDate=True)
 
-    def Title(self, withMeetingDate=False, **kwargs):
+    def Title(self, withMeetingDate=False, withItemNumber=False, withItemReference=False, **kwargs):
         title = self.getField('title').get(self, **kwargs)
-        if withMeetingDate:
-            meeting = self.getMeeting()
-            # XXX check on datetime to be removed after Meeting migration to DX
-            if meeting and isinstance(meeting.date, datetime):
-                tool = api.portal.get_tool('portal_plonemeeting')
-                return "{0} ({1})".format(
-                    title, tool.format_date(meeting.date, with_hour=True).encode('utf-8'))
+        if withItemReference and self.getItemReference():
+            title = "[{0}] {1}".format(self.getItemReference(), title)
+        if self.hasMeeting():
+            if withItemNumber:
+                title = "{0}. {1}".format(self.getItemNumber(for_display=True), title)
+            if withMeetingDate:
+                meeting = self.getMeeting()
+                # XXX check on datetime to be removed after Meeting migration to DX
+                if meeting and isinstance(meeting.date, datetime):
+                    tool = api.portal.get_tool('portal_plonemeeting')
+                    title = "{0} ({1})".format(
+                        title, tool.format_date(meeting.date, with_hour=True).encode('utf-8'))
         return title
 
     security.declarePublic('getPrettyLink')
@@ -3530,13 +3553,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('displayLinkedItem')
 
     def displayLinkedItem(self, item):
-        '''Return a HTML structure to display a linked item.'''
-        # display the meeting date if the item is linked to a meeting
-        if item.hasMeeting():
-            return item.getPrettyLink(contentValue=item.Title(withMeetingDate=True))
-        else:
-            # try to share cache of getPrettyLink
-            return item.getPrettyLink()
+        '''Return a HTML structure to display a linked item.
+           If linked to a meeting, display the meeting date.'''
+        return item.getPrettyLink(contentValue=item.Title(withMeetingDate=True))
 
     def getMeeting(self, only_uid=False, caching=True):
         '''Returns the linked meeting if it exists.'''
@@ -3693,11 +3712,34 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             allGroups += tuple(self.autoCopyGroups)
         return allGroups
 
-    def check_copy_groups_have_access(self):
+    security.declarePublic('getAllRestrictedCopyGroups')
+
+    def getAllRestrictedCopyGroups(self, auto_real_plone_group_ids=False):
+        """Return manually selected restrictedCopyGroups and automatically added ones.
+           If p_auto_real_plone_group_ids is True, the real Plone group id is returned for
+           automatically added groups instead of the AUTO_COPY_GROUP_PREFIX prefixed name."""
+        allGroups = self.getRestrictedCopyGroups()
+        autoRestrictedCopyGroups = getattr(self, 'autoRestrictedCopyGroups', [])
+        if auto_real_plone_group_ids:
+            allGroups += tuple([self._realCopyGroupId(plone_group_id)
+                                for plone_group_id in autoRestrictedCopyGroups])
+        else:
+            allGroups += tuple(autoRestrictedCopyGroups)
+        return allGroups
+
+    security.declarePublic('getAllBothCopyGroups')
+
+    def getAllBothCopyGroups(self, auto_real_plone_group_ids=True):
+        """Get all both common and restricted copy groups."""
+        return self.getAllCopyGroups(auto_real_plone_group_ids=auto_real_plone_group_ids) + \
+            self.getAllRestrictedCopyGroups(auto_real_plone_group_ids=auto_real_plone_group_ids)
+
+    def check_copy_groups_have_access(self, restricted=False):
         """Return True if copyGroups have access in current review_state."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        return self.query_state() in cfg.getItemCopyGroupsStates()
+        return self.query_state() in cfg.getItemRestrictedCopyGroupsStates() \
+            if restricted else self.query_state() in cfg.getItemCopyGroupsStates()
 
     security.declarePublic('checkPrivacyViewable')
 
@@ -4245,21 +4287,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                forceUseCertifiedSignaturesOnMeetingConfig=False,
                                from_group_in_charge=False,
                                listify=True):
-        '''See docstring in interfaces.py.'''
-        item = self.getSelf()
+        '''Gets the certified signatures for this item.
+           Either use signatures defined on the proposing MeetingGroup if exists,
+           or use the meetingConfig certified signatures.
+           If p_forceUseCertifiedSignaturesOnMeetingConfig, signatures defined on
+           the MeetingConfig will be used, no matter signatures are defined on the proposing group.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(item)
+        cfg = tool.getMeetingConfig(self)
         if forceUseCertifiedSignaturesOnMeetingConfig:
             return cfg.getCertifiedSignatures(computed=True, listify=listify)
 
         selected_group_in_charge = None
         if from_group_in_charge:
-            selected_group_in_charge = item.getGroupsInCharge(
+            selected_group_in_charge = self.getGroupsInCharge(
                 theObjects=True, fromOrgIfEmpty=True, fromCatIfEmpty=True, first=True)
         # get certified signatures computed, this will return a list with pair
-        # of function/signatures, so ['function1', 'name1', 'function2', 'name2', 'function3', 'name3', ]
+        # of function/signatures, so ['function1', 'name1', 'function2', 'name2']
         # this list is ordered by signature number defined on the organization/MeetingConfig
-        return item.getProposingGroup(theObject=True).get_certified_signatures(
+        return self.getProposingGroup(theObject=True).get_certified_signatures(
             computed=True, cfg=cfg, group_in_charge=selected_group_in_charge, listify=listify)
 
     def is_assembly_field_used(self, field_name):
@@ -5088,6 +5133,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """Send notifications that depends on old/new review_state."""
         self._sendAdviceToGiveMailIfRelevant(old_review_state, new_review_state)
         self._sendCopyGroupsMailIfRelevant(old_review_state, new_review_state)
+        self._sendRestrictedCopyGroupsMailIfRelevant(old_review_state, new_review_state)
         # send e-mail to group suffix
         # both notitifications may be enabled in configuration to manage when item
         # back to itemcreated from presented (when using WFA
@@ -5165,6 +5211,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """See docstring in interfaces.py"""
         return True
 
+    def _sendCopyGroupsToGroup(self, groupId):
+        """See docstring in interfaces.py"""
+        return True
+
     def _sendCopyGroupsMailIfRelevant(self, old_review_state, new_review_state):
         '''A transition was fired on self, check if, in the new item state,
            copy groups have now access to the item.'''
@@ -5189,9 +5239,34 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if plone_group_ids:
             return sendMailIfRelevant(self, 'copyGroups', plone_group_ids, isGroupIds=True)
 
-    def _sendCopyGroupsToGroup(self, groupId):
+    def _sendRestrictedCopyGroupsToGroup(self, groupId):
         """See docstring in interfaces.py"""
         return True
+
+    def _sendRestrictedCopyGroupsMailIfRelevant(self, old_review_state, new_review_state):
+        '''A transition was fired on self, check if, in the new item state,
+           restricted copy groups have now access to the item.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        if 'restrictedCopyGroups' not in cfg.getMailItemEvents():
+            return
+
+        restrictedCopyGroupsStates = cfg.getItemRestrictedCopyGroupsStates()
+        # Ignore if current state not in restrictedCopyGroupsStates
+        # Ignore if restrictedCopyGroups had already access in previous state
+        if new_review_state not in restrictedCopyGroupsStates or \
+           old_review_state in restrictedCopyGroupsStates:
+            return
+        # Send a mail to every person from getAllRestrictedCopyGroups
+        plone_group_ids = []
+        for plone_group_id in self.getAllRestrictedCopyGroups(auto_real_plone_group_ids=True):
+            # call hook '_sendRestrictedCopyGroupsToGroup' to be able to bypass
+            # send of this notification to some defined groups
+            if not self.adapted()._sendRestrictedCopyGroupsToGroup(plone_group_id):
+                continue
+            plone_group_ids.append(plone_group_id)
+        if plone_group_ids:
+            return sendMailIfRelevant(self, 'restrictedCopyGroups', plone_group_ids, isGroupIds=True)
 
     def _get_proposing_group_suffix_notified_user_ids_for_review_state(
             self,
@@ -5301,6 +5376,50 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             )
 
         return sendMailIfRelevant(self, mail_event_id, notified_user_ids, isUserIds=True)
+
+    def send_powerobservers_mail_if_relevant(self, mail_event_type):
+        """
+        Send mail to powerobservers if event is enabled in the configuration.
+        mail_event_type is the event to send and is the left-handed part of the mail event id.
+        """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+
+        res = []
+        cfg_id = cfg.getId()
+        for po_infos in cfg.getPowerObservers():
+            mail_event_id = "{0}__{1}".format(mail_event_type, po_infos['row_id'])
+            if mail_event_id in cfg.getMailItemEvents():
+                group_id = "{0}_{1}".format(cfg_id, po_infos['row_id'])
+                res.append(sendMailIfRelevant(self,
+                                              mail_event_type,
+                                              [group_id],
+                                              customEvent=True,
+                                              isGroupIds=True))
+        return res
+
+    def send_suffixes_and_owner_mail_if_relevant(self, mail_event_type):
+        """
+        Send mail to suffixes and owner if event is enabled in the configuration.
+        mail_event_type is the event to send and is the left-handed part of the mail event id.
+        """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        suffixes = [fct['fct_id'] for fct in get_registry_functions() if fct['enabled']]
+        roles = ["Owner"]  # To be completed ?
+        targets = suffixes + roles
+
+        res = []
+        for target in targets:
+            mail_event_id = "{0}__{1}".format(mail_event_type, target)
+            if mail_event_id in cfg.getMailItemEvents():
+                res.append(sendMailIfRelevant(self,
+                                              mail_event_type,
+                                              target,
+                                              customEvent=True,
+                                              isRole=target in roles,
+                                              isSuffix=target in suffixes))
+        return res
 
     security.declarePublic('sendAdviceDelayWarningMailIfRelevant')
 
@@ -5503,18 +5622,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('addAutoCopyGroups')
 
-    def addAutoCopyGroups(self, isCreated):
+    def addAutoCopyGroups(self, isCreated, restricted=False):
         '''What group should be automatically set as copyGroups for this item?
            We get it by evaluating the TAL expression on every active
            organization.as_copy_group_on. The expression returns a list of suffixes
            or an empty list.  The method update existing copyGroups and add groups
            prefixed with AUTO_COPY_GROUP_PREFIX.'''
         # empty stored autoCopyGroups
-        self.autoCopyGroups = PersistentList()
+        attr_name = 'autoRestrictedCopyGroups' if restricted else 'autoCopyGroups'
+        setattr(self, attr_name, PersistentList())
+        attr = getattr(self, attr_name)
         extra_expr_ctx = _base_extra_expr_ctx(self)
         cfg = extra_expr_ctx['cfg']
-        for org_uid, expr in cfg.get_orgs_with_as_copy_group_on_expression().items():
-            extra_expr_ctx.update({'item': self, 'isCreated': isCreated})
+        for org_uid, expr in cfg.get_orgs_with_as_copy_group_on_expression(
+                restricted=restricted).items():
+            extra_expr_ctx.update({'item': self,
+                                   'isCreated': isCreated,
+                                   'org_uid': org_uid})
             suffixes = _evaluateExpression(
                 self,
                 expression=expr,
@@ -5534,7 +5658,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     continue
                 plone_group_id = get_plone_group_id(org_uid, suffix)
                 auto_plone_group_id = '{0}{1}'.format(AUTO_COPY_GROUP_PREFIX, plone_group_id)
-                self.autoCopyGroups.append(auto_plone_group_id)
+                attr.append(auto_plone_group_id)
 
     def _evalAdviceAvailableOn(self, available_on_expr, mayEdit=True):
         """ """
@@ -5915,15 +6039,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('displayCopyGroups')
 
-    def displayCopyGroups(self):
+    def displayCopyGroups(self, restricted=False):
         '''Display copy groups on the item view, especially the link showing users of a group.'''
         portal_url = api.portal.get().absolute_url()
+        field_name = 'restrictedCopyGroups' if restricted else 'copyGroups'
         copyGroupsVocab = get_vocab(
             self,
-            self.getField('copyGroups').vocabulary_factory,
+            self.getField(field_name).vocabulary_factory,
             **{'include_auto': True, })
         res = []
-        allCopyGroups = self.getAllCopyGroups()
+        allCopyGroups = self.getAllRestrictedCopyGroups() if restricted else self.getAllCopyGroups()
         for term in copyGroupsVocab._terms:
             if term.value not in allCopyGroups:
                 continue
@@ -6183,19 +6308,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for advice in self.getAdvices():
             self._delObject(advice.getId(), suppress_events=suppress_events)
 
-    def _adviceDelayIsTimedOut(self, groupId, computeNewDelayInfos=False):
+    def _adviceDelayIsTimedOut(self, groupId, computeNewDelayInfos=False, adviceInfo=None):
         """Returns True if given p_advice is delay-aware and delay is timed out.
            If p_computeNewDelayInfos is True, we will not take delay_infos from the
            adviceIndex but call getDelayInfosForAdvice to get fresh data."""
-        if not self.adviceIndex[groupId]['delay']:
+        adviceInfo = adviceInfo or self.adviceIndex[groupId]
+        if not adviceInfo['delay']:
             return False
         # in some case, when creating advice, if adviserIndex is reindexed before
         # _updateAdvices is finished, we do not have the 'delay_infos' in the adviceIndex
         # in this case, no matter p_computeNewDelayInfos we use getDelayInfosForAdvice
-        if computeNewDelayInfos or 'delay_infos' not in self.adviceIndex[groupId]:
+        if computeNewDelayInfos or 'delay_infos' not in adviceInfo:
             delay_infos = self.getDelayInfosForAdvice(groupId)
         else:
-            delay_infos = self.adviceIndex[groupId]['delay_infos']
+            delay_infos = adviceInfo['delay_infos']
         return delay_infos['delay_status'] == 'timed_out' or \
             delay_infos['delay_status_when_stopped'] == 'stopped_timed_out'
 
@@ -6284,7 +6410,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         adapted = self.adapted()
         for org_uid, adviceInfo in self.adviceIndex.iteritems():
             saved_stored_data[org_uid] = {}
-            reinit_delay = adapted._adviceDelayWillBeReinitialized(
+            reinit_delay = self._adviceDelayWillBeReinitialized(
                 org_uid, adviceInfo, isTransitionReinitializingDelays)
             if reinit_delay or org_uid in inheritedAdviserUids:
                 saved_stored_data[org_uid]['delay_started_on'] = None
@@ -6674,9 +6800,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         adviceInfo,
                                         isTransitionReinitializingDelays):
         '''See doc in interfaces.py.'''
-        item = self.getSelf()
         reinit_delay = False
-        if isTransitionReinitializingDelays and not item._advice_is_given(org_uid):
+        if isTransitionReinitializingDelays and \
+           not self._advice_is_given(org_uid) and \
+           not self._adviceDelayIsTimedOut(
+                org_uid, computeNewDelayInfos=True, adviceInfo=adviceInfo):
             reinit_delay = True
         return reinit_delay
 
@@ -6791,10 +6919,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getCopyGroupsHelpMsg')
 
-    def getCopyGroupsHelpMsg(self, cfg):
+    def getCopyGroupsHelpMsg(self, cfg, restricted=False):
         '''Help message regarding copy groups configuration.'''
-        translated_states = translate_list(cfg.getItemCopyGroupsStates())
-        msg = translate(msgid="copy_groups_help_msg",
+        if restricted:
+            translated_states = translate_list(cfg.getItemRestrictedCopyGroupsStates())
+            msgid = "restricted_copy_groups_help_msg"
+        else:
+            translated_states = translate_list(cfg.getItemCopyGroupsStates())
+            msgid = "copy_groups_help_msg"
+        msg = translate(msgid=msgid,
                         domain="PloneMeeting",
                         mapping={"states": translated_states},
                         context=self.REQUEST)
@@ -6843,7 +6976,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item_advice_states = cfg.getItemAdviceStatesForOrg(adviceInfos['id'])
         translated_item_advice_states = translate_list(item_advice_states)
         advice_states_msg = translate(
-            'This advice is addable in following states : ${item_advice_states}.',
+            'This advice is addable in following states: ${item_advice_states}.',
             mapping={'item_advice_states': translated_item_advice_states},
             domain="PloneMeeting",
             context=self.REQUEST)
@@ -7081,6 +7214,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # update local roles regarding copyGroups
         isCreated = kwargs.get('isCreated', None)
         self._updateCopyGroupsLocalRoles(isCreated, cfg, item_state)
+        self._updateRestrictedCopyGroupsLocalRoles(isCreated, cfg, item_state)
         # Update advices after update_local_roles because it
         # reinitialize existing local roles
         triggered_by_transition = kwargs.get('triggered_by_transition', None)
@@ -7171,6 +7305,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         copyGroupIds = self.getAllCopyGroups(auto_real_plone_group_ids=True)
         for copyGroupId in copyGroupIds:
             self.manage_addLocalRoles(copyGroupId, (READER_USECASES['copy_groups'],))
+
+    def _updateRestrictedCopyGroupsLocalRoles(self, isCreated, cfg, item_state):
+        '''Give the 'Reader' local role to the restricted copy groups
+           depending on what is defined in the corresponding meetingConfig.'''
+        if not self.attribute_is_used('restrictedCopyGroups'):
+            return
+        # Check if some copyGroups must be automatically added
+        self.addAutoCopyGroups(isCreated=isCreated, restricted=True)
+
+        # check if copyGroups should have access to this item for current review state
+        if item_state not in cfg.getItemRestrictedCopyGroupsStates():
+            return
+        # Add the local roles corresponding to the selected restrictedCopyGroups.
+        # We give the 'Reader' role to the selected groups.
+        # This will give them a read-only access to the item.
+        restrictedCopyGroupIds = self.getAllRestrictedCopyGroups(auto_real_plone_group_ids=True)
+        for restrictedCopyGroupId in restrictedCopyGroupIds:
+            self.manage_addLocalRoles(
+                restrictedCopyGroupId, (READER_USECASES['restricted_copy_groups'],))
 
     def _updatePowerObserversLocalRoles(self, cfg, item_state):
         '''Give local roles to the groups defined in MeetingConfig.powerObservers.'''

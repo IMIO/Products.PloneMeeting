@@ -2032,7 +2032,18 @@ class testMeetingConfig(PloneMeetingTestCase):
             return
 
         proposed_state = self._stateMappingFor('proposed')
-        # config
+        # config, fix original_WAITING_ADVICES_FROM_STATES when called from subplugin
+        from Products.PloneMeeting.model import adaptations
+        original_WAITING_ADVICES_FROM_STATES = deepcopy(adaptations.WAITING_ADVICES_FROM_STATES)
+        adaptations.WAITING_ADVICES_FROM_STATES = {'*': (
+            {'from_states': (proposed_state, ),
+             'back_states': (proposed_state, ),
+             'perm_cloned_states': (proposed_state, ),
+             'remove_modify_access': True,
+             'use_custom_icon': False,
+             'use_custom_back_transition_title_for': (),
+             'use_custom_state_title': True, },), }
+
         waiting_advices_proposed_state = '{0}_waiting_advices'.format(
             proposed_state)
         cfg.setItemAdviceStates((waiting_advices_proposed_state, ))
@@ -2062,6 +2073,8 @@ class testMeetingConfig(PloneMeetingTestCase):
                 context=self.request)
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
                          level_removed_error)
+        # back to original configuration
+        adaptations.WAITING_ADVICES_FROM_STATES = original_WAITING_ADVICES_FROM_STATES
 
     def test_pm_Validate_itemWFValidationLevels_removed_used_state_in_config(self):
         """Test MeetingConfig.validate_itemWFValidationLevels, if we remove a validation
@@ -2211,7 +2224,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         annex = self.addAnnex(item)
         annex_decision = self.addAnnex(item, relatedTo='item_decision')
         # preview for this will not be removed
-        preview_annex = self.addAnnex(item, annexType='preview-annex')
+        preview_annex = self.addAnnex(
+            item, annexType='preview-annex', annexFile=self.annexFilePDF)
         infos = _categorized_elements(item)
         self.assertEqual(infos[annex.UID()]['preview_status'], 'converted')
         self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'converted')
@@ -2497,12 +2511,20 @@ class testMeetingConfig(PloneMeetingTestCase):
         # onlySelectable=True by default
         cfg_cat_ids = [cat.getId() for cat in cfg.getCategories()]
         cfg2_cat_ids = [cat.getId() for cat in cfg2.getCategories()]
+        # categories are not enabled in cfg
+        self.assertFalse('category' in cfg.getUsedItemAttributes())
+        self.assertFalse(cfg_cat_ids)
+        self._enableField('category', reload=True)
+        self.assertTrue('category' in cfg.getUsedItemAttributes())
+        cfg_cat_ids = [cat.getId() for cat in cfg.getCategories()]
         self.assertEqual(cfg_cat_ids,
                          ['development', 'research', 'events'])
         self.assertEqual(cfg2_cat_ids,
                          ['deployment', 'maintenance', 'development',
                           'events', 'research', 'projects'])
-        # onlySelectable=False
+        # onlySelectable=False, returned even if not enabled
+        self._enableField('category', enable=False, reload=True)
+        self.assertFalse('category' in cfg.getUsedItemAttributes())
         cfg_cat_ids = [cat.getId() for cat in cfg.getCategories(onlySelectable=False)]
         cfg2_cat_ids = [cat.getId() for cat in cfg2.getCategories(onlySelectable=False)]
         self.assertEqual(cfg_cat_ids,

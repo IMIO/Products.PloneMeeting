@@ -124,14 +124,17 @@
     </tal:customFields>
 
     <div class="configActions">
-      <table tal:condition="isManager">
+      <table tal:condition="isManager" class="discreet">
         <tr valign="top">
           <td>
             <tal:comment replace="nothing">Display groups and users linked to this MeetingConfig</tal:comment>
             <fieldset>
               <legend i18n:translate="" i18n:domain="collective.contact.plonegroup">Groups and users</legend>
               <p i18n:translate="meetingconfig_display_groups_and_users_descr" class='pageNameDescr'></p>
-              <tal:groupsAndUsers tal:replace="structure context/displayGroupsAndUsers" />
+              <tal:groupsAndUsers tal:replace="structure python: context.displayGroupsAndUsers()" />
+              <span tal:define="field python:here.getField('usingGroups')">
+                <metal:block use-macro="here/widgets/field/macros/view" />
+              </span>
             </fieldset>
           </td>
           <td tal:condition="isRealManager" style="padding-left: 0.75em;">
@@ -1181,6 +1184,15 @@
           <td></td>
         </tr>
         <tr valign="top">
+          <td tal:define="field python:here.getField('selectableRestrictedCopyGroups')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('itemRestrictedCopyGroupsStates')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td></td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('hideHistoryTo')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
@@ -1340,6 +1352,12 @@
          </a>
         </legend>
         <p class="discreet" i18n:translate="pod_templates_descr"></p>
+        <p i18n:translate="warning_meetingconfig_edit_section_descr" style="color: red;">
+          DO NOT CHANGE PARAMETERS DEFINED IN THIS SECTION UNLESS YOU ARE REALLY SURE WHAT YOU ARE DOING!
+        </p>
+        <p i18n:translate="warning_meetingconfig_edit_podtemplate_descr" style="color: red;">
+          POD TEMPLATES MUST BE EDITED USING LIBREOFFICE ONLY, DO NOT USE MICROSOFT WORD TO EDIT THESE TEMPLATES!
+        </p>
         <h3 i18n:translate="">Style templates</h3>
         <table class="listing nosort"
                align="right"
@@ -1446,16 +1464,28 @@
                        <label class="horizontal" i18n:domain="plone" i18n:translate="">File</label>
                        <div>
                          <span class="text-widget textline-field"
-                               tal:content="python: obj.get_filename()">Filename</span>
+                               tal:content="python: obj.get_filename()"
+                               tal:on-error="structure python: '<strong class=\'highlightValue\'>NOT FOUND?</strong>'"
+                               >Filename</span>
                        </div>
                      </div>
-
+                    <div class="discreet"
+                         tal:define="tal_condition python: obj.tal_condition"
+                         tal:condition="tal_condition">
+                       <label i18n:translate=""
+                              i18n:domain="collective.behavior.talcondition"
+                              class="horizontal">TAL condition expression</label>
+                       <div>
+                         <span class="text-widget textline-field"
+                               tal:content="tal_condition">TAL condition</span>
+                       </div>
+                     </div>
                 </tal:baseInformations>
                 <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
                 <tal:additionalInformations
                     condition="show_details"
                     define="context python: obj;
-                            excludedFields python: ('pod_formats', 'enabled')">
+                            excludedFields python: ('pod_formats', 'enabled', 'tal_condition')">
                     <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
                 </tal:additionalInformations>
             </td>
@@ -1475,7 +1505,8 @@
               </a>
               <a tal:define="podTemplateHolder python: obj.get_pod_template_to_use();
                              otherCfg python: tool.getMeetingConfig(podTemplateHolder)"
-                 tal:attributes="href string:${podTemplateHolder/absolute_url}"
+                 tal:attributes="href python: podTemplateHolder.absolute_url()"
+                 tal:on-error="python: obj.pod_template_to_use"
                  tal:condition="python: obj.odt_file is None"
                  tal:content="string:${otherCfg/title} ➔ ${podTemplateHolder/Title}">File holder</a>
             </td>

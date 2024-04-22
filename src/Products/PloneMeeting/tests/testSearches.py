@@ -12,7 +12,6 @@ from datetime import datetime
 from datetime import timedelta
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import cleanRamCacheFor
-from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
 from plone import api
 from plone.app.querystring.querybuilder import queryparser
@@ -886,7 +885,7 @@ class testSearches(PloneMeetingTestCase):
         '''Test the 'items-to-correct' CompoundCriterion adapter.  This should return
            a list of items in state 'returned_to_proposing_group' the current user is able to edit.'''
         cfg = self.meetingConfig
-        if 'return_to_proposing_group' not in get_vocab_values(cfg, 'WorkflowAdaptations'):
+        if not self._check_wfa_available(['return_to_proposing_group']):
             pm_logger.info("Bypassing test test_pm_SearchItemsToCorrect because it "
                            "needs the 'return_to_proposing_group' wfAdaptation.")
             return
@@ -960,7 +959,7 @@ class testSearches(PloneMeetingTestCase):
            CompoundCriterion adapter. This should return a list of items in state
            'returned_to_proposing_group_proposed' the current user is able to edit.'''
         cfg = self.meetingConfig
-        if 'return_to_proposing_group_with_last_validation' not in get_vocab_values(cfg, 'WorkflowAdaptations'):
+        if not self._check_wfa_available(['return_to_proposing_group_with_last_validation']):
             pm_logger.info(
                 "Bypassing test test_pm_SearchItemsToCorrectToValidateHighestHierarchicLevel because it "
                 "needs the 'return_to_proposing_group_with_last_validation' wfAdaptation.")
@@ -1042,7 +1041,7 @@ class testSearches(PloneMeetingTestCase):
            so items that are 'proposed' and items that are 'returned_to_proposing_group_proposed'.'''
         # specify that copyGroups can see the item when it is proposed
         cfg = self.meetingConfig
-        if 'return_to_proposing_group_with_last_validation' not in get_vocab_values(cfg, 'WorkflowAdaptations'):
+        if not self._check_wfa_available(['return_to_proposing_group_with_last_validation']):
             pm_logger.info(
                 "Bypassing test test_pm_SearchAllItemsToValidateHighestHierarchicLevel because it "
                 "needs the 'return_to_proposing_group_with_last_validation' wfAdaptation.")
@@ -1110,13 +1109,13 @@ class testSearches(PloneMeetingTestCase):
         '''Test the 'items-to-correct-to-validate-of-every-reviewer-groups'
            CompoundCriterion adapter.  This should return a list of items in state
            'returned_to_proposing_group_proposed' the current user is able to edit.'''
-        cfg = self.meetingConfig
-        if 'return_to_proposing_group_with_all_validations' not in get_vocab_values(cfg, 'WorkflowAdaptations'):
+        if not self._check_wfa_available(['return_to_proposing_group_with_all_validations']):
             pm_logger.info(
                 "Bypassing test test_pm_SearchItemsToCorrectToValidateOfEveryReviewerGroups because it "
                 "needs the 'return_to_proposing_group_with_all_validations' wfAdaptation.")
             return
 
+        cfg = self.meetingConfig
         itemTypeName = cfg.getItemTypeName()
 
         self.changeUser('siteadmin')
@@ -1134,6 +1133,7 @@ class testSearches(PloneMeetingTestCase):
             wfAdaptations.remove('return_to_proposing_group')
         cfg.setWorkflowAdaptations(wfAdaptations)
         self._enablePrevalidation(cfg)
+        notify(ObjectEditedEvent(cfg))
 
         # normally this search is not available to users that are not able to review items
         # nevertheless, if a user is in not able to edit items to correct in proposed, the special
@@ -1181,7 +1181,7 @@ class testSearches(PloneMeetingTestCase):
            CompoundCriterion adapter. This should return every items the user is able to validate
            so items that are 'proposed' and items that are 'returned_to_proposing_group_proposed'.'''
         cfg = self.meetingConfig
-        if 'return_to_proposing_group_with_all_validations' not in get_vocab_values(cfg, 'WorkflowAdaptations'):
+        if not self._check_wfa_available(['return_to_proposing_group_with_all_validations']):
             pm_logger.info(
                 "Bypassing test test_pm_SearchAllItemsToValidateOfEveryReviewerGroups because it "
                 "needs the 'return_to_proposing_group_with_all_validations' wfAdaptation.")

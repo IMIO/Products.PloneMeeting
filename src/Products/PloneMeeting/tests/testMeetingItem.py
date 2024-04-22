@@ -43,6 +43,7 @@ from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
+from Products.CMFPlone.utils import safe_unicode
 from Products.Five import zcml
 from Products.PloneMeeting.browser.itemassembly import item_assembly_default
 from Products.PloneMeeting.browser.itemassembly import validate_item_assembly
@@ -116,6 +117,11 @@ class testMeetingItem(PloneMeetingTestCase):
         expectedClassifiers = ['classifier1', 'classifier2', 'classifier3', ]
         # By default, every categories are selectable
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
+        # classifiers are not enabled
+        self.assertFalse('classifier' in cfg.getUsedItemAttributes())
+        self.assertFalse([cat.id for cat in cfg.getCategories(catType='classifiers')])
+        self._enableField('classifier', reload=True)
+        self.assertTrue('classifier' in cfg.getUsedItemAttributes())
         self.assertEqual([cat.id for cat in cfg.getCategories(catType='classifiers')], expectedClassifiers)
         # Deactivate a category
         self.changeUser('admin')
@@ -153,13 +159,6 @@ class testMeetingItem(PloneMeetingTestCase):
         notify(ObjectModifiedEvent(cfg.categories.subproducts))
         expectedCategories.remove('subproducts')
         self.assertEqual([cat.id for cat in cfg.getCategories(userId='pmCreator2')], expectedCategories)
-
-        # if not using 'category', getCategories will still return categories
-        self._enableField("category", enable=False)
-        expectedCategories.remove('maintenance')
-        expectedCategories.append('subproducts')
-        self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
-        self.assertEqual([cat.id for cat in cfg.getCategories(catType='classifiers')], expectedClassifiers)
 
     def test_pm_ItemProposingGroupsVocabulary(self):
         '''Check MeetingItem.proposingGroup vocabulary.'''
@@ -1940,7 +1939,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_PreviousReviewStateIndex(self):
         """Test the previous_review_state index, especially when data_changes is enabled."""
         cfg = self.meetingConfig
-        cfg.setHistorizedItemAttributes(('decision', ))
+        cfg.setHistorizedItemAttributes(('description', ))
         cfg.setRecordItemHistoryStates((self._stateMappingFor('proposed'), ))
 
         self.changeUser('pmCreator1')
@@ -1953,7 +1952,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # now check that it does not interact when data_changes is enabled
         self.changeUser('pmReviewer1')
-        set_field_from_ajax(item, 'decision', self.decisionText)
+        set_field_from_ajax(item, 'description', self.decisionText)
         self.assertEqual(previous_review_state(item)(), previous_state)
 
         # does not fail if no workflow_history
@@ -1965,7 +1964,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_WFHistoryAndDataChangesHistoryAreSeparated(self):
         """The WF history and data_changes history are separated in 2 adapters."""
         cfg = self.meetingConfig
-        cfg.setHistorizedItemAttributes(('decision', ))
+        cfg.setHistorizedItemAttributes(('description', ))
         cfg.setRecordItemHistoryStates((self._stateMappingFor('itemcreated'), ))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -1974,19 +1973,19 @@ class testMeetingItem(PloneMeetingTestCase):
         # datachanges adapter highlight_last_comment is not enabled
         self.assertFalse(datachanges_adapter.highlight_last_comment)
         self.assertFalse('_datachange_' in [event['action'] for event in wf_adapter.getHistory()])
-        set_field_from_ajax(item, 'decision', self.decisionText)
+        set_field_from_ajax(item, 'description', self.decisionText)
         self.assertFalse('_datachange_' in [event['action'] for event in wf_adapter.getHistory()])
         self.assertTrue('_datachange_' in [event['action'] for event in datachanges_adapter.getHistory()])
 
     def test_pm_DataChangesHistory(self):
         """Test the datachanges history adapter."""
         cfg = self.meetingConfig
-        cfg.setHistorizedItemAttributes(('decision', ))
+        cfg.setHistorizedItemAttributes(('description', ))
         cfg.setRecordItemHistoryStates((self._stateMappingFor('itemcreated'), ))
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem', decision="<p>test</p>")
-        set_field_from_ajax(item, 'decision', "<p>tralala</p>")
-        set_field_from_ajax(item, 'decision', "<p>abcedfgijklm</p>")
+        item = self.create('MeetingItem', description="<p>test</p>")
+        set_field_from_ajax(item, 'description', "<p>tralala</p>")
+        set_field_from_ajax(item, 'description', "<p>abcedfgijklm</p>")
         self.proposeItem(item)
         self.changeUser('pmReviewer1')
         self.do(item, 'validate')
@@ -1998,7 +1997,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # Test if the values are correct
         for event in datachanges:
             self.assertEqual(event["actor"], "pmCreator1")
-            self.assertIn("M. PMCreator One", event["changes"]["decision"])
+            self.assertIn("M. PMCreator One", event["changes"]["description"])
 
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
@@ -2191,6 +2190,40 @@ class testMeetingItem(PloneMeetingTestCase):
                          (self.developers_reviewers, auto_vendors_reviewers))
         self.assertEqual(item.getAllCopyGroups(auto_real_plone_group_ids=True),
                          (self.developers_reviewers, self.vendors_reviewers))
+
+    def test_pm_RestrictedCopyGroupes(self):
+        """Test MeetingItem.restrictedCopyGroups, a second level
+           of copy groups complementary to MeetingItem.copyGroups."""
+        self._enableField(('copyGroups', 'restrictedCopyGroups'))
+        self.vendors.as_copy_group_on = "python: ['creators']"
+        self.developers.as_restricted_copy_group_on = "python: ['creators']"
+        cfg = self.meetingConfig
+        cfg.setItemCopyGroupsStates(('itemcreated', ))
+        cfg.setSelectableRestrictedCopyGroups((self.developers_observers, self.vendors_observers))
+        cfg.setItemRestrictedCopyGroupsStates(('validated', ))
+        # create item for vendors
+        self.changeUser('pmCreator2')
+        item = self.create('MeetingItem',
+                           copyGroups=(self.developers_reviewers, ),
+                           restrictedCopyGroups=(self.developers_observers, ))
+        self.assertEqual(item.getAllCopyGroups(True),
+                         (self.developers_reviewers, self.vendors_creators))
+        self.assertEqual(item.getAllRestrictedCopyGroups(True),
+                         (self.developers_observers, self.developers_creators))
+        # no access for now for restricted copy groups
+        # copyGroups
+        self.assertTrue(self.developers_reviewers in item.__ac_local_roles__)
+        self.assertTrue(self.vendors_creators in item.__ac_local_roles__)
+        # restrictedCopyGroups
+        self.assertFalse(self.developers_observers in item.__ac_local_roles__)
+        self.assertFalse(self.developers_creators in item.__ac_local_roles__)
+        self.validateItem(item)
+        # copyGroups, vendors_creators still access as vendors is proposingGroup
+        self.assertFalse(self.developers_reviewers in item.__ac_local_roles__)
+        self.assertTrue(self.vendors_creators in item.__ac_local_roles__)
+        # restrictedCopyGroups
+        self.assertTrue(self.developers_observers in item.__ac_local_roles__)
+        self.assertTrue(self.developers_creators in item.__ac_local_roles__)
 
     def test_pm_UpdateAdvices(self):
         '''Test if local roles for adviser groups, are still correct when an item is edited
@@ -3034,10 +3067,10 @@ class testMeetingItem(PloneMeetingTestCase):
         # terms are escaped
         annex_term_title = annex_vocab._terms[1].title
         self.assertTrue("Annex type&quot;&gt;&lt;script&gt;alert" in annex_term_title)
-        self.assertTrue("> Title&quot;&gt;&lt;script" in annex_term_title)
+        self.assertTrue("> 2. Title&quot;&gt;&lt;script" in annex_term_title)
         annex_decision_term_title = annex_decision_vocab._terms[0].title
         self.assertTrue("Annex decision type&quot;&gt;&lt;script&gt;alert" in annex_decision_term_title)
-        self.assertTrue("> Decision title&quot;&gt;&lt;script" in annex_decision_term_title)
+        self.assertTrue("> 1. Decision title&quot;&gt;&lt;script" in annex_decision_term_title)
         # trying to duplicate an item with those annexes will raise Unauthorized for pmCreator
         form = item.restrictedTraverse('@@item_duplicate_form').form_instance
         data = {'keep_link': False, 'annex_ids': [], 'annex_decision_ids': []}
@@ -5004,9 +5037,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertNotEqual(beforeUserGroupsEdit_rendered_actions_panel,
                             afterUserGroupsEdit_rendered_actions_panel)
 
-    def _reviewers_may_edit_itemcreated(self):
-        return False
-
     def test_pm_ItemActionsPanelCachingProfiles(self):
         """Actions panel cache is generated for various profiles, check
            that is works as expected, profiles are:
@@ -5022,6 +5052,13 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setItemAdviceStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
         cfg.setItemAdviceEditStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
         cfg.setItemAdviceViewStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
+        # make reviewer able to edit when itemcreated so this will generate another cached value
+        # creator is also able to duplicate, and after, an observer will have a different value as well
+        itemWFValLevels = cfg.getItemWFValidationLevels()
+        itemWFValLevels[0]['extra_suffixes'] = cfg.getItemWFValidationLevels(
+            states=[self._stateMappingFor('proposed')], data="suffix", return_state_singleton=False)
+        cfg.setItemWFValidationLevels(itemWFValLevels)
+        notify(ObjectEditedEvent(cfg))
 
         # create item
         self.changeUser('pmCreator1')
@@ -5048,72 +5085,69 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(_sum_entries(False), 0)
         self.assertEqual(_sum_entries(), 1)
         self.changeUser('pmReviewer1', clean_memoize=False)
-        if self._reviewers_may_edit_itemcreated():
-            # reviewer, have the hand on item, view as a Reader
-            self.assertEqual(_sum_entries(), 1)
-        else:
-            # reviewer, does not have the hand on item, view as a Reader
-            self.assertEqual(_sum_entries(), 2)
-        # observer, Reader
-        self.changeUser('pmObserver1', clean_memoize=False)
+        # as reviewer is not creator, cache is invalidated to manage the "duplicate" action
         self.assertEqual(_sum_entries(), 2)
+        # observer, Reader
+        # as creator/reviewer are editor, another value for reader
+        self.changeUser('pmObserver1', clean_memoize=False)
+        self.assertEqual(_sum_entries(), 3)
         # copyGroups or optionalAdvisers, Reader
         self.changeUser('pmReviewer2', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 2)
+        self.assertEqual(_sum_entries(), 3)
         # powerobserver, Reader
         self.changeUser('powerobserver1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 2)
+        self.assertEqual(_sum_entries(), 3)
 
         # propose item, cache invalidated because item modified
         # pmReviewer1 has hand on item, other are Readers
         self.changeUser('pmCreator1', clean_memoize=False)
         self.proposeItem(item, clean_memoize=False)
-        self.assertEqual(_sum_entries(False), 2)
-        self.assertEqual(_sum_entries(), 3)
+        self.assertEqual(_sum_entries(False), 3)
+        self.assertEqual(_sum_entries(), 4)
         # reviewer, has hand on item
         self.changeUser('pmReviewer1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 4)
+        self.assertEqual(_sum_entries(), 5)
         # observer, Reader, can not duplicate, action is hidden
         self.changeUser('pmObserver1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 5)
+        self.assertEqual(_sum_entries(), 6)
         # copyGroups or optionalAdvisers, Reader
         self.changeUser('pmReviewer2', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 5)
+        self.assertEqual(_sum_entries(), 6)
         # powerobserver, Reader
         self.changeUser('powerobserver1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 5)
+        self.assertEqual(_sum_entries(), 6)
 
         # special case for powerobservers when using MeetingConfig.hideHistoryTo
         cfg.setHideHistoryTo(('MeetingItem.powerobservers', ))
-        self.assertEqual(_sum_entries(), 6)
+        self.assertEqual(_sum_entries(), 7)
         # but still ok for others
         self.changeUser('pmReviewer2', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 6)
+        self.assertEqual(_sum_entries(), 7)
 
         # now test as a MeetingManager that has access when item validated
         self.changeUser('pmReviewer1', clean_memoize=False)
         self.validateItem(item, as_manager=False, clean_memoize=False)
-        self.assertEqual(_sum_entries(), 7)
+        self.assertEqual(_sum_entries(), 8)
         # without meeting, MeetingManager may edit
         self.changeUser('pmManager', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 8)
-        self.create('Meeting')
         self.assertEqual(_sum_entries(), 9)
+        self.create('Meeting')
+        self.assertEqual(_sum_entries(), 10)
         # 'pmReviewer1' is not creator, so new value for 'pmCreator1'
         self.changeUser('pmCreator1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 10)
+        self.assertEqual(_sum_entries(), 11)
         # reviewer, has hand on item
         self.changeUser('pmReviewer1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 10)
+        self.assertEqual(_sum_entries(), 11)
         # observer, Reader
         self.changeUser('pmObserver1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 10)
+        self.assertEqual(_sum_entries(), 11)
         # copyGroups or optionalAdvisers, Reader
         self.changeUser('pmReviewer2', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 10)
+        self.assertEqual(_sum_entries(), 11)
         # powerobserver, Reader but changed as using MeetingConfig.hideHistoryTo
         self.changeUser('powerobserver1', clean_memoize=False)
-        self.assertEqual(_sum_entries(), 11)
+        self.assertEqual(_sum_entries(), 12)
 
     def test_pm_HistoryCommentViewability(self):
         '''Test the MeetingConfig.hideItemHistoryCommentsToUsersOutsideProposingGroup parameter
@@ -5194,14 +5228,14 @@ class testMeetingItem(PloneMeetingTestCase):
         # item proposing group is "developers"
         self.assertEqual(item.getProposingGroup(), self.developers_uid)
         # getting certified signatures for item will return signatures defined on proposing group
-        self.assertEqual(item.adapted().getCertifiedSignatures(),
+        self.assertEqual(item.getCertifiedSignatures(),
                          ['Group Function1', 'Group Name1', 'Group Function2', 'Group Name2'])
         # we can force to get signatures from the MeetingConfig
-        self.assertEqual(item.adapted().getCertifiedSignatures(forceUseCertifiedSignaturesOnMeetingConfig=True),
+        self.assertEqual(item.getCertifiedSignatures(forceUseCertifiedSignaturesOnMeetingConfig=True),
                          [u'Function1', u'Name1', u'Function2', u'Name2'])
         # if no signatures on the organization, signatures of the MeetingConfig are used
         self.developers.certified_signatures = []
-        self.assertEqual(item.adapted().getCertifiedSignatures(),
+        self.assertEqual(item.getCertifiedSignatures(),
                          [u'Function1', u'Name1', u'Function2', u'Name2'])
 
         # now test behaviour of periodic signatures
@@ -5240,7 +5274,7 @@ class testMeetingItem(PloneMeetingTestCase):
              },
         ]
         cfg.setCertifiedSignatures(certified)
-        self.assertEqual(item.adapted().getCertifiedSignatures(),
+        self.assertEqual(item.getCertifiedSignatures(),
                          [u'Function1', u'Name1',
                           u'Function2', u'Name2',
                           u'Function3', u'Name3',
@@ -5272,7 +5306,7 @@ class testMeetingItem(PloneMeetingTestCase):
              }
         ]
         cfg.setCertifiedSignatures(certified)
-        self.assertEqual(item.adapted().getCertifiedSignatures(),
+        self.assertEqual(item.getCertifiedSignatures(),
                          [u'Function1', u'Name1', u'Function2', u'Name2'])
 
         # no valid signature number 1 at all, every timed out
@@ -5300,7 +5334,7 @@ class testMeetingItem(PloneMeetingTestCase):
              }
         ]
         cfg.setCertifiedSignatures(certified)
-        self.assertEqual(item.adapted().getCertifiedSignatures(), [u'Function2', u'Name2'])
+        self.assertEqual(item.getCertifiedSignatures(), [u'Function2', u'Name2'])
 
         # first discovered valid is used
         # defined for signature number 1, one passed, one valid, one always valid
@@ -5352,7 +5386,7 @@ class testMeetingItem(PloneMeetingTestCase):
              }
         ]
         cfg.setCertifiedSignatures(certified)
-        self.assertEqual(item.adapted().getCertifiedSignatures(),
+        self.assertEqual(item.getCertifiedSignatures(),
                          [u'Function1valid', u'Name1valid', u'Function2', u'Name2'])
 
         # validity dates can be same day (same date_from and date_to)
@@ -5387,7 +5421,7 @@ class testMeetingItem(PloneMeetingTestCase):
              },
         ]
         cfg.setCertifiedSignatures(certified)
-        self.assertEqual(item.adapted().getCertifiedSignatures(),
+        self.assertEqual(item.getCertifiedSignatures(),
                          [u'Function1valid', u'Name1valid'])
 
     def test_pm_GetCertifiedSignaturesFromGroupInCharge(self):
@@ -6864,13 +6898,13 @@ class testMeetingItem(PloneMeetingTestCase):
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img.UID()))
 
         # test using the quickedit, test with field 'decision' where getRaw was overrided
-        decision = '<p>Working external image <img src="%s"/>.</p>' % self.external_image2
-        set_field_from_ajax(item, 'decision', decision)
+        description = '<p>Working external image <img src="%s"/>.</p>' % self.external_image2
+        set_field_from_ajax(item, 'description', description)
         self.assertTrue('1025-400x300.jpg' in item.objectIds())
         img2 = item.get('1025-400x300.jpg')
         # external image link was updated
         self.assertEqual(
-            item.getRawDecision(),
+            item.getRawDescription(),
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img2.UID()))
 
         # test using processForm, aka full edit form, with field "description"
@@ -7367,7 +7401,7 @@ class testMeetingItem(PloneMeetingTestCase):
             u'<img title=\'Sent from {0}, original item is "{1}".\' '
             u'src=\'http://nohost/plone/cloned_not_decided.png\' '
             u'style="width: 16px; height: 16px;" />'.format(
-                cfg.Title(),
+                safe_unicode(cfg.Title()),
                 translate(item.query_state(), domain="plone", context=self.request)
             )
             in IPrettyLink(item2).getLink())
@@ -7377,7 +7411,7 @@ class testMeetingItem(PloneMeetingTestCase):
             u'<img title=\'Sent from {0}, original item is "{1}".\' '
             u'src=\'http://nohost/plone/cloned_not_decided.png\' '
             u'style="width: 16px; height: 16px;" />'.format(
-                cfg.Title(),
+                safe_unicode(cfg.Title()),
                 translate(item.query_state(), domain="plone", context=self.request)
             )
             in IPrettyLink(item2).getLink())
@@ -8193,7 +8227,8 @@ class testMeetingItem(PloneMeetingTestCase):
                           u'M. PMManager <pmmanager@plonemeeting.org>',
                           u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
         self.assertEqual(subject,
-                         u'{0} - Your advice is requested - My item'.format(cfg_title))
+                         u'{0} - Your advice is requested - My item'.format(
+                             safe_unicode(cfg_title)))
         self.assertEqual(body,
                          u'The item is entitled "My item". '
                          u'You can access this item here: {0}.'.format(item_url))
@@ -8350,7 +8385,7 @@ class testMeetingItem(PloneMeetingTestCase):
             subject,
             u'{0} - Item in state "Proposed" '
             u'(following "Back to \'Proposed\'") - '
-            u'My item that notify when propose'.format(cfg.Title()))
+            u'My item that notify when propose'.format(safe_unicode(cfg.Title())))
         self.assertEqual(
             body,
             u'The item is entitled "My item that notify when propose". '
@@ -8819,7 +8854,62 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         recipients, subject, body = item.wfActions().doValidate(None)
         self.assertEqual(recipients, [u'M. PMManager <pmmanager@plonemeeting.org>'])
-        self.assertEqual(subject, u'PloneMeeting assembly - A "late" item has been validated.')
+        self.assertEqual(subject, u'%s - A "late" item has been validated.' %
+                         safe_unicode(cfg.Title()))
+
+    def test_pm_send_powerobservers_mail_if_relevant(self):
+        """Test the "late_item_in_meeting" notification to powerobservers."""
+        cfg = self.meetingConfig
+        cfg.setMailItemEvents(('late_item_in_meeting__powerobservers',))
+        self.request['debug_sendMailIfRelevant'] = True
+        self.changeUser('pmManager')
+
+        meeting = self.create('Meeting')
+        normal_item = self.create('MeetingItem', preferredMeeting=meeting.UID())
+
+        self.request["debug_sendMailIfRelevant_result"] = None
+        self.presentItem(normal_item)
+        self.assertIsNone(self.request["debug_sendMailIfRelevant_result"])
+        self.do(meeting, 'freeze')
+        late_item = self.create('MeetingItem', preferredMeeting=meeting.UID())
+        self.presentItem(late_item)
+        self.assertIn(u'M. Power Observer1 <powerobserver1@plonemeeting.org>',
+                      self.request["debug_sendMailIfRelevant_result"][0])
+
+        change_view = normal_item.unrestrictedTraverse('@@change-item-listtype')
+        change_view('late')
+        self.assertIn(u'M. Power Observer1 <powerobserver1@plonemeeting.org>',
+                      self.request["debug_sendMailIfRelevant_result"][0])
+
+        cfg.setMailItemEvents(())
+        self.request["debug_sendMailIfRelevant_result"] = None
+        late_item2 = self.create('MeetingItem', preferredMeeting=meeting.UID())
+        self.presentItem(late_item2)
+        self.assertIsNone(self.request["debug_sendMailIfRelevant_result"])
+
+    def test_pm_ItemTitle(self):
+        """Test the MeetingItem.Title method."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', title="My title héhé")
+        self.assertEqual(item.Title(), "My title héhé")
+        self.assertEqual(item.Title(withMeetingDate=True), "My title héhé")
+        self.assertEqual(item.Title(withItemNumber=True), "My title héhé")
+        self.assertEqual(item.Title(withItemReference=True), "My title héhé")
+        self.assertEqual(
+            item.Title(withMeetingDate=True, withItemNumber=True, withItemReference=True),
+            "My title héhé")
+        self.changeUser('pmManager')
+        self.create('Meeting', date=datetime(2024, 3, 27, 15, 30))
+        self.presentItem(item)
+        item.update_item_reference()
+        self.assertEqual(item.Title(), "My title héhé")
+        self.assertEqual(item.Title(withMeetingDate=True),
+                         "My title héhé (27 march 2024 (15:30))")
+        self.assertEqual(item.Title(withItemNumber=True), "3. My title héhé")
+        self.assertEqual(item.Title(withItemReference=True), "[Ref. 20240327/3] My title héhé")
+        self.assertEqual(
+            item.Title(withMeetingDate=True, withItemNumber=True, withItemReference=True),
+            "3. [Ref. 20240327/3] My title héhé (27 march 2024 (15:30))")
 
 
 def test_suite():

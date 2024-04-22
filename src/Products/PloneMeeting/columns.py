@@ -81,7 +81,7 @@ class ItemGroupsInChargeAcronymColumn(AbbrColumn):
 
 class ItemCopyGroupsColumn(VocabularyColumn):
     """A column that display the copyGroups."""
-    sort_index = 'getCopyGroups'
+    attrName = 'getAllBothCopyGroups'
     vocabulary = u'Products.PloneMeeting.Groups'
     the_object = True
 

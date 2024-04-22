@@ -33,6 +33,8 @@
            name="Products.PloneMeeting.vocabularies.copygroupsvocabulary" />
   <utility component=".vocabularies.ItemCopyGroupsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.itemcopygroupsvocabulary" />
+  <utility component=".vocabularies.ItemRestrictedCopyGroupsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.itemrestrictedcopygroupsvocabulary" />
   <utility component=".vocabularies.GroupsInChargeVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.groupsinchargevocabulary" />
   <utility component=".vocabularies.ItemGroupsInChargeVocabularyFactory"
@@ -75,8 +77,6 @@
            name="Products.PloneMeeting.vocabularies.selectableprivaciesvocabulary" />
   <utility component=".vocabularies.PollTypesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.polltypesvocabulary" />
-  <utility component=".vocabularies.StorePodTemplateAsAnnexVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.storepodtemplateasannexvocabulary" />
   <utility component=".vocabularies.ItemTemplatesStorableAsAnnexVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary" />
   <utility component=".vocabularies.SelectableHeldPositionsVocabularyFactory"
@@ -119,6 +119,12 @@
            component=".vocabularies.PMPositionTypesVocabularyFactory" />
   <utility name="PMAttendeeRedefinePositionTypes"
            component=".vocabularies.PMAttendeeRedefinePositionTypesVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.item_annex_types_vocabulary"
+           component=".vocabularies.ItemAnnexTypesVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.icon_item_annex_types_vocabulary"
+           component=".vocabularies.IconItemAnnexTypesVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.every_annex_types_vocabulary"
+           component=".vocabularies.EveryAnnexTypesVocabularyFactory" />
   <utility name="AdvicePortalTypes"
            component=".vocabularies.AdvicePortalTypesVocabularyFactory" />
   <utility name="ItemWorkflows"

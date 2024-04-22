@@ -106,7 +106,7 @@ class ToolInitializer:
             # contacts DashboardPODTemplate
             for descr in self.profileData.contactsTemplates:
                 if descr.id not in self.portal.contacts:
-                        self.addPodTemplate(self.portal.contacts, descr, source=self.profilePath)
+                    self.addPodTemplate(self.portal.contacts, descr, source=self.profilePath)
             # this will especially apply advisersConfig
             self.tool.at_post_edit_script()
 
@@ -548,6 +548,7 @@ class ToolInitializer:
             enabled=at.enabled,
             show_preview=at.show_preview,
             description=at.description,
+            only_pdf=at.only_pdf,
         )
         # store an empty set in other_mc_correspondences for validation
         # then store intermediate value that will be reworked at the end

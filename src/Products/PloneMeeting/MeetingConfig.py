@@ -11,6 +11,7 @@ from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_groups
+from collective.contact.plonegroup.utils import get_registry_functions
 from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
 from collective.datagridcolumns.SelectColumn import SelectColumn
 from collective.datagridcolumns.TextAreaColumn import TextAreaColumn
@@ -2247,6 +2248,7 @@ schema = Schema((
         schemata="advices",
         multiValued=1,
         vocabulary='listSelectableCopyGroups',
+        default=defValues.selectableCopyGroups,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -2254,7 +2256,7 @@ schema = Schema((
         name='itemCopyGroupsStates',
         widget=MultiSelectionWidget(
             description="ItemCopyGroupsStates",
-            description_msgid="item_copygroups_states_descr",
+            description_msgid="item_copy_groups_states_descr",
             format="checkbox",
             label='Itemcopygroupsstates',
             label_msgid='PloneMeeting_label_itemCopyGroupsStates',
@@ -2264,6 +2266,41 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemStates',
         default=defValues.itemCopyGroupsStates,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='selectableRestrictedCopyGroups',
+        widget=MultiSelectionWidget(
+            size=20,
+            description="SelectableRestrictedCopyGroups",
+            description_msgid="selectable_restricted_copy_groups_descr",
+            format="checkbox",
+            label='Selectablerestrictedcopygroups',
+            label_msgid='PloneMeeting_label_selectableRestrictedCopyGroups',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listSelectableCopyGroups',
+        default=defValues.selectableRestrictedCopyGroups,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='itemRestrictedCopyGroupsStates',
+        widget=MultiSelectionWidget(
+            description="ItemRestrictedCopyGroupsStates",
+            description_msgid="item_restricted_copy_groups_states_descr",
+            format="checkbox",
+            label='Itemrestrictedcopygroupsstates',
+            label_msgid='PloneMeeting_label_itemRestrictedCopyGroupsStates',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listItemStates',
+        default=defValues.itemRestrictedCopyGroupsStates,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -7097,12 +7134,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("adviceToGiveByUser", translate('event_advice_to_give_by_user',
                                              domain=d,
                                              context=self.REQUEST)),
-            ("adviceEdited", translate('event_add_advice',
-                                       domain=d,
-                                       context=self.REQUEST)),
-            ("adviceEditedOwner", translate('event_add_advice_owner',
-                                            domain=d,
-                                            context=self.REQUEST)),
             ("adviceInvalidated", translate('event_invalidate_advice',
                                             domain=d,
                                             context=self.REQUEST)),
@@ -7188,6 +7219,48 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res_transitions.append((id, translated_msg))
         res = res + DisplayList(res_transitions).sortedByValue()
 
+        # suffixes related notifications
+        functions = [fct for fct in get_registry_functions() if fct['enabled']]
+
+        res_suffixes = []
+        for fct in functions:
+            id = "advice_edited__%s" % fct['fct_id']
+            translated_msg = translate("event_advice_edited",
+                                       domain="PloneMeeting",
+                                       mapping={"suffix": fct['fct_title']},
+                                       context=self.REQUEST)
+            res_suffixes.append((id, translated_msg))
+        res_suffixes.append(("advice_edited__Owner",
+                             translate('event_advice_edited_owner',
+                                       domain=d,
+                                       context=self.REQUEST)))
+        res = res + DisplayList(res_suffixes).sortedByValue()
+
+        res_suffixes = []
+        for fct in functions:
+            id = "advice_edited_in_meeting__%s" % fct['fct_id']
+            translated_msg = translate("event_advice_edited_in_meeting",
+                                       domain="PloneMeeting",
+                                       mapping={"suffix": fct['fct_title']},
+                                       context=self.REQUEST)
+            res_suffixes.append((id, translated_msg))
+        res_suffixes.append(("advice_edited_in_meeting__Owner",
+                            translate('event_advice_edited_in_meeting_owner',
+                                      domain=d,
+                                      context=self.REQUEST)))
+        res = res + DisplayList(res_suffixes).sortedByValue()
+
+        # power observers related notification
+        res_po = []
+        for po_infos in self.getPowerObservers():
+            id = "late_item_in_meeting__%s" % po_infos["row_id"]
+            translated_msg = translate("event_late_item_in_meeting",
+                                       domain="PloneMeeting",
+                                       mapping={"po_label": po_infos["label"]},
+                                       context=self.REQUEST,
+                                       default="event_late_item_in_meeting_%s" % po_infos["row_id"])
+            res_po.append((id, translated_msg))
+        res = res + DisplayList(res_po).sortedByValue()
         return res
 
     security.declarePublic('listMeetingEvents')
@@ -7939,21 +8012,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     set(get_plone_groups_for_user()).intersection(
                         self.getSelectableCopyGroups()))
 
-    def get_orgs_with_as_copy_group_on_expression_cachekey(method, self):
+    def get_orgs_with_as_copy_group_on_expression_cachekey(method, self, restricted=False):
         '''cachekey method for self.get_orgs_with_as_copy_group_on_expression.
            MeetingConfig.modified is updated when an organization added/removed/edited.'''
         # the volatile is invalidated when an organization changed
-        return repr(self), self.modified(), get_cachekey_volatile('_users_groups_value')
+        return repr(self), self.modified(), get_cachekey_volatile('_users_groups_value'), restricted
 
     @ram.cache(get_orgs_with_as_copy_group_on_expression_cachekey)
-    def get_orgs_with_as_copy_group_on_expression(self):
+    def get_orgs_with_as_copy_group_on_expression(self, restricted=False):
         """Returns a dict with organizations having a as_copy_group_on TAL expression."""
         orgs = self.getUsingGroups(theObjects=True)
         # keep order as new and old item local_roles are compared
         # to check if other updates must be done
         data = OrderedDict()
         for org in orgs:
-            expr = org.as_copy_group_on
+            if restricted:
+                expr = org.as_restricted_copy_group_on
+            else:
+                expr = org.as_copy_group_on
             if not expr or not expr.strip():
                 continue
             data[org.UID()] = expr

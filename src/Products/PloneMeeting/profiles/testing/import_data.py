@@ -95,7 +95,7 @@ itemAnnex = ItemAnnexTypeDescriptor(
     'item-annex', 'Other annex(es)', u'itemAnnex.png')
 
 previewAnnex = ItemAnnexTypeDescriptor(
-    'preview-annex', 'Preview annex', u'itemAnnex.png', show_preview=1)
+    'preview-annex', 'Preview annex', u'itemAnnex.png', show_preview=1, only_pdf=True)
 
 previewHideDownloadAnnex = ItemAnnexTypeDescriptor(
     'preview-hide-download-annex', 'Preview hide download annex', u'itemAnnex.png', show_preview=2)
@@ -417,7 +417,7 @@ meetingPma.powerObservers = (
      'meeting_access_on': u'',
      'orderindex_': '1'},
     {'row_id': 'restrictedpowerobservers',
-     'label': 'Restricted power observers',
+     'label': 'Restricted power observers spécial',
      'item_states': [],
      'item_access_on': u'',
      'meeting_states': [],
@@ -427,8 +427,9 @@ meetingPma.useVotes = True
 meetingPma.styleTemplates = [stylesTemplate1, stylesTemplate2]
 meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate, dashboardTemplate, allItemTemplate]
 meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers')]
-meetingPma.meetingConfigsToCloneTo = [{'meeting_config': 'cfg2',
-                                       'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}]
+meetingPma.meetingConfigsToCloneTo = [
+    {'meeting_config': 'cfg2',
+     'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}]
 meetingPma.addContactsCSV = False
 
 # Plonegov-assembly
@@ -444,7 +445,8 @@ meetingPga.classifiers = [classifier1, classifier2, classifier3]
 meetingPga.annexTypes = [financialAnalysis, legalAnalysis,
                          budgetAnalysisCfg2, itemAnnex, decisionAnnex,
                          adviceAnnex, adviceLegalAnalysis, meetingAnnex]
-meetingPga.usedItemAttributes = ('description', 'toDiscuss', 'associatedGroups', 'itemIsSigned', 'category', 'copyGroups')
+meetingPga.usedItemAttributes = (
+    'description', 'toDiscuss', 'associatedGroups', 'itemIsSigned', 'category', 'copyGroups')
 meetingPga.onMeetingTransitionItemActionToExecute = deepcopy(
     meetingPma.onMeetingTransitionItemActionToExecute)
 meetingPga.insertingMethodsOnAddItem = ({'insertingMethod': 'on_categories', 'reverse': '0'}, )

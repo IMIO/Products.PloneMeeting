@@ -556,10 +556,6 @@ div#content.advice_infos_tooltipster legend {
    height: auto;
 }
 
-div#content.advice_infos_tooltipster legend acronym {
-   margin-right: 0.25em;
-}
-
 /* align [+][-] with following text and icons */
 div#content.advice_infos_tooltipster div.collapsible {
     vertical-align: bottom;
@@ -674,6 +670,7 @@ div.hsGrey {
 /* Highlight that a value has been modified, for example
    the itemAssembly is overriden on a MeetingItem */
 a.highlightValue,
+strong.highlightValue,
 p.highlightValue,
 span.highlightValue,
 dt.highlightValue span,
@@ -1447,6 +1444,10 @@ td[class^="meeting_item_listType_"] div.item_listType_container {
     color: &dtml-discreetColor;;
     font-style: italic;
     text-decoration: underline;
+}
+
+#content div.advice_reference {
+    padding-top: 0.5em;
 }
 
 div.decisionAnnexDescription {
