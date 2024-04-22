@@ -6968,7 +6968,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item_advice_states = cfg.getItemAdviceStatesForOrg(adviceInfos['id'])
         translated_item_advice_states = translate_list(item_advice_states)
         advice_states_msg = translate(
-            'This advice is addable in following states : ${item_advice_states}.',
+            'This advice is addable in following states: ${item_advice_states}.',
             mapping={'item_advice_states': translated_item_advice_states},
             domain="PloneMeeting",
             context=self.REQUEST)
