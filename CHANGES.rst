@@ -56,6 +56,12 @@ Changelog
   is necessary to convert `portal_catalog` `getObjSize` format to `bytes` and
   `bytes` to a human readable format.
   [gbastien]
+- Improve `view.print_attendees_by_type` to be able to customize the in and out
+  count more.
+  [aduchene]
+- Allow to use OrderedDict in POD templates.
+  [aduchene]
+
 
 4.2.9rc5 (2024-03-14)
 ---------------------
