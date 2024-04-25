@@ -2667,6 +2667,9 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(set(meetingParentFolder.objectValues('MeetingItem')), set(meeting.get_items()))
         # if trying to remove a meeting containing items as non Manager, it will raise Unauthorized
         self.assertRaises(Unauthorized, self.portal.restrictedTraverse('@@delete_givenuid'), meeting.UID())
+        transaction.begin()
+        self.assertRaises(Unauthorized, meetingParentFolder.manage_delObjects, [meeting.getId()])
+        transaction.abort()
         # as a Manager, the meeting including items will be removed
         self.deleteAsManager(meeting.UID())
         # nothing left in the folder but the searches_* folders

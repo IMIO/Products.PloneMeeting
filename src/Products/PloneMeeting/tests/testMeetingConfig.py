@@ -1265,7 +1265,7 @@ class testMeetingConfig(PloneMeetingTestCase):
 
         # a user can not delete the MeetingConfig
         self.changeUser('pmManager')
-        self.assertRaises(Unauthorized, self.tool.manage_delObjects, [cfgId, ])
+        self.assertRaises(Unauthorized, self.tool.manage_delObjects, [cfgId])
 
         # fails if a meeting exists
         self.changeUser('pmManager')

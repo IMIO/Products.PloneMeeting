@@ -21,6 +21,9 @@ Changelog
 - Added field `MeetingItem.restrictedCopyGroups`, a secondary `copyGroups` field
   where we can define other groups having access to item in other (later) states.
   [gbastien]
+- Now every deletion is protected by `IContentDeletable`, including default
+  Plone deletion using `manage_delObjects`.
+  [gbastien]
 
 4.2.9rc6 (2024-04-10)
 ---------------------
