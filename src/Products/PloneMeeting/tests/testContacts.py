@@ -1503,7 +1503,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertIn(
             "Monsieur Person1FirstName Person1LastName, Assembly member 1 - only for these: 2 to 3",
             helper.print_attendees_by_type(include_in_count=True,
-                                           in_out_cluster_seperator=" to ",
+                                           in_out_cluster_format="{} to {}",
                                            in_count_patterns=OrderedDict([
                                                ("MS", " - only for: {}"),
                                                ("MP", " - only for these: {}"),

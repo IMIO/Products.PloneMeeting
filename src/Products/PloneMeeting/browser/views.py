@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
@@ -17,7 +18,7 @@ from ftw.labels.interfaces import ILabeling
 from imio.helpers.content import get_user_fullname
 from imio.helpers.content import uuidToObject
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
-from imio.pyutils.utils import get_clusters
+from imio.pyutils.utils import get_ordinal_clusters
 from imio.zamqp.core.utils import scan_id_barcode
 from plone import api
 from plone.app.caching.operations.utils import getContext
@@ -1114,7 +1115,7 @@ class BaseDGHV(object):
                                 include_in_count=False,
                                 include_out_count=False,
                                 in_out_attendee_types=['item_excused', 'item_absent'],
-                                in_out_cluster_seperator="-",
+                                in_out_cluster_format="{}-{}",
                                 out_count_patterns={'*' :u" ({})"},
                                 in_count_patterns={'*': u" ({})"},
                                 abbreviate_firstname=False,
@@ -1176,7 +1177,7 @@ class BaseDGHV(object):
                         brains = catalog(UID=not_present_item_uids, sort_on='getItemNumber')
                         numbers = [brain.getObject().getItemNumber(for_display=True) for brain in brains]
                         numbers = [int(number) if '.' not in number else float(number) for number in numbers]
-                        cluster = get_clusters(numbers).replace("-", in_out_cluster_seperator)
+                        cluster = get_ordinal_clusters(numbers, offset=100, cluster_format=in_out_cluster_format)
                         pattern = (str(contact.gender) or 'M') + ('S' if len(numbers) == 1 else 'P')
                         pattern_key = filter(lambda x: fnmatch(pattern, x), out_count_patterns.keys())[0]
                         contact_value += out_count_patterns.get(pattern_key).format(cluster)
@@ -1184,7 +1185,7 @@ class BaseDGHV(object):
                         numbers = [item.getItemNumber(for_display=True)
                                    for item in meeting.get_items(ordered=True) if item.UID() not in not_present_item_uids]
                         numbers = [int(number) if '.' not in number else float(number) for number in numbers]
-                        cluster = get_clusters(numbers).replace("-", in_out_cluster_seperator)
+                        cluster = get_ordinal_clusters(numbers, offset=100, cluster_format=in_out_cluster_format)
                         pattern = (str(contact.gender) or 'M') + ('S' if len(numbers) == 1 else 'P')
                         pattern_key = filter(lambda x: fnmatch(pattern, x), in_count_patterns.keys())[0]
                         contact_value += in_count_patterns.get(pattern_key).format(cluster)
@@ -2395,7 +2396,7 @@ class DisplayMeetingItemNotPresent(BrowserView):
         """Display item numbers as clusters."""
         numbers = [item.getItemNumber(for_display=True) for item in self.items_for_not_present]
         numbers = [int(number) if '.' not in number else float(number) for number in numbers]
-        return get_clusters(numbers)
+        return get_ordinal_clusters(numbers)
 
 
 class DisplayMeetingItemSignatories(BrowserView):
