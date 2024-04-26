@@ -17,7 +17,6 @@ from imio.helpers.content import get_user_fullname
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
 from imio.helpers.content import uuidToCatalogBrain
-from OFS.ObjectManager import BeforeDeleteException
 from os import path
 from plone.app.querystring.querybuilder import queryparser
 from plone.dexterity.utils import createContentInContainer
@@ -2665,14 +2664,11 @@ class testMeetingType(PloneMeetingTestCase):
                                     'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmManager')
         meetingParentFolder = meeting.getParentNode()
-        self.assertEqual(
-            set(meetingParentFolder.objectValues('MeetingItem')), set(meeting.get_items()))
+        self.assertEqual(set(meetingParentFolder.objectValues('MeetingItem')), set(meeting.get_items()))
         # if trying to remove a meeting containing items as non Manager, it will raise Unauthorized
-        self.assertRaises(
-            Unauthorized, self.portal.restrictedTraverse('@@delete_givenuid'), meeting.UID())
+        self.assertRaises(Unauthorized, self.portal.restrictedTraverse('@@delete_givenuid'), meeting.UID())
         transaction.begin()
-        self.assertRaises(
-            BeforeDeleteException, meetingParentFolder.manage_delObjects, [meeting.getId()])
+        self.assertRaises(Unauthorized, meetingParentFolder.manage_delObjects, [meeting.getId()])
         transaction.abort()
         # as a Manager, the meeting including items will be removed
         self.deleteAsManager(meeting.UID())
