@@ -24,6 +24,9 @@ Changelog
 - Now every deletion is protected by `IContentDeletable`, including default
   Plone deletion using `manage_delObjects`.
   [gbastien]
+- Fixed item number not saved when using `Disk` icon to change item number
+  on meeting view when item number is a subnumber.
+  [gbastien]
 
 4.2.9rc6 (2024-04-10)
 ---------------------
