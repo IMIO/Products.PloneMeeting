@@ -26,8 +26,8 @@ from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocab
 from collective.eeafaceted.z3ctable.columns import EMPTY_STRING
 from collective.iconifiedcategory.config import get_sort_categorized_tab
 from collective.iconifiedcategory.utils import get_categorized_elements
-from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_category_icon_url
+from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import render_filesize

@@ -514,15 +514,20 @@
       factory="Products.PloneMeeting.behaviors.overrides.PMTALCondition"
       marker="collective.behavior.talcondition.interfaces.ITALConditionable" />
 
-    <!-- MISSING VOCABULARIES -->
-    <!-- type, layer, view, field, vocabulary, widget -->
-    <adapter
-        for="imio.annex.content.annex.IAnnex
-             z3c.form.interfaces.IFormLayer
-             zope.interface.Interface
-             zope.schema.interfaces.IChoice
-             zope.schema.interfaces.IBaseVocabulary
-             z3c.form.interfaces.ISelectWidget"
-        factory=".adapters.AnnexMissingTermsVocabulary" />
+  <!-- MISSING VOCABULARIES -->
+  <!-- type, layer, view, field, vocabulary, widget -->
+  <adapter
+      for="imio.annex.content.annex.IAnnex
+           z3c.form.interfaces.IFormLayer
+           zope.interface.Interface
+           zope.schema.interfaces.IChoice
+           zope.schema.interfaces.IBaseVocabulary
+           z3c.form.interfaces.ISelectWidget"
+      factory=".adapters.AnnexMissingTermsVocabulary" />
+
+  <!-- Enable call to check IContentDeletable upon any deletion -->
+  <subscriber for="OFS.interfaces.IItem
+                   OFS.interfaces.IObjectWillBeRemovedEvent"
+              handler="imio.actionspanel.events.onObjWillBeRemoved" />
 
 </configure>
