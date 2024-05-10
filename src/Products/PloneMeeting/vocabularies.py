@@ -3244,11 +3244,23 @@ class WorkflowAdaptationsVocabulary(object):
         """Received "context" is a MeetingConfig."""
         terms = []
         for adaptation in context.wfAdaptations:
+            # generate a WFA by MeetingConfig.powerObservers in addition to the base one
+            if adaptation == 'hide_decisions_when_under_writing':
+                tool = api.portal.get_tool('portal_plonemeeting')
+                cfg = tool.getMeetingConfig(context)
+                for po in cfg.getPowerObservers():
+                    term_id = 'hide_decisions_when_under_writing__po__{0}'.format(po['row_id'])
+                    title = translate(
+                        'wa_hide_decisions_when_under_writing_excepted_po',
+                        domain='PloneMeeting',
+                        mapping={'po': po['label']},
+                        context=context.REQUEST)
+                    terms.append(SimpleTerm(term_id, term_id, title))
             # back transitions from presented to every available item validation
             # states defined in MeetingConfig.itemWFValidationLevels
             if adaptation == 'presented_item_back_to_validation_state':
                 for item_validation_level in context.getItemWFValidationLevels(only_enabled=True):
-                    adaptation_id = 'presented_item_back_to_{0}'.format(item_validation_level['state'])
+                    term_id = 'presented_item_back_to_{0}'.format(item_validation_level['state'])
                     translated_item_validation_state = translate(
                         safe_unicode(item_validation_level['state_title']),
                         domain='plone',
@@ -3260,8 +3272,8 @@ class WorkflowAdaptationsVocabulary(object):
                         context=context.REQUEST,
                         default=u'Item back to presented from validation state "{0}"'.format(
                             translated_item_validation_state))
-                    title = title + " ({0})".format(adaptation_id)
-                    terms.append(SimpleTerm(adaptation_id, adaptation_id, title))
+                    title = title + " ({0})".format(term_id)
+                    terms.append(SimpleTerm(term_id, term_id, title))
             else:
                 title = translate('wa_%s' % adaptation, domain='PloneMeeting', context=context.REQUEST)
                 title = title + " ({0})".format(adaptation)

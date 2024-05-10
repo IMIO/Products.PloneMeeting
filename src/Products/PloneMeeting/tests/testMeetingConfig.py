@@ -1884,6 +1884,7 @@ class testMeetingConfig(PloneMeetingTestCase):
            - we do not have same value for 'label';
            - if we remove a line :
              - the power observer is not used in any other MeetingConfig fields;
+             - not used in a 'hide_decisions_when_under_writing'__po__' wfa;
              - the linked Plone groups is empty.'''
         cfg = self.meetingConfig
         values = [
@@ -1934,7 +1935,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             context=self.portal.REQUEST)
         self.assertEqual(cfg.validate_powerObservers(values), same_label_error_msg)
 
-        # remove a used powerObserver
+        # remove a used powerObserver (restrictedpowerobservers)
         # used in MeetingConfig fields
         self.assertTrue('restrictedpowerobservers' in cfg.getRestrictAccessToSecretItemsTo())
         values = [
@@ -1948,21 +1949,27 @@ class testMeetingConfig(PloneMeetingTestCase):
             'power_observer_removed_used_in_fields',
             domain='PloneMeeting',
             context=self.portal.REQUEST)
+        plone_group_not_empty_error_msg = translate(
+            'power_observer_removed_plone_group_not_empty',
+            domain='PloneMeeting',
+            context=self.portal.REQUEST)
         self.assertEqual(cfg.validate_powerObservers(values), used_in_fields_error_msg)
         cfg.setRestrictAccessToSecretItemsTo(())
-        # also chech configgroup_ prefixed fields
+        # also check configgroup_ prefixed fields
         cfg.setItemAnnexConfidentialVisibleFor(('configgroup_restrictedpowerobservers', ))
         self.assertEqual(cfg.validate_powerObservers(values), used_in_fields_error_msg)
         cfg.setItemAnnexConfidentialVisibleFor(())
+        self.assertEqual(cfg.validate_powerObservers(values), plone_group_not_empty_error_msg)
+        # used as WFA
+        self._activate_wfas(('hide_decisions_when_under_writing__po__restrictedpowerobservers', ))
+        self.assertEqual(cfg.validate_powerObservers(values), used_in_fields_error_msg)
+        self._activate_wfas(())
+        self.assertEqual(cfg.validate_powerObservers(values), plone_group_not_empty_error_msg)
 
         # linked Plone group is not empty
         plone_group_id = '{0}_{1}'.format(cfg.getId(), 'restrictedpowerobservers')
         plone_group = api.group.get(plone_group_id)
         self.assertEqual(plone_group.getMemberIds(), ['restrictedpowerobserver1'])
-        plone_group_not_empty_error_msg = translate(
-            'power_observer_removed_plone_group_not_empty',
-            domain='PloneMeeting',
-            context=self.portal.REQUEST)
         self.assertEqual(cfg.validate_powerObservers(values), plone_group_not_empty_error_msg)
         self._removePrincipalFromGroups('restrictedpowerobserver1', [plone_group_id])
         # validates with removed power observer
