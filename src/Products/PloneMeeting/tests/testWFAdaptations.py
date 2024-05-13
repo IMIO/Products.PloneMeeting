@@ -1821,14 +1821,16 @@ class testWFAdaptations(PloneMeetingTestCase):
         # check while the wfAdaptation is not activated
         self._hide_decisions_when_under_writing_inactive()
         # activate the wfAdaptation and check
-        self._activate_wfas(('hide_decisions_when_under_writing', ))
+        self._activate_wfas(('hide_decisions_when_under_writing',
+                             'hide_decisions_when_under_writing__po__powerobservers'))
         self._hide_decisions_when_under_writing_active()
         # test also for the meetingConfig2 if it uses a different workflow
         if cfg.getMeetingWorkflow() == self.meetingConfig2.getMeetingWorkflow():
             return
         self.meetingConfig = self.meetingConfig2
         self._hide_decisions_when_under_writing_inactive()
-        self._activate_wfas(('hide_decisions_when_under_writing', ))
+        self._activate_wfas(('hide_decisions_when_under_writing',
+                             'hide_decisions_when_under_writing__po__powerobservers'))
         # check while the wfAdaptation is not activated
         self._hide_decisions_when_under_writing_active()
 
@@ -1936,10 +1938,15 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(item.getDecision(), '<p>Decision adapted by pmManager</p>')
         self.changeUser('pmCreator1')
         self.assertTrue(self.hasPermission(View, item))
-        self.assertEqual(item.getMotivation(),
-                         HIDE_DECISION_UNDER_WRITING_MSG)
-        self.assertEqual(item.getDecision(),
-                         HIDE_DECISION_UNDER_WRITING_MSG)
+        self.assertEqual(item.getMotivation(), HIDE_DECISION_UNDER_WRITING_MSG)
+        self.assertEqual(item.getDecision(), HIDE_DECISION_UNDER_WRITING_MSG)
+        # visible to powerobservers but not restrictedpowerobservers
+        self.changeUser('powerobserver1')
+        self.assertEqual(item.getMotivation(), '<p>Motivation adapted by pmManager</p>')
+        self.assertEqual(item.getDecision(), '<p>Decision adapted by pmManager</p>')
+        self.changeUser('restrictedpowerobserver1')
+        self.assertEqual(item.getMotivation(), HIDE_DECISION_UNDER_WRITING_MSG)
+        self.assertEqual(item.getDecision(), HIDE_DECISION_UNDER_WRITING_MSG)
         # a 'publish_decisions' transition is added after 'decide'
         self.changeUser('pmManager')
         self.do(meeting, 'publish_decisions')
