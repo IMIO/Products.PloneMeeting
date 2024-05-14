@@ -30,6 +30,10 @@ Changelog
 - Fixed validation of meeting signatories when creating a meeting, it was possible
   to create a meeting with several signatories using same signature number.
   [gbastien]
+- Added per power observer complementary workflow adaptation to base
+  `hide_decisions_when_under_writing` to let the selected power observers
+  have access to the item decision.
+  [gbastien]
 
 4.2.9rc6 (2024-04-10)
 ---------------------
