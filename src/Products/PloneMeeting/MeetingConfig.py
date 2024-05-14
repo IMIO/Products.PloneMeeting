@@ -7242,7 +7242,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             id = "advice_edited_in_meeting__%s" % fct['fct_id']
             translated_msg = translate("event_advice_edited_in_meeting",
                                        domain="PloneMeeting",
-                                       mapping={"suffix": fct['fct_title']},
+                                       mapping={"suffix": safe_unicode(fct['fct_title'])},
                                        context=self.REQUEST)
             res_suffixes.append((id, translated_msg))
         res_suffixes.append(("advice_edited_in_meeting__Owner",
@@ -7257,7 +7257,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             id = "late_item_in_meeting__%s" % po_infos["row_id"]
             translated_msg = translate("event_late_item_in_meeting",
                                        domain="PloneMeeting",
-                                       mapping={"po_label": po_infos["label"]},
+                                       mapping={"po_label": safe_unicode(po_infos["label"])},
                                        context=self.REQUEST,
                                        default="event_late_item_in_meeting_%s" % po_infos["row_id"])
             res_po.append((id, translated_msg))
