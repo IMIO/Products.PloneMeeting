@@ -3253,7 +3253,7 @@ class WorkflowAdaptationsVocabulary(object):
                     title = translate(
                         'wa_hide_decisions_when_under_writing_excepted_po',
                         domain='PloneMeeting',
-                        mapping={'po': po['label']},
+                        mapping={'po': safe_unicode(po['label'])},
                         context=context.REQUEST)
                     terms.append(SimpleTerm(term_id, term_id, title))
             # back transitions from presented to every available item validation
