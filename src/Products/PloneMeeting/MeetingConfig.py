@@ -4343,6 +4343,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('power_observer_removed_used_in_fields',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
+            # workflowAdaptations
+            if 'hide_decisions_when_under_writing__po__{0}'.format(removedRowId) in \
+               self.getWorkflowAdaptations():
+                return translate('power_observer_removed_used_in_fields',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
 
             # check if linked Plone group is empty
             plone_group_id = '{0}_{1}'.format(self.getId(), removedRowId)
@@ -4936,7 +4942,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             'waiting_advices_given_advices_required_to_validate':
                 ['waiting_advices_given_and_signed_advices_required_to_validate'],
             'hide_decisions_when_under_writing':
-                ['hide_decisions_when_under_writing_check_returned_to_proposing_group'],
+                ['hide_decisions_when_under_writing_check_returned_to_proposing_group'] +
+                ['hide_decisions_when_under_writing__po__{0}'.format(v['row_id'])
+                 for v in self.getPowerObservers()],
         }
         for base_wfa, dependents in dependencies.items():
             if set(values).intersection(dependents) and base_wfa not in values:
@@ -7241,7 +7249,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             id = "advice_edited_in_meeting__%s" % fct['fct_id']
             translated_msg = translate("event_advice_edited_in_meeting",
                                        domain="PloneMeeting",
-                                       mapping={"suffix": fct['fct_title']},
+                                       mapping={"suffix": safe_unicode(fct['fct_title'])},
                                        context=self.REQUEST)
             res_suffixes.append((id, translated_msg))
         res_suffixes.append(("advice_edited_in_meeting__Owner",
@@ -7256,7 +7264,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             id = "late_item_in_meeting__%s" % po_infos["row_id"]
             translated_msg = translate("event_late_item_in_meeting",
                                        domain="PloneMeeting",
-                                       mapping={"po_label": po_infos["label"]},
+                                       mapping={"po_label": safe_unicode(po_infos["label"])},
                                        context=self.REQUEST,
                                        default="event_late_item_in_meeting_%s" % po_infos["row_id"])
             res_po.append((id, translated_msg))

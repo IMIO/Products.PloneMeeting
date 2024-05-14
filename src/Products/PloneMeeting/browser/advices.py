@@ -243,7 +243,7 @@ class AdvicesIconsInfos(BrowserView):
 
     def mayDelete(self, advice):
         """ """
-        return IContentDeletable(advice).mayDelete(advisableGroups=self.advisableGroups)
+        return IContentDeletable(advice).mayDelete()
 
     def mayView(self):
         """ """

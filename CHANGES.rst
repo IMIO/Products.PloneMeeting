@@ -21,6 +21,19 @@ Changelog
 - Added field `MeetingItem.restrictedCopyGroups`, a secondary `copyGroups` field
   where we can define other groups having access to item in other (later) states.
   [gbastien]
+- Now every deletion is protected by `IContentDeletable`, including default
+  Plone deletion using `manage_delObjects`.
+  [gbastien]
+- Fixed item number not saved when using `Disk` icon to change item number
+  on meeting view when item number is a subnumber.
+  [gbastien]
+- Fixed validation of meeting signatories when creating a meeting, it was possible
+  to create a meeting with several signatories using same signature number.
+  [gbastien]
+- Added per power observer complementary workflow adaptation to base
+  `hide_decisions_when_under_writing` to let the selected power observers
+  have access to the item decision.
+  [gbastien]
 - Added column `groups_managing_item` in `MeetingConfig.itemWFValidationLevels`,
   this will manage cases when another group than the proposing group is managing
   the item, several groups may be selected including the proposing group or not.

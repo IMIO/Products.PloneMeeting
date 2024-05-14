@@ -2230,12 +2230,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            when meeting is 'decided' and user may not edit the item."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        adaptations = cfg.getWorkflowAdaptations()
+        wfas = cfg.getWorkflowAdaptations()
+        # viewable by some power observers?
+        acceptable_pos = [wfa.split('hide_decisions_when_under_writing__po__')[1]
+                          for wfa in wfas
+                          if wfa.startswith('hide_decisions_when_under_writing__po__')]
         # manage case of accepted item that is no more editable by MeetingManagers
         # but the meeting in this case is still editable
         meeting = self.getMeeting()
-        if meeting and 'hide_decisions_when_under_writing' in adaptations and \
+        if meeting and 'hide_decisions_when_under_writing' in wfas and \
            meeting.query_state() == 'decided' and \
+           (not acceptable_pos or not isPowerObserverForCfg(cfg, acceptable_pos)) and \
            not (_checkPermission(ModifyPortalContent, self) or
                 _checkPermission(ModifyPortalContent, meeting)):
             # do not return unicode as getDecision returns 'utf-8' usually
