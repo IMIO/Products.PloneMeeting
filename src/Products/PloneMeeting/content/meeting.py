@@ -567,8 +567,7 @@ class IMeeting(IDXMeetingContent):
 
     @invariant
     def validate_attendees(data):
-        """Validate attendees, only if context is a Meeting,
-           when creating a new meeting, nothing is defined on item."""
+        """Validate attendees."""
         context = data.__context__
         if context is None:
             # occurs when adding a new element
@@ -584,77 +583,80 @@ class IMeeting(IDXMeetingContent):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
 
-        if is_meeting and cfg.isUsingContacts():
-
-            # removed attendees?
-            # REQUEST.form['meeting_attendees'] is like
-            # ['muser_attendeeuid1_attendee', 'muser_attendeeuid2_excused']
-            meeting_attendees = [attendee.split('_')[1] for attendee
-                                 in request.form.get('meeting_attendees', [])
-                                 if attendee.split('_')[2] == 'attendee']
-            all_meeting_attendees = [
-                attendee.split('_')[1] for attendee
-                in request.form.get('meeting_attendees', [])]
+        if cfg.isUsingContacts():
+            # if creating a new meeting, only check if not several same signatories
             signatories = [signatory for signatory in
                            request.form.get('meeting_signatories', [])
                            if signatory]
-            signatory_uids = [signatory.split('__signaturenumber__')[0]
-                              for signatory in signatories]
-            _validate_attendees_removed_and_order(
-                context, meeting_attendees, all_meeting_attendees, signatory_uids)
-
-            # removed voters?
-            stored_voters = context.get_voters()
-            # bypass when not using votes
-            if stored_voters:
-                meeting_voters = [voter.split('_')[1] for voter
-                                  in request.form.get('meeting_voters', [])]
-                removed_meeting_voters = set(stored_voters).difference(meeting_voters)
-                # public, voters are known
-                item_votes = context.get_item_votes()
-                voter_uids = []
-                highest_secret_votes = 0
-                for votes in item_votes.values():
-                    for vote in votes:
-                        if 'voters' in vote:
-                            # public
-                            voter_uids += [k for k, v in vote['voters'].items()
-                                           if v != NOT_ENCODED_VOTE_VALUE]
-                        else:
-                            secret_votes = sum([v for k, v in vote['votes'].items()])
-                            if secret_votes > highest_secret_votes:
-                                highest_secret_votes = secret_votes
-                voter_uids = list(set(voter_uids))
-                conflict_voters = removed_meeting_voters.intersection(
-                    voter_uids)
-                if conflict_voters:
-                    voter_uid = tuple(removed_meeting_voters)[0]
-                    voter_brain = uuidToCatalogBrain(voter_uid)
-                    msg = translate(
-                        'can_not_remove_public_voter_voted_on_items',
-                        mapping={'attendee_title': voter_brain.get_full_title},
-                        domain='PloneMeeting',
-                        context=request)
-                    # avoid multiple call to this invariant
-                    context.REQUEST.set("validate_attendees_done", True)
-                    # encode msg in utf-8 for restapi
-                    raise Invalid(msg.encode('utf-8'))
-                elif highest_secret_votes > len(meeting_voters):
-                    msg = translate(
-                        'can_not_remove_secret_voter_voted_on_items',
-                        domain='PloneMeeting',
-                        context=request)
-                    # avoid multiple call to this invariant
-                    context.REQUEST.set("validate_attendees_done", True)
-                    # encode msg in utf-8 for restapi
-                    raise Invalid(msg.encode('utf-8'))
-
             # there can not be 2 same signatories
             if signatories:
                 signature_numbers = [signatory.split('__signaturenumber__')[1]
                                      for signatory in signatories]
                 _validate_attendees_signatories(
                     context, signature_numbers)
+
+            # is editing a meeting, check for removed/used values
+            if is_meeting:
+                # removed attendees?
+                # REQUEST.form['meeting_attendees'] is like
+                # ['muser_attendeeuid1_attendee', 'muser_attendeeuid2_excused']
+                meeting_attendees = [attendee.split('_')[1] for attendee
+                                     in request.form.get('meeting_attendees', [])
+                                     if attendee.split('_')[2] == 'attendee']
+                all_meeting_attendees = [
+                    attendee.split('_')[1] for attendee
+                    in request.form.get('meeting_attendees', [])]
+
+                signatory_uids = [signatory.split('__signaturenumber__')[0]
+                                  for signatory in signatories]
+                _validate_attendees_removed_and_order(
+                    context, meeting_attendees, all_meeting_attendees, signatory_uids)
+
+                # removed voters?
+                stored_voters = context.get_voters()
+                # bypass when not using votes
+                if stored_voters:
+                    meeting_voters = [voter.split('_')[1] for voter
+                                      in request.form.get('meeting_voters', [])]
+                    removed_meeting_voters = set(stored_voters).difference(meeting_voters)
+                    # public, voters are known
+                    item_votes = context.get_item_votes()
+                    voter_uids = []
+                    highest_secret_votes = 0
+                    for votes in item_votes.values():
+                        for vote in votes:
+                            if 'voters' in vote:
+                                # public
+                                voter_uids += [k for k, v in vote['voters'].items()
+                                               if v != NOT_ENCODED_VOTE_VALUE]
+                            else:
+                                secret_votes = sum([v for k, v in vote['votes'].items()])
+                                if secret_votes > highest_secret_votes:
+                                    highest_secret_votes = secret_votes
+                    voter_uids = list(set(voter_uids))
+                    conflict_voters = removed_meeting_voters.intersection(
+                        voter_uids)
+                    if conflict_voters:
+                        voter_uid = tuple(removed_meeting_voters)[0]
+                        voter_brain = uuidToCatalogBrain(voter_uid)
+                        msg = translate(
+                            'can_not_remove_public_voter_voted_on_items',
+                            mapping={'attendee_title': voter_brain.get_full_title},
+                            domain='PloneMeeting',
+                            context=request)
+                        # avoid multiple call to this invariant
+                        context.REQUEST.set("validate_attendees_done", True)
+                        # encode msg in utf-8 for restapi
+                        raise Invalid(msg.encode('utf-8'))
+                    elif highest_secret_votes > len(meeting_voters):
+                        msg = translate(
+                            'can_not_remove_secret_voter_voted_on_items',
+                            domain='PloneMeeting',
+                            context=request)
+                        # avoid multiple call to this invariant
+                        context.REQUEST.set("validate_attendees_done", True)
+                        # encode msg in utf-8 for restapi
+                        raise Invalid(msg.encode('utf-8'))
 
         # avoid multiple call to this invariant
         context.REQUEST.set("validate_attendees_done", True)
