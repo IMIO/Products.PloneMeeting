@@ -39,6 +39,7 @@
     <metal:field use-macro="python:here.widget('committees', mode='edit')"/>
     <metal:field use-macro="python:here.widget('optionalAdvisers', mode='edit')"/>
     <metal:field use-macro="python:here.widget('copyGroups', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('restrictedCopyGroups', mode='edit')"/>
 
     <metal:field use-macro="python:here.widget('preferredMeeting', mode='edit')"/>
     <metal:field use-macro="python:here.widget('meetingDeadlineDate', mode='edit')"/>

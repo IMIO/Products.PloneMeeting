@@ -13,11 +13,12 @@ from collective.contact.plonegroup.utils import get_plone_groups
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from eea.facetednavigation.interfaces import ICriteria
+from fnmatch import fnmatch
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.content import get_user_fullname
 from imio.helpers.content import uuidToObject
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
-from imio.pyutils.utils import get_clusters
+from imio.pyutils.utils import get_ordinal_clusters
 from imio.zamqp.core.utils import scan_id_barcode
 from plone import api
 from plone.app.caching.operations.utils import getContext
@@ -1114,8 +1115,9 @@ class BaseDGHV(object):
                                 include_in_count=False,
                                 include_out_count=False,
                                 in_out_attendee_types=['item_excused', 'item_absent'],
-                                out_count_pattern=" ({})",
-                                in_count_pattern=" ({})",
+                                in_out_cluster_format="{}-{}",
+                                out_count_patterns={'*': u" ({})"},
+                                in_count_patterns={'*': u" ({})"},
                                 abbreviate_firstname=False,
                                 included_attendee_types=['attendee', 'excused', 'absent', 'replaced',
                                                          'item_excused', 'item_absent', 'item_non_attendee'],
@@ -1163,18 +1165,31 @@ class BaseDGHV(object):
                         not_present_item_uids += meeting.get_item_excused(by_persons=True).get(contact_uid, [])
                     if 'non_attendee' in in_out_attendee_types:
                         not_present_item_uids += meeting.get_item_non_attendees(by_persons=True).get(contact_uid, [])
+
+                    # A glob pattern is used to minimize the size of the dict the user have to pass
+                    # in out_count_patterns and in_count_patterns.
+                    # If you don't care, you can use "*" as the first and/or second part of the key
+                    # "M" stands for masculine and "F" for feminine genre of the contact
+                    # "S" stands for singular and "P" for plural items
+
                     if include_out_count and len(not_present_item_uids) > 0:
                         catalog = api.portal.get_tool('portal_catalog')
                         brains = catalog(UID=not_present_item_uids, sort_on='getItemNumber')
-                        numbers = [brain.getObject().getItemNumber(for_display=True) for brain in brains]
-                        numbers = [int(number) if '.' not in number else float(number) for number in numbers]
-                        contact_value += out_count_pattern.format(get_clusters(numbers))
+                        numbers = [brain.getObject().getItemNumber(for_display=False)
+                                   for brain in brains]
+                        cluster = get_ordinal_clusters(numbers, offset=100, cluster_format=in_out_cluster_format)
+                        pattern = (str(contact.gender) or 'M') + ('S' if len(numbers) == 1 else 'P')
+                        pattern_key = filter(lambda x: fnmatch(pattern, x), out_count_patterns.keys())[0]
+                        contact_value += out_count_patterns.get(pattern_key).format(cluster)
                     if include_in_count and len(not_present_item_uids) > 0:
-                        numbers = [item.getItemNumber(for_display=True)
+                        numbers = [item.getItemNumber(for_display=False)
                                    for item in meeting.get_items(ordered=True)
                                    if item.UID() not in not_present_item_uids]
-                        numbers = [int(number) if '.' not in number else float(number) for number in numbers]
-                        contact_value += in_count_pattern.format(get_clusters(numbers))
+                        cluster = get_ordinal_clusters(numbers, offset=100, cluster_format=in_out_cluster_format)
+                        pattern = (str(contact.gender) or 'M') + ('S' if len(numbers) == 1 else 'P')
+                        pattern_key = filter(lambda x: fnmatch(pattern, x), in_count_patterns.keys())[0]
+                        contact_value += in_count_patterns.get(pattern_key).format(cluster)
+
                 if unbreakable_contact_value:
                     contact_value = contact_value.replace(" ", "&nbsp;")
                 grouped_contacts_value.append(contact_value)
@@ -1805,7 +1820,14 @@ def print_votes(item,
                 main_pattern=u"<p>Par {0},</p>",
                 separator=u", ",
                 last_separator=u" et ",
-                single_vote_value=u"une",
+                single_vote_value={'yes': u"une",
+                                   'no': u"une",
+                                   'abstain': u"une",
+                                   'does_not_vote': u"un",
+                                   'not_found': u"un",
+                                   'invalid': u"un",
+                                   'blank': u"un",
+                                   'default': u"1"},
                 secret_intro=u"<p>Au scrutin secret,</p>",
                 public_intro=u"",
                 total_voters_pattern=u"<p>Il y a {0} votants.</p>",
@@ -1818,6 +1840,7 @@ def print_votes(item,
                 include_voters=False,
                 include_person_title=True,
                 include_hp=True,
+                include_voters_percent_treshold=100,
                 include_total_voters=False,
                 abbreviate_firstname=False,
                 voters_pattern=u"<p>{0}</p>",
@@ -1831,6 +1854,9 @@ def print_votes(item,
        When using p_render_as_html=True :
        - p_main_pattern is the main pattern the votes will be rendered;
        - p_separator is used to separate vote values;
+       - p_single_vote_value is a dict with a value when the given vote result is "1",
+         it can be a dict with an entry for each vote value or a single value like "one" or "1".
+         A special value "default" will be used if vote value not defined;
        - p_last_separator is used to separate last vote value from others;
        - p_secret_intro will be included before rendered vote_values if votes are secret;
        - p_public_intro will be included before rendered vote_values if votes are public;
@@ -1841,7 +1867,14 @@ def print_votes(item,
        - p_include_null_vote_count_values, by default null (0) vote counts are not shown,
          define a list of used vote values to keep;
        - p_all_yes_render, rendered instead vote values when every values are 'yes';
-       - render_as_html=True
+       - p_include_voters, may be False(default/True or a list of vote values (yes, no, ...),
+         will display the voters next to the vote value:
+         - p_include_person_title will include voter title;
+         - p_include_hp will include the voter held position;
+         - p_include_voters_percent_treshold, integer value between 0 and 100 that will include voters
+           if ratio between number of voters for a vote value and total voters is
+           less or equal the treshold.
+       - p_include_total_voters will include the total number of voters based on p_total_voters_pattern.
        """
 
     def _render_voters(vote_value, voters, meeting):
@@ -1879,7 +1912,16 @@ def print_votes(item,
             'no': u"{0} voix contre",
             'no_multiple': u"{0} voix contre",
             'abstain': u"{0} abstention",
-            'abstain_multiple': u"{0} abstentions"}
+            'abstain_multiple': u"{0} abstentions",
+            'does_not_vote': u"{0} bulletin \"ne vote pas\"",
+            'does_not_vote_multiple': u"{0} bulletins \"ne vote pas\"",
+            'not_found': u"{0} bulletin non trouvé dans l'urne",
+            'not_found_multiple': u"{0} bulletins non trouvés dans l'urne",
+            'invalid': u"{0} bulletin invalide",
+            'invalid_multiple': u"{0} bulletins invalides",
+            'blank': u"{0} vote blanc",
+            'blank_multiple': u"{0} votes blancs",
+        }
     elif used_patterns == "counts":
         patterns = {
             'yes': u"<p><strong>Pour: {0}</strong></p>",
@@ -1887,7 +1929,16 @@ def print_votes(item,
             'no': u"<p><strong>Contre: {0}</strong></p>",
             'no_multiple': u"<p><strong>Contre: {0}</strong></p>",
             'abstain': u"<p><strong>Abstention: {0}</strong></p>",
-            'abstain_multiple': u"<p><strong>Abstentions: {0}</strong></p>"}
+            'abstain_multiple': u"<p><strong>Abstentions: {0}</strong></p>",
+            'does_not_vote': u"<p><strong>Ne vote pas: {0}</strong></p>",
+            'does_not_vote_multiple': u"<p><strong>Ne votent pas: {0}</strong></p>",
+            'not_found': u"<p><strong>Bulletin non trouvé: {0}</strong></p>",
+            'not_found_multiple': u"<p><strong>Bulletins non trouvés: {0}</strong></p>",
+            'invalid': u"<p><strong>Bulletin invalide: {0}</strong></p>",
+            'invalid_multiple': u"<p><strong>Bulletins invalides: {0}</strong></p>",
+            'blank': u"<p><strong>Vote blanc: {0}</strong></p>",
+            'blank_multiple': u"<p><strong>Votes blancs: {0}</strong></p>",
+        }
     elif used_patterns == "counts_persons":
         patterns = {
             'yes': u"<p><strong>A voté pour: {0}</strong></p>",
@@ -1895,7 +1946,16 @@ def print_votes(item,
             'no': u"<p><strong>A voté contre: {0}</strong></p>",
             'no_multiple': u"<p><strong>Ont voté contre: {0}</strong></p>",
             'abstain': u"<p><strong>S'est abstenu(e): {0}</strong></p>",
-            'abstain_multiple': u"<p><strong>Se sont abstenu(e)s: {0}</strong></p>"}
+            'abstain_multiple': u"<p><strong>Se sont abstenu(e)s: {0}</strong></p>",
+            'does_not_vote': u"<p><strong>N'a pas voté: {0}</strong></p>",
+            'does_not_vote_multiple': u"<p><strong>N'ont pas voté: {0}</strong></p>",
+            'not_found': u"<p><strong>Bulletin non trouvé: {0}</strong></p>",
+            'not_found_multiple': u"<p><strong>Bulletins non trouvés: {0}</strong></p>",
+            'invalid': u"<p><strong>Bulletin invalide: {0}</strong></p>",
+            'invalid_multiple': u"<p><strong>Bulletins invalides: {0}</strong></p>",
+            'blank': u"<p><strong>A voté blanc: {0}</strong></p>",
+            'blank_multiple': u"<p><strong>Ont voté blanc: {0}</strong></p>",
+        }
     patterns.update(custom_patterns)
     # get votes
     rendered = u""
@@ -1930,11 +1990,20 @@ def print_votes(item,
                 for vote_value, vote_count in counts.items():
                     # use _multiple suffixed pattern?
                     pattern_value = vote_count > 1 and vote_value + '_multiple' or vote_value
+                    vote_count_value = vote_count
                     if vote_count == 1:
-                        vote_count = single_vote_value
-                    value = patterns[pattern_value].format(vote_count)
-                    # prepare voters if necessary
-                    if include_voters and not secret:
+                        if isinstance(single_vote_value, dict):
+                            vote_count_value = single_vote_value.get(
+                                vote_value, single_vote_value.get('default', '1'))
+                        else:
+                            vote_count_value = single_vote_value
+                    value = patterns[pattern_value].format(vote_count_value)
+                    # include voters name?
+                    if include_voters and \
+                       not secret and \
+                       (include_voters is True or vote_value in include_voters) and \
+                       (include_voters_percent_treshold == 1 or
+                            100 * vote_count / total_voters <= include_voters_percent_treshold):
                         value += _render_voters(vote_value, voters, meeting)
                     values.append(value)
 
@@ -2338,9 +2407,8 @@ class DisplayMeetingItemNotPresent(BrowserView):
 
     def display_clusters(self):
         """Display item numbers as clusters."""
-        numbers = [item.getItemNumber(for_display=True) for item in self.items_for_not_present]
-        numbers = [int(number) if '.' not in number else float(number) for number in numbers]
-        return get_clusters(numbers)
+        numbers = [item.getItemNumber(for_display=False) for item in self.items_for_not_present]
+        return get_ordinal_clusters(numbers)
 
 
 class DisplayMeetingItemSignatories(BrowserView):

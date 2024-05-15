@@ -2,7 +2,50 @@ Changelog
 =========
 
 
-4.2.9rc6 (unreleased)
+4.2.9rc7 (unreleased)
+---------------------
+
+- In `EveryAnnexTypesVocabulary` use `content_category` icon image scale
+  instead `portal_url.getRelativeUrl` so it is cached.
+  [gbastien]
+- Execute `upgrade_step_4211_add_item_widgets.xml` adding faceted criterion
+  `title only` again in upgrade to `4214` as it was not in
+  `default_dashboard_items_widgets.xml`, new `MeetingConfig` added since
+  profile version `4211` are missing this criterion.
+  [gbastien]
+- Completed `print_votes` so it manages every `vote_values`
+  (`does_not_vote`, `not_found`, `invalid`, `blank`).
+  Adapted parameter `single_vote_value` so we can define a single value or
+  a different value for each `vote_values`.
+  Adapted parameter `include_voters=False` that maye be False/True or a list of
+  vote values.
+  Added parameter `include_voters_percent_treshold=100` that is an integer value
+  from 0 to 100 that will display voters if ratio between number of voters and
+  total voters exceeds the treshold.
+  [gbastien]
+- Added field `MeetingItem.restrictedCopyGroups`, a secondary `copyGroups` field
+  where we can define other groups having access to item in other (later) states.
+  [gbastien]
+- Now every deletion is protected by `IContentDeletable`, including default
+  Plone deletion using `manage_delObjects`.
+  [gbastien]
+- Fixed item number not saved when using `Disk` icon to change item number
+  on meeting view when item number is a subnumber.
+  [gbastien]
+- Fixed validation of meeting signatories when creating a meeting, it was possible
+  to create a meeting with several signatories using same signature number.
+  [gbastien]
+- Added per power observer complementary workflow adaptation to base
+  `hide_decisions_when_under_writing` to let the selected power observers
+  have access to the item decision.
+  [gbastien]
+- Improve `view.print_attendees_by_type` to be able to customize the in and out
+  count more.
+  [aduchene]
+- Allow to use OrderedDict in POD templates.
+  [aduchene]
+
+4.2.9rc6 (2024-04-10)
 ---------------------
 
 - Moved field `Meeting.pre_observations` before `Meeting.observations`.
@@ -31,6 +74,50 @@ Changelog
 - Make `test_pm_Validate_itemWFValidationLevels_removed_depending_used_state_item`
   and `test_pm_SearchItemsToCorrectToValidateOfEveryReviewerGroups` more robust
   when called from subplugin.
+  [gbastien]
+- Adapted `Products.PloneMeeting.vocabularies.advicetypesvocabulary`, used in
+  advice types faceted filter to take into account
+  `ToolPloneMeeting.advisersConfig.advice_types`.
+  [gbastien]
+- Add two types of email notifications to suffixes about given advices.
+  Added upgrade step to 4214 to update `MeetingConfig.mailItemEvents`.
+  [aduchene]
+- Add a notification to power observers about late items.
+  [aduchene]
+- When `MeetingConfig.mailMode` is set to `test`, display the sent mail `subject`
+  and `recipients` in a portal message.
+  [gbastien]
+- Do not break in `MeetingConfig` POD templates when some reusable POD templates
+  were deleted or marked no more reusable.
+  [gbastien]
+- Import `safe_encode` from `imio.pyutils` instead `imio.helpers`.
+  [gbastien]
+- Now that `@@folder_contents` works on `DashboardCollection`,
+  added `test_pm_Folder_contents` to confirm it.
+  [gbastien]
+- Added `tobytes` and `fileSize` from `Products.CPUtils` to `safe_utils`, this
+  is necessary to convert `portal_catalog` `getObjSize` format to `bytes` and
+  `bytes` to a human readable format.
+  [gbastien]
+- Back to previous behavior in `utils._sendMail`, when sending an email
+  with attachment, send it only one time to every recipients instead sending
+  it one time by recipient.
+  [gbastien]
+- Avoid vocabulary `AskedAdvicesVocabulary` being empty when cached because
+  `MeetingConfig` could not be obtained.
+  [gbastien]
+- Display `MeetingConfig.usingGroups` field on `MeetingConfig` view home page
+  under `Groups and users` to identify easily a MeetingConfig using this parameter.
+  [gbastien]
+- Added parameters `withItemNumber=False` and `withItemReference=False` to
+  `MeetingItem.Title` to have the item title prefixed with item reference
+  and/or item number.
+  [gbastien]
+- Adapted `utils._sendMail` to use `bcc` (`blind carbon copy`) when sending
+  an email with attachment (one email sent to several recipients).
+  [gbastien]
+- Display `TAL condition` by default on `MeetingConfig` view in
+  `POD templates` section.
   [gbastien]
 
 4.2.9rc5 (2024-03-14)
@@ -111,6 +198,9 @@ Changelog
   Also refactored it so the loop on recipients is managed by `utils._sendMail`
   and one mail is sent by recipient in any case (attachments or not).
   [gbastien]
+- Use ZLogHandler in `ToolPloneMeeting.update_all_local_roles`.
+  [aduchene]
+
 
 4.2.9rc1 (2024-02-08)
 ---------------------

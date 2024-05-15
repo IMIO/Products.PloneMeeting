@@ -193,6 +193,7 @@ ITEMTEMPLATESMANAGERS_GROUP_SUFFIX = 'itemtemplatesmanagers'
 # If a special usecase needs to use another role, it can be specified in a sub-plugin
 READER_USECASES = {
     'copy_groups': 'Reader',
+    'restricted_copy_groups': 'Reader',
     'advices': 'Reader',
     'powerobservers': 'Reader',
     'itemtemplatesmanagers': 'Reader',
@@ -228,7 +229,8 @@ ITEM_DEFAULT_TEMPLATE_ID = "default-empty-item-template"
 DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivation',
                          'decision', 'decisionSuite', 'decisionEnd',
                          'budgetInfos', 'budgetRelated', 'sendToAuthority',
-                         'groupsInCharge', 'proposingGroupWithGroupInCharge', 'copyGroups']
+                         'groupsInCharge', 'proposingGroupWithGroupInCharge',
+                         'copyGroups', 'restrictedCopyGroups']
 # extra fields kept when an item is cloned in the same meeting config,
 # so not the case when sent to another meeting config
 EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'category', 'classifier', 'committees',
@@ -269,6 +271,17 @@ ADVICE_STATES_ENDED = ('advice_given', )
 # to be monkey patched to extend it
 # this is the mappings between an advice WF state and it's corresponding group suffix
 ADVICE_STATES_MAPPING = {'advice_given': 'advisers', }
+
+ADVICE_TYPES = [
+    'positive',
+    'positive_with_comments',
+    'positive_with_remarks',
+    'cautious',
+    'negative',
+    'negative_with_remarks',
+    'back_to_proposing_group',
+    'nil',
+    'read']
 
 # name of the variable added to the REQUEST when getting the scan_id
 ITEM_SCAN_ID_NAME = 'item_scan_id'

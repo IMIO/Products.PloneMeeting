@@ -792,6 +792,24 @@ class testFaceted(PloneMeetingTestCase):
                           'hidden_during_redaction',
                           'not_given',
                           'positive'])
+        # ToolPloneMeeting.advisersConfig.advice_types
+        self.tool.setAdvisersConfig(
+            ({'advice_types': ['positive_with_remarks'],
+              'base_wf': 'meetingadvice_workflow',
+              'default_advice_type': 'positive_with_remarks',
+              'org_uids': [self.vendors_uid],
+              'portal_type': 'meetingadvice',
+              'show_advice_on_final_wf_transition': '1',
+              'wf_adaptations': []}, ))
+        self.tool.at_post_edit_script()
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(sorted([term.token for term in vocab(pmFolder)]),
+                         ['asked_again',
+                          'considered_not_given_hidden_during_redaction',
+                          'hidden_during_redaction',
+                          'not_given',
+                          'positive',
+                          'positive_with_remarks'])
 
     def test_pm_PMConditionAwareCollectionVocabulary(self):
         """Test the 'conditionawarecollectionvocabulary'

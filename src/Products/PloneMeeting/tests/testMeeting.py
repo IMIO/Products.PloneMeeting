@@ -27,6 +27,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.permissions import View
 from Products.Five import zcml
+from Products.PloneMeeting.browser.meeting import _get_default_attendees
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
@@ -2667,6 +2668,9 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(set(meetingParentFolder.objectValues('MeetingItem')), set(meeting.get_items()))
         # if trying to remove a meeting containing items as non Manager, it will raise Unauthorized
         self.assertRaises(Unauthorized, self.portal.restrictedTraverse('@@delete_givenuid'), meeting.UID())
+        transaction.begin()
+        self.assertRaises(Unauthorized, meetingParentFolder.manage_delObjects, [meeting.getId()])
+        transaction.abort()
         # as a Manager, the meeting including items will be removed
         self.deleteAsManager(meeting.UID())
         # nothing left in the folder but the searches_* folders
@@ -3549,14 +3553,29 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(invariants.validate(data), ())
         self.request.set('validate_attendees_done', False)
 
-        # now with contacts
+        # now with contacts, add form
         self._setUpOrderedContacts()
         add_form.update()
         self.assertEqual(invariants.validate(data), ())
         self.request.set('validate_attendees_done', False)
+        # can not use several times same signature_number
+        error_msg = translate(
+            u'can_not_define_several_same_signature_number',
+            domain='PloneMeeting',
+            context=self.request)
+        attendee_uids = _get_default_attendees(pm_folder)
+        meeting_signatories = ['{0}__signaturenumber__1'.format(attendee_uids[0]),
+                               '{0}__signaturenumber__1'.format(attendee_uids[1])]
+        self.request.form['meeting_signatories'] = meeting_signatories
+        errors = invariants.validate(data)
+        self.request.set('validate_attendees_done', False)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0].message, error_msg)
+        del self.request.form['meeting_signatories']
+
+        # edit form
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
-
         # does not break post_validating without 'meeting_attendees'
         # this is the case when nobody has been selected on the meeting
         edit_form = meeting.restrictedTraverse('@@edit')
@@ -3641,18 +3660,6 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(invariants.validate(data), ())
         self.request.set('validate_attendees_done', False)
 
-        # can not use several times same signature_number
-        error_msg = translate(
-            u'can_not_define_several_same_signature_number',
-            domain='PloneMeeting',
-            context=self.request)
-        meeting_signatories = ['{0}__signaturenumber__1'.format(attendee_uids[0]),
-                               '{0}__signaturenumber__1'.format(attendee_uids[1])]
-        self.request.form['meeting_signatories'] = meeting_signatories
-        errors = invariants.validate(data)
-        self.request.set('validate_attendees_done', False)
-        self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0].message, error_msg)
         # now with correct values, 2 different signature numbers
         meeting_signatories = ['{0}__signaturenumber__1'.format(attendee_uids[0]),
                                '{0}__signaturenumber__2'.format(attendee_uids[1])]

@@ -16,7 +16,7 @@
               &lt;title i18n:translate=""&gt;store_as_annex&lt;/title&gt;
               &lt;description i18n:translate=""&gt;store_as_annex_descr&lt;/description&gt;
               &lt;required&gt;False&lt;/required&gt;
-              &lt;vocabulary&gt;Products.PloneMeeting.vocabularies.storepodtemplateasannexvocabulary&lt;/vocabulary&gt;
+              &lt;vocabulary&gt;Products.PloneMeeting.vocabularies.every_annex_types_vocabulary&lt;/vocabulary&gt;
             &lt;/field&gt;
 
             &lt;field name="store_as_annex_title_expr" type="zope.schema.TextLine"&gt;

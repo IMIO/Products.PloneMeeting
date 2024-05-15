@@ -1018,7 +1018,7 @@ class testAnnexes(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self._enable_annex_config(item, param="to_be_printed")
         annex1 = self.addAnnex(item, annexTitle="Annex 1")
-        annex2 = self.addAnnex(item, annexTitle="Annex 2")
+        annex2 = self.addAnnex(item, annexTitle="Annex 2", annexType='overhead-analysis')
         annex3 = self.addAnnex(item, annexTitle="Annex 3")
         annex1.to_print = True
         annex2.to_print = True
@@ -1033,6 +1033,10 @@ class testAnnexes(PloneMeetingTestCase):
         # same result
         annexes_to_print2 = get_annexes_to_print(item, caching=False)
         self.assertEqual(annexes_to_print, annexes_to_print2)
+        # filters
+        annexes_to_print = get_annexes_to_print(item, filters={'category_id': 'overhead-analysis'})
+        self.assertEqual(len(annexes_to_print), 1)
+        self.assertEqual(annexes_to_print[0]['UID'], annex2.UID())
 
     def test_pm_ChangeAnnexPosition(self):
         """Annexes are orderable by the user able to add annexes."""
@@ -1769,7 +1773,9 @@ class testAnnexes(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         annex0 = self.addAnnex(item)
-        annex1 = self.addAnnex(item, annexType='preview-annex')
+        # must be PDF
+        self.assertRaises(Invalid, self.addAnnex, item, annexType='preview-annex')
+        annex1 = self.addAnnex(item, annexType='preview-annex', annexFile=self.annexFilePDF)
         annex2 = self.addAnnex(item, annexType='preview-hide-download-annex')
         infos = _categorized_elements(item)
         # every annexes were converted
