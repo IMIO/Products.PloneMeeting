@@ -39,6 +39,11 @@ Changelog
   `hide_decisions_when_under_writing` to let the selected power observers
   have access to the item decision.
   [gbastien]
+- Improve `view.print_attendees_by_type` to be able to customize the in and out
+  count more.
+  [aduchene]
+- Allow to use OrderedDict in POD templates.
+  [aduchene]
 
 4.2.9rc6 (2024-04-10)
 ---------------------
