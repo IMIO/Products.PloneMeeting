@@ -1512,7 +1512,6 @@ class testContacts(PloneMeetingTestCase):
                                            ]))
         )  # Here we make sure to use an ordered dict to keep the order of the patterns in py2
 
-
     def test_pm_Print_attendees_by_type_committee_id(self):
         """Print Meeting committee attendees by type."""
         self.changeUser('pmManager')

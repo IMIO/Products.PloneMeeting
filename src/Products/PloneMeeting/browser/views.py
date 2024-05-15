@@ -1116,7 +1116,7 @@ class BaseDGHV(object):
                                 include_out_count=False,
                                 in_out_attendee_types=['item_excused', 'item_absent'],
                                 in_out_cluster_format="{}-{}",
-                                out_count_patterns={'*' :u" ({})"},
+                                out_count_patterns={'*': u" ({})"},
                                 in_count_patterns={'*': u" ({})"},
                                 abbreviate_firstname=False,
                                 included_attendee_types=['attendee', 'excused', 'absent', 'replaced',
@@ -1175,16 +1175,18 @@ class BaseDGHV(object):
                     if include_out_count and len(not_present_item_uids) > 0:
                         catalog = api.portal.get_tool('portal_catalog')
                         brains = catalog(UID=not_present_item_uids, sort_on='getItemNumber')
-                        numbers = [brain.getObject().getItemNumber(for_display=True) for brain in brains]
-                        numbers = [int(number) if '.' not in number else float(number) for number in numbers]
+                        numbers = [brain.getObject().getItemNumber(for_display=False)
+                                   for brain in brains]
+                        # numbers = [int(number) if '.' not in number else float(number) for number in numbers]
                         cluster = get_ordinal_clusters(numbers, offset=100, cluster_format=in_out_cluster_format)
                         pattern = (str(contact.gender) or 'M') + ('S' if len(numbers) == 1 else 'P')
                         pattern_key = filter(lambda x: fnmatch(pattern, x), out_count_patterns.keys())[0]
                         contact_value += out_count_patterns.get(pattern_key).format(cluster)
                     if include_in_count and len(not_present_item_uids) > 0:
-                        numbers = [item.getItemNumber(for_display=True)
-                                   for item in meeting.get_items(ordered=True) if item.UID() not in not_present_item_uids]
-                        numbers = [int(number) if '.' not in number else float(number) for number in numbers]
+                        numbers = [item.getItemNumber(for_display=False)
+                                   for item in meeting.get_items(ordered=True)
+                                   if item.UID() not in not_present_item_uids]
+                        # numbers = [int(number) if '.' not in number else float(number) for number in numbers]
                         cluster = get_ordinal_clusters(numbers, offset=100, cluster_format=in_out_cluster_format)
                         pattern = (str(contact.gender) or 'M') + ('S' if len(numbers) == 1 else 'P')
                         pattern_key = filter(lambda x: fnmatch(pattern, x), in_count_patterns.keys())[0]
