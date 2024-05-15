@@ -1161,9 +1161,9 @@ class BaseDGHV(object):
                     not_present_item_uids = []
                     if 'item_absent' in in_out_attendee_types:
                         not_present_item_uids += meeting.get_item_absents(by_persons=True).get(contact_uid, [])
-                    elif 'item_excused' in in_out_attendee_types:
+                    if 'item_excused' in in_out_attendee_types:
                         not_present_item_uids += meeting.get_item_excused(by_persons=True).get(contact_uid, [])
-                    elif 'non_attendee' in in_out_attendee_types:
+                    if 'non_attendee' in in_out_attendee_types:
                         not_present_item_uids += meeting.get_item_non_attendees(by_persons=True).get(contact_uid, [])
 
                     # A glob pattern is used to minimize the size of the dict the user have to pass
@@ -1177,7 +1177,6 @@ class BaseDGHV(object):
                         brains = catalog(UID=not_present_item_uids, sort_on='getItemNumber')
                         numbers = [brain.getObject().getItemNumber(for_display=False)
                                    for brain in brains]
-                        # numbers = [int(number) if '.' not in number else float(number) for number in numbers]
                         cluster = get_ordinal_clusters(numbers, offset=100, cluster_format=in_out_cluster_format)
                         pattern = (str(contact.gender) or 'M') + ('S' if len(numbers) == 1 else 'P')
                         pattern_key = filter(lambda x: fnmatch(pattern, x), out_count_patterns.keys())[0]
@@ -1186,7 +1185,6 @@ class BaseDGHV(object):
                         numbers = [item.getItemNumber(for_display=False)
                                    for item in meeting.get_items(ordered=True)
                                    if item.UID() not in not_present_item_uids]
-                        # numbers = [int(number) if '.' not in number else float(number) for number in numbers]
                         cluster = get_ordinal_clusters(numbers, offset=100, cluster_format=in_out_cluster_format)
                         pattern = (str(contact.gender) or 'M') + ('S' if len(numbers) == 1 else 'P')
                         pattern_key = filter(lambda x: fnmatch(pattern, x), in_count_patterns.keys())[0]
@@ -2409,8 +2407,7 @@ class DisplayMeetingItemNotPresent(BrowserView):
 
     def display_clusters(self):
         """Display item numbers as clusters."""
-        numbers = [item.getItemNumber(for_display=True) for item in self.items_for_not_present]
-        numbers = [int(number) if '.' not in number else float(number) for number in numbers]
+        numbers = [item.getItemNumber(for_display=False) for item in self.items_for_not_present]
         return get_ordinal_clusters(numbers)
 
 

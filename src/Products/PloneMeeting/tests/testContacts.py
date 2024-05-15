@@ -1486,6 +1486,12 @@ class testContacts(PloneMeetingTestCase):
         )
 
         self.assertIn(
+            "Madame Person3FirstName Person3LastName, Assembly member 3 [except 1, 3]",
+            helper.print_attendees_by_type(include_out_count=True, in_out_attendee_types=["item_excused", "item_absent"],
+                                           out_count_patterns={"*": u" [except {}]"}),
+        )
+
+        self.assertIn(
             u"Monsieur Person1FirstName Person1LastName, Assembly member 1 [éàè@%1ê 1]",
             helper.print_attendees_by_type(include_out_count=True, in_out_attendee_types=["item_absent"],
                                            out_count_patterns={"*": u" [éàè@%1ê {}]"}),
