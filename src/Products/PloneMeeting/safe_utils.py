@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # flake8: noqa
 
+from collections import OrderedDict
 from datetime import datetime
 from DateTime import DateTime
 from imio.helpers.cache import get_current_user_id

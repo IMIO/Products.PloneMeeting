@@ -1480,10 +1480,43 @@ class testContacts(PloneMeetingTestCase):
         )
 
         self.assertIn(
-            "Monsieur Person1FirstName Person1LastName, Assembly member 1 [sauf 1]",
+            "Monsieur Person1FirstName Person1LastName, Assembly member 1 [except 1]",
             helper.print_attendees_by_type(include_out_count=True, in_out_attendee_types=["item_absent"],
-                                           out_count_pattern=" [sauf {}]"),
+                                           out_count_patterns={"*": u" [except {}]"}),
         )
+
+        self.assertIn(
+            "Madame Person3FirstName Person3LastName, Assembly member 3 [except 1, 3]",
+            helper.print_attendees_by_type(include_out_count=True, in_out_attendee_types=["item_excused", "item_absent"],
+                                           out_count_patterns={"*": u" [except {}]"}),
+        )
+
+        self.assertIn(
+            u"Monsieur Person1FirstName Person1LastName, Assembly member 1 [éàè@%1ê 1]",
+            helper.print_attendees_by_type(include_out_count=True, in_out_attendee_types=["item_absent"],
+                                           out_count_patterns={"*": u" [éàè@%1ê {}]"}),
+        )
+
+        self.assertIn(
+            "Monsieur Person1FirstName Person1LastName, Assembly member 1 - except for this item: 1",
+            helper.print_attendees_by_type(include_out_count=True,
+                                           out_count_patterns={
+                                               "*S": " - except for this item: {}",
+                                               "*P": " - except for these items: {}"
+                                           })
+        )
+
+        self.assertIn(
+            "Monsieur Person1FirstName Person1LastName, Assembly member 1 - only for these: 2 to 3",
+            helper.print_attendees_by_type(include_in_count=True,
+                                           in_out_cluster_format="{} to {}",
+                                           in_count_patterns=OrderedDict([
+                                               ("MS", " - only for: {}"),
+                                               ("MP", " - only for these: {}"),
+                                               ("*S", "I'm being ignored"),
+                                               ("*", "{}")
+                                           ]))
+        )  # Here we make sure to use an ordered dict to keep the order of the patterns in py2
 
     def test_pm_Print_attendees_by_type_committee_id(self):
         """Print Meeting committee attendees by type."""

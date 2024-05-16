@@ -17,6 +17,11 @@ Changelog
   (`does_not_vote`, `not_found`, `invalid`, `blank`).
   Adapted parameter `single_vote_value` so we can define a single value or
   a different value for each `vote_values`.
+  Adapted parameter `include_voters=False` that maye be False/True or a list of
+  vote values.
+  Added parameter `include_voters_percent_treshold=100` that is an integer value
+  from 0 to 100 that will display voters if ratio between number of voters and
+  total voters exceeds the treshold.
   [gbastien]
 - Added field `MeetingItem.restrictedCopyGroups`, a secondary `copyGroups` field
   where we can define other groups having access to item in other (later) states.
@@ -34,6 +39,11 @@ Changelog
   `hide_decisions_when_under_writing` to let the selected power observers
   have access to the item decision.
   [gbastien]
+- Improve `view.print_attendees_by_type` to be able to customize the in and out
+  count more.
+  [aduchene]
+- Allow to use OrderedDict in POD templates.
+  [aduchene]
 - Added column `groups_managing_item` in `MeetingConfig.itemWFValidationLevels`,
   this will manage cases when another group than the proposing group is managing
   the item, several groups may be selected including the proposing group or not.

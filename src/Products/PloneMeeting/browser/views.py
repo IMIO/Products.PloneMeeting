@@ -13,11 +13,12 @@ from collective.contact.plonegroup.utils import get_plone_groups
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from eea.facetednavigation.interfaces import ICriteria
+from fnmatch import fnmatch
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.content import get_user_fullname
 from imio.helpers.content import uuidToObject
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
-from imio.pyutils.utils import get_clusters
+from imio.pyutils.utils import get_ordinal_clusters
 from imio.zamqp.core.utils import scan_id_barcode
 from plone import api
 from plone.app.caching.operations.utils import getContext
@@ -1114,8 +1115,9 @@ class BaseDGHV(object):
                                 include_in_count=False,
                                 include_out_count=False,
                                 in_out_attendee_types=['item_excused', 'item_absent'],
-                                out_count_pattern=" ({})",
-                                in_count_pattern=" ({})",
+                                in_out_cluster_format="{}-{}",
+                                out_count_patterns={'*': u" ({})"},
+                                in_count_patterns={'*': u" ({})"},
                                 abbreviate_firstname=False,
                                 included_attendee_types=['attendee', 'excused', 'absent', 'replaced',
                                                          'item_excused', 'item_absent', 'item_non_attendee'],
@@ -1163,18 +1165,31 @@ class BaseDGHV(object):
                         not_present_item_uids += meeting.get_item_excused(by_persons=True).get(contact_uid, [])
                     if 'non_attendee' in in_out_attendee_types:
                         not_present_item_uids += meeting.get_item_non_attendees(by_persons=True).get(contact_uid, [])
+
+                    # A glob pattern is used to minimize the size of the dict the user have to pass
+                    # in out_count_patterns and in_count_patterns.
+                    # If you don't care, you can use "*" as the first and/or second part of the key
+                    # "M" stands for masculine and "F" for feminine genre of the contact
+                    # "S" stands for singular and "P" for plural items
+
                     if include_out_count and len(not_present_item_uids) > 0:
                         catalog = api.portal.get_tool('portal_catalog')
                         brains = catalog(UID=not_present_item_uids, sort_on='getItemNumber')
-                        numbers = [brain.getObject().getItemNumber(for_display=True) for brain in brains]
-                        numbers = [int(number) if '.' not in number else float(number) for number in numbers]
-                        contact_value += out_count_pattern.format(get_clusters(numbers))
+                        numbers = [brain.getObject().getItemNumber(for_display=False)
+                                   for brain in brains]
+                        cluster = get_ordinal_clusters(numbers, offset=100, cluster_format=in_out_cluster_format)
+                        pattern = (str(contact.gender) or 'M') + ('S' if len(numbers) == 1 else 'P')
+                        pattern_key = filter(lambda x: fnmatch(pattern, x), out_count_patterns.keys())[0]
+                        contact_value += out_count_patterns.get(pattern_key).format(cluster)
                     if include_in_count and len(not_present_item_uids) > 0:
-                        numbers = [item.getItemNumber(for_display=True)
+                        numbers = [item.getItemNumber(for_display=False)
                                    for item in meeting.get_items(ordered=True)
                                    if item.UID() not in not_present_item_uids]
-                        numbers = [int(number) if '.' not in number else float(number) for number in numbers]
-                        contact_value += in_count_pattern.format(get_clusters(numbers))
+                        cluster = get_ordinal_clusters(numbers, offset=100, cluster_format=in_out_cluster_format)
+                        pattern = (str(contact.gender) or 'M') + ('S' if len(numbers) == 1 else 'P')
+                        pattern_key = filter(lambda x: fnmatch(pattern, x), in_count_patterns.keys())[0]
+                        contact_value += in_count_patterns.get(pattern_key).format(cluster)
+
                 if unbreakable_contact_value:
                     contact_value = contact_value.replace(" ", "&nbsp;")
                 grouped_contacts_value.append(contact_value)
@@ -1825,6 +1840,7 @@ def print_votes(item,
                 include_voters=False,
                 include_person_title=True,
                 include_hp=True,
+                include_voters_percent_treshold=100,
                 include_total_voters=False,
                 abbreviate_firstname=False,
                 voters_pattern=u"<p>{0}</p>",
@@ -1851,7 +1867,14 @@ def print_votes(item,
        - p_include_null_vote_count_values, by default null (0) vote counts are not shown,
          define a list of used vote values to keep;
        - p_all_yes_render, rendered instead vote values when every values are 'yes';
-       - render_as_html=True
+       - p_include_voters, may be False(default/True or a list of vote values (yes, no, ...),
+         will display the voters next to the vote value:
+         - p_include_person_title will include voter title;
+         - p_include_hp will include the voter held position;
+         - p_include_voters_percent_treshold, integer value between 0 and 100 that will include voters
+           if ratio between number of voters for a vote value and total voters is
+           less or equal the treshold.
+       - p_include_total_voters will include the total number of voters based on p_total_voters_pattern.
        """
 
     def _render_voters(vote_value, voters, meeting):
@@ -1967,15 +1990,20 @@ def print_votes(item,
                 for vote_value, vote_count in counts.items():
                     # use _multiple suffixed pattern?
                     pattern_value = vote_count > 1 and vote_value + '_multiple' or vote_value
+                    vote_count_value = vote_count
                     if vote_count == 1:
                         if isinstance(single_vote_value, dict):
-                            vote_count = single_vote_value.get(
+                            vote_count_value = single_vote_value.get(
                                 vote_value, single_vote_value.get('default', '1'))
                         else:
-                            vote_count = single_vote_value
-                    value = patterns[pattern_value].format(vote_count)
-                    # prepare voters if necessary
-                    if include_voters and not secret:
+                            vote_count_value = single_vote_value
+                    value = patterns[pattern_value].format(vote_count_value)
+                    # include voters name?
+                    if include_voters and \
+                       not secret and \
+                       (include_voters is True or vote_value in include_voters) and \
+                       (include_voters_percent_treshold == 1 or
+                            100 * vote_count / total_voters <= include_voters_percent_treshold):
                         value += _render_voters(vote_value, voters, meeting)
                     values.append(value)
 
@@ -2379,9 +2407,8 @@ class DisplayMeetingItemNotPresent(BrowserView):
 
     def display_clusters(self):
         """Display item numbers as clusters."""
-        numbers = [item.getItemNumber(for_display=True) for item in self.items_for_not_present]
-        numbers = [int(number) if '.' not in number else float(number) for number in numbers]
-        return get_clusters(numbers)
+        numbers = [item.getItemNumber(for_display=False) for item in self.items_for_not_present]
+        return get_ordinal_clusters(numbers)
 
 
 class DisplayMeetingItemSignatories(BrowserView):

@@ -192,6 +192,21 @@ class testVotes(PloneMeetingTestCase):
             u'Assembly member 2</p>, une voix contre<p>Madame Person3FirstName '
             u'Person3LastName, Assembly member 3</p> et une abstention<p>Madame '
             u'Person4FirstName Person4LastName, Assembly member 4 &amp; 5</p>,</p>')
+        # include_voters=('no', 'absention')
+        self.assertEqual(
+            helper_public.print_votes(include_voters=('no', 'abstain')),
+            u'<p>Par 2 voix pour, une voix contre'
+            u'<p>Madame Person3FirstName Person3LastName, Assembly member 3</p> '
+            u'et une abstention<p>Madame Person4FirstName Person4LastName, '
+            u'Assembly member 4 &amp; 5</p>,</p>')
+        # include_voters_percent_treshold=40
+        # will display voters for vote values where there are less than 40% of the total voters
+        self.assertEqual(
+            helper_public.print_votes(include_voters=True, include_voters_percent_treshold=40),
+            u'<p>Par 2 voix pour, une voix contre'
+            u'<p>Madame Person3FirstName Person3LastName, Assembly member 3</p> '
+            u'et une abstention<p>Madame Person4FirstName Person4LastName, '
+            u'Assembly member 4 &amp; 5</p>,</p>')
         # public vote all yes
         self.assertEqual(
             helper_yes_public.print_votes(include_voters=True),
