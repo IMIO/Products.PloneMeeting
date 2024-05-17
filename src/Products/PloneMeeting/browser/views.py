@@ -1718,9 +1718,9 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
                     if held_position in assembly:
                         attendances[held_position.UID()][counter] = len(meetingItems)
 
-            def _remove_attendances(attendance, counter):
-                attendances[attendance]['present'] -= 1
-                attendances[attendance][counter] += 1
+            def _remove_attendances(attendance, counter, number):
+                attendances[attendance]['present'] -= number
+                attendances[attendance][counter] += number
 
             _add_attendance(attendances, meeting_items, presents, 'present')
             _add_attendance(attendances, meeting_items, excused, 'excused')
@@ -1728,9 +1728,9 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
 
             for attendance in attendances:
                 if attendance in item_excused:
-                    _remove_attendances(attendance, 'excused')
+                    _remove_attendances(attendance, 'excused', len(item_excused[attendance]))
                 if attendance in item_absents:
-                    _remove_attendances(attendance, 'absent')
+                    _remove_attendances(attendance, 'absent', len(item_absents[attendance]))
 
         res = []
 

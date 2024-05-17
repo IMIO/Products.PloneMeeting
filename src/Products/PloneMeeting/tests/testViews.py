@@ -3025,20 +3025,51 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual([v['absent'] for v in stats], [3, 1, 0, 0])
         self.assertEqual([v['excused'] for v in stats], [0, 2, 0, 0])
 
+        def _compute_attendance(attendances):
+            presents = []
+            for info in attendances:
+                presents.append(sorted([at['present'] for at in info['attendances']]))
+            absents = []
+            for info in attendances:
+                absents.append(sorted([at['absent'] for at in info['attendances']]))
+            excused = []
+            for info in attendances:
+                excused.append(sorted([at['excused'] for at in info['attendances']]))
+            proportions = []
+            for info in attendances:
+                proportions.append(sorted([at['proportion'] for at in info['attendances']]))
+            return presents, absents, excused, proportions
+
         # get_meeting_assembly_stats_by_meeting
         attendances = helper.get_meeting_assembly_stats_by_meeting(brains)
-        presents = []
-        for info in attendances:
-            presents.append(sorted([at['present'] for at in info['attendances']]))
-        absents = []
-        for info in attendances:
-            absents.append(sorted([at['absent'] for at in info['attendances']]))
-        excused = []
-        for info in attendances:
-            excused.append(sorted([at['excused'] for at in info['attendances']]))
+        presents, absents, excused, proportions = _compute_attendance(attendances)
         self.assertEqual(sorted(presents), [[0, 0, 2, 2], [0, 0, 2, 2], [0, 0, 2, 2]])
         self.assertEqual(sorted(absents), [[0, 0, 0, 2], [0, 0, 0, 2], [0, 0, 2, 2]])
         self.assertEqual(sorted(excused), [[0, 0, 0, 0], [0, 0, 0, 2], [0, 0, 0, 2]])
+        self.assertEqual(sorted(proportions), [
+            [0.0, 0.0, 100.0, 100.0],
+            [0.0, 0.0, 100.0, 100.0],
+            [0.0, 0.0, 100.0, 100.0]])
+
+        # define some attendees absent and excused on some items
+        attendees = meeting1.get_attendees()
+        attendee3 = attendees[0]
+        attendee4 = attendees[1]
+        items = meeting1.get_items(ordered=True)
+        item1_uid = items[0].UID()
+        item2_uid = items[1].UID()
+        meeting1.item_excused[item1_uid] = [attendee3]
+        meeting1.item_excused[item2_uid] = [attendee3]
+        meeting1.item_absents[item1_uid] = [attendee4]
+        attendances = helper.get_meeting_assembly_stats_by_meeting(brains)
+        presents, absents, excused, proportions = _compute_attendance(attendances)
+        self.assertEqual(sorted(presents), [[0, 0, 0, 1], [0, 0, 2, 2], [0, 0, 2, 2]])
+        self.assertEqual(sorted(absents), [[0, 0, 0, 2], [0, 0, 1, 2], [0, 0, 2, 2]])
+        self.assertEqual(sorted(excused), [[0, 0, 0, 0], [0, 0, 0, 2], [0, 0, 2, 2]])
+        self.assertEqual(sorted(proportions), [
+            [0.0, 0.0, 0.0, 50.0],
+            [0.0, 0.0, 100.0, 100.0],
+            [0.0, 0.0, 100.0, 100.0]])
 
     def test_pm_Folder_contents(self):
         """Test the @@folder_contents, especially for DashboardCollection
