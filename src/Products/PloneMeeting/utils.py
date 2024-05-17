@@ -2196,7 +2196,7 @@ def compute_item_roles_to_assign_to_suffixes_cachekey(method, cfg, item, item_st
 
 
 @ram.cache(compute_item_roles_to_assign_to_suffixes_cachekey)
-def compute_item_roles_to_assign_to_suffixes(cfg, item, item_state, org_uids=[]):
+def compute_item_roles_to_assign_to_suffixes(cfg, item, item_state, plone_group_ids=[]):
     """ """
     apply_meetingmanagers_access = True
     suffix_roles = {}

@@ -8,6 +8,7 @@ from App.class_init import InitializeClass
 from appy.gen import No
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collections import OrderedDict
+from collections import defaultdict
 from collective.behavior.internalnumber.browser.settings import _internal_number_is_used
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_functions
@@ -7082,7 +7083,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Add the event to item's history
             self.itemHistory.append(event)
 
-    def _getGroupsManagingItem(self, review_state, theObjects=False):
+    def _getPloneGroupsAndSuffixesManagingItem(self, review_state, theObjects=False):
         """Returns the groups managing the item.
            By default this will be the proposingGroup only.
            Given p_review_state may be used to know what group manage item in which review_state.
@@ -7100,25 +7101,27 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = [self.getProposingGroup()]
         return uuidsToObjects(res) if theObjects else res
 
-    def _getAllGroupsManagingItem(self, review_state, theObjects=False):
-        """Returns the list of groups that managed the item until given p_review_state.
-           Returns a list of organizations UIDs (or organizations when theObjects=True).
+    def _getAllPloneGroupsAndSuffixesAccessingItem(self, review_state):
+        """Returns the list of Plone groups (so suffixed) that managed the item
+           until given p_review_state. Returns a list of organizations UIDs
+           (or organizations when theObjects=True).
            See _getGroupsManagingItem docstring for more informations."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        res = [self.getProposingGroup()]
+        pg_uid = self.getProposingGroup()
+        # res is a dict with list as value
+        res = defaultdict(list)
         if review_state in cfg.getItemWFValidationLevels(data="state", only_enabled=True):
             levels = cfg.getItemWFValidationLevels(only_enabled=True)
             for level in levels:
-                res += level['groups_managing_item']
+                for gmi in level['groups_managing_item']:
+                    org_uid, suffix = gmi.split('_')
+                    if org_uid == GROUPS_MANAGING_ITEM_PG_VALUE:
+                        org_uid = pg_uid
+                    res[org_uid].append(suffix)
                 if level['state'] == review_state:
                     break
-        # remove duplicates
-        res = list(set(res))
-        # remove special value 'proposing_group'
-        if GROUPS_MANAGING_ITEM_PG_VALUE in res:
-            res.remove(GROUPS_MANAGING_ITEM_PG_VALUE)
-        return uuidsToObjects(res) if theObjects else res
+        return res
 
     def _assign_roles_to_group_suffixes(self, org_uid, suffix_roles):
         """Helper that applies local_roles for org_uid to p_sufix_roles.
@@ -7134,18 +7137,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     "Parameter suffix_roles values must be of type tuple or list!")
             self.manage_addLocalRoles(plone_group_id, tuple(roles))
 
-    def _assign_roles_to_all_groups_managing_item_suffixes(self,
-                                                           cfg,
-                                                           item_state,
-                                                           org_uids,
-                                                           all_org_uid):
+    def _assign_roles_to_all_groups_accessing_item(self,
+                                                   cfg,
+                                                   item_state,
+                                                   all_plone_groups_and_suffixes_accessing_item):
         '''See doc in interfaces.py.'''
-        # by default, every suffixes receive Reader role
+        # by default, every suffixes receive 'Reader' role
         item = self.getSelf()
-        for managing_org_uid in org_uids:
-            suffix_roles = {suffix: ['Reader'] for suffix in
-                            get_all_suffixes(managing_org_uid)}
-            item._assign_roles_to_group_suffixes(managing_org_uid, suffix_roles)
+        for org_uid, suffixes in all_plone_groups_and_suffixes_accessing_item.items():
+            suffix_roles = {suffix: ['Reader'] for suffix in suffixes}
+            item._assign_roles_to_group_suffixes(org_uid, suffix_roles)
 
     def assign_roles_to_group_suffixes(self, cfg, item_state):
         """Method that do the work of assigning relevant roles to
@@ -7158,7 +7159,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            - validation levels
            For unknown states, method _get_corresponding_state_to_assign_local_roles
            will be used to determinate a known configuration to take into ccount"""
-        # Add the local roles corresponding to the group managing the item
+        # Add the local roles corresponding to the group managing the item in current state
         groups_managing_item_uids = self._getGroupsManagingItem(item_state)
         # in some case like ItemTemplate, we have no proposing group
         if not groups_managing_item_uids:
@@ -7170,12 +7171,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for org_uid in groups_managing_item_uids:
             self._assign_roles_to_group_suffixes(org_uid, suffix_roles)
 
-        # when more than one group managing item, make sure every groups get access
+        # when more than one group managing item, make sure every groups get 'Reader' access
         adapted = self.adapted()
-        all_groups_managing_item_uids = self._getAllGroupsManagingItem(item_state)
-        if len(all_groups_managing_item_uids) > 1:
-            adapted._assign_roles_to_all_groups_managing_item_suffixes(
-                cfg, item_state, all_groups_managing_item_uids, groups_managing_item_uids)
+        all_plone_groups_and_suffixes_accessing_item = \
+            self._getAllPloneGroupsAndSuffixesAccessingItem(item_state)
+        if len(all_plone_groups_and_suffixes_accessing_item) > 1:
+            adapted._assign_roles_to_all_groups_accessing_item(
+                cfg, item_state, all_plone_groups_and_suffixes_accessing_item)
 
         # MeetingManagers get access if item at least validated or decided
         # decided will include states "decided out of meeting"

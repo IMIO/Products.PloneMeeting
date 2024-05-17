@@ -1783,13 +1783,15 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
     def _suffix_proposinggroup(self, visible_fors, item):
         """ """
         res = []
-        groups_managing_item_uids = item._getAllGroupsManagingItem(item.query_state())
+        all_plone_groups_and_suffixes_accessing_item = \
+            item._getAllPloneGroupsAndSuffixesAccessingItem(item.query_state())
         for visible_for in visible_fors:
             if visible_for.startswith(PROPOSINGGROUPPREFIX):
                 suffix = visible_for.replace(PROPOSINGGROUPPREFIX, '')
-                for group_managing_item_uid in groups_managing_item_uids:
-                    plone_group_id = get_plone_group_id(group_managing_item_uid, suffix)
-                    res.append(plone_group_id)
+                for org_uid, suffixes in all_plone_groups_and_suffixes_accessing_item.items():
+                    if suffix in suffixes:
+                        plone_group_id = get_plone_group_id(org_uid, suffix)
+                        res.append(plone_group_id)
         return res
 
     def _suffix_profile_proposinggroup(self, visible_fors):
@@ -1810,6 +1812,8 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
                     res.append(plone_group_id)
             elif visible_for == '{0}copy_groups'.format(READERPREFIX):
                 res = res + list(self.parent.getAllCopyGroups(auto_real_plone_group_ids=True))
+            elif visible_for == '{0}restricted_copy_groups'.format(READERPREFIX):
+                res = res + list(self.parent.getAllRestrictedCopyGroups(auto_real_plone_group_ids=True))
             elif visible_for == '{0}groupsincharge'.format(READERPREFIX):
                 groupsInCharge = self.parent.getGroupsInCharge(theObjects=False, includeAuto=True)
                 for groupInCharge in groupsInCharge:
