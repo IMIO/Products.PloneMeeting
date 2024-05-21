@@ -44,9 +44,12 @@ Changelog
   [aduchene]
 - Allow to use OrderedDict in POD templates.
   [aduchene]
-- Added column `groups_managing_item` in `MeetingConfig.itemWFValidationLevels`,
-  this will manage cases when another group than the proposing group is managing
-  the item, several groups may be selected including the proposing group or not.
+- Fixed attendees statistics wrong absent/excused computation in sheet by meeting.
+  [gbastien]
+- Replaced columns `suffix/extra_suffix` of `MeetingConfig.itemWFValidationLevels`
+  by a new column `groups_managing_item`, this will manage cases when another
+  group than the proposing group is managing the item, several groups may be
+  selected including the proposing group or not.
   [gbastien]
 
 4.2.9rc6 (2024-04-10)
