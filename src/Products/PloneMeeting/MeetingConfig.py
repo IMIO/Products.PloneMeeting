@@ -75,6 +75,7 @@ from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
+from Products.PloneMeeting.config import GROUPS_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
@@ -144,7 +145,6 @@ from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleVocabulary
 
-import copy
 import html
 import itertools
 import logging
@@ -1197,12 +1197,19 @@ schema = Schema((
                         Column("Item WF validation levels back transition title",
                                col_description="Item WF validation levels back transition title description.",
                                required=True),
-                     'groups_managing_item':
-                        MultiSelectColumn(
-                            "Item WF validation levels groups managing item",
+                     'group_managing_item':
+                        SelectColumn(
+                            "Item WF validation levels group managing item",
                             vocabulary_factory=u'Products.PloneMeeting.vocabularies.'
                             'groups_managing_item_vocabulary',
-                            col_description="Item WF validation levels groups managing item description.",
+                            col_description="Item WF validation levels group managing item description.",
+                            required=True),
+                     'extra_groups_managing_item':
+                        MultiSelectColumn(
+                            "Item WF validation levels extra groups managing item",
+                            vocabulary_factory=u'Products.PloneMeeting.vocabularies.'
+                            'groups_managing_item_vocabulary',
+                            col_description="Item WF validation levels extra groups managing item description.",
                             required=True),
                      'enabled':
                         SelectColumn("Item WF validation levels enabled",
@@ -1224,7 +1231,8 @@ schema = Schema((
                  'leading_transition_title',
                  'back_transition',
                  'back_transition_title',
-                 'groups_managing_item',
+                 'group_managing_item',
+                 'extra_groups_managing_item',
                  'enabled'),
         allow_empty_rows=False,
     ),
@@ -2236,7 +2244,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listSelectableCopyGroups',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.suffixed_plone_groups_vocabulary',
         default=defValues.selectableCopyGroups,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -2271,7 +2279,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listSelectableCopyGroups',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.suffixed_plone_groups_vocabulary',
         default=defValues.selectableRestrictedCopyGroups,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -3751,10 +3759,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getItemWFValidationLevels')
 
     def getItemWFValidationLevels(self,
+                                  item=None,
                                   states=[],
                                   data=None,
                                   only_enabled=False,
                                   value=None,
+                                  render_proposing_group=False,
                                   translated_itemWFValidationLevels=False,
                                   return_state_singleton=True,
                                   **kwargs):
@@ -3765,6 +3775,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            - data : return every values defined for a given datagrid column name;
            - only_enabled : make sure to return rows having enabled '1'.'''
         res = value if value is not None else self.getField('itemWFValidationLevels').get(self, **kwargs)
+        # avoid it modified
+        res = deepcopy(res)
         enabled = ['0', '1']
         if only_enabled:
             enabled = ['1']
@@ -3773,8 +3785,55 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         if states:
             res = [level for level in res if level['state'] in states]
+        # when having to manage special value proposing_group prefix
+        # we need an item
+        if render_proposing_group or \
+           'group_managing_item' in data or \
+           'extra_groups_managing_item' in data:
+            if item:
+                # will replace prefix with PG uid _
+                pg_uid_pattern = item.getProposingGroup() + '_'
+            else:
+                raise Exception('Parameter item can not be None when ...')
+
         if data:
-            res = [level[data] for level in res if level[data]]
+            if data == 'suffix':
+                res = [level['group_managing_item'].split('_')[1]
+                       for level in res if level['group_managing_item']]
+            elif data == 'extra_suffixes':
+                res = [level['extra_groups_managing_item']
+                       for level in res if level['group_managing_item']]
+                # res is a list of lists
+                res = list(itertools.chain.from_iterable(res))
+                res = [egmi.split('_')[1] for egmi in res]
+                res = list(set(res))
+            elif data == 'group_managing_item':
+                # replace special value GROUPS_MANAGING_ITEM_PG_PREFIX
+                res = [gmi.replace(GROUPS_MANAGING_ITEM_PG_PREFIX, pg_uid_pattern)
+                       for gmi in res]
+                # remove duplicates
+                res = tuple(set(res))
+            elif data == 'extra_groups_managing_item':
+                # replace special value GROUPS_MANAGING_ITEM_PG_PREFIX
+                # res is a list of lists
+                res = list(itertools.chain.from_iterable(res))
+                res = [gmi.replace(GROUPS_MANAGING_ITEM_PG_PREFIX, pg_uid_pattern)
+                       for gmi in res]
+                # remove duplicates
+                res = tuple(set(res))
+            else:
+                res = [level[data] for level in res if level[data]]
+
+        if render_proposing_group:
+            # replace special value GROUPS_MANAGING_ITEM_PG_PREFIX
+            for level in res:
+                level['group_managing_item'] = level['group_managing_item'].replace(
+                    GROUPS_MANAGING_ITEM_PG_PREFIX, pg_uid_pattern)
+            for level in res:
+                level['extra_groups_managing_item'] = [
+                    gmi.replace(GROUPS_MANAGING_ITEM_PG_PREFIX, pg_uid_pattern)
+                    for gmi in level['extra_groups_managing_item']]
+
         if return_state_singleton and len(states) == 1:
             res = res and res[0] or res
         # when displayed, append translated values to elements title
@@ -3793,8 +3852,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     line[translated_title] = u"{0} ({1})".format(
                         translated_value, line_translated_title)
             res = translated_res
-        # when returning for example extra_suffixes as list, avoid it modified
-        return copy.deepcopy(res)
+        return res
 
     security.declarePublic('getOrderedItemInitiators')
 
@@ -6858,6 +6916,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # try to get custom reviewersFor, necessary for too complex workflows
         res = self.adapted()._custom_reviewersFor()
         if res is None:
+
             suffixes = list(self.getItemWFValidationLevels(data='suffix', only_enabled=True))[1:]
             # we need from highest level to lowest
             suffixes.reverse()

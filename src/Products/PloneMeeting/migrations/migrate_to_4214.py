@@ -3,6 +3,7 @@
 from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.setup import load_type_from_package
 from imio.pyutils.utils import replace_in_list
+from Products.PloneMeeting.config import GROUPS_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.setuphandlers import indexInfos
@@ -26,16 +27,26 @@ class Migrate_To_4214(Migrator):
                 cfg.setMailItemEvents(mailItemEvents)
         logger.info('Done.')
 
-    def _addGroupsManagingItemToCfgItemWFValidationLevels(self):
-        """Update existing MeetingConfig.itemWFValidationLevels to add empty
-           "groups_managing_item"."""
-        logger.info('Updating MeetingConfig.itemWFValidationLevels to add "groups_managing_item"...')
+    def _initGroupsManagingItemToCfgItemWFValidationLevels(self):
+        """Update existing MeetingConfig.itemWFValidationLevels to initialize
+           "group_managing_item/extra_groups_managing_item" based on
+           "suffix/extra_suffixes" that are removed."""
+        logger.info('Updating MeetingConfig.itemWFValidationLevels to initialize '
+                    '"group_managing_item/extra_groups_managing_item"...')
         for cfg in self.tool.objectValues('MeetingConfig'):
             stored = getattr(cfg, 'itemWFValidationLevels', [])
             for level in stored:
-                if 'groups_managing_item' in level:
+                if 'suffix' not in level:
                     return self._already_migrated()
-                level['groups_managing_item'] = []
+                # migrate columns 'suffix' to 'group_managing_item' and
+                # 'extra_suffixes' to 'extra_groups_managing_item'
+                # and remove 'suffix/extra_suffixes'
+                level['group_managing_item'] = GROUPS_MANAGING_ITEM_PG_PREFIX + level['suffix']
+                level['extra_groups_managing_item'] = [
+                    GROUPS_MANAGING_ITEM_PG_PREFIX + suffix
+                    for suffix in list(level['extra_suffixes'])]
+                del level['suffix']
+                del level['extra_suffixes']
             cfg.setItemWFValidationLevels(stored)
         logger.info('Done.')
 
@@ -49,7 +60,7 @@ class Migrate_To_4214(Migrator):
         # dashboard faceted criteria, new MeetingConfigs created manually in between
         # are missing this new criterion
         self.updateFacetedFilters(xml_filename='upgrade_step_4211_add_item_widgets.xml')
-        self._addGroupsManagingItemToCfgItemWFValidationLevels()
+        self._initGroupsManagingItemToCfgItemWFValidationLevels()
         # need to change the reviewProcessInfo index from FieldIndex to KeywordIndex
         # as it may contains several values now (several groups managing item at same time)
         addOrUpdateIndexes(self.portal, indexInfos)

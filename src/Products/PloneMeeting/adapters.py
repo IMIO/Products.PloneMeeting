@@ -63,7 +63,6 @@ from Products.PloneMeeting.MeetingConfig import CONFIGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import READERPREFIX
 from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
-from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import findNewValue
 from Products.PloneMeeting.utils import get_context_with_request
@@ -1288,8 +1287,8 @@ class BaseItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
                 # roles that may edit
                 edit_roles = itemWF.states[review_state].permission_roles[ModifyPortalContent]
                 # suffixes information for review_state
-                roles_of_suffixes = compute_item_roles_to_assign_to_suffixes(
-                    self.cfg, None, review_state)[1]
+                # XXX to be fixed
+                roles_of_suffixes = []
                 # keep suffixes having relevant roles
                 suffixes = []
                 for suffix, roles in roles_of_suffixes.items():

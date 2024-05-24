@@ -384,7 +384,7 @@ EXECUTE_EXPR_VALUE = 'execute_tal_expression'
 
 NO_COMMITTEE = u"no_committee"
 
-GROUPS_MANAGING_ITEM_PG_VALUE = 'proposing_group'
+GROUPS_MANAGING_ITEM_PG_PREFIX = 'proposing_group__'
 
 ITEM_MOVAL_PREVENTED = "Prevented to rename item no more in initial_state!"
 

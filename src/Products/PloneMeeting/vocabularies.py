@@ -9,11 +9,13 @@ from collections import OrderedDict
 from collective.behavior.internalnumber.browser.settings import DxPortalTypesVocabulary
 from collective.contact.plonegroup.browser.settings import EveryOrganizationsVocabulary
 from collective.contact.plonegroup.browser.settings import SortedSelectedOrganizationsElephantVocabulary
+from collective.contact.plonegroup.config import get_registry_functions
 from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
+from collective.contact.plonegroup.utils import get_plone_groups
 from collective.contact.plonegroup.vocabularies import PositionTypesVocabulary
 from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
 from collective.documentgenerator.content.vocabulary import MergeTemplatesVocabularyFactory
@@ -55,7 +57,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import ADVICE_TYPES
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
-from Products.PloneMeeting.config import GROUPS_MANAGING_ITEM_PG_VALUE
+from Products.PloneMeeting.config import GROUPS_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NO_COMMITTEE
@@ -664,24 +666,6 @@ class PMSortedSelectedOrganizationsElephantVocabulary(SortedSelectedOrganization
 
 
 PMSortedSelectedOrganizationsElephantVocabularyFactory = PMSortedSelectedOrganizationsElephantVocabulary()
-
-
-class GroupsManagingItemVocabulary(SortedSelectedOrganizationsElephantVocabulary):
-    """ """
-
-    def GroupsManagingItemVocabulary__call__(self, context):
-        terms = super(GroupsManagingItemVocabulary, self).__call__(context)
-        terms._terms.insert(0, SimpleTerm(
-            GROUPS_MANAGING_ITEM_PG_VALUE,
-            GROUPS_MANAGING_ITEM_PG_VALUE,
-            translate('The proposing group', domain="PloneMeeting", context=context.REQUEST)))
-        return terms
-
-    # do ram.cache have a different key name
-    __call__ = GroupsManagingItemVocabulary__call__
-
-
-GroupsManagingItemVocabularyFactory = GroupsManagingItemVocabulary()
 
 
 class MeetingReviewStatesVocabulary(object):
@@ -3365,3 +3349,59 @@ class ConfigHideHistoryTosVocabulary(object):
 
 
 ConfigHideHistoryTosVocabularyFactory = ConfigHideHistoryTosVocabulary()
+
+
+class SuffixedPloneGroupsVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        # this volatile is invalidated when plonegroup config changed
+        date = get_cachekey_volatile(
+            '_users_groups_value')
+        return date
+
+    @ram.cache(__call___cachekey)
+    def __call__(self, context):
+        """ """
+        terms = []
+        for org_uid in get_organizations(the_objects=False):
+            for plone_group in get_plone_groups(org_uid):
+                terms.append(
+                    SimpleTerm(
+                        plone_group.id,
+                        plone_group.id,
+                        safe_unicode(plone_group.getProperty('title'))))
+        terms = humansorted(terms, key=attrgetter('title'))
+        return SimpleVocabulary(terms)
+
+
+SuffixedPloneGroupsVocabularyFactory = SuffixedPloneGroupsVocabulary()
+
+
+class GroupsManagingItemVocabulary(SuffixedPloneGroupsVocabulary):
+    """ """
+
+    def GroupsManagingItemVocabulary__call__(self, context):
+        terms = super(GroupsManagingItemVocabulary, self).__call__(context)
+        # do not modify original terms
+        terms = list(terms._terms)
+        for fct_dic in get_registry_functions():
+            if fct_dic['enabled'] is False:
+                continue
+            term_id = GROUPS_MANAGING_ITEM_PG_PREFIX + fct_dic['fct_id']
+            term_title = translate(
+                'proposing_group_managing_item',
+                mapping={'suffix_title': safe_unicode(fct_dic['fct_title'])},
+                domain="PloneMeeting",
+                context=context.REQUEST)
+            terms.insert(0, SimpleTerm(term_id, term_id, term_title))
+        return SimpleVocabulary(terms)
+
+    # do ram.cache have a different key name
+    __call__ = GroupsManagingItemVocabulary__call__
+
+
+GroupsManagingItemVocabularyFactory = GroupsManagingItemVocabulary()

@@ -143,6 +143,8 @@
            component=".vocabularies.ConfigHideHistoryTosVocabularyFactory" />
   <utility name="EnabledItemActions"
            component=".vocabularies.EnabledItemActionsVocabularyFactory" />
+  <utility component=".vocabularies.SuffixedPloneGroupsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.suffixed_plone_groups_vocabulary" />
   <utility component=".vocabularies.GroupsManagingItemVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.groups_managing_item_vocabulary" />
 
