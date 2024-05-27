@@ -44,6 +44,8 @@ Changelog
   [aduchene]
 - Allow to use OrderedDict in POD templates.
   [aduchene]
+- Fixed attendees statistics wrong absent/excused computation in sheet by meeting.
+  [gbastien]
 
 4.2.9rc6 (2024-04-10)
 ---------------------
