@@ -58,7 +58,7 @@ def migrate(context):
 
        1) Update values of MeetingConfig.itemMailEvents as format
           of "adviceEdited" values changed;
-       2) Install and configure "imio.webspellchecker".
+       2) Not done for now: install and configure "imio.webspellchecker".
     '''
     migrator = Migrate_To_4214(context)
     migrator.run()
