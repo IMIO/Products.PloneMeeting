@@ -5,6 +5,7 @@
 # GNU General Public License (GPL)
 #
 
+from collections import OrderedDict
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.documentgenerator.config import set_column_modifier
 from collective.documentgenerator.config import set_oo_port
@@ -531,13 +532,56 @@ def _configureQuickupload(site):
     logger.info('Done.')
 
 
+def installWebspellchecker(context):
+    '''XXX temporary custom install for imio.webspellchecker
+       to be able to install it only when decided.'''
+
+    if isNotPloneMeetingProfile(context):
+        return
+    _installWebspellchecker(context.getSite())
+
+
+def _installWebspellchecker(portal):
+    # remove Scayt in CKeditor
+    cke_props = portal.portal_properties.ckeditor_properties
+    cke_props.enableScaytOnStartup = False
+    toolbar_Custom = cke_props.toolbar_Custom
+    scayt_values = OrderedDict(
+        [
+            (",'-','Scayt']", "]"),
+            # space after ","
+            (", '-','Scayt']", "]"),
+            (",'-', 'Scayt']", "]"),
+            (", '-', 'Scayt']", "]"),
+            # space before "]"
+            (", '-','Scayt' ]", "]"),
+            (",'-', 'Scayt' ]", "]"),
+            (", '-', 'Scayt' ]", "]"),
+            # other possibilities, 'Scayt' in the middle
+            (",'Scayt',", ","),
+            (", 'Scayt',", ",")
+        ])
+    replaced = False
+    for k, v in scayt_values.items():
+        if toolbar_Custom.find(k) != -1:
+            replaced = True
+            toolbar_Custom = toolbar_Custom.replace(k, v)
+            cke_props.toolbar_Custom = toolbar_Custom
+            break
+
+    portal.portal_setup.runAllImportStepsFromProfile(
+        'imio.webspellchecker:default',
+        dependency_strategy=DEPENDENCY_STRATEGY_REAPPLY)
+    # now that it is installed, configure imio.webspellchecker
+    _configureWebspellchecker(portal)
+    return replaced
+
+
 def _configureWebspellchecker(site):
     '''Make sure imio.webspellchecker disallowed_portal_types is correctly configured.'''
     wsc_config.set_enabled(True)
     wsc_config.set_hide_branding(True)
     wsc_config.set_theme('gray')
-    wsc_config.set_js_bundle_url(u'https://wsc.imio-app.be/wscservice/wscbundle/wscbundle.js')
-    wsc_config.set_service_url(u'https://wsc.imio-app.be/wscservice/api/scripts/ssrv.cgi')
     portal_types = api.portal.get_tool('portal_types')
     disallowed_portal_types = [pt for pt in portal_types.listContentTypes()
                                if not pt.lower().startswith('meeting') and

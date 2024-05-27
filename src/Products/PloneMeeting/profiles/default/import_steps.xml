@@ -20,6 +20,15 @@
  </import-step>
 
  <import-step
+    id="PloneMeeting-Install-Imio-Webspellchecker"
+    handler="Products.PloneMeeting.setuphandlers.installWebspellchecker"
+    title="install imio.webspellchecker"
+    version="2024-05-27T10:43:34.404620">
+   <dependency step="toolset"/>
+   install imio.webspellchecker
+ </import-step>
+
+ <import-step
     id="PloneMeeting-postInstall"
     handler="Products.PloneMeeting.setuphandlers.postInstall"
     title="manual coded post-install for PloneMeeting"

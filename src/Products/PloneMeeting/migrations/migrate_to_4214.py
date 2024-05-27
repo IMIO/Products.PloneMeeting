@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from collections import OrderedDict
 from imio.helpers.setup import load_type_from_package
 from imio.pyutils.utils import replace_in_list
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.setuphandlers import _configureWebspellchecker
+from Products.PloneMeeting.setuphandlers import _installWebspellchecker
 
 
 class Migrate_To_4214(Migrator):
@@ -29,39 +29,12 @@ class Migrate_To_4214(Migrator):
     def _installIMIOWebSpellChecker(self):
         """Configure imio.webspellchecker."""
         logger.info('Install and configure "imio.webspellchecker"...')
-        # remove Scayt in CKeditor
-        cke_props = self.portal.portal_properties.ckeditor_properties
-        cke_props.enableScaytOnStartup = False
-        toolbar_Custom = cke_props.toolbar_Custom
-        scayt_values = OrderedDict(
-            [
-                (",'-','Scayt']", "]"),
-                # space after ","
-                (", '-','Scayt']", "]"),
-                (",'-', 'Scayt']", "]"),
-                (", '-', 'Scayt']", "]"),
-                # space before "]"
-                (", '-','Scayt' ]", "]"),
-                (",'-', 'Scayt' ]", "]"),
-                (", '-', 'Scayt' ]", "]"),
-                # other possibilities, 'Scayt' in the middle
-                (",'Scayt',", ","),
-                (", 'Scayt',", ",")
-            ])
-        replaced = False
-        for k, v in scayt_values.items():
-            if toolbar_Custom.find(k) != -1:
-                replaced = True
-                toolbar_Custom = toolbar_Custom.replace(k, v)
-                cke_props.toolbar_Custom = toolbar_Custom
-                break
+        replaced = _installWebspellchecker(self.portal)
         if replaced is False:
             self.warn(
                 logger,
                 "In _installIMIOWebSpellChecker could not remove 'Scayt' "
                 "option from toolbar_Custom!")
-
-        self.reinstall(['imio.webspellchecker:default'])
         _configureWebspellchecker(self.portal)
         logger.info('Done.')
 
@@ -71,7 +44,8 @@ class Migrate_To_4214(Migrator):
         # reload ConfigurablePODTemplate to use every_annex_types_vocabulary for field store_as_annex
         load_type_from_package('ConfigurablePODTemplate', 'Products.PloneMeeting:default')
         self._migrateAdviceEditedItemMailEvents()
-        self._installIMIOWebSpellChecker()
+        # not done for now, we will enable it when necessary
+        # self._installIMIOWebSpellChecker()
         # add text criterion on "item title only" again as it was not in default
         # dashboard faceted criteria, new MeetingConfigs created manually in between
         # are missing this new criterion
