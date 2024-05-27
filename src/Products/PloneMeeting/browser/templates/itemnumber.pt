@@ -1,5 +1,6 @@
 <tal:defines define="may_change_order python: view.may_change_items_order;
-                     itemNumber python: context.getItemNumber(for_display=True);"
+                     itemNumber python: context.getItemNumber(for_display=True);
+                     js_itemNumber python: itemNumber.replace('.', '\\\.');"
              i18n:domain="PloneMeeting">
   <div class="change-item-order" tal:condition="may_change_order">
     <input type="text" size="2" name="moveValue"
@@ -12,7 +13,7 @@
          title="move_item_to_given_position" i18n:attributes="title" name="moveImageButton"
          tal:attributes="id string:moveAction_${itemNumber};
                          src string:${view/portal_url}/save.gif;
-                         onClick string:moveItem(baseUrl='${context/absolute_url}', moveType='number', $('input#value_moveAction_${itemNumber}'));"/>
+                         onClick string:moveItem(baseUrl='${context/absolute_url}', moveType='number', $('input#value_moveAction_${js_itemNumber}'));"/>
     <img style="visibility: hidden;"
          title="Cancel" i18n:attributes="title" name="moveImageButton"
          tal:define="id string:moveAction_cancel_${itemNumber};"

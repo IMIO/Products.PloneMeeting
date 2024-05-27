@@ -19,6 +19,39 @@ Changelog
   `default_dashboard_items_widgets.xml`, new `MeetingConfig` added since
   profile version `4211` are missing this criterion.
   [gbastien]
+- Completed `print_votes` so it manages every `vote_values`
+  (`does_not_vote`, `not_found`, `invalid`, `blank`).
+  Adapted parameter `single_vote_value` so we can define a single value or
+  a different value for each `vote_values`.
+  Adapted parameter `include_voters=False` that maye be False/True or a list of
+  vote values.
+  Added parameter `include_voters_percent_treshold=100` that is an integer value
+  from 0 to 100 that will display voters if ratio between number of voters and
+  total voters exceeds the treshold.
+  [gbastien]
+- Added field `MeetingItem.restrictedCopyGroups`, a secondary `copyGroups` field
+  where we can define other groups having access to item in other (later) states.
+  [gbastien]
+- Now every deletion is protected by `IContentDeletable`, including default
+  Plone deletion using `manage_delObjects`.
+  [gbastien]
+- Fixed item number not saved when using `Disk` icon to change item number
+  on meeting view when item number is a subnumber.
+  [gbastien]
+- Fixed validation of meeting signatories when creating a meeting, it was possible
+  to create a meeting with several signatories using same signature number.
+  [gbastien]
+- Added per power observer complementary workflow adaptation to base
+  `hide_decisions_when_under_writing` to let the selected power observers
+  have access to the item decision.
+  [gbastien]
+- Improve `view.print_attendees_by_type` to be able to customize the in and out
+  count more.
+  [aduchene]
+- Allow to use OrderedDict in POD templates.
+  [aduchene]
+- Fixed attendees statistics wrong absent/excused computation in sheet by meeting.
+  [gbastien]
 - Integrate `imio.webspellchecker` to replace `Scayt` for `CKEditor`.
   As `WSC` is started when focus is set in `CKEditor` field, set focus on
   field when using quick edit.
