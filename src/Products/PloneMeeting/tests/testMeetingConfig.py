@@ -1960,11 +1960,13 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(cfg.validate_powerObservers(values), used_in_fields_error_msg)
         cfg.setItemAnnexConfidentialVisibleFor(())
         self.assertEqual(cfg.validate_powerObservers(values), plone_group_not_empty_error_msg)
+
         # used as WFA
-        self._activate_wfas(('hide_decisions_when_under_writing__po__restrictedpowerobservers', ))
-        self.assertEqual(cfg.validate_powerObservers(values), used_in_fields_error_msg)
-        self._activate_wfas(())
-        self.assertEqual(cfg.validate_powerObservers(values), plone_group_not_empty_error_msg)
+        if self._check_wfa_available(['hide_decisions_when_under_writing__po__restrictedpowerobservers']):
+            self._activate_wfas(('hide_decisions_when_under_writing__po__restrictedpowerobservers', ))
+            self.assertEqual(cfg.validate_powerObservers(values), used_in_fields_error_msg)
+            self._activate_wfas(())
+            self.assertEqual(cfg.validate_powerObservers(values), plone_group_not_empty_error_msg)
 
         # linked Plone group is not empty
         plone_group_id = '{0}_{1}'.format(cfg.getId(), 'restrictedpowerobservers')
