@@ -34,17 +34,17 @@
                        tal:attributes="id string:comment_toggle_${advice/id};
                                        onclick string:toggleDetails('comment_content_${advice/id}', toggle_parent_active=true, parent_tag=comment_toggle_${advice/id});">
                   </div>
-                  <span tal:condition="advice/delay">
+                  <span tal:condition="python: advice['delay']">
                      <tal:defines define="class_if_not_given string:advice_delay advice_delay_${advice/delay_infos/delay_status};">
                        <img src="advice_with_delay_big.png"
                             tal:define="delay_icon python: view.delay_icon(advice)"
                             tal:attributes="src string:${portal_url}/${delay_icon};"/>
                        <span class="advice_delay"
-                             tal:content="advice/delay_infos/left_delay"
+                             tal:content="python: advice['delay_infos']['left_delay']"
                              tal:attributes="class python: context._advice_is_given(advice['id']) and 'advice_delay' or class_if_not_given" />
                      </tal:defines>
                   </span>
-                  <tal:not_asked_advice_icon condition="advice/not_asked">
+                  <tal:not_asked_advice_icon condition="python: advice['not_asked']">
                       <img src="advice_not_asked.png"
                            title="This advice was given as personal initiative"
                            style="cursor: help;"
@@ -78,9 +78,9 @@
                       </acronym>
                   </tal:inherited_advice>
                   <div class="advice_popup_label">
-                    <span class="advice-name" tal:content="advice/name"></span>
+                    <span class="advice-name" tal:content="python: advice['name']"></span>
                     <tal:showDelayLabel condition="python: advice['delay'] and advice['delay_label']">
-                    - <span class="advice-label" tal:content="advice/delay_label"></span>
+                    - <span class="advice-label" tal:content="python: advice['delay_label']"></span>
                     </tal:showDelayLabel>
                     <span tal:condition="python: not advice['optional']">[auto]</span>
                   </div>
@@ -169,16 +169,18 @@
                             </a>
                           </td>
                           <td align="right" width="20px" class="noPadding" condition="not: adviceIsLocked">
-                            <img tal:condition="advice/hidden_during_redaction"
+                            <img tal:condition="python: advice['hidden_during_redaction']"
                                  class="adviceHiddenDuringRedactionEditable"
                                  i18n:attributes="title" title="to_not_hidden_during_redaction"
                                  tal:attributes="src string:${portal_url}/advice_${adviceStyle}_enable_hidden_during_redaction.png;
-                                                 onClick string:javascript:$('.tooltipstered').tooltipster('hide');;callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-hidden-during-redaction');;"/>
-                            <img tal:condition="not: advice/hidden_during_redaction"
+                                                 onClick string:javascript:$('.tooltipstered').tooltipster('hide');;
+                                                         callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-hidden-during-redaction');;"/>
+                            <img tal:condition="python: not advice['hidden_during_redaction']"
                                  class="adviceHiddenDuringRedactionEditable"
                                  i18n:attributes="title" title="to_hidden_during_redaction"
                                  tal:attributes="src string:${portal_url}/advice_${adviceStyle}_disable_hidden_during_redaction.png;
-                                                 onClick string:javascript:$('.tooltipstered').tooltipster('hide');;callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-hidden-during-redaction');;"/>
+                                                 onClick string:javascript:$('.tooltipstered').tooltipster('hide');;
+                                                         callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-hidden-during-redaction');;"/>
                           </td>
                           </tal:editableOrLocked>
                           <td tal:condition="python: view.tool.showAnnexesTab(obj)" align="right" width="20px" class="noPadding">
@@ -327,17 +329,17 @@
                                   tal:condition="python: advice['delay_infos']['delay_status'] in ['still_time', 'still_time_but_alert']"
                                   i18n:translate="">The item is viewable by the advisers of this group but the advice has not been given yet, it can still be given until the <span tal:attributes="class string:advice_delay_${advice/delay_infos/delay_status}"
                                                                                                                               i18n:name="advice_delay_limit_date"
-                                                                                                                              tal:content="advice/delay_infos/limit_date_localized"></span>.
+                                                                                                                              tal:content="python: advice['delay_infos']['limit_date_localized']"></span>.
                             </span>
                         </tal:adviceGiveableWithDelay>
                         <tal:adviceNoMoreGiveableBecauseDelayExceeded condition="python: not adviceAlterable and advice['delay_infos'] and advice['delay_infos']['delay_status'] == 'timed_out'">
                             <span class="discreet"
                                   i18n:translate="">This advice can not be given anymore, it was asked the <span class="advice_delay_timed_out"
                                                                                                                  i18n:name="advice_delay_started_on"
-                                                                                                                 tal:content="advice/delay_infos/delay_started_on_localized">2013/05/05</span>
+                                                                                                                 tal:content="python: advice['delay_infos']['delay_started_on_localized']">2013/05/05</span>
                                                     and could be given until the <span class="advice_delay_timed_out"
                                                                                        i18n:name="advice_delay_limit_date"
-                                                                                       tal:content="advice/delay_infos/limit_date_localized">2013/05/15</span>.
+                                                                                       tal:content="python: advice['delay_infos']['limit_date_localized']">2013/05/15</span>.
                             </span>
                         </tal:adviceNoMoreGiveableBecauseDelayExceeded>
                         <tal:itemsStillNotViewableToAdvisers condition="python: not advice['item_viewable_by_advisers']">
@@ -347,9 +349,9 @@
                                                                                                                                            i18n:domain="plone"
                                                                                                                                            tal:content="item_state_infos/state_title"
                                                                                                                                            tal:attributes="class string:state-${item_review_state}"></span>).</span>
-                            <br /><span tal:condition="advice/delay_infos"
+                            <br /><span tal:condition="python: advice['delay_infos']"
                                         class="discreet"
-                                        i18n:translate="">Once viewable, the adviser will have <span style="font-weight: bold;" i18n:name="advice_delay" tal:content="advice/delay_infos/delay">15</span> days to give the advice.</span>
+                                        i18n:translate="">Once viewable, the adviser will have <span style="font-weight: bold;" i18n:name="advice_delay" tal:content="python: advice['delay_infos']['delay']">15</span> days to give the advice.</span>
                         </tal:itemsStillNotViewableToAdvisers>
                         <tal:itemViewableButNoMoreAdviseableWithoutDelay condition="python: advice['item_viewable_by_advisers'] and not advice['delay_infos'] and not adviceAlterable">
                             <span class="discreet"
@@ -369,23 +371,23 @@
                                      tal:content="item_state_infos/state_title"
                                      tal:attributes="class string:state-${item_review_state}"></span>)
                             </span>,
-                            <tal:advice_was_not_given_during_delay tal:condition="advice/delay_stopped_on">
+                            <tal:advice_was_not_given_during_delay tal:condition="python: advice['delay_stopped_on']">
                             <span class="discreet"
                                   i18n:translate="possibility_to_advice_stopped_on">the possiblity to give an advice was stopped on
                                  <span style="font-weight: bold;"
                                        i18n:name="advice_delay_stopped_on"
-                                       tal:content="advice/delay_infos/delay_stopped_on_localized" />
+                                       tal:content="python: advice['delay_infos']['delay_stopped_on_localized']" />
                             </span>,
                             <span tal:attributes="class string:discreet advice_delay_${advice/delay_infos/delay_status_when_stopped};"
                                   i18n:translate="delay_left_when_stopped"
                                   tal:condition="python: advice['delay_infos']['delay_when_stopped'] > 0"> at this moment, there was
                                  <span i18n:name="delay_when_stopped"
-                                       tal:content="advice/delay_infos/delay_when_stopped">
+                                       tal:content="python: advice['delay_infos']['delay_when_stopped']">
                                       10
                                  </span> day(s) left to give the advice.
                             </span>
                             </tal:advice_was_not_given_during_delay>
-                            <tal:advice_was_never_giveable tal:condition="not:advice/delay_stopped_on">
+                            <tal:advice_was_never_giveable tal:condition="python: not advice['delay_stopped_on']">
                             <span class="discreet"
                                   i18n:translate="advice_stopped_on_never_asked">
                                 the advice was never giveable because item was never in a state where advice could be given.</span>

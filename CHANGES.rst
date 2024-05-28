@@ -46,6 +46,10 @@ Changelog
   [aduchene]
 - Fixed attendees statistics wrong absent/excused computation in sheet by meeting.
   [gbastien]
+- Integrate `imio.webspellchecker` to replace `Scayt` for `CKEditor`.
+  As `WSC` is started when focus is set in `CKEditor` field, set focus on
+  field when using quick edit.
+  [gbastien]
 
 4.2.9rc6 (2024-04-10)
 ---------------------

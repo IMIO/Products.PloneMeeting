@@ -4,6 +4,8 @@ from imio.helpers.setup import load_type_from_package
 from imio.pyutils.utils import replace_in_list
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.setuphandlers import _configureWebspellchecker
+from Products.PloneMeeting.setuphandlers import _installWebspellchecker
 
 
 class Migrate_To_4214(Migrator):
@@ -24,12 +26,26 @@ class Migrate_To_4214(Migrator):
                 cfg.setMailItemEvents(mailItemEvents)
         logger.info('Done.')
 
+    def _installIMIOWebSpellChecker(self):
+        """Configure imio.webspellchecker."""
+        logger.info('Install and configure "imio.webspellchecker"...')
+        replaced = _installWebspellchecker(self.portal)
+        if replaced is False:
+            self.warn(
+                logger,
+                "In _installIMIOWebSpellChecker could not remove 'Scayt' "
+                "option from toolbar_Custom!")
+        _configureWebspellchecker(self.portal)
+        logger.info('Done.')
+
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4214...')
         # reload ConfigurablePODTemplate to use every_annex_types_vocabulary for field store_as_annex
         load_type_from_package('ConfigurablePODTemplate', 'Products.PloneMeeting:default')
         self._migrateAdviceEditedItemMailEvents()
+        # not done for now, we will enable it when necessary
+        # self._installIMIOWebSpellChecker()
         # add text criterion on "item title only" again as it was not in default
         # dashboard faceted criteria, new MeetingConfigs created manually in between
         # are missing this new criterion
@@ -41,7 +57,8 @@ def migrate(context):
     '''This migration function will:
 
        1) Update values of MeetingConfig.itemMailEvents as format
-          of "adviceEdited" values changed.
+          of "adviceEdited" values changed;
+       2) Not done for now: install and configure "imio.webspellchecker".
     '''
     migrator = Migrate_To_4214(context)
     migrator.run()

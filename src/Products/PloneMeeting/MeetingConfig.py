@@ -6309,7 +6309,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     brains = catalog.unrestrictedSearchResults(portal_type=portal_type)
                     for brain in brains:
                         item = brain.getObject()
-                        item.reindexObject(idxs=['getIcon', ])
+                        item.reindexObject(idxs=['getIcon'])
                 # do not search item templates and recurring items
                 if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring'):
                     nsTypes = props.getProperty('types_not_searched')

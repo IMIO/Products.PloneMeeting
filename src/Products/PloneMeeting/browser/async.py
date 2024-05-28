@@ -121,7 +121,6 @@ class TakenOverBy(BrowserView):
 
         memberId = get_current_user_id()
 
-        tool = api.portal.get_tool('portal_plonemeeting')
         currentlyTakenOverBy = self.context.getTakenOverBy()
         if currentlyTakenOverBy and \
            not currentlyTakenOverBy == takenOverByFrom and \
