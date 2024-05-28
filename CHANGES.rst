@@ -52,6 +52,9 @@ Changelog
   [gbastien]
 - Avoid double click on POD template mailing list.
   [gbastien]
+- Generate `Meeting/MeetingItem` portal_type title based on `MeetingConfig`
+  title instead translating it.
+  [gbastien]
 
 4.2.9rc6 (2024-04-10)
 ---------------------
