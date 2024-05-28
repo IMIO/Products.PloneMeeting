@@ -6370,7 +6370,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 previous_collection_id = None
 
             if collectionId in container.objectIds():
-                logger.info("Trying to add an already existing collection with id '%s', skipping..." % collectionId)
+                logger.info("'%s' skipped adding already existing collection '%s'..." % (
+                    self.getId(), collectionId))
                 previous_collection_id = collectionId
                 continue
             added_collections = True

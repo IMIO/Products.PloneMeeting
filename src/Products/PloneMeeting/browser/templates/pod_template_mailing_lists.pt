@@ -8,7 +8,7 @@
                            javascript:var theForm = document.getElementsByName('podTemplateForm')[0];;
                            theForm.mailinglist_name.value='${name}';;
                            theForm.target='_self';;
-                           generatePodDocument('${view/template_uid}','${view/output_format}', $$(theForm).children()[0]);;">
+                           temp_disable_link(this);;generatePodDocument('${view/template_uid}','${view/output_format}', $$(theForm).children()[0]);">
             Mailing list name
         </a><br />
     </tal:loop>
