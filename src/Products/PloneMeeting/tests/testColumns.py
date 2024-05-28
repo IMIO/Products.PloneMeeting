@@ -16,7 +16,6 @@ from Products.PloneMeeting.columns import PMPrettyLinkColumn
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
-from zope.i18n import translate
 
 
 class testColumns(PloneMeetingTestCase):
