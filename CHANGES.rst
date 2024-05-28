@@ -50,6 +50,8 @@ Changelog
   As `WSC` is started when focus is set in `CKEditor` field, set focus on
   field when using quick edit.
   [gbastien]
+- Avoid double click on POD template mailing list.
+  [gbastien]
 
 4.2.9rc6 (2024-04-10)
 ---------------------
