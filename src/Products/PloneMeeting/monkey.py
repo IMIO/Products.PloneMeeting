@@ -235,6 +235,7 @@ logger.info("Monkey patching zope.ramcache.ram.Storage (getStatistics)")
 
 
 def Title(self):
+    """Same code as dexterity's fti (DexterityFTI) for AT fti."""
     if self.title and self.i18n_domain:
         try:
             return Message(self.title.decode('utf8'), self.i18n_domain)
