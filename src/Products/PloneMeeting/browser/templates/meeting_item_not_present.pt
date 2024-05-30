@@ -7,7 +7,7 @@
     (<span i18n:name="clusters" tal:content="python: view.display_clusters()">clusters</span>)</span> :</h4>
   <ul tal:condition="python: view.items_for_not_present">
     <li tal:repeat="item python: view.items_for_not_present">
-      <span tal:content="python: item.getItemNumber(for_display=True)" />. <span tal:replace="structure item/getPrettyLink" />
+      <span tal:content="python: item.getItemNumber(for_display=True)" />. <span tal:replace="structure python: item.getPrettyLink()" />
     </li>
   </ul>
   <span tal:condition="python: not view.items_for_not_present" i18n:translate="no_shown_items">

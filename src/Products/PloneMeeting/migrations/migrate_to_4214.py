@@ -38,12 +38,20 @@ class Migrate_To_4214(Migrator):
         _configureWebspellchecker(self.portal)
         logger.info('Done.')
 
+    def _updatePortalTypesTitle(self):
+        """Meeting/MeetingItem portal_types title is now the translated version."""
+        logger.info('Updating every Meeting/MeetingItem portal_types title...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            cfg.registerPortalTypes()
+        logger.info('Done.')
+
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4214...')
         # reload ConfigurablePODTemplate to use every_annex_types_vocabulary for field store_as_annex
         load_type_from_package('ConfigurablePODTemplate', 'Products.PloneMeeting:default')
         self._migrateAdviceEditedItemMailEvents()
+        self._updatePortalTypesTitle()
         # not done for now, we will enable it when necessary
         # self._installIMIOWebSpellChecker()
         # add text criterion on "item title only" again as it was not in default
@@ -56,9 +64,13 @@ class Migrate_To_4214(Migrator):
 def migrate(context):
     '''This migration function will:
 
-       1) Update values of MeetingConfig.itemMailEvents as format
-          of "adviceEdited" values changed;
-       2) Not done for now: install and configure "imio.webspellchecker".
+       1) Reload ConfigurablePODTemplate as store_as_annex field vocabulary changed;
+       2) Update values of MeetingConfig.itemMailEvents as format of
+          "adviceEdited" values changed;
+       3) Update Meeting/MeetingItem portal_types title as we store the real title now;
+       4) Update faceted filters;
+       5) Not done for now: install and configure "imio.webspellchecker".
+
     '''
     migrator = Migrate_To_4214(context)
     migrator.run()

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 from Acquisition import aq_base
 from cPickle import dumps
@@ -8,6 +9,7 @@ from plone.app.querystring import queryparser
 from plone.memoize import ram
 from Products.Archetypes.BaseObject import BaseObject
 from Products.Archetypes.Field import Field
+from Products.CMFCore.TypesTool import TypeInformation
 from Products.PloneMeeting import logger
 from Products.PlonePAS.tools.membership import MembershipTool
 from Products.PortalTransforms.cache import Cache
@@ -18,6 +20,7 @@ from time import time
 from types import StringType
 from z3c.form import interfaces
 from z3c.form.widget import SequenceWidget
+from zope.i18nmessageid import Message
 from zope.ramcache.ram import Storage
 
 
@@ -229,3 +232,18 @@ def getStatistics(self):
 
 Storage.getStatistics = getStatistics
 logger.info("Monkey patching zope.ramcache.ram.Storage (getStatistics)")
+
+
+def Title(self):
+    """Same code as dexterity's fti (DexterityFTI) for AT fti."""
+    if self.title and self.i18n_domain:
+        try:
+            return Message(self.title.decode('utf8'), self.i18n_domain)
+        except UnicodeDecodeError:
+            return Message(self.title.decode('latin-1'), self.i18n_domain)
+    else:
+        return self.title or self.getId()
+
+
+TypeInformation.__old_Title = TypeInformation.Title
+TypeInformation.Title = Title
