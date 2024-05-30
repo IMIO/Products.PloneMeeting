@@ -142,8 +142,10 @@ def reviewProcessInfo(obj):
       and the item review_state so it can be queryable in the catalog.
     """
     item_state = obj.query_state()
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(obj)
     return ['%s__reviewprocess__%s' % (org_uid, item_state)
-            for org_uid in obj._getGroupsManagingItem(item_state)]
+            for org_uid in obj.get_orgs_managing_item(cfg, item_state)]
 
 
 @indexer(IMeetingItem)

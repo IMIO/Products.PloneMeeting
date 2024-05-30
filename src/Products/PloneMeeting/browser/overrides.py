@@ -1467,6 +1467,41 @@ class PMContentHistoryView(IHContentHistoryView):
                             res = False
         return res
 
+    def getTransitionTitle(self, transitionName):
+        """Manage the create_to_..._from_... translation manually."""
+        if transitionName.startswith('create_to_') and '_from_' in transitionName:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            from_cfg_id = transitionName.split('create_to_')[1].split('_from_')[1]
+            to_cfg_id = transitionName.split('create_to_')[1].split('_from_')[0]
+            from_cfg = tool.get(from_cfg_id)
+            to_cfg = tool.get(to_cfg_id)
+            if from_cfg is not None and to_cfg is not None:
+                return translate('create_to_from',
+                                 domain='PloneMeeting',
+                                 mapping={'from': safe_unicode(from_cfg.Title()),
+                                          'to': safe_unicode(to_cfg.Title())},
+                                 context=self.request)
+        return super(PMContentHistoryView, self).getTransitionTitle(transitionName)
+
+    def _translate_comments(self, event):
+        """Manage the create_to_..._from_..._comments translation manually."""
+        comments = event['comments']
+        if comments.startswith('create_to_') and \
+           '_from_' in comments and \
+           comments.endswith('_comments'):
+            tool = api.portal.get_tool('portal_plonemeeting')
+            from_cfg_id = comments.split('create_to_')[1].split('_from_')[1].replace('_comments', '')
+            to_cfg_id = comments.split('create_to_')[1].split('_from_')[0].replace('_comments', '')
+            from_cfg = tool.get(from_cfg_id)
+            to_cfg = tool.get(to_cfg_id)
+            if from_cfg is not None and to_cfg is not None:
+                return translate('create_to_from_comments',
+                                 domain='PloneMeeting',
+                                 mapping={'from': safe_unicode(from_cfg.Title()),
+                                          'to': safe_unicode(to_cfg.Title())},
+                                 context=self.request)
+        return super(PMContentHistoryView, self)._translate_comments(event)
+
 
 class AdviceContentHistoryView(PMContentHistoryView):
     """ """

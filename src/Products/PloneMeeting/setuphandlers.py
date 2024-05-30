@@ -5,6 +5,7 @@
 # GNU General Public License (GPL)
 #
 
+from collections import OrderedDict
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.documentgenerator.config import set_column_modifier
 from collective.documentgenerator.config import set_oo_port
@@ -18,6 +19,7 @@ from imio.dashboard.setuphandlers import add_orgs_searches
 from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.emailer import get_mail_host
+from imio.webspellchecker import config as wsc_config
 from plone import api
 from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import WorkflowPolicyConfig_id
 from Products.CMFPlone.utils import base_hasattr
@@ -251,6 +253,8 @@ def postInstall(context):
 
     _configureQuickupload(site)
 
+    _configureWebspellchecker(site)
+
     # manage safe_html
     _congfigureSafeHtml(site)
 
@@ -432,7 +436,7 @@ def _configureCKeditor(site):
        CKeditor custom styles are kept during migrations using the _before_reinstall/_after_reinstall hooks.'''
     logger.info('Defining CKeditor as the new default editor for every users and configuring it (styles)...')
     # this will install collective.ckeditor if it is not already the case...
-    configure_ckeditor(site, custom='plonemeeting', forceTextPaste=0, scayt=1, removeWsc=1)
+    configure_ckeditor(site, custom='plonemeeting', forceTextPaste=0, scayt=0, removeWsc=1)
     # remove every styles defined by default and add the custom styles if not already done...
     cke_props = site.portal_properties.ckeditor_properties
     if cke_props.menuStyles.find(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG) == -1:
@@ -526,6 +530,64 @@ def _configureQuickupload(site):
     qu_props.id_as_title = False
     qu_props.sim_upload_limit = 1
     logger.info('Done.')
+
+
+def installWebspellchecker(context):
+    '''XXX temporary custom install for imio.webspellchecker
+       to be able to install it only when decided.'''
+
+    if isNotPloneMeetingProfile(context):
+        return
+    _installWebspellchecker(context.getSite())
+
+
+def _installWebspellchecker(portal):
+    # remove Scayt in CKeditor
+    cke_props = portal.portal_properties.ckeditor_properties
+    cke_props.enableScaytOnStartup = False
+    toolbar_Custom = cke_props.toolbar_Custom
+    scayt_values = OrderedDict(
+        [
+            (",'-','Scayt']", "]"),
+            # space after ","
+            (", '-','Scayt']", "]"),
+            (",'-', 'Scayt']", "]"),
+            (", '-', 'Scayt']", "]"),
+            # space before "]"
+            (", '-','Scayt' ]", "]"),
+            (",'-', 'Scayt' ]", "]"),
+            (", '-', 'Scayt' ]", "]"),
+            # other possibilities, 'Scayt' in the middle
+            (",'Scayt',", ","),
+            (", 'Scayt',", ",")
+        ])
+    replaced = False
+    for k, v in scayt_values.items():
+        if toolbar_Custom.find(k) != -1:
+            replaced = True
+            toolbar_Custom = toolbar_Custom.replace(k, v)
+            cke_props.toolbar_Custom = toolbar_Custom
+            break
+
+    portal.portal_setup.runAllImportStepsFromProfile(
+        'imio.webspellchecker:default',
+        dependency_strategy=DEPENDENCY_STRATEGY_REAPPLY)
+    # now that it is installed, configure imio.webspellchecker
+    _configureWebspellchecker(portal)
+    return replaced
+
+
+def _configureWebspellchecker(site):
+    '''Make sure imio.webspellchecker disallowed_portal_types is correctly configured.'''
+    wsc_config.set_enabled(True)
+    wsc_config.set_hide_branding(True)
+    wsc_config.set_theme('gray')
+    portal_types = api.portal.get_tool('portal_types')
+    disallowed_portal_types = [pt for pt in portal_types.listContentTypes()
+                               if not pt.lower().startswith('meeting') and
+                               not pt.startswith('annex') and
+                               pt not in ('Message', 'Document', 'News Item', 'Event')]
+    wsc_config.set_disallowed_portal_types(disallowed_portal_types)
 
 
 def _congfigureSafeHtml(site):

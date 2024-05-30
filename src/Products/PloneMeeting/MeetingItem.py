@@ -7089,6 +7089,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return cfg.getItemWFValidationLevels(
             item=self, states=[item_state], data='groups_managing_item', only_enabled=True)
 
+    def get_orgs_managing_item(self, cfg, item_state):
+        return [gmi.split('_')[0]
+                for gmi in self.get_plone_groups_managing_item(cfg, item_state)]
+
     def get_all_plone_groups_accessing_item(self, cfg, item_state):
         """ """
         possible_states = cfg.getItemWFValidationLevels(data="state", only_enabled=True)

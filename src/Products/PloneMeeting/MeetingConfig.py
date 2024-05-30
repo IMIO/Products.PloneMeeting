@@ -6328,6 +6328,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             portalTypeName = '%s%s' % (metaTypeName, self.getShortName())
             portalType = getattr(typesTool, portalTypeName)
             basePortalType = getattr(typesTool, metaTypeName)
+            portalType.title = "{0} {1}".format(
+                translate(metaTypeName, domain='plone', context=self.REQUEST).encode('utf-8'),
+                self.Title(include_config_group=True))
             portalType.i18n_domain = basePortalType.i18n_domain
             # base portal_types 'Meeting' and 'MeetingItem' are global_allow=False
             portalType.global_allow = True
@@ -6360,7 +6363,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     brains = catalog.unrestrictedSearchResults(portal_type=portal_type)
                     for brain in brains:
                         item = brain.getObject()
-                        item.reindexObject(idxs=['getIcon', ])
+                        item.reindexObject(idxs=['getIcon'])
                 # do not search item templates and recurring items
                 if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring'):
                     nsTypes = props.getProperty('types_not_searched')
@@ -6421,7 +6424,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 previous_collection_id = None
 
             if collectionId in container.objectIds():
-                logger.info("Trying to add an already existing collection with id '%s', skipping..." % collectionId)
+                logger.info("'%s' skipped adding already existing collection '%s'..." % (
+                    self.getId(), collectionId))
                 previous_collection_id = collectionId
                 continue
             added_collections = True
@@ -7038,7 +7042,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             for tr in cfg.getTransitionsForPresentingAnItem():
                 text = u'%s ➔ %s' % (
                     cfgTitle,
-                    availableItemTransitionTitles[availableItemTransitionIds.index(tr)])
+                    availableItemTransitionTitles[
+                        availableItemTransitionIds.index(tr)])
                 res.append(('%s.%s' % (cfgId, tr), text))
         return DisplayList(tuple(res))
 
@@ -7105,7 +7110,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''
         return self._listFieldsFor(baseClass, widget_type='RichWidget')
 
-    def _listFieldsFor(self, baseClass, widget_type=None, ignored_field_ids=[], hide_not_visible=False):
+    def _listFieldsFor(self,
+                       baseClass,
+                       widget_type=None,
+                       ignored_field_ids=[],
+                       hide_not_visible=False):
         """ """
         d = 'PloneMeeting'
         res = []
@@ -7114,10 +7123,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if fieldName not in ignored_field_ids and \
                (not widget_type or field.widget.getName() == widget_type) and \
                (not hide_not_visible or field.widget.visible):
-                label_msgid = getattr(field.widget, 'label_msgid', field.widget.label)
+                label_msgid = getattr(
+                    field.widget, 'label_msgid', field.widget.label)
                 msg = u'%s.%s ➔ %s' % (
-                    baseClass.__name__,
-                    fieldName,
+                    baseClass.__name__, fieldName,
                     translate(label_msgid, domain=d, context=self.REQUEST))
                 res.append(('%s.%s' % (baseClass.__name__, fieldName), msg))
         return res

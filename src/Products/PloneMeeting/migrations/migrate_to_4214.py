@@ -6,6 +6,8 @@ from imio.pyutils.utils import replace_in_list
 from Products.PloneMeeting.config import GROUPS_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.setuphandlers import _configureWebspellchecker
+from Products.PloneMeeting.setuphandlers import _installWebspellchecker
 from Products.PloneMeeting.setuphandlers import indexInfos
 
 
@@ -48,6 +50,24 @@ class Migrate_To_4214(Migrator):
                 del level['suffix']
                 del level['extra_suffixes']
             cfg.setItemWFValidationLevels(stored)
+
+    def _installIMIOWebSpellChecker(self):
+        """Configure imio.webspellchecker."""
+        logger.info('Install and configure "imio.webspellchecker"...')
+        replaced = _installWebspellchecker(self.portal)
+        if replaced is False:
+            self.warn(
+                logger,
+                "In _installIMIOWebSpellChecker could not remove 'Scayt' "
+                "option from toolbar_Custom!")
+        _configureWebspellchecker(self.portal)
+        logger.info('Done.')
+
+    def _updatePortalTypesTitle(self):
+        """Meeting/MeetingItem portal_types title is now the translated version."""
+        logger.info('Updating every Meeting/MeetingItem portal_types title...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            cfg.registerPortalTypes()
         logger.info('Done.')
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):
@@ -56,6 +76,9 @@ class Migrate_To_4214(Migrator):
         # reload ConfigurablePODTemplate to use every_annex_types_vocabulary for field store_as_annex
         load_type_from_package('ConfigurablePODTemplate', 'Products.PloneMeeting:default')
         self._migrateAdviceEditedItemMailEvents()
+        self._updatePortalTypesTitle()
+        # not done for now, we will enable it when necessary
+        # self._installIMIOWebSpellChecker()
         # add text criterion on "item title only" again as it was not in default
         # dashboard faceted criteria, new MeetingConfigs created manually in between
         # are missing this new criterion
@@ -70,12 +93,15 @@ class Migrate_To_4214(Migrator):
 def migrate(context):
     '''This migration function will:
 
-       1) Reload type ConfigurablePODTemplate as store_as_annex vocabluary changed;
-       2) Update values of MeetingConfig.itemMailEvents as format
-       of "adviceEdited" values changed;
-       3) Add "item title only" search criterion again;
-       4) Add "groups_managing_item" to every MeetingConfig.itemWFValidationLevels;
-       5) Adapt reviewProcessInfo catalog index from FieldIndex to KeywordIndex.
+       1) Reload ConfigurablePODTemplate as store_as_annex field vocabulary changed;
+       2) Update values of MeetingConfig.itemMailEvents as format of
+          "adviceEdited" values changed;
+       3) Update Meeting/MeetingItem portal_types title as we store the real title now;
+       4) Update faceted filters (Add "item title only" search criterion again);
+       5) Not done for now: install and configure "imio.webspellchecker".
+       6) Add "groups_managing_item" to every MeetingConfig.itemWFValidationLevels;
+       7) Adapt reviewProcessInfo catalog index from FieldIndex to KeywordIndex.
+
     '''
     migrator = Migrate_To_4214(context)
     migrator.run()

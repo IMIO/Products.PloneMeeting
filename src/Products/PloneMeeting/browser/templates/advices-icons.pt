@@ -31,7 +31,7 @@
                              style="outline: none; margin-left: 5px;"
                              tal:attributes="src string:${view/portal_url}/${adviceToWarnIcon};"/>
                         <span tal:define="class_if_not_given string:advice_delay advice_delay_${adviceToWarnGroupId/delay_infos/delay_status};"
-                              tal:content="adviceToWarnGroupId/delay_infos/left_delay"
+                              tal:content="python: adviceToWarnGroupId['delay_infos']['left_delay']"
                               title="An advice on this item still needs to be given respecting given delay."
                               i18n:attributes="title"
                               tal:attributes="class class_if_not_given" />

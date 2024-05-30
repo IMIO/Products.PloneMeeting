@@ -450,9 +450,10 @@ class testMeetingItem(PloneMeetingTestCase):
         # Activate the functionnality
         self.changeUser('admin')
         cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
         self._enableField('category')
         meetingConfigId = cfg.getId()
-        otherMeetingConfigId = self.meetingConfig2.getId()
+        otherMeetingConfigId = cfg2.getId()
         # the item is sendable if it is 'accepted', the user is a MeetingManager,
         # the destMeetingConfig is selected in the MeetingItem.otherMeetingConfigsClonableTo
         # and it has not already been sent to this other meetingConfig
@@ -577,6 +578,11 @@ class testMeetingItem(PloneMeetingTestCase):
         # and the special cloneEvent action specifying that it has been transfered to another meetingConfig
         self.assertEqual([action['action'] for action in newItem.workflow_history[itemWorkflowId]],
                          [None, 'create_to_%s_from_%s' % (otherMeetingConfigId, meetingConfigId)])
+        historyview = newItem.restrictedTraverse('@@historyview')()
+        cfg_title = safe_unicode(cfg.Title())
+        cfg2_title = safe_unicode(cfg2.Title())
+        self.assertTrue(u"Create a %s from a %s" % (cfg2_title, cfg_title) in historyview)
+        self.assertTrue(u"Create a %s from a %s comments" % (cfg2_title, cfg_title) in historyview)
         # now check that the item is sent to another meetingConfig for each
         # cfg.getItemAutoSentToOtherMCStates() state
         needToBackToPublished = True
@@ -5148,6 +5154,19 @@ class testMeetingItem(PloneMeetingTestCase):
         # powerobserver, Reader but changed as using MeetingConfig.hideHistoryTo
         self.changeUser('powerobserver1', clean_memoize=False)
         self.assertEqual(_sum_entries(), 12)
+
+    def test_pm_ItemActionsPanelOnItemTemplateAndRecurringItem(self):
+        """Check that it is displayed correctly on item template and recurring item."""
+        cfg = self.meetingConfig
+        cfg.setTitle("Spécial")
+        cfg.registerPortalTypes()
+        self.changeUser('siteadmin')
+        template1_ap = cfg.itemtemplates.template1.restrictedTraverse('actions_panel')
+        recItem1_ap = cfg.recurringitems.recItem1.restrictedTraverse('actions_panel')
+        self.assertTrue(template1_ap(useIcons=False))
+        self.assertTrue(template1_ap(useIcons=True))
+        self.assertTrue(recItem1_ap(useIcons=False))
+        self.assertTrue(recItem1_ap(useIcons=True))
 
     def test_pm_HistoryCommentViewability(self):
         '''Test the MeetingConfig.hideItemHistoryCommentsToUsersOutsideProposingGroup parameter

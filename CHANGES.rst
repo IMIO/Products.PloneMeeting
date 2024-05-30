@@ -46,10 +46,19 @@ Changelog
   [aduchene]
 - Fixed attendees statistics wrong absent/excused computation in sheet by meeting.
   [gbastien]
+- Integrate `imio.webspellchecker` to replace `Scayt` for `CKEditor`.
+  As `WSC` is started when focus is set in `CKEditor` field, set focus on
+  field when using quick edit.
+  [gbastien]
+- Avoid double click on POD template mailing list.
+  [gbastien]
+- Generate `Meeting/MeetingItem` portal_type title based on `MeetingConfig`
+  title instead translating it.
+  [gbastien]
 - Replaced columns `suffix/extra_suffix` of `MeetingConfig.itemWFValidationLevels`
-  by a new column `groups_managing_item`, this will manage cases when another
-  group than the proposing group is managing the item, several groups may be
-  selected including the proposing group or not.
+  by new columns `group_managing_item/extra_groups_managing_item`, this will
+  manage cases when another group than the proposing group is managing the item,
+  several groups may be selected including the proposing group or not.
   [gbastien]
 
 4.2.9rc6 (2024-04-10)
