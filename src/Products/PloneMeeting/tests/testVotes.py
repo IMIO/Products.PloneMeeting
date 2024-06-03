@@ -318,13 +318,13 @@ class testVotes(PloneMeetingTestCase):
         meeting.set_item_public_vote(public_item, public_votes, 1)
         self.assertEqual(len(public_item.get_item_votes(include_unexisting=False)), 2)
         # vote 0 is not deletable
-        self.assertFalse(public_item._voteIsDeletable(0))
-        self.assertTrue(public_item._voteIsDeletable(1))
+        self.assertFalse(public_item._voteIsDeletable(meeting, 0))
+        self.assertTrue(public_item._voteIsDeletable(meeting, 1))
         delete_view = public_item.restrictedTraverse('@@item_delete_vote')
         self.assertRaises(AssertionError, delete_view, object_uid=0)
         # delete vote 1, then vote 0 is deletable
         delete_view(object_uid=1)
-        self.assertTrue(public_item._voteIsDeletable(0))
+        self.assertTrue(public_item._voteIsDeletable(meeting, 0))
         delete_view(object_uid=0)
         self.assertFalse(public_item.get_item_votes(include_unexisting=False))
 
@@ -341,9 +341,9 @@ class testVotes(PloneMeetingTestCase):
         meeting.set_item_public_vote(public_item, public_votes, 1)
         meeting.set_item_public_vote(public_item, public_votes, 2)
         self.assertEqual(len(public_item.get_item_votes(include_unexisting=False)), 3)
-        self.assertTrue(public_item._voteIsDeletable(0))
-        self.assertTrue(public_item._voteIsDeletable(1))
-        self.assertTrue(public_item._voteIsDeletable(2))
+        self.assertTrue(public_item._voteIsDeletable(meeting, 0))
+        self.assertTrue(public_item._voteIsDeletable(meeting, 1))
+        self.assertTrue(public_item._voteIsDeletable(meeting, 2))
         delete_view = public_item.restrictedTraverse('@@item_delete_vote')
         delete_view(object_uid=1)
         # vote 2 is not vote 1

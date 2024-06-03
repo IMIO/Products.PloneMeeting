@@ -4574,7 +4574,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def get_vote_is_secret(self, meeting, vote_number):
         """ """
-        item_votes = meeting.get_item_votes(self.UID())
+        item_votes = meeting.get_item_votes(item_uid=self.UID(), as_copy=False)
         if len(item_votes) - 1 >= vote_number:
             poll_type = item_votes[vote_number].get('poll_type', self.getPollType())
         else:
@@ -4637,7 +4637,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not self.hasMeeting():
             return votes
         meeting = self.getMeeting()
-        item_votes = meeting.get_item_votes(self.UID())
+        item_votes = meeting.get_item_votes(item_uid=self.UID(), as_copy=False)
         voter_uids = self.get_item_voters()
         poll_type = self.getPollType()
         # all votes
@@ -4720,7 +4720,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def _voteIsDeletable(self, meeting, vote_number):
         """ """
         res = False
-        item_votes = meeting.get_item_votes().get(self.UID())
+        item_votes = meeting.get_item_votes(item_uid=self.UID(), as_copy=False)
         if item_votes:
             vote_infos = item_votes[vote_number]
             if vote_infos['linked_to_previous'] or \

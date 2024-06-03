@@ -1578,21 +1578,27 @@ class Meeting(Container):
 
     security.declarePublic('get_item_votes')
 
-    def get_item_votes(self, item_uid=None):
+    def get_item_votes(self, item_uid=None, as_copy=True):
         ''' '''
         if item_uid:
             # avoid deepcopy returned data as it leads to perf problems
             # with huge item_votes (50 voters, 30 votes on same item)
             # See testPerformances.test_pm_Speed_AsyncLoadItemAssemblyAndSignatures
-            return list(self.item_votes.data.get(item_uid, []))
+            if as_copy:
+                return deepcopy(self.item_votes.data.get(item_uid, []))
+            else:
+                return self.item_votes.data.get(item_uid, [])
         else:
-            return self.item_votes.data.copy()
+            if as_copy:
+                return deepcopy(self.item_votes.data)
+            else:
+                return self.item_votes.data
 
     security.declarePrivate('set_item_public_vote')
 
     def set_item_public_vote(self, item, data, vote_number=0):
         """ """
-        data = data.copy()
+        data = deepcopy(data)
         item_uid = item.UID()
         # set new item_votes value on meeting
         # first votes
@@ -1637,7 +1643,7 @@ class Meeting(Container):
 
     def set_item_secret_vote(self, item, data, vote_number):
         """ """
-        data = data.copy()
+        data = deepcopy(data)
         item_uid = item.UID()
         # set new itemVotes value on meeting
         # first votes
