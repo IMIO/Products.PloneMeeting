@@ -23,6 +23,8 @@ from z3c.form import validator
 from zope.i18n import translate
 from zope.interface import Invalid
 
+import transaction
+
 
 class testVotes(PloneMeetingTestCase):
     '''Tests various aspects of votes management.'''
@@ -1036,6 +1038,8 @@ class testVotes(PloneMeetingTestCase):
         secret_vote['votes']['no'] = 0
         meeting.set_item_secret_vote(secret_item, secret_vote, 1)
         view(1, 'freehand')
+        # commit so meeting.item_votes._p_mtime is updated
+        transaction.commit()
         # "apply_until_item_number" field would be disabled
         self.assertTrue(_should_disable_apply_until_item_number(secret_item))
 
@@ -1077,6 +1081,8 @@ class testVotes(PloneMeetingTestCase):
                                  for hp_uid in public_vote["voters"]}
         meeting.set_item_public_vote(public_item, public_vote, 1)
         view(1, 'secret')
+        # commit so meeting.item_votes._p_mtime is updated
+        transaction.commit()
         # "apply_until_item_number" field would be disabled
         self.assertTrue(_should_disable_apply_until_item_number(public_item))
 
