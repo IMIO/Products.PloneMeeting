@@ -12,6 +12,7 @@ from Products.PloneMeeting.browser.itemvotes import _should_disable_apply_until_
 from Products.PloneMeeting.browser.itemvotes import IEncodeSecretVotes
 from Products.PloneMeeting.browser.itemvotes import secret_votes_default
 from Products.PloneMeeting.browser.itemvotes import votes_default
+from Products.PloneMeeting.config import ALL_VOTE_VALUES
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.content.meeting import IMeeting
@@ -231,8 +232,7 @@ class testVotes(PloneMeetingTestCase):
 
         # other possible vote values
         cfg = self.meetingConfig
-        cfg.setUsedVoteValues(
-            ('yes', 'no', 'abstain', 'does_not_vote', 'not_found', 'invalid', 'blank'))
+        cfg.setUsedVoteValues(ALL_VOTE_VALUES)
 
         voters = meeting.get_voters()
         # public votes
@@ -497,12 +497,12 @@ class testVotes(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, votes_form._doApply)
         self.changeUser('pmManager')
-        self.assertEqual(public_item.get_vote_count('yes'), 2)
+        self.assertEqual(public_item.get_vote_count(meeting, 'yes'), 2)
         votes_form.update()
         votes_form._doApply()
         # votes were updated
-        self.assertEqual(public_item.get_vote_count('yes'), 0)
-        self.assertEqual(public_item.get_vote_count('no'), 4)
+        self.assertEqual(public_item.get_vote_count(meeting, 'yes'), 0)
+        self.assertEqual(public_item.get_vote_count(meeting, 'no'), 4)
 
     def test_pm_EncodePublicVotesFormLinkedToPrevious(self):
         """ """
@@ -526,7 +526,7 @@ class testVotes(PloneMeetingTestCase):
         votes_form = public_item.restrictedTraverse('@@item_encode_votes_form')
         votes_form.meeting = meeting
         # there are 'yes' votes so not able to link to previous
-        self.assertEqual(public_item.get_vote_count('yes'), 2)
+        self.assertEqual(public_item.get_vote_count(meeting, 'yes'), 2)
         load_view = public_item.restrictedTraverse('@@load_item_assembly_and_signatures')
         load_view._update()
         self.assertFalse(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
@@ -646,12 +646,12 @@ class testVotes(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, votes_form._doApply)
         self.changeUser('pmManager')
-        self.assertEqual(secret_item.get_vote_count('yes'), 1)
+        self.assertEqual(secret_item.get_vote_count(meeting, 'yes'), 1)
         votes_form.update()
         votes_form._doApply()
         # votes were updated
-        self.assertEqual(secret_item.get_vote_count('yes'), 0)
-        self.assertEqual(secret_item.get_vote_count('no'), 4)
+        self.assertEqual(secret_item.get_vote_count(meeting, 'yes'), 0)
+        self.assertEqual(secret_item.get_vote_count(meeting, 'no'), 4)
 
     def test_pm_EncodeSecretVotesFormLinkedToPrevious(self):
         """ """
@@ -660,7 +660,7 @@ class testVotes(PloneMeetingTestCase):
             self._createMeetingWithVotes(include_yes=False)
 
         # there are 'yes' votes so not able to link to previous
-        self.assertEqual(secret_item.get_vote_count('yes'), 1)
+        self.assertEqual(secret_item.get_vote_count(meeting, 'yes'), 1)
         load_view = secret_item.restrictedTraverse('@@load_item_assembly_and_signatures')
         load_view._update()
         self.assertFalse(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
@@ -1014,10 +1014,10 @@ class testVotes(PloneMeetingTestCase):
         meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
             self._createMeetingWithVotes()
         # not changed when encoded
-        self.assertTrue(secret_item.get_vote_is_secret(0))
+        self.assertTrue(secret_item.get_vote_is_secret(meeting, 0))
         view = secret_item.restrictedTraverse('@@change-item-vote-polltype')
         view(0, 'freehand')
-        self.assertTrue(secret_item.get_vote_is_secret(0))
+        self.assertTrue(secret_item.get_vote_is_secret(meeting, 0))
         # encode votes form
         self._setUpSecretVoteForm(secret_item, meeting)
         # "apply_until_item_number" field is useable
@@ -1040,8 +1040,8 @@ class testVotes(PloneMeetingTestCase):
         self.assertTrue(_should_disable_apply_until_item_number(secret_item))
 
         # vote_number 1 is now public
-        self.assertTrue(secret_item.get_vote_is_secret(0))
-        self.assertFalse(secret_item.get_vote_is_secret(1))
+        self.assertTrue(secret_item.get_vote_is_secret(meeting, 0))
+        self.assertFalse(secret_item.get_vote_is_secret(meeting, 1))
         self.assertFalse("voters" in secret_item.get_item_votes(0))
         self.assertTrue("voters" in secret_item.get_item_votes(1))
         # the view on item is rendering
@@ -1055,10 +1055,10 @@ class testVotes(PloneMeetingTestCase):
         meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
             self._createMeetingWithVotes()
         # not changed when encoded
-        self.assertFalse(public_item.get_vote_is_secret(0))
+        self.assertFalse(public_item.get_vote_is_secret(meeting, 0))
         view = public_item.restrictedTraverse('@@change-item-vote-polltype')
         view(0, 'secret')
-        self.assertFalse(public_item.get_vote_is_secret(0))
+        self.assertFalse(public_item.get_vote_is_secret(meeting, 0))
         # encode votes form
         self._setUpPublicVoteForm(public_item, meeting)
         # "apply_until_item_number" field is useable
@@ -1081,8 +1081,8 @@ class testVotes(PloneMeetingTestCase):
         self.assertTrue(_should_disable_apply_until_item_number(public_item))
 
         # vote_number 1 is now secret
-        self.assertFalse(public_item.get_vote_is_secret(0))
-        self.assertTrue(public_item.get_vote_is_secret(1))
+        self.assertFalse(public_item.get_vote_is_secret(meeting, 0))
+        self.assertTrue(public_item.get_vote_is_secret(meeting, 1))
         self.assertTrue("voters" in public_item.get_item_votes(0))
         self.assertFalse("voters" in public_item.get_item_votes(1))
         # the view on item is rendering

@@ -652,7 +652,7 @@ class ItemDeleteVoteView(BrowserView):
             assert self.context._voteIsDeletable(vote_number)
 
             vote_to_delete = item_votes[vote_number]
-            if self.context.get_vote_is_secret(vote_number):
+            if self.context.get_vote_is_secret(meeting, vote_number):
                 originnal_vote_keys = [str(vote_count) for vote_value, vote_count
                                        in vote_to_delete['votes'].items()]
                 originnal_vote_keys = "__".join(originnal_vote_keys)

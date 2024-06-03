@@ -4572,9 +4572,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """ """
         return bool(self.getPollType().startswith('secret'))
 
-    def get_vote_is_secret(self, vote_number):
+    def get_vote_is_secret(self, meeting, vote_number):
         """ """
-        item_votes = self.getMeeting().get_item_votes().get(self.UID(), [])
+        return False
+        item_votes = meeting.get_item_votes().get(self.UID(), [])
         if len(item_votes) - 1 >= vote_number:
             poll_type = item_votes[vote_number].get('poll_type', self.getPollType())
         else:
@@ -4622,6 +4623,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                        vote_number='all',
                        include_extra_infos=True,
                        include_unexisting=True,
+                       include_voters=True,
                        unexisting_value=NOT_ENCODED_VOTE_VALUE,
                        ignored_vote_values=[],
                        force_list_result=False):
@@ -4658,7 +4660,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # include_unexisting
         # secret votes
         if poll_type != 'no_vote':
-            if self.get_vote_is_secret(vote_number):
+            if self.get_vote_is_secret(meeting, vote_number):
                 if include_unexisting and not votes:
                     votes = self._build_unexisting_vote(True, vote_number, poll_type)
             # public votes
@@ -4669,23 +4671,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     votes = self._build_unexisting_vote(False, vote_number, poll_type)
 
         i = 0 if vote_number == 'all' else vote_number
-        for vote in votes:
-            if not self.get_vote_is_secret(i):
-                # add new values if some voters were added
-                stored_voter_uids = vote['voters'].keys()
-                for voter_uid in voter_uids:
-                    if voter_uid not in stored_voter_uids:
-                        vote['voters'][voter_uid] = NOT_ENCODED_VOTE_VALUE
-                # make sure we only have current voters in 'voters'
-                # this could not be the case when encoding votes
-                # for a voter then setting him absent
-                # discard also ignored_vote_values
-                vote['voters'] = OrderedDict(
-                    [(vote_voter_uid, vote['voters'][vote_voter_uid])
-                     for vote_voter_uid in voter_uids
-                     if (not ignored_vote_values or
-                         vote['voters'][vote_voter_uid] not in ignored_vote_values)])
-            i = i + 1
+        if include_voters:
+            for vote in votes:
+                if not self.get_vote_is_secret(meeting, i):
+                    # add new values if some voters were added
+                    stored_voter_uids = vote['voters'].keys()
+                    for voter_uid in voter_uids:
+                        if voter_uid not in stored_voter_uids:
+                            vote['voters'][voter_uid] = NOT_ENCODED_VOTE_VALUE
+                    # make sure we only have current voters in 'voters'
+                    # this could not be the case when encoding votes
+                    # for a voter then setting him absent
+                    # discard also ignored_vote_values
+                    vote['voters'] = OrderedDict(
+                        [(vote_voter_uid, vote['voters'][vote_voter_uid])
+                         for vote_voter_uid in voter_uids
+                         if (not ignored_vote_values or
+                             vote['voters'][vote_voter_uid] not in ignored_vote_values)])
+                i = i + 1
 
         # when asking a vote_number, only return this one as a dict, not as a list
         if votes and vote_number != 'all' and not force_list_result:
@@ -8117,42 +8120,42 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('get_vote_count')
 
-    def get_vote_count(self, vote_value, vote_number=0):
+    def get_vote_count(self, meeting, vote_value, vote_number=0):
         '''Gets the number of votes for p_vote_value.
            A special value 'any_votable' may be passed for p_vote_value,
            in this case every values other than NOT_VOTABLE_LINKED_TO_VALUE are counted.'''
         res = 0
-        itemVotes = self.get_item_votes(vote_number)
+        item_votes = self.get_item_votes(vote_number)
         item_voter_uids = self.get_item_voters()
         # when initializing, so Meeting.item_votes is empty
         # only return count for NOT_ENCODED_VOTE_VALUE
-        if not itemVotes and vote_value == NOT_ENCODED_VOTE_VALUE:
+        if not item_votes and vote_value == NOT_ENCODED_VOTE_VALUE:
             res = len(item_voter_uids)
-        elif not self.get_vote_is_secret(vote_number):
+        elif not self.get_vote_is_secret(meeting, vote_number):
             # public
             for item_voter_uid in item_voter_uids:
-                if (item_voter_uid not in itemVotes['voters'] and
+                if (item_voter_uid not in item_votes['voters'] and
                         vote_value == NOT_ENCODED_VOTE_VALUE) or \
-                   (item_voter_uid in itemVotes['voters'] and
-                        vote_value == itemVotes['voters'][item_voter_uid]) or \
-                   (item_voter_uid in itemVotes['voters'] and
+                   (item_voter_uid in item_votes['voters'] and
+                        vote_value == item_votes['voters'][item_voter_uid]) or \
+                   (item_voter_uid in item_votes['voters'] and
                         vote_value == 'any_votable' and
-                        itemVotes['voters'][item_voter_uid] != NOT_VOTABLE_LINKED_TO_VALUE):
+                        item_votes['voters'][item_voter_uid] != NOT_VOTABLE_LINKED_TO_VALUE):
                     res += 1
         else:
             # secret
-            if vote_value in itemVotes['votes']:
-                res = itemVotes['votes'][vote_value] or 0
+            if vote_value in item_votes['votes']:
+                res = item_votes['votes'][vote_value] or 0
             elif vote_value == 'any_votable':
                 res = len(item_voter_uids)
             elif vote_value == NOT_ENCODED_VOTE_VALUE:
                 total = len(item_voter_uids)
                 voted = sum([item_vote_count or 0 for item_vote_value, item_vote_count
-                             in itemVotes['votes'].items()])
+                             in item_votes['votes'].items()])
                 res = total - voted
             elif vote_value == 'any_voted':
                 res = sum([item_vote_count or 0 for item_vote_value, item_vote_count
-                           in itemVotes['votes'].items()])
+                           in item_votes['votes'].items()])
         return res
 
     security.declarePublic('setFieldFromAjax')

@@ -406,7 +406,7 @@ document.location.reload(true);
         </span>)
       </div>
       <tal:actions condition="mayChangeAttendees"
-                   define="edit_form_name python: context.get_vote_is_secret(vote_infos['vote_number']) and '@@item_encode_secret_votes_form' or '@@item_encode_votes_form';">
+                   define="edit_form_name python: view.get_cached_vote_is_secret(vote_infos['vote_number']) and '@@item_encode_secret_votes_form' or '@@item_encode_votes_form';">
         <a tal:attributes="href string:${edit_form_name}?vote_number:int=${vote_infos/vote_number}"
            title="Edit this vote"
            i18n:attributes="title"
@@ -663,8 +663,10 @@ document.location.reload(true);
        <span tal:condition="not:isVoter">-</span>
      </td>
 
-     <tal:vote repeat="vote_infos itemVotes" condition="python: show_votes">
-      <tal:public_vote condition="python: not context.get_vote_is_secret(vote_infos['vote_number'])">
+     <tal:vote repeat="vote_infos itemVotes"
+               condition="python: show_votes">
+      <tal:defines define="vote_is_secret python: view.get_cached_vote_is_secret(vote_infos['vote_number'])">
+      <tal:public_vote condition="not: vote_is_secret ">
         <td align="center" class="attendee-value vote-value public-vote">
           <tal:comment replace="nothing">Show "vote" value the user voted for this item</tal:comment>
           <tal:voted condition="python: aUid in voters and aUid in vote_infos['voters']">
@@ -687,7 +689,7 @@ document.location.reload(true);
           </tal:not_voter>
         </td>
       </tal:public_vote>
-      <tal:secret_vote condition="python: context.get_vote_is_secret(vote_infos['vote_number'])">
+      <tal:secret_vote condition="vote_is_secret">
         <td align="center"
             class="attendee-value vote-value secret-vote"
             tal:define="loop_index repeat/mUser/index"
@@ -702,6 +704,7 @@ document.location.reload(true);
           </tal:loop>
         </td>
       </tal:secret_vote>
+      </tal:defines>
      </tal:vote>
 
   </tr>
