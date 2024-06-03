@@ -88,7 +88,6 @@ from zope.schema.interfaces import ITokenizedTerm
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleVocabulary
 
-import copy
 import itertools
 import logging
 
@@ -1410,7 +1409,7 @@ class Meeting(Container):
             for key in keys:
                 data[key] = [k for k, v in attr.items() if key in v]
         else:
-            data = copy.deepcopy(attr.data)
+            data = attr.data.copy()
         return data
 
     security.declarePublic('get_item_absents')
@@ -1590,7 +1589,7 @@ class Meeting(Container):
 
     def set_item_public_vote(self, item, data, vote_number=0):
         """ """
-        data = deepcopy(data)
+        data = data.copy()
         item_uid = item.UID()
         # set new item_votes value on meeting
         # first votes
@@ -1635,7 +1634,7 @@ class Meeting(Container):
 
     def set_item_secret_vote(self, item, data, vote_number):
         """ """
-        data = deepcopy(data)
+        data = data.copy()
         item_uid = item.UID()
         # set new itemVotes value on meeting
         # first votes
