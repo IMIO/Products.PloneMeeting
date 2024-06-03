@@ -1581,7 +1581,10 @@ class Meeting(Container):
     def get_item_votes(self, item_uid=None):
         ''' '''
         if item_uid:
-            return self.item_votes.data.get(item_uid, [])
+            # avoid deepcopy returned data as it leads to perf problems
+            # with huge item_votes (50 voters, 30 votes on same item)
+            # See testPerformances.test_pm_Speed_AsyncLoadItemAssemblyAndSignatures
+            return list(self.item_votes.data.get(item_uid, []))
         else:
             return self.item_votes.data.copy()
 
