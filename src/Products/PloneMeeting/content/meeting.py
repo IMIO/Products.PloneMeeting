@@ -1579,10 +1579,12 @@ class Meeting(Container):
 
     security.declarePublic('get_item_votes')
 
-    def get_item_votes(self):
+    def get_item_votes(self, item_uid=None):
         ''' '''
-        votes = deepcopy(self.item_votes.data)
-        return votes
+        if item_uid:
+            return self.item_votes.data.get(item_uid, [])
+        else:
+            return self.item_votes.data.copy()
 
     security.declarePrivate('set_item_public_vote')
 

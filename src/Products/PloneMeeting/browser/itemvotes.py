@@ -649,7 +649,7 @@ class ItemDeleteVoteView(BrowserView):
         meeting = self.context.getMeeting()
         if item_uid in meeting.item_votes:
             item_votes = meeting.item_votes[item_uid]
-            assert self.context._voteIsDeletable(vote_number)
+            assert self.context._voteIsDeletable(meeting, vote_number)
 
             vote_to_delete = item_votes[vote_number]
             if self.context.get_vote_is_secret(meeting, vote_number):

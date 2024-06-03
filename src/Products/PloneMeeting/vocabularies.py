@@ -1475,7 +1475,7 @@ class UsedVoteValuesVocabulary(object):
     def is_first_linked_vote(self, vote_number):
         """ """
         return next_vote_is_linked(
-            self.context.get_item_votes(), vote_number)
+            self.context.get_item_votes(include_voters=False), vote_number)
 
     def is_linked_vote(self, vote_number):
         """ """
