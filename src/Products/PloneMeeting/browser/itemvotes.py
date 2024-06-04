@@ -109,8 +109,9 @@ def votes_default(context):
        - or we do not have and we use the default value defined on MeetingConfig."""
     res = []
     vote_number = vote_number_default()
-    item_votes = context.get_item_votes(vote_number=vote_number,
-                                        ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE])
+    item_votes = context.get_item_votes(
+        vote_number=vote_number,
+        ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE])
     # keep order using get_item_voters
     item_voter_uids = context.get_item_voters()
     # when adding a new vote linked_to_previous, only keep possible voters

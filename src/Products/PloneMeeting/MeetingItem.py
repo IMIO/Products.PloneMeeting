@@ -4616,8 +4616,36 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 votes[0]['voters'][voter_uid] = NOT_ENCODED_VOTE_VALUE
         return votes
 
+    def get_item_votes_cachekey(method,
+                                self,
+                                vote_number='all',
+                                include_extra_infos=True,
+                                include_unexisting=True,
+                                include_voters=True,
+                                unexisting_value=NOT_ENCODED_VOTE_VALUE,
+                                ignored_vote_values=[],
+                                force_list_result=False):
+        '''cachekey method for self.downOrUpWorkflowAgain.'''
+        item_votes_modified = None
+        item_attendees_order = None
+        if self.hasMeeting():
+            context_uid = self.UID()
+            meeting = self.getMeeting()
+            meeting_item_votes = meeting.get_item_votes(context_uid, as_copy=False)
+            if not meeting_item_votes:
+                raise ram.DontCache
+            item_votes_modified = meeting_item_votes._p_mtime
+            item_attendees_order = meeting.item_attendees_order
+            if context_uid in item_attendees_order:
+                item_attendees_order = item_attendees_order[context_uid]
+        cache_date = self.REQUEST.get('cache_date', None)
+        return repr(self), item_votes_modified, item_attendees_order, \
+            vote_number, include_extra_infos, include_unexisting, include_voters, \
+            unexisting_value, ignored_vote_values, force_list_result, cache_date
+
     security.declarePublic('get_item_votes')
 
+    @ram.cache(get_item_votes_cachekey)
     def get_item_votes(self,
                        vote_number='all',
                        include_extra_infos=True,
@@ -4654,7 +4682,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     i += 1
         # vote_number
         elif len(item_votes) - 1 >= vote_number:
-            votes.append(item_votes[vote_number])
+            votes.append(deepcopy(item_votes[vote_number]))
 
         # include_unexisting
         # secret votes

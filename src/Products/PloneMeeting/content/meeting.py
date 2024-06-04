@@ -1634,6 +1634,8 @@ class Meeting(Container):
             self.item_votes[item_uid][vote_number]['voters'].update(data['voters'])
             data.pop('voters')
             self.item_votes[item_uid][vote_number].update(data)
+        # will invalidate MeetingItem.get_item_votes cache
+        self.item_votes[item_uid]._p_changed = True
         # manage linked_to_previous
         # if current vote is linked to other votes, we will set NOT_VOTABLE_LINKED_TO_VALUE
         # as value of vote of voters of other linked votes
@@ -1665,6 +1667,8 @@ class Meeting(Container):
             # make sure key "voters" is removed
             self.item_votes[item_uid][vote_number].pop('voters', None)
             self.item_votes[item_uid][vote_number].update(data)
+        # will invalidate MeetingItem.get_item_votes cache
+        self.item_votes[item_uid]._p_changed = True
 
     security.declarePublic('display_user_replacement')
 
