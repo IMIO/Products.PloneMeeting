@@ -940,6 +940,64 @@ class testPerformances(PloneMeetingTestCase):
         for time in range(times):
             org.get_full_title()
 
+    def test_pm_Speed_AsyncLoadItemAssemblyAndSignatures(self):
+        """Test when loading @@load_item_assembly_and_signatures
+           with 40 assemby members and 25 votes."""
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        # create 40 new held positions
+        pm_logger.info('Creating 40 held positions...')
+        for i in range(40):
+            person = self.create('person')
+            self.create('held_position',
+                        folder=person,
+                        label=str(i),
+                        usages=['assemblyMember'],
+                        defaults=['present', 'voter'])
+        self._setUpOrderedContacts()
+        # now create an item with 1 vote and one with 25 votes
+        pm_logger.info('Creating meeting, items and votes...')
+        self.changeUser('pmManager')
+        public_item1 = self.create('MeetingItem')
+        public_item25 = self.create('MeetingItem')
+        secret_item1 = self.create('MeetingItem', pollType='secret')
+        secret_item25 = self.create('MeetingItem', pollType='secret')
+        meeting = self.create('Meeting')
+        self.presentItem(public_item1)
+        self.presentItem(public_item25)
+        self.presentItem(secret_item1)
+        self.presentItem(secret_item25)
+        # setup public votes
+        voters = meeting.get_voters()
+        public_votes = public_item1.get_item_votes()[0]
+        for voter in voters:
+            public_votes['voters'][voter] = "yes"
+        meeting.set_item_public_vote(public_item1, public_votes, 0)
+        for i in range(25):
+            meeting.set_item_public_vote(public_item25, public_votes, i)
+
+        # setup secret votes
+        secret_votes = secret_item1.get_item_votes()[0]
+        secret_votes['votes']['abstain'] = 20
+        secret_votes['votes']['no'] = 10
+        secret_votes['votes']['yes'] = 5
+        meeting.set_item_secret_vote(secret_item1, secret_votes, 0)
+        for i in range(25):
+            meeting.set_item_secret_vote(secret_item25, secret_votes, i)
+        self._check_load_item_assembly_and_signatures(public_item1, True, 1)
+        self._check_load_item_assembly_and_signatures(public_item25, True, 25)
+        self._check_load_item_assembly_and_signatures(secret_item1, False, 1)
+        self._check_load_item_assembly_and_signatures(secret_item25, False, 25)
+
+    @timecall
+    def _check_load_item_assembly_and_signatures(self, item, public=True, votes=1):
+        ''' '''
+        public = "public" if public else "secret"
+        pm_logger.info('Call @@load_item_assembly_and_signatures for "{0}" '
+                       'item with "{1}" vote(s)'.format(public, votes))
+        item.restrictedTraverse('@@load_item_assembly_and_signatures')()
+
 
 def test_suite():
     from unittest import makeSuite

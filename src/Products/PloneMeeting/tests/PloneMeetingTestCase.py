@@ -329,6 +329,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             if folder is None:
                 raise Exception(
                     'The "folder" parameter must be a person when creating a held_position!')
+            if "organization" not in attrs:
+                attrs['position'] = self._relation(self.own_org)
         elif objectType == 'meetingcategory':
             if is_classifier:
                 folder = cfg.classifiers

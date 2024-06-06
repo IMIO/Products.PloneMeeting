@@ -55,6 +55,9 @@ Changelog
 - Generate `Meeting/MeetingItem` portal_type title based on `MeetingConfig`
   title instead translating it.
   [gbastien]
+- Optimized `@@load_item_assembly_and_signatures` especially when several
+  voters (50) and votes for an item (25).
+  [gbastien]
 
 4.2.9rc6 (2024-04-10)
 ---------------------

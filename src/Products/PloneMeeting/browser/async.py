@@ -353,10 +353,17 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         self.request = request
         self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
+        self._cached_vote_is_secret = {}
 
     def show(self):
         """ """
         return self.meeting is not None
+
+    def get_cached_vote_is_secret(self, vote_number):
+        """ """
+        if vote_number not in self._cached_vote_is_secret:
+            self._cached_vote_is_secret[vote_number] = self.context.get_vote_is_secret(self.meeting, vote_number)
+        return self._cached_vote_is_secret[vote_number]
 
     def vote_counts(self):
         """Returns informations regarding votes count."""
@@ -365,7 +372,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         total_count = 0
         for vote_number in range(len(self.item_votes)):
             sub_counts = []
-            total_votes = self.context.get_vote_count('any_votable', vote_number)
+            total_votes = self.context.get_vote_count(self.meeting, 'any_votable', vote_number)
             number_of_votes_msg = translate(
                 'number_of_voters', domain='PloneMeeting', context=self.request)
             res = [u'<span title="{0}">{1}</span>'.format(
@@ -375,9 +382,9 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
             pattern = u'<span class="vote_value_{0}" title="{1}">{2}</span>'
 
             # specify how much voted for this vote if secret
-            vote_is_secret = self.context.get_vote_is_secret(vote_number)
+            vote_is_secret = self.get_cached_vote_is_secret(vote_number)
             if vote_is_secret:
-                voted = self.context.get_vote_count('any_voted', vote_number)
+                voted = self.context.get_vote_count(self.meeting, 'any_voted', vote_number)
                 formated_total_votes = "{0} / {1}".format(voted, total_votes)
             sub_counts.append((number_of_votes_msg,
                                formated_total_votes,
@@ -391,17 +398,17 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                 if not linked_vote_numbers or vote_number == min(linked_vote_numbers):
                     total_voted = 0
                     for linked_vote_number in linked_vote_numbers:
-                        total_voted += self.context.get_vote_count('any_voted', linked_vote_number)
-                    translated_used_vote_value = translate(
+                        total_voted += self.context.get_vote_count(self.meeting, 'any_voted', linked_vote_number)
+                    translated_not_yet_vote_value = translate(
                         'vote_value_not_yet',
                         domain='PloneMeeting',
                         context=self.request)
                     count = total_votes - total_voted
                     res.append(pattern.format(
                         NOT_ENCODED_VOTE_VALUE,
-                        translated_used_vote_value,
+                        translated_not_yet_vote_value,
                         count))
-                    sub_counts.append((translated_used_vote_value,
+                    sub_counts.append((translated_not_yet_vote_value,
                                        count,
                                        'vote_value_not_yet'))
 
@@ -409,20 +416,15 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                 self.context,
                 "Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary",
                 vote_number=vote_number)
-            usedVoteValues = [term.token for term in used_vote_terms._terms]
-            for usedVoteValue in usedVoteValues:
-                translated_used_vote_value = translate(
-                    'vote_value_{0}'.format(usedVoteValue),
-                    domain='PloneMeeting',
-                    context=self.request)
-                count = self.context.get_vote_count(usedVoteValue, vote_number)
+            for term in used_vote_terms._terms:
+                count = self.context.get_vote_count(self.meeting, term.token, vote_number)
                 res.append(pattern.format(
-                    usedVoteValue,
-                    translated_used_vote_value,
+                    term.token,
+                    term.title,
                     count))
-                if usedVoteValue != NOT_ENCODED_VOTE_VALUE:
+                if term.token != NOT_ENCODED_VOTE_VALUE:
                     total_count += count
-                sub_counts.append((translated_used_vote_value, count, 'vote_value_' + usedVoteValue))
+                sub_counts.append((term.title, count, 'vote_value_' + term.token))
             votes = u" / ".join(res)
             data.append(votes)
             counts.append(sub_counts)
@@ -446,7 +448,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                 res = True
             elif vote_infos.get('poll_type') == self.context.getPollType():
                 # check vote_values not out of MeetingConfig.firstLinkedVoteUsedVoteValues
-                if self.context.get_vote_is_secret(vote_number):
+                if self.get_cached_vote_is_secret(vote_number):
                     vote_values = [vote_value for vote_value, vote_count
                                    in vote_infos['votes'].items()
                                    if vote_count and vote_value in self.cfg.getUsedVoteValues()]
@@ -476,8 +478,8 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         ordered_contacts = meeting.ordered_contacts.items()
         redefined_item_attendees = meeting._get_all_redefined_attendees(only_keys=False)
         show_votes = self.context.show_votes()
-        item_votes = self.context.get_item_votes(include_extra_infos=False)
         context_uid = self.context.UID()
+        item_votes_modified = context_uid in meeting.item_votes and meeting.item_votes[context_uid]._p_mtime
         item_attendees_order = meeting._get_item_attendees_order(context_uid)
         # if something redefined for context or not
         if context_uid not in str(redefined_item_attendees):
@@ -504,7 +506,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                 redefined_item_attendees,
                 item_attendees_order,
                 show_votes,
-                item_votes,
+                item_votes_modified,
                 may_change_attendees,
                 poll_type,
                 cache_date,

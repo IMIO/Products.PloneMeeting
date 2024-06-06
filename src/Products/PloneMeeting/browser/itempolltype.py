@@ -150,8 +150,9 @@ class ChangeItemVotePollTypeView(ChangeItemPollTypeView):
     def _do_validate_new_poll_type(self, old_pollType, new_value):
         """Specific validation."""
         # only if no vote encoded
+        meeting = self.context.getMeeting()
         if self.context.get_vote_count(
-            NOT_ENCODED_VOTE_VALUE, vote_number=self.vote_number) != \
+            meeting, NOT_ENCODED_VOTE_VALUE, vote_number=self.vote_number) != \
            len(self.context.get_item_voters()):
             api.portal.show_message(
                 _('can_not_switch_vote_polltype_votes_encoded'),
@@ -160,7 +161,7 @@ class ChangeItemVotePollTypeView(ChangeItemPollTypeView):
             return True
         # can not be linked to other vote
         elif self.vote_number in _get_linked_item_vote_numbers(
-                self.context, self.context.getMeeting(), self.vote_number):
+                self.context, meeting, self.vote_number):
             api.portal.show_message(
                 _('can_not_switch_vote_polltype_linked_to_previous'),
                 request=self.request,

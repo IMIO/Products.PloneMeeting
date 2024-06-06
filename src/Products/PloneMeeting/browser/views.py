@@ -1781,6 +1781,7 @@ def get_vote_infos(item, used_vote_values=[], include_null_vote_count_values=[],
     # there may have several votes
     votes = []
     i = 0
+    meeting = item.getMeeting()
     for item_vote in item_votes:
         if keep_vote_numbers and i not in keep_vote_numbers:
             continue
@@ -1788,7 +1789,7 @@ def get_vote_infos(item, used_vote_values=[], include_null_vote_count_values=[],
         counts = OrderedDict()
         for vote_value in used_vote_values:
             vote_count = item.get_vote_count(
-                vote_value=vote_value, vote_number=item_vote['vote_number'])
+                meeting, vote_value=vote_value, vote_number=item_vote['vote_number'])
             # keep 0 vote_counts?
             if vote_count == 0 and vote_value not in include_null_vote_count_values:
                 continue
@@ -2467,7 +2468,7 @@ class DisplayMeetingItemVoters(BrowserView):
                        item.get_voted_voters(vote_number=vote_number)):
                         res['public'].append(item)
                 else:
-                    total_voters = item.get_vote_count('any_votable')
+                    total_voters = item.get_vote_count(self.context, 'any_votable')
                     i = vote_number
                     linked_numbers = _get_linked_item_vote_numbers(
                         item, self.context, vote_number=vote_number)
@@ -2476,7 +2477,7 @@ class DisplayMeetingItemVoters(BrowserView):
                         i = min(linked_numbers)
                     if i not in data:
                         data[i] = 0
-                    vote_count = item.get_vote_count('any_voted', vote_number=vote_number)
+                    vote_count = item.get_vote_count(self.context, 'any_voted', vote_number=vote_number)
                     data[i] += vote_count
             if is_secret:
                 # now if we have an element in res < total_voters, we miss some votes
