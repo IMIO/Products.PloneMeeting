@@ -3242,14 +3242,9 @@ class PMDxPortalTypesVocabulary(DxPortalTypesVocabulary):
                      not (fti.id.startswith("MeetingItemRecurring") or
                           fti.id.startswith("MeetingItemTemplate") or
                           fti.id == "MeetingItem")]
-        portal = api.portal.get()
         for item_fti in item_ftis:
             terms.append(SimpleTerm(
-                item_fti.id,
-                item_fti.id,
-                translate(item_fti.title,
-                          domain="plone",
-                          context=portal.REQUEST)))
+                item_fti.id, item_fti.id, item_fti.Title()))
         return SimpleVocabulary(terms)
 
 
