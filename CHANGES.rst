@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.9 (unreleased)
+4.2.9 (2024-06-10)
 ------------------
 
 - In `EveryAnnexTypesVocabulary` use `content_category` icon image scale
