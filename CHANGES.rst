@@ -58,6 +58,9 @@ Changelog
 - Optimized `@@load_item_assembly_and_signatures` especially when several
   voters (50) and votes for an item (25).
   [gbastien]
+- Fixed encode votes for several items failed when there was a `no_vote` item
+  in the way.
+  [gbastien]
 
 4.2.9rc6 (2024-04-10)
 ---------------------

@@ -4662,12 +4662,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            If p_include_unexisting, will return p_unexisting_value for votes that
            does not exist, so when votes just enabled, new voter selected, ...'''
         votes = []
-        if not self.hasMeeting():
+        poll_type = self.getPollType()
+        if not self.hasMeeting() or poll_type == "no_vote":
             return votes
         meeting = self.getMeeting()
         item_votes = meeting.get_item_votes(item_uid=self.UID(), as_copy=False)
         voter_uids = self.get_item_voters()
-        poll_type = self.getPollType()
         # all votes
         if vote_number == 'all':
             # votes will be a list
@@ -4686,16 +4686,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # include_unexisting
         # secret votes
-        if poll_type != 'no_vote':
-            if self.get_vote_is_secret(meeting, vote_number):
-                if include_unexisting and not votes:
-                    votes = self._build_unexisting_vote(True, vote_number, poll_type)
-            # public votes
-            else:
-                # add an empty vote in case nothing in itemVotes
-                # this is useful when no votes encoded, new voters selected, ...
-                if include_unexisting and not votes:
-                    votes = self._build_unexisting_vote(False, vote_number, poll_type)
+        if self.get_vote_is_secret(meeting, vote_number):
+            if include_unexisting and not votes:
+                votes = self._build_unexisting_vote(True, vote_number, poll_type)
+        # public votes
+        else:
+            # add an empty vote in case nothing in itemVotes
+            # this is useful when no votes encoded, new voters selected, ...
+            if include_unexisting and not votes:
+                votes = self._build_unexisting_vote(False, vote_number, poll_type)
 
         i = 0 if vote_number == 'all' else vote_number
         if include_voters:

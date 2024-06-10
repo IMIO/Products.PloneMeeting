@@ -35,7 +35,7 @@ class testVotes(PloneMeetingTestCase):
         self._setUpOrderedContacts()
         self._removeConfigObjectsFor(self.meetingConfig)
 
-    def _createMeetingWithVotes(self, include_yes=True):
+    def _createMeetingWithVotes(self, include_yes=True, include_no_vote=False):
         """ """
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
@@ -55,6 +55,11 @@ class testVotes(PloneMeetingTestCase):
                                           decision=self.decisionText,
                                           pollType='secret')
             self.presentItem(yes_secret_item)
+        if include_no_vote:
+            no_vote_item = self.create('MeetingItem',
+                                       decision=self.decisionText,
+                                       pollType='no_vote')
+            self.presentItem(no_vote_item)
         voters = meeting.get_voters()
         # public votes
         public_votes = public_item.get_item_votes()[0]
@@ -86,6 +91,8 @@ class testVotes(PloneMeetingTestCase):
         res = meeting, public_item, secret_item
         if include_yes:
             res = meeting, public_item, yes_public_item, secret_item, yes_secret_item
+        if include_no_vote:
+            res += (no_vote_item, )
         return res
 
     def test_pm_Show_votes(self):
@@ -958,8 +965,8 @@ class testVotes(PloneMeetingTestCase):
     def test_pm_EncodeVotesForSeveralItems(self):
         """Votes may be encoded for several items but only relevant items will be updated."""
         self.changeUser('pmManager')
-        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
-            self._createMeetingWithVotes()
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item, no_vote_item = \
+            self._createMeetingWithVotes(include_no_vote=True)
         # for now public_item and yes_public_item votes are different
         self.assertNotEqual(public_item.get_item_votes(), yes_public_item.get_item_votes())
         secret_item_votes = secret_item.get_item_votes()
@@ -972,7 +979,7 @@ class testVotes(PloneMeetingTestCase):
         votes_form.votes = votes_form.widgets['votes'].value
         votes_form.linked_to_previous = False
         votes_form.vote_number = 0
-        votes_form.apply_until_item_number = u'400'
+        votes_form.apply_until_item_number = u'500'
         # item modified when applied
         modified = public_item.modified()
         votes_form._doApply()
@@ -982,10 +989,12 @@ class testVotes(PloneMeetingTestCase):
         self.assertEqual(public_item.get_item_votes(), yes_public_item.get_item_votes())
         self.assertEqual(secret_item_votes, secret_item.get_item_votes())
         self.assertEqual(yes_secret_item_votes, yes_secret_item.get_item_votes())
+        self.assertEqual(no_vote_item.get_item_votes(), [])
+        self.assertEqual(no_vote_item.get_item_votes(vote_number=0), [])
         # relevant messages are displayed to the user
         messages = IStatusMessage(self.request).show()
         self.assertEqual(messages[-2].message, u'Votes have been encoded for items "1 & 2".')
-        self.assertEqual(messages[-1].message, u'Votes could not be updated for items "3 & 4".')
+        self.assertEqual(messages[-1].message, u'Votes could not be updated for items "3, 4 & 5".')
 
     def test_pm_EncodeVotesByVotingGroup(self):
         """Just check that voting_group functionnality is working."""
