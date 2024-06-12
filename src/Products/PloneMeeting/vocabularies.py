@@ -56,6 +56,7 @@ from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import ADVICE_TYPES
+from Products.PloneMeeting.config import ALL_VOTE_VALUES
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import GROUPS_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
@@ -1452,15 +1453,34 @@ class ListTypesVocabulary(object):
 ListTypesVocabularyFactory = ListTypesVocabulary()
 
 
+class AllVoteValuesVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        terms = []
+        for vote_value in ALL_VOTE_VALUES:
+            terms.append(SimpleTerm(
+                vote_value,
+                vote_value,
+                translate('vote_value_%s' % vote_value,
+                          domain='PloneMeeting',
+                          context=context.REQUEST)))
+        return SimpleVocabulary(terms)
+
+
+AllVoteValuesVocabularyFactory = AllVoteValuesVocabulary()
+
+
 class UsedVoteValuesVocabulary(object):
     implements(IVocabularyFactory)
 
     def is_first_linked_vote(self, vote_number):
         """ """
-        itemVotes = self.context.get_item_votes()
-        return next_vote_is_linked(itemVotes, vote_number)
+        return next_vote_is_linked(
+            self.context.get_item_votes(include_voters=False), vote_number)
 
-    def is_linked_vote(self):
+    def is_linked_vote(self, vote_number):
         """ """
         return self.item_vote['linked_to_previous']
 
@@ -1485,15 +1505,16 @@ class UsedVoteValuesVocabulary(object):
                 vote_number = int(self.context.REQUEST.form.get(
                     'vote_number',
                     self.context.REQUEST.form.get('form.widgets.vote_number')))
-            self.item_vote = self.context.get_item_votes(vote_number=vote_number)
+            self.meeting = self.context.getMeeting()
+            self.item_vote = self.context.get_item_votes(include_voters=False, vote_number=vote_number)
             used_values_attr = 'usedVoteValues'
-            if self.is_linked_vote():
+            if self.is_linked_vote(vote_number):
                 used_values_attr = 'nextLinkedVotesUsedVoteValues'
             elif self.is_first_linked_vote(vote_number):
                 used_values_attr = 'firstLinkedVoteUsedVoteValues'
             for usedVoteValue in cfg.getUsedVoteValues(
                     used_values_attr=used_values_attr,
-                    include_not_encoded=not self.context.get_vote_is_secret(vote_number)):
+                    include_not_encoded=not self.context.get_vote_is_secret(self.meeting, vote_number)):
                 res.append(
                     SimpleTerm(
                         usedVoteValue,
@@ -3224,14 +3245,9 @@ class PMDxPortalTypesVocabulary(DxPortalTypesVocabulary):
                      not (fti.id.startswith("MeetingItemRecurring") or
                           fti.id.startswith("MeetingItemTemplate") or
                           fti.id == "MeetingItem")]
-        portal = api.portal.get()
         for item_fti in item_ftis:
             terms.append(SimpleTerm(
-                item_fti.id,
-                item_fti.id,
-                translate(item_fti.title,
-                          domain="plone",
-                          context=portal.REQUEST)))
+                item_fti.id, item_fti.id, item_fti.Title()))
         return SimpleVocabulary(terms)
 
 

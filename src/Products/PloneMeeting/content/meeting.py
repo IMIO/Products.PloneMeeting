@@ -88,7 +88,6 @@ from zope.schema.interfaces import ITokenizedTerm
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleVocabulary
 
-import copy
 import itertools
 import logging
 
@@ -1410,7 +1409,7 @@ class Meeting(Container):
             for key in keys:
                 data[key] = [k for k, v in attr.items() if key in v]
         else:
-            data = copy.deepcopy(attr.data)
+            data = attr.data.copy()
         return data
 
     security.declarePublic('get_item_absents')
@@ -1579,10 +1578,21 @@ class Meeting(Container):
 
     security.declarePublic('get_item_votes')
 
-    def get_item_votes(self):
+    def get_item_votes(self, item_uid=None, as_copy=True):
         ''' '''
-        votes = deepcopy(self.item_votes.data)
-        return votes
+        if item_uid:
+            # avoid deepcopy returned data as it leads to perf problems
+            # with huge item_votes (50 voters, 30 votes on same item)
+            # See testPerformances.test_pm_Speed_AsyncLoadItemAssemblyAndSignatures
+            if as_copy:
+                return deepcopy(self.item_votes.data.get(item_uid, []))
+            else:
+                return self.item_votes.data.get(item_uid, [])
+        else:
+            if as_copy:
+                return deepcopy(self.item_votes.data)
+            else:
+                return self.item_votes.data
 
     security.declarePrivate('set_item_public_vote')
 
@@ -1624,6 +1634,8 @@ class Meeting(Container):
             self.item_votes[item_uid][vote_number]['voters'].update(data['voters'])
             data.pop('voters')
             self.item_votes[item_uid][vote_number].update(data)
+        # will invalidate MeetingItem.get_item_votes cache
+        self.item_votes[item_uid]._p_changed = True
         # manage linked_to_previous
         # if current vote is linked to other votes, we will set NOT_VOTABLE_LINKED_TO_VALUE
         # as value of vote of voters of other linked votes
@@ -1655,6 +1667,8 @@ class Meeting(Container):
             # make sure key "voters" is removed
             self.item_votes[item_uid][vote_number].pop('voters', None)
             self.item_votes[item_uid][vote_number].update(data)
+        # will invalidate MeetingItem.get_item_votes cache
+        self.item_votes[item_uid]._p_changed = True
 
     security.declarePublic('display_user_replacement')
 

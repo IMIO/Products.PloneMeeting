@@ -2755,7 +2755,7 @@ schema = Schema((
         ),
         schemata="votes",
         multiValued=1,
-        vocabulary='listAllVoteValues',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.allvotevaluesvocabulary',
         default=defValues.usedVoteValues,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -2772,7 +2772,7 @@ schema = Schema((
         ),
         schemata="votes",
         multiValued=1,
-        vocabulary='listAllVoteValues',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.allvotevaluesvocabulary',
         default=defValues.firstLinkedVoteUsedVoteValues,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -2789,7 +2789,7 @@ schema = Schema((
         ),
         schemata="votes",
         multiValued=1,
-        vocabulary='listAllVoteValues',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.allvotevaluesvocabulary',
         default=defValues.nextLinkedVotesUsedVoteValues,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -6000,31 +6000,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = self.listBooleanVocabulary()
         res.add('item_only',
                 translate('enabled_item_only', domain=d, context=self.REQUEST))
-        return res
-
-    security.declarePrivate('listAllVoteValues')
-
-    def listAllVoteValues(self):
-        d = "PloneMeeting"
-        res = DisplayList((
-            ("yes", translate('vote_value_yes', domain=d, context=self.REQUEST)),
-            ("no", translate('vote_value_no', domain=d, context=self.REQUEST)),
-            ("abstain", translate('vote_value_abstain', domain=d, context=self.REQUEST)),
-            ("does_not_vote", translate('vote_value_does_not_vote',
-                                        domain=d,
-                                        context=self.REQUEST)),
-            # 'not_found' represents, when the vote is done manually in an urn,
-            # a ballot that was not found in the urn.
-            ("not_found", translate('vote_value_not_found',
-                                    domain=d,
-                                    context=self.REQUEST)),
-            # 'invalid' represents, when the vote is done manually, an invalid ballot.
-            ("invalid", translate('vote_value_invalid',
-                                  domain=d,
-                                  context=self.REQUEST)),
-            # 'blank' represents a blank vote.
-            ("blank", translate('vote_value_blank', domain=d, context=self.REQUEST)),
-        ))
         return res
 
     security.declarePrivate('listItemAttributeVisibleFor')

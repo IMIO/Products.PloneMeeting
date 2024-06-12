@@ -2,8 +2,17 @@ Changelog
 =========
 
 
-4.2.9rc7 (unreleased)
----------------------
+4.2.10 (unreleased)
+-------------------
+
+- Replaced columns `suffix/extra_suffix` of `MeetingConfig.itemWFValidationLevels`
+  by new columns `group_managing_item/extra_groups_managing_item`, this will
+  manage cases when another group than the proposing group is managing the item,
+  several groups may be selected including the proposing group or not.
+  [gbastien]
+
+4.2.9 (2024-06-10)
+------------------
 
 - In `EveryAnnexTypesVocabulary` use `content_category` icon image scale
   instead `portal_url.getRelativeUrl` so it is cached.
@@ -55,10 +64,11 @@ Changelog
 - Generate `Meeting/MeetingItem` portal_type title based on `MeetingConfig`
   title instead translating it.
   [gbastien]
-- Replaced columns `suffix/extra_suffix` of `MeetingConfig.itemWFValidationLevels`
-  by new columns `group_managing_item/extra_groups_managing_item`, this will
-  manage cases when another group than the proposing group is managing the item,
-  several groups may be selected including the proposing group or not.
+- Optimized `@@load_item_assembly_and_signatures` especially when several
+  voters (50) and votes for an item (25).
+  [gbastien]
+- Fixed encode votes for several items failed when there was a `no_vote` item
+  in the way.
   [gbastien]
 
 4.2.9rc6 (2024-04-10)

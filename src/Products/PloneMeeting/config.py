@@ -257,6 +257,7 @@ ITEM_ICON_COLORS = ("azur", "black", "green", "grey", "orange",
 
 NOT_ENCODED_VOTE_VALUE = u'not_yet'
 NOT_VOTABLE_LINKED_TO_VALUE = u'not_votable_linked_to'
+ALL_VOTE_VALUES = ('yes', 'no', 'abstain', 'does_not_vote', 'not_found', 'invalid', 'blank')
 NOT_GIVEN_ADVICE_VALUE = 'not_given'
 HIDDEN_DURING_REDACTION_ADVICE_VALUE = 'hidden_during_redaction'
 CONSIDERED_NOT_GIVEN_ADVICE_VALUE = 'considered_not_given_hidden_during_redaction'

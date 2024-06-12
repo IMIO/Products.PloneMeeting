@@ -109,8 +109,9 @@ def votes_default(context):
        - or we do not have and we use the default value defined on MeetingConfig."""
     res = []
     vote_number = vote_number_default()
-    item_votes = context.get_item_votes(vote_number=vote_number,
-                                        ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE])
+    item_votes = context.get_item_votes(
+        vote_number=vote_number,
+        ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE])
     # keep order using get_item_voters
     item_voter_uids = context.get_item_voters()
     # when adding a new vote linked_to_previous, only keep possible voters
@@ -278,7 +279,8 @@ def is_vote_updatable_for(context, item_to_update):
        if using same pollType and same voters and not using several or linked votes."""
     res = False
     if context == item_to_update or \
-       (context.get_item_votes(vote_number=0).get('poll_type', context.getPollType()) ==
+       (item_to_update.getPollType() != 'no_vote' and
+        context.get_item_votes(vote_number=0).get('poll_type', context.getPollType()) ==
         item_to_update.get_item_votes(vote_number=0).get('poll_type', item_to_update.getPollType()) and
         context.get_item_voters() == item_to_update.get_item_voters() and
             len(item_to_update.get_item_votes()) < 2):
@@ -649,10 +651,10 @@ class ItemDeleteVoteView(BrowserView):
         meeting = self.context.getMeeting()
         if item_uid in meeting.item_votes:
             item_votes = meeting.item_votes[item_uid]
-            assert self.context._voteIsDeletable(vote_number)
+            assert self.context._voteIsDeletable(meeting, vote_number)
 
             vote_to_delete = item_votes[vote_number]
-            if self.context.get_vote_is_secret(vote_number):
+            if self.context.get_vote_is_secret(meeting, vote_number):
                 originnal_vote_keys = [str(vote_count) for vote_value, vote_count
                                        in vote_to_delete['votes'].items()]
                 originnal_vote_keys = "__".join(originnal_vote_keys)

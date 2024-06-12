@@ -69,6 +69,8 @@
            name="Products.PloneMeeting.vocabularies.yearlyinitmeetingnumbersvocabulary" />
   <utility component=".vocabularies.ListTypesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.listtypesvocabulary" />
+  <utility component=".vocabularies.AllVoteValuesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.allvotevaluesvocabulary" />
   <utility component=".vocabularies.UsedVoteValuesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary" />
   <utility component=".vocabularies.PrivaciesVocabularyFactory"

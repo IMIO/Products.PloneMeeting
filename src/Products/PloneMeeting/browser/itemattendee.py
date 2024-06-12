@@ -272,10 +272,10 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
                 len_voters = len(voters)
                 for item_vote in all_item_votes:
                     # secret
-                    if item_to_update.get_vote_is_secret(vote_number=i):
+                    if item_to_update.get_vote_is_secret(self.meeting, vote_number=i):
                         # every voters voted?
                         encoded_votes_count = item_to_update.get_vote_count(
-                            vote_value='any_voted', vote_number=i)
+                            self.meeting, vote_value='any_voted', vote_number=i)
                         if len_voters == encoded_votes_count:
                             msg = translate(
                                 "Can not set \"${not_present_type}\" "
