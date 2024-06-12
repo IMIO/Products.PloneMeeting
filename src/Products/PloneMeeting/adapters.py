@@ -1782,14 +1782,13 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
     def _suffix_proposinggroup(self, visible_fors, item):
         """ """
         res = []
-        all_plone_groups_and_suffixes_accessing_item = \
-            item._getAllPloneGroupsAndSuffixesAccessingItem(item.query_state())
+        all_plone_groups_accessing_item = \
+            item.get_all_plone_groups_accessing_item(self.cfg, item.query_state())
         for visible_for in visible_fors:
             if visible_for.startswith(PROPOSINGGROUPPREFIX):
                 suffix = visible_for.replace(PROPOSINGGROUPPREFIX, '')
-                for org_uid, suffixes in all_plone_groups_and_suffixes_accessing_item.items():
-                    if suffix in suffixes:
-                        plone_group_id = get_plone_group_id(org_uid, suffix)
+                for plone_group_id in all_plone_groups_accessing_item:
+                    if plone_group_id.endswith(suffix):
                         res.append(plone_group_id)
         return res
 

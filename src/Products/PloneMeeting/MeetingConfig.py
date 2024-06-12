@@ -3788,8 +3788,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # when having to manage special value proposing_group prefix
         # we need an item
         if render_proposing_group or \
-           'group_managing_item' in data or \
-           'extra_groups_managing_item' in data:
+           data == 'group_managing_item' or \
+           data == 'extra_groups_managing_item':
             if item:
                 # will replace prefix with PG uid _
                 pg_uid_pattern = item.getProposingGroup() + '_'
@@ -3809,18 +3809,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 res = list(set(res))
             elif data == 'group_managing_item':
                 # replace special value GROUPS_MANAGING_ITEM_PG_PREFIX
-                res = [gmi.replace(GROUPS_MANAGING_ITEM_PG_PREFIX, pg_uid_pattern)
-                       for gmi in res]
+                res = [row['group_managing_item'].replace(GROUPS_MANAGING_ITEM_PG_PREFIX, pg_uid_pattern)
+                       for row in res]
                 # remove duplicates
-                res = tuple(set(res))
+                res = list(set(res))
             elif data == 'extra_groups_managing_item':
                 # replace special value GROUPS_MANAGING_ITEM_PG_PREFIX
-                # res is a list of lists
-                res = list(itertools.chain.from_iterable(res))
                 res = [gmi.replace(GROUPS_MANAGING_ITEM_PG_PREFIX, pg_uid_pattern)
-                       for gmi in res]
+                       for row in res
+                       for gmi in row['extra_groups_managing_item']]
                 # remove duplicates
-                res = tuple(set(res))
+                res = list(set(res))
             else:
                 res = [level[data] for level in res if level[data]]
 
@@ -8004,7 +8003,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def get_item_custom_suffix_roles(self, item, item_state):
         '''See doc in interfaces.py.'''
-        return True, []
+        return []
 
     def user_is_proposing_group_editor(self, org_uid):
         """ """

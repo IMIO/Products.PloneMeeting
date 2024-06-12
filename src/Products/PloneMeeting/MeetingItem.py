@@ -7163,7 +7163,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _turn_plone_group_ids_to_group_suffixes(self, plone_group_ids, roles_config={'*': ['Reader']}):
         """ """
-        res = defaultdict({})
+        res = defaultdict(lambda: defaultdict())
         for plone_group_id in plone_group_ids:
             org_uid, suffix = plone_group_id.split('_')
             roles = roles_config.get(suffix, roles_config.get('*'))
@@ -7176,7 +7176,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # 'Contributor' will allow add annex decision
         # it is given during item validation process or after if may_add_annex_decision
         if item_state in cfg.getItemWFValidationLevels(data='state', only_enabled=False) or \
-           self.adapted().may_add_annex_decision(cfg, item_state):
+           self.may_add_annex_decision(cfg, item_state):
             roles_config['*'].append('Contributor')
 
         all_plone_groups_accessing_item = \
