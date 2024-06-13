@@ -3,7 +3,7 @@
 from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.setup import load_type_from_package
 from imio.pyutils.utils import replace_in_list
-from Products.PloneMeeting.config import GROUPS_MANAGING_ITEM_PG_PREFIX
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.setuphandlers import _configureWebspellchecker
@@ -43,9 +43,9 @@ class Migrate_To_4214(Migrator):
                 # migrate columns 'suffix' to 'group_managing_item' and
                 # 'extra_suffixes' to 'extra_groups_managing_item'
                 # and remove 'suffix/extra_suffixes'
-                level['group_managing_item'] = GROUPS_MANAGING_ITEM_PG_PREFIX + level['suffix']
+                level['group_managing_item'] = GROUP_MANAGING_ITEM_PG_PREFIX + level['suffix']
                 level['extra_groups_managing_item'] = [
-                    GROUPS_MANAGING_ITEM_PG_PREFIX + suffix
+                    GROUP_MANAGING_ITEM_PG_PREFIX + suffix
                     for suffix in list(level['extra_suffixes'])]
                 del level['suffix']
                 del level['extra_suffixes']

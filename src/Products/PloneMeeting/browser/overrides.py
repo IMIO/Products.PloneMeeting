@@ -706,8 +706,8 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                 if "waiting_advices_proposing_group_send_back" in wfas:
                     # convenience, return every user proposingGroup suffixes
                     # user able to do this depends on state to go to
-                    groups_managing_item_uids = self.context._getGroupsManagingItem(
-                        item_state, theObjects=False)
+                    groups_managing_item_uids = self.context.get_orgs_managing_item(
+                        self.cfg, item_state)
                     userAbleToCorrectItemWaitingAdvices += \
                         self.tool.get_filtered_plone_groups_for_user(
                             org_uids=groups_managing_item_uids)
@@ -1430,8 +1430,8 @@ class PMContentHistoryView(IHContentHistoryView):
                         # for MeetingItem, take into account that powerobserver
                         # could also be member of the proposingGroup
                         # in this case we do not hide the history to the user
-                        org_uids = self.context._getGroupsManagingItem(
-                            self.context.query_state(), theObjects=False)
+                        org_uids = self.context.get_orgs_managing_item(
+                            cfg, self.context.query_state(), theObjects=False)
                         if not set(org_uids).intersection(tool.get_orgs_for_user()) and \
                            isPowerObserverForCfg(cfg, power_observer_types=item_values):
                             res = False
@@ -1455,8 +1455,8 @@ class PMContentHistoryView(IHContentHistoryView):
                         # in this case we do not hide the history to the user
                         item = self.context.aq_inner.aq_parent
                         item_review_state = item.query_state()
-                        org_uids = item._getGroupsManagingItem(
-                            item_review_state, theObjects=False)
+                        org_uids = item.get_orgs_managing_item(
+                            cfg, item_review_state, theObjects=False)
                         if not set(org_uids).intersection(tool.get_orgs_for_user()) and \
                            isPowerObserverForCfg(cfg, power_observer_types=po_advice_values):
                             res = False

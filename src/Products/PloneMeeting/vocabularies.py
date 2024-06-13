@@ -58,7 +58,7 @@ from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import ADVICE_TYPES
 from Products.PloneMeeting.config import ALL_VOTE_VALUES
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
-from Products.PloneMeeting.config import GROUPS_MANAGING_ITEM_PG_PREFIX
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NO_COMMITTEE
@@ -3407,7 +3407,7 @@ class GroupsManagingItemVocabulary(SuffixedPloneGroupsVocabulary):
         for fct_dic in get_registry_functions():
             if fct_dic['enabled'] is False:
                 continue
-            term_id = GROUPS_MANAGING_ITEM_PG_PREFIX + fct_dic['fct_id']
+            term_id = GROUP_MANAGING_ITEM_PG_PREFIX + fct_dic['fct_id']
             term_title = translate(
                 'proposing_group_managing_item',
                 mapping={'suffix_title': safe_unicode(fct_dic['fct_title'])},

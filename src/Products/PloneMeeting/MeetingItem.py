@@ -82,7 +82,7 @@ from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
-from Products.PloneMeeting.config import GROUPS_MANAGING_ITEM_PG_PREFIX
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import INSERTING_ON_ITEM_DECISION_FIRST_WORDS_NB
@@ -288,8 +288,8 @@ class MeetingItemWorkflowConditions(object):
                 states=[previous_val_state], data='suffix', only_enabled=True)
             previous_suffixes.append(previous_main_suffix)
             previous_suffixes = tuple(set(previous_suffixes))
-            previous_groups_managing_item_uids = self.context._getGroupsManagingItem(
-                previous_val_state)
+            previous_groups_managing_item_uids = self.context.get_orgs_managing_item(
+                self.cfg, previous_val_state)
             res = bool(self.tool.get_filtered_plone_groups_for_user(
                 org_uids=previous_groups_managing_item_uids, suffixes=previous_suffixes))
             # when previous_val_state group suffix is empty, we replay _mayShortcutToValidationLevel
@@ -312,7 +312,7 @@ class MeetingItemWorkflowConditions(object):
         if _checkPermission(ReviewPortalContent, self.context):
             suffix = self.cfg.getItemWFValidationLevels(
                 states=[destinationState], data='suffix', only_enabled=True)
-            groups_managing_item_uids = self.context._getGroupsManagingItem(destinationState)
+            groups_managing_item_uids = self.context.get_orgs_managing_item(self.cfg, destinationState)
             # check if next validation level suffixed Plone group is not empty
             res = False
             for group_managing_item_uid in groups_managing_item_uids:
@@ -2819,7 +2819,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             cfg = tool.getMeetingConfig(item)
             item_state = item.query_state()
             if self.is_decided(cfg, item_state) and \
-               set(item._getGroupsManagingItem(item_state)
+               set(item.get_orgs_managing_item(cfg, item_state)
                    ).intersection(tool.get_orgs_for_user()):
                 res = True
         return res
@@ -3012,7 +3012,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            item.adviceIndex[adviser_uid]["advice_editable"]:
             # check that current user is member of the proposingGroup suffix
             # to which the item state could go back to
-            org_uids = self._getGroupsManagingItem(item_state)
+            org_uids = self.get_orgs_managing_item(cfg, item_state)
             # get the "back" states, item_state is like "proposed_waiting_advices"
             # of "itemcreated__or__proposed_waiting_advices"
             # or when using WAITING_ADVICES_FROM_STATES 'new_state_id',
@@ -7113,27 +7113,34 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Add the event to item's history
             self.itemHistory.append(event)
 
-    def get_plone_groups_managing_item(self, cfg, item_state):
+    def get_plone_groups_managing_item(self, cfg, item_states):
         """ """
         return cfg.getItemWFValidationLevels(
-            item=self, states=[item_state], data='groups_managing_item', only_enabled=True)
+            item=self,
+            states=item_states,
+            data='group_managing_item',
+            only_enabled=True,
+            return_state_singleton=False) + \
+            cfg.getItemWFValidationLevels(
+                item=self,
+                states=item_states,
+                data='extra_groups_managing_item',
+                only_enabled=True,
+                return_state_singleton=False)
 
     def get_orgs_managing_item(self, cfg, item_state):
         return [gmi.split('_')[0]
-                for gmi in self.get_plone_groups_managing_item(cfg, item_state)]
+                for gmi in self.get_plone_groups_managing_item(cfg, [item_state])]
 
     def get_all_plone_groups_accessing_item(self, cfg, item_state):
         """ """
         possible_states = cfg.getItemWFValidationLevels(data="state", only_enabled=True)
-        states = []
+        item_states = []
         for state in possible_states:
-            states.append(state)
+            item_states.append(state)
             if state == item_state:
                 break
-        res = cfg.getItemWFValidationLevels(
-            item=self, states=states, data='group_managing_item', only_enabled=True) + \
-            cfg.getItemWFValidationLevels(
-                item=self, states=states, data='extra_groups_managing_item', only_enabled=True)
+        res = self.get_plone_groups_managing_item(cfg, item_states)
         # special case when no validation levels, items are created "validated"
         # we use data defined on itemcreated
         if not res:
@@ -7191,7 +7198,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """ """
         item = self.getSelf()
         plone_groups_managing_item = \
-            self.get_plone_groups_managing_item(cfg, item_state)
+            self.get_plone_groups_managing_item(cfg, [item_state])
         if plone_groups_managing_item:
             # we are in one of the itemWFValidationStates
             # 'Reader' and 'Contributor' is managed by _assign_roles_to_all_groups_accessing_item
@@ -7261,7 +7268,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         related_indexes = ['getCopyGroups', 'getGroupsInCharge']
 
         # update suffixes related local roles
-        self.assign_roles_to_group_suffixes(cfg, item_state)
+        if not self.isDefinedInTool():
+            self.assign_roles_to_group_suffixes(cfg, item_state)
 
         # update local roles regarding copyGroups
         isCreated = kwargs.get('isCreated', None)

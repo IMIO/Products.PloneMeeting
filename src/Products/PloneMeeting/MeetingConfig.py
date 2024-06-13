@@ -75,7 +75,7 @@ from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
-from Products.PloneMeeting.config import GROUPS_MANAGING_ITEM_PG_PREFIX
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
@@ -3798,24 +3798,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         if data:
             if data == 'suffix':
-                res = [level['group_managing_item'].split('_')[1]
+                res = [level['group_managing_item'].split('_')[-1]
                        for level in res if level['group_managing_item']]
             elif data == 'extra_suffixes':
                 res = [level['extra_groups_managing_item']
                        for level in res if level['group_managing_item']]
                 # res is a list of lists
                 res = list(itertools.chain.from_iterable(res))
-                res = [egmi.split('_')[1] for egmi in res]
+                res = [egmi.split('_')[-1] for egmi in res]
                 res = list(set(res))
             elif data == 'group_managing_item':
-                # replace special value GROUPS_MANAGING_ITEM_PG_PREFIX
-                res = [row['group_managing_item'].replace(GROUPS_MANAGING_ITEM_PG_PREFIX, pg_uid_pattern)
+                # replace special value GROUP_MANAGING_ITEM_PG_PREFIX
+                res = [row['group_managing_item'].replace(GROUP_MANAGING_ITEM_PG_PREFIX, pg_uid_pattern)
                        for row in res]
                 # remove duplicates
                 res = list(set(res))
             elif data == 'extra_groups_managing_item':
-                # replace special value GROUPS_MANAGING_ITEM_PG_PREFIX
-                res = [gmi.replace(GROUPS_MANAGING_ITEM_PG_PREFIX, pg_uid_pattern)
+                # replace special value GROUP_MANAGING_ITEM_PG_PREFIX
+                res = [gmi.replace(GROUP_MANAGING_ITEM_PG_PREFIX, pg_uid_pattern)
                        for row in res
                        for gmi in row['extra_groups_managing_item']]
                 # remove duplicates
@@ -3824,13 +3824,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 res = [level[data] for level in res if level[data]]
 
         if render_proposing_group:
-            # replace special value GROUPS_MANAGING_ITEM_PG_PREFIX
+            # replace special value GROUP_MANAGING_ITEM_PG_PREFIX
             for level in res:
                 level['group_managing_item'] = level['group_managing_item'].replace(
-                    GROUPS_MANAGING_ITEM_PG_PREFIX, pg_uid_pattern)
+                    GROUP_MANAGING_ITEM_PG_PREFIX, pg_uid_pattern)
             for level in res:
                 level['extra_groups_managing_item'] = [
-                    gmi.replace(GROUPS_MANAGING_ITEM_PG_PREFIX, pg_uid_pattern)
+                    gmi.replace(GROUP_MANAGING_ITEM_PG_PREFIX, pg_uid_pattern)
                     for gmi in level['extra_groups_managing_item']]
 
         if return_state_singleton and len(states) == 1:

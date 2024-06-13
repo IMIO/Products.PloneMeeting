@@ -708,7 +708,7 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
             if self.cfg.getHideItemHistoryCommentsToUsersOutsideProposingGroup() and \
                not self.tool.isManager(self.cfg) and \
                not set(self.tool.get_orgs_for_user()).intersection(
-                    self.context._getGroupsManagingItem(event['review_state'])):
+                    self.context.get_orgs_managing_item(self.cfg, event['review_state'])):
                 userMayAccessComment = False
         return userMayAccessComment
 
