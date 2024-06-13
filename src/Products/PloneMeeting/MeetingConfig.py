@@ -7348,13 +7348,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         transitions.append('present')
         if org_uid:
             tool = api.portal.get_tool('portal_plonemeeting')
-            tr_suffixes = {v['leading_transition']: v['suffix'] for v in item_wf_val_levels
-                           if v['leading_transition'] != '-'}
+            tr_plone_groups = {}
+            for row in item_wf_val_levels:
+                if row['leading_transition'] == '-':
+                    continue
+                tr_plone_groups[row['leading_transition']] = []
+                # group_managing_item
+                gp_managing_item = row['group_managing_item'].replace(
+                    GROUP_MANAGING_ITEM_PG_PREFIX, org_uid + "_")
+                if gp_managing_item.startswith(org_uid):
+                    tr_plone_groups[row['leading_transition']].append(gp_managing_item)
+                # extra_groups_managing_item
+                for extra_gp_managing_item in row['extra_groups_managing_item']:
+                    extra_gp_managing_item = extra_gp_managing_item.replace(
+                        GROUP_MANAGING_ITEM_PG_PREFIX, org_uid + "_")
+                    if extra_gp_managing_item.startswith(org_uid):
+                        tr_plone_groups[row['leading_transition']].append(extra_gp_managing_item)
             res = []
             for transition in transitions:
-                if transition in tr_suffixes and \
-                   not transition == "present" and \
-                   not tool.group_is_not_empty(org_uid, tr_suffixes[transition]):
+                if transition in tr_plone_groups and \
+                   transition != "present" and \
+                   not [tool.group_is_not_empty(plone_group_id=plone_group_id)
+                        for plone_group_id in tr_plone_groups[transition]]:
                     continue
                 res.append(transition)
             transitions = res
