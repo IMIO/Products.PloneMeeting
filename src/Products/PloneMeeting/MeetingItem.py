@@ -237,8 +237,7 @@ class MeetingItemWorkflowConditions(object):
         found_before_last = False
         level = {}
         for level in levels:
-            org_uid, suffix = level['group_managing_item'].split('_')
-            if self.tool.group_is_not_empty(org_uid, suffix):
+            if self.tool.group_is_not_empty(level['group_managing_item']):
                 res = level['state']
                 if found_last:
                     found_before_last = True
@@ -452,27 +451,26 @@ class MeetingItemWorkflowConditions(object):
                                mapping={'itemNumber': itemNumber}))
         return res
 
-    def _userIsPGMemberAbleToSendItemBack(self, proposing_group_uid, destinationState):
+    def _userIsPGMemberAbleToSendItemBack(self, plone_group_managing_item, destinationState):
         ''' '''
-        suffix = self.cfg.getItemWFValidationLevels(
-            states=[destinationState], data='suffix')
         # first case, is user member of destinationState level?
         res = self.tool.group_is_not_empty(
-            proposing_group_uid, suffix, user_id=get_current_user_id(self.context.REQUEST))
+            plone_group_id=plone_group_managing_item,
+            user_id=get_current_user_id(self.context.REQUEST))
         # in case we use shortcuts, we also check if able to go to destinationState
         # if it was the classic item validation workflow
         # so a creator could send back to "itemcreated" and to "proposed"
         if not res and \
-           self.tool.group_is_not_empty(proposing_group_uid, suffix) and \
+           self.tool.group_is_not_empty(plone_group_id=plone_group_managing_item) and \
            'item_validation_shortcuts' in self.cfg.getWorkflowAdaptations():
             res = self._mayShortcutToValidationLevel(destinationState)
 
         return res and \
             self._userIsPGMemberAbleToSendItemBackExtraCondition(
-                proposing_group_uid, destinationState)
+                plone_group_managing_item, destinationState)
 
     def _userIsPGMemberAbleToSendItemBackExtraCondition(
-            self, proposingGroup, destinationState):
+            self, plone_group_managing_item, destinationState):
         ''' '''
         return True
 
@@ -525,10 +523,18 @@ class MeetingItemWorkflowConditions(object):
         res = False
         meeting = self.context.getMeeting()
         if not meeting or (meeting and meeting.query_state() != 'closed'):
-            proposingGroup = self.context.getProposingGroup()
-            # when item is validated, we may eventually send back to last validation state
+            # when item is "validated", we may eventually send back to last validation state
             wfas = self.cfg.getWorkflowAdaptations()
             last_val_state, last_level = self._getLastValidationState(return_level=True)
+            # group managing item available when item before "validated"
+            # after we take proposingGroup + last validation state group_managing_item suffix
+            plone_group_managing_item = self.context.get_plone_groups_managing_item(
+                self.cfg, self.review_state, only_group_managing_item=True)
+            if plone_group_managing_item:
+                org_uid, suffix = plone_group_managing_item[0].split("_")
+            else:
+                org_uid, suffix = self.context.getProposingGroup(), \
+                    last_level['group_managing_item'].split("_")[-1]
             if self.review_state == 'validated' and destinationState == last_val_state:
                 # MeetingManager probably
                 if _checkPermission(ReviewPortalContent, self.context):
@@ -536,8 +542,7 @@ class MeetingItemWorkflowConditions(object):
                 # manage the reviewers_take_back_validated_item WFAdaptation
                 elif 'reviewers_take_back_validated_item' in self.cfg.getWorkflowAdaptations():
                     # is current user member of last validation level?
-                    res = self.tool.group_is_not_empty(
-                        proposingGroup, last_level['suffix'], user_id=get_current_user_id())
+                    res = self.tool.group_is_not_empty(org_uid, suffix, user_id=get_current_user_id())
             # using 'waiting_advices_XXX_send_back' WFAdaptations,
             elif self.review_state.endswith('_waiting_advices'):
                 item_validation_states = self.cfg.getItemWFValidationLevels(data='state', only_enabled=True)
@@ -567,7 +572,7 @@ class MeetingItemWorkflowConditions(object):
                         # is current user proposingGroup member able to trigger transition?
                         if 'waiting_advices_proposing_group_send_back' in wfas:
                             res = self._userIsPGMemberAbleToSendItemBack(
-                                proposingGroup, destinationState)
+                                plone_group_managing_item, destinationState)
                         # if not, maybe it is an adviser able to give an advice?
                         if not res and 'waiting_advices_adviser_send_back' in wfas:
                             # adviser may send back to validated when using
@@ -582,7 +587,7 @@ class MeetingItemWorkflowConditions(object):
                 suffix = self.cfg.getItemWFValidationLevels(
                     states=[destinationState], data='suffix')
                 res = _checkPermission(ReviewPortalContent, self.context) and \
-                    (not suffix or self.tool.group_is_not_empty(proposingGroup, suffix))
+                    (not suffix or self.tool.group_is_not_empty(org_uid, suffix))
         return res
 
     security.declarePublic('mayBackToMeeting')
@@ -7113,20 +7118,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Add the event to item's history
             self.itemHistory.append(event)
 
-    def get_plone_groups_managing_item(self, cfg, item_states):
+    def get_plone_groups_managing_item(self, cfg, item_states, only_group_managing_item=False):
         """ """
-        return cfg.getItemWFValidationLevels(
+        # group_managing_item
+        res = cfg.getItemWFValidationLevels(
             item=self,
             states=item_states,
             data='group_managing_item',
             only_enabled=True,
-            return_state_singleton=False) + \
-            cfg.getItemWFValidationLevels(
+            return_state_singleton=False)
+        if not only_group_managing_item:
+            # extra_groups_managing_item
+            res += cfg.getItemWFValidationLevels(
                 item=self,
                 states=item_states,
                 data='extra_groups_managing_item',
                 only_enabled=True,
                 return_state_singleton=False)
+        return res
 
     def get_orgs_managing_item(self, cfg, item_state):
         return [gmi.split('_')[0]
