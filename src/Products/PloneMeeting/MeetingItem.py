@@ -7139,8 +7139,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 data='extra_groups_managing_item',
                 only_enabled=True,
                 return_state_singleton=False)
-        if not res:
-            return [self.getProposingGroup()]
         return res
 
     def get_orgs_managing_item(self, cfg, item_state):
