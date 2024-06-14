@@ -237,7 +237,7 @@ class MeetingItemWorkflowConditions(object):
         found_before_last = False
         level = {}
         for level in levels:
-            if self.tool.group_is_not_empty(level['group_managing_item']):
+            if self.tool.group_is_not_empty(plone_group_id=level['group_managing_item']):
                 res = level['state']
                 if found_last:
                     found_before_last = True
@@ -7142,6 +7142,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     def get_orgs_managing_item(self, cfg, item_state):
+        """Return the organization uids currently managing the item."""
         return [gmi.split('_')[0]
                 for gmi in self.get_plone_groups_managing_item(cfg, [item_state])]
 
