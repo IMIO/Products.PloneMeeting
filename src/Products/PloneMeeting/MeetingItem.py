@@ -7118,7 +7118,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Add the event to item's history
             self.itemHistory.append(event)
 
-    def get_plone_groups_managing_item(self, cfg, item_states, only_group_managing_item=False):
+    def get_plone_groups_managing_item(
+            self,
+            cfg,
+            item_states,
+            only_group_managing_item=False):
         """ """
         # group_managing_item
         res = cfg.getItemWFValidationLevels(
@@ -7135,6 +7139,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 data='extra_groups_managing_item',
                 only_enabled=True,
                 return_state_singleton=False)
+        if not res:
+            return [self.getProposingGroup()]
         return res
 
     def get_orgs_managing_item(self, cfg, item_state):
@@ -7149,6 +7155,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             item_states.append(state)
             if state == item_state:
                 break
+        # item_states are every state prior to current state (and including current state)
+        # if item no more in the validation process, every validation states are kept
         res = self.get_plone_groups_managing_item(cfg, item_states)
         # special case when no validation levels, items are created "validated"
         # we use data defined on itemcreated

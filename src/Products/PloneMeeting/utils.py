@@ -660,14 +660,17 @@ def sendMailIfRelevant(obj,
     userIds = []
     membershipTool = api.portal.get_tool('portal_membership')
     if isSuffix:
-        plone_groups = [get_plone_group(pgid) for pgid
-                        in obj.get_plone_groups_managing_item(cfg, obj.query_state())
-                        if pgid.endswith(value)]
+        org_uids = obj.get_orgs_managing_item(cfg, obj.query_state())
+        plone_groups = []
+        for org_uid in org_uids:
+            plone_group = get_plone_group(org_uid, value)
+            if plone_group:
+                plone_groups.append(plone_group)
         if not plone_groups:
             # maybe the suffix is a MeetingConfig related suffix, like _meetingmanagers
-            plone_groups = [get_plone_group(cfg.getId(), value)]
-        # remove Nones
-        plone_groups = [pg for pg in plone_groups if pg is not None]
+            plone_group = get_plone_group(cfg.getId(), value)
+            if plone_group:
+                plone_groups.append(plone_group)
         for plone_group in plone_groups:
             userIds += list(plone_group.getGroupMemberIds())
     elif isRole:
