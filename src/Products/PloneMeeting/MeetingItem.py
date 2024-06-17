@@ -388,9 +388,9 @@ class MeetingItemWorkflowConditions(object):
                 if self.review_state == last_validation_state or \
                    ('item_validation_shortcuts' in self.cfg.getWorkflowAdaptations() and
                     'item_validation_no_validate_shortcuts' not in self.cfg.getWorkflowAdaptations() and
-                        get_plone_group_id(
-                            self.context.getProposingGroup(),
-                            last_level['suffix']) in get_plone_groups_for_user()):
+                        set(self.context.get_plone_groups_managing_item(
+                            self.cfg, self.review_state)).intersection(
+                            get_plone_groups_for_user())):
                     res = True
                     if self._has_waiting_advices_transitions():
                         res = No(_('has_required_waiting_advices'))
@@ -2819,13 +2819,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if wfTool.getTransitionsFor(item):
             res = True
         else:
-            # item is decided and user is member of the proposingGroup
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(item)
             item_state = item.query_state()
+            # item is decided and user is member of the proposingGroup
+            # here item is decided so nonsense checking on group managing item
             if self.is_decided(cfg, item_state) and \
-               set(item.get_orgs_managing_item(cfg, item_state)
-                   ).intersection(tool.get_orgs_for_user()):
+               item.getProposingGroup() in tool.get_orgs_for_user():
                 res = True
         return res
 
@@ -5320,8 +5320,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        suffix_notified = cfg.getItemWFValidationLevels(states=[review_state])["suffix"]
-        plone_group_id_notified = get_plone_group_id(self.getProposingGroup(), suffix_notified)
+        plone_group_id_notified = cfg.getItemWFValidationLevels(
+            item=self, states=[review_state], data="group_managing_item")
         plone_group_notified = api.group.get(plone_group_id_notified)
 
         notified_user_ids = []
