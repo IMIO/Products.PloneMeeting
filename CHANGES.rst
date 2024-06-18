@@ -5,8 +5,9 @@ Changelog
 4.2.10 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Display a clear message when trying to remove a meeting containing items as
+  `MeetignManager` as it will raise `Unauthorized` when using restapi.
+  [gbastien]
 
 4.2.9 (2024-06-10)
 ------------------

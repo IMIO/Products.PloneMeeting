@@ -3,6 +3,7 @@
 # File: adapters.py
 #
 
+from appy.gen import No
 from appy.shared.diff import HtmlDiff
 from collective.compoundcriterion.adapters import NegativePersonalLabelsAdapter
 from collective.compoundcriterion.adapters import NegativePreviousIndexValuesAdapter
@@ -83,6 +84,7 @@ import logging
 
 
 logger = logging.getLogger('PloneMeeting')
+CAN_NOT_DELETE_MEETING_ERROR = "This meeting can not be deleted because it contains items!"
 
 
 # this catalog query will find nothing, used in CompoundCriterion adapters when necessary
@@ -188,7 +190,7 @@ class MeetingContentDeletableAdapter(APContentDeletableAdapter):
         if res:
             if self.context.number_of_items() != 0 and \
                not api.user.get_current().has_role('Manager'):
-                res = False
+                res = No(CAN_NOT_DELETE_MEETING_ERROR)
         return res
 
 
