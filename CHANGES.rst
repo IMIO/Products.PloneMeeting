@@ -5,6 +5,9 @@ Changelog
 4.2.10 (unreleased)
 -------------------
 
+- Display a clear message when trying to remove a meeting containing items as
+  `MeetignManager` as it will raise `Unauthorized` when using restapi.
+  [gbastien]
 - Replaced columns `suffix/extra_suffix` of `MeetingConfig.itemWFValidationLevels`
   by new columns `group_managing_item/extra_groups_managing_item`, this will
   manage cases when another group than the proposing group is managing the item,

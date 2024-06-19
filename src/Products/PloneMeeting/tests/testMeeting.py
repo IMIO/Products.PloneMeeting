@@ -27,6 +27,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.permissions import View
 from Products.Five import zcml
+from Products.PloneMeeting.adapters import CAN_NOT_DELETE_MEETING_ERROR
 from Products.PloneMeeting.browser.meeting import _get_default_attendees
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -2669,7 +2670,9 @@ class testMeetingType(PloneMeetingTestCase):
         # if trying to remove a meeting containing items as non Manager, it will raise Unauthorized
         self.assertRaises(Unauthorized, self.portal.restrictedTraverse('@@delete_givenuid'), meeting.UID())
         transaction.begin()
-        self.assertRaises(Unauthorized, meetingParentFolder.manage_delObjects, [meeting.getId()])
+        with self.assertRaises(Unauthorized) as cm:
+            meetingParentFolder.manage_delObjects([meeting.getId()])
+        self.assertEqual(cm.exception.message, CAN_NOT_DELETE_MEETING_ERROR)
         transaction.abort()
         # as a Manager, the meeting including items will be removed
         self.deleteAsManager(meeting.UID())
