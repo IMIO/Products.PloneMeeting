@@ -498,7 +498,12 @@ class PloneMeetingTestingHelpers(object):
         notify(ObjectEditedEvent(cfg))
         self.changeUser(currentUser)
 
-    def _updateItemValidationLevel(self, cfg, level=None, suffix=None, extra_suffixes=None, enable=True):
+    def _updateItemValidationLevel(self,
+                                   cfg,
+                                   level=None,
+                                   group_managing_item=None,
+                                   extra_groups_managing_item=None,
+                                   enable=True):
         """Utility method that enable/disable item validation levels."""
         currentUser = self.member.getId()
         self.changeUser('admin')
@@ -506,21 +511,21 @@ class PloneMeetingTestingHelpers(object):
         for itemValLevel in itemValLevels:
             if not level or itemValLevel['state'] == level:
                 itemValLevel['enabled'] = enable and '1' or '0'
-                if suffix:
-                    itemValLevel['suffix'] = suffix
-                if extra_suffixes:
-                    itemValLevel['extra_suffixes'] = extra_suffixes
+                if group_managing_item:
+                    itemValLevel['group_managing_item'] = group_managing_item
+                if extra_groups_managing_item:
+                    itemValLevel['extra_groups_managing_item'] = extra_groups_managing_item
         cfg.setItemWFValidationLevels(itemValLevels)
         notify(ObjectEditedEvent(cfg))
         self.changeUser(currentUser)
 
-    def _enableItemValidationLevel(self, cfg, level=None, suffix=None):
+    def _enableItemValidationLevel(self, cfg, level=None, group_managing_item=None):
         """Enable one or every item validation levels."""
-        self._updateItemValidationLevel(cfg, level, suffix, enable=True)
+        self._updateItemValidationLevel(cfg, level, group_managing_item, enable=True)
 
-    def _disableItemValidationLevel(self, cfg, level=None, suffix=None):
+    def _disableItemValidationLevel(self, cfg, level=None, group_managing_item=None):
         """Disable one or every item validation levels."""
-        self._updateItemValidationLevel(cfg, level, suffix, enable=False)
+        self._updateItemValidationLevel(cfg, level, group_managing_item, enable=False)
 
     def _setUpOrderedContacts(
             self,
