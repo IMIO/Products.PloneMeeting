@@ -8,6 +8,9 @@ Changelog
 - Display a clear message when trying to remove a meeting containing items as
   `MeetignManager` as it will raise `Unauthorized` when using restapi.
   [gbastien]
+- Fixed `PMPortalTypesVocabulary` to use portal_type `Title` method to display
+  the term title instead translating the term `title` attribute.
+  [gbastien]
 
 4.2.9 (2024-06-10)
 ------------------
