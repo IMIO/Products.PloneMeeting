@@ -56,6 +56,7 @@ from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_MOVAL_PREVENTED
@@ -8065,10 +8066,67 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         # adapt configuration, make suffix 'observers' extra_suffix in state 'itemcreated'
         itemWFValidationLevels = cfg.getItemWFValidationLevels()
-        itemWFValidationLevels[0]['extra_suffixes'] = ['observers']
+        itemWFValidationLevels[0]['extra_groups_managing_item'] = [self.vendors_observers]
         cfg.setItemWFValidationLevels(itemWFValidationLevels)
         notify(ObjectEditedEvent(cfg))
         item.update_local_roles()
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+
+    def test_pm_ItemWFValidationLevels_with_groups_managing_item(self):
+        """Test when using groups_managing_item that gives manage access
+           to the items to antoher group than the proposingGroup
+           (or in addition to the proposingGroup)."""
+        cfg = self.meetingConfig
+        # by default, no groups_managing_item, it is the proposing_group that manages the item
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+        self.changeUser('pmCreator2')
+        self.assertFalse(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+
+        # adapt configuration, makes vendors manage item
+        itemWFValidationLevels = cfg.getItemWFValidationLevels()
+        itemWFValidationLevels[0]['group_managing_item'] = self.vendors_creators
+        cfg.setItemWFValidationLevels(itemWFValidationLevels)
+        notify(ObjectEditedEvent(cfg))
+        item.update_local_roles()
+        # proposingGroup may no more access as still itemcreated
+        self.changeUser('pmCreator1')
+        self.assertFalse(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.changeUser('pmCreator2')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+        # but when proposed, pmCreator1 may see if it was managing item when itemcreated
+        itemWFValidationLevels[0]['group_managing_item'] = self.developers_creators
+        itemWFValidationLevels[1]['group_managing_item'] = self.vendors_creators
+        cfg.setItemWFValidationLevels(itemWFValidationLevels)
+        notify(ObjectEditedEvent(cfg))
+        self.proposeItem(item)
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.changeUser('pmCreator2')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+
+        # adapt configuration, makes proposing_group and vendors manage item
+        itemWFValidationLevels = cfg.getItemWFValidationLevels()
+        itemWFValidationLevels[1]['group_managing_item'] = "{0}creators".format(
+            GROUP_MANAGING_ITEM_PG_PREFIX)
+        itemWFValidationLevels[1]['extra_groups_managing_item'] = [self.vendors_creators]
+        cfg.setItemWFValidationLevels(itemWFValidationLevels)
+        notify(ObjectEditedEvent(cfg))
+        item.update_local_roles()
+        # proposingGroup have access and manage
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+        # as well as vendors
+        self.changeUser('pmCreator2')
         self.assertTrue(self.hasPermission(View, item))
         self.assertTrue(self.hasPermission(ModifyPortalContent, item))
 

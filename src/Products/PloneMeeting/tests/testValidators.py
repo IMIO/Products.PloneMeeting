@@ -8,6 +8,7 @@ from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group
 from copy import deepcopy
 from plone import api
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.validators import PloneGroupSettingsFunctionsValidator
@@ -312,8 +313,10 @@ class testValidators(PloneMeetingTestCase):
         self.assertIsNone(validator.validate(functions))
         set_registry_functions(functions)
         # use samplers suffix
-        self._enableItemValidationLevel(cfg, level='prevalidated', suffix='samplers')
-
+        self._enableItemValidationLevel(
+            cfg,
+            level='prevalidated',
+            group_managing_item=GROUP_MANAGING_ITEM_PG_PREFIX + 'samplers')
         # developers_samplers was created
         dev_samplers = get_plone_group(self.developers_uid, 'samplers')
         dev_samplers_id = dev_samplers.getId()
@@ -335,7 +338,10 @@ class testValidators(PloneMeetingTestCase):
         item.reindexObject()
         # still complaining about config because used in itemWFValidationLevels
         _check(validation_error_msg, checks=['without', 'disabled'])
-        self._disableItemValidationLevel(cfg, level='prevalidated', suffix='prereviewers')
+        self._disableItemValidationLevel(
+            cfg,
+            level='prevalidated',
+            group_managing_item=GROUP_MANAGING_ITEM_PG_PREFIX + 'prereviewers')
         validation_error_msg = _('can_not_delete_plone_group_meetingitem',
                                  mapping={'item_url': item.absolute_url()})
         _check(validation_error_msg)

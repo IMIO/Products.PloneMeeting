@@ -660,13 +660,19 @@ def sendMailIfRelevant(obj,
     userIds = []
     membershipTool = api.portal.get_tool('portal_membership')
     if isSuffix:
-        org_uid = obj.adapted()._getGroupManagingItem(obj.query_state(), theObject=False)
-        plone_group = get_plone_group(org_uid, value)
-        if not plone_group:
+        org_uids = obj.get_orgs_managing_item(cfg, obj.query_state())
+        plone_groups = []
+        for org_uid in org_uids:
+            plone_group = get_plone_group(org_uid, value)
+            if plone_group:
+                plone_groups.append(plone_group)
+        if not plone_groups:
             # maybe the suffix is a MeetingConfig related suffix, like _meetingmanagers
             plone_group = get_plone_group(cfg.getId(), value)
-        if plone_group:
-            userIds = plone_group.getGroupMemberIds()
+            if plone_group:
+                plone_groups.append(plone_group)
+        for plone_group in plone_groups:
+            userIds += list(plone_group.getGroupMemberIds())
     elif isRole:
         if value == 'Owner':
             userIds = [obj.Creator()]
@@ -2179,91 +2185,13 @@ def get_item_validation_wf_suffixes(cfg, org_uid=None, only_enabled=True):
     else:
         config_extra_suffixes = cfg.getItemWFValidationLevels(
             data='extra_suffixes', only_enabled=only_enabled)
-    # flatten, config_extra_suffixes is a list of lists
-    config_extra_suffixes = list(itertools.chain.from_iterable(config_extra_suffixes))
+    # remove duplicates
     suffixes = list(set(base_suffixes + config_suffixes + config_extra_suffixes))
     if org_uid:
         # only return suffixes that are available for p_org
         available_suffixes = set(get_all_suffixes(org_uid))
         suffixes = list(available_suffixes.intersection(set(suffixes)))
     return suffixes
-
-
-def compute_item_roles_to_assign_to_suffixes_cachekey(method, cfg, item, item_state, org_uid=None):
-    '''cachekey method for compute_item_roles_to_assign_to_suffixes.'''
-    # we do not use item in the key, cfg and item_state is sufficient
-    return cfg.getId(), cfg.modified(), item_state, org_uid
-
-
-@ram.cache(compute_item_roles_to_assign_to_suffixes_cachekey)
-def compute_item_roles_to_assign_to_suffixes(cfg, item, item_state, org_uid=None):
-    """ """
-    apply_meetingmanagers_access = True
-    suffix_roles = {}
-
-    # roles given to item_state are managed automatically
-    # it is possible to manage it manually for extra states (coming from wfAdaptations for example)
-    # try to find corresponding item state
-    corresponding_auto_item_state = cfg.adapted().get_item_corresponding_state_to_assign_local_roles(
-        item_state)
-    if corresponding_auto_item_state:
-        item_state = corresponding_auto_item_state
-    else:
-        # if no corresponding item state, check if we manage state suffix roles manually
-        apply_meetingmanagers_access, suffix_roles = cfg.adapted().get_item_custom_suffix_roles(
-            item, item_state)
-
-    # find suffix_roles if it was not managed manually
-    if suffix_roles:
-        return apply_meetingmanagers_access, suffix_roles
-
-    # we get every states, including disabled ones so for example we may use
-    # "itemcreated" even if it is disabled
-    item_val_levels_states = cfg.getItemWFValidationLevels(
-        data='state', only_enabled=False)
-
-    # by default, observers may View in every states as well as creators
-    # for observers, this also depends on MeetingConfig.itemObserversStates if defined
-    suffix_roles = {'creators': ['Reader'], }
-    if not cfg.getItemObserversStates() or item_state in cfg.getItemObserversStates():
-        suffix_roles['observers'] = ['Reader']
-
-    # MeetingConfig.itemWFValidationLevels
-    # states before validated
-    if item_state in item_val_levels_states:
-        # find Editor suffixes
-        # walk every defined validation levels so we give 'Reader'
-        # to levels already behind us
-        for level in cfg.getItemWFValidationLevels(only_enabled=False):
-            suffixes = [level['suffix']] + list(level['extra_suffixes'])
-            for suffix in suffixes:
-                if suffix not in suffix_roles:
-                    suffix_roles[suffix] = []
-                # 'Contributor' will allow add annex decision
-                given_roles = ['Reader', 'Contributor']
-                # we are on the current state
-                if level['state'] == item_state:
-                    given_roles.append('Editor')
-                    given_roles.append('Reviewer')
-                for role in given_roles:
-                    if role not in suffix_roles[suffix]:
-                        suffix_roles[suffix].append(role)
-            if level['state'] == item_state:
-                break
-
-    # states out of item validation (validated and following states)
-    else:
-        # every item validation suffixes get View access
-        # we also give the Contributor except to 'observers'
-        # so every editors roles get the "PloneMeeting: Add decision annex"
-        # permission that let add decision annex
-        for suffix in get_item_validation_wf_suffixes(cfg, org_uid):
-            given_roles = ['Reader']
-            if item.may_add_annex_decision(cfg, item_state) and suffix != 'observers':
-                given_roles.append('Contributor')
-            suffix_roles[suffix] = given_roles
-
-    return apply_meetingmanagers_access, suffix_roles
 
 
 def is_proposing_group_editor(org_uid, cfg):
