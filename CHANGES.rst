@@ -8,10 +8,13 @@ Changelog
 - Display a clear message when trying to remove a meeting containing items as
   `MeetignManager` as it will raise `Unauthorized` when using restapi.
   [gbastien]
+- Fixed `PMPortalTypesVocabulary` to use portal_type `Title` method to display
+  the term title instead translating the term `title` attribute.
+  [gbastien]
 - Replaced columns `suffix/extra_suffix` of `MeetingConfig.itemWFValidationLevels`
   by new columns `group_managing_item/extra_groups_managing_item`, this will
   manage cases when another group than the proposing group is managing the item,
-  several groups may be selected including the proposing group or not...
+  several groups may be selected including the proposing group or not.
   [gbastien]
 
 4.2.9 (2024-06-10)

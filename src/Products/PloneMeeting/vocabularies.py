@@ -1726,26 +1726,21 @@ class PMPortalTypesVocabulary(PortalTypesVocabularyFactory):
         cfg = tool.getMeetingConfig(context)
         res = []
         if cfg:
+            portal_types = api.portal.get_tool('portal_types')
             # available for item, meeting and advice
             itemTypeName = cfg.getItemTypeName()
             res.append(SimpleTerm(itemTypeName,
                                   itemTypeName,
-                                  translate(itemTypeName,
-                                            domain="plone",
-                                            context=context.REQUEST)))
+                                  portal_types[itemTypeName].Title()))
             meetingTypeName = cfg.getMeetingTypeName()
             res.append(SimpleTerm(meetingTypeName,
                                   meetingTypeName,
-                                  translate(meetingTypeName,
-                                            domain="plone",
-                                            context=context.REQUEST)))
+                                  portal_types[meetingTypeName].Title()))
             # manage multiple 'meetingadvice' portal_types
             for portal_type in getAdvicePortalTypes():
                 res.append(SimpleTerm(portal_type.id,
                                       portal_type.id,
-                                      translate(portal_type.title,
-                                                domain="PloneMeeting",
-                                                context=context.REQUEST)))
+                                      portal_type.Title()))
             return SimpleVocabulary(res)
         else:
             return super(PMPortalTypesVocabulary, self).__call__(context)
