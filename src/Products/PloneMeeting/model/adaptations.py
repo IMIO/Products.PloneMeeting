@@ -26,16 +26,17 @@ RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES = (
 # the last key 'no_more_returnable_state' specify states in wich the item is no more
 # returnable to the meeting...
 # these mappings are easily overridable by a subproduct...
-RETURN_TO_PROPOSING_GROUP_MAPPINGS = {'backTo_presented_from_returned_to_proposing_group':
-                                      ['created', ],
-                                      'backTo_itempublished_from_returned_to_proposing_group':
-                                      ['published', ],
-                                      'backTo_itemfrozen_from_returned_to_proposing_group':
-                                      ['frozen', 'decided', 'decisions_published', ],
-                                      'backTo_itemdecided_from_returned_to_proposing_group':
-                                      ['decided', 'decisions_published', ],
-                                      'NO_MORE_RETURNABLE_STATES': ['closed', 'archived', ]
-                                      }
+RETURN_TO_PROPOSING_GROUP_MAPPINGS = {
+    'backTo_presented_from_returned_to_proposing_group':
+    {'*': ['created']},
+    'backTo_itempublished_from_returned_to_proposing_group':
+    {'*': ['published']},
+    'backTo_itemfrozen_from_returned_to_proposing_group':
+    {'*': ['frozen', 'decided', 'decisions_published']},
+    'backTo_itemdecided_from_returned_to_proposing_group':
+    {'*': ['decided', 'decisions_published']},
+    'NO_MORE_RETURNABLE_STATES': ['closed', 'archived']
+}
 
 WF_APPLIED = 'Workflow adaptation "%s" applied for meetingConfig "%s".'
 WF_APPLIED_CUSTOM = 'Custom Workflow adaptation "%s" applied for meetingConfig "%s".'

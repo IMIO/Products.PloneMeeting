@@ -11,6 +11,9 @@ Changelog
 - Fixed `PMPortalTypesVocabulary` to use portal_type `Title` method to display
   the term title instead translating the term `title` attribute.
   [gbastien]
+- Adapted `adaptations.RETURN_TO_PROPOSING_GROUP_MAPPINGS` to be able to define
+  the list of meeting states on a per `MeetingConfig` basis.
+  [gbastien]
 
 4.2.9 (2024-06-10)
 ------------------
