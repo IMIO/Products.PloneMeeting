@@ -869,8 +869,9 @@ class AskedAdvicesVocabulary(object):
         # customAdvisers
         customAdvisers = self.cfg and self.cfg.getCustomAdvisers() or []
         for customAdviser in customAdvisers:
-            if (active and customAdviser['for_item_created_until']) or \
-               (not active and not customAdviser['for_item_created_until']):
+            created_until = customAdviser['for_item_created_until']
+            if (active and created_until and DateTime(created_until).isPast()) or \
+               (not active and (not created_until or DateTime(created_until).isFuture())):
                 continue
             if customAdviser['delay']:
                 # build using DELAYAWARE_ROW_ID_PATTERN

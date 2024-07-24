@@ -14,6 +14,9 @@ Changelog
 - Adapted `adaptations.RETURN_TO_PROPOSING_GROUP_MAPPINGS` to be able to define
   the list of meeting states on a per `MeetingConfig` basis.
   [gbastien]
+- Fixed `AskedAdvicesVocabulary` to mark an term as inactive only if
+  `for_item_created_until` date is actually expired.
+  [gbastien]
 
 4.2.9 (2024-06-10)
 ------------------
