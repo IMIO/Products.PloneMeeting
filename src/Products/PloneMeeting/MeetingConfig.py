@@ -4492,7 +4492,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 if created_until:
                     date_until = DateTime(created_until)
                     # check if given format respect wished one
-                    if not date_until.strftime('%Y/%m/%d') == created_until:
+                    if date_until.strftime('%Y/%m/%d') != created_until:
                         raise Exception
                     # and check if encoded date is not in the past, it has to be in the future
                     # except if it was already set before

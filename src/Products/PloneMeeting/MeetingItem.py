@@ -615,7 +615,8 @@ class MeetingItemWorkflowConditions(object):
         meetingState = meeting.query_state()
         # use RETURN_TO_PROPOSING_GROUP_MAPPINGS to know in which meetingStates
         # the given p_transitionName can be triggered
-        authorizedMeetingStates = RETURN_TO_PROPOSING_GROUP_MAPPINGS[transitionName]
+        authorizedMeetingStates = RETURN_TO_PROPOSING_GROUP_MAPPINGS[transitionName].get(
+            self.cfg.getId(), RETURN_TO_PROPOSING_GROUP_MAPPINGS[transitionName].get('*'))
         # special behavior when using WFA 'itemdecided', back to itemfrozen
         # may only be done if meeting in state 'frozen'
         if 'itemdecided' in self.cfg.getWorkflowAdaptations() and \
