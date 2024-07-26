@@ -82,7 +82,6 @@ from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
-from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import INSERTING_ON_ITEM_DECISION_FIRST_WORDS_NB
@@ -533,8 +532,7 @@ class MeetingItemWorkflowConditions(object):
             if plone_group_managing_item:
                 org_uid, suffix = plone_group_managing_item[0].split("_")
             else:
-                org_uid, suffix = self.context.getProposingGroup(), \
-                    last_level['group_managing_item'].split("_")[-1]
+                org_uid, suffix = self.context.getProposingGroup(), "creators"
             if self.review_state == 'validated' and destinationState == last_val_state:
                 # MeetingManager probably
                 if _checkPermission(ReviewPortalContent, self.context):
@@ -7123,14 +7121,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self,
             cfg,
             item_states,
-            only_group_managing_item=False):
+            only_group_managing_item=False,
+            only_enabled=True):
         """ """
         # group_managing_item
         res = cfg.getItemWFValidationLevels(
             item=self,
             states=item_states,
             data='group_managing_item',
-            only_enabled=True,
+            only_enabled=only_enabled,
             return_state_singleton=False)
         if not only_group_managing_item:
             # extra_groups_managing_item
@@ -7138,7 +7137,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 item=self,
                 states=item_states,
                 data='extra_groups_managing_item',
-                only_enabled=True,
+                only_enabled=only_enabled,
                 return_state_singleton=False)
         return res
 
@@ -7162,9 +7161,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # we use data defined on itemcreated
         if not res:
             res = cfg.getItemWFValidationLevels(
-                item=self, states=["itemcreated"], data='group_managing_item', only_enabled=False) + \
+                item=self, states=["itemcreated"],
+                data='group_managing_item',
+                only_enabled=False,
+                return_state_singleton=False) + \
                 cfg.getItemWFValidationLevels(
-                    item=self, states=["itemcreated"], data='extra_groups_managing_item', only_enabled=False)
+                    item=self,
+                    states=["itemcreated"],
+                    data='extra_groups_managing_item',
+                    only_enabled=False,
+                    return_state_singleton=False)
         # custom management for "observers" suffix
         item_observers_states = cfg.getItemObserversStates()
         if not item_observers_states or item_state in item_observers_states:
@@ -7196,7 +7202,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _assign_roles_to_all_groups_accessing_item(self, cfg, item_state):
         """ """
-        roles_config = {'*': ['Reader'], 'observers': ['Reader']}
+        roles_config = {'*': ['Reader']}
         # 'Contributor' will allow add annex decision
         # it is given during item validation process or after if may_add_annex_decision
         if item_state in cfg.getItemWFValidationLevels(data='state', only_enabled=False) or \
@@ -7215,7 +7221,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """ """
         item = self.getSelf()
         plone_groups_managing_item = \
-            self.get_plone_groups_managing_item(cfg, [item_state])
+            self.get_plone_groups_managing_item(cfg, [item_state], only_enabled=False)
         if plone_groups_managing_item:
             # we are in one of the itemWFValidationStates
             # 'Reader' and 'Contributor' is managed by _assign_roles_to_all_groups_accessing_item
