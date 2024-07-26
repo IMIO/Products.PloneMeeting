@@ -833,6 +833,8 @@ class testWorkflows(PloneMeetingTestCase):
            the full meeting must not freeze items, or on contrary, freezing a full meeting
            must freeze the items but when a late item is presented."""
         cfg = self.meetingConfig
+        # this will keep frozen/published/decided for meeting
+        self._activate_wfas(('delayed', ))
         self._removeConfigObjectsFor(cfg)
         # by default, freezing a meeting or inserting a late item will freeze the item
         self.changeUser('pmManager')
@@ -847,6 +849,18 @@ class testWorkflows(PloneMeetingTestCase):
         late_item = self.create('MeetingItem', preferredMeeting=meeting.UID())
         self.presentItem(late_item)
         self.assertEqual(late_item.query_state(), 'itemfrozen')
+        # present a late item in a published meeting, default item published
+        pubished_item = self.create('MeetingItem', preferredMeeting=meeting.UID())
+        self.publishMeeting(meeting)
+        self.assertEqual(meeting.query_state(), 'published')
+        self.presentItem(pubished_item)
+        self.assertEqual(pubished_item.query_state(), 'itempublished')
+        # present a late item in a decided meeting, default item published
+        decided_item = self.create('MeetingItem', preferredMeeting=meeting.UID())
+        self.decideMeeting(meeting)
+        self.assertEqual(meeting.query_state(), 'decided')
+        self.presentItem(decided_item)
+        self.assertEqual(decided_item.query_state(), 'itempublished')
 
         # only late item is frozen, not freezing whole meeting
         cfg.setOnMeetingTransitionItemActionToExecute(

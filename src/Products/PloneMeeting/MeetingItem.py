@@ -8,6 +8,7 @@ from App.class_init import InitializeClass
 from appy.gen import No
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collections import OrderedDict
+from collections import defaultdict
 from collective.behavior.internalnumber.browser.settings import _internal_number_is_used
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_functions
@@ -121,7 +122,6 @@ from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
 from Products.PloneMeeting.utils import checkMayQuickEdit
 from Products.PloneMeeting.utils import cleanMemoize
-from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import down_or_up_wf
 from Products.PloneMeeting.utils import escape
@@ -227,7 +227,8 @@ class MeetingItemWorkflowConditions(object):
            If p_before_last=True, then we return before_last level.
            If p_return_level=True we return the last validation state and
            the full validation level from cfg.getItemWFValidationLevels.'''
-        levels = list(self.cfg.getItemWFValidationLevels(only_enabled=True))
+        levels = list(self.cfg.getItemWFValidationLevels(
+            item=self.context, render_proposing_group=True, only_enabled=True))
         res = 'itemcreated'
         # get suffixed Plone group in reverse order of defined validation levels
         levels.reverse()
@@ -235,7 +236,7 @@ class MeetingItemWorkflowConditions(object):
         found_before_last = False
         level = {}
         for level in levels:
-            if self.tool.group_is_not_empty(self.context.getProposingGroup(), level['suffix']):
+            if self.tool.group_is_not_empty(plone_group_id=level['group_managing_item']):
                 res = level['state']
                 if found_last:
                     found_before_last = True
@@ -285,16 +286,18 @@ class MeetingItemWorkflowConditions(object):
                 states=[previous_val_state], data='suffix', only_enabled=True)
             previous_suffixes.append(previous_main_suffix)
             previous_suffixes = tuple(set(previous_suffixes))
-            previous_group_managing_item_uid = self.context.adapted()._getGroupManagingItem(
-                previous_val_state)
+            previous_groups_managing_item_uids = self.context.get_orgs_managing_item(
+                self.cfg, previous_val_state)
             res = bool(self.tool.get_filtered_plone_groups_for_user(
-                org_uids=[previous_group_managing_item_uid], suffixes=previous_suffixes))
+                org_uids=previous_groups_managing_item_uids, suffixes=previous_suffixes))
             # when previous_val_state group suffix is empty, we replay _mayShortcutToValidationLevel
             # but with this previous state as destinationState
             # XXX TO BE CONFIRMED
-            if not res and not self.tool.group_is_not_empty(
-               previous_group_managing_item_uid, previous_main_suffix):
-                return self._mayShortcutToValidationLevel(previous_val_state)
+            if not res:
+                for previous_group_managing_item_uid in previous_groups_managing_item_uids:
+                    if not self.tool.group_is_not_empty(
+                            previous_group_managing_item_uid, previous_main_suffix):
+                        return self._mayShortcutToValidationLevel(previous_val_state)
         else:
             res = True
         return res
@@ -307,9 +310,13 @@ class MeetingItemWorkflowConditions(object):
         if _checkPermission(ReviewPortalContent, self.context):
             suffix = self.cfg.getItemWFValidationLevels(
                 states=[destinationState], data='suffix', only_enabled=True)
-            group_managing_item_uid = self.context.adapted()._getGroupManagingItem(destinationState)
+            groups_managing_item_uids = self.context.get_orgs_managing_item(self.cfg, destinationState)
             # check if next validation level suffixed Plone group is not empty
-            res = self.tool.group_is_not_empty(group_managing_item_uid, suffix)
+            res = False
+            for group_managing_item_uid in groups_managing_item_uids:
+                res = self.tool.group_is_not_empty(group_managing_item_uid, suffix)
+                if res:
+                    break
             # shortcuts are available to (Meeting)Managers
             if res and not self.tool.isManager(self.cfg):
                 # check that when using shortcuts, this is available
@@ -380,9 +387,9 @@ class MeetingItemWorkflowConditions(object):
                 if self.review_state == last_validation_state or \
                    ('item_validation_shortcuts' in self.cfg.getWorkflowAdaptations() and
                     'item_validation_no_validate_shortcuts' not in self.cfg.getWorkflowAdaptations() and
-                        get_plone_group_id(
-                            self.context.getProposingGroup(),
-                            last_level['suffix']) in get_plone_groups_for_user()):
+                        set(self.context.get_plone_groups_managing_item(
+                            self.cfg, self.review_state)).intersection(
+                            get_plone_groups_for_user())):
                     res = True
                     if self._has_waiting_advices_transitions():
                         res = No(_('has_required_waiting_advices'))
@@ -443,27 +450,26 @@ class MeetingItemWorkflowConditions(object):
                                mapping={'itemNumber': itemNumber}))
         return res
 
-    def _userIsPGMemberAbleToSendItemBack(self, proposing_group_uid, destinationState):
+    def _userIsPGMemberAbleToSendItemBack(self, plone_group_managing_item, destinationState):
         ''' '''
-        suffix = self.cfg.getItemWFValidationLevels(
-            states=[destinationState], data='suffix')
         # first case, is user member of destinationState level?
         res = self.tool.group_is_not_empty(
-            proposing_group_uid, suffix, user_id=get_current_user_id(self.context.REQUEST))
+            plone_group_id=plone_group_managing_item,
+            user_id=get_current_user_id(self.context.REQUEST))
         # in case we use shortcuts, we also check if able to go to destinationState
         # if it was the classic item validation workflow
         # so a creator could send back to "itemcreated" and to "proposed"
         if not res and \
-           self.tool.group_is_not_empty(proposing_group_uid, suffix) and \
+           self.tool.group_is_not_empty(plone_group_id=plone_group_managing_item) and \
            'item_validation_shortcuts' in self.cfg.getWorkflowAdaptations():
             res = self._mayShortcutToValidationLevel(destinationState)
 
         return res and \
             self._userIsPGMemberAbleToSendItemBackExtraCondition(
-                proposing_group_uid, destinationState)
+                plone_group_managing_item, destinationState)
 
     def _userIsPGMemberAbleToSendItemBackExtraCondition(
-            self, proposingGroup, destinationState):
+            self, plone_group_managing_item, destinationState):
         ''' '''
         return True
 
@@ -516,10 +522,17 @@ class MeetingItemWorkflowConditions(object):
         res = False
         meeting = self.context.getMeeting()
         if not meeting or (meeting and meeting.query_state() != 'closed'):
-            proposingGroup = self.context.getProposingGroup()
-            # when item is validated, we may eventually send back to last validation state
+            # when item is "validated", we may eventually send back to last validation state
             wfas = self.cfg.getWorkflowAdaptations()
             last_val_state, last_level = self._getLastValidationState(return_level=True)
+            # group managing item available when item before "validated"
+            # after we take proposingGroup + last validation state group_managing_item suffix
+            plone_group_managing_item = self.context.get_plone_groups_managing_item(
+                self.cfg, self.review_state, only_group_managing_item=True)
+            if plone_group_managing_item:
+                org_uid, suffix = plone_group_managing_item[0].split("_")
+            else:
+                org_uid, suffix = self.context.getProposingGroup(), "creators"
             if self.review_state == 'validated' and destinationState == last_val_state:
                 # MeetingManager probably
                 if _checkPermission(ReviewPortalContent, self.context):
@@ -527,8 +540,7 @@ class MeetingItemWorkflowConditions(object):
                 # manage the reviewers_take_back_validated_item WFAdaptation
                 elif 'reviewers_take_back_validated_item' in self.cfg.getWorkflowAdaptations():
                     # is current user member of last validation level?
-                    res = self.tool.group_is_not_empty(
-                        proposingGroup, last_level['suffix'], user_id=get_current_user_id())
+                    res = self.tool.group_is_not_empty(org_uid, suffix, user_id=get_current_user_id())
             # using 'waiting_advices_XXX_send_back' WFAdaptations,
             elif self.review_state.endswith('_waiting_advices'):
                 item_validation_states = self.cfg.getItemWFValidationLevels(data='state', only_enabled=True)
@@ -558,7 +570,7 @@ class MeetingItemWorkflowConditions(object):
                         # is current user proposingGroup member able to trigger transition?
                         if 'waiting_advices_proposing_group_send_back' in wfas:
                             res = self._userIsPGMemberAbleToSendItemBack(
-                                proposingGroup, destinationState)
+                                plone_group_managing_item, destinationState)
                         # if not, maybe it is an adviser able to give an advice?
                         if not res and 'waiting_advices_adviser_send_back' in wfas:
                             # adviser may send back to validated when using
@@ -573,7 +585,7 @@ class MeetingItemWorkflowConditions(object):
                 suffix = self.cfg.getItemWFValidationLevels(
                     states=[destinationState], data='suffix')
                 res = _checkPermission(ReviewPortalContent, self.context) and \
-                    (not suffix or self.tool.group_is_not_empty(proposingGroup, suffix))
+                    (not suffix or self.tool.group_is_not_empty(org_uid, suffix))
         return res
 
     security.declarePublic('mayBackToMeeting')
@@ -2806,13 +2818,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if wfTool.getTransitionsFor(item):
             res = True
         else:
-            # item is decided and user is member of the proposingGroup
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(item)
             item_state = item.query_state()
+            # item is decided and user is member of the proposingGroup
+            # here item is decided so nonsense checking on group managing item
             if self.is_decided(cfg, item_state) and \
-               item.adapted()._getGroupManagingItem(item_state, theObject=False) in \
-               tool.get_orgs_for_user():
+               item.getProposingGroup() in tool.get_orgs_for_user():
                 res = True
         return res
 
@@ -3004,7 +3016,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            item.adviceIndex[adviser_uid]["advice_editable"]:
             # check that current user is member of the proposingGroup suffix
             # to which the item state could go back to
-            org_uid = self._getGroupManagingItem(item_state)
+            org_uids = self.get_orgs_managing_item(cfg, item_state)
             # get the "back" states, item_state is like "proposed_waiting_advices"
             # of "itemcreated__or__proposed_waiting_advices"
             # or when using WAITING_ADVICES_FROM_STATES 'new_state_id',
@@ -3023,8 +3035,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     states = [states]
             suffixes = cfg.getItemWFValidationLevels(
                 states=states, data='suffix', only_enabled=True, return_state_singleton=False)
-            if tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes):
-                return True
+            for org_uid in org_uids:
+                if tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes):
+                    return True
         return False
 
     security.declarePublic('mayBackToPreviousAdvice')
@@ -5306,8 +5319,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        suffix_notified = cfg.getItemWFValidationLevels(states=[review_state])["suffix"]
-        plone_group_id_notified = get_plone_group_id(self.getProposingGroup(), suffix_notified)
+        plone_group_id_notified = cfg.getItemWFValidationLevels(
+            item=self, states=[review_state], data="group_managing_item")
         plone_group_notified = api.group.get(plone_group_id_notified)
 
         notified_user_ids = []
@@ -7104,19 +7117,67 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Add the event to item's history
             self.itemHistory.append(event)
 
-    def _getGroupManagingItem(self, review_state, theObject=False):
-        '''See doc in interfaces.py.'''
-        item = self.getSelf()
-        return item.getProposingGroup(theObject=theObject)
-
-    def _getAllGroupsManagingItem(self, review_state, theObjects=False):
-        '''See doc in interfaces.py.'''
-        res = []
-        item = self.getSelf()
-        proposingGroup = item.getProposingGroup(theObject=theObjects)
-        if proposingGroup:
-            res.append(proposingGroup)
+    def get_plone_groups_managing_item(
+            self,
+            cfg,
+            item_states,
+            only_group_managing_item=False,
+            only_enabled=True):
+        """ """
+        # group_managing_item
+        res = cfg.getItemWFValidationLevels(
+            item=self,
+            states=item_states,
+            data='group_managing_item',
+            only_enabled=only_enabled,
+            return_state_singleton=False)
+        if not only_group_managing_item:
+            # extra_groups_managing_item
+            res += cfg.getItemWFValidationLevels(
+                item=self,
+                states=item_states,
+                data='extra_groups_managing_item',
+                only_enabled=only_enabled,
+                return_state_singleton=False)
         return res
+
+    def get_orgs_managing_item(self, cfg, item_state):
+        """Return the organization uids currently managing the item."""
+        return [gmi.split('_')[0]
+                for gmi in self.get_plone_groups_managing_item(cfg, [item_state])]
+
+    def get_all_plone_groups_accessing_item(self, cfg, item_state):
+        """ """
+        possible_states = cfg.getItemWFValidationLevels(data="state", only_enabled=True)
+        item_states = []
+        for state in possible_states:
+            item_states.append(state)
+            if state == item_state:
+                break
+        # item_states are every state prior to current state (and including current state)
+        # if item no more in the validation process, every validation states are kept
+        res = self.get_plone_groups_managing_item(cfg, item_states)
+        # special case when no validation levels, items are created "validated"
+        # we use data defined on itemcreated
+        if not res:
+            res = cfg.getItemWFValidationLevels(
+                item=self, states=["itemcreated"],
+                data='group_managing_item',
+                only_enabled=False,
+                return_state_singleton=False) + \
+                cfg.getItemWFValidationLevels(
+                    item=self,
+                    states=["itemcreated"],
+                    data='extra_groups_managing_item',
+                    only_enabled=False,
+                    return_state_singleton=False)
+        # custom management for "observers" suffix
+        observers_have_access = False
+        item_observers_states = cfg.getItemObserversStates()
+        if not item_observers_states or item_state in item_observers_states:
+            observers_have_access = True
+            res.append(get_plone_group_id(self.getProposingGroup(), "observers"))
+        return observers_have_access, res
 
     def _assign_roles_to_group_suffixes(self, org_uid, suffix_roles):
         """Helper that applies local_roles for org_uid to p_sufix_roles.
@@ -7132,62 +7193,86 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     "Parameter suffix_roles values must be of type tuple or list!")
             self.manage_addLocalRoles(plone_group_id, tuple(roles))
 
-    def _assign_roles_to_all_groups_managing_item_suffixes(self,
-                                                           cfg,
-                                                           item_state,
-                                                           org_uids,
-                                                           org_uid):
-        '''See doc in interfaces.py.'''
-        # by default, every suffixes receive Reader role
+    def _turn_plone_group_ids_to_group_suffixes(self, plone_group_ids, roles_config={'*': ['Reader']}):
+        """ """
+        res = defaultdict(lambda: defaultdict())
+        for plone_group_id in plone_group_ids:
+            org_uid, suffix = plone_group_id.split('_')
+            roles = roles_config.get(suffix, roles_config.get('*'))
+            res[org_uid][suffix] = roles
+        return res
+
+    def _assign_roles_to_all_groups_accessing_item(self, cfg, item_state):
+        """ """
+        roles_config = {'*': ['Reader']}
+        # 'Contributor' will allow add annex decision
+        # it is given during item validation process or after if may_add_annex_decision
+        if item_state in cfg.getItemWFValidationLevels(data='state', only_enabled=False) or \
+           self.may_add_annex_decision(cfg, item_state):
+            roles_config['*'].append('Contributor')
+
+        observers_have_access, all_plone_groups_accessing_item = \
+            self.get_all_plone_groups_accessing_item(cfg, item_state)
+        # special handling for 'observers' that do not get the 'Contributor' role
+        if observers_have_access:
+            roles_config['observers'] = ['Reader']
+
+        all_plone_groups_accessing_item = self._turn_plone_group_ids_to_group_suffixes(
+            all_plone_groups_accessing_item, roles_config=roles_config)
+        for org_uid, suffix_roles in all_plone_groups_accessing_item.items():
+            self._assign_roles_to_group_suffixes(org_uid, suffix_roles)
+
+    def _assign_roles_to_groups_managing_item(self, cfg, item_state):
+        """ """
         item = self.getSelf()
-        for managing_org_uid in org_uids:
-            suffix_roles = {suffix: ['Reader'] for suffix in
-                            get_all_suffixes(managing_org_uid)}
-            item._assign_roles_to_group_suffixes(managing_org_uid, suffix_roles)
+        plone_groups_managing_item = \
+            self.get_plone_groups_managing_item(cfg, [item_state], only_enabled=False)
+        if plone_groups_managing_item:
+            # we are in one of the itemWFValidationStates
+            # 'Reader' and 'Contributor' is managed by _assign_roles_to_all_groups_accessing_item
+            roles_config = {'*': ['Editor', 'Reviewer']}
+            plone_groups_managing_item = self._turn_plone_group_ids_to_group_suffixes(
+                plone_groups_managing_item, roles_config=roles_config)
+            for org_uid, suffix_roles in plone_groups_managing_item.items():
+                item._assign_roles_to_group_suffixes(org_uid, suffix_roles)
 
     def assign_roles_to_group_suffixes(self, cfg, item_state):
-        """Method that do the work of assigning relevant roles to
-           suffixed groups of an organization depending on current state :
-           - suffix '_observers' will have 'Reader' role in every cases;
-           - state 'itemcreated', _creators is 'Editor';
-           - states managed by MeetingConfig.itemWFValidationLevels.
-           For now, we manage every roles :
-           - itemcreated;
-           - validation levels
-           For unknown states, method _get_corresponding_state_to_assign_local_roles
-           will be used to determinate a known configuration to take into ccount"""
-        adapted = self.adapted()
-        # Add the local roles corresponding to the group managing the item
-        org_uid = adapted._getGroupManagingItem(item_state, theObject=False)
-        # in some case like ItemTemplate, we have no proposing group
-        if not org_uid:
-            return
-        apply_meetingmanagers_access, suffix_roles = compute_item_roles_to_assign_to_suffixes(
-            cfg, self, item_state, org_uid)
+        """ """
+        custom_suffix_roles = {}
 
-        # apply local roles to computed suffixes
-        self._assign_roles_to_group_suffixes(org_uid, suffix_roles)
+        # roles given to item_state are managed automatically
+        # it is possible to manage it manually for extra states (coming from wfAdaptations for example)
+        # try to find corresponding item state
+        corresponding_auto_item_state = cfg.adapted().get_item_corresponding_state_to_assign_local_roles(
+            item_state)
+        if corresponding_auto_item_state:
+            item_state = corresponding_auto_item_state
+        else:
+            # if no corresponding item state, check if we manage state suffix roles manually
+            custom_suffix_roles = cfg.adapted().get_item_custom_suffix_roles(
+                self, item_state)
 
-        # when more than one group managing item, make sure every groups get access
-        org_uids = adapted._getAllGroupsManagingItem(item_state)
-        if len(org_uids) > 1:
-            adapted._assign_roles_to_all_groups_managing_item_suffixes(
-                cfg, item_state, org_uids, org_uid)
+        # custom suffix_roles
+        if custom_suffix_roles:
+            for org_uid, suffix_roles in custom_suffix_roles.items():
+                self._assign_roles_to_group_suffixes(org_uid, suffix_roles)
+        else:
+            self._assign_roles_to_all_groups_accessing_item(cfg, item_state)
+            self._assign_roles_to_groups_managing_item(cfg, item_state)
 
         # MeetingManagers get access if item at least validated or decided
         # decided will include states "decided out of meeting"
         # if it is still not decided, it gets full access
-        if apply_meetingmanagers_access:
-            mmanagers_item_states = ['validated'] + list(cfg.getItemDecidedStates())
-            if item_state in mmanagers_item_states or self.hasMeeting():
-                mmanagers_group_id = "{0}_{1}".format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
-                # 'Reviewer' also on decided item, the WF guard will
-                # avoid correct if meeting closed, and give 'Contributor' to be
-                # able to add decision annexes
-                mmanagers_roles = ['Reader', 'Reviewer', 'Contributor']
-                if not self.is_decided(cfg, item_state):
-                    mmanagers_roles += ['Editor']
-                self.manage_addLocalRoles(mmanagers_group_id, tuple(mmanagers_roles))
+        mmanagers_item_states = ['validated'] + list(cfg.getItemDecidedStates())
+        if item_state in mmanagers_item_states or self.hasMeeting():
+            mmanagers_group_id = "{0}_{1}".format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
+            # 'Reviewer' also on decided item, the WF guard will
+            # avoid correct if meeting closed, and give 'Contributor' to be
+            # able to add decision annexes
+            mmanagers_roles = ['Reader', 'Reviewer', 'Contributor']
+            if not self.is_decided(cfg, item_state):
+                mmanagers_roles += ['Editor']
+            self.manage_addLocalRoles(mmanagers_group_id, tuple(mmanagers_roles))
 
     security.declareProtected(ModifyPortalContent, 'update_local_roles')
 
@@ -7211,7 +7296,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         related_indexes = ['getCopyGroups', 'getGroupsInCharge']
 
         # update suffixes related local roles
-        self.assign_roles_to_group_suffixes(cfg, item_state)
+        if not self.isDefinedInTool():
+            self.assign_roles_to_group_suffixes(cfg, item_state)
 
         # update local roles regarding copyGroups
         isCreated = kwargs.get('isCreated', None)

@@ -64,7 +64,6 @@ from Products.PloneMeeting.MeetingConfig import CONFIGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import READERPREFIX
 from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
-from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import findNewValue
 from Products.PloneMeeting.utils import get_context_with_request
@@ -709,12 +708,10 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
         userMayAccessComment = True
         if self.context.getTagName() == 'MeetingItem':
             if self.cfg.getHideItemHistoryCommentsToUsersOutsideProposingGroup() and \
-               not self.tool.isManager(self.cfg):
-                userOrgUids = self.tool.get_orgs_for_user()
-                group_managing_item_uid = \
-                    self.context.adapted()._getGroupManagingItem(event['review_state'])
-                if group_managing_item_uid not in userOrgUids:
-                    userMayAccessComment = False
+               not self.tool.isManager(self.cfg) and \
+               not set(self.tool.get_orgs_for_user()).intersection(
+                    self.context.get_orgs_managing_item(self.cfg, event['review_state'])):
+                userMayAccessComment = False
         return userMayAccessComment
 
     def get_history_data(self):
@@ -1292,8 +1289,8 @@ class BaseItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
                 # roles that may edit
                 edit_roles = itemWF.states[review_state].permission_roles[ModifyPortalContent]
                 # suffixes information for review_state
-                roles_of_suffixes = compute_item_roles_to_assign_to_suffixes(
-                    self.cfg, None, review_state)[1]
+                # XXX to be fixed
+                roles_of_suffixes = []
                 # keep suffixes having relevant roles
                 suffixes = []
                 for suffix, roles in roles_of_suffixes.items():
@@ -1787,14 +1784,14 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
     def _suffix_proposinggroup(self, visible_fors, item):
         """ """
         res = []
-        groups_managing_item_uids = item.adapted()._getAllGroupsManagingItem(
-            item.query_state())
+        all_plone_groups_accessing_item = \
+            item.get_all_plone_groups_accessing_item(self.cfg, item.query_state())
         for visible_for in visible_fors:
             if visible_for.startswith(PROPOSINGGROUPPREFIX):
                 suffix = visible_for.replace(PROPOSINGGROUPPREFIX, '')
-                for group_managing_item_uid in groups_managing_item_uids:
-                    plone_group_id = get_plone_group_id(group_managing_item_uid, suffix)
-                    res.append(plone_group_id)
+                for plone_group_id in all_plone_groups_accessing_item:
+                    if plone_group_id.endswith(suffix):
+                        res.append(plone_group_id)
         return res
 
     def _suffix_profile_proposinggroup(self, visible_fors):
@@ -1815,6 +1812,8 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
                     res.append(plone_group_id)
             elif visible_for == '{0}copy_groups'.format(READERPREFIX):
                 res = res + list(self.parent.getAllCopyGroups(auto_real_plone_group_ids=True))
+            elif visible_for == '{0}restricted_copy_groups'.format(READERPREFIX):
+                res = res + list(self.parent.getAllRestrictedCopyGroups(auto_real_plone_group_ids=True))
             elif visible_for == '{0}groupsincharge'.format(READERPREFIX):
                 groupsInCharge = self.parent.getGroupsInCharge(theObjects=False, includeAuto=True)
                 for groupInCharge in groupsInCharge:

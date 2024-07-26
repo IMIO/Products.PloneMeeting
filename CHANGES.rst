@@ -17,6 +17,11 @@ Changelog
 - Fixed `AskedAdvicesVocabulary` to mark an term as inactive only if
   `for_item_created_until` date is actually expired.
   [gbastien]
+- Replaced columns `suffix/extra_suffix` of `MeetingConfig.itemWFValidationLevels`
+  by new columns `group_managing_item/extra_groups_managing_item`, this will
+  manage cases when another group than the proposing group is managing the item,
+  several groups may be selected including the proposing group or not.
+  [gbastien]
 
 4.2.9 (2024-06-10)
 ------------------
