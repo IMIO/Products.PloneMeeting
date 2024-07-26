@@ -7172,10 +7172,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     only_enabled=False,
                     return_state_singleton=False)
         # custom management for "observers" suffix
+        observers_have_access = False
         item_observers_states = cfg.getItemObserversStates()
         if not item_observers_states or item_state in item_observers_states:
+            observers_have_access = True
             res.append(get_plone_group_id(self.getProposingGroup(), "observers"))
-        return res
+        return observers_have_access, res
 
     def _assign_roles_to_group_suffixes(self, org_uid, suffix_roles):
         """Helper that applies local_roles for org_uid to p_sufix_roles.
@@ -7209,8 +7211,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            self.may_add_annex_decision(cfg, item_state):
             roles_config['*'].append('Contributor')
 
-        all_plone_groups_accessing_item = \
+        observers_have_access, all_plone_groups_accessing_item = \
             self.get_all_plone_groups_accessing_item(cfg, item_state)
+        # special handling for 'observers' that do not get the 'Contributor' role
+        if observers_have_access:
+            roles_config['observers'] = ['Reader']
 
         all_plone_groups_accessing_item = self._turn_plone_group_ids_to_group_suffixes(
             all_plone_groups_accessing_item, roles_config=roles_config)

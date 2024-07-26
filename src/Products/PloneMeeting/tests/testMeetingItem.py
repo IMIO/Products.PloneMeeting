@@ -5061,8 +5061,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # make reviewer able to edit when itemcreated so this will generate another cached value
         # creator is also able to duplicate, and after, an observer will have a different value as well
         itemWFValLevels = cfg.getItemWFValidationLevels()
-        itemWFValLevels[0]['extra_suffixes'] = cfg.getItemWFValidationLevels(
-            states=[self._stateMappingFor('proposed')], data="suffix", return_state_singleton=False)
+        itemWFValLevels[0]['extra_groups_managing_item'] = [cfg.getItemWFValidationLevels(
+            cfg, states=[self._stateMappingFor('proposed')])['group_managing_item']]
         cfg.setItemWFValidationLevels(itemWFValLevels)
         notify(ObjectEditedEvent(cfg))
 
