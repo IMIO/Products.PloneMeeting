@@ -7141,10 +7141,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 return_state_singleton=False)
         return res
 
-    def get_orgs_managing_item(self, cfg, item_state):
+    def get_orgs_managing_item(self, cfg, item_state, only_group_managing_item=False):
         """Return the organization uids currently managing the item."""
         return [gmi.split('_')[0]
-                for gmi in self.get_plone_groups_managing_item(cfg, [item_state])]
+                for gmi in self.get_plone_groups_managing_item(
+                    cfg,
+                    [item_state],
+                    only_group_managing_item=only_group_managing_item)]
 
     def get_all_plone_groups_accessing_item(self, cfg, item_state):
         """ """
