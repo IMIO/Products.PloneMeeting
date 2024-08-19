@@ -8014,7 +8014,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # waiting_advices WFAdaptation
         elif item_state.endswith('_waiting_advices'):
             corresponding_item_state = item_state.split('_waiting_advices')[0]
-        return corresponding_item_state
+        return corresponding_item_state or item_state
 
     def get_item_custom_suffix_roles(self, item, item_state):
         '''See doc in interfaces.py.'''

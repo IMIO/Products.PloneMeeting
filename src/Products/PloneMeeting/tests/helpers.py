@@ -490,10 +490,10 @@ class PloneMeetingTestingHelpers(object):
         currentUser = self.member.getId()
         self.changeUser('admin')
         itemWFValidationLevels = cfg.getItemWFValidationLevels()
-        itemWFValidationLevels[1]['suffix'] = 'prereviewers'
+        itemWFValidationLevels[1]['group_managing_item'] = 'proposing_group__prereviewers'
         itemWFValidationLevels[2]['enabled'] = '1'
         if enable_extra_suffixes:
-            itemWFValidationLevels[2]['extra_suffixes'] = ['reviewers']
+            itemWFValidationLevels[2]['extra_groups_managing_item'] = ['proposing_group__reviewers']
         cfg.setItemWFValidationLevels(itemWFValidationLevels)
         notify(ObjectEditedEvent(cfg))
         self.changeUser(currentUser)

@@ -7249,7 +7249,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # try to find corresponding item state
         corresponding_auto_item_state = cfg.adapted().get_item_corresponding_state_to_assign_local_roles(
             item_state)
-        if corresponding_auto_item_state:
+        if corresponding_auto_item_state != item_state:
             item_state = corresponding_auto_item_state
         else:
             # if no corresponding item state, check if we manage state suffix roles manually
@@ -8351,11 +8351,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def mayDisplayProposingGroupUsers(self):
         """ """
         res = False
-        proposingGroup = self.getProposingGroup()
+        pg = self.getProposingGroup()
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        if not proposingGroup or \
-           proposingGroup in tool.get_orgs_for_user() or \
+        if not pg or \
+           pg in tool.get_orgs_for_user() or \
            tool.isManager(cfg):
             res = True
         return res
