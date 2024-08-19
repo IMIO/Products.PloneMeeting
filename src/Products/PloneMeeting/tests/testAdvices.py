@@ -4135,7 +4135,7 @@ class testAdvices(PloneMeetingTestCase):
               'delay': '5',
               'delay_label': ''}, ])
         self.changeUser('templatemanager1')
-        itemTemplate = cfg.getItemTemplates(as_brains=False)[0]
+        itemTemplate = cfg.get_default_item_template()
         self.assertEqual(itemTemplate.getProposingGroup(), '')
         itemTemplate.setOptionalAdvisers(
             (self.developers_uid,
