@@ -144,10 +144,12 @@ def reviewProcessInfo(obj):
     item_state = obj.query_state()
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(obj)
+    corresponding_item_state = \
+        cfg.get_item_corresponding_state_to_assign_local_roles(item_state)
     return '%s__reviewprocess__%s' % (
-        obj.adapted().get_orgs_managing_item(
+        obj.get_orgs_managing_item(
             cfg,
-            item_state,
+            corresponding_item_state,
             only_group_managing_item=True),
         item_state)
 

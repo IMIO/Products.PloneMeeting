@@ -1286,17 +1286,12 @@ class BaseItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
         reviewProcessInfos = []
         for review_state in review_states:
             if review_state in itemWF.states:
-                # roles that may edit
-                edit_roles = itemWF.states[review_state].permission_roles[ModifyPortalContent]
-                # suffixes information for review_state
-                # XXX to be fixed
-                roles_of_suffixes = []
+                corresponding_item_state = \
+                    self.cfg.get_item_corresponding_state_to_assign_local_roles(review_state)
                 # keep suffixes having relevant roles
-                suffixes = []
-                for suffix, roles in roles_of_suffixes.items():
-                    if set(edit_roles).intersection(set(roles)):
-                        suffixes.append(suffix)
-                # we have suffixes to keep, now find suffixed orgs for current user
+                suffixes = self.cfg.getItemWFValidationLevels(
+                    states=[corresponding_item_state],
+                    data='suffix')
                 userOrgUids = self.tool.get_orgs_for_user(suffixes=suffixes)
                 for userOrgUid in userOrgUids:
                     reviewProcessInfos.append('%s__reviewprocess__%s' % (userOrgUid, review_state))
@@ -1475,22 +1470,22 @@ class AdvisedItemsAdapter(CompoundCriterionBaseAdapter):
         # advised items are items that has an advice in a particular review_state
         # just append every available meetingadvice state: we want "given" advices.
         # this search will return every advices
-        wfTool = api.portal.get_tool('portal_workflow')
-        adviceStates = []
+        wf_tool = api.portal.get_tool('portal_workflow')
+        advice_states = []
         # manage multiple 'meetingadvice' portal_types
         for portal_type_id in getAdvicePortalTypeIds():
-            adviceWF = wfTool.getWorkflowsFor(portal_type_id)[0]
-            adviceStates += adviceWF.states.keys()
+            adviceWF = wf_tool.getWorkflowsFor(portal_type_id)[0]
+            advice_states += adviceWF.states.keys()
         # remove duplicates
-        adviceStates = tuple(set(adviceStates))
-        indexAdvisers = []
-        for adviceState in adviceStates:
-            indexAdvisers += [org_uid + '_%s' % adviceState for org_uid in org_uids]
-            indexAdvisers += ['delay__' + org_uid + '_%s' % adviceState for org_uid in org_uids]
+        advice_states = tuple(set(advice_states))
+        index_advisers = []
+        for advice_state in advice_states:
+            index_advisers += [org_uid + '_%s' % advice_state for org_uid in org_uids]
+            index_advisers += ['delay__' + org_uid + '_%s' % advice_state for org_uid in org_uids]
         # Create query parameters
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
-                'indexAdvisers': {'query': indexAdvisers}, }
+                'indexAdvisers': {'query': index_advisers}, }
 
     # we may not ram.cache methods in same file with same name...
     query = query_adviseditems

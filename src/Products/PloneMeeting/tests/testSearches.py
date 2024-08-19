@@ -933,8 +933,9 @@ class testSearches(PloneMeetingTestCase):
         self.do(developersItem, 'return_to_proposing_group')
         self.do(vendorsItem, 'return_to_proposing_group')
 
-        # pmManager may only edit developersItem
+        # pmManager may only manage developersItem
         self.assertTrue(self.hasPermission(ModifyPortalContent, developersItem))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, vendorsItem))
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrect')
         res = collection.results()
         self.failUnless(len(res) == 1)
