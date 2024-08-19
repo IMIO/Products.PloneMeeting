@@ -259,8 +259,8 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
 
         # manage takenOverBy
         current_member_id = None
-        takenOverBy = self.context.getTakenOverBy()
-        if takenOverBy:
+        taken_over_by = self.context.getTakenOverBy()
+        if taken_over_by:
             current_member_id = get_current_user_id(self.request)
 
         # manage when displaying the icon with informations about
@@ -292,7 +292,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
 
         return res + (meeting_modified,
                       advice_modified,
-                      takenOverBy,
+                      taken_over_by,
                       current_member_id,
                       predecessor_modified,
                       other_mc_to_clone_to,
@@ -317,8 +317,8 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
 
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-        usedItemAttributes = self.cfg.getUsedItemAttributes()
-        usedMeetingAttributes = self.cfg.getUsedMeetingAttributes()
+        used_item_attrs = self.cfg.getUsedItemAttributes()
+        used_meeting_attrs = self.cfg.getUsedMeetingAttributes()
 
         if displaying_available_items(self.context):
             meeting = getCurrentMeetingObject(self.context)
@@ -328,7 +328,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                 # must show a deadline- or late-related icon.
                 if self.context.wfConditions().isLateFor(meeting):
                     # A late item, or worse: a late item not respecting the freeze deadline.
-                    if "freeze_deadline" in usedMeetingAttributes and \
+                    if "freeze_deadline" in used_meeting_attrs and \
                        getattr(meeting, "freeze_deadline", None) is not None and \
                        not is_transition_before_date(
                             self.context, "validate", meeting.freeze_deadline):
@@ -342,7 +342,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                               domain="PloneMeeting",
                                               context=self.request)))
                 elif meeting.query_state() == 'created' and \
-                        "validation_deadline" in usedMeetingAttributes and \
+                        "validation_deadline" in used_meeting_attrs and \
                         getattr(meeting, "validation_deadline", None) is not None and \
                         not is_transition_before_date(
                             self.context, "validate", meeting.validation_deadline):
@@ -502,7 +502,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                             context=self.request)
             # manage the otherMeetingConfigsClonableToPrivacy
             suffix = ''
-            if 'otherMeetingConfigsClonableToPrivacy' in usedItemAttributes and \
+            if 'otherMeetingConfigsClonableToPrivacy' in used_item_attrs and \
                'privacy' in otherMeetingConfigClonableTo.getUsedItemAttributes():
                 if otherMeetingConfigClonableToId in self.context.getOtherMeetingConfigsClonableToPrivacy():
                     suffix = "_secret"
@@ -566,12 +566,12 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                                context=self.request)))
 
         # In some cases, it does not matter if an item is inMeeting or not.
-        if 'oralQuestion' in usedItemAttributes:
+        if 'oralQuestion' in used_item_attrs:
             if self.context.getOralQuestion():
                 res.append(('oralQuestion.png', translate('this_item_is_an_oral_question',
                                                           domain="PloneMeeting",
                                                           context=self.request)))
-        if 'emergency' in usedItemAttributes:
+        if 'emergency' in used_item_attrs:
             # display an icon if emergency asked/accepted/refused
             itemEmergency = self.context.getEmergency()
             if itemEmergency == 'emergency_asked':
@@ -586,7 +586,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                 res.append(('emergency_refused.png', translate('emergency_refused',
                                                                domain="PloneMeeting",
                                                                context=self.request)))
-        if 'takenOverBy' in usedItemAttributes:
+        if 'takenOverBy' in used_item_attrs:
             takenOverBy = self.context.getTakenOverBy()
             if takenOverBy:
                 # if taken over, display a different icon if taken over by current user or not
@@ -1784,7 +1784,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
     def _suffix_proposinggroup(self, visible_fors, item):
         """ """
         res = []
-        all_plone_groups_accessing_item = \
+        observers_have_access, all_plone_groups_accessing_item = \
             item.get_all_plone_groups_accessing_item(self.cfg, item.query_state())
         for visible_for in visible_fors:
             if visible_for.startswith(PROPOSINGGROUPPREFIX):
@@ -1815,9 +1815,9 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
             elif visible_for == '{0}restricted_copy_groups'.format(READERPREFIX):
                 res = res + list(self.parent.getAllRestrictedCopyGroups(auto_real_plone_group_ids=True))
             elif visible_for == '{0}groupsincharge'.format(READERPREFIX):
-                groupsInCharge = self.parent.getGroupsInCharge(theObjects=False, includeAuto=True)
-                for groupInCharge in groupsInCharge:
-                    plone_group_id = get_plone_group_id(groupInCharge, 'observers')
+                gics = self.parent.getGroupsInCharge(theObjects=False, includeAuto=True)
+                for gic in gics:
+                    plone_group_id = get_plone_group_id(gic, 'observers')
                     res.append(plone_group_id)
         return res
 
@@ -1934,7 +1934,7 @@ class IconifiedCategoryGroupAdapter(object):
         if self.context.getTagName() == 'MeetingItem' or \
            (self.context.portal_type in ('annex', 'annexDecision') and
                 parent.getTagName() == 'MeetingItem'):
-            isItemDecisionAnnex = False
+            is_item_decision_annex = False
             if self.context.getTagName() == 'MeetingItem':
                 # it is possible to force to use the item_decision_annexes group
                 # or when using quickupload, the typeupload contains the type of element to add
@@ -1955,12 +1955,12 @@ class IconifiedCategoryGroupAdapter(object):
                     return cfg.annexes_types.item_annexes
 
                 if getattr(form_instance, 'portal_type', '') == 'annexDecision':
-                    isItemDecisionAnnex = True
+                    is_item_decision_annex = True
             else:
                 if self.context.portal_type == 'annexDecision':
-                    isItemDecisionAnnex = True
+                    is_item_decision_annex = True
 
-            if not isItemDecisionAnnex:
+            if not is_item_decision_annex:
                 return cfg.annexes_types.item_annexes
             else:
                 return cfg.annexes_types.item_decision_annexes
