@@ -315,7 +315,7 @@ class testValidators(PloneMeetingTestCase):
         # use samplers suffix
         self._enableItemValidationLevel(
             cfg,
-            level='prevalidated',
+            item_state='prevalidated',
             group_managing_item=GROUP_MANAGING_ITEM_PG_PREFIX + 'samplers')
         # developers_samplers was created
         dev_samplers = get_plone_group(self.developers_uid, 'samplers')
@@ -340,7 +340,7 @@ class testValidators(PloneMeetingTestCase):
         _check(validation_error_msg, checks=['without', 'disabled'])
         self._disableItemValidationLevel(
             cfg,
-            level='prevalidated',
+            item_state='prevalidated',
             group_managing_item=GROUP_MANAGING_ITEM_PG_PREFIX + 'prereviewers')
         validation_error_msg = _('can_not_delete_plone_group_meetingitem',
                                  mapping={'item_url': item.absolute_url()})

@@ -388,7 +388,7 @@ class MeetingItemWorkflowConditions(object):
                    ('item_validation_shortcuts' in self.cfg.getWorkflowAdaptations() and
                     'item_validation_no_validate_shortcuts' not in self.cfg.getWorkflowAdaptations() and
                         set(self.context.get_plone_groups_managing_item(
-                            self.cfg, self.review_state)).intersection(
+                            self.cfg, [self.review_state])).intersection(
                             get_plone_groups_for_user())):
                     res = True
                     if self._has_waiting_advices_transitions():
@@ -450,26 +450,27 @@ class MeetingItemWorkflowConditions(object):
                                mapping={'itemNumber': itemNumber}))
         return res
 
-    def _userIsPGMemberAbleToSendItemBack(self, plone_group_managing_item, destinationState):
+    def _userIsPGMemberAbleToSendItemBack(self, proposing_group_uid, destinationState):
         ''' '''
+        suffix = self.cfg.getItemWFValidationLevels(
+            states=[destinationState], data='suffix')
         # first case, is user member of destinationState level?
         res = self.tool.group_is_not_empty(
-            plone_group_id=plone_group_managing_item,
-            user_id=get_current_user_id(self.context.REQUEST))
+            proposing_group_uid, suffix, user_id=get_current_user_id(self.context.REQUEST))
         # in case we use shortcuts, we also check if able to go to destinationState
         # if it was the classic item validation workflow
         # so a creator could send back to "itemcreated" and to "proposed"
         if not res and \
-           self.tool.group_is_not_empty(plone_group_id=plone_group_managing_item) and \
+           self.tool.group_is_not_empty(proposing_group_uid, suffix) and \
            'item_validation_shortcuts' in self.cfg.getWorkflowAdaptations():
             res = self._mayShortcutToValidationLevel(destinationState)
 
         return res and \
             self._userIsPGMemberAbleToSendItemBackExtraCondition(
-                plone_group_managing_item, destinationState)
+                proposing_group_uid, destinationState)
 
     def _userIsPGMemberAbleToSendItemBackExtraCondition(
-            self, plone_group_managing_item, destinationState):
+            self, proposing_group_uid, destinationState):
         ''' '''
         return True
 
@@ -528,7 +529,7 @@ class MeetingItemWorkflowConditions(object):
             # group managing item available when item before "validated"
             # after we take proposingGroup + last validation state group_managing_item suffix
             plone_group_managing_item = self.context.get_plone_groups_managing_item(
-                self.cfg, self.review_state, only_group_managing_item=True)
+                self.cfg, [self.review_state], only_group_managing_item=True)
             if plone_group_managing_item:
                 org_uid, suffix = plone_group_managing_item[0].split("_")
             else:
@@ -540,7 +541,9 @@ class MeetingItemWorkflowConditions(object):
                 # manage the reviewers_take_back_validated_item WFAdaptation
                 elif 'reviewers_take_back_validated_item' in self.cfg.getWorkflowAdaptations():
                     # is current user member of last validation level?
-                    res = self.tool.group_is_not_empty(org_uid, suffix, user_id=get_current_user_id())
+                    res = self.tool.group_is_not_empty(
+                        plone_group_id=last_level['group_managing_item'],
+                        user_id=get_current_user_id())
             # using 'waiting_advices_XXX_send_back' WFAdaptations,
             elif self.review_state.endswith('_waiting_advices'):
                 item_validation_states = self.cfg.getItemWFValidationLevels(data='state', only_enabled=True)
@@ -570,7 +573,7 @@ class MeetingItemWorkflowConditions(object):
                         # is current user proposingGroup member able to trigger transition?
                         if 'waiting_advices_proposing_group_send_back' in wfas:
                             res = self._userIsPGMemberAbleToSendItemBack(
-                                plone_group_managing_item, destinationState)
+                                org_uid, destinationState)
                         # if not, maybe it is an adviser able to give an advice?
                         if not res and 'waiting_advices_adviser_send_back' in wfas:
                             # adviser may send back to validated when using

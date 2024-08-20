@@ -27,6 +27,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import MEETING_REMOVE_MOG_WFA
 from Products.PloneMeeting.config import WriteBudgetInfos
@@ -1465,22 +1466,26 @@ class testWFAdaptations(PloneMeetingTestCase):
             creators_roles.append('Contributor')
         self.assertEqual(item.__ac_local_roles__[self.developers_creators], creators_roles)
         self.assertEqual(item.__ac_local_roles__[self.developers_observers], ['Reader'])
-        # localroles keep what is defined for 'state': 'itemcreated' in self.meetingConfig.getItemWFValidationLevels
-        # if there are some extra suffixes they still havve REader access to this item
+        # localroles keep what is defined for 'state': 'itemcreated' in cfg.getItemWFValidationLevels
+        # if there are some extra suffixes they still have Reader access to this item
         self.assertNotIn(self.developers_reviewers, item.__ac_local_roles__)
 
     def _no_validation_extra_suffixes(self):
         '''By default, when using no validation (items are created "validated")
            validation suffixes have no access except if some extra_suffixes
            are defined on the "itemcreated" item WF validation leve.'''
+        cfg = self.meetingConfig
         self._updateItemValidationLevel(
-            self.meetingConfig, "itemcreated", extra_suffixes=["reviewers"], enable=False)
+            cfg,
+            "itemcreated",
+            extra_groups_managing_item=[GROUP_MANAGING_ITEM_PG_PREFIX + "reviewers"],
+            enable=False)
         item = self.create('MeetingItem')
         self.assertEqual(item.query_state(), 'validated')
         # creators always have access
         # adding decision annex may be adapted
         creators_roles = ['Reader']
-        if item.may_add_annex_decision(self.meetingConfig, item.query_state()):
+        if item.may_add_annex_decision(cfg, item.query_state()):
             creators_roles.append('Contributor')
         self.assertEqual(item.__ac_local_roles__[self.developers_creators], creators_roles)
         self.assertEqual(item.__ac_local_roles__[self.developers_observers], ['Reader'])
