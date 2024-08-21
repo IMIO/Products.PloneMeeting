@@ -1210,7 +1210,7 @@ schema = Schema((
                             vocabulary_factory=u'Products.PloneMeeting.vocabularies.'
                             'groups_managing_item_vocabulary',
                             col_description="Item WF validation levels extra groups managing item description.",
-                            required=True),
+                            required=False),
                      'enabled':
                         SelectColumn("Item WF validation levels enabled",
                                      vocabulary="listBooleanVocabulary",

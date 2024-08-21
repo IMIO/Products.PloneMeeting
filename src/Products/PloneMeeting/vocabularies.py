@@ -152,10 +152,10 @@ class CategoriesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         categories = cfg.getCategories(catType=cat_type, onlySelectable=False)
-        activeCategories = [cat for cat in categories if cat.enabled]
-        notActiveCategories = [cat for cat in categories if not cat.enabled]
+        active_cats = [cat for cat in categories if cat.enabled]
+        not_active_cats = [cat for cat in categories if not cat.enabled]
         res_active = []
-        for category in activeCategories:
+        for category in active_cats:
             term_id = category.getId()
             res_active.append(
                 SimpleTerm(term_id,
@@ -166,7 +166,7 @@ class CategoriesVocabulary(object):
         res = humansorted(res_active, key=attrgetter('title'))
 
         res_not_active = []
-        for category in notActiveCategories:
+        for category in not_active_cats:
             term_id = category.getId()
             res_not_active.append(
                 SimpleTerm(term_id,
@@ -3408,7 +3408,8 @@ class GroupsManagingItemVocabulary(SuffixedPloneGroupsVocabulary):
                 'proposing_group_managing_item',
                 mapping={'suffix_title': safe_unicode(fct_dic['fct_title'])},
                 domain="PloneMeeting",
-                context=context.REQUEST)
+                context=context.REQUEST,
+                default="Proposing group ({0})".format(fct_dic['fct_id']))
             terms.insert(0, SimpleTerm(term_id, term_id, term_title))
         return SimpleVocabulary(terms)
 
