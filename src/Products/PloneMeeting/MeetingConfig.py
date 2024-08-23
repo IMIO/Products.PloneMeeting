@@ -5184,6 +5184,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                              domain='PloneMeeting',
                              context=self.REQUEST)
 
+        # for "itemcreated", group_managing_item must be "proposing_group__creators"
+        if enabled_values_states and \
+           itemcreated_values_state['group_managing_item'] != GROUP_MANAGING_ITEM_PG_PREFIX + "creators":
+            return translate('item_wf_val_states_itemcreated_group_managing_item_creators_error',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
         # the values of "back_transition" column must start with "back"
         back_transition_values = self.getItemWFValidationLevels(
             data='back_transition',
