@@ -2194,6 +2194,44 @@ def get_item_validation_wf_suffixes(cfg, org_uid=None, only_enabled=True):
     return suffixes
 
 
+def get_last_validation_state_cachekey(method, item, cfg, before_last=False, return_level=False):
+    '''cachekey method for self.get_last_validation_state.'''
+    return item.getProposingGroup(), cfg.getId(), before_last, return_level
+
+# not ramcached perf tests says it does not change much
+# and this avoid useless entry in cache
+# @ram.cache(get_last_validation_state_cachekey)
+def get_last_validation_state(item, cfg, before_last=False, return_level=False):
+    '''Last validation state is validation level state defined in
+       MeetingConfig.itemWFValidationLevels for which the linked
+       suffixed Plone group is not empty.
+       If p_before_last=True, then we return before_last level.
+       If p_return_level=True we return the last validation state and
+       the full validation level from cfg.getItemWFValidationLevels.'''
+    tool = api.portal.get_tool('portal_plonemeeting')
+    levels = list(cfg.getItemWFValidationLevels(
+        item=item, render_proposing_group=True, only_enabled=True))
+    res = 'itemcreated'
+    # get suffixed Plone group in reverse order of defined validation levels
+    levels.reverse()
+    found_last = False
+    found_before_last = False
+    level = {}
+    for level in levels:
+        if tool.group_is_not_empty(plone_group_id=level['group_managing_item']):
+            res = level['state']
+            if found_last:
+                found_before_last = True
+            else:
+                found_last = True
+            if (found_last and not before_last) or found_before_last:
+                break
+    if return_level:
+        return res, level
+    else:
+        return res
+
+
 def is_proposing_group_editor(org_uid, cfg):
     """ """
     suffixes = cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)

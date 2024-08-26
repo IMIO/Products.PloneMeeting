@@ -5023,6 +5023,24 @@ class testMeetingItem(PloneMeetingTestCase):
     def _get_developers_all_reviewers_groups(self):
         return [self.developers_reviewers]
 
+    def test_pm_ItemActionsPanelCachingWFA_reviewers_take_back_validated_item(self):
+        """Actions panel cache when WFA "reviewers_take_back_validated_item" is used."""
+        if not self._check_wfa_available(['reviewers_take_back_validated_item']):
+            return
+
+        self._setUpDefaultItemWFValidationLevels(self.meetingConfig)
+        item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
+        # make pmReviewer1 a creator as creator is part of the cachekey
+        self._addPrincipalToGroup('pmReviewer1', self.developers_creators)
+        self._activate_wfas(['reviewers_take_back_validated_item'])
+        self.validateItem(item)
+        self.changeUser("pmReviewer1")
+        self.assertTrue('backToProposed' in item.restrictedTraverse('@@actions_panel')())
+        self.assertEqual(self.transitions(item), ['backToProposed'])
+        self.changeUser("pmCreator1", clean_memoize=False)
+        self.assertFalse('backToProposed' in item.restrictedTraverse('@@actions_panel')())
+        self.assertEqual(self.transitions(item), [])
+
     def test_pm_ItemActionsPanelCachingInvalidatedWhenUserGroupsChanged(self):
         """Actions panel cache is invalidated when the groups of a user changed.
            Here we will make a creator be a reviewer."""
@@ -8105,8 +8123,11 @@ class testMeetingItem(PloneMeetingTestCase):
         itemWFValidationLevels[1]['group_managing_item'] = self.vendors_creators
         cfg.setItemWFValidationLevels(itemWFValidationLevels)
         notify(ObjectEditedEvent(cfg))
-        self.proposeItem(item)
+        item.update_local_roles()
         self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+        self.proposeItem(item)
         self.assertTrue(self.hasPermission(View, item))
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         self.changeUser('pmCreator2')

@@ -128,6 +128,7 @@ from Products.PloneMeeting.utils import escape
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_internal_number
+from Products.PloneMeeting.utils import get_last_validation_state
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -212,42 +213,6 @@ class MeetingItemWorkflowConditions(object):
         '''Is the object currently published in Plone a Meeting ?'''
         obj = getCurrentMeetingObject(self.context)
         return isinstance(obj, Meeting)
-
-    def _getLastValidationState_cachekey(method, self, before_last=False, return_level=False):
-        '''cachekey method for self._getLastValidationState.'''
-        return self.context.getProposingGroup(), before_last, return_level
-
-    # not ramcached perf tests says it does not change much
-    # and this avoid useless entry in cache
-    # @ram.cache(_getLastValidationState_cachekey)
-    def _getLastValidationState(self, before_last=False, return_level=False):
-        '''Last validation state is validation level state defined in
-           MeetingConfig.itemWFValidationLevels for which the linked
-           suffixed Plone group is not empty.
-           If p_before_last=True, then we return before_last level.
-           If p_return_level=True we return the last validation state and
-           the full validation level from cfg.getItemWFValidationLevels.'''
-        levels = list(self.cfg.getItemWFValidationLevels(
-            item=self.context, render_proposing_group=True, only_enabled=True))
-        res = 'itemcreated'
-        # get suffixed Plone group in reverse order of defined validation levels
-        levels.reverse()
-        found_last = False
-        found_before_last = False
-        level = {}
-        for level in levels:
-            if self.tool.group_is_not_empty(plone_group_id=level['group_managing_item']):
-                res = level['state']
-                if found_last:
-                    found_before_last = True
-                else:
-                    found_last = True
-                if (found_last and not before_last) or found_before_last:
-                    break
-        if return_level:
-            return res, level
-        else:
-            return res
 
     def _check_required_data(self, destination_state):
         '''Make sure required data are encoded when necessary.'''
@@ -383,7 +348,7 @@ class MeetingItemWorkflowConditions(object):
                 res = True
             else:
                 # user may validate if he is member of the last validation level suffixed group
-                last_validation_state, last_level = self._getLastValidationState(return_level=True)
+                last_validation_state = get_last_validation_state(self.context, self.cfg)
                 if self.review_state == last_validation_state or \
                    ('item_validation_shortcuts' in self.cfg.getWorkflowAdaptations() and
                     'item_validation_no_validate_shortcuts' not in self.cfg.getWorkflowAdaptations() and
@@ -525,7 +490,8 @@ class MeetingItemWorkflowConditions(object):
         if not meeting or (meeting and meeting.query_state() != 'closed'):
             # when item is "validated", we may eventually send back to last validation state
             wfas = self.cfg.getWorkflowAdaptations()
-            last_val_state, last_level = self._getLastValidationState(return_level=True)
+            last_val_state, last_level = get_last_validation_state(
+                self.context, self.cfg, return_level=True)
             # group managing item available when item before "validated"
             # after we take proposingGroup + last validation state group_managing_item suffix
             plone_group_managing_item = self.context.get_plone_groups_managing_item(
@@ -539,7 +505,7 @@ class MeetingItemWorkflowConditions(object):
                 if _checkPermission(ReviewPortalContent, self.context):
                     res = True
                 # manage the reviewers_take_back_validated_item WFAdaptation
-                elif 'reviewers_take_back_validated_item' in self.cfg.getWorkflowAdaptations():
+                elif 'reviewers_take_back_validated_item' in wfas:
                     # is current user member of last validation level?
                     res = self.tool.group_is_not_empty(
                         plone_group_id=last_level['group_managing_item'],
@@ -551,7 +517,8 @@ class MeetingItemWorkflowConditions(object):
                 sendable_back_states = []
                 # when using from last/before last validation level, able to send back to last level
                 if 'waiting_advices_from_before_last_val_level' in wfas:
-                    sendable_back_states.append(self._getLastValidationState(before_last=True))
+                    sendable_back_states.append(get_last_validation_state(
+                        self.context, self.cfg, before_last=True))
                 if 'waiting_advices_from_last_val_level' in wfas:
                     sendable_back_states.append(last_val_state)
                 if 'waiting_advices_from_every_val_levels' in wfas:
@@ -605,10 +572,9 @@ class MeetingItemWorkflowConditions(object):
             current_validation_state = 'itemcreated' \
                 if self.review_state == 'returned_to_proposing_group' \
                 else self.review_state.replace('returned_to_proposing_group_', '')
-            last_val_state = self._getLastValidationState()
             # we are in last validation state, or we are in state 'returned_to_proposing_group'
             # and there is no last validation state, aka it is "itemcreated"
-            if current_validation_state != last_val_state:
+            if current_validation_state != get_last_validation_state(self.context, self.cfg):
                 return
 
         # get the linked meeting
@@ -745,9 +711,11 @@ class MeetingItemWorkflowConditions(object):
                 from_states = []
                 if 'waiting_advices' in wfas:
                     if 'waiting_advices_from_last_val_level' in wfas:
-                        from_states.append(self._getLastValidationState())
+                        from_states.append(
+                            get_last_validation_state(self.context, self.cfg))
                     if 'waiting_advices_from_before_last_val_level' in wfas:
-                        from_states.append(self._getLastValidationState(before_last=True))
+                        from_states.append(
+                            get_last_validation_state(self.context, self.cfg, before_last=True))
                     if 'waiting_advices_from_every_val_levels' in wfas:
                         item_validation_states = self.cfg.getItemWFValidationLevels(
                             data='state', only_enabled=True)
