@@ -17,6 +17,9 @@ Changelog
 - Fixed `AskedAdvicesVocabulary` to mark an term as inactive only if
   `for_item_created_until` date is actually expired.
   [gbastien]
+- Added new field `MeetingItem.emergencyMotivation` to manage emergency
+  motivation more easily and out of full `emergency` functionnality.
+  [gbastien]
 
 4.2.9 (2024-06-10)
 ------------------
