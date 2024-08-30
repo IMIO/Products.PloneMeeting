@@ -9,6 +9,7 @@ from plone.app.querystring import queryparser
 from plone.memoize import ram
 from Products.Archetypes.BaseObject import BaseObject
 from Products.Archetypes.Field import Field
+from Products.Archetypes.Field import TextField
 from Products.CMFCore.TypesTool import TypeInformation
 from Products.PloneMeeting import logger
 from Products.PlonePAS.tools.membership import MembershipTool
@@ -129,6 +130,30 @@ def validate_content_types(self, instance, value, errors):
 
 Field.validate_content_types = validate_content_types
 logger.info("Monkey patching Products.Archetypes.Field.Field (validate_content_types)")
+
+
+TextField.__old_pm__process_input = TextField._process_input
+
+
+def _process_input(self, value, file=None, default=None,
+                   mimetype=None, instance=None, **kwargs):
+    """Initialize new field correctly with text/html content_type."""
+    file, mimetype, filename = self.__old_pm__process_input(
+        value=value, file=file, default=default, mimetype=mimetype, instance=instance, **kwargs)
+    # this case if when a new field is initialized on an existing element
+    if not instance.checkCreationFlag() and kwargs.get('_initializing_') and 'schema' in kwargs:
+        field_name = kwargs['field'] if isinstance(kwargs['field'], str) else \
+            kwargs['field'].__name__
+        logger.info("Initializing new field \"{0}\" on existing element at {1}".format(
+            field_name, '/'.join(instance.getPhysicalPath())))
+        default_content_type = kwargs['schema'][field_name].default_content_type
+        if default_content_type:
+            file.setContentType(instance, default_content_type)
+    return file, mimetype, filename
+
+
+TextField._process_input = _process_input
+logger.info("Monkey patching Products.Archetypes.Field.TextField (_process_input)")
 
 
 def extract(self, default=interfaces.NO_VALUE):
