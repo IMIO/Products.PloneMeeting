@@ -8,6 +8,8 @@ Changelog
 - Display a clear message when trying to remove a meeting containing items as
   `MeetignManager` as it will raise `Unauthorized` when using restapi.
   [gbastien]
+- Fix issue regarding mail notification not sent when user is coming from a LDAP/AD.
+  [aduchene]
 
 4.2.9 (2024-06-10)
 ------------------

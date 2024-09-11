@@ -685,7 +685,7 @@ def sendMailIfRelevant(obj,
         userIds = value
     else:
         # isPermission
-        userIds = membershipTool.listMemberIds()
+        userIds = api.portal.get_tool('portal_memberdata')._members
 
     # remove duplicate
     userIds = list(set(userIds))
