@@ -869,8 +869,9 @@ class AskedAdvicesVocabulary(object):
         # customAdvisers
         customAdvisers = self.cfg and self.cfg.getCustomAdvisers() or []
         for customAdviser in customAdvisers:
-            if (active and customAdviser['for_item_created_until']) or \
-               (not active and not customAdviser['for_item_created_until']):
+            created_until = customAdviser['for_item_created_until']
+            if (active and created_until and DateTime(created_until).isPast()) or \
+               (not active and (not created_until or DateTime(created_until).isFuture())):
                 continue
             if customAdviser['delay']:
                 # build using DELAYAWARE_ROW_ID_PATTERN
@@ -1723,26 +1724,21 @@ class PMPortalTypesVocabulary(PortalTypesVocabularyFactory):
         cfg = tool.getMeetingConfig(context)
         res = []
         if cfg:
+            portal_types = api.portal.get_tool('portal_types')
             # available for item, meeting and advice
             itemTypeName = cfg.getItemTypeName()
             res.append(SimpleTerm(itemTypeName,
                                   itemTypeName,
-                                  translate(itemTypeName,
-                                            domain="plone",
-                                            context=context.REQUEST)))
+                                  portal_types[itemTypeName].Title()))
             meetingTypeName = cfg.getMeetingTypeName()
             res.append(SimpleTerm(meetingTypeName,
                                   meetingTypeName,
-                                  translate(meetingTypeName,
-                                            domain="plone",
-                                            context=context.REQUEST)))
+                                  portal_types[meetingTypeName].Title()))
             # manage multiple 'meetingadvice' portal_types
             for portal_type in getAdvicePortalTypes():
                 res.append(SimpleTerm(portal_type.id,
                                       portal_type.id,
-                                      translate(portal_type.title,
-                                                domain="PloneMeeting",
-                                                context=context.REQUEST)))
+                                      portal_type.Title()))
             return SimpleVocabulary(res)
         else:
             return super(PMPortalTypesVocabulary, self).__call__(context)

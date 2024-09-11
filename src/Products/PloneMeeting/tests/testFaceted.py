@@ -682,6 +682,19 @@ class testFaceted(PloneMeetingTestCase):
         cfg.setPowerAdvisersGroups([self.endUsers_uid])
         notify(ObjectEditedEvent(cfg))
         self.assertEqual(len(vocab(pmFolder)), 7)
+        # inactive term, displayed in term title
+        # make a not really expired term, a 'for_item_created_until' in the future
+        self.assertEqual(customAdvisers[-1]['row_id'], 'unique_id_789')
+        customAdvisers[-1]['for_item_created_until'] = '2099/01/01'
+        cfg.setCustomAdvisers(customAdvisers)
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(vocab(pmFolder).by_token['delay_row_id__unique_id_789'].title,
+                         u'Vendors - 20 day(s)')
+        customAdvisers[-1]['for_item_created_until'] = '2009/01/01'
+        cfg.setCustomAdvisers(customAdvisers)
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(vocab(pmFolder).by_token['delay_row_id__unique_id_789'].title,
+                         u'Vendors - 20 day(s) (Inactive)')
 
     def test_pm_AskedAdvicesVocabularyWithWrongContext(self):
         '''Test the "Products.PloneMeeting.vocabularies.askedadvicesvocabulary"
