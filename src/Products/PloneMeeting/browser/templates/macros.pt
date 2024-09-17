@@ -1013,19 +1013,36 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
  <div class="item-linkeditems"
      tal:condition="linkedItems">
      <tal:loop repeat="linkedItem linkedItems">
-       <tal:defines define="linkedItem_uid linkedItem/UID;
-                            linkedItem_url linkedItem/absolute_url;">
+       <tal:defines define="linkedItem_uid python: linkedItem.UID();
+                            linkedItem_url python: linkedItem.absolute_url();
+                            is_viewable python: linkedItem.isViewable();">
            <div class="collapsible"
+                tal:condition="is_viewable"
                 tal:attributes="onclick string:toggleDetails('collapsible-text-linkeditem-${linkedItem_uid}',
                                 toggle_parent_active=true, parent_tag=this,
                                 load_view='@@load-linked-items-infos?fieldsConfigAttr=itemsVisibleFields&currentCfgId=${view/cfg/getId}', base_url='${linkedItem_url}');">
            </div>
-           <div class="collapsible-pretty-title" style="display: inline;" tal:content="structure python: context.displayLinkedItem(linkedItem)"></div>
+           <div class="collapsible"
+                tal:condition="not:is_viewable"
+                tal:attributes="onclick string:toggleDetails('collapsible-text-linkeditem-${linkedItem_uid}',
+                                toggle_parent_active=true, parent_tag=this);">
+           </div>
+           <div class="collapsible-pretty-title"
+                style="display: inline;"
+                tal:content="structure python: context.displayLinkedItem(linkedItem)"></div>
            <div style="clear: both;"></div>
-           <div tal:attributes="id string:collapsible-text-linkeditem-${linkedItem_uid}"
+           <div tal:condition="is_viewable" tal:attributes="id string:collapsible-text-linkeditem-${linkedItem_uid}"
                 class="collapsible-content">
              <div class="collapsible-inner-content">
                  <img tal:attributes="src string:${view/portal_url}/spinner_small.gif" />
+             </div>
+           </div>
+           <div tal:condition="not:is_viewable" tal:attributes="id string:collapsible-text-linkeditem-${linkedItem_uid}"
+                class="collapsible-content">
+             <div class="collapsible-inner-content">
+                 <span class="discreet no_access"
+                       i18n:translate="can_not_access_this_element"
+                       i18n:domain="imio.prettylink">(You can not access this element)</span>
              </div>
            </div>
        </tal:defines>

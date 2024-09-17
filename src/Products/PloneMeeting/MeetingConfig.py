@@ -1189,6 +1189,10 @@ schema = Schema((
                         Column("Item WF validation levels leading transition title",
                                col_description="Item WF validation levels leading transition title description.",
                                required=True),
+                     'leading_transition_condition':
+                        Column("Item WF validation levels leading transition condition",
+                               col_description="Item WF validation levels leading transition condition description.",
+                               required=False),
                      'back_transition':
                         Column("Item WF validation levels back transition",
                                col_description="Item WF validation levels back transition description.",
@@ -1229,6 +1233,7 @@ schema = Schema((
                  'state_title',
                  'leading_transition',
                  'leading_transition_title',
+                 'leading_transition_condition',
                  'back_transition',
                  'back_transition_title',
                  'group_managing_item',

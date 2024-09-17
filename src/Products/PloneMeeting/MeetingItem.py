@@ -238,33 +238,29 @@ class MeetingItemWorkflowConditions(object):
     def _mayShortcutToValidationLevel(self, destinationState):
         '''When using WFAdaptation 'item_validation_shortcuts',
            is current user able to use the shortcut to p_destinationState?'''
-        res = False
+        res = True
         if 'item_validation_shortcuts' in self.cfg.getWorkflowAdaptations():
             # get previous item validation state and check what suffixes may manage
             item_val_levels_states = self.cfg.getItemWFValidationLevels(
-                data='state', only_enabled=True)
+                data='state',
+                only_enabled=True,
+                return_state_singleton=False)
             previous_val_state = item_val_levels_states[
                 item_val_levels_states.index(destinationState) - 1]
-            previous_suffixes = self.cfg.getItemWFValidationLevels(
-                states=[previous_val_state], data='extra_suffixes', only_enabled=True)
-            previous_main_suffix = self.cfg.getItemWFValidationLevels(
-                states=[previous_val_state], data='suffix', only_enabled=True)
-            previous_suffixes.append(previous_main_suffix)
-            previous_suffixes = tuple(set(previous_suffixes))
-            previous_groups_managing_item_uids = self.context.get_orgs_managing_item(
-                self.cfg, previous_val_state)
-            res = bool(self.tool.get_filtered_plone_groups_for_user(
-                org_uids=previous_groups_managing_item_uids, suffixes=previous_suffixes))
-            # when previous_val_state group suffix is empty, we replay _mayShortcutToValidationLevel
-            # but with this previous state as destinationState
-            # XXX TO BE CONFIRMED
-            if not res:
-                for previous_group_managing_item_uid in previous_groups_managing_item_uids:
-                    if not self.tool.group_is_not_empty(
-                            previous_group_managing_item_uid, previous_main_suffix):
-                        return self._mayShortcutToValidationLevel(previous_val_state)
-        else:
-            res = True
+            previous_plone_group_ids = self.cfg.getItemWFValidationLevels(
+                item=self.context,
+                states=[previous_val_state],
+                data='group_managing_item',
+                only_enabled=True,
+                return_state_singleton=False)
+            previous_plone_group_ids += self.cfg.getItemWFValidationLevels(
+                item=self.context,
+                states=[previous_val_state],
+                data='extra_groups_managing_item',
+                only_enabled=True,
+                return_state_singleton=False)
+            res = set(previous_plone_group_ids).intersection(
+                self.tool.get_plone_groups_for_user())
         return res
 
     security.declarePublic('mayProposeToNextValidationLevel')
@@ -273,18 +269,26 @@ class MeetingItemWorkflowConditions(object):
         '''Check if able to propose to next validation level.'''
         res = False
         if _checkPermission(ReviewPortalContent, self.context):
-            suffix = self.cfg.getItemWFValidationLevels(
-                states=[destinationState], data='suffix', only_enabled=True)
-            groups_managing_item_uids = self.context.get_orgs_managing_item(self.cfg, destinationState)
+            plone_groups_managing_item = self.cfg.getItemWFValidationLevels(
+                item=self.context,
+                states=[destinationState],
+                data='group_managing_item',
+                only_enabled=True,
+                return_state_singleton=False)
+            extra_plone_groups_managing_item = self.cfg.getItemWFValidationLevels(
+                item=self.context,
+                states=[destinationState],
+                data='extra_groups_managing_item',
+                only_enabled=True,
+                return_state_singleton=False)
             # check if next validation level suffixed Plone group is not empty
-            res = False
-            for group_managing_item_uid in groups_managing_item_uids:
-                res = self.tool.group_is_not_empty(group_managing_item_uid, suffix)
+            for plone_group_id in plone_groups_managing_item + extra_plone_groups_managing_item:
+                res = self.tool.group_is_not_empty(plone_group_id=plone_group_id)
                 if res:
                     break
             # shortcuts are available to (Meeting)Managers
             if res and not self.tool.isManager(self.cfg):
-                # check that when using shortcuts, this is available
+                # check if available when using shortcuts
                 res = self._mayShortcutToValidationLevel(destinationState)
         # check required data only if transition is doable or we would display
         # a No button for a transition that is actually not triggerable...
@@ -353,7 +357,7 @@ class MeetingItemWorkflowConditions(object):
                    ('item_validation_shortcuts' in self.cfg.getWorkflowAdaptations() and
                     'item_validation_no_validate_shortcuts' not in self.cfg.getWorkflowAdaptations() and
                         set(self.context.get_plone_groups_managing_item(
-                            self.cfg, [self.review_state])).intersection(
+                            self.cfg, [last_validation_state])).intersection(
                             get_plone_groups_for_user())):
                     res = True
                     if self._has_waiting_advices_transitions():
