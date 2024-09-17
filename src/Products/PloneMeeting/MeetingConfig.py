@@ -4997,11 +4997,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate(
                     'wa_dependencies', domain='PloneMeeting', context=self.REQUEST)
 
-        # dependency on 'MeetingConfig.itemWFValidationLevels'
-        msg = translate('wa_item_validation_levels_dependency',
-                        domain='PloneMeeting',
-                        context=self.REQUEST)
-
         # item validation levels
         itemWFValidationLevels = self.REQUEST.get(
             'itemWFValidationLevels', self.getItemWFValidationLevels())
@@ -5012,12 +5007,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         back_from_presented = [v for v in values
                                if v.startswith('presented_item_back_to_')]
-        if not item_validation_states:
-            if 'reviewers_take_back_validated_item' in values or \
-               'return_to_proposing_group_with_last_validation' in values or \
-               'return_to_proposing_group_with_all_validations' in values or \
-               back_from_presented:
-                return msg
+
+        # dependency on 'MeetingConfig.itemWFValidationLevels'
+        # if no validation state or only "itemcreated", some WFA are not selectable
+        if (not item_validation_states and
+            ('reviewers_take_back_validated_item' in values or
+             'return_to_proposing_group_with_last_validation' in values or
+             'return_to_proposing_group_with_all_validations' in values or
+             back_from_presented)) or \
+           (len(item_validation_states) == 1 and
+             ('return_to_proposing_group_with_last_validation' in values or
+              'return_to_proposing_group_with_all_validations' in values)):
+                return translate(
+                    'wa_item_validation_levels_dependency',
+                    domain='PloneMeeting',
+                    context=self.REQUEST)
 
         # check that selected back_from_presented transitions
         # exists in MeetingConfig.itemWFValidationLevels
