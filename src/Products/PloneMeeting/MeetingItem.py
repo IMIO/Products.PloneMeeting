@@ -250,32 +250,27 @@ class MeetingItemWorkflowConditions(object):
             while not self.validation_level_is_valid(item_val_levels_states[index]):
                 index -= 1
             previous_val_state = item_val_levels_states[index]
-            previous_plone_group_ids = self.cfg.getItemWFValidationLevels(
-                item=self.context,
-                states=[previous_val_state],
-                data='group_managing_item',
-                only_enabled=True,
-                return_state_singleton=False)
-            previous_plone_group_ids += self.cfg.getItemWFValidationLevels(
-                item=self.context,
-                states=[previous_val_state],
-                data='extra_groups_managing_item',
-                only_enabled=True,
-                return_state_singleton=False)
+            self.context.get_all_groups_managing_item
+            previous_plone_group_ids = self.context.get_plone_groups_managing_item(
+                self.cfg,
+                item_states=[previous_val_state])
             res = set(previous_plone_group_ids).intersection(
                 self.tool.get_plone_groups_for_user())
         return res
 
     def validation_level_is_valid(self, review_state, user_id=None):
         """ """
-        # check available_on
-        available_on = self.cfg.getItemWFValidationLevels(
+        # check if level is a validation level
+        level = self.cfg.getItemWFValidationLevels(
             states=[review_state],
-            data='available_on',
-            only_enabled=True)
+            only_enabled=True,
+            return_state_singleton=True)
+        if not level:
+            return
+        # check available_on
         res = _evaluateExpression(
             self.context,
-            expression=available_on,
+            expression=level['available_on'],
             roles_bypassing_expression=[],
             extra_expr_ctx=_base_extra_expr_ctx(self.context),
             raise_on_error=True)
@@ -543,7 +538,7 @@ class MeetingItemWorkflowConditions(object):
                 # remove duplicates
                 sendable_back_states = list(set(sendable_back_states))
                 if destinationState in sendable_back_states or \
-                   destinationState not in item_validation_states:
+                   destinationState == "validated":
                     # bypass for Manager, do not check on ReviewPortalContent
                     # as also given to proposingGroup
                     if self.tool.isManager(self.cfg):
