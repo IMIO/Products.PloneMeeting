@@ -1289,7 +1289,6 @@ def applyOnTransitionFieldTransform(obj, transitionId):
            ('.' not in transform['field_name'] or
                 transform['field_name'].split('.')[0] == obj.getTagName()):
             try:
-                extra_expr_ctx.update({'item': obj, })
                 res = _evaluateExpression(
                     obj,
                     expression=tal_expr,
@@ -1344,7 +1343,7 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId, items=[]):
                     # do this as Manager to avoid permission problems, the configuration
                     # is supposed to be applied
                     with api.env.adopt_roles(['Manager']):
-                        extra_expr_ctx.update({'item': item, 'meeting': meeting})
+                        extra_expr_ctx.update({'item': item})
                         _evaluateExpression(
                             item,
                             expression=action['tal_expression'].strip(),
@@ -1950,7 +1949,7 @@ def getAvailableMailingLists(obj, pod_template):
         return res
     try:
         extra_expr_ctx = _base_extra_expr_ctx(obj)
-        extra_expr_ctx.update({'obj': obj, })
+        extra_expr_ctx.update({'obj': obj})
         for line in mailing_lists.split('\n'):
             name, expression, userIds = line.split(';')
             if not expression or _evaluateExpression(obj,
@@ -2208,7 +2207,6 @@ def get_last_validation_state(item, cfg, before_last=False, return_level=False):
        If p_before_last=True, then we return before_last level.
        If p_return_level=True we return the last validation state and
        the full validation level from cfg.getItemWFValidationLevels.'''
-    tool = api.portal.get_tool('portal_plonemeeting')
     levels = list(cfg.getItemWFValidationLevels(
         item=item, render_proposing_group=True, only_enabled=True))
     res = 'itemcreated'
@@ -2217,8 +2215,9 @@ def get_last_validation_state(item, cfg, before_last=False, return_level=False):
     found_last = False
     found_before_last = False
     level = {}
+    wf_conditions = item.wfConditions()
     for level in levels:
-        if tool.group_is_not_empty(plone_group_id=level['group_managing_item']):
+        if wf_conditions.validation_level_is_valid(level['state']):
             res = level['state']
             if found_last:
                 found_before_last = True
@@ -2351,11 +2350,15 @@ def _base_extra_expr_ctx(obj):
     cfg = tool.getMeetingConfig(obj)
     # member, context and portal are managed by
     # collective.behavior.talcondition or collective.documentgenerator
+    item = obj if obj.__class__.__name__ == 'MeetingItem' else None
+    meeting = obj if obj.__class__.__name__ == 'Meeting' else \
+        (item.getMeeting() if item else None)
     data = {'tool': tool,
             'cfg': cfg,
             # backward compatibility
             'meetingConfig': cfg,
-            'meeting': obj.getMeeting() if obj.__class__.__name__ == 'MeetingItem' else None,
+            'item': item,
+            'meeting': meeting,
             # backward compatibility, "member" will be available by default
             'user': api.user.get_current(),
             'catalog': api.portal.get_tool('portal_catalog'),

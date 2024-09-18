@@ -245,8 +245,11 @@ class MeetingItemWorkflowConditions(object):
                 data='state',
                 only_enabled=True,
                 return_state_singleton=False)
-            previous_val_state = item_val_levels_states[
-                item_val_levels_states.index(destinationState) - 1]
+            # check if can review previous valid validation state
+            index = item_val_levels_states.index(destinationState) - 1
+            while not self.validation_level_is_valid(item_val_levels_states[index]):
+                index -= 1
+            previous_val_state = item_val_levels_states[index]
             previous_plone_group_ids = self.cfg.getItemWFValidationLevels(
                 item=self.context,
                 states=[previous_val_state],
@@ -263,29 +266,47 @@ class MeetingItemWorkflowConditions(object):
                 self.tool.get_plone_groups_for_user())
         return res
 
+    def validation_level_is_valid(self, review_state, user_id=None):
+        """ """
+        # check available_on
+        available_on = self.cfg.getItemWFValidationLevels(
+            states=[review_state],
+            data='available_on',
+            only_enabled=True)
+        res = _evaluateExpression(
+            self.context,
+            expression=available_on,
+            roles_bypassing_expression=[],
+            extra_expr_ctx=_base_extra_expr_ctx(self.context),
+            raise_on_error=True)
+        if res:
+            # check if next validation level suffixed Plone group is not empty
+            plone_groups_managing_item = self.cfg.getItemWFValidationLevels(
+                item=self.context,
+                states=[review_state],
+                data='group_managing_item',
+                only_enabled=True,
+                return_state_singleton=False)
+            extra_plone_groups_managing_item = self.cfg.getItemWFValidationLevels(
+                item=self.context,
+                states=[review_state],
+                data='extra_groups_managing_item',
+                only_enabled=True,
+                return_state_singleton=False)
+            for plone_group_id in plone_groups_managing_item + extra_plone_groups_managing_item:
+                res = self.tool.group_is_not_empty(
+                    plone_group_id=plone_group_id, user_id=user_id)
+                if res:
+                    break
+        return res
+
     security.declarePublic('mayProposeToNextValidationLevel')
 
     def mayProposeToNextValidationLevel(self, destinationState):
         '''Check if able to propose to next validation level.'''
         res = False
         if _checkPermission(ReviewPortalContent, self.context):
-            plone_groups_managing_item = self.cfg.getItemWFValidationLevels(
-                item=self.context,
-                states=[destinationState],
-                data='group_managing_item',
-                only_enabled=True,
-                return_state_singleton=False)
-            extra_plone_groups_managing_item = self.cfg.getItemWFValidationLevels(
-                item=self.context,
-                states=[destinationState],
-                data='extra_groups_managing_item',
-                only_enabled=True,
-                return_state_singleton=False)
-            # check if next validation level suffixed Plone group is not empty
-            for plone_group_id in plone_groups_managing_item + extra_plone_groups_managing_item:
-                res = self.tool.group_is_not_empty(plone_group_id=plone_group_id)
-                if res:
-                    break
+            res = self.validation_level_is_valid(destinationState)
             # shortcuts are available to (Meeting)Managers
             if res and not self.tool.isManager(self.cfg):
                 # check if available when using shortcuts
@@ -421,16 +442,13 @@ class MeetingItemWorkflowConditions(object):
 
     def _userIsPGMemberAbleToSendItemBack(self, proposing_group_uid, destinationState):
         ''' '''
-        suffix = self.cfg.getItemWFValidationLevels(
-            states=[destinationState], data='suffix')
-        # first case, is user member of destinationState level?
-        res = self.tool.group_is_not_empty(
-            proposing_group_uid, suffix, user_id=get_current_user_id(self.context.REQUEST))
-        # in case we use shortcuts, we also check if able to go to destinationState
-        # if it was the classic item validation workflow
-        # so a creator could send back to "itemcreated" and to "proposed"
+        # level valid and member can manage?
+        res = self.validation_level_is_valid(
+            destinationState, user_id=get_current_user_id(self.context.REQUEST))
+        # if not, check if using shortcuts, maybe user can send item back
+        # as when using shortcuts, user could send back to "itemcreated" or "proposed"
         if not res and \
-           self.tool.group_is_not_empty(proposing_group_uid, suffix) and \
+           self.validation_level_is_valid(destinationState) and \
            'item_validation_shortcuts' in self.cfg.getWorkflowAdaptations():
             res = self._mayShortcutToValidationLevel(destinationState)
 
@@ -501,9 +519,9 @@ class MeetingItemWorkflowConditions(object):
             plone_group_managing_item = self.context.get_plone_groups_managing_item(
                 self.cfg, [self.review_state], only_group_managing_item=True)
             if plone_group_managing_item:
-                org_uid, suffix = plone_group_managing_item[0].split("_")
+                org_uid = plone_group_managing_item[0].split("_")[0]
             else:
-                org_uid, suffix = self.context.getProposingGroup(), "creators"
+                org_uid = self.context.getProposingGroup()
             if self.review_state == 'validated' and destinationState == last_val_state:
                 # MeetingManager probably
                 if _checkPermission(ReviewPortalContent, self.context):
@@ -555,11 +573,8 @@ class MeetingItemWorkflowConditions(object):
                             res = self._currentUserIsAdviserAbleToSendItemBack(destinationState)
             else:
                 # maybe destinationState is a validation state?
-                # in this case return True only if group not empty
-                suffix = self.cfg.getItemWFValidationLevels(
-                    states=[destinationState], data='suffix')
                 res = _checkPermission(ReviewPortalContent, self.context) and \
-                    (not suffix or self.tool.group_is_not_empty(org_uid, suffix))
+                    self.validation_level_is_valid(destinationState)
         return res
 
     security.declarePublic('mayBackToMeeting')
