@@ -440,7 +440,7 @@ class MeetingItemWorkflowConditions(object):
                                mapping={'itemNumber': itemNumber}))
         return res
 
-    def _userIsPGMemberAbleToSendItemBack(self, proposing_group_uid, destinationState):
+    def _userIsPGMemberAbleToSendItemBack(self, destinationState):
         ''' '''
         # level valid and member can manage?
         res = self.validation_level_is_valid(
@@ -453,11 +453,9 @@ class MeetingItemWorkflowConditions(object):
             res = self._mayShortcutToValidationLevel(destinationState)
 
         return res and \
-            self._userIsPGMemberAbleToSendItemBackExtraCondition(
-                proposing_group_uid, destinationState)
+            self._userIsPGMemberAbleToSendItemBackExtraCondition(destinationState)
 
-    def _userIsPGMemberAbleToSendItemBackExtraCondition(
-            self, proposing_group_uid, destinationState):
+    def _userIsPGMemberAbleToSendItemBackExtraCondition(self, destinationState):
         ''' '''
         return True
 
@@ -514,14 +512,6 @@ class MeetingItemWorkflowConditions(object):
             wfas = self.cfg.getWorkflowAdaptations()
             last_val_state, last_level = get_last_validation_state(
                 self.context, self.cfg, return_level=True)
-            # group managing item available when item before "validated"
-            # after we take proposingGroup + last validation state group_managing_item suffix
-            plone_group_managing_item = self.context.get_plone_groups_managing_item(
-                self.cfg, [self.review_state], only_group_managing_item=True)
-            if plone_group_managing_item:
-                org_uid = plone_group_managing_item[0].split("_")[0]
-            else:
-                org_uid = self.context.getProposingGroup()
             if self.review_state == 'validated' and destinationState == last_val_state:
                 # MeetingManager probably
                 if _checkPermission(ReviewPortalContent, self.context):
@@ -561,8 +551,7 @@ class MeetingItemWorkflowConditions(object):
                     else:
                         # is current user proposingGroup member able to trigger transition?
                         if 'waiting_advices_proposing_group_send_back' in wfas:
-                            res = self._userIsPGMemberAbleToSendItemBack(
-                                org_uid, destinationState)
+                            res = self._userIsPGMemberAbleToSendItemBack(destinationState)
                         # if not, maybe it is an adviser able to give an advice?
                         if not res and 'waiting_advices_adviser_send_back' in wfas:
                             # adviser may send back to validated when using
