@@ -2926,7 +2926,7 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(data['tool'], self.tool)
         self.assertEqual(data['cfg'], cfg)
         self.assertEqual(data['meetingConfig'], cfg)
-        self.assertEqual(data['meeting'], None)
+        self.assertEqual(data['meeting'], meeting)
 
     def test_pm_print_signatures_by_position(self):
         """
