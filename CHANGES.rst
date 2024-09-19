@@ -17,6 +17,8 @@ Changelog
 - Fixed `AskedAdvicesVocabulary` to mark an term as inactive only if
   `for_item_created_until` date is actually expired.
   [gbastien]
+- Fix issue regarding mail notification not sent when user is coming from a LDAP/AD.
+  [aduchene]
 - Adapted `MeetingItem.restrictedCopyGroups` so it is only editable by
   `MeetingManager`.
   [gbastien]
