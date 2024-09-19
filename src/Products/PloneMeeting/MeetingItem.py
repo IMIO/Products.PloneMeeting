@@ -1802,7 +1802,7 @@ schema = Schema((
             size=10,
             condition="python: here.attribute_is_used('restrictedCopyGroups')",
             description="RestrictedCopyGroupsItems",
-            description_msgid="restricted_groups_item_descr",
+            description_msgid="descr_field_vieawable_by_everyone",
             format="checkbox",
             label='Restrictedcopygroups',
             label_msgid='PloneMeeting_label_restrictedCopyGroups',
@@ -1812,6 +1812,7 @@ schema = Schema((
         enforceVocabulary=True,
         multiValued=1,
         vocabulary_factory='Products.PloneMeeting.vocabularies.itemrestrictedcopygroupsvocabulary',
+        write_permission=WriteItemMeetingManagerFields,
     ),
     StringField(
         name='pollType',

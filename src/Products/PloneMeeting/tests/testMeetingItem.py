@@ -2196,7 +2196,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.getAllCopyGroups(auto_real_plone_group_ids=True),
                          (self.developers_reviewers, self.vendors_reviewers))
 
-    def test_pm_RestrictedCopyGroupes(self):
+    def test_pm_RestrictedCopyGroups(self):
         """Test MeetingItem.restrictedCopyGroups, a second level
            of copy groups complementary to MeetingItem.copyGroups."""
         self._enableField(('copyGroups', 'restrictedCopyGroups'))
@@ -2206,11 +2206,19 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setItemCopyGroupsStates(('itemcreated', ))
         cfg.setSelectableRestrictedCopyGroups((self.developers_observers, self.vendors_observers))
         cfg.setItemRestrictedCopyGroupsStates(('validated', ))
-        # create item for vendors
+        # create item for vendors, field is only editable by MeetingManagers
         self.changeUser('pmCreator2')
         item = self.create('MeetingItem',
                            copyGroups=(self.developers_reviewers, ),
                            restrictedCopyGroups=(self.developers_observers, ))
+        self.assertEqual(item.getRestrictedCopyGroups(), ())
+        # as MeetingManager
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem',
+                           proposingGroup=self.vendors_uid,
+                           copyGroups=(self.developers_reviewers, ),
+                           restrictedCopyGroups=(self.developers_observers, ))
+        self.changeUser('pmCreator2')
         self.assertEqual(item.getAllCopyGroups(True),
                          (self.developers_reviewers, self.vendors_creators))
         self.assertEqual(item.getAllRestrictedCopyGroups(True),

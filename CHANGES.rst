@@ -19,6 +19,9 @@ Changelog
   [gbastien]
 - Fix issue regarding mail notification not sent when user is coming from a LDAP/AD.
   [aduchene]
+- Adapted `MeetingItem.restrictedCopyGroups` so it is only editable by
+  `MeetingManager`.
+  [gbastien]
 
 4.2.9 (2024-06-10)
 ------------------
