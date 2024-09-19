@@ -17,6 +17,9 @@ Changelog
 - Fixed `AskedAdvicesVocabulary` to mark an term as inactive only if
   `for_item_created_until` date is actually expired.
   [gbastien]
+- Adapted `MeetingItem.restrictedCopyGroups` so it is only editable by
+  `MeetingManager`.
+  [gbastien]
 
 4.2.9 (2024-06-10)
 ------------------
