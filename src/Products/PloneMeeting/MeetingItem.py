@@ -250,7 +250,6 @@ class MeetingItemWorkflowConditions(object):
             while not self.validation_level_is_valid(item_val_levels_states[index]):
                 index -= 1
             previous_val_state = item_val_levels_states[index]
-            self.context.get_all_groups_managing_item
             previous_plone_group_ids = self.context.get_plone_groups_managing_item(
                 self.cfg,
                 item_states=[previous_val_state])
