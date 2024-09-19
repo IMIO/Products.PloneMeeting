@@ -507,6 +507,8 @@ class MeetingItemWorkflowConditions(object):
             wfas = self.cfg.getWorkflowAdaptations()
             last_val_state, last_level = get_last_validation_state(
                 self.context, self.cfg, return_level=True)
+            item_validation_states = self.cfg.getItemWFValidationLevels(
+                data='state', only_enabled=True)
             if self.review_state == 'validated' and destinationState == last_val_state:
                 # MeetingManager probably
                 if _checkPermission(ReviewPortalContent, self.context):
@@ -519,7 +521,6 @@ class MeetingItemWorkflowConditions(object):
                         user_id=get_current_user_id())
             # using 'waiting_advices_XXX_send_back' WFAdaptations,
             elif self.review_state.endswith('_waiting_advices'):
-                item_validation_states = self.cfg.getItemWFValidationLevels(data='state', only_enabled=True)
                 # compute sendable back states
                 sendable_back_states = []
                 # when using from last/before last validation level, able to send back to last level
@@ -556,9 +557,10 @@ class MeetingItemWorkflowConditions(object):
                             # is current user adviser able to trigger transition?
                             res = self._currentUserIsAdviserAbleToSendItemBack(destinationState)
             else:
-                # maybe destinationState is a validation state?
+                # if a validation state, must be valid
                 res = _checkPermission(ReviewPortalContent, self.context) and \
-                    self.validation_level_is_valid(destinationState)
+                    (destinationState not in item_validation_states or
+                     self.validation_level_is_valid(destinationState))
         return res
 
     security.declarePublic('mayBackToMeeting')
