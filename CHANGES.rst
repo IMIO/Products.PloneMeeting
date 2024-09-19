@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.10 (unreleased)
+4.2.10 (2024-09-19)
 -------------------
 
 - Display a clear message when trying to remove a meeting containing items as
