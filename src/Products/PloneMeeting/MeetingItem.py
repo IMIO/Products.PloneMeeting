@@ -1406,6 +1406,22 @@ schema = Schema((
         enforceVocabulary=True,
     ),
     TextField(
+        name='emergencyMotivation',
+        widget=RichWidget(
+            condition="python: here.attribute_is_used('emergencyMotivation')",
+            label='EmergencyMotivation',
+            label_msgid='PloneMeeting_label_emergencyMotivation',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        read_permission="PloneMeeting: Read decision",
+        searchable=False,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=True,
+        write_permission=WriteDecision,
+    ),
+    TextField(
         name='motivation',
         widget=RichWidget(
             condition="python: here.attribute_is_used('motivation')",
@@ -1789,7 +1805,7 @@ schema = Schema((
             size=10,
             condition="python: here.attribute_is_used('restrictedCopyGroups')",
             description="RestrictedCopyGroupsItems",
-            description_msgid="restricted_groups_item_descr",
+            description_msgid="descr_field_vieawable_by_everyone",
             format="checkbox",
             label='Restrictedcopygroups',
             label_msgid='PloneMeeting_label_restrictedCopyGroups',
@@ -1799,6 +1815,7 @@ schema = Schema((
         enforceVocabulary=True,
         multiValued=1,
         vocabulary_factory='Products.PloneMeeting.vocabularies.itemrestrictedcopygroupsvocabulary',
+        write_permission=WriteItemMeetingManagerFields,
     ),
     StringField(
         name='pollType',
