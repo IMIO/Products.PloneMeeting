@@ -5,8 +5,10 @@ Changelog
 4.2.11 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Added new field `MeetingItem.emergencyMotivation` to manage emergency
+  motivation more easily and out of full `emergency` functionnality.
+  Added monkeypatch to initialize a new HTML field correctly on existing elements.
+  [gbastien]
 
 4.2.10 (2024-09-19)
 -------------------

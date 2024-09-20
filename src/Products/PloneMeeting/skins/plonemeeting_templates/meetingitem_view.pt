@@ -503,6 +503,11 @@
     </fieldset>
     </tal:block>
 
+    <tal:comment replace="nothing">Emergency motivation</tal:comment>
+    <tal:field define="fieldName python: 'emergencyMotivation'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
     <tal:comment replace="nothing">Motivation</tal:comment>
     <tal:field define="fieldName python: 'motivation'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
