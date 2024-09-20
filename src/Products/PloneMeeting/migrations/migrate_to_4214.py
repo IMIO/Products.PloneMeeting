@@ -6,6 +6,7 @@ from imio.pyutils.utils import replace_in_list
 from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.model.adaptations import WAITING_ADVICES_NEW_STATE_ID_PATTERN
 from Products.PloneMeeting.setuphandlers import _configureWebspellchecker
 from Products.PloneMeeting.setuphandlers import _installWebspellchecker
 from Products.PloneMeeting.setuphandlers import indexInfos
@@ -70,6 +71,28 @@ class Migrate_To_4214(Migrator):
             cfg.registerPortalTypes()
         logger.info('Done.')
 
+    def _migrateItemsWaitingAdviceState(self):
+        """When using MeetingConfig.itemWFValidationLevels to compute
+           the waiting_advices state id, we were generating a __or__ complex
+           state name, now we go back to any_validation_state_waiting_advices."""
+        logger.info('Migrating items waiting advices state name...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            wfas = cfg.getWorkflowAdaptations()
+            if 'waiting_advices_from_every_val_levels' in wfas or \
+               'waiting_advices_from_before_last_val_level' in wfas or \
+               'waiting_advices_from_last_val_level' in wfas:
+                # generate old state id
+                item_validation_states = cfg.getItemWFValidationLevels(
+                    data='state', only_enabled=True)
+                state_id = WAITING_ADVICES_NEW_STATE_ID_PATTERN.format(
+                    '__or__'.join(item_validation_states))
+                self.updateWFStatesAndTransitions(
+                    query={'review_state': state_id,
+                           'getConfigId': cfg.getId()},
+                    review_state_mappings={
+                        state_id: 'any_validation_state_waiting_advices'})
+        logger.info('Done.')
+
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4214...')
@@ -78,6 +101,7 @@ class Migrate_To_4214(Migrator):
         load_type_from_package('ConfigurablePODTemplate', 'Products.PloneMeeting:default')
         self._migrateAdviceEditedItemMailEvents()
         self._updatePortalTypesTitle()
+        self._migrateItemsWaitingAdviceState()
         # not done for now, we will enable it when necessary
         # self._installIMIOWebSpellChecker()
         # add text criterion on "item title only" again as it was not in default

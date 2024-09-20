@@ -3013,18 +3013,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # of "itemcreated__or__proposed_waiting_advices"
             # or when using WAITING_ADVICES_FROM_STATES 'new_state_id',
             # we use the "from_states"
-            states = item_state.replace("_waiting_advices", "")
-            if "__or__" in states:
-                states = states.split("__or__")
-            else:
-                found = False
-                for infos in get_waiting_advices_infos(cfg.getId()):
-                    if infos['new_state_id'] == states:
-                        states = infos['new_state_id']
-                        break
-                if not found:
-                    # make sure we have a list
-                    states = [states]
+            states = []
+            if item_state != "any_validation_state_waiting_advices":
+                states = item_state.replace("_waiting_advices", "")
+                if "__or__" in states:
+                    states = states.split("__or__")
+                else:
+                    found = False
+                    for infos in get_waiting_advices_infos(cfg.getId()):
+                        if infos['new_state_id'] == states:
+                            states = infos['new_state_id']
+                            break
+                    if not found:
+                        # make sure we have a list
+                        states = [states]
             suffixes = cfg.getItemWFValidationLevels(
                 states=states, data='suffix', only_enabled=True, return_state_singleton=False)
             for org_uid in org_uids:
