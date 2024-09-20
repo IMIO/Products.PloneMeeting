@@ -241,6 +241,7 @@ EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'category', 'classifier', 'co
                                'otherMeetingConfigsClonableToFieldDescription',
                                'otherMeetingConfigsClonableToFieldDetailedDescription',
                                'otherMeetingConfigsClonableToFieldMotivation',
+                               'otherMeetingConfigsClonableToFieldMotivationSuite',
                                'otherMeetingConfigsClonableToFieldDecision',
                                'otherMeetingConfigsClonableToFieldDecisionSuite',
                                'otherMeetingConfigsClonableToFieldDecisionEnd',

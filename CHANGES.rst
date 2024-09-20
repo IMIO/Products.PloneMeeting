@@ -9,10 +9,15 @@ Changelog
   motivation more easily and out of full `emergency` functionnality.
   Added monkeypatch to initialize a new HTML field correctly on existing elements.
   [gbastien]
+- Added new fields `MeetingItem.motivationSuite` and
+  `MeetingItem.otherMeetingConfigsClonableToFieldMotivationSuite`.
+  [gbastien]
 - Replaced columns `suffix/extra_suffix` of `MeetingConfig.itemWFValidationLevels`
   by new columns `group_managing_item/extra_groups_managing_item`, this will
   manage cases when another group than the proposing group is managing the item,
   several groups may be selected including the proposing group or not.
+  Added new column `available_on` to be able to define a `TAL expression`
+  that will make a transition available or not.
   [gbastien]
 
 4.2.10 (2024-09-19)

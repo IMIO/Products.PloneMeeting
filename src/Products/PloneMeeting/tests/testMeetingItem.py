@@ -1645,8 +1645,9 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         self._enableField('category', cfg=cfg2, enable=False)
-        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
-                                         'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
+        cfg.setMeetingConfigsToCloneTo(
+            ({'meeting_config': '%s' % cfg2Id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
         cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
         self._enableField('otherMeetingConfigsClonableToFieldDecision')
         self._enableField('otherMeetingConfigsClonableToFieldMotivation')
