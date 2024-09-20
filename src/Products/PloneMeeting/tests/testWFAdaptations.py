@@ -51,7 +51,12 @@ class testWFAdaptations(PloneMeetingTestCase):
        This way too, we will be able to check multiple activated wfAdaptations.'''
 
     def _default_waiting_advices_state(self):
-        return 'itemcreated__or__proposed_waiting_advices'
+        wfas = self.meetingConfig.getWorkflowAdaptations()
+        is_using_item_wf_val_levels = 'waiting_advices_from_every_val_levels' in wfas or \
+           'waiting_advices_from_before_last_val_level' in wfas or \
+           'waiting_advices_from_last_val_level' in wfas
+        return 'any_validation_state_waiting_advices' \
+            if is_using_item_wf_val_levels else 'itemcreated__or__proposed_waiting_advices'
 
     def _wait_advice_from_proposed_state_transition(self):
         return 'wait_advices_from_' + self._stateMappingFor('proposed')
@@ -2460,10 +2465,10 @@ class testWFAdaptations(PloneMeetingTestCase):
                                           'waiting_advices_from_before_last_val_level']):
             return
 
-        cfg.setItemAdviceStates((self._default_waiting_advices_state(), ))
         self._activate_wfas(('waiting_advices',
                              'waiting_advices_proposing_group_send_back',
                              'waiting_advices_from_before_last_val_level'))
+        cfg.setItemAdviceStates((self._default_waiting_advices_state(), ))
 
         # make itemcreated last validation level for vendors and proposed for developers
         # select developers for suffix reviewers
