@@ -9,6 +9,8 @@ Changelog
   motivation more easily and out of full `emergency` functionnality.
   Added monkeypatch to initialize a new HTML field correctly on existing elements.
   [gbastien]
+- Upgrade `appy.pod` ready for `LibreOffice 24.2.x`.
+  [gbastien]
 
 4.2.10 (2024-09-19)
 -------------------
