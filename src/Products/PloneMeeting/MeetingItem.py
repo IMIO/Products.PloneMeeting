@@ -7,8 +7,8 @@ from Acquisition import aq_base
 from App.class_init import InitializeClass
 from appy.gen import No
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
-from collections import OrderedDict
 from collections import defaultdict
+from collections import OrderedDict
 from collective.behavior.internalnumber.browser.settings import _internal_number_is_used
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_functions
@@ -235,30 +235,65 @@ class MeetingItemWorkflowConditions(object):
                 msg = No(_('required_groupsInCharge_ko'))
         return msg
 
+    def _get_previous_val_level(self, review_state):
+        """ """
+        item_val_levels_states = self.cfg.getItemWFValidationLevels(
+            data='state',
+            only_enabled=True,
+            return_state_singleton=False)
+        # check if previous validation state is valid
+        index = item_val_levels_states.index(review_state) - 1
+        while not self.is_valid_validation_level(
+                item_val_levels_states[index]):
+            index -= 1
+        return item_val_levels_states[index]
+
+    def _get_next_val_level(self, destinationState):
+        """ """
+        item_val_levels_states = self.cfg.getItemWFValidationLevels(
+            data='state',
+            only_enabled=True,
+            return_state_singleton=False)
+        # check if next validation state is valid
+        index = item_val_levels_states.index(destinationState) + 1
+        while not self.is_valid_validation_level(
+                item_val_levels_states[index]):
+            index += 1
+        return item_val_levels_states[index]
+
+    def _mayShortcutToValidationLevel_cachekey(method, self, destinationState):
+        '''cachekey method for self._mayShortcutToValidationLevel.'''
+        # for a state, either group managing item is fixed or it is the proposing group
+        # so cache on proposingGroup is sufficient and sometimes even "too much"
+        # but it would be to expensive to use get_plone_groups_managing_item
+        return destinationState, self.context.getProposingGroup()
+
+    # @ram.cache(_mayShortcutToValidationLevel_cachekey)
+
     def _mayShortcutToValidationLevel(self, destinationState):
         '''When using WFAdaptation 'item_validation_shortcuts',
            is current user able to use the shortcut to p_destinationState?'''
         res = True
         if 'item_validation_shortcuts' in self.cfg.getWorkflowAdaptations():
-            # get previous item validation state and check what suffixes may manage
-            item_val_levels_states = self.cfg.getItemWFValidationLevels(
-                data='state',
-                only_enabled=True,
-                return_state_singleton=False)
-            # check if can review previous valid validation state
-            index = item_val_levels_states.index(destinationState) - 1
-            while not self.validation_level_is_valid(item_val_levels_states[index]):
-                index -= 1
-            previous_val_state = item_val_levels_states[index]
-            previous_plone_group_ids = self.context.get_plone_groups_managing_item(
-                self.cfg,
-                item_states=[previous_val_state])
-            res = set(previous_plone_group_ids).intersection(
-                self.tool.get_plone_groups_for_user())
+            previous_val_state = self._get_previous_val_level(
+                destinationState)
+            # now that we have previous valid validation state, check if correct with shortcut
+            res = False
+            if self.is_valid_validation_level(previous_val_state, shortcut=True):
+                previous_plone_group_ids = self.context.get_plone_groups_managing_item(
+                    self.cfg,
+                    item_states=[previous_val_state])
+                res = set(previous_plone_group_ids).intersection(
+                    get_plone_groups_for_user())
         return res
 
-    def validation_level_is_valid(self, review_state, user_id=None):
+    def is_valid_validation_level(self, review_state, user_id=None, shortcut=None, back=False):
         """ """
+        i = self.context.REQUEST.get('i_counter', 0)
+        self.context.REQUEST.set('i_counter', i + 1)
+        logger.info(self.context.REQUEST.get('i_counter'))
+        logger.info(self.context.REQUEST.get('i_counter'))
+        # logger.info("%s: %s >> %s >> %s" % (back, self.review_state, review_state, shortcut))
         # check if level is a validation level
         level = self.cfg.getItemWFValidationLevels(
             states=[review_state],
@@ -267,27 +302,18 @@ class MeetingItemWorkflowConditions(object):
         if not level:
             return
         # check available_on
+        extra_expr_ctx = _base_extra_expr_ctx(self.context)
+        extra_expr_ctx['shortcut'] = shortcut
         res = _evaluateExpression(
             self.context,
             expression=level['available_on'],
             roles_bypassing_expression=[],
-            extra_expr_ctx=_base_extra_expr_ctx(self.context),
+            extra_expr_ctx=extra_expr_ctx,
             raise_on_error=True)
         if res:
             # check if next validation level suffixed Plone group is not empty
-            plone_groups_managing_item = self.cfg.getItemWFValidationLevels(
-                item=self.context,
-                states=[review_state],
-                data='group_managing_item',
-                only_enabled=True,
-                return_state_singleton=False)
-            extra_plone_groups_managing_item = self.cfg.getItemWFValidationLevels(
-                item=self.context,
-                states=[review_state],
-                data='extra_groups_managing_item',
-                only_enabled=True,
-                return_state_singleton=False)
-            for plone_group_id in plone_groups_managing_item + extra_plone_groups_managing_item:
+            for plone_group_id in self.context.get_plone_groups_managing_item(
+                    self.cfg, item_states=[review_state]):
                 res = self.tool.group_is_not_empty(
                     plone_group_id=plone_group_id, user_id=user_id)
                 if res:
@@ -300,9 +326,10 @@ class MeetingItemWorkflowConditions(object):
         '''Check if able to propose to next validation level.'''
         res = False
         if _checkPermission(ReviewPortalContent, self.context):
-            res = self.validation_level_is_valid(destinationState)
+            res = self.is_valid_validation_level(destinationState)
             # shortcuts are available to (Meeting)Managers
-            if res and not self.tool.isManager(self.cfg):
+            if res and not self.tool.isManager(self.cfg) and \
+               self._get_next_val_level(self.review_state) != destinationState:
                 # check if available when using shortcuts
                 res = self._mayShortcutToValidationLevel(destinationState)
         # check required data only if transition is doable or we would display
@@ -437,12 +464,12 @@ class MeetingItemWorkflowConditions(object):
     def _userIsPGMemberAbleToSendItemBack(self, destinationState):
         ''' '''
         # level valid and member can manage?
-        res = self.validation_level_is_valid(
+        res = self.is_valid_validation_level(
             destinationState, user_id=get_current_user_id(self.context.REQUEST))
         # if not, check if using shortcuts, maybe user can send item back
         # as when using shortcuts, user could send back to "itemcreated" or "proposed"
         if not res and \
-           self.validation_level_is_valid(destinationState) and \
+           self.is_valid_validation_level(destinationState) and \
            'item_validation_shortcuts' in self.cfg.getWorkflowAdaptations():
             res = self._mayShortcutToValidationLevel(destinationState)
 
@@ -556,10 +583,14 @@ class MeetingItemWorkflowConditions(object):
                             # is current user adviser able to trigger transition?
                             res = self._currentUserIsAdviserAbleToSendItemBack(destinationState)
             else:
-                # if a validation state, must be valid
-                res = _checkPermission(ReviewPortalContent, self.context) and \
-                    (destinationState not in item_validation_states or
-                     self.validation_level_is_valid(destinationState))
+                res = _checkPermission(ReviewPortalContent, self.context)
+                if res:
+                    # if a validation state, must be valid
+                    if self.review_state in item_validation_states:
+                        shortcut = False
+                        if destinationState != self._get_previous_val_level(self.review_state):
+                            shortcut = True
+                        res = self.is_valid_validation_level(destinationState, shortcut=shortcut, back=True)
         return res
 
     security.declarePublic('mayBackToMeeting')

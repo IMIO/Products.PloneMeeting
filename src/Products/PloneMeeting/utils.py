@@ -2199,7 +2199,7 @@ def get_last_validation_state_cachekey(method, item, cfg, before_last=False, ret
 
 # not ramcached perf tests says it does not change much
 # and this avoid useless entry in cache
-# @ram.cache(get_last_validation_state_cachekey)
+@ram.cache(get_last_validation_state_cachekey)
 def get_last_validation_state(item, cfg, before_last=False, return_level=False):
     '''Last validation state is validation level state defined in
        MeetingConfig.itemWFValidationLevels for which the linked
@@ -2217,7 +2217,7 @@ def get_last_validation_state(item, cfg, before_last=False, return_level=False):
     level = {}
     wf_conditions = item.wfConditions()
     for level in levels:
-        if wf_conditions.validation_level_is_valid(level['state']):
+        if wf_conditions.is_valid_validation_level(level['state']):
             res = level['state']
             if found_last:
                 found_before_last = True

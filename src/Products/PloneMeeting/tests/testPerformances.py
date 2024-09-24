@@ -5,6 +5,7 @@
 # GNU General Public License (GPL)
 #
 
+from collective.contact.plonegroup.utils import enable_function
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_groups
@@ -912,8 +913,45 @@ class testPerformances(PloneMeetingTestCase):
 
     def test_pm_Speed_get_last_validation_state(self):
         '''Test utils.get_last_validation_state.'''
-        self.changeUser('pmManager')
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        self._activate_wfas(('item_validation_shortcuts', ))
+        # enable levelXreviewers and corresponding validation levels
+        # so we have several transitions
+        enable_function("level1reviewers")
+        enable_function("level2reviewers")
+        enable_function("level3reviewers")
+        enable_function("level4reviewers")
+        enable_function("level5reviewers")
+        # will enable every validation levels
+        self._enableItemValidationLevel(cfg)
+        self._addPrincipalToGroup("pmCreator1", "{0}_reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level1reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level1reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level2reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level3reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level4reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level5reviewers".format(
+            self.developers_uid))
+        self.changeUser("pmCreator1")
         item = self.create('MeetingItem')
+        self.assertEqual(self.transitions(item),
+                         ['prevalidate',
+                          'propose',
+                          'proposeToValidationLevel1',
+                          'proposeToValidationLevel2',
+                          'proposeToValidationLevel3',
+                          'proposeToValidationLevel4',
+                          'proposeToValidationLevel5',
+                          'validate'])
+        # call get_last_validation_state 100 times
+        self._check_get_last_validation_state(item, times=100)
         # call get_last_validation_state 1000 times
         self._check_get_last_validation_state(item, times=1000)
 
