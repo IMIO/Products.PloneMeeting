@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.11 (unreleased)
+4.2.11 (2024-09-25)
 -------------------
 
 - Added new field `MeetingItem.emergencyMotivation` to manage emergency
