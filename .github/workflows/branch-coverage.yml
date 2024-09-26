@@ -15,8 +15,11 @@ jobs:
         python-version: ["2.7"]
         plone-version: ["4.3"]
     steps:
+      - name: Needed for local development
+        if: ${{ env.ACT }}
+        run: echo /home/runner/externals/node20/bin >> $GITHUB_PATH
       - name: Run check
-        uses: IMIO/gha/plone-package-test-notify@v3
+        uses: IMIO/gha/plone-package-test-notify@main
         env:
           cache-name: cache-eggs
         with:
