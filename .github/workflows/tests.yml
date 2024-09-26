@@ -20,8 +20,8 @@ jobs:
       - name: Needed for local development
         if: ${{ env.ACT }}
         run: echo /home/runner/externals/node20/bin >> $GITHUB_PATH
-      - name: Set up Docker
-        uses: crazy-max/ghaction-setup-docker@v3
+      #- name: Set up Docker
+      #  uses: crazy-max/ghaction-setup-docker@v3
       - name: Run libreoffice docker image
         uses: addnab/docker-run-action@v3
         with:
