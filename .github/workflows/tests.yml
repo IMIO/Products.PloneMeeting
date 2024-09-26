@@ -16,23 +16,28 @@ jobs:
         python-version: ["2.7"]
         plone-version: ["4.3"]
         experimental: [false]
+    services:
+      soffice:
+        image: harbor.imio.be/common/libreoffice:7.3
+        ports:
+          - 2002:2002
+        credentials:
+          username: ${{ secrets.COMMON_HARBOR_USERNAME }}
+          password: ${{ secrets.COMMON_HARBOR_PASSWORD }}
     steps:
       - name: Needed for local development
         if: ${{ env.ACT }}
         run: echo /home/runner/externals/node20/bin >> $GITHUB_PATH
       #- name: Set up Docker
       #  uses: crazy-max/ghaction-setup-docker@v3
-      - name: Run libreoffice docker image
-        uses: addnab/docker-run-action@v3
-        with:
-          username: ${{ secrets.COMMON_HARBOR_USERNAME }}
-          password: ${{ secrets.COMMON_HARBOR_PASSWORD }}
-          registry: harbor.imio.be
-          image: harbor.imio.be/common/libreoffice:7.3
-          run: soffice --headless --nodefault --accept="socket,host=loffice,port=2002,tcpNoDelay=1;urp;StarOffice.ServiceManager"
-      - name: list docker images
-        run: docker ps -a
-        shell: bash
+      #- name: Run libreoffice docker image
+      #  uses: addnab/docker-run-action@v3
+      #  with:
+      #    username: ${{ secrets.COMMON_HARBOR_USERNAME }}
+      #    password: ${{ secrets.COMMON_HARBOR_PASSWORD }}
+      #    registry: harbor.imio.be
+      #    image: harbor.imio.be/common/libreoffice:7.3
+      #    run: soffice --headless --nodefault --accept="socket,host=loffice,port=2002,tcpNoDelay=1;urp;StarOffice.ServiceManager"
       - name: Run tests
         uses: IMIO/gha/plone-package-test-notify@main
         env:
