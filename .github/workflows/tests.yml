@@ -17,10 +17,8 @@ jobs:
         plone-version: ["4.3"]
         experimental: [false]
     steps:
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Set up Docker
+        uses: crazy-max/ghaction-setup-docker@v3
       - name: Run libreoffice docker image
         uses: addnab/docker-run-action@v3
         with:
