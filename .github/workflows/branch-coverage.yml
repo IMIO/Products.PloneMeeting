@@ -8,35 +8,39 @@ on:
 
 jobs:
   coverage:
-    runs-on: gha-runners-delib-py3
+    runs-on: gha-runners-delib-py2
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["2.7"]
         plone-version: ["4.3"]
     steps:
       - name: Needed for local development
         if: ${{ env.ACT }}
         run: echo /home/runner/externals/node20/bin >> $GITHUB_PATH
+      - name: Install Pip
+        run: |
+          curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
+          python2.7 get-pip.py
+          export PATH="/home/runner/.local/bin:$PATH"
       - name: Run check
         uses: IMIO/gha/plone-package-test-notify@python2
         env:
           cache-name: cache-eggs
         with:
-          PYTHON_VERSION: ${{ matrix.python-version }}
-          CACHE_KEY: ${{ runner.os }}-build-${{ env.cache-name }}-${{ matrix.python-version }}
+          CACHE_KEY: ${{ runner.os }}-build-${{ env.cache-name }}-2.7.18
           TEST_COMMAND: coverage run bin/test
           REQUIREMENTS_FILE: 'requirements-tests.txt'
           MATTERMOST_WEBHOOK_URL: ${{ secrets.DELIB_MATTERMOST_WEBHOOK_URL }}
-          BUILDOUT_CONFIG_FILE: 'test-${{ matrix.plone-version }}.cfg'
+          #BUILDOUT_CONFIG_FILE: 'test-${{ matrix.plone-version }}.cfg'
+          BUILDOUT_CONFIG_FILE: buildout.cfg
       - name: Report
         run: |
           coverage report
           coverage xml
         shell: bash
-      - name: Publish to Coveralls
-        run: |
-          coveralls --service=github
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Publish to Coveralls
+      #   run: |
+      #     coveralls --service=github
+      #   shell: bash
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
