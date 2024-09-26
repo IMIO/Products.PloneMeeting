@@ -1,0 +1,30 @@
+name: Test package
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - gha
+
+jobs:
+  test:
+    runs-on: gha-runners-delib-py2
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["2.7"]
+        plone-version: ["4.3"]
+        experimental: [false]
+    steps:
+      - name: Run tests
+        uses: IMIO/gha/plone-package-test-notify@v3
+        env:
+          cache-name: cache-eggs
+        with:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+          CACHE_KEY: ${{ runner.os }}-build-${{ env.cache-name }}-${{ matrix.python-version }}
+          TEST_COMMAND: bin/test
+          REQUIREMENTS_FILE: 'requirements-tests.txt'
+          MATTERMOST_WEBHOOK_URL: ${{ secrets.DELIB_MATTERMOST_WEBHOOK_URL }}
+          BUILDOUT_CONFIG_FILE: 'test-${{ matrix.plone-version }}.cfg'
