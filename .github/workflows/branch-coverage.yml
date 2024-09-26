@@ -19,7 +19,7 @@ jobs:
         if: ${{ env.ACT }}
         run: echo /home/runner/externals/node20/bin >> $GITHUB_PATH
       - name: Run check
-        uses: IMIO/gha/plone-package-test-notify@main
+        uses: IMIO/gha/plone-package-test-notify@python2
         env:
           cache-name: cache-eggs
         with:
