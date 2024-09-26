@@ -38,12 +38,16 @@ jobs:
       #    registry: harbor.imio.be
       #    image: harbor.imio.be/common/libreoffice:7.3
       #    run: soffice --headless --nodefault --accept="socket,host=loffice,port=2002,tcpNoDelay=1;urp;StarOffice.ServiceManager"
+      - name: Install Pip
+        run: |
+          curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
+          python2.7 get-pip.py
+          export PATH="/home/runner/.local/bin:$PATH"
       - name: Run tests
-        uses: IMIO/gha/plone-package-test-notify@main
+        uses: IMIO/gha/plone-package-test-notify@python2
         env:
           cache-name: cache-eggs
         with:
-          PYTHON_VERSION: ${{ matrix.python-version }}
           CACHE_KEY: ${{ runner.os }}-build-${{ env.cache-name }}-${{ matrix.python-version }}
           # TODO : launch libreoffice on port 2002
           TEST_COMMAND: OO_SERVER=loffice OO_PORT=2002 bin/testmc
