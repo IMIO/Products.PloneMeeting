@@ -17,6 +17,21 @@ jobs:
         plone-version: ["4.3"]
         experimental: [false]
     steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Run libreoffice docker image
+        uses: addnab/docker-run-action@v3
+        with:
+          username: ${{ secrets.COMMON_HARBOR_USERNAME }}
+          password: ${{ secrets.COMMON_HARBOR_PASSWORD }}
+          registry: harbor.imio.be
+          image: harbor.imio.be/common/libreoffice:7.3
+          run: soffice --headless --nodefault --accept="socket,host=loffice,port=2002,tcpNoDelay=1;urp;StarOffice.ServiceManager"
+      - name: list docker images
+        run: docker ps -a
+        shell: bash
       - name: Run tests
         uses: IMIO/gha/plone-package-test-notify@v3
         env:
@@ -25,7 +40,7 @@ jobs:
           PYTHON_VERSION: ${{ matrix.python-version }}
           CACHE_KEY: ${{ runner.os }}-build-${{ env.cache-name }}-${{ matrix.python-version }}
           # TODO : launch libreoffice on port 2002
-          TEST_COMMAND: bin/testmc
+          TEST_COMMAND: OO_SERVER=loffice OO_PORT=2002 bin/testmc
           REQUIREMENTS_FILE: 'requirements-tests.txt'
           MATTERMOST_WEBHOOK_URL: ${{ secrets.DELIB_MATTERMOST_WEBHOOK_URL }}
           BUILDOUT_CONFIG_FILE: 'test-${{ matrix.plone-version }}.cfg'
