@@ -19,6 +19,7 @@ from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.annex.columns import ActionsColumn
+from imio.annex.columns import PrettyLinkColumn
 from imio.annex.utils import get_annexes_to_print
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
@@ -1551,6 +1552,28 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertFalse('@@historyview' in column.renderCell(annex_content))
         self.changeUser('admin')
         self.assertTrue('@@historyview' in column.renderCell(annex_content))
+
+    def test_pm_annex_pretty_link_column_escaped(self):
+        """The various elements displayed in PrettyLinkColumn are escaped to
+           avoid JS injection or else."""
+        nasty_js = "<script>alert(0)</script>"
+        escaped_nasty_js = "&lt;script&gt;alert(0)&lt;/script&gt;"
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        annex1 = self.addAnnex(item)
+        annex2 = self.addAnnex(
+            item,
+            annexTitle="<script>alert(0)</script>",
+            annexDescription="<script>alert(0)</script>")
+        annex1_infos = get_categorized_elements(item, uids=[annex1.UID()])
+        annex2_infos = get_categorized_elements(item, uids=[annex2.UID()])
+        annex1_content = CategorizedContent(item, annex1_infos[0])
+        annex2_content = CategorizedContent(item, annex2_infos[0])
+        column = PrettyLinkColumn(self.portal, self.request, self)
+        self.assertEqual(column.renderCell(annex1_content).count(nasty_js), 0)
+        self.assertEqual(column.renderCell(annex1_content).count(escaped_nasty_js), 0)
+        self.assertEqual(column.renderCell(annex2_content).count(nasty_js), 0)
+        self.assertEqual(column.renderCell(annex2_content).count(escaped_nasty_js), 3)
 
     def test_pm_ParentModificationDateUpdatedWhenAnnexChanged(self):
         """When an annex is added/modified/removed, the parent modification date is updated."""

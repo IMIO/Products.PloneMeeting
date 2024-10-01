@@ -2,13 +2,9 @@ Changelog
 =========
 
 
-4.2.11 (unreleased)
+4.2.12 (unreleased)
 -------------------
 
-- Added new field `MeetingItem.emergencyMotivation` to manage emergency
-  motivation more easily and out of full `emergency` functionnality.
-  Added monkeypatch to initialize a new HTML field correctly on existing elements.
-  [gbastien]
 - Added new fields `MeetingItem.motivationSuite` and
   `MeetingItem.otherMeetingConfigsClonableToFieldMotivationSuite`.
   [gbastien]
@@ -18,6 +14,16 @@ Changelog
   several groups may be selected including the proposing group or not.
   Added new column `available_on` to be able to define a `TAL expression`
   that will make a transition available or not.
+  [gbastien]
+
+4.2.11 (2024-09-25)
+-------------------
+
+- Added new field `MeetingItem.emergencyMotivation` to manage emergency
+  motivation more easily and out of full `emergency` functionnality.
+  Added monkeypatch to initialize a new HTML field correctly on existing elements.
+  [gbastien]
+- Upgrade `appy.pod` ready for `LibreOffice 24.2.x`.
   [gbastien]
 
 4.2.10 (2024-09-19)
