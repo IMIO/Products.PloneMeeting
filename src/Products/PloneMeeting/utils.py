@@ -28,6 +28,7 @@ from email import Encoders
 from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
+from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import base_getattr
@@ -2195,7 +2196,8 @@ def get_item_validation_wf_suffixes(cfg, org_uid=None, only_enabled=True):
 
 def get_last_validation_state_cachekey(method, item, cfg, before_last=False, return_level=False):
     '''cachekey method for self.get_last_validation_state.'''
-    return item.getProposingGroup(), cfg.getId(), before_last, return_level
+    return get_cachekey_volatile('_users_groups_value'), \
+        item.getProposingGroup(), cfg.getId(), before_last, return_level
 
 # not ramcached perf tests says it does not change much
 # and this avoid useless entry in cache

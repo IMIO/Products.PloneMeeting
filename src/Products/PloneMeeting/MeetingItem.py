@@ -287,12 +287,23 @@ class MeetingItemWorkflowConditions(object):
                     get_plone_groups_for_user())
         return res
 
+    def _is_groups_managing_item_not_empty(self, review_state, user_id):
+        """ """
+        res = False
+        # check if next validation level suffixed Plone group is not empty
+        for plone_group_id in self.context.get_plone_groups_managing_item(
+                self.cfg, item_states=[review_state]):
+            res = self.tool.group_is_not_empty(
+                plone_group_id=plone_group_id, user_id=user_id)
+            if res:
+                break
+        return res
+
     def is_valid_validation_level(self, review_state, user_id=None, shortcut=None, back=False):
         """ """
-        i = self.context.REQUEST.get('i_counter', 0)
-        self.context.REQUEST.set('i_counter', i + 1)
-        logger.info(self.context.REQUEST.get('i_counter'))
-        logger.info(self.context.REQUEST.get('i_counter'))
+        # i = self.context.REQUEST.get('i_counter', 0)
+        # self.context.REQUEST.set('i_counter', i + 1)
+        # logger.info(self.context.REQUEST.get('i_counter'))
         # logger.info("%s: %s >> %s >> %s" % (back, self.review_state, review_state, shortcut))
         # check if level is a validation level
         level = self.cfg.getItemWFValidationLevels(
@@ -302,22 +313,18 @@ class MeetingItemWorkflowConditions(object):
         if not level:
             return
         # check available_on
-        extra_expr_ctx = _base_extra_expr_ctx(self.context)
-        extra_expr_ctx['shortcut'] = shortcut
-        res = _evaluateExpression(
-            self.context,
-            expression=level['available_on'],
-            roles_bypassing_expression=[],
-            extra_expr_ctx=extra_expr_ctx,
-            raise_on_error=True)
+        res = True
+        if level['available_on'].strip():
+            extra_expr_ctx = _base_extra_expr_ctx(self.context)
+            extra_expr_ctx['shortcut'] = shortcut
+            res = _evaluateExpression(
+                self.context,
+                expression=level['available_on'],
+                roles_bypassing_expression=[],
+                extra_expr_ctx=extra_expr_ctx,
+                raise_on_error=True)
         if res:
-            # check if next validation level suffixed Plone group is not empty
-            for plone_group_id in self.context.get_plone_groups_managing_item(
-                    self.cfg, item_states=[review_state]):
-                res = self.tool.group_is_not_empty(
-                    plone_group_id=plone_group_id, user_id=user_id)
-                if res:
-                    break
+            res = self._is_groups_managing_item_not_empty(review_state, user_id)
         return res
 
     security.declarePublic('mayProposeToNextValidationLevel')

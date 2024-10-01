@@ -962,6 +962,64 @@ class testPerformances(PloneMeetingTestCase):
         for time in range(times):
             get_last_validation_state(item, self.meetingConfig)
 
+    def test_pm_Speed_is_valid_validation_level(self):
+        '''Test utils.get_last_validation_state.'''
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        self._activate_wfas(('item_validation_shortcuts', ))
+        # enable levelXreviewers and corresponding validation levels
+        # so we have several transitions
+        enable_function("level1reviewers")
+        enable_function("level2reviewers")
+        enable_function("level3reviewers")
+        enable_function("level4reviewers")
+        enable_function("level5reviewers")
+        # will enable every validation levels
+        self._enableItemValidationLevel(cfg)
+        self._addPrincipalToGroup("pmCreator1", "{0}_reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level1reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level1reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level2reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level3reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level4reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level5reviewers".format(
+            self.developers_uid))
+        self.changeUser("pmCreator1")
+        item1 = self.create('MeetingItem')
+        self.assertEqual(self.transitions(item1),
+                         ['prevalidate',
+                          'propose',
+                          'proposeToValidationLevel1',
+                          'proposeToValidationLevel2',
+                          'proposeToValidationLevel3',
+                          'proposeToValidationLevel4',
+                          'proposeToValidationLevel5',
+                          'validate'])
+        self.changeUser("pmCreator2")
+        item2 = self.create('MeetingItem')
+        self.assertEqual(self.transitions(item2),
+                         ['propose'])
+        self.changeUser('pmCreator1')
+        self._check_is_valid_validation_level(item1, times=100)
+        self._check_is_valid_validation_level(item1, times=1000)
+        self.changeUser('pmCreator2')
+        self._check_is_valid_validation_level(item2, times=100)
+        self._check_is_valid_validation_level(item2, times=1000)
+
+    @timecall
+    def _check_is_valid_validation_level(self, item, times=1):
+        ''' '''
+        pm_logger.info('Call MeetingItemWorkflowConditions.is_valid_validation_level {0} times'.format(times))
+        wfconditions = item.wfConditions()
+        for time in range(times):
+            wfconditions.is_valid_validation_level("proposed")
+
     def test_pm_Speed_get_full_title(self):
         '''Test organization.get_full_title.'''
         self.changeUser('pmManager')
