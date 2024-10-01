@@ -38,13 +38,8 @@ jobs:
       #    registry: harbor.imio.be
       #    image: harbor.imio.be/common/libreoffice:7.3
       #    run: soffice --headless --nodefault --accept="socket,host=loffice,port=2002,tcpNoDelay=1;urp;StarOffice.ServiceManager"
-      - name: Install Pip
-        run: |
-          curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
-          python2.7 get-pip.py
-          export PATH="/home/runner/.local/bin:$PATH"
       - name: Run tests
-        uses: IMIO/gha/plone-package-test-notify@python2
+        uses: IMIO/gha/plone-package-test-notify@v4
         env:
           cache-name: cache-eggs
         with:

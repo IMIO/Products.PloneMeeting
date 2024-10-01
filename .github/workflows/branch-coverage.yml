@@ -18,13 +18,17 @@ jobs:
         if: ${{ env.ACT }}
         run: echo /home/runner/externals/node20/bin >> $GITHUB_PATH
       - name: Run check
-        uses: IMIO/gha/plone-package-test-notify@python2
+        uses: IMIO/gha/plone-package-test-notify@v4
         env:
           cache-name: cache-eggs
         with:
           CACHE_KEY: ${{ runner.os }}-build-${{ env.cache-name }}-2.7.18
           TEST_COMMAND: coverage run bin/test
-          REQUIREMENTS_FILE: 'requirements-tests.txt'
+          INSTALL_DEPENDENCIES_COMMANDS: |
+            sudo pip2.7 install -r requirements-tests.txt
+            sudo apt-get update
+            sudo apt-get install -y python3-pip
+            sudo pip3 install -r requirements-coverage.txt
           MATTERMOST_WEBHOOK_URL: ${{ secrets.DELIB_MATTERMOST_WEBHOOK_URL }}
           #BUILDOUT_CONFIG_FILE: 'test-${{ matrix.plone-version }}.cfg'
           BUILDOUT_CONFIG_FILE: buildout.cfg
