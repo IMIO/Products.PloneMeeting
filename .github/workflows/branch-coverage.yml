@@ -17,11 +17,6 @@ jobs:
       - name: Needed for local development
         if: ${{ env.ACT }}
         run: echo /home/runner/externals/node20/bin >> $GITHUB_PATH
-      - name: Install Pip
-        run: |
-          curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
-          python2.7 get-pip.py
-          export PATH="/home/runner/.local/bin:$PATH"
       - name: Run check
         uses: IMIO/gha/plone-package-test-notify@python2
         env:
