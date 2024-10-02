@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-4.2.12 (unreleased)
--------------------
+4.2.11.1 (unreleased)
+---------------------
 
 - Added new fields `MeetingItem.motivationSuite` and
   `MeetingItem.otherMeetingConfigsClonableToFieldMotivationSuite`.
