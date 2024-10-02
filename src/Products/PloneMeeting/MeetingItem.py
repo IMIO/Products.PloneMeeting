@@ -248,19 +248,6 @@ class MeetingItemWorkflowConditions(object):
             index -= 1
         return item_val_levels_states[index]
 
-    def _get_next_val_level(self, destinationState):
-        """ """
-        item_val_levels_states = self.cfg.getItemWFValidationLevels(
-            data='state',
-            only_enabled=True,
-            return_state_singleton=False)
-        # check if next validation state is valid
-        index = item_val_levels_states.index(destinationState) + 1
-        while not self.is_valid_validation_level(
-                item_val_levels_states[index]):
-            index += 1
-        return item_val_levels_states[index]
-
     def _mayShortcutToValidationLevel_cachekey(method, self, destinationState):
         '''cachekey method for self._mayShortcutToValidationLevel.'''
         # for a state, either group managing item is fixed or it is the proposing group
@@ -327,6 +314,19 @@ class MeetingItemWorkflowConditions(object):
             res = self._is_groups_managing_item_not_empty(review_state, user_id)
         return res
 
+    def _get_next_val_level(self, destinationState):
+        """ """
+        item_val_levels_states = self.cfg.getItemWFValidationLevels(
+            data='state',
+            only_enabled=True,
+            return_state_singleton=False)
+        # check if next validation state is valid
+        index = item_val_levels_states.index(destinationState) + 1
+        while not self.is_valid_validation_level(
+                item_val_levels_states[index]):
+            index += 1
+        return item_val_levels_states[index]
+
     security.declarePublic('mayProposeToNextValidationLevel')
 
     def mayProposeToNextValidationLevel(self, destinationState):
@@ -335,8 +335,12 @@ class MeetingItemWorkflowConditions(object):
         if _checkPermission(ReviewPortalContent, self.context):
             res = self.is_valid_validation_level(destinationState)
             # shortcuts are available to (Meeting)Managers
+            # this also manage returned_to_proposing_group_proposed so
+            # we use get_item_corresponding_state_to_assign_local_roles
             if res and not self.tool.isManager(self.cfg) and \
-               self._get_next_val_level(self.review_state) != destinationState:
+               self._get_next_val_level(
+                    self.cfg.adapted().get_item_corresponding_state_to_assign_local_roles(
+                        self.review_state)) != destinationState:
                 # check if available when using shortcuts
                 res = self._mayShortcutToValidationLevel(destinationState)
         # check required data only if transition is doable or we would display

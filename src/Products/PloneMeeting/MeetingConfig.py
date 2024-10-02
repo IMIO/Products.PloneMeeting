@@ -5084,7 +5084,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # check that no more items are in this state
             # get every 'waiting_advices'-like states, we could have 'itemcreated_waiting_advices',
             # 'proposed_waiting_advices' or
-            # 'itemcreated__or__proposedToValidationLevel1__or__..._waiting_advices' for example
+            # 'any_validation_state_waiting_advices' for example
             waiting_advices_states = [state for state in itemWF.states if 'waiting_advices' in state]
             if catalog.unrestrictedSearchResults(
                     portal_type=item_type, review_state=waiting_advices_states):

@@ -226,7 +226,8 @@ ITEM_NO_PREFERRED_MEETING_VALUE = "whatever"
 ITEM_DEFAULT_TEMPLATE_ID = "default-empty-item-template"
 
 # default fields kept when an item is cloned
-DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivation',
+DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription',
+                         'motivation', 'motivationSuite',
                          'decision', 'decisionSuite', 'decisionEnd',
                          'budgetInfos', 'budgetRelated', 'sendToAuthority',
                          'groupsInCharge', 'proposingGroupWithGroupInCharge',
