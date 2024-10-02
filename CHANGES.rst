@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.11.1 (unreleased)
+4.2.11.1 (2024-10-02)
 ---------------------
 
 - Added new fields `MeetingItem.motivationSuite` and
