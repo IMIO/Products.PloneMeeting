@@ -87,8 +87,8 @@ class Migrate_To_4214(Migrator):
                 state_id = WAITING_ADVICES_NEW_STATE_ID_PATTERN.format(
                     '__or__'.join(item_validation_states))
                 self.updateWFStatesAndTransitions(
-                    query={'review_state': state_id,
-                           'getConfigId': cfg.getId()},
+                    query={'getConfigId': cfg.getId(),
+                           'meta_type': 'MeetingItem'},
                     review_state_mappings={
                         state_id: 'any_validation_state_waiting_advices'})
         logger.info('Done.')
