@@ -513,6 +513,11 @@
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
+    <tal:comment replace="nothing">Motivation suite</tal:comment>
+    <tal:field define="fieldName python: 'motivationSuite'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
     <tal:votesResult_after_motivation condition="python: 'votesResult_after_motivation' in usedAttrs">
       <div tal:attributes="id string:marker-collapsible-field-votesResult">
         <tal:votesResult replace="structure python: context.restrictedTraverse('@@display-collapsible-rich-field')('votesResult')" />

@@ -86,6 +86,9 @@
     <tal:field define="fieldName python: 'motivation'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
+    <tal:field define="fieldName python: 'motivationSuite'">
+      <metal:f use-macro="context/@@pm-macros/editContentField"/>
+    </tal:field>
     <tal:field define="fieldName python: 'decision'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
