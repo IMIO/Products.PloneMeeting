@@ -28,16 +28,6 @@ jobs:
       - name: Needed for local development
         if: ${{ env.ACT }}
         run: echo /home/runner/externals/node20/bin >> $GITHUB_PATH
-      #- name: Set up Docker
-      #  uses: crazy-max/ghaction-setup-docker@v3
-      #- name: Run libreoffice docker image
-      #  uses: addnab/docker-run-action@v3
-      #  with:
-      #    username: ${{ secrets.COMMON_HARBOR_USERNAME }}
-      #    password: ${{ secrets.COMMON_HARBOR_PASSWORD }}
-      #    registry: harbor.imio.be
-      #    image: harbor.imio.be/common/libreoffice:7.3
-      #    run: soffice --headless --nodefault --accept="socket,host=loffice,port=2002,tcpNoDelay=1;urp;StarOffice.ServiceManager"
       - name: Run tests
         uses: IMIO/gha/plone-package-test-notify@v4
         env:
