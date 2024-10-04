@@ -13,6 +13,17 @@ jobs:
       fail-fast: false
       matrix:
         plone-version: ["4.3"]
+    services:
+      soffice:
+        image: harbor.imio.be/common/libreoffice:7.3
+        ports:
+          - 2002:2002
+        volumes:
+          - /tmp:/tmp
+          - /var/tmp:/var/tmp
+        credentials:
+          username: ${{ secrets.COMMON_HARBOR_USERNAME }}
+          password: ${{ secrets.COMMON_HARBOR_PASSWORD }}
     steps:
       - name: Needed for local development
         if: ${{ env.ACT }}
