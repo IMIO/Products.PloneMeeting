@@ -41,4 +41,4 @@ jobs:
           TEST_COMMAND: echo "No tests to run"
           INSTALL_DEPENDENCIES_COMMANDS: |
             sudo pip install -r requirements-tests.txt
-          MATTERMOST_WEBHOOK_URL: ${{ secrets.DELIB_MATTERMOST_WEBHOOK_URL }}
+          #MATTERMOST_WEBHOOK_URL: ${{ secrets.DELIB_MATTERMOST_WEBHOOK_URL }}
