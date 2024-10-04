@@ -47,6 +47,6 @@ jobs:
           # TODO : launch libreoffice on port 2002
           TEST_COMMAND: OO_SERVER=loffice OO_PORT=2002 bin/testmc
           INSTALL_DEPENDENCIES_COMMANDS: |
-            pip install -r requirements-tests.txt
+            sudo pip install -r requirements-tests.txt
           MATTERMOST_WEBHOOK_URL: ${{ secrets.DELIB_MATTERMOST_WEBHOOK_URL }}
           BUILDOUT_CONFIG_FILE: 'test-${{ matrix.plone-version }}.cfg'
