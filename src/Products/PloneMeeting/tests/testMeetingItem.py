@@ -1645,17 +1645,13 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         self._enableField('category', cfg=cfg2, enable=False)
-        cfg.setMeetingConfigsToCloneTo(
-            ({'meeting_config': '%s' % cfg2Id,
-              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
         cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
         self._enableField('otherMeetingConfigsClonableToFieldDecision')
         self._enableField('otherMeetingConfigsClonableToFieldMotivation')
         self._enableField('otherMeetingConfigsClonableToFieldTitle')
 
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        item.setTitle('Title')
+        item = self.create('MeetingItem', title='Title')
         item.setDecision('<p></p>')
         item.setOtherMeetingConfigsClonableToFieldTitle('Field title')
         item.setOtherMeetingConfigsClonableToFieldMotivation('<p>Field motivation</p>')
@@ -1673,6 +1669,35 @@ class testMeetingItem(PloneMeetingTestCase):
                          ['otherMeetingConfigsClonableToFieldTitle',
                           'otherMeetingConfigsClonableToFieldMotivation',
                           'otherMeetingConfigsClonableToFieldDecision'])
+
+    def test_pm_SendItemToOtherMCItemReference(self):
+        '''Test when item sent to other MC and original item
+           is using otherMeetingConfigsClonableToFieldItemReference field.'''
+        # if we want to keep a stored itemReference, we need to configure it
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg2.setItemReferenceFormat('python:here.getItemReference()')
+        cfg2.setComputeItemReferenceForItemsOutOfMeeting(True)
+        self._enableField('otherMeetingConfigsClonableToFieldItemReference')
+        self._enableField('category', cfg=cfg2, enable=False)
+        cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
+        self.changeUser('pmCreator1')
+        item = self.create(
+            'MeetingItem',
+            title='Title',
+            otherMeetingConfigsClonableToFieldItemReference='124/1/2024',
+            otherMeetingConfigsClonableTo=(cfg2Id, ))
+        cloned_item = item.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEqual(cloned_item.getItemReference(), '124/1/2024')
+        # with such configuration, item reference is kept
+        self.setMeetingConfig(cfg2Id)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        self.presentItem(cloned_item)
+        self.freezeMeeting(meeting)
+        self.assertEqual(cloned_item.query_state(), 'itemfrozen')
+        self.assertEqual(cloned_item.getItemReference(), '124/1/2024')
 
     def test_pm_CloneItemWithSetCurrentAsPredecessor(self):
         '''When an item is cloned with option setCurrentAsPredecessor=True,

@@ -5,8 +5,10 @@ Changelog
 4.2.11.2 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Added field `MeetingItem.otherMeetingConfigsClonableToFieldItemReference`
+  to be able to define a fixed item reference on an item to reuse on item cloned
+  to another `MeetingConfig`.
+  [gbastien]
 
 4.2.11.1 (2024-10-02)
 ---------------------

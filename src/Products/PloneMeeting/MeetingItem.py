@@ -2029,6 +2029,18 @@ schema = Schema((
         ),
         optional=True,
     ),
+    StringField(
+        name='otherMeetingConfigsClonableToFieldItemReference',
+        searchable=True,
+        default='',
+        widget=StringWidget(
+            condition="python: here.attribute_is_used('otherMeetingConfigsClonableToFieldItemReference')",
+            label_msgid="PloneMeeting_label_itemReference",
+            label='OtherMeetingConfigsClonableToFieldItemReference',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+    ),
     TextField(
         name='otherMeetingConfigsClonableToFieldDescription',
         widget=RichWidget(
