@@ -49,4 +49,3 @@ jobs:
           INSTALL_DEPENDENCIES_COMMANDS: |
             sudo pip install -r requirements-tests.txt
           MATTERMOST_WEBHOOK_URL: ${{ secrets.DELIB_MATTERMOST_WEBHOOK_URL }}
-          BUILDOUT_CONFIG_FILE: 'test-${{ matrix.plone-version }}.cfg'
