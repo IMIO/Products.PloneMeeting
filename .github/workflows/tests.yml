@@ -44,8 +44,7 @@ jobs:
           cache-name: cache-eggs
         with:
           CACHE_KEY: ${{ runner.os }}-build-${{ env.cache-name }}-${{ matrix.python-version }}
-          # TODO : launch libreoffice on port 2002
-          TEST_COMMAND: OO_SERVER=loffice OO_PORT=2002 bin/testmc
+          TEST_COMMAND: OO_SERVER=loffice OO_PORT=2002 bin/testmc -s Products.PloneMeeting --layer=\!ROBOT --test=\!\(testSetup\|testPerf\)
           INSTALL_DEPENDENCIES_COMMANDS: |
             sudo pip install -r requirements-tests.txt
           MATTERMOST_WEBHOOK_URL: ${{ secrets.DELIB_MATTERMOST_WEBHOOK_URL }}
