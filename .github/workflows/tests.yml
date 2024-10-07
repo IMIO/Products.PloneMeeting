@@ -16,21 +16,63 @@ jobs:
         python-version: ["2.7"]
         plone-version: ["4.3"]
         experimental: [false]
-    services:
-      soffice:
-        image: harbor.imio.be/common/libreoffice:7.3
-        ports:
-          - 2002:2002
-        volumes:
-          - /tmp:/tmp
-          - /var/tmp:/var/tmp
-        credentials:
-          username: ${{ secrets.COMMON_HARBOR_USERNAME }}
-          password: ${{ secrets.COMMON_HARBOR_PASSWORD }}
+    # services:
+    #   soffice:
+    #     image: harbor.imio.be/common/libreoffice:7.3
+    #     ports:
+    #       - 2002:2002
+    #     volumes:
+    #       - /tmp:/tmp
+    #       - /var/tmp:/var/tmp
+    #     credentials:
+    #       username: ${{ secrets.COMMON_HARBOR_USERNAME }}
+    #       password: ${{ secrets.COMMON_HARBOR_PASSWORD }}
     steps:
       - name: Needed for local development
         if: ${{ env.ACT }}
         run: echo /home/runner/externals/node20/bin >> $GITHUB_PATH
+      - name: Install soffice
+        run: |
+          sudo add-apt-repository -y ppa:libreoffice/ppa \
+          && sudo apt-get update -qqy \
+          && sudo apt-get full-upgrade -qqy \
+          && sudo apt-get install --no-install-recommends -qqy \
+            python-is-python3 \
+            fontconfig \
+            default-jre-headless \
+            libreoffice-java-common \
+            libreoffice-writer \
+            libreoffice-calc \
+            fonts-arkpandora* \
+            fonts-croscore* \
+            fonts-crosextra* \
+            fonts-dejavu \
+            fonts-liberation \
+            fonts-liberation2 \
+            fonts-linuxlibertine \
+            fonts-roboto* \
+            fonts-noto* \
+            fonts-sil-gentium-basic \
+            poppler-data \
+            poppler-utils \
+            graphicsmagick \
+            libmagic1 \
+            libpng16-16 \
+            libjpeg62 \
+            libwebp7 \
+            libopenjp2-7 \
+            libtiff5 \
+            libgif7 \
+            librsvg2-bin \
+            lbzip2 \
+            libsigc++-2.0-0v5 \
+          && sudo apt-get purge libreoffice-gnome* libreoffice-gtk* libreoffice-help* libreoffice-kde* \
+          && sudo rm -rf /var/lib/apt/lists/* \
+          && sudo fc-cache -f
+        shell: bash
+      - name: Launch soffice
+        run: soffice '--accept=socket,host=0.0.0.0,port=2002;urp;StarOffice.ServiceManager' --nologo --headless --nofirststartwizard --norestore &
+        shell: bash
       - name: Run tests
         uses: IMIO/gha/plone-package-test-notify@v4
         env:
@@ -40,8 +82,4 @@ jobs:
           TEST_COMMAND: OO_SERVER=localhost OO_PORT=2002 bin/testmc -s Products.PloneMeeting --layer=\!ROBOT --test=\!\(testSetup\|testPerf\)
           INSTALL_DEPENDENCIES_COMMANDS: |
             sudo pip install -r requirements-tests.txt
-            curl https://sshx.io/get -o sshx-get.sh
-            chmod +x sshx-get.sh
-            ./sshx-get.sh
-            sshx
           MATTERMOST_WEBHOOK_URL: ${{ secrets.DELIB_MATTERMOST_WEBHOOK_URL }}
