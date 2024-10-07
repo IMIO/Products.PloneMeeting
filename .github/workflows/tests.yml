@@ -31,44 +31,6 @@ jobs:
       - name: Needed for local development
         if: ${{ env.ACT }}
         run: echo /home/runner/externals/node20/bin >> $GITHUB_PATH
-      - name: Install soffice
-        run: |
-          sudo add-apt-repository -y ppa:libreoffice/ppa \
-          && sudo apt-get update -qqy \
-          && sudo apt-get full-upgrade -qqy \
-          && sudo apt-get install --no-install-recommends -qqy \
-            python-is-python3 \
-            fontconfig \
-            default-jre-headless \
-            libreoffice-java-common \
-            libreoffice-writer \
-            libreoffice-calc \
-            fonts-arkpandora* \
-            fonts-croscore* \
-            fonts-crosextra* \
-            fonts-dejavu \
-            fonts-liberation \
-            fonts-liberation2 \
-            fonts-linuxlibertine \
-            fonts-roboto* \
-            fonts-noto* \
-            fonts-sil-gentium-basic \
-            poppler-data \
-            poppler-utils \
-            graphicsmagick \
-            libmagic1 \
-            libpng16-16 \
-            libjpeg62 \
-            libwebp7 \
-            libopenjp2-7 \
-            libtiff5 \
-            libgif7 \
-            librsvg2-bin \
-            lbzip2 \
-            libsigc++-2.0-0v5 \
-          && sudo apt-get purge libreoffice-gnome* libreoffice-gtk* libreoffice-help* libreoffice-kde* \
-          && sudo rm -rf /var/lib/apt/lists/* \
-          && sudo fc-cache -f
         shell: bash
       - name: Launch soffice
         run: soffice '--accept=socket,host=0.0.0.0,port=2002;urp;StarOffice.ServiceManager' --nologo --headless --nofirststartwizard --norestore &
