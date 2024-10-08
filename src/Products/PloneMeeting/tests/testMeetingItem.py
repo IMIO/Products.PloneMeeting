@@ -8081,6 +8081,16 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         self.assertTrue(self.hasPermission(ModifyPortalContent, item))
 
+    def test_pm_ItemWFValidationLevels_available_on(self):
+        """Test when using available_on that uses a TAL expression to enable
+           or not a workflow transition."""
+        # make only pmCreator1b able to propose the item
+        cfg = self.meetingConfig
+        self._setUpDefaultItemWFValidationLevels(cfg)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        import ipdb; ipdb.set_trace()
+
     def test_pm__update_meeting_link(self):
         """The MeetingItem._update_meeting_link is
            keeping the link between meeting and item."""

@@ -20,7 +20,8 @@
                        itemAbsents python: context.get_item_absents(by_persons=True);
                        itemExcused python: context.get_item_excused(by_persons=True);
                        itemSignatories python: context.get_item_signatories(by_signatories=True);
-                       isManager python:view.tool.isManager(view.cfg);">
+                       isManager python:view.tool.isManager(view.cfg);
+                       safe_utils python: modules['Products.PloneMeeting'].safe_utils">
     <tal:comment replace="nothing">Column captions</tal:comment>
     <thead>
     <tr>
@@ -73,7 +74,7 @@
           tal:attributes="class classOddEven">
         <td class="td_cell_number-column" tal:content="repeat/mUser/number">1</td>
         <td>
-          <span tal:content="python: context.get_attendee_short_title(mUser, view.cfg)"
+          <span tal:content="python: safe_utils.get_attendee_short_title(mUser, view.cfg)"
                 tal:attributes="class python: is_attendee_position_redefined and 'tooltipster-meeting-item-redefined-position link-help item-attendee-title highlightValue' or 'item-attendee-title';
                                 data-base_url string:${context/absolute_url};
                                 data-attendee_uid string:${aUid};">

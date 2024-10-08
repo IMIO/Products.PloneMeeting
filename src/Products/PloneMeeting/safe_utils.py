@@ -25,6 +25,7 @@ from Products.PloneMeeting.utils import escape
 from Products.PloneMeeting.utils import field_is_empty
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_attendee_short_title
 from Products.PloneMeeting.utils import get_gn_position_name
 from Products.PloneMeeting.utils import get_internal_number
 from Products.PloneMeeting.utils import get_next_meeting

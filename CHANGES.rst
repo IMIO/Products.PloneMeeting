@@ -5,8 +5,10 @@ Changelog
 4.2.12 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Added possibility to pass any parameter to `held_position.get_short_title`
+  when using `BaseDGHV.print_attendees` and `BaseDGHV.print_attendees_by_type`
+  using a special parameter `short_title_kwargs`.
+  [gbastien]
 
 4.2.11 (2024-09-25)
 -------------------

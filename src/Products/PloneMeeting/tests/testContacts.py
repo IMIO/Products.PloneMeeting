@@ -1387,6 +1387,35 @@ class testContacts(PloneMeetingTestCase):
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
             u'<strong>pr\xe9sent</strong>')
 
+    def test_pm_Print_attendees_short_title_kwargs(self):
+        """Print attendees short_title_kwargs parameter to be able to pass any
+           held_position.get_short_title parameter.
+           Here we test with include_voting_group=True."""
+        self.changeUser('siteadmin')
+        outside_org = api.content.create(
+            container=self.portal.contacts,
+            type='organization',
+            id='political-group',
+            title='Political group')
+        meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()
+        self.hp1.voting_group = self._relation(outside_org)
+        view = item1.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        self.assertEqual(
+            helper.print_attendees(),
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
+            u'<strong>absent pour ce point</strong><br />Madame Person3FirstName '
+            u'Person3LastName, Assembly member 3, <strong>excus\xe9e pour ce point</strong>'
+            u'<br />Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5, '
+            u'<strong>pr\xe9sente</strong>')
+        self.assertEqual(
+            helper.print_attendees(short_title_kwargs={'include_voting_group': True}),
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1 (Political group), '
+            u'<strong>absent pour ce point</strong><br />Madame Person3FirstName Person3LastName, '
+            u'Assembly member 3, <strong>excus\xe9e pour ce point</strong><br />'
+            u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5, '
+            u'<strong>pr\xe9sente</strong>')
+
     def test_pm_Print_attendees_by_type(self):
         """Basic test for the print_attendees method."""
         meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()

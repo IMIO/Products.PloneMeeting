@@ -1519,6 +1519,20 @@ def get_gn_position_name(contacts, position_type):
     return split_gender_and_number(position_name)[gn]
 
 
+def get_attendee_short_title(hp, cfg, item=None, meeting=None, **kwargs):
+    '''Helper that return short title for given p_hp,
+       taking into account that p_hp position may be redefined for self.'''
+    position_type = None
+    if item is not None:
+        position_type = meeting.get_attendee_position_for(
+            item.UID(), hp.UID())
+    include_voting_group = cfg.getDisplayVotingGroup()
+    return hp.get_short_title(
+        forced_position_type_value=position_type,
+        include_voting_group=include_voting_group,
+        **kwargs)
+
+
 def listifySignatures(signatures):
     res = []
     for singNumber, signInfos in sorted(signatures.items()):

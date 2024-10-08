@@ -16,6 +16,7 @@ from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
+from Products.PloneMeeting.utils import get_attendee_short_title
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import redirect
 from z3c.form import button
@@ -99,7 +100,8 @@ class BaseAttendeeForm(form.Form):
             hp = uuidToObject(person_uid, unrestricted=True)
             if not hp:
                 raise BadRequest(WRONG_PERSON_UID % person_uid)
-            self.description = self.meeting.get_attendee_short_title(hp, cfg, item=self.context)
+            self.description = get_attendee_short_title(
+                hp, cfg, item=self.context, meeting=self.meeting)
 
     def update(self):
         """ """
