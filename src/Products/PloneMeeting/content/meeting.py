@@ -54,6 +54,7 @@ from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _get_category
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_attendee_short_title
 from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -1544,19 +1545,6 @@ class Meeting(Container):
                     forced_position_type_value=position_type)
         return position_type
 
-    def get_attendee_short_title(self, hp, cfg, item=None, **kwargs):
-        '''Helper that return short title for given p_hp,
-           taking into account that p_hp position may be redefined for self.'''
-        position_type = None
-        if item is not None:
-            position_type = self.get_attendee_position_for(
-                item.UID(), hp.UID())
-        include_voting_group = cfg.getDisplayVotingGroup()
-        return hp.get_short_title(
-            forced_position_type_value=position_type,
-            include_voting_group=include_voting_group,
-            **kwargs)
-
     def _get_item_attendees_order(self, item_uid=None, from_meeting_if_empty=True):
         """ """
         if not base_hasattr(self, 'item_attendees_order'):
@@ -1677,9 +1665,13 @@ class Meeting(Container):
                                  include_held_position_label=True,
                                  include_sub_organizations=True):
         '''Display the user remplacement from p_held_position_uid.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         held_position = uuidToObject(held_position_uid, unrestricted=True)
         if include_held_position_label:
-            return held_position.get_short_title(
+            return get_attendee_short_title(
+                held_position,
+                cfg,
                 include_sub_organizations=include_sub_organizations)
         else:
             person = held_position.get_person()

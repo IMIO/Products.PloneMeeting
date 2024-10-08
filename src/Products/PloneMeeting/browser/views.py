@@ -966,7 +966,8 @@ class BaseDGHV(object):
                         replaced_by_format={'M': u'<strong>remplacé par {0}</strong>',
                                             'F': u'<strong>remplacée par {0}</strong>'},
                         ignore_non_attendees=True,
-                        committee_id=None):
+                        committee_id=None,
+                        short_title_kwargs={}):
         """ """
 
         def _render_as_html(tree, by_parent_org=False):
@@ -1021,9 +1022,11 @@ class BaseDGHV(object):
             if self.context.getTagName() == "MeetingItem":
                 forced_position_type_value = meeting.get_attendee_position_for(
                     context_uid, contact_uid)
-            contact_short_title = contact.get_short_title(include_sub_organizations=False,
-                                                          abbreviate_firstname=abbreviate_firstname,
-                                                          forced_position_type_value=forced_position_type_value)
+            contact_short_title = contact.get_short_title(
+                include_sub_organizations=False,
+                abbreviate_firstname=abbreviate_firstname,
+                forced_position_type_value=forced_position_type_value,
+                **short_title_kwargs)
             if escape_for_html:
                 contact_short_title = cgi.escape(contact_short_title)
             res[contact] = contact_short_title
@@ -1850,7 +1853,8 @@ def print_votes(item,
                 no_votes_marker=u"<p>-</p>",
                 keep_vote_numbers=[],
                 render_as_html=True,
-                escape_for_html=True):
+                escape_for_html=True,
+                short_title_kwargs={}):
     """Function for printing votes :
        When using p_render_as_html=True :
        - p_main_pattern is the main pattern the votes will be rendered;
@@ -1895,12 +1899,14 @@ def print_votes(item,
                     include_sub_organizations=False,
                     include_person_title=include_person_title,
                     abbreviate_firstname=abbreviate_firstname,
-                    forced_position_type_value=forced_position_type_value)
+                    forced_position_type_value=forced_position_type_value,
+                    **short_title_kwargs)
             else:
                 voter_short_title = voter.get_person_short_title(
                     include_person_title=include_person_title,
                     abbreviate_firstname=abbreviate_firstname,
-                    forced_position_type_value=forced_position_type_value)
+                    forced_position_type_value=forced_position_type_value,
+                    **short_title_kwargs)
             if escape_for_html:
                 voter_short_title = cgi.escape(voter_short_title)
             res.append(voter_pattern.format(voter_short_title))
@@ -2100,7 +2106,8 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             html_pattern=u'<p>{0}</p>',
             ignore_before_first_item=True,
             include_hp=False,
-            abbreviate_firstname=False):
+            abbreviate_firstname=False,
+            short_title_kwargs={}):
         """Print in an out moves depending on the previous/next item.
            If p_in_and_out_types is given, only given types are considered among
            patterns keys ('left_before', 'entered_before', ...).
@@ -2144,7 +2151,8 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
                     person_short_title = held_position.get_person_short_title(
                         include_person_title=include_person_title,
                         abbreviate_firstname=abbreviate_firstname,
-                        forced_position_type_value=forced_position_type_value)
+                        forced_position_type_value=forced_position_type_value,
+                        **short_title_kwargs)
                 person_res[in_and_out_type].append(person_short_title)
 
         if render_as_html:

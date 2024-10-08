@@ -162,7 +162,7 @@
                       <img tal:attributes="src string:${mUser/getIconURL}" />
                       <b tal:attributes="id string:muser_${muid}_title;
                                          class python: muid not in attendees and 'input_disabled';"
-                         tal:content="mUser/get_short_title"></b>
+                         tal:content="python: view.get_attendee_short_title(mUser, view.cfg)"></b>
                     </td>
                     <td align="center">
                       <input type="checkbox" class="noborder meeting_attendees_marker"
@@ -211,7 +211,7 @@
                       </select>
                     </td>
                     <td tal:condition="use_user_replacements">
-                      <select tal:define="mid mUser/getId;
+                      <select tal:define="mid python: mUser.getId();
                                           sid python: 'muser_%s_replacement' % muid;
                                           aid python: attendee_id;
                                           eid python: 'muser_%s_excused' % muid;
@@ -223,10 +223,10 @@
                         <option value="">-</option>
                         <tal:other repeat="oUser python: all_users">
                           <tal:defines define="value string:${muid}__replacedby__${oUser/UID};">
-                          <option tal:define="ouid oUser/UID;
+                          <option tal:define="ouid python: oUser.UID();
                                               show python: ('meeting_attendees' in request and 'muser_%s_attendee' % ouid in request.get('meeting_attendees', [])) or ('meeting_attendees' not in request and ouid in attendees)"
                                   tal:condition="python: ouid != muid"
-                                  tal:content="oUser/get_short_title"
+                                  tal:content="python:view.get_attendee_short_title(oUser, view.cfg)"
                                   tal:attributes="value value;
                                                   data-icon string:${view/portal_url}/held_position_icon.png;
                                                   style python: not show and 'display:none' or '';

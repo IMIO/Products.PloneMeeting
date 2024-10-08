@@ -29,6 +29,7 @@ from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import field_is_empty
+from Products.PloneMeeting.utils import get_attendee_short_title
 from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import redirect
 from z3c.form.contentprovider import ContentProviders
@@ -395,6 +396,10 @@ class AttendeesEditProvider(ContentProviderBase, BaseMeetingView):
         else:
             is_disabled = muid not in stored_value
         return is_disabled
+
+    def get_attendee_short_title(self, hp, cfg):
+        """Helper to manage attendee short title."""
+        return get_attendee_short_title(hp, cfg)
 
 
 class MeetingEdit(DefaultEditForm, BaseMeetingView):
