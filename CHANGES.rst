@@ -2,12 +2,30 @@ Changelog
 =========
 
 
-4.2.12 (unreleased)
--------------------
+4.2.11.2 (unreleased)
+---------------------
 
+- Added field `MeetingItem.otherMeetingConfigsClonableToFieldItemReference`
+  to be able to define a fixed item reference on an item to reuse on item cloned
+  to another `MeetingConfig`.
+  [gbastien]
 - Added possibility to pass any parameter to `held_position.get_short_title`
   when using `BaseDGHV.print_attendees` and `BaseDGHV.print_attendees_by_type`
   using a special parameter `short_title_kwargs`.
+  [gbastien]
+
+4.2.11.1 (2024-10-02)
+---------------------
+
+- Added new fields `MeetingItem.motivationSuite` and
+  `MeetingItem.otherMeetingConfigsClonableToFieldMotivationSuite`.
+  [gbastien]
+- Replaced columns `suffix/extra_suffix` of `MeetingConfig.itemWFValidationLevels`
+  by new columns `group_managing_item/extra_groups_managing_item`, this will
+  manage cases when another group than the proposing group is managing the item,
+  several groups may be selected including the proposing group or not.
+  Added new column `available_on` to be able to define a `TAL expression`
+  that will make a transition available or not.
   [gbastien]
 
 4.2.11 (2024-09-25)

@@ -1997,9 +1997,9 @@ class testMeetingConfig(PloneMeetingTestCase):
                       domain='PloneMeeting',
                       context=self.request)
         # values_disabled_itemcreated
-        self._disableItemValidationLevel(cfg, level='itemcreated')
+        self._disableItemValidationLevel(cfg, item_state='itemcreated')
         values_disabled_itemcreated = deepcopy(cfg.getItemWFValidationLevels())
-        self._enableItemValidationLevel(cfg, level='itemcreated')
+        self._enableItemValidationLevel(cfg, item_state='itemcreated')
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_itemcreated),
                          level_itemcreated_error)
 
@@ -2007,9 +2007,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(cfg.getItemWFValidationLevels(data='state', only_enabled=True),
                          ['itemcreated', 'proposed'])
         # values_disabled_proposed
-        self._disableItemValidationLevel(cfg, level='proposed')
+        self._disableItemValidationLevel(cfg, item_state='proposed')
         values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
-        self._enableItemValidationLevel(cfg, level='proposed')
+        self._enableItemValidationLevel(cfg, item_state='proposed')
         self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
 
         # create an item that will be itemcreated
@@ -2067,9 +2067,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.proposeItem(item)
         self._setItemToWaitingAdvices(item, 'wait_advices_from_{}'.format(proposed_state))
         # values_disabled_proposed
-        self._disableItemValidationLevel(cfg, level=proposed_state)
+        self._disableItemValidationLevel(cfg, item_state=proposed_state)
         values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
-        self._enableItemValidationLevel(cfg, level=proposed_state)
+        self._enableItemValidationLevel(cfg, item_state=proposed_state)
         proposed_state = cfg.getItemWorkflow(True).states[proposed_state]
         translated_proposed_state = translate(proposed_state.title, domain="plone")
         level_removed_error = \
@@ -2101,9 +2101,9 @@ class testMeetingConfig(PloneMeetingTestCase):
                       domain='PloneMeeting',
                       context=self.request)
         # values_disabled_proposed
-        self._disableItemValidationLevel(cfg, level=proposed_state_id)
+        self._disableItemValidationLevel(cfg, item_state=proposed_state_id)
         values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
-        self._enableItemValidationLevel(cfg, level=proposed_state_id)
+        self._enableItemValidationLevel(cfg, item_state=proposed_state_id)
         # used in itemAdviceStates, as state
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
                          level_removed_config_error)

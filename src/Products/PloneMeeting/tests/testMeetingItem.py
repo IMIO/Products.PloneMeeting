@@ -56,6 +56,7 @@ from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_MOVAL_PREVENTED
@@ -1644,16 +1645,13 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         self._enableField('category', cfg=cfg2, enable=False)
-        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
-                                         'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
         cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
         self._enableField('otherMeetingConfigsClonableToFieldDecision')
         self._enableField('otherMeetingConfigsClonableToFieldMotivation')
         self._enableField('otherMeetingConfigsClonableToFieldTitle')
 
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        item.setTitle('Title')
+        item = self.create('MeetingItem', title='Title')
         item.setDecision('<p></p>')
         item.setOtherMeetingConfigsClonableToFieldTitle('Field title')
         item.setOtherMeetingConfigsClonableToFieldMotivation('<p>Field motivation</p>')
@@ -1671,6 +1669,35 @@ class testMeetingItem(PloneMeetingTestCase):
                          ['otherMeetingConfigsClonableToFieldTitle',
                           'otherMeetingConfigsClonableToFieldMotivation',
                           'otherMeetingConfigsClonableToFieldDecision'])
+
+    def test_pm_SendItemToOtherMCItemReference(self):
+        '''Test when item sent to other MC and original item
+           is using otherMeetingConfigsClonableToFieldItemReference field.'''
+        # if we want to keep a stored itemReference, we need to configure it
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg2.setItemReferenceFormat('python:here.getItemReference()')
+        cfg2.setComputeItemReferenceForItemsOutOfMeeting(True)
+        self._enableField('otherMeetingConfigsClonableToFieldItemReference')
+        self._enableField('category', cfg=cfg2, enable=False)
+        cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
+        self.changeUser('pmCreator1')
+        item = self.create(
+            'MeetingItem',
+            title='Title',
+            otherMeetingConfigsClonableToFieldItemReference='124/1/2024',
+            otherMeetingConfigsClonableTo=(cfg2Id, ))
+        cloned_item = item.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEqual(cloned_item.getItemReference(), '124/1/2024')
+        # with such configuration, item reference is kept
+        self.setMeetingConfig(cfg2Id)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        self.presentItem(cloned_item)
+        self.freezeMeeting(meeting)
+        self.assertEqual(cloned_item.query_state(), 'itemfrozen')
+        self.assertEqual(cloned_item.getItemReference(), '124/1/2024')
 
     def test_pm_CloneItemWithSetCurrentAsPredecessor(self):
         '''When an item is cloned with option setCurrentAsPredecessor=True,
@@ -5030,6 +5057,24 @@ class testMeetingItem(PloneMeetingTestCase):
     def _get_developers_all_reviewers_groups(self):
         return [self.developers_reviewers]
 
+    def test_pm_ItemActionsPanelCachingWFA_reviewers_take_back_validated_item(self):
+        """Actions panel cache when WFA "reviewers_take_back_validated_item" is used."""
+        if not self._check_wfa_available(['reviewers_take_back_validated_item']):
+            return
+
+        self._setUpDefaultItemWFValidationLevels(self.meetingConfig)
+        item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
+        # make pmReviewer1 a creator as creator is part of the cachekey
+        self._addPrincipalToGroup('pmReviewer1', self.developers_creators)
+        self._activate_wfas(['reviewers_take_back_validated_item'])
+        self.validateItem(item)
+        self.changeUser("pmReviewer1")
+        self.assertTrue('backToProposed' in item.restrictedTraverse('@@actions_panel')())
+        self.assertEqual(self.transitions(item), ['backToProposed'])
+        self.changeUser("pmCreator1", clean_memoize=False)
+        self.assertFalse('backToProposed' in item.restrictedTraverse('@@actions_panel')())
+        self.assertEqual(self.transitions(item), [])
+
     def test_pm_ItemActionsPanelCachingInvalidatedWhenUserGroupsChanged(self):
         """Actions panel cache is invalidated when the groups of a user changed.
            Here we will make a creator be a reviewer."""
@@ -5068,8 +5113,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # make reviewer able to edit when itemcreated so this will generate another cached value
         # creator is also able to duplicate, and after, an observer will have a different value as well
         itemWFValLevels = cfg.getItemWFValidationLevels()
-        itemWFValLevels[0]['extra_suffixes'] = cfg.getItemWFValidationLevels(
-            states=[self._stateMappingFor('proposed')], data="suffix", return_state_singleton=False)
+        itemWFValLevels[0]['extra_groups_managing_item'] = [cfg.getItemWFValidationLevels(
+            cfg, states=[self._stateMappingFor('proposed')])['group_managing_item']]
         cfg.setItemWFValidationLevels(itemWFValLevels)
         notify(ObjectEditedEvent(cfg))
 
@@ -8074,22 +8119,104 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         # adapt configuration, make suffix 'observers' extra_suffix in state 'itemcreated'
         itemWFValidationLevels = cfg.getItemWFValidationLevels()
-        itemWFValidationLevels[0]['extra_suffixes'] = ['observers']
+        itemWFValidationLevels[0]['extra_groups_managing_item'] = [self.vendors_observers]
         cfg.setItemWFValidationLevels(itemWFValidationLevels)
         notify(ObjectEditedEvent(cfg))
         item.update_local_roles()
         self.assertTrue(self.hasPermission(View, item))
         self.assertTrue(self.hasPermission(ModifyPortalContent, item))
 
+    def test_pm_ItemWFValidationLevels_with_groups_managing_item(self):
+        """Test when using groups_managing_item that gives manage access
+           to the items to antoher group than the proposingGroup
+           (or in addition to the proposingGroup)."""
+        cfg = self.meetingConfig
+        # by default, no groups_managing_item, it is the proposing_group that manages the item
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+        self.changeUser('pmCreator2')
+        self.assertFalse(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+
+        # adapt configuration, makes vendors manage item
+        itemWFValidationLevels = cfg.getItemWFValidationLevels()
+        itemWFValidationLevels[0]['group_managing_item'] = self.vendors_creators
+        cfg.setItemWFValidationLevels(itemWFValidationLevels)
+        notify(ObjectEditedEvent(cfg))
+        item.update_local_roles()
+        # proposingGroup may no more access as still itemcreated
+        self.changeUser('pmCreator1')
+        self.assertFalse(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.changeUser('pmCreator2')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+        # but when proposed, pmCreator1 may see if it was managing item when itemcreated
+        itemWFValidationLevels[0]['group_managing_item'] = self.developers_creators
+        itemWFValidationLevels[1]['group_managing_item'] = self.vendors_creators
+        cfg.setItemWFValidationLevels(itemWFValidationLevels)
+        notify(ObjectEditedEvent(cfg))
+        item.update_local_roles()
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+        self.proposeItem(item)
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.changeUser('pmCreator2')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+
+        # adapt configuration, makes proposing_group and vendors manage item
+        itemWFValidationLevels = cfg.getItemWFValidationLevels()
+        itemWFValidationLevels[1]['group_managing_item'] = "{0}creators".format(
+            GROUP_MANAGING_ITEM_PG_PREFIX)
+        itemWFValidationLevels[1]['extra_groups_managing_item'] = [self.vendors_creators]
+        cfg.setItemWFValidationLevels(itemWFValidationLevels)
+        notify(ObjectEditedEvent(cfg))
+        item.update_local_roles()
+        # proposingGroup have access and manage
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+        # as well as vendors
+        self.changeUser('pmCreator2')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+
     def test_pm_ItemWFValidationLevels_available_on(self):
         """Test when using available_on that uses a TAL expression to enable
            or not a workflow transition."""
-        # make only pmCreator1b able to propose the item
         cfg = self.meetingConfig
+        self._activate_wfas(('item_validation_shortcuts',
+                             'item_validation_no_validate_shortcuts'))
         self._setUpDefaultItemWFValidationLevels(cfg)
+        self._enablePrevalidation(cfg)
+        self._addPrincipalToGroup('pmCreator1', self.developers_prereviewers)
+
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        import ipdb; ipdb.set_trace()
+        self.assertEqual(self.transitions(item), ['prevalidate', 'propose'])
+        # only proposable if there is a description
+        self._updateItemValidationLevel(
+            cfg,
+            item_state='proposed',
+            available_on='python: item.Description()')
+        self.assertEqual(self.transitions(item), ['prevalidate'])
+        item.setDescription(self.descriptionText)
+        self.assertEqual(self.transitions(item), ['prevalidate', 'propose'])
+        # disable shortcut to prevalidate except for pmCreator1b
+        self._updateItemValidationLevel(
+            cfg,
+            item_state='prevalidated',
+            available_on='python: shortcut is not True')
+        self.assertEqual(self.transitions(item), ['propose'])
+        # will be available when not a shortcut
+        self.do(item, 'propose')
+        self.assertEqual(self.transitions(item),
+                         ['backToItemCreated', 'prevalidate'])
 
     def test_pm__update_meeting_link(self):
         """The MeetingItem._update_meeting_link is
