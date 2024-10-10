@@ -8189,12 +8189,34 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_ItemWFValidationLevels_available_on(self):
         """Test when using available_on that uses a TAL expression to enable
            or not a workflow transition."""
-        # make only pmCreator1b able to propose the item
         cfg = self.meetingConfig
+        self._activate_wfas(('item_validation_shortcuts',
+                             'item_validation_no_validate_shortcuts'))
         self._setUpDefaultItemWFValidationLevels(cfg)
+        self._enablePrevalidation(cfg)
+        self._addPrincipalToGroup('pmCreator1', self.developers_prereviewers)
+
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        import ipdb; ipdb.set_trace()
+        self.assertEqual(self.transitions(item), ['prevalidate', 'propose'])
+        # only proposable if there is a description
+        self._updateItemValidationLevel(
+            cfg,
+            item_state='proposed',
+            available_on='python: item.Description()')
+        self.assertEqual(self.transitions(item), ['prevalidate'])
+        item.setDescription(self.descriptionText)
+        self.assertEqual(self.transitions(item), ['prevalidate', 'propose'])
+        # disable shortcut to prevalidate except for pmCreator1b
+        self._updateItemValidationLevel(
+            cfg,
+            item_state='prevalidated',
+            available_on='python: shortcut is not True')
+        self.assertEqual(self.transitions(item), ['propose'])
+        # will be available when not a shortcut
+        self.do(item, 'propose')
+        self.assertEqual(self.transitions(item),
+                         ['backToItemCreated', 'prevalidate'])
 
     def test_pm__update_meeting_link(self):
         """The MeetingItem._update_meeting_link is

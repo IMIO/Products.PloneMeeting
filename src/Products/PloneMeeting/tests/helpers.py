@@ -501,9 +501,8 @@ class PloneMeetingTestingHelpers(object):
     def _updateItemValidationLevel(self,
                                    cfg,
                                    item_state=None,
-                                   group_managing_item=None,
-                                   extra_groups_managing_item=None,
-                                   enable=True):
+                                   enable=True,
+                                   **kwargs):
         """Utility method that enable/disable item validation levels."""
         currentUser = self.member.getId()
         self.changeUser('admin')
@@ -511,10 +510,8 @@ class PloneMeetingTestingHelpers(object):
         for itemValLevel in itemValLevels:
             if not item_state or itemValLevel['state'] == item_state:
                 itemValLevel['enabled'] = enable and '1' or '0'
-                if group_managing_item:
-                    itemValLevel['group_managing_item'] = group_managing_item
-                if extra_groups_managing_item:
-                    itemValLevel['extra_groups_managing_item'] = extra_groups_managing_item
+                for k, v in kwargs.items():
+                    itemValLevel[k] = v
         cfg.setItemWFValidationLevels(itemValLevels)
         notify(ObjectEditedEvent(cfg))
         self.changeUser(currentUser)

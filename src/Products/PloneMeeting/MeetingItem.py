@@ -261,17 +261,20 @@ class MeetingItemWorkflowConditions(object):
         '''When using WFAdaptation 'item_validation_shortcuts',
            is current user able to use the shortcut to p_destinationState?'''
         res = True
+        # if using shortcut and allowed to shortcut to this destinationState
+        # check that user can manage previous review_state
         if 'item_validation_shortcuts' in self.cfg.getWorkflowAdaptations():
-            previous_val_state = self._get_previous_val_level(
-                destinationState)
-            # now that we have previous valid validation state, check if correct with shortcut
             res = False
-            if self.is_valid_validation_level(previous_val_state, shortcut=True):
-                previous_plone_group_ids = self.context.get_plone_groups_managing_item(
-                    self.cfg,
-                    item_states=[previous_val_state])
-                res = set(previous_plone_group_ids).intersection(
-                    get_plone_groups_for_user())
+            if self.is_valid_validation_level(destinationState, shortcut=True):
+                previous_val_state = self._get_previous_val_level(
+                    destinationState)
+                # now that we have previous valid validation state, check if correct with shortcut
+                if self.is_valid_validation_level(previous_val_state):
+                    previous_plone_group_ids = self.context.get_plone_groups_managing_item(
+                        self.cfg,
+                        item_states=[previous_val_state])
+                    res = set(previous_plone_group_ids).intersection(
+                        get_plone_groups_for_user())
         return res
 
     def _is_groups_managing_item_not_empty(self, review_state, user_id):
