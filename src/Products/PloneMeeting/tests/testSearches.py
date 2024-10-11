@@ -1134,7 +1134,6 @@ class testSearches(PloneMeetingTestCase):
             wfAdaptations.remove('return_to_proposing_group')
         cfg.setWorkflowAdaptations(wfAdaptations)
         self._enablePrevalidation(cfg)
-        notify(ObjectEditedEvent(cfg))
 
         # normally this search is not available to users that are not able to review items
         # nevertheless, if a user is in not able to edit items to correct in proposed, the special

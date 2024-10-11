@@ -5112,11 +5112,11 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setItemAdviceViewStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
         # make reviewer able to edit when itemcreated so this will generate another cached value
         # creator is also able to duplicate, and after, an observer will have a different value as well
-        itemWFValLevels = cfg.getItemWFValidationLevels()
-        itemWFValLevels[0]['extra_groups_managing_item'] = [cfg.getItemWFValidationLevels(
-            cfg, states=[self._stateMappingFor('proposed')])['group_managing_item']]
-        cfg.setItemWFValidationLevels(itemWFValLevels)
-        notify(ObjectEditedEvent(cfg))
+        self._updateItemValidationLevel(
+            cfg,
+            'itemcreated',
+            extra_groups_managing_item=[cfg.getItemWFValidationLevels(
+                cfg, states=[self._stateMappingFor('proposed')])['group_managing_item']])
 
         # create item
         self.changeUser('pmCreator1')
@@ -8118,10 +8118,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         # adapt configuration, make suffix 'observers' extra_suffix in state 'itemcreated'
-        itemWFValidationLevels = cfg.getItemWFValidationLevels()
-        itemWFValidationLevels[0]['extra_groups_managing_item'] = [self.vendors_observers]
-        cfg.setItemWFValidationLevels(itemWFValidationLevels)
-        notify(ObjectEditedEvent(cfg))
+        self._updateItemValidationLevel(
+            cfg, 'itemcreated', extra_groups_managing_item=[self.vendors_observers])
         item.update_local_roles()
         self.assertTrue(self.hasPermission(View, item))
         self.assertTrue(self.hasPermission(ModifyPortalContent, item))

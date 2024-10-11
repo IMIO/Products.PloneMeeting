@@ -1482,9 +1482,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self._updateItemValidationLevel(
             cfg,
-            "itemcreated",
+            item_state="itemcreated",
             extra_groups_managing_item=[GROUP_MANAGING_ITEM_PG_PREFIX + "reviewers"],
-            enable=False)
+            enabled='0')
         item = self.create('MeetingItem')
         self.assertEqual(item.query_state(), 'validated')
         # creators always have access
@@ -2089,6 +2089,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # ease override by subproducts
         if not self._check_wfa_available(['waiting_advices']):
             return
+        cfg = self.meetingConfig
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
         self._activate_wfas(())
@@ -2106,13 +2107,11 @@ class testWFAdaptations(PloneMeetingTestCase):
              'use_custom_back_transition_title_for': (),
              'use_custom_state_title': True, },), }
         # change the from_state title to check that it is not changed by the WFA (was the case...)
-        levels = self.meetingConfig.getItemWFValidationLevels()
-        levels[0]['state_title'] = "h\xc3\xa9h\xc3\xa9"
-        self.meetingConfig.setItemWFValidationLevels(levels)
+        self._updateItemValidationLevel(cfg, 'itemcreated', state_title="h\xc3\xa9h\xc3\xa9")
         self._activate_wfas(
             ('waiting_advices', 'waiting_advices_proposing_group_send_back'),
             keep_existing=True)
-        itemWF = self.meetingConfig.getItemWorkflow(True)
+        itemWF = cfg.getItemWorkflow(True)
         self.assertEqual(itemWF.states['itemcreated'].title, "h\xc3\xa9h\xc3\xa9")
 
         self._waiting_advices_active()
