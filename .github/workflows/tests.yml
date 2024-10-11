@@ -36,7 +36,7 @@ jobs:
         run: soffice '--accept=socket,host=0.0.0.0,port=2002;urp;StarOffice.ServiceManager' --nologo --headless --nofirststartwizard --norestore &
         shell: bash
       - name: Run tests
-        uses: IMIO/gha/plone-package-test-notify@v4
+        uses: IMIO/gha/plone-package-test-notify@main
         env:
           cache-name: cache-eggs
         with:
