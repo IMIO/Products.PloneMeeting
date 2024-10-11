@@ -501,7 +501,6 @@ class PloneMeetingTestingHelpers(object):
     def _updateItemValidationLevel(self,
                                    cfg,
                                    item_state=None,
-                                   enable=True,
                                    **kwargs):
         """Utility method that enable/disable item validation levels."""
         currentUser = self.member.getId()
@@ -509,20 +508,21 @@ class PloneMeetingTestingHelpers(object):
         itemValLevels = cfg.getItemWFValidationLevels()
         for itemValLevel in itemValLevels:
             if not item_state or itemValLevel['state'] == item_state:
-                itemValLevel['enabled'] = enable and '1' or '0'
                 for k, v in kwargs.items():
                     itemValLevel[k] = v
         cfg.setItemWFValidationLevels(itemValLevels)
         notify(ObjectEditedEvent(cfg))
         self.changeUser(currentUser)
 
-    def _enableItemValidationLevel(self, cfg, item_state=None, group_managing_item=None):
+    def _enableItemValidationLevel(self, cfg, item_state=None, **kwargs):
         """Enable one or every item validation levels."""
-        self._updateItemValidationLevel(cfg, item_state, group_managing_item, enable=True)
+        kwargs['enabled'] = '1'
+        self._updateItemValidationLevel(cfg, item_state, **kwargs)
 
-    def _disableItemValidationLevel(self, cfg, item_state=None, group_managing_item=None):
+    def _disableItemValidationLevel(self, cfg, item_state=None, **kwargs):
         """Disable one or every item validation levels."""
-        self._updateItemValidationLevel(cfg, item_state, group_managing_item, enable=False)
+        kwargs['enabled'] = '0'
+        self._updateItemValidationLevel(cfg, item_state, **kwargs)
 
     def _setUpOrderedContacts(
             self,
