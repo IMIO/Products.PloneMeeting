@@ -498,10 +498,7 @@ class PloneMeetingTestingHelpers(object):
         notify(ObjectEditedEvent(cfg))
         self.changeUser(currentUser)
 
-    def _updateItemValidationLevel(self,
-                                   cfg,
-                                   item_state=None,
-                                   **kwargs):
+    def _updateItemValidationLevel(self, cfg, item_state=None, **kwargs):
         """Utility method that enable/disable item validation levels."""
         currentUser = self.member.getId()
         self.changeUser('admin')

@@ -289,7 +289,7 @@ class MeetingItemWorkflowConditions(object):
                 break
         return res
 
-    def is_valid_validation_level(self, review_state, user_id=None, shortcut=None, back=False):
+    def is_valid_validation_level(self, review_state, user_id=None, shortcut=None, back_transition=False):
         """ """
         # i = self.context.REQUEST.get('i_counter', 0)
         # self.context.REQUEST.set('i_counter', i + 1)
@@ -307,6 +307,7 @@ class MeetingItemWorkflowConditions(object):
         if level['available_on'].strip():
             extra_expr_ctx = _base_extra_expr_ctx(self.context)
             extra_expr_ctx['shortcut'] = shortcut
+            extra_expr_ctx['back_transition'] = back_transition
             res = _evaluateExpression(
                 self.context,
                 expression=level['available_on'],
@@ -604,7 +605,8 @@ class MeetingItemWorkflowConditions(object):
                         shortcut = False
                         if destinationState != self._get_previous_val_level(self.review_state):
                             shortcut = True
-                        res = self.is_valid_validation_level(destinationState, shortcut=shortcut, back=True)
+                        res = self.is_valid_validation_level(
+                            destinationState, shortcut=shortcut, back_transition=True)
         return res
 
     security.declarePublic('mayBackToMeeting')
