@@ -8215,6 +8215,37 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(item, 'propose')
         self.assertEqual(self.transitions(item),
                          ['backToItemCreated', 'prevalidate'])
+        # disable shortcut "backToItemCreated"
+        self._addPrincipalToGroup('pmCreator1', self.developers_reviewers)
+        self.do(item, 'prevalidate')
+        self.assertEqual(self.transitions(item),
+                         ['backToItemCreated', 'backToProposed', 'validate'])
+        self._updateItemValidationLevel(
+            cfg,
+            item_state='itemcreated',
+            available_on='python: back_transition is False')
+        self.assertEqual(self.transitions(item),
+                         ['backToProposed', 'validate'])
+        # disable shortcut "backToProposed"
+        self._updateItemValidationLevel(
+            cfg,
+            item_state='proposed',
+            available_on='python: back_transition is False')
+        self.assertEqual(self.transitions(item), ['validate'])
+        # disable back shortcut to "itemcreated"
+        self._updateItemValidationLevel(cfg, item_state='itemcreated', available_on='')
+        self._updateItemValidationLevel(cfg, item_state='proposed', available_on='')
+        self.assertEqual(self.transitions(item),
+                         ['backToItemCreated', 'backToProposed', 'validate'])
+        self._updateItemValidationLevel(
+            cfg, item_state='itemcreated', available_on='python: shortcut is not True')
+        self.assertEqual(self.transitions(item),
+                         ['backToProposed', 'validate'])
+        # "backToProposed" still available as not a shortcut
+        self._updateItemValidationLevel(
+            cfg, item_state='proposed', available_on='python: shortcut is not True')
+        self.assertEqual(self.transitions(item),
+                         ['backToProposed', 'validate'])
 
     def test_pm__update_meeting_link(self):
         """The MeetingItem._update_meeting_link is
