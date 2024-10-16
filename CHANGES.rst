@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-4.2.11.3 (unreleased)
----------------------
+4.2.12rc1 (unreleased)
+----------------------
 
 - Nothing changed yet.
 
