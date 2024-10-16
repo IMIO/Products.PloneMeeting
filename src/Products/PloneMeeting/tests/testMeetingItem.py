@@ -4871,6 +4871,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def _setupItemActionsPanelInvalidation(self):
         """Setup for every test_pm_ItemActionsPanelCachingXXX tests."""
+        self._setUpDefaultItemWFValidationLevels(self.meetingConfig)
         # use categories
         self._enableField('category')
         # create an item
@@ -4902,6 +4903,19 @@ class testMeetingItem(PloneMeetingTestCase):
         actions_panel._transitions = None
         category_rendered_actions_panel = actions_panel()
         self.assertEqual(category_rendered_actions_panel, rendered_actions_panel)
+        # enable a transition when a ftw label (annotation) is enabled
+        self._updateItemValidationLevel(
+            self.meetingConfig,
+            item_state='proposed',
+            available_on='python: "label" in utils.get_labels(item)')
+        transaction.commit()
+        self.assertFalse("propose" in self.transitions(item))
+        self.assertFalse("propose" in item.restrictedTraverse('@@actions_panel')())
+        labeling = ILabeling(item)
+        labeling.update(['label'])
+        transaction.commit()
+        self.assertTrue("propose" in self.transitions(item))
+        self.assertTrue("propose" in item.restrictedTraverse('@@actions_panel')())
 
     def test_pm_ItemActionsPanelCachingInvalidatedWhenItemStateChanged(self):
         """Actions panel cache is invalidated when an item state changed."""

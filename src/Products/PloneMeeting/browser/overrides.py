@@ -25,6 +25,7 @@ from imio.dashboard.interfaces import IContactsDashboard
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
+from imio.helpers.cache import obj_modified
 from imio.helpers.content import uuidToObject
 from imio.helpers.security import check_zope_admin
 from imio.history.browser.views import IHContentHistoryView
@@ -741,7 +742,8 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         date = get_cachekey_volatile('_users_groups_value')
 
         # check also portal_url in case application is accessed thru different URI
-        return (repr(self.context), repr(self.context.modified()), advicesIndexModified, repr(date),
+        return (repr(self.context), repr(obj_modified(self.context, asdatetime=False)),
+                advicesIndexModified, repr(date),
                 sent_to,
                 isRealManager, isManager, isEditorUser, isCreator, isFinalReviewer,
                 userAbleToCorrectItemWaitingAdvices, isPowerObserverHiddenHistory,

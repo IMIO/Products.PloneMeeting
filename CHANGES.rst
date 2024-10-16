@@ -9,6 +9,11 @@ Changelog
   `searchitemsofmycommitteeseditable` by default.  When enabled, it will check
   if committees configuration is using `committees editors`.
   [gbastien]
+- Use `imio.helpers.cache.obj_modified` to check if item is actually modified
+  so we check also if some annotations were modified, this is the case when
+  using `ftw.labels`, so when adding/removing a label, it will invalidates
+  the item `actions_panel`.
+  [gbastien]
 
 4.2.11.2 (2024-10-16)
 ---------------------
