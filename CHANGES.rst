@@ -5,8 +5,10 @@ Changelog
 4.2.12rc1 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Disable collections `searchitemsofmycommittees` and
+  `searchitemsofmycommitteeseditable` by default.  When enabled, it will check
+  if committees configuration is using `committees editors`.
+  [gbastien]
 
 4.2.11.2 (2024-10-16)
 ---------------------

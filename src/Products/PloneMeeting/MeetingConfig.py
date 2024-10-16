@@ -3457,8 +3457,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: tool.get_orgs_for_user(omitted_suffixes=['observers', ]) "
-                        "and cfg.getCommittees()",
+                    'tal_condition': "python: cfg.is_committees_using('enable_editors')",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items of my committees editable
@@ -3474,8 +3473,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: tool.get_orgs_for_user(omitted_suffixes=['observers', ]) "
-                        "and cfg.getCommittees()",
+                    'tal_condition': "python: cfg.is_committees_using('enable_editors')",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # All not-yet-decided meetings
@@ -3993,13 +3991,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         """Return True if using committees given p_column :
            - using "auto_from" column mean that committee on item is determined automatically;
            - using "using_groups" column is exclusive from "auto_groups" and
-             restrict available committees to selected proposing groups."""
-        res = False
-        for committee in value or self.getCommittees():
-            if committee[column]:
-                res = True
-                break
-        return res
+             restrict available committees to selected proposing groups;
+           - "enabled" and "enable_editors" columns will have "0" when not using
+           and "1" when using."""
+        for committee in value or self.getCommittees(only_enabled=True):
+            if committee[column] and committee[column] != '0':
+                return True
 
     def get_committee(self, row_id):
         """ """

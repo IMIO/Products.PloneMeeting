@@ -5,7 +5,6 @@
 
 from AccessControl.SecurityManagement import getSecurityManager
 from collections import OrderedDict
-from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from collective.contact.plonegroup.config import set_registry_organizations
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_groups

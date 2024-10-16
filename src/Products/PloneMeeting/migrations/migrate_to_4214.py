@@ -93,6 +93,19 @@ class Migrate_To_4214(Migrator):
                         state_id: 'any_validation_state_waiting_advices'})
         logger.info('Done.')
 
+    def _updateSearchItemsOfMyCommitteesSearchesCondition(self):
+        """As these searches are used only when committees editors are used."""
+        logger.info('Updating committees editors searches TAL condition in every MeetingConfigs...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            searchitemsofmycommittees = cfg.searches.searches_items.get('searchitemsofmycommittees')
+            if searchitemsofmycommittees:
+                searchitemsofmycommittees.tal_condition = "python: cfg.is_committees_using('enable_editors')"
+            searchitemsofmycommitteeseditable = cfg.searches.searches_items.get('searchitemsofmycommitteeseditable')
+            if searchitemsofmycommitteeseditable:
+                searchitemsofmycommitteeseditable.tal_condition = \
+                    "python: cfg.is_committees_using('enable_editors')"
+        logger.info('Done.')
+
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4214...')
@@ -108,9 +121,7 @@ class Migrate_To_4214(Migrator):
         # dashboard faceted criteria, new MeetingConfigs created manually in between
         # are missing this new criterion
         self.updateFacetedFilters(xml_filename='upgrade_step_4211_add_item_widgets.xml')
-        # need to change the reviewProcessInfo index from FieldIndex to KeywordIndex
-        # as it may contains several values now (several groups managing item at same time)
-        addOrUpdateIndexes(self.portal, indexInfos)
+        self._updateSearchItemsOfMyCommitteesSearchesCondition()
         logger.info('Migrating to PloneMeeting 4214... Done.')
 
 
@@ -124,8 +135,7 @@ def migrate(context):
        4) Update faceted filters (Add "item title only" search criterion again);
        5) Not done for now: install and configure "imio.webspellchecker".
        6) Add "groups_managing_item" to every MeetingConfig.itemWFValidationLevels;
-       7) Adapt reviewProcessInfo catalog index from FieldIndex to KeywordIndex.
-
+       7) Adapt committees editors searches tal_condition.
     '''
     migrator = Migrate_To_4214(context)
     migrator.run()
