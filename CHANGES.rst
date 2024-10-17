@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.12rc1 (unreleased)
+4.2.12rc1 (2024-10-17)
 ----------------------
 
 - Disable collections `searchitemsofmycommittees` and
