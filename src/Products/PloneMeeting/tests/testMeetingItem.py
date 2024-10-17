@@ -8104,6 +8104,47 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(successor1.get_predecessor(), item)
         self.assertEqual(successor2.get_predecessor(), item)
 
+    def test_pm_ItemPredecessorOtherPortalType(self):
+        """When getting predecessor, we can get the predecessor of another
+           portal_type, this will get the item that was originally sent to
+           another MeetingConfig."""
+        cfg = self.meetingConfig
+        cfg_portal_type = cfg.getItemTypeName()
+        cfg2 = self.meetingConfig2
+        cfg2_id = cfg2.getId()
+        cfg2_portal_type = cfg2.getItemTypeName()
+        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'), ))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', otherMeetingConfigsClonableTo=(cfg2_id, ))
+        self.assertIsNone(item.get_predecessor())
+        self.assertIsNone(item.get_predecessor(cfg_portal_type))
+        self.assertIsNone(item.get_predecessor(cfg2_portal_type))
+        cfg_successor = item.clone(setCurrentAsPredecessor=True)
+        self.assertEqual(cfg_successor.get_predecessor(), item)
+        self.assertEqual(cfg_successor.get_predecessor(cfg_portal_type), item)
+        self.assertIsNone(item.get_predecessor(cfg2_portal_type))
+        cfg2_item = cfg_successor.cloneToOtherMeetingConfig(cfg2_id)
+        self.assertEqual(cfg2_item.get_predecessor(), cfg_successor)
+        self.assertEqual(cfg2_item.get_predecessor(cfg_portal_type), cfg_successor)
+        self.assertIsNone(cfg2_item.get_predecessor(cfg2_portal_type))
+        cfg2_successor = cfg2_item.clone(setCurrentAsPredecessor=True)
+        self.assertEqual(cfg2_successor.get_predecessor(), cfg2_item)
+        self.assertEqual(cfg2_successor.get_predecessor(cfg_portal_type), cfg_successor)
+        self.assertEqual(cfg2_successor.get_predecessor(cfg2_portal_type), cfg2_item)
+        # get_predecessors
+        self.assertEqual(item.get_predecessors(include_successors=False), [])
+        self.assertEqual(item.get_predecessors(cfg_portal_type, include_successors=False), [])
+        self.assertEqual(item.get_predecessors(cfg2_portal_type, include_successors=False), [])
+        self.assertEqual(cfg_successor.get_predecessors(include_successors=False), [item])
+        self.assertEqual(cfg_successor.get_predecessors(cfg_portal_type, include_successors=False), [item])
+        self.assertEqual(cfg_successor.get_predecessors(cfg2_portal_type, include_successors=False), [])
+        self.assertEqual(cfg2_item.get_predecessors(include_successors=False), [item, cfg_successor])
+        self.assertEqual(cfg2_item.get_predecessors(cfg_portal_type, include_successors=False), [item, cfg_successor])
+        self.assertEqual(cfg2_item.get_predecessors(cfg2_portal_type, include_successors=False), [])
+        self.assertEqual(cfg2_successor.get_predecessors(include_successors=False), [item, cfg_successor, cfg2_item])
+        self.assertEqual(cfg2_successor.get_predecessors(cfg_portal_type, include_successors=False), [item, cfg_successor])
+        self.assertEqual(cfg2_successor.get_predecessors(cfg2_portal_type, include_successors=False), [cfg2_item])
+
     def test_pm_DefaultItemTemplateNotMovable(self):
         """The default item template may not be moved to a subfolder."""
         cfg = self.meetingConfig

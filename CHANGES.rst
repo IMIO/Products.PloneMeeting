@@ -14,6 +14,11 @@ Changelog
   using `ftw.labels`, so when adding/removing a label, it will invalidates
   the item `actions_panel`.
   [gbastien]
+- Added parameter `portal_type=None` to `MeetingItem.get_predecessor` and
+  `MeetingItem.get_predecessors` to get predecessor/predecessors of a given
+  `portal_type`. This makes it easier to get the original item when an item
+  is sent to another `MeetingConfig`.
+  [gbastien]
 
 4.2.11.2 (2024-10-16)
 ---------------------

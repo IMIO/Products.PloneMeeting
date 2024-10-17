@@ -3612,28 +3612,33 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             the_objects=the_objects, unrestricted=unrestricted))
         return res
 
-    def get_predecessor(self, the_object=True, unrestricted=True):
+    def get_predecessor(self, portal_type=None, the_object=True, unrestricted=True):
         ''' '''
         res = getattr(self, 'linked_predecessor_uid', None)
         if res and the_object:
             portal = api.portal.get()
             predecessor_path = self.linked_predecessor_path
             res = portal.unrestrictedTraverse(predecessor_path)
+            if portal_type is not None and res.portal_type != portal_type:
+                # if we had a predecessor but wrong portal_type, get predecessor
+                if res and portal_type:
+                    return res.get_predecessor(portal_type, the_object, unrestricted)
+                res = None
         return res
 
     security.declarePublic('get_predecessors')
 
-    def get_predecessors(self, only_viewable=False, include_successors=True):
+    def get_predecessors(self, portal_type=None, only_viewable=False, include_successors=True):
         '''See doc in interfaces.py.'''
         item = self.getSelf()
-
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
         predecessor = item.get_predecessor()
         predecessors = []
         # retrieve every predecessors
         while predecessor:
-            if item._appendLinkedItem(predecessor, tool, cfg, only_viewable=only_viewable):
+            if item._appendLinkedItem(predecessor, tool, cfg, only_viewable=only_viewable) and \
+               (portal_type is None or predecessor.portal_type == portal_type):
                 predecessors.append(predecessor)
             predecessor = predecessor.get_predecessor()
         # keep order
