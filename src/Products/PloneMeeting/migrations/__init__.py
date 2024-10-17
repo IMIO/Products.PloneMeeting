@@ -209,6 +209,7 @@ class Migrator(BaseMigrator):
                         itemOrMeeting.workflow_history._p_changed = True
                         # not necessary if just an action changed?
                         # objsToUpdate.append(itemOrMeeting)
+            itemOrMeeting.reindexObject(idxs=['review_state'])
         # update fixed objects
         if update_local_roles:
             for obj in objsToUpdate:

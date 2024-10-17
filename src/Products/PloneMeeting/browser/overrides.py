@@ -23,7 +23,9 @@ from imio.actionspanel.browser.views import ActionsPanelView
 from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
+from imio.helpers.cache import obj_modified
 from imio.helpers.content import uuidToObject
 from imio.helpers.security import check_zope_admin
 from imio.history.browser.views import IHContentHistoryView
@@ -57,6 +59,7 @@ from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_last_validation_state
 from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.PloneMeeting.utils import getAvailableMailingLists
@@ -681,7 +684,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         # try to share cache among user "profiles"
         isRealManager = isManager = isEditorUser = advicesIndexModified = \
             userAbleToCorrectItemWaitingAdvices = isPowerObserverHiddenHistory = \
-            isCreator = None
+            isCreator = isFinalReviewer = None
         # Manager
         isRealManager = self.tool.isManager(realManagers=True)
         # MeetingManager, necessary for MeetingConfig.itemActionsColumnConfig for example
@@ -691,12 +694,12 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             # manage showing/hidding duplicate item action reserved to creators
             isCreator = self.tool.userIsAmong(['creators'])
             item_state = self.context.query_state()
+            wfas = self.cfg.getWorkflowAdaptations()
             # member able to edit item, manage isEditorUser/userAbleToCorrectItemWaitingAdvices
             if _checkPermission(ModifyPortalContent, self.context):
                 isEditorUser = True
             elif item_state.endswith('_waiting_advices'):
                 advicesIndexModified = self.context.adviceIndex._p_mtime
-                wfas = self.cfg.getWorkflowAdaptations()
                 userAbleToCorrectItemWaitingAdvices = []
                 if "waiting_advices_adviser_send_back" in wfas:
                     # will only work if only one advice to give in this state
@@ -706,11 +709,18 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                 if "waiting_advices_proposing_group_send_back" in wfas:
                     # convenience, return every user proposingGroup suffixes
                     # user able to do this depends on state to go to
-                    group_managing_item_uid = self.context.adapted()._getGroupManagingItem(
-                        item_state, theObject=False)
+                    groups_managing_item_uids = self.context.get_orgs_managing_item(
+                        self.cfg, item_state)
                     userAbleToCorrectItemWaitingAdvices += \
                         self.tool.get_filtered_plone_groups_for_user(
-                            org_uids=[group_managing_item_uid])
+                            org_uids=groups_managing_item_uids)
+            elif item_state == "validated" and \
+                 "reviewers_take_back_validated_item" in wfas:
+                last_val_state, last_level = get_last_validation_state(
+                    self.context, self.cfg, return_level=True)
+                isFinalReviewer = self.tool.group_is_not_empty(
+                        plone_group_id=last_level['group_managing_item'],
+                        user_id=get_current_user_id())
 
             # powerobservers to manage MeetingConfig.hideHistoryTo
             hideHistoryTo_item_values = [
@@ -732,9 +742,10 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         date = get_cachekey_volatile('_users_groups_value')
 
         # check also portal_url in case application is accessed thru different URI
-        return (repr(self.context), repr(self.context.modified()), advicesIndexModified, repr(date),
+        return (repr(self.context), repr(obj_modified(self.context, asdatetime=False)),
+                advicesIndexModified, repr(date),
                 sent_to,
-                isRealManager, isManager, isEditorUser, isCreator,
+                isRealManager, isManager, isEditorUser, isCreator, isFinalReviewer,
                 userAbleToCorrectItemWaitingAdvices, isPowerObserverHiddenHistory,
                 meeting_review_state, useIcons, showTransitions, appendTypeNameToTransitionLabel,
                 showEdit, showOwnDelete, showOwnDeleteWithComments, showActions,
@@ -1430,12 +1441,10 @@ class PMContentHistoryView(IHContentHistoryView):
                         # for MeetingItem, take into account that powerobserver
                         # could also be member of the proposingGroup
                         # in this case we do not hide the history to the user
-                        item_review_state = self.context.query_state()
-                        proposing_group_uid = self.context._getGroupManagingItem(
-                            item_review_state, theObject=False)
-                        if proposing_group_uid not in tool.get_orgs_for_user() and \
-                            isPowerObserverForCfg(
-                                cfg, power_observer_types=item_values):
+                        org_uids = self.context.get_orgs_managing_item(
+                            cfg, self.context.query_state())
+                        if not set(org_uids).intersection(tool.get_orgs_for_user()) and \
+                           isPowerObserverForCfg(cfg, power_observer_types=item_values):
                             res = False
                 elif self.context.__class__.__name__ == "Meeting":
                     # meeting values are only about powerobservers
@@ -1457,11 +1466,9 @@ class PMContentHistoryView(IHContentHistoryView):
                         # in this case we do not hide the history to the user
                         item = self.context.aq_inner.aq_parent
                         item_review_state = item.query_state()
-                        proposing_group_uid = item._getGroupManagingItem(
-                            item_review_state, theObject=False)
-                        if proposing_group_uid not in tool.get_orgs_for_user() and \
-                            isPowerObserverForCfg(
-                                cfg, power_observer_types=po_advice_values):
+                        org_uids = item.get_orgs_managing_item(cfg, item_review_state)
+                        if not set(org_uids).intersection(tool.get_orgs_for_user()) and \
+                           isPowerObserverForCfg(cfg, power_observer_types=po_advice_values):
                             res = False
                     if res and '{0}.everyone'.format(self.context.portal_type) in hideHistoryTo:
                         # hide history to everyone except advice advisers

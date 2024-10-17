@@ -5,7 +5,7 @@
 
 from AccessControl.SecurityManagement import getSecurityManager
 from collections import OrderedDict
-from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
+from collective.contact.plonegroup.config import set_registry_organizations
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.documentviewer.config import CONVERTABLE_TYPES
@@ -587,7 +587,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             # empty groups_in_charge
             org.groups_in_charge = []
         # unselect every organizations from plonegroup
-        api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, [])
+        set_registry_organizations([])
         ids_to_remove = self.own_org.objectIds()
         self.own_org.manage_delObjects(ids=ids_to_remove)
         self.cleanMemoize()
