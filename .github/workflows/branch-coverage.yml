@@ -2,9 +2,9 @@ name: Branch Coverage
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - gha
+  # push:
+  #   branches:
+  #     - gha
 
 jobs:
   coverage:
