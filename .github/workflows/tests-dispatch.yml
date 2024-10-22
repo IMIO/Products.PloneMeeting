@@ -9,6 +9,19 @@ on:
 jobs:
   dispatch-tests:
     runs-on: gha-runners-delib-py2
+    strategy:
+      matrix:
+        repository:
+          - Products.MeetingBEP
+          - Products.MeetingCommunes
+          - Products.MeetingCharleroi
+          - Products.MeetingCPASLalouviere
+          - Products.MeetingLalouviere
+          - Products.MeetingLiege
+          - Products.MeetingMons
+          - Products.MeetingNamur
+          - Products.MeetingPROVHainaut
+          - Products.MeetingSeraing
     steps:
       - name: Needed for local development
         if: ${{ env.ACT }}
@@ -17,10 +30,9 @@ jobs:
       - name: Dispatch test to Products.MeetingBEP
         uses: IMIO/gha/repository-dispatch-notify@main
         with:
-          REPOSITORY: Products.MeetingBEP
+          REPOSITORY: ${{ matrix.repository }}
           REPOSITORY_OWNER: IMIO
           GIT_REFERENCE: gha
           WORKFLOW_FILENAME: tests.yml
-          EVENT_TYPE: launch-tests
           APP_ID: ${{ vars.APPS_ID_IMIO_GHA }}
           APP_PRIVATE_KEY: ${{ secrets.APPS_PRIVATE_KEY_IMIO_GHA }}
