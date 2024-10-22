@@ -5,6 +5,9 @@ on:
   push:
     branches:
       - gha
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -16,17 +19,6 @@ jobs:
         python-version: ["2.7"]
         plone-version: ["4.3"]
         experimental: [false]
-    # services:
-    #   soffice:
-    #     image: harbor.imio.be/common/libreoffice:7.3
-    #     ports:
-    #       - 2002:2002
-    #     volumes:
-    #       - /tmp:/tmp
-    #       - /var/tmp:/var/tmp
-    #     credentials:
-    #       username: ${{ secrets.COMMON_HARBOR_USERNAME }}
-    #       password: ${{ secrets.COMMON_HARBOR_PASSWORD }}
     steps:
       - name: Needed for local development
         if: ${{ env.ACT }}
