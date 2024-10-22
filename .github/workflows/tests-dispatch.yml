@@ -1,0 +1,23 @@
+name: Dispatch tests to Products.Meeting*
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - gha
+
+jobs:
+  dispatch-tests:
+    runs-on: gha-runners-delib-py2
+    steps:
+      - name: Needed for local development
+        if: ${{ env.ACT }}
+        run: echo /home/runner/externals/node20/bin >> $GITHUB_PATH
+        shell: bash
+      - name: Dispatch test to Products.MeetingBEP
+        uses: IMIO/gha/repository-dispatch-notify@main
+        with:
+          REPOSITORY: IMIO/Products.MeetingBEP
+          EVENT_TYPE: launch-tests
+          APP_ID: ${{ vars.APPS_ID_IMIO_GHA }}
+          APP_PRIVATE_KEY: ${{ secrets.APPS_PRIVATE_KEY_IMIO_GHA }}
