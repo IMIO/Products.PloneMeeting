@@ -8,9 +8,6 @@ on:
 
 jobs:
   dispatch-tests:
-    # permissions:
-    #   actions: write
-    permissions: write-all
     runs-on: gha-runners-delib-py2
     steps:
       - name: Needed for local development
@@ -22,6 +19,8 @@ jobs:
         with:
           REPOSITORY: Products.MeetingBEP
           REPOSITORY_OWNER: IMIO
+          GIT_REFERENCE: gha
+          WORKFLOW_FILENAME: tests.yml
           EVENT_TYPE: launch-tests
           APP_ID: ${{ vars.APPS_ID_IMIO_GHA }}
           APP_PRIVATE_KEY: ${{ secrets.APPS_PRIVATE_KEY_IMIO_GHA }}
