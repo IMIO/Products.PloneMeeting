@@ -1,0 +1,56 @@
+name: Branch Coverage
+
+on:
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - gha
+
+jobs:
+  coverage:
+    runs-on: gha-runners-delib-py2
+    strategy:
+      fail-fast: false
+      matrix:
+        plone-version: ["4.3"]
+    services:
+      soffice:
+        image: harbor.imio.be/common/libreoffice:7.3
+        ports:
+          - 2002:2002
+        volumes:
+          - /tmp:/tmp
+          - /var/tmp:/var/tmp
+        credentials:
+          username: ${{ secrets.COMMON_HARBOR_USERNAME }}
+          password: ${{ secrets.COMMON_HARBOR_PASSWORD }}
+    steps:
+      - name: Needed for local development
+        if: ${{ env.ACT }}
+        run: echo /home/runner/externals/node20/bin >> $GITHUB_PATH
+      - name: Run check
+        uses: IMIO/gha/plone-package-test-notify@v4
+        env:
+          cache-name: cache-eggs
+        with:
+          CACHE_KEY: ${{ runner.os }}-build-${{ env.cache-name }}-2.7.18
+          TEST_COMMAND: coverage run bin/test
+          INSTALL_DEPENDENCIES_COMMANDS: |
+            sudo pip2.7 install -r requirements-tests.txt
+            sudo apt-get update
+            sudo apt-get install -y python3-pip
+            sudo pip3 install -r requirements-coverage.txt
+          MATTERMOST_WEBHOOK_URL: ${{ secrets.DELIB_MATTERMOST_WEBHOOK_URL }}
+          #BUILDOUT_CONFIG_FILE: 'test-${{ matrix.plone-version }}.cfg'
+          BUILDOUT_CONFIG_FILE: buildout.cfg
+      - name: Report
+        run: |
+          coverage report
+          coverage xml
+        shell: bash
+      # - name: Publish to Coveralls
+      #   run: |
+      #     coveralls --service=github
+      #   shell: bash
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
