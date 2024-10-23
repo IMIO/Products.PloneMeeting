@@ -3,6 +3,11 @@ name: Dispatch tests to Products.Meeting*
 on:
   workflow_dispatch:
   pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
   push:
     branches:
       - gha
