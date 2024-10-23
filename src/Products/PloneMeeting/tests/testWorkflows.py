@@ -56,16 +56,16 @@ class testWorkflows(PloneMeetingTestCase):
         # May the creator see his item ?
         self.failUnless(self.hasPermission(View, item))
         self.failUnless(self.hasPermission(AccessContentsInformation, item))
-        pmFolder = self.tool.getPloneMeetingFolder(cfg.getId())
         myItems = cfg.searches.searches_items.searchmyitems.results()
         self.assertEqual(len(myItems), 1)
         self.changeUser('pmManager')
         # The manager may not see the item yet except if item is already 'validated'
         # this could be the case if item initial_state is 'validated'
-        pmFolder = self.tool.getPloneMeetingFolder(cfg.getId())
+        pm_folder = self.tool.getPloneMeetingFolder(cfg.getId())
         collection = cfg.searches.searches_items.searchallitems
-        self.request['PATH_TRANSLATED'] = "{0}/{1}".format(pmFolder.searches_items.absolute_url(),
-                                                           pmFolder.searches_items.getLayout())
+        self.request['PATH_TRANSLATED'] = "{0}/{1}".format(
+            pm_folder.searches_items.absolute_url(),
+            pm_folder.searches_items.getLayout())
         allItems = collection.results()
         numberOfFoundItems = 0
         if item.query_state() == 'validated':
@@ -833,6 +833,8 @@ class testWorkflows(PloneMeetingTestCase):
            the full meeting must not freeze items, or on contrary, freezing a full meeting
            must freeze the items but when a late item is presented."""
         cfg = self.meetingConfig
+        # this will keep frozen/published/decided for meeting
+        self._activate_wfas(('delayed', ))
         self._removeConfigObjectsFor(cfg)
         # by default, freezing a meeting or inserting a late item will freeze the item
         self.changeUser('pmManager')
@@ -847,6 +849,18 @@ class testWorkflows(PloneMeetingTestCase):
         late_item = self.create('MeetingItem', preferredMeeting=meeting.UID())
         self.presentItem(late_item)
         self.assertEqual(late_item.query_state(), 'itemfrozen')
+        # present a late item in a published meeting, default item published
+        pubished_item = self.create('MeetingItem', preferredMeeting=meeting.UID())
+        self.publishMeeting(meeting)
+        self.assertEqual(meeting.query_state(), 'published')
+        self.presentItem(pubished_item)
+        self.assertEqual(pubished_item.query_state(), 'itempublished')
+        # present a late item in a decided meeting, default item published
+        decided_item = self.create('MeetingItem', preferredMeeting=meeting.UID())
+        self.decideMeeting(meeting)
+        self.assertEqual(meeting.query_state(), 'decided')
+        self.presentItem(decided_item)
+        self.assertEqual(decided_item.query_state(), 'itempublished')
 
         # only late item is frozen, not freezing whole meeting
         cfg.setOnMeetingTransitionItemActionToExecute(

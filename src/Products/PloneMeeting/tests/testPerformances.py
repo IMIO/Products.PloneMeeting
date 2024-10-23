@@ -5,6 +5,7 @@
 # GNU General Public License (GPL)
 #
 
+from collective.contact.plonegroup.utils import enable_function
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_groups
@@ -22,6 +23,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import down_or_up_wf
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_last_validation_state
 from Products.PloneMeeting.utils import isPowerObserverForCfg
 from profilehooks import timecall
 from zope.event import notify
@@ -57,11 +59,11 @@ class testPerformances(PloneMeetingTestCase):
                                       present_items=False,
                                       as_uids=True):
         cfg = self.meetingConfig
-        wfAdaptations = list(cfg.getWorkflowAdaptations())
-        if 'no_publication' not in wfAdaptations:
+        wfas = list(cfg.getWorkflowAdaptations())
+        if 'no_publication' not in wfas:
             self.changeUser('siteadmin')
-            wfAdaptations.append('no_publication')
-            cfg.setWorkflowAdaptations(wfAdaptations)
+            wfas.append('no_publication')
+            cfg.setWorkflowAdaptations(wfas)
             notify(ObjectEditedEvent(cfg))
 
         self.changeUser('pmManager')
@@ -224,11 +226,11 @@ class testPerformances(PloneMeetingTestCase):
         self._enableField('category', cfg=cfg2, enable=False)
         cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
                                             'reverse': '0'}, ))
-        cfg2Id = cfg2.getId()
+        cfg2_id = cfg2.getId()
         # make items sent to config2 automatically presented in the next meeting
-        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2_id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
-                                         (cfg2Id, 'present')},))
+                                         (cfg2_id, 'present')},))
         cfg.setItemAutoSentToOtherMCStates((u'itemfrozen', ))
         meeting, items = self._setupMeetingItemsWithAnnexes(50, 5, present_items=True, as_uids=False)
         # make 25 items sendable to another MC
@@ -237,7 +239,7 @@ class testPerformances(PloneMeetingTestCase):
             item.reindexObject(idxs=['sentToInfos', ])
 
         # create meeting in cfg2 in which items will be presented
-        self.setMeetingConfig(cfg2Id)
+        self.setMeetingConfig(cfg2_id)
         meeting2 = self.create('Meeting', date=datetime.now() + timedelta(days=1))
         self.assertFalse(meeting2.get_items())
 
@@ -291,16 +293,16 @@ class testPerformances(PloneMeetingTestCase):
         # test with the last created meeting
         self._computeItemNumbersForMeeting(meeting)
         # now close meeting at half of existing meetings
-        meetingAtHalf = meetings[int(number_of_meetings / 2)]
-        self.closeMeeting(meetingAtHalf)
+        meeting_at_half = meetings[int(number_of_meetings / 2)]
+        self.closeMeeting(meeting_at_half)
         self._computeItemNumbersForMeeting(meeting)
         # now close meeting at 90% of created meetings that is the most obvious usecase
-        meetingAt90Percent = meetings[int(number_of_meetings * 0.9)]
-        self.closeMeeting(meetingAt90Percent)
+        meeting_at_90_percent = meetings[int(number_of_meetings * 0.9)]
+        self.closeMeeting(meeting_at_90_percent)
         self._computeItemNumbersForMeeting(meeting)
         # now close penultimate meeting (the meeting just before the meeting the item is in) and test again
-        meetingPenultimate = meetings[number_of_meetings - 2]
-        self.closeMeeting(meetingPenultimate)
+        meeting_penultimate = meetings[number_of_meetings - 2]
+        self.closeMeeting(meeting_penultimate)
         self._computeItemNumbersForMeeting(meeting)
         # finally close the meeting we will compute items numbers
         self.closeMeeting(meeting)
@@ -327,9 +329,9 @@ class testPerformances(PloneMeetingTestCase):
         orgs = get_organizations(only_selected=True)
         for org in orgs:
             self._select_organization(org.UID(), remove=True)
-            for ploneGroup in get_plone_groups(org.UID()):
-                for memberId in ploneGroup.getGroupMemberIds():
-                    ploneGroup.removeMember(memberId)
+            for plone_group in get_plone_groups(org.UID()):
+                for member_id in plone_group.getGroupMemberIds():
+                    plone_group.removeMember(member_id)
         # remove items defined in the tool
         self._removeConfigObjectsFor(cfg, folders=['recurringitems', 'itemtemplates', 'categories'])
         self._removeConfigObjectsFor(cfg2, folders=['recurringitems', 'itemtemplates', 'categories'])
@@ -500,26 +502,24 @@ class testPerformances(PloneMeetingTestCase):
         for time in range(times):
             get_current_user_id()
 
-    def _setupForMeetingCategories(self, number_of_categories, withUsingGroups=False):
+    def _setupForMeetingCategories(self, number_of_categories, with_using_groups=False):
         self.changeUser('admin')
         # remove items in the tool and categories
         self._removeConfigObjectsFor(self.meetingConfig, folders=['recurringitems', 'itemtemplates', 'categories'])
         # create categories
         for i in range(number_of_categories):
-            catObj = self.create('meetingcategory',
-                                 id=i,
-                                 title='Category %d' % i)
-            if withUsingGroups:
-                catObj.setUsingGroups(('developers', ))
-            catObj._at_creation_flag = False
-            catObj.at_post_create_script()
+            cat = self.create('meetingcategory',
+                              id=i,
+                              title='Category %d' % i)
+            if with_using_groups:
+                cat.setUsingGroups(('developers', ))
 
     def test_pm_GetCategoriesCaching(self):
         '''Test MeetingConfig.getCategories caching.'''
         times = 1000
         self._enableField('category')
         # first test with 10 groups without usingGroups
-        self._setupForMeetingCategories(10, withUsingGroups=False)
+        self._setupForMeetingCategories(10, with_using_groups=False)
         pm_logger.info('getCategories called %d times with %d activated groups, without usingGroups.'
                        % (times, 10))
         pm_logger.info('Not cached..')
@@ -531,7 +531,7 @@ class testPerformances(PloneMeetingTestCase):
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
 
         # first test with 10 groups with usingGroups
-        self._setupForMeetingCategories(10, withUsingGroups=True)
+        self._setupForMeetingCategories(10, with_using_groups=True)
         pm_logger.info('getCategories called %d times with %d activated groups, with usingGroups.'
                        % (times, 10))
         pm_logger.info('No cached.')
@@ -543,7 +543,7 @@ class testPerformances(PloneMeetingTestCase):
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
 
         # test with 100 categories without usingGroups
-        self._setupForMeetingCategories(100, withUsingGroups=False)
+        self._setupForMeetingCategories(100, with_using_groups=False)
         pm_logger.info('getCategories called %d times with %d activated groups, without usingGroups.'
                        % (times, 100))
         pm_logger.info('No cached.')
@@ -555,7 +555,7 @@ class testPerformances(PloneMeetingTestCase):
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
 
         # test with 100 categories with usingGroups
-        self._setupForMeetingCategories(100, withUsingGroups=True)
+        self._setupForMeetingCategories(100, with_using_groups=True)
         pm_logger.info('getCategories called %d times with %d activated groups, with usingGroups.'
                        % (times, 100))
         pm_logger.info('No cached.')
@@ -567,7 +567,7 @@ class testPerformances(PloneMeetingTestCase):
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
 
         # test with 250 categories without usingGroups
-        self._setupForMeetingCategories(250, withUsingGroups=False)
+        self._setupForMeetingCategories(250, with_using_groups=False)
         pm_logger.info('getCategories called %d times with %d activated groups, without usingGroups.'
                        % (times, 250))
         pm_logger.info('No cached.')
@@ -579,7 +579,7 @@ class testPerformances(PloneMeetingTestCase):
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
 
         # test with 250 categories with usingGroups
-        self._setupForMeetingCategories(250, withUsingGroups=True)
+        self._setupForMeetingCategories(250, with_using_groups=True)
         pm_logger.info('getCategories called %d times with %d activated groups, with usingGroups.'
                        % (times, 250))
         pm_logger.info('No cached.')
@@ -742,16 +742,16 @@ class testPerformances(PloneMeetingTestCase):
             pm_logger.info('Duplicate item first time without annexes.')
             self._duplicateItem(item)
             pm_logger.info('Duplicate item first time with annexes.')
-            self._duplicateItem(item, copyAnnexes=True)
+            self._duplicateItem(item, copy_annexes=True)
             pm_logger.info('Duplicate item second time without annexes.')
             self._duplicateItem(item)
             pm_logger.info('Duplicate item second time with annexes.')
-            self._duplicateItem(item, copyAnnexes=True)
+            self._duplicateItem(item, copy_annexes=True)
 
     @timecall
-    def _duplicateItem(self, item, copyAnnexes=False):
+    def _duplicateItem(self, item, copy_annexes=False):
         '''Helper method that actually duplicated given p_item.'''
-        item.clone(copyAnnexes=copyAnnexes)
+        item.clone(copyAnnexes=copy_annexes)
 
     def test_pm_SpeedGetMeeting(self):
         '''Test MeetingItem.getMeeting method performances.
@@ -810,11 +810,11 @@ class testPerformances(PloneMeetingTestCase):
         self._get_user_fullname(times=1000)
 
     @timecall
-    def _get_user_fullname(self, userId="pmManager", times=1):
+    def _get_user_fullname(self, user_id="pmManager", times=1):
         ''' '''
         pm_logger.info('Call {0} times'.format(times))
         for time in range(times):
-            get_user_fullname(userId)
+            get_user_fullname(user_id)
 
     def test_pm_SpeedItemQueryState(self):
         '''Test MeetingItem.query_state.'''
@@ -911,20 +911,114 @@ class testPerformances(PloneMeetingTestCase):
         for time in range(times):
             self.member.has_permission("ModifyPortalContent", item)
 
-    def test_pm_Speed_getLastValidationState(self):
-        '''Test MeetingItemWorkflowConditions._getLastValidationState.'''
-        self.changeUser('pmManager')
+    def test_pm_Speed_get_last_validation_state(self):
+        '''Test utils.get_last_validation_state.'''
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        self._activate_wfas(('item_validation_shortcuts', ))
+        # enable levelXreviewers and corresponding validation levels
+        # so we have several transitions
+        enable_function("level1reviewers")
+        enable_function("level2reviewers")
+        enable_function("level3reviewers")
+        enable_function("level4reviewers")
+        enable_function("level5reviewers")
+        # will enable every validation levels
+        self._enableItemValidationLevel(cfg)
+        self._addPrincipalToGroup("pmCreator1", "{0}_reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level1reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level1reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level2reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level3reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level4reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level5reviewers".format(
+            self.developers_uid))
+        self.changeUser("pmCreator1")
         item = self.create('MeetingItem')
-        wf_conditions = item.wfConditions()
-        # call _getLastValidationState 1000 times
-        self._check__getLastValidationState(wf_conditions, times=1000)
+        self.assertEqual(self.transitions(item),
+                         ['prevalidate',
+                          'propose',
+                          'proposeToValidationLevel1',
+                          'proposeToValidationLevel2',
+                          'proposeToValidationLevel3',
+                          'proposeToValidationLevel4',
+                          'proposeToValidationLevel5',
+                          'validate'])
+        # call get_last_validation_state 100 times
+        self._check_get_last_validation_state(item, times=100)
+        # call get_last_validation_state 1000 times
+        self._check_get_last_validation_state(item, times=1000)
 
     @timecall
-    def _check__getLastValidationState(self, wf_conditions, times=1):
+    def _check_get_last_validation_state(self, item, times=1):
         ''' '''
-        pm_logger.info('Call _getLastValidationState {0} times'.format(times))
+        pm_logger.info('Call utils.get_last_validation_state {0} times'.format(times))
         for time in range(times):
-            wf_conditions._getLastValidationState()
+            get_last_validation_state(item, self.meetingConfig)
+
+    def test_pm_Speed_is_valid_validation_level(self):
+        '''Test utils.get_last_validation_state.'''
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        self._activate_wfas(('item_validation_shortcuts', ))
+        # enable levelXreviewers and corresponding validation levels
+        # so we have several transitions
+        enable_function("level1reviewers")
+        enable_function("level2reviewers")
+        enable_function("level3reviewers")
+        enable_function("level4reviewers")
+        enable_function("level5reviewers")
+        # will enable every validation levels
+        self._enableItemValidationLevel(cfg)
+        self._addPrincipalToGroup("pmCreator1", "{0}_reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level1reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level1reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level2reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level3reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level4reviewers".format(
+            self.developers_uid))
+        self._addPrincipalToGroup("pmCreator1", "{0}_level5reviewers".format(
+            self.developers_uid))
+        self.changeUser("pmCreator1")
+        item1 = self.create('MeetingItem')
+        self.assertEqual(self.transitions(item1),
+                         ['prevalidate',
+                          'propose',
+                          'proposeToValidationLevel1',
+                          'proposeToValidationLevel2',
+                          'proposeToValidationLevel3',
+                          'proposeToValidationLevel4',
+                          'proposeToValidationLevel5',
+                          'validate'])
+        self.changeUser("pmCreator2")
+        item2 = self.create('MeetingItem')
+        self.assertEqual(self.transitions(item2),
+                         ['propose'])
+        self.changeUser('pmCreator1')
+        self._check_is_valid_validation_level(item1, times=100)
+        self._check_is_valid_validation_level(item1, times=1000)
+        self.changeUser('pmCreator2')
+        self._check_is_valid_validation_level(item2, times=100)
+        self._check_is_valid_validation_level(item2, times=1000)
+
+    @timecall
+    def _check_is_valid_validation_level(self, item, times=1):
+        ''' '''
+        pm_logger.info('Call MeetingItemWorkflowConditions.is_valid_validation_level {0} times'.format(times))
+        wfconditions = item.wfConditions()
+        for time in range(times):
+            wfconditions.is_valid_validation_level("proposed")
 
     def test_pm_Speed_get_full_title(self):
         '''Test organization.get_full_title.'''
