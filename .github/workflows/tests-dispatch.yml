@@ -43,7 +43,7 @@ jobs:
         with:
           REPOSITORY: ${{ matrix.repository }}
           REPOSITORY_OWNER: IMIO
-          GIT_REFERENCE: gha
+          GIT_REFERENCE: master
           WORKFLOW_FILENAME: tests.yml
           APP_ID: ${{ vars.APPS_ID_IMIO_GHA }}
           APP_PRIVATE_KEY: ${{ secrets.APPS_PRIVATE_KEY_IMIO_GHA }}
