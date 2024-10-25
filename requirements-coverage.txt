@@ -1,0 +1,2 @@
+-r https://raw.githubusercontent.com/IMIO/buildout.pm/refs/heads/master/requirements.txt
+coverage==5.3.1
