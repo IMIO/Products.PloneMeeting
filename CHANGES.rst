@@ -8,6 +8,11 @@ Changelog
 - Adapted `Migrator.updateWFStatesAndTransitions` to manage item WF states
   defined on organizations in item advice related states attributes.
   [gbastien]
+- Extended length of string fields of `MeetingConfig` containing TAL expression
+  to avoid long expressions problems (was limited to 255, extented to 750).
+  [gbastien]
+- Fixed `Meeting.convocation_date` calendar to start on monday.
+  [gbastien]
 
 4.2.12rc1 (2024-10-17)
 ----------------------
