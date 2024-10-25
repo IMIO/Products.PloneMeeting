@@ -8,6 +8,7 @@
 
 from collections import OrderedDict
 from collective.behavior.talcondition.behavior import ITALCondition
+from collective.contact.plonegroup.utils import get_organizations
 from collective.documentgenerator.search_replace.pod_template import SearchAndReplacePODTemplates
 from collective.iconifiedcategory.utils import _categorized_elements
 from DateTime import DateTime
@@ -25,6 +26,7 @@ from plone import api
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.content.organization import WF_STATE_ATTRS
 from Products.PloneMeeting.MeetingConfig import ITEM_WF_STATE_ATTRS
 from Products.PloneMeeting.MeetingConfig import ITEM_WF_TRANSITION_ATTRS
 from Products.PloneMeeting.MeetingConfig import MEETING_WF_STATE_ATTRS
@@ -152,13 +154,13 @@ class Migrator(BaseMigrator):
                 values = replace_in_list(values, original, replacement)
             return values
 
-        def _update_attrs(attrs, mappings):
+        def _update_attrs(obj, attrs, mappings):
             for attr in attrs:
                 # state_attr may be a datagridfield field_name/column_name
                 # like powerObservers/item_states
                 if "/" in attr:
                     field_name, col_name = attr.split('/')
-                    values = cfg.getField(field_name).get(cfg)
+                    values = getattr(obj, field_name)
                     for row in values:
                         if hasattr(row[col_name], '__iter__'):
                             col_values = _replace_values_in_list(
@@ -168,19 +170,28 @@ class Migrator(BaseMigrator):
                         row[col_name] = col_values
                 else:
                     field_name = attr
-                    values = cfg.getField(field_name).get(cfg)
+                    values = getattr(obj, field_name)
                     values = _replace_values_in_list(values, mappings)
-                setattr(cfg, field_name, tuple(values))
+                setattr(obj, field_name, tuple(values))
 
         # MeetingConfigs
         state_attrs = ITEM_WF_STATE_ATTRS if related_to == 'MeetingItem' else MEETING_WF_STATE_ATTRS
         tr_attrs = ITEM_WF_TRANSITION_ATTRS if related_to == 'MeetingItem' else MEETING_WF_TRANSITION_ATTRS
         for cfg in self.tool.objectValues('MeetingConfig'):
-            # state_attrs
-            _update_attrs(state_attrs, review_state_mappings)
-
-            # transition_attrs
-            _update_attrs(tr_attrs, transition_mappings)
+            # cfg state_attrs
+            _update_attrs(cfg, state_attrs, review_state_mappings)
+            # cfg transition_attrs
+            _update_attrs(cfg, tr_attrs, transition_mappings)
+            if related_to == 'MeetingItem':
+                cfg_id = cfg.getId()
+                # on org, stored value is like "meeting-config-id__state__item_state_id"
+                org_review_state_mappings = {
+                    u"{0}__state__{1}".format(cfg_id, key):
+                        u"{0}__state__{1}".format(cfg_id, value)
+                    for key, value in review_state_mappings.items()}
+                for org in get_organizations(only_selected=False):
+                    # org state_attrs
+                    _update_attrs(org, WF_STATE_ATTRS, org_review_state_mappings)
 
         # workflow_history
         # manage query if not given

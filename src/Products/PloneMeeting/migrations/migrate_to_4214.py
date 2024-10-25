@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.setup import load_type_from_package
 from imio.pyutils.utils import replace_in_list
 from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
@@ -9,7 +8,6 @@ from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.model.adaptations import WAITING_ADVICES_NEW_STATE_ID_PATTERN
 from Products.PloneMeeting.setuphandlers import _configureWebspellchecker
 from Products.PloneMeeting.setuphandlers import _installWebspellchecker
-from Products.PloneMeeting.setuphandlers import indexInfos
 
 
 class Migrate_To_4214(Migrator):

@@ -5018,12 +5018,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
              'return_to_proposing_group_with_all_validations' in values or
              back_from_presented)) or \
            (len(item_validation_states) == 1 and
-             ('return_to_proposing_group_with_last_validation' in values or
-              'return_to_proposing_group_with_all_validations' in values)):
-                return translate(
-                    'wa_item_validation_levels_dependency',
-                    domain='PloneMeeting',
-                    context=self.REQUEST)
+            ('return_to_proposing_group_with_last_validation' in values or
+             'return_to_proposing_group_with_all_validations' in values)):
+            return translate(
+                'wa_item_validation_levels_dependency',
+                domain='PloneMeeting',
+                context=self.REQUEST)
 
         # check that selected back_from_presented transitions
         # exists in MeetingConfig.itemWFValidationLevels
