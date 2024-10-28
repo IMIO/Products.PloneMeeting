@@ -29,7 +29,7 @@ jobs:
           cache-name: cache-eggs
         with:
           CACHE_KEY: ${{ runner.os }}-build-${{ env.cache-name }}-2.7.18
-          TEST_COMMAND: coverage run bin/test --test-path=src/Products.PloneMeeting
+          TEST_COMMAND: coverage run bin/test --test-path=src/Products.PloneMeeting --layer=!ROBOT
           INSTALL_DEPENDENCIES_COMMANDS: |
             sudo pip2.7 install -r requirements-coverage.txt
           MATTERMOST_WEBHOOK_URL: ${{ secrets.DELIB_MATTERMOST_WEBHOOK_URL }}
