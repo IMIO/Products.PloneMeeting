@@ -1,7 +1,7 @@
 Changelog
 =========
 
-4.2.9.1 (unreleased)
+4.2.9.1 (2024-10-28)
 --------------------
 
 - Backport from 4.2.12: Added holidays for 2025.
