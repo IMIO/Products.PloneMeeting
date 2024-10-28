@@ -39,6 +39,12 @@ jobs:
           coverage report
           coverage xml
         shell: bash
+      - name: Create artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.xml
+          retention-days: 90
       # - name: Publish to Coveralls
       #   run: |
       #     coveralls --service=github
