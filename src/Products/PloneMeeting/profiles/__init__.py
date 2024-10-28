@@ -918,6 +918,19 @@ class PloneMeetingConfiguration(Descriptor):
             {'date': '2024/11/11', },
             {'date': '2024/11/15', },
             {'date': '2024/12/25', },
+
+            {'date': '2025/01/01', },  # 2025
+            {'date': '2025/04/21', },
+            {'date': '2025/05/01', },
+            {'date': '2025/05/29', },
+            {'date': '2025/06/09', },
+            {'date': '2025/07/21', },
+            {'date': '2025/08/15', },
+            {'date': '2025/09/27', },
+            {'date': '2025/11/01', },
+            {'date': '2025/11/11', },
+            {'date': '2025/11/15', },
+            {'date': '2025/12/25', },
         ]
         self.delayUnavailableEndDays = ()
         self.configGroups = ()

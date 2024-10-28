@@ -1,6 +1,11 @@
 Changelog
 =========
 
+4.2.9.1 (unreleased)
+--------------------
+
+- Backport from 4.2.12: Added holidays for 2025.
+  [aduchene]
 
 4.2.9 (2024-06-10)
 ------------------
