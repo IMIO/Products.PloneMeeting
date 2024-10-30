@@ -120,6 +120,8 @@ class Migrate_To_4214(Migrator):
         # are missing this new criterion
         self.updateFacetedFilters(xml_filename='upgrade_step_4211_add_item_widgets.xml')
         self._updateSearchItemsOfMyCommitteesSearchesCondition()
+        # holidays 2025 were added
+        self.updateHolidays()
         logger.info('Migrating to PloneMeeting 4214... Done.')
 
 
