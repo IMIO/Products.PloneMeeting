@@ -30,6 +30,7 @@
     </tal:field>
 
     <tal:comment replace="nothing">Proposing group, category, classifier, toDiscuss</tal:comment>
+    <metal:field use-macro="python:here.widget('itemReference', mode='edit')"/>
     <metal:field use-macro="python:here.widget('proposingGroup', mode='edit')"/>
     <metal:field use-macro="python:here.widget('proposingGroupWithGroupInCharge', mode='edit')"/>
     <metal:field use-macro="python:here.widget('groupsInCharge', mode='edit')"/>

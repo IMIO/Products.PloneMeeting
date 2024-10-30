@@ -16,6 +16,11 @@ Changelog
 - Make `ToolPloneMeeting.showHolidaysWarning` number of days a parameter
   so in can be changed if necessary.
   [gbastien]
+- Field `MeetingItem.itemReference` is now an optional field, when enabled,
+  it can be managed manually by the editors of the item.  In this case, the
+  configuration of `MeetingConfig.itemReferenceFormat` must be adapted
+  accordingly to avoid losing manually managed item reference.
+  [gbastien]
 
 4.2.12rc1 (2024-10-17)
 ----------------------

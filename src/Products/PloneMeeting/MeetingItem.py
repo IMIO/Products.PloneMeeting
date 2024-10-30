@@ -1186,11 +1186,12 @@ schema = Schema((
     StringField(
         name='itemReference',
         widget=StringWidget(
-            visible=False,
+            condition="python: here.attribute_is_used('itemReference')",
             label='Itemreference',
             label_msgid='PloneMeeting_label_itemReference',
             i18n_domain='PloneMeeting',
         ),
+        optional=True,
         searchable=True,
     ),
     TextField(
