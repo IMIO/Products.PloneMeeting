@@ -1621,13 +1621,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 history.append(event)
         obj.workflow_history[workflow_name] = tuple(history)
 
-    def showHolidaysWarning(self, cfg):
+    def showHolidaysWarning(self, cfg, days=60):
         """Condition for showing the 'holidays_waring_message'."""
         if cfg is not None and cfg.__class__.__name__ == "MeetingConfig":
             holidays = self.getHolidays()
-            # if user isManager and last defined holiday is in less than 60 days, display warning
+            # if user isManager and last defined holiday is in less than p_days,
+            # display warning
             if self.isManager(cfg) and \
-               (not holidays or DateTime(holidays[-1]['date']) < DateTime() + 60):
+               (not holidays or DateTime(holidays[-1]['date']) < DateTime() + days):
                 return True
         return False
 

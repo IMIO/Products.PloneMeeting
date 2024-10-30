@@ -13,6 +13,9 @@ Changelog
   [gbastien]
 - Fixed `Meeting.convocation_date` calendar to start on monday.
   [gbastien]
+- Make `ToolPloneMeeting.showHolidaysWarning` number of days a parameter
+  so in can be changed if necessary.
+  [gbastien]
 
 4.2.12rc1 (2024-10-17)
 ----------------------
