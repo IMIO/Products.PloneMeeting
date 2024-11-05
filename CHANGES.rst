@@ -11,6 +11,8 @@ Changelog
   [gbastien]
 - Completed `AnnexTypeDescriptors` and `ToolInitializer` to manage
   attribute `after_scan_change_annex_type_to`.
+  Completed init attributes of `AnnexSubTypeDescriptor` and
+  `ItemAnnexSubTypeDescriptor`.
   [gbastien]
 
 4.2.11 (2024-09-25)

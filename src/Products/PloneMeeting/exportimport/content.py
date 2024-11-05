@@ -349,7 +349,6 @@ class ToolInitializer:
             other_annex_type = cfg.annexes_types.unrestrictedTraverse(
                 annex_type.after_scan_change_annex_type_to)
             annex_type.after_scan_change_annex_type_to = other_annex_type.UID()
-        import ipdb; ipdb.set_trace()
         for annex_group in cfg.annexes_types.objectValues():
             for annex_type in annex_group.objectValues():
                 if annex_type.after_scan_change_annex_type_to:
