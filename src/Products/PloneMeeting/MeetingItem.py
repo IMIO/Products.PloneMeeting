@@ -2027,7 +2027,7 @@ schema = Schema((
         searchable=True,
         default='',
         widget=StringWidget(
-            condition="python: here.attribute_is_used('otherMeetingConfigsClonableToFieldTitle')",
+            condition="python: here.show_othermcs_clonable_to_field('title', in_check_may_quick_edit=exists('in_check_may_quick_edit') and in_check_may_quick_edit or False)",
             label_msgid="PloneMeeting_label_itemTitle",
             label='OtherMeetingConfigsClonableToFieldTitle',
             i18n_domain='PloneMeeting',
@@ -2040,7 +2040,7 @@ schema = Schema((
         searchable=True,
         default='',
         widget=StringWidget(
-            condition="python: here.attribute_is_used('otherMeetingConfigsClonableToFieldItemReference')",
+            condition="python: here.show_othermcs_clonable_to_field('itemReference', in_check_may_quick_edit=exists('in_check_may_quick_edit') and in_check_may_quick_edit or False)",
             label_msgid="PloneMeeting_label_itemReference",
             label='OtherMeetingConfigsClonableToFieldItemReference',
             i18n_domain='PloneMeeting',
@@ -2050,7 +2050,7 @@ schema = Schema((
     TextField(
         name='otherMeetingConfigsClonableToFieldDescription',
         widget=RichWidget(
-            condition="python: here.attribute_is_used('otherMeetingConfigsClonableToFieldDescription')",
+            condition="python: here.show_othermcs_clonable_to_field('description', in_check_may_quick_edit=exists('in_check_may_quick_edit') and in_check_may_quick_edit or False)",
             label_msgid="PloneMeeting_label_itemDescription",
             label='Description',
             i18n_domain='PloneMeeting',
@@ -2064,7 +2064,7 @@ schema = Schema((
     TextField(
         name='otherMeetingConfigsClonableToFieldDetailedDescription',
         widget=RichWidget(
-            condition="python: here.attribute_is_used('otherMeetingConfigsClonableToFieldDetailedDescription')",
+            condition="python: here.show_othermcs_clonable_to_field('detailedDescription', in_check_may_quick_edit=exists('in_check_may_quick_edit') and in_check_may_quick_edit or False)",
             label_msgid="PloneMeeting_label_detailedDescription",
             label='Detaileddescription',
             i18n_domain='PloneMeeting',
@@ -2078,7 +2078,7 @@ schema = Schema((
     TextField(
         name='otherMeetingConfigsClonableToFieldMotivation',
         widget=RichWidget(
-            condition="python: here.attribute_is_used('otherMeetingConfigsClonableToFieldMotivation')",
+            condition="python: here.show_othermcs_clonable_to_field('motivation', in_check_may_quick_edit=exists('in_check_may_quick_edit') and in_check_may_quick_edit or False)",
             label='OtherMeetingConfigsClonableToFieldMotivation',
             label_msgid='PloneMeeting_label_motivation',
             i18n_domain='PloneMeeting',
@@ -2094,7 +2094,7 @@ schema = Schema((
     TextField(
         name='otherMeetingConfigsClonableToFieldMotivationSuite',
         widget=RichWidget(
-            condition="python: here.attribute_is_used('otherMeetingConfigsClonableToFieldMotivationSuite')",
+            condition="python: here.show_othermcs_clonable_to_field('motivationSuite', in_check_may_quick_edit=exists('in_check_may_quick_edit') and in_check_may_quick_edit or False)",
             label='OtherMeetingConfigsClonableToFieldMotivationSuite',
             label_msgid='PloneMeeting_label_motivationSuite',
             i18n_domain='PloneMeeting',
@@ -2110,7 +2110,7 @@ schema = Schema((
     TextField(
         name='otherMeetingConfigsClonableToFieldDecision',
         widget=RichWidget(
-            condition="python: here.attribute_is_used('otherMeetingConfigsClonableToFieldDecision')",
+            condition="python: here.show_othermcs_clonable_to_field('decision', in_check_may_quick_edit=exists('in_check_may_quick_edit') and in_check_may_quick_edit or False)",
             label='OtherMeetingConfigsClonableToFieldDecision',
             label_msgid='PloneMeeting_label_decision',
             i18n_domain='PloneMeeting',
@@ -2126,7 +2126,7 @@ schema = Schema((
     TextField(
         name='otherMeetingConfigsClonableToFieldDecisionSuite',
         widget=RichWidget(
-            condition="python: here.attribute_is_used('otherMeetingConfigsClonableToFieldDecisionSuite')",
+            condition="python: here.show_othermcs_clonable_to_field('decisionSuite', in_check_may_quick_edit=exists('in_check_may_quick_edit') and in_check_may_quick_edit or False)",
             label='OtherMeetingConfigsClonableToFieldDecisionSuite',
             label_msgid='PloneMeeting_label_decisionSuite',
             i18n_domain='PloneMeeting',
@@ -2142,7 +2142,7 @@ schema = Schema((
     TextField(
         name='otherMeetingConfigsClonableToFieldDecisionEnd',
         widget=RichWidget(
-            condition="python: here.attribute_is_used('otherMeetingConfigsClonableToFieldDecisionEnd')",
+            condition="python: here.show_othermcs_clonable_to_field('decisionEnd', in_check_may_quick_edit=exists('in_check_may_quick_edit') and in_check_may_quick_edit or False)",
             label='OtherMeetingConfigsClonableToFieldDecisionEnd',
             label_msgid='PloneMeeting_label_decisionEnd',
             i18n_domain='PloneMeeting',
@@ -2753,6 +2753,29 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = tool.isManager(cfg)
             if not res:
                 res = isPowerObserverForCfg(cfg) or item.is_decided(cfg)
+        return res
+
+    security.declarePublic('show_othermcs_clonable_to_field')
+
+    def show_othermcs_clonable_to_field(self, field_name, in_check_may_quick_edit=False):
+        '''Condition for showing otherMeetingConfigsClonableToFieldXXX fields.
+           Shown if used in MeetingConfig and depending on
+           MeetingConfig.meetingConfigsToCloneToEditFieldsTALExpr to check if editable
+           (edit form and quick edit from view).'''
+        res = False
+        if self.attribute_is_used('otherMeetingConfigsClonableToField' + field_name.capitalize()):
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            if not cfg.getMeetingConfigsToCloneToEditFieldsTALExpr():
+                res = True
+            else:
+                extra_expr_ctx = _base_extra_expr_ctx(self)
+                extra_expr_ctx['field_name'] = field_name
+                res = (not in_check_may_quick_edit and not is_editing(cfg)) or \
+                    _evaluateExpression(
+                        self,
+                        cfg.getMeetingConfigsToCloneToEditFieldsTALExpr(),
+                        extra_expr_ctx=extra_expr_ctx)
         return res
 
     security.declarePublic('showIsAcceptableOutOfMeeting')

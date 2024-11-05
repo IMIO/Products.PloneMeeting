@@ -2084,9 +2084,13 @@ def checkMayQuickEdit(obj,
     tool = api.portal.get_tool('portal_plonemeeting')
     res = False
     meeting = obj.getTagName() == "Meeting" and obj or (obj.hasMeeting() and obj.getMeeting())
+    # we _base_extra_expr_ctx when calling _evaluateExpression for performance...
     if (not onlyForManagers or (onlyForManagers and tool.isManager(tool.getMeetingConfig(obj)))) and \
        (bypassWritePermissionCheck or _checkPermission(permission, obj)) and \
-       (_evaluateExpression(obj, expression)) and \
+       (_evaluateExpression(
+            obj,
+            expression,
+            extra_expr_ctx=dict(_base_extra_expr_ctx(obj).items() + {'in_check_may_quick_edit': True}.items()))) and \
        (not (not bypassMeetingClosedCheck and
         meeting and
         meeting.query_state() in Meeting.MEETINGCLOSEDSTATES) or

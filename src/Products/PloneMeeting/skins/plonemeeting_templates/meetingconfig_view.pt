@@ -1252,9 +1252,16 @@
           <td tal:define="field python:here.getField('itemInternalNotesEditableBy')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td tal:define="field python:here.getField('meetingConfigsToCloneToEditFieldsTALExpr')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+        <tr>
           <td tal:define="field python:here.getField('usingGroups')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td></td>
+          <td></td>
         </tr>
       </table>
     </tal:advices>

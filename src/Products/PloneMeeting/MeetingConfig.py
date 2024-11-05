@@ -1531,7 +1531,6 @@ schema = Schema((
             label='Itemsnotviewablevisiblefieldstalexpr',
             label_msgid='PloneMeeting_label_itemsNotViewableVisibleFieldsTALExpr',
             i18n_domain='PloneMeeting',
-            maxlength=750,
         ),
         schemata="gui",
         default=defValues.itemsNotViewableVisibleFieldsTALExpr,
@@ -2555,6 +2554,21 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    TextField(
+        name='meetingConfigsToCloneToEditFieldsTALExpr',
+        allowable_content_types=('text/plain',),
+        widget=TextAreaWidget(
+            description="MeetingConfigsToCloneToEditFieldsTALExpr",
+            description_msgid="meeting_configs_to_clone_to_edit_fields_tal_expr_descr",
+            label='Meetingconfigstoclonetoeditfieldstalexpr',
+            label_msgid='PloneMeeting_label_meetingConfigsToCloneToEditFieldsTALExpr',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        default=defValues.meetingConfigsToCloneToEditFieldsTALExpr,
+        default_content_type='text/plain',
+        write_permission="PloneMeeting: Write risky config",
+    ),
     LinesField(
         name='usingGroups',
         widget=MultiSelectionWidget(
@@ -2804,34 +2818,34 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    StringField(
+    TextField(
         name='voteCondition',
         default=defValues.voteCondition,
-        widget=StringField._properties['widget'](
+        allowable_content_types=('text/plain',),
+        widget=TextAreaWidget(
             description="VoteCondition",
             description_msgid="vote_condition_descr",
-            size=100,
             label='Votecondition',
             label_msgid='PloneMeeting_label_voteCondition',
             i18n_domain='PloneMeeting',
-            maxlength=750,
         ),
         schemata="votes",
+        default_content_type='text/plain',
         write_permission="PloneMeeting: Write risky config",
     ),
-    StringField(
+    TextField(
         name='votesResultTALExpr',
         default=defValues.votesResultTALExpr,
-        widget=StringField._properties['widget'](
+        allowable_content_types=('text/plain',),
+        widget=TextAreaWidget(
             description="VotesResultTALExpr",
             description_msgid="votes_result_tal_expr_descr",
-            size=100,
             label='Votesresulttalexpr',
             label_msgid='PloneMeeting_label_votesResultTALExpr',
             i18n_domain='PloneMeeting',
-            maxlength=750,
         ),
         schemata="votes",
+        default_content_type='text/plain',
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(

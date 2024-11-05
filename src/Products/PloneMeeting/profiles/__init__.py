@@ -565,6 +565,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.inheritedAdviceRemoveableByAdviser = False
         self.itemLabelsEditableByProposingGroupForever = False
         self.itemInternalNotesEditableBy = []
+        self.meetingConfigsToCloneToEditFieldsTALExpr = ''
         self.usingGroups = []
         # List of other meetingConfigs, item of this meetingConfig
         # will be clonable to

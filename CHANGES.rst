@@ -26,6 +26,10 @@ Changelog
   Completed init attributes of `AnnexSubTypeDescriptor` and
   `ItemAnnexSubTypeDescriptor`.
   [gbastien]
+- Added `MeetingConfig.meetingConfigsToCloneToEditFieldsTALExpr` to be able to
+  define an expression to protect `MeetingItem.otherMeetingConfigsClonableToFields`
+  against edition when the TAL expression is `False`.
+  [gbastien]
 
 4.2.12rc1 (2024-10-17)
 ----------------------
