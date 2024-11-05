@@ -21,6 +21,11 @@ Changelog
   configuration of `MeetingConfig.itemReferenceFormat` must be adapted
   accordingly to avoid losing manually managed item reference.
   [gbastien]
+- Completed `AnnexTypeDescriptors` and `ToolInitializer` to manage
+  attribute `after_scan_change_annex_type_to`.
+  Completed init attributes of `AnnexSubTypeDescriptor` and
+  `ItemAnnexSubTypeDescriptor`.
+  [gbastien]
 
 4.2.12rc1 (2024-10-17)
 ----------------------
@@ -66,7 +71,6 @@ Changelog
   several groups may be selected including the proposing group or not.
   Added new column `available_on` to be able to define a `TAL expression`
   that will make a transition available or not.
-  [gbastien]
 
 4.2.11 (2024-09-25)
 -------------------
