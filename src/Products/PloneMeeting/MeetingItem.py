@@ -2767,7 +2767,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.attribute_is_used('otherMeetingConfigsClonableToField' + field_name.capitalize()):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
-            if not cfg.getMeetingConfigsToCloneToEditFieldsTALExpr():
+            if not cfg.getMeetingConfigsToCloneToEditFieldsTALExpr().strip():
                 res = True
             else:
                 extra_expr_ctx = _base_extra_expr_ctx(self)
