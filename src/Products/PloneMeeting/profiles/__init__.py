@@ -127,6 +127,7 @@ class AnnexTypeDescriptor(Descriptor):
                  to_print=False,
                  show_preview=0,
                  description=u'',
+                 after_scan_change_annex_type_to=None,
                  only_pdf=False):
         self.id = id
         self.title = title
@@ -143,6 +144,7 @@ class AnnexTypeDescriptor(Descriptor):
         self.show_preview = show_preview
         self.enabled = enabled
         self.description = description
+        self.after_scan_change_annex_type_to = after_scan_change_annex_type_to
         self.only_pdf = only_pdf
 
 
@@ -163,6 +165,7 @@ class ItemAnnexTypeDescriptor(AnnexTypeDescriptor):
                  to_print=False,
                  show_preview=0,
                  description=u'',
+                 after_scan_change_annex_type_to=None,
                  only_for_meeting_managers=False,
                  only_pdf=False):
         super(ItemAnnexTypeDescriptor, self).__init__(
@@ -179,6 +182,7 @@ class ItemAnnexTypeDescriptor(AnnexTypeDescriptor):
             to_print=to_print,
             show_preview=show_preview,
             description=description,
+            after_scan_change_annex_type_to=after_scan_change_annex_type_to,
             only_pdf=only_pdf)
         self.other_mc_correspondences = other_mc_correspondences
         self.only_for_meeting_managers = only_for_meeting_managers
@@ -195,6 +199,10 @@ class AnnexSubTypeDescriptor(Descriptor):
                  enabled=True,
                  confidential=False,
                  to_print=False,
+                 show_preview=0,
+                 description=u'',
+                 after_scan_change_annex_type_to=None,
+                 only_for_meeting_managers=False,
                  only_pdf=False):
         self.id = id
         self.title = title
@@ -204,7 +212,11 @@ class AnnexSubTypeDescriptor(Descriptor):
         self.to_sign = to_sign
         self.signed = signed
         self.enabled = enabled
+        self.after_scan_change_annex_type_to = after_scan_change_annex_type_to
         self.only_pdf = only_pdf
+        self.show_preview = show_preview
+        self.description = description
+        self.only_for_meeting_managers = only_for_meeting_managers
 
 
 class ItemAnnexSubTypeDescriptor(AnnexSubTypeDescriptor):
@@ -219,6 +231,9 @@ class ItemAnnexSubTypeDescriptor(AnnexSubTypeDescriptor):
                  enabled=True,
                  confidential=False,
                  to_print=False,
+                 show_preview=0,
+                 description=u'',
+                 after_scan_change_annex_type_to=None,
                  only_for_meeting_managers=False,
                  only_pdf=False):
         super(ItemAnnexSubTypeDescriptor, self).__init__(
@@ -230,6 +245,9 @@ class ItemAnnexSubTypeDescriptor(AnnexSubTypeDescriptor):
             enabled=enabled,
             confidential=confidential,
             to_print=to_print,
+            show_preview=show_preview,
+            description=description,
+            after_scan_change_annex_type_to=after_scan_change_annex_type_to,
             only_pdf=only_pdf)
         self.other_mc_correspondences = other_mc_correspondences
         self.only_for_meeting_managers = only_for_meeting_managers

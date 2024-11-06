@@ -201,6 +201,7 @@ class ToolInitializer:
         # manage other_mc_correspondences
         for created_cfg in created_cfgs:
             self._manageOtherMCCorrespondences(created_cfg)
+            self._manage_after_scan_change_annex_type_to(created_cfg)
 
         # now that every meetingConfigs have been created, we can manage the meetingConfigsToCloneTo
         # and orgs advice states related fields
@@ -341,6 +342,21 @@ class ToolInitializer:
                         for subType in annex_type.objectValues():
                             _convert_to_real_other_mc_correspondences(subType)
 
+    def _manage_after_scan_change_annex_type_to(self, cfg):
+        """We have the new annex type path, we need it's UID."""
+        def _convert_to_real_after_scan_change_annex_type_to(annex_type):
+            # get the annex_type and replaced it by it's UID
+            other_annex_type = cfg.annexes_types.unrestrictedTraverse(
+                annex_type.after_scan_change_annex_type_to)
+            annex_type.after_scan_change_annex_type_to = other_annex_type.UID()
+        for annex_group in cfg.annexes_types.objectValues():
+            for annex_type in annex_group.objectValues():
+                if annex_type.after_scan_change_annex_type_to:
+                    _convert_to_real_after_scan_change_annex_type_to(annex_type)
+                    for sub_type in annex_type.objectValues():
+                        if sub_type.after_scan_change_annex_type_to:
+                            _convert_to_real_after_scan_change_annex_type_to(sub_type)
+
     def createMeetingConfig(self, configData, source):
         '''Creates a new meeting configuration from p_configData which is a
            MeetingConfigDescriptor instance. p_source is a string that
@@ -440,8 +456,8 @@ class ToolInitializer:
         # manage MeetingManagers
         groupsTool = self.portal.portal_groups
         for userId in configData.meetingManagers:
-            groupsTool.addPrincipalToGroup(userId, '{0}_{1}'.format(cfg.getId(),
-                                                                    MEETINGMANAGERS_GROUP_SUFFIX))
+            groupsTool.addPrincipalToGroup(userId, '{0}_{1}'.format(
+                cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX))
         # manage annex confidentiality, enable it on relevant CategoryGroup
         if configData.itemAnnexConfidentialVisibleFor:
             cfg.annexes_types.item_annexes.confidentiality_activated = True
@@ -548,6 +564,7 @@ class ToolInitializer:
             enabled=at.enabled,
             show_preview=at.show_preview,
             description=at.description,
+            after_scan_change_annex_type_to=at.after_scan_change_annex_type_to,
             only_pdf=at.only_pdf,
         )
         # store an empty set in other_mc_correspondences for validation
@@ -569,11 +586,12 @@ class ToolInitializer:
                 container=annexType,
                 to_print=subType.to_print,
                 confidential=subType.confidential,
-                to_sign=at.to_sign,
-                signed=at.signed,
+                to_sign=subType.to_sign,
+                signed=subType.signed,
                 enabled=subType.enabled,
-                show_preview=at.show_preview,
-                description=at.description,
+                show_preview=subType.show_preview,
+                after_scan_change_annex_type_to=subType.after_scan_change_annex_type_to,
+                description=subType.description,
             )
             if sub_portal_type == 'ItemAnnexContentSubcategory':
                 annexSubType.other_mc_correspondences = set()
