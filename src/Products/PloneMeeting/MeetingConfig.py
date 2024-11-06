@@ -2833,19 +2833,19 @@ schema = Schema((
         default_content_type='text/plain',
         write_permission="PloneMeeting: Write risky config",
     ),
-    TextField(
+    StringField(
         name='votesResultTALExpr',
         default=defValues.votesResultTALExpr,
-        allowable_content_types=('text/plain',),
-        widget=TextAreaWidget(
+        widget=StringField._properties['widget'](
             description="VotesResultTALExpr",
             description_msgid="votes_result_tal_expr_descr",
+            size=100,
             label='Votesresulttalexpr',
             label_msgid='PloneMeeting_label_votesResultTALExpr',
             i18n_domain='PloneMeeting',
+            maxlength=750,
         ),
         schemata="votes",
-        default_content_type='text/plain',
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
