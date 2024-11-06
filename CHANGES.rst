@@ -21,6 +21,8 @@ Changelog
   configuration of `MeetingConfig.itemReferenceFormat` must be adapted
   accordingly to avoid losing manually managed item reference.
   [gbastien]
+- Added holidays for 2025.
+  [aduchene]
 - Completed `AnnexTypeDescriptors` and `ToolInitializer` to manage
   attribute `after_scan_change_annex_type_to`.
   Completed init attributes of `AnnexSubTypeDescriptor` and
