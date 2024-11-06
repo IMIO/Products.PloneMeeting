@@ -232,13 +232,15 @@ class AdvicesIconsInfos(BrowserView):
              in a itemAdviceEditStates review_state."""
         res = False
         if self.adviceIsInherited:
-            if self.tool.isManager(self.cfg) and not self.context.is_decided(self.cfg):
+            if self.tool.isManager(realManagers=True) or \
+               (self.tool.isManager(self.cfg) and
+                    not self.context.is_decided(self.cfg)):
                 res = True
             else:
                 if self.cfg.getInheritedAdviceRemoveableByAdviser() and \
                    self.advice_id in self.userAdviserOrgUids and \
                    self.itemReviewState in self.cfg.getItemAdviceStatesForOrg(self.advice_id):
-                    return True
+                    res = True
         return res
 
     def mayDelete(self, advice):

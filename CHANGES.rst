@@ -85,6 +85,8 @@ Changelog
   [gbastien]
 - Upgrade `appy.pod` ready for `LibreOffice 24.2.x`.
   [gbastien]
+- Let role `Manager` be able to remove an inherited advice in any case.
+  [gbastien]
 
 4.2.10 (2024-09-19)
 -------------------
