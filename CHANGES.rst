@@ -9,6 +9,8 @@ Changelog
   when using `BaseDGHV.print_attendees` and `BaseDGHV.print_attendees_by_type`
   using a special parameter `short_title_kwargs`.
   [gbastien]
+- Added holidays for 2025.
+  [aduchene]
 - Completed `AnnexTypeDescriptors` and `ToolInitializer` to manage
   attribute `after_scan_change_annex_type_to`.
   Completed init attributes of `AnnexSubTypeDescriptor` and

@@ -58,6 +58,8 @@ class Migrate_To_4214(Migrator):
         # dashboard faceted criteria, new MeetingConfigs created manually in between
         # are missing this new criterion
         self.updateFacetedFilters(xml_filename='upgrade_step_4211_add_item_widgets.xml')
+        # holidays 2025 were added
+        self.updateHolidays()
         logger.info('Migrating to PloneMeeting 4214... Done.')
 
 
