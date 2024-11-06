@@ -8301,6 +8301,17 @@ class testMeetingItem(PloneMeetingTestCase):
             cfg, item_state='proposed', available_on='python: shortcut is not True')
         self.assertEqual(self.transitions(item),
                          ['backToProposed', 'validate'])
+        # when "validated" available_on is also taken into account
+        self.validateItem(item)
+        self.changeUser('pmManager')
+        self.assertEqual(self.transitions(item), ['backToPrevalidated'])
+        self._updateItemValidationLevel(
+            cfg, item_state='itemcreated', available_on='')
+        self._updateItemValidationLevel(
+            cfg, item_state='proposed', available_on='')
+        self.assertEqual(
+            self.transitions(item),
+            ['backToItemCreated', 'backToPrevalidated', 'backToProposed'])
 
     def test_pm__update_meeting_link(self):
         """The MeetingItem._update_meeting_link is

@@ -242,7 +242,8 @@ class MeetingItemWorkflowConditions(object):
             only_enabled=True,
             return_state_singleton=False)
         # check if previous validation state is valid
-        index = item_val_levels_states.index(review_state) - 1
+        index = len(item_val_levels_states) - 1 if review_state == "validated" else \
+            item_val_levels_states.index(review_state) - 1
         while not self.is_valid_validation_level(
                 item_val_levels_states[index]):
             index -= 1
@@ -600,8 +601,8 @@ class MeetingItemWorkflowConditions(object):
             else:
                 res = _checkPermission(ReviewPortalContent, self.context)
                 if res:
-                    # if a validation state, must be valid
-                    if self.review_state in item_validation_states:
+                    # if a validation state or validated, must be valid
+                    if self.review_state in item_validation_states + ["validated"]:
                         shortcut = False
                         if destinationState != self._get_previous_val_level(self.review_state):
                             shortcut = True
