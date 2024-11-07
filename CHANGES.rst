@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.12 (unreleased)
+4.2.12 (2024-11-07)
 -------------------
 
 - Added possibility to pass any parameter to `held_position.get_short_title`
