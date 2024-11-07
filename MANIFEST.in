@@ -2,6 +2,7 @@ include *.conf
 include *.ignore
 include *.py
 include *.rst
+include *.txt
 include Makefile
 include base.cfg
 include buildout.cfg
