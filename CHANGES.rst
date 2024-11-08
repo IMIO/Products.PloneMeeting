@@ -2,8 +2,14 @@ Changelog
 =========
 
 
-4.2.12rc2 (unreleased)
+4.2.13rc1 (unreleased)
 ----------------------
+
+- Nothing changed yet.
+
+
+4.2.12 (2024-11-07)
+-------------------
 
 - Adapted `Migrator.updateWFStatesAndTransitions` to manage item WF states
   defined on organizations in item advice related states attributes.
