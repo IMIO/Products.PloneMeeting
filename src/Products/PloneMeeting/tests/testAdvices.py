@@ -3813,6 +3813,9 @@ class testAdvices(PloneMeetingTestCase):
         self.closeMeeting(meeting)
         self.assertTrue(item2.query_state() in cfg.getItemDecidedStates())
         self.assertFalse(advice_infos.mayRemoveInheritedAdvice())
+        # still doable as Manager
+        self.changeUser('siteadmin')
+        self.assertTrue(advice_infos.mayRemoveInheritedAdvice())
 
     def test_pm_RemoveInheritedAdviceByAdviser(self):
         """An adviser may remove an inherited advice he is adviser for

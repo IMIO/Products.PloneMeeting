@@ -2,8 +2,14 @@ Changelog
 =========
 
 
-4.2.12rc2 (unreleased)
+4.2.13rc1 (unreleased)
 ----------------------
+
+- Nothing changed yet.
+
+
+4.2.12 (2024-11-07)
+-------------------
 
 - Adapted `Migrator.updateWFStatesAndTransitions` to manage item WF states
   defined on organizations in item advice related states attributes.
@@ -21,6 +27,8 @@ Changelog
   configuration of `MeetingConfig.itemReferenceFormat` must be adapted
   accordingly to avoid losing manually managed item reference.
   [gbastien]
+- Added holidays for 2025.
+  [aduchene]
 - Completed `AnnexTypeDescriptors` and `ToolInitializer` to manage
   attribute `after_scan_change_annex_type_to`.
   Completed init attributes of `AnnexSubTypeDescriptor` and
@@ -80,6 +88,8 @@ Changelog
   Added monkeypatch to initialize a new HTML field correctly on existing elements.
   [gbastien]
 - Upgrade `appy.pod` ready for `LibreOffice 24.2.x`.
+  [gbastien]
+- Let role `Manager` be able to remove an inherited advice in any case.
   [gbastien]
 
 4.2.10 (2024-09-19)
