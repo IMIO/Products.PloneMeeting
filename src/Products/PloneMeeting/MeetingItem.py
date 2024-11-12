@@ -247,6 +247,9 @@ class MeetingItemWorkflowConditions(object):
         while not self.is_valid_validation_level(
                 item_val_levels_states[index]):
             index -= 1
+            # no previous valid state was found
+            if index < 0:
+                return
         return item_val_levels_states[index]
 
     def _mayShortcutToValidationLevel_cachekey(method, self, destinationState):
