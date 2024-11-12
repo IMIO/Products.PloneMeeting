@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.13rc1 (unreleased)
+4.2.13rc1 (2024-11-12)
 ----------------------
 
 - Adapted `Migrator.updateWFStatesAndTransitions` to manage item WF states
