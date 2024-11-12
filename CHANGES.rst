@@ -5,12 +5,6 @@ Changelog
 4.2.13rc1 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
-
-4.2.12 (2024-11-07)
--------------------
-
 - Adapted `Migrator.updateWFStatesAndTransitions` to manage item WF states
   defined on organizations in item advice related states attributes.
   [gbastien]
@@ -27,21 +21,10 @@ Changelog
   configuration of `MeetingConfig.itemReferenceFormat` must be adapted
   accordingly to avoid losing manually managed item reference.
   [gbastien]
-- Added holidays for 2025.
-  [aduchene]
-- Completed `AnnexTypeDescriptors` and `ToolInitializer` to manage
-  attribute `after_scan_change_annex_type_to`.
-  Completed init attributes of `AnnexSubTypeDescriptor` and
-  `ItemAnnexSubTypeDescriptor`.
-  [gbastien]
 - Added `MeetingConfig.meetingConfigsToCloneToEditFieldsTALExpr` to be able to
   define an expression to protect `MeetingItem.otherMeetingConfigsClonableToFields`
   against edition when the TAL expression is `False`.
   [gbastien]
-
-4.2.12rc1 (2024-10-17)
-----------------------
-
 - Disable collections `searchitemsofmycommittees` and
   `searchitemsofmycommitteeseditable` by default.  When enabled, it will check
   if committees configuration is using `committees editors`.
@@ -56,24 +39,10 @@ Changelog
   `portal_type`. This makes it easier to get the original item when an item
   is sent to another `MeetingConfig`.
   [gbastien]
-
-4.2.11.2 (2024-10-16)
----------------------
-
 - Added field `MeetingItem.otherMeetingConfigsClonableToFieldItemReference`
   to be able to define a fixed item reference on an item to reuse on item cloned
   to another `MeetingConfig`.
   [gbastien]
-- Added possibility to pass any parameter to `held_position.get_short_title`
-  when using `BaseDGHV.print_attendees` and `BaseDGHV.print_attendees_by_type`
-  using a special parameter `short_title_kwargs`.
-  [gbastien]
-- Added holidays for 2025.
-  [aduchene]
-
-4.2.11.1 (2024-10-02)
----------------------
-
 - Added new fields `MeetingItem.motivationSuite` and
   `MeetingItem.otherMeetingConfigsClonableToFieldMotivationSuite`.
   [gbastien]
@@ -83,6 +52,21 @@ Changelog
   several groups may be selected including the proposing group or not.
   Added new column `available_on` to be able to define a `TAL expression`
   that will make a transition available or not.
+
+4.2.12 (2024-11-07)
+-------------------
+
+- Added possibility to pass any parameter to `held_position.get_short_title`
+  when using `BaseDGHV.print_attendees` and `BaseDGHV.print_attendees_by_type`
+  using a special parameter `short_title_kwargs`.
+  [gbastien]
+- Added holidays for 2025.
+  [aduchene]
+- Completed `AnnexTypeDescriptors` and `ToolInitializer` to manage
+  attribute `after_scan_change_annex_type_to`.
+  Completed init attributes of `AnnexSubTypeDescriptor` and
+  `ItemAnnexSubTypeDescriptor`.
+  [gbastien]
 
 4.2.11 (2024-09-25)
 -------------------
