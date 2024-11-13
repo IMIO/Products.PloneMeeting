@@ -1649,24 +1649,29 @@ class testMeetingItem(PloneMeetingTestCase):
         self._enableField('otherMeetingConfigsClonableToFieldDecision')
         self._enableField('otherMeetingConfigsClonableToFieldMotivation')
         self._enableField('otherMeetingConfigsClonableToFieldTitle')
+        self._enableField('otherMeetingConfigsClonableToFieldItemReference')
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', title='Title')
         item.setDecision('<p></p>')
         item.setOtherMeetingConfigsClonableToFieldTitle('Field title')
+        item.setOtherMeetingConfigsClonableToFieldItemReference('Item reference')
         item.setOtherMeetingConfigsClonableToFieldMotivation('<p>Field motivation</p>')
         item.setOtherMeetingConfigsClonableToFieldDecision('<p>Field decision</p>')
         item.setOtherMeetingConfigsClonableTo((cfg2Id,))
         newItem = item.cloneToOtherMeetingConfig(cfg2Id)
         self.assertEqual(newItem.Title(), 'Field title')
+        self.assertEqual(newItem.getItemReference(), 'Item reference')
         self.assertEqual(newItem.getMotivation(), '<p>Field motivation</p>')
         self.assertEqual(newItem.getDecision(), '<p>Field decision</p>')
         self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldTitle'))
+        self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldItemReference'))
         self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldMotivation'))
         self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldDecision'))
         # otherMeetingConfigsClonableToFieldXXX order is correct (schema)
-        self.assertEqual(item.get_enable_clone_to_other_mc_fields(cfg),
+        self.assertEqual(item.get_enable_clone_to_other_mc_fields(),
                          ['otherMeetingConfigsClonableToFieldTitle',
+                          'otherMeetingConfigsClonableToFieldItemReference',
                           'otherMeetingConfigsClonableToFieldMotivation',
                           'otherMeetingConfigsClonableToFieldDecision'])
 

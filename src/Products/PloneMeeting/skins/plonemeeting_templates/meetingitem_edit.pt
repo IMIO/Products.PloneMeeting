@@ -16,7 +16,7 @@
                        cfg python: tool.getMeetingConfig(context);
                        usedAttrs cfg/getUsedItemAttributes;
                        showClonableToOtherMCs context/showClonableToOtherMCs;
-                       showAdvancedClonableToOtherMCs python: context.adapted().showAdvancedClonableToOtherMCs(showClonableToOtherMCs);">
+                       showAdvancedClonableToOtherMCs python: context.showAdvancedClonableToOtherMCs(showClonableToOtherMCs);">
 
     <tal:showWarningWillInvalidateAdvices condition="context/willInvalidateAdvices">
     <dl class="portalMessage warning">

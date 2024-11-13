@@ -5,8 +5,14 @@ Changelog
 4.2.13rc2 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Fixed `MeetingItem.show_othermcs_clonable_to_field` not managing field
+  `MeetingItem.otherMeetingConfigsClonableToFieldItemReference` because
+  `str.capitalize` upperize first letter but lowerize every others, this
+  leaded to field considered not enabled.
+  [gbastien]
+- Disable `utils.get_last_validation_state ram.cache` for now as we need to
+  disable it when using `MeetingConfig.itemWFValidationLevels available_on`.
+  [gbastien]
 
 4.2.13rc1 (2024-11-12)
 ----------------------

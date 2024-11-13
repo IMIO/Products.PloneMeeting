@@ -2217,9 +2217,10 @@ def get_last_validation_state_cachekey(method, item, cfg, before_last=False, ret
     return get_cachekey_volatile('_users_groups_value'), \
         item.getProposingGroup(), cfg.getId(), before_last, return_level
 
-# not ramcached perf tests says it does not change much
-# and this avoid useless entry in cache
-@ram.cache(get_last_validation_state_cachekey)
+# not ramcached because is_valid_validation_level evaluates a TAL expression
+# that may change upon context
+# XXX enable cache if not using available_on TAL expression
+# @ram.cache(get_last_validation_state_cachekey)
 def get_last_validation_state(item, cfg, before_last=False, return_level=False):
     '''Last validation state is validation level state defined in
        MeetingConfig.itemWFValidationLevels for which the linked

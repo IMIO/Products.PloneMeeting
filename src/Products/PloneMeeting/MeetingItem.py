@@ -2767,7 +2767,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            MeetingConfig.meetingConfigsToCloneToEditFieldsTALExpr to check if editable
            (edit form and quick edit from view).'''
         res = False
-        if self.attribute_is_used('otherMeetingConfigsClonableToField' + field_name.capitalize()):
+        if self.attribute_is_used('otherMeetingConfigsClonableToField'
+                                  + field_name[0].upper() + field_name[1:]):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
             if not cfg.getMeetingConfigsToCloneToEditFieldsTALExpr().strip():
@@ -3495,13 +3496,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def showAdvancedClonableToOtherMCs(self, showClonableToOtherMCs=False):
         '''Display otherMeetingConfigsClonableTo as advanced or not.
            Functionnality enabled and using relevant otherMeetingConfigsClonableToFieldXXX are used.'''
-        item = self.getSelf()
-        res = False
-        if showClonableToOtherMCs:
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(item)
-            res = bool(self.get_enable_clone_to_other_mc_fields(cfg))
-        return res
+        return showClonableToOtherMCs and self.get_enable_clone_to_other_mc_fields()
 
     security.declarePublic('getItemNumber')
 
@@ -7903,12 +7898,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         fplog('clone_item', extras=extras)
         return newItem
 
-    def get_enable_clone_to_other_mc_fields(self, cfg, ignored_field_names=[]):
+    def get_enable_clone_to_other_mc_fields(self, ignored_field_names=[]):
         """Return the ids of 'otherMeetingConfigsClonableToFieldXXX' that are enabled."""
         return [field_name for field_name in self.Schema().keys()
-                if field_name in cfg.getUsedItemAttributes() and
-                field_name.startswith('otherMeetingConfigsClonableToField') and
-                field_name not in ignored_field_names]
+                if field_name.startswith('otherMeetingConfigsClonableToField') and
+                field_name not in ignored_field_names and
+                self.attribute_is_used(field_name)]
 
     security.declarePublic('doCloneToOtherMeetingConfig')
 
@@ -8027,7 +8022,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             newItem.setPrivacy('secret')
 
         # handle 'otherMeetingConfigsClonableToFieldXXX' of original item
-        for other_mc_field_name in self.get_enable_clone_to_other_mc_fields(cfg):
+        for other_mc_field_name in self.get_enable_clone_to_other_mc_fields():
             # first check if original field not empty
             if self.fieldIsEmpty(other_mc_field_name):
                 continue
