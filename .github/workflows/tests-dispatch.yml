@@ -11,9 +11,6 @@ on:
       - synchronize
       - ready_for_review
   push:
-    branches:
-      - gha
-      - master
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
