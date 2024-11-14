@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.13rc2 (unreleased)
+4.2.13rc2 (2024-11-14)
 ----------------------
 
 - Fixed `MeetingItem.show_othermcs_clonable_to_field` not managing field
