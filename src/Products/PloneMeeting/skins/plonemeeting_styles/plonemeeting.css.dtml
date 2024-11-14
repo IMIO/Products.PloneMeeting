@@ -19,16 +19,20 @@ table.listing tbody tr.odd.meeting_item_privacy_secret td {
 table.listing tbody tr.even.meeting_item_privacy_secret td {
     background-color: #ffe37f;
 }
-table.listing tbody tr.odd.meeting_item_privacy_secret_heading td {
+table.listing tbody tr.odd.meeting_item_privacy_secret_heading td,
+table.listing tbody tr.odd.meeting_item_privacy_secret_ending td {
     background-color: #d0ece7;
 }
-table.listing tbody tr.even.meeting_item_privacy_secret_heading td {
+table.listing tbody tr.even.meeting_item_privacy_secret_heading td,
+table.listing tbody tr.even.meeting_item_privacy_secret_ending td {
     background-color: #a2d9ce;
 }
-table.listing tbody tr.odd.meeting_item_privacy_public_heading td {
+table.listing tbody tr.odd.meeting_item_privacy_public_heading td,
+table.listing tbody tr.odd.meeting_item_privacy_public_ending td {
     background-color: #FFEDDE;
 }
-table.listing tbody tr.even.meeting_item_privacy_public_heading td {
+table.listing tbody tr.even.meeting_item_privacy_public_heading td,
+table.listing tbody tr.even.meeting_item_privacy_public_ending td {
     background-color: #FFDABC;
 }
 
@@ -702,11 +706,13 @@ p.indent-firstline {text-indent: 40px;}
 /* CSS for MeetingItem.privacy */
 /* While displayed as a single item (meetingitem_view) */
 .item_privacy_public,
-.item_privacy_public_heading {
+.item_privacy_public_heading,
+.item_privacy_public_ending {
     color: green;
 }
 .item_privacy_secret,
-.item_privacy_secret_heading {
+.item_privacy_secret_heading,
+.item_privacy_secret_ending {
     color: #FF934A;
 }
 /* CSS for MeetingItem.otherMeetingConfigsClonableToEmergency */
