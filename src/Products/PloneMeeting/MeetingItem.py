@@ -5152,7 +5152,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             privacy = self.getPrivacy()
             privacies = cfg.getSelectablePrivacies()
             # Get the order of the privacy
-            res = privacies.index(privacy)
+            res = privacies.index(privacy) if privacy in privacies else 99
         elif insertMethod == 'on_to_discuss':
             if self.getToDiscuss():
                 res = 0
@@ -5173,7 +5173,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                    'Products.PloneMeeting.vocabularies.polltypesvocabulary')
             pollTypes = [term.token for term in factory(self)._terms]
             # Get the order of the pollType
-            res = pollTypes.index(pollType)
+            res = pollTypes.index(pollType) if pollType in pollTypes else 99
         elif insertMethod == 'on_item_title':
             res = normalize(safe_unicode(self.Title()))
         elif insertMethod == 'on_item_decision_first_words':
