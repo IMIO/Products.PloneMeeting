@@ -1538,7 +1538,8 @@ class SelectablePrivaciesVocabulary(object):
     def __call__(self, context):
         """ """
         res = []
-        keys = ['public_heading', 'public', 'secret_heading', 'secret']
+        keys = ['public_heading', 'public', 'public_ending',
+                'secret_heading', 'secret', 'secret_ending']
         for key in keys:
             res.append(SimpleTerm(
                 key,

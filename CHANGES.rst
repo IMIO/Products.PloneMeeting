@@ -13,6 +13,10 @@ Changelog
 - Disable `utils.get_last_validation_state ram.cache` for now as we need to
   disable it when using `MeetingConfig.itemWFValidationLevels available_on`.
   [gbastien]
+- Added new privacies `public_ending` and `secret_ending`, similar to
+  `public_heading` and `secret_heading` especially to be used to manage items
+  order on meeting and group items at the end of a privacy.
+  [gbastien]
 
 4.2.13rc1 (2024-11-12)
 ----------------------
