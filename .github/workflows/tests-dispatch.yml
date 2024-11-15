@@ -22,15 +22,15 @@ jobs:
       matrix:
         repository:
           - Products.MeetingBEP
-          # - Products.MeetingCommunes
-          # - Products.MeetingCharleroi
-          # - Products.MeetingCPASLalouviere
-          # - Products.MeetingLalouviere
-          # - Products.MeetingLiege
-          # - Products.MeetingMons
-          # - Products.MeetingNamur
-          # - Products.MeetingPROVHainaut
-          # - Products.MeetingSeraing
+          - Products.MeetingCommunes
+          - Products.MeetingCharleroi
+          - Products.MeetingCPASLalouviere
+          - Products.MeetingLalouviere
+          - Products.MeetingLiege
+          - Products.MeetingMons
+          - Products.MeetingNamur
+          - Products.MeetingPROVHainaut
+          - Products.MeetingSeraing
     if: ${{ !github.event_name == 'pull_request' || !github.event.pull_request.draft }}
     steps:
       - name: Needed for local development
@@ -38,11 +38,11 @@ jobs:
         run: echo /home/runner/externals/node20/bin >> $GITHUB_PATH
         shell: bash
       - name: Dispatch test to ${{ matrix.repository }}
-        uses: IMIO/gha/repository-dispatch-notify@main
+        uses: IMIO/gha/repository-dispatch-notify@v4
         with:
           REPOSITORY: ${{ matrix.repository }}
           REPOSITORY_OWNER: IMIO
-          GIT_REFERENCE: gha
+          GIT_REFERENCE: master
           INPUTS: '{"branch_name":"${{ github.ref_name}}"}'
           WORKFLOW_FILENAME: tests.yml
           APP_ID: ${{ vars.APPS_ID_IMIO_GHA }}
