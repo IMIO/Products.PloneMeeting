@@ -42,7 +42,7 @@ jobs:
         with:
           REPOSITORY: ${{ matrix.repository }}
           REPOSITORY_OWNER: IMIO
-          GIT_REFERENCE: master
+          GIT_REFERENCE: gha
           INPUTS: '{"branch_name":"${{ github.ref_name}}"}'
           WORKFLOW_FILENAME: tests.yml
           APP_ID: ${{ vars.APPS_ID_IMIO_GHA }}
