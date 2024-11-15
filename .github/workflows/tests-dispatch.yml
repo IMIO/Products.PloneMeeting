@@ -22,15 +22,15 @@ jobs:
       matrix:
         repository:
           - Products.MeetingBEP
-          - Products.MeetingCommunes
-          - Products.MeetingCharleroi
-          - Products.MeetingCPASLalouviere
-          - Products.MeetingLalouviere
-          - Products.MeetingLiege
-          - Products.MeetingMons
-          - Products.MeetingNamur
-          - Products.MeetingPROVHainaut
-          - Products.MeetingSeraing
+          # - Products.MeetingCommunes
+          # - Products.MeetingCharleroi
+          # - Products.MeetingCPASLalouviere
+          # - Products.MeetingLalouviere
+          # - Products.MeetingLiege
+          # - Products.MeetingMons
+          # - Products.MeetingNamur
+          # - Products.MeetingPROVHainaut
+          # - Products.MeetingSeraing
     if: ${{ !github.event_name == 'pull_request' || !github.event.pull_request.draft }}
     steps:
       - name: Needed for local development
