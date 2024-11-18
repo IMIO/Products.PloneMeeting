@@ -612,7 +612,7 @@
         for="*"
         permission="zope2.View" />
     <browser:page
-        name="load_linked_items"
+        name="load-linked-items"
         class=".async.AsyncLoadLinkedItems"
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         template="templates/item_linked_items.pt"
@@ -621,7 +621,7 @@
         name="load-linked-items-infos"
         class=".async.AsyncLoadLinkedItemsInfos"
         for="Products.PloneMeeting.interfaces.IMeetingItem"
-        permission="zope2.View" />
+        permission="zope.Public" />
 
     <browser:page
         for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"

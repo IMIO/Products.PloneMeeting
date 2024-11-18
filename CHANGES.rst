@@ -5,8 +5,9 @@ Changelog
 4.2.13rc3 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Fixed `MeetingConfig.itemsNotViewableVisibleFields` functionnality that was
+  raising `Unhautorized` when accessing more infos of not viewable items.
+  [gbastien]
 
 4.2.13rc2 (2024-11-14)
 ----------------------
