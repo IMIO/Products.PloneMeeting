@@ -1031,55 +1031,56 @@ class testViews(PloneMeetingTestCase):
         '''When displaying more infos on a not viewable item, configuration
            defined in MeetingConfig.itemsNotViewableVisibleFields will be used.'''
         cfg = self.meetingConfig
+        cfg_id = cfg.getId()
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        annex = self.addAnnex(item)
+        linked_item = self.create('MeetingItem')
+        linked_item_uid = linked_item.UID()
+        annex = self.addAnnex(linked_item)
         self.changeUser('pmCreator2')
-        self.assertFalse(self.hasPermission(View, item))
-        view = item.restrictedTraverse('@@item-more-infos')
-        view()
+        self.assertFalse(self.hasPermission(View, linked_item))
+        item = self.create('MeetingItem')
+        item.setManuallyLinkedItems((linked_item_uid, ))
+        view = item.restrictedTraverse('@@load-linked-items')
+        self.assertTrue(linked_item_uid in view())
+        infos_view = linked_item.restrictedTraverse('@@load-linked-items-infos')
+        infos_view("itemsNotViewableVisibleFields", cfg_id)
         self.assertEqual(cfg.getItemsNotViewableVisibleFields(), ())
-        self.assertEqual(view.getVisibleFields().keys(), [])
         cfg.setItemsNotViewableVisibleFields(('MeetingItem.description', ))
         self.cleanMemoize()
-        view()
-        self.assertEqual(view.getVisibleFields().keys(), ['description'])
-        # view annexes
-        cfg.setItemsNotViewableVisibleFields(('MeetingItem.description', 'MeetingItem.annexes', ))
-        self.cleanMemoize()
-        view()
-        self.assertEqual(view.getVisibleFields().keys(), ['description', 'annexes'])
-        category_uid = item.categorized_elements.get(annex.UID())['category_uid']
+        # when field is empty, it is not displayed
+        self.assertTrue("Nothing to display." in infos_view("itemsNotViewableVisibleFields", cfg_id))
+        self.assertFalse("<span>Description</span>" in infos_view("itemsNotViewableVisibleFields", cfg_id))
+        linked_item.setDescription(self.descriptionText)
+        self.assertTrue("<span>Description</span>" in infos_view("itemsNotViewableVisibleFields", cfg_id))
+        # view annexes, not viewable for now
+        category_uid = linked_item.categorized_elements.get(annex.UID())['category_uid']
         # not viewable because there is no back referenced item to which user has View access
-        infos = item.restrictedTraverse('@@categorized-childs-infos')(
+        infos = linked_item.restrictedTraverse('@@categorized-childs-infos')(
             category_uid=category_uid, filters={}).strip()
         # not viewable
         self.assertFalse(infos)
         # not downloadable
         download_view = annex.restrictedTraverse('@@download')
         self.assertRaises(Unauthorized, download_view)
-
-        # viewable when a linked item is viewable
-        # manuallyLinkedItem
-        manually_linked_item = self.create('MeetingItem')
-        manually_linked_item.setManuallyLinkedItems([item.UID()])
-        infos = item.restrictedTraverse('@@categorized-childs-infos')(
+        # make it viewable
+        cfg.setItemsNotViewableVisibleFields(('MeetingItem.description', 'MeetingItem.annexes', ))
+        self.cleanMemoize()
+        infos = linked_item.restrictedTraverse('@@categorized-childs-infos')(
             category_uid=category_uid, filters={}).strip()
         # viewable
         self.assertTrue(infos)
         # downloadable
         self.assertTrue(download_view())
-        # predecessor
         # remove manually linked item, no more viewable
-        self.deleteAsManager(manually_linked_item.UID())
-        infos = item.restrictedTraverse('@@categorized-childs-infos')(
+        self.deleteAsManager(item.UID())
+        infos = linked_item.restrictedTraverse('@@categorized-childs-infos')(
             category_uid=category_uid, filters={}).strip()
         self.assertFalse(infos)
         self.assertRaises(Unauthorized, download_view)
         auto_linked_item = self.create('MeetingItem')
-        item._update_predecessor(auto_linked_item)
-        # with viewable precessor, annex is viewable
-        infos = item.restrictedTraverse('@@categorized-childs-infos')(
+        linked_item._update_predecessor(auto_linked_item)
+        # with viewable predecessor, annex is viewable
+        infos = linked_item.restrictedTraverse('@@categorized-childs-infos')(
             category_uid=category_uid, filters={}).strip()
         self.assertTrue(infos)
         self.assertTrue(download_view())
