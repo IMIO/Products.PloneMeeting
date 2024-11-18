@@ -1042,6 +1042,7 @@ class testViews(PloneMeetingTestCase):
         item.setManuallyLinkedItems((linked_item_uid, ))
         view = item.restrictedTraverse('@@load-linked-items')
         self.assertTrue(linked_item_uid in view())
+        self.assertTrue("@@load-linked-items-infos?fieldsConfigAttr=itemsVisibleFields" in view())
         infos_view = linked_item.restrictedTraverse('@@load-linked-items-infos')
         infos_view("itemsNotViewableVisibleFields", cfg_id)
         self.assertEqual(cfg.getItemsNotViewableVisibleFields(), ())
