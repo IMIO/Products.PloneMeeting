@@ -513,6 +513,11 @@
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
+    <tal:comment replace="nothing">Motivation suite</tal:comment>
+    <tal:field define="fieldName python: 'motivationSuite'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
     <tal:votesResult_after_motivation condition="python: 'votesResult_after_motivation' in usedAttrs">
       <div tal:attributes="id string:marker-collapsible-field-votesResult">
         <tal:votesResult replace="structure python: context.restrictedTraverse('@@display-collapsible-rich-field')('votesResult')" />
@@ -565,12 +570,17 @@
               Data that will be used on new item to
               <span i18n:name="cfg_titles" tal:content="python: context.displayOtherMeetingConfigsClonableToPossibleValues()" />
             </legend>
-            <tal:otherMeetingConfigsClonableToFieldTitle condition="python: 'otherMeetingConfigsClonableToFieldTitle' in usedAttrs">
+            <p tal:condition="python: 'otherMeetingConfigsClonableToFieldTitle' in usedAttrs">
               <span class="item_attribute_label"
                     i18n:translate="PloneMeeting_label_itemTitle"></span>:&nbsp;&nbsp;
               <span metal:use-macro="python: here.widget('otherMeetingConfigsClonableToFieldTitle', mode='view')" />
-            </tal:otherMeetingConfigsClonableToFieldTitle>
-            <tal:loop tal:repeat="other_mc_field_name python: context.get_enable_clone_to_other_mc_fields(cfg, ignored_field_names=['otherMeetingConfigsClonableToFieldTitle'])">
+            </p>
+            <p tal:condition="python: 'otherMeetingConfigsClonableToFieldItemReference' in usedAttrs">
+              <span class="item_attribute_label"
+                    i18n:translate="PloneMeeting_label_itemReference"></span>:&nbsp;&nbsp;
+              <span metal:use-macro="python: here.widget('otherMeetingConfigsClonableToFieldItemReference', mode='view')" />
+            </p>
+            <tal:loop tal:repeat="other_mc_field_name python: context.get_enable_clone_to_other_mc_fields(cfg, ignored_field_names=['otherMeetingConfigsClonableToFieldTitle', 'otherMeetingConfigsClonableToFieldItemReference'])">
                 <tal:field define="fieldName python: other_mc_field_name; ajaxEdit python:True">
                   <metal:f use-macro="context/@@pm-macros/viewContentField"/>
                 </tal:field>

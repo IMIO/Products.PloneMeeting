@@ -983,26 +983,32 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
     def test_pm_ShowHolidaysWarning(self):
         """Method that shows the 'warning holidays' message."""
+        cfg = self.meetingConfig
         # only available to MeetingManagers if last defined holidays is < 60 days in the future
         self.changeUser('pmManager')
 
         # not shown for now
-        self.assertFalse(self.tool.showHolidaysWarning(self.meetingConfig))
+        self.assertFalse(self.tool.showHolidaysWarning(cfg))
 
         # make message shows
-        self.tool.setHolidays([{'date': (DateTime() + 59).strftime('%y/%m/%d')}])
-        self.assertTrue(self.tool.showHolidaysWarning(self.meetingConfig))
+        self.tool.setHolidays([{'date': (DateTime() + 59).strftime('%Y/%m/%d')}])
+        self.failIf(self.tool.validate_holidays(self.tool.getHolidays()))
+        self.assertTrue(self.tool.showHolidaysWarning(cfg))
         # not shown if passing something else than a MeetingConfig
         self.assertFalse(self.tool.showHolidaysWarning(self.portal))
 
         # not shown if not a MeetingManager
         self.changeUser('pmCreator1')
-        self.assertFalse(self.tool.showHolidaysWarning(self.meetingConfig))
+        self.assertFalse(self.tool.showHolidaysWarning(cfg))
 
-        # not shown if last defined holiday is in more than 60 days
         self.changeUser('pmManager')
+        # days parameter can be changed, will be warned p_days before
+        self.assertTrue(self.tool.showHolidaysWarning(cfg, days=60))
+        self.assertFalse(self.tool.showHolidaysWarning(cfg, days=30))
+        # not shown if last defined holiday is in more than 60 days
         self.tool.setHolidays([{'date': (DateTime() + 61).strftime('%Y/%m/%d')}])
-        self.assertFalse(self.tool.showHolidaysWarning(self.meetingConfig))
+        self.failIf(self.tool.validate_holidays(self.tool.getHolidays()))
+        self.assertFalse(self.tool.showHolidaysWarning(cfg))
 
     def test_pm_UserIsAmong(self):
         """This method will check if a user has a group that ends with a list of given suffixes.

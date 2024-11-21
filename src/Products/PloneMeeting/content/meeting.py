@@ -124,7 +124,7 @@ class ICommitteesRowSchema(Interface):
         title=_("title_committees_date"),
         required=False)
 
-    form.widget('convocation_date', DateFieldWidget, show_today_link=True)
+    form.widget('convocation_date', DateFieldWidget, show_today_link=True, first_day=1)
     convocation_date = schema.Date(
         title=_("title_committees_convocation_date"),
         required=False)

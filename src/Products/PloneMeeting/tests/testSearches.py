@@ -881,7 +881,7 @@ class testSearches(PloneMeetingTestCase):
         self.failUnless(len(collection.results()) == 1)
         self.failUnless(collection.results()[0].UID == item2.UID())
 
-    def test_pm_SearchItemsToCorrect(self):
+    def test_pm_SearchItemsToCorrectDefault(self):
         '''Test the 'items-to-correct' CompoundCriterion adapter.  This should return
            a list of items in state 'returned_to_proposing_group' the current user is able to edit.'''
         cfg = self.meetingConfig
@@ -933,8 +933,9 @@ class testSearches(PloneMeetingTestCase):
         self.do(developersItem, 'return_to_proposing_group')
         self.do(vendorsItem, 'return_to_proposing_group')
 
-        # pmManager may only edit developersItem
+        # pmManager may only manage developersItem
         self.assertTrue(self.hasPermission(ModifyPortalContent, developersItem))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, vendorsItem))
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrect')
         res = collection.results()
         self.failUnless(len(res) == 1)
@@ -1133,7 +1134,6 @@ class testSearches(PloneMeetingTestCase):
             wfAdaptations.remove('return_to_proposing_group')
         cfg.setWorkflowAdaptations(wfAdaptations)
         self._enablePrevalidation(cfg)
-        notify(ObjectEditedEvent(cfg))
 
         # normally this search is not available to users that are not able to review items
         # nevertheless, if a user is in not able to edit items to correct in proposed, the special

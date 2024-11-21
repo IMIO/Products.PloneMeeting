@@ -29,7 +29,8 @@ class Migrate_To_4212(Migrator):
 def migrate(context):
     '''This migration function will:
 
-       1) Enable "userid" behavior for "person".
+       1) Enable "userid" behavior for "person";
+       2) Add "groups_managing_item" to every MeetingConfig.itemWFValidationLevels.
     '''
     migrator = Migrate_To_4212(context)
     migrator.run()

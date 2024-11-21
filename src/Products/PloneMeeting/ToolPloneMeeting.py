@@ -606,20 +606,21 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                             plone_group_id.split('_')[1] in suffixes)]
         return sorted(user_groups)
 
-    def group_is_not_empty_cachekey(method, self, org_uid, suffix, user_id=None):
+    def group_is_not_empty_cachekey(method, self, org_uid=None, suffix=None, plone_group_id=None, user_id=None):
         '''cachekey method for self.group_is_not_empty.'''
         return (get_cachekey_volatile('_users_groups_value'),
                 org_uid,
                 suffix,
+                plone_group_id,
                 user_id)
 
     # not ramcached see perf test
     # @ram.cache(group_is_not_empty_cachekey)
-    def group_is_not_empty(self, org_uid, suffix, user_id=None):
+    def group_is_not_empty(self, org_uid=None, suffix=None, plone_group_id=None, user_id=None):
         '''Is there any user in the group?
            Do not use ram.cache for this one, seems slower...'''
         portal = api.portal.get()
-        plone_group_id = get_plone_group_id(org_uid, suffix)
+        plone_group_id = plone_group_id or get_plone_group_id(org_uid, suffix)
         # for performance reasons, check directly in source_groups stored data
         group_users = portal.acl_users.source_groups._group_principal_map.get(plone_group_id, [])
         return len(group_users) and (not user_id or user_id in group_users)
@@ -1620,13 +1621,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 history.append(event)
         obj.workflow_history[workflow_name] = tuple(history)
 
-    def showHolidaysWarning(self, cfg):
+    def showHolidaysWarning(self, cfg, days=60):
         """Condition for showing the 'holidays_waring_message'."""
         if cfg is not None and cfg.__class__.__name__ == "MeetingConfig":
             holidays = self.getHolidays()
-            # if user isManager and last defined holiday is in less than 60 days, display warning
+            # if user isManager and last defined holiday is in less than p_days,
+            # display warning
             if self.isManager(cfg) and \
-               (not holidays or DateTime(holidays[-1]['date']) < DateTime() + 60):
+               (not holidays or DateTime(holidays[-1]['date']) < DateTime() + days):
                 return True
         return False
 

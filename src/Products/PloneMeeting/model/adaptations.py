@@ -95,6 +95,7 @@ WAITING_ADVICES_FROM_STATES = {
 # defined here to be importable
 WAITING_ADVICES_FROM_TRANSITION_ID_PATTERN = 'wait_advices_from_{0}'
 WAITING_ADVICES_FROM_TO_TRANSITION_ID_PATTERN = 'wait_advices_from_{0}__to__{1}'
+WAITING_ADVICES_NEW_STATE_ID_PATTERN = '{0}_waiting_advices'
 
 # restrict item validation back shortcuts
 # if not empty, we will permit back shortcuts from given item states
@@ -862,7 +863,6 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             for field in MeetingItem.schema.fields():
                 if field.write_permission and field.write_permission not in edit_permissions:
                     edit_permissions.append(field.write_permission)
-            NEW_STATE_ID_PATTERN = '{0}_waiting_advices'
             # try to get meetingConfig id in WAITING_ADVICES_FROM_STATES
             # if not found, look for a "*" that is applied to every meetingConfigs
             # else nothing is done
@@ -871,11 +871,13 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 # while using WFAs 'waiting_advices_from_before_last_val_level'
                 # or 'waiting_advices_from_last_val_level', infos['from_states']/infos['back_states']
                 # are ignored ad we use validation states
+                item_validation_states = []
                 from_states = []
                 back_states = []
-                if 'waiting_advices_from_every_val_levels' in wfAdaptations or \
+                is_using_item_wf_val_levels = 'waiting_advices_from_every_val_levels' in wfAdaptations or \
                    'waiting_advices_from_before_last_val_level' in wfAdaptations or \
-                   'waiting_advices_from_last_val_level' in wfAdaptations:
+                   'waiting_advices_from_last_val_level' in wfAdaptations
+                if is_using_item_wf_val_levels:
                     item_validation_states = meetingConfig.getItemWFValidationLevels(
                         data='state', only_enabled=True)
                     from_states = list(item_validation_states)
@@ -892,8 +894,12 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 # if nothing left, continue
                 if not from_state_ids or not back_state_ids:
                     continue
+                # generate state any_validation_state_waiting_advices when using
+                # MeetingConfig.itemWFValidationLevels, else a custom __or__ name
                 new_state_id = infos.get('new_state_id', None) or \
-                    NEW_STATE_ID_PATTERN.format('__or__'.join(from_state_ids))
+                    (WAITING_ADVICES_NEW_STATE_ID_PATTERN.format('any_validation_state')
+                     if item_validation_states
+                     else WAITING_ADVICES_NEW_STATE_ID_PATTERN.format('__or__'.join(from_state_ids)))
                 if not new_state_id.endswith('_waiting_advices'):
                     raise Exception('Waiting advices "new_state_id" must end with "_waiting_advices" !')
                 back_transition_ids = []
@@ -963,7 +969,8 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
 
                     # Update connections between states and transitions
                     new_state_title = new_state_id
-                    if not infos.get('use_custom_state_title', True):
+                    if not infos.get('use_custom_state_title', True) or \
+                       is_using_item_wf_val_levels:
                         new_state_title = 'waiting_advices'
                     new_state.setProperties(title=new_state_title,
                                             description='',

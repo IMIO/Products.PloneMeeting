@@ -5,6 +5,7 @@
 # GNU General Public License (GPL)
 #
 
+from collective.documentgenerator.config import set_raiseOnError_for_non_managers
 from imio.helpers.content import object_values
 from pkgutil import iter_importers
 from plone import api
@@ -69,11 +70,7 @@ class testSetup(PloneMeetingTestCase):
            containing an import_data works as expected."""
         ToolInitializer.getProfileData = getProfileData
         self.changeUser('admin')
-
-        api.portal.set_registry_record(
-            'collective.documentgenerator.browser.controlpanel.'
-            'IDocumentGeneratorControlPanelSchema.raiseOnError_for_non_managers',
-            True)
+        set_raiseOnError_for_non_managers(True)
 
         # get current package name based on testing layer
         profile_names = self._currentSetupProfileNames(excluded=(':default', ':testing'))

@@ -6,7 +6,8 @@
 #
 
 from AccessControl import Unauthorized
-from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
+from collective.contact.plonegroup.config import get_registry_organizations
+from collective.contact.plonegroup.config import set_registry_organizations
 from collective.iconifiedcategory.utils import get_categorized_elements
 from datetime import datetime
 from datetime import timedelta
@@ -18,7 +19,6 @@ from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastAction
 from imio.history.utils import getLastWFAction
 from os import path
-from plone import api
 from plone.dexterity.schema import SchemaInvalidatedEvent
 from plone.dexterity.utils import createContentInContainer
 from Products.Archetypes.event import ObjectEditedEvent
@@ -876,7 +876,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(len(brains), 1)
         self.assertEqual(brains[0].UID, itemUID)
         # if a delay-aware advice delay is exceeded, it is indexed with an ending '2'
-        item.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime(2012, 01, 01)
+        item.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime(2012, 1, 1)
         item.update_local_roles()
         self.assertEqual(
             sorted(indexAdvisers.callable(item)),
@@ -3217,9 +3217,9 @@ class testAdvices(PloneMeetingTestCase):
         """ """
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
-        selected_orgs = list(api.portal.get_registry_record(ORGANIZATIONS_REGISTRY))
+        selected_orgs = get_registry_organizations()
         selected_orgs.append(self.endUsers_uid)
-        api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, selected_orgs)
+        set_registry_organizations(selected_orgs)
         self._addPrincipalToGroup('pmAdviser1', '{0}_advisers'.format(self.endUsers_uid))
         cfg.setSelectableAdvisers(cfg.getSelectableAdvisers() + (self.endUsers_uid, ))
         cfg.setPowerAdvisersGroups((self.endUsers_uid, ))
@@ -4138,7 +4138,7 @@ class testAdvices(PloneMeetingTestCase):
               'delay': '5',
               'delay_label': ''}, ])
         self.changeUser('templatemanager1')
-        itemTemplate = cfg.getItemTemplates(as_brains=False)[0]
+        itemTemplate = cfg.get_default_item_template()
         self.assertEqual(itemTemplate.getProposingGroup(), '')
         itemTemplate.setOptionalAdvisers(
             (self.developers_uid,

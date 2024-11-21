@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-4.2.13 (unreleased)
--------------------
+4.2.13rc1 (unreleased)
+----------------------
 
 - Fixed `MeetingConfig.itemsNotViewableVisibleFields` functionnality that was
   raising `Unhautorized` when accessing more infos of not viewable items.
@@ -12,9 +12,21 @@ Changelog
 4.2.12 (2024-11-07)
 -------------------
 
-- Added possibility to pass any parameter to `held_position.get_short_title`
-  when using `BaseDGHV.print_attendees` and `BaseDGHV.print_attendees_by_type`
-  using a special parameter `short_title_kwargs`.
+- Adapted `Migrator.updateWFStatesAndTransitions` to manage item WF states
+  defined on organizations in item advice related states attributes.
+  [gbastien]
+- Extended length of string fields of `MeetingConfig` containing TAL expression
+  to avoid long expressions problems (was limited to 255, extented to 750).
+  [gbastien]
+- Fixed `Meeting.convocation_date` calendar to start on monday.
+  [gbastien]
+- Make `ToolPloneMeeting.showHolidaysWarning` number of days a parameter
+  so in can be changed if necessary.
+  [gbastien]
+- Field `MeetingItem.itemReference` is now an optional field, when enabled,
+  it can be managed manually by the editors of the item.  In this case, the
+  configuration of `MeetingConfig.itemReferenceFormat` must be adapted
+  accordingly to avoid losing manually managed item reference.
   [gbastien]
 - Added holidays for 2025.
   [aduchene]
@@ -23,6 +35,51 @@ Changelog
   Completed init attributes of `AnnexSubTypeDescriptor` and
   `ItemAnnexSubTypeDescriptor`.
   [gbastien]
+
+4.2.12rc1 (2024-10-17)
+----------------------
+
+- Disable collections `searchitemsofmycommittees` and
+  `searchitemsofmycommitteeseditable` by default.  When enabled, it will check
+  if committees configuration is using `committees editors`.
+  [gbastien]
+- Use `imio.helpers.cache.obj_modified` to check if item is actually modified
+  so we check also if some annotations were modified, this is the case when
+  using `ftw.labels`, so when adding/removing a label, it will invalidates
+  the item `actions_panel`.
+  [gbastien]
+- Added parameter `portal_type=None` to `MeetingItem.get_predecessor` and
+  `MeetingItem.get_predecessors` to get predecessor/predecessors of a given
+  `portal_type`. This makes it easier to get the original item when an item
+  is sent to another `MeetingConfig`.
+  [gbastien]
+
+4.2.11.2 (2024-10-16)
+---------------------
+
+- Added field `MeetingItem.otherMeetingConfigsClonableToFieldItemReference`
+  to be able to define a fixed item reference on an item to reuse on item cloned
+  to another `MeetingConfig`.
+  [gbastien]
+- Added possibility to pass any parameter to `held_position.get_short_title`
+  when using `BaseDGHV.print_attendees` and `BaseDGHV.print_attendees_by_type`
+  using a special parameter `short_title_kwargs`.
+  [gbastien]
+- Added holidays for 2025.
+  [aduchene]
+
+4.2.11.1 (2024-10-02)
+---------------------
+
+- Added new fields `MeetingItem.motivationSuite` and
+  `MeetingItem.otherMeetingConfigsClonableToFieldMotivationSuite`.
+  [gbastien]
+- Replaced columns `suffix/extra_suffix` of `MeetingConfig.itemWFValidationLevels`
+  by new columns `group_managing_item/extra_groups_managing_item`, this will
+  manage cases when another group than the proposing group is managing the item,
+  several groups may be selected including the proposing group or not.
+  Added new column `available_on` to be able to define a `TAL expression`
+  that will make a transition available or not.
 
 4.2.11 (2024-09-25)
 -------------------
