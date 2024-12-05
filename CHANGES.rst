@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.13rc3 (unreleased)
+4.2.13rc3 (2024-12-05)
 ----------------------
 
 - Fixed `MeetingConfig.itemsNotViewableVisibleFields` functionnality that was
