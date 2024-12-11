@@ -3306,8 +3306,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 proposingGroup = groupsInCharge = ''
             if value:
                 proposingGroup, groupsInCharge = value.split('__groupincharge__')
+                groupsInCharge = [groupsInCharge]
             self.setProposingGroup(proposingGroup)
-            self.setGroupsInCharge([groupsInCharge] if not type(groupsInCharge) is list else groupsInCharge)
+            self.setGroupsInCharge(groupsInCharge)
             field.set(self, value, **kwargs)
 
     def _adaptLinesValueToBeCompared(self, value):
