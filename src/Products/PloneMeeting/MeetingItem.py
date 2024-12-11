@@ -3299,12 +3299,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         field = self.getField('proposingGroupWithGroupInCharge')
         current_value = field.get(self, **kwargs)
         if not value == current_value:
-            # value may be empty if used on an itemTemplate
-            proposingGroup = groupInCharge = ''
+            proposingGroup = self.getProposingGroup()
+            groupsInCharge = self.getGroupsInCharge()
+            if self.isDefinedInTool(item_type='itemtemplate'):
+                # value may be empty if used on an itemTemplate
+                proposingGroup = groupsInCharge = ''
             if value:
-                proposingGroup, groupInCharge = value.split('__groupincharge__')
+                proposingGroup, groupsInCharge = value.split('__groupincharge__')
             self.setProposingGroup(proposingGroup)
-            self.setGroupsInCharge([groupInCharge])
+            self.setGroupsInCharge([groupsInCharge] if not type(groupsInCharge) is list else groupsInCharge)
             field.set(self, value, **kwargs)
 
     def _adaptLinesValueToBeCompared(self, value):
@@ -7823,12 +7826,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     newCat = getattr(destMeetingConfig.categories, destCat.split('.')[1])
                     newItem.setCategory(newCat.getId())
                     break
-        if 'proposingGroupWithGroupInCharge' in cfg.getUsedItemAttributes() and \
-            'proposingGroupWithGroupInCharge' not in destUsedItemAttributes and \
-                not newItem.getProposingGroup():
-            # Handle an edge case when 'proposingGroupWithGroupInCharge' is not used in destMeetingConfig
-            # to avoid an empty proposingGroup
-            newItem.setProposingGroup(self.getProposingGroupWithGroupInCharge().split("__groupincharge__")[0])
 
         # find meeting to present the item in and set it as preferred
         # this way if newItem needs to be presented in a frozen meeting, it works
