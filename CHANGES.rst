@@ -5,8 +5,9 @@ Changelog
 4.2.14 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Fixed an issue when `MeetingItem.proposingGroupWithGroupInCharge` is used in a `MeetingConfig`
+  but not in another one when an item is sent to it.
+  [aduchene]
 
 4.2.13 (2024-12-06)
 -------------------
