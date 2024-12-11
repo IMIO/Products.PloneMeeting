@@ -7823,6 +7823,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     newCat = getattr(destMeetingConfig.categories, destCat.split('.')[1])
                     newItem.setCategory(newCat.getId())
                     break
+        if 'proposingGroupWithGroupInCharge' in cfg.getUsedItemAttributes() and \
+            'proposingGroupWithGroupInCharge' not in destUsedItemAttributes and \
+                not newItem.getProposingGroup():
+            # Handle an edge case when 'proposingGroupWithGroupInCharge' is not used in destMeetingConfig
+            # to avoid an empty proposingGroup
+            newItem.setProposingGroup(self.getProposingGroupWithGroupInCharge().split("__groupincharge__")[0])
 
         # find meeting to present the item in and set it as preferred
         # this way if newItem needs to be presented in a frozen meeting, it works
