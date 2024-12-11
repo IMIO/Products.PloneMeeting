@@ -370,8 +370,8 @@ class testValidators(PloneMeetingTestCase):
 
     def test_pm_PloneGroupSettingsOrganizationsValidator(self):
         """Can not unselected an organization if used as groups_in_charge
-           of another organziations."""
-
+           of another organziations or in MeetingConfig.usingGroups."""
+        cfg = self.meetingConfig
         self.changeUser('siteadmin')
         validator = PloneGroupSettingsOrganizationsValidator(
             self.portal, self.request, None, IContactPlonegroupConfig['organizations'], None)
@@ -390,6 +390,18 @@ class testValidators(PloneMeetingTestCase):
         self.assertIsNone(validator.validate([organizations[1]]))
         # remove groups_in_charge so org may be unselected
         orgs[0].groups_in_charge = []
+
+        # MeetingConfg.usingGroups
+        cfg.setUsingGroups([orgs[1].UID()])
+        with self.assertRaises(Invalid) as cm:
+            validator.validate([organizations[0]])
+        validation_error_msg = _('can_not_unselect_plone_group_meetingconfig',
+                                 mapping={'cfg_title': cfg.Title()})
+        self.assertEqual(cm.exception.message, validation_error_msg)
+        # remove usingGroups so org may be unselected
+        cfg.setUsingGroups([])
+
+        # now org may be unselected
         self.assertIsNone(validator.validate([organizations[0]]))
 
 

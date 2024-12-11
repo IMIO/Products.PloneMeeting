@@ -8,6 +8,9 @@ Changelog
 - Fixed an issue when `MeetingItem.proposingGroupWithGroupInCharge` is used in a `MeetingConfig`
   but not in another one when an item is sent to it.
   [aduchene]
+- Prevent to unselect an organization in plonegroup that
+  is used by `MeetingConfig.usingGroups`.
+  [gbastien]
 
 4.2.13 (2024-12-06)
 -------------------

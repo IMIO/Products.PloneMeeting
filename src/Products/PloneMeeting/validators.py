@@ -266,11 +266,19 @@ class PloneGroupSettingsOrganizationsValidator(validator.SimpleFieldValidator):
 
     def validate(self, value):
         selected_org_uids = get_organizations(only_selected=True, the_objects=False)
-        removed_orgs_uids = set(selected_org_uids).difference(value)
+        removed_org_uids = set(selected_org_uids).difference(value)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        for cfg in tool.objectValues('MeetingConfig'):
+            # usingGroups
+            if removed_org_uids.intersection(cfg.getUsingGroups()):
+                msg = _("can_not_unselect_plone_group_meetingconfig",
+                        mapping={'cfg_title': safe_unicode(cfg.Title())})
+                raise Invalid(msg)
+
         # check that removed orgs are not used as groups_in_charge of an organization
         orgs = get_organizations(only_selected=False, the_objects=True)
         for org in orgs:
-            if removed_orgs_uids.intersection(org.groups_in_charge):
+            if removed_org_uids.intersection(org.groups_in_charge):
                 msgid = "can_not_unselect_plone_group_org"
                 msg = _(msgid, mapping={'org_url': org.absolute_url()})
                 raise Invalid(msg)
