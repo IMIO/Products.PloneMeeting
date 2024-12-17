@@ -1667,6 +1667,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         self._enableField('category', cfg=cfg2, enable=False)
+        self._enableField('motivation', cfg=cfg2)
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
         cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
@@ -1676,8 +1677,9 @@ class testMeetingItem(PloneMeetingTestCase):
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setTitle('Title')
-        item.setDecision('<p></p>')
+        item.setTitle('Original title')
+        item.setMotivation('<p>Original motivation</p>')
+        item.setDecision('<p>Original decision</p>')
         item.setOtherMeetingConfigsClonableToFieldTitle('Field title')
         item.setOtherMeetingConfigsClonableToFieldMotivation('<p>Field motivation</p>')
         item.setOtherMeetingConfigsClonableToFieldDecision('<p>Field decision</p>')
@@ -1694,6 +1696,24 @@ class testMeetingItem(PloneMeetingTestCase):
                          ['otherMeetingConfigsClonableToFieldTitle',
                           'otherMeetingConfigsClonableToFieldMotivation',
                           'otherMeetingConfigsClonableToFieldDecision'])
+
+        # when other_mc value is empty, it will only erase field value if field is not required
+        # disable motivation, it will not be initialized
+        self._enableField('motivation', cfg=cfg2, enable=False)
+        item.setOtherMeetingConfigsClonableToFieldTitle('')
+        item.setOtherMeetingConfigsClonableToFieldDecision('')
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        self.assertEqual(item.Title(), 'Original title')
+        self.assertEqual(item.getMotivation(), '<p>Original motivation</p>')
+        self.assertEqual(item.getDecision(), '<p>Original decision</p>')
+        self.deleteAsManager(newItem.UID())
+        newItem = item.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEqual(newItem.Title(), 'Original title')
+        # motivation not used so empty on copied item
+        self.assertFalse(newItem.attribute_is_used('motivation'))
+        self.assertEqual(newItem.getMotivation(), '')
+        # was emptied
+        self.assertEqual(newItem.getDecision(), '')
 
     def test_pm_CloneItemWithSetCurrentAsPredecessor(self):
         '''When an item is cloned with option setCurrentAsPredecessor=True,

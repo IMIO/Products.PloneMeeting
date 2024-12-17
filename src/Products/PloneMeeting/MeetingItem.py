@@ -7841,14 +7841,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # handle 'otherMeetingConfigsClonableToFieldXXX' of original item
         for other_mc_field_name in self.get_enable_clone_to_other_mc_fields(cfg):
-            # first check if original field not empty
-            if self.fieldIsEmpty(other_mc_field_name):
-                continue
-            other_mc_field = self.getField(other_mc_field_name)
-            other_mc_field_value = other_mc_field.get(self)
             dest_field_name = other_mc_field_name.replace('otherMeetingConfigsClonableToField', '')
             dest_field_name = dest_field_name[0].lower() + dest_field_name[1:]
             dest_field = newItem.getField(dest_field_name)
+            # check that we will not empty a required field (case for "title" especially)
+            # and also that if field optional, it is used in destination config
+            if (self.fieldIsEmpty(other_mc_field_name) and
+                self.getField(dest_field_name).required) or \
+               (getattr(dest_field, 'optional', False) and
+                    not newItem.attribute_is_used(dest_field_name)):
+                continue
+            other_mc_field = self.getField(other_mc_field_name)
+            other_mc_field_value = other_mc_field.get(self)
             dest_field.set(newItem, other_mc_field_value)
 
         # execute some transitions on the newItem if it was defined in the cfg
