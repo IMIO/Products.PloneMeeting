@@ -11,6 +11,10 @@ Changelog
 - Prevent to unselect an organization in plonegroup that
   is used by `MeetingConfig.usingGroups`.
   [gbastien]
+- Fixed `otherMeetingConfigsClonableToFieldXXX` field management when it is
+  empty, it was not emptying the value on new item, now it is the case except
+  for `title` that can not be empty.
+  [gbastien]
 
 4.2.13 (2024-12-06)
 -------------------

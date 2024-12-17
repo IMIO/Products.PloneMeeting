@@ -1668,6 +1668,10 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         self._enableField('category', cfg=cfg2, enable=False)
+        self._enableField('itemReference', cfg=cfg2)
+        self._enableField('motivation', cfg=cfg2)
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+                                         'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
         cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
         self._enableField('otherMeetingConfigsClonableToFieldDecision')
         self._enableField('otherMeetingConfigsClonableToFieldMotivation')
@@ -1675,8 +1679,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self._enableField('otherMeetingConfigsClonableToFieldItemReference')
 
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem', title='Title')
-        item.setDecision('<p></p>')
+        item = self.create('MeetingItem')
+        item.setTitle('Original title')
+        item.setItemReference('Original reference')
+        item.setMotivation('<p>Original motivation</p>')
+        item.setDecision('<p>Original decision</p>')
         item.setOtherMeetingConfigsClonableToFieldTitle('Field title')
         item.setOtherMeetingConfigsClonableToFieldItemReference('Item reference')
         item.setOtherMeetingConfigsClonableToFieldMotivation('<p>Field motivation</p>')
@@ -1692,11 +1699,32 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldMotivation'))
         self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldDecision'))
         # otherMeetingConfigsClonableToFieldXXX order is correct (schema)
-        self.assertEqual(item.get_enable_clone_to_other_mc_fields(),
+        self.assertEqual(item.get_enable_clone_to_other_mc_fields(cfg),
                          ['otherMeetingConfigsClonableToFieldTitle',
                           'otherMeetingConfigsClonableToFieldItemReference',
                           'otherMeetingConfigsClonableToFieldMotivation',
                           'otherMeetingConfigsClonableToFieldDecision'])
+
+        # when other_mc value is empty, it will only erase field value if field is not required
+        # disable motivation, it will not be initialized
+        self._enableField('motivation', cfg=cfg2, enable=False)
+        item.setOtherMeetingConfigsClonableToFieldTitle('')
+        item.setOtherMeetingConfigsClonableToFieldItemReference('')
+        item.setOtherMeetingConfigsClonableToFieldDecision('')
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        self.assertEqual(item.Title(), 'Original title')
+        self.assertEqual(item.getItemReference(), 'Original reference')
+        self.assertEqual(item.getMotivation(), '<p>Original motivation</p>')
+        self.assertEqual(item.getDecision(), '<p>Original decision</p>')
+        self.deleteAsManager(newItem.UID())
+        newItem = item.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEqual(newItem.Title(), 'Original title')
+        # motivation not used so empty on copied item
+        self.assertFalse(newItem.attribute_is_used('motivation'))
+        self.assertEqual(newItem.getMotivation(), '')
+        # was emptied
+        self.assertEqual(newItem.getItemReference(), '')
+        self.assertEqual(newItem.getDecision(), '')
 
     def test_pm_SendItemToOtherMCItemReference(self):
         '''Test when item sent to other MC and original item
@@ -1708,6 +1736,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2.setItemReferenceFormat('python:here.getItemReference()')
         cfg2.setComputeItemReferenceForItemsOutOfMeeting(True)
         self._enableField('otherMeetingConfigsClonableToFieldItemReference')
+        self._enableField('itemReference', cfg=cfg2)
         self._enableField('category', cfg=cfg2, enable=False)
         cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
         self.changeUser('pmCreator1')
