@@ -2,14 +2,18 @@ Changelog
 =========
 
 
-4.2.13rc4 (unreleased)
+4.2.14rc1 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Fixed an issue when `MeetingItem.proposingGroupWithGroupInCharge` is used in a `MeetingConfig`
+  but not in another one when an item is sent to it.
+  [aduchene]
+- Prevent to unselect an organization in plonegroup that
+  is used by `MeetingConfig.usingGroups`.
+  [gbastien]
 
-
-4.2.13rc3 (2024-12-05)
-----------------------
+4.2.13 (2024-12-06)
+-------------------
 
 - Fixed `MeetingConfig.itemsNotViewableVisibleFields` functionnality that was
   raising `Unhautorized` when accessing more infos of not viewable items.

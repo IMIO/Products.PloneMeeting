@@ -325,6 +325,29 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item1.validate_proposingGroupWithGroupInCharge(wrong_value), required_msg)
         self.failIf(item1.validate_proposingGroupWithGroupInCharge(original_value))
 
+    def test_pm_ItemProposingGroupsWithGroupsInChargeSentToOtherMC(self):
+        '''Check MeetingItem.proposingGroupWithGroupInCharge when sent to another MC.'''
+        self.changeUser('siteadmin')
+        self._enableField('proposingGroupWithGroupInCharge')
+        org1 = self.create('organization', id='org1', title='Org 1', acronym='O1')
+        org1_uid = org1.UID()
+        cfg = self.meetingConfig
+        cfg2_id = self.meetingConfig2.getId()
+        cfg.setMeetingConfigsToCloneTo(
+            ({'meeting_config': '%s' % cfg2_id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
+        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'), ))
+        self._select_organization(org1_uid)
+        self.developers.groups_in_charge = (org1_uid, )
+
+        item = self.create('MeetingItem')
+        developers_gic = '{0}__groupincharge__{1}'.format(self.developers_uid, org1_uid)
+        item.setProposingGroupWithGroupInCharge(developers_gic)
+        item.setOtherMeetingConfigsClonableTo((cfg2_id,))
+        item.cloneToOtherMeetingConfig(cfg2_id)
+        new_item = item.get_successor()
+        self.assertEqual(new_item.getProposingGroup(), self.developers_uid)
+
     def test_pm_CloneItemRemovesAnnotations(self):
         '''Annotations relative to item sent to other MC are correctly cleaned.'''
         # create a third meetingConfig with special characters in it's title

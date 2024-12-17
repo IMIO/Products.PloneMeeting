@@ -3409,12 +3409,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         field = self.getField('proposingGroupWithGroupInCharge')
         current_value = field.get(self, **kwargs)
         if not value == current_value:
-            # value may be empty if used on an itemTemplate
-            proposingGroup = groupInCharge = ''
+            proposingGroup = self.getProposingGroup()
+            groupsInCharge = self.getGroupsInCharge()
+            if self.isDefinedInTool(item_type='itemtemplate'):
+                # value may be empty if used on an itemTemplate
+                proposingGroup = groupsInCharge = ''
             if value:
-                proposingGroup, groupInCharge = value.split('__groupincharge__')
+                proposingGroup, groupsInCharge = value.split('__groupincharge__')
+                groupsInCharge = [groupsInCharge]
             self.setProposingGroup(proposingGroup)
-            self.setGroupsInCharge([groupInCharge])
+            self.setGroupsInCharge(groupsInCharge)
             field.set(self, value, **kwargs)
 
     def _adaptLinesValueToBeCompared(self, value):
