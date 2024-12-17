@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.14rc1 (unreleased)
+4.2.14rc1 (2024-12-17)
 ----------------------
 
 - Fixed an issue when `MeetingItem.proposingGroupWithGroupInCharge` is used in a `MeetingConfig`
