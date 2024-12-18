@@ -987,26 +987,27 @@ class testWorkflows(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.setDecision(self.decisionText)
         # field not writeable
-        marginalNotesField = item.getField('marginalNotes')
-        self.assertFalse(marginalNotesField.writeable(item))
+        marginal_notes_field = item.getField('marginalNotes')
+        self.assertFalse(marginal_notes_field.writeable(item))
         self.assertFalse(item.mayQuickEdit('marginalNotes'))
         self.validateItem(item)
 
         # as MeetingManager
         self.changeUser('pmManager')
         # field not writeable
-        self.assertFalse(marginalNotesField.writeable(item))
+        self.assertFalse(marginal_notes_field.writeable(item))
         self.assertFalse(item.mayQuickEdit('marginalNotes'))
+        # writeable when "presented"
         meeting = self.create('Meeting')
         self.presentItem(item)
         self.assertEqual(item.query_state(), 'presented')
-        self.assertFalse(marginalNotesField.writeable(item))
-        self.assertFalse(item.mayQuickEdit('marginalNotes'))
+        self.assertTrue(marginal_notes_field.writeable(item))
+        self.assertTrue(item.mayQuickEdit('marginalNotes'))
 
         # writeable when meeting frozen
         self.freezeMeeting(meeting)
         self.assertEqual(item.query_state(), 'itemfrozen')
-        self.assertTrue(marginalNotesField.writeable(item))
+        self.assertTrue(marginal_notes_field.writeable(item))
         self.assertTrue(item.mayQuickEdit('marginalNotes'))
         # as other fields
         obsField = item.getField('observations')
@@ -1017,7 +1018,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.closeMeeting(meeting)
         self.assertEqual(meeting.query_state(), 'closed')
         self.assertEqual(item.query_state(), 'accepted')
-        self.assertTrue(marginalNotesField.writeable(item))
+        self.assertTrue(marginal_notes_field.writeable(item))
         self.assertTrue(item.mayQuickEdit('marginalNotes'))
         # but not other fields
         self.assertFalse(obsField.writeable(item))

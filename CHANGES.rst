@@ -21,6 +21,12 @@ Changelog
   empty, it was not emptying the value on new item, now it is the case except
   for `title` that can not be empty.
   [gbastien]
+- Make `MeetingItem.marginalNotes` field editable by `MeetingManagers` when item
+  is `presented` (before it was when item was `itemfrozen`) so votes are also
+  editable when item is `presented` as it relies on same permission
+  `WriteMarginalNotes` that we should change name to a more generic name like
+  `WriteClosedMeetingMeetingManagersReservedFields`.
+  [gbastien]
 
 4.2.13 (2024-12-06)
 -------------------
