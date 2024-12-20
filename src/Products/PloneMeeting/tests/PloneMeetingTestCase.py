@@ -33,9 +33,9 @@ from plone.dexterity.utils import iterSchemata
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFPlone.utils import base_hasattr
 from Products.Five.browser import BrowserView
-from Products.PloneMeeting.browser.meeting import _get_default_attendees
-from Products.PloneMeeting.browser.meeting import _get_default_signatories
-from Products.PloneMeeting.browser.meeting import _get_default_voters
+from Products.PloneMeeting.browser.meeting import get_default_attendees
+from Products.PloneMeeting.browser.meeting import get_default_signatories
+from Products.PloneMeeting.browser.meeting import get_default_voters
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
@@ -382,15 +382,15 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             # manage attendees if using it
             usedMeetingAttrs = cfg.getUsedMeetingAttributes()
             if 'attendees' in usedMeetingAttrs:
-                default_attendees = _get_default_attendees(obj)
+                default_attendees = get_default_attendees(cfg)
                 default_attendees = OrderedDict((
                     (attendee, 'attendee') for attendee in default_attendees))
                 signatories = []
                 if 'signatories' in usedMeetingAttrs:
-                    signatories = _get_default_signatories(obj, cfg)
+                    signatories = get_default_signatories(cfg)
                 voters = []
                 if cfg.getUseVotes():
-                    voters = _get_default_voters(obj, cfg)
+                    voters = get_default_voters(cfg)
                 obj._do_update_contacts(attendees=default_attendees,
                                         signatories=signatories,
                                         voters=voters)

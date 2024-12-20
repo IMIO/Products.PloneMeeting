@@ -267,36 +267,32 @@ class MeetingDefaultView(DefaultView, BaseMeetingView):
         manage_committees(self)
 
 
-def _get_default_attendees(context):
+def get_default_attendees(cfg):
     '''The default attendees are the active held_positions
        with 'present' in defaults.'''
-    res = []
-    used_held_positions = get_all_usable_held_positions(context)
-    res = [held_pos.UID() for held_pos in used_held_positions
+    res = [held_pos.UID() for held_pos in get_all_usable_held_positions(cfg)
            if held_pos.defaults and 'present' in held_pos.defaults]
     return res
 
 
-def _get_default_signatories(context, cfg):
+def get_default_signatories(cfg):
     '''The default signatories are the active held_positions
        with a defined signature_number.'''
     res = {}
     if "signatories" in cfg.getUsedMeetingAttributes():
-        used_held_positions = get_all_usable_held_positions(context)
-        signers = [held_pos for held_pos in used_held_positions
+        signers = [held_pos for held_pos in get_all_usable_held_positions(cfg)
                    if held_pos.defaults and 'present' in
                    held_pos.defaults and held_pos.signature_number]
         res = {signer.UID(): signer.signature_number for signer in signers}
     return res
 
 
-def _get_default_voters(context, cfg):
+def get_default_voters(cfg):
     '''The default voters are the active held_positions
        with 'voter' in defaults.'''
     res = []
     if cfg.getUseVotes():
-        used_held_positions = get_all_usable_held_positions(context)
-        res = [held_pos.UID() for held_pos in used_held_positions
+        res = [held_pos.UID() for held_pos in get_all_usable_held_positions(cfg)
                if held_pos.defaults and 'voter' in held_pos.defaults]
     return res
 
@@ -328,7 +324,7 @@ class AttendeesEditProvider(ContentProviderBase, BaseMeetingView):
         if is_meeting:
             attendees = self.context.get_attendees()
         else:
-            attendees = _get_default_attendees(self.context)
+            attendees = get_default_attendees(self.cfg)
         return attendees
 
     def get_excused(self):
@@ -354,7 +350,7 @@ class AttendeesEditProvider(ContentProviderBase, BaseMeetingView):
         if is_meeting:
             signatories = self.context.get_signatories()
         else:
-            signatories = _get_default_signatories(self.context, self.cfg)
+            signatories = get_default_signatories(self.cfg)
         return signatories
 
     def get_user_replacements(self):
@@ -372,7 +368,7 @@ class AttendeesEditProvider(ContentProviderBase, BaseMeetingView):
         if is_meeting:
             voters = self.context.get_voters()
         else:
-            voters = _get_default_voters(self.context, self.cfg)
+            voters = get_default_voters(self.cfg)
         return voters
 
     def checked(self, cbid, muid, stored_value, req_key="meeting_attendees"):
@@ -554,7 +550,7 @@ class MeetingFacetedView(BaseMeetingFacetedView):
                 if u'1' not in signature_numbers or u'2' not in signature_numbers:
                     # double check, maybe we are in a case
                     # where we only have one signatory
-                    default_signatories = _get_default_signatories(self.context, self.cfg)
+                    default_signatories = get_default_signatories(self.cfg)
                     if sorted(default_signatories.values()) != sorted(signature_numbers):
                         warn = True
             else:

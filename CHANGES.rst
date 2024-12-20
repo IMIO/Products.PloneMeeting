@@ -21,6 +21,11 @@ Changelog
   `WriteMarginalNotes` that we should change name to a more generic name like
   `WriteClosedMeetingMeetingManagersReservedFields`.
   [gbastien]
+- Renamed `_get_default_attendees` to `get_default_attendees`,
+  `_get_default_signatories` to `get_default_signatories` and
+  `_get_default_voters` to `_get_default_voters` and added it to `safe_utils`
+  so it may be used in restricted python code.
+  [gbastien]
 
 4.2.13 (2024-12-06)
 -------------------
