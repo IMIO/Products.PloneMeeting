@@ -28,7 +28,7 @@ from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.permissions import View
 from Products.Five import zcml
 from Products.PloneMeeting.adapters import CAN_NOT_DELETE_MEETING_ERROR
-from Products.PloneMeeting.browser.meeting import _get_default_attendees
+from Products.PloneMeeting.browser.meeting import get_default_attendees
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
@@ -3579,7 +3579,7 @@ class testMeetingType(PloneMeetingTestCase):
             u'can_not_define_several_same_signature_number',
             domain='PloneMeeting',
             context=self.request)
-        attendee_uids = _get_default_attendees(pm_folder)
+        attendee_uids = get_default_attendees(cfg)
         meeting_signatories = ['{0}__signaturenumber__1'.format(attendee_uids[0]),
                                '{0}__signaturenumber__1'.format(attendee_uids[1])]
         self.request.form['meeting_signatories'] = meeting_signatories

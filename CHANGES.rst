@@ -5,8 +5,17 @@ Changelog
 4.2.14rc2 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Make `MeetingItem.marginalNotes` field editable by `MeetingManagers` when item
+  is `presented` (before it was when item was `itemfrozen`) so votes are also
+  editable when item is `presented` as it relies on same permission
+  `WriteMarginalNotes` that we should change name to a more generic name like
+  `WriteClosedMeetingMeetingManagersReservedFields`.
+  [gbastien]
+- Renamed `_get_default_attendees` to `get_default_attendees`,
+  `_get_default_signatories` to `get_default_signatories` and
+  `_get_default_voters` to `_get_default_voters` and added it to `safe_utils`
+  so it may be used in restricted python code.
+  [gbastien]
 
 4.2.14rc1 (2024-12-17)
 ----------------------
@@ -20,12 +29,6 @@ Changelog
 - Fixed `otherMeetingConfigsClonableToFieldXXX` field management when it is
   empty, it was not emptying the value on new item, now it is the case except
   for `title` that can not be empty.
-  [gbastien]
-- Make `MeetingItem.marginalNotes` field editable by `MeetingManagers` when item
-  is `presented` (before it was when item was `itemfrozen`) so votes are also
-  editable when item is `presented` as it relies on same permission
-  `WriteMarginalNotes` that we should change name to a more generic name like
-  `WriteClosedMeetingMeetingManagersReservedFields`.
   [gbastien]
 
 4.2.13 (2024-12-06)

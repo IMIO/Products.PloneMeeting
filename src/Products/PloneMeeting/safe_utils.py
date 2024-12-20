@@ -15,6 +15,9 @@ from imio.helpers.xhtml import unescape_html
 from imio.history.utils import getLastWFAction
 from Products.CPUtils.Extensions.utils import fileSize
 from Products.CPUtils.Extensions.utils import tobytes
+from Products.PloneMeeting.browser.meeting import get_default_attendees
+from Products.PloneMeeting.browser.meeting import get_default_signatories
+from Products.PloneMeeting.browser.meeting import get_default_voters
 from Products.PloneMeeting.browser.views import is_all_count
 from Products.PloneMeeting.browser.views import print_votes
 from Products.PloneMeeting.ftw_labels.utils import get_labels
