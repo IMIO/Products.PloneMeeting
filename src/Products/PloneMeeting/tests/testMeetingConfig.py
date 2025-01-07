@@ -18,6 +18,7 @@ from collective.iconifiedcategory.utils import get_category_object
 from copy import deepcopy
 from DateTime import DateTime
 from datetime import datetime
+from datetime import timedelta
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
@@ -371,11 +372,12 @@ class testMeetingConfig(PloneMeetingTestCase):
         # validate returns nothing if validation was successful
         self.failIf(cfg.validate_customAdvisers([originalCustomAdvisers, ]))
         # change everything including logical data
+        now = datetime.now()
         changedCustomAdvisers = {'row_id': 'unique_id_123',
                                  'org': self.vendors_uid,
                                  'gives_auto_advice_on': 'not:item/getBudgetRelated',
                                  'for_item_created_from': '2013/01/01',
-                                 'for_item_created_until': '2025/01/01',
+                                 'for_item_created_until': (now + timedelta(days=10)).strftime('%Y/%m/%d'),
                                  'gives_auto_advice_on_help_message': 'Auto help message changed',
                                  'delay': '20',
                                  'delay_left_alert': '',
