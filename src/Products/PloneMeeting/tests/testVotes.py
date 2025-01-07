@@ -1166,9 +1166,9 @@ class testVotes(PloneMeetingTestCase):
         # get in meeting
         meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
             self._createMeetingWithVotes()
-        # not editable until item is frozen
+        # votes are editable as soon as in a meeting (presented)
         self.assertEqual(public_item.query_state(), 'presented')
-        self.assertFalse(public_item.mayQuickEdit('votesResult'))
+        self.assertTrue(public_item.mayQuickEdit('votesResult'))
         self.assertTrue(may_view_field(public_item, 'votesResult'))
         self.assertEqual(
             public_item.getVotesResult(),
