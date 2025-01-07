@@ -3282,6 +3282,7 @@ class testAdvices(PloneMeetingTestCase):
         """When an advice is marked as 'inherited', it will show another advice
            coming from another item, in this case, read access to current item are same as
            usual but viewers of the inherited advice are able to see it and to download annexes."""
+        cfg = self.meetingConfig
         item1, item2, vendors_advice, developers_advice, annexConfidential, annexNotConfidential = \
             self._setupInheritedAdvice(addAnnexesToVendorsAdvice=True)
         # check with a power observer only able to see item2
@@ -3311,8 +3312,24 @@ class testAdvices(PloneMeetingTestCase):
         infos = vendors_advice.restrictedTraverse(
             '@@categorized-childs-infos')(category_uid=category_uid, filters={}).strip()
         self.assertTrue(infos)
-        download_view = annexConfidential.restrictedTraverse('@@download')
+        download_view = annexNotConfidential.restrictedTraverse('@@download')
         self.assertTrue(download_view())
+        # confidential annexes on advices are not viewable by powerobservers
+        download_view = annexConfidential.restrictedTraverse('@@download')
+        self.assertFalse(cfg.getAdviceAnnexConfidentialVisibleFor())
+        self.assertRaises(Unauthorized, download_view)
+        cfg.setAdviceAnnexConfidentialVisibleFor(('configgroup_powerobservers', ))
+        item1.__ac_local_roles__.clear()
+        item1.update_local_roles()
+        self.assertTrue(download_view())
+        # another user could not access the annex
+        self.changeUser("restrictedpowerobserver1")
+        self.assertFalse(self.hasPermission(View, item1))
+        self.assertFalse(self.hasPermission(View, item2))
+        download_view = annexNotConfidential.restrictedTraverse('@@download')
+        self.assertRaises(Unauthorized, download_view)
+        download_view = annexConfidential.restrictedTraverse('@@download')
+        self.assertRaises(Unauthorized, download_view)
 
     def test_pm_GetAdviceDataFor(self):
         '''Test the getAdviceDataFor method, essentially the fact that it needs the item

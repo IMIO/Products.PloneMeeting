@@ -26,6 +26,10 @@ Changelog
   `_get_default_voters` to `_get_default_voters` and added it to `safe_utils`
   so it may be used in restricted python code.
   [gbastien]
+- Fixed `PMCategorizedObjectAdapter.can_view` when managing not viewable items
+  because it could lead to unwanted users having access to some annexes by
+  accessing it's URL directly.
+  [gbastien]
 
 4.2.13 (2024-12-06)
 -------------------
