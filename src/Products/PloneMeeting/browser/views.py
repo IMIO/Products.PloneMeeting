@@ -1419,7 +1419,8 @@ class BaseDGHV(object):
                                       signature_format=(u'prefixed_secondary_position_type', u'person'),
                                       separator=u',',
                                       ender=u'',
-                                      committee_id=None):
+                                      committee_id=None,
+                                      signatories={}):
         """
         Print signatories by position
         :param signature_format: tuple representing a single signature format
@@ -1440,6 +1441,9 @@ class BaseDGHV(object):
         (same for 'secondary_position_type' that will fall back to 'position_type')
         :param separator: str that will be appended at the end of each line (except the last one)
         :param ender: str that will be appended at the end of the last one
+        :param committee_id: to be used to get the signatories from a committee_id
+        :param signatories: arbitrary dict with {'1': hp1, '2': hp2} as format
+        to not get signatories from the context but pass arbitrary signatories (held_positions)
         :return: a dict with position as key and signature as value
         like this {0 : 'The Manager,', 1 : "Jane Doe", 2 : 'The mayor,', 3: 'John Doe'}
         A dict is used to safely retrieve a signature with the '.get()' method in the PODTemplates
@@ -1452,22 +1456,23 @@ class BaseDGHV(object):
         """
         signature_lines = OrderedDict()
         forced_position_type_values = {}
-        if committee_id:
-            signatories = self.context.get_committee_signatories(
-                committee_id, the_objects=True, by_signature_number=True)
-        elif self.context.getTagName() == 'Meeting':
-            signatories = self.context.get_signatories(the_objects=True, by_signature_number=True)
-        else:
-            signatories = self.context.get_item_signatories(the_objects=True, by_signature_number=True)
-            if self.context.hasMeeting():
-                # if we have redefined signatories, use the selected position_type
-                meeting = self.context.getMeeting()
-                item_uid = self.context.UID()
-                item_signatories = meeting.get_item_signatories(include_position_type=True)
-                if item_uid in item_signatories:
-                    forced_position_type_values = {
-                        k: v['position_type'] for k, v in
-                        item_signatories[item_uid].items()}
+        if not signatories:
+            if committee_id:
+                signatories = self.context.get_committee_signatories(
+                    committee_id, the_objects=True, by_signature_number=True)
+            elif self.context.getTagName() == 'Meeting':
+                signatories = self.context.get_signatories(the_objects=True, by_signature_number=True)
+            else:
+                signatories = self.context.get_item_signatories(the_objects=True, by_signature_number=True)
+                if self.context.hasMeeting():
+                    # if we have redefined signatories, use the selected position_type
+                    meeting = self.context.getMeeting()
+                    item_uid = self.context.UID()
+                    item_signatories = meeting.get_item_signatories(include_position_type=True)
+                    if item_uid in item_signatories:
+                        forced_position_type_values = {
+                            k: v['position_type'] for k, v in
+                            item_signatories[item_uid].items()}
 
         line = 0
         sorted_signatories = [(v, forced_position_type_values.get(k, None))
