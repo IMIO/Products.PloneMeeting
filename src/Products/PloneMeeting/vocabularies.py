@@ -3220,7 +3220,7 @@ class PMAttendeeRedefinePositionTypesVocabulary(PMPositionTypesVocabulary):
         res._terms = [term for term in res._terms
                       if not selectableRedefinedPositionTypes or
                       term.token in selectableRedefinedPositionTypes or
-                      hp and term.token == hp.position_type]
+                      hp and term.token in (hp.position_type, hp.secondary_position_type)]
         return res
 
 

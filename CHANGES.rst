@@ -31,6 +31,10 @@ Changelog
   This is useful for printing default signatories for example when we do
   not want to use signatories defined on context (item or meeting).
   [gbastien]
+- Fixed `PMAttendeeRedefinePositionTypesVocabulary` that did not render default
+  value term of `IRedefineAttendeePosition.position_type` correctly when it was
+  not in the base vocabulary.
+  [gbastien]
 
 4.2.13 (2024-12-06)
 -------------------
