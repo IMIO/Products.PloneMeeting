@@ -913,6 +913,20 @@ class testContacts(PloneMeetingTestCase):
                 3: u"La Super-héroine"
             }
         )
+
+        # we can also pass arbitrary signatories, use other signatories
+        self.assertEqual(
+            helper.print_signatories_by_position(
+                signatories={'1': self.hp1, '2': self.hp2},
+                signature_format=(u'person', )),
+            {0: u'Jane Doe', 1: u'Person2FirstName Person2LastName'})
+        # can also be passed to print_signatures_by_position
+        self.assertEqual(
+            helper.print_signatories_by_position(
+                signatories={'1': self.hp3, '2': self.hp4},
+                signature_format=(u'person', )),
+            {0: u'Person3FirstName Person3LastName', 1: u'John Doe'})
+
         # print_signatories_by_position is using Meeting.get_signature_infos_for
         # redefined on item
         self.assertTrue(signatory3_uid in item.get_item_signatories(real=True))
