@@ -29,6 +29,7 @@ from Products.CMFCore.permissions import View
 from Products.Five import zcml
 from Products.PloneMeeting.adapters import CAN_NOT_DELETE_MEETING_ERROR
 from Products.PloneMeeting.browser.meeting import get_default_attendees
+from Products.PloneMeeting.browser.meeting import get_default_signatories
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
@@ -3699,6 +3700,21 @@ class testMeetingType(PloneMeetingTestCase):
         self.request.set('validate_attendees_done', False)
         self.assertEqual(len(errors), 1)
         self.assertEqual(errors[0].message, error_msg)
+
+    def test_pm_get_default_signatories(self):
+        """Returns default signatories, can return uids,
+           held_position objects and by signature number or not."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        self.assertEqual(get_default_signatories(cfg), {})
+        self.assertEqual(get_default_signatories(cfg, the_objects=True), {})
+        self.assertEqual(get_default_signatories(cfg, by_signature_number=True), {})
+        self._setUpOrderedContacts()
+        self.assertEqual(get_default_signatories(cfg),
+                         {self.hp1_uid: '1', self.hp4_uid: '2'})
+        self.assertEqual(
+            get_default_signatories(cfg, the_objects=True, by_signature_number=True),
+            {'1': self.hp1, '2': self.hp4})
 
     def test_pm_Votes_observations(self):
         """Fields Meeting.votes_observations and MeetingItem.votesObservations

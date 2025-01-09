@@ -275,7 +275,7 @@ def get_default_attendees(cfg):
     return res
 
 
-def get_default_signatories(cfg):
+def get_default_signatories(cfg, the_objects=False, by_signature_number=False):
     '''The default signatories are the active held_positions
        with a defined signature_number.'''
     res = {}
@@ -283,7 +283,11 @@ def get_default_signatories(cfg):
         signers = [held_pos for held_pos in get_all_usable_held_positions(cfg)
                    if held_pos.defaults and 'present' in
                    held_pos.defaults and held_pos.signature_number]
-        res = {signer.UID(): signer.signature_number for signer in signers}
+        res = {signer if the_objects else signer.UID():
+               signer.signature_number for signer in signers}
+        if by_signature_number:
+            # keys are values, values are keys
+            res = {v: k for k, v in res.items()}
     return res
 
 

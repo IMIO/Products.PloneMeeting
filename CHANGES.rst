@@ -15,6 +15,8 @@ Changelog
   `_get_default_signatories` to `get_default_signatories` and
   `_get_default_voters` to `_get_default_voters` and added it to `safe_utils`
   so it may be used in restricted python code.
+  Added parameters `the_objects=False` and `by_signature_number`
+  to `get_default_signatories`.
   [gbastien]
 - Added parameter `signatories={}` to `BaseDGHV.print_signatories_by_position`
   to be able to pass a dict of arbitrary held positions to render as signatures.
