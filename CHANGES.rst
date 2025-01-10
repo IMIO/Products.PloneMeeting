@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.14rc2 (unreleased)
+4.2.14rc2 (2025-01-10)
 ----------------------
 
 - Make `MeetingItem.marginalNotes` field editable by `MeetingManagers` when item
