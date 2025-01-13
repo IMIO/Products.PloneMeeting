@@ -26,6 +26,15 @@ Changelog
   `_get_default_voters` to `_get_default_voters` and added it to `safe_utils`
   so it may be used in restricted python code.
   [gbastien]
+- Added parameter `signatories={}` to `BaseDGHV.print_signatories_by_position`
+  to be able to pass a dict of arbitrary held positions to render as signatures.
+  This is useful for printing default signatories for example when we do
+  not want to use signatories defined on context (item or meeting).
+  [gbastien]
+- Fixed `PMAttendeeRedefinePositionTypesVocabulary` that did not render default
+  value term of `IRedefineAttendeePosition.position_type` correctly when it was
+  not in the base vocabulary.
+  [gbastien]
 - Fixed `PMCategorizedObjectAdapter.can_view` when managing not viewable items
   because it could lead to unwanted users having access to some annexes by
   accessing it's URL directly.
