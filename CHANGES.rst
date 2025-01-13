@@ -33,6 +33,10 @@ Changelog
   value term of `IRedefineAttendeePosition.position_type` correctly when it was
   not in the base vocabulary.
   [gbastien]
+- Display `MeetingConfig` title in page title (displayed in web browser tab)
+  on faceted contexts (dashboard and in configuration) so user knows where he is
+  when using several tabs.
+  [gbastien]
 
 4.2.14rc1 (2024-12-17)
 ----------------------

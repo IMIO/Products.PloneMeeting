@@ -3,9 +3,14 @@
 # GNU General Public License (GPL)
 #
 
+from cgi import escape
 from collections import OrderedDict
+from eea.facetednavigation.interfaces import IFacetedNavigable
 from plone import api
 from plone.app.layout.viewlets import ViewletBase
+from plone.app.layout.viewlets.common import TitleViewlet
+from plone.memoize.view import memoize
+from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.config import ITEM_INITIATOR_INDEX_PATTERN
@@ -116,3 +121,18 @@ class HeldPositionBackRefsView(BrowserView):
                     res[cfg]['overlimit'] = True
                     break
         return res
+
+
+class PMTitleViewlet(TitleViewlet):
+
+    @property
+    @memoize
+    def page_title(self):
+        '''Include MeetingConfig title when on a faceted context (items).'''
+        title = super(PMTitleViewlet, self).page_title
+        if IFacetedNavigable.providedBy(self.context):
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self.context)
+            if cfg:
+                title = u"%s - %s" % (escape(safe_unicode(cfg.Title())), title)
+        return title

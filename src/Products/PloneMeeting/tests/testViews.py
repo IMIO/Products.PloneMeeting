@@ -3093,6 +3093,24 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(
             '/'.join(meeting.getPhysicalPath()) in meeting_collection.restrictedTraverse('@@folder_contents')())
 
+    def test_pm_title_viewlet(self):
+        """Test that MeetingConfig title is displayed on pmFolders (faceted folders)
+           for users and in the configuration."""
+        cfg = self.meetingConfig
+        self.changeUser('pmCreator1')
+        pm_folder = self.getMeetingFolder()
+        self.assertTrue("<title>%s - Items" % cfg.Title() in
+                        pm_folder.searches_items.restrictedTraverse('base_view')())
+        self.assertTrue("<title>%s - Decisions" % cfg.Title() in
+                        pm_folder.searches_decisions.restrictedTraverse('base_view')())
+        # but not on item
+        item = self.create("MeetingItem")
+        self.assertTrue("<title>o1 &mdash; Plone site</title>" in
+                        item.restrictedTraverse('base_view')())
+        # but also in config
+        self.assertTrue("<title>%s - Items" % cfg.Title() in
+                        cfg.searches.searches_items.restrictedTraverse('base_view')())
+
 
 def test_suite():
     from unittest import makeSuite
