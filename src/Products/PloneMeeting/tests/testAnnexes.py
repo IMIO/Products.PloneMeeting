@@ -48,6 +48,8 @@ from zope.event import notify
 from zope.interface import Invalid
 from zope.lifecycleevent import ObjectModifiedEvent
 
+import magic
+
 
 class testAnnexes(PloneMeetingTestCase):
     '''Tests various aspects of annexes management.'''
@@ -1793,8 +1795,14 @@ class testAnnexes(PloneMeetingTestCase):
 
     def test_pm_AnnexShowPreview(self):
         """Test when show_preview is defined on annex type."""
+        cfg = self.meetingConfig
+        self._enableField('copyGroups')
+        cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
+        item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
+        cfg.setItemCopyGroupsStates((item_initial_state, ))
+        cfg.setSelectableCopyGroups((self.vendors_creators, ))
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
+        item = self.create('MeetingItem', copyGroups=(self.vendors_creators, ))
         annex0 = self.addAnnex(item)
         # must be PDF
         self.assertRaises(Invalid, self.addAnnex, item, annexType='preview-annex')
@@ -1806,18 +1814,19 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertEqual(infos[annex1.UID()]['preview_status'], 'converted')
         self.assertEqual(infos[annex2.UID()]['preview_status'], 'converted')
         # check who may access the download button
-        self.changeUser('powerobserver1')
-        self.assertTrue(self.hasPermission(View, item))
-        self.assertTrue(self.hasPermission(View, annex0))
-        self.assertTrue(self.hasPermission(View, annex1))
-        self.assertTrue(self.hasPermission(View, annex2))
-        self.assertTrue(annex0.show_download())
-        self.assertTrue(annex1.show_download())
-        self.assertFalse(annex2.show_download())
-        # trying to download will raise Unauthorized
-        self.assertTrue(annex0.restrictedTraverse('@@download')())
-        self.assertTrue(annex1.restrictedTraverse('@@download')())
-        self.assertRaises(Unauthorized, annex2.restrictedTraverse('@@download'))
+        for observer_user_id in ('powerobserver1', 'pmCreator2'):
+            self.changeUser(observer_user_id)
+            self.assertTrue(self.hasPermission(View, item))
+            self.assertTrue(self.hasPermission(View, annex0))
+            self.assertTrue(self.hasPermission(View, annex1))
+            self.assertTrue(self.hasPermission(View, annex2))
+            self.assertTrue(annex0.show_download())
+            self.assertTrue(annex1.show_download())
+            self.assertFalse(annex2.show_download())
+            # trying to download will raise Unauthorized
+            self.assertTrue(annex0.restrictedTraverse('@@download')())
+            self.assertTrue(annex1.restrictedTraverse('@@download')())
+            self.assertRaises(Unauthorized, annex2.restrictedTraverse('@@download'))
         # but the creator may download
         self.changeUser('pmCreator1')
         self.assertTrue(annex0.show_download())
@@ -1826,6 +1835,31 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(annex0.restrictedTraverse('@@download')())
         self.assertTrue(annex1.restrictedTraverse('@@download')())
         self.assertTrue(annex2.restrictedTraverse('@@download')())
+        # not kept when item duplicated
+        self.changeUser('pmCreator2')
+        self.assertTrue(annex2.getId() in item.objectIds())
+        self.assertEqual(len(get_annexes(item)), 3)
+        new_item = item.clone(copyAnnexes=True, copyDecisionAnnexes=True)
+        self.assertEqual(len(get_annexes(new_item)), 2)
+        self.assertFalse(annex2.getId() in new_item.objectIds())
+        # handled by download annexes (as zip) batch action form
+        self.request['form.widgets.uids'] = u','.join([annex0.UID(), annex1.UID(), annex2.UID()])
+        self.request.form['form.widgets.uids'] = self.request['form.widgets.uids']
+        self.request.form['ajax_load'] = 'dummy'
+        form = item.restrictedTraverse('@@download-annexes-batch-action')
+        self.assertTrue(form.available())
+        form.update()
+        self.assertEqual(form.annex_not_downloadable, annex2)
+        self.assertRaises(Unauthorized, form.handleApply, form, None)
+        # OK for pmCreator1
+        self.changeUser('pmCreator1')
+        form = item.restrictedTraverse('@@download-annexes-batch-action')
+        self.assertTrue(form.available())
+        form.update()
+        self.assertIsNone(form.annex_not_downloadable)
+        data = form.handleApply(form, None)
+        m = magic.Magic()
+        self.assertTrue(m.from_buffer(data).startswith('Zip archive data, at least v2.0 to extract'))
 
     def test_pm_AnnexWithScanIdRemovedWhenItemDuplicated(self):
         """Annex with scan_id will be removed when an item is duplicated."""

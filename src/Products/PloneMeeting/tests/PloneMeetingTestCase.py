@@ -15,6 +15,7 @@ from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
 from copy import deepcopy
 from datetime import datetime
+from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import get_vocab_values
@@ -48,6 +49,7 @@ from z3c.relationfield.relation import RelationValue
 from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.event import notify
+from zope.interface import Invalid
 from zope.intid.interfaces import IIntIds
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.traversing.interfaces import BeforeTraverseEvent
@@ -489,7 +491,11 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
 
         data = DummyData(annex, annex.file.contentType, annex.content_category)
         for schema in iterSchemata(annex):
-            schema.validateInvariants(data, [])
+            try:
+                schema.validateInvariants(data, [])
+            except Invalid as exc:
+                unrestrictedRemoveGivenObject(annex)
+                raise(exc)
 
         # need to commit the transaction so the stored blob is correct
         # if not done, accessing the blob will raise 'BlobError: Uncommitted changes'

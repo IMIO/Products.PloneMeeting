@@ -39,6 +39,9 @@ Changelog
   on faceted contexts (dashboard and in configuration) so user knows where he is
   when using several tabs.
   [gbastien]
+- Make sure annexes only previewable (not downloadable) are not selectable
+  when duplicating an item, exporting it to PDF or exporting annexes to Zip.
+  [gbastien]
 
 4.2.13 (2024-12-06)
 -------------------
