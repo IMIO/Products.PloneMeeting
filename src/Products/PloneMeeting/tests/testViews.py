@@ -28,6 +28,7 @@ from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
+from Products.CMFPlone.utils import safe_unicode
 from Products.Five import zcml
 from Products.PloneMeeting.browser.views import SEVERAL_SAME_BARCODE_ERROR
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
@@ -3092,6 +3093,25 @@ class testViews(PloneMeetingTestCase):
         meeting_collection = self.meetingConfig.searches.searches_meetings.searchnotdecidedmeetings
         self.assertTrue(
             '/'.join(meeting.getPhysicalPath()) in meeting_collection.restrictedTraverse('@@folder_contents')())
+
+    def test_pm_title_viewlet(self):
+        """Test that MeetingConfig title is displayed on pmFolders (faceted folders)
+           for users and in the configuration."""
+        cfg = self.meetingConfig
+        cfg_title = safe_unicode(cfg.Title())
+        self.changeUser('pmCreator1')
+        pm_folder = self.getMeetingFolder()
+        self.assertTrue(u"<title>%s - Items" % cfg_title in
+                        pm_folder.searches_items.restrictedTraverse('base_view')())
+        self.assertTrue(u"<title>%s - Decisions" % cfg_title in
+                        pm_folder.searches_decisions.restrictedTraverse('base_view')())
+        # but not on item
+        item = self.create("MeetingItem")
+        self.assertTrue(u"<title>o1 &mdash; Plone site</title>" in
+                        item.restrictedTraverse('base_view')())
+        # but also in config
+        self.assertTrue(u"<title>%s - Items" % cfg_title in
+                        cfg.searches.searches_items.restrictedTraverse('base_view')())
 
 
 def test_suite():
