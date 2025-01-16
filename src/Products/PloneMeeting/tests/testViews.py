@@ -1051,9 +1051,9 @@ class testViews(PloneMeetingTestCase):
         self.cleanMemoize()
         # when field is empty, it is not displayed
         self.assertTrue("Nothing to display." in infos_view("itemsNotViewableVisibleFields", cfg_id))
-        self.assertFalse("<span>Description</span>" in infos_view("itemsNotViewableVisibleFields", cfg_id))
+        self.assertFalse(self.descriptionText in infos_view("itemsNotViewableVisibleFields", cfg_id))
         linked_item.setDescription(self.descriptionText)
-        self.assertTrue("<span>Description</span>" in infos_view("itemsNotViewableVisibleFields", cfg_id))
+        self.assertTrue(self.descriptionText in infos_view("itemsNotViewableVisibleFields", cfg_id))
         # view annexes, not viewable for now
         category_uid = linked_item.categorized_elements.get(annex.UID())['category_uid']
         # not viewable because there is no back referenced item to which user has View access

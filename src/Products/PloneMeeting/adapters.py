@@ -1826,6 +1826,10 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
         self.cfg = self.tool.getMeetingConfig(self.context)
 
     def can_view(self):
+        # as we let user access a not viewable annex, check that it is not an anonymous!
+        if api.user.is_anonymous():
+            return
+        # base adapter check View permission of categorized object
         can_view = super(PMCategorizedObjectAdapter, self).can_view()
         infos = self.context.categorized_elements[self.categorized_obj.UID()]
         class_name = self.context.__class__.__name__
@@ -1884,7 +1888,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
                     return True
                 return False
 
-            return True
+            return can_view
 
 
 class IconifiedCategoryConfigAdapter(object):

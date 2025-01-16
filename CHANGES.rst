@@ -49,6 +49,10 @@ Changelog
   empty, it was not emptying the value on new item, now it is the case except
   for `title` that can not be empty.
   [gbastien]
+- Fixed `PMCategorizedObjectAdapter.can_view` when managing not viewable items
+  because it could lead to unwanted users having access to some annexes by
+  accessing it's URL directly.
+  [gbastien]
 
 4.2.13 (2024-12-06)
 -------------------
