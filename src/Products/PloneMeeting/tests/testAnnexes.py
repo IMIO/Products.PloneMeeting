@@ -25,6 +25,7 @@ from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
 from plone import api
+from plone.app.testing import logout
 from plone.dexterity.utils import createContentInContainer
 from plone.indexer.wrapper import IndexableObjectWrapper
 from Products.Archetypes.event import ObjectEditedEvent
@@ -1860,6 +1861,32 @@ class testAnnexes(PloneMeetingTestCase):
         data = form.handleApply(form, None)
         m = magic.Magic()
         self.assertTrue(m.from_buffer(data).startswith('Zip archive data, at least v2.0 to extract'))
+
+    def test_pm_AnonymousCanNotDownloadAnnex(self):
+        """As we overrided can_view to let user download not viewable annexes
+           make sure it is not accesible to anonymous."""
+        cfg = self.meetingConfig
+        cfg.setItemAnnexConfidentialVisibleFor(('suffix_proposing_group_creators', ))
+        item_initial_state, item, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
+        # the creator may download as confidential annexes are available to creators
+        self.changeUser('pmCreator1')
+        self.assertTrue(annexNotConfidential.restrictedTraverse('@@download')())
+        self.assertTrue(annexConfidential.restrictedTraverse('@@download')())
+        # but anonymous trying to download will raise Unauthorized
+        logout()
+        self.assertFalse(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(View, annexNotConfidential))
+        self.assertFalse(self.hasPermission(View, annexConfidential))
+        self.assertRaises(Unauthorized, annexNotConfidential.restrictedTraverse('@@download'))
+        self.assertRaises(Unauthorized, annexConfidential.restrictedTraverse('@@download'))
+        # user that can not access will also raise Unauthorized
+        self.changeUser('pmCreator2')
+        self.assertFalse(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(View, annexNotConfidential))
+        self.assertFalse(self.hasPermission(View, annexConfidential))
+        self.assertRaises(Unauthorized, annexNotConfidential.restrictedTraverse('@@download'))
+        self.assertRaises(Unauthorized, annexConfidential.restrictedTraverse('@@download'))
 
     def test_pm_AnnexWithScanIdRemovedWhenItemDuplicated(self):
         """Annex with scan_id will be removed when an item is duplicated."""

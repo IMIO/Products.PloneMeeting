@@ -39,6 +39,10 @@ Changelog
   on faceted contexts (dashboard and in configuration) so user knows where he is
   when using several tabs.
   [gbastien]
+- Fixed `PMCategorizedObjectAdapter.can_view` when managing not viewable items
+  because it could lead to unwanted users having access to some annexes by
+  accessing it's URL directly.
+  [gbastien]
 - Make sure annexes only previewable (not downloadable) are not selectable
   when duplicating an item, exporting it to PDF or exporting annexes to Zip.
   [gbastien]
