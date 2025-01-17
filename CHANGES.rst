@@ -43,6 +43,9 @@ Changelog
   because it could lead to unwanted users having access to some annexes by
   accessing it's URL directly.
   [gbastien]
+- Make sure annexes only previewable (not downloadable) are not selectable
+  when duplicating an item, exporting it to PDF or exporting annexes to Zip.
+  [gbastien]
 
 4.2.13 (2024-12-06)
 -------------------
