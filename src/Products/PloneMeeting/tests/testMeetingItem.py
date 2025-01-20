@@ -929,7 +929,7 @@ class testMeetingItem(PloneMeetingTestCase):
                                     mapping={'annexTitle': data['annex1'].Title()},
                                     domain='PloneMeeting',
                                     context=self.request)
-        self.assertEqual(messages[-3].message, expectedMessage)
+        self.assertEqual(messages[-4].message, expectedMessage)
         expectedMessage = translate("annex_not_kept_because_only_pdf_annex_type_warning",
                                     mapping={'annexTitle': data['decisionAnnex1'].Title()},
                                     domain='PloneMeeting',
