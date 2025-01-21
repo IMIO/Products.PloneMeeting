@@ -9,6 +9,13 @@ Changelog
   on faceted contexts (dashboard and in configuration) so user knows where he is
   when using several tabs.
   [gbastien]
+- Fixed `PMCategorizedObjectAdapter.can_view` when managing not viewable items
+  because it could lead to unwanted users having access to some annexes by
+  accessing it's URL directly.
+  [gbastien]
+- Make sure annexes only previewable (not downloadable) are not selectable
+  when duplicating an item, exporting it to PDF or exporting annexes to Zip.
+  [gbastien]
 
 4.2.14rc2 (2025-01-10)
 ----------------------
@@ -48,13 +55,6 @@ Changelog
 - Fixed `otherMeetingConfigsClonableToFieldXXX` field management when it is
   empty, it was not emptying the value on new item, now it is the case except
   for `title` that can not be empty.
-  [gbastien]
-- Fixed `PMCategorizedObjectAdapter.can_view` when managing not viewable items
-  because it could lead to unwanted users having access to some annexes by
-  accessing it's URL directly.
-  [gbastien]
-- Make sure annexes only previewable (not downloadable) are not selectable
-  when duplicating an item, exporting it to PDF or exporting annexes to Zip.
   [gbastien]
 
 4.2.13 (2024-12-06)
