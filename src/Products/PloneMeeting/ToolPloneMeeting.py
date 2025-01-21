@@ -1186,11 +1186,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
             # if we have left annexes, we manage it
             plone_utils = api.portal.get_tool('plone_utils')
-            if get_annexes(newItem):
-                # manage the otherMCCorrespondence
-                oldAnnexes = get_categorized_elements(copiedItem, result_type='objects')
+            annexes = get_annexes(newItem)
+            if annexes:
+                oldAnnexes = get_annexes(copiedItem)
                 for oldAnnex in oldAnnexes:
-                    newAnnex = getattr(newItem, oldAnnex.getId(), None)
+                    newAnnex = newItem.get(oldAnnex.getId())
                     if not newAnnex:
                         # this annex was removed by another event
                         continue
@@ -1198,13 +1198,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     # to update every annex.content_category because it still refers
                     # the annexType in the old MeetingConfig the item is copied from
                     if newPortalType:
+                        # manage the otherMCCorrespondence
                         originCfg = self.getMeetingConfig(copiedItem)
                         new_annex_category = self._updateContentCategoryAfterSentToOtherMeetingConfig(
                             newAnnex, originCfg, destCfg)
                         if new_annex_category is None:
                             msg = translate('annex_not_kept_item_paste_info',
-                                            mapping={'annexTitle': safe_unicode(newAnnex.Title()),
-                                                     'cfg': safe_unicode(destCfg.Title())},
+                                            mapping={'annexTitle': safe_unicode(newAnnex.Title())},
                                             domain='PloneMeeting',
                                             context=self.REQUEST)
                             plone_utils.addPortalMessage(msg, 'info')
@@ -1213,8 +1213,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         elif new_annex_category.only_pdf and \
                                 newAnnex.file.contentType != 'application/pdf':
                             msg = translate('annex_not_kept_because_only_pdf_annex_type_warning',
-                                            mapping={'annexTitle': safe_unicode(newAnnex.Title()),
-                                                     'cfg': safe_unicode(destCfg.Title())},
+                                            mapping={'annexTitle': safe_unicode(newAnnex.Title())},
                                             domain='PloneMeeting',
                                             context=self.REQUEST)
                             plone_utils.addPortalMessage(msg, 'warning')
@@ -1242,6 +1241,15 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         plone_utils.addPortalMessage(msg, type='warning')
                         unrestrictedRemoveGivenObject(newAnnex)
                         continue
+                    # remove annexes that are not downloadable
+                    if not oldAnnex.show_download():
+                        msg = translate('annex_show_preview_not_kept',
+                                        mapping={'annexTitle': safe_unicode(oldAnnex.Title())},
+                                        domain='PloneMeeting',
+                                        context=self.REQUEST)
+                        plone_utils.addPortalMessage(msg, 'info')
+                        unrestrictedRemoveGivenObject(newAnnex)
+
 
                     # initialize to_print correctly regarding configuration
                     if not destCfg.getKeepOriginalToPrintOfClonedItems():

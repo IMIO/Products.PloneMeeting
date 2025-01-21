@@ -2960,9 +2960,9 @@ class BaseContainedAnnexesVocabulary(object):
         i = 1
         sort_on = 'getObjPositionInParent' if \
             get_sort_categorized_tab() is False else None
-        annexes = get_categorized_elements(
+        annex_infos = get_categorized_elements(
             context, portal_type=portal_type, sort_on=sort_on)
-        if annexes:
+        if annex_infos:
             categories_vocab = get_vocab(
                 context,
                 'collective.iconifiedcategory.categories',
@@ -2972,57 +2972,66 @@ class BaseContainedAnnexesVocabulary(object):
                 domain="imio.annex",
                 context=context.REQUEST) if prefixed else ''
 
-            for annex in annexes:
+            for annex_info in annex_infos:
                 # term title is annex icon, number and title
                 term_title = u'<img src="{0}/{1}" title="{2}" ' \
                     u'width="16px" height="16px"> {3}{4}. {5}'.format(
                         portal_url,
-                        annex['icon_url'],
-                        html.escape(safe_unicode(annex['category_title'])),
+                        annex_info['icon_url'],
+                        html.escape(safe_unicode(annex_info['category_title'])),
                         portal_type_title,
                         str(i),
-                        html.escape(safe_unicode(annex['title'])))
+                        html.escape(safe_unicode(annex_info['title'])))
                 i += 1
-                if annex['warn_filesize']:
-                    term_title += u' ({0})'.format(render_filesize(annex['filesize']))
-                term = SimpleTerm(annex['id'], annex['id'], term_title)
+                if annex_info['warn_filesize']:
+                    term_title += u' ({0})'.format(render_filesize(annex_info['filesize']))
+                term = SimpleTerm(annex_info['id'], annex_info['id'], term_title)
                 # check if need to disable term
-                self._check_disable_term(context, annex, categories_vocab, term)
+                self._check_disable_term(context, annex_info, categories_vocab, term)
                 terms.append(term)
         return SimpleVocabulary(terms)
 
-    def _check_disable_term(self, context, annex, categories_vocab, term):
-        """ """
-        return
+    def _check_disable_term(self, context, annex_info, categories_vocab, term):
+        """By default, disable if not downloadable (only previewable)."""
+        term.disabled = False
+        if annex_info['show_preview'] == 2 and \
+           not context.get(annex_info['id']).show_download():
+            term.disabled = True
+            term.title += translate(' [only previewable]',
+                                    domain='PloneMeeting',
+                                    context=context.REQUEST)
 
 
 class ItemDuplicationContainedAnnexesVocabulary(BaseContainedAnnexesVocabulary):
     """ """
 
-    def _check_disable_term(self, context, annex, categories_vocab, term):
-        # check if user able to keep this annex :
-        # - annex may not hold a scan_id
-        term.disabled = False
-        annex_obj = getattr(context, annex['id'])
-        if getattr(annex_obj, 'scan_id', None):
-            term.disabled = True
-            term.title += translate(' [holds scan_id]',
-                                    domain='PloneMeeting',
-                                    context=context.REQUEST)
-        # - annexType must be among current user selectable annex types
-        elif annex['category_uid'] not in categories_vocab:
-            term.disabled = True
-            term.title += translate(' [reserved MeetingManagers]',
-                                    domain='PloneMeeting',
-                                    context=context.REQUEST)
-        # annexType ask a PDF but the file is not a PDF
-        # could happen if configuration changed after creation of annex
-        elif get_category_object(annex_obj, annex_obj.content_category).only_pdf and \
-                annex_obj.file.contentType != 'application/pdf':
-            term.disabled = True
-            term.title += translate(' [PDF required]',
-                                    domain='PloneMeeting',
-                                    context=context.REQUEST)
+    def _check_disable_term(self, context, annex_info, categories_vocab, term):
+        super(ItemDuplicationContainedAnnexesVocabulary, self)._check_disable_term(
+            context, annex_info, categories_vocab, term)
+        if term.disabled is False:
+            # check if user able to keep this annex :
+            # - annex may not hold a scan_id
+            term.disabled = False
+            annex_obj = getattr(context, annex_info['id'])
+            if getattr(annex_obj, 'scan_id', None):
+                term.disabled = True
+                term.title += translate(' [holds scan_id]',
+                                        domain='PloneMeeting',
+                                        context=context.REQUEST)
+            # - annexType must be among current user selectable annex types
+            elif annex_info['category_uid'] not in categories_vocab:
+                term.disabled = True
+                term.title += translate(' [reserved MeetingManagers]',
+                                        domain='PloneMeeting',
+                                        context=context.REQUEST)
+            # annexType ask a PDF but the file is not a PDF
+            # could happen if configuration changed after creation of annex
+            elif get_category_object(annex_obj, annex_obj.content_category).only_pdf and \
+                    annex_obj.file.contentType != 'application/pdf':
+                term.disabled = True
+                term.title += translate(' [PDF required]',
+                                        domain='PloneMeeting',
+                                        context=context.REQUEST)
 
 
 ItemDuplicationContainedAnnexesVocabularyFactory = ItemDuplicationContainedAnnexesVocabulary()
@@ -3046,16 +3055,17 @@ ItemDuplicationContainedDecisionAnnexesVocabularyFactory = ItemDuplicationContai
 class ItemExportPDFElementsVocabulary(BaseContainedAnnexesVocabulary):
     """ """
 
-    def _check_disable_term(self, context, annex, categories_vocab, term):
-        # check if user able to export this annex :
-        # - annex must be PDF
-        term.disabled = False
-        annex_obj = getattr(context, annex['id'])
-        if annex_obj.file.contentType != 'application/pdf':
-            term.disabled = True
-            term.title += translate(' [PDF required]',
-                                    domain='PloneMeeting',
-                                    context=context.REQUEST)
+    def _check_disable_term(self, context, annex_info, categories_vocab, term):
+        super(ItemExportPDFElementsVocabulary, self)._check_disable_term(
+            context, annex_info, categories_vocab, term)
+        if term.disabled is False:
+            # check if user able to export this annex :
+            # - annex must be PDF
+            if annex_info['contentType'] != 'application/pdf':
+                term.disabled = True
+                term.title += translate(' [PDF required]',
+                                        domain='PloneMeeting',
+                                        context=context.REQUEST)
 
     def __call__(self, context):
         """ """
