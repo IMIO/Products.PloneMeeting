@@ -46,6 +46,10 @@ Changelog
 - Make sure annexes only previewable (not downloadable) are not selectable
   when duplicating an item, exporting it to PDF or exporting annexes to Zip.
   [gbastien]
+- Renamed `Migrator.updateItemFilters` to `Migrator.update_faceted_filters` and
+  `Migrator.cleanUsedItemAttributes` to `Migrator.update_used_attrs` and
+  manage `to_add/to_remove/to_replace` for each methods.
+  [gbastien]
 
 4.2.13 (2024-12-06)
 -------------------
