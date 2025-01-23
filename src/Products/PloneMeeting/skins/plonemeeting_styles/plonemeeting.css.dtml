@@ -767,6 +767,10 @@ input[readonly=""] {
     border-color: lightgrey !important;
     background-color: #F0F0F0;
 }
+/* as radio button is before value (and radio are sometimes after value), highlight selected value */
+form#item-encode-votes-form input:checked + span {
+    border-bottom: 1px dashed;
+}
 
 .adviceHiddenDuringRedactionEditable,
 .askAdviceAgainEditable {
@@ -2467,7 +2471,7 @@ input.int-field {
 }
 
 /* datagrid field for encoding votes */
-table#form-widgets-votes span.option {
+form#item-encode-votes-form table#form-widgets-votes span.option {
    display: inline;
 }
 
@@ -2502,6 +2506,10 @@ div#formfield-form-widgets-votes td.cell-3 {
    text-align: right;
    white-space: nowrap;
 }
+div#formfield-form-widgets-votes td.cell-3 span.label {
+   vertical-align: bottom;
+}
+
 table#form-widgets-votes td,
 table#form-widgets-votes th {
    padding: 0.35em;

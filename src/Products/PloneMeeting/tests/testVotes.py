@@ -502,7 +502,7 @@ class testVotes(PloneMeetingTestCase):
         hp4 = person4.get_held_positions()[0]
         hp4_uid = hp4.UID()
         self.request['PUBLISHED'] = public_item
-        votes_form = public_item.restrictedTraverse('@@item_encode_votes_form')
+        votes_form = public_item.restrictedTraverse('@@item-encode-votes-form')
         votes_form.meeting = meeting
         # change vote to all 'no'
         votes_form.votes = [{'voter_uid': hp1_uid, 'vote_value': 'no'},
@@ -546,7 +546,7 @@ class testVotes(PloneMeetingTestCase):
         person4 = self.portal.contacts.get('person4')
         hp4 = person4.get_held_positions()[0]
         hp4_uid = hp4.UID()
-        votes_form = public_item.restrictedTraverse('@@item_encode_votes_form')
+        votes_form = public_item.restrictedTraverse('@@item-encode-votes-form')
         votes_form.meeting = meeting
         # there are 'yes' votes so not able to link to previous
         self.assertEqual(public_item.get_vote_count(meeting, 'yes'), 2)
@@ -616,7 +616,7 @@ class testVotes(PloneMeetingTestCase):
     def _setUpSecretVoteForm(self, secret_item, meeting):
         """ """
         votes_form = secret_item.restrictedTraverse(
-            '@@item_encode_secret_votes_form')
+            '@@item-encode-secret-votes-form')
         self.request['PUBLISHED'] = secret_item
         votes_form.meeting = meeting
         votes_form.votes = [
@@ -645,7 +645,7 @@ class testVotes(PloneMeetingTestCase):
         hp4 = person4.get_held_positions()[0]
         hp4_uid = hp4.UID()
         votes_form = public_item.restrictedTraverse(
-            '@@item_encode_votes_form')
+            '@@item-encode-votes-form')
         votes_form.meeting = meeting
         # change vote to all 'no'
         votes_form.votes = [{'voter_uid': hp1_uid, 'vote_value': 'no'},
@@ -692,7 +692,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertFalse(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
 
         # make linked vote addable
-        votes_form = secret_item.restrictedTraverse('@@item_encode_secret_votes_form')
+        votes_form = secret_item.restrictedTraverse('@@item-encode-secret-votes-form')
         votes_form.meeting = meeting
         votes_form.votes = [
             {'vote_value': 'yes', 'vote_count': 0, 'vote_value_id': 'yes'},
@@ -934,7 +934,7 @@ class testVotes(PloneMeetingTestCase):
         rendered = view()
         # MeetingManager see and may manage
         self.assertTrue("Monsieur Person1FirstName Person1LastName, Assembly member 1" in rendered)
-        manage_vote_action = "item_encode_votes_form?vote_number:int=0"
+        manage_vote_action = "item-encode-votes-form?vote_number:int=0"
         manage_attendee_action = "item_byebye_attendee_form?person_uid="
         manage_signatory_action = "item_redefine_signatory_form?person_uid="
         self.assertTrue(manage_vote_action in rendered)
@@ -972,7 +972,7 @@ class testVotes(PloneMeetingTestCase):
         secret_item_votes = secret_item.get_item_votes()
         yes_secret_item_votes = yes_secret_item.get_item_votes()
         self.request['PUBLISHED'] = public_item
-        votes_form = public_item.restrictedTraverse('@@item_encode_votes_form')
+        votes_form = public_item.restrictedTraverse('@@item-encode-votes-form')
         self.request.form['vote_number'] = 0
         votes_form.meeting = public_item.getMeeting()
         votes_form.update()
@@ -1015,7 +1015,7 @@ class testVotes(PloneMeetingTestCase):
         meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
             self._createMeetingWithVotes()
         self.request['PUBLISHED'] = public_item
-        votes_form = public_item.restrictedTraverse('@@item_encode_votes_form')
+        votes_form = public_item.restrictedTraverse('@@item-encode-votes-form')
         self.request.form['vote_number'] = 0
         votes_form.meeting = public_item.getMeeting()
         votes_form.update()

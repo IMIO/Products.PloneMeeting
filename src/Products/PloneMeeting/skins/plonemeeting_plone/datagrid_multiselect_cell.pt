@@ -23,6 +23,7 @@
                             opt_label python:opt[1];
                             ">
                <tal:comment replace="nothing">XXX fixed values of checkboxes lost upon validation error, get value from request</tal:comment>
+               <tal:comment replace="nothing">XXX watch out! this does not work when a new empty row is added then form is saved</tal:comment>
                <input class="noborder" type="checkbox" value="1" id="" style="width: auto;"
                       tal:define="name string:${fieldName}.${column}.${opt_val}.${repeat/rows/number};"
                       tal:attributes="name name;

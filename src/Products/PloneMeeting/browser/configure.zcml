@@ -549,13 +549,13 @@
      <browser:page
        for="Products.PloneMeeting.interfaces.IMeetingItem"
        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-       name="item_encode_votes_form"
+       name="item-encode-votes-form"
        class=".itemvotes.EncodeVotesForm"
        permission="zope2.View" />
      <browser:page
        for="Products.PloneMeeting.interfaces.IMeetingItem"
        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-       name="item_encode_secret_votes_form"
+       name="item-encode-secret-votes-form"
        class=".itemvotes.EncodeSecretVotesForm"
        permission="zope2.View" />
    <browser:view

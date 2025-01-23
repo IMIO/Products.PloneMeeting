@@ -50,6 +50,11 @@ Changelog
   `Migrator.cleanUsedItemAttributes` to `Migrator.update_used_attrs` and
   manage `to_add/to_remove/to_replace` for each methods.
   [gbastien]
+- In the votes editing form, highlight the value selected by the radio button
+  as in some application the radio button is before or after the value.
+  Renamed forms `item_encode_votes_form` to `item-encode-votes-form` and
+  `item_encode_secret_votes_form` to `item-encode-secret-votes-form`.
+  [gbastien]
 
 4.2.13 (2024-12-06)
 -------------------

@@ -75,7 +75,7 @@ function manageAttendees() {
                 },
               onClose : function (e) {
                 selector = '.attendee-value';
-                if (e.target.innerHTML.includes('item_encode_votes_form')) {
+                if (e.target.innerHTML.includes('item-encode-votes-form')) {
                   selector = '.vote-value';
                 }
                 else if (e.target.innerHTML.includes('_attendee_form')) {
