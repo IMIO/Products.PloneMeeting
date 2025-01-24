@@ -10,10 +10,12 @@ from imio.pyutils.utils import replace_in_list
 from plone import api
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import MEETING_REMOVE_MOG_WFA
 from Products.PloneMeeting.utils import updateCollectionCriterion
+from zope.i18n import translate
 
 
 # states of the meeting from which an item can be 'returned_to_proposing_group'
@@ -459,12 +461,32 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
 
         # create transitions, between new state and last_returned_state_id
         # when coming back from base_state_id
-        transition_id = 'backTo_%s_from_%s' % (last_returned_state_id, new_state_id)
+        transition_id = 'backTo_%s' % last_returned_state_id
+        leading_state_id = last_returned_state_id.replace('returned_to_proposing_group_', '')
+        leading_state_title = safe_unicode(wf.states[leading_state_id].title)
+
         wf.transitions.addTransition(transition_id)
         transition = wf.transitions[transition_id]
+        # manage translation of transition title when using validations
+        if transition_id == "backTo_returned_to_proposing_group":
+            # stored as utf-8
+            transition_title = translate(
+                'back_to_returned_to_proposing_group',
+                domain="plone",
+                context=meetingConfig.REQUEST).encode('utf-8')
+        else:
+            # stored as utf-8
+            transition_title = translate(
+                'back_to_returned_to_proposing_group_with_validation_state',
+                domain="plone",
+                mapping={"validation_state":
+                    translate(leading_state_title,
+                              domain='plone',
+                              context=meetingConfig.REQUEST), },
+                context=meetingConfig.REQUEST).encode('utf-8')
         image_url = '%(portal_url)s/{0}.png'.format(transition_id)
         transition.setProperties(
-            title=transition_id,
+            title=transition_title,
             new_state_id=last_returned_state_id, trigger_type=1, script_name='',
             actbox_name=transition_id, actbox_url='',
             actbox_icon=image_url, actbox_category='workflow',
@@ -485,9 +507,11 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         transition_id = 'goTo_%s' % (new_state_id)
         wf.transitions.addTransition(transition_id)
         transition = wf.transitions[transition_id]
+        transition_title = meetingConfig.getItemWFValidationLevels(
+            states=[base_state_id])['leading_transition_title']
         image_url = '%(portal_url)s/{0}.png'.format(transition_id)
         transition.setProperties(
-            title=transition_id,
+            title=transition_title,
             new_state_id=new_state_id, trigger_type=1, script_name='',
             actbox_name=transition_id, actbox_url='',
             actbox_icon=image_url, actbox_category='workflow',
@@ -496,15 +520,25 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 '.mayProposeToNextValidationLevel(destinationState="{0}")'.format(
                     transition_id.replace('goTo_returned_to_proposing_group_', ''))})
 
-        wf.states[last_returned_state_id].setProperties(
-            title=last_returned_state_id, description='',
-            transitions=wf.states[last_returned_state_id].transitions + (transition_id, ))
+        wf.states[last_returned_state_id].transitions = \
+            wf.states[last_returned_state_id].transitions + (transition_id, )
 
         # use same permissions as used by the base_state
         base_state = wf.states[base_state_id]
+        leading_state_id = new_state_id.replace('returned_to_proposing_group_', '')
+        leading_state_title = safe_unicode(wf.states[leading_state_id].title)
+        new_state_title = translate(
+            'returned_to_proposing_group_with_validation_state',
+            domain="plone",
+            mapping={"validation_state":
+                translate(leading_state_title,
+                          domain='plone',
+                          context=meetingConfig.REQUEST), },
+            context=meetingConfig.REQUEST).encode('utf-8')
         new_state = wf.states[new_state_id]
         cloned_permissions = dict(base_state.permission_roles)
         new_state.permission_roles = cloned_permissions
+        new_state.title = new_state_title
 
     def _apply_return_to_proposing_group(whichValidation=None):
         """Helper method to apply the 'return_to_proposing_group' or
@@ -514,12 +548,12 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         """
         if 'returned_to_proposing_group' not in itemWorkflow.states:
             itemWorkflow.states.addState('returned_to_proposing_group')
-            newState = getattr(itemWorkflow.states, 'returned_to_proposing_group')
+            new_state = getattr(itemWorkflow.states, 'returned_to_proposing_group')
             stateToClone = get_base_item_validation_state()
             # remove DeleteObjects permission
             cloned_permissions = dict(stateToClone.permission_roles)
             cloned_permissions[DeleteObjects] = ('Manager', )
-            newState.permission_roles = cloned_permissions
+            new_state.permission_roles = cloned_permissions
 
             # now create the necessary transitions : one to go to 'returned_to_proposing_group' state
             # and x to go back to relevant state depending on current meeting state
@@ -555,8 +589,12 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                     props={'guard_expr': 'python:here.wfConditions().mayBackToMeeting("%s")' % transitionName})
                 # now that we created back transitions, we can assign them to newState 'returned_to_proposing_group'
                 # set properties for new 'returned_to_proposing_group' state
-            newState.setProperties(
-                title='returned_to_proposing_group', description='',
+            new_state_title = translate(
+                'returned_to_proposing_group',
+                domain="plone",
+                context=meetingConfig.REQUEST).encode('utf-8')
+            new_state.setProperties(
+                title=new_state_title, description='',
                 transitions=newTransitionNames)
 
         # keep validation returned states

@@ -5,8 +5,8 @@ Changelog
 4.2.14 (unreleased)
 -------------------
 
-- Fixed an issue when `MeetingItem.proposingGroupWithGroupInCharge` is used in a `MeetingConfig`
-  but not in another one when an item is sent to it.
+- Fixed an issue when `MeetingItem.proposingGroupWithGroupInCharge` is used in a
+  `MeetingConfig` but not in another one when an item is sent to it.
   [aduchene]
 - Prevent to unselect an organization in plonegroup that
   is used by `MeetingConfig.usingGroups`.
@@ -54,6 +54,9 @@ Changelog
   as in some application the radio button is before or after the value.
   Renamed forms `item_encode_votes_form` to `item-encode-votes-form` and
   `item_encode_secret_votes_form` to `item-encode-secret-votes-form`.
+  [gbastien]
+- Make `return_to_proposing_group` with validations more standalone by
+  generating everything based on the `MeetingConfig.itemWFValidationLevels`.
   [gbastien]
 
 4.2.13 (2024-12-06)
