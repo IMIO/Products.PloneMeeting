@@ -16,6 +16,10 @@ function adviceAddEdit() {
                 this.advice_url = $("[rel='#" + rel_num + "']").attr('href');
                 return true;
             },
+            onBeforeClose : function (e) {
+                // avoid closing overlay when click outside overlay
+                if (e.target.id == "exposeMask") {return false;}
+            },
             onClose : function (e) {
                 // make sure CKeditor instances are destroyed because
                 // it can not be initialized twice
@@ -73,27 +77,30 @@ function manageAttendees() {
                   submitFormHelper(this.form, onsuccess=onsuccessManageAttendees);
                   return true;
                 },
-              onClose : function (e) {
-                selector = '.attendee-value';
-                if (e.target.innerHTML.includes('item-encode-votes-form')) {
-                  selector = '.vote-value';
-                }
-                else if (e.target.innerHTML.includes('_attendee_form')) {
-                  selector = '.attendee-assembly';
-                }
-                else if (e.target.innerHTML.includes('_signatory_form')) {
-                  selector = '.attendee-signatory';
-                }
-                else if (e.target.innerHTML.includes('_nonattendee_form')) {
-                  selector = '.attendee-nonattendee';
-                }
-                highlight_attendees(selector);
+                onBeforeClose : function (e) {
+                    // avoid closing overlay when click outside overlay
+                    if (e.target.id == "exposeMask") {return false;}
+                },
+                onClose : function (e) {
+                    selector = '.attendee-value';
+                    if (e.target.innerHTML.includes('item-encode-votes-form')) {
+                      selector = '.vote-value';
+                    }
+                    else if (e.target.innerHTML.includes('_attendee_form')) {
+                      selector = '.attendee-assembly';
+                    }
+                    else if (e.target.innerHTML.includes('_signatory_form')) {
+                      selector = '.attendee-signatory';
+                    }
+                    else if (e.target.innerHTML.includes('_nonattendee_form')) {
+                      selector = '.attendee-nonattendee';
+                    }
+                    highlight_attendees(selector);
 
-                // reload votesResult
-                if (e.target.innerHTML.includes('_votes_form')) {
-                  reloadVotesResult();
-                }
-
+                    // reload votesResult
+                    if (e.target.innerHTML.includes('_votes_form')) {
+                      reloadVotesResult();
+                    }
               },
             }
        });
