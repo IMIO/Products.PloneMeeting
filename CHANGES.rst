@@ -55,6 +55,9 @@ Changelog
   Renamed forms `item_encode_votes_form` to `item-encode-votes-form` and
   `item_encode_secret_votes_form` to `item-encode-secret-votes-form`.
   [gbastien]
+- Prevent closing overlays when clicking outside it if it contains a form
+  so we avoid losing encoded data if user clicked outside by mistake.
+  [gbastien]
 - Make `return_to_proposing_group` with validations more standalone by
   generating everything based on the `MeetingConfig.itemWFValidationLevels`.
   [gbastien]

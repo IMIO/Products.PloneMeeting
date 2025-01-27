@@ -1716,12 +1716,25 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._return_to_proposing_group_active_from_item_states()
 
     def _process_transition_for_correcting_item(self, item, all):
-        # all parameter if for custom profiles
-        if all:
-            # do custom WF steps
-            pass
         self.changeUser('pmCreator1')
         self.do(item, 'goTo_returned_to_proposing_group_proposed')
+        if all:
+            self.changeUser('pmReviewerLevel1')
+            self.assertEqual(self.transitions(item),
+                             ['backTo_returned_to_proposing_group',
+                              'goTo_returned_to_proposing_group_prevalidated'])
+            self.do(item, 'goTo_returned_to_proposing_group_prevalidated')
+            # check back transitions
+            self.changeUser('pmReviewer1')
+            self.assertEqual(self.transitions(item),
+                             ['backTo_presented_from_returned_to_proposing_group',
+                              'backTo_returned_to_proposing_group_proposed'])
+        else:
+            # check back transitions
+            self.changeUser('pmReviewer1')
+            self.assertEqual(self.transitions(item),
+                             ['backTo_presented_from_returned_to_proposing_group',
+                              'backTo_returned_to_proposing_group'])
 
     def _return_to_proposing_group_with_validation_active_wf_functionality(self, all=True):
         '''Tests the workflow functionality of using the
@@ -1773,8 +1786,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         # on the meeting state.  Here, when meeting is 'created', the item is back to 'presented'
         self.do(item, 'backTo_presented_from_returned_to_proposing_group')
         self.assertEqual(item.query_state(), 'presented')
-        # send the item back to proposing group, freeze the meeting then send the item back to the meeting
-        # the item should be now in the item state corresponding to the meeting frozen state, so 'itemfrozen'
+        # send the item back to proposing group, freeze the meeting then send
+        # the item back to the meeting the item should be now in the item state
+        # corresponding to the meeting frozen state, so 'itemfrozen'
         self.do(item, 'return_to_proposing_group')
         self._process_transition_for_correcting_item(item, all)
         self.changeUser('pmManager')
@@ -1800,6 +1814,11 @@ class testWFAdaptations(PloneMeetingTestCase):
         # ease override by subproducts
         if not self._check_wfa_available(['return_to_proposing_group_with_all_validations']):
             return
+        # make sure we use default itemWFValidationLevels,
+        # useful when test executed with custom profile
+        cfg = self.meetingConfig
+        self._setUpDefaultItemWFValidationLevels(cfg)
+        self._enablePrevalidation(cfg)
         # activate the wfAdaptation and check
         self._activate_wfas(('return_to_proposing_group_with_all_validations', ))
         # test what should happen to the wf (added states and transitions)
