@@ -974,6 +974,8 @@ class testWFAdaptations(PloneMeetingTestCase):
             self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation',)))
         self._process_transition_for_correcting_item(item, True)
         self.assertEqual(item.query_state(), returned_to_proposing_group_last_state)
+        # check that pretty_link is displayed correctly
+        self.assertTrue(item.getPrettyLink())
         self.assertEqual(
             cfg.validate_workflowAdaptations(()),
             return_to_proposing_group_removed_error)
@@ -1771,6 +1773,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.failUnless(self.hasPermission(ModifyPortalContent, item))
         # Now send item to the reviewer
         self._process_transition_for_correcting_item(item, all)
+        # check that pretty_link is displayed correctly
+        self.assertTrue(item.getPrettyLink())
         # the item creator may not be able to modify the item
         self.changeUser('pmCreator1')
         self.failIf(self.hasPermission(ModifyPortalContent, item))
@@ -1791,6 +1795,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         # corresponding to the meeting frozen state, so 'itemfrozen'
         self.do(item, 'return_to_proposing_group')
         self._process_transition_for_correcting_item(item, all)
+        # check that pretty_link is displayed correctly
+        self.assertTrue(item.getPrettyLink())
         self.changeUser('pmManager')
         self.freezeMeeting(meeting)
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
