@@ -426,11 +426,11 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             level = self.cfg.getItemWFValidationLevels(states=[validation_state])
             res.append(
                 ('goTo_{0}.png'.format(self.itemState),
-                 translate('icon_help_returned_to_proposing_group_with_validation_state',
-                           domain="PloneMeeting",
+                 translate('returned_to_proposing_group_with_validation_state',
+                           domain="plone",
                            mapping={"validation_state":
                                     translate(
-                                        level['state_title'],
+                                        safe_unicode(level['state_title']),
                                         domain='plone',
                                         context=self.request), },
                            context=self.request)))
