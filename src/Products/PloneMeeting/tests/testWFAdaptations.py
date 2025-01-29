@@ -1720,6 +1720,9 @@ class testWFAdaptations(PloneMeetingTestCase):
     def _process_transition_for_correcting_item(self, item, all):
         self.changeUser('pmCreator1')
         self.do(item, 'goTo_returned_to_proposing_group_proposed')
+        back_to_meeting_tr_id = "backTo_presented_from_returned_to_proposing_group"
+        if item.getMeeting().query_state() == "frozen":
+            back_to_meeting_tr_id = "backTo_itemfrozen_from_returned_to_proposing_group"
         if all:
             self.changeUser('pmReviewerLevel1')
             self.assertEqual(self.transitions(item),
@@ -1729,13 +1732,13 @@ class testWFAdaptations(PloneMeetingTestCase):
             # check back transitions
             self.changeUser('pmReviewer1')
             self.assertEqual(self.transitions(item),
-                             ['backTo_presented_from_returned_to_proposing_group',
+                             [back_to_meeting_tr_id,
                               'backTo_returned_to_proposing_group_proposed'])
         else:
             # check back transitions
             self.changeUser('pmReviewer1')
             self.assertEqual(self.transitions(item),
-                             ['backTo_presented_from_returned_to_proposing_group',
+                             [back_to_meeting_tr_id,
                               'backTo_returned_to_proposing_group'])
 
     def _return_to_proposing_group_with_validation_active_wf_functionality(self, all=True):
