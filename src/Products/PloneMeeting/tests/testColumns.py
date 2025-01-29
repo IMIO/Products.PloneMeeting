@@ -249,6 +249,7 @@ class testColumns(PloneMeetingTestCase):
     def test_pm_ReviewStateTitleColumn(self):
         """Will display review_state title by getting the title used
            in the workflow object."""
+        item_wf = self.meetingConfig.getItemWorkflow(True)
         self._enable_column('review_state_title')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -257,7 +258,7 @@ class testColumns(PloneMeetingTestCase):
         faceted_table.initColumns()
         column = faceted_table.columnByName['review_state_title']
         item_brain = self.catalog(UID=item.UID())[0]
-        self.assertEqual(column.renderCell(item_brain), u'Created')
+        self.assertEqual(column.renderCell(item_brain), item_wf['itemcreated'].title)
         item_wf = self.meetingConfig.getItemWorkflow(True)
         item_wf.states['itemcreated'].title = 'proposed'
         self.assertEqual(column.renderCell(item_brain), u'Proposed')

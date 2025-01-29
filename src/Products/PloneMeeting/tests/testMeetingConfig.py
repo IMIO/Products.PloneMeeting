@@ -2095,7 +2095,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # itemcreated level is mandatory
         proposed_state = cfg.getItemWorkflow(True).states[self._stateMappingFor('proposed')]
         proposed_state_id = proposed_state.getId()
-        translated_proposed_state = translate(proposed_state.title, domain="plone")
+        translated_proposed_state = translate(safe_unicode(proposed_state.title), domain="plone")
         level_removed_config_error = \
             translate('state_or_transition_can_not_be_removed_in_use_config',
                       mapping={'state_or_transition': translated_proposed_state,
