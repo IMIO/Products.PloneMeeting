@@ -10,12 +10,14 @@ from collective.iconifiedcategory.config import get_sort_categorized_tab
 from collective.iconifiedcategory.config import set_sort_categorized_tab
 from collective.iconifiedcategory.utils import get_categorized_elements
 from imio.helpers.cache import cleanRamCacheFor
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.columns import ItemLinkedMeetingColumn
 from Products.PloneMeeting.columns import PMAnnexActionsColumn
 from Products.PloneMeeting.columns import PMPrettyLinkColumn
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from zope.i18n import translate
 
 
 class testColumns(PloneMeetingTestCase):
@@ -249,7 +251,8 @@ class testColumns(PloneMeetingTestCase):
     def test_pm_ReviewStateTitleColumn(self):
         """Will display review_state title by getting the title used
            in the workflow object."""
-        item_wf = self.meetingConfig.getItemWorkflow(True)
+        cfg = self.meetingConfig
+        item_wf = cfg.getItemWorkflow(True)
         self._enable_column('review_state_title')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -258,8 +261,9 @@ class testColumns(PloneMeetingTestCase):
         faceted_table.initColumns()
         column = faceted_table.columnByName['review_state_title']
         item_brain = self.catalog(UID=item.UID())[0]
-        self.assertEqual(column.renderCell(item_brain), item_wf['itemcreated'].title)
-        item_wf = self.meetingConfig.getItemWorkflow(True)
+        self.assertEqual(column.renderCell(item_brain),
+                         translate(safe_unicode(item_wf.states['itemcreated'].title),
+                                   domain="plone", context=self.request))
         item_wf.states['itemcreated'].title = 'proposed'
         self.assertEqual(column.renderCell(item_brain), u'Proposed')
 

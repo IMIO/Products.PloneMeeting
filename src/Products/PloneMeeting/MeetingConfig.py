@@ -4774,14 +4774,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             crossed_transitions = [v for v in values
                                    for r in removed_or_disabled_transitions if r in v]
             if crossed_states or crossed_transitions:
-                every_crossed = crossed_states + crossed_transitions
+                if crossed_states:
+                    # manage values like MeetingItem.proposed
+                    state_or_transition_title = \
+                        self.getItemWorkflow(True).states[crossed_states[0].split('.')[-1]].title
+                else:
+                    # manage values like MeetingItem.propose
+                    state_or_transition_title = \
+                        self.getItemWorkflow(True).transitions[crossed_transitions[0].split('.')[-1]].title
                 return translate(
                     'state_or_transition_can_not_be_removed_in_use_config',
                     domain='PloneMeeting',
                     mapping={
                         'state_or_transition': translate(
-                            # manage values like MeetingItem.proposed
-                            every_crossed[0].split('.')[-1],
+                            state_or_transition_title,
                             domain="plone",
                             context=self.REQUEST),
                         'cfg_field_name': translate(

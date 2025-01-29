@@ -950,6 +950,11 @@ class testWFAdaptations(PloneMeetingTestCase):
         if not self._check_wfa_available(['return_to_proposing_group_with_all_validations']):
             return
 
+        # make sure we use default itemWFValidationLevels,
+        # useful when test executed with custom profile
+        self._setUpDefaultItemWFValidationLevels(cfg)
+        self._enablePrevalidation(cfg)
+
         return_to_proposing_group_removed_error = translate(
             'wa_removed_return_to_proposing_group_with_all_validations_error',
             domain='PloneMeeting',
@@ -965,7 +970,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'return_to_proposing_group')
         self.assertEqual(item.query_state(), 'returned_to_proposing_group')
         self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_all_validations',)))
-        returned_to_proposing_group_last_state = 'returned_to_proposing_group_' + self._stateMappingFor('proposed')
+        returned_to_proposing_group_last_state = 'returned_to_proposing_group_' + self._stateMappingFor('prevalidated')
 
         if self._check_wfa_available(['return_to_proposing_group']):
             self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group', )))

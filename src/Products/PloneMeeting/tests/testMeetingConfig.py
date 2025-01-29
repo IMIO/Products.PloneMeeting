@@ -2073,7 +2073,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
         self._enableItemValidationLevel(cfg, level=proposed_state)
         proposed_state = cfg.getItemWorkflow(True).states[proposed_state]
-        translated_proposed_state = translate(proposed_state.title, domain="plone")
+        translated_proposed_state = translate(
+            safe_unicode(proposed_state.title), domain="plone")
         level_removed_error = \
             translate(
                 'item_wf_val_states_can_not_be_removed_in_use',
