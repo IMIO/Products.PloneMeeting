@@ -4770,24 +4770,32 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 if values and hasattr(values[0], "__iter__"):
                     values = itertools.chain.from_iterable(values)
             crossed_states = [v for v in values
-                              for r in removed_or_disabled_states if r in v]
+                              for r in removed_or_disabled_states
+                              if r in v]
             crossed_transitions = [v for v in values
-                                   for r in removed_or_disabled_transitions if r in v]
+                                   for r in removed_or_disabled_transitions
+                                   if r in v]
             if crossed_states or crossed_transitions:
+                crossed_value = (crossed_states + crossed_transitions)[0]
+                if attr in cfg_item_wf_attrs and not crossed_value.startswith("Meeting."):
+                    wf = self.getItemWorkflow(True)
+                else:
+                    wf = self.getMeetingWorkflow(True)
+                # manage values like MeetingItem.proposed
+                crossed_value = crossed_value.split(".")[-1]
                 if crossed_states:
-                    # manage values like MeetingItem.proposed
                     state_or_transition_title = \
-                        self.getItemWorkflow(True).states[crossed_states[0].split('.')[-1]].title
+                        wf.states[crossed_value].title
                 else:
                     # manage values like MeetingItem.propose
                     state_or_transition_title = \
-                        self.getItemWorkflow(True).transitions[crossed_transitions[0].split('.')[-1]].title
+                        wf.transitions[crossed_value].title
                 return translate(
                     'state_or_transition_can_not_be_removed_in_use_config',
                     domain='PloneMeeting',
                     mapping={
                         'state_or_transition': translate(
-                            state_or_transition_title,
+                            safe_unicode(state_or_transition_title),
                             domain="plone",
                             context=self.REQUEST),
                         'cfg_field_name': translate(
