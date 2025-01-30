@@ -4784,8 +4784,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # manage values like MeetingItem.proposed
                 crossed_value = crossed_value.split(".")[-1]
                 if crossed_states:
-                    state_or_transition_title = \
-                        wf.states[crossed_value].title
+                    state_or_transition_title = wf.states[crossed_value].title
                 else:
                     # manage values like MeetingItem.propose
                     state_or_transition_title = \
@@ -4804,7 +4803,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                             context=self.REQUEST)},
                     context=self.REQUEST)
         # special check for MeetingConfig.meetingConfigsToCloneTo, current removed
-        # transition could used in another cfg
+        # transition could be used in another cfg
         cfg_id = self.getId()
         tool = api.portal.get_tool('portal_plonemeeting')
         for other_cfg in tool.objectValues('MeetingConfig'):
@@ -4819,12 +4818,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 v['trigger_workflow_transitions_until'].split('.')[1]
                 in removed_or_disabled_transitions]
             if values:
+                wf = other_cfg.getItemWorkflow(True)
+                transition_title = wf.transitions[values[0]].title
                 return translate(
                     'state_or_transition_can_not_be_removed_in_use_other_config',
                     domain='PloneMeeting',
                     mapping={
                         'transition': translate(
-                            values[0],
+                            transition_title,
                             domain="plone",
                             context=self.REQUEST),
                         'parameter_label': translate(
@@ -5191,9 +5192,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 portal_type=self.getItemTypeName(), review_state=item_contained_states)
             if brains:
                 aBrain = brains[0]
+                item_state_title = item_states[aBrain.review_state].title
                 return translate('item_wf_val_states_can_not_be_removed_in_use',
                                  domain='PloneMeeting',
-                                 mapping={'item_state': translate(aBrain.review_state,
+                                 mapping={'item_state': translate(item_state_title,
                                                                   domain="plone",
                                                                   context=self.REQUEST),
                                           'item_url': aBrain.getURL()},
