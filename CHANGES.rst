@@ -5,8 +5,11 @@ Changelog
 4.2.15 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Optimized `Meeting._update_using_groups_local_roles` that may be called on
+  every existing meetings when saving several organizations in parameter
+  `MeetingConfig.usingGroups`.
+  This leaded to several minutes to save the `MeetingConfig`.
+  [gbastien]
 
 4.2.14 (2025-02-03)
 -------------------
