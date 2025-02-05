@@ -16,6 +16,10 @@ Changelog
 - For `Delete whole meeting` confirm dialog message,
   use specific message `plonemeeting_delete_meeting_confirm_message`.
   [gbastien]
+- In `PloneGroupSettingsOrganizationsValidator` display full `MeetingConfig`
+  title (including `configGroup` label) in case several `MeetingConfigs` with
+  same title exist in different config groups.
+  [gbastien]
 
 4.2.14 (2025-02-03)
 -------------------
