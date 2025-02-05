@@ -6416,20 +6416,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             actionId = self._getCloneToOtherMCActionId(configId, self.getId())
             urlExpr = "string:javascript:callViewAndReload(base_url='${object_url}', " \
                 "view_name='doCloneToOtherMeetingConfig', " \
-                "params={'destMeetingConfigId': '%s'});" % configId
-            availExpr = 'python: object.meta_type == "MeetingItem" and ' \
-                        'object.adapted().mayCloneToOtherMeetingConfig("%s")' \
-                        % configId
+                "params={'destMeetingConfigId': '%s'}, force_faceted=false, " \
+                "onsuccess=null, ask_confirm=true);" % configId
+            availExpr = 'python: object.adapted().mayCloneToOtherMeetingConfig("%s")' \
+                % configId
             destConfig = tool.get(configId)
             actionName = self._getCloneToOtherMCActionTitle(destConfig.Title())
-            item_portal_type.addAction(id=actionId,
-                                       name=actionName,
-                                       category='object_buttons',
-                                       action=urlExpr,
-                                       icon_expr='string:${portal_url}/clone_to_other_mc.png',
-                                       condition=availExpr,
-                                       permission=(View,),
-                                       visible=True)
+            item_portal_type.addAction(
+                id=actionId,
+                name=actionName,
+                category='object_buttons',
+                action=urlExpr,
+                icon_expr='string:${portal_url}/clone_to_other_mc.png',
+                condition=availExpr,
+                permission=(View,),
+                visible=True)
 
     security.declarePrivate('updateIsDefaultFields')
 

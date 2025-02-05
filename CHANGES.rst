@@ -10,6 +10,9 @@ Changelog
   `MeetingConfig.usingGroups`.
   This leaded to several minutes to save the `MeetingConfig`.
   [gbastien]
+- Added confirmation dialog when clicking on `Send to other MeetingConfig`
+  button as this will send the item to another `MeetingConfig` immediately.
+  [gbastien]
 
 4.2.14 (2025-02-03)
 -------------------
