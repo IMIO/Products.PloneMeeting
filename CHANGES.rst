@@ -13,6 +13,9 @@ Changelog
 - Added confirmation dialog when clicking on `Send to other MeetingConfig`
   button as this will send the item to another `MeetingConfig` immediately.
   [gbastien]
+- For `Delete whole meeting` confirm dialog message,
+  use specific message `plonemeeting_delete_meeting_confirm_message`.
+  [gbastien]
 
 4.2.14 (2025-02-03)
 -------------------
