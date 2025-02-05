@@ -2276,7 +2276,8 @@ class Meeting(Container):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         for org_uid in cfg.getUsingGroups():
-            for plone_group_id in get_plone_groups(org_uid, ids_only=True):
+            for plone_group_id in get_plone_groups(
+                    org_uid, ids_only=True, verify_group_exist=False):
                 self.manage_addLocalRoles(plone_group_id, ('Reader', ))
 
     security.declarePublic('wfConditions')

@@ -998,6 +998,35 @@ class testPerformances(PloneMeetingTestCase):
                        'item with "{1}" vote(s)'.format(public, votes))
         item.restrictedTraverse('@@load_item_assembly_and_signatures')()
 
+    def test_pm_Speed_MeetingConfigEdit(self):
+        """Check editing a MeetingConfig, especially when using
+           MeetingConfig.usingGroups as this will update every existing
+           meetings and add local roles of selected usingGroups."""
+        self.changeUser("siteadmin")
+        cfg = self.meetingConfig
+        # create 100 groups
+        org_uids = []
+        pm_logger.info('Creating 100 organizations...')
+        for i in range(100):
+            org = self.create('organization', id=i, title='Org %d' % i)
+            org_uid = org.UID()
+            self._select_organization(org_uid)
+            org_uids.append(org_uid)
+        pm_logger.info('Done.')
+        cfg.setUsingGroups(org_uids)
+        # create 250 meetings
+        pm_logger.info('Creating 100 meetings...')
+        for i in range(100):
+            self.create('Meeting', date=datetime.now() + timedelta(i + 1))
+        pm_logger.info('Done.')
+        self._check_meeting_config_edit()
+
+    @timecall
+    def _check_meeting_config_edit(self):
+        ''' '''
+        pm_logger.info('Save MeetingConfig')
+        notify(ObjectEditedEvent(self.meetingConfig))
+
 
 def test_suite():
     from unittest import makeSuite
