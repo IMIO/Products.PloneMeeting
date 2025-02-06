@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.15 (unreleased)
+4.2.15 (2025-02-06)
 -------------------
 
 - Optimized `Meeting._update_using_groups_local_roles` that may be called on
