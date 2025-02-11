@@ -5,8 +5,9 @@ Changelog
 4.2.16 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Fixed `@@json_collections_count` caching invalidation for collections using
+  a criterion refering to current connected user.
+  [gbastien]
 
 4.2.15 (2025-02-06)
 -------------------
