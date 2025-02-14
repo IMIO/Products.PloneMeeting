@@ -939,6 +939,7 @@ table.listing th.th_header_itemIsSigned,
 table.listing th.th_header_toDiscuss,
 table.listing th.th_header_getItemIsSigned,
 table.listing th.th_header_proposing_group_acronym,
+table.listing th.th_header_committees_index_acronym,
 table.listing th.th_header_groups_in_charge_acronym,
 table.listing th.th_header_associated_groups_acronym,
 .pm_meeting_listing_th_checkBoxes {
