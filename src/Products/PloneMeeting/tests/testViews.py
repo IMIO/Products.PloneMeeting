@@ -33,6 +33,7 @@ from Products.Five import zcml
 from Products.PloneMeeting.browser.views import SEVERAL_SAME_BARCODE_ERROR
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
+from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.content.meeting import PLACE_OTHER
 from Products.PloneMeeting.etags import ConfigModified
 from Products.PloneMeeting.etags import ContextModified
@@ -1986,6 +1987,57 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(item2.getCopyGroups(), (self.vendors_reviewers, ))
         # adapted elements were reindexed
         self.assertTrue(self.catalog(getCopyGroups=self.vendors_reviewers, UID=item1_uid))
+
+    def test_pm_UpdateCommitteesBatchActionForm(self):
+        """This will update copyGroups for selected items."""
+        cfg = self.meetingConfig
+        self._enableField("committees", related_to="Meeting")
+        # only available to MeetingManagers
+        self.changeUser('pmCreator1')
+        searches_items = self.getMeetingFolder().searches_items
+        self.assertFalse(searches_items.unrestrictedTraverse(
+            '@@update-committees-batch-action').available())
+        self.changeUser('pmManager')
+        searches_items = self.getMeetingFolder().searches_items
+        self.assertTrue(searches_items.unrestrictedTraverse(
+            '@@update-committees-batch-action').available())
+        cfg_committees = cfg.getCommittees()
+        com1_id = cfg_committees[0]['row_id']
+        com2_id = cfg_committees[1]['row_id']
+        com3_id = cfg_committees[2]['row_id']
+        # create 3 items
+        item1 = self.create('MeetingItem', committees=[com1_id])
+        item1_uid = item1.UID()
+        item2 = self.create('MeetingItem', committees=[com2_id])
+        item2_uid = item2.UID()
+        item3 = self.create('MeetingItem', committees=[NO_COMMITTEE])
+        item3_uid = item3.UID()
+        self.request.form['form.widgets.uids'] = ','.join([item1_uid, item2_uid, item3_uid])
+        form = searches_items.restrictedTraverse('@@update-committees-batch-action')
+        form.update()
+        # try to add NO_COMMITTEE, nothing changed as can not be selected in addition with another
+        self.request['form.widgets.action_choice'] = 'add'
+        self.request['form.widgets.added_values'] = [NO_COMMITTEE]
+        form.handleApply(form, None)
+        self.assertEqual(item1.getCommittees(), (com1_id, ))
+        self.assertEqual(item2.getCommittees(), (com2_id, ))
+        self.assertEqual(item3.getCommittees(), (NO_COMMITTEE, ))
+        # add com3_id, will be added in addition to com1_id and com2_id
+        # but not NO_COMMITTEE that must be alone
+        self.request['form.widgets.added_values'] = [com3_id]
+        form.handleApply(form, None)
+        self.assertEqual(item1.getCommittees(), (com1_id, com3_id))
+        self.assertEqual(item2.getCommittees(), (com2_id, com3_id))
+        self.assertEqual(item3.getCommittees(), (NO_COMMITTEE, ))
+        # required so last value can not be removed
+        self.request['form.widgets.action_choice'] = 'remove'
+        self.request['form.widgets.added_values'] = [NO_COMMITTEE]
+        form.handleApply(form, None)
+        self.assertEqual(item3.getCommittees(), (NO_COMMITTEE, ))
+        # remove com1_id
+        self.request['form.widgets.removed_values'] = [com1_id]
+        form.handleApply(form, None)
+        self.assertEqual(item1.getCommittees(), (com3_id, ))
 
     def test_pm_DownloadAnnexesActionForm(self):
         """This batch action will download annexes as a zip file."""
