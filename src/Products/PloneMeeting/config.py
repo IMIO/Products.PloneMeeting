@@ -277,6 +277,7 @@ ADVICE_TYPES = [
     'positive',
     'positive_with_comments',
     'positive_with_remarks',
+    'positive_after_modification',
     'cautious',
     'negative',
     'negative_with_remarks',

@@ -8,6 +8,8 @@ Changelog
 - Fixed `@@json_collections_count` caching invalidation for collections using
   a criterion refering to current connected user.
   [gbastien]
+- Added new advice type `Positive after modification`.
+  [gbastien]
 
 4.2.15 (2025-02-06)
 -------------------
