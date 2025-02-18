@@ -1991,7 +1991,20 @@ class testViews(PloneMeetingTestCase):
     def test_pm_UpdateCommitteesBatchActionForm(self):
         """This will update copyGroups for selected items."""
         cfg = self.meetingConfig
+        cfg_id = cfg.getId()
         self._enableField("committees", related_to="Meeting")
+        cfg_committees = cfg.getCommittees()
+        com1_id = cfg_committees[0]['row_id']
+        com2_id = cfg_committees[1]['row_id']
+        com3_id = cfg_committees[2]['row_id']
+        # enable_editors
+        cfg_committees[0]['enable_editors'] = "1"
+        cfg_committees[1]['enable_editors'] = "1"
+        cfg_committees[2]['enable_editors'] = "1"
+        cfg.setItemCommitteesStates(['itemcreated'])
+        com1_editors_group_id = "%s_%s" % (cfg_id, com1_id)
+        com2_editors_group_id = "%s_%s" % (cfg_id, com2_id)
+        com3_editors_group_id = "%s_%s" % (cfg_id, com3_id)
         # only available to MeetingManagers
         self.changeUser('pmCreator1')
         searches_items = self.getMeetingFolder().searches_items
@@ -2001,14 +2014,12 @@ class testViews(PloneMeetingTestCase):
         searches_items = self.getMeetingFolder().searches_items
         self.assertTrue(searches_items.unrestrictedTraverse(
             '@@update-committees-batch-action').available())
-        cfg_committees = cfg.getCommittees()
-        com1_id = cfg_committees[0]['row_id']
-        com2_id = cfg_committees[1]['row_id']
-        com3_id = cfg_committees[2]['row_id']
         # create 3 items
         item1 = self.create('MeetingItem', committees=[com1_id])
+        self.assertTrue(com1_editors_group_id in item1.__ac_local_roles__)
         item1_uid = item1.UID()
         item2 = self.create('MeetingItem', committees=[com2_id])
+        self.assertTrue(com2_editors_group_id in item2.__ac_local_roles__)
         item2_uid = item2.UID()
         item3 = self.create('MeetingItem', committees=[NO_COMMITTEE])
         item3_uid = item3.UID()
@@ -2024,11 +2035,17 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(item3.getCommittees(), (NO_COMMITTEE, ))
         # add com3_id, will be added in addition to com1_id and com2_id
         # but not NO_COMMITTEE that must be alone
+        self.assertFalse(com3_editors_group_id in item1.__ac_local_roles__)
+        self.assertFalse(com3_editors_group_id in item2.__ac_local_roles__)
+        self.assertFalse(com3_editors_group_id in item3.__ac_local_roles__)
         self.request['form.widgets.added_values'] = [com3_id]
         form.handleApply(form, None)
         self.assertEqual(item1.getCommittees(), (com1_id, com3_id))
         self.assertEqual(item2.getCommittees(), (com2_id, com3_id))
         self.assertEqual(item3.getCommittees(), (NO_COMMITTEE, ))
+        self.assertTrue(com3_editors_group_id in item1.__ac_local_roles__)
+        self.assertTrue(com3_editors_group_id in item2.__ac_local_roles__)
+        self.assertFalse(com3_editors_group_id in item3.__ac_local_roles__)
         # required so last value can not be removed
         self.request['form.widgets.action_choice'] = 'remove'
         self.request['form.widgets.added_values'] = [NO_COMMITTEE]
@@ -2038,6 +2055,9 @@ class testViews(PloneMeetingTestCase):
         self.request['form.widgets.removed_values'] = [com1_id]
         form.handleApply(form, None)
         self.assertEqual(item1.getCommittees(), (com3_id, ))
+        self.assertFalse(com1_editors_group_id in item1.__ac_local_roles__)
+        self.assertFalse(com2_editors_group_id in item1.__ac_local_roles__)
+        self.assertTrue(com3_editors_group_id in item1.__ac_local_roles__)
 
     def test_pm_DownloadAnnexesActionForm(self):
         """This batch action will download annexes as a zip file."""
