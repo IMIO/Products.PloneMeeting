@@ -956,6 +956,11 @@ class testWFAdaptations(PloneMeetingTestCase):
         if not self._check_wfa_available(['return_to_proposing_group_with_all_validations']):
             return
 
+        # make sure we use default itemWFValidationLevels,
+        # useful when test executed with custom profile
+        self._setUpDefaultItemWFValidationLevels(cfg)
+        self._enablePrevalidation(cfg)
+
         return_to_proposing_group_removed_error = translate(
             'wa_removed_return_to_proposing_group_with_all_validations_error',
             domain='PloneMeeting',
@@ -971,7 +976,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'return_to_proposing_group')
         self.assertEqual(item.query_state(), 'returned_to_proposing_group')
         self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_all_validations',)))
-        returned_to_proposing_group_last_state = 'returned_to_proposing_group_' + self._stateMappingFor('proposed')
+        returned_to_proposing_group_last_state = 'returned_to_proposing_group_' + self._stateMappingFor('prevalidated')
 
         if self._check_wfa_available(['return_to_proposing_group']):
             self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group', )))
@@ -980,6 +985,8 @@ class testWFAdaptations(PloneMeetingTestCase):
             self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation',)))
         self._process_transition_for_correcting_item(item, True)
         self.assertEqual(item.query_state(), returned_to_proposing_group_last_state)
+        # check that pretty_link is displayed correctly
+        self.assertTrue(item.getPrettyLink())
         self.assertEqual(
             cfg.validate_workflowAdaptations(()),
             return_to_proposing_group_removed_error)
@@ -1726,12 +1733,28 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._return_to_proposing_group_active_from_item_states()
 
     def _process_transition_for_correcting_item(self, item, all):
-        # all parameter if for custom profiles
-        if all:
-            # do custom WF steps
-            pass
         self.changeUser('pmCreator1')
         self.do(item, 'goTo_returned_to_proposing_group_proposed')
+        back_to_meeting_tr_id = "backTo_presented_from_returned_to_proposing_group"
+        if item.getMeeting().query_state() == "frozen":
+            back_to_meeting_tr_id = "backTo_itemfrozen_from_returned_to_proposing_group"
+        if all:
+            self.changeUser('pmReviewerLevel1')
+            self.assertEqual(self.transitions(item),
+                             ['backTo_returned_to_proposing_group',
+                              'goTo_returned_to_proposing_group_prevalidated'])
+            self.do(item, 'goTo_returned_to_proposing_group_prevalidated')
+            # check back transitions
+            self.changeUser('pmReviewer1')
+            self.assertEqual(self.transitions(item),
+                             [back_to_meeting_tr_id,
+                              'backTo_returned_to_proposing_group_proposed'])
+        else:
+            # check back transitions
+            self.changeUser('pmReviewer1')
+            self.assertEqual(self.transitions(item),
+                             [back_to_meeting_tr_id,
+                              'backTo_returned_to_proposing_group'])
 
     def _return_to_proposing_group_with_validation_active_wf_functionality(self, all=True):
         '''Tests the workflow functionality of using the
@@ -1768,6 +1791,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.failUnless(self.hasPermission(ModifyPortalContent, item))
         # Now send item to the reviewer
         self._process_transition_for_correcting_item(item, all)
+        # check that pretty_link is displayed correctly
+        self.assertTrue(item.getPrettyLink())
         # the item creator may not be able to modify the item
         self.changeUser('pmCreator1')
         self.failIf(self.hasPermission(ModifyPortalContent, item))
@@ -1783,10 +1808,13 @@ class testWFAdaptations(PloneMeetingTestCase):
         # on the meeting state.  Here, when meeting is 'created', the item is back to 'presented'
         self.do(item, 'backTo_presented_from_returned_to_proposing_group')
         self.assertEqual(item.query_state(), 'presented')
-        # send the item back to proposing group, freeze the meeting then send the item back to the meeting
-        # the item should be now in the item state corresponding to the meeting frozen state, so 'itemfrozen'
+        # send the item back to proposing group, freeze the meeting then send
+        # the item back to the meeting the item should be now in the item state
+        # corresponding to the meeting frozen state, so 'itemfrozen'
         self.do(item, 'return_to_proposing_group')
         self._process_transition_for_correcting_item(item, all)
+        # check that pretty_link is displayed correctly
+        self.assertTrue(item.getPrettyLink())
         self.changeUser('pmManager')
         self.freezeMeeting(meeting)
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
@@ -1810,6 +1838,11 @@ class testWFAdaptations(PloneMeetingTestCase):
         # ease override by subproducts
         if not self._check_wfa_available(['return_to_proposing_group_with_all_validations']):
             return
+        # make sure we use default itemWFValidationLevels,
+        # useful when test executed with custom profile
+        cfg = self.meetingConfig
+        self._setUpDefaultItemWFValidationLevels(cfg)
+        self._enablePrevalidation(cfg)
         # activate the wfAdaptation and check
         self._activate_wfas(('return_to_proposing_group_with_all_validations', ))
         # test what should happen to the wf (added states and transitions)

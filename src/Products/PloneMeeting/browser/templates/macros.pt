@@ -407,7 +407,7 @@ document.location.reload(true);
         </span>)
       </div>
       <tal:actions condition="mayChangeAttendees"
-                   define="edit_form_name python: view.get_cached_vote_is_secret(vote_infos['vote_number']) and '@@item_encode_secret_votes_form' or '@@item_encode_votes_form';">
+                   define="edit_form_name python: view.get_cached_vote_is_secret(vote_infos['vote_number']) and '@@item-encode-secret-votes-form' or '@@item-encode-votes-form';">
         <a tal:attributes="href string:${edit_form_name}?vote_number:int=${vote_infos/vote_number}"
            title="Edit this vote"
            i18n:attributes="title"
@@ -424,7 +424,7 @@ document.location.reload(true);
         </a>
         <tal:last_vote_actions
              define="next_vote_number python: view.next_vote_number;
-                     add_form_name python: context.get_votes_are_secret() and '@@item_encode_secret_votes_form' or '@@item_encode_votes_form';"
+                     add_form_name python: context.get_votes_are_secret() and '@@item-encode-secret-votes-form' or '@@item-encode-votes-form';"
              condition="python: vote_infos['vote_number'] + 1 == next_vote_number">
          <a tal:attributes="href string:${add_form_name}?vote_number:int=${next_vote_number}"
             title="Add new vote"

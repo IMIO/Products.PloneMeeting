@@ -1153,24 +1153,24 @@ class testSearches(PloneMeetingTestCase):
         # it returns only items the current user is able to correct
         # create an item for developers and one for vendors and 'return' it to proposingGroup
         self.create('Meeting')
-        developersItem = self.create('MeetingItem')
-        self.assertEqual(developersItem.getProposingGroup(), self.developers_uid)
+        developers_item = self.create('MeetingItem')
+        self.assertEqual(developers_item.getProposingGroup(), self.developers_uid)
         self.changeUser('pmCreator2')
-        vendorsItem = self.create('MeetingItem')
-        self.assertEqual(vendorsItem.getProposingGroup(), self.vendors_uid)
+        vendors_item = self.create('MeetingItem')
+        self.assertEqual(vendors_item.getProposingGroup(), self.vendors_uid)
         # present items
         self.changeUser('pmManager')
-        self.presentItem(developersItem)
-        self.presentItem(vendorsItem)
+        self.presentItem(developers_item)
+        self.presentItem(vendors_item)
         collection = cfg.searches.searches_items.searchitemstocorrecttovalidateoffeveryreviewergroups
         cleanRamCacheFor(
             'Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels')
         self.failIf(collection.results())
 
-        self.do(developersItem, 'return_to_proposing_group')
-        self.do(vendorsItem, 'return_to_proposing_group')
+        self.do(developers_item, 'return_to_proposing_group')
+        self.do(vendors_item, 'return_to_proposing_group')
 
-        self._test_reviewer_groups(developersItem, vendorsItem, collection)
+        self._test_reviewer_groups(developers_item, vendors_item, collection)
 
     def _get_query_review_process(self, cfg):
         return [state['state'] for state in cfg.getItemWFValidationLevels()
@@ -1405,6 +1405,34 @@ class testSearches(PloneMeetingTestCase):
         self.assertEqual(item.query_state(), 'accepted')
         self.assertTrue(item.query_state() in cfg.getItemDecidedStates())
         self.assertFalse(item.UID() in [brain.UID for brain in collection.results()])
+
+    def test_pm_json_collections_count(self):
+        """Test the @@json_collections_count, essentially because it is cached thru
+           PMRenderTermView.number_of_items.
+           Test also that caching works when using a "myitems" like collection as
+           user_id is taken into account in the invalidation key in this case."""
+        self.changeUser("pmCreator1")
+        view = self.getMeetingFolder().restrictedTraverse("@@json_collections_count")
+        self.assertEqual(view(), '{"criterionId": "c1", "countByCollection": []}')
+        item = self.create("MeetingItem")
+        self.assertEqual(view(), '{"criterionId": "c1", "countByCollection": []}')
+        searchmyitems = self.meetingConfig.searches.searches_items.searchmyitems
+        searchmyitems_uid = searchmyitems.UID()
+        searchmyitems.showNumberOfItems = True
+        self.assertEqual(
+            view(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 1, "uid": "%s"}]}' % searchmyitems_uid)
+        self.changeUser("pmCreator1b", clean_memoize=False)
+        view = self.getMeetingFolder().restrictedTraverse("@@json_collections_count")
+        self.assertEqual(
+            view(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % searchmyitems_uid)
+        self.changeUser("pmCreator1", clean_memoize=False)
+        self.deleteAsManager(item.UID())
+        view = self.getMeetingFolder().restrictedTraverse("@@json_collections_count")
+        self.assertEqual(
+            view(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % searchmyitems_uid)
 
 
 def test_suite():

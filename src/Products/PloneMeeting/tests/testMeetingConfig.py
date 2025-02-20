@@ -2072,14 +2072,14 @@ class testMeetingConfig(PloneMeetingTestCase):
         self._disableItemValidationLevel(cfg, item_state=proposed_state)
         values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
         self._enableItemValidationLevel(cfg, item_state=proposed_state)
-        proposed_state = cfg.getItemWorkflow(True).states[proposed_state]
-        translated_proposed_state = translate(proposed_state.title, domain="plone")
+        proposed_state = cfg.getItemWorkflow(True).states['%s_waiting_advices' % proposed_state]
+        translated_proposed_state = translate(
+            safe_unicode(proposed_state.title), domain="plone", context=self.request)
         level_removed_error = \
             translate(
                 'item_wf_val_states_can_not_be_removed_in_use',
                 domain='PloneMeeting',
-                mapping={'item_state': "Waiting advices ({0})".format(
-                         translated_proposed_state.lower()),
+                mapping={'item_state': translated_proposed_state,
                          'item_url': item.absolute_url()},
                 context=self.request)
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
@@ -2095,7 +2095,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # itemcreated level is mandatory
         proposed_state = cfg.getItemWorkflow(True).states[self._stateMappingFor('proposed')]
         proposed_state_id = proposed_state.getId()
-        translated_proposed_state = translate(proposed_state.title, domain="plone")
+        translated_proposed_state = translate(safe_unicode(proposed_state.title), domain="plone")
         level_removed_config_error = \
             translate('state_or_transition_can_not_be_removed_in_use_config',
                       mapping={'state_or_transition': translated_proposed_state,
@@ -2141,7 +2141,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg_id = cfg.getId()
         tr = get_leading_transitions(
-            cfg.getItemWorkflow(True), self._stateMappingFor('proposed'),
+            cfg2.getItemWorkflow(True), self._stateMappingFor('proposed'),
             not_starting_with="back")[0]
         error_msg = translate(
             'state_or_transition_can_not_be_removed_in_use_other_config',
@@ -2161,7 +2161,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             ({'meeting_config': '%s' % cfg_id,
               'trigger_workflow_transitions_until': '%s.%s' % (cfg_id, tr.id)},))
         self.assertEqual(
-            cfg.validate_itemWFValidationLevels(values_disabled_proposed), error_msg)
+                cfg.validate_itemWFValidationLevels(values_disabled_proposed), error_msg)
         # ok if transition not used
         cfg2.setMeetingConfigsToCloneTo(
             ({'meeting_config': '%s' % cfg_id,

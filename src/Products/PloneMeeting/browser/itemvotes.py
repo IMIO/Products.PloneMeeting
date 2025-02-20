@@ -313,6 +313,8 @@ class EncodeVotesForm(BaseAttendeeForm):
     fields = field.Fields(IEncodeVotes)
     fields['votes'].widgetFactory = DataGridFieldFactory
 
+    id = "item-encode-votes-form"
+
     def updateWidgets(self):
         # hide vote_number field
         self.fields['vote_number'].mode = HIDDEN_MODE

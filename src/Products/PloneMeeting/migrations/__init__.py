@@ -491,16 +491,18 @@ class Migrator(BaseMigrator):
             cfg.updateCollectionColumns()
         logger.info('Done.')
 
-    def updateItemFilters(self,
-                          to_remove=[],
-                          to_add=[],
-                          field_names=['dashboardItemsListingsFilters',
-                                       'dashboardMeetingAvailableItemsFilters',
-                                       'dashboardMeetingLinkedItemsFilters'],
-                          cfg_ids=[]):
+    def update_faceted_filters(self,
+                               to_remove=[],
+                               to_add=[],
+                               field_names=['dashboardItemsListingsFilters',
+                                            'dashboardMeetingAvailableItemsFilters',
+                                            'dashboardMeetingLinkedItemsFilters'],
+                               cfg_ids=[]):
         '''When a faceted filter is no more available or has been renamed.'''
-        logger.info('Cleaning MeetingConfig faceted filter related fields, removing columns "%s"...'
-                    % ', '.join(to_remove))
+        logger.info('Updating MeetingConfig faceted filter related fields, '
+                    'removing filters "%s" and adding filters "%s"...'
+                    % (', '.join(to_remove),
+                       ', '.join(to_add)))
         for cfg in self.tool.objectValues('MeetingConfig'):
             if cfg_ids and cfg.getId() not in cfg_ids:
                 continue
@@ -508,27 +510,38 @@ class Migrator(BaseMigrator):
                 field = cfg.getField(field_name)
                 keys = field.get(cfg)
                 adapted_keys = [k for k in keys if k not in to_remove]
+                for filter_to_add in to_add:
+                    if filter_to_add not in adapted_keys:
+                        adapted_keys.append(filter_to_add)
                 field.set(cfg, adapted_keys)
         logger.info('Done.')
 
-    def cleanUsedItemAttributes(self, to_remove=[]):
+    def update_used_attrs(self, to_remove=[], to_add=[], to_replace={}, cfg_ids=[], related_to="MeetingItem"):
         '''When an item attribute is no more available or has been renamed.'''
-        logger.info('Cleaning MeetingConfig used item attributes, removing columns "%s"...'
-                    % ', '.join(to_remove))
+        logger.info('Updating MeetingConfig "%s" used attributes, '
+                    'removing "%s", replacing "%s" and adding "%s"...'
+                    % (related_to,
+                       ', '.join(to_remove),
+                       ', '.join(to_replace.keys()),
+                       ', '.join(to_add)))
         for cfg in self.tool.objectValues('MeetingConfig'):
-            usedItemAttrs = list(cfg.getUsedItemAttributes())
-            adapted_usedItemAttrs = [k for k in usedItemAttrs if k not in to_remove]
-            cfg.setUsedItemAttributes(adapted_usedItemAttrs)
-        logger.info('Done.')
+            if cfg_ids and cfg.getId() not in cfg_ids:
+                continue
+            if related_to == "MeetingItem":
+                used_attrs = list(cfg.getUsedItemAttributes())
+            else:
+                used_attrs = list(cfg.getUsedMeetingAttributes())
+            adapted_used_attrs = [k for k in used_attrs if k not in to_remove]
+            for attr_to_add in to_add:
+                if attr_to_add not in adapted_used_attrs:
+                    adapted_used_attrs.append(attr_to_add)
+            for orignal_value, new_value in to_replace.items():
+                adapted_used_attrs = replace_in_list(adapted_used_attrs, orignal_value, new_value)
 
-    def cleanUsedMeetingAttributes(self, to_remove=[]):
-        '''When a meeting attribute is no more available or has been renamed.'''
-        logger.info('Cleaning MeetingConfig used meeting attributes, removing columns "%s"...'
-                    % ', '.join(to_remove))
-        for cfg in self.tool.objectValues('MeetingConfig'):
-            usedItemAttrs = list(cfg.getUsedMeetingAttributes())
-            adapted_usedItemAttrs = [k for k in usedItemAttrs if k not in to_remove]
-            cfg.setUsedMeetingAttributes(adapted_usedItemAttrs)
+            if related_to == "MeetingItem":
+                cfg.setUsedItemAttributes(adapted_used_attrs)
+            else:
+                cfg.setUsedMeetingAttributes(adapted_used_attrs)
         logger.info('Done.')
 
     def removeUnusedWorkflows(self):

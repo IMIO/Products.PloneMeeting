@@ -209,7 +209,7 @@ class PloneGroupSettingsFunctionsValidator(validator.SimpleFieldValidator):
             if removed_plonegroup_id.endswith('_advisers')]
         for cfg in tool.objectValues('MeetingConfig'):
             msg = _("can_not_delete_plone_group_meetingconfig",
-                    mapping={'cfg_title': safe_unicode(cfg.Title())})
+                    mapping={'cfg_title': safe_unicode(cfg.Title(include_config_group=True))})
             # copyGroups
             if removed_plonegroups.intersection(cfg.getSelectableCopyGroups()):
                 raise Invalid(msg)
@@ -272,7 +272,7 @@ class PloneGroupSettingsOrganizationsValidator(validator.SimpleFieldValidator):
             # usingGroups
             if removed_org_uids.intersection(cfg.getUsingGroups()):
                 msg = _("can_not_unselect_plone_group_meetingconfig",
-                        mapping={'cfg_title': safe_unicode(cfg.Title())})
+                        mapping={'cfg_title': safe_unicode(cfg.Title(include_config_group=True))})
                 raise Invalid(msg)
 
         # check that removed orgs are not used as groups_in_charge of an organization

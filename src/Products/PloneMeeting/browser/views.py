@@ -1877,7 +1877,7 @@ def print_votes(item,
        - p_include_null_vote_count_values, by default null (0) vote counts are not shown,
          define a list of used vote values to keep;
        - p_all_yes_render, rendered instead vote values when every values are 'yes';
-       - p_include_voters, may be False(default/True or a list of vote values (yes, no, ...),
+       - p_include_voters, may be False(default True) or a list of vote values (yes, no, ...),
          will display the voters next to the vote value:
          - p_include_person_title will include voter title;
          - p_include_hp will include the voter held position;

@@ -17,6 +17,7 @@ from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.PloneMeeting import logger
+from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import displaying_available_items
 from z3c.form.field import Fields
@@ -150,6 +151,38 @@ class UpdateCopyGroupsBatchActionForm(PMBaseARUOBatchActionForm):
 
     def _vocabulary(self):
         return 'Products.PloneMeeting.vocabularies.copygroupsvocabulary'
+
+
+class UpdateCommitteesBatchActionForm(PMBaseARUOBatchActionForm):
+    """ """
+
+    label = _CEBA("Update committees for selected elements")
+    modified_attr_name = "committees"
+    indexes = ["committees_index"]
+    required = True
+
+    def available(self):
+        """Field "committees" is not an optionnal field, this is controlled
+           from the attributes enabled on the meeting.
+           Make it available only to MeetingManagers."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        return self.modified_attr_name in cfg.getUsedMeetingAttributes() and \
+            tool.isManager(cfg)
+
+    def _validate(self, obj, values):
+        """Can not use NO_COMMITTEE together with another value."""
+        res = super(UpdateCommitteesBatchActionForm, self)._validate(obj, values)
+        if res:
+            if len(values) > 1 and NO_COMMITTEE in values:
+                api.portal.show_message(
+                    _("can_not_select_no_committee_and_committee"),
+                    request=self.request)
+                res = False
+        return res
+
+    def _vocabulary(self):
+        return 'Products.PloneMeeting.vocabularies.item_selectable_committees_vocabulary'
 
 
 #

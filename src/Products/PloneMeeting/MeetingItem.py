@@ -1988,7 +1988,7 @@ schema = Schema((
     LinesField(
         name='otherMeetingConfigsClonableTo',
         widget=MultiSelectionWidget(
-            condition="here/showClonableToOtherMCs",
+            condition="python: here.showClonableToOtherMCs()",
             format="checkbox",
             label='Othermeetingconfigsclonableto',
             label_msgid='PloneMeeting_label_otherMeetingConfigsClonableTo',

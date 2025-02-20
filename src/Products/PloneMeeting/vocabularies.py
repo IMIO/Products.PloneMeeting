@@ -2825,8 +2825,11 @@ SelectableCommitteesAcronymsVocabularyFactory = SelectableCommitteesAcronymsVoca
 class ItemSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
 
     def _get_stored_values(self):
-        """ """
-        return self.context.getCommittees()
+        """Make it work when context is not an item."""
+        res = []
+        if IMeetingItem.providedBy(self.context):
+            res = self.context.getCommittees()
+        return res
 
     def __call__(self, context):
         """ """

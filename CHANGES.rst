@@ -2,12 +2,49 @@ Changelog
 =========
 
 
-4.2.14rc3 (unreleased)
+4.2.17rc1 (unreleased)
 ----------------------
 
 - Display `MeetingConfig` title in page title (displayed in web browser tab)
   on faceted contexts (dashboard and in configuration) so user knows where he is
   when using several tabs.
+
+4.2.16 (unreleased)
+-------------------
+
+- Fixed `@@json_collections_count` caching invalidation for collections using
+  a criterion refering to current connected user.
+  [gbastien]
+- Added new advice type `Positive after modification`.
+  [gbastien]
+
+4.2.15 (2025-02-06)
+-------------------
+
+- Optimized `Meeting._update_using_groups_local_roles` that may be called on
+  every existing meetings when saving several organizations in parameter
+  `MeetingConfig.usingGroups`.
+  This leaded to several minutes to save the `MeetingConfig`.
+  [gbastien]
+- Added confirmation dialog when clicking on `Send to other MeetingConfig`
+  button as this will send the item to another `MeetingConfig` immediately.
+  [gbastien]
+- For `Delete whole meeting` confirm dialog message,
+  use specific message `plonemeeting_delete_meeting_confirm_message`.
+  [gbastien]
+- In `PloneGroupSettingsOrganizationsValidator` display full `MeetingConfig`
+  title (including `configGroup` label) in case several `MeetingConfigs` with
+  same title exist in different config groups.
+  [gbastien]
+
+4.2.14 (2025-02-03)
+-------------------
+
+- Fixed an issue when `MeetingItem.proposingGroupWithGroupInCharge` is used in a
+  `MeetingConfig` but not in another one when an item is sent to it.
+  [aduchene]
+- Prevent to unselect an organization in plonegroup that
+  is used by `MeetingConfig.usingGroups`.
   [gbastien]
 - Fixed `PMCategorizedObjectAdapter.can_view` when managing not viewable items
   because it could lead to unwanted users having access to some annexes by
@@ -55,6 +92,21 @@ Changelog
 - Fixed `otherMeetingConfigsClonableToFieldXXX` field management when it is
   empty, it was not emptying the value on new item, now it is the case except
   for `title` that can not be empty.
+  [gbastien]
+- Renamed `Migrator.updateItemFilters` to `Migrator.update_faceted_filters` and
+  `Migrator.cleanUsedItemAttributes` to `Migrator.update_used_attrs` and
+  manage `to_add/to_remove/to_replace` for each methods.
+  [gbastien]
+- In the votes editing form, highlight the value selected by the radio button
+  as in some application the radio button is before or after the value.
+  Renamed forms `item_encode_votes_form` to `item-encode-votes-form` and
+  `item_encode_secret_votes_form` to `item-encode-secret-votes-form`.
+  [gbastien]
+- Prevent closing overlays when clicking outside it if it contains a form
+  so we avoid losing encoded data if user clicked outside by mistake.
+  [gbastien]
+- Make `return_to_proposing_group` with validations more standalone by
+  generating everything based on the `MeetingConfig.itemWFValidationLevels`.
   [gbastien]
 
 4.2.13 (2024-12-06)

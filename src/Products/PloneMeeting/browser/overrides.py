@@ -496,7 +496,12 @@ class PMRenderTermView(RenderTermPortletView):
         '''cachekey method for self.number_of_items.'''
         # cache until an item is modified
         date = get_cachekey_volatile('Products.PloneMeeting.MeetingItem.modified', method)
-        return (repr(self.context), get_plone_groups_for_user(), date, init)
+        # include current user_id if we have a "myitems" like collection
+        user_id = None
+        if (criterion for criterion in self.context.query
+            if criterion['o'] == 'plone.app.querystring.operation.string.currentUser'):
+                user_id = get_current_user_id(self.request)
+        return (repr(self.context), get_plone_groups_for_user(), user_id, date, init)
 
     @ram.cache(number_of_items_cachekey)
     def number_of_items(self, init=False):
