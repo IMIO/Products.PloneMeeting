@@ -10,6 +10,11 @@ Changelog
   [gbastien]
 - Added new advice type `Positive after modification`.
   [gbastien]
+- Added `fplog` when inserting/removing item from meeting.
+  [gbastien]
+- When not using the `decided` meeting workflow state,
+  meeting is always considered `decided`.
+  [gbastien]
 
 4.2.15 (2025-02-06)
 -------------------

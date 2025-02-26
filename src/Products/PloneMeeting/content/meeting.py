@@ -18,6 +18,7 @@ from imio.helpers.content import richtextval
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.content import uuidToObject
+from imio.helpers.security import fplog
 from imio.prettylink.interfaces import IPrettyLink
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
@@ -1886,6 +1887,10 @@ class Meeting(Container):
         # store number of items
         self._number_of_items = len(items) + 1
         self._finalize_item_insert(items_to_update=[item])
+        # add logging message to fingerpointing log
+        extras = 'object={0} meeting={1} meeting_date={2} item_preferred_meeting_uid={3}'.format(
+            repr(item), repr(self), self.date, item.getPreferredMeeting())
+        fplog('insert_item_in_meeting', extras=extras)
 
     def _finalize_item_insert(self, items_to_update=[]):
         """ """
@@ -1976,6 +1981,10 @@ class Meeting(Container):
         # a higher item number
         item.update_item_reference()
         self.update_item_references(start_number=item_number)
+        # add logging message to fingerpointing log
+        extras = 'object={0} meeting={1} meeting_date={2}'.format(
+            repr(item), repr(self), self.date)
+        fplog('remove_item_from_meeting', extras=extras)
 
     def _may_update_item_references(self):
         '''See docstring in interfaces.py.'''
@@ -2344,7 +2353,15 @@ class Meeting(Container):
 
     def is_decided(self):
         meeting = self.get_self()
-        return meeting.query_state() in ('decided', 'closed', 'decisions_published', )
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(meeting)
+        meeting_wf = cfg.getMeetingWorkflow(True)
+        if "decided" in meeting_wf:
+            return meeting.query_state() in ('decided', 'closed', 'decisions_published', )
+        else:
+            # when using no_decide, items may be decided when meeting is frozen
+            # and when using no_freeze, items may be decided when meeting is created
+            return True
 
     def add_recurring_items_if_relevant(self, transition):
         '''Sees in the meeting config linked to p_meeting if the triggering of
