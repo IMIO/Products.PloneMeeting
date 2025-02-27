@@ -2356,7 +2356,7 @@ class Meeting(Container):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(meeting)
         meeting_wf = cfg.getMeetingWorkflow(True)
-        if "decided" in meeting_wf:
+        if "decided" in meeting_wf.states:
             return meeting.query_state() in ('decided', 'closed', 'decisions_published', )
         else:
             # when using no_decide, items may be decided when meeting is frozen
