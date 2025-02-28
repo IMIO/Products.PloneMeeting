@@ -2314,6 +2314,8 @@ class testMeetingType(PloneMeetingTestCase):
            It will be presented to the ['PUBLISHED'] meeting if any.
         '''
         cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2_id = cfg2.getId()
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         meeting = self.create('Meeting', date=datetime(2014, 1, 1))
@@ -2391,6 +2393,15 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(item.getMeeting(), meeting)
         self.presentItem(item2)
         self.assertEqual(item2.getMeeting(), meeting2)
+
+        # several items in several MeetingConfigs without preferred meeting
+        item_cfg1 = self.create("MeetingItem")
+        meeting_cfg1 = self.create("Meeting")
+        self.setMeetingConfig(cfg2_id)
+        item_cfg2 = self.create("MeetingItem")
+        meeting_cfg2 = self.create("Meeting")
+        self.assertEqual(item_cfg1.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting_cfg1)
+        self.assertEqual(item_cfg2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting_cfg2)
 
     def test_pm_PresentItemWhenNoPublishedMeetingAndNextMeetingInFutureIsFrozen(self):
         '''If next meeting in future is frozen and it is not the preferredMeeting of an item,

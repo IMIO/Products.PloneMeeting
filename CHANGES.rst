@@ -15,6 +15,10 @@ Changelog
 - When not using the `decided` meeting workflow state,
   meeting is always considered `decided`.
   [gbastien]
+- Optimized `MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject`
+  cachekey to not cache per item but per `MeetingConfig` and only consider
+  `preferredMeeting`.
+  [gbastien]
 
 4.2.15 (2025-02-06)
 -------------------

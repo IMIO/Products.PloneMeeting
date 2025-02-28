@@ -3600,7 +3600,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # and when preferredMeeting is still the same
         date_date = get_cachekey_volatile('Products.PloneMeeting.Meeting.date')
         date_review_state = get_cachekey_volatile('Products.PloneMeeting.Meeting.review_state')
-        return repr(self), self.getPreferredMeeting(), date_date, date_review_state
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        # per MeetingConfig id as preferredMeeting may be ITEM_NO_PREFERRED_MEETING_VALUE
+        # in different MeetingConfigs
+        return cfg.getId(), self.getPreferredMeeting(), date_date, date_review_state
 
     @ram.cache(getMeetingToInsertIntoWhenNoCurrentMeetingObjectPath_cachekey)
     def getMeetingToInsertIntoWhenNoCurrentMeetingObjectPath(self):
