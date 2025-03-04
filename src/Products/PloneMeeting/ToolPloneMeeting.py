@@ -975,11 +975,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def showAnnexesTab(self, context):
         '''Must we show the "Annexes" on given p_context ?'''
-        if context.meta_type == 'MeetingItem' and \
-           (context.isTemporary() or context.isDefinedInTool()):
-            return False
-        else:
-            return True
+        return context.meta_type != 'MeetingItem' or not context.isTemporary()
 
     security.declarePrivate('listBooleanVocabulary')
 
@@ -1199,25 +1195,26 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     if newPortalType:
                         # manage the otherMCCorrespondence
                         originCfg = self.getMeetingConfig(copiedItem)
-                        new_annex_category = self._updateContentCategoryAfterSentToOtherMeetingConfig(
-                            newAnnex, originCfg, destCfg)
-                        if new_annex_category is None:
-                            msg = translate('annex_not_kept_item_paste_info',
-                                            mapping={'annexTitle': safe_unicode(newAnnex.Title())},
-                                            domain='PloneMeeting',
-                                            context=self.REQUEST)
-                            plone_utils.addPortalMessage(msg, 'info')
-                            unrestrictedRemoveGivenObject(newAnnex)
-                            continue
-                        elif new_annex_category.only_pdf and \
-                                newAnnex.file.contentType != 'application/pdf':
-                            msg = translate('annex_not_kept_because_only_pdf_annex_type_warning',
-                                            mapping={'annexTitle': safe_unicode(newAnnex.Title())},
-                                            domain='PloneMeeting',
-                                            context=self.REQUEST)
-                            plone_utils.addPortalMessage(msg, 'warning')
-                            unrestrictedRemoveGivenObject(newAnnex)
-                            continue
+                        if originCfg != destCfg:
+                            new_annex_category = self._updateContentCategoryAfterSentToOtherMeetingConfig(
+                                newAnnex, originCfg, destCfg)
+                            if new_annex_category is None:
+                                msg = translate('annex_not_kept_item_paste_info',
+                                                mapping={'annexTitle': safe_unicode(newAnnex.Title())},
+                                                domain='PloneMeeting',
+                                                context=self.REQUEST)
+                                plone_utils.addPortalMessage(msg, 'info')
+                                unrestrictedRemoveGivenObject(newAnnex)
+                                continue
+                            elif new_annex_category.only_pdf and \
+                                    newAnnex.file.contentType != 'application/pdf':
+                                msg = translate('annex_not_kept_because_only_pdf_annex_type_warning',
+                                                mapping={'annexTitle': safe_unicode(newAnnex.Title())},
+                                                domain='PloneMeeting',
+                                                context=self.REQUEST)
+                                plone_utils.addPortalMessage(msg, 'warning')
+                                unrestrictedRemoveGivenObject(newAnnex)
+                                continue
 
                     # if not newPortalType, annex with a scan_id is deleted
                     # if annex portal_type not defined in transfertAnnexWithScanIdTypes
