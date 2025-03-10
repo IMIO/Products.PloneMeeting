@@ -4342,6 +4342,15 @@ class testMeetingItem(PloneMeetingTestCase):
         # delay aware advices should not be available anymore in the vocabulary
         self.assertEqual(get_vocab_values(item, vocab_factory_name),
                          [self.developers_uid, self.vendors_uid])
+        # every active delay aware advisers are available on an item template
+        item_template = cfg.getItemTemplates(as_brains=False)[0]
+        self.assertTrue('{0}__rowid__unique_id_456'.format(self.developers_uid)
+                        in get_vocab_values(item_template, vocab_factory_name))
+        get_vocab_values(item_template, vocab_factory_name)
+        item_template.setCreationDate(DateTime('2010/01/01'))
+        item_template.reindexObject()
+        self.assertTrue('{0}__rowid__unique_id_456'.format(self.developers_uid)
+                        in get_vocab_values(item_template, vocab_factory_name))
 
     def test_pm_Validate_optionalAdvisersCanNotSelectSameGroupAdvisers(self):
         '''

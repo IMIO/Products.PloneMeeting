@@ -19,6 +19,9 @@ Changelog
   cachekey to not cache per item but per `MeetingConfig` and only consider
   `preferredMeeting`.
   [gbastien]
+- On item templates and recurring items make sure every active delay aware
+  advisers are displayed, ignore the `for_item_created_from` information.
+  [gbastien]
 
 4.2.15 (2025-02-06)
 -------------------
