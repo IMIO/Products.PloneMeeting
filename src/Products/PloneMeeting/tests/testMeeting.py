@@ -2335,7 +2335,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.cleanMemoize()
         meeting.date = datetime.now() + timedelta(days=2)
         notify(ObjectModifiedEvent(meeting, Attributes(Interface, 'date')))
-        self.assertTrue(not cfg.getMeetingPresentItemWhenNoCurrentMeetingStates())
+        self.assertFalse(cfg.getMeetingPresentItemWhenNoCurrentMeetingStates())
         # item may be presented in the meeting
         self.assertTrue(item.wfConditions().mayPresent())
         # there is a meeting to insert into
@@ -2396,10 +2396,11 @@ class testMeetingType(PloneMeetingTestCase):
 
         # several items in several MeetingConfigs without preferred meeting
         item_cfg1 = self.create("MeetingItem")
-        meeting_cfg1 = self.create("Meeting")
+        # avoid failing test when meeting date was just passed
+        meeting_cfg1 = self.create("Meeting", date=datetime.now() + timedelta(days=1))
         self.setMeetingConfig(cfg2_id)
         item_cfg2 = self.create("MeetingItem")
-        meeting_cfg2 = self.create("Meeting")
+        meeting_cfg2 = self.create("Meeting", date=datetime.now() + timedelta(days=1))
         self.assertEqual(item_cfg1.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting_cfg1)
         self.assertEqual(item_cfg2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting_cfg2)
 
