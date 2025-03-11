@@ -2331,7 +2331,8 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertIsNone(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject())
 
         # clean cache for MeetingConfig.getMeetingsAcceptingItems
-        # and set meeting date in the future, it will be found because no meetingPresentItemWhenNoCurrentMeetingStates
+        # and set meeting date in the future, it will be found because
+        # no meetingPresentItemWhenNoCurrentMeetingStates
         self.cleanMemoize()
         meeting.date = datetime.now() + timedelta(days=2)
         notify(ObjectModifiedEvent(meeting, Attributes(Interface, 'date')))

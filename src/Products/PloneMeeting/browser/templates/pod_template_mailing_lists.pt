@@ -3,7 +3,7 @@
         <span class="fa fa-angle-double-right" />
         <a href="#"
            class="template_send_mailing_list"
-           tal:content="name"
+           tal:content="structure name"
            tal:attributes="onclick string:event.preventDefault();;
                            javascript:var theForm = document.getElementsByName('podTemplateForm')[0];;
                            theForm.mailinglist_name.value='${name}';;

@@ -22,6 +22,8 @@ Changelog
 - On item templates and recurring items make sure every active delay aware
   advisers are displayed, ignore the `for_item_created_from` information.
   [gbastien]
+- Fixed POD template mailing list containing a quote (') was breaking JS.
+  [gbastien]
 
 4.2.15 (2025-02-06)
 -------------------

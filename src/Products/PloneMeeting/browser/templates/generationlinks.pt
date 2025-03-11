@@ -1,5 +1,5 @@
 <div id="doc-generation-view"
-     tal:condition="view/available"
+     tal:condition="python: view.available()"
      i18n:domain="PloneMeeting">
     <form name="podTemplateForm"
       method="POST"
@@ -10,10 +10,13 @@
       <input type="hidden" name="uids" value=""/>
       <input type="hidden" name="facetedQuery" value=""/>
       <input type="hidden" name="mailinglist_name" value=""/>
-      <input tal:condition="view/displayStoreAsAnnexSection" type="hidden" name="store_as_annex" value="0"/>
+      <input tal:condition="python: view.displayStoreAsAnnexSection()"
+             type="hidden"
+             name="store_as_annex"
+             value="0"/>
 
       <ul class="pod-template"
-          tal:define="infos view/get_links_info;
+          tal:define="infos python: view.get_links_info();
                       titles python:infos.keys();">
         <li tal:repeat="title titles" class="template-link">
           <span class="template-link-title" title="Please choose a format to generate here next" i18n:attributes="title" tal:content="title">Template title</span><span class="template-link-after-title"></span>
@@ -38,7 +41,7 @@
                     class="tooltipster-available-mailing-lists" /></span>
             </tal:mail>
             <tal:comment replace="nothing">XXX Added by PloneMeting : store generated document as annex.</tal:comment>
-            <tal:store_as_annex condition="view/displayStoreAsAnnexSection">
+            <tal:store_as_annex condition="python: view.displayStoreAsAnnexSection()">
                 <tal:defines define="store_as_annex_uid link/store_as_annex_uid"
                              condition="python: store_as_annex_uid and view.may_store_as_annex(link['template'])">
                     <a href="#"
