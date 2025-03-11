@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.16 (unreleased)
+4.2.16 (2025-03-11)
 -------------------
 
 - Fixed `@@json_collections_count` caching invalidation for collections using
