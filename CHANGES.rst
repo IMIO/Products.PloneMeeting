@@ -5,8 +5,10 @@ Changelog
 4.2.17 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Make `test_pm_json_collections_count` more robust by disabling every workflow
+  adaptations so a custom profile will not enable a `DashboardCollection`
+  that is using a counter.
+  [gbastien]
 
 4.2.16 (2025-03-11)
 -------------------
