@@ -131,6 +131,7 @@ from Products.PloneMeeting.utils import reindex_object
 from Products.PloneMeeting.utils import translate_list
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator
+from Products.ZCatalog.ProgressHandler import ZLogHandler
 from z3c.form.i18n import MessageFactory as _z3c_form
 from zope.annotation import IAnnotations
 from zope.component import getMultiAdapter
@@ -6298,9 +6299,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     portalType.icon_expr_object = Expression(portalType.icon_expr)
                     catalog = api.portal.get_tool('portal_catalog')
                     brains = catalog.unrestrictedSearchResults(portal_type=portal_type)
+                    pghandler = ZLogHandler(steps=1000)
+                    pghandler.init(
+                        'Updating items icon color ({0})...'.format(metaTypeName), len(brains))
+                    i = 1
                     for brain in brains:
-                        item = brain.getObject()
-                        item.reindexObject(idxs=['getIcon'])
+                        brain.getObject().reindexObject(idxs=['getIcon'])
+                        pghandler.report(i)
+                        i = i + 1
+                    pghandler.finish()
                 # do not search item templates and recurring items
                 if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring'):
                     nsTypes = props.getProperty('types_not_searched')

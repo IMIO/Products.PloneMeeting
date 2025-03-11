@@ -24,6 +24,9 @@ Changelog
   [gbastien]
 - Fixed POD template mailing list containing a quote (') was breaking JS.
   [gbastien]
+- Added logging when reindexing every items icon color
+  when changed in `MeetingConfig`.
+  [gbastien]
 
 4.2.15 (2025-02-06)
 -------------------
