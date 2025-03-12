@@ -1032,8 +1032,12 @@ class ItemOptionalAdvicesVocabulary(object):
         validity_date = None
         item = None
         if context.meta_type == 'MeetingItem':
-            validity_date = context.created()
             item = context
+            if context.isDefinedInTool():
+                # this way every defined custom advisers is valid and displayed
+                validity_date = DateTime()
+            else:
+                validity_date = context.created()
         else:
             validity_date = DateTime()
         return cfg._optionalDelayAwareAdvisers(validity_date, item)

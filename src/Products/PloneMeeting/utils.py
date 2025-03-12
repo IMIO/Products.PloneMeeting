@@ -1967,12 +1967,14 @@ def getAvailableMailingLists(obj, pod_template):
         extra_expr_ctx.update({'obj': obj})
         for line in mailing_lists.split('\n'):
             name, expression, userIds = line.split(';')
-            if not expression or _evaluateExpression(obj,
-                                                     expression,
-                                                     roles_bypassing_expression=[],
-                                                     extra_expr_ctx=extra_expr_ctx,
-                                                     raise_on_error=True):
-                res.append(name.strip())
+            if not expression or _evaluateExpression(
+                    obj,
+                    expression,
+                    roles_bypassing_expression=[],
+                    extra_expr_ctx=extra_expr_ctx,
+                    raise_on_error=True):
+                # escape as name in JS is escaped to manage name with "'"
+                res.append(html.escape(name.strip()))
     except Exception, exc:
         res.append(translate('Mailing lists are not correctly defined, original error is \"${error}\"',
                              domain='PloneMeeting',

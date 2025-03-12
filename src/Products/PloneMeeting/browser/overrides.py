@@ -1363,6 +1363,8 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         mailing_lists = pod_template.mailing_lists and pod_template.mailing_lists.strip()
         for line in mailing_lists.split('\n'):
             name, condition, values = line.split(';')
+            # escape as name in JS is escaped to manage name with "'"
+            name = html.escape(name).strip()
             if name != mailinglist_name:
                 continue
             recipients = self._extractRecipients(values)

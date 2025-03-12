@@ -1191,7 +1191,7 @@ class testAdvices(PloneMeetingTestCase):
                   'delay_label': '',
                   'userids': []}])
         )
-        # define one condition for wich the date is > than current item CreationDate
+        # define one condition for which the date is > than current item CreationDate
         futureDate = DateTime() + 1
         cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',

@@ -1014,8 +1014,8 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
  <div class="item-linkeditems"
      tal:condition="linkedItems">
      <tal:loop repeat="linkedItem linkedItems">
-       <tal:defines define="linkedItem_uid linkedItem/UID;
-                            linkedItem_url linkedItem/absolute_url;">
+       <tal:defines define="linkedItem_uid python: linkedItem.UID();
+                            linkedItem_url python: linkedItem.absolute_url();">
            <div class="collapsible"
                 tal:attributes="onclick string:toggleDetails('collapsible-text-linkeditem-${linkedItem_uid}',
                                 toggle_parent_active=true, parent_tag=this,

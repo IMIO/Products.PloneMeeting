@@ -1259,6 +1259,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         # activate the wfAdaptation and check
         self._activate_wfas(('no_decide', ))
         self._no_decide_active()
+        # check when no_decide, no_publication and no_freeze are enabled
+        self._activate_wfas(('no_freeze', 'no_publication', 'no_decide', ))
+        self._all_no_active()
 
     def _no_decide_inactive(self):
         '''Tests while 'no_decide' wfAdaptation is inactive.'''
@@ -1281,6 +1284,21 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse('backToDecided' in meetingWF.transitions)
         # create a meeting and check it can reach the 'closed' state
         meeting = self._createMeetingWithItems()
+        self.closeMeeting(meeting)
+        self.assertEqual(meeting.query_state(), 'closed')
+
+    def _all_no_active(self):
+        '''Tests while every 'no_...' wfAdaptations are active.'''
+        cfg = self.meetingConfig
+        meetingWF = cfg.getMeetingWorkflow(True)
+        self.assertFalse('freeze' in meetingWF.transitions)
+        self.assertFalse('publish' in meetingWF.transitions)
+        self.assertFalse('decide' in meetingWF.transitions)
+        # create a meeting and check it can reach the 'closed' state
+        meeting = self._createMeetingWithItems()
+        # items are acceptable
+        for item in meeting.get_items():
+            self.assertTrue("accept" in self.transitions(item))
         self.closeMeeting(meeting)
         self.assertEqual(meeting.query_state(), 'closed')
 

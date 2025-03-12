@@ -8,14 +8,32 @@ Changelog
 - Display `MeetingConfig` title in page title (displayed in web browser tab)
   on faceted contexts (dashboard and in configuration) so user knows where he is
   when using several tabs.
+  [gbastien]
 
-4.2.16 (unreleased)
+4.2.16 (2025-03-11)
 -------------------
 
 - Fixed `@@json_collections_count` caching invalidation for collections using
   a criterion refering to current connected user.
   [gbastien]
 - Added new advice type `Positive after modification`.
+  [gbastien]
+- Added `fplog` when inserting/removing item from meeting.
+  [gbastien]
+- When not using the `decided` meeting workflow state,
+  meeting is always considered `decided`.
+  [gbastien]
+- Optimized `MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject`
+  cachekey to not cache per item but per `MeetingConfig` and only consider
+  `preferredMeeting`.
+  [gbastien]
+- On item templates and recurring items make sure every active delay aware
+  advisers are displayed, ignore the `for_item_created_from` information.
+  [gbastien]
+- Fixed POD template mailing list containing a quote (') was breaking JS.
+  [gbastien]
+- Added logging when reindexing every items icon color
+  when changed in `MeetingConfig`.
   [gbastien]
 
 4.2.15 (2025-02-06)

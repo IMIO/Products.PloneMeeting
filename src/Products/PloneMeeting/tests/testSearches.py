@@ -1411,6 +1411,8 @@ class testSearches(PloneMeetingTestCase):
            PMRenderTermView.number_of_items.
            Test also that caching works when using a "myitems" like collection as
            user_id is taken into account in the invalidation key in this case."""
+        # disable every workflow adaptations so no search is enabled by custom profile
+        self._activate_wfas([])
         self.changeUser("pmCreator1")
         view = self.getMeetingFolder().restrictedTraverse("@@json_collections_count")
         self.assertEqual(view(), '{"criterionId": "c1", "countByCollection": []}')
