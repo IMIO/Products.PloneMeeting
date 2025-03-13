@@ -123,6 +123,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
 
     # Some default content
     descriptionText = '<p>Some description</p>'
+    motivationText = '<p>Some motivation.</p>'
     decisionText = '<p>Some decision.</p>'
     subproductIgnoredTestFiles = ['testPerformances.py',
                                   'test_robot.py']
@@ -365,6 +366,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             # decision is not set (???) by invokeFactory...
             if 'decision' in attrs:
                 obj.setDecision(attrs['decision'])
+            # motivation is not set (???) by invokeFactory...
+            if 'motivation' in attrs:
+                obj.setMotivation(attrs['motivation'])
             # define a category for the item if necessary
             if autoAddCategory and \
                'category' in cfg.getUsedItemAttributes() and \

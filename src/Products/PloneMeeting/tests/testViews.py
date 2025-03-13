@@ -3185,6 +3185,20 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(u"<title>%s - Items" % cfg_title in
                         cfg.searches.searches_items.restrictedTraverse('base_view')())
 
+    def test_pm_deliberation_for_restapi(self):
+        """Used by plonemeeting.restapi to render formatted data."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', motivation=self.motivationText, decision=self.decisionText)
+        view = item.restrictedTraverse('@@document-generation')
+        helper = view.get_generation_context_helper()
+        data = helper.deliberation_for_restapi()
+        self.assertEqual(data["deliberation"], self.motivationText + self.decisionText)
+        self.assertEqual(data["deliberation_motivation"], self.motivationText)
+        self.assertEqual(data["deliberation_decision"], self.decisionText)
+        self.assertEqual(data["public_deliberation"], self.motivationText + self.decisionText)
+        self.assertEqual(data["public_deliberation_decided"], self.motivationText + self.decisionText)
+        return item, view, helper, data
+
 
 def test_suite():
     from unittest import makeSuite
