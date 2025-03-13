@@ -9,6 +9,9 @@ Changelog
   adaptations so a custom profile will not enable a `DashboardCollection`
   that is using a counter.
   [gbastien]
+- In `MeetingItem.getGivenAdvices` use `toLocalizedTime`
+  from `@@plone` instead python script.
+  [gbastien]
 
 4.2.16 (2025-03-11)
 -------------------

@@ -5977,7 +5977,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         'delay_label': delay_label,
                                         'advice_given_on': advice_given_on,
                                         'advice_given_on_localized':
-                                        self.toLocalizedTime(advice_given_on),
+                                        self.restrictedTraverse('@@plone').toLocalizedTime(advice_given_on),
                                         'hidden_during_redaction': advice.advice_hide_during_redaction,
                                         }
         return res
