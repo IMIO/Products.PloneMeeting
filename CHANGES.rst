@@ -12,6 +12,8 @@ Changelog
 - In `MeetingItem.getGivenAdvices` use `toLocalizedTime`
   from `@@plone` instead python script.
   [gbastien]
+- Do not close add/edit annex overlay when clicking outside of it.
+  [gbastien]
 
 4.2.16 (2025-03-11)
 -------------------
