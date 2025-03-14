@@ -14,6 +14,14 @@ Changelog
   [gbastien]
 - Do not close add/edit annex overlay when clicking outside of it.
   [gbastien]
+- When duplicating an item and using groups in charge on the category, make sure
+  the new item uses groups in charge defined on the category and not original
+  item groups in charge in case configuration was changed on the category.
+  Make also sure that when an item is sent to another `MeetingConfig`, groups
+  in charge defined on destination category are correctly applied on new item.
+  On the `MeetingItem` view, do not `includeAuto=True` for groups in charge,
+  display really stored groups in charge.
+  [gbastien]
 
 4.2.16 (2025-03-11)
 -------------------

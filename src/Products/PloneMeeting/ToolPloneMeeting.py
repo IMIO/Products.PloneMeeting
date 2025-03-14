@@ -1083,6 +1083,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # like updating advices as it will be removed here under
         self.REQUEST.set('currentlyPastingItems', True)
         destCfg = self.getMeetingConfig(destFolder)
+        destCfgId = destCfg.getId()
         # Current user may not have the right to create object in destFolder.
         # We will grant him the right temporarily
         loggedUserId = get_current_user_id(self.REQUEST)
@@ -1124,6 +1125,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             raise PloneMeetingError('Could not copy.')
 
         isManager = self.isManager(destCfg)
+        originCfg = self.getMeetingConfig(copiedItem)
 
         # Let the logged user do everything on the newly created item
         with api.env.adopt_roles(['Manager']):
@@ -1178,6 +1180,20 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     field.getMutator(newItem)(field.getDefault(newItem))
             newItem._at_creation_flag = False
 
+            if newPortalType:
+                # manage categories mapping, if original and new items use
+                # categories, we check if a mapping is defined in the configuration of the original item
+                originalCategory = copiedItem.getCategory(theObject=True)
+                if originalCategory and "category" in destCfg.getUsedItemAttributes():
+                    # find out if something is defined when sending an item to destMeetingConfig
+                    for destCat in originalCategory.category_mapping_when_cloning_to_other_mc:
+                        if destCat.split('.')[0] == destCfgId:
+                            # we found a mapping defined for the new category, apply it
+                            # get the category so it fails if it does not exist (that should not be possible...)
+                            newCat = getattr(destCfg.categories, destCat.split('.')[1])
+                            newItem.setCategory(newCat.getId())
+                            break
+
             # Set some default values that could not be initialized properly
             if 'toDiscuss' in copyFields and destCfg.getToDiscussSetOnItemInsert():
                 toDiscussDefault = destCfg.getToDiscussDefault()
@@ -1198,9 +1214,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     # the annexType in the old MeetingConfig the item is copied from
                     if newPortalType:
                         # manage the otherMCCorrespondence
-                        originCfg = self.getMeetingConfig(copiedItem)
                         new_annex_category = self._updateContentCategoryAfterSentToOtherMeetingConfig(
-                            newAnnex, originCfg, destCfg)
+                            newAnnex, originCfg, destCfgId)
                         if new_annex_category is None:
                             msg = translate('annex_not_kept_item_paste_info',
                                             mapping={'annexTitle': safe_unicode(newAnnex.Title())},
@@ -1315,7 +1330,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('currentlyPastingItems', False)
         return newItem
 
-    def _updateContentCategoryAfterSentToOtherMeetingConfig(self, annex, originCfg, destCfg):
+    def _updateContentCategoryAfterSentToOtherMeetingConfig(self, annex, originCfg, destCfgId):
         '''
           Update the content_category of the annex while an item is sent from
           a MeetingConfig to another : find a corresponding content_category in the new MeetingConfig :
@@ -1334,7 +1349,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             annex_category = get_category_object(originCfg, annex.content_category)
 
         # special case when annex not kept
-        annex_not_kept = ANNEX_NOT_KEPT.format(destCfg.getId())
+        annex_not_kept = ANNEX_NOT_KEPT.format(destCfgId)
         if annex_category.other_mc_correspondences is not None and \
            annex_not_kept in annex_category.other_mc_correspondences:
             return None
