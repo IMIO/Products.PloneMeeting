@@ -1458,10 +1458,13 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Test when sending an item to another MeetingConfig and both using
            categories, a mapping can be defined for a category in original meetingConfig
            to a category in destination meetingConfig.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
         # activate categories in both meetingConfigs, as no mapping is defined,
         # the newItem will have no category
         self._enableField('category')
-        self._enableField('category', cfg=self.meetingConfig2)
+        self._enableField('category', cfg=cfg2)
         data = self._setupSendItemToOtherMC()
         newItem = data['newItem']
         self.assertEqual(newItem.getCategory(), '')
@@ -1474,9 +1477,40 @@ class testMeetingItem(PloneMeetingTestCase):
         # delete newItem and send originalItem again
         # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
         self.deleteAsManager(newItem.UID())
-        originalItem.cloneToOtherMeetingConfig(self.meetingConfig2.getId())
+        originalItem.cloneToOtherMeetingConfig(cfg2Id)
         newItem = originalItem.get_successor()
         self.assertEqual(newItem.getCategory(), catIdOfMC2Mapped)
+
+        # now test when using MeetingCategory.groups_in_charge and
+        # MeetingConfig.includeGroupsInChargeDefinedOnCategory
+        self.deleteAsManager(newItem.UID())
+        cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
+        cfg.setIncludeGroupsInChargeDefinedOnCategory(True)
+        originalItemCat.groups_in_charge = (self.vendors_uid, )
+        cfg2.categories.get(catIdOfMC2Mapped).groups_in_charge = (self.developers_uid, )
+        # first test that duplicating an item will update groupsInCharge
+        self.assertFalse(originalItem.getGroupsInCharge(includeAuto=False))
+        self.request.set('need_MeetingItem_update_groups_in_charge_category', False)
+        self.request.set('need_MeetingItem_update_groups_in_charge_proposing_group', False)
+        newOriginalItem = originalItem.clone()
+        self.assertEqual(newOriginalItem.getGroupsInCharge(includeAuto=False), [self.vendors_uid])
+        originalItemCat.groups_in_charge = (self.vendors_uid, self.developers_uid)
+        self.request.set('need_MeetingItem_update_groups_in_charge_category', False)
+        self.request.set('need_MeetingItem_update_groups_in_charge_proposing_group', False)
+        newOriginalItem2 = newOriginalItem.clone()
+        self.assertEqual(newOriginalItem2.getGroupsInCharge(includeAuto=False),
+                         [self.vendors_uid, self.developers_uid])
+        # no groups in charge if sent to cfg2 as includeGroupsInChargeDefinedOnCategory is False
+        self.assertFalse(cfg2.getIncludeGroupsInChargeDefinedOnCategory())
+        newItem = newOriginalItem.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEqual(newItem.getCategory(), catIdOfMC2Mapped)
+        self.assertFalse(newItem.getGroupsInCharge(includeAuto=False))
+        # enable includeGroupsInChargeDefinedOnCategory
+        cfg2.setIncludeGroupsInChargeDefinedOnCategory(True)
+        self.deleteAsManager(newItem.UID())
+        newItem = newOriginalItem.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEqual(newItem.getCategory(), catIdOfMC2Mapped)
+        self.assertEqual(newItem.getGroupsInCharge(includeAuto=False), [self.developers_uid])
 
     def test_pm_SendItemToOtherMCManually(self):
         '''An item may be sent automatically or manually to another MC

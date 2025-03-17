@@ -4246,7 +4246,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 reindex_object(self, idxs=idxs, update_metadata=0)
         return res
 
-    def update_groups_in_charge(self):
+    def update_groups_in_charge(self, force=False):
         """When MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup or
            MeetingConfig.includeGroupsInChargeDefinedOnCategory is used,
            if MeetingItem.groupsInCharge is empty or
@@ -4257,7 +4257,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         gic_from_cat = cfg.getIncludeGroupsInChargeDefinedOnCategory()
         gic_from_pg = cfg.getIncludeGroupsInChargeDefinedOnProposingGroup()
         if (gic_from_cat or gic_from_pg) and \
-           (not self.groupsInCharge or
+           (force or
+            not self.groupsInCharge or
             (self.REQUEST.get('need_MeetingItem_update_groups_in_charge_category') and
              gic_from_cat) or
             (self.REQUEST.get('need_MeetingItem_update_groups_in_charge_classifier') and
@@ -7048,7 +7049,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_delLocalRoles([userId])
         self.manage_addLocalRoles(userId, ('Owner',))
         # update groupsInCharge before update_local_roles
-        self.update_groups_in_charge()
+        self.update_groups_in_charge(force=True)
         indexes = self.update_local_roles(
             isCreated=True,
             inheritedAdviserUids=kwargs.get('inheritedAdviserUids', []))
@@ -7819,18 +7820,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              keepProposingGroup=True, setCurrentAsPredecessor=True,
                              inheritAdvices=keepAdvices, inheritedAdviceUids=keptAdvices,
                              reindexNewItem=False)
-        # manage categories mapping, if original and new items use
-        # categories, we check if a mapping is defined in the configuration of the original item
-        originalCategory = self.getCategory(theObject=True)
-        if originalCategory and "category" in destUsedItemAttributes:
-            # find out if something is defined when sending an item to destMeetingConfig
-            for destCat in originalCategory.category_mapping_when_cloning_to_other_mc:
-                if destCat.split('.')[0] == destMeetingConfigId:
-                    # we found a mapping defined for the new category, apply it
-                    # get the category so it fails if it does not exist (that should not be possible...)
-                    newCat = getattr(destMeetingConfig.categories, destCat.split('.')[1])
-                    newItem.setCategory(newCat.getId())
-                    break
 
         # find meeting to present the item in and set it as preferred
         # this way if newItem needs to be presented in a frozen meeting, it works
