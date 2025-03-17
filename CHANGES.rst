@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.17 (unreleased)
+4.2.17 (2025-03-17)
 -------------------
 
 - Make `test_pm_json_collections_count` more robust by disabling every workflow
