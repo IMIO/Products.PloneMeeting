@@ -5,8 +5,9 @@ Changelog
 4.2.18 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Fixed do not display `MeetingConfig` title in page title
+  if faceted context is a `meeting`.
+  [gbastien]
 
 4.2.17 (2025-03-17)
 -------------------

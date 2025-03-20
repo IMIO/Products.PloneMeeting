@@ -3170,6 +3170,8 @@ class testViews(PloneMeetingTestCase):
         """Test that MeetingConfig title is displayed on pmFolders (faceted folders)
            for users and in the configuration."""
         cfg = self.meetingConfig
+        # remove recurring items in self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
         cfg_title = safe_unicode(cfg.Title())
         self.changeUser('pmCreator1')
         pm_folder = self.getMeetingFolder()
@@ -3181,6 +3183,11 @@ class testViews(PloneMeetingTestCase):
         item = self.create("MeetingItem")
         self.assertTrue(u"<title>o1 &mdash; Plone site</title>" in
                         item.restrictedTraverse('base_view')())
+        # and not on meeting
+        self.changeUser('pmManager')
+        meeting = self.create("Meeting", date=datetime(2025, 3, 20))
+        self.assertTrue(u"<title>20 march 2025 &mdash; Plone site</title>" in
+                        meeting.restrictedTraverse('@@meeting_view')())
         # but also in config
         self.assertTrue(u"<title>%s - Items" % cfg_title in
                         cfg.searches.searches_items.restrictedTraverse('base_view')())
