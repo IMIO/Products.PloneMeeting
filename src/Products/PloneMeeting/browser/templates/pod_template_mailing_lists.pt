@@ -1,10 +1,13 @@
 <div>
-    <tal:loop tal:repeat="name python: view.getAvailableMailingLists()">
+    <tal:loop tal:repeat="infos python: view.getAvailableMailingLists()">
         <span class="fa fa-angle-double-right" />
         <a href="#"
+           tal:define="name python: infos[0];
+                       link_title python: infos[1]"
            class="template_send_mailing_list"
            tal:content="structure name"
-           tal:attributes="onclick string:event.preventDefault();;
+           tal:attributes="title link_title;
+                           onclick string:event.preventDefault();;
                            javascript:var theForm = document.getElementsByName('podTemplateForm')[0];;
                            theForm.mailinglist_name.value='${name}';;
                            theForm.target='_self';;

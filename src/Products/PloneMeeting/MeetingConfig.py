@@ -297,6 +297,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_lastMeetingNumber',
             i18n_domain='PloneMeeting',
         ),
+        required=True,
         write_permission="PloneMeeting: Write harmless config",
     ),
     LinesField(

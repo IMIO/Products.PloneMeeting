@@ -8,6 +8,13 @@ Changelog
 - Fixed do not display `MeetingConfig` title in page title
   if faceted context is a `meeting`.
   [gbastien]
+- Make `MeetingConfig.lastMeetingNumber` required so it can never be `None`.
+  [gbastien]
+- Adapted POD template mailing list functionnality so the list of
+  email addresses to which the mailing list will be sent to is display when
+  hovering the mailing list and also displayed in the confirmation message when
+  the mail has been sent.
+  [gbastien]
 
 4.2.17 (2025-03-17)
 -------------------

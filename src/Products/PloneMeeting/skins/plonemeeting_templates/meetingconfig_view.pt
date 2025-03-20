@@ -1470,6 +1470,17 @@
                        </div>
                      </div>
                     <div class="discreet"
+                         tal:define="mailing_lists python: obj.mailing_lists"
+                         tal:condition="mailing_lists">
+                       <label i18n:translate="mailing_lists"
+                              i18n:domain="collective.documentgenerator"
+                              class="horizontal">Mailing lists</label>
+                       <div>
+                         <span class="text-widget textline-field"
+                               tal:content="mailing_lists">mailing_lists</span>
+                       </div>
+                     </div>
+                    <div class="discreet"
                          tal:define="tal_condition python: obj.tal_condition"
                          tal:condition="tal_condition">
                        <label i18n:translate=""
@@ -1481,7 +1492,6 @@
                        </div>
                      </div>
                 </tal:baseInformations>
-                <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
                 <tal:additionalInformations
                     condition="show_details"
                     define="context python: obj;

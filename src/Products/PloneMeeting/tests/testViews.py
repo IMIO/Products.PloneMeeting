@@ -43,6 +43,7 @@ from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import IMG_BASE64_DATA
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import extract_recipients
 from Products.PloneMeeting.utils import get_advice_alive_states
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_widget
@@ -800,15 +801,21 @@ class testViews(PloneMeetingTestCase):
         self.assertRaises(Exception, view)
 
         # now when working as expected
-        template.mailing_lists = "list1;python:True;user1@test.be\nlist2;python:False;user1@test.be"
+        template.mailing_lists = "list1;python:True;user1@test.be,pmCreator1,pmCreator2\nlist2;python:False;user1@test.be"
         messages = IStatusMessage(self.request).show()
-        msg = translate('pt_mailing_sent', domain='PloneMeeting', context=self.request)
+        msg = translate(
+            'pt_mailing_sent',
+            domain='PloneMeeting',
+            mapping={'recipients': "user1@test.be, "
+                     "M. PMCreator One <pmcreator1@plonemeeting.org>, "
+                     "M. PMCreator Two <pmcreator2@plonemeeting.org>"},
+            context=self.request)
         self.assertNotEquals(messages[-1].message, msg)
         view()
         messages = IStatusMessage(self.request).show()
         self.assertEqual(messages[-1].message, msg)
 
-    def test_pm_SendPodTemplateToMailingListRecipient(self):
+    def test_pm_SendPodTemplateToMailingListRecipients(self):
         """Recipients may be defined using several ways :
            - python script;
            - userid;
@@ -816,30 +823,28 @@ class testViews(PloneMeetingTestCase):
            - Plone group."""
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        template = self.meetingConfig.podtemplates.itemTemplate
-        self.request.set('template_uid', template.UID())
-        self.request.set('output_format', 'odt')
-        view = item.restrictedTraverse('@@document-generation')
 
         # script
-        self.assertEqual(view._extractRecipients("python:['pmCreator1']"),
+        self.assertEqual(extract_recipients(item, "python:['pmCreator1']"),
                          [u'M. PMCreator One <pmcreator1@plonemeeting.org>'])
         # userid
-        self.assertEqual(view._extractRecipients("pmCreator1"),
+        self.assertEqual(extract_recipients(item, "pmCreator1"),
                          [u'M. PMCreator One <pmcreator1@plonemeeting.org>'])
         # email
-        self.assertEqual(view._extractRecipients("pmcreator1@plonemeeting.org"),
+        self.assertEqual(extract_recipients(item, "pmcreator1@plonemeeting.org"),
                          ['pmcreator1@plonemeeting.org'])
         # group
         group_dev_creators = "group:{0}".format(self.developers_creators)
-        self.assertEqual(sorted(view._extractRecipients(group_dev_creators)),
+        self.assertEqual(sorted(extract_recipients(item, group_dev_creators)),
                          [u'M. PMCreator One <pmcreator1@plonemeeting.org>',
                           u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
                           u'M. PMManager <pmmanager@plonemeeting.org>'])
 
         # mixed
-        self.assertEqual(sorted(view._extractRecipients(
-            "python:['pmCreator1'],pmCreator1,pmCreator2,{0},new@example.com".format(group_dev_creators))),
+        self.assertEqual(sorted(extract_recipients(
+            item,
+            "python:['pmCreator1'],pmCreator1,pmCreator2,{0},new@example.com".format(
+                group_dev_creators))),
             [u'M. PMCreator One <pmcreator1@plonemeeting.org>',
              u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
              u'M. PMCreator Two <pmcreator2@plonemeeting.org>',
