@@ -2141,7 +2141,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg_id = cfg.getId()
         tr = get_leading_transitions(
-            cfg2.getItemWorkflow(True), self._stateMappingFor('proposed'),
+            cfg.getItemWorkflow(True), self._stateMappingFor('proposed'),
             not_starting_with="back")[0]
         error_msg = translate(
             'state_or_transition_can_not_be_removed_in_use_other_config',
@@ -2161,7 +2161,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             ({'meeting_config': '%s' % cfg_id,
               'trigger_workflow_transitions_until': '%s.%s' % (cfg_id, tr.id)},))
         self.assertEqual(
-                cfg.validate_itemWFValidationLevels(values_disabled_proposed), error_msg)
+            cfg.validate_itemWFValidationLevels(values_disabled_proposed), error_msg)
         # ok if transition not used
         cfg2.setMeetingConfigsToCloneTo(
             ({'meeting_config': '%s' % cfg_id,
