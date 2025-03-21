@@ -1941,6 +1941,19 @@ class testViews(PloneMeetingTestCase):
         # local_roles removed
         self.assertFalse(self.vendors_observers in item1.__ac_local_roles__)
 
+        # when using auto groups in charge from proposing group or category
+        # action is displayed to MeetingManagers
+        cfg2 = self.meetingConfig2
+        searches_items = self.getMeetingFolder(cfg2).searches_items
+        self.assertFalse(searches_items.unrestrictedTraverse(
+            '@@update-groups-in-charge-batch-action').available())
+        self.changeUser('pmManager')
+        self.assertFalse(searches_items.unrestrictedTraverse(
+            '@@update-groups-in-charge-batch-action').available())
+        cfg2.setIncludeGroupsInChargeDefinedOnCategory(True)
+        self.assertTrue(searches_items.unrestrictedTraverse(
+            '@@update-groups-in-charge-batch-action').available())
+
     def test_pm_UpdateCopyGroupsBatchActionForm(self):
         """This will update copyGroups for selected items."""
         cfg = self.meetingConfig

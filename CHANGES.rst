@@ -15,6 +15,12 @@ Changelog
   hovering the mailing list and also displayed in the confirmation message when
   the mail has been sent.
   [gbastien]
+- Adapted `getGroupsInCharge` item catalog index to not include
+  auto groups in charge as it is stored on the item.
+  Make groups in charge batch action available to `MeetingManagers` when using
+  `MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup` or
+  `MeetingConfig.includeGroupsInChargeDefinedOnCategory`.
+  [gbastien]
 
 4.2.17 (2025-03-17)
 -------------------

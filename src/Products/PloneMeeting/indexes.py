@@ -178,9 +178,10 @@ def item_meeting_date(obj):
 @indexer(IMeetingItem)
 def getGroupsInCharge(obj):
     """
-      Indexes the groupsInCharge attribute including auto groups
+      Indexes the groupsInCharge attribute but do not include auto groups
+      as it is stored on obj
     """
-    return obj.getGroupsInCharge(includeAuto=True) or EMPTY_STRING
+    return obj.getGroupsInCharge(includeAuto=False) or EMPTY_STRING
 
 
 @indexer(IMeetingItem)
