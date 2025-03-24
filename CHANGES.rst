@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.18 (unreleased)
+4.2.18 (2025-03-24)
 -------------------
 
 - Fixed do not display `MeetingConfig` title in page title
