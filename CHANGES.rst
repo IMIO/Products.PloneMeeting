@@ -8,6 +8,9 @@ Changelog
 - Fixed MeetingItem `actions_panel` caching that could display WF transitions
   actually not available. Transition could not be triggered anyway.
   [gbastien]
+- In `ToolPloneMeeting.update_all_local_roles` only display the `Done.` message
+  if `redirect=True` so it is not displayed in the dashboard batch action.
+  [gbastien]
 
 4.2.18 (2025-03-24)
 -------------------

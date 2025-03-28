@@ -1604,8 +1604,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             startTime,
             base_msg="update_all_local_roles finished in ",
             total_number=numberOfBrains))
-        api.portal.show_message('Done.', request=self.REQUEST)
         if redirect:
+            api.portal.show_message('Done.', request=self.REQUEST)
             return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
         else:
             return warnings
