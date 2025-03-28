@@ -5,8 +5,9 @@ Changelog
 4.2.19 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Fixed MeetingItem `actions_panel` caching that could display WF transitions
+  actually not available. Transition could not be triggered anyway.
+  [gbastien]
 
 4.2.18 (2025-03-24)
 -------------------

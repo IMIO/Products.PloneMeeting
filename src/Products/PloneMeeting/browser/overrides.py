@@ -687,7 +687,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         # try to share cache among user "profiles"
         isRealManager = isManager = isEditorUser = advicesIndexModified = \
             userAbleToCorrectItemWaitingAdvices = isPowerObserverHiddenHistory = \
-            isCreator = None
+            isCreator = pg_groups = None
         # Manager
         isRealManager = self.tool.isManager(realManagers=True)
         # MeetingManager, necessary for MeetingConfig.itemActionsColumnConfig for example
@@ -717,6 +717,11 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                     userAbleToCorrectItemWaitingAdvices += \
                         self.tool.get_filtered_plone_groups_for_user(
                             org_uids=[group_managing_item_uid])
+            proposing_group = self.context.getProposingGroup()
+            if proposing_group and \
+               'item_validation_shortcuts' in self.cfg.getWorkflowAdaptations():
+                pg_groups = self.tool.get_filtered_plone_groups_for_user(
+                    org_uids=[proposing_group])
 
             # powerobservers to manage MeetingConfig.hideHistoryTo
             hideHistoryTo_item_values = [
@@ -740,7 +745,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         # check also portal_url in case application is accessed thru different URI
         return (repr(self.context), repr(self.context.modified()), advicesIndexModified, repr(date),
                 sent_to,
-                isRealManager, isManager, isEditorUser, isCreator,
+                isRealManager, isManager, isEditorUser, isCreator, pg_groups,
                 userAbleToCorrectItemWaitingAdvices, isPowerObserverHiddenHistory,
                 meeting_review_state, useIcons, showTransitions, appendTypeNameToTransitionLabel,
                 showEdit, showOwnDelete, showOwnDeleteWithComments, showActions,

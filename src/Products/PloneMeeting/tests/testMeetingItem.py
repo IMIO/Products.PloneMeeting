@@ -5002,6 +5002,22 @@ class testMeetingItem(PloneMeetingTestCase):
         actions_panel = item.restrictedTraverse('@@actions_panel')
         self.assertNotEqual(power_observer_rendered_actions_panel, actions_panel())
 
+    def test_pm_ItemActionsPanelCachingInvalidatedWhenUsingWFShortcutsAndUserChanged(self):
+        """Actions panel cache is invalidated when user changed when using WF shortcuts."""
+        self._activate_wfas(('item_validation_shortcuts', ))
+        self._enablePrevalidation(self.meetingConfig)
+        # make pmReviewer1 a creator and prereviewer (already reviewer)
+        self._addPrincipalToGroup('pmReviewer1', get_plone_group_id(self.developers_uid, 'creators'))
+        self._addPrincipalToGroup('pmReviewer1', get_plone_group_id(self.developers_uid, 'prereviewers'))
+        self.changeUser('pmReviewer1')
+        item = self.create('MeetingItem')
+        actions_panel = item.restrictedTraverse('@@actions_panel')
+        pmReviewer1_rendered_actions_panel = actions_panel()
+        self.changeUser('pmCreator1', clean_memoize=False)
+        actions_panel = item.restrictedTraverse('@@actions_panel')
+        pmCreator1_rendered_actions_panel = actions_panel()
+        self.assertNotEqual(pmReviewer1_rendered_actions_panel, pmCreator1_rendered_actions_panel)
+
     def test_pm_ItemActionsPanelCachingInvalidatedWhenItemTurnsToPresentable(self):
         """Actions panel cache is invalidated when the item turns to presentable."""
         item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
