@@ -717,6 +717,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                     userAbleToCorrectItemWaitingAdvices += \
                         self.tool.get_filtered_plone_groups_for_user(
                             org_uids=[group_managing_item_uid])
+            # make sure shortucut transitions are only displayed to relevant user
             proposing_group = self.context.getProposingGroup()
             if proposing_group and \
                'item_validation_shortcuts' in self.cfg.getWorkflowAdaptations():
