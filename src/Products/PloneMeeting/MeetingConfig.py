@@ -2102,6 +2102,11 @@ schema = Schema((
                      'delay_label':
                         Column("Custom adviser delay label",
                                col_description="delay_label_col_description"),
+                     'is_delay_calendar_days':
+                        SelectColumn("Is delay computed in calendar days?",
+                                     vocabulary="listBooleanVocabulary",
+                                     col_description="Is delay computed in calendar days description",
+                                     default='0'),
                      'available_on':
                         Column("Available on",
                                col_description="available_on_col_description"),
@@ -2120,7 +2125,7 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
         columns=('row_id', 'org', 'gives_auto_advice_on', 'gives_auto_advice_on_help_message',
                  'for_item_created_from', 'for_item_created_until', 'delay', 'delay_left_alert',
-                 'delay_label', 'available_on', 'is_linked_to_previous_row'),
+                 'delay_label', 'is_delay_calendar_days', 'available_on', 'is_linked_to_previous_row'),
         allow_empty_rows=False,
     ),
     LinesField(
