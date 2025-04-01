@@ -2549,6 +2549,8 @@ class BaseCopyGroupsVocabulary(object):
         terms = []
         if include_both:
             groupIds = cfg.getSelectableCopyGroups() + cfg.getSelectableRestrictedCopyGroups()
+            # remove duplicates
+            groupIds = list(set(groupIds))
         else:
             groupIds = cfg.getSelectableRestrictedCopyGroups() if restricted \
                 else cfg.getSelectableCopyGroups()
