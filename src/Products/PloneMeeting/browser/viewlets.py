@@ -14,6 +14,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.config import ITEM_INITIATOR_INDEX_PATTERN
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.events import _is_held_pos_uid_used_by
 from Products.PloneMeeting.utils import displaying_available_items
 from zope.component import getMultiAdapter
@@ -128,9 +129,10 @@ class PMTitleViewlet(TitleViewlet):
     @property
     @memoize
     def page_title(self):
-        '''Include MeetingConfig title when on a faceted context (items).'''
+        '''Include MeetingConfig title when on a faceted context (dashboards).'''
         title = super(PMTitleViewlet, self).page_title
-        if IFacetedNavigable.providedBy(self.context):
+        if IFacetedNavigable.providedBy(self.context) and \
+           not IMeeting.providedBy(self.context):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
             if cfg:

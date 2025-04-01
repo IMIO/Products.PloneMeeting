@@ -2561,7 +2561,17 @@ class PODTemplateMailingLists(BrowserView):
     def getAvailableMailingLists(self):
         '''Gets the names of the (currently active) mailing lists defined for template_uid.'''
         pod_template = api.content.find(UID=self.template_uid)[0].getObject()
-        return getAvailableMailingLists(self.context, pod_template)
+        data = getAvailableMailingLists(self.context, pod_template, include_recipients=True)
+        res = []
+        for name, recipients in data:
+            res.append(
+                (name,
+                 translate(
+                    "pt_mailing_will_be_sent_to",
+                    domain="PloneMeeting",
+                    mapping={"recipients": ", ".join(recipients)},
+                    context=self.request)))
+        return res
 
 
 class RenderSingleWidgetView(BrowserView):

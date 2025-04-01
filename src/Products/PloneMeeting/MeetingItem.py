@@ -4355,7 +4355,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 reindex_object(self, idxs=idxs, update_metadata=0)
         return res
 
-    def update_groups_in_charge(self):
+    def update_groups_in_charge(self, force=False):
         """When MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup or
            MeetingConfig.includeGroupsInChargeDefinedOnCategory is used,
            if MeetingItem.groupsInCharge is empty or
@@ -4366,7 +4366,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         gic_from_cat = cfg.getIncludeGroupsInChargeDefinedOnCategory()
         gic_from_pg = cfg.getIncludeGroupsInChargeDefinedOnProposingGroup()
         if (gic_from_cat or gic_from_pg) and \
-           (not self.groupsInCharge or
+           (force or
+            not self.groupsInCharge or
             (self.REQUEST.get('need_MeetingItem_update_groups_in_charge_category') and
              gic_from_cat) or
             (self.REQUEST.get('need_MeetingItem_update_groups_in_charge_classifier') and
@@ -6086,7 +6087,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         'delay_label': delay_label,
                                         'advice_given_on': advice_given_on,
                                         'advice_given_on_localized':
-                                        self.toLocalizedTime(advice_given_on),
+                                        self.restrictedTraverse('@@plone').toLocalizedTime(advice_given_on),
                                         'hidden_during_redaction': advice.advice_hide_during_redaction,
                                         }
         return res
@@ -7157,7 +7158,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_delLocalRoles([userId])
         self.manage_addLocalRoles(userId, ('Owner',))
         # update groupsInCharge before update_local_roles
-        self.update_groups_in_charge()
+        self.update_groups_in_charge(force=True)
         indexes = self.update_local_roles(
             isCreated=True,
             inheritedAdviserUids=kwargs.get('inheritedAdviserUids', []))
@@ -7867,9 +7868,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 newItem._update_predecessor(self)
                 # manage inherited adviceIds
                 if inheritAdvices:
-                    inheritedAdviserUids = [org_uid for org_uid in self.adviceIndex.keys()
-                                            if (not inheritedAdviceUids or org_uid in inheritedAdviceUids) and
-                                            newItem.couldInheritAdvice(org_uid)]
+                    inheritedAdviserUids = [
+                        org_uid for org_uid in self.adviceIndex.keys()
+                        if (not inheritedAdviceUids or
+                            org_uid in inheritedAdviceUids) and
+                        newItem.couldInheritAdvice(org_uid)]
 
         # set arbitrary attrs before reindexing
         for attr_id, attr_value in item_attrs.items():
@@ -7953,7 +7956,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         wfTool = api.portal.get_tool('portal_workflow')
         tool = api.portal.get_tool('portal_plonemeeting')
         plone_utils = api.portal.get_tool('plone_utils')
-        destMeetingConfig = getattr(tool, destMeetingConfigId, None)
+        destCfg = getattr(tool, destMeetingConfigId, None)
         cfg = tool.getMeetingConfig(self)
 
         # This will get the destFolder or create it if the current user has the permission
@@ -7964,10 +7967,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         except ValueError:
             # While getting the destFolder, it could not exist, in this case
             # we return a clear message
-            plone_utils.addPortalMessage(translate('sendto_inexistent_destfolder_error',
-                                         mapping={'meetingConfigTitle': destMeetingConfig.Title()},
-                                         domain="PloneMeeting", context=self.REQUEST),
-                                         type='error')
+            plone_utils.addPortalMessage(
+                translate('sendto_inexistent_destfolder_error',
+                          mapping={'meetingConfigTitle': destCfg.Title()},
+                          domain="PloneMeeting", context=self.REQUEST),
+                          type='error')
             return
         # The owner of the new item will be the same as the owner of the
         # original item.
@@ -7975,7 +7979,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cloneEventAction = 'create_to_%s_from_%s' % (destMeetingConfigId,
                                                      cfg.getId())
         fieldsToCopy = list(DEFAULT_COPIED_FIELDS)
-        destUsedItemAttributes = destMeetingConfig.getUsedItemAttributes()
+        destUsedItemAttributes = destCfg.getUsedItemAttributes()
         # do not keep optional fields that are not used in the destMeetingConfig
         optionalFields = cfg.listUsedItemAttributes().keys()
         # iterate a copy of fieldsToCopy as we change it in the loop
@@ -8001,27 +8005,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                              newOwnerId=newOwnerId,
                              cloneEventAction=cloneEventAction,
                              destFolder=destFolder, copyFields=fieldsToCopy,
-                             newPortalType=destMeetingConfig.getItemTypeName(),
+                             newPortalType=destCfg.getItemTypeName(),
                              keepProposingGroup=True, setCurrentAsPredecessor=True,
                              inheritAdvices=keepAdvices, inheritedAdviceUids=keptAdvices,
                              reindexNewItem=False)
-        # manage categories mapping, if original and new items use
-        # categories, we check if a mapping is defined in the configuration of the original item
-        originalCategory = self.getCategory(theObject=True)
-        if originalCategory and "category" in destUsedItemAttributes:
-            # find out if something is defined when sending an item to destMeetingConfig
-            for destCat in originalCategory.category_mapping_when_cloning_to_other_mc:
-                if destCat.split('.')[0] == destMeetingConfigId:
-                    # we found a mapping defined for the new category, apply it
-                    # get the category so it fails if it does not exist (that should not be possible...)
-                    newCat = getattr(destMeetingConfig.categories, destCat.split('.')[1])
-                    newItem.setCategory(newCat.getId())
-                    break
 
         # find meeting to present the item in and set it as preferred
         # this way if newItem needs to be presented in a frozen meeting, it works
         # as it requires the preferredMeeting to be the frozen meeting
-        meeting = self._otherMCMeetingToBePresentedIn(destMeetingConfig)
+        meeting = self._otherMCMeetingToBePresentedIn(destCfg)
         if meeting:
             newItem.setPreferredMeeting(meeting.UID())
         # handle 'otherMeetingConfigsClonableToPrivacy' of original item
@@ -8066,7 +8058,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             originalPublishedObject = self.REQUEST.get('PUBLISHED')
             # do this as Manager to be sure that transitions may be triggered
             with api.env.adopt_roles(roles=['Manager']):
-                destCfgTitle = safe_unicode(destMeetingConfig.Title())
+                destCfgTitle = safe_unicode(destCfg.Title())
                 # we will warn user if some transitions may not be triggered and
                 # triggerUntil is not reached
                 need_to_warn = True
@@ -8074,7 +8066,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if triggerUntil in ["validate", "present"] and \
                    "validate" in get_transitions(newItem):
                     wfTool.doActionFor(newItem, "validate")
-                for tr in destMeetingConfig.getTransitionsForPresentingAnItem(
+                for tr in destCfg.getTransitionsForPresentingAnItem(
                         org_uid=newItem.getProposingGroup()):
                     # special handling for the 'present' transition
                     # that needs a meeting as 'PUBLISHED' object to work
@@ -8124,8 +8116,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             'sentto_othermeetingconfig',
             domain="PloneMeeting",
             context=self.REQUEST,
-            mapping={'meetingConfigTitle': safe_unicode(destMeetingConfig.Title())})
-        action = destMeetingConfig._getCloneToOtherMCActionTitle(destMeetingConfig.Title())
+            mapping={'meetingConfigTitle': safe_unicode(destCfg.Title())})
+        action = destCfg._getCloneToOtherMCActionTitle(destCfg.Title())
         # add an event to the workflow history
         add_event_to_wf_history(self, action=action, comments=comments)
 
@@ -8138,7 +8130,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                            isPermission=True)
         plone_utils.addPortalMessage(
             translate('sendto_success',
-                      mapping={'cfgTitle': safe_unicode(destMeetingConfig.Title())},
+                      mapping={'cfgTitle': safe_unicode(destCfg.Title())},
                       domain="PloneMeeting",
                       context=self.REQUEST),
             type='info')

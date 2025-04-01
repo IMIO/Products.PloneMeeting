@@ -2,12 +2,58 @@ Changelog
 =========
 
 
-4.2.17rc1 (unreleased)
-----------------------
+4.2.19 (unreleased)
+-------------------
+
+- Fixed MeetingItem `actions_panel` caching that could display WF transitions
+  actually not available. Transition could not be triggered anyway.
+  [gbastien]
+- In `ToolPloneMeeting.update_all_local_roles` only display the `Done.` message
+  if `redirect=True` so it is not displayed in the dashboard batch action.
+  [gbastien]
+- Fixed `BaseCopyGroupsVocabulary` that could break because of several terms
+  with same value when `copyGroups` and `restrictedCopyGroups` were used.
+  [gbastien]
+
+4.2.18 (2025-03-24)
+-------------------
+
+- Fixed do not display `MeetingConfig` title in page title
+  if faceted context is a `meeting`.
+  [gbastien]
+- Make `MeetingConfig.lastMeetingNumber` required so it can never be `None`.
+  [gbastien]
+- Adapted POD template mailing list functionnality so the list of
+  email addresses to which the mailing list will be sent to is display when
+  hovering the mailing list and also displayed in the confirmation message when
+  the mail has been sent.
+  [gbastien]
+- Adapted `getGroupsInCharge` item catalog index to not include
+  auto groups in charge as it is stored on the item.
+  Make groups in charge batch action available to `MeetingManagers` when using
+  `MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup` or
+  `MeetingConfig.includeGroupsInChargeDefinedOnCategory`.
+  [gbastien]
+
+4.2.17 (2025-03-17)
+-------------------
 
 - Display `MeetingConfig` title in page title (displayed in web browser tab)
   on faceted contexts (dashboard and in configuration) so user knows where he is
   when using several tabs.
+  [gbastien]
+- In `MeetingItem.getGivenAdvices` use `toLocalizedTime`
+  from `@@plone` instead python script.
+  [gbastien]
+- Do not close add/edit annex overlay when clicking outside of it.
+  [gbastien]
+- When duplicating an item and using groups in charge on the category, make sure
+  the new item uses groups in charge defined on the category and not original
+  item groups in charge in case configuration was changed on the category.
+  Make also sure that when an item is sent to another `MeetingConfig`, groups
+  in charge defined on destination category are correctly applied on new item.
+  On the `MeetingItem` view, do not `includeAuto=True` for groups in charge,
+  display really stored groups in charge.
   [gbastien]
 
 4.2.16 (2025-03-11)

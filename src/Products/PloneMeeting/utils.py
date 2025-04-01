@@ -1955,7 +1955,7 @@ def get_advice_alive_states():
                       if state_id not in ADVICE_STATES_ENDED]))
 
 
-def getAvailableMailingLists(obj, pod_template):
+def getAvailableMailingLists(obj, pod_template, include_recipients=False):
     '''Gets the names of the (currently active) mailing lists defined for
        this template.'''
     res = []
@@ -1974,13 +1974,56 @@ def getAvailableMailingLists(obj, pod_template):
                     extra_expr_ctx=extra_expr_ctx,
                     raise_on_error=True):
                 # escape as name in JS is escaped to manage name with "'"
-                res.append(html.escape(name.strip()))
+                name = html.escape(name.strip())
+                if include_recipients:
+                    res.append((name, extract_recipients(obj, userIds)))
+                else:
+                    res.append(name)
     except Exception, exc:
-        res.append(translate('Mailing lists are not correctly defined, original error is \"${error}\"',
-                             domain='PloneMeeting',
-                             mapping={'error': str(exc)},
-                             context=obj.REQUEST))
+        msg = translate(
+            'Mailing lists are not correctly defined, original error is \"${error}\"',
+            domain='PloneMeeting',
+            mapping={'error': str(exc)},
+            context=obj.REQUEST)
+        if include_recipients:
+            res.append((msg, []))
+        else:
+            res.append(msg)
     return res
+
+
+def extract_recipients(obj, values):
+    """ """
+    # compile userIds in case we have a TAL expression
+    recipients = []
+    userIdsOrEmailAddresses = []
+    extra_expr_ctx = _base_extra_expr_ctx(obj)
+    extra_expr_ctx.update({'obj': obj, })
+    for value in values.strip().split(','):
+        # value may be a TAL expression returning a list of userIds or email addresses
+        # or a group (of users)
+        # or a userId
+        # or an e-mail address
+        if value.startswith('python:') or '/' in value:
+            evaluatedExpr = _evaluateExpression(
+                obj,
+                expression=value.strip(),
+                extra_expr_ctx=extra_expr_ctx)
+            userIdsOrEmailAddresses += list(evaluatedExpr)
+        elif value.startswith('group:'):
+            group = api.group.get(value[6:])
+            userIdsOrEmailAddresses += list(group.getMemberIds())
+        else:
+            userIdsOrEmailAddresses.append(value)
+    # now we have userIds or email address, we want email addresses
+    for userIdOrEmailAddress in userIdsOrEmailAddresses:
+        recipient = '@' in userIdOrEmailAddress and userIdOrEmailAddress or \
+            getMailRecipient(userIdOrEmailAddress.strip())
+        if not recipient:
+            continue
+        if recipient not in recipients:
+            recipients.append(recipient)
+    return recipients
 
 
 def displaying_available_items(context):

@@ -359,6 +359,8 @@ function editAnnex(){
                 return true;
             },
             onBeforeClose : function (e) {
+                // avoid closing overlay when click outside overlay
+                if (e.target.id == "exposeMask") {return false;}
                 // close every opened select2 widgets
                 $('.single-select2-widget').select2("close");
                 $('.multi-select2-widget').select2("close");

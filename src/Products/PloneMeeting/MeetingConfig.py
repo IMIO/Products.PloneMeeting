@@ -297,6 +297,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_lastMeetingNumber',
             i18n_domain='PloneMeeting',
         ),
+        required=True,
         write_permission="PloneMeeting: Write harmless config",
     ),
     LinesField(
@@ -4895,7 +4896,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 v['trigger_workflow_transitions_until'].split('.')[1]
                 in removed_or_disabled_transitions]
             if values:
-                wf = other_cfg.getItemWorkflow(True)
+                wf = self.getItemWorkflow(True)
                 transition_title = wf.transitions[values[0]].title
                 return translate(
                     'state_or_transition_can_not_be_removed_in_use_other_config',

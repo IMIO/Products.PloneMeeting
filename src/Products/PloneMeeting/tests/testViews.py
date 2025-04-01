@@ -43,6 +43,7 @@ from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import IMG_BASE64_DATA
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import extract_recipients
 from Products.PloneMeeting.utils import get_advice_alive_states
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_widget
@@ -800,15 +801,21 @@ class testViews(PloneMeetingTestCase):
         self.assertRaises(Exception, view)
 
         # now when working as expected
-        template.mailing_lists = "list1;python:True;user1@test.be\nlist2;python:False;user1@test.be"
+        template.mailing_lists = "list1;python:True;user1@test.be,pmCreator1,pmCreator2\nlist2;python:False;user1@test.be"
         messages = IStatusMessage(self.request).show()
-        msg = translate('pt_mailing_sent', domain='PloneMeeting', context=self.request)
+        msg = translate(
+            'pt_mailing_sent',
+            domain='PloneMeeting',
+            mapping={'recipients': "user1@test.be, "
+                     "M. PMCreator One <pmcreator1@plonemeeting.org>, "
+                     "M. PMCreator Two <pmcreator2@plonemeeting.org>"},
+            context=self.request)
         self.assertNotEquals(messages[-1].message, msg)
         view()
         messages = IStatusMessage(self.request).show()
         self.assertEqual(messages[-1].message, msg)
 
-    def test_pm_SendPodTemplateToMailingListRecipient(self):
+    def test_pm_SendPodTemplateToMailingListRecipients(self):
         """Recipients may be defined using several ways :
            - python script;
            - userid;
@@ -816,30 +823,28 @@ class testViews(PloneMeetingTestCase):
            - Plone group."""
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        template = self.meetingConfig.podtemplates.itemTemplate
-        self.request.set('template_uid', template.UID())
-        self.request.set('output_format', 'odt')
-        view = item.restrictedTraverse('@@document-generation')
 
         # script
-        self.assertEqual(view._extractRecipients("python:['pmCreator1']"),
+        self.assertEqual(extract_recipients(item, "python:['pmCreator1']"),
                          [u'M. PMCreator One <pmcreator1@plonemeeting.org>'])
         # userid
-        self.assertEqual(view._extractRecipients("pmCreator1"),
+        self.assertEqual(extract_recipients(item, "pmCreator1"),
                          [u'M. PMCreator One <pmcreator1@plonemeeting.org>'])
         # email
-        self.assertEqual(view._extractRecipients("pmcreator1@plonemeeting.org"),
+        self.assertEqual(extract_recipients(item, "pmcreator1@plonemeeting.org"),
                          ['pmcreator1@plonemeeting.org'])
         # group
         group_dev_creators = "group:{0}".format(self.developers_creators)
-        self.assertEqual(sorted(view._extractRecipients(group_dev_creators)),
+        self.assertEqual(sorted(extract_recipients(item, group_dev_creators)),
                          [u'M. PMCreator One <pmcreator1@plonemeeting.org>',
                           u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
                           u'M. PMManager <pmmanager@plonemeeting.org>'])
 
         # mixed
-        self.assertEqual(sorted(view._extractRecipients(
-            "python:['pmCreator1'],pmCreator1,pmCreator2,{0},new@example.com".format(group_dev_creators))),
+        self.assertEqual(sorted(extract_recipients(
+            item,
+            "python:['pmCreator1'],pmCreator1,pmCreator2,{0},new@example.com".format(
+                group_dev_creators))),
             [u'M. PMCreator One <pmcreator1@plonemeeting.org>',
              u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
              u'M. PMCreator Two <pmcreator2@plonemeeting.org>',
@@ -1935,6 +1940,19 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(item3.getGroupsInCharge(), [self.developers_uid])
         # local_roles removed
         self.assertFalse(self.vendors_observers in item1.__ac_local_roles__)
+
+        # when using auto groups in charge from proposing group or category
+        # action is displayed to MeetingManagers
+        cfg2 = self.meetingConfig2
+        searches_items = self.getMeetingFolder(cfg2).searches_items
+        self.assertFalse(searches_items.unrestrictedTraverse(
+            '@@update-groups-in-charge-batch-action').available())
+        self.changeUser('pmManager')
+        self.assertFalse(searches_items.unrestrictedTraverse(
+            '@@update-groups-in-charge-batch-action').available())
+        cfg2.setIncludeGroupsInChargeDefinedOnCategory(True)
+        self.assertTrue(searches_items.unrestrictedTraverse(
+            '@@update-groups-in-charge-batch-action').available())
 
     def test_pm_UpdateCopyGroupsBatchActionForm(self):
         """This will update copyGroups for selected items."""
@@ -3170,6 +3188,8 @@ class testViews(PloneMeetingTestCase):
         """Test that MeetingConfig title is displayed on pmFolders (faceted folders)
            for users and in the configuration."""
         cfg = self.meetingConfig
+        # remove recurring items in self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
         cfg_title = safe_unicode(cfg.Title())
         self.changeUser('pmCreator1')
         pm_folder = self.getMeetingFolder()
@@ -3181,9 +3201,28 @@ class testViews(PloneMeetingTestCase):
         item = self.create("MeetingItem")
         self.assertTrue(u"<title>o1 &mdash; Plone site</title>" in
                         item.restrictedTraverse('base_view')())
+        # and not on meeting
+        self.changeUser('pmManager')
+        meeting = self.create("Meeting", date=datetime(2025, 3, 20))
+        self.assertTrue(u"<title>20 march 2025 &mdash; Plone site</title>" in
+                        meeting.restrictedTraverse('@@meeting_view')())
         # but also in config
         self.assertTrue(u"<title>%s - Items" % cfg_title in
                         cfg.searches.searches_items.restrictedTraverse('base_view')())
+
+    def test_pm_deliberation_for_restapi(self):
+        """Used by plonemeeting.restapi to render formatted data."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', motivation=self.motivationText, decision=self.decisionText)
+        view = item.restrictedTraverse('@@document-generation')
+        helper = view.get_generation_context_helper()
+        data = helper.deliberation_for_restapi()
+        self.assertEqual(data["deliberation"], self.motivationText + self.decisionText)
+        self.assertEqual(data["deliberation_motivation"], self.motivationText)
+        self.assertEqual(data["deliberation_decision"], self.decisionText)
+        self.assertEqual(data["public_deliberation"], self.motivationText + self.decisionText)
+        self.assertEqual(data["public_deliberation_decided"], self.motivationText + self.decisionText)
+        return item, view, helper, data
 
 
 def test_suite():

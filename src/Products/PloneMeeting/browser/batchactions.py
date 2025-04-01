@@ -100,7 +100,7 @@ class UpdateLocalRolesBatchActionForm(BaseBatchActionForm):
     def _apply(self, **data):
         """ """
         uids = listify_uids(data['uids'])
-        self.tool.update_all_local_roles(brains=self.brains, log=False)
+        self.tool.update_all_local_roles(brains=self.brains, log=False, redirect=False)
         msg = translate('update_selected_elements',
                         domain="PloneMeeting",
                         mapping={'number_of_elements': len(uids)},
@@ -120,9 +120,9 @@ class PMBaseARUOBatchActionForm(BaseARUOBatchActionForm):
            roles in the application.
            This is essentially done to hide this to (restricted)powerobservers
            and to non MeetingManagers on the meeting_view."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        return self.modified_attr_name in cfg.getUsedItemAttributes() and \
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+        return self.modified_attr_name in self.cfg.getUsedItemAttributes() and \
             _is_operational_user(self.context)
 
     def _apply(self, **data):
@@ -137,6 +137,19 @@ class UpdateGroupsInChargeBatchActionForm(PMBaseARUOBatchActionForm):
     label = _CEBA("Update groups in charge for selected elements")
     modified_attr_name = "groupsInCharge"
     required = True
+
+    def available(self):
+        """If not available, check if it should be made available to
+        MeetingManagers when using
+        MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup or
+        MeetingConfig.includeGroupsInChargeDefinedOnCategory."""
+        res = super(UpdateGroupsInChargeBatchActionForm, self).available()
+        if not res:
+            if (self.cfg.getIncludeGroupsInChargeDefinedOnProposingGroup() or
+                self.cfg.getIncludeGroupsInChargeDefinedOnCategory()) and \
+               self.tool.isManager(self.cfg):
+                res = True
+        return res
 
     def _vocabulary(self):
         return 'Products.PloneMeeting.vocabularies.itemgroupsinchargevocabulary'
