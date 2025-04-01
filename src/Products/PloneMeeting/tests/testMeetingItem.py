@@ -3859,7 +3859,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.assertTrue(m2UID not in item.listMeetingsAcceptingItems().keys())
 
-    def test_pm_CopyGroupsVocabulary(self):
+    def test_pm_ItemCopyGroupsVocabulary(self):
         '''
           This is the vocabulary for the field "copyGroups".
           Check that we still have the stored value in the vocabulary, aka if the stored value

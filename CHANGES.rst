@@ -11,6 +11,9 @@ Changelog
 - In `ToolPloneMeeting.update_all_local_roles` only display the `Done.` message
   if `redirect=True` so it is not displayed in the dashboard batch action.
   [gbastien]
+- Fixed `BaseCopyGroupsVocabulary` that could break because of several terms
+  with same value when `copyGroups` and `restrictedCopyGroups` were used.
+  [gbastien]
 
 4.2.18 (2025-03-24)
 -------------------

@@ -962,6 +962,18 @@ class testFaceted(PloneMeetingTestCase):
             [term.token for term in vocab(cfg)],
             ['confidential', 'not_confidential', 'to_sign', 'not_to_sign', 'signed'])
 
+    def test_pm_CopyGroupsVocabulary(self):
+        """Test, especially when using copyGroups and restrictedCopyGroups."""
+        cfg = self.meetingConfig
+        cfg.setSelectableCopyGroups((self.vendors_reviewers, self.developers_reviewers))
+        cfg.setSelectableRestrictedCopyGroups((self.vendors_reviewers, ))
+        self._enableField('copyGroups')
+        self._enableField('restrictedCopyGroups')
+        self.changeUser('pmManager')
+        self.assertEqual(
+            get_vocab_values(cfg, "Products.PloneMeeting.vocabularies.copygroupsvocabulary"),
+            [self.developers_reviewers, self.vendors_reviewers])
+
 
 def test_suite():
     from unittest import makeSuite
