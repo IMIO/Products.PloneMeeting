@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.19 (unreleased)
+4.2.19 (2025-04-02)
 -------------------
 
 - Fixed MeetingItem `actions_panel` caching that could display WF transitions
