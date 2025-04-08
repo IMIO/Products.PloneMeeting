@@ -5,8 +5,10 @@ Changelog
 4.2.20 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- When using `MeetingItem.otherMeetingConfigsClonableToFields`, make sure if
+  field is empty, the resulting item field `mimetype` is correctly set to
+  `text/html` (was `text/plain` resulting in broken `quick edit`).
+  [gbastien]
 
 4.2.19 (2025-04-02)
 -------------------
