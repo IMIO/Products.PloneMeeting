@@ -1748,6 +1748,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(newItem.getMotivation(), '')
         # was emptied
         self.assertEqual(newItem.getDecision(), '')
+        self.assertEqual(newItem.decision.mimetype, 'text/html')
 
     def test_pm_CloneItemWithSetCurrentAsPredecessor(self):
         '''When an item is cloned with option setCurrentAsPredecessor=True,
