@@ -1759,6 +1759,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # was emptied
         self.assertEqual(newItem.getItemReference(), '')
         self.assertEqual(newItem.getDecision(), '')
+        self.assertEqual(newItem.decision.mimetype, 'text/html')
 
     def test_pm_SendItemToOtherMCItemReference(self):
         '''Test when item sent to other MC and original item

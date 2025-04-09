@@ -8035,7 +8035,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             other_mc_field = self.getField(other_mc_field_name)
             other_mc_field_value = other_mc_field.get(self)
-            dest_field.set(newItem, other_mc_field_value)
+            dest_field.set(newItem, other_mc_field_value, mimetype='text/html')
 
         # execute some transitions on the newItem if it was defined in the cfg
         # find the transitions to trigger

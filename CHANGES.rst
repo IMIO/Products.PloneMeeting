@@ -2,7 +2,15 @@ Changelog
 =========
 
 
-4.2.19 (unreleased)
+4.2.20 (unreleased)
+-------------------
+
+- When using `MeetingItem.otherMeetingConfigsClonableToFields`, make sure if
+  field is empty, the resulting item field `mimetype` is correctly set to
+  `text/html` (was `text/plain` resulting in broken `quick edit`).
+  [gbastien]
+
+4.2.19 (2025-04-02)
 -------------------
 
 - Fixed MeetingItem `actions_panel` caching that could display WF transitions
