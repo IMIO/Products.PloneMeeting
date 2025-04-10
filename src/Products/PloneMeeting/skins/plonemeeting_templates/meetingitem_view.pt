@@ -466,6 +466,20 @@
         </div>
     </tal:defines>
 
+    <tal:comment replace="nothing">Externals infos</tal:comment>
+    <div id="external-infos"
+         class="collapsible discreet not-auto-collapsible-activable"
+         onclick="toggleDetails('collapsible-external-infos', toggle_parent_active=true, parent_tag=null, load_view='@@load-external-infos');">
+      <span class="item_attribute_label" i18n:translate="external_infos">
+          External infos
+      </span>
+    </div>
+    <div id="collapsible-external-infos" class="collapsible-content discreet">
+      <div class="collapsible-inner-content">
+         <img tal:attributes="src string:${portal_url}/spinner_small.gif" />
+      </div>
+    </div>
+
     <tal:comment replace="nothing">Description</tal:comment>
     <tal:field define="fieldName python: 'description'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>

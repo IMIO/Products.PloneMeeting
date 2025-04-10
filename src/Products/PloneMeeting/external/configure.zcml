@@ -1,0 +1,23 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    xmlns:plone="http://namespaces.plone.org/plone">
+
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="load-external-infos"
+        class=".views.ExternalView"
+        template="templates/external.pt"
+        permission="zope2.Public" />
+
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        name="item-link-vision-projects"
+        class=".forms.LinkWithVisionForm"
+        permission="zope2.View" />
+
+    <utility component=".vocabularies.VisionProjectsVocabularyFactory"
+             name="Products.PloneMeeting.external.vocabularies.visionprojects" />
+
+</configure>
