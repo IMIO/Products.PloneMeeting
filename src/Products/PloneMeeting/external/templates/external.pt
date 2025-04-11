@@ -4,57 +4,63 @@
     <tal:block define="content python: view.content;
                        DateTime python:modules['DateTime'].DateTime;
                        toLocalizedTime nocall:context/@@plone/toLocalizedTime;
-                       portal_url context/@@plone_portal_state/portal_url;"
+                       portal_url context/@@plone_portal_state/portal_url;
+                       DateTime python:modules['DateTime'].DateTime;"
                i18n:domain="PloneMeeting">
 
-      <p class="discreet" i18n:translate="pm_informations_help">You see these informations because the current element is linked to iA.Vision.</p>
-        <tal:showInfos condition="python: isinstance(available, tuple)">
-        <dl class="portalMessage info" tal:attributes="class python: 'portalMessage %s' % available[1]">
-          <dt i18n:domain="plone" i18n:translate="" tal:content="python: available[1].capitalize()">Level</dt>
-          <dd tal:content="python: available[0]">Message</dd>
-        </dl>
-        </tal:showInfos>
-        <table class="listing" tal:condition="python: available is True and content">
-            <thead i18n:domain="PloneMeeting">
-               <th i18n:translate="title">Title</th>
-               <th i18n:translate="type">Type</th>
-               <th i18n:translate="status">Status</th>
-               <th i18n:translate="parent">Parent</th>
-               <th i18n:translate="manager">Manager</th>
-               <th i18n:translate="start_date">Start date</th>
-            </thead>
-            <tbody>
-              <tal:loop repeat="info content">
-                <tr tal:define="elt info/target;
-                                oddrow repeat/info/odd;
-                                classOddEven python: oddrow and 'even' or 'odd';"
-                    tal:attributes="class classOddEven">
-                  <td>
-                    <a tal:attributes="href elt/url|string:#"
-                       tal:content="elt/name" target="_blank">
-                      Item title</a>
-                  </td>
-                  <td tal:content="elt/type">Type</td>
-                  <td tal:content="elt/infos/status">Status</td>
-                  <td tal:content="elt/infos/parent/name|elt/infos/project/name|string:-">Parent</td>
-                  <td tal:content="elt/infos/manager|string:-">Manager</td>
-                  <td tal:content="elt/infos/start_date|string:-">Start date</td>
-                </tr>
-              </tal:loop>
-            </tbody>
-        </table>
+      <span class="item_attribute_label" i18n:translate="pm_external_vision_help">Elements linked from iA.Vision</span>:
+      <tal:showInfos condition="python: isinstance(available, tuple)">
+      <dl class="portalMessage info" tal:attributes="class python: 'portalMessage %s' % available[1]">
+        <dt i18n:domain="plone" i18n:translate="" tal:content="python: available[1].capitalize()">Level</dt>
+        <dd tal:content="python: available[0]">Message</dd>
+      </dl>
+      </tal:showInfos>
+      <table class="listing" tal:condition="python: available is True and content">
+          <thead>
+             <th i18n:translate="listingheader_title">Title</th>
+             <th i18n:translate="type">Type</th>
+             <th i18n:translate="status">Status</th>
+             <th i18n:translate="parent">Parent</th>
+             <th i18n:translate="manager">Manager</th>
+             <th i18n:translate="vision_start_date">Start date</th>
+          </thead>
+          <tbody>
+            <tal:loop repeat="info content">
+              <tr tal:define="elt info/target;
+                              oddrow repeat/info/odd;
+                              classOddEven python: oddrow and 'even' or 'odd';"
+                  tal:attributes="class classOddEven">
+                <td>
+                  <a tal:attributes="href elt/url|string:#"
+                     tal:content="elt/name" target="_blank">
+                    Item title</a>
+                </td>
+                <td tal:content="elt/type">Type</td>
+                <td tal:content="elt/infos/status">Status</td>
+                <td tal:content="elt/infos/parent/name|elt/infos/project/name|string:-">Parent</td>
+                <td tal:content="python: elt['infos']['manager'] or '-'">Manager</td>
+                <td tal:define="start_date python: elt['infos']['start_date']"
+                    tal:content="python: start_date and context.unrestrictedTraverse('@@plone').toLocalizedTime(start_date) or '-'">Start date</td>
+              </tr>
+            </tal:loop>
+          </tbody>
+      </table>
+      <p i18n:translate="" tal:condition="not:content">Nothing to display.</p>
     </tal:block>
+    <a href="@@item-link-vision-projects"
+       class="link-overlay-pm"
+       tal:condition="python: view.can_link()">
+      <form name="item-link-vision-projects-form"
+            style="text-align: right"
+            action="item-link-vision-projects">
+        <input class="context" type="submit" name="item-link-vision-projects"
+               value="Link with iA.Vision"
+               i18n:domain="PloneMeeting"
+               i18n:attributes="value" />
+      </form>
+    </a>
   </tal:available>
   <tal:not-available condition="not:available">
-    <p tal:content="python: available.msg">Error</p>
+    <p class="highlight-red" tal:content="python: available.msg">Error</p>
   </tal:not-available>
-  <a href="@@item-link-vision-projects"
-     class="link-overlay-pm">
-    <form name="item-link-vision-projects-form"
-          style="text-align: right"
-          action="item-link-vision-projects">
-      <input class="context" type="submit" name="item-link-vision-projects"
-             value="Lier à iA.Vision" />
-    </form>
-  </a>
 </tal:defines>

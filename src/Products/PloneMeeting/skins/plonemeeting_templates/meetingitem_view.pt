@@ -466,12 +466,12 @@
         </div>
     </tal:defines>
 
-    <tal:comment replace="nothing">Externals infos</tal:comment>
+    <tal:comment replace="nothing">Externals linked elements</tal:comment>
     <div id="external-infos"
          class="collapsible discreet not-auto-collapsible-activable"
          onclick="toggleDetails('collapsible-external-infos', toggle_parent_active=true, parent_tag=null, load_view='@@load-external-infos');">
-      <span class="item_attribute_label" i18n:translate="external_infos">
-          External infos
+      <span class="item_attribute_label" i18n:translate="external_linked_elements">
+          External linked elements
       </span>
     </div>
     <div id="collapsible-external-infos" class="collapsible-content discreet">

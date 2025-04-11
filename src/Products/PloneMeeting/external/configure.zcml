@@ -19,5 +19,7 @@
 
     <utility component=".vocabularies.VisionProjectsVocabularyFactory"
              name="Products.PloneMeeting.external.vocabularies.visionprojects" />
+    <utility component=".vocabularies.VisionTasksVocabularyFactory"
+             name="Products.PloneMeeting.external.vocabularies.visiontasks" />
 
 </configure>
