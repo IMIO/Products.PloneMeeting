@@ -2,12 +2,15 @@ Changelog
 =========
 
 
-4.2.20 (unreleased)
--------------------
+4.2.20-visiona1 (unreleased)
+----------------------------
 
 - When using `MeetingItem.otherMeetingConfigsClonableToFields`, make sure if
   field is empty, the resulting item field `mimetype` is correctly set to
   `text/html` (was `text/plain` resulting in broken `quick edit`).
+  [gbastien]
+- Display elements from external source `iA.Vision`, added form to be able
+  to `link/unlink` elements from it as well.
   [gbastien]
 
 4.2.19 (2025-04-02)
