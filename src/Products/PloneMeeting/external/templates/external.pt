@@ -8,7 +8,6 @@
                        DateTime python:modules['DateTime'].DateTime;"
                i18n:domain="PloneMeeting">
 
-      <span class="item_attribute_label" i18n:translate="pm_external_vision_help">Elements linked from iA.Vision</span>:
       <tal:showInfos condition="python: isinstance(available, tuple)">
       <dl class="portalMessage info" tal:attributes="class python: 'portalMessage %s' % available[1]">
         <dt i18n:domain="plone" i18n:translate="" tal:content="python: available[1].capitalize()">Level</dt>
@@ -17,9 +16,10 @@
       </tal:showInfos>
       <table class="listing" tal:condition="python: available is True and content">
           <thead>
-             <th i18n:translate="listingheader_title">Title</th>
+             <th i18n:translate="listingheader_title_from_vision">Title from iA.Vision</th>
              <th i18n:translate="type">Type</th>
-             <th i18n:translate="status">Status</th>
+             <th i18n:translate="State">State</th>
+             <th i18n:translate="project">Project</th>
              <th i18n:translate="parent">Parent</th>
              <th i18n:translate="manager">Manager</th>
              <th i18n:translate="vision_start_date">Start date</th>
@@ -37,7 +37,8 @@
                 </td>
                 <td tal:content="elt/type">Type</td>
                 <td tal:content="elt/infos/status">Status</td>
-                <td tal:content="elt/infos/parent/name|elt/infos/project/name|string:-">Parent</td>
+                <td tal:content="python: elt['infos'].get('project', {}).get('name') or '-'">Project</td>
+                <td tal:content="python: elt['infos']['parent'].get('name') or '-'">Parent</td>
                 <td tal:content="python: elt['infos']['manager'] or '-'">Manager</td>
                 <td tal:define="start_date python: elt['infos']['start_date']"
                     tal:content="python: start_date and context.unrestrictedTraverse('@@plone').toLocalizedTime(start_date) or '-'">Start date</td>
@@ -51,7 +52,6 @@
        class="link-overlay-pm"
        tal:condition="python: view.can_link()">
       <form name="item-link-vision-projects-form"
-            style="text-align: right"
             action="item-link-vision-projects">
         <input class="context" type="submit" name="item-link-vision-projects"
                value="Link with iA.Vision"

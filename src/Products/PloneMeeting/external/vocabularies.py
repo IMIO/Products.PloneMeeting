@@ -17,7 +17,17 @@ class BaseVisionVocabulary(object):
         """ """
         terms = []
         for info in send_json_request(endpoint):
-            terms.append(SimpleTerm(info['id'], info['id'], info['name']))
+            # concatenate element's project, parent and name for term title
+            res = []
+            project_name = info['infos'].get('project', {}).get('name')
+            if project_name:
+                res.append("<span class='discreet'>%s</span>" % project_name)
+            parent_name = info['infos']['parent'].get('name')
+            if parent_name:
+                res.append("<span class='discreet'>%s</span>" % parent_name)
+            res.append(info['name'])
+            title = u" / ".join(res)
+            terms.append(SimpleTerm(info['id'], info['id'], title))
         terms = humansorted(terms, key=attrgetter('title'))
         return SimpleVocabulary(terms)
 

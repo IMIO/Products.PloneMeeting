@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
+# attribute name on the portal to store keycloak auth token
 AUTH_INFOS_ATTR = "keycloak_auth_infos"
 
+# keycloak auth token configuration
 AUTH_URL = 'https://keycloak-apps.cloud.imio-test.be/realms/vision/protocol/openid-connect/token'
 AUTH_CLIENT_ID = 'vision'
 AUTH_CLIENT_SECRET = '71dFZaMv96cJYCx@HANr77NyQ0Lz0I%i'
@@ -17,6 +19,7 @@ AUTH_CURL_COMMAND = "curl --location '%s' \
 --data-urlencode 'grant_type=password'" % (
     AUTH_URL, AUTH_CLIENT_ID, AUTH_CLIENT_SECRET, AUTH_USERNAME, AUTH_PASSWORD)
 
+# api configuration
 API_URL = 'https://api-staging.imio.be/imio/vision/v1/municipalities/demo/%s?delib_user=%s%s'
 API_USERNAME = 'dgen'
 API_DELIB_UID = '93acfdd74c8342f180c4f0a02e6a0c61'

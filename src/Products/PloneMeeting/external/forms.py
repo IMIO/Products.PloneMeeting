@@ -85,7 +85,9 @@ class LinkWithVisionForm(form.Form):
 
     def render(self):
         if self._finished_sent:
-            IRedirect(self.request).redirect(self.context.absolute_url())
+            IRedirect(self.request).redirect(
+                self.context.absolute_url() +
+                "?expand-collapsible=external-infos")
             return ""
         return super(LinkWithVisionForm, self).render()
 
@@ -104,18 +106,20 @@ class LinkWithVisionForm(form.Form):
                 body = {"delib_uid": API_DELIB_UID,
                         "target": {"type": "project",
                                    "object_id": project_id}}
-                send_json_request("delib-links", method='POST', body=json.dumps(body))
+                res = send_json_request("delib-links", method='POST', body=json.dumps(body))
                 api.portal.show_message(
-                    'Project with id "%s" has been linked.' % project_id,
+                    _('Element "${element}" has been linked.',
+                      mapping={'element': res[0]['target']['name']}),
                     request=self.request)
         for task_id in data['tasks']:
             if task_id not in linked_tasks:
                 body = {"delib_uid": API_DELIB_UID,
                         "target": {"type": "task",
                                    "object_id": task_id}}
-                send_json_request("delib-links", method='POST', body=json.dumps(body))
+                res = send_json_request("delib-links", method='POST', body=json.dumps(body))
                 api.portal.show_message(
-                    'Task with id "%s" has been linked.' % task_id,
+                    _('Element "${element}" has been linked.',
+                      mapping={'element': res[0]['target']['name']}),
                     request=self.request)
         # unlink no more selected elements
         for linked_elt in linked_content:
@@ -123,10 +127,10 @@ class LinkWithVisionForm(form.Form):
                 linked_elt['target']['id'] not in data['projects']) or \
                (linked_elt['target']['type'] == "task" and
                     linked_elt['target']['id'] not in data['tasks']):
-                send_json_request("delib-links/%s" % linked_elt['id'], method='DELETE')
+                res = send_json_request("delib-links/%s" % linked_elt['id'], method='DELETE')
                 api.portal.show_message(
-                    '%s with id "%s" has been unlinked.' % (
-                        linked_elt['target']['type'].capitalize(),
-                        linked_elt['target']['id']),
-                    request=self.request, type="warning")
+                    _('Element "${element}" has been unlinked.',
+                      mapping={'element': linked_elt['target']['name']}),
+                    request=self.request,
+                    type='warning')
         self._finished_sent = True

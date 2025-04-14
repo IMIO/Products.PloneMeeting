@@ -3,10 +3,10 @@
 from appy.gen import No
 from datetime import datetime
 from datetime import timedelta
+from imio.helpers.cache import get_current_user_id
 from imio.helpers.security import fplog
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.external.config import API_URL
-from Products.PloneMeeting.external.config import API_USERNAME
 from Products.PloneMeeting.external.config import AUTH_CURL_COMMAND
 from Products.PloneMeeting.external.config import AUTH_INFOS_ATTR
 from plone import api
@@ -65,27 +65,28 @@ def send_json_request(
     # prepare url to call, manage extra_parameters
     if extra_parameters:
         extra_parameters = "&" + urllib.urlencode(extra_parameters)
-    url = API_URL % (endpoint, API_USERNAME, extra_parameters or "")
+    request = getRequest()
+    url = API_URL % (endpoint, get_current_user_id(request), extra_parameters or "")
     target = urlparse(url)
     h = httplib2.Http()
     url = target.geturl()
-    extras = 'method={0} url={1}'.format(method, url)
-    # manage cache per request for GET
+    # manage cache per request for 'GET'
     content = None
     if method == 'GET':
-        request = getRequest()
-        cachekey_id = "_send_json_request_cachekey"
+        cachekey_id = "send_json_request_cachekey"
         cache = getattr(request, cachekey_id, {})
         cachekey = "%s__%s" % (url, method)
         content = cache.get(cachekey, None)
     if content is None:
+        extras = 'method={0} url={1}'.format(method, url)
         fplog('execute_json_call', extras=extras)
         start = datetime.now()
         response, content = h.request(url, method, body, headers)
         logger.info(datetime.now() - start)
-        if response.status in [404, 500]:
+        if response.status >= 300:
             api.portal.show_message(content, request=getRequest())
             content = No("Error status: %d (%s)" % (response.status, content))
+        # manage cache per request for 'GET'
         if method == 'GET':
             cache[cachekey] = content
             setattr(request, cachekey_id, cache)
