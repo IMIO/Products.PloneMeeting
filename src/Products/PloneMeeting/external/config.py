@@ -22,4 +22,3 @@ AUTH_CURL_COMMAND = "curl --location '%s' \
 # api configuration
 API_URL = 'https://api-staging.imio.be/imio/vision/v1/municipalities/demo/%s?delib_user=%s%s'
 API_USERNAME = 'dgen'
-API_DELIB_UID = '93acfdd74c8342f180c4f0a02e6a0c61'

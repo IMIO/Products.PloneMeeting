@@ -6,7 +6,6 @@ from plone import api
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
-from Products.PloneMeeting.external.config import API_DELIB_UID
 from Products.PloneMeeting.external.utils import send_json_request
 from Products.PloneMeeting.utils import is_proposing_group_editor
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -35,7 +34,7 @@ class ExternalView(BrowserView):
         """ """
         if not self.context.isDefinedInTool():
             self.content = send_json_request(
-                "delib-links", extra_parameters={"delib_uid": API_DELIB_UID})
+                "delib-links", extra_parameters={"delib_uid": self.context.UID()})
             if self.content:
                 self.content = humansorted(self.content, key=lambda x: x['target']['name'])
         else:

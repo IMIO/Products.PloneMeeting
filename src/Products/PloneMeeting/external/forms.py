@@ -2,7 +2,6 @@
 
 from plone import api
 from Products.PloneMeeting.config import PMMessageFactory as _
-from Products.PloneMeeting.external.config import API_DELIB_UID
 from Products.PloneMeeting.external.utils import send_json_request
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
@@ -11,22 +10,26 @@ from z3c.form import field
 from z3c.form import form
 from zope import schema
 from zope.interface import Interface
+from zope.interface import provider
+from zope.schema.interfaces import IContextAwareDefaultFactory
 
 import json
 
 
-def projects_default():
+@provider(IContextAwareDefaultFactory)
+def projects_default(context):
     """ """
     content = send_json_request(
-        "delib-links", extra_parameters={"delib_uid": API_DELIB_UID})
+        "delib-links", extra_parameters={"delib_uid": context.UID()})
     return [elt['target']['id'] for elt in content
             if elt['target']['type'] == "project"]
 
 
-def tasks_default():
+@provider(IContextAwareDefaultFactory)
+def tasks_default(context):
     """ """
     content = send_json_request(
-        "delib-links", extra_parameters={"delib_uid": API_DELIB_UID})
+        "delib-links", extra_parameters={"delib_uid": context.UID()})
     return [elt['target']['id'] for elt in content
             if elt['target']['type'] == "task"]
 
@@ -95,7 +98,7 @@ class LinkWithVisionForm(form.Form):
         """ """
         # get linked items and link new elements and unlink no more selected ones
         linked_content = send_json_request(
-            "delib-links", extra_parameters={"delib_uid": API_DELIB_UID})
+            "delib-links", extra_parameters={"delib_uid": self.context.UID()})
         linked_projects = [elt['target']['id'] for elt in linked_content
                            if elt['target']['type'] == "project"]
         linked_tasks = [elt['target']['id'] for elt in linked_content
@@ -103,7 +106,7 @@ class LinkWithVisionForm(form.Form):
         # link new selected elements
         for project_id in data['projects']:
             if project_id not in linked_projects:
-                body = {"delib_uid": API_DELIB_UID,
+                body = {"delib_uid": self.context.UID(),
                         "target": {"type": "project",
                                    "object_id": project_id}}
                 res = send_json_request("delib-links", method='POST', body=json.dumps(body))
@@ -113,7 +116,7 @@ class LinkWithVisionForm(form.Form):
                     request=self.request)
         for task_id in data['tasks']:
             if task_id not in linked_tasks:
-                body = {"delib_uid": API_DELIB_UID,
+                body = {"delib_uid": self.context.UID(),
                         "target": {"type": "task",
                                    "object_id": task_id}}
                 res = send_json_request("delib-links", method='POST', body=json.dumps(body))
