@@ -421,6 +421,10 @@ class MeetingItemWorkflowConditions(object):
            not self.context.mandatoryAdvicesAreOk():
             return No(_('mandatory_advice_ko'))
 
+        # can not be presented if isAcceptableOutOfMeeting
+        if self.context.getIsAcceptableOutOfMeeting():
+            return False
+
         # all checks passed
         return True
 
