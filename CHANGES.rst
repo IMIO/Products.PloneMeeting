@@ -9,6 +9,11 @@ Changelog
   field is empty, the resulting item field `mimetype` is correctly set to
   `text/html` (was `text/plain` resulting in broken `quick edit`).
   [gbastien]
+- Adapted `MeetingItemWorkflowConditions.mayPresent` so an item that
+  `isAcceptableOutOfMeeting` can not be presented into a meeting.
+  [gbastien]
+- Use another translation for `isAcceptableOutOfMeeting` pretty link icon title.
+  [gastien]
 - Display elements from external source `iA.Vision`, added form to be able
   to `link/unlink` elements from it as well.
   [gbastien]
