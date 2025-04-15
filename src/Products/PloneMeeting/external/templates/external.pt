@@ -19,7 +19,7 @@
              <th i18n:translate="listingheader_title_from_vision">Title from iA.Vision</th>
              <th i18n:translate="type">Type</th>
              <th i18n:translate="State">State</th>
-             <th i18n:translate="project">Project</th>
+             <th i18n:translate="Project">Project</th>
              <th i18n:translate="parent">Parent</th>
              <th i18n:translate="manager">Manager</th>
              <th i18n:translate="vision_start_date">Start date</th>
@@ -35,7 +35,7 @@
                      tal:content="elt/name" target="_blank">
                     Item title</a>
                 </td>
-                <td tal:content="elt/type">Type</td>
+                <td i18n:translate="" tal:content="python: elt['type'].capitalize()">Type</td>
                 <td tal:content="elt/infos/status">Status</td>
                 <td tal:content="python: elt['infos'].get('project', {}).get('name') or '-'">Project</td>
                 <td tal:content="python: elt['infos']['parent'].get('name') or '-'">Parent</td>

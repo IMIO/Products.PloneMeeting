@@ -84,6 +84,7 @@ def send_json_request(
         response, content = h.request(url, method, body, headers)
         logger.info(datetime.now() - start)
         if response.status >= 300:
+            logger.warn(content)
             api.portal.show_message(content, request=getRequest())
             content = No("Error status: %d (%s)" % (response.status, content))
         # manage cache per request for 'GET'
