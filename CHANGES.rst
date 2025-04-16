@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-4.2.20 (unreleased)
--------------------
+4.2.20rc1 (unreleased)
+----------------------
 
 - When using `MeetingItem.otherMeetingConfigsClonableToFields`, make sure if
   field is empty, the resulting item field `mimetype` is correctly set to
