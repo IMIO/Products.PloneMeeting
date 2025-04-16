@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.20rc1 (unreleased)
+4.2.20rc1 (2025-04-16)
 ----------------------
 
 - When using `MeetingItem.otherMeetingConfigsClonableToFields`, make sure if
