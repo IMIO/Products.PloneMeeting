@@ -600,7 +600,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
 
         if self.context.getIsAcceptableOutOfMeeting():
             res.append(('acceptable_out_of_meeting.png',
-                        translate('PloneMeeting_label_isAcceptableOutOfMeeting',
+                        translate('icon_help_isAcceptableOutOfMeeting',
                                   domain="PloneMeeting",
                                   context=self.request)))
         return res

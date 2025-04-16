@@ -3342,11 +3342,14 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Tests while 'accepted_out_of_meeting' wfAdaptation is active.'''
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
+        self.create('Meeting')
         self.validateItem(item)
         # not available until MeetingItem.isAcceptableOutOfMeeting is True
         self.assertFalse('accept_out_of_meeting' in self.transitions(item))
+        self.assertTrue('present' in self.transitions(item))
         item.setIsAcceptableOutOfMeeting(True)
         self.assertTrue('accept_out_of_meeting' in self.transitions(item))
+        self.assertFalse('present' in self.transitions(item))
         # in case 'reviewers_take_back_validated_item' is available
         self.changeUser('pmReviewer1')
         self.assertFalse('accept_out_of_meeting' in self.transitions(item))
