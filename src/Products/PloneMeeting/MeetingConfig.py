@@ -2105,7 +2105,7 @@ schema = Schema((
                      'is_delay_calendar_days':
                         SelectColumn("Is delay computed in calendar days?",
                                      vocabulary="listBooleanVocabulary",
-                                     col_description="Is delay computed in calendar days description",
+                                     col_description="is_delay_calendar_days_col_description",
                                      default='0'),
                      'available_on':
                         Column("Available on",
