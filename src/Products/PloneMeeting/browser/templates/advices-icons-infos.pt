@@ -43,6 +43,10 @@
                              tal:content="python: advice['delay_infos']['left_delay']"
                              tal:attributes="class python: context._advice_is_given(advice['id']) and 'advice_delay' or class_if_not_given" />
                      </tal:defines>
+                     <span tal:condition="python: advice['is_delay_calendar_days']"
+                           title="Delay computed in calendar days"
+                           i18n:attributes="title"
+                           class="far fa-calendar-alt pmHelp" />
                   </span>
                   <tal:not_asked_advice_icon condition="python: advice['not_asked']">
                       <img src="advice_not_asked.png"
