@@ -4589,6 +4589,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                k not in ['gives_auto_advice_on_help_message',
                                          'delay_left_alert',
                                          'delay_label',
+                                         'is_delay_calendar_days',
                                          'available_on'] and \
                                not (k == 'is_linked_to_previous_row' and
                                     (v == '0' or not self._findLinkedRowsFor(customAdviser['row_id'])[0])):

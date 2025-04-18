@@ -1756,6 +1756,48 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'],
                          item._doClearDayFrom(item.adviceIndex[self.vendors_uid]['delay_started_on'] + timedelta(10)))
 
+    def test_pm_is_delay_calendar_days(self):
+        """Test when is_delay_calendar_days then delay is computed in calendar days."""
+        cfg = self.meetingConfig
+        # make advice giveable when item is proposed
+        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'), ))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'), ))
+        cfg.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'org': self.vendors_uid,
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '10',
+              'delay_label': '',
+              'is_delay_calendar_days': '0'},
+             {'row_id': 'unique_id_456',
+              'org': self.developers_uid,
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '10',
+              'delay_label': '',
+              'is_delay_calendar_days': '1'},])
+        self.changeUser('pmCreator1')
+        item = self.create(
+            'MeetingItem',
+            optionalAdvisers=['{0}__rowid__unique_id_123'.format(self.vendors_uid),
+                              '{0}__rowid__unique_id_456'.format(self.developers_uid)])
+        vendors_advice_infos = item.adviceIndex.get(self.vendors_uid)
+        self.assertFalse(vendors_advice_infos['is_delay_calendar_days'])
+        dev_advice_infos = item.adviceIndex.get(self.developers_uid)
+        self.assertTrue(dev_advice_infos['is_delay_calendar_days'])
+        # both advices have a delay of 10 days but the one computed in calendar days
+        # will be shorter because it ignores weekends, holidays, ...
+        # same sart, dfferent end
+        self.assertEqual(vendors_advice_infos['delay_infos']['delay_started_on_localized'],
+                         dev_advice_infos['delay_infos']['delay_started_on_localized'])
+        # limit_date is a clear day like datetime.datetime(2025, 4, 28, 23, 59, 59)
+        self.assertTrue(vendors_advice_infos['delay_infos']['limit_date'] >
+                        dev_advice_infos['delay_infos']['limit_date'])
+
     def test_pm_AvailableDelaysView(self):
         '''Test the view '@@advice-available-delays' that shows
            available delays for a selected delay-aware advice.'''

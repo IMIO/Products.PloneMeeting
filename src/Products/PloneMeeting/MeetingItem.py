@@ -5587,9 +5587,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 delay = customAdviserInfos['delay']
                 delay_left_alert = customAdviserInfos['delay_left_alert']
                 delay_label = customAdviserInfos['delay_label']
+                is_delay_calendar_days = customAdviserInfos['is_delay_calendar_days'] == '1'
             else:
                 org_uid = adviser
                 row_id = delay = delay_left_alert = delay_label = ''
+                is_delay_calendar_days = False
             # manage userids
             userids = [optionalAdviser.split('__userid__')[1]
                        for optionalAdviser in optionalAdvisers
@@ -5602,6 +5604,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         'delay': delay,
                         'delay_left_alert': delay_left_alert,
                         'delay_label': delay_label,
+                        'is_delay_calendar_days': is_delay_calendar_days,
                         'userids': userids})
         return res
 
@@ -5649,15 +5652,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                             'delay': customAdviser['delay'],
                             'delay_left_alert': customAdviser['delay_left_alert'],
                             'delay_label': customAdviser['delay_label'],
+                            'is_delay_calendar_days': customAdviser['is_delay_calendar_days'],
                             # userids is unhandled for automatic advisers
                             'userids': []})
                 # check if the found automatic adviser is not already in the self.adviceIndex
                 # but with a manually changed delay, aka
                 # 'delay_for_automatic_adviser_changed_manually' is True
                 storedCustomAdviser = self.adviceIndex.get(customAdviser['org'], {})
-                delay_for_automatic_adviser_changed_manually = \
-                    'delay_for_automatic_adviser_changed_manually' in storedCustomAdviser and \
-                    storedCustomAdviser['delay_for_automatic_adviser_changed_manually'] or False
+                delay_for_automatic_adviser_changed_manually = storedCustomAdviser.get(
+                    'delay_for_automatic_adviser_changed_manually', False)
+                is_delay_calendar_days = storedCustomAdviser.get(
+                    'is_delay_calendar_days', False)
                 if storedCustomAdviser and \
                    not storedCustomAdviser['row_id'] == customAdviser['row_id'] and \
                    delay_for_automatic_adviser_changed_manually and \
@@ -5675,6 +5680,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                             res[-1]['delay'] = storedCustomAdviser['delay']
                             res[-1]['delay_left_alert'] = storedCustomAdviser['delay_left_alert']
                             res[-1]['delay_label'] = storedCustomAdviser['delay_label']
+                            res[-1]['is_delay_calendar_days'] = is_delay_calendar_days
         return res
 
     security.declarePrivate('addAutoCopyGroups')
@@ -6549,6 +6555,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 d['delay'] = adviceInfo['delay']
                 d['delay_left_alert'] = adviceInfo['delay_left_alert']
                 d['delay_label'] = adviceInfo['delay_label']
+                d['is_delay_calendar_days'] = adviceInfo['is_delay_calendar_days']
                 d['gives_auto_advice_on_help_message'] = \
                     adviceInfo['gives_auto_advice_on_help_message']
                 d['row_id'] = adviceInfo['row_id']
@@ -6917,9 +6924,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 return data
 
         tool = api.portal.get_tool('portal_plonemeeting')
-        holidays = tool.getHolidaysAs_datetime()
-        weekends = tool.getNonWorkingDayNumbers()
-        unavailable_weekdays = tool.getUnavailableWeekDaysNumbers()
+        holidays = weekends = unavailable_weekdays = ()
+        if adviceInfos['is_delay_calendar_days'] is False:
+            holidays = tool.getHolidaysAs_datetime()
+            weekends = tool.getNonWorkingDayNumbers()
+            unavailable_weekdays = tool.getUnavailableWeekDaysNumbers()
         limit_date = workday(delay_started_on,
                              delay,
                              holidays=holidays,
