@@ -5956,6 +5956,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for advice in self.getAdvices():
             optional = True
             gives_auto_advice_on_help_message = delay = delay_left_alert = delay_label = ''
+            is_delay_calendar_days = False
             # find the relevant row in customAdvisers if advice has a row_id
             if advice.advice_row_id:
                 customAdviserConfig = cfg._dataForCustomAdviserRowId(advice.advice_row_id)
