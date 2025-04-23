@@ -242,6 +242,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '10',
                            'delay_left_alert': '',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': '',
                            'is_linked_to_previous_row': '0', }, ]
         org = get_organization(customAdvisers[0]['org'])
@@ -367,6 +368,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                                   'delay': '10',
                                   'delay_left_alert': '',
                                   'delay_label': 'Delay label',
+                                  'is_delay_calendar_days': '0',
                                   'available_on': '',
                                   'is_linked_to_previous_row': '0', }
         # validate returns nothing if validation was successful
@@ -382,6 +384,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                                  'delay': '20',
                                  'delay_left_alert': '',
                                  'delay_label': 'Delay label changed',
+                                 'is_delay_calendar_days': '1',
                                  'available_on': '',
                                  'is_linked_to_previous_row': '0', }
         # validate returns nothing if validation was successful
@@ -413,6 +416,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # now change a non logical field, then it still validates
         non_logical_fields_wrong_values_mapping = {
             'gives_auto_advice_on_help_message': 'New help message gives auto',
+            'is_delay_calendar_days': '1',
             'delay_left_alert': '5',
             'delay_label': 'New delay label', }
         savedOriginalCustomAdvisers = dict(originalCustomAdvisers)
@@ -457,6 +461,7 @@ class testMeetingConfig(PloneMeetingTestCase):
              'delay': '20',
              'delay_left_alert': '',
              'delay_label': 'Delay label changed',
+             'is_delay_calendar_days': '0',
              'available_on': '',
              'is_linked_to_previous_row': '0', }
         cfg.setCustomAdvisers([customAdvisersCreatedUntilSetAndPast, ])
@@ -473,6 +478,7 @@ class testMeetingConfig(PloneMeetingTestCase):
              'delay': '20',
              'delay_left_alert': '',
              'delay_label': 'Delay label changed',
+             'is_delay_calendar_days': '0',
              'available_on': '',
              'is_linked_to_previous_row': '0', }
         cfg.setCustomAdvisers([customAdvisersNotAutoChangedCreatedFrom, ])
@@ -535,6 +541,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '10',
                            'delay_left_alert': '',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': 'python: item.getItemIsSigned()',
                            'is_linked_to_previous_row': '0', }, ]
         org = get_organization(customAdvisers[0]['org'])
@@ -577,6 +584,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '',
                            'delay_left_alert': '',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': '',
                            'is_linked_to_previous_row': '0', }, ]
         org = get_organization(customAdvisers[0]['org'])
@@ -603,6 +611,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                                'delay': '',
                                'delay_left_alert': '',
                                'delay_label': '',
+                               'is_delay_calendar_days': '0',
                                'available_on': '',
                                'is_linked_to_previous_row': '1'})
 
@@ -650,6 +659,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '5',
                            'delay_left_alert': '2',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': '',
                            'is_linked_to_previous_row': '0', },
                           {'row_id': 'unique_id_456',
@@ -661,6 +671,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '10',
                            'delay_left_alert': '4',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': '',
                            'is_linked_to_previous_row': '1'},
                           {'row_id': 'unique_id_789',
@@ -672,6 +683,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '20',
                            'delay_left_alert': '4',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': '',
                            'is_linked_to_previous_row': '1'}]
         cfg.setCustomAdvisers(customAdvisers)
@@ -702,6 +714,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '5',
                            'delay_left_alert': '2',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': '',
                            'is_linked_to_previous_row': '0', },
                           {'row_id': 'unique_id_456',
@@ -713,6 +726,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '10',
                            'delay_left_alert': '4',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': '',
                            'is_linked_to_previous_row': '1'},
                           {'row_id': 'unique_id_789',
@@ -724,6 +738,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '20',
                            'delay_left_alert': '4',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': '',
                            'is_linked_to_previous_row': '1'},
                           {'row_id': 'unique_id_1011',
@@ -735,6 +750,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '30',
                            'delay_left_alert': '4',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': '',
                            'is_linked_to_previous_row': '1'}]
         cfg.setCustomAdvisers(customAdvisers)
@@ -836,6 +852,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                      'delay': '',
                      'delay_left_alert': '',
                      'delay_label': '',
+                     'is_delay_calendar_days': '0',
                      'available_on': '',
                      'is_linked_to_previous_row': '0'}
         customAdvisers.insert(99, extra_row)

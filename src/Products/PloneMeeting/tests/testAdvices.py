@@ -1117,11 +1117,12 @@ class testAdvices(PloneMeetingTestCase):
         '''This test that if an automatic advice is asked because a condition
            on the item is True, the automatic advice is given then the condition
            on the item changes, the advice is kept.'''
-        self.meetingConfig.setCustomAdvisers([{'row_id': 'unique_id_123',
-                                               'org': self.vendors_uid,
-                                               'gives_auto_advice_on': 'item/getBudgetRelated',
-                                               'for_item_created_from': '2012/01/01',
-                                               'delay': '10'}, ])
+        cfg = self.meetingConfig
+        cfg.setCustomAdvisers([{'row_id': 'unique_id_123',
+                                'org': self.vendors_uid,
+                                'gives_auto_advice_on': 'item/getBudgetRelated',
+                                'for_item_created_from': '2012/01/01',
+                                'delay': '10'}, ])
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setBudgetRelated(True)
@@ -1182,13 +1183,14 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(
             sorted(item.getAutomaticAdvisersData()),
             sorted(
-                [{'gives_auto_advice_on_help_message': '',
+                [{'delay': '',
+                  'delay_left_alert': '',
+                  'delay_label': '',
+                  'gives_auto_advice_on_help_message': '',
+                  'is_delay_calendar_days': False,
                   'org_uid': self.developers_uid,
                   'org_title': u'Developers',
                   'row_id': 'unique_id_456',
-                  'delay': '',
-                  'delay_left_alert': '',
-                  'delay_label': '',
                   'userids': []}])
         )
         # define one condition for which the date is > than current item CreationDate
@@ -1218,13 +1220,14 @@ class testAdvices(PloneMeetingTestCase):
               'delay_label': '',
               'userids': []}, ])
         self.assertEqual(item.getAutomaticAdvisersData(),
-                         [{'gives_auto_advice_on_help_message': '',
+                         [{'delay': '',
+                           'delay_left_alert': '',
+                           'delay_label': '',
+                           'gives_auto_advice_on_help_message': '',
+                           'is_delay_calendar_days': False,
                            'org_uid': self.developers_uid,
                            'org_title': u'Developers',
                            'row_id': 'unique_id_123',
-                           'delay': '',
-                           'delay_left_alert': '',
-                           'delay_label': '',
                            'userids': []}])
         # now define a 'for_item_created_until' that is in the past
         # relative to the item created date
@@ -1234,6 +1237,7 @@ class testAdvices(PloneMeetingTestCase):
               'gives_auto_advice_on': 'not:item/getBudgetRelated',
               'for_item_created_from': '2012/01/01',
               'for_item_created_until': '2013/01/01',
+              'is_delay_calendar_days': '0',
               'delay': '',
               'delay_left_alert': '',
               'delay_label': ''}, ])

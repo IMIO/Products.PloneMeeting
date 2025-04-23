@@ -5653,7 +5653,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                             'delay': customAdviser['delay'],
                             'delay_left_alert': customAdviser['delay_left_alert'],
                             'delay_label': customAdviser['delay_label'],
-                            'is_delay_calendar_days': customAdviser['is_delay_calendar_days'],
+                            'is_delay_calendar_days': customAdviser['is_delay_calendar_days'] == '1',
                             # userids is unhandled for automatic advisers
                             'userids': []})
                 # check if the found automatic adviser is not already in the self.adviceIndex
@@ -5965,6 +5965,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 delay = customAdviserConfig['delay'] or ''
                 delay_left_alert = customAdviserConfig['delay_left_alert'] or ''
                 delay_label = customAdviserConfig['delay_label'] or ''
+                is_delay_calendar_days = customAdviserConfig['is_delay_calendar_days'] == '1'
             advice_given_on = advice.get_advice_given_on()
             res[advice.advice_group] = {'type': advice.advice_type,
                                         'optional': optional,
@@ -5987,6 +5988,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         'delay': delay,
                                         'delay_left_alert': delay_left_alert,
                                         'delay_label': delay_label,
+                                        'is_delay_calendar_days': is_delay_calendar_days,
                                         'advice_given_on': advice_given_on,
                                         'advice_given_on_localized':
                                         self.restrictedTraverse('@@plone').toLocalizedTime(advice_given_on),
