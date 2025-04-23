@@ -41,6 +41,7 @@ from plone.app.portlets.portlets import navigation
 from plone.memoize import ram
 from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletManager
+from plone.restapi.deserializer import boolean_value
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.atapi import InAndOutWidget
@@ -7952,6 +7953,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         'org_title': org.get_full_title(),
                         'delay': customAdviserConfig['delay'],
                         'delay_label': customAdviserConfig['delay_label'],
+                        'is_delay_calendar_days': boolean_value(
+                            customAdviserConfig['is_delay_calendar_days']),
                         'row_id': customAdviserConfig['row_id']})
         return res
 
