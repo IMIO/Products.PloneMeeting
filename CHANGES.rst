@@ -14,6 +14,11 @@ Changelog
   [gbastien]
 - Use another translation for `isAcceptableOutOfMeeting` pretty link icon title.
   [gastien]
+- Fixed `Migrate_To_4211._updateDataRelatedToToolPloneMeetingSimplification`
+  that was broken since imio.fpaudit that reinstalls
+  `collective.documentgenerator` and breaks our custom
+  `ConfigurablePODTemplate` portal_type.
+  [gbastien]
 
 4.2.19 (2025-04-02)
 -------------------
