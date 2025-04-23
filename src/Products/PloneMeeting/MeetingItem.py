@@ -5548,6 +5548,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                  'delay': predecessor.adviceIndex[adviserUid]['delay'],
                  'delay_left_alert': predecessor.adviceIndex[adviserUid]['delay_left_alert'],
                  'delay_label': predecessor.adviceIndex[adviserUid]['delay_label'],
+                 'is_delay_calendar_days': predecessor.adviceIndex[adviserUid].get('is_delay_calendar_days', False),
                  'userids': predecessor.adviceIndex[adviserUid].get('userids', [])})
         return res
 
