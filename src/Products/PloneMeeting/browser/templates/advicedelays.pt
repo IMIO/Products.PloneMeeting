@@ -13,6 +13,10 @@
                      src="advice_with_delay_big.png"
                      tal:attributes="src string:${view/portal_url}/advice_with_delay_big.png">
                 <span class="advice_delay" tal:content="python: delay[1]">Delay</span>
+                <span tal:condition="python: delay[3]"
+                      title="Delay computed in calendar days"
+                      i18n:attributes="title"
+                      class="far fa-calendar-alt pmHelp" />
                 <span tal:content="python: delay[2]">Delay label</span>
             </a><br />
         </li>

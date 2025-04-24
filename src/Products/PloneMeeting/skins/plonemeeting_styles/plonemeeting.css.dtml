@@ -2158,7 +2158,8 @@ div.tooltipster-content table.actionspanel-no-style-table td.noPadding {
     color: red;
 }
 #content img.pmHelp,
-#content span.pmHelp {
+#content span.pmHelp,
+div.tooltipster-base span.pmHelp {
     cursor: help;
 }
 
