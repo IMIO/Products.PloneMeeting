@@ -915,22 +915,29 @@ class AskedAdvicesVocabulary(object):
             org_uid = delayAwareAdviser['org']
             org = get_organization(org_uid)
             org_title = org.get_full_title()
+            is_delay_calendar_days = delayAwareAdviser['is_delay_calendar_days'] == '1'
             if delay_label:
+                msgid = 'advice_delay_with_label'
+                if is_delay_calendar_days:
+                    msgid ='advice_calendar_days_delay_with_label'
                 termTitle = translate(
-                    'advice_delay_with_label',
+                    msgid,
                     domain='PloneMeeting',
                     mapping={'org_title': org_title,
                              'delay': delay,
                              'delay_label': delay_label},
-                    default='${group_name} - ${delay} day(s) (${delay_label})',
+                    default='${org_title} - ${delay} day(s) (${delay_label})',
                     context=self.request)
             else:
+                msgid = 'advice_delay_without_label'
+                if is_delay_calendar_days:
+                    msgid ='advice_calendar_days_delay_without_label'
                 termTitle = translate(
-                    'advice_delay_without_label',
+                    msgid,
                     domain='PloneMeeting',
                     mapping={'org_title': org_title,
                              'delay': delay},
-                    default='${group_name} - ${delay} day(s)',
+                    default='${org_title} - ${delay} day(s)',
                     context=self.request)
         return termTitle
 
