@@ -19,6 +19,9 @@ Changelog
   `collective.documentgenerator` and breaks our custom
   `ConfigurablePODTemplate` portal_type.
   [gbastien]
+- Added column `is_delay_calendar_days` to `MeetingConfig.customAdvisers`,
+  when set to `1` advice delay will be computed in calendar days.
+  [gbastien]
 
 4.2.19 (2025-04-02)
 -------------------
