@@ -5,8 +5,9 @@ Changelog
 4.2.20rc2 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Added column `is_delay_calendar_days` to `MeetingConfig.customAdvisers`,
+  when set to `1` advice delay will be computed in calendar days.
+  [gbastien]
 
 4.2.20rc1 (2025-04-16)
 ----------------------
@@ -24,9 +25,6 @@ Changelog
   that was broken since imio.fpaudit that reinstalls
   `collective.documentgenerator` and breaks our custom
   `ConfigurablePODTemplate` portal_type.
-  [gbastien]
-- Added column `is_delay_calendar_days` to `MeetingConfig.customAdvisers`,
-  when set to `1` advice delay will be computed in calendar days.
   [gbastien]
 
 4.2.19 (2025-04-02)
