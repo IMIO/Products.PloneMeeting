@@ -1822,6 +1822,7 @@ class testAdvices(PloneMeetingTestCase):
                            'for_item_created_until': '',
                            'delay': '5',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': '',
                            'is_linked_to_previous_row': '0'}, ]
         cfg.setCustomAdvisers(customAdvisers)
@@ -1841,6 +1842,7 @@ class testAdvices(PloneMeetingTestCase):
                             'for_item_created_until': '',
                             'delay': '10',
                             'delay_label': '',
+                            'is_delay_calendar_days': '0',
                             'available_on': '',
                             'is_linked_to_previous_row': '1'},
                            {'row_id': 'unique_id_789',
@@ -1850,6 +1852,7 @@ class testAdvices(PloneMeetingTestCase):
                             'for_item_created_until': '',
                             'delay': '20',
                             'delay_label': '',
+                            'is_delay_calendar_days': '1',
                             'available_on': '',
                             'is_linked_to_previous_row': '1'}, ]
         cfg.setCustomAdvisers(customAdvisers)
@@ -1858,7 +1861,7 @@ class testAdvices(PloneMeetingTestCase):
         # the delay may still be edited when the user can edit the item
         # except if it is an automatic advice for wich only MeetingManagers may change delay
         self.assertEqual(availableDelaysView.listSelectableDelays(),
-                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
+                         [('unique_id_456', '10', u'', False), ('unique_id_789', '20', u'', True)])
         # access to delay changes history
         self.assertTrue(availableDelaysView._mayAccessDelayChangesHistory())
         # the creator may only edit the delays if it may edit the item
@@ -1871,7 +1874,7 @@ class testAdvices(PloneMeetingTestCase):
         # the pmReviewer1 can change delay as he may edit the item
         self.changeUser('pmReviewer1')
         self.assertEqual(availableDelaysView.listSelectableDelays(),
-                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
+                         [('unique_id_456', '10', u'', False), ('unique_id_789', '20', u'', True)])
         # access to delay changes history
         self.assertTrue(availableDelaysView._mayAccessDelayChangesHistory())
 
@@ -1900,14 +1903,14 @@ class testAdvices(PloneMeetingTestCase):
         # a MeetingManager may edit an automatic advice delay
         self.changeUser('pmManager')
         self.assertEqual(availableDelaysView.listSelectableDelays(),
-                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
+                         [('unique_id_456', '10', u'', False), ('unique_id_789', '20', u'', True)])
         # access to delay changes history
         self.assertTrue(availableDelaysView._mayAccessDelayChangesHistory())
         # test the 'available_on' behaviour
         self.backToState(item, self._stateMappingFor('proposed'))
         self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_stopped_on'] is None)
         self.assertEqual(availableDelaysView.listSelectableDelays(),
-                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
+                         [('unique_id_456', '10', u'', False), ('unique_id_789', '20', u'', True)])
         # access to delay changes history
         self.assertTrue(availableDelaysView._mayAccessDelayChangesHistory())
         # now define a 'available_on' for third row
@@ -1916,7 +1919,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setCustomAdvisers(customAdvisers)
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
         self.assertEqual(availableDelaysView.listSelectableDelays(),
-                         [('unique_id_456', '10', u''), ])
+                         [('unique_id_456', '10', u'', False), ])
         # access to delay changes history
         self.assertTrue(availableDelaysView._mayAccessDelayChangesHistory())
         # a wrong TAL expression for 'available_on' does not break anything
@@ -1924,7 +1927,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setCustomAdvisers(customAdvisers)
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
         self.assertEqual(availableDelaysView.listSelectableDelays(),
-                         [('unique_id_456', '10', u''), ])
+                         [('unique_id_456', '10', u'', False), ])
         # access to delay changes history
         self.assertTrue(availableDelaysView._mayAccessDelayChangesHistory())
         # second step, something that is True
@@ -1932,7 +1935,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setCustomAdvisers(customAdvisers)
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
         self.assertEqual(availableDelaysView.listSelectableDelays(),
-                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
+                         [('unique_id_456', '10', u'', False), ('unique_id_789', '20', u'', True)])
         # access to delay changes history
         self.assertTrue(availableDelaysView._mayAccessDelayChangesHistory())
         # now test the particular expression that makes a custom adviser
@@ -1941,7 +1944,7 @@ class testAdvices(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
         cfg.setCustomAdvisers(customAdvisers)
         self.assertEqual(availableDelaysView.listSelectableDelays(),
-                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
+                         [('unique_id_456', '10', u'', False), ('unique_id_789', '20', u'', True)])
         # access to delay changes history
         self.assertTrue(availableDelaysView._mayAccessDelayChangesHistory())
 
@@ -1951,14 +1954,14 @@ class testAdvices(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
         cfg.setCustomAdvisers(customAdvisers)
         self.assertEqual(availableDelaysView.listSelectableDelays(),
-                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
+                         [('unique_id_456', '10', u'', False), ('unique_id_789', '20', u'', True)])
         # access to delay changes history
         self.assertTrue(availableDelaysView._mayAccessDelayChangesHistory())
         customAdvisers[2]['available_on'] = "not:mayEdit"
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
         cfg.setCustomAdvisers(customAdvisers)
         self.assertEqual(availableDelaysView.listSelectableDelays(),
-                         [('unique_id_456', '10', u''), ])
+                         [('unique_id_456', '10', u'', False), ])
         # access to delay changes history
         self.assertTrue(availableDelaysView._mayAccessDelayChangesHistory())
 
