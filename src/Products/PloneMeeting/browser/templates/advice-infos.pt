@@ -49,7 +49,7 @@
         <span tal:condition="python: obj and view.advice_given_by"> - </span><span class="advice_asked_on" i18n:translate="">Asked on <span i18n:name="advice_asked_on_date" tal:content="python: advice['delay_infos']['delay_started_on_localized']">2013/05/08</span></span>
         <span class="advice_delay_started_on" tal:condition="python: advice['type'] != 'not_given' and not advice['hidden_during_redaction']"> - <span i18n:translate="">Given on <span i18n:name="advice_given_on_date" tal:content="python: advice['advice_given_on_localized']">2013/05/08</span></span><span class="fa show-help" style="margin-left: 2px; cursor: help;" title="help_given_on_before_started_on" i18n:attributes="title" tal:condition="python: advice['advice_given_on'].asdatetime().date() < advice['delay_started_on'].date()"></span></span>
         <span class="advice_limit_date"> - <span i18n:translate="">Limit date <span i18n:name="advice_limit_date" tal:content="advice/delay_infos/limit_date_localized">2013/05/08</span></span></span>
-        <span tal:condition="python: advice['is_delay_calendar_days']"
+        <span tal:condition="python: advice.get('is_delay_calendar_days', False)"
               title="Delay computed in calendar days"
               i18n:attributes="title"
               class="far fa-calendar-alt pmHelp" />

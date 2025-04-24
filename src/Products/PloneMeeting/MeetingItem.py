@@ -6929,7 +6929,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         tool = api.portal.get_tool('portal_plonemeeting')
         holidays = weekends = unavailable_weekdays = ()
-        if adviceInfos['is_delay_calendar_days'] is False:
+        if adviceInfos.get('is_delay_calendar_days', False) is False:
             holidays = tool.getHolidaysAs_datetime()
             weekends = tool.getNonWorkingDayNumbers()
             unavailable_weekdays = tool.getUnavailableWeekDaysNumbers()

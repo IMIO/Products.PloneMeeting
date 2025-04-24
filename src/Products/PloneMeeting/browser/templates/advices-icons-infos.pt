@@ -43,7 +43,7 @@
                              tal:content="python: advice['delay_infos']['left_delay']"
                              tal:attributes="class python: context._advice_is_given(advice['id']) and 'advice_delay' or class_if_not_given" />
                      </tal:defines>
-                     <span tal:condition="python: advice['is_delay_calendar_days']"
+                     <span tal:condition="python: advice.get('is_delay_calendar_days', False)"
                            title="Delay computed in calendar days"
                            i18n:attributes="title"
                            class="far fa-calendar-alt pmHelp" />
