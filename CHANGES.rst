@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.20rc2 (unreleased)
+4.2.20rc2 (2025-04-24)
 ----------------------
 
 - Added column `is_delay_calendar_days` to `MeetingConfig.customAdvisers`,
