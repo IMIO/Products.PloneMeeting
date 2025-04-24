@@ -1605,6 +1605,13 @@ div.advice_popup_actions span.pmHelp {
     vertical-align: middle;
     font-size: 110%;
 }
+div.advice_popup_infos {
+    display: inline-block;
+}
+div.advice_popup_infos span.pmHelp {
+    vertical-align: middle;
+    font-size: 110%;
+}
 
 /* display table with align="center"... centered... */
 table[align="center"] {
@@ -2163,7 +2170,8 @@ div.tooltipster-content table.actionspanel-no-style-table td.noPadding {
     color: red;
 }
 #content img.pmHelp,
-#content span.pmHelp {
+#content span.pmHelp,
+div.tooltipster-base span.pmHelp {
     cursor: help;
 }
 

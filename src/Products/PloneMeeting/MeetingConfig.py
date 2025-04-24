@@ -41,6 +41,7 @@ from plone.app.portlets.portlets import navigation
 from plone.memoize import ram
 from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletManager
+from plone.restapi.deserializer import boolean_value
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.atapi import InAndOutWidget
@@ -2115,6 +2116,11 @@ schema = Schema((
                      'delay_label':
                         Column("Custom adviser delay label",
                                col_description="delay_label_col_description"),
+                     'is_delay_calendar_days':
+                        SelectColumn("Is delay computed in calendar days?",
+                                     vocabulary="listBooleanVocabulary",
+                                     col_description="is_delay_calendar_days_col_description",
+                                     default='0'),
                      'available_on':
                         Column("Available on",
                                col_description="available_on_col_description"),
@@ -2133,7 +2139,7 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
         columns=('row_id', 'org', 'gives_auto_advice_on', 'gives_auto_advice_on_help_message',
                  'for_item_created_from', 'for_item_created_until', 'delay', 'delay_left_alert',
-                 'delay_label', 'available_on', 'is_linked_to_previous_row'),
+                 'delay_label', 'is_delay_calendar_days', 'available_on', 'is_linked_to_previous_row'),
         allow_empty_rows=False,
     ),
     LinesField(
@@ -4660,6 +4666,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                k not in ['gives_auto_advice_on_help_message',
                                          'delay_left_alert',
                                          'delay_label',
+                                         'is_delay_calendar_days',
                                          'available_on'] and \
                                not (k == 'is_linked_to_previous_row' and
                                     (v == '0' or not self._findLinkedRowsFor(customAdviser['row_id'])[0])):
@@ -8049,6 +8056,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         'org_title': org.get_full_title(),
                         'delay': customAdviserConfig['delay'],
                         'delay_label': customAdviserConfig['delay_label'],
+                        'is_delay_calendar_days': boolean_value(
+                            customAdviserConfig['is_delay_calendar_days']),
                         'row_id': customAdviserConfig['row_id']})
         return res
 

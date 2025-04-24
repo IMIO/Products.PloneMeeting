@@ -67,6 +67,16 @@ class Migrate_To_4215(Migrator):
             if searchitemsofmycommitteeseditable:
                 searchitemsofmycommitteeseditable.tal_condition = \
                     "python: cfg.is_committees_using('enable_editors')"
+
+    def _updateConfigCustomAdvisersDataGrid(self):
+        """MeetingConfig.customAdvisers get a new column "is_delay_calendar_days"."""
+        logger.info('Updating datagridfield "customAdvisers" for every MeetingConfigs...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            custom_advisers = cfg.getCustomAdvisers()
+            for ca in custom_advisers:
+                if "is_delay_calendar_days" not in ca:
+                    ca["is_delay_calendar_days"] = "0"
+            cfg.setCustomAdvisers(custom_advisers)
         logger.info('Done.')
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):
@@ -75,6 +85,7 @@ class Migrate_To_4215(Migrator):
         self._initGroupsManagingItemToCfgItemWFValidationLevels()
         self._migrateItemsWaitingAdviceState()
         self._updateSearchItemsOfMyCommitteesSearchesCondition()
+        self._updateConfigCustomAdvisersDataGrid()
         logger.info('Migrating to PloneMeeting 4215... Done.')
 
 
@@ -84,6 +95,7 @@ def migrate(context):
        1) Add "groups_managing_item" to every MeetingConfig.itemWFValidationLevels;
        2) Move item waiting_advices states to "any_validation_state_waiting_advices";
        3) Adapt committees editors searches "tal_condition".
+       4) Update MeetingConfig.customAdvisers to add new column "is_delay_calendar_days".
     '''
     migrator = Migrate_To_4215(context)
     migrator.run()
