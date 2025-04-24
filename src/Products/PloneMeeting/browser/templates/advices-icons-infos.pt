@@ -34,7 +34,7 @@
                        tal:attributes="id string:comment_toggle_${advice/id};
                                        onclick string:toggleDetails('comment_content_${advice/id}', toggle_parent_active=true, parent_tag=comment_toggle_${advice/id});">
                   </div>
-                  <span tal:condition="python: advice['delay']">
+                  <div tal:condition="python: advice['delay']" class="advice_popup_infos">
                      <tal:defines define="class_if_not_given string:advice_delay advice_delay_${advice/delay_infos/delay_status};">
                        <img src="advice_with_delay_big.png"
                             tal:define="delay_icon python: view.delay_icon(advice)"
@@ -43,7 +43,11 @@
                              tal:content="python: advice['delay_infos']['left_delay']"
                              tal:attributes="class python: context._advice_is_given(advice['id']) and 'advice_delay' or class_if_not_given" />
                      </tal:defines>
-                  </span>
+                     <span tal:condition="python: advice.get('is_delay_calendar_days', False)"
+                           title="Delay computed in calendar days"
+                           i18n:attributes="title"
+                           class="far fa-calendar-alt pmHelp" />
+                  </div>
                   <tal:not_asked_advice_icon condition="python: advice['not_asked']">
                       <img src="advice_not_asked.png"
                            title="This advice was given as personal initiative"
