@@ -1992,7 +1992,7 @@ class testAdvices(PloneMeetingTestCase):
                            'for_item_created_from': '2012/01/01',
                            'for_item_created_until': '',
                            'delay': '5',
-                           'delay_label': '',
+                           'delay_label': 'h\xc3\xa9h\xc3\xa9',
                            'available_on': '',
                            'is_linked_to_previous_row': '0'},
                           {'row_id': 'unique_id_456',
@@ -2001,7 +2001,7 @@ class testAdvices(PloneMeetingTestCase):
                            'for_item_created_from': '2012/01/01',
                            'for_item_created_until': '',
                            'delay': '10',
-                           'delay_label': '',
+                           'delay_label': 'h\xc3\xa9h\xc3\xa9',
                            'available_on': '',
                            'is_linked_to_previous_row': '1'},
                           {'row_id': 'unique_id_789',
@@ -2010,7 +2010,7 @@ class testAdvices(PloneMeetingTestCase):
                            'for_item_created_from': '2012/01/01',
                            'for_item_created_until': '',
                            'delay': '20',
-                           'delay_label': '',
+                           'delay_label': 'h\xc3\xa9h\xc3\xa9',
                            'available_on': '',
                            'is_linked_to_previous_row': '1'}, ]
         cfg.setCustomAdvisers(customAdvisers)
@@ -2021,7 +2021,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(item.adviceIndex[self.vendors_uid]['row_id'], 'unique_id_123')
         self.assertEqual(item.adviceIndex[self.vendors_uid]['delay'], '5')
         self.assertTrue(item.adviceIndex[self.vendors_uid]['optional'])
-        form = item.restrictedTraverse('@@advice_delay_change_form').form_instance
+        form = item.restrictedTraverse('@@advice-delay-change-form').form_instance
         form.request['form.widgets.current_delay_row_id'] = u'unique_id_123'
 
         # first check that if we try to play the fennec, it raises Unauthorized
@@ -2062,6 +2062,10 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(item.adviceIndex[self.vendors_uid]['row_id'], 'unique_id_789')
         self.assertEqual(item.adviceIndex[self.vendors_uid]['delay'], '20')
         self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_for_automatic_adviser_changed_manually'])
+        # check that form is correctly displayed
+        form.request['new_delay_row_id'] = u'unique_id_123'
+        form.update()
+        self.assertTrue(u"(h\xe9h\xe9)" in form.render())
 
     def test_pm_AdviceProposingGroupComment(self):
         '''Test the view '@@advice_proposing_group_comment_form' form that will

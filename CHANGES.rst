@@ -22,6 +22,9 @@ Changelog
 - Added column `is_delay_calendar_days` to `MeetingConfig.customAdvisers`,
   when set to `1` advice delay will be computed in calendar days.
   [gbastien]
+- Renamed `@@advice_delay_change_form` to `@@advice-delay-change-form`.
+  Fixed `UnicodeDecodeError` when `delay_label` contains special characters.
+  [gbastien]
 
 4.2.19 (2025-04-02)
 -------------------
