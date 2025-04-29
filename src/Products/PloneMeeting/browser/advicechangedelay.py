@@ -275,8 +275,8 @@ class AdviceChangeDelayForm(form.EditForm):
         self.fields['comment'].field.description = translate(
             'change_advice_delay_descr',
             domain='PloneMeeting',
-            mapping={'new_advice_delay': newAdviceData['delay'],
-                     'new_advice_delay_label': newAdviceData['delay_label'],
+            mapping={'new_advice_delay': safe_unicode(newAdviceData['delay']),
+                     'new_advice_delay_label': safe_unicode(newAdviceData['delay_label']),
                      'new_advice_is_delay_calendar_days': is_delay_calendar_days,
                      },
             context=self.request)

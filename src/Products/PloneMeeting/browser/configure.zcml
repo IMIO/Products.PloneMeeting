@@ -755,7 +755,7 @@
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        name="advice_delay_change_form"
+        name="advice-delay-change-form"
         class=".advicechangedelay.AdviceChangeDelayFormWrapper"
         permission="zope2.View"
       />

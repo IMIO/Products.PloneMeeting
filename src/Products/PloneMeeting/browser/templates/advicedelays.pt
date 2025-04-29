@@ -5,7 +5,7 @@
     <ul class="change_delay_actions">
         <li tal:condition="selectableDelays" tal:repeat="delay selectableDelays">
             <a href="#"
-               tal:attributes="href python: '%s/advice_delay_change_form?new_delay_row_id=%s&current_delay_row_id=%s' % (view.context.absolute_url(),
+               tal:attributes="href python: '%s/advice-delay-change-form?new_delay_row_id=%s&current_delay_row_id=%s' % (view.context.absolute_url(),
                                                                                                                          delay[0],
                                                                                                                          view.advice['row_id']);
                                class python: 'link-overlay-pm advice_delay_change_value'">

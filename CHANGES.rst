@@ -5,8 +5,9 @@ Changelog
 4.2.20rc3 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Renamed `@@advice_delay_change_form` to `@@advice-delay-change-form`.
+  Fixed `UnicodeDecodeError` when `delay_label` contains special characters.
+  [gbastien]
 
 4.2.20rc2 (2025-04-24)
 ----------------------
