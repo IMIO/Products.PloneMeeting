@@ -25,6 +25,10 @@ Changelog
 - Renamed `@@advice_delay_change_form` to `@@advice-delay-change-form`.
   Fixed `UnicodeDecodeError` when `delay_label` contains special characters.
   [gbastien]
+- When sending email notifications, prepend `MeetingConfig.configGroup`
+  `full_label` when used and several `MeetingConfigs` have same title
+  so we know from which `MeetingConfig` the notification is sent.
+  [gbastien]
 
 4.2.19 (2025-04-02)
 -------------------
