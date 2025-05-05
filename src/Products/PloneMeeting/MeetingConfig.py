@@ -3578,12 +3578,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('Title')
 
     def Title(self, include_config_group=False, **kwargs):
-        '''Returns the title and include config group value if p_include_config_group is True.'''
+        '''Returns the title and:
+           - include config group label if p_include_config_group is True;
+           - include config group full_label if p_include_config_group is "full_label".'''
         title = self.title
         if include_config_group and self.getConfigGroup():
-            # prepend configGroup
-            configGroupValue = self.Vocabulary('configGroup')[0].getValue(self.getConfigGroup())
-            title = u"{0} - {1}".format(configGroupValue, title)
+            if include_config_group is True:
+                # prepend configGroup label
+                title = u"{0} - {1}".format(
+                    safe_unicode(self.getConfigGroup(True)['label']), title)
+            elif include_config_group == "full_label":
+                full_label = self.getConfigGroup(True)['full_label']
+                if full_label:
+                    # prepend configGroup full_label
+                    title = u"{0} - {1}".format(
+                        safe_unicode(self.getConfigGroup(True)['full_label']), title)
         # Title returns utf-8
         return title.encode('utf-8')
 

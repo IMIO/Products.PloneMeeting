@@ -18,7 +18,11 @@ function adviceAddEdit() {
             },
             onBeforeClose : function (e) {
                 // avoid closing overlay when click outside overlay
-                if (e.target.id == "exposeMask") {return false;}
+                // or when it is closed by WSC
+                console.log(e.target);
+                if (e.target.id == "exposeMask" ||
+                    e.target.classList.contains("wsc-icon") ||
+                    e.target.classList.contains("wsc-button")) {return false;}
             },
             onClose : function (e) {
                 // make sure CKeditor instances are destroyed because

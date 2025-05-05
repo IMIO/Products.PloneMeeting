@@ -8,6 +8,12 @@ Changelog
 - Renamed `@@advice_delay_change_form` to `@@advice-delay-change-form`.
   Fixed `UnicodeDecodeError` when `delay_label` contains special characters.
   [gbastien]
+- Avoid add/edit advice popup closing when using WSC.
+  [gbastien]
+- When sending email notifications, prepend `MeetingConfig.configGroup`
+  `full_label` when used and several `MeetingConfigs` have same title
+  so we know from which `MeetingConfig` the notification is sent.
+  [gbastien]
 
 4.2.20rc2 (2025-04-24)
 ----------------------
@@ -29,7 +35,7 @@ Changelog
 - Use another translation for `isAcceptableOutOfMeeting` pretty link icon title.
   [gastien]
 - Fixed `Migrate_To_4211._updateDataRelatedToToolPloneMeetingSimplification`
-  that was broken since imio.fpaudit that reinstalls
+  that was broken since `imio.fpaudit` that reinstalls
   `collective.documentgenerator` and breaks our custom
   `ConfigurablePODTemplate` portal_type.
   [gbastien]

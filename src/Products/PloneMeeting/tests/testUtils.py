@@ -21,6 +21,7 @@ from Products.PloneMeeting.utils import duplicate_portal_type
 from Products.PloneMeeting.utils import escape
 from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import org_id_to_uid
+from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import set_dx_value
 from Products.PloneMeeting.utils import set_field_from_ajax
@@ -121,7 +122,7 @@ class testUtils(PloneMeetingTestCase):
                   "isSuffix": True,
                   "debug": True}
 
-        # disabled
+        # deactivated
         self.assertIsNone(sendMailIfRelevant(**params))
         # enabled but not selected
         cfg.setMailMode("activated")
@@ -227,6 +228,51 @@ class testUtils(PloneMeetingTestCase):
         params["value"] = ModifyPortalContent
         recipients, subject, body = sendMailIfRelevant(**params)
         self.assertEqual(sorted(recipients), self._modify_permission_mail_recipents())
+
+    def test_pm_SendMailMeetingConfigTitle(self):
+        """Variable "meetingConfigTitle" used in mail subject will include
+           MeetingConfig.groupConfig when relevant."""
+        config_groups = (
+            {'row_id': 'unique_id_1',
+             'label': 'ConfigGroup1',
+             'full_label': 'Config group 1'},
+            {'row_id': 'unique_id_2',
+             'label': 'ConfigGroup2',
+             'full_label': 'Config group 2'},
+            {'row_id': 'unique_id_3',
+             'label': 'ConfigGroup3',
+             'full_label': 'Config group 3'},
+        )
+        self.tool.setConfigGroups(config_groups)
+        cfg = self.meetingConfig
+        # "test" mailMode will return computed elements
+        cfg.setMailMode('test')
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        obj, body, recipients, fromAddress, subject, attachments, translationMapping = \
+            sendMail([], item, '')
+        # no config group, simple title
+        self.assertEqual(translationMapping['meetingConfigTitle'],
+                         safe_unicode(cfg.Title()))
+        # config group but different config title, simple title
+        cfg.setConfigGroup('unique_id_3')
+        obj, body, recipients, fromAddress, subject, attachments, translationMapping = \
+            sendMail([], item, '')
+        self.assertEqual(translationMapping['meetingConfigTitle'],
+                         safe_unicode(cfg.Title()))
+        # with several same config title, config group is preprended
+        self.meetingConfig2.setTitle(cfg.Title())
+        obj, body, recipients, fromAddress, subject, attachments, translationMapping = \
+            sendMail([], item, '')
+        self.assertEqual(translationMapping['meetingConfigTitle'],
+                         u'Config group 3 - %s' % safe_unicode(cfg.Title()))
+        # if "full_label" is empty, it is not preprended
+        config_groups[-1]['full_label'] = ''
+        self.tool.setConfigGroups(config_groups)
+        obj, body, recipients, fromAddress, subject, attachments, translationMapping = \
+            sendMail([], item, '')
+        self.assertEqual(translationMapping['meetingConfigTitle'],
+                         safe_unicode(cfg.Title()))
 
     def test_pm_org_id_to_uid(self):
         """Test the utils.org_id_to_uid function."""
