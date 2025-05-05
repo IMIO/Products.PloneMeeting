@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.21rc1 (unreleased)
+4.2.21rc1 (2025-05-05)
 ----------------------
 
 - Renamed `@@advice_delay_change_form` to `@@advice-delay-change-form`.
