@@ -505,6 +505,17 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         wf_action = getPreviousEvent(obj, wf_action)
         comments = wf_action['comments']
 
+    # in case we use configGroups and we have several MeetingConfig with
+    # same title, this means we use configGroups to group same kind of
+    # MeetingConfig, we prepend configGroup "full_label" to the "meetingConfigTitle"
+    if cfg.getConfigGroup() and \
+       (len([tmp_cfg.Title() for tmp_cfg in tool.getActiveConfigs(check_access=False)]) != \
+            len(set([tmp_cfg.Title() for tmp_cfg in tool.getActiveConfigs(check_access=False)]))):
+        meetingConfigTitle = safe_unicode(cfg.Title(include_config_group="full_label"))
+    else:
+        # common case
+        meetingConfigTitle = safe_unicode(cfg.Title())
+
     translationMapping.update({
         'portalUrl': portalUrl,
         'portalTitle': safe_unicode(portal.Title()),
@@ -515,7 +526,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         'itemTitle': '',
         'user': get_user_fullname(user.getId()),
         'groups': safe_unicode(userGroups),
-        'meetingConfigTitle': safe_unicode(cfg.Title()),
+        'meetingConfigTitle': meetingConfigTitle,
         'transitionActor': wf_action and
         get_user_fullname(wf_action['actor'], with_user_id=True) or u'-',
         'transitionTitle': wf_action and
@@ -605,6 +616,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         logger.info('Subject is [%s]' % subject)
         logger.info('Body is [%s]' % body)
         api.portal.show_message(extras, request=obj.REQUEST)
+        return obj, body, recipients, fromAddress, subject, attachments, translationMapping
     else:
         # Use 'plain' for mail format so the email client will turn links to clickable links
         mailFormat = 'text/plain'
