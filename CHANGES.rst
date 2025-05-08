@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.21 (unreleased)
+4.2.21 (2025-05-08)
 -------------------
 
 - Removed useless index `is_default_page` from item templates tree query.
