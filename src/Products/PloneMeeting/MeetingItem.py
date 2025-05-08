@@ -4275,19 +4275,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             groups_in_charge = self.getGroupsInCharge(includeAuto=True)
             self.setGroupsInCharge(groups_in_charge)
 
-    def update_committees(self):
+    def update_committees(self, force=False):
         """Update committees automatically?
            This will be the case if :
            - "committees" field used;
            - no commitees selected on item of a parameter on item changed;
            - the item is not inserted into a meeting
-             (this avoid changing old if configuration changed)."""
+             (this avoid changing old if configuration changed).
+           If force=True, it will be updated if used, this manage especially when
+           item is cloned and configuration changed."""
         indexes = []
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # warning, "committees" is in MeetingConfig.usedMeetingAttributes
         if "committees" in cfg.getUsedMeetingAttributes() and \
-           (not self.getCommittees() or self.REQUEST.get('need_MeetingItem_update_committees')) and \
+           (force or not self.getCommittees() or self.REQUEST.get('need_MeetingItem_update_committees')) and \
            not self.hasMeeting():
             if cfg.is_committees_using("auto_from"):
                 committees = []
@@ -7077,7 +7079,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Make sure we have 'text/html' for every Rich fields
         forceHTMLContentTypeForEmptyRichFields(self)
         # update committees if necessary
-        indexes += self.update_committees()
+        indexes += self.update_committees(force=True)
         # reindex necessary indexes
         self.reindexObject(idxs=indexes)
         # itemReference uses MeetingConfig.computeItemReferenceForItemsOutOfMeeting?

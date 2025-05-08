@@ -1512,6 +1512,34 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(newItem.getCategory(), catIdOfMC2Mapped)
         self.assertEqual(newItem.getGroupsInCharge(includeAuto=False), [self.developers_uid])
 
+    def test_pm_DuplicatedItemUpdatesAutoCommittee(self):
+        """When committees are set automatically, it is correctly updated
+           if configuration changed and an item is duplicated."""
+        cfg = self.meetingConfig
+        self._enableField('category')
+        self._enableField("committees", related_to="Meeting")
+        cfg_committees = cfg.getCommittees()
+        # configure auto committees
+        cfg_committees[0]['auto_from'] = ["proposing_group__" + self.developers_uid]
+        cfg.setCommittees(cfg_committees)
+        self.assertTrue(cfg.is_committees_using("auto_from"))
+        # create item
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(item.getCommittees(), (cfg_committees[0]['row_id'], ))
+        # change configuration, make committee_1 auto selected for developers
+        cfg_committees[0]['auto_from'] = ["proposing_group__" + self.vendors_uid]
+        cfg_committees[1]['auto_from'] = ["proposing_group__" + self.developers_uid]
+        cfg.setCommittees(cfg_committees)
+        # not changing already existing elements
+        item._update_after_edit()
+        self.assertEqual(item.getCommittees(), (cfg_committees[0]['row_id'], ))
+        # but when duplicating the item, the new configuration is used
+        # make sure need_MeetingItem_update_committees is False for now
+        self.request.set('need_MeetingItem_update_committees', False)
+        cloned = item.clone()
+        self.assertEqual(cloned.getCommittees(), (cfg_committees[1]['row_id'], ))
+
     def test_pm_SendItemToOtherMCManually(self):
         '''An item may be sent automatically or manually to another MC
            depending on what is defined in the MeetingConfig.'''

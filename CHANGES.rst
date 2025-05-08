@@ -11,6 +11,8 @@ Changelog
   customizations (`portal_type`, `viewlet`) as it is reinstalled by
   `collective.contact.core` upgrade during install of dependency `imio.fpaudit`.
   [gbastien]
+- When cloning an item, re-apply auto committees in case configuration changed.
+  [gbastien]
 
 4.2.20 (2025-05-05)
 -------------------
