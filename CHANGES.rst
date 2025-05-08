@@ -5,8 +5,12 @@ Changelog
 4.2.21 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Removed useless index `is_default_page` from item templates tree query.
+  [gbastien]
+- Fixed migration to 4215 by re-applying `collective.documentgenerator` related
+  customizations (`portal_type`, `viewlet`) as it is reinstalled by
+  `collective.contact.core` upgrade during install of dependency `imio.fpaudit`.
+  [gbastien]
 
 4.2.20 (2025-05-05)
 -------------------
