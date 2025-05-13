@@ -5,8 +5,9 @@ Changelog
 4.2.22 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Completed migration to 4215 with step `_fixWSCConfigAndCleanBrokenAnnexes`
+  to configure `WSC` and remove eventual broken annexes.
+  [gbastien]
 
 4.2.21 (2025-05-08)
 -------------------
