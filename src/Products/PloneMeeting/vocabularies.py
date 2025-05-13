@@ -919,7 +919,7 @@ class AskedAdvicesVocabulary(object):
             if delay_label:
                 msgid = 'advice_delay_with_label'
                 if is_delay_calendar_days:
-                    msgid ='advice_calendar_days_delay_with_label'
+                    msgid = 'advice_calendar_days_delay_with_label'
                 termTitle = translate(
                     msgid,
                     domain='PloneMeeting',
@@ -931,7 +931,7 @@ class AskedAdvicesVocabulary(object):
             else:
                 msgid = 'advice_delay_without_label'
                 if is_delay_calendar_days:
-                    msgid ='advice_calendar_days_delay_without_label'
+                    msgid = 'advice_calendar_days_delay_without_label'
                 termTitle = translate(
                     msgid,
                     domain='PloneMeeting',
@@ -1054,13 +1054,14 @@ class ItemOptionalAdvicesVocabulary(object):
            useful for display only most of times."""
 
         request = context.REQUEST
+
         def _displayDelayAwareValue(delay_label, org_title, delay, is_delay_calendar_days):
             org_title = safe_unicode(org_title)
             delay_label = safe_unicode(delay_label)
             if delay_label:
                 msgid = 'advice_delay_with_label'
                 if is_delay_calendar_days:
-                    msgid ='advice_calendar_days_delay_with_label'
+                    msgid = 'advice_calendar_days_delay_with_label'
                 value_to_display = translate(
                     msgid,
                     domain='PloneMeeting',
@@ -1072,7 +1073,7 @@ class ItemOptionalAdvicesVocabulary(object):
             else:
                 msgid = 'advice_delay_without_label'
                 if is_delay_calendar_days:
-                    msgid ='advice_calendar_days_delay_without_label'
+                    msgid = 'advice_calendar_days_delay_without_label'
                 value_to_display = translate(
                     msgid,
                     domain='PloneMeeting',

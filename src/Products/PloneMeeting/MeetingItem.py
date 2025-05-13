@@ -7804,7 +7804,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 translate('sendto_inexistent_destfolder_error',
                           mapping={'meetingConfigTitle': destCfg.Title()},
                           domain="PloneMeeting", context=self.REQUEST),
-                          type='error')
+                type='error')
             return
         # The owner of the new item will be the same as the owner of the
         # original item.
