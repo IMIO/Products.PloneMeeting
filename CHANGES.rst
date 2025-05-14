@@ -8,6 +8,9 @@ Changelog
 - Completed migration to 4215 with step `_fixWSCConfigAndCleanBrokenAnnexes`
   to configure `WSC` and remove eventual broken annexes.
   [gbastien]
+- Fixed error when editing votes on an item when a held position was disabled
+  (actually when it had no more `usages`).
+  [gbastien]
 
 4.2.21 (2025-05-08)
 -------------------

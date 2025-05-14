@@ -2244,7 +2244,7 @@ class BaseHeldPositionsVocabulary(object):
         forced_position_type_value = None
         for brain in brains:
             held_position = brain.getObject()
-            if held_position.usages and (not usage or usage in held_position.usages):
+            if not usage or (held_position.usages and usage in held_position.usages):
                 if is_item:
                     forced_position_type_value = meeting.get_attendee_position_for(
                         context_uid, brain.UID)
