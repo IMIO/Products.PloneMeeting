@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.22 (unreleased)
+4.2.22 (2025-05-14)
 -------------------
 
 - Completed migration to 4215 with step `_fixWSCConfigAndCleanBrokenAnnexes`
