@@ -5,8 +5,9 @@ Changelog
 4.2.23 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Adapted call to `@@load_held_position_back_refs` to be able to pass a `limit`
+  and so display more than 50 elements.
+  [gbastien]
 
 4.2.22 (2025-05-14)
 -------------------
