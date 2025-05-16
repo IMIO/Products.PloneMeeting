@@ -16,6 +16,10 @@ Changelog
   `MeetingConfig.nextLinkedVotesUsedVoteValues` so it is possible to change
   displayed order.
   [gbastien]
+- When quick editing the `MeetingItem.internalNotes` field, do not make item
+  `modified` as this field is somehow external to the item decision and more
+  like a `post-it` field as it is the case for `labels`.
+  [gbastien]
 
 4.2.22 (2025-05-14)
 -------------------

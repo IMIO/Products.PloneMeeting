@@ -7376,6 +7376,35 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.query_state(), 'accepted')
         _check_editable(item)
 
+    def test_pm_ItemInternalNotesQuickEditDoesNotChangeModificationDate(self, ):
+        """When field MeetingItem.internalNotes is quickedited, it will not change
+           the item modification date as it is a field that is not really part
+           of the decision."""
+        self.changeUser('siteadmin')
+        self._enableField('description')
+        self._enableField('internalNotes')
+        # by default set internalNotes editable by proposingGroup creators
+        self._activate_config('itemInternalNotesEditableBy',
+                              'suffix_proposing_group_creators',
+                              keep_existing=False)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item_modified = item.modified()
+        # reindexed, but as internalNotes is not indexed, check with title
+        item.setTitle('specific')
+        self.assertFalse(self.catalog(SearchableText='specific'))
+        # not modified when quick editing internalNotes
+        set_field_from_ajax(item, 'internalNotes', self.descriptionText)
+        self.assertEqual(item_modified, item.modified())
+        # but reindexed
+        self.assertTrue(self.catalog(SearchableText='specific'))
+        # modified and reindexed when quickediting another field
+        item.setTitle('specific2')
+        self.assertFalse(self.catalog(SearchableText='specific2'))
+        set_field_from_ajax(item, 'description', self.descriptionText)
+        self.assertNotEqual(item_modified, item.modified())
+        self.assertTrue(self.catalog(SearchableText='specific2'))
+
     def test_pm_HideCssClasses(self):
         """ """
         self.changeUser('siteadmin')

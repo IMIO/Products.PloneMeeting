@@ -4920,6 +4920,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if fieldName in ['internalNotes', 'marginalNotes']:
             return True
 
+    def _bypass_quick_edit_notify_modified_for(self, fieldName):
+        """See docstring in interfaces.py"""
+        if fieldName in ['internalNotes']:
+            return True
+
     security.declarePublic('mayQuickEdit')
 
     def mayQuickEdit(self,
