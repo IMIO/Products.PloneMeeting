@@ -1113,10 +1113,19 @@ def set_dx_value(obj, field_name, value, raise_unauthorized=True):
             raise Unauthorized
 
 
-def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True, reindex=True, unlock=True):
+def set_field_from_ajax(
+        obj,
+        field_name,
+        new_value,
+        remember=True,
+        tranform=True,
+        reindex=True,
+        unlock=True,
+        modified=True):
     '''Sets on p_obj the content of a field whose name is p_fieldName and whose
        new value is p_fieldValue. This method is called by Ajax pages.'''
 
+    notify_modified = True
     if IDexterityContent.providedBy(obj):
         widget = get_dx_widget(obj, field_name=field_name)
         if not widget.may_edit():
@@ -1126,6 +1135,9 @@ def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True
         # only used for AT MeetingItem
         if not obj.mayQuickEdit(field_name):
             raise Unauthorized
+
+        # check if quick editing field_name will change modified of item
+        notify_modified = not obj.adapted()._bypass_quick_edit_notify_modified_for(field_name)
 
         field = obj.getField(field_name)
         if remember:
@@ -1156,7 +1168,7 @@ def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True
             extra_idxs.append(probable_index_name)
         # unmark deferred SearchableText reindexing
         setattr(obj, REINDEX_NEEDED_MARKER, False)
-        notifyModifiedAndReindex(obj, extra_idxs=extra_idxs)
+        notifyModifiedAndReindex(obj, notify_modified=notify_modified, extra_idxs=extra_idxs)
     if unlock:
         # just unlock, do not call ObjectEditedEvent because it does too much
         unlockAfterModification(obj, event={})
@@ -1166,18 +1178,19 @@ def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True
     fplog('quickedit_field', extras=extras)
 
 
-def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False, update_metadata=1):
+def notifyModifiedAndReindex(obj, notify_modified=True, extra_idxs=[], notify_event=False, update_metadata=1):
     """Ease notifyModified and reindex of a given p_obj.
        If p_extra_idxs contains '*', a full reindex is done, if not
        only 'modified' related indexes are updated.
        If p_notify_event is True, the ObjectModifiedEvent is notified."""
 
-    obj.notifyModified()
-
     idxs = []
+    if notify_modified:
+        obj.notifyModified()
+        idxs = ['modified', 'ModificationDate', 'Date']
+
     if '*' not in extra_idxs:
-        idxs = [
-            'pm_technical_index', 'modified', 'ModificationDate', 'Date'] + extra_idxs
+        idxs += ['pm_technical_index'] + extra_idxs
 
     reindex_object(obj, idxs, update_metadata=update_metadata)
 

@@ -8,6 +8,10 @@ Changelog
 - Adapted call to `@@load_held_position_back_refs` to be able to pass a `limit`
   and so display more than 50 elements.
   [gbastien]
+- When quick editing the `MeetingItem.internalNotes` field, do not make item
+  `modified` as this field is somehow external to the item decision and more
+  like a `post-it` field as it is the case for `labels`.
+  [gbastien]
 
 4.2.22 (2025-05-14)
 -------------------
