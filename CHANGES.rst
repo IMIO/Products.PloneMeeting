@@ -11,6 +11,11 @@ Changelog
 - Adpated step `_fixWSCConfigAndCleanBrokenAnnexes` of migration to 4215 to
   only disable `WSC` in `quickupload`.
   [gbastien]
+- Use an `InAndOutWidget` for `MeetingConfig.usedVoteValues`,
+  `MeetingConfig.firstLinkedVoteUsedVoteValues` and
+  `MeetingConfig.nextLinkedVotesUsedVoteValues` so it is possible to change
+  displayed order.
+  [gbastien]
 
 4.2.22 (2025-05-14)
 -------------------

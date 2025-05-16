@@ -2749,7 +2749,7 @@ schema = Schema((
     ),
     LinesField(
         name='usedVoteValues',
-        widget=MultiSelectionWidget(
+        widget=InAndOutWidget(
             description="UsedVoteValues",
             description_msgid="used_vote_values_descr",
             format="checkbox",
@@ -2766,7 +2766,7 @@ schema = Schema((
     ),
     LinesField(
         name='firstLinkedVoteUsedVoteValues',
-        widget=MultiSelectionWidget(
+        widget=InAndOutWidget(
             description="FirstLinkedVoteUsedVoteValues",
             description_msgid="first_linked_vote_used_vote_values_descr",
             format="checkbox",
@@ -2783,7 +2783,7 @@ schema = Schema((
     ),
     LinesField(
         name='nextLinkedVotesUsedVoteValues',
-        widget=MultiSelectionWidget(
+        widget=InAndOutWidget(
             description="NextLinkedVotesUsedVoteValues",
             description_msgid="next_linked_votes_used_vote_values_descr",
             format="checkbox",
