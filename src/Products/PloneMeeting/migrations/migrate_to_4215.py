@@ -36,7 +36,7 @@ class Migrate_To_4215(Migrator):
         if self.portal.portal_quickinstaller.isProductInstalled('imio.webspellchecker'):
             # disable WSC in input and textarea
             if not get_disable_autosearch_in():
-                set_disable_autosearch_in(u'["input", "textarea"]')
+                set_disable_autosearch_in(u'["#form-widgets-title", "#form-widgets-description"]')
             # remove broken annexes
             self._removeBrokenAnnexes()
         logger.info('Done.')

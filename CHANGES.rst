@@ -8,6 +8,9 @@ Changelog
 - Adapted call to `@@load_held_position_back_refs` to be able to pass a `limit`
   and so display more than 50 elements.
   [gbastien]
+- Adpated step `_fixWSCConfigAndCleanBrokenAnnexes` of migration to 4215 to
+  only disable `WSC` in `quickupload`.
+  [gbastien]
 
 4.2.22 (2025-05-14)
 -------------------
