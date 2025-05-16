@@ -8,6 +8,14 @@ Changelog
 - Adapted call to `@@load_held_position_back_refs` to be able to pass a `limit`
   and so display more than 50 elements.
   [gbastien]
+- Adpated step `_fixWSCConfigAndCleanBrokenAnnexes` of migration to 4215 to
+  only disable `WSC` in `quickupload`.
+  [gbastien]
+- Use an `InAndOutWidget` for `MeetingConfig.usedVoteValues`,
+  `MeetingConfig.firstLinkedVoteUsedVoteValues` and
+  `MeetingConfig.nextLinkedVotesUsedVoteValues` so it is possible to change
+  displayed order.
+  [gbastien]
 - When quick editing the `MeetingItem.internalNotes` field, do not make item
   `modified` as this field is somehow external to the item decision and more
   like a `post-it` field as it is the case for `labels`.
