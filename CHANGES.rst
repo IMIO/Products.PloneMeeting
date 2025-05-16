@@ -2,8 +2,47 @@ Changelog
 =========
 
 
-4.2.20-visiona1 (unreleased)
-----------------------------
+4.2.23 (unreleased)
+-------------------
+
+- Adapted call to `@@load_held_position_back_refs` to be able to pass a `limit`
+  and so display more than 50 elements.
+  [gbastien]
+- Adpated step `_fixWSCConfigAndCleanBrokenAnnexes` of migration to 4215 to
+  only disable `WSC` in `quickupload`.
+  [gbastien]
+- Use an `InAndOutWidget` for `MeetingConfig.usedVoteValues`,
+  `MeetingConfig.firstLinkedVoteUsedVoteValues` and
+  `MeetingConfig.nextLinkedVotesUsedVoteValues` so it is possible to change
+  displayed order.
+  [gbastien]
+- Display elements from external source `iA.Vision`, added form to be able
+  to `link/unlink` elements from it as well.
+
+4.2.22 (2025-05-14)
+-------------------
+
+- Completed migration to 4215 with step `_fixWSCConfigAndCleanBrokenAnnexes`
+  to configure `WSC` and remove eventual broken annexes.
+  [gbastien]
+- Fixed error when editing votes on an item when a held position was disabled
+  (actually when it had no more `usages`).
+  [gbastien]
+
+4.2.21 (2025-05-08)
+-------------------
+
+- Removed useless index `is_default_page` from item templates tree query.
+  [gbastien]
+- Fixed migration to 4215 by re-applying `collective.documentgenerator` related
+  customizations (`portal_type`, `viewlet`) as it is reinstalled by
+  `collective.contact.core` upgrade during install of dependency `imio.fpaudit`.
+  [gbastien]
+- When cloning an item, re-apply auto committees in case configuration changed.
+  [gbastien]
+
+4.2.20 (2025-05-05)
+-------------------
 
 - When using `MeetingItem.otherMeetingConfigsClonableToFields`, make sure if
   field is empty, the resulting item field `mimetype` is correctly set to
@@ -14,8 +53,22 @@ Changelog
   [gbastien]
 - Use another translation for `isAcceptableOutOfMeeting` pretty link icon title.
   [gastien]
-- Display elements from external source `iA.Vision`, added form to be able
-  to `link/unlink` elements from it as well.
+- Fixed `Migrate_To_4211._updateDataRelatedToToolPloneMeetingSimplification`
+  that was broken since `imio.fpaudit` that reinstalls
+  `collective.documentgenerator` and breaks our custom
+  `ConfigurablePODTemplate` portal_type.
+  [gbastien]
+- Added column `is_delay_calendar_days` to `MeetingConfig.customAdvisers`,
+  when set to `1` advice delay will be computed in calendar days.
+  [gbastien]
+- Renamed `@@advice_delay_change_form` to `@@advice-delay-change-form`.
+  Fixed `UnicodeDecodeError` when `delay_label` contains special characters.
+  [gbastien]
+- Avoid add/edit advice popup closing when using WSC.
+  [gbastien]
+- When sending email notifications, prepend `MeetingConfig.configGroup`
+  `full_label` when used and several `MeetingConfigs` have same title
+  so we know from which `MeetingConfig` the notification is sent.
   [gbastien]
 
 4.2.19 (2025-04-02)

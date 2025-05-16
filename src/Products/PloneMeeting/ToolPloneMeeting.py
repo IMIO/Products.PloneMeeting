@@ -1264,7 +1264,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         plone_utils.addPortalMessage(msg, 'info')
                         unrestrictedRemoveGivenObject(newAnnex)
 
-
                     # initialize to_print correctly regarding configuration
                     if not destCfg.getKeepOriginalToPrintOfClonedItems():
                         newAnnex.to_print = \

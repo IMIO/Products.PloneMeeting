@@ -121,6 +121,8 @@ class ItemTemplateView(BrowserView):
         # fails to compute it because query['path']['query'] is a list here...
         strategy = NavtreeStrategyBase()
         strategy.rootPath = itemTemplatesPath
+        # remove useless query parameters
+        strategy.supplimentQuery.pop('is_default_page', None)
         folderTree = buildFolderTree(self.context, None, query, strategy)
         # the single left problem is the fact that we could have empty folders
         # because we look in the itemTemplatesPath and it returns 'directly contained items' and

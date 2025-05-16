@@ -2566,11 +2566,10 @@ class PODTemplateMailingLists(BrowserView):
         for name, recipients in data:
             res.append(
                 (name,
-                 translate(
-                    "pt_mailing_will_be_sent_to",
-                    domain="PloneMeeting",
-                    mapping={"recipients": ", ".join(recipients)},
-                    context=self.request)))
+                 translate("pt_mailing_will_be_sent_to",
+                           domain="PloneMeeting",
+                           mapping={"recipients": ", ".join(recipients)},
+                           context=self.request)))
         return res
 
 

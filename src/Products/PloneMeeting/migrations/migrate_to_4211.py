@@ -41,7 +41,8 @@ class Migrate_To_4211(Migrator):
         """ToolPloneMeeting will be moved to the registry,
            most methods are moved or removed, update stored data."""
         logger.info('Updating portal_plonemeeting related data...')
-        # make sure ConfigurablePODTemplate portal_type is up to date
+        # reload ConfigurablePODTemplate to be sure that we have the correct portal_type
+        # this can have been changed by other upgrade steps
         load_type_from_package('ConfigurablePODTemplate', 'Products.PloneMeeting:default')
         prefixes = ('tool',
                     'context.portal_plonemeeting',

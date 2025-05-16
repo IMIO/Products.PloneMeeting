@@ -915,22 +915,29 @@ class AskedAdvicesVocabulary(object):
             org_uid = delayAwareAdviser['org']
             org = get_organization(org_uid)
             org_title = org.get_full_title()
+            is_delay_calendar_days = delayAwareAdviser['is_delay_calendar_days'] == '1'
             if delay_label:
+                msgid = 'advice_delay_with_label'
+                if is_delay_calendar_days:
+                    msgid = 'advice_calendar_days_delay_with_label'
                 termTitle = translate(
-                    'advice_delay_with_label',
+                    msgid,
                     domain='PloneMeeting',
                     mapping={'org_title': org_title,
                              'delay': delay,
                              'delay_label': delay_label},
-                    default='${group_name} - ${delay} day(s) (${delay_label})',
+                    default='${org_title} - ${delay} day(s) (${delay_label})',
                     context=self.request)
             else:
+                msgid = 'advice_delay_without_label'
+                if is_delay_calendar_days:
+                    msgid = 'advice_calendar_days_delay_without_label'
                 termTitle = translate(
-                    'advice_delay_without_label',
+                    msgid,
                     domain='PloneMeeting',
                     mapping={'org_title': org_title,
                              'delay': delay},
-                    default='${group_name} - ${delay} day(s)',
+                    default='${org_title} - ${delay} day(s)',
                     context=self.request)
         return termTitle
 
@@ -1048,24 +1055,32 @@ class ItemOptionalAdvicesVocabulary(object):
 
         request = context.REQUEST
 
-        def _displayDelayAwareValue(delay_label, org_title, delay):
+        def _displayDelayAwareValue(delay_label, org_title, delay, is_delay_calendar_days):
             org_title = safe_unicode(org_title)
             delay_label = safe_unicode(delay_label)
             if delay_label:
-                value_to_display = translate('advice_delay_with_label',
-                                             domain='PloneMeeting',
-                                             mapping={'org_title': org_title,
-                                                      'delay': delay,
-                                                      'delay_label': delay_label},
-                                             default='${org_title} - ${delay} day(s) (${delay_label})',
-                                             context=request)
+                msgid = 'advice_delay_with_label'
+                if is_delay_calendar_days:
+                    msgid = 'advice_calendar_days_delay_with_label'
+                value_to_display = translate(
+                    msgid,
+                    domain='PloneMeeting',
+                    mapping={'org_title': org_title,
+                             'delay': delay,
+                             'delay_label': delay_label},
+                    default='${org_title} - ${delay} day(s) (${delay_label})',
+                    context=request)
             else:
-                value_to_display = translate('advice_delay_without_label',
-                                             domain='PloneMeeting',
-                                             mapping={'org_title': group_name,
-                                                      'delay': delay},
-                                             default='${org_title} - ${delay} day(s)',
-                                             context=request)
+                msgid = 'advice_delay_without_label'
+                if is_delay_calendar_days:
+                    msgid = 'advice_calendar_days_delay_without_label'
+                value_to_display = translate(
+                    msgid,
+                    domain='PloneMeeting',
+                    mapping={'org_title': group_name,
+                             'delay': delay},
+                    default='${org_title} - ${delay} day(s)',
+                    context=request)
             return value_to_display
 
         def _insert_term_and_users(res, term_value, term_title, add_users=True):
@@ -1119,7 +1134,9 @@ class ItemOptionalAdvicesVocabulary(object):
             delay = delayAwareAdviser['delay']
             delay_label = delayAwareAdviser['delay_label']
             group_name = delayAwareAdviser['org_title']
-            value_to_display = _displayDelayAwareValue(delay_label, group_name, delay)
+            is_delay_calendar_days = delayAwareAdviser['is_delay_calendar_days']
+            value_to_display = _displayDelayAwareValue(
+                delay_label, group_name, delay, is_delay_calendar_days)
             _insert_term_and_users(
                 resDelayAwareAdvisers, adviserId, value_to_display)
 
@@ -1143,11 +1160,13 @@ class ItemOptionalAdvicesVocabulary(object):
                             org_uid, row_id = decodeDelayAwareId(org_uid)
                             delay = cfg._dataForCustomAdviserRowId(row_id)['delay']
                             delay_label = context.adviceIndex[org_uid]['delay_label']
+                            is_delay_calendar_days = context.adviceIndex[org_uid].get(
+                                'is_delay_calendar_days', False)
                             org = get_organization(org_uid)
                             if not org:
                                 continue
                             value_to_display = _displayDelayAwareValue(
-                                delay_label, org.get_full_title(), delay)
+                                delay_label, org.get_full_title(), delay, is_delay_calendar_days)
                             if not user_id:
                                 _insert_term_and_users(
                                     resDelayAwareAdvisers,
@@ -2225,7 +2244,7 @@ class BaseHeldPositionsVocabulary(object):
         forced_position_type_value = None
         for brain in brains:
             held_position = brain.getObject()
-            if held_position.usages and (not usage or usage in held_position.usages):
+            if not usage or (held_position.usages and usage in held_position.usages):
                 if is_item:
                     forced_position_type_value = meeting.get_attendee_position_for(
                         context_uid, brain.UID)

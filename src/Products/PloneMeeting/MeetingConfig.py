@@ -41,6 +41,7 @@ from plone.app.portlets.portlets import navigation
 from plone.memoize import ram
 from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletManager
+from plone.restapi.deserializer import boolean_value
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.atapi import InAndOutWidget
@@ -2102,6 +2103,11 @@ schema = Schema((
                      'delay_label':
                         Column("Custom adviser delay label",
                                col_description="delay_label_col_description"),
+                     'is_delay_calendar_days':
+                        SelectColumn("Is delay computed in calendar days?",
+                                     vocabulary="listBooleanVocabulary",
+                                     col_description="is_delay_calendar_days_col_description",
+                                     default='0'),
                      'available_on':
                         Column("Available on",
                                col_description="available_on_col_description"),
@@ -2120,7 +2126,7 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
         columns=('row_id', 'org', 'gives_auto_advice_on', 'gives_auto_advice_on_help_message',
                  'for_item_created_from', 'for_item_created_until', 'delay', 'delay_left_alert',
-                 'delay_label', 'available_on', 'is_linked_to_previous_row'),
+                 'delay_label', 'is_delay_calendar_days', 'available_on', 'is_linked_to_previous_row'),
         allow_empty_rows=False,
     ),
     LinesField(
@@ -2743,7 +2749,7 @@ schema = Schema((
     ),
     LinesField(
         name='usedVoteValues',
-        widget=MultiSelectionWidget(
+        widget=InAndOutWidget(
             description="UsedVoteValues",
             description_msgid="used_vote_values_descr",
             format="checkbox",
@@ -2760,7 +2766,7 @@ schema = Schema((
     ),
     LinesField(
         name='firstLinkedVoteUsedVoteValues',
-        widget=MultiSelectionWidget(
+        widget=InAndOutWidget(
             description="FirstLinkedVoteUsedVoteValues",
             description_msgid="first_linked_vote_used_vote_values_descr",
             format="checkbox",
@@ -2777,7 +2783,7 @@ schema = Schema((
     ),
     LinesField(
         name='nextLinkedVotesUsedVoteValues',
-        widget=MultiSelectionWidget(
+        widget=InAndOutWidget(
             description="NextLinkedVotesUsedVoteValues",
             description_msgid="next_linked_votes_used_vote_values_descr",
             format="checkbox",
@@ -3544,12 +3550,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('Title')
 
     def Title(self, include_config_group=False, **kwargs):
-        '''Returns the title and include config group value if p_include_config_group is True.'''
+        '''Returns the title and:
+           - include config group label if p_include_config_group is True;
+           - include config group full_label if p_include_config_group is "full_label".'''
         title = self.title
         if include_config_group and self.getConfigGroup():
-            # prepend configGroup
-            configGroupValue = self.Vocabulary('configGroup')[0].getValue(self.getConfigGroup())
-            title = u"{0} - {1}".format(configGroupValue, title)
+            if include_config_group is True:
+                # prepend configGroup label
+                title = u"{0} - {1}".format(
+                    safe_unicode(self.getConfigGroup(True)['label']), title)
+            elif include_config_group == "full_label":
+                full_label = self.getConfigGroup(True)['full_label']
+                if full_label:
+                    # prepend configGroup full_label
+                    title = u"{0} - {1}".format(
+                        safe_unicode(self.getConfigGroup(True)['full_label']), title)
         # Title returns utf-8
         return title.encode('utf-8')
 
@@ -4584,6 +4599,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                k not in ['gives_auto_advice_on_help_message',
                                          'delay_left_alert',
                                          'delay_label',
+                                         'is_delay_calendar_days',
                                          'available_on'] and \
                                not (k == 'is_linked_to_previous_row' and
                                     (v == '0' or not self._findLinkedRowsFor(customAdviser['row_id'])[0])):
@@ -7946,6 +7962,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         'org_title': org.get_full_title(),
                         'delay': customAdviserConfig['delay'],
                         'delay_label': customAdviserConfig['delay_label'],
+                        'is_delay_calendar_days': boolean_value(
+                            customAdviserConfig['is_delay_calendar_days']),
                         'row_id': customAdviserConfig['row_id']})
         return res
 

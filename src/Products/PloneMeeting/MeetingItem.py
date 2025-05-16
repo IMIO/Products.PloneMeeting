@@ -4275,19 +4275,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             groups_in_charge = self.getGroupsInCharge(includeAuto=True)
             self.setGroupsInCharge(groups_in_charge)
 
-    def update_committees(self):
+    def update_committees(self, force=False):
         """Update committees automatically?
            This will be the case if :
            - "committees" field used;
            - no commitees selected on item of a parameter on item changed;
            - the item is not inserted into a meeting
-             (this avoid changing old if configuration changed)."""
+             (this avoid changing old if configuration changed).
+           If force=True, it will be updated if used, this manage especially when
+           item is cloned and configuration changed."""
         indexes = []
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # warning, "committees" is in MeetingConfig.usedMeetingAttributes
         if "committees" in cfg.getUsedMeetingAttributes() and \
-           (not self.getCommittees() or self.REQUEST.get('need_MeetingItem_update_committees')) and \
+           (force or not self.getCommittees() or self.REQUEST.get('need_MeetingItem_update_committees')) and \
            not self.hasMeeting():
             if cfg.is_committees_using("auto_from"):
                 committees = []
@@ -5548,6 +5550,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                  'delay': predecessor.adviceIndex[adviserUid]['delay'],
                  'delay_left_alert': predecessor.adviceIndex[adviserUid]['delay_left_alert'],
                  'delay_label': predecessor.adviceIndex[adviserUid]['delay_label'],
+                 'is_delay_calendar_days': predecessor.adviceIndex[adviserUid].get('is_delay_calendar_days', False),
                  'userids': predecessor.adviceIndex[adviserUid].get('userids', [])})
         return res
 
@@ -5587,9 +5590,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 delay = customAdviserInfos['delay']
                 delay_left_alert = customAdviserInfos['delay_left_alert']
                 delay_label = customAdviserInfos['delay_label']
+                is_delay_calendar_days = customAdviserInfos['is_delay_calendar_days'] == '1'
             else:
                 org_uid = adviser
                 row_id = delay = delay_left_alert = delay_label = ''
+                is_delay_calendar_days = False
             # manage userids
             userids = [optionalAdviser.split('__userid__')[1]
                        for optionalAdviser in optionalAdvisers
@@ -5602,6 +5607,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         'delay': delay,
                         'delay_left_alert': delay_left_alert,
                         'delay_label': delay_label,
+                        'is_delay_calendar_days': is_delay_calendar_days,
                         'userids': userids})
         return res
 
@@ -5649,15 +5655,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                             'delay': customAdviser['delay'],
                             'delay_left_alert': customAdviser['delay_left_alert'],
                             'delay_label': customAdviser['delay_label'],
+                            'is_delay_calendar_days': customAdviser['is_delay_calendar_days'] == '1',
                             # userids is unhandled for automatic advisers
                             'userids': []})
                 # check if the found automatic adviser is not already in the self.adviceIndex
                 # but with a manually changed delay, aka
                 # 'delay_for_automatic_adviser_changed_manually' is True
                 storedCustomAdviser = self.adviceIndex.get(customAdviser['org'], {})
-                delay_for_automatic_adviser_changed_manually = \
-                    'delay_for_automatic_adviser_changed_manually' in storedCustomAdviser and \
-                    storedCustomAdviser['delay_for_automatic_adviser_changed_manually'] or False
+                delay_for_automatic_adviser_changed_manually = storedCustomAdviser.get(
+                    'delay_for_automatic_adviser_changed_manually', False)
+                is_delay_calendar_days = storedCustomAdviser.get(
+                    'is_delay_calendar_days', False)
                 if storedCustomAdviser and \
                    not storedCustomAdviser['row_id'] == customAdviser['row_id'] and \
                    delay_for_automatic_adviser_changed_manually and \
@@ -5675,6 +5683,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                             res[-1]['delay'] = storedCustomAdviser['delay']
                             res[-1]['delay_left_alert'] = storedCustomAdviser['delay_left_alert']
                             res[-1]['delay_label'] = storedCustomAdviser['delay_label']
+                            res[-1]['is_delay_calendar_days'] = is_delay_calendar_days
         return res
 
     security.declarePrivate('addAutoCopyGroups')
@@ -5949,6 +5958,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for advice in self.getAdvices():
             optional = True
             gives_auto_advice_on_help_message = delay = delay_left_alert = delay_label = ''
+            is_delay_calendar_days = False
             # find the relevant row in customAdvisers if advice has a row_id
             if advice.advice_row_id:
                 customAdviserConfig = cfg._dataForCustomAdviserRowId(advice.advice_row_id)
@@ -5958,6 +5968,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 delay = customAdviserConfig['delay'] or ''
                 delay_left_alert = customAdviserConfig['delay_left_alert'] or ''
                 delay_label = customAdviserConfig['delay_label'] or ''
+                is_delay_calendar_days = customAdviserConfig['is_delay_calendar_days'] == '1'
             advice_given_on = advice.get_advice_given_on()
             res[advice.advice_group] = {'type': advice.advice_type,
                                         'optional': optional,
@@ -5980,6 +5991,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         'delay': delay,
                                         'delay_left_alert': delay_left_alert,
                                         'delay_label': delay_label,
+                                        'is_delay_calendar_days': is_delay_calendar_days,
                                         'advice_given_on': advice_given_on,
                                         'advice_given_on_localized':
                                         self.restrictedTraverse('@@plone').toLocalizedTime(advice_given_on),
@@ -6549,6 +6561,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 d['delay'] = adviceInfo['delay']
                 d['delay_left_alert'] = adviceInfo['delay_left_alert']
                 d['delay_label'] = adviceInfo['delay_label']
+                d['is_delay_calendar_days'] = adviceInfo['is_delay_calendar_days']
                 d['gives_auto_advice_on_help_message'] = \
                     adviceInfo['gives_auto_advice_on_help_message']
                 d['row_id'] = adviceInfo['row_id']
@@ -6917,9 +6930,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 return data
 
         tool = api.portal.get_tool('portal_plonemeeting')
-        holidays = tool.getHolidaysAs_datetime()
-        weekends = tool.getNonWorkingDayNumbers()
-        unavailable_weekdays = tool.getUnavailableWeekDaysNumbers()
+        holidays = weekends = unavailable_weekdays = ()
+        if adviceInfos.get('is_delay_calendar_days', False) is False:
+            holidays = tool.getHolidaysAs_datetime()
+            weekends = tool.getNonWorkingDayNumbers()
+            unavailable_weekdays = tool.getUnavailableWeekDaysNumbers()
         limit_date = workday(delay_started_on,
                              delay,
                              holidays=holidays,
@@ -7064,7 +7079,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Make sure we have 'text/html' for every Rich fields
         forceHTMLContentTypeForEmptyRichFields(self)
         # update committees if necessary
-        indexes += self.update_committees()
+        indexes += self.update_committees(force=True)
         # reindex necessary indexes
         self.reindexObject(idxs=indexes)
         # itemReference uses MeetingConfig.computeItemReferenceForItemsOutOfMeeting?
@@ -7789,7 +7804,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 translate('sendto_inexistent_destfolder_error',
                           mapping={'meetingConfigTitle': destCfg.Title()},
                           domain="PloneMeeting", context=self.REQUEST),
-                          type='error')
+                type='error')
             return
         # The owner of the new item will be the same as the owner of the
         # original item.

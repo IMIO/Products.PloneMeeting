@@ -77,7 +77,7 @@ class HeldPositionBackRefsView(BrowserView):
                 res.append(cfg)
         return res
 
-    def using_meetings(self, limit=10):
+    def using_meetings(self, limit=50):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         catalog = api.portal.get_tool('portal_catalog')
@@ -100,7 +100,7 @@ class HeldPositionBackRefsView(BrowserView):
                         break
         return res
 
-    def using_items(self, limit=10):
+    def using_items(self, limit=50):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         catalog = api.portal.get_tool('portal_catalog')

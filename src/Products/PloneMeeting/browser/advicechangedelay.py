@@ -9,6 +9,7 @@ from plone import api
 from plone.z3cform.layout import wrap_form
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
+from Products.CMFPlone.utils import safe_unicode
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -99,7 +100,11 @@ class AdviceDelaysView(BrowserView):
         for linkedRow in availableLinkedRows:
             if linkedRow['row_id'] == self.row_id:
                 continue
-            res.append((linkedRow['row_id'], linkedRow['delay'], unicode(linkedRow['delay_label'], 'utf-8')))
+            res.append(
+                (linkedRow['row_id'],
+                 linkedRow['delay'],
+                 safe_unicode(linkedRow['delay_label']),
+                 linkedRow['is_delay_calendar_days'] == '1'))
         return res
 
     def _mayAccessDelayChangesHistory(self):
@@ -260,13 +265,21 @@ class AdviceChangeDelayForm(form.EditForm):
         if not newAdviceData:
             raise Unauthorized
 
+        is_delay_calendar_days = ''
+        if newAdviceData['is_delay_calendar_days'] == '1':
+            is_delay_calendar_days = \
+                "<span title='%s' class='far fa-calendar-alt pmHelp'></span>" % \
+                translate('Delay computed in calendar days',
+                          domain="PloneMeeting",
+                          context=self.request)
         self.fields['comment'].field.description = translate(
             'change_advice_delay_descr',
             domain='PloneMeeting',
-            mapping={'new_advice_delay': newAdviceData['delay']},
-            context=self.request,
-            default=u"You are about to change advice delay for this item to <span style='font-weight: bold;'>"
-            u"${new_delay_value}</span> days, please enter a comment.")
+            mapping={'new_advice_delay': safe_unicode(newAdviceData['delay']),
+                     'new_advice_delay_label': safe_unicode(newAdviceData['delay_label']),
+                     'new_advice_is_delay_calendar_days': is_delay_calendar_days,
+                     },
+            context=self.request)
 
 
 AdviceChangeDelayFormWrapper = wrap_form(AdviceChangeDelayForm)
