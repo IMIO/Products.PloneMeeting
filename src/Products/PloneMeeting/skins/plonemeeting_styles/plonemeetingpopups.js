@@ -19,7 +19,6 @@ function adviceAddEdit() {
             onBeforeClose : function (e) {
                 // avoid closing overlay when click outside overlay
                 // or when it is closed by WSC
-                console.log(e.target);
                 if (e.target.id == "exposeMask" ||
                     e.target.classList.contains("wsc-icon") ||
                     e.target.classList.contains("wsc-button")) {return false;}
@@ -222,6 +221,15 @@ function pmCommonOverlays(selector_prefix='') {
         $(selector_prefix + 'a.link-overlay-pm').prepOverlay({
             subtype: 'ajax',
             closeselector: '[name="form.buttons.cancel"]',
+            config: {
+                onBeforeClose : function (e) {
+                    // avoid closing overlay when click outside overlay
+                    // or when it is closed by WSC
+                    if (e.target.id == "exposeMask" ||
+                        e.target.classList.contains("wsc-icon") ||
+                        e.target.classList.contains("wsc-button")) {return false;}
+                },
+            },
        });
     });
 }

@@ -20,6 +20,8 @@ Changelog
   `modified` as this field is somehow external to the item decision and more
   like a `post-it` field as it is the case for `labels`.
   [gbastien]
+- Avoid overlays closing when using `WSC` in an editable field.
+  [gbastien]
 
 4.2.22 (2025-05-14)
 -------------------
