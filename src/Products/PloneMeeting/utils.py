@@ -1185,12 +1185,13 @@ def notifyModifiedAndReindex(obj, notify_modified=True, extra_idxs=[], notify_ev
        If p_notify_event is True, the ObjectModifiedEvent is notified."""
 
     idxs = []
+    modified_idxs = []
     if notify_modified:
         obj.notifyModified()
-        idxs = ['modified', 'ModificationDate', 'Date']
+        modified_idxs = ['modified', 'ModificationDate', 'Date']
 
     if '*' not in extra_idxs:
-        idxs += ['pm_technical_index'] + extra_idxs
+        idxs = modified_idxs + ['pm_technical_index'] + extra_idxs
 
     reindex_object(obj, idxs, update_metadata=update_metadata)
 
