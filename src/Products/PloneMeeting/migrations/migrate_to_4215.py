@@ -41,6 +41,22 @@ class Migrate_To_4215(Migrator):
             self._removeBrokenAnnexes()
         logger.info('Done.')
 
+    def _updateWFWriteMarginalNotesPermission(self):
+        """Re-apply WFs (portal_setup and MeetingConfig) as WriteMarginalNotes
+           permission is now available when item is "presented"."""
+        logger.info("Updating workflows 'WriteMarginalNotes' permission...")
+        # update workflow definition
+        self.runProfileSteps('Products.PloneMeeting', steps=['workflow'], profile='default')
+        # reload every MeetingConfigs so WF are updated
+        self.reloadMeetingConfigs()
+        # update every "presented" items
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            item_wf = cfg.getItemWorkflow(True)
+            for brain in self.catalog(portal_type=cfg.getItemTypeName()):
+                item = brain.getObject()
+                item_wf.updateRoleMappingsFor(item)
+        logger.info('Done.')
+
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4215...')
@@ -56,6 +72,7 @@ class Migrate_To_4215(Migrator):
         self._updateConfigCustomAdvisersDataGrid()
         self._reloadMeetingConfigsForItemWorkflows()
         self._fixWSCConfigAndCleanBrokenAnnexes()
+        self._updateWFWriteMarginalNotesPermission()
         logger.info('Migrating to PloneMeeting 4215... Done.')
 
 
@@ -65,7 +82,8 @@ def migrate(context):
        1) Upgrade all and make sure documentgenerator overrides are re-applied;
        2) Update MeetingConfig.customAdvisers to add new column "is_delay_calendar_days";
        3) Reload MeetingConfigs if using "return_to_proposing_group" with validation;
-       4) Fix WSC config and remove broken annexes.
+       4) Fix WSC config and remove broken annexes;
+       5) Update "WriteMarginalNotes" for every item WF and "presented" items.
     '''
     migrator = Migrate_To_4215(context)
     migrator.run()

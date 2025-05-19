@@ -22,6 +22,10 @@ Changelog
   [gbastien]
 - Avoid overlays closing when using `WSC` in an editable field.
   [gbastien]
+- Completed migration to 4215 with step `_updateWFWriteMarginalNotesPermission`
+  to update item WF to manage `WriteMarginalNotes` given to `MeetingManager`
+  when item is `presented`.
+  [gbastien]
 
 4.2.22 (2025-05-14)
 -------------------
