@@ -470,12 +470,22 @@ def get_public_url(obj):
     return url
 
 
+def several_mc_with_same_title(cfg_title=None):
+    """Return True if we have several MeetingConfigs with same title."""
+    tool = api.portal.get_tool("portal_plonemeeting")
+    every_cfg_titles = [cfg.Title() for cfg in tool.getActiveConfigs(check_access=False)]
+    if cfg_title:
+        return every_cfg_titles.count(cfg_title) > 1
+    else:
+        return len(every_cfg_titles) != len(set(every_cfg_titles))
+
+
 def sendMail(recipients, obj, event, attachments=None, mapping={}):
     '''Sends a mail related to p_event that occurred on p_obj to
        p_recipients. If p_recipients is None, the mail is sent to
        the system administrator.'''
     # Do not sent any mail if mail mode is "deactivated".
-    tool = obj.portal_plonemeeting
+    tool = api.portal.get_tool("portal_plonemeeting")
     cfg = tool.getMeetingConfig(obj) or tool.getActiveConfigs()[0]
     mailMode = cfg.getMailMode()
     if mailMode == 'deactivated':
@@ -508,13 +518,11 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     # in case we use configGroups and we have several MeetingConfig with
     # same title, this means we use configGroups to group same kind of
     # MeetingConfig, we prepend configGroup "full_label" to the "meetingConfigTitle"
-    if cfg.getConfigGroup() and \
-       (len([tmp_cfg.Title() for tmp_cfg in tool.getActiveConfigs(check_access=False)]) !=
-            len(set([tmp_cfg.Title() for tmp_cfg in tool.getActiveConfigs(check_access=False)]))):
-        meetingConfigTitle = safe_unicode(cfg.Title(include_config_group="full_label"))
+    if cfg.getConfigGroup() and several_mc_with_same_title():
+        cfg_title = safe_unicode(cfg.Title(include_config_group="full_label"))
     else:
         # common case
-        meetingConfigTitle = safe_unicode(cfg.Title())
+        cfg_title = safe_unicode(cfg.Title())
 
     translationMapping.update({
         'portalUrl': portalUrl,
@@ -526,7 +534,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         'itemTitle': '',
         'user': get_user_fullname(user.getId()),
         'groups': safe_unicode(userGroups),
-        'meetingConfigTitle': meetingConfigTitle,
+        'meetingConfigTitle': cfg_title,
         'transitionActor': wf_action and
         get_user_fullname(wf_action['actor'], with_user_id=True) or u'-',
         'transitionTitle': wf_action and
