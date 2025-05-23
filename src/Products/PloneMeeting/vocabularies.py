@@ -1318,26 +1318,29 @@ class SentToInfosVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         # the 'not to be cloned anywhere' term
-        res.append(SimpleTerm('not_to_be_cloned_to',
-                              'not_to_be_cloned_to',
-                              safe_unicode(translate('not_to_be_cloned_to_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
+        res.append(
+            SimpleTerm('not_to_be_cloned_to',
+                       'not_to_be_cloned_to',
+                       safe_unicode(translate('not_to_be_cloned_to_term',
+                                              domain='PloneMeeting',
+                                              context=context.REQUEST))))
         for cfgInfo in cfg.getMeetingConfigsToCloneTo():
             cfgId = cfgInfo['meeting_config']
-            cfgTitle = getattr(tool, cfgId).Title()
+            cfgTitle = getattr(tool, cfgId).Title(include_config_group=True)
             # add 'clonable to' and 'cloned to' options
             for suffix in ('__clonable_to', '__clonable_to_emergency',
                            '__cloned_to', '__cloned_to_emergency'):
                 termId = cfgId + suffix
-                res.append(SimpleTerm(termId,
-                                      termId,
-                                      translate('sent_to_other_mc_term' + suffix,
-                                                mapping={'meetingConfigTitle': safe_unicode(cfgTitle)},
-                                                domain='PloneMeeting',
-                                                context=context.REQUEST))
-                           )
+                res.append(
+                    SimpleTerm(
+                        termId,
+                        termId,
+                        translate(
+                            'sent_to_other_mc_term' + suffix,
+                            mapping={'meetingConfigTitle':
+                                safe_unicode(cfgTitle)},
+                            domain='PloneMeeting',
+                            context=context.REQUEST)))
         return SimpleVocabulary(res)
 
 
@@ -2925,9 +2928,12 @@ class OtherMCsClonableToVocabulary(object):
         cfg_ids = [mc['meeting_config'] for mc in cfg.getMeetingConfigsToCloneTo()]
         cfg_ids = list(set(cfg_ids).union(self._get_stored_values(context)))
         for cfg_id in cfg_ids:
-            terms.append(SimpleTerm(cfg_id,
-                                    cfg_id,
-                                    term_title or getattr(tool, cfg_id).Title()))
+            terms.append(
+                SimpleTerm(
+                    cfg_id,
+                    cfg_id,
+                    term_title or
+                    getattr(tool, cfg_id).Title(include_config_group=True)))
         return SimpleVocabulary(terms)
 
     # do ram.cache have a different key name

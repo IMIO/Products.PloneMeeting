@@ -26,6 +26,10 @@ Changelog
   to update item WF to manage `WriteMarginalNotes` given to `MeetingManager`
   when item is `presented`.
   [gbastien]
+- Display `MeetingConfig.configGroup` everywhere necessary to avoid
+  misinterpretationwhen several `MeetingConfigs` have same title in different
+  `configGroups`.
+  [gbastien]
 
 4.2.22 (2025-05-14)
 -------------------

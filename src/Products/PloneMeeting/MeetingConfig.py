@@ -34,7 +34,7 @@ from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToObject
 from imio.helpers.workflow import get_leading_transitions
 from natsort import humansorted
-from operator import attrgetter
+from operator import itemgetter
 from persistent.list import PersistentList
 from plone import api
 from plone.app.portlets.portlets import navigation
@@ -129,6 +129,7 @@ from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.utils import reindex_object
+from Products.PloneMeeting.utils import several_mc_with_same_title
 from Products.PloneMeeting.utils import translate_list
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator
@@ -6245,9 +6246,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                portalTypeName not in registeredFactoryTypes:
                 factoryTypesToRegister.append(portalTypeName)
             if not hasattr(self.portal_types, portalTypeName):
-                typeInfoName = "PloneMeeting: %s (%s)" % (metaTypeName,
-                                                          metaTypeName)
-                realMetaType = metaTypeName.startswith('MeetingItem') and 'MeetingItem' or metaTypeName
+                typeInfoName = "PloneMeeting: %s (%s)" % (
+                    metaTypeName, metaTypeName)
+                realMetaType = 'MeetingItem' if metaTypeName.startswith('MeetingItem') \
+                    else metaTypeName
                 portal_types.manage_addTypeInformation(
                     getattr(portal_types, realMetaType).meta_type,
                     id=portalTypeName, typeinfo_name=typeInfoName)
@@ -6368,6 +6370,38 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Update the cloneToOtherMeetingConfig actions visibility
         self._updateCloneToOtherMCActions()
 
+    def _updateCloneToOtherMCActions(self):
+        '''Manage the visibility of the object_button action corresponding to
+           the clone/send item to another meetingConfig functionality.
+           This method should only be called if you are sure that no actions regarding
+           the 'send to other mc' functionnality exist.  Either, call updatePortalTypes that
+           actually remove every existing actions on the portal_type then call this submethod'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        item_portal_type = self.portal_types[self.getItemTypeName()]
+        for mctct in self.getMeetingConfigsToCloneTo():
+            configId = mctct['meeting_config']
+            actionId = self._getCloneToOtherMCActionId(configId, self.getId())
+            urlExpr = "string:javascript:callViewAndReload(base_url='${object_url}', " \
+                "view_name='doCloneToOtherMeetingConfig', " \
+                "params={'destMeetingConfigId': '%s'}, force_faceted=false, " \
+                "onsuccess=null, ask_confirm=true);" % configId
+            availExpr = 'python: object.adapted().mayCloneToOtherMeetingConfig("%s")' \
+                % configId
+            destConfig = tool.get(configId)
+            # include configGroup if current cfg configGroup different than destConfig configGroup
+            actionName = self._getCloneToOtherMCActionTitle(
+                destConfig.Title(
+                    include_config_group=self.getConfigGroup() != destConfig.getConfigGroup()))
+            item_portal_type.addAction(
+                id=actionId,
+                name=actionName,
+                category='object_buttons',
+                action=urlExpr,
+                icon_expr='string:${portal_url}/clone_to_other_mc.png',
+                condition=availExpr,
+                permission=(View,),
+                visible=True)
+
     security.declarePrivate('createSearches')
 
     def createSearches(self, searchesInfo):
@@ -6426,35 +6460,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                          domain='PloneMeeting',
                          mapping={'meetingConfigTitle': safe_unicode(destMeetingConfigTitle)},
                          context=self.REQUEST).encode('utf-8')
-
-    def _updateCloneToOtherMCActions(self):
-        '''Manage the visibility of the object_button action corresponding to
-           the clone/send item to another meetingConfig functionality.
-           This method should only be called if you are sure that no actions regarding
-           the 'send to other mc' functionnality exist.  Either, call updatePortalTypes that
-           actually remove every existing actions on the portal_type then call this submethod'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        item_portal_type = self.portal_types[self.getItemTypeName()]
-        for mctct in self.getMeetingConfigsToCloneTo():
-            configId = mctct['meeting_config']
-            actionId = self._getCloneToOtherMCActionId(configId, self.getId())
-            urlExpr = "string:javascript:callViewAndReload(base_url='${object_url}', " \
-                "view_name='doCloneToOtherMeetingConfig', " \
-                "params={'destMeetingConfigId': '%s'}, force_faceted=false, " \
-                "onsuccess=null, ask_confirm=true);" % configId
-            availExpr = 'python: object.adapted().mayCloneToOtherMeetingConfig("%s")' \
-                % configId
-            destConfig = tool.get(configId)
-            actionName = self._getCloneToOtherMCActionTitle(destConfig.Title())
-            item_portal_type.addAction(
-                id=actionId,
-                name=actionName,
-                category='object_buttons',
-                action=urlExpr,
-                icon_expr='string:${portal_url}/clone_to_other_mc.png',
-                condition=availExpr,
-                permission=(View,),
-                visible=True)
 
     security.declarePrivate('updateIsDefaultFields')
 
@@ -6974,8 +6979,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for mc in tool.getActiveConfigs():
             mcId = mc.getId()
             if not mcId == self.getId():
-                res.append((mcId, mc.Title()))
-        return DisplayList(tuple(res))
+                res.append((mcId, safe_unicode(mc.Title(include_config_group=True))))
+        return DisplayList(humansorted(res, key=itemgetter(1)))
 
     security.declarePrivate('listTransitionsUntilPresented')
 
@@ -6991,7 +6996,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                           context=self.REQUEST)), ]
         tool = api.portal.get_tool('portal_plonemeeting')
         # sort cfg by Title
-        for cfg in humansorted(tool.getActiveConfigs(), key=attrgetter('title')):
+        for cfg in tool.getActiveConfigs():
             # only show other meetingConfigs than self
             if cfg == self:
                 continue
@@ -6999,14 +7004,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             availableItemTransitionIds = [tr[0] for tr in availableItemTransitions]
             availableItemTransitionTitles = [tr[1] for tr in availableItemTransitions]
             cfgId = cfg.getId()
-            cfgTitle = unicode(cfg.Title(), 'utf-8')
+            cfgTitle = safe_unicode(cfg.Title(include_config_group=True))
             for tr in cfg.getTransitionsForPresentingAnItem():
                 text = u'%s ➔ %s' % (
                     cfgTitle,
                     availableItemTransitionTitles[
                         availableItemTransitionIds.index(tr)])
                 res.append(('%s.%s' % (cfgId, tr), text))
-        return DisplayList(tuple(res))
+        return DisplayList(humansorted(res, key=itemgetter(1)))
 
     security.declarePrivate('listExecutableItemActions')
 
