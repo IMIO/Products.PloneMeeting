@@ -30,6 +30,12 @@ Changelog
   misinterpretation when several `MeetingConfigs` have same title in different
   `configGroups`.
   [gbastien]
+- Fixed `MeetingItemWorkflowConditions.mayCorrect` and
+  `MeetingItemWorkflowConditions._getLastValidationState` to use adaptable
+  method `MeetingItem._getGroupManagingItem` instead
+  `MeetingItem.getProposingGroup` when relevant or it is possible to correct
+  to a validation state where group is empty because not using correct group.
+  [gbastien]
 
 4.2.22 (2025-05-14)
 -------------------
