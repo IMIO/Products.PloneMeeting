@@ -27,7 +27,7 @@ Changelog
   when item is `presented`.
   [gbastien]
 - Display `MeetingConfig.configGroup` everywhere necessary to avoid
-  misinterpretationwhen several `MeetingConfigs` have same title in different
+  misinterpretation when several `MeetingConfigs` have same title in different
   `configGroups`.
   [gbastien]
 
