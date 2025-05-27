@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.23 (unreleased)
+4.2.23 (2025-05-27)
 -------------------
 
 - Adapted call to `@@load_held_position_back_refs` to be able to pass a `limit`
