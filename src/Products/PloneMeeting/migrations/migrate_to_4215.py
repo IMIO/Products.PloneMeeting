@@ -51,7 +51,7 @@ class Migrate_To_4215(Migrator):
         # update every "presented" items
         for cfg in self.tool.objectValues('MeetingConfig'):
             item_wf = cfg.getItemWorkflow(True)
-            for brain in self.catalog(portal_type=cfg.getItemTypeName()):
+            for brain in self.catalog(portal_type=cfg.getItemTypeName(), review_state="presented"):
                 item = brain.getObject()
                 item_wf.updateRoleMappingsFor(item)
         logger.info('Done.')

@@ -2,11 +2,12 @@ Changelog
 =========
 
 
-4.2.24 (unreleased)
--------------------
+4.2.23.1 (unreleased)
+---------------------
 
-- Nothing changed yet.
-
+- Fixed `Migrate_To_4215._updateWFWriteMarginalNotesPermission` to only update
+  items in state `presented`.
+  [gbastien]
 
 4.2.23 (2025-05-27)
 -------------------
