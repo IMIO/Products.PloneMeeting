@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.23.1 (unreleased)
+4.2.23.1 (2025-05-28)
 ---------------------
 
 - Fixed `Migrate_To_4215._updateWFWriteMarginalNotesPermission` to only update
