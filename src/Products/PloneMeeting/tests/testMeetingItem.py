@@ -5189,6 +5189,10 @@ class testMeetingItem(PloneMeetingTestCase):
            - item editor;
            - item viewer;
            - powerobserver."""
+        # shortcuts are taken into account in cache key
+        self._deactivate_wfas(
+            ['item_validation_shortcuts',
+             'item_validation_no_validate_shortcuts'])
         cfg = self.meetingConfig
         # enable everything
         cfg.setItemCopyGroupsStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
