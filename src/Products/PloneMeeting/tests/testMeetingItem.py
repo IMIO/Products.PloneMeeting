@@ -1513,6 +1513,34 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(newItem.getCategory(), catIdOfMC2Mapped)
         self.assertEqual(newItem.getGroupsInCharge(includeAuto=False), [self.developers_uid])
 
+    def test_pm_DuplicatedItemUpdatesAutoCommittee(self):
+        """When committees are set automatically, it is correctly updated
+           if configuration changed and an item is duplicated."""
+        cfg = self.meetingConfig
+        self._enableField('category')
+        self._enableField("committees", related_to="Meeting")
+        cfg_committees = cfg.getCommittees()
+        # configure auto committees
+        cfg_committees[0]['auto_from'] = ["proposing_group__" + self.developers_uid]
+        cfg.setCommittees(cfg_committees)
+        self.assertTrue(cfg.is_committees_using("auto_from"))
+        # create item
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(item.getCommittees(), (cfg_committees[0]['row_id'], ))
+        # change configuration, make committee_1 auto selected for developers
+        cfg_committees[0]['auto_from'] = ["proposing_group__" + self.vendors_uid]
+        cfg_committees[1]['auto_from'] = ["proposing_group__" + self.developers_uid]
+        cfg.setCommittees(cfg_committees)
+        # not changing already existing elements
+        item._update_after_edit()
+        self.assertEqual(item.getCommittees(), (cfg_committees[0]['row_id'], ))
+        # but when duplicating the item, the new configuration is used
+        # make sure need_MeetingItem_update_committees is False for now
+        self.request.set('need_MeetingItem_update_committees', False)
+        cloned = item.clone()
+        self.assertEqual(cloned.getCommittees(), (cfg_committees[1]['row_id'], ))
+
     def test_pm_SendItemToOtherMCManually(self):
         '''An item may be sent automatically or manually to another MC
            depending on what is defined in the MeetingConfig.'''
@@ -7442,6 +7470,35 @@ class testMeetingItem(PloneMeetingTestCase):
         self.closeMeeting(meeting)
         self.assertEqual(item.query_state(), 'accepted')
         _check_editable(item)
+
+    def test_pm_ItemInternalNotesQuickEditDoesNotChangeModificationDate(self, ):
+        """When field MeetingItem.internalNotes is quickedited, it will not change
+           the item modification date as it is a field that is not really part
+           of the decision."""
+        self.changeUser('siteadmin')
+        self._enableField('description')
+        self._enableField('internalNotes')
+        # by default set internalNotes editable by proposingGroup creators
+        self._activate_config('itemInternalNotesEditableBy',
+                              'suffix_proposing_group_creators',
+                              keep_existing=False)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item_modified = item.modified()
+        # reindexed, but as internalNotes is not indexed, check with title
+        item.setTitle('specific')
+        self.assertFalse(self.catalog(SearchableText='specific'))
+        # not modified when quick editing internalNotes
+        set_field_from_ajax(item, 'internalNotes', self.descriptionText)
+        self.assertEqual(item_modified, item.modified())
+        # but reindexed
+        self.assertTrue(self.catalog(SearchableText='specific'))
+        # modified and reindexed when quickediting another field
+        item.setTitle('specific2')
+        self.assertFalse(self.catalog(SearchableText='specific2'))
+        set_field_from_ajax(item, 'description', self.descriptionText)
+        self.assertNotEqual(item_modified, item.modified())
+        self.assertTrue(self.catalog(SearchableText='specific2'))
 
     def test_pm_HideCssClasses(self):
         """ """

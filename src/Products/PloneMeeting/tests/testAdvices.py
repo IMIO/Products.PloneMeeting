@@ -1783,7 +1783,7 @@ class testAdvices(PloneMeetingTestCase):
               'for_item_created_until': '',
               'delay': '10',
               'delay_label': '',
-              'is_delay_calendar_days': '1'},])
+              'is_delay_calendar_days': '1'}])
         self.changeUser('pmCreator1')
         item = self.create(
             'MeetingItem',

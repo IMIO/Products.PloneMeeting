@@ -922,7 +922,7 @@ class AskedAdvicesVocabulary(object):
             if delay_label:
                 msgid = 'advice_delay_with_label'
                 if is_delay_calendar_days:
-                    msgid ='advice_calendar_days_delay_with_label'
+                    msgid = 'advice_calendar_days_delay_with_label'
                 termTitle = translate(
                     msgid,
                     domain='PloneMeeting',
@@ -934,7 +934,7 @@ class AskedAdvicesVocabulary(object):
             else:
                 msgid = 'advice_delay_without_label'
                 if is_delay_calendar_days:
-                    msgid ='advice_calendar_days_delay_without_label'
+                    msgid = 'advice_calendar_days_delay_without_label'
                 termTitle = translate(
                     msgid,
                     domain='PloneMeeting',
@@ -1057,13 +1057,14 @@ class ItemOptionalAdvicesVocabulary(object):
            useful for display only most of times."""
 
         request = context.REQUEST
+
         def _displayDelayAwareValue(delay_label, org_title, delay, is_delay_calendar_days):
             org_title = safe_unicode(org_title)
             delay_label = safe_unicode(delay_label)
             if delay_label:
                 msgid = 'advice_delay_with_label'
                 if is_delay_calendar_days:
-                    msgid ='advice_calendar_days_delay_with_label'
+                    msgid = 'advice_calendar_days_delay_with_label'
                 value_to_display = translate(
                     msgid,
                     domain='PloneMeeting',
@@ -1075,7 +1076,7 @@ class ItemOptionalAdvicesVocabulary(object):
             else:
                 msgid = 'advice_delay_without_label'
                 if is_delay_calendar_days:
-                    msgid ='advice_calendar_days_delay_without_label'
+                    msgid = 'advice_calendar_days_delay_without_label'
                 value_to_display = translate(
                     msgid,
                     domain='PloneMeeting',
@@ -1320,26 +1321,29 @@ class SentToInfosVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         # the 'not to be cloned anywhere' term
-        res.append(SimpleTerm('not_to_be_cloned_to',
-                              'not_to_be_cloned_to',
-                              safe_unicode(translate('not_to_be_cloned_to_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
+        res.append(
+            SimpleTerm('not_to_be_cloned_to',
+                       'not_to_be_cloned_to',
+                       safe_unicode(translate('not_to_be_cloned_to_term',
+                                              domain='PloneMeeting',
+                                              context=context.REQUEST))))
         for cfgInfo in cfg.getMeetingConfigsToCloneTo():
             cfgId = cfgInfo['meeting_config']
-            cfgTitle = getattr(tool, cfgId).Title()
+            cfgTitle = getattr(tool, cfgId).Title(include_config_group=True)
             # add 'clonable to' and 'cloned to' options
             for suffix in ('__clonable_to', '__clonable_to_emergency',
                            '__cloned_to', '__cloned_to_emergency'):
                 termId = cfgId + suffix
-                res.append(SimpleTerm(termId,
-                                      termId,
-                                      translate('sent_to_other_mc_term' + suffix,
-                                                mapping={'meetingConfigTitle': safe_unicode(cfgTitle)},
-                                                domain='PloneMeeting',
-                                                context=context.REQUEST))
-                           )
+                res.append(
+                    SimpleTerm(
+                        termId,
+                        termId,
+                        translate(
+                            'sent_to_other_mc_term' + suffix,
+                            mapping={'meetingConfigTitle':
+                                safe_unicode(cfgTitle)},
+                            domain='PloneMeeting',
+                            context=context.REQUEST)))
         return SimpleVocabulary(res)
 
 
@@ -2247,7 +2251,7 @@ class BaseHeldPositionsVocabulary(object):
         forced_position_type_value = None
         for brain in brains:
             held_position = brain.getObject()
-            if held_position.usages and (not usage or usage in held_position.usages):
+            if not usage or (held_position.usages and usage in held_position.usages):
                 if is_item:
                     forced_position_type_value = meeting.get_attendee_position_for(
                         context_uid, brain.UID)
@@ -2928,9 +2932,12 @@ class OtherMCsClonableToVocabulary(object):
         cfg_ids = [mc['meeting_config'] for mc in cfg.getMeetingConfigsToCloneTo()]
         cfg_ids = list(set(cfg_ids).union(self._get_stored_values(context)))
         for cfg_id in cfg_ids:
-            terms.append(SimpleTerm(cfg_id,
-                                    cfg_id,
-                                    term_title or getattr(tool, cfg_id).Title()))
+            terms.append(
+                SimpleTerm(
+                    cfg_id,
+                    cfg_id,
+                    term_title or
+                    getattr(tool, cfg_id).Title(include_config_group=True)))
         return SimpleVocabulary(terms)
 
     # do ram.cache have a different key name

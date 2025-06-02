@@ -484,6 +484,7 @@ class testVotes(PloneMeetingTestCase):
 
     def test_pm_EncodePublicVotesForm(self):
         """ """
+        cfg = self.meetingConfig
         self.changeUser('pmManager')
         meeting, public_item, secret_item = \
             self._createMeetingWithVotes(include_yes=False)
@@ -526,6 +527,24 @@ class testVotes(PloneMeetingTestCase):
         # votes were updated
         self.assertEqual(public_item.get_vote_count(meeting, 'yes'), 0)
         self.assertEqual(public_item.get_vote_count(meeting, 'no'), 4)
+        # disable voter, it is still displayed when editing voters for item
+        # deactivated, form still OK
+        votes_form._finished = False
+        self.changeUser('siteadmin')
+        self.do(hp4, 'deactivate')
+        cleanRamCache()
+        self.changeUser('pmManager')
+        self.assertTrue(hp4_uid in votes_form.render())
+        # remove usages from hp
+        hp4.usages = []
+        cleanRamCache()
+        self.assertTrue(hp4_uid in votes_form.render())
+        # make hp no more selectable
+        ordered_contacts = list(cfg.getOrderedContacts())
+        ordered_contacts.remove(hp4_uid)
+        cfg.setOrderedContacts(ordered_contacts)
+        cleanRamCache()
+        self.assertTrue(hp4_uid in votes_form.render())
 
     def test_pm_EncodePublicVotesFormLinkedToPrevious(self):
         """ """

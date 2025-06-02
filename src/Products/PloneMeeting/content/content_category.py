@@ -3,6 +3,8 @@
 from collective.iconifiedcategory.content.category import CategorySchemaPolicy
 from collective.iconifiedcategory.content.subcategory import SubcategorySchemaPolicy
 from imio.helpers.content import uuidToObject
+from natsort import humansorted
+from operator import attrgetter
 from plone import api
 from plone.autoform import directives as form
 from Products.CMFPlone.utils import safe_unicode
@@ -100,7 +102,7 @@ class OtherMCCorrespondencesVocabulary(object):
                     ANNEX_NOT_KEPT.format(cfg_id),
                     ANNEX_NOT_KEPT.format(cfg_id),
                     u'%s ➔ %s ➔ %s' % (
-                        safe_unicode(cfg.Title()),
+                        safe_unicode(cfg.Title(include_config_group=True)),
                         translate('Item annexes',
                                   domain='PloneMeeting',
                                   context=context.REQUEST),
@@ -116,7 +118,7 @@ class OtherMCCorrespondencesVocabulary(object):
                             cat_uid,
                             cat_uid,
                             u'%s ➔ %s ➔ %s' % (
-                                safe_unicode(cfg.Title()),
+                                safe_unicode(cfg.Title(include_config_group=True)),
                                 safe_unicode(annexes_types_folder.Title()),
                                 safe_unicode(cat.Title()))))
                         for subcat in cat.objectValues():
@@ -125,11 +127,11 @@ class OtherMCCorrespondencesVocabulary(object):
                                 subcat_uid,
                                 subcat_uid,
                                 u'%s ➔ %s ➔ %s ➔ %s' % (
-                                    safe_unicode(cfg.Title()),
+                                    safe_unicode(cfg.Title(include_config_group=True)),
                                     safe_unicode(annexes_types_folder.Title()),
                                     safe_unicode(cat.Title()),
                                     safe_unicode(subcat.Title()))))
-        return SimpleVocabulary(res)
+        return SimpleVocabulary(humansorted(res, key=attrgetter('title')))
 
 
 OtherMCCorrespondencesVocabularyFactory = OtherMCCorrespondencesVocabulary()

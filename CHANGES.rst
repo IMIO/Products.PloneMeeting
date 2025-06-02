@@ -2,34 +2,78 @@ Changelog
 =========
 
 
-4.2.21rc2 (unreleased)
+4.2.24rc1 (unreleased)
 ----------------------
 
 - Nothing changed yet.
 
 
-4.2.21rc1 (2025-05-05)
-----------------------
+4.2.23.1 (2025-05-28)
+---------------------
 
-- Renamed `@@advice_delay_change_form` to `@@advice-delay-change-form`.
-  Fixed `UnicodeDecodeError` when `delay_label` contains special characters.
-  [gbastien]
-- Avoid add/edit advice popup closing when using WSC.
-  [gbastien]
-- When sending email notifications, prepend `MeetingConfig.configGroup`
-  `full_label` when used and several `MeetingConfigs` have same title
-  so we know from which `MeetingConfig` the notification is sent.
+- Fixed `Migrate_To_4215._updateWFWriteMarginalNotesPermission` to only update
+  items in state `presented`.
   [gbastien]
 
-4.2.20rc2 (2025-04-24)
-----------------------
+4.2.23 (2025-05-27)
+-------------------
 
-- Added column `is_delay_calendar_days` to `MeetingConfig.customAdvisers`,
-  when set to `1` advice delay will be computed in calendar days.
+- Adapted call to `@@load_held_position_back_refs` to be able to pass a `limit`
+  and so display more than 50 elements.
+  [gbastien]
+- Adpated step `_fixWSCConfigAndCleanBrokenAnnexes` of migration to 4215 to
+  only disable `WSC` in `quickupload`.
+  [gbastien]
+- Use an `InAndOutWidget` for `MeetingConfig.usedVoteValues`,
+  `MeetingConfig.firstLinkedVoteUsedVoteValues` and
+  `MeetingConfig.nextLinkedVotesUsedVoteValues` so it is possible to change
+  displayed order.
+  [gbastien]
+- When quick editing the `MeetingItem.internalNotes` field, do not make item
+  `modified` as this field is somehow external to the item decision and more
+  like a `post-it` field as it is the case for `labels`.
+  [gbastien]
+- Avoid overlays closing when using `WSC` in an editable field.
+  [gbastien]
+- Completed migration to 4215 with step `_updateWFWriteMarginalNotesPermission`
+  to update item WF to manage `WriteMarginalNotes` given to `MeetingManager`
+  when item is `presented`.
+  [gbastien]
+- Display `MeetingConfig.configGroup` everywhere necessary to avoid
+  misinterpretation when several `MeetingConfigs` have same title in different
+  `configGroups`.
+  [gbastien]
+- Fixed `MeetingItemWorkflowConditions.mayCorrect` and
+  `MeetingItemWorkflowConditions._getLastValidationState` to use adaptable
+  method `MeetingItem._getGroupManagingItem` instead
+  `MeetingItem.getProposingGroup` when relevant or it is possible to correct
+  to a validation state where group is empty because not using correct group.
   [gbastien]
 
-4.2.20rc1 (2025-04-16)
-----------------------
+4.2.22 (2025-05-14)
+-------------------
+
+- Completed migration to 4215 with step `_fixWSCConfigAndCleanBrokenAnnexes`
+  to configure `WSC` and remove eventual broken annexes.
+  [gbastien]
+- Fixed error when editing votes on an item when a held position was disabled
+  (actually when it had no more `usages`).
+  [gbastien]
+
+4.2.21 (2025-05-08)
+-------------------
+
+- Removed useless index `is_default_page` from item templates tree query.
+  [gbastien]
+- Fixed migration to 4215 by re-applying `collective.documentgenerator` related
+  customizations (`portal_type`, `viewlet`) as it is reinstalled by
+  `collective.contact.core` upgrade during install of dependency `imio.fpaudit`.
+  [gbastien]
+- When cloning an item, re-apply auto committees in case configuration changed.
+  [gbastien]
+
+4.2.20 (2025-05-05)
+-------------------
 
 - When using `MeetingItem.otherMeetingConfigsClonableToFields`, make sure if
   field is empty, the resulting item field `mimetype` is correctly set to
@@ -44,6 +88,18 @@ Changelog
   that was broken since `imio.fpaudit` that reinstalls
   `collective.documentgenerator` and breaks our custom
   `ConfigurablePODTemplate` portal_type.
+  [gbastien]
+- Added column `is_delay_calendar_days` to `MeetingConfig.customAdvisers`,
+  when set to `1` advice delay will be computed in calendar days.
+  [gbastien]
+- Renamed `@@advice_delay_change_form` to `@@advice-delay-change-form`.
+  Fixed `UnicodeDecodeError` when `delay_label` contains special characters.
+  [gbastien]
+- Avoid add/edit advice popup closing when using WSC.
+  [gbastien]
+- When sending email notifications, prepend `MeetingConfig.configGroup`
+  `full_label` when used and several `MeetingConfigs` have same title
+  so we know from which `MeetingConfig` the notification is sent.
   [gbastien]
 
 4.2.19 (2025-04-02)
@@ -82,9 +138,9 @@ Changelog
 4.2.17 (2025-03-17)
 -------------------
 
-- Display `MeetingConfig` title in page title (displayed in web browser tab)
-  on faceted contexts (dashboard and in configuration) so user knows where he is
-  when using several tabs.
+- Make `test_pm_json_collections_count` more robust by disabling every workflow
+  adaptations so a custom profile will not enable a `DashboardCollection`
+  that is using a counter.
   [gbastien]
 - In `MeetingItem.getGivenAdvices` use `toLocalizedTime`
   from `@@plone` instead python script.
@@ -154,17 +210,10 @@ Changelog
 - Prevent to unselect an organization in plonegroup that
   is used by `MeetingConfig.usingGroups`.
   [gbastien]
-- Fixed `PMCategorizedObjectAdapter.can_view` when managing not viewable items
-  because it could lead to unwanted users having access to some annexes by
-  accessing it's URL directly.
+- Fixed `otherMeetingConfigsClonableToFieldXXX` field management when it is
+  empty, it was not emptying the value on new item, now it is the case except
+  for `title` that can not be empty.
   [gbastien]
-- Make sure annexes only previewable (not downloadable) are not selectable
-  when duplicating an item, exporting it to PDF or exporting annexes to Zip.
-  [gbastien]
-
-4.2.14rc2 (2025-01-10)
-----------------------
-
 - Make `MeetingItem.marginalNotes` field editable by `MeetingManagers` when item
   is `presented` (before it was when item was `itemfrozen`) so votes are also
   editable when item is `presented` as it relies on same permission
@@ -175,8 +224,6 @@ Changelog
   `_get_default_signatories` to `get_default_signatories` and
   `_get_default_voters` to `_get_default_voters` and added it to `safe_utils`
   so it may be used in restricted python code.
-  Added parameters `the_objects=False` and `by_signature_number`
-  to `get_default_signatories`.
   [gbastien]
 - Added parameter `signatories={}` to `BaseDGHV.print_signatories_by_position`
   to be able to pass a dict of arbitrary held positions to render as signatures.
@@ -187,19 +234,16 @@ Changelog
   value term of `IRedefineAttendeePosition.position_type` correctly when it was
   not in the base vocabulary.
   [gbastien]
-
-4.2.14rc1 (2024-12-17)
-----------------------
-
-- Fixed an issue when `MeetingItem.proposingGroupWithGroupInCharge` is used in a `MeetingConfig`
-  but not in another one when an item is sent to it.
-  [aduchene]
-- Prevent to unselect an organization in plonegroup that
-  is used by `MeetingConfig.usingGroups`.
+- Display `MeetingConfig` title in page title (displayed in web browser tab)
+  on faceted contexts (dashboard and in configuration) so user knows where he is
+  when using several tabs.
   [gbastien]
-- Fixed `otherMeetingConfigsClonableToFieldXXX` field management when it is
-  empty, it was not emptying the value on new item, now it is the case except
-  for `title` that can not be empty.
+- Fixed `PMCategorizedObjectAdapter.can_view` when managing not viewable items
+  because it could lead to unwanted users having access to some annexes by
+  accessing it's URL directly.
+  [gbastien]
+- Make sure annexes only previewable (not downloadable) are not selectable
+  when duplicating an item, exporting it to PDF or exporting annexes to Zip.
   [gbastien]
 - Renamed `Migrator.updateItemFilters` to `Migrator.update_faceted_filters` and
   `Migrator.cleanUsedItemAttributes` to `Migrator.update_used_attrs` and
@@ -223,73 +267,6 @@ Changelog
 - Fixed `MeetingConfig.itemsNotViewableVisibleFields` functionnality that was
   raising `Unhautorized` when accessing more infos of not viewable items.
   [gbastien]
-
-4.2.13rc2 (2024-11-14)
-----------------------
-
-- Fixed `MeetingItem.show_othermcs_clonable_to_field` not managing field
-  `MeetingItem.otherMeetingConfigsClonableToFieldItemReference` because
-  `str.capitalize` upperize first letter but lowerize every others, this
-  leaded to field considered not enabled.
-  [gbastien]
-- Disable `utils.get_last_validation_state ram.cache` for now as we need to
-  disable it when using `MeetingConfig.itemWFValidationLevels available_on`.
-  [gbastien]
-- Added new privacies `public_ending` and `secret_ending`, similar to
-  `public_heading` and `secret_heading` especially to be used to manage items
-  order on meeting and group items at the end of a privacy.
-  [gbastien]
-
-4.2.13rc1 (2024-11-12)
-----------------------
-
-- Adapted `Migrator.updateWFStatesAndTransitions` to manage item WF states
-  defined on organizations in item advice related states attributes.
-  [gbastien]
-- Extended length of string fields of `MeetingConfig` containing TAL expression
-  to avoid long expressions problems (was limited to 255, extented to 750).
-  [gbastien]
-- Fixed `Meeting.convocation_date` calendar to start on monday.
-  [gbastien]
-- Make `ToolPloneMeeting.showHolidaysWarning` number of days a parameter
-  so in can be changed if necessary.
-  [gbastien]
-- Field `MeetingItem.itemReference` is now an optional field, when enabled,
-  it can be managed manually by the editors of the item.  In this case, the
-  configuration of `MeetingConfig.itemReferenceFormat` must be adapted
-  accordingly to avoid losing manually managed item reference.
-  [gbastien]
-- Added `MeetingConfig.meetingConfigsToCloneToEditFieldsTALExpr` to be able to
-  define an expression to protect `MeetingItem.otherMeetingConfigsClonableToFields`
-  against edition when the TAL expression is `False`.
-  [gbastien]
-- Disable collections `searchitemsofmycommittees` and
-  `searchitemsofmycommitteeseditable` by default.  When enabled, it will check
-  if committees configuration is using `committees editors`.
-  [gbastien]
-- Use `imio.helpers.cache.obj_modified` to check if item is actually modified
-  so we check also if some annotations were modified, this is the case when
-  using `ftw.labels`, so when adding/removing a label, it will invalidates
-  the item `actions_panel`.
-  [gbastien]
-- Added parameter `portal_type=None` to `MeetingItem.get_predecessor` and
-  `MeetingItem.get_predecessors` to get predecessor/predecessors of a given
-  `portal_type`. This makes it easier to get the original item when an item
-  is sent to another `MeetingConfig`.
-  [gbastien]
-- Added field `MeetingItem.otherMeetingConfigsClonableToFieldItemReference`
-  to be able to define a fixed item reference on an item to reuse on item cloned
-  to another `MeetingConfig`.
-  [gbastien]
-- Added new fields `MeetingItem.motivationSuite` and
-  `MeetingItem.otherMeetingConfigsClonableToFieldMotivationSuite`.
-  [gbastien]
-- Replaced columns `suffix/extra_suffix` of `MeetingConfig.itemWFValidationLevels`
-  by new columns `group_managing_item/extra_groups_managing_item`, this will
-  manage cases when another group than the proposing group is managing the item,
-  several groups may be selected including the proposing group or not.
-  Added new column `available_on` to be able to define a `TAL expression`
-  that will make a transition available or not.
 
 4.2.12 (2024-11-07)
 -------------------

@@ -471,12 +471,22 @@ def get_public_url(obj):
     return url
 
 
+def several_mc_with_same_title(cfg_title=None):
+    """Return True if we have several MeetingConfigs with same title."""
+    tool = api.portal.get_tool("portal_plonemeeting")
+    every_cfg_titles = [cfg.Title() for cfg in tool.getActiveConfigs(check_access=False)]
+    if cfg_title:
+        return every_cfg_titles.count(cfg_title) > 1
+    else:
+        return len(every_cfg_titles) != len(set(every_cfg_titles))
+
+
 def sendMail(recipients, obj, event, attachments=None, mapping={}):
     '''Sends a mail related to p_event that occurred on p_obj to
        p_recipients. If p_recipients is None, the mail is sent to
        the system administrator.'''
     # Do not sent any mail if mail mode is "deactivated".
-    tool = obj.portal_plonemeeting
+    tool = api.portal.get_tool("portal_plonemeeting")
     cfg = tool.getMeetingConfig(obj) or tool.getActiveConfigs()[0]
     mailMode = cfg.getMailMode()
     if mailMode == 'deactivated':
@@ -509,13 +519,11 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     # in case we use configGroups and we have several MeetingConfig with
     # same title, this means we use configGroups to group same kind of
     # MeetingConfig, we prepend configGroup "full_label" to the "meetingConfigTitle"
-    if cfg.getConfigGroup() and \
-       (len([tmp_cfg.Title() for tmp_cfg in tool.getActiveConfigs(check_access=False)]) != \
-            len(set([tmp_cfg.Title() for tmp_cfg in tool.getActiveConfigs(check_access=False)]))):
-        meetingConfigTitle = safe_unicode(cfg.Title(include_config_group="full_label"))
+    if cfg.getConfigGroup() and several_mc_with_same_title():
+        cfg_title = safe_unicode(cfg.Title(include_config_group="full_label"))
     else:
         # common case
-        meetingConfigTitle = safe_unicode(cfg.Title())
+        cfg_title = safe_unicode(cfg.Title())
 
     translationMapping.update({
         'portalUrl': portalUrl,
@@ -527,7 +535,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         'itemTitle': '',
         'user': get_user_fullname(user.getId()),
         'groups': safe_unicode(userGroups),
-        'meetingConfigTitle': meetingConfigTitle,
+        'meetingConfigTitle': cfg_title,
         'transitionActor': wf_action and
         get_user_fullname(wf_action['actor'], with_user_id=True) or u'-',
         'transitionTitle': wf_action and
@@ -1120,10 +1128,19 @@ def set_dx_value(obj, field_name, value, raise_unauthorized=True):
             raise Unauthorized
 
 
-def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True, reindex=True, unlock=True):
+def set_field_from_ajax(
+        obj,
+        field_name,
+        new_value,
+        remember=True,
+        tranform=True,
+        reindex=True,
+        unlock=True,
+        modified=True):
     '''Sets on p_obj the content of a field whose name is p_fieldName and whose
        new value is p_fieldValue. This method is called by Ajax pages.'''
 
+    notify_modified = True
     if IDexterityContent.providedBy(obj):
         widget = get_dx_widget(obj, field_name=field_name)
         if not widget.may_edit():
@@ -1133,6 +1150,9 @@ def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True
         # only used for AT MeetingItem
         if not obj.mayQuickEdit(field_name):
             raise Unauthorized
+
+        # check if quick editing field_name will change modified of item
+        notify_modified = not obj.adapted()._bypass_quick_edit_notify_modified_for(field_name)
 
         field = obj.getField(field_name)
         if remember:
@@ -1163,7 +1183,7 @@ def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True
             extra_idxs.append(probable_index_name)
         # unmark deferred SearchableText reindexing
         setattr(obj, REINDEX_NEEDED_MARKER, False)
-        notifyModifiedAndReindex(obj, extra_idxs=extra_idxs)
+        notifyModifiedAndReindex(obj, notify_modified=notify_modified, extra_idxs=extra_idxs)
     if unlock:
         # just unlock, do not call ObjectEditedEvent because it does too much
         unlockAfterModification(obj, event={})
@@ -1173,18 +1193,20 @@ def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True
     fplog('quickedit_field', extras=extras)
 
 
-def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False, update_metadata=1):
+def notifyModifiedAndReindex(obj, notify_modified=True, extra_idxs=[], notify_event=False, update_metadata=1):
     """Ease notifyModified and reindex of a given p_obj.
        If p_extra_idxs contains '*', a full reindex is done, if not
        only 'modified' related indexes are updated.
        If p_notify_event is True, the ObjectModifiedEvent is notified."""
 
-    obj.notifyModified()
-
     idxs = []
+    modified_idxs = []
+    if notify_modified:
+        obj.notifyModified()
+        modified_idxs = ['modified', 'ModificationDate', 'Date']
+
     if '*' not in extra_idxs:
-        idxs = [
-            'pm_technical_index', 'modified', 'ModificationDate', 'Date'] + extra_idxs
+        idxs = modified_idxs + ['pm_technical_index'] + extra_idxs
 
     reindex_object(obj, idxs, update_metadata=update_metadata)
 
