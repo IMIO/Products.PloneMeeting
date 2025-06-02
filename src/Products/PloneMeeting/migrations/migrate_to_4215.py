@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from imio.helpers.setup import load_type_from_package
-from imio.webspellchecker.config import get_disable_autosearch_in
 from imio.webspellchecker.config import set_disable_autosearch_in
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
@@ -21,7 +20,7 @@ class Migrate_To_4215(Migrator):
         logger.info('Done.')
 
     def _reloadMeetingConfigsForItemWorkflows(self):
-        """Reload MeetingConfigs so if using "return_to_proposing_group" with validation."""
+        """Reload MeetingConfigs if using "return_to_proposing_group" with validation."""
         logger.info("Updating item WF using 'return_to_proposing_group with validation'...")
         for cfg in self.tool.objectValues('MeetingConfig'):
             if len([state_id for state_id in cfg.getItemWorkflow(True)
