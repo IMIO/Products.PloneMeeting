@@ -9,6 +9,9 @@ Changelog
   POD templates and also in informations about "sendable to/sent to" on items
   (icons, actions).
   [gbastien]
+- Added overlay CSS class `link-overlay-pm-info` to be used for overlays that
+  may be closed safely when clicking outside of it.
+  [gbastien]
 
 4.2.23.1 (2025-05-28)
 ---------------------
