@@ -5,8 +5,10 @@ Changelog
 4.2.24 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Display `MeetingConfig.configGroup` on `meetingconfig_view` when listing
+  POD templates and also in informations about "sendable to/sent to" on items
+  (icons, actions).
+  [gbastien]
 
 4.2.23.1 (2025-05-28)
 ---------------------

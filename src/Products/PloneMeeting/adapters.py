@@ -219,9 +219,8 @@ class AdvicePrettyLinkAdapter(PrettyLinkAdapter):
     def getLink_cachekey(method, self):
         '''As item title is displayed on advice, invalidate cache if item title changed.'''
         res = super(AdvicePrettyLinkAdapter, self).getLink_cachekey(self)
-        item = self.context.aq_inner.aq_parent
-        item_title = item.Title()
-        return res + (item_title, )
+        # append item title
+        return res + (self.context.aq_inner.aq_parent.Title(), )
 
     @ram.cache(getLink_cachekey)
     def getLink(self):
@@ -458,10 +457,13 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             emergency = clonedToOtherMCId in self.context.getOtherMeetingConfigsClonableToEmergency()
             clonedToOtherMC = self.tool.get(clonedToOtherMCId)
             msgid = emergency and 'sentto_othermeetingconfig_emergency' or 'sentto_othermeetingconfig'
-            msg = translate(msgid,
-                            mapping={'meetingConfigTitle': safe_unicode(clonedToOtherMC.Title())},
-                            domain="PloneMeeting",
-                            context=self.request)
+            msg = translate(
+                msgid,
+                mapping={
+                    'meetingConfigTitle':
+                        safe_unicode(clonedToOtherMC.Title(include_config_group=True))},
+                domain="PloneMeeting",
+                context=self.request)
 
             clonedBrain = self.context.getItemClonedToOtherMC(clonedToOtherMCId, theObject=False)
             # do not check on meeting_date because it may contains '1950/01/01',
@@ -498,7 +500,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             iconName = emergency and "will_be_cloned_to_other_mc_emergency" or "will_be_cloned_to_other_mc"
             msg = translate(msgid,
                             mapping={'meetingConfigTitle': safe_unicode(
-                                     otherMeetingConfigClonableTo.Title())},
+                                     otherMeetingConfigClonableTo.Title(include_config_group=True))},
                             domain="PloneMeeting",
                             context=self.request)
             # manage the otherMeetingConfigsClonableToPrivacy
@@ -523,36 +525,47 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             predecessor_state = predecessor.query_state()
             translated_state = translate(predecessor_state, domain='plone', context=self.request)
             if not predecessorMeeting:
-                res.append(('cloned_not_decided.png',
-                            translate('icon_help_cloned_not_presented',
-                                      domain="PloneMeeting",
-                                      mapping={'meetingConfigTitle': safe_unicode(predecessorCfg.Title()),
-                                               'predecessorState': translated_state},
-                                      context=self.request,
-                                      default="Sent from ${meetingConfigTitle}, "
-                                      "original item is \"${predecessorState}\".")))
+                res.append(
+                    ('cloned_not_decided.png',
+                     translate(
+                        'icon_help_cloned_not_presented',
+                        domain="PloneMeeting",
+                        mapping={
+                            'meetingConfigTitle':
+                            safe_unicode(predecessorCfg.Title(include_config_group=True)),
+                            'predecessorState': translated_state},
+                        context=self.request,
+                        default="Sent from ${meetingConfigTitle}, "
+                        "original item is \"${predecessorState}\".")))
             else:
                 if predecessor_state in predecessorCfg.getItemPositiveDecidedStates():
-                    res.append(('cloned_and_decided.png',
-                                translate(
-                                    'icon_help_cloned_and_decided',
-                                    mapping={'meetingDate': self.tool.format_date(predecessorMeeting.date),
-                                             'meetingConfigTitle': safe_unicode(predecessorCfg.Title()),
-                                             'predecessorState': translated_state},
-                                    domain="PloneMeeting",
-                                    context=self.request,
-                                    default="Sent from ${meetingConfigTitle} (${meetingDate}), original item is "
-                                    "\"${predecessorState}\".")))
+                    res.append(
+                        ('cloned_and_decided.png',
+                         translate(
+                            'icon_help_cloned_and_decided',
+                            mapping={
+                                'meetingDate': self.tool.format_date(predecessorMeeting.date),
+                                'meetingConfigTitle':
+                                safe_unicode(predecessorCfg.Title(include_config_group=True)),
+                                'predecessorState': translated_state},
+                            domain="PloneMeeting",
+                            context=self.request,
+                            default="Sent from ${meetingConfigTitle} (${meetingDate}), "
+                            "original item is \"${predecessorState}\".")))
                 else:
-                    res.append(('cloned_not_decided.png',
-                                translate('icon_help_cloned_not_decided',
-                                          mapping={'meetingDate': self.tool.format_date(predecessorMeeting.date),
-                                                   'meetingConfigTitle': safe_unicode(predecessorCfg.Title()),
-                                                   'predecessorState': translated_state},
-                                          domain="PloneMeeting",
-                                          context=self.request,
-                                          default="Sent from ${meetingConfigTitle} (${meetingDate}), original item is "
-                                          "\"${predecessorState}\".")))
+                    res.append(
+                        ('cloned_not_decided.png',
+                         translate(
+                            'icon_help_cloned_not_decided',
+                            mapping={
+                                'meetingDate': self.tool.format_date(predecessorMeeting.date),
+                                'meetingConfigTitle':
+                                safe_unicode(predecessorCfg.Title(include_config_group=True)),
+                                'predecessorState': translated_state},
+                            domain="PloneMeeting",
+                            context=self.request,
+                            default="Sent from ${meetingConfigTitle} (${meetingDate}), "
+                            "original item is \"${predecessorState}\".")))
 
         # display icons if element is down the workflow or up for at least second time...
         # display it only for items before state 'validated'
@@ -648,14 +661,16 @@ class MeetingPrettyLinkAdapter(PrettyLinkAdapter):
                                   context=self.request)))
         if self.context.adopts_next_agenda_of:
             tool = api.portal.get_tool('portal_plonemeeting')
-            res.append(('adopts_next_agenda_of.png',
-                        translate(
-                            'this_meeting_adopts_next_agenda_of',
-                            mapping={'cfg_titles': u", ".join([
-                                safe_unicode(tool.get(cfg_id).Title())
-                                for cfg_id in self.context.adopts_next_agenda_of])},
-                            domain="PloneMeeting",
-                            context=self.request)))
+            res.append(
+                ('adopts_next_agenda_of.png',
+                 translate(
+                    'this_meeting_adopts_next_agenda_of',
+                    mapping={
+                        'cfg_titles': u", ".join([
+                            safe_unicode(tool.get(cfg_id).Title(include_config_group=True))
+                            for cfg_id in self.context.adopts_next_agenda_of])},
+                    domain="PloneMeeting",
+                    context=self.request)))
         return res
 
 

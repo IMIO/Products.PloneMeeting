@@ -1518,7 +1518,7 @@
                  tal:attributes="href python: podTemplateHolder.absolute_url()"
                  tal:on-error="python: obj.pod_template_to_use"
                  tal:condition="python: obj.odt_file is None"
-                 tal:content="string:${otherCfg/title} ➔ ${podTemplateHolder/Title}">File holder</a>
+                 tal:content="python:otherCfg.Title(include_config_group=True) + ' ➔ ' + podTemplateHolder.Title()">File holder</a>
             </td>
             <td i18n:domain="plone">
               <span tal:condition="obj/enabled" i18n:translate="">Yes</span>
