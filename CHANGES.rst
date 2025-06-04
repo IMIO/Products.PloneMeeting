@@ -12,6 +12,9 @@ Changelog
 - Added overlay CSS class `link-overlay-pm-info` to be used for overlays that
   may be closed safely when clicking outside of it.
   [gbastien]
+- Fixed max width to `300px` for `copyGroups` column of items dashboards and
+  `category` column of annexes table.
+  [gbastien]
 
 4.2.23.1 (2025-05-28)
 ---------------------
