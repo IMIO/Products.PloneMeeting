@@ -393,8 +393,17 @@ class testContacts(PloneMeetingTestCase):
             self.assertEqual(view.getItemsForNotPresent(), [item1])
             self.assertTrue(view(hp3_uid, "non_attendee"))
             self.assertEqual(view.getItemsForNotPresent(), [item1, item2])
+        # a user that may view the meeting, but not the items for which member is not present
+        self.changeUser('pmCreator2')
+        self.assertTrue(meeting_view(hp1_uid, "absent"))
+        self.assertEqual(meeting_view.getItemsForNotPresent(), [])
+        self.assertTrue(meeting_view(hp2_uid, "excused"))
+        self.assertEqual(meeting_view.getItemsForNotPresent(), [])
+        self.assertTrue(meeting_view(hp3_uid, "non_attendee"))
+        self.assertEqual(meeting_view.getItemsForNotPresent(), [])
         # not able to set absent an attendee that is not present on the meeting
         # set hp4_uid absent on meeting and try
+        self.changeUser('pmManager')
         hp4_uid = meeting.get_attendees()[3]
         meeting.ordered_contacts[hp4_uid]['attendee'] = False
         meeting.ordered_contacts[hp4_uid]['absent'] = True

@@ -2422,7 +2422,7 @@ class DisplayMeetingItemNotPresent(BrowserView):
     def display_clusters(self):
         """Display item numbers as clusters."""
         numbers = [item.getItemNumber(for_display=False) for item in self.items_for_not_present]
-        return get_ordinal_clusters(numbers)
+        return get_ordinal_clusters(numbers) or '-'
 
 
 class DisplayMeetingItemSignatories(BrowserView):

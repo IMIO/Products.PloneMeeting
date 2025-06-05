@@ -15,6 +15,10 @@ Changelog
 - Fixed max width to `300px` for `copyGroups` column of items dashboards and
   `category` column of annexes table.
   [gbastien]
+- Completed `test_pm_ItemAbsentsAndExcusedAndNonAttendees` to show that
+  `@@display-meeting-item-not-present` works when current user can not access
+  items for which assembly member is absent.
+  [gbastien]
 
 4.2.23.1 (2025-05-28)
 ---------------------
