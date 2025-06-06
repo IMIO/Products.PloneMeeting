@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.23.3 (unreleased)
+4.2.23.3 (2025-06-06)
 ---------------------
 
 - Make sure WSC is disabled in annex `content_category select2 widget` or
