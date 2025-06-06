@@ -34,7 +34,9 @@ class Migrate_To_4215(Migrator):
         logger.info("Updating WSC config and removing broken annexes...")
         if self.portal.portal_quickinstaller.isProductInstalled('imio.webspellchecker'):
             # disable WSC in quickupload
-            set_disable_autosearch_in(u'["#form-widgets-title", "#form-widgets-description"]')
+            set_disable_autosearch_in(
+                u'["#form-widgets-title", "#form-widgets-description", '
+                u'".select2-focusser", ".select2-input"]')
             # remove broken annexes
             self._removeBrokenAnnexes()
         logger.info('Done.')

@@ -46,7 +46,6 @@ __docformat__ = 'plaintext'
 
 logger = logging.getLogger('PloneMeeting: setuphandlers')
 
-folderViews = ('folder_contents', )
 # Indexes used by PloneMeeting
 # XXX warning, do ONLY use ZCTextIndex for real text values,
 # NOT returning empty tuple/list like () or [] but empty values like ''
@@ -115,19 +114,19 @@ def setupHideToolsFromNavigation(context):
     # uncatalog tools
     site = context.getSite()
     toolnames = ['portal_plonemeeting']
-    portalProperties = api.portal.get_tool('portal_properties')
-    navtreeProperties = getattr(portalProperties, 'navtree_properties')
-    if navtreeProperties.hasProperty('idsNotToList'):
+    portal_properties = api.portal.get_tool('portal_properties')
+    navtree_properties = getattr(portal_properties, 'navtree_properties')
+    if navtree_properties.hasProperty('idsNotToList'):
         for toolname in toolnames:
             try:
                 site[toolname].unindexObject()
             except Exception:
                 pass
-            current = list(navtreeProperties.getProperty('idsNotToList') or [])
+            current = list(navtree_properties.getProperty('idsNotToList') or [])
             if toolname not in current:
                 current.append(toolname)
                 kwargs = {'idsNotToList': current}
-                navtreeProperties.manage_changeProperties(**kwargs)
+                navtree_properties.manage_changeProperties(**kwargs)
 
 
 def setupCatalogMultiplex(context):
@@ -167,12 +166,12 @@ def postInstall(context):
 
     # We add meetingfolder_redirect_view and folder_contents to the list of
     # available views for type "Folder".
-    portalType = site.portal_types.Folder
-    available_views = list(portalType.getAvailableViewMethods(None))
-    for folderView in folderViews:
-        if folderView not in available_views:
-            available_views.append(folderView)
-    portalType.manage_changeProperties(view_methods=available_views)
+    portal_type = site.portal_types.Folder
+    available_views = list(portal_type.getAvailableViewMethods(None))
+    for folder_view in ('folder_contents', ):
+        if folder_view not in available_views:
+            available_views.append(folder_view)
+    portal_type.manage_changeProperties(view_methods=available_views)
 
     # Make sure folder "Members" is private
     wft = api.portal.get_tool('portal_workflow')
@@ -243,9 +242,9 @@ def postInstall(context):
 
     # Disable content indexation, we have our own.
     pt = site.portal_transforms
-    for transformId in transformsToDisable:
-        if hasattr(pt.aq_base, transformId):
-            pt.manage_delObjects([transformId])
+    for transform_id in transformsToDisable:
+        if hasattr(pt.aq_base, transform_id):
+            pt.manage_delObjects([transform_id])
 
     # configure CKEditor : adapt available buttons in toolbar and
     # defines it as default Plone editor
@@ -478,7 +477,7 @@ def _configureCKeditor(site):
                                    domain='PloneMeeting',
                                    context=site.REQUEST).encode('utf-8')
 
-        menuStyles = unicode(
+        menu_styles = unicode(
             "[\n{0}\n{{ name : '{1}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-red' }} }},\n"
             "{{ name : '{2}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-blue' }} }},\n"
             "{{ name : '{3}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-green' }} }},\n"
@@ -504,7 +503,7 @@ def _configureCKeditor(site):
                    msg_table_no_optimization,
                    msg_indent,
                    msg_page_break), enc)
-        cke_props.menuStyles = menuStyles
+        cke_props.menuStyles = menu_styles
     # make sure we use resolveuid for images so URL is always correct even if item id changed
     cke_props.allow_link_byuid = True
     # make sure force paste as plain text is disabled
@@ -588,7 +587,9 @@ def _configureWebspellchecker(site):
                                not pt.startswith('annex') and
                                pt not in ('Message', 'Document', 'News Item', 'Event')]
     wsc_config.set_disallowed_portal_types(disallowed_portal_types)
-
+    wsc_config.set_disable_autosearch_in(
+        u'["#form-widgets-title", "#form-widgets-description", '
+        u'".select2-focusser", ".select2-input"]')
 
 def _congfigureSafeHtml(site):
     '''Add some values to safe_html.'''
@@ -621,31 +622,30 @@ def _adaptFrontPage(site):
       take here a difference of 0.5 seconds), then it means that it was not changed, we can update it.
     '''
     # first be sure that a front-page exists
-    frontPage = getattr(site, 'front-page', None)
-    if not frontPage:
+    front_page = getattr(site, 'front-page', None)
+    if not front_page:
         return
 
     logger.info('Adapting front-page...')
     # make sure we only adapt it at install time, so when creation and modification date are almost equal
-    if frontPage.modified() - frontPage.created() < 0.000005:
+    if front_page.modified() - front_page.created() < 0.000005:
         # disable presentation mode
-        frontPage.setPresentation(False)
+        front_page.setPresentation(False)
         # there is a difference of less than 0.5 seconds between last modification and creation date
         # it means that practically, the front page was not adapted...
-        frontPageTitle = translate('front_page_title',
-                                   domain='PloneMeeting',
-                                   context=site.REQUEST)
-        frontPage.setTitle(frontPageTitle)
-        frontPageDescription = translate('front_page_description',
-                                         domain='PloneMeeting',
-                                         context=site.REQUEST)
-        frontPage.setDescription(frontPageDescription)
-        frontPageBody = translate('front_page_body',
-                                  domain='PloneMeeting',
-                                  context=site.REQUEST)
-        frontPage.setText(frontPageBody)
-        frontPage.setModificationDate(frontPage.created() + 0.000002)
-        frontPage.reindexObject()
+        front_page_title = translate('front_page_title',
+                                     domain='PloneMeeting',
+                                     context=site.REQUEST)
+        front_page.setTitle(front_page_title)
+        front_page_descr = translate('front_page_description',
+                                     domain='PloneMeeting',
+                                     context=site.REQUEST)
+        front_page.setDescription(front_page_descr)
+        front_page_body = translate('front_page_body',
+                                    domain='PloneMeeting',
+                                    context=site.REQUEST)
+        front_page.setText(front_page_body)
+        front_page.reindexObject()
     logger.info('Done.')
 
 

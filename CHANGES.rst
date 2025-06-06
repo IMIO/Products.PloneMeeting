@@ -5,8 +5,9 @@ Changelog
 4.2.23.3 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Make sure WSC is disabled in annex `content_category select2 widget` or
+  it breaks `quickupload` of several annexes.
+  [gbastien]
 
 4.2.23.2 (2025-06-06)
 ---------------------
