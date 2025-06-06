@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.23.2 (unreleased)
+4.2.23.2 (2025-06-06)
 ---------------------
 
 - Display `MeetingConfig.configGroup` on `meetingconfig_view` when listing
