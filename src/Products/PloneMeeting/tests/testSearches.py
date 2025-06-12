@@ -1207,7 +1207,7 @@ class testSearches(PloneMeetingTestCase):
         '''Test the 'items-with-negative-personal-labels' adapter.
            This should return a list of items for which current user did not checked the 'lu' label.'''
         cfg = self.meetingConfig
-        cfg.setEnableLabels(True)
+        self._enableField('labels')
         collection = cfg.searches.searches_items.searchunreaditems
 
         # create item, not 'lu' by default

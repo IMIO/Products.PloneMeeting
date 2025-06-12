@@ -269,7 +269,7 @@ class PMLabelsBatchActionForm(LabelsBatchActionForm):
         """Only available when labels are enabled."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        return cfg.getEnableLabels()
+        return 'labels' in cfg.getUsedItemAttributes()
 
 
 def _is_operational_user(context):

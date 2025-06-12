@@ -28,7 +28,7 @@ class PMFTWLabelsRenderer(ftw_labels_renderer):
         """ """
         available = super(PMFTWLabelsRenderer, self).available
         return available and \
-            self.context.getEnableLabels() and \
+            'labels' in self.context.getUsedItemAttributes() and \
             self.request.get('pageName', None) == 'data'
 
 
@@ -110,7 +110,7 @@ class PMFTWLabelsLabelingViewlet(LabelingViewlet):
         available = super(PMFTWLabelsLabelingViewlet, self).available
         if available:
             cfg = self.tool.getMeetingConfig(self.context)
-            available = cfg.getEnableLabels()
+            available = 'labels' in cfg.getUsedItemAttributes()
         return available
 
     @property

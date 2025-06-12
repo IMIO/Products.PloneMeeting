@@ -2192,7 +2192,7 @@ class testViews(PloneMeetingTestCase):
     def test_pm_ftw_labels_viewlet_available(self):
         """Only available on items if enabled in MeetingConfig."""
         cfg = self.meetingConfig
-        self.assertFalse(cfg.getEnableLabels())
+        self.assertFalse('labels' in cfg.getUsedItemAttributes())
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         viewlet = self._get_viewlet(
@@ -2206,7 +2206,7 @@ class testViews(PloneMeetingTestCase):
         labeljar.storage.clear()
         self.assertEqual(labeljar.list(), [])
         # enableLabels
-        cfg.setEnableLabels(True)
+        self._enableField('labels')
         # still not available as no labels defined
         self.assertFalse(viewlet.available)
         labeljar.add('Label', 'green', False)
@@ -2214,7 +2214,7 @@ class testViews(PloneMeetingTestCase):
 
     def _enable_ftw_labels(self):
         cfg = self.meetingConfig
-        cfg.setEnableLabels(True)
+        self._enableField('labels')
         self.changeUser('pmCreator1')
         labeljar = getAdapter(cfg, ILabelJar)
         labeljar.add('Label1', 'green', False)

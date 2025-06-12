@@ -687,19 +687,6 @@ schema = Schema((
         schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
-        name='enableLabels',
-        default=defValues.enableLabels,
-        widget=BooleanField._properties['widget'](
-            description="EnableLabels",
-            description_msgid="enable_labels_descr",
-            label='Enablelabels',
-            label_msgid='PloneMeeting_label_enableLabels',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        write_permission="PloneMeeting: Write risky config",
-    ),
     DataGridField(
         name='insertingMethodsOnAddItem',
         widget=DataGridField._properties['widget'](
@@ -2533,6 +2520,51 @@ schema = Schema((
         schemata="advices",
         write_permission="PloneMeeting: Write risky config",
     ),
+    DataGridField(
+        name='labelsConfig',
+        widget=DataGridField._properties['widget'](
+            description="LabelsConfig",
+            description_msgid="labels_config_descr",
+            columns={
+                'label_id': SelectColumn(
+                    "Labels config label id",
+                    vocabulary_factory="Products.PloneMeeting.vocabularies.ftwlabelsvocabulary",
+                    col_description="labels_config_label_id_col_description"),
+                'view_groups': MultiSelectColumn(
+                    "Labels config view groups",
+                    col_description="labels_config_view_groups_col_description",
+                    vocabulary="listItemAttributeVisibleForWithMeetingManagers"),
+                'view_states': MultiSelectColumn(
+                    "Labels config view states",
+                    col_description="labels_config_view_states_col_description",
+                    vocabulary="listItemStates"),
+                'view_access_on': Column(
+                    "Labels config view access TAL expression",
+                    col_description="labels_config_view_access_on_col_description"),
+                'edit_groups': MultiSelectColumn(
+                    "Labels config view groups",
+                    col_description="labels_config_view_groups_col_description",
+                    vocabulary="listItemAttributeVisibleForWithMeetingManagers"),
+                'edit_states': MultiSelectColumn(
+                    "Labels config edit states",
+                    col_description="labels_config_edit_states_col_description",
+                    vocabulary="listItemStates"),
+                'edit_access_on': Column(
+                    "Labels config edit access TAL expression",
+                    col_description="labels_config_edit_access_on_col_description"),
+            },
+            label='Labelsconfig',
+            label_msgid='PloneMeeting_label_labelsConfig',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        allow_oddeven=True,
+        default=defValues.labelsConfig,
+        columns=('label_id', 'view_states', 'view_groups', 'view_access_on',
+                 'edit_groups', 'edit_states', 'edit_access_on'),
+        allow_empty_rows=False,
+        write_permission=WriteRiskyConfig,
+    ),
     LinesField(
         name='itemInternalNotesEditableBy',
         widget=MultiSelectionWidget(
@@ -3113,7 +3145,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getEnableLabels() and "
+                    'tal_condition': "python: 'labels' in cfg.getUsedItemAttributes() and "
                         "cfg.show_copy_groups_search()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -3361,7 +3393,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getEnableLabels()",
+                    'tal_condition': "python: 'labels' in cfg.getUsedItemAttributes()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Unread to follow
@@ -3380,7 +3412,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getEnableLabels()",
+                    'tal_condition': "python: 'labels' in cfg.getUsedItemAttributes()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Corrected items
@@ -3441,7 +3473,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getEnableLabels()",
+                    'tal_condition': "python: 'labels' in cfg.getUsedItemAttributes()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items of my committees
@@ -3818,6 +3850,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # when returning for example extra_suffixes as list, avoid it modified
         return copy.deepcopy(res)
 
+    security.declarePublic('getLabelsConfig')
+
+    def getLabelsConfig(self, data=None, **kwargs):
+        '''Override the field 'labelsConfig' accessor to be able to handle some paramters:
+           - data : return every values defined for a given datagrid column name.'''
+        res = self.getField('labelsConfig').get(self, **kwargs)
+        if data:
+            res = [level[data] for level in res if level[data]]
+            # manage multivalued columns
+            if res and hasattr(res[0], "__iter__"):
+                res = itertools.chain.from_iterable(res)
+        return res
+
     security.declarePublic('getOrderedItemInitiators')
 
     def getOrderedItemInitiators(self, theObjects=False, **kwargs):
@@ -4052,6 +4097,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 '%s (votesResult_after_decisionEnd)' %
                 (translate('votesResult_after_decisionEnd',
                            domain='PloneMeeting',
+                           context=self.REQUEST)))
+        res.add('labels', '%s (labels)' %
+                (translate('Labels',
+                           domain='eea',
                            context=self.REQUEST)))
         return res.sortedByValue()
 
