@@ -2184,8 +2184,7 @@ span.signatory-replacer {
     color: red;
 }
 
-
-/* hide downloard vcard link on contacts */
+/* hide download vcard link on contacts */
 p#download_vcard {
    display: none;
 }
@@ -2648,6 +2647,12 @@ span.link-separator::before {
 
 div#forceInsertNormalInput {
     margin-bottom: 0.5em;
+}
+
+/* by default, browser will align center table caption, but LO (appy) will
+   align it on the left, so we align on the left by default */
+table caption {
+    text-align: left;
 }
 
 /* </dtml-with> */
