@@ -7295,6 +7295,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # update group in charge local roles
         # we will give the current groupsInCharge _observers sub group access to this item
         self._updateGroupsInChargeLocalRoles(cfg, item_state)
+        # update viewable/editable labels access cache
+        self._updateLabelsAccess(cfg, item_state)
         # manage automatically given permissions
         _addManagedPermissions(self)
         # clean borg.localroles caching
@@ -7415,6 +7417,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             adapter.cfg.getItemInternalNotesEditableBy())
         for group_id in group_ids:
             self.manage_addLocalRoles(group_id, ('MeetingInternalNotesEditor',))
+
+    def _updateLabelsAccess(self, cfg, item_state):
+        ''' '''
+        self._labels_cache = PersistentMapping()
+        labels_config = cfg.getLabelsConfig()
+        if labels_config:
+            # as computing groups accessing the labels is the same as computing
+            # groups for access to confidential annexes, we use the code in the
+            # IIconifiedInfos adapter
+            adapter = getAdapter(self, IIconifiedInfos)
+            adapter.parent = self
+            for row in cfg.getLabelsConfig():
+                self._labels_cache[row['label_id']] = {}
+                self._labels_cache[row['label_id']]['view_groups'] = \
+                    adapter._item_visible_for_groups(row['view_groups'])
+                self._labels_cache[row['label_id']]['edit_groups'] = \
+                    adapter._item_visible_for_groups(row['edit_groups'])
 
     def _updateCommitteeEditorsLocalRoles(self, cfg, item_state):
         '''Add local roles depending on MeetingConfig.committees.'''

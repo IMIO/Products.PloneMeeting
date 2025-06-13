@@ -10,6 +10,7 @@
 from AccessControl import Unauthorized
 from ftw.labels.browser.labeling import Labeling
 from ftw.labels.browser.labelsjar import LabelsJar
+from ftw.labels.interfaces import ILabelSupport
 from ftw.labels.jar import LabelJar
 from ftw.labels.portlets.labeljar import Renderer as ftw_labels_renderer
 from ftw.labels.viewlets.labeling import LabelingViewlet
@@ -107,11 +108,30 @@ class PMFTWLabelsLabelingViewlet(LabelingViewlet):
     @property
     def available(self):
         """ """
-        available = super(PMFTWLabelsLabelingViewlet, self).available
-        if available:
-            cfg = self.tool.getMeetingConfig(self.context)
-            available = 'labels' in cfg.getUsedItemAttributes()
-        return available
+        # for PloneMeeting
+        cfg = self.tool.getMeetingConfig(self.context)
+        if 'labels' not in cfg.getUsedItemAttributes():
+            return False
+
+        # override to avoid several calls to self.available_labels
+        available_labels = self.available_labels
+        if not available_labels:
+            return False
+        if 'portal_factory' in self.context.absolute_url():
+            return False
+        if not ILabelSupport.providedBy(self.context):
+            return False
+        if not available_labels[0] and not available_labels[1]:
+            return False
+        return True
+
+    @property
+    def available_labels(self):
+        labels = getattr(self, "_available_labels_cache", None)
+        if labels is None:
+            labels = super(PMFTWLabelsLabelingViewlet, self).available_labels
+            self._available_labels_cache = labels
+        return labels
 
     @property
     def can_edit(self):
