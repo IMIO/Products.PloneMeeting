@@ -22,7 +22,7 @@ class Migrate_To_4216(Migrator):
             delattr(cfg, 'enableLabels')
             # replace call to getEnaleLabels in TAL expressions
             self.updateTALConditions(
-                "cfg.getEnableLabels()", "'labels' in cfg.getUsedAttributes()")
+                "cfg.getEnableLabels()", "'labels' in cfg.getUsedItemAttributes()")
         logger.info('Done.')
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):
