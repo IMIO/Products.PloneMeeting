@@ -3852,10 +3852,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getLabelsConfig')
 
-    def getLabelsConfig(self, data=None, **kwargs):
+    def getLabelsConfig(self, label_id=None, data=None, **kwargs):
         '''Override the field 'labelsConfig' accessor to be able to handle some paramters:
            - data : return every values defined for a given datagrid column name.'''
         res = self.getField('labelsConfig').get(self, **kwargs)
+        if label_id:
+            res = [level for level in res if level['label_id'] == label_id]
+            res = res and res[0] or {}
         if data:
             res = [level[data] for level in res if level[data]]
             # manage multivalued columns

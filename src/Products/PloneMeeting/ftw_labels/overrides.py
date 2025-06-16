@@ -8,6 +8,7 @@
 #
 
 from AccessControl import Unauthorized
+from imio.helpers.cache import get_plone_groups_for_user
 from ftw.labels.browser.labeling import Labeling
 from ftw.labels.browser.labelsjar import LabelsJar
 from ftw.labels.interfaces import ILabelSupport
@@ -104,13 +105,13 @@ class PMFTWLabelsLabelingViewlet(LabelingViewlet):
     def __init__(self, context, request, view, manager=None):
         super(PMFTWLabelsLabelingViewlet, self).__init__(context, request, view, manager=None)
         self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
 
     @property
     def available(self):
         """ """
         # for PloneMeeting
-        cfg = self.tool.getMeetingConfig(self.context)
-        if 'labels' not in cfg.getUsedItemAttributes():
+        if 'labels' not in self.cfg.getUsedItemAttributes():
             return False
 
         # override to avoid several calls to self.available_labels
@@ -127,9 +128,43 @@ class PMFTWLabelsLabelingViewlet(LabelingViewlet):
 
     @property
     def available_labels(self):
-        labels = getattr(self, "_available_labels_cache", None)
+        labels = getattr(self.context, "_available_labels_cache", None)
         if labels is None:
             labels = super(PMFTWLabelsLabelingViewlet, self).available_labels
+            # filter depending on self._labels_cache
+            cache = getattr(self.context, '_labels_cache', None)
+            if cache and not self.tool.isManager(realManagers=True):
+                personal_labels = []
+                global_labels = []
+                user_groups = set(get_plone_groups_for_user())
+                item_state = self.context.query_state()
+                for label in labels[0] + labels[1]:
+                    # manage _labels_cache, continue if label not available
+                    if label['label_id'] in cache:
+                        cached = cache[label['label_id']]
+                        # view
+                        if label['active']:
+                            if cached['view_groups'] and \
+                               not user_groups.intersection(cached['view_groups']):
+                                continue
+                            view_states = self.cfg.getLabelsConfig(
+                                label_id=label['label_id']).get('view_states')
+                            if view_states and item_state not in view_states:
+                                continue
+                        # edit
+                        else:
+                            if cached['edit_groups'] and \
+                               not user_groups.intersection(cached['edit_groups']):
+                                continue
+                            edit_states = self.cfg.getLabelsConfig(
+                                label_id=label['label_id']).get('edit_states')
+                            if edit_states and item_state not in edit_states:
+                                continue
+                    if label['by_user']:
+                        personal_labels.append(label)
+                    else:
+                        global_labels.append(label)
+                labels = [personal_labels, global_labels]
             self._available_labels_cache = labels
         return labels
 
