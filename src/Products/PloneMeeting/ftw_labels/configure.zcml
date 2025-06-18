@@ -52,6 +52,8 @@
     <!-- Vocabularies -->
     <utility component=".vocabularies.FTWLabelsVocabularyFactory"
              name="Products.PloneMeeting.vocabularies.ftwlabelsvocabulary" />
+    <utility component=".vocabularies.ConfigFTWLabelsVocabularyFactory"
+             name="Products.PloneMeeting.vocabularies.configftwlabelsvocabulary" />
     <utility component=".vocabularies.FTWLabelsForFacetedFilterVocabularyFactory"
              name="Products.PloneMeeting.vocabularies.ftwlabelsforfacetedfiltervocabulary" />
 

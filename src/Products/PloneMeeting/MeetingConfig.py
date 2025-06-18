@@ -2528,7 +2528,7 @@ schema = Schema((
             columns={
                 'label_id': SelectColumn(
                     "Labels config label id",
-                    vocabulary_factory="Products.PloneMeeting.vocabularies.ftwlabelsvocabulary",
+                    vocabulary_factory="Products.PloneMeeting.vocabularies.configftwlabelsvocabulary",
                     col_description="labels_config_label_id_col_description"),
                 'view_groups': MultiSelectColumn(
                     "Labels config view groups",
@@ -2541,6 +2541,9 @@ schema = Schema((
                 'view_access_on': Column(
                     "Labels config view access TAL expression",
                     col_description="labels_config_view_access_on_col_description"),
+                'cache_view_access_on': CheckboxColumn(
+                    "Labels config cache view access TAL expression",
+                    col_description="labels_config_cache_view_access_on_col_description"),
                 'edit_groups': MultiSelectColumn(
                     "Labels config view groups",
                     col_description="labels_config_view_groups_col_description",
@@ -2552,6 +2555,9 @@ schema = Schema((
                 'edit_access_on': Column(
                     "Labels config edit access TAL expression",
                     col_description="labels_config_edit_access_on_col_description"),
+                'cache_edit_access_on': CheckboxColumn(
+                    "Labels config cache edit access TAL expression",
+                    col_description="labels_config_cache_edit_access_on_col_description"),
             },
             label='Labelsconfig',
             label_msgid='PloneMeeting_label_labelsConfig',
@@ -2560,8 +2566,9 @@ schema = Schema((
         schemata="advices",
         allow_oddeven=True,
         default=defValues.labelsConfig,
-        columns=('label_id', 'view_states', 'view_groups', 'view_access_on',
-                 'edit_groups', 'edit_states', 'edit_access_on'),
+        columns=('label_id',
+                 'view_states', 'view_groups', 'view_access_on', 'cache_view_access_on',
+                 'edit_groups', 'edit_states', 'edit_access_on', 'cache_edit_access_on'),
         allow_empty_rows=False,
         write_permission=WriteRiskyConfig,
     ),

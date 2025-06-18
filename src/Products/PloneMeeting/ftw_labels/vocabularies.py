@@ -6,6 +6,7 @@ from imio.helpers.cache import get_current_user_id
 from plone import api
 from plone.memoize import ram
 from Products.PloneMeeting.utils import get_context_with_request
+from zope.i18n import translate
 from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
@@ -47,6 +48,25 @@ class FTWLabelsVocabulary(object):
 
 
 FTWLabelsVocabularyFactory = FTWLabelsVocabulary()
+
+
+class ConfigFTWLabelsVocabulary(FTWLabelsVocabulary):
+    """
+        Vocabulary used for MeetingConfig.labelsConfig
+    """
+    def __call__(self, context):
+        res = super(ConfigFTWLabelsVocabulary, self).__call__(context)
+        res._terms.insert(
+            0,
+            SimpleTerm("*",
+                       "*",
+                       translate('default_for_all_labels',
+                                 domain='PloneMeeting',
+                                 context=context.REQUEST).encode('utf-8')))
+        return res
+
+
+ConfigFTWLabelsVocabularyFactory = ConfigFTWLabelsVocabulary()
 
 
 class FTWLabelsForFacetedFilterVocabulary(object):
