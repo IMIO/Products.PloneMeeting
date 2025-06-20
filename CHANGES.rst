@@ -5,8 +5,9 @@ Changelog
 4.2.23.4 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Added `imio.helpers.content.object_values` to `safe_utils` so it is available
+  in TAL expressions and Python scripts.
+  [gbastien]
 
 4.2.23.3 (2025-06-06)
 ---------------------
