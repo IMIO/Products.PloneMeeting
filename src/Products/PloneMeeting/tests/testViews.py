@@ -1802,6 +1802,43 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, meeting))
         self.assertFalse(form.available())
 
+    def test_pm_PMLabelsBatchActionForm(self):
+        """Check labels change batch action."""
+        cfg = self.meetingConfig
+        cfg.setEnableLabels(True)
+        cfg.setItemCopyGroupsStates(('itemcreated', ))
+        self._enableField('copyGroups')
+
+        # create some items
+        self.changeUser('pmCreator1')
+        item1 = self.create('MeetingItem')
+        item2 = self.create('MeetingItem')
+        self.request.form['form.widgets.uids'] = ','.join([item1.UID(), item2.UID()])
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.restrictedTraverse('@@labels-batch-action')
+        form.update()
+        self.assertEqual(len(form.brains), 2)
+        self.assertTrue(form.available())
+        self.assertTrue(form._can_change_labels())
+        # when an item is no more editable, labels are no more batch editable
+        self.proposeItem(item1)
+        self.assertTrue(form.available())
+        self.assertFalse(form._can_change_labels())
+        # except when MeetingConfig.itemLabelsEditableByProposingGroupForever is True
+        cfg.setItemLabelsEditableByProposingGroupForever(True)
+        self.assertTrue(form.available())
+        self.assertTrue(form._can_change_labels())
+        # but not with an item of another group
+        self.changeUser('pmCreator2')
+        item3 = self.create('MeetingItem', copyGroups=[self.developers_creators])
+        self.changeUser('pmCreator1')
+        self.request.form['form.widgets.uids'] = ','.join([item1.UID(), item2.UID(), item3.UID()])
+        form = searches_items.restrictedTraverse('@@labels-batch-action')
+        form.update()
+        self.assertEqual(len(form.brains), 3)
+        self.assertTrue(form.available())
+        self.assertFalse(form._can_change_labels())
+
     def test_pm_UpdateLocalRolesBatchActionForm(self):
         """This will call update_local_roles on selected elements."""
         cfg = self.meetingConfig

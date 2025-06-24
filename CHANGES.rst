@@ -8,6 +8,11 @@ Changelog
 - Added `imio.helpers.content.object_values` to `safe_utils` so it is available
   in TAL expressions and Python scripts.
   [gbastien]
+- Fixed global labels not changeable using labels batch action form when
+  `MeetingConfig.itemLabelsEditableByProposingGroupForever` is `True` by
+  overriding `LabelsBatchActionForm._can_change_labels` to take into account
+  our `PMLabeling.can_edit`.
+  [gbastien]
 
 4.2.23.3 (2025-06-06)
 ---------------------
