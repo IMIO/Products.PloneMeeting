@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.24 (unreleased)
+4.2.24 (2025-06-25)
 -------------------
 
 - Added `imio.helpers.content.object_values` to `safe_utils` so it is available
