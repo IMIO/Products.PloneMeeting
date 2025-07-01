@@ -175,6 +175,16 @@
                        onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
                        i18n:attributes="value"/>
               </form>
+              <form name="updateLabelsAccessCacheForm" action="update_labels_access_cache">
+                <p class="discreet" style="color: red;" i18n:translate="pm_tool_updates_warning">
+                  Warning: take care that launching these proceedings may take time, depending on the number of existing elements!  Do not launch during period of hig use!
+                </p>
+                <input class="context"
+                       type="submit" name="updateLabelsAccessCache"
+                       value="pm_update_labels_access_cache"
+                       onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                       i18n:attributes="value"/>
+              </form>
               <form name="updatePersonalLabelsForm" action="updatePersonalLabels">
                 <p class="discreet" style="color: red;" i18n:translate="pm_update_personal_labels_warning">
                     Warning: the action 'Initialize personal labels' will activate selected labels on every existing items that were last modified before given number of days for every users able to see these items.

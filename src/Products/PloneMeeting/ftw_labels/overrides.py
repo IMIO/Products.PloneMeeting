@@ -13,17 +13,18 @@ from ftw.labels.browser.labeling import Labeling
 from ftw.labels.browser.labelsjar import LabelsJar
 from ftw.labels.interfaces import ILabelSupport
 from ftw.labels.jar import LabelJar
-from ftw.labels.portlets.labeljar import Renderer as ftw_labels_renderer
+from ftw.labels.portlets.labeljar import Renderer as FTWLabelsRenderer
 from ftw.labels.viewlets.labeling import LabelingViewlet
 from plone import api
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
+from Products.PloneMeeting.config import ITEM_LABELS_ACCESS_CACHE_ATTR
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import is_proposing_group_editor
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 
 
-class PMFTWLabelsRenderer(ftw_labels_renderer):
+class PMFTWLabelsRenderer(FTWLabelsRenderer):
     """ """
     @property
     def available(self):
@@ -128,20 +129,30 @@ class PMFTWLabelsLabelingViewlet(LabelingViewlet):
 
     @property
     def available_labels(self):
-        labels = getattr(self.context, "_available_labels_cache", None)
+        # local cache as called several times (at least 2 times) by the viewlet
+        labels = getattr(self, "_available_labels_cache", None)
         if labels is None:
             labels = super(PMFTWLabelsLabelingViewlet, self).available_labels
             # filter depending on self._labels_cache
-            cache = getattr(self.context, '_labels_cache', None)
-            if cache and not self.tool.isManager(realManagers=True):
+            cache = getattr(self.context, ITEM_LABELS_ACCESS_CACHE_ATTR)
+            # do not filter for Managers
+            if not self.tool.isManager(realManagers=True):
                 personal_labels = []
                 global_labels = []
                 user_groups = set(get_plone_groups_for_user())
                 item_state = self.context.query_state()
+                default_config_already_checked = False
                 for label in labels[0] + labels[1]:
-                    # manage _labels_cache, continue if label not available
-                    if label['label_id'] in cache:
-                        cached = cache[label['label_id']]
+                    # manage _labels_cache, if not in cache, use the config for
+                    # 'default_for_all_labels'
+                    cached = cache.get(label['label_id'])
+                    is_using_default_config = False
+                    if cached is None:
+                        is_using_default_config = True
+                        cached = cache["*"]
+                    # when using default config, only filter if it was not already
+                    # tested and passed
+                    if not is_using_default_config or default_config_already_checked is False:
                         # view
                         if label['active']:
                             if cached['view_groups'] and \
@@ -151,6 +162,9 @@ class PMFTWLabelsLabelingViewlet(LabelingViewlet):
                                 label_id=label['label_id']).get('view_states')
                             if view_states and item_state not in view_states:
                                 continue
+                            # mark default config as working
+                            if is_using_default_config:
+                                default_config_already_checked = True
                         # edit
                         else:
                             if cached['edit_groups'] and \
@@ -160,6 +174,10 @@ class PMFTWLabelsLabelingViewlet(LabelingViewlet):
                                 label_id=label['label_id']).get('edit_states')
                             if edit_states and item_state not in edit_states:
                                 continue
+                            # mark default config as working
+                            if is_using_default_config:
+                                default_config_already_checked = True
+                    # OK label may be kept
                     if label['by_user']:
                         personal_labels.append(label)
                     else:

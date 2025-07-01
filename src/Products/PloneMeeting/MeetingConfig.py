@@ -2545,8 +2545,8 @@ schema = Schema((
                     "Labels config cache view access TAL expression",
                     col_description="labels_config_cache_view_access_on_col_description"),
                 'edit_groups': MultiSelectColumn(
-                    "Labels config view groups",
-                    col_description="labels_config_view_groups_col_description",
+                    "Labels config edit groups",
+                    col_description="labels_config_edit_groups_col_description",
                     vocabulary="listItemAttributeVisibleForWithMeetingManagers"),
                 'edit_states': MultiSelectColumn(
                     "Labels config edit states",
@@ -7804,6 +7804,38 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 reindex_object(item, idxs=['labels'], update_metadata=0)
         logger.info('Done.')
         return numberOfBrains
+
+    security.declarePublic('update_labels_access_cache')
+
+    def update_labels_access_cache(self, redirect=True):
+        '''Update _labels_access_cache on every items.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if not tool.isManager(realManagers=True):
+            raise Unauthorized
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog.unrestrictedSearchResults(portal_type=self.getItemTypeName())
+        pghandler = ZLogHandler(steps=1000)
+        pghandler.init('Updating labels access cache...', len(brains))
+        warnings = []
+        i = 1
+        for brain in brains:
+            try:
+                item = brain.getObject()
+            except AttributeError:
+                warning = 'Could not getObject() element at %s' % brain.getPath()
+                warnings.append(warning)
+                logger.warn(warning)
+                continue
+            pghandler.report(i)
+            i = i + 1
+            item._update_labels_access_cache(self, brain.review_state)
+
+        pghandler.finish()
+        if redirect:
+            api.portal.show_message('Done.', request=self.REQUEST)
+            return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
+        else:
+            return warnings
 
     security.declarePublic('updateAdviceConfidentiality')
 

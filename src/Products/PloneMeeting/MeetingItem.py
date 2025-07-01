@@ -87,6 +87,7 @@ from Products.PloneMeeting.config import INSERTING_ON_ITEM_DECISION_FIRST_WORDS_
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.config import ITEM_LABELS_ACCESS_CACHE_ATTR
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
@@ -7296,7 +7297,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # we will give the current groupsInCharge _observers sub group access to this item
         self._updateGroupsInChargeLocalRoles(cfg, item_state)
         # update viewable/editable labels access cache
-        self._updateLabelsAccess(cfg, item_state)
+        self._update_labels_access_cache(cfg, item_state)
         # manage automatically given permissions
         _addManagedPermissions(self)
         # clean borg.localroles caching
@@ -7418,9 +7419,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for group_id in group_ids:
             self.manage_addLocalRoles(group_id, ('MeetingInternalNotesEditor',))
 
-    def _updateLabelsAccess(self, cfg, item_state):
+    def _update_labels_access_cache(self, cfg, item_state):
         ''' '''
-        self._labels_cache = PersistentMapping()
+        setattr(self, ITEM_LABELS_ACCESS_CACHE_ATTR, PersistentMapping())
         labels_config = cfg.getLabelsConfig()
         if labels_config:
             # as computing groups accessing the labels is the same as computing
@@ -7428,12 +7429,26 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # IIconifiedInfos adapter
             adapter = getAdapter(self, IIconifiedInfos)
             adapter.parent = self
+            extra_expr_ctx = _base_extra_expr_ctx(self)
+            extra_expr_ctx.update({'item': self, })
+
             for row in cfg.getLabelsConfig():
-                self._labels_cache[row['label_id']] = {}
-                self._labels_cache[row['label_id']]['view_groups'] = \
-                    adapter._item_visible_for_groups(row['view_groups'])
-                self._labels_cache[row['label_id']]['edit_groups'] = \
-                    adapter._item_visible_for_groups(row['edit_groups'])
+                cache = getattr(self, ITEM_LABELS_ACCESS_CACHE_ATTR)
+                cache[row['label_id']] = {}
+                if not row['view_access_on'].strip() or \
+                   _evaluateExpression(
+                        self,
+                        expression=row['view_access_on'],
+                        extra_expr_ctx=extra_expr_ctx):
+                    cache[row['label_id']]['view_groups'] = \
+                        adapter._item_visible_for_groups(row['view_groups'])
+                if not row['edit_access_on'].strip() or \
+                   _evaluateExpression(
+                        self,
+                        expression=row['edit_access_on'],
+                        extra_expr_ctx=extra_expr_ctx):
+                    cache[row['label_id']]['edit_groups'] = \
+                        adapter._item_visible_for_groups(row['edit_groups'])
 
     def _updateCommitteeEditorsLocalRoles(self, cfg, item_state):
         '''Add local roles depending on MeetingConfig.committees.'''
