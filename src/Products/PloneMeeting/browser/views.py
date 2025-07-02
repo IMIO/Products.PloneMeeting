@@ -179,7 +179,8 @@ class BaseStaticInfosView(BrowserView):
     def _static_infos_field_names(self):
         """Field names displayed as static infos.
            These are selected values starting with 'static_'."""
-        field_names = [field_name.replace('static_', '') for field_name in self.visibleColumns
+        field_names = [field_name.replace('static_', '')
+                       for field_name in self.visibleColumns
                        if field_name.startswith('static_')]
         return field_names
 
@@ -190,9 +191,12 @@ class ItemStaticInfosView(BaseStaticInfosView):
     """
     @property
     def active_labels(self):
-        available_labels = ILabeling(self.context).available_labels()
-        active_personal_labels = [label for label in available_labels[0] if label['active']]
-        active_labels = [label for label in available_labels[1] if label['active']]
+        available_labels = self.context.restrictedTraverse(
+            '@@labeling').available_labels
+        active_personal_labels = [label for label in available_labels[0]
+                                  if label['active']]
+        active_labels = [label for label in available_labels[1]
+                         if label['active']]
         return active_personal_labels, active_labels
 
 

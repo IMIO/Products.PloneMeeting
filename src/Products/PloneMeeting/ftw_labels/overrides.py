@@ -11,6 +11,7 @@ from AccessControl import Unauthorized
 from imio.helpers.cache import get_plone_groups_for_user
 from ftw.labels.browser.labeling import Labeling
 from ftw.labels.browser.labelsjar import LabelsJar
+from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelSupport
 from ftw.labels.jar import LabelJar
 from ftw.labels.portlets.labeljar import Renderer as FTWLabelsRenderer
@@ -73,11 +74,89 @@ class PMLabelsJar(LabelsJar):
 
 class PMLabeling(Labeling):
     """ """
+    def __init__(self, context, request):
+        super(PMLabeling, self).__init__(context, request)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+
+    def filter_manageable_labels(self, labels):
+        """Give p_labels is like [[], []]."""
+        # do not filter for Managers
+        if not self.tool.isManager(realManagers=True):
+            # filter depending on self._labels_cache
+            cache = getattr(self.context, ITEM_LABELS_ACCESS_CACHE_ATTR)
+            personal_labels = []
+            global_labels = []
+            user_groups = set(get_plone_groups_for_user())
+            item_state = self.context.query_state()
+            default_config_already_checked = False
+            for label in labels[0]+labels[1]:
+                # manage _labels_cache, if not in cache, use the config for
+                # 'default_for_all_labels'
+                cached = cache.get(label['label_id'])
+                is_using_default_config = False
+                if cached is None:
+                    is_using_default_config = True
+                    cached = cache["*"]
+                # when using default config, only filter if it was not already
+                # tested and passed
+                if not is_using_default_config or default_config_already_checked is False:
+                    # view
+                    if label['active']:
+                        if cached['view_groups'] and \
+                           not user_groups.intersection(cached['view_groups']):
+                            continue
+                        view_states = self.cfg.getLabelsConfig(
+                            label_id=label['label_id']).get('view_states')
+                        if view_states and item_state not in view_states:
+                            continue
+                        # mark default config as working
+                        if is_using_default_config:
+                            default_config_already_checked = True
+                    # edit
+                    else:
+                        if cached['edit_groups'] and \
+                           not user_groups.intersection(cached['edit_groups']):
+                            continue
+                        edit_states = self.cfg.getLabelsConfig(
+                            label_id=label['label_id']).get('edit_states')
+                        if edit_states and item_state not in edit_states:
+                            continue
+                        # mark default config as working
+                        if is_using_default_config:
+                            default_config_already_checked = True
+                # OK label may be kept
+                if label['by_user']:
+                    personal_labels.append(label)
+                else:
+                    global_labels.append(label)
+            labels = [personal_labels, global_labels]
+        return labels
+
+    @property
+    def available_labels(self):
+        return self.filter_manageable_labels(
+            ILabeling(self.context).available_labels())
 
     def update(self):
         """ """
         if not self.can_edit:
             raise Unauthorized
+        # avoid labels not manageable to be removed
+        # add it back to activate_labels in the request
+        activate_labels = self.request.form.get('activate_labels', [])
+        active_labels = ILabeling(self.context).active_labels()
+        if active_labels:
+            for active_label in active_labels:
+                # this will make check for edit
+                active_label['active'] = False
+            # need a full label to filter it, returns pers and global labels
+            manageable_labels = self.filter_manageable_labels([[], active_labels])[1]
+            active_label_ids = [label['label_id'] for label in active_labels]
+            manageable_label_ids = [label['label_id'] for label in manageable_labels]
+            not_mangeable_label_ids = set(active_label_ids).difference(manageable_label_ids)
+            activate_labels += list(not_mangeable_label_ids)
+            self.request.form.update({'activate_labels': activate_labels})
         return super(PMLabeling, self).update()
 
     def pers_update(self):
@@ -88,12 +167,10 @@ class PMLabeling(Labeling):
 
     @property
     def can_edit(self):
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
         return _checkPermission(ModifyPortalContent, self.context) or \
-            tool.isManager(cfg) or \
-            (cfg.getItemLabelsEditableByProposingGroupForever() and
-             is_proposing_group_editor(self.context.getProposingGroup(), cfg))
+            self.tool.isManager(self.cfg) or \
+            (self.cfg.getItemLabelsEditableByProposingGroupForever() and
+             is_proposing_group_editor(self.context.getProposingGroup(), self.cfg))
 
     @property
     def can_personal_edit(self):
@@ -130,61 +207,10 @@ class PMFTWLabelsLabelingViewlet(LabelingViewlet):
     @property
     def available_labels(self):
         # local cache as called several times (at least 2 times) by the viewlet
-        labels = getattr(self, "_available_labels_cache", None)
-        if labels is None:
-            labels = super(PMFTWLabelsLabelingViewlet, self).available_labels
-            # filter depending on self._labels_cache
-            cache = getattr(self.context, ITEM_LABELS_ACCESS_CACHE_ATTR)
-            # do not filter for Managers
-            if not self.tool.isManager(realManagers=True):
-                personal_labels = []
-                global_labels = []
-                user_groups = set(get_plone_groups_for_user())
-                item_state = self.context.query_state()
-                default_config_already_checked = False
-                for label in labels[0] + labels[1]:
-                    # manage _labels_cache, if not in cache, use the config for
-                    # 'default_for_all_labels'
-                    cached = cache.get(label['label_id'])
-                    is_using_default_config = False
-                    if cached is None:
-                        is_using_default_config = True
-                        cached = cache["*"]
-                    # when using default config, only filter if it was not already
-                    # tested and passed
-                    if not is_using_default_config or default_config_already_checked is False:
-                        # view
-                        if label['active']:
-                            if cached['view_groups'] and \
-                               not user_groups.intersection(cached['view_groups']):
-                                continue
-                            view_states = self.cfg.getLabelsConfig(
-                                label_id=label['label_id']).get('view_states')
-                            if view_states and item_state not in view_states:
-                                continue
-                            # mark default config as working
-                            if is_using_default_config:
-                                default_config_already_checked = True
-                        # edit
-                        else:
-                            if cached['edit_groups'] and \
-                               not user_groups.intersection(cached['edit_groups']):
-                                continue
-                            edit_states = self.cfg.getLabelsConfig(
-                                label_id=label['label_id']).get('edit_states')
-                            if edit_states and item_state not in edit_states:
-                                continue
-                            # mark default config as working
-                            if is_using_default_config:
-                                default_config_already_checked = True
-                    # OK label may be kept
-                    if label['by_user']:
-                        personal_labels.append(label)
-                    else:
-                        global_labels.append(label)
-                labels = [personal_labels, global_labels]
-            self._available_labels_cache = labels
-        return labels
+        if getattr(self, "_available_labels_cache", None) is None:
+            self._available_labels_cache = self.context.restrictedTraverse(
+                '@@labeling').available_labels
+        return self._available_labels_cache
 
     @property
     def can_edit(self):
