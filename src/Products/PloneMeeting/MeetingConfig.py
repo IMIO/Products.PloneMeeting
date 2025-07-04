@@ -129,7 +129,6 @@ from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.utils import reindex_object
-from Products.PloneMeeting.utils import several_mc_with_same_title
 from Products.PloneMeeting.utils import translate_list
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator
@@ -2541,9 +2540,6 @@ schema = Schema((
                 'view_access_on': Column(
                     "Labels config view access TAL expression",
                     col_description="labels_config_view_access_on_col_description"),
-                'cache_view_access_on': CheckboxColumn(
-                    "Labels config cache view access TAL expression",
-                    col_description="labels_config_cache_view_access_on_col_description"),
                 'edit_groups': MultiSelectColumn(
                     "Labels config edit groups",
                     col_description="labels_config_edit_groups_col_description",
@@ -2555,9 +2551,6 @@ schema = Schema((
                 'edit_access_on': Column(
                     "Labels config edit access TAL expression",
                     col_description="labels_config_edit_access_on_col_description"),
-                'cache_edit_access_on': CheckboxColumn(
-                    "Labels config cache edit access TAL expression",
-                    col_description="labels_config_cache_edit_access_on_col_description"),
             },
             label='Labelsconfig',
             label_msgid='PloneMeeting_label_labelsConfig',
@@ -2567,8 +2560,8 @@ schema = Schema((
         allow_oddeven=True,
         default=defValues.labelsConfig,
         columns=('label_id',
-                 'view_states', 'view_groups', 'view_access_on', 'cache_view_access_on',
-                 'edit_groups', 'edit_states', 'edit_access_on', 'cache_edit_access_on'),
+                 'view_states', 'view_groups', 'view_access_on',
+                 'edit_groups', 'edit_states', 'edit_access_on'),
         allow_empty_rows=False,
         write_permission=WriteRiskyConfig,
     ),
@@ -4427,6 +4420,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('power_observer_removed_plone_group_not_empty',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
+
+    security.declarePrivate('validate_labelsConfig')
+
+    def validate_labelsConfig(self, value):
+        """Validator for self.labelsConfig:
+            - first element must be the default behavior;
+            - there can not be several lines for same label."""
+        # first row can not be 'is_linked_to_previous_row' == '1'
+        if not value or value[0]['label_id'] != '*':
+            return translate(
+                'labels_config_first_row_must_be_default_config',
+                domain='PloneMeeting',
+                context=self.REQUEST)
+        # can not have several config for same label
+        label_ids = [row['label_id'] for row in value
+                     if value and
+                     row.get('orderindex_') != 'template_row_marker']
+        if len(label_ids) != len(set(label_ids)):
+            return translate(
+                'labels_config_cant_not_have_several_config_for_same_label',
+                 domain='PloneMeeting',
+                 context=self.REQUEST)
 
     security.declarePrivate('validate_customAdvisers')
 

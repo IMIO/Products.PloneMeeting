@@ -520,7 +520,15 @@ class MeetingConfigDescriptor(Descriptor):
             "here.restrictedTraverse('@@pm_unrestricted_methods').getLinkedMeetingDate().strftime('%Y%m%d') or '') " \
             "+ '/' + str(here.getItemNumber(relativeTo='meeting', for_display=True))"
         self.computeItemReferenceForItemsOutOfMeeting = False
-        self.labelsConfig = []
+        self.labelsConfig = [
+            {'edit_access_on': '',
+             'edit_groups': [],
+             'edit_states': [],
+             'label_id': '*',
+             'view_access_on': '',
+             'view_groups': [],
+             'view_states': []}
+        ]
         # labels are like :
         # {'read': {'color': 'blue', 'label_id': 'read', 'by_user': True, 'title': 'Read'},
         #  'urgent': {'color': 'red', 'label_id': 'urgent', 'by_user': False, 'title': 'Urgent'}}}
