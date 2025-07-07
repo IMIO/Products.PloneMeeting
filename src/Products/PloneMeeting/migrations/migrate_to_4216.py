@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from Products.CMFPlone.utils import base_hasattr
+from Products.PloneMeeting.MeetingConfig import defValues
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+import copy
 
 
 class Migrate_To_4216(Migrator):
@@ -20,9 +22,21 @@ class Migrate_To_4216(Migrator):
                 used_item_attrs.append('labels')
                 cfg.setUsedItemAttributes(used_item_attrs)
             delattr(cfg, 'enableLabels')
-            # replace call to getEnaleLabels in TAL expressions
+            # replace call to getEnableLabels in TAL expressions
             self.updateTALConditions(
                 "cfg.getEnableLabels()", "'labels' in cfg.getUsedItemAttributes()")
+            # migrate MeetingConfig.itemLabelsEditableByProposingGroupForever
+            # if True, let current config, if False, define "edit_access_on"
+            # to check for ModifyPortalContent on context
+            # fix labelsConfig as it is taken from MeetingConfigDescriptor
+            # for every cfg, it shares the same dict...
+            labels_config = copy.deepcopy(defValues.labelsConfig)
+            cfg.setLabelsConfig(labels_config)
+            if not cfg.itemLabelsEditableByProposingGroupForever:
+                labels_config[0]["edit_access_on"] = \
+                    'python: checkPermission("Modify portal content", context)'
+                cfg.setLabelsConfig(labels_config)
+            delattr(cfg, 'itemLabelsEditableByProposingGroupForever')
         logger.info('Done.')
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):

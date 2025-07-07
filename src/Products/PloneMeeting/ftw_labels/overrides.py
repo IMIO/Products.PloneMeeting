@@ -17,11 +17,9 @@ from ftw.labels.jar import LabelJar
 from ftw.labels.portlets.labeljar import Renderer as FTWLabelsRenderer
 from ftw.labels.viewlets.labeling import LabelingViewlet
 from plone import api
-from Products.CMFCore.permissions import ModifyPortalContent
-from Products.CMFCore.utils import _checkPermission
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import ITEM_LABELS_ACCESS_CACHE_ATTR
 from Products.PloneMeeting.config import PMMessageFactory as _
-from Products.PloneMeeting.utils import is_proposing_group_editor
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 
 
@@ -79,7 +77,7 @@ class PMLabeling(Labeling):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
-    def filter_manageable_labels(self, labels):
+    def filter_manageable_labels(self, labels, modes=("view", "edit", )):
         """Give p_labels is like [[], []]."""
         # do not filter for Managers
         if not self.tool.isManager(realManagers=True):
@@ -102,7 +100,7 @@ class PMLabeling(Labeling):
                 # tested and passed
                 if not is_using_default_config or default_config_already_checked is False:
                     # view
-                    if label['active']:
+                    if "view" in modes and label['active']:
                         if cached['view_groups'] and \
                            not user_groups.intersection(cached['view_groups']):
                             continue
@@ -114,7 +112,7 @@ class PMLabeling(Labeling):
                         if is_using_default_config:
                             default_config_already_checked = True
                     # edit
-                    else:
+                    elif "edit" in modes and not label['active']:
                         if cached['edit_groups'] and \
                            not user_groups.intersection(cached['edit_groups']):
                             continue
@@ -133,10 +131,15 @@ class PMLabeling(Labeling):
             labels = [personal_labels, global_labels]
         return labels
 
-    @property
-    def available_labels(self):
-        return self.filter_manageable_labels(
-            ILabeling(self.context).available_labels())
+    def available_labels(self, modes=('view', 'edit')):
+        # cache in request
+        cache_key = "fwt_labeling_cache_{0}-{1}".format(self.context.UID(), "_".join(modes))
+        if cache_key not in self.request:
+            self.request.set(
+                cache_key,
+                self.filter_manageable_labels(
+                    ILabeling(self.context).available_labels(), modes=modes))
+        return self.request.get(cache_key)
 
     def update(self):
         """ """
@@ -151,10 +154,19 @@ class PMLabeling(Labeling):
                 # this will make check for edit
                 active_label['active'] = False
             # need a full label to filter it, returns pers and global labels
-            manageable_labels = self.filter_manageable_labels([[], active_labels])[1]
+            manageable_labels = self.filter_manageable_labels([[], active_labels], modes=["edit"])[1]
             active_label_ids = [label['label_id'] for label in active_labels]
             manageable_label_ids = [label['label_id'] for label in manageable_labels]
+            not_manageable_label_titles = [label['title'] for label in active_labels
+                                           if label['label_id'] not in manageable_label_ids]
             not_mangeable_label_ids = set(active_label_ids).difference(manageable_label_ids)
+            if not_mangeable_label_ids:
+                api.portal.show_message(
+                    _("You can not manage labels \"${not_manageable_label_titles}\"!",
+                      mapping={'not_manageable_label_titles': safe_unicode(
+                        ', '.join(not_manageable_label_titles))}),
+                      type='warning',
+                      request=self.request)
             activate_labels += list(not_mangeable_label_ids)
             self.request.form.update({'activate_labels': activate_labels})
         return super(PMLabeling, self).update()
@@ -167,10 +179,7 @@ class PMLabeling(Labeling):
 
     @property
     def can_edit(self):
-        return _checkPermission(ModifyPortalContent, self.context) or \
-            self.tool.isManager(self.cfg) or \
-            (self.cfg.getItemLabelsEditableByProposingGroupForever() and
-             is_proposing_group_editor(self.context.getProposingGroup(), self.cfg))
+        return self.available_labels()
 
     @property
     def can_personal_edit(self):
@@ -206,11 +215,7 @@ class PMFTWLabelsLabelingViewlet(LabelingViewlet):
 
     @property
     def available_labels(self):
-        # local cache as called several times (at least 2 times) by the viewlet
-        if getattr(self, "_available_labels_cache", None) is None:
-            self._available_labels_cache = self.context.restrictedTraverse(
-                '@@labeling').available_labels
-        return self._available_labels_cache
+        return self.context.restrictedTraverse('@@labeling').available_labels()
 
     @property
     def can_edit(self):
