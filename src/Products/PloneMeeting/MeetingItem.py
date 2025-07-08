@@ -7429,26 +7429,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # IIconifiedInfos adapter
             adapter = getAdapter(self, IIconifiedInfos)
             adapter.parent = self
-            extra_expr_ctx = _base_extra_expr_ctx(self)
-            extra_expr_ctx.update({'item': self, })
-
-            for row in cfg.getLabelsConfig():
+            for row in labels_config:
                 cache = getattr(self, ITEM_LABELS_ACCESS_CACHE_ATTR)
                 cache[row['label_id']] = {}
-                if not row['view_access_on'].strip() or \
-                   _evaluateExpression(
-                        self,
-                        expression=row['view_access_on'],
-                        extra_expr_ctx=extra_expr_ctx):
-                    cache[row['label_id']]['view_groups'] = \
-                        adapter._item_visible_for_groups(row['view_groups'])
-                if not row['edit_access_on'].strip() or \
-                   _evaluateExpression(
-                        self,
-                        expression=row['edit_access_on'],
-                        extra_expr_ctx=extra_expr_ctx):
-                    cache[row['label_id']]['edit_groups'] = \
-                        adapter._item_visible_for_groups(row['edit_groups'])
+                # view
+                cache[row['label_id']]['view_groups'] = \
+                    adapter._item_visible_for_groups(row['view_groups'])
+                cache[row['label_id']]['view_access_on'] = row['view_access_on']
+                # edit
+                cache[row['label_id']]['edit_groups'] = \
+                    adapter._item_visible_for_groups(row['edit_groups'])
+                cache[row['label_id']]['edit_access_on'] = row['edit_access_on']
 
     def _updateCommitteeEditorsLocalRoles(self, cfg, item_state):
         '''Add local roles depending on MeetingConfig.committees.'''

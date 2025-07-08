@@ -569,7 +569,7 @@ def _installWebspellchecker(portal):
             break
 
     portal.portal_setup.runAllImportStepsFromProfile(
-        'imio.webspellchecker:default',
+        'profile-imio.webspellchecker:default',
         dependency_strategy=DEPENDENCY_STRATEGY_REAPPLY)
     # now that it is installed, configure imio.webspellchecker
     _configureWebspellchecker(portal)

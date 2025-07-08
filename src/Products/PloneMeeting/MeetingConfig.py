@@ -2506,19 +2506,6 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
-        name='itemLabelsEditableByProposingGroupForever',
-        default=defValues.itemLabelsEditableByProposingGroupForever,
-        widget=BooleanField._properties['widget'](
-            description="ItemLabelsEditableByProposingGroupForever",
-            description_msgid="item_labels_editable_by_proposing_group_forever_descr",
-            label='Itemlabelseditablebyproposinggroupforever',
-            label_msgid='PloneMeeting_label_itemLabelsEditableByProposingGroupForever',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="advices",
-        write_permission="PloneMeeting: Write risky config",
-    ),
     DataGridField(
         name='labelsConfig',
         widget=DataGridField._properties['widget'](
@@ -2551,6 +2538,11 @@ schema = Schema((
                 'edit_access_on': Column(
                     "Labels config edit access TAL expression",
                     col_description="labels_config_edit_access_on_col_description"),
+                'update_local_roles': SelectColumn(
+                    "Labels config update local roles?",
+                    col_description="labels_config_update_local_roles_col_description",
+                    vocabulary="listBooleanVocabulary",
+                    default='0'),
             },
             label='Labelsconfig',
             label_msgid='PloneMeeting_label_labelsConfig',
@@ -2561,7 +2553,8 @@ schema = Schema((
         default=defValues.labelsConfig,
         columns=('label_id',
                  'view_states', 'view_groups', 'view_access_on',
-                 'edit_groups', 'edit_states', 'edit_access_on'),
+                 'edit_states', 'edit_groups', 'edit_access_on',
+                 'update_local_roles'),
         allow_empty_rows=False,
         write_permission=WriteRiskyConfig,
     ),
@@ -3852,18 +3845,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getLabelsConfig')
 
-    def getLabelsConfig(self, label_id=None, data=None, **kwargs):
+    def getLabelsConfig(self, label_ids=[], data=None, return_label_id_singleton=True, **kwargs):
         '''Override the field 'labelsConfig' accessor to be able to handle some paramters:
            - data : return every values defined for a given datagrid column name.'''
         res = self.getField('labelsConfig').get(self, **kwargs)
-        if label_id:
-            res = [level for level in res if level['label_id'] == label_id]
-            res = res and res[0] or {}
+        if label_ids:
+            res = [level for level in res
+                   if level['label_id'] in label_ids]
         if data:
             res = [level[data] for level in res if level[data]]
             # manage multivalued columns
             if res and hasattr(res[0], "__iter__"):
                 res = itertools.chain.from_iterable(res)
+        if return_label_id_singleton and len(label_ids) == 1:
+            res = res and res[0] or res
         return res
 
     security.declarePublic('getOrderedItemInitiators')

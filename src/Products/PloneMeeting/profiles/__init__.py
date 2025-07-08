@@ -570,7 +570,6 @@ class MeetingConfigDescriptor(Descriptor):
         self.adviceConfidentialFor = ()
         self.hideNotViewableLinkedItemsTo = ()
         self.inheritedAdviceRemoveableByAdviser = False
-        self.itemLabelsEditableByProposingGroupForever = False
         self.itemInternalNotesEditableBy = []
         self.usingGroups = []
         # List of other meetingConfigs, item of this meetingConfig

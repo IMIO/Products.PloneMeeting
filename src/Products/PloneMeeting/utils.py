@@ -2472,7 +2472,7 @@ def get_next_meeting(meeting_date, cfg, date_gap=0):
     return res
 
 
-def _base_extra_expr_ctx(obj):
+def _base_extra_expr_ctx(obj, extra_ctx={}):
     """ """
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(obj)
@@ -2494,6 +2494,7 @@ def _base_extra_expr_ctx(obj):
             'imio_history_utils': SecureModuleImporter['imio.history.safe_utils'],
             'utils': SecureModuleImporter['Products.PloneMeeting.safe_utils'],
             'pm_utils': SecureModuleImporter['Products.PloneMeeting.safe_utils'], }
+    data.update(extra_ctx)
     return data
 
 
