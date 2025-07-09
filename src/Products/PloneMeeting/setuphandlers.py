@@ -568,6 +568,11 @@ def _installWebspellchecker(portal):
             cke_props.toolbar_Custom = toolbar_Custom
             break
 
+    # make sure imio.webspellchecker is correctly installed
+    # by first uninstalling it because older versions (>1001)
+    # profile was not correct
+    portal.portal_setup.runAllImportStepsFromProfile(
+        'profile-imio.webspellchecker:uninstall')
     portal.portal_setup.runAllImportStepsFromProfile(
         'profile-imio.webspellchecker:default',
         dependency_strategy=DEPENDENCY_STRATEGY_REAPPLY)
