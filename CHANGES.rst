@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-4.2.25 (unreleased)
--------------------
+4.2.24.1 (unreleased)
+---------------------
 
 - Fixed installation of `imio.webspellchecker` using helper
   `setuphandlers._installWebspellchecker`, need to prepend profile name with
