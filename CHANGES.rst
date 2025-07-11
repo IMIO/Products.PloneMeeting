@@ -2,11 +2,13 @@ Changelog
 =========
 
 
-4.2.25 (unreleased)
--------------------
+4.2.24.1 (unreleased)
+---------------------
 
-- Nothing changed yet.
-
+- Fixed installation of `imio.webspellchecker` using helper
+  `setuphandlers._installWebspellchecker`, need to prepend profile name with
+  `profile-` when calling `portal_setup.runAllImportStepsFromProfile`.
+  [gbastien]
 
 4.2.24 (2025-06-25)
 -------------------
