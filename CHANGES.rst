@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.24.1 (unreleased)
+4.2.24.1 (2025-07-11)
 ---------------------
 
 - Fixed installation of `imio.webspellchecker` using helper
