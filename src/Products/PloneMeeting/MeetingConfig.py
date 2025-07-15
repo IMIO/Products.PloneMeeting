@@ -8100,12 +8100,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return True, []
 
-    def user_is_proposing_group_editor(self, org_uid):
-        """ """
-        tool = api.portal.get_tool('portal_plonemeeting')
-        suffixes = self.getItemWFValidationLevels(data='suffix', only_enabled=True)
-        return tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes)
-
     def render_editform_errors(self, errors):
         """Render errors in the edit form in case it comes from another fieldset."""
         error_pattern = u"<dl class=\"portalMessage error\"><dt>{0}</dt><dd>{1}</dd></dl>"

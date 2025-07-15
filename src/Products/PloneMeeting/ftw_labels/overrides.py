@@ -92,7 +92,7 @@ class PMLabeling(Labeling):
             global_labels = []
             user_groups = set(get_plone_groups_for_user())
             item_state = self.context.query_state()
-            default_config_already_checked = False
+            default_view_config_already_checked = default_edit_config_already_checked = False
             extra_expr_ctx = None
             for label in labels[0]+labels[1]:
                 # manage _labels_cache, if not in cache, use the config for
@@ -105,58 +105,62 @@ class PMLabeling(Labeling):
                 config = self.cfg.getLabelsConfig(["*"]) if \
                     is_using_default_config else \
                     self.cfg.getLabelsConfig([label['label_id']])
-                # when using default config, only filter if it was not already
-                # tested and passed
-                if not is_using_default_config or default_config_already_checked is False:
-                    # by_user labels are always editable
-                    if not label['by_user']:
-                        # view
-                        if "view" in modes and label['active']:
-                            if cached['view_groups'] and \
-                               not user_groups.intersection(cached['view_groups']):
+                # by_user labels are always editable
+                if not label['by_user']:
+                    # view
+                    if "view" in modes and \
+                       label['active'] and \
+                       (not is_using_default_config or
+                            default_view_config_already_checked is False):
+                        if cached['view_groups'] and \
+                           not user_groups.intersection(cached['view_groups']):
+                            continue
+                        if config['view_states'] and \
+                           item_state not in config['view_states']:
+                            continue
+                        # manage view_access_on
+                        if cached['view_access_on'].strip():
+                            # will be done only on first use
+                            if extra_expr_ctx is None:
+                                extra_expr_ctx = _base_extra_expr_ctx(
+                                    self.context, {'item': self.context, })
+                            if not _evaluateExpression(
+                                    self.context,
+                                    expression=cached['view_access_on'],
+                                    extra_expr_ctx=extra_expr_ctx,
+                                    raise_on_error=True):
                                 continue
-                            if config['view_states'] and \
-                               item_state not in config['view_states']:
+                        # mark view default config as working
+                        if is_using_default_config:
+                            default_view_config_already_checked = True
+                    # edit
+                    elif "edit" in modes and \
+                         not label['active'] and \
+                         (not is_using_default_config or
+                          default_edit_config_already_checked is False):
+                        if cached['edit_groups'] and \
+                           not user_groups.intersection(cached['edit_groups']):
+                            continue
+                        if config['edit_states'] and \
+                           item_state not in config['edit_states']:
+                            continue
+                        # manage edit_access_on
+                        if cached['edit_access_on'].strip():
+                            # will be done only on first use
+                            if extra_expr_ctx is None:
+                                extra_expr_ctx = _base_extra_expr_ctx(
+                                    self.context, {'item': self.context, })
+                            if not _evaluateExpression(
+                                    self.context,
+                                    expression=cached['edit_access_on'],
+                                    extra_expr_ctx=extra_expr_ctx,
+                                    raise_on_error=True):
                                 continue
-                            # manage view_access_on
-                            if cached['view_access_on'].strip():
-                                # will be done only on first use
-                                if extra_expr_ctx is None:
-                                    extra_expr_ctx = _base_extra_expr_ctx(
-                                        self.context, {'item': self.context, })
-                                if not _evaluateExpression(
-                                        self.context,
-                                        expression=cached['view_access_on'],
-                                        extra_expr_ctx=extra_expr_ctx,
-                                        raise_on_error=True):
-                                    continue
-                            # mark default config as working
-                            if is_using_default_config:
-                                default_config_already_checked = True
-                        # edit
-                        elif "edit" in modes and not label['active']:
-                            if cached['edit_groups'] and \
-                               not user_groups.intersection(cached['edit_groups']):
-                                continue
-                            if config['edit_states'] and \
-                               item_state not in config['edit_states']:
-                                continue
-                            # manage edit_access_on
-                            if cached['edit_access_on'].strip():
-                                # will be done only on first use
-                                if extra_expr_ctx is None:
-                                    extra_expr_ctx = _base_extra_expr_ctx(
-                                        self.context, {'item': self.context, })
-                                if not _evaluateExpression(
-                                        self.context,
-                                        expression=cached['edit_access_on'],
-                                        extra_expr_ctx=extra_expr_ctx,
-                                        raise_on_error=True):
-                                    continue
-                            # mark default config as working
-                            if is_using_default_config:
-                                default_config_already_checked = True
-                # OK label may be kept
+                        # mark edit default config as working
+                        if is_using_default_config:
+                            default_edit_config_already_checked = True
+                # if we are here, label may be kept, otherwise we would have
+                # encountered a "continue" here above
                 if label['by_user']:
                     personal_labels.append(label)
                 else:
@@ -189,14 +193,15 @@ class PMLabeling(Labeling):
             # need a full label to filter it, returns pers and global labels
             editable_labels = self.filter_manageable_labels(
                 [[], active_labels], modes=('edit, '))[1]
-            active_label_ids = [label['label_id'] for label in active_labels]
+            active_label_ids = [label['label_id'] for label in active_labels
+                                if not label['by_user']]
             editable_label_ids = [label['label_id'] for label in editable_labels]
             not_mangeable_label_ids = set(active_label_ids).difference(
                 editable_label_ids + activate_labels)
             if not_mangeable_label_ids:
                 not_editable_label_titles = [
                     label['title'] for label in active_labels
-                    if label['label_id'] not in editable_label_ids]
+                    if label['label_id'] in not_mangeable_label_ids]
                 api.portal.show_message(
                     _("You can not manage labels \"${not_manageable_label_titles}\"!",
                       mapping={'not_manageable_label_titles': safe_unicode(
@@ -205,17 +210,18 @@ class PMLabeling(Labeling):
                     request=self.request)
             activate_labels += list(not_mangeable_label_ids)
             self.request.form.update({'activate_labels': activate_labels})
-        # this will add/remove relevant labels before eventual update_local_roles
-        res = super(PMLabeling, self).update()
         # check if need to update_local_roles, a relevant label has been (un)selected
         # check if one added or removed
         stored_label_ids = IAnnotations(self.context).get(FTW_LABELS_ANNOTATION_KEY, {}).keys()
-        added_or_removed = set(activate_labels).symmetric_difference(stored_label_ids)
-        # check if need to update from added/removed labels, if no configuration defined
-        # for every added/removed labels, check if default configuration specify to update
-        added_or_removed.add('*')
-        # first element of config is related to "*"
-        config = self.cfg.getLabelsConfig(added_or_removed, data="update_local_roles")
+        added_or_removed = tuple(set(activate_labels).symmetric_difference(stored_label_ids))
+        # this will add/remove relevant labels before eventual update_local_roles
+        res = super(PMLabeling, self).update()
+        # first element of config is related to "*",
+        config = self.cfg.getLabelsConfig(('*', ) + added_or_removed, data="update_local_roles")
+        # we have:
+        # a config other than the default specifying to update local roles
+        # or we do not have "0" for every selected elements and
+        # default config specify to update local roles
         if ("1" in config[1:]) or \
            (len(config)-1 != len(added_or_removed) and config[0] == "1"):
             self.context.update_local_roles(avoid_reindex=True)

@@ -283,18 +283,6 @@ class PMLabelsBatchActionForm(LabelsBatchActionForm):
                 return False
         return True
 
-    def _can_change_labels(self):
-        view = None
-        for brain in self.brains:
-            obj = brain.getObject()
-            # only instanciate view one time and change context
-            if view is None:
-                view = obj.restrictedTraverse('@@labeling')
-            view.context = obj
-            if not view.can_edit:
-                return False
-        return True
-
 
 def _is_operational_user(context):
     """Is current user an operationnal user in the application for the given p_context."""

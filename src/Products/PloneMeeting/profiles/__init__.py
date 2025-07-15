@@ -517,14 +517,16 @@ class MeetingConfigDescriptor(Descriptor):
         # What is the format of the item references ?
         # Default is Ref. MeetingDate/ItemNumberInMeeting
         self.itemReferenceFormat = "python: 'Ref. ' + (here.hasMeeting() and " \
-            "here.restrictedTraverse('@@pm_unrestricted_methods').getLinkedMeetingDate().strftime('%Y%m%d') or '') " \
-            "+ '/' + str(here.getItemNumber(relativeTo='meeting', for_display=True))"
+            "here.restrictedTraverse('@@pm_unrestricted_methods')." \
+            "getLinkedMeetingDate().strftime('%Y%m%d') or '') + '/' + " \
+            "str(here.getItemNumber(relativeTo='meeting', for_display=True))"
         self.computeItemReferenceForItemsOutOfMeeting = False
         self.labelsConfig = (
             {'edit_access_on': '',
              'edit_groups': [],
              'edit_states': [],
              'label_id': '*',
+             'update_local_roles': '0',
              'view_access_on': '',
              'view_groups': [],
              'view_states': []},

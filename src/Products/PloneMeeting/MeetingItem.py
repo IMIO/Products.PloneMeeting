@@ -7423,7 +7423,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         ''' '''
         setattr(self, ITEM_LABELS_ACCESS_CACHE_ATTR, PersistentMapping())
         labels_config = cfg.getLabelsConfig()
-        if labels_config:
+        if "labels" in cfg.getUsedItemAttributes() and labels_config:
             # as computing groups accessing the labels is the same as computing
             # groups for access to confidential annexes, we use the code in the
             # IIconifiedInfos adapter

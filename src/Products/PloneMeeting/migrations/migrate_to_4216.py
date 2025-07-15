@@ -2,6 +2,7 @@
 
 from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.MeetingConfig import defValues
+from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 import copy
@@ -32,11 +33,18 @@ class Migrate_To_4216(Migrator):
             # for every cfg, it shares the same dict...
             labels_config = copy.deepcopy(defValues.labelsConfig)
             cfg.setLabelsConfig(labels_config)
-            if not cfg.itemLabelsEditableByProposingGroupForever:
+            if cfg.itemLabelsEditableByProposingGroupForever:
+                # remove duplicates
+                suffixes = tuple(set(cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)))
+                edit_groups = [PROPOSINGGROUPPREFIX + suffix for suffix in suffixes]
+                labels_config[0]["edit_groups"] = edit_groups
+            else:
                 labels_config[0]["edit_access_on"] = \
                     'python: checkPermission("Modify portal content", context)'
-                cfg.setLabelsConfig(labels_config)
+            cfg.setLabelsConfig(labels_config)
             delattr(cfg, 'itemLabelsEditableByProposingGroupForever')
+            # update labels cache for items of this MeetingConfig
+            cfg.update_labels_access_cache(redirect=False)
         logger.info('Done.')
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):

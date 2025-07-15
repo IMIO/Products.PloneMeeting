@@ -706,6 +706,7 @@ class Migrate_To_4200(Migrator):
                         '.getAssemblyProxies(': '.get_assembly_proxies(',
                         '.getSignatories(theObjects=': '.get_signatories(the_objects=',
                         '.getSignatories(': '.get_signatories(',
+                        '.getMeetingNumber()': ".meeting_number",
                         '.getItems(': '.get_items(',
                         '.getItemsInOrder(': '.get_items(ordered=True, ',
                         'self.adapted().getPrintableItems(itemUids)':
@@ -754,7 +755,6 @@ class Migrate_To_4200(Migrator):
             'self.getAuthorityNotice()': "view.print_value('authority_notice')",
             'self.getCommitteeObservations()': "view.print_value('committees_observations')",
             'self.getInAndOutMoves()': "view.print_value('in_and_out_moves')",
-            'self.getMeetingNumber()': "self.meeting_number",
             'self.getNotes()': "view.print_value('notes')",
             'self.getObservations()': "view.print_value('observations')",
             'self.getPlace()': "view.print_value('place')",
