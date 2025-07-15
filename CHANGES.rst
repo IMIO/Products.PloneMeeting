@@ -5,8 +5,10 @@ Changelog
 4.2.24.2 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Fixed `Migrate_To_4200._fixPODTemplatesInstructions` to manage
+  `getMeetingNumber` to `meeting_number` replacement also in item related
+  POD templates.
+  [gbastien]
 
 4.2.24.1 (2025-07-11)
 ---------------------

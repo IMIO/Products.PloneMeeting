@@ -714,6 +714,7 @@ class Migrate_To_4200(Migrator):
                         '.getItemSignatories(': '.get_item_signatories(',
                         '.getNextMeeting(cfgId=': '.get_next_meeting(cfg_id=',
                         '.getNextMeeting(': '.get_next_meeting(',
+                        '.getMeetingNumber()': ".meeting_number",
                         # get_next_meeting parameter
                         'dateGap=': 'date_gap=',
                         '.numberOfItems(': '.number_of_items(',
@@ -754,7 +755,6 @@ class Migrate_To_4200(Migrator):
             'self.getAuthorityNotice()': "view.print_value('authority_notice')",
             'self.getCommitteeObservations()': "view.print_value('committees_observations')",
             'self.getInAndOutMoves()': "view.print_value('in_and_out_moves')",
-            'self.getMeetingNumber()': "self.meeting_number",
             'self.getNotes()': "view.print_value('notes')",
             'self.getObservations()': "view.print_value('observations')",
             'self.getPlace()': "view.print_value('place')",
