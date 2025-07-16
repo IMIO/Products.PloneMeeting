@@ -152,9 +152,16 @@ class testUtils(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setMailMode("activated")
         cfg.setMailItemEvents(("item_state_changed_validate", ))
+        # test also that custom state/transition title works
+        self._updateItemValidationLevel(
+            cfg,
+            level="proposed",
+            state_title="New proposed title",
+            leading_transition_title="New propose title")
 
         self.changeUser('pmManager')
         item = self.create("MeetingItem", title="My item")
+        self.proposeItem(item)
         params = {"obj": item,
                   "event": "item_state_changed_validate",
                   "value": [self.developers_creators, self.vendors_creators],
@@ -162,6 +169,8 @@ class testUtils(PloneMeetingTestCase):
                   "debug": True}
 
         recipients, subject, body = sendMailIfRelevant(**params)
+        self.assertTrue("New proposed title" in subject)
+        self.assertTrue("New propose title" in subject)
         dev_creators = get_plone_group(self.developers_uid, 'creators')
         self.assertEqual(dev_creators.getMemberIds(),
                          ['pmCreator1', 'pmCreator1b', 'pmManager'])
