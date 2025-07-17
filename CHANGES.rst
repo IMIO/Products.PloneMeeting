@@ -9,6 +9,11 @@ Changelog
   `getMeetingNumber` to `meeting_number` replacement also in item related
   POD templates.
   [gbastien]
+- Fixed `utils.sendMail` `translationMapping` to use correct title for
+  `transitionTitle` and `meetingState/itemState`.
+  This let's use new WF values in email notifications with correct WF
+  transition and state title.
+  [gbastien]
 
 4.2.24.1 (2025-07-11)
 ---------------------

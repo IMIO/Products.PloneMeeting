@@ -169,6 +169,7 @@ class testUtils(PloneMeetingTestCase):
                   "debug": True}
 
         recipients, subject, body = sendMailIfRelevant(**params)
+        # config wf state/transition title is correctly used
         self.assertTrue("New proposed title" in subject)
         self.assertTrue("New propose title" in subject)
         dev_creators = get_plone_group(self.developers_uid, 'creators')
