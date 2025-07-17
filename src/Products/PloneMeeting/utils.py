@@ -448,13 +448,13 @@ def _sendMail(obj, body, recipients, fromAddress, subject, format,
             for recipient in recipients:
                 obj.MailHost.send(
                     body, recipient, fromAddress, subject, charset='utf-8', msg_type=format)
-    except socket.error, sg:
+    except socket.error as sg:
         raise EmailError(SENDMAIL_ERROR % str(sg))
-    except UnicodeDecodeError, ue:
+    except UnicodeDecodeError as ue:
         raise EmailError(ENCODING_ERROR % str(ue))
-    except MailHostError, mhe:
+    except MailHostError as mhe:
         raise EmailError(MAILHOST_ERROR % str(mhe))
-    except Exception, e:
+    except Exception as e:
         raise EmailError(SENDMAIL_ERROR % str(e))
 
 
@@ -503,9 +503,9 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         for elt in mapping:
             if not isinstance(mapping[elt], unicode):
                 mapping[elt] = safe_unicode(mapping[elt])
-        translationMapping = mapping
+        translation_mapping = mapping
     else:
-        translationMapping = {}
+        translation_mapping = {}
 
     # get last WF action but specifically manage when an transition was
     # triggered automatilcally, the comments is in the previous transition
@@ -524,7 +524,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         # common case
         cfg_title = safe_unicode(cfg.Title())
     wf = api.portal.get_tool('portal_workflow').getWorkflowsFor(obj)[0]
-    translationMapping.update({
+    translation_mapping.update({
         'portalUrl': portalUrl,
         'portalTitle': safe_unicode(portal.Title()),
         'objectTitle': safe_unicode(obj.Title()),
@@ -537,36 +537,41 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         'meetingConfigTitle': cfg_title,
         'transitionActor': wf_action and
         get_user_fullname(wf_action['actor'], with_user_id=True) or u'-',
-        'transitionTitle': wf_action and
-        translate(wf.transitions[wf_action['action']].title, domain="plone", context=obj.REQUEST) or u'-',
+        'transitionTitle': translate(
+            wf.transitions[wf_action['action']].title,
+            domain="plone",
+            context=obj.REQUEST) if (
+                wf_action and
+                wf_action['type'] == 'workflow' and
+                wf_action['action'] in wf.transitions) else u'-',
         'transitionComments': wf_action and safe_unicode(wf_action['comments']) or u'-',
     })
     if obj.getTagName() == 'Meeting':
-        translationMapping['meetingTitle'] = safe_unicode(obj.Title())
-        translationMapping['meetingLongTitle'] = tool.format_date(obj.date, prefixed=True)
-        translationMapping['meetingState'] = translate(
+        translation_mapping['meetingTitle'] = safe_unicode(obj.Title())
+        translation_mapping['meetingLongTitle'] = tool.format_date(obj.date, prefixed=True)
+        translation_mapping['meetingState'] = translate(
             cfg.getItemWorkflow(True).states[obj.query_state()].title,
             domain='plone',
             context=obj.REQUEST)
     elif obj.getTagName() == 'MeetingItem':
-        translationMapping['itemTitle'] = safe_unicode(obj.Title())
-        translationMapping['itemState'] = translate(
+        translation_mapping['itemTitle'] = safe_unicode(obj.Title())
+        translation_mapping['itemState'] = translate(
             cfg.getItemWorkflow(True).states[obj.query_state()].title,
             domain='plone',
             context=obj.REQUEST)
         meeting = obj.getMeeting()
         if meeting:
-            translationMapping['meetingUrl'] = get_public_url(meeting)
-            translationMapping['meetingTitle'] = safe_unicode(meeting.Title())
-            translationMapping['meetingLongTitle'] = tool.format_date(meeting.date, prefixed=True)
-            translationMapping['itemNumber'] = obj.getItemNumber(
+            translation_mapping['meetingUrl'] = get_public_url(meeting)
+            translation_mapping['meetingTitle'] = safe_unicode(meeting.Title())
+            translation_mapping['meetingLongTitle'] = tool.format_date(meeting.date, prefixed=True)
+            translation_mapping['itemNumber'] = obj.getItemNumber(
                 relativeTo='meeting')
 
     # some event end with "Owner", we use same event without the "Owner" suffix
     subjectLabel = u'%s_mail_subject' % event.replace("Owner", "")
     subject = translate(subjectLabel,
                         domain=d,
-                        mapping=translationMapping,
+                        mapping=translation_mapping,
                         context=obj.REQUEST)
     # special case for translations of event concerning state change
     # if we can not translate the specific translation msgid, we use a default msgid
@@ -580,14 +585,14 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
             subjectLabel = u'item_state_changed_default_mail_subject'
         subject = translate(subjectLabel,
                             domain=d,
-                            mapping=translationMapping,
+                            mapping=translation_mapping,
                             context=obj.REQUEST)
     subject = safe_unicode(subject)
     # some event end with "Owner", we use same event without the "Owner" suffix
     bodyLabel = u'%s_mail_body' % event.replace("Owner", "")
     body = translate(bodyLabel,
                      domain=d,
-                     mapping=translationMapping,
+                     mapping=translation_mapping,
                      context=obj.REQUEST)
     # special case for translations of event concerning state change
     # if we can not translate the specific translation msgid, we use a default msgid
@@ -601,7 +606,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
             bodyLabel = u'item_state_changed_default_mail_body'
         body = translate(bodyLabel,
                          domain=d,
-                         mapping=translationMapping,
+                         mapping=translation_mapping,
                          context=obj.REQUEST)
     body = safe_unicode(body)
 
@@ -626,14 +631,14 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         logger.info('Subject is [%s]' % subject)
         logger.info('Body is [%s]' % body)
         api.portal.show_message(extras, request=obj.REQUEST)
-        return obj, body, recipients, fromAddress, subject, attachments, translationMapping
+        return obj, body, recipients, fromAddress, subject, attachments, translation_mapping
     else:
         # Use 'plain' for mail format so the email client will turn links to clickable links
         mailFormat = 'text/plain'
         # Send the mail(s)
         try:
             _sendMail(obj, body, recipients, fromAddress, subject, mailFormat, attachments)
-        except EmailError, ee:
+        except EmailError as ee:
             logger.warn(str(ee))
     return subject, body
 
@@ -1332,7 +1337,7 @@ def applyOnTransitionFieldTransform(obj, transitionId):
                     field = obj.getField(transform['field_name'].split('.')[1])
                     field.set(obj, res, mimetype='text/html')
                     idxs.append(field.accessor)
-            except Exception, e:
+            except Exception as e:
                 plone_utils = api.portal.get_tool('plone_utils')
                 plone_utils.addPortalMessage(
                     ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR % (
@@ -2009,7 +2014,7 @@ def getAvailableMailingLists(obj, pod_template, include_recipients=False):
                     res.append((name, extract_recipients(obj, userIds)))
                 else:
                     res.append(name)
-    except Exception, exc:
+    except Exception as exc:
         msg = translate(
             'Mailing lists are not correctly defined, original error is \"${error}\"',
             domain='PloneMeeting',
@@ -2388,7 +2393,7 @@ def org_id_to_uid(org_info, raise_on_error=True, ignore_underscore=False):
             org = getter(org_info.encode('utf-8'))
             if org:
                 return org.UID()
-    except Exception, exc:
+    except Exception as exc:
         if raise_on_error:
             raise(exc)
         else:

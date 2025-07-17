@@ -259,29 +259,29 @@ class testUtils(PloneMeetingTestCase):
         cfg.setMailMode('test')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        obj, body, recipients, fromAddress, subject, attachments, translationMapping = \
+        obj, body, recipients, from_address, subject, attachments, translation_mapping = \
             sendMail([], item, '')
         # no config group, simple title
-        self.assertEqual(translationMapping['meetingConfigTitle'],
+        self.assertEqual(translation_mapping['meetingConfigTitle'],
                          safe_unicode(cfg.Title()))
         # config group but different config title, simple title
         cfg.setConfigGroup('unique_id_3')
-        obj, body, recipients, fromAddress, subject, attachments, translationMapping = \
+        obj, body, recipients, from_address, subject, attachments, translation_mapping = \
             sendMail([], item, '')
-        self.assertEqual(translationMapping['meetingConfigTitle'],
+        self.assertEqual(translation_mapping['meetingConfigTitle'],
                          safe_unicode(cfg.Title()))
         # with several same config title, config group is preprended
         self.meetingConfig2.setTitle(cfg.Title())
-        obj, body, recipients, fromAddress, subject, attachments, translationMapping = \
+        obj, body, recipients, from_address, subject, attachments, translation_mapping = \
             sendMail([], item, '')
-        self.assertEqual(translationMapping['meetingConfigTitle'],
+        self.assertEqual(translation_mapping['meetingConfigTitle'],
                          u'Config group 3 - %s' % safe_unicode(cfg.Title()))
         # if "full_label" is empty, it is not preprended
         config_groups[-1]['full_label'] = ''
         self.tool.setConfigGroups(config_groups)
-        obj, body, recipients, fromAddress, subject, attachments, translationMapping = \
+        obj, body, recipients, from_address, subject, attachments, translation_mapping = \
             sendMail([], item, '')
-        self.assertEqual(translationMapping['meetingConfigTitle'],
+        self.assertEqual(translation_mapping['meetingConfigTitle'],
                          safe_unicode(cfg.Title()))
 
     def test_pm_org_id_to_uid(self):
