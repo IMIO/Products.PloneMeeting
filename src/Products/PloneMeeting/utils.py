@@ -523,7 +523,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     else:
         # common case
         cfg_title = safe_unicode(cfg.Title())
-
+    wf = api.portal.get_tool('portal_workflow').getWorkflowsFor(obj)[0]
     translationMapping.update({
         'portalUrl': portalUrl,
         'portalTitle': safe_unicode(portal.Title()),
@@ -538,20 +538,22 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         'transitionActor': wf_action and
         get_user_fullname(wf_action['actor'], with_user_id=True) or u'-',
         'transitionTitle': wf_action and
-        translate(wf_action['action'], domain="plone", context=obj.REQUEST) or u'-',
+        translate(wf.transitions[wf_action['action']].title, domain="plone", context=obj.REQUEST) or u'-',
         'transitionComments': wf_action and safe_unicode(wf_action['comments']) or u'-',
     })
     if obj.getTagName() == 'Meeting':
         translationMapping['meetingTitle'] = safe_unicode(obj.Title())
         translationMapping['meetingLongTitle'] = tool.format_date(obj.date, prefixed=True)
-        translationMapping['meetingState'] = translate(obj.query_state(),
-                                                       domain='plone',
-                                                       context=obj.REQUEST)
+        translationMapping['meetingState'] = translate(
+            cfg.getItemWorkflow(True).states[obj.query_state()].title,
+            domain='plone',
+            context=obj.REQUEST)
     elif obj.getTagName() == 'MeetingItem':
         translationMapping['itemTitle'] = safe_unicode(obj.Title())
-        translationMapping['itemState'] = translate(obj.query_state(),
-                                                    domain='plone',
-                                                    context=obj.REQUEST)
+        translationMapping['itemState'] = translate(
+            cfg.getItemWorkflow(True).states[obj.query_state()].title,
+            domain='plone',
+            context=obj.REQUEST)
         meeting = obj.getMeeting()
         if meeting:
             translationMapping['meetingUrl'] = get_public_url(meeting)

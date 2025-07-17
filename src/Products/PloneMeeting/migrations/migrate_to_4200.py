@@ -715,6 +715,7 @@ class Migrate_To_4200(Migrator):
                         '.getItemSignatories(': '.get_item_signatories(',
                         '.getNextMeeting(cfgId=': '.get_next_meeting(cfg_id=',
                         '.getNextMeeting(': '.get_next_meeting(',
+                        '.getMeetingNumber()': ".meeting_number",
                         # get_next_meeting parameter
                         'dateGap=': 'date_gap=',
                         '.numberOfItems(': '.number_of_items(',
