@@ -7435,11 +7435,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # view
                 cache[row['label_id']]['view_groups'] = \
                     adapter._item_visible_for_groups(row['view_groups'])
-                cache[row['label_id']]['view_access_on'] = row['view_access_on']
                 # edit
                 cache[row['label_id']]['edit_groups'] = \
                     adapter._item_visible_for_groups(row['edit_groups'])
-                cache[row['label_id']]['edit_access_on'] = row['edit_access_on']
 
     def _updateCommitteeEditorsLocalRoles(self, cfg, item_state):
         '''Add local roles depending on MeetingConfig.committees.'''

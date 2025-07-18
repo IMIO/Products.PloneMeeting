@@ -119,7 +119,7 @@ class PMLabeling(Labeling):
                            item_state not in config['view_states']:
                             continue
                         # manage view_access_on
-                        if cached['view_access_on'].strip():
+                        if config['view_access_on'].strip():
                             # will be done only on first use
                             if extra_expr_ctx is None:
                                 extra_expr_ctx = _base_extra_expr_ctx(
@@ -145,7 +145,7 @@ class PMLabeling(Labeling):
                            item_state not in config['edit_states']:
                             continue
                         # manage edit_access_on
-                        if cached['edit_access_on'].strip():
+                        if config['edit_access_on'].strip():
                             # will be done only on first use
                             if extra_expr_ctx is None:
                                 extra_expr_ctx = _base_extra_expr_ctx(
