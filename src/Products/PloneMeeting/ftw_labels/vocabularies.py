@@ -94,6 +94,13 @@ class FTWLabelsForFacetedFilterVocabulary(object):
         member_id = get_current_user_id(context.REQUEST)
 
         res = []
+        # ftw.labels will index "_" when no label selected
+        res.append(
+            SimpleTerm("_",
+                       "_",
+                       translate('(None)',
+                                 domain='PloneMeeting',
+                                 context=context.REQUEST)))
         labels = ILabelJar(cfg).list()
         for label in labels:
             if label['by_user']:
