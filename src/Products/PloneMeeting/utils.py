@@ -550,7 +550,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         translation_mapping['meetingTitle'] = safe_unicode(obj.Title())
         translation_mapping['meetingLongTitle'] = tool.format_date(obj.date, prefixed=True)
         translation_mapping['meetingState'] = translate(
-            cfg.getItemWorkflow(True).states[obj.query_state()].title,
+            cfg.getMeetingWorkflow(True).states[obj.query_state()].title,
             domain='plone',
             context=obj.REQUEST)
     elif obj.getTagName() == 'MeetingItem':
