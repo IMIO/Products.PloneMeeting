@@ -36,6 +36,7 @@ from imio.helpers.content import get_user_fullname
 from imio.helpers.content import richtextval
 from imio.helpers.security import fplog
 from imio.helpers.workflow import get_final_states
+from imio.helpers.workflow import get_state_infos
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import addClassToLastChildren
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
@@ -549,16 +550,10 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     if obj.getTagName() == 'Meeting':
         translation_mapping['meetingTitle'] = safe_unicode(obj.Title())
         translation_mapping['meetingLongTitle'] = tool.format_date(obj.date, prefixed=True)
-        translation_mapping['meetingState'] = translate(
-            cfg.getItemWorkflow(True).states[obj.query_state()].title,
-            domain='plone',
-            context=obj.REQUEST)
+        translation_mapping['meetingState'] = get_state_infos(obj)['state_title']
     elif obj.getTagName() == 'MeetingItem':
         translation_mapping['itemTitle'] = safe_unicode(obj.Title())
-        translation_mapping['itemState'] = translate(
-            cfg.getItemWorkflow(True).states[obj.query_state()].title,
-            domain='plone',
-            context=obj.REQUEST)
+        translation_mapping['itemState'] = get_state_infos(obj)['state_title']
         meeting = obj.getMeeting()
         if meeting:
             translation_mapping['meetingUrl'] = get_public_url(meeting)
