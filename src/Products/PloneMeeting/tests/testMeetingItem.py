@@ -8528,11 +8528,15 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(sorted(recipients),
                          [u'M. PMReviewer One <pmreviewer1@plonemeeting.org>'])
         # subject and body contain relevant informations
+        val_level = cfg.getItemWFValidationLevels(states=['proposed'])
         self.assertEqual(
             subject,
-            u'{0} - Item in state "Proposed" '
-            u'(following "Back to \'Proposed\'") - '
-            u'My item that notify when propose'.format(safe_unicode(cfg.Title())))
+            u'{0} - Item in state "{1}" '
+            u'(following "{2}") - '
+            u'My item that notify when propose'.format(
+                safe_unicode(cfg.Title()),
+                safe_unicode(val_level['state_title']),
+                safe_unicode(val_level['back_transition_title'])))
         self.assertEqual(
             body,
             u'The item is entitled "My item that notify when propose". '
