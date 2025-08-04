@@ -539,7 +539,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         'transitionActor': wf_action and
         get_user_fullname(wf_action['actor'], with_user_id=True) or u'-',
         'transitionTitle': translate(
-            wf.transitions[wf_action['action']].title,
+            safe_unicode(wf.transitions[wf_action['action']].title),
             domain="plone",
             context=obj.REQUEST) if (
                 wf_action and
