@@ -8545,8 +8545,16 @@ class testMeetingItem(PloneMeetingTestCase):
             u'(following "{2}") - '
             u'My item that notify when propose'.format(
                 safe_unicode(cfg.Title()),
-                safe_unicode(val_level['state_title']),
-                safe_unicode(val_level['back_transition_title'])))
+                safe_unicode(
+                    translate(
+                        val_level['state_title'],
+                        domain="plone",
+                        context=self.request)),
+                safe_unicode(
+                    translate(
+                        val_level['back_transition_title'],
+                        domain="plone",
+                        context=self.request))))
         self.assertEqual(
             body,
             u'The item is entitled "My item that notify when propose". '
