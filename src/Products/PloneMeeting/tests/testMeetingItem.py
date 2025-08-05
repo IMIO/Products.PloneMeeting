@@ -8548,11 +8548,11 @@ class testMeetingItem(PloneMeetingTestCase):
                 translate(
                     safe_unicode(val_level['state_title']),
                     domain="plone",
-                    context=self.request)),
+                    context=self.request),
                 translate(
                     safe_unicode(val_level['back_transition_title']),
                     domain="plone",
-                    context=self.request))
+                    context=self.request)))
         self.assertEqual(
             body,
             u'The item is entitled "My item that notify when propose". '
