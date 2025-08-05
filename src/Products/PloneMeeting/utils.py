@@ -626,7 +626,6 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         logger.info('Subject is [%s]' % subject)
         logger.info('Body is [%s]' % body)
         api.portal.show_message(extras, request=obj.REQUEST)
-        return obj, body, recipients, fromAddress, subject, attachments, translation_mapping
     else:
         # Use 'plain' for mail format so the email client will turn links to clickable links
         mailFormat = 'text/plain'
@@ -635,7 +634,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
             _sendMail(obj, body, recipients, fromAddress, subject, mailFormat, attachments)
         except EmailError as ee:
             logger.warn(str(ee))
-    return subject, body
+    return obj, body, recipients, fromAddress, subject, attachments, translation_mapping
 
 
 def sendMailIfRelevant(obj,
@@ -733,7 +732,7 @@ def sendMailIfRelevant(obj,
         recipient = getMailRecipient(user)
         # After all, we will add this guy to the list of recipients.
         recipients.append(recipient)
-    mail_subject = mail_body = None
+    subject = body = None
     if recipients:
         # wipeout recipients to avoid sendind same email to several users
         unique_emails = []
@@ -744,11 +743,12 @@ def sendMailIfRelevant(obj,
                 continue
             unique_emails.append(email)
             unique_email_recipients.append(recipient)
-        mail_subject, mail_body = sendMail(unique_email_recipients, obj, event, mapping=mapping)
+        obj, body, recipients, fromAddress, subject, attachments, translation_mapping = \
+            sendMail(unique_email_recipients, obj, event, mapping=mapping)
     debug = debug or obj.REQUEST.get('debug_sendMailIfRelevant', False)
     if debug:
-        obj.REQUEST.set('debug_sendMailIfRelevant_result', (recipients, mail_subject, mail_body))
-        return recipients, mail_subject, mail_body
+        obj.REQUEST.set('debug_sendMailIfRelevant_result', (recipients, subject, body))
+        return recipients, subject, body
     return True
 
 

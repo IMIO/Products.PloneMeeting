@@ -8337,6 +8337,16 @@ class testMeetingItem(PloneMeetingTestCase):
              u'M. PMCreator Two <pmcreator2@plonemeeting.org>',
              u'M. PMManager <pmmanager@plonemeeting.org>',
              u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
+        # also working when mailMode is "test"
+        cfg.setMailMode('test')
+        recipients, subject, body = item._sendCopyGroupsMailIfRelevant('itemcreated', 'validated')
+        self.assertEqual(
+            sorted(recipients),
+            [u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
+             u'M. PMCreator Two <pmcreator2@plonemeeting.org>',
+             u'M. PMManager <pmmanager@plonemeeting.org>',
+             u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
+
 
     def test_pm__sendAdviceToGiveMailIfRelevant(self):
         """Check mail sent to advisers when they have access to item.
