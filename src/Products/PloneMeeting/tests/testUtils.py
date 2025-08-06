@@ -155,7 +155,7 @@ class testUtils(PloneMeetingTestCase):
         # test also that custom state/transition title works
         self._updateItemValidationLevel(
             cfg,
-            level="proposed",
+            level=self._stateMappingFor('proposed'),
             state_title="New proposed title",
             leading_transition_title="New propose title")
 
