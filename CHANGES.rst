@@ -14,6 +14,9 @@ Changelog
   This let's use new WF values in email notifications with correct WF
   transition and state title.
   [gbastien]
+- Fixed `utils.sendMail`, return same result when `MeetingConfig.mailMode`
+  is `test` or `enabled`.
+  [gbastien]
 
 4.2.24.1 (2025-07-11)
 ---------------------

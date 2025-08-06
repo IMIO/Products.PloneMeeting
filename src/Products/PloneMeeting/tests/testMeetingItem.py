@@ -8336,6 +8336,16 @@ class testMeetingItem(PloneMeetingTestCase):
              u'M. PMCreator Two <pmcreator2@plonemeeting.org>',
              u'M. PMManager <pmmanager@plonemeeting.org>',
              u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
+        # also working when mailMode is "test"
+        cfg.setMailMode('test')
+        recipients, subject, body = item._sendCopyGroupsMailIfRelevant('itemcreated', 'validated')
+        self.assertEqual(
+            sorted(recipients),
+            [u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
+             u'M. PMCreator Two <pmcreator2@plonemeeting.org>',
+             u'M. PMManager <pmmanager@plonemeeting.org>',
+             u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
+
 
     def test_pm__sendAdviceToGiveMailIfRelevant(self):
         """Check mail sent to advisers when they have access to item.
@@ -8527,11 +8537,21 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(sorted(recipients),
                          [u'M. PMReviewer One <pmreviewer1@plonemeeting.org>'])
         # subject and body contain relevant informations
+        val_level = cfg.getItemWFValidationLevels(states=['proposed'])
         self.assertEqual(
             subject,
-            u'{0} - Item in state "Proposed" '
-            u'(following "Back to \'Proposed\'") - '
-            u'My item that notify when propose'.format(safe_unicode(cfg.Title())))
+            u'{0} - Item in state "{1}" '
+            u'(following "{2}") - '
+            u'My item that notify when propose'.format(
+                safe_unicode(cfg.Title()),
+                translate(
+                    safe_unicode(val_level['state_title']),
+                    domain="plone",
+                    context=self.request),
+                translate(
+                    safe_unicode(val_level['back_transition_title']),
+                    domain="plone",
+                    context=self.request)))
         self.assertEqual(
             body,
             u'The item is entitled "My item that notify when propose". '
