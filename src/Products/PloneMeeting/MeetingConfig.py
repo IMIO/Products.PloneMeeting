@@ -2527,6 +2527,11 @@ schema = Schema((
                 'view_access_on': Column(
                     "Labels config view access TAL expression",
                     col_description="labels_config_view_access_on_col_description"),
+                'view_access_on_cache': SelectColumn(
+                    "Labels config view access TAL expression cache",
+                    col_description="labels_config_view_access_on_cache_col_description",
+                    vocabulary="listBooleanVocabulary",
+                    default='1'),
                 'edit_groups': MultiSelectColumn(
                     "Labels config edit groups",
                     col_description="labels_config_edit_groups_col_description",
@@ -2538,6 +2543,11 @@ schema = Schema((
                 'edit_access_on': Column(
                     "Labels config edit access TAL expression",
                     col_description="labels_config_edit_access_on_col_description"),
+                'edit_access_on_cache': SelectColumn(
+                    "Labels config edit access TAL expression cache",
+                    col_description="labels_config_edit_access_on_cache_col_description",
+                    vocabulary="listBooleanVocabulary",
+                    default='1'),
                 'update_local_roles': SelectColumn(
                     "Labels config update local roles?",
                     col_description="labels_config_update_local_roles_col_description",
@@ -2552,8 +2562,10 @@ schema = Schema((
         allow_oddeven=True,
         default=defValues.labelsConfig,
         columns=('label_id',
-                 'view_states', 'view_groups', 'view_access_on',
-                 'edit_states', 'edit_groups', 'edit_access_on',
+                 'view_states', 'view_groups',
+                 'view_access_on', 'view_access_on_cache',
+                 'edit_states', 'edit_groups',
+                 'edit_access_on', 'edit_access_on_cache',
                  'update_local_roles'),
         allow_empty_rows=False,
         write_permission=WriteRiskyConfig,

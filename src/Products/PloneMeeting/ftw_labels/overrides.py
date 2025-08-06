@@ -91,22 +91,21 @@ class PMLabeling(Labeling):
             personal_labels = []
             global_labels = []
             user_groups = set(get_plone_groups_for_user())
-            item_state = self.context.query_state()
             default_view_config_already_checked = default_edit_config_already_checked = False
             extra_expr_ctx = None
             for label in labels[0]+labels[1]:
-                # manage _labels_cache, if not in cache, use the config for
-                # 'default_for_all_labels'
-                cached = cache.get(label['label_id'])
-                is_using_default_config = False
-                if cached is None:
-                    is_using_default_config = True
-                    cached = cache["*"]
-                config = self.cfg.getLabelsConfig(["*"]) if \
-                    is_using_default_config else \
-                    self.cfg.getLabelsConfig([label['label_id']])
                 # by_user labels are always editable
                 if not label['by_user']:
+                    # manage _labels_cache, if not in cache, use the config for
+                    # 'default_for_all_labels'
+                    cached = cache.get(label['label_id'])
+                    is_using_default_config = False
+                    if cached is None:
+                        is_using_default_config = True
+                        cached = cache["*"]
+                    config = self.cfg.getLabelsConfig(["*"]) if \
+                        is_using_default_config else \
+                        self.cfg.getLabelsConfig([label['label_id']])
                     # view
                     if "view" in modes and \
                        label['active'] and \
@@ -115,18 +114,19 @@ class PMLabeling(Labeling):
                         if cached['view_groups'] and \
                            not user_groups.intersection(cached['view_groups']):
                             continue
-                        if config['view_states'] and \
-                           item_state not in config['view_states']:
+                        # manage view_access, already computed, "False" or "True"
+                        # "None" means needs to be computed on the fly
+                        if cached['view_access'] is False:
                             continue
-                        # manage view_access_on
-                        if config['view_access_on'].strip():
+                        elif config['view_access_on_cache'] == '0' and \
+                                config['view_access_on'].strip():
                             # will be done only on first use
                             if extra_expr_ctx is None:
                                 extra_expr_ctx = _base_extra_expr_ctx(
                                     self.context, {'item': self.context, })
                             if not _evaluateExpression(
                                     self.context,
-                                    expression=cached['view_access_on'],
+                                    expression=config['view_access_on'],
                                     extra_expr_ctx=extra_expr_ctx,
                                     raise_on_error=True):
                                 continue
@@ -141,30 +141,30 @@ class PMLabeling(Labeling):
                         if cached['edit_groups'] and \
                            not user_groups.intersection(cached['edit_groups']):
                             continue
-                        if config['edit_states'] and \
-                           item_state not in config['edit_states']:
+                        # manage edit_access_on, already computed, "False" or "True"
+                        # "None" means needs to be computed on the fly
+                        if cached['edit_access'] is False:
                             continue
-                        # manage edit_access_on
-                        if config['edit_access_on'].strip():
+                        elif config['edit_access_on_cache'] == '0' and \
+                                config['edit_access_on'].strip():
                             # will be done only on first use
                             if extra_expr_ctx is None:
                                 extra_expr_ctx = _base_extra_expr_ctx(
                                     self.context, {'item': self.context, })
                             if not _evaluateExpression(
                                     self.context,
-                                    expression=cached['edit_access_on'],
+                                    expression=config['edit_access_on'],
                                     extra_expr_ctx=extra_expr_ctx,
                                     raise_on_error=True):
                                 continue
                         # mark edit default config as working
                         if is_using_default_config:
                             default_edit_config_already_checked = True
-                # if we are here, label may be kept, otherwise we would have
-                # encountered a "continue" here above
-                if label['by_user']:
-                    personal_labels.append(label)
-                else:
+                    # if we are here, label may be kept, otherwise we would have
+                    # encountered a "continue" here above
                     global_labels.append(label)
+                else:
+                    personal_labels.append(label)
             labels = [personal_labels, global_labels]
         return labels
 

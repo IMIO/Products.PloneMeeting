@@ -7429,15 +7429,57 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # IIconifiedInfos adapter
             adapter = getAdapter(self, IIconifiedInfos)
             adapter.parent = self
+            extra_expr_ctx = None
+            item_state = self.query_state()
             for row in labels_config:
                 cache = getattr(self, ITEM_LABELS_ACCESS_CACHE_ATTR)
                 cache[row['label_id']] = {}
                 # view
                 cache[row['label_id']]['view_groups'] = \
                     adapter._item_visible_for_groups(row['view_groups'])
+                # view_access will take into account view_states and view_access_on
+                # None will mean in correct review state but TAL expr to be computed on the fly
+                cache[row['label_id']]['view_access'] = None
+                if row['view_states'] and item_state not in row['view_states']:
+                    # no need to compute "view_access_on" if not in correct review state
+                    cache[row['label_id']]['view_access'] = False
+                elif row['view_access_on_cache']:
+                    # compute view_access_on if allowed to cache
+                    cache[row['label_id']]['view_access_on'] = True
+                    if row['view_access_on'].strip():
+                        # will be done only on first use
+                        if extra_expr_ctx is None:
+                            extra_expr_ctx = _base_extra_expr_ctx(
+                                self.context, {'item': self.context, })
+                        cache[row['label_id']]['view_access_on'] = \
+                            _evaluateExpression(
+                                self,
+                                expression=row['view_access_on'],
+                                extra_expr_ctx=extra_expr_ctx,
+                                raise_on_error=True)
                 # edit
                 cache[row['label_id']]['edit_groups'] = \
                     adapter._item_visible_for_groups(row['edit_groups'])
+                # edit_access will take into account edit_states and edit_access_on
+                # None will mean in correct review state but TAL expr to be computed on the fly
+                cache[row['label_id']]['edit_access'] = None
+                if row['edit_states'] and item_state not in row['edit_states']:
+                    # no need to compute "edit_access_on" if not in correct review state
+                    cache[row['label_id']]['edit_access'] = False
+                elif row['edit_access_on_cache']:
+                    # compute edit_access_on if allowed to cache
+                    cache[row['label_id']]['edit_access_on'] = True
+                    if row['edit_access_on'].strip():
+                        # will be done only on first use
+                        if extra_expr_ctx is None:
+                            extra_expr_ctx = _base_extra_expr_ctx(
+                                self.context, {'item': self.context, })
+                        cache[row['label_id']]['edit_access_on'] = \
+                            _evaluateExpression(
+                                self,
+                                expression=row['edit_access_on'],
+                                extra_expr_ctx=extra_expr_ctx,
+                                raise_on_error=True)
 
     def _updateCommitteeEditorsLocalRoles(self, cfg, item_state):
         '''Add local roles depending on MeetingConfig.committees.'''
