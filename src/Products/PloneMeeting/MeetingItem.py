@@ -7450,7 +7450,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         # will be done only on first use
                         if extra_expr_ctx is None:
                             extra_expr_ctx = _base_extra_expr_ctx(
-                                self.context, {'item': self.context, })
+                                self, {'item': self, })
                         cache[row['label_id']]['view_access_on'] = \
                             _evaluateExpression(
                                 self,
@@ -7473,7 +7473,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         # will be done only on first use
                         if extra_expr_ctx is None:
                             extra_expr_ctx = _base_extra_expr_ctx(
-                                self.context, {'item': self.context, })
+                                self, {'item': self, })
                         cache[row['label_id']]['edit_access_on'] = \
                             _evaluateExpression(
                                 self,

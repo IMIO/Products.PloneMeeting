@@ -28,7 +28,7 @@ class Migrate_To_4216(Migrator):
                 "cfg.getEnableLabels()", "'labels' in cfg.getUsedItemAttributes()")
             # migrate MeetingConfig.itemLabelsEditableByProposingGroupForever
             # if True, let current config, if False, define "edit_access_on"
-            # to check for ModifyPortalContent on context
+            # to check for ModifyPortalContent on context or isManager
             # fix labelsConfig as it is taken from MeetingConfigDescriptor
             # for every cfg, it shares the same dict...
             labels_config = copy.deepcopy(defValues.labelsConfig)
@@ -40,7 +40,7 @@ class Migrate_To_4216(Migrator):
                 labels_config[0]["edit_groups"] = edit_groups
             else:
                 labels_config[0]["edit_access_on"] = \
-                    'python: checkPermission("Modify portal content", context)'
+                    'python: cfg.isManager(cfg) or checkPermission("Modify portal content", context)'
             cfg.setLabelsConfig(labels_config)
             delattr(cfg, 'itemLabelsEditableByProposingGroupForever')
             # update labels cache for items of this MeetingConfig

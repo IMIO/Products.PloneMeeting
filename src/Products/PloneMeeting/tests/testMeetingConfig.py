@@ -1839,6 +1839,7 @@ class testMeetingConfig(PloneMeetingTestCase):
 
     def test_pm_UsedLabelCanNotBeRemoved(self):
         """A ftw.labels label that is used on an item can not be removed."""
+        self._enableField('labels')
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         item = self.create('MeetingItem')

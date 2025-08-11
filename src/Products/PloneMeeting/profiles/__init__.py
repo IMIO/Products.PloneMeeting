@@ -523,11 +523,16 @@ class MeetingConfigDescriptor(Descriptor):
         self.computeItemReferenceForItemsOutOfMeeting = False
         self.labelsConfig = (
             {'edit_access_on': '',
-             'edit_groups': [],
+             'edit_access_on_cache': '1',
+             'edit_groups': [
+                'suffix_proposing_group_creators',
+                'suffix_proposing_group_prereviewers',
+                'suffix_proposing_group_reviewers'],
              'edit_states': [],
              'label_id': '*',
              'update_local_roles': '0',
              'view_access_on': '',
+             'view_access_on_cache': '1',
              'view_groups': [],
              'view_states': []},
         )

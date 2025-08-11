@@ -1805,9 +1805,8 @@ class testViews(PloneMeetingTestCase):
     def test_pm_PMLabelsBatchActionForm(self):
         """Check labels change batch action."""
         cfg = self.meetingConfig
-        cfg.setEnableLabels(True)
+        self._enableField(('copyGroups', 'labels'))
         cfg.setItemCopyGroupsStates(('itemcreated', ))
-        self._enableField('copyGroups')
 
         # create some items
         self.changeUser('pmCreator1')
@@ -2721,11 +2720,16 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(tool_modified in browser.headers['etag'])
         self.assertTrue(context_modified in browser.headers['etag'])
 
-    def test_pm_FTWLabels(self):
-        """By default, labels are editable if item editable, except for MeetingManagers
-           that may edit labels forever.
-           Personal labels are editable by anybody able to see the item."""
+    def test_pm_FTWLabelsForEditors(self):
+        """By default, labels are editable forever by proposing group operationnal roles.
+           But we can configure it so it is only editable for users able to edit the item and
+           MeetingManagers always.
+           Personal labels are still editable by anybody able to see the item."""
+        self._enableField('labels')
         cfg = self.meetingConfig
+        labelsConfig = cfg.getLabelsConfig()
+        labelsConfig[0]['edit_access_on'] = 'python: cfg.isManager(cfg) or "\
+            "checkPermission("Modify portal content", context)'
         # as label jar is updated by the import process
         # make sure we have a persistentmapping containing persistentmappings
         labeljar = getAdapter(cfg, ILabelJar)
