@@ -85,6 +85,8 @@
            name="Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary" />
   <utility component=".vocabularies.BaseSimplifiedHeldPositionsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.every_heldpositions_vocabulary" />
+  <utility component=".vocabularies.ConfigSelectableSignersVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.config_selectable_signers_vocabulary" />
   <utility component=".vocabularies.SelectableCommitteeAttendeesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary" />
   <utility name="Products.PloneMeeting.vocabularies.selectable_committees_vocabulary"

@@ -134,7 +134,6 @@ from Products.PloneMeeting.utils import translate_list
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator
 from Products.ZCatalog.ProgressHandler import ZLogHandler
-from z3c.form.i18n import MessageFactory as _z3c_form
 from zope.annotation import IAnnotations
 from zope.component import getMultiAdapter
 from zope.component import getUtility
@@ -409,7 +408,7 @@ schema = Schema((
                      'held_position':
                         SelectColumn(
                             _("Certified signatures held position"),
-                            vocabulary="listSelectableContacts",
+                            vocabulary_factory="Products.PloneMeeting.vocabularies.config_selectable_signers_vocabulary",
                             col_description=_(
                                 "Select a held position if necessary, 'Name', 'Function' "
                                 "and other data of this held position will be used if you leave 'Name' and "
@@ -3893,19 +3892,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for search in searches:
             res.append(
                 (search.UID(), search.Title()))
-        return DisplayList(res)
-
-    security.declarePrivate('listSelectableContacts')
-
-    def listSelectableContacts(self):
-        """Vocabulary for the MeetingConfig.certifiedSignatures datagridfield,
-           held_position column."""
-        vocab_factory = getUtility(
-            IVocabularyFactory,
-            "Products.PloneMeeting.vocabularies.every_heldpositions_vocabulary")
-        vocab = vocab_factory(self)
-        res = [(term.value, term.title) for term in vocab._terms]
-        res.insert(0, ('_none_', _z3c_form('No value')))
         return DisplayList(res)
 
     security.declarePrivate('listSelectableCommitteeAttendees')

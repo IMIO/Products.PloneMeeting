@@ -72,6 +72,7 @@ from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.PloneMeeting.utils import getAdvicePortalTypes
 from Products.PloneMeeting.utils import number_word
 from Products.PloneMeeting.utils import split_gender_and_number
+from z3c.form.i18n import MessageFactory as _z3c_form
 from z3c.form.interfaces import NO_VALUE
 from zope.annotation import IAnnotations
 from zope.component import getAdapter
@@ -1999,6 +2000,8 @@ class HeldPositionUsagesVocabulary(object):
             SimpleTerm('assemblyMember', 'assemblyMember', _('assemblyMember')))
         res.append(
             SimpleTerm('asker', 'asker', _('asker')))
+        res.append(
+            SimpleTerm('signer', 'signer', _('signer')))
         return SimpleVocabulary(res)
 
 
@@ -2200,14 +2203,17 @@ class BaseHeldPositionsVocabulary(object):
                           include_defaults=True,
                           include_signature_number=True,
                           include_voting_group=False,
+                          include_none_value=False,
                           pattern=u"{0}",
-                          review_state=['active']):
+                          review_state=['active'],
+                          additional_uids=[]):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile(
             'Products.PloneMeeting.vocabularies.allheldpositionsvocabularies')
         return date, repr(context), usage, uids, self._is_editing_config(context),
         highlight_missing, include_usages, include_defaults,
-        include_signature_number, include_voting_group, pattern, review_state
+        include_signature_number, include_voting_group, include_none_value,
+        pattern, review_state, additional_uids
 
     @ram.cache(__call___cachekey)
     def BaseHeldPositionsVocabulary__call__(
@@ -2220,8 +2226,10 @@ class BaseHeldPositionsVocabulary(object):
             include_defaults=True,
             include_signature_number=True,
             include_voting_group=False,
+            include_none_value=False,
             pattern=u"{0}",
-            review_state=['active']):
+            review_state=['active'],
+            additional_uids=[]):
         catalog = api.portal.get_tool('portal_catalog')
         query = {'portal_type': 'held_position',
                  'sort_on': 'sortable_title'}
@@ -2231,6 +2239,8 @@ class BaseHeldPositionsVocabulary(object):
             query['UID'] = uids
         brains = catalog.unrestrictedSearchResults(**query)
         res = []
+        if include_none_value:
+            res = [SimpleTerm('_none_', '_none_', _z3c_form('No value'))]
         highlight = False
         is_item = False
         context_uid = None
@@ -2245,12 +2255,14 @@ class BaseHeldPositionsVocabulary(object):
             meeting = context.getMeeting()
 
         forced_position_type_value = None
+        kept_uids = []
         for brain in brains:
             held_position = brain.getObject()
             if not usage or (held_position.usages and usage in held_position.usages):
                 if is_item:
                     forced_position_type_value = meeting.get_attendee_position_for(
                         context_uid, brain.UID)
+                kept_uids.append(brain.UID)
                 res.append(
                     SimpleTerm(
                         brain.UID,
@@ -2263,6 +2275,24 @@ class BaseHeldPositionsVocabulary(object):
                                 include_voting_group=include_voting_group,
                                 highlight=highlight,
                                 forced_position_type_value=forced_position_type_value))))
+        if additional_uids:
+            query['UID'] = additional_uids
+            brains = catalog.unrestrictedSearchResults(**query)
+            for brain in brains:
+                if brain.UID not in kept_uids:
+                    held_position = brain.getObject()
+                    res.append(
+                        SimpleTerm(
+                            brain.UID,
+                            brain.UID,
+                            pattern.format(
+                                held_position.get_short_title(
+                                    include_usages=include_usages,
+                                    include_defaults=include_defaults,
+                                    include_signature_number=include_signature_number,
+                                    include_voting_group=include_voting_group,
+                                    highlight=highlight,
+                                    forced_position_type_value=forced_position_type_value))))
         return SimpleVocabulary(res)
 
     # do ram.cache have a different key name
@@ -2272,8 +2302,9 @@ class BaseHeldPositionsVocabulary(object):
 class SelectableHeldPositionsVocabulary(BaseHeldPositionsVocabulary):
     """ """
 
-    def __call__(self, context, usage=None, uids=[]):
-        res = super(SelectableHeldPositionsVocabulary, self).__call__(context, usage=None)
+    def __call__(self, context, usage=None, uids=[], additional_uids=[]):
+        res = super(SelectableHeldPositionsVocabulary, self).__call__(
+            context, usage=usage, uids=uids, additional_uids=additional_uids)
         return res
 
 
@@ -2283,15 +2314,23 @@ SelectableHeldPositionsVocabularyFactory = SelectableHeldPositionsVocabulary()
 class BaseSimplifiedHeldPositionsVocabulary(BaseHeldPositionsVocabulary):
     """ """
 
-    def __call__(self, context, usage=None, uids=[]):
-        res = super(BaseSimplifiedHeldPositionsVocabulary, self).__call__(
+    def __call__(
+            self,
             context,
             usage=None,
+            uids=[],
+            include_none_value=False,
+            additional_uids=[]):
+        res = super(BaseSimplifiedHeldPositionsVocabulary, self).__call__(
+            context,
+            usage=usage,
             uids=uids,
             include_usages=False,
             include_defaults=False,
             include_signature_number=False,
-            include_voting_group=False)
+            include_voting_group=False,
+            include_none_value=include_none_value,
+            additional_uids=additional_uids)
         return res
 
 
@@ -2326,6 +2365,55 @@ class SelectableCommitteeAttendeesVocabulary(BaseSimplifiedHeldPositionsVocabula
 
 
 SelectableCommitteeAttendeesVocabularyFactory = SelectableCommitteeAttendeesVocabulary()
+
+
+class SelectableSignersVocabulary(BaseSimplifiedHeldPositionsVocabulary):
+    """ """
+
+    def __call__(self, context):
+        # as vocabulary is used in a DataGridField
+        # context is often NO_VALUE...
+        if not hasattr(context, "getTagName"):
+            context = get_context_with_request(context)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        uids = []
+        if cfg:
+            # manage missing terms manually as used in a datagridfield...
+            current_values = set()
+            if base_hasattr(context, "certifiedSignatures"):
+                current_values = set(
+                    itertools.chain.from_iterable(
+                        [data.get('certifiedSignatures') or []
+                         for data in context.certifiedSignatures or []]))
+            cfg_values = list(cfg.getOrderedCommitteeContacts())
+            missing_values = list(current_values.difference(cfg_values))
+            uids = cfg_values + missing_values
+        return super(SelectableCommitteeAttendeesVocabulary, self).__call__(
+            context=context,
+            uids=uids)
+
+
+SelectableCommitteeAttendeesVocabularyFactory = SelectableCommitteeAttendeesVocabulary()
+
+
+class ConfigSelectableSignersVocabulary(BaseSimplifiedHeldPositionsVocabulary):
+    """ """
+    def __call__(self, context, usage="signer"):
+        # as vocabulary is used in a DataGridField
+        # context is often NO_VALUE...
+        if not hasattr(context, "getTagName"):
+            context = get_context_with_request(context)
+        additional_uids=[
+            row['held_position'] for row in context.getCertifiedSignatures()
+            if row['held_position'] != '_none_']
+        return super(ConfigSelectableSignersVocabulary, self).__call__(
+            context=context,
+            usage=usage,
+            include_none_value=True,
+            additional_uids=additional_uids)
+
+ConfigSelectableSignersVocabularyFactory = ConfigSelectableSignersVocabulary()
 
 
 class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
