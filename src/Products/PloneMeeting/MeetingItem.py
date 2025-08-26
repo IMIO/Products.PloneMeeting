@@ -7443,7 +7443,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if row['view_states'] and item_state not in row['view_states']:
                     # no need to compute "view_access_on" if not in correct review state
                     cache[row['label_id']]['view_access'] = False
-                elif row['view_access_on_cache']:
+                elif row['view_access_on_cache'] == '1':
                     # compute view_access_on if allowed to cache
                     cache[row['label_id']]['view_access_on'] = True
                     if row['view_access_on'].strip():
@@ -7466,7 +7466,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if row['edit_states'] and item_state not in row['edit_states']:
                     # no need to compute "edit_access_on" if not in correct review state
                     cache[row['label_id']]['edit_access'] = False
-                elif row['edit_access_on_cache']:
+                elif row['edit_access_on_cache'] == '1':
                     # compute edit_access_on if allowed to cache
                     cache[row['label_id']]['edit_access_on'] = True
                     if row['edit_access_on'].strip():

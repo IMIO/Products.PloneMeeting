@@ -41,6 +41,7 @@ class Migrate_To_4216(Migrator):
             else:
                 labels_config[0]["edit_access_on"] = \
                     'python: cfg.isManager(cfg) or checkPermission("Modify portal content", context)'
+                labels_config[0]["edit_access_on_cache"] = "0"
             cfg.setLabelsConfig(labels_config)
             delattr(cfg, 'itemLabelsEditableByProposingGroupForever')
             # update labels cache for items of this MeetingConfig

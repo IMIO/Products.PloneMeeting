@@ -584,7 +584,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                                'meeting-config-gettopics-',
                                'plonegroup-utils-get_organizations-',
                                'PloneMeeting-MeetingConfig-getMeetingsAcceptingItems',
-                               'PloneMeeting-tool-get_orgs_for_user'])
+                               'PloneMeeting-tool-get_orgs_for_user',
+                               'ftw-labeling-cache-'])
 
     def _removeOrganizations(self):
         """Delete every organizations found in own_org."""

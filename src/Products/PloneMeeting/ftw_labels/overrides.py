@@ -75,6 +75,11 @@ class PMLabelsJar(LabelsJar):
         return self._redirect()
 
 
+def available_labels_cache_key(obj, modes):
+    """ """
+    return "ftw-labeling-cache-{0}-{1}".format(obj.UID(), "-".join(modes))
+
+
 class PMLabeling(Labeling):
     """ """
     def __init__(self, context, request):
@@ -135,7 +140,6 @@ class PMLabeling(Labeling):
                             default_view_config_already_checked = True
                     # edit
                     elif "edit" in modes and \
-                         not label['active'] and \
                          (not is_using_default_config or
                           default_edit_config_already_checked is False):
                         if cached['edit_groups'] and \
@@ -170,13 +174,13 @@ class PMLabeling(Labeling):
 
     def available_labels(self, modes=('view', 'edit')):
         # cache in request
-        cache_key = "fwt_labeling_cache_{0}-{1}".format(self.context.UID(), "_".join(modes))
-        if cache_key not in self.request:
-            self.request.set(
-                cache_key,
-                self.filter_manageable_labels(
-                    ILabeling(self.context).available_labels(), modes=modes))
-        return self.request.get(cache_key)
+        cache_key = available_labels_cache_key(self.context, modes)
+        cache = self.request.get(cache_key)
+        if cache is None:
+            cache = self.filter_manageable_labels(
+                ILabeling(self.context).available_labels(), modes=modes)
+            self.request.set(cache_key, cache)
+        return cache
 
     def update(self):
         """ """
@@ -235,7 +239,7 @@ class PMLabeling(Labeling):
 
     @property
     def can_edit(self):
-        return self.available_labels()
+        return self.available_labels(modes=('edit', ))[1]
 
     @property
     def can_personal_edit(self):
