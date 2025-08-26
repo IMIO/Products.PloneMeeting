@@ -17,6 +17,10 @@ Changelog
 - Fixed `utils.sendMail`, return same result when `MeetingConfig.mailMode`
   is `test` or `enabled`.
   [gbastien]
+- In `ItemDocumentGenerationHelperView.print_votes`, added possibility to
+  use special character `|` in label so it will generate several different
+  labels useable thru the `vote_label_pattern`.
+  [gbastien]
 
 4.2.24.1 (2025-07-11)
 ---------------------

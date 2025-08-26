@@ -1983,7 +1983,12 @@ def print_votes(item,
         if render_as_html:
             # vote label
             if vote_label_pattern and label:
-                rendered += vote_label_pattern.format(label)
+                # special behavior with "|" to use several values in label
+                # like "Label|category_of_label"
+                # this way we can render same label, various ways
+                # using the vote_label_pattern
+                labels = label.split('|')
+                rendered += vote_label_pattern.format(*labels)
             # total_voters
             if include_total_voters:
                 rendered += total_voters_pattern.format(total_voters)
