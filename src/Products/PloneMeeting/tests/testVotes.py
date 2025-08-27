@@ -254,7 +254,6 @@ class testVotes(PloneMeetingTestCase):
         public_votes['voters'][voters[1]] = "invalid"
         public_votes['voters'][voters[2]] = "does_not_vote"
         public_votes['voters'][voters[3]] = "not_found"
-        public_votes['label'] = "My label"
         meeting.set_item_public_vote(public_item, public_votes, 0)
         transaction.commit()
         # encode secret votes
