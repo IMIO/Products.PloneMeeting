@@ -3315,13 +3315,25 @@ class testViews(PloneMeetingTestCase):
         # first usecase
         # editable by MeetingManagers only when in state "validated"
         # viewable by everyone excepted powerobservers
-        config = cfg.getLabelsConfig()
+        config = list(cfg.getLabelsConfig())
         new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
         new_config['edit_access_on'] = ""
         new_config['edit_groups'] = ["configgroup_meetingmanagers"]
         new_config['edit_states'] = ["validated"]
         new_config['view_groups'] = ["configgroup_restrictedpowerobservers"]
         new_config['view_groups_excluding'] = "1"
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        viewlet = self._get_viewlet(
+            context=item,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
+        self.assertTrue(viewlet.available)
+        # can not add label
+        self.assertEqual(viewlet.available_labels[1], [])
 
 
 def test_suite():
