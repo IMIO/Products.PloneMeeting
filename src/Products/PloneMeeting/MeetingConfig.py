@@ -2524,7 +2524,7 @@ schema = Schema((
                     "Labels config view groups excluding",
                     col_description="labels_config_view_groups_excluding_col_description",
                     vocabulary="listBooleanVocabulary",
-                    default='1'),
+                    default='0'),
                 'view_states': MultiSelectColumn(
                     "Labels config view states",
                     col_description="labels_config_view_states_col_description",
@@ -2545,7 +2545,7 @@ schema = Schema((
                     "Labels config edit groups excluding",
                     col_description="labels_config_edit_groups_excluding_col_description",
                     vocabulary="listBooleanVocabulary",
-                    default='1'),
+                    default='0'),
                 'edit_states': MultiSelectColumn(
                     "Labels config edit states",
                     col_description="labels_config_edit_states_col_description",
