@@ -528,12 +528,14 @@ class MeetingConfigDescriptor(Descriptor):
                 'suffix_proposing_group_creators',
                 'suffix_proposing_group_prereviewers',
                 'suffix_proposing_group_reviewers'],
+             'edit_groups_excluding': '0',
              'edit_states': [],
              'label_id': '*',
              'update_local_roles': '0',
              'view_access_on': '',
              'view_access_on_cache': '1',
              'view_groups': [],
+             'view_groups_excluding': '0',
              'view_states': []},
         )
         # labels are like :

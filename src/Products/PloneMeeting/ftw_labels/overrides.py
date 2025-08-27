@@ -116,8 +116,13 @@ class PMLabeling(Labeling):
                        label['active'] and \
                        (not is_using_default_config or
                             default_view_config_already_checked is False):
+                        # check "view_groups", in or not in depending on "view_groups_excluding"
                         if cached['view_groups'] and \
-                           not user_groups.intersection(cached['view_groups']):
+                           (
+                            (config['view_groups_excluding'] == '0' and
+                             not user_groups.intersection(cached['view_groups'])) or
+                            (config['view_groups_excluding'] == '1' and
+                             user_groups.intersection(cached['view_groups']))):
                             continue
                         # manage view_access, already computed, "False" or "True"
                         # "None" means needs to be computed on the fly
@@ -142,8 +147,13 @@ class PMLabeling(Labeling):
                     elif "edit" in modes and \
                          (not is_using_default_config or
                           default_edit_config_already_checked is False):
+                        # check "edit_groups", in or not in depending on "edit_groups_excluding"
                         if cached['edit_groups'] and \
-                           not user_groups.intersection(cached['edit_groups']):
+                           (
+                            (config['edit_groups_excluding'] == '0' and
+                             not user_groups.intersection(cached['edit_groups'])) or
+                            (config['edit_groups_excluding'] == '1' and
+                             user_groups.intersection(cached['edit_groups']))):
                             continue
                         # manage edit_access_on, already computed, "False" or "True"
                         # "None" means needs to be computed on the fly

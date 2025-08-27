@@ -2520,6 +2520,11 @@ schema = Schema((
                     "Labels config view groups",
                     col_description="labels_config_view_groups_col_description",
                     vocabulary="listItemAttributeVisibleForWithMeetingManagers"),
+                'view_groups_excluding': SelectColumn(
+                    "Labels config view groups excluding",
+                    col_description="labels_config_view_groups_excluding_col_description",
+                    vocabulary="listBooleanVocabulary",
+                    default='1'),
                 'view_states': MultiSelectColumn(
                     "Labels config view states",
                     col_description="labels_config_view_states_col_description",
@@ -2536,6 +2541,11 @@ schema = Schema((
                     "Labels config edit groups",
                     col_description="labels_config_edit_groups_col_description",
                     vocabulary="listItemAttributeVisibleForWithMeetingManagers"),
+                'edit_groups_excluding': SelectColumn(
+                    "Labels config edit groups excluding",
+                    col_description="labels_config_edit_groups_excluding_col_description",
+                    vocabulary="listBooleanVocabulary",
+                    default='1'),
                 'edit_states': MultiSelectColumn(
                     "Labels config edit states",
                     col_description="labels_config_edit_states_col_description",
@@ -2562,9 +2572,9 @@ schema = Schema((
         allow_oddeven=True,
         default=defValues.labelsConfig,
         columns=('label_id',
-                 'view_states', 'view_groups',
+                 'view_states', 'view_groups', 'view_groups_excluding',
                  'view_access_on', 'view_access_on_cache',
-                 'edit_states', 'edit_groups',
+                 'edit_states', 'edit_groups', 'edit_groups_excluding',
                  'edit_access_on', 'edit_access_on_cache',
                  'update_local_roles'),
         allow_empty_rows=False,

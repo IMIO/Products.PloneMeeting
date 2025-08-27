@@ -9,6 +9,7 @@ from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.documentgenerator.interfaces import IGenerablePODTemplates
 from collective.eeafaceted.dashboard.interfaces import IDashboardGenerablePODTemplates
+from copy import deepcopy
 from datetime import datetime
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
@@ -3304,6 +3305,23 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(data["public_deliberation"], self.motivationText + self.decisionText)
         self.assertEqual(data["public_deliberation_decided"], self.motivationText + self.decisionText)
         return item, view, helper, data
+
+    def test_pm_LabelsConfig(self):
+        """Test various cases of MeetingConfig.labelsConfig to restrict view/edit
+           to some profiles or using a TAL expression."""
+        cfg = self.meetingConfig
+        self._setupLabelsEditableWhenItemEditable(cfg)
+
+        # first usecase
+        # editable by MeetingManagers only when in state "validated"
+        # viewable by everyone excepted powerobservers
+        config = cfg.getLabelsConfig()
+        new_config = deepcopy(config[0])
+        new_config['edit_access_on'] = ""
+        new_config['edit_groups'] = ["configgroup_meetingmanagers"]
+        new_config['edit_states'] = ["validated"]
+        new_config['view_groups'] = ["configgroup_restrictedpowerobservers"]
+        new_config['view_groups_excluding'] = "1"
 
 
 def test_suite():
