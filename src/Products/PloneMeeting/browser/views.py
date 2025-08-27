@@ -917,6 +917,7 @@ class BaseDGHV(object):
         item_absents = []
         item_excused = []
         item_non_attendees = []
+        voters = []
         if committee_id:
             meeting = self.context
             attendees = self.context.get_committee_attendees(committee_id)
@@ -924,6 +925,7 @@ class BaseDGHV(object):
             meeting = self.context
             attendees = meeting.get_attendees()
             item_non_attendees = meeting.get_item_non_attendees()
+            voters = meeting.get_voters()
         else:
             # MeetingItem
             meeting = self.context.getMeeting()
@@ -931,6 +933,7 @@ class BaseDGHV(object):
                 attendees = self.context.get_attendees()
                 item_absents = self.context.get_item_absents()
                 item_excused = self.context.get_item_excused()
+                voters = self.context.get_item_voters()
             item_non_attendees = self.context.get_item_non_attendees()
         # generate content then group by sub organization if necessary
         contacts = []
@@ -951,7 +954,7 @@ class BaseDGHV(object):
             absents = meeting.get_absents()
             replaced = meeting.get_replacements()
         return meeting, attendees, item_absents, item_excused, item_non_attendees, \
-            contacts, excused, absents, replaced
+            contacts, excused, absents, replaced, voters
 
     def _update_patterns_for_videoconference(self, meeting, patterns, value):
         if hasattr(meeting, "videoconference") and meeting.videoconference:
@@ -975,7 +978,8 @@ class BaseDGHV(object):
                                             'F': u'<strong>remplacée par {0}</strong>'},
                         ignore_non_attendees=True,
                         committee_id=None,
-                        short_title_kwargs={}):
+                        short_title_kwargs={},
+                        is_voter=None):
         """ """
 
         def _render_as_html(tree, by_parent_org=False):
@@ -1012,7 +1016,7 @@ class BaseDGHV(object):
 
         # initial values
         meeting, attendees, item_absents, item_excused, item_non_attendees, \
-            contacts, excused, absents, replaced = self._get_attendees(committee_id)
+            contacts, excused, absents, replaced, voters = self._get_attendees(committee_id)
         context_uid = self.context.UID()
 
         if adapt_for_videoconference:
@@ -1025,6 +1029,14 @@ class BaseDGHV(object):
         for contact in contacts:
             contact_uid = contact.UID()
             if ignore_non_attendees and contact_uid in item_non_attendees:
+                continue
+            # is_voter:
+            # - None means every voters/non voters
+            # - True means voters
+            # - False means non voters
+            if is_voter is not None and (
+                (is_voter is False and contact_uid in voters) or
+                (is_voter is True and contact_uid not in voters)):
                 continue
             forced_position_type_value = None
             if self.context.getTagName() == "MeetingItem":
@@ -1135,7 +1147,8 @@ class BaseDGHV(object):
                                 striked_attendee_types=[],
                                 striked_attendee_pattern=u'<strike>{0}</strike>',
                                 ignore_non_attendees=True,
-                                committee_id=None):
+                                committee_id=None,
+                                is_voter=None):
 
         context_uid = self.context.UID()
         is_item = self.context.getTagName() == "MeetingItem"
@@ -1320,7 +1333,7 @@ class BaseDGHV(object):
 
         # initial values
         meeting, attendees, item_absents, item_excused, item_non_attendees, \
-            contacts, excused, absents, replaced = self._get_attendees(committee_id)
+            contacts, excused, absents, replaced, voters = self._get_attendees(committee_id)
 
         if adapt_for_videoconference:
             self._update_patterns_for_videoconference(meeting, grouped_attendee_type_patterns, {
@@ -1338,6 +1351,14 @@ class BaseDGHV(object):
         for contact in contacts:
             contact_uid = contact.UID()
             if ignore_non_attendees and contact_uid in item_non_attendees:
+                continue
+            # is_voter:
+            # - None means every voters/non voters
+            # - True means voters
+            # - False means non voters
+            if is_voter is not None and (
+                (is_voter is False and contact_uid in voters) or
+                (is_voter is True and contact_uid not in voters)):
                 continue
             contact_attendee_type = contact_uid in item_non_attendees and 'item_non_attendee' or \
                 contact_uid in item_absents and 'item_absent' or \
@@ -1991,7 +2012,12 @@ def print_votes(item,
         if render_as_html:
             # vote label
             if vote_label_pattern and label:
-                rendered += vote_label_pattern.format(label)
+                # special behavior with "|" to use several values in label
+                # like "Label|category_of_label"
+                # this way we can render same label, various ways
+                # using the vote_label_pattern
+                labels = label.split('|')
+                rendered += vote_label_pattern.format(*labels)
             # total_voters
             if include_total_voters:
                 rendered += total_voters_pattern.format(total_voters)
