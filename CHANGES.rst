@@ -5,8 +5,8 @@ Changelog
 4.2.24.3 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Use median space to separate optional letters in `abstenu·e·s` of print_votes.
+  [gbastien]
 
 4.2.24.2 (2025-08-28)
 ---------------------
