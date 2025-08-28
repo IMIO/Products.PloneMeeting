@@ -19,7 +19,7 @@ Changelog
   [gbastien]
 - In `ItemDocumentGenerationHelperView.print_votes`, added possibility to
   use special character `|` in label so it will generate several different
-  labels useable thru the `vote_label_pattern`.
+  labels useable thru the `vote_label_pattern` parameter.
   [gbastien]
 - Added parameter `is_voter=None` to `print_attendees` and
   `print_attendees_by_type` so it is possible to get attendees that are
