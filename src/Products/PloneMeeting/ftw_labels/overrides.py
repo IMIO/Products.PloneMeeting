@@ -2,8 +2,6 @@
 #
 # File: overrides.py
 #
-# Copyright (c) 2018 by Imio.be
-#
 # GNU General Public License (GPL)
 #
 
@@ -73,11 +71,6 @@ class PMLabelsJar(LabelsJar):
         """Redirect to HTTP_REFERER."""
         super(PMLabelsJar, self).remove()
         return self._redirect()
-
-
-def available_labels_cache_key(obj, modes):
-    """ """
-    return "ftw-labeling-cache-{0}-{1}".format(obj.UID(), "-".join(modes))
 
 
 class PMLabeling(Labeling):
@@ -184,13 +177,14 @@ class PMLabeling(Labeling):
 
     def available_labels(self, modes=('view', 'edit')):
         # cache in request
-        cache_key = available_labels_cache_key(self.context, modes)
-        cache = self.request.get(cache_key)
-        if cache is None:
-            cache = self.filter_manageable_labels(
+        cache_key = "ftw-labeling-cache-{0}-{1}".format(self.context.UID(), "-".join(modes))
+        cache = IAnnotations(self.request)
+        value = cache.get(cache_key, None)
+        if value is None:
+            value = self.filter_manageable_labels(
                 ILabeling(self.context).available_labels(), modes=modes)
-            self.request.set(cache_key, cache)
-        return cache
+            cache[cache_key] = value
+        return value
 
     def update(self):
         """ """
@@ -249,7 +243,7 @@ class PMLabeling(Labeling):
 
     @property
     def can_edit(self):
-        return self.available_labels(modes=('edit', ))[1]
+        return bool(self.available_labels(modes=('edit', ))[1])
 
     @property
     def can_personal_edit(self):

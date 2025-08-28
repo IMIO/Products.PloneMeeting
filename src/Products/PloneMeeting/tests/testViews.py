@@ -32,7 +32,6 @@ from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import zcml
 from Products.PloneMeeting.browser.views import SEVERAL_SAME_BARCODE_ERROR
-from Products.PloneMeeting.ftw_labels.overrides import available_labels_cache_key
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NO_COMMITTEE
@@ -1824,15 +1823,11 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(form._can_change_labels())
         # when an item is no more editable, labels are no more batch editable
         self.proposeItem(item1)
-        # clear cache
-        cache_key = available_labels_cache_key(item1, ('edit', ))
-        self.request.set(cache_key, None)
         self.assertTrue(form.available())
         self.assertFalse(form._can_change_labels())
         # except when MeetingConfig.labelsConfig is configured so proposingGroup may always edit
         self._setupLabelsEditableWhenItemEditable(cfg, enable=False)
-        # clear cache
-        self.request.set(cache_key, None)
+        self.cleanMemoize()
         self.assertTrue(form.available())
         self.assertTrue(form._can_change_labels())
         # but not with an item of another group
@@ -1842,8 +1837,6 @@ class testViews(PloneMeetingTestCase):
         self.request.form['form.widgets.uids'] = ','.join([item1.UID(), item2.UID(), item3.UID()])
         form = searches_items.restrictedTraverse('@@labels-batch-action')
         form.update()
-        # clear cache
-        self.request.set(cache_key, None)
         self.assertEqual(len(form.brains), 3)
         self.assertTrue(form.available())
         self.assertFalse(form._can_change_labels())
@@ -2257,9 +2250,7 @@ class testViews(PloneMeetingTestCase):
         # still not available as no labels defined
         self.assertFalse(viewlet.available)
         labeljar.add('Label', 'green', False)
-        # clear cache
-        cache_key = available_labels_cache_key(item, ('view', 'edit', ))
-        self.request.set(cache_key, None)
+        self.cleanMemoize()
         self.assertTrue(viewlet.available)
 
     def _enable_ftw_labels(self):
@@ -2293,15 +2284,11 @@ class testViews(PloneMeetingTestCase):
         # propose so no more editable
         self.validateItem(item)
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
-        # clear cache
-        cache_key = available_labels_cache_key(item, ('edit', ))
-        self.request.set(cache_key, None)
         self.assertFalse(viewlet.can_edit)
         # enable labels editable by proposingGroup
         self._setupLabelsEditableWhenItemEditable(cfg, enable=False)
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
-        # clear cache
-        self.request.set(cache_key, None)
+        self.cleanMemoize()
         self.assertTrue(viewlet.can_edit)
 
         # MeetingManagers may edit labels even when item decided
@@ -2311,22 +2298,16 @@ class testViews(PloneMeetingTestCase):
         self.closeMeeting(meeting)
         self.assertEqual(item.query_state(), 'accepted')
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
-        # clear cache
-        self.request.set(cache_key, None)
         self.assertTrue(viewlet.can_edit)
         # proposing group editors may still edit labels
         self.changeUser('pmCreator1')
         self.assertTrue(self.hasPermission(View, item))
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
-        # clear cache
-        self.request.set(cache_key, None)
         self.assertTrue(viewlet.can_edit)
         # but not proposing group other roles
         self.changeUser('pmObserver1')
         self.assertTrue(self.hasPermission(View, item))
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
-        # clear cache
-        self.request.set(cache_key, None)
         self.assertFalse(viewlet.can_edit)
 
     def test_pm_ftw_labels_labeling_update_protected(self):
@@ -2347,9 +2328,6 @@ class testViews(PloneMeetingTestCase):
 
         # propose item, view is not more available
         self.proposeItem(item)
-        # clear cache
-        cache_key = available_labels_cache_key(item, ('edit', ))
-        self.request.set(cache_key, None)
         self.assertRaises(Unauthorized, item.restrictedTraverse('@@labeling').update)
 
     def test_pm_TopLevelTabs(self):
@@ -2779,21 +2757,14 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(item_labeling.storage, {'label': []})
         self.proposeItem(item)
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
-        # clear cache
-        cache_key = available_labels_cache_key(item, ('edit', ))
-        self.request.set(cache_key, None)
         self.assertRaises(Unauthorized, labelingview.update)
         # MeetingManager
-        # clear cache
-        self.request.set(cache_key, None)
         self.changeUser('pmManager')
         self.request.form['activate_labels'] = []
         labelingview.update()
         self.assertEqual(item_labeling.storage, {})
         # decide item so it is no more editable by MeetingManager
         meeting = self.create('Meeting')
-        # clear cache
-        self.request.set(cache_key, None)
         self.presentItem(item)
         self.closeMeeting(meeting)
 
@@ -2808,8 +2779,6 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         self.assertTrue(self.hasPermission(View, item))
-        # clear cache
-        self.request.set(cache_key, None)
         self.assertRaises(Unauthorized, labelingview.update)
         self.request.form['label_id'] = 'personal-label'
         self.request.form['active'] = 'False'
@@ -3311,6 +3280,10 @@ class testViews(PloneMeetingTestCase):
            to some profiles or using a TAL expression."""
         cfg = self.meetingConfig
         self._setupLabelsEditableWhenItemEditable(cfg)
+        # give access to po and rpo when "itemcreated"
+        self._setPowerObserverStates(states=("validated", ))
+        self._setPowerObserverStates(
+            observer_type="restrictedpowerobservers", states=("validated", ))
 
         # first usecase
         # editable by MeetingManagers only when in state "validated"
@@ -3334,6 +3307,25 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(viewlet.available)
         # can not add label
         self.assertEqual(viewlet.available_labels[1], [])
+        self.changeUser('pmManager')
+        # not editable as item not "validated"
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.validateItem(item)
+        self.assertEqual(viewlet.available_labels[1][0]['label_id'], 'label')
+        self.assertEqual(viewlet.available_labels[1][0]['active'], False)
+        item_labeling = ILabeling(item)
+        item_labeling.storage['label'] = []
+        self.cleanMemoize()
+        self.assertEqual(viewlet.available_labels[1][0]['active'], True)
+        # not viewable by restrictedpowerobserver
+        self.changeUser('restrictedpowerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertEqual(viewlet.available_labels[1][0]['label_id'], 'label')
+        self.assertFalse(viewlet.can_edit)
 
 
 def test_suite():

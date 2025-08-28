@@ -4641,7 +4641,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(
             [m.id for m in cfg.getMeetingsAcceptingItems(review_states=['created', 'decided'])],
             [m1.id, m3.id])
-        self.request.__annotations__.clear()
+        self.cleanMemoize()
         self.assertEqual(
             [m.id for m in cfg.getMeetingsAcceptingItems(review_states=['created', 'decided'])],
             [m1.id])
