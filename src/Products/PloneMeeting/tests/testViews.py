@@ -3280,12 +3280,14 @@ class testViews(PloneMeetingTestCase):
            to some profiles or using a TAL expression."""
         cfg = self.meetingConfig
         self._setupLabelsEditableWhenItemEditable(cfg)
-        # give access to po and rpo when "itemcreated"
-        self._setPowerObserverStates(states=("validated", ))
+        # give access to po and rpo when "itemcreated/proposed/validated"
         self._setPowerObserverStates(
-            observer_type="restrictedpowerobservers", states=("validated", ))
+            states=("itemcreated", self._stateMappingFor('proposed'), "validated", ))
+        self._setPowerObserverStates(
+            observer_type="restrictedpowerobservers",
+            states=("itemcreated", self._stateMappingFor('proposed'), "validated", ))
 
-        # first usecase
+        # usecase 1
         # editable by MeetingManagers only when in state "validated"
         # viewable by everyone excepted powerobservers
         config = list(cfg.getLabelsConfig())
@@ -3322,9 +3324,75 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         self.assertEqual(viewlet.available_labels[1], [])
         self.assertFalse(viewlet.can_edit)
+        # viewable by powerobserver
         self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, item))
         self.assertEqual(viewlet.available_labels[1][0]['label_id'], 'label')
+        self.assertFalse(viewlet.can_edit)
+        self.changeUser('pmManager')
+        self.backToState(item, "itemcreated")
+
+        # usecase 2
+        # editable and viewable only by MeetingManagers
+        config = list(cfg.getLabelsConfig())
+        config[1]['label_id'] = "label"
+        config[1]['edit_access_on'] = ""
+        config[1]['edit_groups'] = ["configgroup_meetingmanagers"]
+        config[1]['edit_states'] = []
+        config[1]['view_groups'] = ["configgroup_meetingmanagers"]
+        config[1]['view_groups_excluding'] = "0"
+        cfg.setLabelsConfig(config)
+        item._update_labels_access_cache(cfg, "itemcreated")
+        # creator can not view or edit
+        self.changeUser('pmCreator1')
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+        self.changeUser('pmManager')
+        self.assertEqual(viewlet.available_labels[1][0]['label_id'], 'label')
+        self.assertTrue(viewlet.can_edit)
+        # not viewable by restrictedpowerobserver
+        self.changeUser('restrictedpowerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+        # not viewable by powerobserver
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+
+        # usecase 3
+        # editable and viewable only by proposingGroup
+        config = list(cfg.getLabelsConfig())
+        config[1]['label_id'] = "label"
+        config[1]['edit_access_on'] = ""
+        config[1]['edit_groups'] = [
+            "suffix_proposing_group_creators",
+            "suffix_proposing_group_reviewers"]
+        config[1]['view_groups'] = [
+            "suffix_proposing_group_creators",
+            "suffix_proposing_group_reviewers"]
+        config[1]['view_groups_excluding'] = "0"
+        cfg.setLabelsConfig(config)
+        # use vendors so pmManager is not creator for it
+        self.changeUser('pmCreator2')
+        item2 = self.create('MeetingItem')
+        viewlet = self._get_viewlet(
+            context=item2,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
+        # proposing group creator can view/edit
+        self.assertEqual(viewlet.available_labels[1][0]['label_id'], 'label')
+        self.assertTrue(viewlet.can_edit)
+        self.proposeItem(item2)
+        # proposing group reviewer can view/edit
+        self.changeUser('pmReviewer2')
+        self.assertEqual(viewlet.available_labels[1][0]['label_id'], 'label')
+        self.assertTrue(viewlet.can_edit)
+        # MeetingManager can not view/edit
+        self.validateItem(item2)
+        self.changeUser('pmManager')
+        self.assertEqual(viewlet.available_labels[1], [])
         self.assertFalse(viewlet.can_edit)
 
 
