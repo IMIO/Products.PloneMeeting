@@ -104,40 +104,47 @@ class PMLabeling(Labeling):
                     config = self.cfg.getLabelsConfig(["*"]) if \
                         is_using_default_config else \
                         self.cfg.getLabelsConfig([label['label_id']])
-                    # view
+                    # first check for "view"
+                    view_was_checked = False
                     if "view" in modes and \
-                       label['active'] and \
-                       (not is_using_default_config or
-                            default_view_config_already_checked is False):
-                        # check "view_groups", in or not in depending on "view_groups_excluding"
-                        if cached['view_groups'] and \
-                           (
-                            (config['view_groups_excluding'] == '0' and
-                             not user_groups.intersection(cached['view_groups'])) or
-                            (config['view_groups_excluding'] == '1' and
-                             user_groups.intersection(cached['view_groups']))):
-                            continue
-                        # manage view_access, already computed, "False" or "True"
-                        # "None" means needs to be computed on the fly
-                        if cached['view_access'] is False:
-                            continue
-                        elif config['view_access_on_cache'] == '0' and \
-                                config['view_access_on'].strip():
-                            # will be done only on first use
-                            if extra_expr_ctx is None:
-                                extra_expr_ctx = _base_extra_expr_ctx(
-                                    self.context, {'item': self.context, })
-                            if not _evaluateExpression(
-                                    self.context,
-                                    expression=config['view_access_on'],
-                                    extra_expr_ctx=extra_expr_ctx,
-                                    raise_on_error=True):
+                       label['active']:
+                        if not is_using_default_config or \
+                            default_view_config_already_checked is False:
+                            # check "view_groups", in or not in depending on "view_groups_excluding"
+                            if cached['view_groups'] and \
+                               (
+                                (config['view_groups_excluding'] == '0' and
+                                 not user_groups.intersection(cached['view_groups'])) or
+                                (config['view_groups_excluding'] == '1' and
+                                 user_groups.intersection(cached['view_groups']))):
                                 continue
-                        # mark view default config as working
-                        if is_using_default_config:
-                            default_view_config_already_checked = True
-                    # edit
-                    elif "edit" in modes and \
+                            # manage view_access, already computed, "False" or "True"
+                            # "None" means needs to be computed on the fly
+                            if cached['view_access'] is False:
+                                continue
+                            elif config['view_access_on_cache'] == '0' and \
+                                    config['view_access_on'].strip():
+                                # will be done only on first use
+                                if extra_expr_ctx is None:
+                                    extra_expr_ctx = _base_extra_expr_ctx(
+                                        self.context, {'item': self.context, })
+                                if not _evaluateExpression(
+                                        self.context,
+                                        expression=config['view_access_on'],
+                                        extra_expr_ctx=extra_expr_ctx,
+                                        raise_on_error=True):
+                                    continue
+                            # mark view default config as working
+                            if is_using_default_config:
+                                default_view_config_already_checked = True
+                            # mark "view" as checked, means "view" is in modes
+                            # and check passed so we do not need to check "edit"
+                            view_was_checked = True
+                        else:
+                            view_was_checked = True
+
+                    # "edit" not having passed the "view" check
+                    if "edit" in modes and not view_was_checked and \
                          (not is_using_default_config or
                           default_edit_config_already_checked is False):
                         # check "edit_groups", in or not in depending on "edit_groups_excluding"
