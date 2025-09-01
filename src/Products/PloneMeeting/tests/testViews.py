@@ -3275,9 +3275,8 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(data["public_deliberation_decided"], self.motivationText + self.decisionText)
         return item, view, helper, data
 
-    def test_pm_LabelsConfig(self):
-        """Test various cases of MeetingConfig.labelsConfig to restrict view/edit
-           to some profiles or using a TAL expression."""
+    def _setup_for_labels_config(self):
+        """ """
         cfg = self.meetingConfig
         self._setupLabelsEditableWhenItemEditable(cfg)
         # give access to po and rpo when "itemcreated/proposed/validated"
@@ -3287,9 +3286,11 @@ class testViews(PloneMeetingTestCase):
             observer_type="restrictedpowerobservers",
             states=("itemcreated", self._stateMappingFor('proposed'), "validated", ))
 
-        # usecase 1
-        # editable by MeetingManagers only when in state "validated"
-        # viewable by everyone excepted powerobservers
+    def test_pm_LabelsConfigEditableByMeetingManagersNotViewableByPowerObservers(self):
+        """Test labelsConfig so labels are editable by MeetingManagers only when
+           in state "validated viewable by everyone excepted powerobservers."""
+        cfg = self.meetingConfig
+        self._setup_for_labels_config()
         config = list(cfg.getLabelsConfig())
         new_config = deepcopy(config[0])
         new_config['label_id'] = "label"
@@ -3332,17 +3333,28 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.backToState(item, "itemcreated")
 
-        # usecase 2
+    def test_pm_LabelsConfigEditableAndViewableByMeetingManagersOnly(self):
+        """Test labelsConfig so labels are editable and viewable only by MeetingManagers."""
+        cfg = self.meetingConfig
+        self._setup_for_labels_config()
         # editable and viewable only by MeetingManagers
         config = list(cfg.getLabelsConfig())
-        config[1]['label_id'] = "label"
-        config[1]['edit_access_on'] = ""
-        config[1]['edit_groups'] = ["configgroup_meetingmanagers"]
-        config[1]['edit_states'] = []
-        config[1]['view_groups'] = ["configgroup_meetingmanagers"]
-        config[1]['view_groups_excluding'] = "0"
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
+        new_config['edit_access_on'] = ""
+        new_config['edit_groups'] = ["configgroup_meetingmanagers"]
+        new_config['edit_states'] = []
+        new_config['view_groups'] = ["configgroup_meetingmanagers"]
+        new_config['view_groups_excluding'] = "0"
+        config.append(new_config)
         cfg.setLabelsConfig(config)
-        item._update_labels_access_cache(cfg, "itemcreated")
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        viewlet = self._get_viewlet(
+            context=item,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
+        self.assertTrue(viewlet.available)
         # creator can not view or edit
         self.changeUser('pmCreator1')
         self.assertEqual(viewlet.available_labels[1], [])
@@ -3361,18 +3373,23 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(viewlet.available_labels[1], [])
         self.assertFalse(viewlet.can_edit)
 
-        # usecase 3
+    def test_pm_LabelsConfigEditableAndViewableByProposingGroupOnly(self):
+        """Test labelsConfig so labels are editable and viewable only by propodingGroup."""
+        cfg = self.meetingConfig
+        self._setup_for_labels_config()
         # editable and viewable only by proposingGroup
         config = list(cfg.getLabelsConfig())
-        config[1]['label_id'] = "label"
-        config[1]['edit_access_on'] = ""
-        config[1]['edit_groups'] = [
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
+        new_config['edit_access_on'] = ""
+        new_config['edit_groups'] = [
             "suffix_proposing_group_creators",
             "suffix_proposing_group_reviewers"]
-        config[1]['view_groups'] = [
+        new_config['view_groups'] = [
             "suffix_proposing_group_creators",
             "suffix_proposing_group_reviewers"]
-        config[1]['view_groups_excluding'] = "0"
+        new_config['view_groups_excluding'] = "0"
+        config.append(new_config)
         cfg.setLabelsConfig(config)
         # use vendors so pmManager is not creator for it
         self.changeUser('pmCreator2')
@@ -3392,6 +3409,68 @@ class testViews(PloneMeetingTestCase):
         # MeetingManager can not view/edit
         self.validateItem(item2)
         self.changeUser('pmManager')
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+        # not viewable by restrictedpowerobserver
+        self.changeUser('restrictedpowerobserver1')
+        self.assertTrue(self.hasPermission(View, item2))
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+        # not viewable by powerobserver
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item2))
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+
+    def test_pm_LabelsConfigEditableAndViewableByVendorsAdvisers(self):
+        """Test labelsConfig so labels are editable and viewable only by
+           "Vendors advisers"."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates(('itemcreated', ))
+        cfg.setItemAdviceEditStates(('itemcreated', ))
+        self._setup_for_labels_config()
+        # editable and viewable only by proposingGroup
+        config = list(cfg.getLabelsConfig())
+        tal_expr = "python: '{0}' in utils.get_plone_groups_for_user()".format(
+            self.developers_advisers)
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
+        new_config['edit_access_on'] = tal_expr
+        new_config['edit_groups'] = []
+        new_config['view_groups'] = []
+        new_config['view_groups_excluding'] = "0"
+        new_config['edit_access_on'] = tal_expr
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        # create with vendors and ask developers advice as pmManager is adviser for vendors
+        self.changeUser('pmCreator2')
+        item = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
+        viewlet = self._get_viewlet(
+            context=item,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
+        self.assertTrue(viewlet.available)
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+        # developers adviser may view/edit the label
+        self.changeUser('pmAdviser1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertEqual(viewlet.available_labels[1][0]['label_id'], 'label')
+        self.assertTrue(viewlet.can_edit)
+        # MeetingManager can not view/edit
+        import ipdb; ipdb.set_trace()
+        self.changeUser('pmManager')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+        # not viewable by restrictedpowerobserver
+        self.changeUser('restrictedpowerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+        # not viewable by powerobserver
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
         self.assertEqual(viewlet.available_labels[1], [])
         self.assertFalse(viewlet.can_edit)
 
