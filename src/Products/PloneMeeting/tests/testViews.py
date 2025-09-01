@@ -3426,13 +3426,15 @@ class testViews(PloneMeetingTestCase):
         """Test labelsConfig so labels are editable and viewable only by
            "Vendors advisers"."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates(('itemcreated', ))
-        cfg.setItemAdviceEditStates(('itemcreated', ))
+        cfg.setItemAdviceStates(('itemcreated', 'validated'))
+        cfg.setItemAdviceEditStates(('itemcreated', 'validated'))
         self._setup_for_labels_config()
+        # remove pmManager from vendors_advisers
+        self._removePrincipalFromGroups('pmManager', [self.vendors_advisers])
         # editable and viewable only by proposingGroup
         config = list(cfg.getLabelsConfig())
         tal_expr = "python: '{0}' in utils.get_plone_groups_for_user()".format(
-            self.developers_advisers)
+            self.vendors_advisers)
         new_config = deepcopy(config[0])
         new_config['label_id'] = "label"
         new_config['edit_access_on'] = tal_expr
@@ -3449,16 +3451,16 @@ class testViews(PloneMeetingTestCase):
             context=item,
             manager_name='plone.belowcontenttitle',
             viewlet_name='ftw.labels.labeling')
+        self.validateItem(item)
         self.assertTrue(viewlet.available)
         self.assertEqual(viewlet.available_labels[1], [])
         self.assertFalse(viewlet.can_edit)
-        # developers adviser may view/edit the label
-        self.changeUser('pmAdviser1')
+        # pmReviewer2 is adviser for vendors
+        self.changeUser('pmReviewer2')
         self.assertTrue(self.hasPermission(View, item))
         self.assertEqual(viewlet.available_labels[1][0]['label_id'], 'label')
         self.assertTrue(viewlet.can_edit)
         # MeetingManager can not view/edit
-        import ipdb; ipdb.set_trace()
         self.changeUser('pmManager')
         self.assertTrue(self.hasPermission(View, item))
         self.assertEqual(viewlet.available_labels[1], [])
