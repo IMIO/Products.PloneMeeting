@@ -109,7 +109,7 @@ class PMLabeling(Labeling):
                     if "view" in modes and \
                        label['active']:
                         if not is_using_default_config or \
-                            default_view_config_already_checked is False:
+                           default_view_config_already_checked is False:
                             # check "view_groups", in or not in depending on "view_groups_excluding"
                             if cached['view_groups'] and \
                                (
@@ -145,8 +145,8 @@ class PMLabeling(Labeling):
 
                     # "edit" not having passed the "view" check
                     if "edit" in modes and not view_was_checked and \
-                         (not is_using_default_config or
-                          default_edit_config_already_checked is False):
+                       (not is_using_default_config or
+                            default_edit_config_already_checked is False):
                         # check "edit_groups", in or not in depending on "edit_groups_excluding"
                         if cached['edit_groups'] and \
                            (
@@ -201,29 +201,36 @@ class PMLabeling(Labeling):
         # add it back to activate_labels in the request
         activate_labels = self.request.form.get('activate_labels', [])
         active_labels = ILabeling(self.context).active_labels()
+        stored_label_ids = IAnnotations(self.context).get(FTW_LABELS_ANNOTATION_KEY, {}).keys()
         if active_labels:
             for active_label in active_labels:
-                # this will make check for edit
-                active_label['active'] = False
+                active_label['active'] = True
             # need a full label to filter it, returns pers and global labels
-            editable_labels = self.filter_manageable_labels(
-                [[], active_labels], modes=('edit, '))[1]
             active_label_ids = [label['label_id'] for label in active_labels
                                 if not label['by_user']]
+            editable_labels = self.filter_manageable_labels(
+                [[], active_labels], modes=('edit', ))[1]
             editable_label_ids = [label['label_id'] for label in editable_labels]
-            not_mangeable_label_ids = set(active_label_ids).difference(
+            viewable_labels = self.filter_manageable_labels(
+                [[], active_labels], modes=('view', ))[1]
+            viewable_label_ids = [label['label_id'] for label in viewable_labels]
+            not_manageable_label_ids = set(active_label_ids).difference(
                 editable_label_ids + activate_labels)
-            if not_mangeable_label_ids:
+            # ignore not viewable label ids
+            viewable_not_manageable_label_ids = [
+                not_mangeable_label_id for not_mangeable_label_id in not_manageable_label_ids
+                if not_mangeable_label_id in viewable_label_ids]
+            if viewable_not_manageable_label_ids:
                 not_editable_label_titles = [
                     label['title'] for label in active_labels
-                    if label['label_id'] in not_mangeable_label_ids]
+                    if label['label_id'] in viewable_not_manageable_label_ids]
                 api.portal.show_message(
                     _("You can not manage labels \"${not_manageable_label_titles}\"!",
                       mapping={'not_manageable_label_titles': safe_unicode(
                         ', '.join(not_editable_label_titles))}),
                     type='warning',
                     request=self.request)
-            activate_labels += list(not_mangeable_label_ids)
+            activate_labels += list(not_manageable_label_ids)
             self.request.form.update({'activate_labels': activate_labels})
         # check if need to update_local_roles, a relevant label has been (un)selected
         # check if one added or removed

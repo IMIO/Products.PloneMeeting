@@ -7431,53 +7431,53 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             adapter.parent = self
             extra_expr_ctx = None
             item_state = self.query_state()
-            for row in labels_config:
+            for config in labels_config:
                 cache = getattr(self, ITEM_LABELS_ACCESS_CACHE_ATTR)
-                cache[row['label_id']] = {}
+                cache[config['label_id']] = {}
                 # view
-                cache[row['label_id']]['view_groups'] = \
-                    adapter._item_visible_for_groups(row['view_groups'])
+                cache[config['label_id']]['view_groups'] = \
+                    adapter._item_visible_for_groups(config['view_groups'])
                 # view_access will take into account view_states and view_access_on
                 # None will mean in correct review state but TAL expr to be computed on the fly
-                cache[row['label_id']]['view_access'] = None
-                if row['view_states'] and item_state not in row['view_states']:
-                    # no need to compute "view_access_on" if not in correct review state
-                    cache[row['label_id']]['view_access'] = False
-                elif row['view_access_on_cache'] == '1':
-                    # compute view_access_on if allowed to cache
-                    cache[row['label_id']]['view_access_on'] = True
-                    if row['view_access_on'].strip():
+                cache[config['label_id']]['view_access'] = None
+                if config['view_states'] and item_state not in config['view_states']:
+                    # no need to compute "view_access" if not in correct review state
+                    cache[config['label_id']]['view_access'] = False
+                elif config['view_access_on_cache'] == '1':
+                    # compute view_access if allowed to cache
+                    cache[config['label_id']]['view_access'] = True
+                    if config['view_access_on'].strip():
                         # will be done only on first use
                         if extra_expr_ctx is None:
                             extra_expr_ctx = _base_extra_expr_ctx(
                                 self, {'item': self, })
-                        cache[row['label_id']]['view_access_on'] = \
+                        cache[config['label_id']]['view_access'] = \
                             _evaluateExpression(
                                 self,
-                                expression=row['view_access_on'],
+                                expression=config['view_access_on'],
                                 extra_expr_ctx=extra_expr_ctx,
                                 raise_on_error=True)
                 # edit
-                cache[row['label_id']]['edit_groups'] = \
-                    adapter._item_visible_for_groups(row['edit_groups'])
+                cache[config['label_id']]['edit_groups'] = \
+                    adapter._item_visible_for_groups(config['edit_groups'])
                 # edit_access will take into account edit_states and edit_access_on
                 # None will mean in correct review state but TAL expr to be computed on the fly
-                cache[row['label_id']]['edit_access'] = None
-                if row['edit_states'] and item_state not in row['edit_states']:
-                    # no need to compute "edit_access_on" if not in correct review state
-                    cache[row['label_id']]['edit_access'] = False
-                elif row['edit_access_on_cache'] == '1':
-                    # compute edit_access_on if allowed to cache
-                    cache[row['label_id']]['edit_access_on'] = True
-                    if row['edit_access_on'].strip():
+                cache[config['label_id']]['edit_access'] = None
+                if config['edit_states'] and item_state not in config['edit_states']:
+                    # no need to compute "edit_access" if not in correct review state
+                    cache[config['label_id']]['edit_access'] = False
+                elif config['edit_access_on_cache'] == '1':
+                    # compute edit_access if allowed to cache
+                    cache[config['label_id']]['edit_access'] = True
+                    if config['edit_access_on'].strip():
                         # will be done only on first use
                         if extra_expr_ctx is None:
                             extra_expr_ctx = _base_extra_expr_ctx(
                                 self, {'item': self, })
-                        cache[row['label_id']]['edit_access_on'] = \
+                        cache[config['label_id']]['edit_access'] = \
                             _evaluateExpression(
                                 self,
-                                expression=row['edit_access_on'],
+                                expression=config['edit_access_on'],
                                 extra_expr_ctx=extra_expr_ctx,
                                 raise_on_error=True)
 

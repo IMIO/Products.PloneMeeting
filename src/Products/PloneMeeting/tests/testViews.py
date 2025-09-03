@@ -40,6 +40,7 @@ from Products.PloneMeeting.etags import ConfigModified
 from Products.PloneMeeting.etags import ContextModified
 from Products.PloneMeeting.etags import LinkedMeetingModified
 from Products.PloneMeeting.etags import ToolModified
+from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import IMG_BASE64_DATA
@@ -3475,6 +3476,108 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         self.assertEqual(viewlet.available_labels[1], [])
         self.assertFalse(viewlet.can_edit)
+
+    def test_pm_LabelsConfigUpdateLocalToles(self):
+        """Test labelsConfig when a configuration specify to update_local_roles.
+           Here a copyGroup will be added when a label is selected."""
+        cfg = self.meetingConfig
+        self._enableField(['copyGroups', 'labels'])
+        # vendors_reviewers will be set as copyGroup when label is selected
+        self.vendors.as_copy_group_on = \
+            "python: 'label' in utils.get_labels(item) and ['reviewers']"
+        # for now, do not update_local_roles
+        config = list(cfg.getLabelsConfig())
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.request.form['activate_labels'] = ['label']
+        labelingview.update()
+        # as update_local_roles is "0", copyGroup was not set
+        self.assertTrue('label' in get_labels(item))
+        self.assertEqual(item.getAllCopyGroups(), ())
+        # update config so it update_local_roles
+        config[1]['update_local_roles'] = "1"
+        cfg.setLabelsConfig(config)
+        # was not updated because updated when changed
+        labelingview.update()
+        self.assertEqual(item.getAllCopyGroups(), ())
+        # remove and add it again, this time local_roles are updated
+        self.request.form['activate_labels'] = []
+        labelingview.update()
+        self.assertEqual(get_labels(item), {})
+        self.request.form['activate_labels'] = ['label']
+        labelingview.update()
+        self.assertEqual(item.getAllCopyGroups(True), (self.vendors_reviewers, ))
+        # removing the label will also update local_roles
+        self.request.form['activate_labels'] = []
+        labelingview.update()
+        self.assertEqual(get_labels(item), {})
+        self.assertEqual(item.getAllCopyGroups(True), ())
+
+    def test_pm_LabelsConfigWithNotViewableNotEditableLabels(self):
+        """Test labelsConfig when editing an item containing labels where
+           some are not viewable and/or editable.
+           Warnings are displayed if trying to remove a label that is not editable."""
+        # this way we have 3 labels, label, label1 and label2
+        # label will be viewable and editable, we use the "*" config
+        # label1 is viewable but not editable
+        # label2 is not viewable and not editable
+        cfg = self.meetingConfig
+        self._enable_ftw_labels()
+        config = list(cfg.getLabelsConfig())
+        new_config1 = deepcopy(config[0])
+        new_config1['label_id'] = "label1"
+        new_config1['edit_access_on'] = "python: False"
+        new_config1['edit_groups'] = []
+        new_config2 = deepcopy(config[0])
+        new_config2['label_id'] = "label2"
+        new_config2['edit_access_on'] = "python: False"
+        new_config2['view_access_on'] = "python: False"
+        new_config2['edit_groups'] = []
+        config.append(new_config1)
+        config.append(new_config2)
+        cfg.setLabelsConfig(config)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        labelingview = item.restrictedTraverse('@@labeling')
+        # clear existing messages
+        IStatusMessage(self.request).show()
+        # edit without changing anything
+        self.request.form['activate_labels'] = ['label', 'label1']
+        labelingview.update()
+        self.assertEqual(IStatusMessage(self.request).show(), [])
+        self.assertEqual(sorted(get_labels(item)), ['label', 'label1'])
+        # edit, remove editable 'label'
+        self.request.form['activate_labels'] = ['label1']
+        labelingview.update()
+        self.assertEqual(IStatusMessage(self.request).show(), [])
+        self.assertEqual(sorted(get_labels(item)), ['label1'])
+        # try to remove 'label1', warning and still there
+        self.request.form['activate_labels'] = []
+        labelingview.update()
+        # set response status to 200 so status message is removed
+        self.request.response.setStatus(200)
+        messages = IStatusMessage(self.request).show()
+        self.assertEqual(messages[0].message, u'You can not manage labels "Label1"!')
+        self.assertEqual(sorted(get_labels(item)), ['label1'])
+        # add label2 that is not viewable
+        # and save 'label1' only, 'label2' is still there
+        self.request.form['activate_labels'] = ['label1', 'label2']
+        labelingview.update()
+        self.assertEqual(sorted(get_labels(item)), ['label1', 'label2'])
+        # no message as keeping 'label1'
+        self.assertEqual(IStatusMessage(self.request).show(), [])
+        # save 'label1' as 'label2' is not viewable
+        self.request.form['activate_labels'] = ['label1']
+        labelingview.update()
+        # no message as keeping 'label1', and no message about not viewable 'label2'
+        self.assertEqual(IStatusMessage(self.request).show(), [])
+        # but 'label2' was kept as it is not viewable
+        self.assertEqual(sorted(get_labels(item)), ['label1', 'label2'])
 
 
 def test_suite():
