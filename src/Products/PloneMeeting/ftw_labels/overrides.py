@@ -221,13 +221,13 @@ class PMLabeling(Labeling):
                 not_mangeable_label_id for not_mangeable_label_id in not_manageable_label_ids
                 if not_mangeable_label_id in viewable_label_ids]
             if viewable_not_manageable_label_ids:
-                not_editable_label_titles = [
-                    label['title'] for label in active_labels
+                not_manageable_label_titles = [
+                    '"{0}"'.format(label['title']) for label in active_labels
                     if label['label_id'] in viewable_not_manageable_label_ids]
                 api.portal.show_message(
-                    _("You can not manage labels \"${not_manageable_label_titles}\"!",
+                    _("You can not manage labels ${not_manageable_label_titles}!",
                       mapping={'not_manageable_label_titles': safe_unicode(
-                        ', '.join(not_editable_label_titles))}),
+                        ', '.join(not_manageable_label_titles))}),
                     type='warning',
                     request=self.request)
             activate_labels += list(not_manageable_label_ids)
