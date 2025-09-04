@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.24.3 (unreleased)
+4.2.24.3 (2025-09-04)
 ---------------------
 
 - Use median space to separate optional letters in `abstenu·e·s` of print_votes.
