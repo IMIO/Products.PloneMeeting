@@ -2549,6 +2549,34 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    DataGridField(
+        name='itemFieldsConfig',
+        widget=DataGridField._properties['widget'](
+            description="ItemFieldsConfig",
+            description_msgid="item_fields_config_descr",
+            columns={
+                'name': SelectColumn(
+                    "Item fields config name",
+                    vocabulary_factory="Products.PloneMeeting.vocabularies.item_fields_config_vocabulary",
+                    col_description="item_fields_config_name_description"),
+                'view': Column(
+                    "Item fields config view TAL expression",
+                    col_description="item_fields_config_view_tal_expr_description"),
+                'edit': Column(
+                    "Item fields config edit TAL expression",
+                    col_description="item_fields_config_edit_tal_expr_description"),
+            },
+            label='Itemfieldsconfig',
+            label_msgid='PloneMeeting_label_itemFieldsConfig',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        allow_oddeven=True,
+        default=defValues.itemFieldsConfig,
+        columns=('name', 'view', 'edit'),
+        allow_empty_rows=False,
+        write_permission=WriteRiskyConfig,
+    ),
     LinesField(
         name='usingGroups',
         widget=MultiSelectionWidget(
@@ -3816,6 +3844,42 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res = translated_res
         # when returning for example extra_suffixes as list, avoid it modified
         return copy.deepcopy(res)
+
+    security.declarePublic('getLabelsConfig')
+
+    def getLabelsConfig(self, label_ids=[], data=None, return_label_id_singleton=True, **kwargs):
+        '''Override the field 'labelsConfig' accessor to be able to handle some paramters:
+           - data : return every values defined for a given datagrid column name.'''
+        res = self.getField('labelsConfig').get(self, **kwargs)
+        if label_ids:
+            res = [level for level in res
+                   if level['label_id'] in label_ids]
+        if data:
+            res = [level[data] for level in res if level[data]]
+            # manage multivalued columns
+            if res and hasattr(res[0], "__iter__"):
+                res = itertools.chain.from_iterable(res)
+        if return_label_id_singleton and len(label_ids) == 1:
+            res = res and res[0] or res
+        return res
+
+    security.declarePublic('getItemFieldsConfig')
+
+    def getItemFieldsConfig(self, names=[], data=None, return_name_singleton=True, **kwargs):
+        '''Override the field 'itemFieldsConfig' accessor to be able to handle some paramters:
+           - data : return every values defined for a given datagrid column name.'''
+        res = self.getField('itemFieldsConfig').get(self, **kwargs)
+        if names:
+            res = [level for level in res
+                   if level['name'] in names]
+        if data:
+            res = [level[data] for level in res if level[data]]
+            # manage multivalued columns
+            if res and hasattr(res[0], "__iter__"):
+                res = itertools.chain.from_iterable(res)
+        if return_name_singleton and len(names) == 1:
+            res = res and res[0] or res
+        return res
 
     security.declarePublic('getOrderedItemInitiators')
 
@@ -6175,6 +6239,23 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             extra_expr_ctx=extra_expr_ctx,
             empty_expr_is_true=True)
         return res
+
+    security.declarePrivate('eval_tal_expr_for_field')
+
+    def eval_tal_expr_for_field(self, item, field_name, mode='view'):
+        """ """
+        tal_expr = self.getItemFieldsConfig(names=[field_name], data=mode)
+        extra_expr_ctx = _base_extra_expr_ctx(item)
+        extra_expr_ctx.update({'item': item})
+        empty_expr_is_true = True
+        if mode == 'edit':
+            empty_expr_is_true = False
+        return _evaluateExpression(
+            item,
+            expression=tal_expr,
+            roles_bypassing_expression=[],
+            extra_expr_ctx=extra_expr_ctx,
+            empty_expr_is_true=empty_expr_is_true)
 
     def getItemIconColorName(self):
         '''This will return the name of the icon used for MeetingItem portal_type.'''
