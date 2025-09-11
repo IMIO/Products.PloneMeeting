@@ -5189,6 +5189,10 @@ class testMeetingItem(PloneMeetingTestCase):
            - item editor;
            - item viewer;
            - powerobserver."""
+        # shortcuts are taken into account in cache key
+        self._deactivate_wfas(
+            ['item_validation_shortcuts',
+             'item_validation_no_validate_shortcuts'])
         cfg = self.meetingConfig
         # enable everything
         cfg.setItemCopyGroupsStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
@@ -7376,6 +7380,35 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.query_state(), 'accepted')
         _check_editable(item)
 
+    def test_pm_ItemInternalNotesQuickEditDoesNotChangeModificationDate(self, ):
+        """When field MeetingItem.internalNotes is quickedited, it will not change
+           the item modification date as it is a field that is not really part
+           of the decision."""
+        self.changeUser('siteadmin')
+        self._enableField('description')
+        self._enableField('internalNotes')
+        # by default set internalNotes editable by proposingGroup creators
+        self._activate_config('itemInternalNotesEditableBy',
+                              'suffix_proposing_group_creators',
+                              keep_existing=False)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item_modified = item.modified()
+        # reindexed, but as internalNotes is not indexed, check with title
+        item.setTitle('specific')
+        self.assertFalse(self.catalog(SearchableText='specific'))
+        # not modified when quick editing internalNotes
+        set_field_from_ajax(item, 'internalNotes', self.descriptionText)
+        self.assertEqual(item_modified, item.modified())
+        # but reindexed
+        self.assertTrue(self.catalog(SearchableText='specific'))
+        # modified and reindexed when quickediting another field
+        item.setTitle('specific2')
+        self.assertFalse(self.catalog(SearchableText='specific2'))
+        set_field_from_ajax(item, 'description', self.descriptionText)
+        self.assertNotEqual(item_modified, item.modified())
+        self.assertTrue(self.catalog(SearchableText='specific2'))
+
     def test_pm_HideCssClasses(self):
         """ """
         self.changeUser('siteadmin')
@@ -8304,6 +8337,16 @@ class testMeetingItem(PloneMeetingTestCase):
              u'M. PMCreator Two <pmcreator2@plonemeeting.org>',
              u'M. PMManager <pmmanager@plonemeeting.org>',
              u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
+        # also working when mailMode is "test"
+        cfg.setMailMode('test')
+        recipients, subject, body = item._sendCopyGroupsMailIfRelevant('itemcreated', 'validated')
+        self.assertEqual(
+            sorted(recipients),
+            [u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
+             u'M. PMCreator Two <pmcreator2@plonemeeting.org>',
+             u'M. PMManager <pmmanager@plonemeeting.org>',
+             u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
+
 
     def test_pm__sendAdviceToGiveMailIfRelevant(self):
         """Check mail sent to advisers when they have access to item.
@@ -8495,11 +8538,21 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(sorted(recipients),
                          [u'M. PMReviewer One <pmreviewer1@plonemeeting.org>'])
         # subject and body contain relevant informations
+        val_level = cfg.getItemWFValidationLevels(states=['proposed'])
         self.assertEqual(
             subject,
-            u'{0} - Item in state "Proposed" '
-            u'(following "Back to \'Proposed\'") - '
-            u'My item that notify when propose'.format(safe_unicode(cfg.Title())))
+            u'{0} - Item in state "{1}" '
+            u'(following "{2}") - '
+            u'My item that notify when propose'.format(
+                safe_unicode(cfg.Title()),
+                translate(
+                    safe_unicode(val_level['state_title']),
+                    domain="plone",
+                    context=self.request),
+                translate(
+                    safe_unicode(val_level['back_transition_title']),
+                    domain="plone",
+                    context=self.request)))
         self.assertEqual(
             body,
             u'The item is entitled "My item that notify when propose". '

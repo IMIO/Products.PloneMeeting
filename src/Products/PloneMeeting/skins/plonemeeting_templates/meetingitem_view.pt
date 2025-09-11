@@ -197,7 +197,7 @@
                                    class string:${edit_css_classes} item_${context/getEmergency}">
                     <span metal:use-macro="python: here.widget('emergency', mode='view')" />
                 </span>
-                <span class="discreet"> — <a href="item-emergency-history" class="link-overlay-pm" i18n:translate="" i18n:domain="plone">History</a></span>
+                <span class="discreet"> — <a href="item-emergency-history" class="link-overlay-pm-info" i18n:translate="" i18n:domain="plone">History</a></span>
             </div>
 
             <tal:comment replace="nothing">Item completeness</tal:comment>
@@ -211,7 +211,7 @@
                                    class string:${edit_css_classes} item_${context/getCompleteness}">
                     <span metal:use-macro="python: here.widget('completeness', mode='view')" />
                 </span>
-                <span class="discreet"> — <a href="item-completeness-history" class="link-overlay-pm" i18n:translate="" i18n:domain="plone">History</a></span>
+                <span class="discreet"> — <a href="item-completeness-history" class="link-overlay-pm-info" i18n:translate="" i18n:domain="plone">History</a></span>
             </div>
         </td>
         <td style="padding-right: 0.5em;" width="50%" align="right">

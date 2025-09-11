@@ -36,6 +36,7 @@ from imio.helpers.content import get_user_fullname
 from imio.helpers.content import richtextval
 from imio.helpers.security import fplog
 from imio.helpers.workflow import get_final_states
+from imio.helpers.workflow import get_state_infos
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import addClassToLastChildren
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
@@ -448,13 +449,13 @@ def _sendMail(obj, body, recipients, fromAddress, subject, format,
             for recipient in recipients:
                 obj.MailHost.send(
                     body, recipient, fromAddress, subject, charset='utf-8', msg_type=format)
-    except socket.error, sg:
+    except socket.error as sg:
         raise EmailError(SENDMAIL_ERROR % str(sg))
-    except UnicodeDecodeError, ue:
+    except UnicodeDecodeError as ue:
         raise EmailError(ENCODING_ERROR % str(ue))
-    except MailHostError, mhe:
+    except MailHostError as mhe:
         raise EmailError(MAILHOST_ERROR % str(mhe))
-    except Exception, e:
+    except Exception as e:
         raise EmailError(SENDMAIL_ERROR % str(e))
 
 
@@ -470,12 +471,22 @@ def get_public_url(obj):
     return url
 
 
+def several_mc_with_same_title(cfg_title=None):
+    """Return True if we have several MeetingConfigs with same title."""
+    tool = api.portal.get_tool("portal_plonemeeting")
+    every_cfg_titles = [cfg.Title() for cfg in tool.getActiveConfigs(check_access=False)]
+    if cfg_title:
+        return every_cfg_titles.count(cfg_title) > 1
+    else:
+        return len(every_cfg_titles) != len(set(every_cfg_titles))
+
+
 def sendMail(recipients, obj, event, attachments=None, mapping={}):
     '''Sends a mail related to p_event that occurred on p_obj to
        p_recipients. If p_recipients is None, the mail is sent to
        the system administrator.'''
     # Do not sent any mail if mail mode is "deactivated".
-    tool = obj.portal_plonemeeting
+    tool = api.portal.get_tool("portal_plonemeeting")
     cfg = tool.getMeetingConfig(obj) or tool.getActiveConfigs()[0]
     mailMode = cfg.getMailMode()
     if mailMode == 'deactivated':
@@ -493,9 +504,9 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         for elt in mapping:
             if not isinstance(mapping[elt], unicode):
                 mapping[elt] = safe_unicode(mapping[elt])
-        translationMapping = mapping
+        translation_mapping = mapping
     else:
-        translationMapping = {}
+        translation_mapping = {}
 
     # get last WF action but specifically manage when an transition was
     # triggered automatilcally, the comments is in the previous transition
@@ -508,15 +519,13 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     # in case we use configGroups and we have several MeetingConfig with
     # same title, this means we use configGroups to group same kind of
     # MeetingConfig, we prepend configGroup "full_label" to the "meetingConfigTitle"
-    if cfg.getConfigGroup() and \
-       (len([tmp_cfg.Title() for tmp_cfg in tool.getActiveConfigs(check_access=False)]) !=
-            len(set([tmp_cfg.Title() for tmp_cfg in tool.getActiveConfigs(check_access=False)]))):
-        meetingConfigTitle = safe_unicode(cfg.Title(include_config_group="full_label"))
+    if cfg.getConfigGroup() and several_mc_with_same_title():
+        cfg_title = safe_unicode(cfg.Title(include_config_group="full_label"))
     else:
         # common case
-        meetingConfigTitle = safe_unicode(cfg.Title())
-
-    translationMapping.update({
+        cfg_title = safe_unicode(cfg.Title())
+    wf = api.portal.get_tool('portal_workflow').getWorkflowsFor(obj)[0]
+    translation_mapping.update({
         'portalUrl': portalUrl,
         'portalTitle': safe_unicode(portal.Title()),
         'objectTitle': safe_unicode(obj.Title()),
@@ -526,37 +535,38 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         'itemTitle': '',
         'user': get_user_fullname(user.getId()),
         'groups': safe_unicode(userGroups),
-        'meetingConfigTitle': meetingConfigTitle,
+        'meetingConfigTitle': cfg_title,
         'transitionActor': wf_action and
         get_user_fullname(wf_action['actor'], with_user_id=True) or u'-',
-        'transitionTitle': wf_action and
-        translate(wf_action['action'], domain="plone", context=obj.REQUEST) or u'-',
+        'transitionTitle': translate(
+            safe_unicode(wf.transitions[wf_action['action']].title),
+            domain="plone",
+            context=obj.REQUEST) if (
+                wf_action and
+                wf_action['type'] == 'workflow' and
+                wf_action['action'] in wf.transitions) else u'-',
         'transitionComments': wf_action and safe_unicode(wf_action['comments']) or u'-',
     })
     if obj.getTagName() == 'Meeting':
-        translationMapping['meetingTitle'] = safe_unicode(obj.Title())
-        translationMapping['meetingLongTitle'] = tool.format_date(obj.date, prefixed=True)
-        translationMapping['meetingState'] = translate(obj.query_state(),
-                                                       domain='plone',
-                                                       context=obj.REQUEST)
+        translation_mapping['meetingTitle'] = safe_unicode(obj.Title())
+        translation_mapping['meetingLongTitle'] = tool.format_date(obj.date, prefixed=True)
+        translation_mapping['meetingState'] = get_state_infos(obj)['state_title']
     elif obj.getTagName() == 'MeetingItem':
-        translationMapping['itemTitle'] = safe_unicode(obj.Title())
-        translationMapping['itemState'] = translate(obj.query_state(),
-                                                    domain='plone',
-                                                    context=obj.REQUEST)
+        translation_mapping['itemTitle'] = safe_unicode(obj.Title())
+        translation_mapping['itemState'] = get_state_infos(obj)['state_title']
         meeting = obj.getMeeting()
         if meeting:
-            translationMapping['meetingUrl'] = get_public_url(meeting)
-            translationMapping['meetingTitle'] = safe_unicode(meeting.Title())
-            translationMapping['meetingLongTitle'] = tool.format_date(meeting.date, prefixed=True)
-            translationMapping['itemNumber'] = obj.getItemNumber(
+            translation_mapping['meetingUrl'] = get_public_url(meeting)
+            translation_mapping['meetingTitle'] = safe_unicode(meeting.Title())
+            translation_mapping['meetingLongTitle'] = tool.format_date(meeting.date, prefixed=True)
+            translation_mapping['itemNumber'] = obj.getItemNumber(
                 relativeTo='meeting')
 
     # some event end with "Owner", we use same event without the "Owner" suffix
     subjectLabel = u'%s_mail_subject' % event.replace("Owner", "")
     subject = translate(subjectLabel,
                         domain=d,
-                        mapping=translationMapping,
+                        mapping=translation_mapping,
                         context=obj.REQUEST)
     # special case for translations of event concerning state change
     # if we can not translate the specific translation msgid, we use a default msgid
@@ -570,14 +580,14 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
             subjectLabel = u'item_state_changed_default_mail_subject'
         subject = translate(subjectLabel,
                             domain=d,
-                            mapping=translationMapping,
+                            mapping=translation_mapping,
                             context=obj.REQUEST)
     subject = safe_unicode(subject)
     # some event end with "Owner", we use same event without the "Owner" suffix
     bodyLabel = u'%s_mail_body' % event.replace("Owner", "")
     body = translate(bodyLabel,
                      domain=d,
-                     mapping=translationMapping,
+                     mapping=translation_mapping,
                      context=obj.REQUEST)
     # special case for translations of event concerning state change
     # if we can not translate the specific translation msgid, we use a default msgid
@@ -591,7 +601,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
             bodyLabel = u'item_state_changed_default_mail_body'
         body = translate(bodyLabel,
                          domain=d,
-                         mapping=translationMapping,
+                         mapping=translation_mapping,
                          context=obj.REQUEST)
     body = safe_unicode(body)
 
@@ -616,16 +626,15 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         logger.info('Subject is [%s]' % subject)
         logger.info('Body is [%s]' % body)
         api.portal.show_message(extras, request=obj.REQUEST)
-        return obj, body, recipients, fromAddress, subject, attachments, translationMapping
     else:
         # Use 'plain' for mail format so the email client will turn links to clickable links
         mailFormat = 'text/plain'
         # Send the mail(s)
         try:
             _sendMail(obj, body, recipients, fromAddress, subject, mailFormat, attachments)
-        except EmailError, ee:
+        except EmailError as ee:
             logger.warn(str(ee))
-    return subject, body
+    return obj, body, recipients, fromAddress, subject, attachments, translation_mapping
 
 
 def sendMailIfRelevant(obj,
@@ -723,7 +732,7 @@ def sendMailIfRelevant(obj,
         recipient = getMailRecipient(user)
         # After all, we will add this guy to the list of recipients.
         recipients.append(recipient)
-    mail_subject = mail_body = None
+    subject = body = None
     if recipients:
         # wipeout recipients to avoid sendind same email to several users
         unique_emails = []
@@ -734,11 +743,12 @@ def sendMailIfRelevant(obj,
                 continue
             unique_emails.append(email)
             unique_email_recipients.append(recipient)
-        mail_subject, mail_body = sendMail(unique_email_recipients, obj, event, mapping=mapping)
+        obj, body, recipients, fromAddress, subject, attachments, translation_mapping = \
+            sendMail(unique_email_recipients, obj, event, mapping=mapping)
     debug = debug or obj.REQUEST.get('debug_sendMailIfRelevant', False)
     if debug:
-        obj.REQUEST.set('debug_sendMailIfRelevant_result', (recipients, mail_subject, mail_body))
-        return recipients, mail_subject, mail_body
+        obj.REQUEST.set('debug_sendMailIfRelevant_result', (recipients, subject, body))
+        return recipients, subject, body
     return True
 
 
@@ -1113,10 +1123,19 @@ def set_dx_value(obj, field_name, value, raise_unauthorized=True):
             raise Unauthorized
 
 
-def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True, reindex=True, unlock=True):
+def set_field_from_ajax(
+        obj,
+        field_name,
+        new_value,
+        remember=True,
+        tranform=True,
+        reindex=True,
+        unlock=True,
+        modified=True):
     '''Sets on p_obj the content of a field whose name is p_fieldName and whose
        new value is p_fieldValue. This method is called by Ajax pages.'''
 
+    notify_modified = True
     if IDexterityContent.providedBy(obj):
         widget = get_dx_widget(obj, field_name=field_name)
         if not widget.may_edit():
@@ -1126,6 +1145,9 @@ def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True
         # only used for AT MeetingItem
         if not obj.mayQuickEdit(field_name):
             raise Unauthorized
+
+        # check if quick editing field_name will change modified of item
+        notify_modified = not obj.adapted()._bypass_quick_edit_notify_modified_for(field_name)
 
         field = obj.getField(field_name)
         if remember:
@@ -1156,7 +1178,7 @@ def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True
             extra_idxs.append(probable_index_name)
         # unmark deferred SearchableText reindexing
         setattr(obj, REINDEX_NEEDED_MARKER, False)
-        notifyModifiedAndReindex(obj, extra_idxs=extra_idxs)
+        notifyModifiedAndReindex(obj, notify_modified=notify_modified, extra_idxs=extra_idxs)
     if unlock:
         # just unlock, do not call ObjectEditedEvent because it does too much
         unlockAfterModification(obj, event={})
@@ -1166,18 +1188,20 @@ def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True
     fplog('quickedit_field', extras=extras)
 
 
-def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False, update_metadata=1):
+def notifyModifiedAndReindex(obj, notify_modified=True, extra_idxs=[], notify_event=False, update_metadata=1):
     """Ease notifyModified and reindex of a given p_obj.
        If p_extra_idxs contains '*', a full reindex is done, if not
        only 'modified' related indexes are updated.
        If p_notify_event is True, the ObjectModifiedEvent is notified."""
 
-    obj.notifyModified()
-
     idxs = []
+    modified_idxs = []
+    if notify_modified:
+        obj.notifyModified()
+        modified_idxs = ['modified', 'ModificationDate', 'Date']
+
     if '*' not in extra_idxs:
-        idxs = [
-            'pm_technical_index', 'modified', 'ModificationDate', 'Date'] + extra_idxs
+        idxs = modified_idxs + ['pm_technical_index'] + extra_idxs
 
     reindex_object(obj, idxs, update_metadata=update_metadata)
 
@@ -1308,7 +1332,7 @@ def applyOnTransitionFieldTransform(obj, transitionId):
                     field = obj.getField(transform['field_name'].split('.')[1])
                     field.set(obj, res, mimetype='text/html')
                     idxs.append(field.accessor)
-            except Exception, e:
+            except Exception as e:
                 plone_utils = api.portal.get_tool('plone_utils')
                 plone_utils.addPortalMessage(
                     ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR % (
@@ -1985,7 +2009,7 @@ def getAvailableMailingLists(obj, pod_template, include_recipients=False):
                     res.append((name, extract_recipients(obj, userIds)))
                 else:
                     res.append(name)
-    except Exception, exc:
+    except Exception as exc:
         msg = translate(
             'Mailing lists are not correctly defined, original error is \"${error}\"',
             domain='PloneMeeting',
@@ -2364,7 +2388,7 @@ def org_id_to_uid(org_info, raise_on_error=True, ignore_underscore=False):
             org = getter(org_info.encode('utf-8'))
             if org:
                 return org.UID()
-    except Exception, exc:
+    except Exception as exc:
         if raise_on_error:
             raise(exc)
         else:

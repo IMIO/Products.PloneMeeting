@@ -237,7 +237,9 @@ class MeetingItemWorkflowConditions(object):
         found_before_last = False
         level = {}
         for level in levels:
-            if self.tool.group_is_not_empty(self.context.getProposingGroup(), level['suffix']):
+            if self.tool.group_is_not_empty(
+                    self.context.adapted()._getGroupManagingItem(
+                        level['state']), level['suffix']):
                 res = level['state']
                 if found_last:
                     found_before_last = True
@@ -578,7 +580,8 @@ class MeetingItemWorkflowConditions(object):
                 suffix = self.cfg.getItemWFValidationLevels(
                     states=[destinationState], data='suffix')
                 res = _checkPermission(ReviewPortalContent, self.context) and \
-                    (not suffix or self.tool.group_is_not_empty(proposingGroup, suffix))
+                    (not suffix or self.tool.group_is_not_empty(
+                        self.context.adapted()._getGroupManagingItem(destinationState), suffix))
         return res
 
     security.declarePublic('mayBackToMeeting')

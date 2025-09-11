@@ -286,6 +286,30 @@ class testVotes(PloneMeetingTestCase):
             u"<p><strong>Bulletin invalide: 1</strong></p> et "
             u"<p><strong>A vot\xe9 blanc: 1</strong></p>,</p>")
 
+        # vote_label_pattern
+        public_votes['label'] = "My label|My second label|My third label"
+        meeting.set_item_public_vote(public_item, public_votes, 0)
+        transaction.commit()
+        # just render label
+        self.assertEqual(
+            helper_public.print_votes(
+                main_pattern="",
+                used_vote_values=[''],
+                vote_label_pattern=u"<p>{0}</p>"),
+            u'<p>My label</p>')
+        self.assertEqual(
+            helper_public.print_votes(
+                main_pattern="",
+                used_vote_values=[''],
+                vote_label_pattern=u"<p>{0}: {1}</p>"),
+            u'<p>My label: My second label</p>')
+        self.assertEqual(
+            helper_public.print_votes(
+                main_pattern="",
+                used_vote_values=[''],
+                vote_label_pattern=u"<p>{0}: {2}</p>"),
+            u'<p>My label: My third label</p>')
+
         # no votes
         meeting.item_votes[public_item.UID()] = []
         self.assertEqual(helper_public.print_votes(no_votes_marker="-"), "-")
@@ -484,6 +508,7 @@ class testVotes(PloneMeetingTestCase):
 
     def test_pm_EncodePublicVotesForm(self):
         """ """
+        cfg = self.meetingConfig
         self.changeUser('pmManager')
         meeting, public_item, secret_item = \
             self._createMeetingWithVotes(include_yes=False)
@@ -526,6 +551,24 @@ class testVotes(PloneMeetingTestCase):
         # votes were updated
         self.assertEqual(public_item.get_vote_count(meeting, 'yes'), 0)
         self.assertEqual(public_item.get_vote_count(meeting, 'no'), 4)
+        # disable voter, it is still displayed when editing voters for item
+        # deactivated, form still OK
+        votes_form._finished = False
+        self.changeUser('siteadmin')
+        self.do(hp4, 'deactivate')
+        cleanRamCache()
+        self.changeUser('pmManager')
+        self.assertTrue(hp4_uid in votes_form.render())
+        # remove usages from hp
+        hp4.usages = []
+        cleanRamCache()
+        self.assertTrue(hp4_uid in votes_form.render())
+        # make hp no more selectable
+        ordered_contacts = list(cfg.getOrderedContacts())
+        ordered_contacts.remove(hp4_uid)
+        cfg.setOrderedContacts(ordered_contacts)
+        cleanRamCache()
+        self.assertTrue(hp4_uid in votes_form.render())
 
     def test_pm_EncodePublicVotesFormLinkedToPrevious(self):
         """ """

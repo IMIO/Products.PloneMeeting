@@ -363,12 +363,12 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             # optionalAdvisers are not set (???) by invokeFactory...
             if 'optionalAdvisers' in attrs:
                 obj.setOptionalAdvisers(attrs['optionalAdvisers'])
-            # decision is not set (???) by invokeFactory...
-            if 'decision' in attrs:
-                obj.setDecision(attrs['decision'])
-            # motivation is not set (???) by invokeFactory...
-            if 'motivation' in attrs:
-                obj.setMotivation(attrs['motivation'])
+            # rich text fields are not set (???) by invokeFactory...
+            rich_fields = ['motivation', 'decision', 'decisionSuite', 'decisionEnd', 'votesResult']
+            for rich_field in rich_fields:
+                if rich_field in attrs:
+                    field = obj.getField(rich_field)
+                    field.set(obj, attrs[rich_field])
             # define a category for the item if necessary
             if autoAddCategory and \
                'category' in cfg.getUsedItemAttributes() and \

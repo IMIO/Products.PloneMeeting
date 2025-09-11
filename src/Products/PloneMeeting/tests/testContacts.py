@@ -393,8 +393,17 @@ class testContacts(PloneMeetingTestCase):
             self.assertEqual(view.getItemsForNotPresent(), [item1])
             self.assertTrue(view(hp3_uid, "non_attendee"))
             self.assertEqual(view.getItemsForNotPresent(), [item1, item2])
+        # a user that may view the meeting, but not the items for which member is not present
+        self.changeUser('pmCreator2')
+        self.assertTrue(meeting_view(hp1_uid, "absent"))
+        self.assertEqual(meeting_view.getItemsForNotPresent(), [])
+        self.assertTrue(meeting_view(hp2_uid, "excused"))
+        self.assertEqual(meeting_view.getItemsForNotPresent(), [])
+        self.assertTrue(meeting_view(hp3_uid, "non_attendee"))
+        self.assertEqual(meeting_view.getItemsForNotPresent(), [])
         # not able to set absent an attendee that is not present on the meeting
         # set hp4_uid absent on meeting and try
+        self.changeUser('pmManager')
         hp4_uid = meeting.get_attendees()[3]
         meeting.ordered_contacts[hp4_uid]['attendee'] = False
         meeting.ordered_contacts[hp4_uid]['absent'] = True
@@ -1326,12 +1335,14 @@ class testContacts(PloneMeetingTestCase):
 
     def test_pm_Print_attendees(self):
         """Basic test for the print_attendees method."""
+        self.meetingConfig.setUseVotes(True)
         meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()
         # item
         view = item1.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
+        ipa = helper.print_attendees
         self.assertEqual(
-            helper.print_attendees(),
+            ipa(),
             u'Monsieur Person1FirstName Person1LastName, '
             u'Assembly member 1, <strong>absent pour ce point</strong><br />'
             u'Madame Person3FirstName Person3LastName, '
@@ -1342,7 +1353,7 @@ class testContacts(PloneMeetingTestCase):
         change_view = item1.restrictedTraverse('@@item-change-attendee-order')
         change_view(attendee_uid=item1.get_all_attendees()[0], position=3)
         self.assertEqual(
-            helper.print_attendees(),
+            ipa(),
             u'Madame Person3FirstName Person3LastName, '
             u'Assembly member 3, <strong>excus\xe9e pour ce point</strong><br />'
             u'Monsieur Person1FirstName Person1LastName, '
@@ -1353,8 +1364,9 @@ class testContacts(PloneMeetingTestCase):
         # meeting
         view = meeting.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
+        mpa = helper.print_attendees
         self.assertEqual(
-            helper.print_attendees(),
+            mpa(),
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
             u'<strong>pr\xe9sent</strong><br />'
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
@@ -1367,8 +1379,9 @@ class testContacts(PloneMeetingTestCase):
         meeting.videoconference = True
         view = meeting.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
+        mpa = helper.print_attendees
         self.assertEqual(
-            helper.print_attendees(),
+            mpa(),
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
             u'<strong>connect\xe9</strong><br />'
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
@@ -1378,7 +1391,7 @@ class testContacts(PloneMeetingTestCase):
             u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5, '
             u'<strong>connect\xe9e</strong>')
         self.assertEqual(
-            helper.print_attendees(adapt_for_videoconference=False),
+            mpa(adapt_for_videoconference=False),
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
             u'<strong>pr\xe9sent</strong><br />'
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
@@ -1387,6 +1400,20 @@ class testContacts(PloneMeetingTestCase):
             u'<strong>pr\xe9sente</strong><br />'
             u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5, '
             u'<strong>pr\xe9sente</strong>')
+
+        # is_voter, by default every attendee is voter
+        # make hp1 non voter
+        meeting.ordered_contacts[self.hp1_uid]['voter'] = False
+        # by default return voters and non voters
+        self.assertEqual(
+            len(mpa(render_as_html=False).items()[0][1]),
+            4)
+        self.assertEqual(
+            len(mpa(is_voter=True, render_as_html=False).items()[0][1]),
+            3)
+        self.assertEqual(
+            len(mpa(is_voter=False, render_as_html=False).items()[0][1]),
+            1)
 
     def test_pm_Print_attendees_committee_id(self):
         """Print Meeting committee attendees."""
@@ -1432,12 +1459,14 @@ class testContacts(PloneMeetingTestCase):
 
     def test_pm_Print_attendees_by_type(self):
         """Basic test for the print_attendees method."""
+        self.meetingConfig.setUseVotes(True)
         meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()
         # item
         view = item1.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
+        ihpabt = helper.print_attendees_by_type
         self.assertEqual(
-            helper.print_attendees_by_type(),
+            ihpabt(),
             u'<strong><u>Pr\xe9sente&nbsp;:</u></strong><br />'
             u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5;<br />'
             u'<strong><u>Excus\xe9e pour ce point&nbsp;:</u></strong><br />'
@@ -1448,7 +1477,7 @@ class testContacts(PloneMeetingTestCase):
         # make Person2 present so we may check order
         meeting.item_non_attendees.pop(item1.UID())
         self.assertEqual(
-            helper.print_attendees_by_type(),
+            ihpabt(),
             u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
             u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5;<br />'
@@ -1459,7 +1488,7 @@ class testContacts(PloneMeetingTestCase):
         change_view = item1.restrictedTraverse('@@item-change-attendee-order')
         change_view(attendee_uid=item1.get_all_attendees()[1], position=4)
         self.assertEqual(
-            helper.print_attendees_by_type(),
+            ihpabt(),
             u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
             u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5, '
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2;<br />'
@@ -1471,15 +1500,16 @@ class testContacts(PloneMeetingTestCase):
         # meeting
         view = meeting.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
+        mhpabt = helper.print_attendees_by_type
         self.assertEqual(
-            helper.print_attendees_by_type(),
+            mhpabt(),
             u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
             u'Madame Person3FirstName Person3LastName, Assembly member 3, '
             u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5;')
         self.assertEqual(
-            helper.print_attendees_by_type(
+            mhpabt(
                 unbreakable_contact_value=True,
                 end_type_character="."
             ),
@@ -1492,15 +1522,16 @@ class testContacts(PloneMeetingTestCase):
         meeting.videoconference = True
         view = meeting.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
+        mhpabt = helper.print_attendees_by_type
         self.assertEqual(
-            helper.print_attendees_by_type(),
+            mhpabt(),
             u'<strong><u>Connect\xe9s&nbsp;:</u></strong><br />'
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
             u'Madame Person3FirstName Person3LastName, Assembly member 3, '
             u'Madame Person4FirstName Person4LastName, Assembly member 4 &amp; 5;')
         self.assertEqual(
-            helper.print_attendees_by_type(adapt_for_videoconference=False),
+            mhpabt(adapt_for_videoconference=False),
             u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
@@ -1509,57 +1540,71 @@ class testContacts(PloneMeetingTestCase):
 
         self.assertIn(
             "Monsieur Person1FirstName Person1LastName, Assembly member 1 (2-3)",
-            helper.print_attendees_by_type(include_in_count=True),
+            mhpabt(include_in_count=True),
         )
 
         self.assertIn(
             "Monsieur Person1FirstName Person1LastName, Assembly member 1 (1)",
-            helper.print_attendees_by_type(include_out_count=True),
+            mhpabt(include_out_count=True),
         )
 
         self.assertIn(
             "Monsieur Person1FirstName Person1LastName, Assembly member 1",
-            helper.print_attendees_by_type(include_out_count=True, in_out_attendee_types=["item_excused"]),
+            mhpabt(include_out_count=True, in_out_attendee_types=["item_excused"]),
         )
 
         self.assertIn(
             "Monsieur Person1FirstName Person1LastName, Assembly member 1 [except 1]",
-            helper.print_attendees_by_type(include_out_count=True, in_out_attendee_types=["item_absent"],
-                                           out_count_patterns={"*": u" [except {}]"}),
+            mhpabt(include_out_count=True, in_out_attendee_types=["item_absent"],
+                   out_count_patterns={"*": u" [except {}]"}),
         )
 
         self.assertIn(
             "Madame Person3FirstName Person3LastName, Assembly member 3 [except 1, 3]",
-            helper.print_attendees_by_type(include_out_count=True, in_out_attendee_types=["item_excused", "item_absent"],
-                                           out_count_patterns={"*": u" [except {}]"}),
+            mhpabt(include_out_count=True, in_out_attendee_types=["item_excused", "item_absent"],
+                   out_count_patterns={"*": u" [except {}]"}),
         )
 
         self.assertIn(
             u"Monsieur Person1FirstName Person1LastName, Assembly member 1 [éàè@%1ê 1]",
-            helper.print_attendees_by_type(include_out_count=True, in_out_attendee_types=["item_absent"],
-                                           out_count_patterns={"*": u" [éàè@%1ê {}]"}),
+            mhpabt(include_out_count=True, in_out_attendee_types=["item_absent"],
+                   out_count_patterns={"*": u" [éàè@%1ê {}]"}),
         )
 
         self.assertIn(
             "Monsieur Person1FirstName Person1LastName, Assembly member 1 - except for this item: 1",
-            helper.print_attendees_by_type(include_out_count=True,
-                                           out_count_patterns={
-                                               "*S": " - except for this item: {}",
-                                               "*P": " - except for these items: {}"
-                                           })
+            mhpabt(include_out_count=True,
+                   out_count_patterns={
+                    "*S": " - except for this item: {}",
+                    "*P": " - except for these items: {}"
+                    })
         )
 
         self.assertIn(
             "Monsieur Person1FirstName Person1LastName, Assembly member 1 - only for these: 2 to 3",
-            helper.print_attendees_by_type(include_in_count=True,
-                                           in_out_cluster_format="{} to {}",
-                                           in_count_patterns=OrderedDict([
-                                               ("MS", " - only for: {}"),
-                                               ("MP", " - only for these: {}"),
-                                               ("*S", "I'm being ignored"),
-                                               ("*", "{}")
-                                           ]))
+            mhpabt(include_in_count=True,
+                   in_out_cluster_format="{} to {}",
+                   in_count_patterns=OrderedDict(
+                    [("MS", " - only for: {}"),
+                     ("MP", " - only for these: {}"),
+                     ("*S", "I'm being ignored"),
+                     ("*", "{}")])
+                   )
         )  # Here we make sure to use an ordered dict to keep the order of the patterns in py2
+
+        # is_voter, by default every attendee is voter
+        # make hp1 non voter
+        meeting.ordered_contacts[self.hp1_uid]['voter'] = False
+        # by default return voters and non voters
+        self.assertEqual(
+            len(mhpabt(render_as_html=False)['attendee'].items()[0][1]),
+            4)
+        self.assertEqual(
+            len(mhpabt(is_voter=True, render_as_html=False)['attendee'].items()[0][1]),
+            3)
+        self.assertEqual(
+            len(mhpabt(is_voter=False, render_as_html=False)['attendee'].items()[0][1]),
+            1)
 
     def test_pm_Print_attendees_by_type_committee_id(self):
         """Print Meeting committee attendees by type."""

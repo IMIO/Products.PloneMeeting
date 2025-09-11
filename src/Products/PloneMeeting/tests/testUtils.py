@@ -152,9 +152,16 @@ class testUtils(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setMailMode("activated")
         cfg.setMailItemEvents(("item_state_changed_validate", ))
+        # test also that custom state/transition title works
+        self._updateItemValidationLevel(
+            cfg,
+            level=self._stateMappingFor('proposed'),
+            state_title="New proposed title",
+            leading_transition_title="New propose title")
 
         self.changeUser('pmManager')
         item = self.create("MeetingItem", title="My item")
+        self.proposeItem(item)
         params = {"obj": item,
                   "event": "item_state_changed_validate",
                   "value": [self.developers_creators, self.vendors_creators],
@@ -162,6 +169,9 @@ class testUtils(PloneMeetingTestCase):
                   "debug": True}
 
         recipients, subject, body = sendMailIfRelevant(**params)
+        # config wf state/transition title is correctly used
+        self.assertTrue("New proposed title" in subject)
+        self.assertTrue("New propose title" in subject)
         dev_creators = get_plone_group(self.developers_uid, 'creators')
         self.assertEqual(dev_creators.getMemberIds(),
                          ['pmCreator1', 'pmCreator1b', 'pmManager'])
@@ -249,29 +259,29 @@ class testUtils(PloneMeetingTestCase):
         cfg.setMailMode('test')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        obj, body, recipients, fromAddress, subject, attachments, translationMapping = \
+        obj, body, recipients, from_address, subject, attachments, translation_mapping = \
             sendMail([], item, '')
         # no config group, simple title
-        self.assertEqual(translationMapping['meetingConfigTitle'],
+        self.assertEqual(translation_mapping['meetingConfigTitle'],
                          safe_unicode(cfg.Title()))
         # config group but different config title, simple title
         cfg.setConfigGroup('unique_id_3')
-        obj, body, recipients, fromAddress, subject, attachments, translationMapping = \
+        obj, body, recipients, from_address, subject, attachments, translation_mapping = \
             sendMail([], item, '')
-        self.assertEqual(translationMapping['meetingConfigTitle'],
+        self.assertEqual(translation_mapping['meetingConfigTitle'],
                          safe_unicode(cfg.Title()))
         # with several same config title, config group is preprended
         self.meetingConfig2.setTitle(cfg.Title())
-        obj, body, recipients, fromAddress, subject, attachments, translationMapping = \
+        obj, body, recipients, from_address, subject, attachments, translation_mapping = \
             sendMail([], item, '')
-        self.assertEqual(translationMapping['meetingConfigTitle'],
+        self.assertEqual(translation_mapping['meetingConfigTitle'],
                          u'Config group 3 - %s' % safe_unicode(cfg.Title()))
         # if "full_label" is empty, it is not preprended
         config_groups[-1]['full_label'] = ''
         self.tool.setConfigGroups(config_groups)
-        obj, body, recipients, fromAddress, subject, attachments, translationMapping = \
+        obj, body, recipients, from_address, subject, attachments, translation_mapping = \
             sendMail([], item, '')
-        self.assertEqual(translationMapping['meetingConfigTitle'],
+        self.assertEqual(translation_mapping['meetingConfigTitle'],
                          safe_unicode(cfg.Title()))
 
     def test_pm_org_id_to_uid(self):

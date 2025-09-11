@@ -2658,6 +2658,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # test without usingGroups then enable it
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
+        self.freezeMeeting(meeting)
         recipients, subject, body = sendMailIfRelevant(
             meeting,
             event='meeting_state_changed_freeze',
