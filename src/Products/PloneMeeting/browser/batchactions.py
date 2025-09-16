@@ -19,6 +19,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.ftw_labels.utils import filter_access_global_labels
 from Products.PloneMeeting.utils import displaying_available_items
 from z3c.form.field import Fields
 from zope import schema
@@ -270,6 +271,9 @@ class PMLabelsBatchActionForm(LabelsBatchActionForm):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         return 'labels' in cfg.getUsedItemAttributes()
+
+    def _filter_labels_vocabulary(self, jar):
+        return filter_access_global_labels(jar, mode='edit')
 
     def _can_change_labels(self):
         view = None

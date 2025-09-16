@@ -7,12 +7,12 @@ from appy.gen import No
 from appy.shared.diff import HtmlDiff
 from collective.compoundcriterion.adapters import NegativePersonalLabelsAdapter
 from collective.compoundcriterion.adapters import NegativePreviousIndexValuesAdapter
+from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentgenerator.adapters import GenerablePODTemplatesAdapter
 from collective.eeafaceted.dashboard.adapters import DashboardGenerablePODTemplatesAdapter
 from collective.eeafaceted.dashboard.content.pod_template import IDashboardPODTemplate
-from collective.eeafaceted.z3ctable.columns import EMPTY_STRING
 from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
 from collective.iconifiedcategory.adapter import CategorizedObjectInfoAdapter
 from collective.iconifiedcategory.utils import get_categories
@@ -24,6 +24,7 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from eea.facetednavigation.widgets.storage import Criterion
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
 from imio.annex.adapters import AnnexPrettyLinkAdapter
+from imio.helpers import EMPTY_STRING
 from imio.helpers.adapters import MissingTerms
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
@@ -1754,7 +1755,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         parent_classname = self.parent.getTagName()
         if parent_classname == 'MeetingItem':
             visible_fors = self.cfg.getItemAnnexConfidentialVisibleFor()
-            groups = self._item_visible_for_groups(visible_fors)
+            groups = self._item_visible_for_groups(visible_fors, item=self.parent)
         elif parent_classname == 'Meeting':
             visible_fors = self.cfg.getMeetingAnnexConfidentialVisibleFor()
             groups = self._meeting_visible_for_groups(visible_fors)
@@ -1764,12 +1765,12 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
             groups = self._advice_visible_for_groups(visible_fors)
         return groups
 
-    def _item_visible_for_groups(self, visible_fors):
+    def _item_visible_for_groups(self, visible_fors, item):
         """ """
         res = []
         res += self._configgroup_groups(visible_fors)
         res += self._reader_groups(visible_fors)
-        res += self._suffix_proposinggroup(visible_fors, self.parent)
+        res += self._suffix_proposinggroup(visible_fors, item)
         return res
 
     def _meeting_visible_for_groups(self, visible_fors):
@@ -1799,16 +1800,24 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
                 res.append('{0}_{1}'.format(self.cfg.getId(), suffix))
         return res
 
-    def _suffix_proposinggroup(self, visible_fors, item):
-        """ """
+    def _suffix_proposinggroup(self, visible_fors, item=None):
+        """Behavior of this method change when receiving an item or not:
+           - when p_item is not None, we will compute Plone groups of p_visible_fors
+           suffixes of groups managing the item;
+           - when p_item is None, we will consider every groups using the suffixes."""
         res = []
-        groups_managing_item_uids = item.adapted()._getAllGroupsManagingItem(
-            item.query_state())
+        # item, we take managing groups
+        if item:
+            org_uids = item.adapted()._getAllGroupsManagingItem(
+                item.query_state())
+        else:
+            # every enabled groups
+            org_uids = get_organizations(the_objects=False)
         for visible_for in visible_fors:
             if visible_for.startswith(PROPOSINGGROUPPREFIX):
                 suffix = visible_for.replace(PROPOSINGGROUPPREFIX, '')
-                for group_managing_item_uid in groups_managing_item_uids:
-                    plone_group_id = get_plone_group_id(group_managing_item_uid, suffix)
+                for org_uid in org_uids:
+                    plone_group_id = get_plone_group_id(org_uid, suffix)
                     res.append(plone_group_id)
         return res
 

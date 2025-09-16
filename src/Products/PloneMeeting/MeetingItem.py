@@ -86,8 +86,8 @@ from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import INSERTING_ON_ITEM_DECISION_FIRST_WORDS_NB
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
-from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_LABELS_ACCESS_CACHE_ATTR
+from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
@@ -108,6 +108,7 @@ from Products.PloneMeeting.config import WriteItemMeetingManagerFields
 from Products.PloneMeeting.config import WriteMarginalNotes
 from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.events import item_added_or_initialized
+from Products.PloneMeeting.ftw_labels.utils import compute_labels_access
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
@@ -884,6 +885,7 @@ class MeetingItemWorkflowActions(object):
             meetingExecuteActionOnLinkedItems(
                 meeting, transition.id, [self.context])
         self.context.send_powerobservers_mail_if_relevant('late_item_in_meeting')
+
     security.declarePrivate('doItemFreeze')
 
     def doItemFreeze(self, stateChange):
@@ -7415,71 +7417,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         adapter = getAdapter(self, IIconifiedInfos)
         adapter.parent = self
         group_ids = adapter._item_visible_for_groups(
-            adapter.cfg.getItemInternalNotesEditableBy())
+            adapter.cfg.getItemInternalNotesEditableBy(), item=self)
         for group_id in group_ids:
             self.manage_addLocalRoles(group_id, ('MeetingInternalNotesEditor',))
 
     def _update_labels_access_cache(self, cfg, item_state):
         ''' '''
         setattr(self, ITEM_LABELS_ACCESS_CACHE_ATTR, PersistentMapping())
-        labels_config = cfg.getLabelsConfig()
-        if "labels" in cfg.getUsedItemAttributes() and labels_config:
+        if "labels" in cfg.getUsedItemAttributes():
             # as computing groups accessing the labels is the same as computing
             # groups for access to confidential annexes, we use the code in the
             # IIconifiedInfos adapter
             adapter = getAdapter(self, IIconifiedInfos)
-            adapter.parent = self
-            extra_expr_ctx = None
-            item_state = self.query_state()
-            for config in labels_config:
-                cache = getattr(self, ITEM_LABELS_ACCESS_CACHE_ATTR)
-                cache[config['label_id']] = {}
-                # view
-                cache[config['label_id']]['view_groups'] = \
-                    adapter._item_visible_for_groups(config['view_groups'])
-                # view_access will take into account view_states and view_access_on
-                # None will mean in correct review state but TAL expr to be computed on the fly
-                cache[config['label_id']]['view_access'] = None
-                if config['view_states'] and item_state not in config['view_states']:
-                    # no need to compute "view_access" if not in correct review state
-                    cache[config['label_id']]['view_access'] = False
-                elif config['view_access_on_cache'] == '1':
-                    # compute view_access if allowed to cache
-                    cache[config['label_id']]['view_access'] = True
-                    if config['view_access_on'].strip():
-                        # will be done only on first use
-                        if extra_expr_ctx is None:
-                            extra_expr_ctx = _base_extra_expr_ctx(
-                                self, {'item': self, })
-                        cache[config['label_id']]['view_access'] = \
-                            _evaluateExpression(
-                                self,
-                                expression=config['view_access_on'],
-                                extra_expr_ctx=extra_expr_ctx,
-                                raise_on_error=True)
-                # edit
-                cache[config['label_id']]['edit_groups'] = \
-                    adapter._item_visible_for_groups(config['edit_groups'])
-                # edit_access will take into account edit_states and edit_access_on
-                # None will mean in correct review state but TAL expr to be computed on the fly
-                cache[config['label_id']]['edit_access'] = None
-                if config['edit_states'] and item_state not in config['edit_states']:
-                    # no need to compute "edit_access" if not in correct review state
-                    cache[config['label_id']]['edit_access'] = False
-                elif config['edit_access_on_cache'] == '1':
-                    # compute edit_access if allowed to cache
-                    cache[config['label_id']]['edit_access'] = True
-                    if config['edit_access_on'].strip():
-                        # will be done only on first use
-                        if extra_expr_ctx is None:
-                            extra_expr_ctx = _base_extra_expr_ctx(
-                                self, {'item': self, })
-                        cache[config['label_id']]['edit_access'] = \
-                            _evaluateExpression(
-                                self,
-                                expression=config['edit_access_on'],
-                                extra_expr_ctx=extra_expr_ctx,
-                                raise_on_error=True)
+            cache = getattr(self, ITEM_LABELS_ACCESS_CACHE_ATTR)
+            cache.clear()
+            cache.update(
+                compute_labels_access(
+                    adapter, cfg, item=self, item_state=self.query_state()))
 
     def _updateCommitteeEditorsLocalRoles(self, cfg, item_state):
         '''Add local roles depending on MeetingConfig.committees.'''

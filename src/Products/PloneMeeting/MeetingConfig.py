@@ -8029,11 +8029,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if reload:
                 notify(ObjectEditedEvent(cfg))
 
-    def get_labels_vocab(self, only_personal=True):
+    def get_labels_vocab(
+            self,
+            only_personal=True,
+            vocab_name="Products.PloneMeeting.vocabularies.ftwlabelsvocabulary"):
         """ """
-        vocab_factory = getUtility(
-            IVocabularyFactory, "Products.PloneMeeting.vocabularies.ftwlabelsvocabulary")
-        vocab = vocab_factory(self)
+        vocab = get_vocab(self, vocab_name)
         if only_personal:
             terms = [term for term in vocab._terms if '(*)' in term.title]
             vocab = SimpleVocabulary(terms)

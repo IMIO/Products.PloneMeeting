@@ -5,6 +5,7 @@ from Products.PloneMeeting.MeetingConfig import defValues
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+
 import copy
 
 
