@@ -5,8 +5,10 @@ Changelog
 4.2.24.4 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Completed parameter `disable_autosearch_in` of `imio.webspellchecker` to
+  include CSS class of input `go to item` on item view and `change item number`
+  on meeting view.
+  [gbastien]
 
 4.2.24.3 (2025-09-04)
 ---------------------
