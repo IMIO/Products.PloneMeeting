@@ -12,6 +12,9 @@ Changelog
 - Display `voting group` in `MeetingConfig.orderedContacts` so we can detect
   easily for which held position it is configured.
   [gbastien]
+- Added `MeetingConfig.labelsConfig` to be able to configure who can
+  view/edit labels.
+  [gbastien]
 
 4.2.24.3 (2025-09-04)
 ---------------------

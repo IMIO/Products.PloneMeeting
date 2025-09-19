@@ -81,7 +81,7 @@ def compute_labels_access(adapter,
                     # will be done only on first use
                     if extra_expr_ctx is None:
                         extra_expr_ctx = _base_extra_expr_ctx(
-                            item, {'item': item, })
+                            item or cfg, {'item': item, })
                     data[config['label_id']]['edit_access'] = \
                         _evaluateExpression(
                             item or cfg,
