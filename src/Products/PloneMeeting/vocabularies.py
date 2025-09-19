@@ -2359,6 +2359,7 @@ class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
                 usage=None,
                 uids=missing_term_uids,
                 highlight_missing=True,
+                include_voting_group=True,
                 review_state=[])
             terms += missing_terms._terms
         return SimpleVocabulary(terms)
