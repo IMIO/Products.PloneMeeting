@@ -4442,9 +4442,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def validate_labelsConfig(self, value):
         """Validator for self.labelsConfig:
-            - first element must be the default behavior;
-            - there can not be several lines for same label."""
-        # first row can not be 'is_linked_to_previous_row' == '1'
+            - first row must be the default behavior (for '*');
+            - there can not be several rows for same label."""
+        # first row must be about '*' config
         if not value or value[0]['label_id'] != '*':
             return translate(
                 'labels_config_first_row_must_be_default_config',
