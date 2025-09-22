@@ -1842,6 +1842,102 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(form.available())
         self.assertFalse(form._can_change_labels())
 
+    def test_pm_PMLabelsBatchActionOnlyEditableLabels(self):
+        """The labels batch action will only display editable labels."""
+        cfg = self.meetingConfig
+        self._enable_ftw_labels()
+        self._setupLabelsEditableWhenItemEditable(cfg, enable=False)
+        config = list(cfg.getLabelsConfig())
+        # make "label1" only editable by MeetingManagers
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label1"
+        new_config['edit_access_on'] = ""
+        new_config['edit_groups'] = ["configgroup_meetingmanagers"]
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+
+        # as creator, will not be able to use "label1"
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.request.form['form.widgets.uids'] = item.UID()
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.restrictedTraverse('@@labels-batch-action')
+        form.update()
+        self.assertEqual(len(form.brains), 1)
+        self.assertTrue(form.available())
+        self.assertTrue(form._can_change_labels())
+        self.assertFalse("label1" in form._vocabulary())
+        self.assertTrue("label2" in form._vocabulary())
+
+        # as MeetingManager, will be able to use "label1"
+        self.changeUser('pmManager')
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.restrictedTraverse('@@labels-batch-action')
+        form.update()
+        self.assertEqual(len(form.brains), 1)
+        self.assertTrue(form.available())
+        self.assertTrue(form._can_change_labels())
+        self.assertTrue("label1" in form._vocabulary())
+        self.assertTrue("label2" in form._vocabulary())
+
+    def test_pm_PMLabelsBatchActionDoesNotOverrideNotEditableLabels(self):
+        """The labels batch action when we have stored labels that are not editable
+           by current user will not be removed by the "overwrite" batch action that
+           removes every labels and set new labels."""
+        cfg = self.meetingConfig
+        self._enable_ftw_labels()
+        self._setupLabelsEditableWhenItemEditable(cfg, enable=False)
+        config = list(cfg.getLabelsConfig())
+        # make "label1" only editable by MeetingManagers
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label1"
+        new_config['edit_access_on'] = ""
+        new_config['edit_groups'] = ["configgroup_meetingmanagers"]
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+
+        # create an item as MeetingManager and set "label1"
+        # that is only editable by MeetingMangers
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        view = item.restrictedTraverse('@@labeling')
+        labeling = ILabeling(item)
+        self.assertEqual(labeling.storage, {})
+        self.request.form['activate_labels'] = ['label1']
+        view.update()
+        self.assertTrue('label1' in labeling.storage)
+
+        # use the "overwrite" action to set "label2",
+        # this will not remove not editable labels
+        self.changeUser('pmCreator1')
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.restrictedTraverse('@@labels-batch-action')
+        self.request.form['form.widgets.uids'] = unicode(item.UID())
+        self.request['form.widgets.action_choice'] = u'overwrite'
+        self.request['form.widgets.added_values'] = [u'label2']
+        self.request['form.widgets.removed_values'] = []
+        form.update()
+        self.assertEqual(len(form.brains), 1)
+        self.assertTrue(form.available())
+        self.assertTrue(form._can_change_labels())
+        self.assertFalse("label1" in form._vocabulary())
+        self.assertTrue("label2" in form._vocabulary())
+        form.handleApply(form, None)
+        # not editable "label1" was not removed
+        self.assertEqual(labeling.storage.keys(), ['label1', 'label2'])
+        # when editable, it is removed
+        self.changeUser('pmManager')
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.restrictedTraverse('@@labels-batch-action')
+        form.update()
+        self.assertEqual(len(form.brains), 1)
+        self.assertTrue(form.available())
+        self.assertTrue(form._can_change_labels())
+        self.assertTrue("label1" in form._vocabulary())
+        self.assertTrue("label2" in form._vocabulary())
+        form.handleApply(form, None)
+        self.assertEqual(labeling.storage.keys(), ['label2'])
+
     def test_pm_UpdateLocalRolesBatchActionForm(self):
         """This will call update_local_roles on selected elements."""
         cfg = self.meetingConfig
@@ -3477,7 +3573,7 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(viewlet.available_labels[1], [])
         self.assertFalse(viewlet.can_edit)
 
-    def test_pm_LabelsConfigUpdateLocalToles(self):
+    def test_pm_LabelsConfigUpdateLocalRoles(self):
         """Test labelsConfig when a configuration specify to update_local_roles.
            Here a copyGroup will be added when a label is selected."""
         cfg = self.meetingConfig
