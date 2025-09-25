@@ -176,11 +176,12 @@
                        i18n:attributes="value"/>
               </form>
               <form name="updateLabelsAccessCacheForm" action="update_labels_access_cache">
-                <p class="discreet" style="color: red;" i18n:translate="pm_tool_updates_warning">
-                  Warning: take care that launching these proceedings may take time, depending on the number of existing elements!  Do not launch during period of hig use!
+                <p class="discreet" style="color: red;" i18n:translate="pm_update_labels_access_cache_warning">
+                    Warning: the action 'Update labels access cache' will update every items labels access, this needs to be done when labels are activated or when labels config changed.
                 </p>
-                <input class="context"
-                       type="submit" name="updateLabelsAccessCache"
+                <input class="apButton apButtonAction apButtonAction_update_labels_access_cache"
+                       type="submit"
+                       name="updateLabelsAccessCache"
                        value="pm_update_labels_access_cache"
                        onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
                        i18n:attributes="value"/>

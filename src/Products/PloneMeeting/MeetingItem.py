@@ -7423,14 +7423,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _update_labels_access_cache(self, cfg, item_state):
         ''' '''
-        setattr(self, ITEM_LABELS_ACCESS_CACHE_ATTR, PersistentMapping())
         if "labels" in cfg.getUsedItemAttributes():
+            setattr(self, ITEM_LABELS_ACCESS_CACHE_ATTR, PersistentMapping())
             # as computing groups accessing the labels is the same as computing
             # groups for access to confidential annexes, we use the code in the
             # IIconifiedInfos adapter
             adapter = getAdapter(self, IIconifiedInfos)
             cache = getattr(self, ITEM_LABELS_ACCESS_CACHE_ATTR)
-            cache.clear()
             cache.update(
                 compute_labels_access(
                     adapter, cfg, item=self, item_state=self.query_state()))

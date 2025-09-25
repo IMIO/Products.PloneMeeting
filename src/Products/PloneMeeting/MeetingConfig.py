@@ -4456,7 +4456,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      row.get('orderindex_') != 'template_row_marker']
         if len(label_ids) != len(set(label_ids)):
             return translate(
-                'labels_config_cant_not_have_several_config_for_same_label',
+                'labels_config_can_not_have_several_config_for_same_label',
                  domain='PloneMeeting',
                  context=self.REQUEST)
 

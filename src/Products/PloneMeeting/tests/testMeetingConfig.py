@@ -1916,7 +1916,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(cfg.validate_labelsConfig(cfg.getLabelsConfig()), error_msg)
         # can not have several rows about same label
         error_msg = translate(
-            u'labels_config_cant_not_have_several_config_for_same_label',
+            u'labels_config_can_not_have_several_config_for_same_label',
             domain='PloneMeeting',
             context=self.request)
         config = list(cfg.getLabelsConfig())
