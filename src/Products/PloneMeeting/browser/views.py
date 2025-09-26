@@ -108,15 +108,17 @@ class ItemMoreInfosView(BrowserView):
         # if current user may not see the item, use another fieldsConfigAttr
         if not _checkPermission(View, self.context):
             # check it item fields should be visible nevertheless
-            extra_expr_ctx = _base_extra_expr_ctx(self.context)
             currentCfg = currentCfgId and self.tool.get(currentCfgId) or self.cfg
-            extra_expr_ctx.update({'item': self.context})
-            extra_expr_ctx.update({'cfg': currentCfg})
-            extra_expr_ctx.update({'item_cfg': self.cfg})
-            res = _evaluateExpression(self.context,
-                                      expression=self.cfg.getItemsNotViewableVisibleFieldsTALExpr(),
-                                      roles_bypassing_expression=[],
-                                      extra_expr_ctx=extra_expr_ctx)
+            extra_expr_ctx = _base_extra_expr_ctx(
+                self.context,
+                {'item': self.context,
+                 'cfg': currentCfg,
+                 'item_cfg': self.cfg})
+            res = _evaluateExpression(
+                self.context,
+                expression=self.cfg.getItemsNotViewableVisibleFieldsTALExpr(),
+                roles_bypassing_expression=[],
+                extra_expr_ctx=extra_expr_ctx)
             if res:
                 self.visibleFields = self.cfg.getField('itemsNotViewableVisibleFields').get(self.cfg)
                 with api.env.adopt_roles(roles=['Manager']):

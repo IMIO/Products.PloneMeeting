@@ -4235,8 +4235,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = ''
         if not clear and self.adapted()._may_update_item_reference():
             meeting = self.getMeeting()
-            extra_expr_ctx = _base_extra_expr_ctx(self)
-            extra_expr_ctx.update({'item': self, 'meeting': meeting})
+            extra_expr_ctx = _base_extra_expr_ctx(
+                self, {'item': self, 'meeting': meeting})
             cfg = extra_expr_ctx['cfg']
             # default raise_on_error=False so if the expression
             # raise an error, we will get '' for reference and a message in the log
@@ -5629,7 +5629,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            evaluating the TAL expression on current MeetingConfig.customAdvisers and checking if
            corresponding group contains at least one adviser.
            The method returns a list of dict containing adviser infos.'''
-        extra_expr_ctx = _base_extra_expr_ctx(self)
+        extra_expr_ctx = _base_extra_expr_ctx(self, {'item': self, })
         cfg = extra_expr_ctx['cfg']
         res = []
         for customAdviser in cfg.getCustomAdvisers():
@@ -5648,7 +5648,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Check that the TAL expression on the group returns True
             eRes = False
             org = get_organization(customAdviser['org'])
-            extra_expr_ctx.update({'item': self, 'org': org, 'org_uid': customAdviser['org']})
+            extra_expr_ctx.update({'org': org, 'org_uid': customAdviser['org']})
             eRes = _evaluateExpression(
                 self,
                 expression=customAdviser['gives_auto_advice_on'],
@@ -5709,13 +5709,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         attr_name = 'autoRestrictedCopyGroups' if restricted else 'autoCopyGroups'
         setattr(self, attr_name, PersistentList())
         attr = getattr(self, attr_name)
-        extra_expr_ctx = _base_extra_expr_ctx(self)
+        extra_expr_ctx = _base_extra_expr_ctx(
+            self, {'item': self, 'isCreated': isCreated})
         cfg = extra_expr_ctx['cfg']
         for org_uid, expr in cfg.get_orgs_with_as_copy_group_on_expression(
                 restricted=restricted).items():
-            extra_expr_ctx.update({'item': self,
-                                   'isCreated': isCreated,
-                                   'org_uid': org_uid})
+            extra_expr_ctx.update({'org_uid': org_uid, })
             suffixes = _evaluateExpression(
                 self,
                 expression=expr,
@@ -5739,8 +5738,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _evalAdviceAvailableOn(self, available_on_expr, mayEdit=True):
         """ """
-        extra_expr_ctx = _base_extra_expr_ctx(self)
-        extra_expr_ctx.update({'item': self, 'mayEdit': mayEdit})
+        extra_expr_ctx = _base_extra_expr_ctx(self, {'item': self, 'mayEdit': mayEdit})
         res = _evaluateExpression(
             self,
             expression=available_on_expr,
@@ -7387,8 +7385,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _updatePowerObserversLocalRoles(self, cfg, item_state):
         '''Give local roles to the groups defined in MeetingConfig.powerObservers.'''
-        extra_expr_ctx = _base_extra_expr_ctx(self)
-        extra_expr_ctx.update({'item': self, })
+        extra_expr_ctx = _base_extra_expr_ctx(self, {'item': self, })
         cfg_id = cfg.getId()
         for po_infos in cfg.getPowerObservers():
             if item_state in po_infos['item_states'] and \

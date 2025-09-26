@@ -15,6 +15,9 @@ Changelog
 - Added `MeetingConfig.labelsConfig` to be able to configure who can
   view/edit labels.
   [gbastien]
+- Added parameter `extra_ctx={}` to `utils._base_extra_expr_ctx` to be able
+  to pass extra context immediatelly without having to `dict.update` after.
+  [gbastien]
 
 4.2.24.3 (2025-09-04)
 ---------------------

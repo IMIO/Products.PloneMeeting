@@ -6258,8 +6258,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('isVotable')
 
     def isVotable(self, item):
-        extra_expr_ctx = _base_extra_expr_ctx(item)
-        extra_expr_ctx.update({'item': item})
+        extra_expr_ctx = _base_extra_expr_ctx(item, {'item': item})
+        import ipdb; ipdb.set_trace()
         res = _evaluateExpression(
             item,
             expression=self.getVoteCondition(),
