@@ -3674,6 +3674,17 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(IStatusMessage(self.request).show(), [])
         # but 'label2' was kept as it is not viewable
         self.assertEqual(sorted(get_labels(item)), ['label1', 'label2'])
+        # use global MeetingConfig.update_labels_access_cache to reflect
+        # configuration changes, make "label1" no more viewable
+        self.assertEqual(len(labelingview.available_labels(modes=['edit'])[1]), 1)
+        config = list(cfg.getLabelsConfig())
+        config[1]["edit_access_on"] = ""
+        cfg.setLabelsConfig(config)
+        self.assertRaises(Unauthorized, cfg.update_labels_access_cache)
+        self.changeUser('siteadmin')
+        cfg.update_labels_access_cache()
+        self.changeUser('pmCreator1')
+        self.assertEqual(len(labelingview.available_labels(modes=['edit'])[1]), 2)
 
 
 def test_suite():
