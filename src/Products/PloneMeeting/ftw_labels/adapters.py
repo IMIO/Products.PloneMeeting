@@ -12,8 +12,8 @@ from ftw.labels.labeling import Labeling
 from imio.helpers.cache import get_plone_groups_for_user
 from plone import api
 from Products.CMFPlone.utils import safe_unicode
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ITEM_LABELS_ACCESS_CACHE_ATTR
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from zope.annotation import IAnnotations
 from zope.globalrequest import getRequest
