@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.25 (unreleased)
+4.2.25 (2025-09-26)
 -------------------
 
 - Completed parameter `disable_autosearch_in` of `imio.webspellchecker` to
