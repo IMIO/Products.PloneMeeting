@@ -6259,7 +6259,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def isVotable(self, item):
         extra_expr_ctx = _base_extra_expr_ctx(item, {'item': item})
-        import ipdb; ipdb.set_trace()
         res = _evaluateExpression(
             item,
             expression=self.getVoteCondition(),
