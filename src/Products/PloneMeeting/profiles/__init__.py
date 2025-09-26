@@ -517,10 +517,27 @@ class MeetingConfigDescriptor(Descriptor):
         # What is the format of the item references ?
         # Default is Ref. MeetingDate/ItemNumberInMeeting
         self.itemReferenceFormat = "python: 'Ref. ' + (here.hasMeeting() and " \
-            "here.restrictedTraverse('@@pm_unrestricted_methods').getLinkedMeetingDate().strftime('%Y%m%d') or '') " \
-            "+ '/' + str(here.getItemNumber(relativeTo='meeting', for_display=True))"
+            "here.restrictedTraverse('@@pm_unrestricted_methods')." \
+            "getLinkedMeetingDate().strftime('%Y%m%d') or '') + '/' + " \
+            "str(here.getItemNumber(relativeTo='meeting', for_display=True))"
         self.computeItemReferenceForItemsOutOfMeeting = False
-        self.enableLabels = False
+        self.labelsConfig = (
+            {'edit_access_on': '',
+             'edit_access_on_cache': '1',
+             'edit_groups': [
+                'suffix_proposing_group_creators',
+                'suffix_proposing_group_prereviewers',
+                'suffix_proposing_group_reviewers'],
+             'edit_groups_excluding': '0',
+             'edit_states': [],
+             'label_id': '*',
+             'update_local_roles': '0',
+             'view_access_on': '',
+             'view_access_on_cache': '1',
+             'view_groups': [],
+             'view_groups_excluding': '0',
+             'view_states': []},
+        )
         # labels are like :
         # {'read': {'color': 'blue', 'label_id': 'read', 'by_user': True, 'title': 'Read'},
         #  'urgent': {'color': 'red', 'label_id': 'urgent', 'by_user': False, 'title': 'Urgent'}}}
@@ -562,7 +579,6 @@ class MeetingConfigDescriptor(Descriptor):
         self.adviceConfidentialFor = ()
         self.hideNotViewableLinkedItemsTo = ()
         self.inheritedAdviceRemoveableByAdviser = False
-        self.itemLabelsEditableByProposingGroupForever = False
         self.itemInternalNotesEditableBy = []
         self.usingGroups = []
         # List of other meetingConfigs, item of this meetingConfig

@@ -86,6 +86,7 @@ from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import INSERTING_ON_ITEM_DECISION_FIRST_WORDS_NB
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
+from Products.PloneMeeting.config import ITEM_LABELS_ACCESS_CACHE_ATTR
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_COMMITTEE
@@ -107,6 +108,7 @@ from Products.PloneMeeting.config import WriteItemMeetingManagerFields
 from Products.PloneMeeting.config import WriteMarginalNotes
 from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.events import item_added_or_initialized
+from Products.PloneMeeting.ftw_labels.utils import compute_labels_access
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
@@ -883,6 +885,7 @@ class MeetingItemWorkflowActions(object):
             meetingExecuteActionOnLinkedItems(
                 meeting, transition.id, [self.context])
         self.context.send_powerobservers_mail_if_relevant('late_item_in_meeting')
+
     security.declarePrivate('doItemFreeze')
 
     def doItemFreeze(self, stateChange):
@@ -4232,8 +4235,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = ''
         if not clear and self.adapted()._may_update_item_reference():
             meeting = self.getMeeting()
-            extra_expr_ctx = _base_extra_expr_ctx(self)
-            extra_expr_ctx.update({'item': self, 'meeting': meeting})
+            extra_expr_ctx = _base_extra_expr_ctx(
+                self, {'item': self, 'meeting': meeting})
             cfg = extra_expr_ctx['cfg']
             # default raise_on_error=False so if the expression
             # raise an error, we will get '' for reference and a message in the log
@@ -5626,7 +5629,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            evaluating the TAL expression on current MeetingConfig.customAdvisers and checking if
            corresponding group contains at least one adviser.
            The method returns a list of dict containing adviser infos.'''
-        extra_expr_ctx = _base_extra_expr_ctx(self)
+        extra_expr_ctx = _base_extra_expr_ctx(self, {'item': self, })
         cfg = extra_expr_ctx['cfg']
         res = []
         for customAdviser in cfg.getCustomAdvisers():
@@ -5645,7 +5648,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Check that the TAL expression on the group returns True
             eRes = False
             org = get_organization(customAdviser['org'])
-            extra_expr_ctx.update({'item': self, 'org': org, 'org_uid': customAdviser['org']})
+            extra_expr_ctx.update({'org': org, 'org_uid': customAdviser['org']})
             eRes = _evaluateExpression(
                 self,
                 expression=customAdviser['gives_auto_advice_on'],
@@ -5706,13 +5709,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         attr_name = 'autoRestrictedCopyGroups' if restricted else 'autoCopyGroups'
         setattr(self, attr_name, PersistentList())
         attr = getattr(self, attr_name)
-        extra_expr_ctx = _base_extra_expr_ctx(self)
+        extra_expr_ctx = _base_extra_expr_ctx(
+            self, {'item': self, 'isCreated': isCreated})
         cfg = extra_expr_ctx['cfg']
         for org_uid, expr in cfg.get_orgs_with_as_copy_group_on_expression(
                 restricted=restricted).items():
-            extra_expr_ctx.update({'item': self,
-                                   'isCreated': isCreated,
-                                   'org_uid': org_uid})
+            extra_expr_ctx.update({'org_uid': org_uid, })
             suffixes = _evaluateExpression(
                 self,
                 expression=expr,
@@ -5736,8 +5738,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _evalAdviceAvailableOn(self, available_on_expr, mayEdit=True):
         """ """
-        extra_expr_ctx = _base_extra_expr_ctx(self)
-        extra_expr_ctx.update({'item': self, 'mayEdit': mayEdit})
+        extra_expr_ctx = _base_extra_expr_ctx(self, {'item': self, 'mayEdit': mayEdit})
         res = _evaluateExpression(
             self,
             expression=available_on_expr,
@@ -7295,6 +7296,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # update group in charge local roles
         # we will give the current groupsInCharge _observers sub group access to this item
         self._updateGroupsInChargeLocalRoles(cfg, item_state)
+        # update viewable/editable labels access cache
+        self._update_labels_access_cache(cfg, item_state)
         # manage automatically given permissions
         _addManagedPermissions(self)
         # clean borg.localroles caching
@@ -7382,8 +7385,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _updatePowerObserversLocalRoles(self, cfg, item_state):
         '''Give local roles to the groups defined in MeetingConfig.powerObservers.'''
-        extra_expr_ctx = _base_extra_expr_ctx(self)
-        extra_expr_ctx.update({'item': self, })
+        extra_expr_ctx = _base_extra_expr_ctx(self, {'item': self, })
         cfg_id = cfg.getId()
         for po_infos in cfg.getPowerObservers():
             if item_state in po_infos['item_states'] and \
@@ -7412,9 +7414,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         adapter = getAdapter(self, IIconifiedInfos)
         adapter.parent = self
         group_ids = adapter._item_visible_for_groups(
-            adapter.cfg.getItemInternalNotesEditableBy())
+            adapter.cfg.getItemInternalNotesEditableBy(), item=self)
         for group_id in group_ids:
             self.manage_addLocalRoles(group_id, ('MeetingInternalNotesEditor',))
+
+    def _update_labels_access_cache(self, cfg, item_state):
+        ''' '''
+        if "labels" in cfg.getUsedItemAttributes():
+            setattr(self, ITEM_LABELS_ACCESS_CACHE_ATTR, PersistentMapping())
+            # as computing groups accessing the labels is the same as computing
+            # groups for access to confidential annexes, we use the code in the
+            # IIconifiedInfos adapter
+            adapter = getAdapter(self, IIconifiedInfos)
+            cache = getattr(self, ITEM_LABELS_ACCESS_CACHE_ATTR)
+            cache.update(
+                compute_labels_access(
+                    adapter, cfg, item=self, item_state=self.query_state()))
 
     def _updateCommitteeEditorsLocalRoles(self, cfg, item_state):
         '''Add local roles depending on MeetingConfig.committees.'''

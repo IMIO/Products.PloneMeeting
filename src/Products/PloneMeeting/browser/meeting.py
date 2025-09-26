@@ -48,9 +48,7 @@ def manage_fields(the_form):
     """
     to_remove = []
 
-    extra_expr_ctx = _base_extra_expr_ctx(the_form.context)
-    extra_expr_ctx.update({'view': the_form})
-
+    extra_expr_ctx = _base_extra_expr_ctx(the_form.context, {'view': the_form})
     for field_name, field_info in Meeting.FIELD_INFOS.items():
         if field_info['optional'] and \
            not the_form.show_field(field_name):

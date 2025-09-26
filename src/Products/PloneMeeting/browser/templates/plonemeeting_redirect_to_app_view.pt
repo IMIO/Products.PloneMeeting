@@ -24,7 +24,7 @@
       <p tal:replace="structure frontPage/getText">Welcome text</p>
     </tal:hasFrontPageDocument>
     <tal:noFrontPageDocument condition="not: frontPage">
-      <p><span i18n:translate="">hs_welcome_body</span></p>
+      <p><span i18n:translate="">pm_welcome_body</span></p>
     </tal:noFrontPageDocument>
 
      </metal:main_macro>

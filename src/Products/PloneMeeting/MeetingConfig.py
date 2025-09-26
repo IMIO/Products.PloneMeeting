@@ -129,7 +129,6 @@ from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.utils import reindex_object
-from Products.PloneMeeting.utils import several_mc_with_same_title
 from Products.PloneMeeting.utils import translate_list
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator
@@ -682,19 +681,6 @@ schema = Schema((
             description_msgid="compute_item_reference_for_items_out_of_meeting_descr",
             label='Computeitemreferenceforitemsoutofmeeting',
             label_msgid='PloneMeeting_label_computeItemReferenceForItemsOutOfMeeting',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    BooleanField(
-        name='enableLabels',
-        default=defValues.enableLabels,
-        widget=BooleanField._properties['widget'](
-            description="EnableLabels",
-            description_msgid="enable_labels_descr",
-            label='Enablelabels',
-            label_msgid='PloneMeeting_label_enableLabels',
             i18n_domain='PloneMeeting',
         ),
         schemata="data",
@@ -2520,18 +2506,79 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
-        name='itemLabelsEditableByProposingGroupForever',
-        default=defValues.itemLabelsEditableByProposingGroupForever,
-        widget=BooleanField._properties['widget'](
-            description="ItemLabelsEditableByProposingGroupForever",
-            description_msgid="item_labels_editable_by_proposing_group_forever_descr",
-            label='Itemlabelseditablebyproposinggroupforever',
-            label_msgid='PloneMeeting_label_itemLabelsEditableByProposingGroupForever',
+    DataGridField(
+        name='labelsConfig',
+        widget=DataGridField._properties['widget'](
+            description="LabelsConfig",
+            description_msgid="labels_config_descr",
+            columns={
+                'label_id': SelectColumn(
+                    "Labels config label id",
+                    vocabulary_factory="Products.PloneMeeting.vocabularies.configftwlabelsvocabulary",
+                    col_description="labels_config_label_id_col_description"),
+                'view_groups': MultiSelectColumn(
+                    "Labels config view groups",
+                    col_description="labels_config_view_groups_col_description",
+                    vocabulary="listItemAttributeVisibleForWithMeetingManagers"),
+                'view_groups_excluding': SelectColumn(
+                    "Labels config view groups excluding",
+                    col_description="labels_config_view_groups_excluding_col_description",
+                    vocabulary="listBooleanVocabulary",
+                    default='0'),
+                'view_states': MultiSelectColumn(
+                    "Labels config view states",
+                    col_description="labels_config_view_states_col_description",
+                    vocabulary="listItemStates"),
+                'view_access_on': Column(
+                    "Labels config view access TAL expression",
+                    col_description="labels_config_view_access_on_col_description"),
+                'view_access_on_cache': SelectColumn(
+                    "Labels config view access TAL expression cache",
+                    col_description="labels_config_view_access_on_cache_col_description",
+                    vocabulary="listBooleanVocabulary",
+                    default='1'),
+                'edit_groups': MultiSelectColumn(
+                    "Labels config edit groups",
+                    col_description="labels_config_edit_groups_col_description",
+                    vocabulary="listItemAttributeVisibleForWithMeetingManagers"),
+                'edit_groups_excluding': SelectColumn(
+                    "Labels config edit groups excluding",
+                    col_description="labels_config_edit_groups_excluding_col_description",
+                    vocabulary="listBooleanVocabulary",
+                    default='0'),
+                'edit_states': MultiSelectColumn(
+                    "Labels config edit states",
+                    col_description="labels_config_edit_states_col_description",
+                    vocabulary="listItemStates"),
+                'edit_access_on': Column(
+                    "Labels config edit access TAL expression",
+                    col_description="labels_config_edit_access_on_col_description"),
+                'edit_access_on_cache': SelectColumn(
+                    "Labels config edit access TAL expression cache",
+                    col_description="labels_config_edit_access_on_cache_col_description",
+                    vocabulary="listBooleanVocabulary",
+                    default='1'),
+                'update_local_roles': SelectColumn(
+                    "Labels config update local roles?",
+                    col_description="labels_config_update_local_roles_col_description",
+                    vocabulary="listBooleanVocabulary",
+                    default='0'),
+            },
+            label='Labelsconfig',
+            label_msgid='PloneMeeting_label_labelsConfig',
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
-        write_permission="PloneMeeting: Write risky config",
+        allow_oddeven=True,
+        default=defValues.labelsConfig,
+        columns=('label_id',
+                 'view_states', 'view_groups', 'view_groups_excluding',
+                 'view_access_on', 'view_access_on_cache',
+                 'edit_states', 'edit_groups', 'edit_groups_excluding',
+                 'edit_access_on', 'edit_access_on_cache',
+                 'update_local_roles'),
+        allow_empty_rows=False,
+        write_permission=WriteRiskyConfig,
     ),
     LinesField(
         name='itemInternalNotesEditableBy',
@@ -3113,7 +3160,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getEnableLabels() and "
+                    'tal_condition': "python: 'labels' in cfg.getUsedItemAttributes() and "
                         "cfg.show_copy_groups_search()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -3361,7 +3408,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getEnableLabels()",
+                    'tal_condition': "python: 'labels' in cfg.getUsedItemAttributes()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Unread to follow
@@ -3380,7 +3427,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getEnableLabels()",
+                    'tal_condition': "python: 'labels' in cfg.getUsedItemAttributes()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Corrected items
@@ -3441,7 +3488,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getEnableLabels()",
+                    'tal_condition': "python: 'labels' in cfg.getUsedItemAttributes()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items of my committees
@@ -3818,6 +3865,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # when returning for example extra_suffixes as list, avoid it modified
         return copy.deepcopy(res)
 
+    security.declarePublic('getLabelsConfig')
+
+    def getLabelsConfig(self, label_ids=[], data=None, return_label_id_singleton=True, **kwargs):
+        '''Override the field 'labelsConfig' accessor to be able to handle some paramters:
+           - data : return every values defined for a given datagrid column name.'''
+        res = self.getField('labelsConfig').get(self, **kwargs)
+        if label_ids:
+            res = [level for level in res
+                   if level['label_id'] in label_ids]
+        if data:
+            res = [level[data] for level in res if level[data]]
+            # manage multivalued columns
+            if res and hasattr(res[0], "__iter__"):
+                res = itertools.chain.from_iterable(res)
+        if return_label_id_singleton and len(label_ids) == 1:
+            res = res and res[0] or res
+        return res
+
     security.declarePublic('getOrderedItemInitiators')
 
     def getOrderedItemInitiators(self, theObjects=False, **kwargs):
@@ -4052,6 +4117,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 '%s (votesResult_after_decisionEnd)' %
                 (translate('votesResult_after_decisionEnd',
                            domain='PloneMeeting',
+                           context=self.REQUEST)))
+        res.add('labels', '%s (labels)' %
+                (translate('Labels',
+                           domain='eea',
                            context=self.REQUEST)))
         return res.sortedByValue()
 
@@ -4368,6 +4437,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('power_observer_removed_plone_group_not_empty',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
+
+    security.declarePrivate('validate_labelsConfig')
+
+    def validate_labelsConfig(self, value):
+        """Validator for self.labelsConfig:
+            - first row must be the default behavior (for '*');
+            - there can not be several rows for same label."""
+        # first row must be about '*' config
+        if not value or value[0]['label_id'] != '*':
+            return translate(
+                'labels_config_first_row_must_be_default_config',
+                domain='PloneMeeting',
+                context=self.REQUEST)
+        # can not have several config for same label
+        label_ids = [row['label_id'] for row in value
+                     if value and
+                     row.get('orderindex_') != 'template_row_marker']
+        if len(label_ids) != len(set(label_ids)):
+            return translate(
+                'labels_config_can_not_have_several_config_for_same_label',
+                 domain='PloneMeeting',
+                 context=self.REQUEST)
 
     security.declarePrivate('validate_customAdvisers')
 
@@ -6167,8 +6258,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('isVotable')
 
     def isVotable(self, item):
-        extra_expr_ctx = _base_extra_expr_ctx(item)
-        extra_expr_ctx.update({'item': item})
+        extra_expr_ctx = _base_extra_expr_ctx(item, {'item': item})
         res = _evaluateExpression(
             item,
             expression=self.getVoteCondition(),
@@ -7746,6 +7836,38 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         logger.info('Done.')
         return numberOfBrains
 
+    security.declarePublic('update_labels_access_cache')
+
+    def update_labels_access_cache(self, redirect=True):
+        '''Update _labels_access_cache on every items.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if not tool.isManager(realManagers=True):
+            raise Unauthorized
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog.unrestrictedSearchResults(portal_type=self.getItemTypeName())
+        pghandler = ZLogHandler(steps=1000)
+        pghandler.init('Updating labels access cache...', len(brains))
+        warnings = []
+        i = 1
+        for brain in brains:
+            try:
+                item = brain.getObject()
+            except AttributeError:
+                warning = 'Could not getObject() element at %s' % brain.getPath()
+                warnings.append(warning)
+                logger.warn(warning)
+                continue
+            pghandler.report(i)
+            i = i + 1
+            item._update_labels_access_cache(self, brain.review_state)
+
+        pghandler.finish()
+        if redirect:
+            api.portal.show_message('Done.', request=self.REQUEST)
+            return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
+        else:
+            return warnings
+
     security.declarePublic('updateAdviceConfidentiality')
 
     def updateAdviceConfidentiality(self):
@@ -7906,11 +8028,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if reload:
                 notify(ObjectEditedEvent(cfg))
 
-    def get_labels_vocab(self, only_personal=True):
+    def get_labels_vocab(
+            self,
+            only_personal=True,
+            vocab_name="Products.PloneMeeting.vocabularies.ftwlabelsvocabulary"):
         """ """
-        vocab_factory = getUtility(
-            IVocabularyFactory, "Products.PloneMeeting.vocabularies.ftwlabelsvocabulary")
-        vocab = vocab_factory(self)
+        vocab = get_vocab(self, vocab_name)
         if only_personal:
             terms = [term for term in vocab._terms if '(*)' in term.title]
             vocab = SimpleVocabulary(terms)
@@ -7998,12 +8121,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def get_item_custom_suffix_roles(self, item, item_state):
         '''See doc in interfaces.py.'''
         return True, []
-
-    def user_is_proposing_group_editor(self, org_uid):
-        """ """
-        tool = api.portal.get_tool('portal_plonemeeting')
-        suffixes = self.getItemWFValidationLevels(data='suffix', only_enabled=True)
-        return tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes)
 
     def render_editform_errors(self, errors):
         """Render errors in the edit form in case it comes from another fieldset."""
