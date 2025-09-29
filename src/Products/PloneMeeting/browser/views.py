@@ -14,7 +14,7 @@ from collective.documentgenerator.helper.archetypes import ATDocumentGenerationH
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from eea.facetednavigation.interfaces import ICriteria
 from fnmatch import fnmatch
-from ftw.labels.interfaces import ILabeling
+from ftw.labels.labeling import ANNOTATION_KEY
 from imio.helpers.content import get_user_fullname
 from imio.helpers.content import uuidToObject
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
@@ -53,6 +53,7 @@ from Products.PloneMeeting.utils import getAvailableMailingLists
 from Products.PloneMeeting.utils import may_view_field
 from Products.PloneMeeting.utils import reindex_object
 from z3c.form.interfaces import DISPLAY_MODE
+from zope.annotation import IAnnotations
 from zope.i18n import translate
 
 import cgi
@@ -107,15 +108,17 @@ class ItemMoreInfosView(BrowserView):
         # if current user may not see the item, use another fieldsConfigAttr
         if not _checkPermission(View, self.context):
             # check it item fields should be visible nevertheless
-            extra_expr_ctx = _base_extra_expr_ctx(self.context)
             currentCfg = currentCfgId and self.tool.get(currentCfgId) or self.cfg
-            extra_expr_ctx.update({'item': self.context})
-            extra_expr_ctx.update({'cfg': currentCfg})
-            extra_expr_ctx.update({'item_cfg': self.cfg})
-            res = _evaluateExpression(self.context,
-                                      expression=self.cfg.getItemsNotViewableVisibleFieldsTALExpr(),
-                                      roles_bypassing_expression=[],
-                                      extra_expr_ctx=extra_expr_ctx)
+            extra_expr_ctx = _base_extra_expr_ctx(
+                self.context,
+                {'item': self.context,
+                 'cfg': currentCfg,
+                 'item_cfg': self.cfg})
+            res = _evaluateExpression(
+                self.context,
+                expression=self.cfg.getItemsNotViewableVisibleFieldsTALExpr(),
+                roles_bypassing_expression=[],
+                extra_expr_ctx=extra_expr_ctx)
             if res:
                 self.visibleFields = self.cfg.getField('itemsNotViewableVisibleFields').get(self.cfg)
                 with api.env.adopt_roles(roles=['Manager']):
@@ -179,7 +182,8 @@ class BaseStaticInfosView(BrowserView):
     def _static_infos_field_names(self):
         """Field names displayed as static infos.
            These are selected values starting with 'static_'."""
-        field_names = [field_name.replace('static_', '') for field_name in self.visibleColumns
+        field_names = [field_name.replace('static_', '')
+                       for field_name in self.visibleColumns
                        if field_name.startswith('static_')]
         return field_names
 
@@ -190,9 +194,15 @@ class ItemStaticInfosView(BaseStaticInfosView):
     """
     @property
     def active_labels(self):
-        available_labels = ILabeling(self.context).available_labels()
-        active_personal_labels = [label for label in available_labels[0] if label['active']]
-        active_labels = [label for label in available_labels[1] if label['active']]
+        active_personal_labels = ()
+        active_labels = ()
+        if IAnnotations(self.context).get(ANNOTATION_KEY, None):
+            available_labels = self.context.restrictedTraverse(
+                '@@labeling').available_labels(modes=('view', ))
+            active_personal_labels = [label for label in available_labels[0]
+                                      if label['active']]
+            active_labels = [label for label in available_labels[1]
+                             if label['active']]
         return active_personal_labels, active_labels
 
 

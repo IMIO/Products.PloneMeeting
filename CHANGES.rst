@@ -2,11 +2,28 @@ Changelog
 =========
 
 
-4.2.24.4 (unreleased)
----------------------
+4.2.26 (unreleased)
+-------------------
 
 - Nothing changed yet.
 
+
+4.2.25 (2025-09-26)
+-------------------
+
+- Completed parameter `disable_autosearch_in` of `imio.webspellchecker` to
+  include CSS class of input `go to item` on item view and `change item number`
+  on meeting view.
+  [gbastien]
+- Display `voting group` in `MeetingConfig.orderedContacts` so we can detect
+  easily for which held position it is configured.
+  [gbastien]
+- Added `MeetingConfig.labelsConfig` to be able to configure who can
+  view/edit labels.
+  [gbastien]
+- Added parameter `extra_ctx={}` to `utils._base_extra_expr_ctx` to be able
+  to pass extra context immediatelly without having to `dict.update` after.
+  [gbastien]
 
 4.2.24.3 (2025-09-04)
 ---------------------

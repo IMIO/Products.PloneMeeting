@@ -1963,8 +1963,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_CloneItemWithFTWLabels(self):
         '''When an item is cloned with option keep_ftw_label=True,
            ftw.labels labels are kept, False by default.'''
-        cfg = self.meetingConfig
-        cfg.setEnableLabels(True)
+        self._enableField('labels')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setDecision('<p>Decision</p>')
@@ -4642,7 +4641,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(
             [m.id for m in cfg.getMeetingsAcceptingItems(review_states=['created', 'decided'])],
             [m1.id, m3.id])
-        self.request.__annotations__.clear()
+        self.cleanMemoize()
         self.assertEqual(
             [m.id for m in cfg.getMeetingsAcceptingItems(review_states=['created', 'decided'])],
             [m1.id])

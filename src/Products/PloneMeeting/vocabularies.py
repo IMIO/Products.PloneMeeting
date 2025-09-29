@@ -23,7 +23,6 @@ from collective.documentgenerator.interfaces import IGenerablePODTemplates
 from collective.eeafaceted.collectionwidget.content.dashboardcollection import IDashboardCollection
 from collective.eeafaceted.collectionwidget.vocabulary import CachedCollectionVocabulary
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
-from collective.eeafaceted.z3ctable.columns import EMPTY_STRING
 from collective.iconifiedcategory.config import get_sort_categorized_tab
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_icon_url
@@ -36,6 +35,7 @@ from collective.iconifiedcategory.vocabularies import CategoryVocabulary
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
+from imio.helpers import EMPTY_STRING
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import find
@@ -2360,6 +2360,7 @@ class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
                 usage=None,
                 uids=missing_term_uids,
                 highlight_missing=True,
+                include_voting_group=True,
                 review_state=[])
             terms += missing_terms._terms
         return SimpleVocabulary(terms)

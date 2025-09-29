@@ -1075,6 +1075,11 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
     background-size: 16px;
 }
 
+.apButton.apButtonAction.apButtonAction_update_labels_access_cache {
+    background-image: url(++resource++ftw.labels/edit_labels.png);
+    padding-left: 30px;
+}
+
 /* style for the 'Back' link displayed in the elements of the configuration next to the 'de/activate' button
    We use same height as .apButton height */
 .pm_back_to_tool_link {
@@ -2184,8 +2189,7 @@ span.signatory-replacer {
     color: red;
 }
 
-
-/* hide downloard vcard link on contacts */
+/* hide download vcard link on contacts */
 p#download_vcard {
    display: none;
 }
@@ -2648,6 +2652,16 @@ span.link-separator::before {
 
 div#forceInsertNormalInput {
     margin-bottom: 0.5em;
+}
+
+/* by default, browser will align center table caption, but LO (appy) will
+   align it on the left, so we align on the left by default */
+table caption {
+    text-align: left;
+}
+
+label {
+    word-break: break-word;
 }
 
 /* </dtml-with> */

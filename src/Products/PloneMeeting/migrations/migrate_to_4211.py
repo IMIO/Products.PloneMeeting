@@ -34,7 +34,7 @@ class Migrate_To_4211(Migrator):
             searchunreaditemsincopy = cfg.searches.searches_items.get('searchunreaditemsincopy')
             if searchunreaditemsincopy:
                 searchunreaditemsincopy.tal_condition = \
-                    'python: cfg.getEnableLabels() and cfg.show_copy_groups_search()'
+                    "python: 'labels' in cfg.getUsedItemAttributes() and cfg.show_copy_groups_search()"
         logger.info('Done.')
 
     def _updateDataRelatedToToolPloneMeetingSimplification(self):

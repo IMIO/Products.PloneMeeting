@@ -1310,7 +1310,7 @@ def applyOnTransitionFieldTransform(obj, transitionId):
       Apply onTransitionFieldTransforms defined in the corresponding obj MeetingConfig.
     '''
     idxs = []
-    extra_expr_ctx = _base_extra_expr_ctx(obj)
+    extra_expr_ctx = _base_extra_expr_ctx(obj, {'item': obj, })
     cfg = extra_expr_ctx['cfg']
     for transform in cfg.getOnTransitionFieldTransforms():
         tal_expr = transform['tal_expression'].strip()
@@ -1319,7 +1319,6 @@ def applyOnTransitionFieldTransform(obj, transitionId):
            ('.' not in transform['field_name'] or
                 transform['field_name'].split('.')[0] == obj.getTagName()):
             try:
-                extra_expr_ctx.update({'item': obj, })
                 res = _evaluateExpression(
                     obj,
                     expression=tal_expr,
@@ -1352,7 +1351,7 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId, items=[]):
       check if we need to trigger an action on linked items
       defined in MeetingConfig.meetingExecuteActionOnLinkedItems.
     '''
-    extra_expr_ctx = _base_extra_expr_ctx(meeting)
+    extra_expr_ctx = _base_extra_expr_ctx(meeting, {'meeting': meeting, })
     cfg = extra_expr_ctx['cfg']
     wfTool = api.portal.get_tool('portal_workflow')
     wf_comment = _('wf_transition_triggered_by_application')
@@ -1374,7 +1373,7 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId, items=[]):
                     # do this as Manager to avoid permission problems, the configuration
                     # is supposed to be applied
                     with api.env.adopt_roles(['Manager']):
-                        extra_expr_ctx.update({'item': item, 'meeting': meeting})
+                        extra_expr_ctx.update({'item': item, })
                         _evaluateExpression(
                             item,
                             expression=action['tal_expression'].strip(),
@@ -1993,8 +1992,7 @@ def getAvailableMailingLists(obj, pod_template, include_recipients=False):
     if not mailing_lists:
         return res
     try:
-        extra_expr_ctx = _base_extra_expr_ctx(obj)
-        extra_expr_ctx.update({'obj': obj, })
+        extra_expr_ctx = _base_extra_expr_ctx(obj, {'obj': obj, })
         for line in mailing_lists.split('\n'):
             name, expression, userIds = line.split(';')
             if not expression or _evaluateExpression(
@@ -2027,8 +2025,7 @@ def extract_recipients(obj, values):
     # compile userIds in case we have a TAL expression
     recipients = []
     userIdsOrEmailAddresses = []
-    extra_expr_ctx = _base_extra_expr_ctx(obj)
-    extra_expr_ctx.update({'obj': obj, })
+    extra_expr_ctx = _base_extra_expr_ctx(obj, {'obj': obj, })
     for value in values.strip().split(','):
         # value may be a TAL expression returning a list of userIds or email addresses
         # or a group (of users)
@@ -2474,7 +2471,7 @@ def get_next_meeting(meeting_date, cfg, date_gap=0):
     return res
 
 
-def _base_extra_expr_ctx(obj):
+def _base_extra_expr_ctx(obj, extra_ctx={}):
     """ """
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(obj)
@@ -2496,6 +2493,7 @@ def _base_extra_expr_ctx(obj):
             'imio_history_utils': SecureModuleImporter['imio.history.safe_utils'],
             'utils': SecureModuleImporter['Products.PloneMeeting.safe_utils'],
             'pm_utils': SecureModuleImporter['Products.PloneMeeting.safe_utils'], }
+    data.update(extra_ctx)
     return data
 
 

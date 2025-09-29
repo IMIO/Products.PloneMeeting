@@ -706,6 +706,7 @@ class Migrate_To_4200(Migrator):
                         '.getAssemblyProxies(': '.get_assembly_proxies(',
                         '.getSignatories(theObjects=': '.get_signatories(the_objects=',
                         '.getSignatories(': '.get_signatories(',
+                        '.getMeetingNumber()': ".meeting_number",
                         '.getItems(': '.get_items(',
                         '.getItemsInOrder(': '.get_items(ordered=True, ',
                         'self.adapted().getPrintableItems(itemUids)':

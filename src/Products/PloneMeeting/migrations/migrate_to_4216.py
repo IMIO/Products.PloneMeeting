@@ -5,6 +5,7 @@ from Products.PloneMeeting.MeetingConfig import defValues
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+
 import copy
 
 
@@ -12,7 +13,7 @@ class Migrate_To_4216(Migrator):
 
     def _updateLabelsConfig(self):
         """Update for new field MeetingConfig.labelsConfig."""
-        logger.info('Updaging for new field "MeetingConfig.labelsConfig"...')
+        logger.info('Updating for new field "MeetingConfig.labelsConfig"...')
         for cfg in self.tool.objectValues('MeetingConfig'):
             # migrate MeetingConfig.enableLabels to MeetingConfig.usedItemAttributes
             if not base_hasattr(cfg, 'enableLabels'):
@@ -45,7 +46,11 @@ class Migrate_To_4216(Migrator):
             cfg.setLabelsConfig(labels_config)
             delattr(cfg, 'itemLabelsEditableByProposingGroupForever')
             # update labels cache for items of this MeetingConfig
-            cfg.update_labels_access_cache(redirect=False)
+            if 'labels' in cfg.getUsedItemAttributes():
+                cfg.update_labels_access_cache(redirect=False)
+        # reindex the "labels" portal_catalog index as we manage special
+        # empty value when no global label selected
+        self.catalog.reindexIndex('labels', None)
         logger.info('Done.')
 
     def _updateFollowUp(self):
