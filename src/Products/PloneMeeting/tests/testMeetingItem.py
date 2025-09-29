@@ -4204,12 +4204,14 @@ class testMeetingItem(PloneMeetingTestCase):
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
                            'available_on': 'python:False',
+                           'is_delay_calendar_days': '0',
                            'is_linked_to_previous_row': '1',
                            'delay': '5'},
                           {'row_id': 'unique_id_456',
                            'org': self.developers_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
+                           'is_delay_calendar_days': '0',
                            'is_linked_to_previous_row': '1',
                            'delay': '10'}]
         cfg.setCustomAdvisers(customAdvisers)
@@ -4460,10 +4462,11 @@ class testMeetingItem(PloneMeetingTestCase):
         # check with the 'non-delay-aware' and the 'delay-aware' advisers selected
         item.setOptionalAdvisers((self.developers_uid, ))
         item._update_after_edit()
-        can_not_unselect_msg = translate('can_not_unselect_already_given_advice',
-                                         mapping={'removedAdviser': self.developers.Title()},
-                                         domain='PloneMeeting',
-                                         context=self.portal.REQUEST)
+        can_not_unselect_msg = translate(
+            'can_not_unselect_already_given_advice',
+            mapping={'removedAdviser': self.developers.Title()},
+            domain='PloneMeeting',
+            context=self.portal.REQUEST)
         # for now as developers advice is not given, we can unselect it
         # validate returns nothing if validation was successful
         self.failIf(item.validate_optionalAdvisers(()))
@@ -4481,14 +4484,16 @@ class testMeetingItem(PloneMeetingTestCase):
         # remove advice given by developers and make it a delay-aware advice
         self.portal.restrictedTraverse('@@delete_givenuid')(developers_advice.UID())
         self.changeUser('admin')
-        customAdvisers = [{'row_id': 'unique_id_123',
-                           'org': self.developers_uid,
-                           'gives_auto_advice_on': '',
-                           'for_item_created_from': '2012/01/01',
-                           'for_item_created_until': '',
-                           'gives_auto_advice_on_help_message': 'Optional help message',
-                           'delay': '10',
-                           'delay_label': 'Delay label', }, ]
+        customAdvisers = [
+            {'row_id': 'unique_id_123',
+             'org': self.developers_uid,
+             'gives_auto_advice_on': '',
+             'for_item_created_from': '2012/01/01',
+             'for_item_created_until': '',
+             'gives_auto_advice_on_help_message': 'Optional help message',
+             'delay': '10',
+             'delay_label': 'Delay label',
+             'is_delay_calendar_days': '0'}, ]
         self.meetingConfig.setCustomAdvisers(customAdvisers)
         self.changeUser('pmManager')
         item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid), ))
@@ -4503,10 +4508,11 @@ class testMeetingItem(PloneMeetingTestCase):
                'advice_type': u'positive',
                'advice_comment': richtextval(u'My comment')})
         # now we can not unselect the 'developers' anymore as advice was given
-        can_not_unselect_msg = translate('can_not_unselect_already_given_advice',
-                                         mapping={'removedAdviser': "Developers - 10 day(s) (Delay label)"},
-                                         domain='PloneMeeting',
-                                         context=self.portal.REQUEST)
+        can_not_unselect_msg = translate(
+            'can_not_unselect_already_given_advice',
+            mapping={'removedAdviser': "Developers - 10 day(s) (Delay label)"},
+            domain='PloneMeeting',
+            context=self.portal.REQUEST)
         self.assertEqual(item.validate_optionalAdvisers(()), can_not_unselect_msg)
 
         # we can unselect an optional advice if the given advice is an automatic one
@@ -4514,25 +4520,28 @@ class testMeetingItem(PloneMeetingTestCase):
         # equivalent to the selected optional advice to be given
         self.portal.restrictedTraverse('@@delete_givenuid')(developers_advice.UID())
         self.changeUser('admin')
-        customAdvisers = [{'row_id': 'unique_id_123',
-                           'org': self.developers_uid,
-                           'gives_auto_advice_on': 'item/getBudgetRelated',
-                           'for_item_created_from': '2012/01/01',
-                           'for_item_created_until': '',
-                           'gives_auto_advice_on_help_message': 'Auto help message',
-                           'delay': '10',
-                           'delay_label': 'Delay label', }, ]
+        customAdvisers = [
+            {'row_id': 'unique_id_123',
+             'org': self.developers_uid,
+             'gives_auto_advice_on': 'item/getBudgetRelated',
+             'for_item_created_from': '2012/01/01',
+             'for_item_created_until': '',
+             'gives_auto_advice_on_help_message': 'Auto help message',
+             'delay': '10',
+             'delay_label': 'Delay label',
+             'is_delay_calendar_days': '0', }, ]
         self.meetingConfig.setCustomAdvisers(customAdvisers)
         self.changeUser('pmManager')
         # make item able to receive the automatic advice
         item.setBudgetRelated(True)
         item.at_post_create_script()
         # now optionalAdvisers validation pass even if advice of the 'developers' group is given
-        createContentInContainer(item,
-                                 'meetingadvice',
-                                 **{'advice_group': self.developers_uid,
-                                    'advice_type': u'positive',
-                                    'advice_comment': richtextval(u'My comment')})
+        createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': self.developers_uid,
+               'advice_type': u'positive',
+               'advice_comment': richtextval(u'My comment')})
         # the given advice is not considered as an optional advice
         self.assertEqual(item.adviceIndex[self.developers_uid]['optional'], False)
         self.failIf(item.validate_optionalAdvisers(()))
