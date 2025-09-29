@@ -108,8 +108,8 @@ from Products.PloneMeeting.config import WriteItemMeetingManagerFields
 from Products.PloneMeeting.config import WriteMarginalNotes
 from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.events import item_added_or_initialized
-from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.ftw_labels.utils import compute_labels_access
+from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
@@ -1689,7 +1689,7 @@ schema = Schema((
         allowable_content_types=("text/html",),
         widget=RichWidget(
             condition="python: here.adapted().show_field('providedFollowUp')",
-            label="providedfollowup",
+            label="Providedfollowup",
             label_msgid="PloneMeeting_label_providedFollowUp",
             description="ProvidedFollowUp",
             description_msgid="provided_follow_up_descr",
@@ -5013,7 +5013,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # is no more "View", set it to "Modify portal content"
         write_perm = field.write_permission
         if not bypassWritePermissionCheck and write_perm == "View":
-            import ipdb; ipdb.set_trace()
             write_perm = ModifyPortalContent
         res = checkMayQuickEdit(
             self,
@@ -8475,7 +8474,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if get_labels(self, label_ids=label_ids) and \
                (is_manager or is_proposing_group_editor(
                     self.getProposingGroup(), cfg, suffixes=suffixes)):
-                import ipdb; ipdb.set_trace()
                 return True
 
 

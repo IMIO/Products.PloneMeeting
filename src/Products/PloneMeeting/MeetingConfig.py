@@ -32,6 +32,7 @@ from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToObject
+from imio.helpers.security import fplog
 from imio.helpers.workflow import get_leading_transitions
 from natsort import humansorted
 from operator import itemgetter
@@ -3551,6 +3552,40 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'showNumberOfItems': False,
                     'tal_condition': "python: tool.get_orgs_for_user(omitted_suffixes=['observers', ]) "
                         "and cfg.getCommittees()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items with neededFollowUp
+                ('searchitemswithneededfollowup', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {u'i': u'labels',
+                         u'o': u'plone.app.querystring.operation.selection.is',
+                         u'v': [u'needed-follow-up']},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: 'neededFollowUp' in cfg.getUsedItemAttributes() and "
+                        "tool.get_orgs_for_user(omitted_suffixes=['observers', ])",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items with providedfollowUp
+                ('searchitemswithprovidedfollowup', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {u'i': u'labels',
+                         u'o': u'plone.app.querystring.operation.selection.is',
+                         u'v': [u'provided-follow-up']},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: 'providedFollowUp' in cfg.getUsedItemAttributes() and "
+                        "tool.get_orgs_for_user(omitted_suffixes=['observers', ])",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # All not-yet-decided meetings
@@ -7901,7 +7936,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('update_labels_access_cache')
 
-    def update_labels_access_cache(self, redirect=True):
+    def update_labels_access_cache(self, log=True, redirect=True):
         '''Update _labels_access_cache on every items.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         if not tool.isManager(realManagers=True):
@@ -7912,6 +7947,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         pghandler.init('Updating labels access cache...', len(brains))
         warnings = []
         i = 1
+        if log:
+            extras = 'number_of_elements={0}'.format(len(brains))
+            fplog('update_labels_access_cache', extras=extras)
         for brain in brains:
             try:
                 item = brain.getObject()

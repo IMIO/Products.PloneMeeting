@@ -43,6 +43,7 @@ class Migrate_To_4216(Migrator):
                 labels_config[0]["edit_access_on"] = \
                     'python: cfg.isManager(cfg) or checkPermission("Modify portal content", context)'
                 labels_config[0]["edit_access_on_cache"] = "0"
+                labels_config[0]["edit_groups"] = []
             cfg.setLabelsConfig(labels_config)
             delattr(cfg, 'itemLabelsEditableByProposingGroupForever')
             # update labels cache for items of this MeetingConfig
@@ -60,6 +61,8 @@ class Migrate_To_4216(Migrator):
         self.initNewHTMLFields(
             query={'meta_type': ('MeetingItem')},
             field_names=('neededFollowUp', 'providedFollowUp'))
+        # add searchitemswithneededfollowup and searchitemswithprovidedfollowup
+        self.addNewSearches()
         logger.info('Done.')
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):
