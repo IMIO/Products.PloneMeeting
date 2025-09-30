@@ -498,7 +498,7 @@ class PloneMeetingTestingHelpers(object):
         notify(ObjectEditedEvent(cfg))
         self.changeUser(currentUser)
 
-    def _updateItemValidationLevel(self, cfg, level=None, suffix=None, extra_suffixes=None, enable=True):
+    def _updateItemValidationLevel(self, cfg, level=None, enable=True, **kwargs):
         """Utility method that enable/disable item validation levels."""
         currentUser = self.member.getId()
         self.changeUser('admin')
@@ -506,21 +506,30 @@ class PloneMeetingTestingHelpers(object):
         for itemValLevel in itemValLevels:
             if not level or itemValLevel['state'] == level:
                 itemValLevel['enabled'] = enable and '1' or '0'
-                if suffix:
-                    itemValLevel['suffix'] = suffix
-                if extra_suffixes:
-                    itemValLevel['extra_suffixes'] = extra_suffixes
+                for k in itemValLevel.keys():
+                    if k in kwargs:
+                        itemValLevel[k] = kwargs[k]
         cfg.setItemWFValidationLevels(itemValLevels)
         notify(ObjectEditedEvent(cfg))
         self.changeUser(currentUser)
 
     def _enableItemValidationLevel(self, cfg, level=None, suffix=None):
         """Enable one or every item validation levels."""
-        self._updateItemValidationLevel(cfg, level, suffix, enable=True)
+        kwargs = {}
+        if level is not None:
+            kwargs['level'] = level
+        if suffix is not None:
+            kwargs['suffix'] = suffix
+        self._updateItemValidationLevel(cfg, enable=True, **kwargs)
 
     def _disableItemValidationLevel(self, cfg, level=None, suffix=None):
         """Disable one or every item validation levels."""
-        self._updateItemValidationLevel(cfg, level, suffix, enable=False)
+        kwargs = {}
+        if level is not None:
+            kwargs['level'] = level
+        if suffix is not None:
+            kwargs['suffix'] = suffix
+        self._updateItemValidationLevel(cfg, enable=False, **kwargs)
 
     def _setUpOrderedContacts(
             self,
@@ -586,3 +595,21 @@ class PloneMeetingTestingHelpers(object):
         defValues = MeetingConfigDescriptor.get()
         cfg.setItemWFValidationLevels(deepcopy(defValues.itemWFValidationLevels))
         notify(ObjectEditedEvent(cfg))
+
+    def _setupLabelsEditableWhenItemEditable(self, cfg, enable=True):
+        """Setup labels only editable when item editable."""
+        self._enableField('labels')
+        labelsConfig = cfg.getLabelsConfig()
+        if enable:
+            labelsConfig[0]['edit_groups'] = []
+            labelsConfig[0]['edit_access_on'] = 'python: cfg.isManager(cfg) or '\
+                'checkPermission("Modify portal content", context)'
+            labelsConfig[0]['edit_access_on_cache'] = '0'
+        else:
+            labelsConfig[0]['edit_groups'] = [
+                'suffix_proposing_group_creators',
+                'suffix_proposing_group_prereviewers',
+                'suffix_proposing_group_reviewers']
+            labelsConfig[0]['edit_access_on'] = ""
+            labelsConfig[0]['edit_access_on_cache'] = '1'
+        cfg.setLabelsConfig(labelsConfig)

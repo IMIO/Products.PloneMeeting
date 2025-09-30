@@ -1103,11 +1103,12 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
 
     def get_base_generation_context(self, helper_view, pod_template):
         """ """
-        specific_context = _base_extra_expr_ctx(self.context)
-        specific_context['self'] = self.context
-        specific_context['adap'] = hasattr(self.context, 'adapted') and self.context.adapted() or None
-        specific_context['itemUids'] = {}
-        specific_context['podTemplate'] = pod_template
+        specific_context = _base_extra_expr_ctx(
+            self.context,
+            {'self': self.context,
+             'adap': hasattr(self.context, 'adapted') and self.context.adapted() or None,
+             'itemUids': {},
+             'podTemplate': pod_template})
         # managed by collective.talcondition but not present here
         specific_context['member'] = specific_context['user']
         return specific_context
@@ -1305,8 +1306,8 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         """Generates the stored annex title using the ConfigurablePODTemplate.store_as_annex_title_expr.
            If empty, we just return the ConfigurablePODTemplate title."""
         value = pod_template.store_as_annex_title_expr
-        extra_expr_ctx = _base_extra_expr_ctx(self.context)
-        extra_expr_ctx.update({'obj': self.context, 'pod_template': pod_template})
+        extra_expr_ctx = _base_extra_expr_ctx(
+            self.context, {'obj': self.context, 'pod_template': pod_template})
         evaluatedExpr = _evaluateExpression(
             self.context,
             expression=value and value.strip() or '',

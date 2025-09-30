@@ -286,6 +286,30 @@ class testVotes(PloneMeetingTestCase):
             u"<p><strong>Bulletin invalide: 1</strong></p> et "
             u"<p><strong>A vot\xe9 blanc: 1</strong></p>,</p>")
 
+        # vote_label_pattern
+        public_votes['label'] = "My label|My second label|My third label"
+        meeting.set_item_public_vote(public_item, public_votes, 0)
+        transaction.commit()
+        # just render label
+        self.assertEqual(
+            helper_public.print_votes(
+                main_pattern="",
+                used_vote_values=[''],
+                vote_label_pattern=u"<p>{0}</p>"),
+            u'<p>My label</p>')
+        self.assertEqual(
+            helper_public.print_votes(
+                main_pattern="",
+                used_vote_values=[''],
+                vote_label_pattern=u"<p>{0}: {1}</p>"),
+            u'<p>My label: My second label</p>')
+        self.assertEqual(
+            helper_public.print_votes(
+                main_pattern="",
+                used_vote_values=[''],
+                vote_label_pattern=u"<p>{0}: {2}</p>"),
+            u'<p>My label: My third label</p>')
+
         # no votes
         meeting.item_votes[public_item.UID()] = []
         self.assertEqual(helper_public.print_votes(no_votes_marker="-"), "-")

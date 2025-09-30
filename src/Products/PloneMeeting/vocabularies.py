@@ -23,7 +23,6 @@ from collective.documentgenerator.interfaces import IGenerablePODTemplates
 from collective.eeafaceted.collectionwidget.content.dashboardcollection import IDashboardCollection
 from collective.eeafaceted.collectionwidget.vocabulary import CachedCollectionVocabulary
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
-from collective.eeafaceted.z3ctable.columns import EMPTY_STRING
 from collective.iconifiedcategory.config import get_sort_categorized_tab
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_icon_url
@@ -36,6 +35,7 @@ from collective.iconifiedcategory.vocabularies import CategoryVocabulary
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
+from imio.helpers import EMPTY_STRING
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import find
@@ -1318,26 +1318,29 @@ class SentToInfosVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         # the 'not to be cloned anywhere' term
-        res.append(SimpleTerm('not_to_be_cloned_to',
-                              'not_to_be_cloned_to',
-                              safe_unicode(translate('not_to_be_cloned_to_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
+        res.append(
+            SimpleTerm('not_to_be_cloned_to',
+                       'not_to_be_cloned_to',
+                       safe_unicode(translate('not_to_be_cloned_to_term',
+                                              domain='PloneMeeting',
+                                              context=context.REQUEST))))
         for cfgInfo in cfg.getMeetingConfigsToCloneTo():
             cfgId = cfgInfo['meeting_config']
-            cfgTitle = getattr(tool, cfgId).Title()
+            cfgTitle = getattr(tool, cfgId).Title(include_config_group=True)
             # add 'clonable to' and 'cloned to' options
             for suffix in ('__clonable_to', '__clonable_to_emergency',
                            '__cloned_to', '__cloned_to_emergency'):
                 termId = cfgId + suffix
-                res.append(SimpleTerm(termId,
-                                      termId,
-                                      translate('sent_to_other_mc_term' + suffix,
-                                                mapping={'meetingConfigTitle': safe_unicode(cfgTitle)},
-                                                domain='PloneMeeting',
-                                                context=context.REQUEST))
-                           )
+                res.append(
+                    SimpleTerm(
+                        termId,
+                        termId,
+                        translate(
+                            'sent_to_other_mc_term' + suffix,
+                            mapping={'meetingConfigTitle':
+                                safe_unicode(cfgTitle)},
+                            domain='PloneMeeting',
+                            context=context.REQUEST)))
         return SimpleVocabulary(res)
 
 
@@ -2356,6 +2359,7 @@ class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
                 usage=None,
                 uids=missing_term_uids,
                 highlight_missing=True,
+                include_voting_group=True,
                 review_state=[])
             terms += missing_terms._terms
         return SimpleVocabulary(terms)
@@ -2925,9 +2929,12 @@ class OtherMCsClonableToVocabulary(object):
         cfg_ids = [mc['meeting_config'] for mc in cfg.getMeetingConfigsToCloneTo()]
         cfg_ids = list(set(cfg_ids).union(self._get_stored_values(context)))
         for cfg_id in cfg_ids:
-            terms.append(SimpleTerm(cfg_id,
-                                    cfg_id,
-                                    term_title or getattr(tool, cfg_id).Title()))
+            terms.append(
+                SimpleTerm(
+                    cfg_id,
+                    cfg_id,
+                    term_title or
+                    getattr(tool, cfg_id).Title(include_config_group=True)))
         return SimpleVocabulary(terms)
 
     # do ram.cache have a different key name

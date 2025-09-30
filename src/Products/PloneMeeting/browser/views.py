@@ -14,7 +14,7 @@ from collective.documentgenerator.helper.archetypes import ATDocumentGenerationH
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from eea.facetednavigation.interfaces import ICriteria
 from fnmatch import fnmatch
-from ftw.labels.interfaces import ILabeling
+from ftw.labels.labeling import ANNOTATION_KEY
 from imio.helpers.content import get_user_fullname
 from imio.helpers.content import uuidToObject
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
@@ -53,6 +53,7 @@ from Products.PloneMeeting.utils import getAvailableMailingLists
 from Products.PloneMeeting.utils import may_view_field
 from Products.PloneMeeting.utils import reindex_object
 from z3c.form.interfaces import DISPLAY_MODE
+from zope.annotation import IAnnotations
 from zope.i18n import translate
 
 import cgi
@@ -107,15 +108,17 @@ class ItemMoreInfosView(BrowserView):
         # if current user may not see the item, use another fieldsConfigAttr
         if not _checkPermission(View, self.context):
             # check it item fields should be visible nevertheless
-            extra_expr_ctx = _base_extra_expr_ctx(self.context)
             currentCfg = currentCfgId and self.tool.get(currentCfgId) or self.cfg
-            extra_expr_ctx.update({'item': self.context})
-            extra_expr_ctx.update({'cfg': currentCfg})
-            extra_expr_ctx.update({'item_cfg': self.cfg})
-            res = _evaluateExpression(self.context,
-                                      expression=self.cfg.getItemsNotViewableVisibleFieldsTALExpr(),
-                                      roles_bypassing_expression=[],
-                                      extra_expr_ctx=extra_expr_ctx)
+            extra_expr_ctx = _base_extra_expr_ctx(
+                self.context,
+                {'item': self.context,
+                 'cfg': currentCfg,
+                 'item_cfg': self.cfg})
+            res = _evaluateExpression(
+                self.context,
+                expression=self.cfg.getItemsNotViewableVisibleFieldsTALExpr(),
+                roles_bypassing_expression=[],
+                extra_expr_ctx=extra_expr_ctx)
             if res:
                 self.visibleFields = self.cfg.getField('itemsNotViewableVisibleFields').get(self.cfg)
                 with api.env.adopt_roles(roles=['Manager']):
@@ -179,7 +182,8 @@ class BaseStaticInfosView(BrowserView):
     def _static_infos_field_names(self):
         """Field names displayed as static infos.
            These are selected values starting with 'static_'."""
-        field_names = [field_name.replace('static_', '') for field_name in self.visibleColumns
+        field_names = [field_name.replace('static_', '')
+                       for field_name in self.visibleColumns
                        if field_name.startswith('static_')]
         return field_names
 
@@ -190,9 +194,15 @@ class ItemStaticInfosView(BaseStaticInfosView):
     """
     @property
     def active_labels(self):
-        available_labels = ILabeling(self.context).available_labels()
-        active_personal_labels = [label for label in available_labels[0] if label['active']]
-        active_labels = [label for label in available_labels[1] if label['active']]
+        active_personal_labels = ()
+        active_labels = ()
+        if IAnnotations(self.context).get(ANNOTATION_KEY, None):
+            available_labels = self.context.restrictedTraverse(
+                '@@labeling').available_labels(modes=('view', ))
+            active_personal_labels = [label for label in available_labels[0]
+                                      if label['active']]
+            active_labels = [label for label in available_labels[1]
+                             if label['active']]
         return active_personal_labels, active_labels
 
 
@@ -909,6 +919,7 @@ class BaseDGHV(object):
         item_absents = []
         item_excused = []
         item_non_attendees = []
+        voters = []
         if committee_id:
             meeting = self.context
             attendees = self.context.get_committee_attendees(committee_id)
@@ -916,6 +927,7 @@ class BaseDGHV(object):
             meeting = self.context
             attendees = meeting.get_attendees()
             item_non_attendees = meeting.get_item_non_attendees()
+            voters = meeting.get_voters()
         else:
             # MeetingItem
             meeting = self.context.getMeeting()
@@ -923,6 +935,7 @@ class BaseDGHV(object):
                 attendees = self.context.get_attendees()
                 item_absents = self.context.get_item_absents()
                 item_excused = self.context.get_item_excused()
+                voters = self.context.get_item_voters()
             item_non_attendees = self.context.get_item_non_attendees()
         # generate content then group by sub organization if necessary
         contacts = []
@@ -943,7 +956,7 @@ class BaseDGHV(object):
             absents = meeting.get_absents()
             replaced = meeting.get_replacements()
         return meeting, attendees, item_absents, item_excused, item_non_attendees, \
-            contacts, excused, absents, replaced
+            contacts, excused, absents, replaced, voters
 
     def _update_patterns_for_videoconference(self, meeting, patterns, value):
         if hasattr(meeting, "videoconference") and meeting.videoconference:
@@ -967,7 +980,8 @@ class BaseDGHV(object):
                                             'F': u'<strong>remplacée par {0}</strong>'},
                         ignore_non_attendees=True,
                         committee_id=None,
-                        short_title_kwargs={}):
+                        short_title_kwargs={},
+                        is_voter=None):
         """ """
 
         def _render_as_html(tree, by_parent_org=False):
@@ -1004,7 +1018,7 @@ class BaseDGHV(object):
 
         # initial values
         meeting, attendees, item_absents, item_excused, item_non_attendees, \
-            contacts, excused, absents, replaced = self._get_attendees(committee_id)
+            contacts, excused, absents, replaced, voters = self._get_attendees(committee_id)
         context_uid = self.context.UID()
 
         if adapt_for_videoconference:
@@ -1017,6 +1031,14 @@ class BaseDGHV(object):
         for contact in contacts:
             contact_uid = contact.UID()
             if ignore_non_attendees and contact_uid in item_non_attendees:
+                continue
+            # is_voter:
+            # - None means every voters/non voters
+            # - True means voters
+            # - False means non voters
+            if is_voter is not None and (
+                (is_voter is False and contact_uid in voters) or
+                (is_voter is True and contact_uid not in voters)):
                 continue
             forced_position_type_value = None
             if self.context.getTagName() == "MeetingItem":
@@ -1127,7 +1149,8 @@ class BaseDGHV(object):
                                 striked_attendee_types=[],
                                 striked_attendee_pattern=u'<strike>{0}</strike>',
                                 ignore_non_attendees=True,
-                                committee_id=None):
+                                committee_id=None,
+                                is_voter=None):
 
         context_uid = self.context.UID()
         is_item = self.context.getTagName() == "MeetingItem"
@@ -1312,7 +1335,7 @@ class BaseDGHV(object):
 
         # initial values
         meeting, attendees, item_absents, item_excused, item_non_attendees, \
-            contacts, excused, absents, replaced = self._get_attendees(committee_id)
+            contacts, excused, absents, replaced, voters = self._get_attendees(committee_id)
 
         if adapt_for_videoconference:
             self._update_patterns_for_videoconference(meeting, grouped_attendee_type_patterns, {
@@ -1330,6 +1353,14 @@ class BaseDGHV(object):
         for contact in contacts:
             contact_uid = contact.UID()
             if ignore_non_attendees and contact_uid in item_non_attendees:
+                continue
+            # is_voter:
+            # - None means every voters/non voters
+            # - True means voters
+            # - False means non voters
+            if is_voter is not None and (
+                (is_voter is False and contact_uid in voters) or
+                (is_voter is True and contact_uid not in voters)):
                 continue
             contact_attendee_type = contact_uid in item_non_attendees and 'item_non_attendee' or \
                 contact_uid in item_absents and 'item_absent' or \
@@ -1958,7 +1989,7 @@ def print_votes(item,
             'no': u"<p><strong>A voté contre: {0}</strong></p>",
             'no_multiple': u"<p><strong>Ont voté contre: {0}</strong></p>",
             'abstain': u"<p><strong>S'est abstenu(e): {0}</strong></p>",
-            'abstain_multiple': u"<p><strong>Se sont abstenu(e)s: {0}</strong></p>",
+            'abstain_multiple': u"<p><strong>Se sont abstenu·e·s: {0}</strong></p>",
             'does_not_vote': u"<p><strong>N'a pas voté: {0}</strong></p>",
             'does_not_vote_multiple': u"<p><strong>N'ont pas voté: {0}</strong></p>",
             'not_found': u"<p><strong>Bulletin non trouvé: {0}</strong></p>",
@@ -1983,7 +2014,12 @@ def print_votes(item,
         if render_as_html:
             # vote label
             if vote_label_pattern and label:
-                rendered += vote_label_pattern.format(label)
+                # special behavior with "|" to use several values in label
+                # like "Label|category_of_label"
+                # this way we can render same label, various ways
+                # using the vote_label_pattern
+                labels = label.split('|')
+                rendered += vote_label_pattern.format(*labels)
             # total_voters
             if include_total_voters:
                 rendered += total_voters_pattern.format(total_voters)
@@ -2422,7 +2458,7 @@ class DisplayMeetingItemNotPresent(BrowserView):
     def display_clusters(self):
         """Display item numbers as clusters."""
         numbers = [item.getItemNumber(for_display=False) for item in self.items_for_not_present]
-        return get_ordinal_clusters(numbers)
+        return get_ordinal_clusters(numbers) or '-'
 
 
 class DisplayMeetingItemSignatories(BrowserView):

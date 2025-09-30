@@ -1963,8 +1963,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_CloneItemWithFTWLabels(self):
         '''When an item is cloned with option keep_ftw_label=True,
            ftw.labels labels are kept, False by default.'''
-        cfg = self.meetingConfig
-        cfg.setEnableLabels(True)
+        self._enableField('labels')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setDecision('<p>Decision</p>')
@@ -4205,12 +4204,14 @@ class testMeetingItem(PloneMeetingTestCase):
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
                            'available_on': 'python:False',
+                           'is_delay_calendar_days': '0',
                            'is_linked_to_previous_row': '1',
                            'delay': '5'},
                           {'row_id': 'unique_id_456',
                            'org': self.developers_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
+                           'is_delay_calendar_days': '0',
                            'is_linked_to_previous_row': '1',
                            'delay': '10'}]
         cfg.setCustomAdvisers(customAdvisers)
@@ -4461,10 +4462,11 @@ class testMeetingItem(PloneMeetingTestCase):
         # check with the 'non-delay-aware' and the 'delay-aware' advisers selected
         item.setOptionalAdvisers((self.developers_uid, ))
         item._update_after_edit()
-        can_not_unselect_msg = translate('can_not_unselect_already_given_advice',
-                                         mapping={'removedAdviser': self.developers.Title()},
-                                         domain='PloneMeeting',
-                                         context=self.portal.REQUEST)
+        can_not_unselect_msg = translate(
+            'can_not_unselect_already_given_advice',
+            mapping={'removedAdviser': self.developers.Title()},
+            domain='PloneMeeting',
+            context=self.portal.REQUEST)
         # for now as developers advice is not given, we can unselect it
         # validate returns nothing if validation was successful
         self.failIf(item.validate_optionalAdvisers(()))
@@ -4482,14 +4484,16 @@ class testMeetingItem(PloneMeetingTestCase):
         # remove advice given by developers and make it a delay-aware advice
         self.portal.restrictedTraverse('@@delete_givenuid')(developers_advice.UID())
         self.changeUser('admin')
-        customAdvisers = [{'row_id': 'unique_id_123',
-                           'org': self.developers_uid,
-                           'gives_auto_advice_on': '',
-                           'for_item_created_from': '2012/01/01',
-                           'for_item_created_until': '',
-                           'gives_auto_advice_on_help_message': 'Optional help message',
-                           'delay': '10',
-                           'delay_label': 'Delay label', }, ]
+        customAdvisers = [
+            {'row_id': 'unique_id_123',
+             'org': self.developers_uid,
+             'gives_auto_advice_on': '',
+             'for_item_created_from': '2012/01/01',
+             'for_item_created_until': '',
+             'gives_auto_advice_on_help_message': 'Optional help message',
+             'delay': '10',
+             'delay_label': 'Delay label',
+             'is_delay_calendar_days': '0'}, ]
         self.meetingConfig.setCustomAdvisers(customAdvisers)
         self.changeUser('pmManager')
         item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid), ))
@@ -4504,10 +4508,11 @@ class testMeetingItem(PloneMeetingTestCase):
                'advice_type': u'positive',
                'advice_comment': richtextval(u'My comment')})
         # now we can not unselect the 'developers' anymore as advice was given
-        can_not_unselect_msg = translate('can_not_unselect_already_given_advice',
-                                         mapping={'removedAdviser': "Developers - 10 day(s) (Delay label)"},
-                                         domain='PloneMeeting',
-                                         context=self.portal.REQUEST)
+        can_not_unselect_msg = translate(
+            'can_not_unselect_already_given_advice',
+            mapping={'removedAdviser': "Developers - 10 day(s) (Delay label)"},
+            domain='PloneMeeting',
+            context=self.portal.REQUEST)
         self.assertEqual(item.validate_optionalAdvisers(()), can_not_unselect_msg)
 
         # we can unselect an optional advice if the given advice is an automatic one
@@ -4515,25 +4520,28 @@ class testMeetingItem(PloneMeetingTestCase):
         # equivalent to the selected optional advice to be given
         self.portal.restrictedTraverse('@@delete_givenuid')(developers_advice.UID())
         self.changeUser('admin')
-        customAdvisers = [{'row_id': 'unique_id_123',
-                           'org': self.developers_uid,
-                           'gives_auto_advice_on': 'item/getBudgetRelated',
-                           'for_item_created_from': '2012/01/01',
-                           'for_item_created_until': '',
-                           'gives_auto_advice_on_help_message': 'Auto help message',
-                           'delay': '10',
-                           'delay_label': 'Delay label', }, ]
+        customAdvisers = [
+            {'row_id': 'unique_id_123',
+             'org': self.developers_uid,
+             'gives_auto_advice_on': 'item/getBudgetRelated',
+             'for_item_created_from': '2012/01/01',
+             'for_item_created_until': '',
+             'gives_auto_advice_on_help_message': 'Auto help message',
+             'delay': '10',
+             'delay_label': 'Delay label',
+             'is_delay_calendar_days': '0', }, ]
         self.meetingConfig.setCustomAdvisers(customAdvisers)
         self.changeUser('pmManager')
         # make item able to receive the automatic advice
         item.setBudgetRelated(True)
         item.at_post_create_script()
         # now optionalAdvisers validation pass even if advice of the 'developers' group is given
-        createContentInContainer(item,
-                                 'meetingadvice',
-                                 **{'advice_group': self.developers_uid,
-                                    'advice_type': u'positive',
-                                    'advice_comment': richtextval(u'My comment')})
+        createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': self.developers_uid,
+               'advice_type': u'positive',
+               'advice_comment': richtextval(u'My comment')})
         # the given advice is not considered as an optional advice
         self.assertEqual(item.adviceIndex[self.developers_uid]['optional'], False)
         self.failIf(item.validate_optionalAdvisers(()))
@@ -4642,7 +4650,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(
             [m.id for m in cfg.getMeetingsAcceptingItems(review_states=['created', 'decided'])],
             [m1.id, m3.id])
-        self.request.__annotations__.clear()
+        self.cleanMemoize()
         self.assertEqual(
             [m.id for m in cfg.getMeetingsAcceptingItems(review_states=['created', 'decided'])],
             [m1.id])
@@ -5189,6 +5197,10 @@ class testMeetingItem(PloneMeetingTestCase):
            - item editor;
            - item viewer;
            - powerobserver."""
+        # shortcuts are taken into account in cache key
+        self._deactivate_wfas(
+            ['item_validation_shortcuts',
+             'item_validation_no_validate_shortcuts'])
         cfg = self.meetingConfig
         # enable everything
         cfg.setItemCopyGroupsStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
@@ -7376,6 +7388,35 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.query_state(), 'accepted')
         _check_editable(item)
 
+    def test_pm_ItemInternalNotesQuickEditDoesNotChangeModificationDate(self, ):
+        """When field MeetingItem.internalNotes is quickedited, it will not change
+           the item modification date as it is a field that is not really part
+           of the decision."""
+        self.changeUser('siteadmin')
+        self._enableField('description')
+        self._enableField('internalNotes')
+        # by default set internalNotes editable by proposingGroup creators
+        self._activate_config('itemInternalNotesEditableBy',
+                              'suffix_proposing_group_creators',
+                              keep_existing=False)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item_modified = item.modified()
+        # reindexed, but as internalNotes is not indexed, check with title
+        item.setTitle('specific')
+        self.assertFalse(self.catalog(SearchableText='specific'))
+        # not modified when quick editing internalNotes
+        set_field_from_ajax(item, 'internalNotes', self.descriptionText)
+        self.assertEqual(item_modified, item.modified())
+        # but reindexed
+        self.assertTrue(self.catalog(SearchableText='specific'))
+        # modified and reindexed when quickediting another field
+        item.setTitle('specific2')
+        self.assertFalse(self.catalog(SearchableText='specific2'))
+        set_field_from_ajax(item, 'description', self.descriptionText)
+        self.assertNotEqual(item_modified, item.modified())
+        self.assertTrue(self.catalog(SearchableText='specific2'))
+
     def test_pm_HideCssClasses(self):
         """ """
         self.changeUser('siteadmin')
@@ -8304,6 +8345,16 @@ class testMeetingItem(PloneMeetingTestCase):
              u'M. PMCreator Two <pmcreator2@plonemeeting.org>',
              u'M. PMManager <pmmanager@plonemeeting.org>',
              u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
+        # also working when mailMode is "test"
+        cfg.setMailMode('test')
+        recipients, subject, body = item._sendCopyGroupsMailIfRelevant('itemcreated', 'validated')
+        self.assertEqual(
+            sorted(recipients),
+            [u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
+             u'M. PMCreator Two <pmcreator2@plonemeeting.org>',
+             u'M. PMManager <pmmanager@plonemeeting.org>',
+             u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
+
 
     def test_pm__sendAdviceToGiveMailIfRelevant(self):
         """Check mail sent to advisers when they have access to item.
@@ -8495,11 +8546,21 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(sorted(recipients),
                          [u'M. PMReviewer One <pmreviewer1@plonemeeting.org>'])
         # subject and body contain relevant informations
+        val_level = cfg.getItemWFValidationLevels(states=['proposed'])
         self.assertEqual(
             subject,
-            u'{0} - Item in state "Proposed" '
-            u'(following "Back to \'Proposed\'") - '
-            u'My item that notify when propose'.format(safe_unicode(cfg.Title())))
+            u'{0} - Item in state "{1}" '
+            u'(following "{2}") - '
+            u'My item that notify when propose'.format(
+                safe_unicode(cfg.Title()),
+                translate(
+                    safe_unicode(val_level['state_title']),
+                    domain="plone",
+                    context=self.request),
+                translate(
+                    safe_unicode(val_level['back_transition_title']),
+                    domain="plone",
+                    context=self.request)))
         self.assertEqual(
             body,
             u'The item is entitled "My item that notify when propose". '

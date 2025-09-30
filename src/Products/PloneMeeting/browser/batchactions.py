@@ -17,6 +17,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.ftw_labels.utils import filter_access_global_labels
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import is_operational_user
 from z3c.form.field import Fields
@@ -268,7 +269,22 @@ class PMLabelsBatchActionForm(LabelsBatchActionForm):
         """Only available when labels are enabled."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        return cfg.getEnableLabels()
+        return 'labels' in cfg.getUsedItemAttributes()
+
+    def _filter_labels_vocabulary(self, jar):
+        return filter_access_global_labels(jar, mode='edit')
+
+    def _can_change_labels(self):
+        view = None
+        for brain in self.brains:
+            obj = brain.getObject()
+            # only instanciate view one time and change context
+            if view is None:
+                view = obj.restrictedTraverse('@@labeling')
+            view.context = obj
+            if not view.can_edit:
+                return False
+        return True
 
 
 class PMTransitionBatchActionForm(TransitionBatchActionForm):

@@ -1417,7 +1417,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertFalse(view.showDecisionAnnexesSection())
 
     def test_pm_Other_mc_correspondences_constraint(self):
-        """ """
+        """Test for field other_mc_correspondences constraint."""
         self.changeUser('pmManager')
         cfg = self.meetingConfig
         annex_type = cfg.annexes_types.item_annexes.get(self.annexFileType)
@@ -1431,7 +1431,12 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(other_mc_correspondences_constraint([terms[-1].value]))
 
     def test_pm_Other_mc_correspondences_vocabulary(self):
-        """ """
+        """Test for field other_mc_correspondences vocabulary."""
+        # disable eventual cfg3
+        if hasattr(self, "meetingConfig3"):
+            self.changeUser("siteadmin")
+            # disabled MC are listed to be able to prepare config so delete it
+            self.tool.manage_delObjects([self.meetingConfig3.getId(), ])
         cfg = self.meetingConfig
         annex_type = cfg.annexes_types.item_annexes.get(self.annexFileType)
         # get vocabulary name
@@ -1445,13 +1450,13 @@ class testAnnexes(PloneMeetingTestCase):
             mc_title = mc.Title()
             values = [
                 u'{0} ➔ Item annexes ➔ *** Do not keep annex ***'.format(mc_title),
+                u'{0} ➔ Item annexes ➔ Budget analysis'.format(mc_title),
+                u'{0} ➔ Item annexes ➔ Budget analysis '
+                u'➔ Budget analysis sub annex'.format(mc_title),
                 u'{0} ➔ Item annexes ➔ Financial analysis'.format(mc_title),
                 u'{0} ➔ Item annexes ➔ Financial analysis '
                 u'➔ Financial analysis sub annex'.format(mc_title),
                 u'{0} ➔ Item annexes ➔ Legal analysis'.format(mc_title),
-                u'{0} ➔ Item annexes ➔ Budget analysis'.format(mc_title),
-                u'{0} ➔ Item annexes ➔ Budget analysis '
-                u'➔ Budget analysis sub annex'.format(mc_title),
                 u'{0} ➔ Item annexes ➔ Other annex(es)'.format(mc_title),
                 u'{0} ➔ Item decision annexes ➔ Decision annex(es)'.format(mc_title)]
             expected.extend(values)
