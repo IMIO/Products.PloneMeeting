@@ -8,7 +8,8 @@
         name="load-external-infos"
         class=".views.ExternalView"
         template="templates/external.pt"
-        permission="zope2.Public" />
+        permission="zope2.Public"
+        allowed_attributes="show_section" />
 
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"

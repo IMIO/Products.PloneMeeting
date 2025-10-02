@@ -2,7 +2,10 @@
 
 from natsort import humansorted
 from operator import attrgetter
+from Products.PloneMeeting.external.forms import projects_default
+from Products.PloneMeeting.external.forms import tasks_default
 from Products.PloneMeeting.external.utils import send_json_request
+from zope.i18n import translate
 from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
@@ -13,7 +16,7 @@ class BaseVisionVocabulary(object):
 
     implements(IVocabularyFactory)
 
-    def __call__(self, context, endpoint):
+    def __call__(self, context, endpoint, selected_values=[]):
         """ """
         terms = []
         for info in send_json_request(endpoint):
@@ -32,6 +35,9 @@ class BaseVisionVocabulary(object):
             res.append(info['name'])
             raw_res.append(info['name'])
             title = u" / ".join(res)
+            if info['id'] in selected_values:
+                title += u' [%s]' % translate(
+                    'Linked', domain="PloneMeeting", context=context.REQUEST)
             raw_title = u" / ".join(raw_res)
             term = SimpleTerm(info['id'], info['id'], title)
             term.raw_title = raw_title
@@ -46,7 +52,9 @@ class VisionProjectsVocabulary(BaseVisionVocabulary):
 
     def __call__(self, context):
         """ """
-        return super(VisionProjectsVocabulary, self).__call__(context, endpoint="projects")
+        selected_values = projects_default(context)
+        return super(VisionProjectsVocabulary, self).__call__(
+            context, endpoint="projects", selected_values=selected_values)
 
 
 VisionProjectsVocabularyFactory = VisionProjectsVocabulary()
@@ -58,7 +66,9 @@ class VisionTasksVocabulary(BaseVisionVocabulary):
 
     def __call__(self, context):
         """ """
-        return super(VisionTasksVocabulary, self).__call__(context, endpoint="tasks")
+        selected_values = tasks_default(context)
+        return super(VisionTasksVocabulary, self).__call__(
+            context, endpoint="tasks", selected_values=selected_values)
 
 
 VisionTasksVocabularyFactory = VisionTasksVocabulary()

@@ -13,8 +13,6 @@ from zope.interface import Interface
 from zope.interface import provider
 from zope.schema.interfaces import IContextAwareDefaultFactory
 
-import json
-
 
 @provider(IContextAwareDefaultFactory)
 def projects_default(context):
@@ -35,6 +33,12 @@ def tasks_default(context):
 
 
 class ILinkWithVision(Interface):
+
+    quick_filter = schema.TextLine(
+        title=_(u"Quick filter"),
+        description=u"",
+        required=False,
+    )
 
     projects = schema.List(
         title=_(u"Projects"),
@@ -73,6 +77,14 @@ class LinkWithVisionForm(form.Form):
         # after calling parent's update, self.actions are available
         self.actions.get('cancel').addClass('standalone')
 
+    def updateWidgets(self):
+        super(LinkWithVisionForm, self).updateWidgets()
+        self.widgets['quick_filter'].placeholder = _(u'Encode terms to filter')
+        # enable filterByName
+        self.widgets['quick_filter'].onkeyup = u'filterByName(event)'
+        # disable submit on [Enter]
+        self.widgets['quick_filter'].onkeydown=u"return (event.keyCode!=13);"
+
     @button.buttonAndHandler(_('Apply'), name='apply')
     def handle_apply(self, action):
         data, errors = self.extractData()
@@ -106,20 +118,22 @@ class LinkWithVisionForm(form.Form):
         # link new selected elements
         for project_id in data['projects']:
             if project_id not in linked_projects:
-                body = {"delib_uid": self.context.UID(),
-                        "target": {"type": "project",
-                                   "object_id": project_id}}
-                res = send_json_request("delib-links", method='POST', body=json.dumps(body))
+                project_data = {
+                    "delib_uid": self.context.UID(),
+                    "target": {"type": "project",
+                               "object_id": project_id}}
+                res = send_json_request("delib-links", method='POST', data=project_data)
                 api.portal.show_message(
                     _('Element "${element}" has been linked.',
                       mapping={'element': res[0]['target']['name']}),
                     request=self.request)
         for task_id in data['tasks']:
             if task_id not in linked_tasks:
-                body = {"delib_uid": self.context.UID(),
-                        "target": {"type": "task",
-                                   "object_id": task_id}}
-                res = send_json_request("delib-links", method='POST', body=json.dumps(body))
+                task_data = {
+                    "delib_uid": self.context.UID(),
+                    "target": {"type": "task",
+                               "object_id": task_id}}
+                res = send_json_request("delib-links", method='POST', data=task_data)
                 api.portal.show_message(
                     _('Element "${element}" has been linked.',
                       mapping={'element': res[0]['target']['name']}),

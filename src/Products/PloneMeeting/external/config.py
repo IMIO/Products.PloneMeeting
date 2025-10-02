@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
+import os
+
 
 # attribute name on the portal to store keycloak auth token
 AUTH_INFOS_ATTR = "keycloak_auth_infos"
 
 # keycloak auth token configuration
-AUTH_URL = 'https://keycloak-apps.cloud.imio-test.be/realms/vision/protocol/openid-connect/token'
-AUTH_CLIENT_ID = 'vision'
-AUTH_CLIENT_SECRET = '71dFZaMv96cJYCx@HANr77NyQ0Lz0I%i'
-AUTH_USERNAME = 'demo-vision'
-AUTH_PASSWORD = 'ztm,M=+3yrL{^6VkTGV;x&(T'
+VISION_AUTH_URL = os.getenv('VISION_AUTH_URL')
+VISION_CLIENT_ID = os.getenv('VISION_CLIENT_ID')
+VISION_CLIENT_SECRET = os.getenv('VISION_CLIENT_SECRET')
+VISION_AUTH_USERNAME = os.getenv('VISION_AUTH_USERNAME')
+VISION_AUTH_PASSWORD = os.getenv('VISION_AUTH_PASSWORD')
 AUTH_CURL_COMMAND = "curl --location '%s' \
 --header 'Content-Type: application/x-www-form-urlencoded' \
 --header 'Cookie: KEYCLOAK_LOCALE=fr' \
@@ -17,7 +19,7 @@ AUTH_CURL_COMMAND = "curl --location '%s' \
 --data-urlencode 'username=%s' \
 --data-urlencode 'password=%s' \
 --data-urlencode 'grant_type=password'" % (
-    AUTH_URL, AUTH_CLIENT_ID, AUTH_CLIENT_SECRET, AUTH_USERNAME, AUTH_PASSWORD)
+    VISION_AUTH_URL, VISION_CLIENT_ID, VISION_CLIENT_SECRET, VISION_AUTH_USERNAME, VISION_AUTH_PASSWORD)
 
 # api configuration
-API_URL = 'https://api-staging.imio.be/imio/vision/v1/municipalities/demo/%s?delib_user=%s%s'
+API_URL = 'https://ipa.imio.be/imio/vision/v1/municipalities/demo/%s?delib_user=%s%s'

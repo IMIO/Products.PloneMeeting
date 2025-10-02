@@ -6,17 +6,32 @@ from plone import api
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
+from Products.PloneMeeting.external.config import VISION_AUTH_USERNAME
 from Products.PloneMeeting.external.utils import send_json_request
 from Products.PloneMeeting.utils import is_proposing_group_editor
-from Products.PloneMeeting.config import PMMessageFactory as _
+from zope.i18n import translate
+
 
 class ExternalView(BrowserView):
     """
       This manage functionnality around iA.Vision
     """
 
+    def show_section(self):
+        """Display the 'External linked elements' on the item view?"""
+        return VISION_AUTH_USERNAME is not None
+
     def available(self):
         """ """
+        if isinstance(self.content, No):
+            # current user not found in iA.Vision
+            if self.content.status_code == 404:
+                self.content = No(
+                    u"%s (%s)" %
+                    (translate('Nothing to display.',
+                               domain='PloneMeeting',
+                               context=self.request),
+                     self.content.msg))
         return isinstance(self.content, list) and True or self.content
 
     def can_link(self):
@@ -38,5 +53,5 @@ class ExternalView(BrowserView):
             if self.content:
                 self.content = humansorted(self.content, key=lambda x: x['target']['name'])
         else:
-            self.content = No(_('Nothing to display.'))
+            self.content = No(translate('Nothing to display.', domain='PloneMeeting', context=self.request))
         return super(ExternalView, self).__call__()

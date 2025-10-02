@@ -1,12 +1,12 @@
 <tal:comment replace="nothing">Either show error messages or display relevant informations about linked elements</tal:comment>
-<tal:defines define="available python: view.available()">
+<tal:defines define="available python: view.available()"
+             i18n:domain="PloneMeeting">
   <tal:available condition="python: available is True">
     <tal:block define="content python: view.content;
                        DateTime python:modules['DateTime'].DateTime;
                        toLocalizedTime nocall:context/@@plone/toLocalizedTime;
                        portal_url context/@@plone_portal_state/portal_url;
-                       DateTime python:modules['DateTime'].DateTime;"
-               i18n:domain="PloneMeeting">
+                       DateTime python:modules['DateTime'].DateTime;">
 
       <tal:showInfos condition="python: isinstance(available, tuple)">
       <dl class="portalMessage info" tal:attributes="class python: 'portalMessage %s' % available[1]">
@@ -16,13 +16,13 @@
       </tal:showInfos>
       <table class="listing" tal:condition="python: available is True and content">
           <thead>
-             <th i18n:translate="listingheader_title_from_vision">Title from iA.Vision</th>
-             <th i18n:translate="type">Type</th>
-             <th i18n:translate="State">State</th>
-             <th i18n:translate="Project">Project</th>
-             <th i18n:translate="parent">Parent</th>
-             <th i18n:translate="manager">Manager</th>
-             <th i18n:translate="vision_start_date">Start date</th>
+             <th class="th_header_title_from_vision" i18n:translate="listingheader_title_from_vision">Title from iA.Vision</th>
+             <th class="th_header_type" i18n:translate="type">Type</th>
+             <th class="th_header_state" i18n:translate="State">State</th>
+             <th class="th_header_project" i18n:translate="Project">Project</th>
+             <th class="th_header_parent" i18n:translate="parent">Parent</th>
+             <th class="th_header_manager" i18n:translate="manager">Manager</th>
+             <th class="th_header_vision_start_date" i18n:translate="vision_start_date">Start date</th>
           </thead>
           <tbody>
             <tal:loop repeat="info content">
@@ -32,8 +32,11 @@
                   tal:attributes="class classOddEven">
                 <td>
                   <a tal:attributes="href elt/url|string:#"
-                     tal:content="elt/name" target="_blank">
+                     tal:content="elt/name"
+                     target="_blank">
                     Item title</a>
+                  <p class="discreet">
+                    <tal:block replace="structure elt/infos/description" />
                 </td>
                 <td i18n:translate="" tal:content="python: elt['type'].capitalize()">Type</td>
                 <td tal:content="elt/infos/status">Status</td>
@@ -51,13 +54,7 @@
     <a href="@@item-link-vision-projects"
        class="link-overlay-pm"
        tal:condition="python: view.can_link()">
-      <form name="item-link-vision-projects-form"
-            action="item-link-vision-projects">
-        <input class="context" type="submit" name="item-link-vision-projects"
-               value="Link with iA.Vision"
-               i18n:domain="PloneMeeting"
-               i18n:attributes="value" />
-      </form>
+      <span class="fa fa-link"></span>&nbsp;<span i18n:translate="">Link with iA.Vision</span>
     </a>
   </tal:available>
   <tal:not-available condition="not:available">
