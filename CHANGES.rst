@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.26rc1 (unreleased)
+4.2.26rc1 (2025-10-02)
 ----------------------
 
 - Manage item follow-up.
