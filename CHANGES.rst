@@ -2,11 +2,11 @@ Changelog
 =========
 
 
-4.2.26 (unreleased)
--------------------
+4.2.26rc1 (unreleased)
+----------------------
 
-- Nothing changed yet.
-
+- Manage item follow-up.
+  [gbastien]
 
 4.2.25 (2025-09-26)
 -------------------
