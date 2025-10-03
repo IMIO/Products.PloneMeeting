@@ -3566,12 +3566,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
-                    'showNumberOfItems': False,
+                    'showNumberOfItems': True,
                     'tal_condition': "python: 'neededFollowUp' in cfg.getUsedItemAttributes() and "
                         "tool.get_orgs_for_user(omitted_suffixes=['observers', ])",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
-                # Items with providedfollowUp
+                # Items with providedFollowUp
                 ('searchitemswithprovidedfollowup', {
                     'subFolderId': 'searches_items',
                     'active': True,

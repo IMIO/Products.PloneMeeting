@@ -1845,7 +1845,7 @@ class testViews(PloneMeetingTestCase):
     def test_pm_PMLabelsBatchActionOnlyEditableLabels(self):
         """The labels batch action will only display editable labels."""
         cfg = self.meetingConfig
-        self._enable_ftw_labels()
+        self._enable_ftw_labels(cfg)
         self._setupLabelsEditableWhenItemEditable(cfg, enable=False)
         config = list(cfg.getLabelsConfig())
         # make "label1" only editable by MeetingManagers
@@ -1885,7 +1885,7 @@ class testViews(PloneMeetingTestCase):
            by current user will not be removed by the "overwrite" batch action that
            removes every labels and set new labels."""
         cfg = self.meetingConfig
-        self._enable_ftw_labels()
+        self._enable_ftw_labels(cfg)
         self._setupLabelsEditableWhenItemEditable(cfg, enable=False)
         config = list(cfg.getLabelsConfig())
         # make "label1" only editable by MeetingManagers
@@ -2350,22 +2350,13 @@ class testViews(PloneMeetingTestCase):
         self.cleanMemoize()
         self.assertTrue(viewlet.available)
 
-    def _enable_ftw_labels(self):
-        cfg = self.meetingConfig
-        self._enableField('labels')
-        self.changeUser('pmCreator1')
-        labeljar = getAdapter(cfg, ILabelJar)
-        labeljar.add('Label1', 'green', False)
-        labeljar.add('Label2', 'red', False)
-        return labeljar
-
     def test_pm_ftw_labels_viewlet_can_edit(self):
         """can_edit when user has Modify portal content permission."""
         cfg = self.meetingConfig
         # remove recurring items in self.meetingConfig
         self._removeConfigObjectsFor(cfg)
         # enable viewlet
-        self._enable_ftw_labels()
+        self._enable_ftw_labels(cfg)
         self._setupLabelsEditableWhenItemEditable(cfg)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', decision=self.decisionText)
@@ -2412,8 +2403,9 @@ class testViews(PloneMeetingTestCase):
            Indeed, a scenario where an item is labelled then ModifyPortalContent is lost
            because state changed, make sure if a browser screen was not updated, labeling
            update raises Unauthorized."""
-        self._enable_ftw_labels()
-        self._setupLabelsEditableWhenItemEditable(self.meetingConfig)
+        cfg = self.meetingConfig
+        self._enable_ftw_labels(cfg)
+        self._setupLabelsEditableWhenItemEditable(cfg)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         view = item.restrictedTraverse('@@labeling')
@@ -3623,7 +3615,7 @@ class testViews(PloneMeetingTestCase):
         # label1 is viewable but not editable
         # label2 is not viewable and not editable
         cfg = self.meetingConfig
-        self._enable_ftw_labels()
+        self._enable_ftw_labels(cfg)
         config = list(cfg.getLabelsConfig())
         new_config1 = deepcopy(config[0])
         new_config1['label_id'] = "label1"

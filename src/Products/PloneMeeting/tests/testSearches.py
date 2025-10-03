@@ -20,6 +20,7 @@ from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.adapters import _find_nothing_query
+from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import getAdvicePortalTypes
@@ -1209,18 +1210,30 @@ class testSearches(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self._enableField('labels')
         collection = cfg.searches.searches_items.searchunreaditems
+        collection_uid = collection.UID()
+        collection.showNumberOfItems = True
 
         # create item, not 'lu' by default
         self.changeUser('pmCreator1')
+        # check that counter is updated when a personal label is changed
+        json_collections_count = self.getMeetingFolder().restrictedTraverse("@@json_collections_count")
+        self.assertEqual(
+            json_collections_count(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % collection_uid)
         item = self.create('MeetingItem')
-        item.reindexObject(idxs=['labels'])
         # for now item is not 'lu'
         self.assertEqual(len(collection.results()), 1)
+        self.assertEqual(
+            json_collections_count(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 1, "uid": "%s"}]}' % collection_uid)
         # make item 'lu'
         labeling = ILabeling(item)
         labeling.pers_update(['lu'], True)
         item.reindexObject(idxs=['labels'])
         self.assertEqual(len(collection.results()), 0)
+        self.assertEqual(
+            json_collections_count(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % collection_uid)
 
     def test_pm_CompoundCriterionAdapterItemsWithNegativePreviousIndex(self):
         '''Test the 'items-with-negative-previous-index' adapter.
@@ -1437,6 +1450,40 @@ class testSearches(PloneMeetingTestCase):
         self.assertEqual(
             view(),
             '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % searchmyitems_uid)
+
+    def test_pm_SearchFollowUp(self):
+        '''Test the "searchitemswithneededfollowup" and "searchitemswithprovidedfollowup".
+           Especially counter cache and results.'''
+        cfg = self.meetingConfig
+        for collection in cfg.searches.searches_items.objectValues():
+            if collection.getId() == "searchitemswithneededfollowup":
+                continue
+            collection.showNumberOfItems = False
+        neededfollowup = cfg.searches.searches_items.searchitemswithneededfollowup
+        neededfollowup_uid = neededfollowup.UID()
+        # providedfollowup = cfg.searches.searches_items.searchitemswithprovidedfollowup
+        self._setupFollowUp(cfg)
+
+        self.changeUser("pmCreator1")
+        # check that counter is correct when using global labels
+        view = self.getMeetingFolder().restrictedTraverse("@@json_collections_count")
+        self.assertEqual(
+            view(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % neededfollowup_uid)
+        item = self.create('MeetingItem')
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.request.form['activate_labels'] = ['needed-follow-up']
+        labelingview.update()
+        # was not added as only MeetingManager can add this label
+        self.assertFalse('needed-follow-up' in get_labels(item))
+        self.changeUser("pmManager")
+        view = self.getMeetingFolder().restrictedTraverse("@@json_collections_count")
+        self.assertEqual(
+            view(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % neededfollowup_uid)
+        labelingview = item.restrictedTraverse('@@labeling')
+        labelingview.update()
+        self.assertTrue('needed-follow-up' in get_labels(item))
 
 
 def test_suite():

@@ -581,12 +581,12 @@ class MeetingConfigDescriptor(Descriptor):
         self.inheritedAdviceRemoveableByAdviser = False
         self.itemInternalNotesEditableBy = []
         self.itemFieldsConfig = (
-            {'name': 'neededFollowUp',
-             'view': '',
-             'edit': ''},
-            {'name': 'providedFollowUp',
-             'view': '',
-             'edit': ''},
+            {'name': "neededFollowUp",
+             'view': "python: item.may_view_follow_up()",
+             'edit': "python: item.may_edit_follow_up('neededFollowUp')"},
+            {'name': "providedFollowUp",
+             'view': "python: item.may_view_follow_up()",
+             'edit': "python: item.may_edit_follow_up('providedFollowUp')"},
         )
         self.votesResultTALExpr = ''
 
