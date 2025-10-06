@@ -5,8 +5,10 @@ Changelog
 4.2.26 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Fixed `MeetingItem._updateAdvices` to avoid error when comparing `Dicts`
+  `self.adviceIndex` and `old_adviceIndex` in case we have a `datetime.datetime`
+  and a `None`.
+  [gbastien]
 
 4.2.25 (2025-09-26)
 -------------------
