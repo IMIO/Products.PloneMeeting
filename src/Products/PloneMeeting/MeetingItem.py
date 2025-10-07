@@ -6844,7 +6844,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         try:
             if self.adviceIndex != old_adviceIndex:
                 indexes += adapted.getAdviceRelatedIndexes()
-        except UnicodeDecodeError:
+        except Exception:
+            # comparing self.adviceIndex and old_adviceIndex may lead to some
+            # errors like UnicodeDecorError or date comparison error when we
+            # have a datetime.datetime and a None
             indexes += adapted.getAdviceRelatedIndexes()
         return indexes
 

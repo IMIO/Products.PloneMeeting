@@ -5,6 +5,10 @@ Changelog
 4.2.26 (unreleased)
 -------------------
 
+- Fixed `MeetingItem._updateAdvices` to avoid error when comparing `Dicts`
+  `self.adviceIndex` and `old_adviceIndex` in case we have a `datetime.datetime`
+  and a `None`.
+  [gbastien]
 - Display elements from external source `iA.Vision`, added form to be able
   to `link/unlink` elements from it as well.
   [gbastien]
