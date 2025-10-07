@@ -50,6 +50,7 @@
   <include package=".ckeditor" />
   <include package=".content" />
   <include package=".documentgenerator" />
+  <include package=".external" />
   <include package=".filters" />
   <include package=".ftw_labels" />
   <include package=".widgets" />

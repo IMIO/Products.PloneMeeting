@@ -9,6 +9,9 @@ Changelog
   `self.adviceIndex` and `old_adviceIndex` in case we have a `datetime.datetime`
   and a `None`.
   [gbastien]
+- Display elements from external source `iA.Vision`, added form to be able
+  to `link/unlink` elements from it as well.
+  [gbastien]
 
 4.2.25 (2025-09-26)
 -------------------

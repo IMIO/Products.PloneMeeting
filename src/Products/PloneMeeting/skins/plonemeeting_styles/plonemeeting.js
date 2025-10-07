@@ -677,6 +677,9 @@ function init_tooltipsters(event) {
       categorizedChildsInfos({selector: 'div.item-linkeditems .tooltipster-childs-infos', });
       advicesInfos();
     }
+    if (css_id == 'collapsible-external-infos') {
+      pmCommonOverlays(selector_prefix='div#collapsible-external-infos ');
+    }
 }
 
 $(document).on('ckeditor_prepare_ajax_success', init_ckeditor);
