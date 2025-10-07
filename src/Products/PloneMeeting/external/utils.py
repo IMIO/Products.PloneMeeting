@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from AccessControl import Unauthorized
 from appy.gen import No
 from datetime import datetime
 from datetime import timedelta
@@ -74,7 +75,15 @@ def send_json_request(
     if extra_parameters:
         extra_parameters = "&" + urllib.urlencode(extra_parameters)
     request = getRequest()
-    url = API_URL % (endpoint, get_current_user_id(request), extra_parameters or "")
+    # make an Manager able to pass an arbitrary external_user_id for testing
+    user_id = request.get('external_user_id')
+    if user_id:
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if not tool.isManager(realManagers=True):
+            raise Unauthorized
+    else:
+        user_id = get_current_user_id(request)
+    url = API_URL % (endpoint, user_id, extra_parameters or "")
     target = urlparse(url)
     url = target.geturl()
     # manage cache per request for 'GET'

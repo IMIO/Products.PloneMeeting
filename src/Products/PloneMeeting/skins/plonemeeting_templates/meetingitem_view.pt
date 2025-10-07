@@ -470,7 +470,7 @@
     <tal:external-infos condition="python: context.restrictedTraverse('@@load-external-infos').show_section()">
         <div id="external-infos"
              class="collapsible discreet not-auto-collapsible-activable"
-             onclick="toggleDetails('collapsible-external-infos', toggle_parent_active=true, parent_tag=null, load_view='@@load-external-infos');">
+             tal:attributes="onclick string:toggleDetails('collapsible-external-infos', toggle_parent_active=true, parent_tag=null, load_view='@@load-external-infos?external_user_id=${request/external_user_id}');">
           <span class="item_attribute_label" i18n:translate="external_linked_elements">
               External linked elements
           </span>

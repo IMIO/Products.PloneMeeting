@@ -51,7 +51,7 @@
       </table>
       <p i18n:translate="" tal:condition="not:content">Nothing to display.</p>
     </tal:block>
-    <a href="@@item-link-vision-projects"
+    <a tal:attributes="href string:@@item-link-vision-projects?external_user_id=${request/external_user_id}"
        class="link-overlay-pm"
        tal:condition="python: view.can_link()">
       <span class="fa fa-link"></span>&nbsp;<span i18n:translate="">Link with iA.Vision</span>
