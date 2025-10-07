@@ -18,7 +18,7 @@ class ExternalView(BrowserView):
     """
 
     def show_section(self):
-        """Display the 'External linked elements' on the item view?"""
+        """Display the "External linked elements" on the item view?"""
         return VISION_AUTH_USERNAME is not None
 
     def available(self):

@@ -19,7 +19,11 @@ AUTH_CURL_COMMAND = "curl --location '%s' \
 --data-urlencode 'username=%s' \
 --data-urlencode 'password=%s' \
 --data-urlencode 'grant_type=password'" % (
-    VISION_AUTH_URL, VISION_CLIENT_ID, VISION_CLIENT_SECRET, VISION_AUTH_USERNAME, VISION_AUTH_PASSWORD)
+    VISION_AUTH_URL,
+    VISION_CLIENT_ID,
+    VISION_CLIENT_SECRET,
+    VISION_AUTH_USERNAME,
+    VISION_AUTH_PASSWORD)
 
 # api configuration
 API_URL = 'https://ipa.imio.be/imio/vision/v1/municipalities/demo/%s?delib_user=%s%s'

@@ -25,8 +25,10 @@ except ImportError:
     from urllib.parse import urlparse
 
 
-def get_auth_token():
-    """ """
+def get_auth_token(expire_treshold=60):
+    """Get the auth token and store it on the portal.
+       Get it again if expired or expires in less than
+       given expire_treshold seconds."""
     portal = api.portal.get()
     auth_infos = getattr(portal, AUTH_INFOS_ATTR, {})
     if not auth_infos or auth_infos['expires_in'] < datetime.now():
@@ -40,10 +42,12 @@ def get_auth_token():
             auth_infos['access_token'] = result['access_token']
             # store that expires_in is 60 seconds before real expires_in
             # so we may probably execute one last request
-            auth_infos['expires_in'] = datetime.now() + timedelta(seconds=result['expires_in'] - 60)
+            auth_infos['expires_in'] = datetime.now() + \
+                timedelta(seconds=result['expires_in'] - expire_treshold)
             setattr(portal, AUTH_INFOS_ATTR, auth_infos)
     # logger.info(auth_infos['access_token'])
     return auth_infos.get('access_token') or result
+
 
 def send_json_request(
         endpoint,

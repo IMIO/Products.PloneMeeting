@@ -58,6 +58,6 @@
     </a>
   </tal:available>
   <tal:not-available condition="not:available">
-    <p class="highlight-red" tal:content="python: available.msg">Error</p>
+    <p class="discreet" tal:content="python: available.msg">Error</p>
   </tal:not-available>
 </tal:defines>
