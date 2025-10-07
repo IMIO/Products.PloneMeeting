@@ -823,6 +823,20 @@ def getDateFromDelta(aDate, delta):
     return new_date
 
 
+def is_operational_user(obj):
+    """Is current user an operationnal user in the application for the given p_obj."""
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(obj)
+    class_name = obj.__class__.__name__
+    return ((class_name == 'Meeting' and
+            _checkPermission(ModifyPortalContent, obj)) or
+         (not class_name == 'Meeting' and
+         (tool.isManager(cfg) or
+          bool(tool.userIsAmong(
+               suffixes=get_all_suffixes(omitted_suffixes=['observers']), cfg=cfg)))))
+
+
+
 def is_transition_before_date(obj, transition, date):
     '''Returns True if this p_obj last p_transition was made before p_date.
        p_date is a python datetime.datetime.'''
