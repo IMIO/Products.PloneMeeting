@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.26 (unreleased)
+4.2.26 (2025-10-07)
 -------------------
 
 - Fixed `MeetingItem._updateAdvices` to avoid error when comparing `Dicts`
