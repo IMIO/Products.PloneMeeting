@@ -152,8 +152,12 @@ class PMLabeling(Labeling):
         # need a full label to filter it, returns pers and global labels
         active_label_ids = [label['label_id'] for label in active_labels
                             if not label['by_user']]
+        # build a filter_manageable_labels compliant list of dicts
+        new_labels = [
+            {'label_id': label_id, 'active': True, 'by_user': False}
+            for label_id in label_ids]
         editable_labels = self.filter_manageable_labels(
-            [[], active_labels], modes=('edit', ))[1]
+            [[], active_labels + new_labels], modes=('edit', ))[1]
         editable_label_ids = [label['label_id'] for label in editable_labels]
         # wipeout label_ids if not stored and not editable, this could mean
         # a label manipulated in the UI as this should not be possible
