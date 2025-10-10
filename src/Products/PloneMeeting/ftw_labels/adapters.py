@@ -9,15 +9,17 @@ from collective.behavior.talcondition.utils import _evaluateExpression
 from ftw.labels.interfaces import ILabelJar
 from ftw.labels.labeling import ANNOTATION_KEY as FTW_LABELS_ANNOTATION_KEY
 from ftw.labels.labeling import Labeling
+from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from plone import api
+from plone.app.querystring.queryparser import parseFormquery
+from plone.memoize import ram
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import ITEM_LABELS_ACCESS_CACHE_ATTR
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from zope.annotation import IAnnotations
-from zope.globalrequest import getRequest
 
 
 def ftw_labels_jar_discovery(context):
@@ -137,10 +139,33 @@ class PMLabeling(Labeling):
             labels = [personal_labels, global_labels]
         return labels
 
+    def get_searches_labels_cachekey(method, self):
+        """Cachekey for self.get_searches_labels.
+           When a DashboardCollection is added/modified/removed,
+           the MeetingConfig modification date is updated."""
+        return self.cfg.modified()
+
+    @ram.cache(get_searches_labels_cachekey)
+    def get_searches_labels(self):
+        """Return list of labels used in searches of current MeetingConfig
+           so searches using the "labels" index and for which showNumberOfItems
+           is True. This is used to invalidate searches counter cache when
+           changing a label but only when relevant."""
+        res = []
+        for collection in self.cfg.searches.searches_items.objectValues():
+            if collection.showNumberOfItems is True and collection.enabled is True:
+                parsed_query = parseFormquery(collection, collection.query)
+                if "labels" in parsed_query:
+                    res += parsed_query['labels']['query']
+        return res
+
     def pers_update(self, label_ids, activate):
-        # invalidate collections counter cache and portlet_todo
-        invalidate_cachekey_volatile_for(
-            'Products.PloneMeeting.MeetingItem.modified', get_again=True)
+        # invalidate collections counter cache and portlet_todo if any
+        user_id = get_current_user_id(self.context.REQUEST)
+        if set(['%s:%s' % (user_id, label_id) for label_id in label_ids]). \
+                intersection(self.get_searches_labels()):
+            invalidate_cachekey_volatile_for(
+                'Products.PloneMeeting.MeetingItem.modified', get_again=True)
         return super(PMLabeling, self).pers_update(label_ids, activate)
 
     def update(self, label_ids):
@@ -181,7 +206,7 @@ class PMLabeling(Labeling):
                   mapping={'not_manageable_label_titles': safe_unicode(
                     ', '.join(not_manageable_label_titles))}),
                 type='warning',
-                request=getRequest())
+                request=self.context.REQUEST)
         label_ids += list(not_manageable_label_ids)
         # check if need to update_local_roles, a relevant label has been (un)selected
         # check if one added or removed
@@ -198,5 +223,6 @@ class PMLabeling(Labeling):
            (len(config)-1 != len(added_or_removed) and config[0] == "1"):
             self.context.update_local_roles(avoid_reindex=True)
         # invalidate collections counter cache and portlet_todo
-        invalidate_cachekey_volatile_for(
-            'Products.PloneMeeting.MeetingItem.modified', get_again=True)
+        if set(active_label_ids).symmetric_difference(label_ids).intersection(self.get_searches_labels()):
+            invalidate_cachekey_volatile_for(
+                'Products.PloneMeeting.MeetingItem.modified', get_again=True)

@@ -3619,11 +3619,11 @@ class testViews(PloneMeetingTestCase):
         config = list(cfg.getLabelsConfig())
         new_config1 = deepcopy(config[0])
         new_config1['label_id'] = "label1"
-        new_config1['edit_access_on'] = "python: False"
+        new_config1['edit_access_on'] = "python: item.Title() != 'Label1 not editable'"
         new_config1['edit_groups'] = []
         new_config2 = deepcopy(config[0])
         new_config2['label_id'] = "label2"
-        new_config2['edit_access_on'] = "python: False"
+        new_config2['edit_access_on'] = "python: item.Title() != 'Label2 not editable'"
         new_config2['view_access_on'] = "python: False"
         new_config2['edit_groups'] = []
         config.append(new_config1)
@@ -3644,7 +3644,11 @@ class testViews(PloneMeetingTestCase):
         labelingview.update()
         self.assertEqual(IStatusMessage(self.request).show(), [])
         self.assertEqual(sorted(get_labels(item)), ['label1'])
+        # make "label1" no more editable
         # try to remove 'label1', warning and still there
+        item.setTitle('Label1 not editable')
+        item._update_after_edit()
+
         self.request.form['activate_labels'] = []
         labelingview.update()
         # set response status to 200 so status message is removed
@@ -3659,24 +3663,29 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(sorted(get_labels(item)), ['label1', 'label2'])
         # no message as keeping 'label1'
         self.assertEqual(IStatusMessage(self.request).show(), [])
+        # make label2 not editable and save "label1"
         # save 'label1' as 'label2' is not viewable
+        item.setTitle('Label2 not editable')
+        item._update_after_edit()
         self.request.form['activate_labels'] = ['label1']
         labelingview.update()
         # no message as keeping 'label1', and no message about not viewable 'label2'
         self.assertEqual(IStatusMessage(self.request).show(), [])
         # but 'label2' was kept as it is not viewable
         self.assertEqual(sorted(get_labels(item)), ['label1', 'label2'])
+        self.cleanMemoize()
         # use global MeetingConfig.update_labels_access_cache to reflect
-        # configuration changes, make "label1" no more viewable
-        self.assertEqual(len(labelingview.available_labels(modes=['edit'])[1]), 1)
+        # configuration changes, make "label2" viewable
+        # for now we have "label" and "label1"
+        self.assertEqual(len(labelingview.available_labels(modes=['edit'])[1]), 2)
         config = list(cfg.getLabelsConfig())
-        config[1]["edit_access_on"] = ""
+        config[2]["edit_access_on"] = ""
         cfg.setLabelsConfig(config)
         self.assertRaises(Unauthorized, cfg.update_labels_access_cache)
         self.changeUser('siteadmin')
         cfg.update_labels_access_cache()
         self.changeUser('pmCreator1')
-        self.assertEqual(len(labelingview.available_labels(modes=['edit'])[1]), 2)
+        self.assertEqual(len(labelingview.available_labels(modes=['edit'])[1]), 3)
 
 
 def test_suite():

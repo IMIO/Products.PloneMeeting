@@ -2,10 +2,14 @@ Changelog
 =========
 
 
-4.2.27 (unreleased)
--------------------
+4.2.27rc1 (unreleased)
+----------------------
 
 - Manage item follow-up.
+  [gbastien]
+- Invalidate dashboard collection counter when a label is (un)selected.
+  This is done only when the added/removed global or personal label is used in
+  an enabled dashboard collection query.
   [gbastien]
 
 4.2.26 (2025-10-07)

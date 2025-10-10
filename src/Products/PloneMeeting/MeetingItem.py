@@ -443,7 +443,8 @@ class MeetingItemWorkflowConditions(object):
            self.context.hasMeeting():
             meeting = self.context.getMeeting()
             if meeting.date < datetime.now():
-                if not fieldIsEmpty('decision') or not fieldIsEmpty('motivation'):
+                if not fieldIsEmpty('decision', self.context) or \
+                   not fieldIsEmpty('motivation', self.context):
                     res = True
                 else:
                     itemNumber = self.context.getItemNumber(relativeTo='meeting',
@@ -7950,7 +7951,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             dest_field = newItem.getField(dest_field_name)
             # check that we will not empty a required field (case for "title" especially)
             # and also that if field optional, it is used in destination config
-            if (fieldIsEmpty(other_mc_field_name) and
+            if (fieldIsEmpty(other_mc_field_name, self) and
                 self.getField(dest_field_name).required) or \
                (getattr(dest_field, 'optional', False) and
                     not newItem.attribute_is_used(dest_field_name)):
