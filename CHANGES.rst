@@ -2,9 +2,11 @@ Changelog
 =========
 
 
-4.2.27rc1 (unreleased)
-----------------------
+4.2.27 (unreleased)
+-------------------
 
+- Add 2026 holidays in profile.
+  [aduchene]
 - Manage item follow-up.
   [gbastien]
 - Invalidate dashboard collection counter when a label is (un)selected.
