@@ -419,6 +419,7 @@ class testUtils(PloneMeetingTestCase):
     def test_pm_get_labels(self):
         """Test the ToolPloneMeeting.get_labels method
            that will return ftw.labels active_labels."""
+        self._enableField('labels')
         self.changeUser("pmCreator1")
         item = self.create("MeetingItem")
         self.assertEqual(get_labels(item), {})

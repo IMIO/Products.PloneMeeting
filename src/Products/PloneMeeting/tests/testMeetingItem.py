@@ -5838,6 +5838,7 @@ class testMeetingItem(PloneMeetingTestCase):
             'takenOverBy', 'templateUsingGroups',
             'toDiscuss', 'committeeObservations', 'committeeTranscript',
             'votesObservations', 'votesResult',
+            'neededFollowUp', 'providedFollowUp',
             'otherMeetingConfigsClonableToEmergency',
             'internalNotes', 'externalIdentifier']
         NEUTRAL_FIELDS += self._extraNeutralFields()

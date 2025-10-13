@@ -8,8 +8,10 @@ from imio.helpers.content import object_values
 from imio.pyutils.utils import merge_dicts
 from imio.pyutils.utils import replace_in_list
 from plone import api
+from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import AddAnnex
@@ -898,9 +900,13 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             from Products.PloneMeeting.MeetingItem import MeetingItem
             edit_permissions = [ModifyPortalContent, DeleteObjects]
             for field in MeetingItem.schema.fields():
-                if field.write_permission and field.write_permission not in edit_permissions:
+                # in some case we protect edit with "View" permission because
+                # we manage access manually, ignore these edit permissions
+                if field.write_permission and \
+                   field.write_permission not in edit_permissions and \
+                   field.write_permission not in (View, AccessContentsInformation):
                     edit_permissions.append(field.write_permission)
-            NEW_STATE_ID_PATTERN = '{0}_waiting_advices'
+            new_state_id_pattern = '{0}_waiting_advices'
             # try to get meetingConfig id in WAITING_ADVICES_FROM_STATES
             # if not found, look for a "*" that is applied to every meetingConfigs
             # else nothing is done
@@ -931,7 +937,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                 if not from_state_ids or not back_state_ids:
                     continue
                 new_state_id = infos.get('new_state_id', None) or \
-                    NEW_STATE_ID_PATTERN.format('__or__'.join(from_state_ids))
+                    new_state_id_pattern.format('__or__'.join(from_state_ids))
                 if not new_state_id.endswith('_waiting_advices'):
                     raise Exception('Waiting advices "new_state_id" must end with "_waiting_advices" !')
                 back_transition_ids = []

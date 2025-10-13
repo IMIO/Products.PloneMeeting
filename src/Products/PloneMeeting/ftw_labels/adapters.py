@@ -156,7 +156,9 @@ class PMLabeling(Labeling):
             if collection.showNumberOfItems is True and collection.enabled is True:
                 parsed_query = parseFormquery(collection, collection.query)
                 if "labels" in parsed_query:
-                    res += parsed_query['labels']['query']
+                    # most queries use "query", except for "not" queries
+                    res += parsed_query['labels'].get(
+                        'query', parsed_query['labels'].get('not'))
         return res
 
     def pers_update(self, label_ids, activate):
