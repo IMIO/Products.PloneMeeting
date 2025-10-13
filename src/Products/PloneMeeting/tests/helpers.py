@@ -585,3 +585,21 @@ class PloneMeetingTestingHelpers(object):
         defValues = MeetingConfigDescriptor.get()
         cfg.setItemWFValidationLevels(deepcopy(defValues.itemWFValidationLevels))
         notify(ObjectEditedEvent(cfg))
+
+    def _setupLabelsEditableWhenItemEditable(self, cfg, enable=True):
+        """Setup labels only editable when item editable."""
+        self._enableField('labels')
+        labelsConfig = cfg.getLabelsConfig()
+        if enable:
+            labelsConfig[0]['edit_groups'] = []
+            labelsConfig[0]['edit_access_on'] = 'python: cfg.isManager(cfg) or '\
+                'checkPermission("Modify portal content", context)'
+            labelsConfig[0]['edit_access_on_cache'] = '0'
+        else:
+            labelsConfig[0]['edit_groups'] = [
+                'suffix_proposing_group_creators',
+                'suffix_proposing_group_prereviewers',
+                'suffix_proposing_group_reviewers']
+            labelsConfig[0]['edit_access_on'] = ""
+            labelsConfig[0]['edit_access_on_cache'] = '1'
+        cfg.setLabelsConfig(labelsConfig)

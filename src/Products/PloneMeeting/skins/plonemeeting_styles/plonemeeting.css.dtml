@@ -948,6 +948,7 @@ table.listing th.th_header_proposing_group_acronym,
 table.listing th.th_header_committees_index_acronym,
 table.listing th.th_header_groups_in_charge_acronym,
 table.listing th.th_header_associated_groups_acronym,
+table.listing th.th_header_vision_start_date,
 .pm_meeting_listing_th_checkBoxes {
     width: 1%;
 }
@@ -1079,6 +1080,11 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
 .apButtonAction_export_pdf {
     background-image: url("++resource++collective.documentgenerator/pdf.svg");
     background-size: 16px;
+}
+
+.apButton.apButtonAction.apButtonAction_update_labels_access_cache {
+    background-image: url(++resource++ftw.labels/edit_labels.png);
+    padding-left: 30px;
 }
 
 /* style for the 'Back' link displayed in the elements of the configuration next to the 'de/activate' button
@@ -1991,9 +1997,10 @@ table.listing tbody tr.even.selected td,
 table.listing tbody tr.even.dragging td {
     background-color: #ffa;
 }
-/* category column in annexes table */
-table tbody tr td.td_cell_category-column {
-   max-width: 200px;
+/* category column in annexes table and copyGroups in items table */
+table tbody tr td.td_cell_category-column,
+table tbody tr td.td_cell_copyGroups {
+   max-width: 300px;
 }
 
 /* refresh attendees */
@@ -2195,8 +2202,7 @@ span.signatory-replacer {
     color: red;
 }
 
-
-/* hide downloard vcard link on contacts */
+/* hide download vcard link on contacts */
 p#download_vcard {
    display: none;
 }
@@ -2659,6 +2665,16 @@ span.link-separator::before {
 
 div#forceInsertNormalInput {
     margin-bottom: 0.5em;
+}
+
+/* by default, browser will align center table caption, but LO (appy) will
+   align it on the left, so we align on the left by default */
+table caption {
+    text-align: left;
+}
+
+label {
+    word-break: break-word;
 }
 
 /* </dtml-with> */

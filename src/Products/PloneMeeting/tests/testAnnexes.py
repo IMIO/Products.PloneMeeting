@@ -1041,6 +1041,17 @@ class testAnnexes(PloneMeetingTestCase):
         annexes_to_print = get_annexes_to_print(item, filters={'category_id': 'overhead-analysis'})
         self.assertEqual(len(annexes_to_print), 1)
         self.assertEqual(annexes_to_print[0]['UID'], annex2.UID())
+        # sort on
+        annexes_to_print = [a['title'] for a in get_annexes_to_print(item, sort_on="title", caching=False)]
+        self.assertEqual(annexes_to_print, ["Annex 1", "Annex 2"])
+        annexes_to_print = [a["title"] for a in get_annexes_to_print(item, sort_on="getObjPositionInParent", caching=False)]
+        self.assertEqual(annexes_to_print, ["Annex 1", "Annex 2"],)
+
+        item.folder_position_typeaware(position='down', id=annex1.getId())
+        annexes_to_print = [a["title"] for a in get_annexes_to_print(item, sort_on="getObjPositionInParent", caching=False)]
+        self.assertEqual(annexes_to_print, ["Annex 2", "Annex 1"],)
+        annexes_to_print = [a['title'] for a in get_annexes_to_print(item, sort_on="title", caching=False)]
+        self.assertEqual(annexes_to_print, ["Annex 1", "Annex 2"])
 
     def test_pm_ChangeAnnexPosition(self):
         """Annexes are orderable by the user able to add annexes."""
@@ -1417,7 +1428,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertFalse(view.showDecisionAnnexesSection())
 
     def test_pm_Other_mc_correspondences_constraint(self):
-        """ """
+        """Test for field other_mc_correspondences constraint."""
         self.changeUser('pmManager')
         cfg = self.meetingConfig
         annex_type = cfg.annexes_types.item_annexes.get(self.annexFileType)
@@ -1431,7 +1442,12 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(other_mc_correspondences_constraint([terms[-1].value]))
 
     def test_pm_Other_mc_correspondences_vocabulary(self):
-        """ """
+        """Test for field other_mc_correspondences vocabulary."""
+        # disable eventual cfg3
+        if hasattr(self, "meetingConfig3"):
+            self.changeUser("siteadmin")
+            # disabled MC are listed to be able to prepare config so delete it
+            self.tool.manage_delObjects([self.meetingConfig3.getId(), ])
         cfg = self.meetingConfig
         annex_type = cfg.annexes_types.item_annexes.get(self.annexFileType)
         # get vocabulary name

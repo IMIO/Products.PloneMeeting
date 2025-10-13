@@ -1839,6 +1839,7 @@ class testMeetingConfig(PloneMeetingTestCase):
 
     def test_pm_UsedLabelCanNotBeRemoved(self):
         """A ftw.labels label that is used on an item can not be removed."""
+        self._enableField('labels')
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
@@ -1896,6 +1897,37 @@ class testMeetingConfig(PloneMeetingTestCase):
         jar.remove('new-added-label')
         self.assertTrue(cfg.modified() > config_modified_before_remove)
         self.assertFalse(label_id in vocab_factory(pmFolder))
+
+    def test_pm_Validate_labelsConfig(self):
+        '''Test the MeetingConfig.labelsConfigpowerObservers validation.'''
+        cfg = self.meetingConfig
+        self.failIf(cfg.validate_labelsConfig(cfg.getLabelsConfig()))
+        # first line must be about '*'
+        config = list(cfg.getLabelsConfig())
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
+        config.insert(0, new_config)
+        cfg.setLabelsConfig(config)
+        # first config must be about "*"
+        error_msg = translate(
+            u'labels_config_first_row_must_be_default_config',
+            domain='PloneMeeting',
+            context=self.request)
+        self.assertEqual(cfg.validate_labelsConfig(cfg.getLabelsConfig()), error_msg)
+        # can not have several rows about same label
+        error_msg = translate(
+            u'labels_config_can_not_have_several_config_for_same_label',
+            domain='PloneMeeting',
+            context=self.request)
+        config = list(cfg.getLabelsConfig())
+        config[0]['label_id'] = "*"
+        cfg.setLabelsConfig(config)
+        self.assertEqual(cfg.validate_labelsConfig(cfg.getLabelsConfig()), error_msg)
+        # workable config
+        config = list(cfg.getLabelsConfig())
+        config[1]['label_id'] = "label"
+        cfg.setLabelsConfig(config)
+        self.failIf(cfg.validate_labelsConfig(cfg.getLabelsConfig()))
 
     def test_pm_Validate_powerObservers(self):
         '''Test the MeetingConfig.powerObservers validation.
@@ -2658,6 +2690,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # test without usingGroups then enable it
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
+        self.freezeMeeting(meeting)
         recipients, subject, body = sendMailIfRelevant(
             meeting,
             event='meeting_state_changed_freeze',

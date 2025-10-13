@@ -6,10 +6,10 @@
 #
 
 from collective.contact.core.content.organization import IOrganization
-from collective.eeafaceted.z3ctable.columns import EMPTY_STRING
 from collective.iconifiedcategory.indexes import content_category_uid
 from datetime import datetime
 from imio.annex.content.annex import IAnnex
+from imio.helpers import EMPTY_STRING
 from imio.helpers.content import _contained_objects
 from imio.helpers.content import base_getattr
 from imio.helpers.content import safe_delattr

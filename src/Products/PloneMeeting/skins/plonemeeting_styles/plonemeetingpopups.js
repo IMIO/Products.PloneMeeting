@@ -230,7 +230,12 @@ function pmCommonOverlays(selector_prefix='') {
                         e.target.classList.contains("wsc-button")) {return false;}
                 },
             },
-       });
+        });
+        // Info overlays that may be closed whenever clicking outside
+        $(selector_prefix + 'a.link-overlay-pm-info').prepOverlay({
+            subtype: 'ajax',
+            closeselector: '[name="form.buttons.cancel"]',
+        });
     });
 }
 

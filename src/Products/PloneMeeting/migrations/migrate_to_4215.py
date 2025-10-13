@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from imio.helpers.setup import load_type_from_package
-from imio.pyutils.utils import replace_in_list
 from imio.webspellchecker.config import set_disable_autosearch_in
 from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.migrations import logger
@@ -81,7 +80,7 @@ class Migrate_To_4215(Migrator):
         logger.info('Done.')
 
     def _reloadMeetingConfigsForItemWorkflows(self):
-        """Reload MeetingConfigs so if using "return_to_proposing_group" with validation."""
+        """Reload MeetingConfigs if using "return_to_proposing_group" with validation."""
         logger.info("Updating item WF using 'return_to_proposing_group with validation'...")
         for cfg in self.tool.objectValues('MeetingConfig'):
             if len([state_id for state_id in cfg.getItemWorkflow(True)
@@ -95,7 +94,9 @@ class Migrate_To_4215(Migrator):
         logger.info("Updating WSC config and removing broken annexes...")
         if self.portal.portal_quickinstaller.isProductInstalled('imio.webspellchecker'):
             # disable WSC in quickupload
-            set_disable_autosearch_in(u'["#form-widgets-title", "#form-widgets-description"]')
+            set_disable_autosearch_in(
+                u'["#form-widgets-title", "#form-widgets-description", '
+                u'".select2-focusser", ".select2-input"]')
             # remove broken annexes
             self._removeBrokenAnnexes()
         logger.info('Done.')

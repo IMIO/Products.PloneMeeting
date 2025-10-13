@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.eeafaceted.batchactions import _ as _CEBA
 from collective.eeafaceted.batchactions.browser.viewlets import BatchActionsViewlet
 from collective.eeafaceted.batchactions.browser.views import BaseARUOBatchActionForm
@@ -15,11 +14,12 @@ from imio.annex.browser.views import DownloadAnnexesBatchActionForm
 from plone import api
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
-from Products.CMFCore.utils import _checkPermission
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.ftw_labels.utils import filter_access_global_labels
 from Products.PloneMeeting.utils import displaying_available_items
+from Products.PloneMeeting.utils import is_operational_user
 from z3c.form.field import Fields
 from zope import schema
 from zope.i18n import translate
@@ -123,7 +123,7 @@ class PMBaseARUOBatchActionForm(BaseARUOBatchActionForm):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         return self.modified_attr_name in self.cfg.getUsedItemAttributes() and \
-            _is_operational_user(self.context)
+            is_operational_user(self.context)
 
     def _apply(self, **data):
         updated = super(PMBaseARUOBatchActionForm, self)._apply(**data)
@@ -269,21 +269,22 @@ class PMLabelsBatchActionForm(LabelsBatchActionForm):
         """Only available when labels are enabled."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        return cfg.getEnableLabels()
+        return 'labels' in cfg.getUsedItemAttributes()
 
+    def _filter_labels_vocabulary(self, jar):
+        return filter_access_global_labels(jar, mode='edit')
 
-def _is_operational_user(context):
-    """Is current user an operationnal user in the application for the given p_context."""
-    tool = api.portal.get_tool('portal_plonemeeting')
-    cfg = tool.getMeetingConfig(context)
-    class_name = context.__class__.__name__
-    return class_name != 'MeetingItem' and \
-        ((class_name == 'Meeting' and
-            _checkPermission(ModifyPortalContent, context)) or
-         (not class_name == 'Meeting' and
-         (tool.isManager(cfg) or
-          bool(tool.userIsAmong(
-               suffixes=get_all_suffixes(omitted_suffixes=['observers']), cfg=cfg)))))
+    def _can_change_labels(self):
+        view = None
+        for brain in self.brains:
+            obj = brain.getObject()
+            # only instanciate view one time and change context
+            if view is None:
+                view = obj.restrictedTraverse('@@labeling')
+            view.context = obj
+            if not view.can_edit:
+                return False
+        return True
 
 
 class PMTransitionBatchActionForm(TransitionBatchActionForm):
@@ -293,7 +294,7 @@ class PMTransitionBatchActionForm(TransitionBatchActionForm):
         """Only available to users having operational roles in the application.
            This is essentially done to hide this to (restricted)powerobservers
            and to non MeetingManagers on the meeting_view."""
-        return _is_operational_user(self.context)
+        return is_operational_user(self.context)
 
 
 class PMMeetingBatchActionsViewlet(BatchActionsViewlet):

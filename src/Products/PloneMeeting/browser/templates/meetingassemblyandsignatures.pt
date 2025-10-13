@@ -27,7 +27,7 @@
     <tr>
       <th class="th_header_number-column">
         <a tal:condition="isManager"
-           class="link-overlay-pm"
+           class="link-overlay-pm-info"
            title="Redefined item attendees order"
            i18n:attributes="title"
            tal:attributes="href string:${context/absolute_url}/@@display-meeting-item-changed-attendees-order">
@@ -49,13 +49,13 @@
       <th class="header-attendee-voter" class="nosort" tal:condition="showVoters">
        <span i18n:translate="is_voter">Voter?</span>
        <tal:show_voted_or_not_voted condition="isManager">
-        <a class="link-overlay-pm"
+        <a class="link-overlay-pm-info"
            title="Completed votes"
            i18n:attributes="title"
            tal:attributes="href string:${context/absolute_url}/@@display-meeting-item-voters?show_voted_items:boolean=1">
          <span class="fa show-info green-colored link-action"></span>
         </a>
-        <a class="link-overlay-pm"
+        <a class="link-overlay-pm-info"
            title="Not completed votes"
            i18n:attributes="title"
            tal:attributes="href string:${context/absolute_url}/@@display-meeting-item-voters">

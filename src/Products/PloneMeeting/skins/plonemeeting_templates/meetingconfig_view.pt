@@ -175,6 +175,17 @@
                        onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
                        i18n:attributes="value"/>
               </form>
+              <form name="updateLabelsAccessCacheForm" action="update_labels_access_cache">
+                <p class="discreet" style="color: red;" i18n:translate="pm_update_labels_access_cache_warning">
+                    Warning: the action 'Update labels access cache' will update every items labels access, this needs to be done when labels are activated or when labels config changed.
+                </p>
+                <input class="apButton apButtonAction apButtonAction_update_labels_access_cache"
+                       type="submit"
+                       name="updateLabelsAccessCache"
+                       value="pm_update_labels_access_cache"
+                       onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                       i18n:attributes="value"/>
+              </form>
               <form name="updatePersonalLabelsForm" action="updatePersonalLabels">
                 <p class="discreet" style="color: red;" i18n:translate="pm_update_personal_labels_warning">
                     Warning: the action 'Initialize personal labels' will activate selected labels on every existing items that were last modified before given number of days for every users able to see these items.
@@ -340,9 +351,7 @@
           <td tal:define="field python:here.getField('computeItemReferenceForItemsOutOfMeeting')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('enableLabels')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
+          <td></td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('toDiscussSetOnItemInsert')">
@@ -1246,9 +1255,11 @@
           </td>
         </tr>
         <tr>
-          <td tal:define="field python:here.getField('itemLabelsEditableByProposingGroupForever')">
+          <td colspan="3" tal:define="field python:here.getField('labelsConfig')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+        </tr>
+        <tr>
           <td tal:define="field python:here.getField('itemInternalNotesEditableBy')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
@@ -1525,7 +1536,7 @@
                  tal:attributes="href python: podTemplateHolder.absolute_url()"
                  tal:on-error="python: obj.pod_template_to_use"
                  tal:condition="python: obj.odt_file is None"
-                 tal:content="string:${otherCfg/title} ➔ ${podTemplateHolder/Title}">File holder</a>
+                 tal:content="python:otherCfg.Title(include_config_group=True) + ' ➔ ' + podTemplateHolder.Title()">File holder</a>
             </td>
             <td i18n:domain="plone">
               <span tal:condition="obj/enabled" i18n:translate="">Yes</span>

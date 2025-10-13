@@ -2,11 +2,114 @@ Changelog
 =========
 
 
-4.2.24rc1 (unreleased)
-----------------------
+4.2.27 (unreleased)
+-------------------
 
-- Nothing changed yet.
+- Add 2026 holidays in profile.
+  [aduchene]
 
+4.2.26 (2025-10-07)
+-------------------
+
+- Fixed `MeetingItem._updateAdvices` to avoid error when comparing `Dicts`
+  `self.adviceIndex` and `old_adviceIndex` in case we have a `datetime.datetime`
+  and a `None`.
+  [gbastien]
+- Display elements from external source `iA.Vision`, added form to be able
+  to `link/unlink` elements from it as well.
+  [gbastien]
+
+4.2.25 (2025-09-26)
+-------------------
+
+- Completed parameter `disable_autosearch_in` of `imio.webspellchecker` to
+  include CSS class of input `go to item` on item view and `change item number`
+  on meeting view.
+  [gbastien]
+- Display `voting group` in `MeetingConfig.orderedContacts` so we can detect
+  easily for which held position it is configured.
+  [gbastien]
+- Added `MeetingConfig.labelsConfig` to be able to configure who can
+  view/edit labels.
+  [gbastien]
+- Added parameter `extra_ctx={}` to `utils._base_extra_expr_ctx` to be able
+  to pass extra context immediatelly without having to `dict.update` after.
+  [gbastien]
+
+4.2.24.3 (2025-09-04)
+---------------------
+
+- Use median space to separate optional letters in `abstenu·e·s` of print_votes.
+  [gbastien]
+
+4.2.24.2 (2025-08-28)
+---------------------
+
+- Fixed `Migrate_To_4200._fixPODTemplatesInstructions` to manage
+  `getMeetingNumber` to `meeting_number` replacement also in item related
+  POD templates.
+  [gbastien]
+- Fixed `utils.sendMail` `translationMapping` to use correct title for
+  `transitionTitle` and `meetingState/itemState`.
+  This let's use new WF values in email notifications with correct WF
+  transition and state title.
+  [gbastien]
+- Fixed `utils.sendMail`, return same result when `MeetingConfig.mailMode`
+  is `test` or `enabled`.
+  [gbastien]
+- In `ItemDocumentGenerationHelperView.print_votes`, added possibility to
+  use special character `|` in label so it will generate several different
+  labels useable thru the `vote_label_pattern` parameter.
+  [gbastien]
+- Added parameter `is_voter=None` to `print_attendees` and
+  `print_attendees_by_type` so it is possible to get attendees that are
+  voters (`True`), non voters (`False`) or everybody (`None`).
+  [gbastien]
+
+4.2.24.1 (2025-07-11)
+---------------------
+
+- Fixed installation of `imio.webspellchecker` using helper
+  `setuphandlers._installWebspellchecker`, need to prepend profile name with
+  `profile-` when calling `portal_setup.runAllImportStepsFromProfile`.
+  [gbastien]
+
+4.2.24 (2025-06-25)
+-------------------
+
+- Added `imio.helpers.content.object_values` to `safe_utils` so it is available
+  in TAL expressions and Python scripts.
+  [gbastien]
+- Fixed global labels not changeable using labels batch action form when
+  `MeetingConfig.itemLabelsEditableByProposingGroupForever` is `True` by
+  overriding `LabelsBatchActionForm._can_change_labels` to take into account
+  our `PMLabeling.can_edit`.
+  [gbastien]
+
+4.2.23.3 (2025-06-06)
+---------------------
+
+- Make sure WSC is disabled in annex `content_category select2 widget` or
+  it breaks `quickupload` of several annexes.
+  [gbastien]
+
+4.2.23.2 (2025-06-06)
+---------------------
+
+- Display `MeetingConfig.configGroup` on `meetingconfig_view` when listing
+  POD templates and also in informations about "sendable to/sent to" on items
+  (icons, actions).
+  [gbastien]
+- Added overlay CSS class `link-overlay-pm-info` to be used for overlays that
+  may be closed safely when clicking outside of it.
+  [gbastien]
+- Fixed max width to `300px` for `copyGroups` column of items dashboards and
+  `category` column of annexes table.
+  [gbastien]
+- Completed `test_pm_ItemAbsentsAndExcusedAndNonAttendees` to show that
+  `@@display-meeting-item-not-present` works when current user can not access
+  items for which assembly member is absent.
+  [gbastien]
 
 4.2.23.1 (2025-05-28)
 ---------------------
