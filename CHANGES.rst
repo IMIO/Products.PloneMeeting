@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-4.2.27 (unreleased)
--------------------
+4.2.27rc1 (unreleased)
+----------------------
 
 - Add 2026 holidays in profile.
   [aduchene]
