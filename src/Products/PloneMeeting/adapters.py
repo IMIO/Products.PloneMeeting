@@ -7,6 +7,7 @@ from appy.gen import No
 from appy.shared.diff import HtmlDiff
 from collective.compoundcriterion.adapters import NegativePersonalLabelsAdapter
 from collective.compoundcriterion.adapters import NegativePreviousIndexValuesAdapter
+from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
@@ -80,6 +81,7 @@ from zope.component import getAdapter
 from zope.i18n import translate
 from zope.schema.vocabulary import SimpleVocabulary
 
+import itertools
 import logging
 
 
@@ -1798,19 +1800,22 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
            suffixes of groups managing the item;
            - when p_item is None, we will consider every groups using the suffixes."""
         res = []
-        # item, we take managing groups
+        # item, we take plone groups accessing item
         if item:
-            observers_have_access, org_uids = \
-                item.get_all_plone_groups_accessing_item(self.cfg, item.query_state())
+            observers_have_access, plone_group_ids = \
+                item.get_all_plone_groups_accessing_item(
+                    self.cfg, item.query_state())
         else:
-            # every enabled groups
-            org_uids = get_organizations(the_objects=False)
+            # every enabled organizations plone group ids
+            plone_group_ids = itertools.chain.from_iterable(
+                [get_all_suffixes(org_uid)
+                 for org_uid in get_organizations(the_objects=False)])
         for visible_for in visible_fors:
             if visible_for.startswith(PROPOSINGGROUPPREFIX):
                 suffix = visible_for.replace(PROPOSINGGROUPPREFIX, '')
-                for org_uid in org_uids:
-                    plone_group_id = get_plone_group_id(org_uid, suffix)
-                    res.append(plone_group_id)
+                for plone_group_id in plone_group_ids:
+                    if plone_group_id.endswith(suffix):
+                        res.append(plone_group_id)
         return res
 
     def _suffix_profile_proposinggroup(self, visible_fors):
