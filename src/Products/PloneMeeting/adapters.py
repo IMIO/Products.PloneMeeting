@@ -7,9 +7,9 @@ from appy.gen import No
 from appy.shared.diff import HtmlDiff
 from collective.compoundcriterion.adapters import NegativePersonalLabelsAdapter
 from collective.compoundcriterion.adapters import NegativePreviousIndexValuesAdapter
-from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
+from collective.contact.plonegroup.utils import get_plone_groups
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentgenerator.adapters import GenerablePODTemplatesAdapter
 from collective.eeafaceted.dashboard.adapters import DashboardGenerablePODTemplatesAdapter
@@ -1808,7 +1808,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         else:
             # every enabled organizations plone group ids
             plone_group_ids = itertools.chain.from_iterable(
-                [get_all_suffixes(org_uid)
+                [get_plone_groups(org_uid, ids_only=True, verify_group_exist=False)
                  for org_uid in get_organizations(the_objects=False)])
         for visible_for in visible_fors:
             if visible_for.startswith(PROPOSINGGROUPPREFIX):
