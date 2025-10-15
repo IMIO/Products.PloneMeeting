@@ -2210,10 +2210,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            view to use it in the widget in edit mode.  This way, we can display
            more informations than just the title.'''
         if withTypeName:
-            return "{0} - {1}".format(translate(self.portal_type,
-                                                domain="plone",
-                                                context=self.REQUEST).encode('utf-8'),
-                                      self.Title(withMeetingDate=True))
+            portal_types = api.portal.get_tool('portal_types')
+            return "{0} - {1}".format(
+                portal_types[self.portal_type].title,
+                self.Title(withMeetingDate=True))
         return self.Title(withMeetingDate=True)
 
     def Title(self, withMeetingDate=False, withItemNumber=False, withItemReference=False, **kwargs):
