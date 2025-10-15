@@ -42,7 +42,7 @@
 
               <tal:comment replace="nothing">Icon for adding an advice</tal:comment>
               <div tal:condition="python: advicesToAdd and not displayedAddIcon" class="add_advice_icon">
-              <tal:loop tal:repeat="advice_portal_type python: view.getAddableAdvicePortalTypes(advicesToAdd)">
+              <tal:loop tal:repeat="advice_portal_type python: context.get_addable_advice_portal_types(advicesToAdd)">
                 <a href="++add++meetingadvice"
                    class="link-overlay-pm-advice"
                    tal:define="global displayedAddIcon python: True"

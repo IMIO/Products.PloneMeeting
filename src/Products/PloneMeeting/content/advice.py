@@ -329,7 +329,7 @@ class MeetingAdviceSchemaPolicy(DexteritySchemaPolicy):
 class AdviceGroupVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call__(self, context):
+    def __call__(self, context, advice_portal_type=None):
         """"""
         terms = []
         advicePortalTypeIds = getAdvicePortalTypeIds()
@@ -349,7 +349,7 @@ class AdviceGroupVocabulary(object):
         # manage case where we have several meetingadvice portal_types
         # depending on current portal_type, clean up selectable orgs
         itemObj = context.meta_type == 'MeetingItem' and context or context.getParentNode()
-        current_portal_type = findMeetingAdvicePortalType(context)
+        current_portal_type = advice_portal_type or findMeetingAdvicePortalType(context)
         alterable_advice_org_uids = [
             org_uid for org_uid in alterable_advice_org_uids
             if (itemObj.adapted()._advicePortalTypeForAdviser(org_uid) == current_portal_type or
@@ -367,7 +367,7 @@ class AdviceGroupVocabulary(object):
 class AdviceTypeVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call__(self, context):
+    def __call__(self, context, advice_portal_type=None):
         """ """
         terms = []
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -378,7 +378,7 @@ class AdviceTypeVocabulary(object):
             # get usedAdviceTypes depending on current meetingadvice portal_type
             itemObj = context.meta_type == 'MeetingItem' and context or context.getParentNode()
             usedAdviceTypes = itemObj._adviceTypesForAdviser(
-                findMeetingAdvicePortalType(context))
+                advice_portal_type or findMeetingAdvicePortalType(context))
 
             # make sure if an adviceType was used for context and it is no more available, it
             # appears in the vocabulary and is so useable...

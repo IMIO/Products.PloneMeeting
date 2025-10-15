@@ -289,6 +289,11 @@
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItemDashboardBatchActionsMarker"
+        name="add-advice-batch-action"
+        class=".batchactions.AddAdviceBatchActionForm"
+        permission="zope2.View" />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItemDashboardBatchActionsMarker"
         name="update-committees-batch-action"
         class=".batchactions.UpdateCommitteesBatchActionForm"
         permission="zope2.View" />

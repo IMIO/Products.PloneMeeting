@@ -3083,6 +3083,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         return False
 
+    def get_addable_advice_portal_types(self, advices_to_add):
+        """ """
+        res = []
+        for advice_to_add in advices_to_add:
+            advice_portal_type = self.adapted()._advicePortalTypeForAdviser(advice_to_add)
+            if advice_portal_type not in res:
+                res.append(advice_portal_type)
+        return res
+
     security.declareProtected(ModifyPortalContent, 'setItemIsSigned')
 
     def setItemIsSigned(self, value, **kwargs):

@@ -8,21 +8,28 @@ from collective.eeafaceted.batchactions.browser.views import DeleteBatchActionFo
 from collective.eeafaceted.batchactions.browser.views import LabelsBatchActionForm
 from collective.eeafaceted.batchactions.browser.views import TransitionBatchActionForm
 from collective.eeafaceted.batchactions.utils import listify_uids
+from collective.z3cform.select2.widget.widget import SingleSelect2FieldWidget
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.annex.browser.views import ConcatenateAnnexesBatchActionForm
 from imio.annex.browser.views import DownloadAnnexesBatchActionForm
 from plone import api
+from plone.app.textfield import RichText
+from plone.formwidget.masterselect import MasterSelectField
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.ftw_labels.utils import filter_access_global_labels
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import is_operational_user
+from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
 from z3c.form.field import Fields
 from zope import schema
 from zope.i18n import translate
+from zope.schema.vocabulary import SimpleTerm
+from zope.schema.vocabulary import SimpleVocabulary
 
 
 #
@@ -198,6 +205,86 @@ class UpdateCommitteesBatchActionForm(PMBaseARUOBatchActionForm):
         return 'Products.PloneMeeting.vocabularies.item_selectable_committees_vocabulary'
 
 
+class AddAdviceBatchActionForm(BaseBatchActionForm):
+    """ """
+
+    label = _CEBA("Add common advice for selected elements")
+    button_with_icon = True
+
+    def __init__(self, context, request):
+        super(AddAdviceBatchActionForm, self).__init__(
+            context, request)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(context)
+
+    def available(self):
+        """ """
+        # super() will check for self.available_permission
+        return super(AddAdviceBatchActionForm, self).available()
+
+    def _advice_group_vocabulary(self):
+        """ """
+        res = []
+        for brain in self.brains:
+            item = brain.getObject()
+            addable_advice_groups = item.getAdvicesGroupsInfosForUser()
+            # addable advices
+            res.append(addable_advice_groups[0])
+            # power adviser advices
+            res.append(addable_advice_groups[1])
+        # keep intersection, so advices addable on every items
+        if res:
+            adviser_uids = list(set(res[0]).intersection(*res))
+        return SimpleVocabulary([])
+
+    def _advice_type_vocabulary(self):
+        """ """
+        res = []
+        for brain in self.brains:
+            item = brain.getObject()
+            addable_advice_groups = item.getAdvicesGroupsInfosForUser()
+            # addable advices
+            res.append(addable_advice_groups[0])
+            # power adviser advices
+            res.append(addable_advice_groups[1])
+        # keep intersection, so advices addable on every items
+        if res:
+            adviser_uids = list(set(res[0]).intersection(*res))
+        return SimpleVocabulary([])
+
+    def _update(self):
+
+        self.fields += Fields(schema.Choice(
+            __name__='advice_group',
+            title=_(u'Advice group'),
+            vocabulary=self._advice_group_vocabulary()))
+
+        self.fields += Fields(schema.Choice(
+            __name__='advice_type',
+            title=_(u'Advice type'),
+            vocabulary=self._advice_type_vocabulary()))
+        self.fields["advice_type"].widgetFactory = SingleSelect2FieldWidget
+
+        self.fields += Fields(RichText(
+            __name__='advice_comment',
+            title=_(u'Advice comment'),
+            description=_(u'Advice comment'),
+            allowed_mime_types=(u"text/html", ),
+            required=False))
+        self.fields['advice_comment'].widgetFactory = PMRichTextFieldWidget
+        self.fields += Fields(RichText(
+            __name__='advice_observations',
+            title=_(u'Advice observations'),
+            description=_(u'Advice observations'),
+            allowed_mime_types=(u"text/html", ),
+            required=False))
+        self.fields['advice_observations'].widgetFactory = PMRichTextFieldWidget
+
+    def _apply(self, **data):
+        """ """
+        return
+
+
 #
 #
 #  Overrides
@@ -297,6 +384,11 @@ class PMTransitionBatchActionForm(TransitionBatchActionForm):
         return is_operational_user(self.context)
 
 
+#
+#
+#  Viewlets
+#
+#
 class PMMeetingBatchActionsViewlet(BatchActionsViewlet):
     """ """
     def available(self):
@@ -306,11 +398,6 @@ class PMMeetingBatchActionsViewlet(BatchActionsViewlet):
         return True
 
 
-#
-#
-#  Viewlets
-#
-#
 class AnnexesBatchActionsViewlet(BatchActionsViewlet):
     """ """
 
