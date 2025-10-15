@@ -5,8 +5,10 @@ Changelog
 4.2.27rc2 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Fixed `MeetingItem.title_or_id` to return `portal_type's title` instead
+  translated `portal_type` as now we do not translate `portal_type` anymore
+  but use the `portal_type's title`.
+  [gbastien]
 
 4.2.27rc1 (2025-10-13)
 ----------------------
@@ -18,7 +20,6 @@ Changelog
 - Invalidate dashboard collection counter when a label is (un)selected.
   This is done only when the added/removed global or personal label is used in
   an enabled dashboard collection query.
-  [gbastien]
 
 4.2.26 (2025-10-07)
 -------------------
