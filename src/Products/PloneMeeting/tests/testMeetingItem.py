@@ -9111,7 +9111,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(
             view(),
             '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % neededfollowup_uid)
-        item = self.create('MeetingItem')
+        item = self.create('MeetingItem', decision=self.decisionText)
         self.assertEqual(len(neededfollowup.results()), 0)
         self.assertEqual(len(providedfollowup.results()), 0)
         # providedFollowUp is not editable when label "needed-follow-up" is not set
@@ -9156,6 +9156,21 @@ class testMeetingItem(PloneMeetingTestCase):
             '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % neededfollowup_uid)
         self.assertEqual(len(neededfollowup.results()), 0)
         self.assertEqual(len(providedfollowup.results()), 1)
+        # fields are still editable in a closed meeting
+        self.request.form['activate_labels'] = ['needed-follow-up']
+        labelingview.update()
+        self.assertTrue('needed-follow-up' in get_labels(item))
+        self._removeConfigObjectsFor(cfg)
+        meeting = self.create('Meeting')
+        self.presentItem(item)
+        self.closeMeeting(meeting)
+        self.assertEqual(item.query_state(), "accepted")
+        self.assertEqual(meeting.query_state(), "closed")
+        self.assertTrue(item.mayQuickEdit('neededFollowUp'))
+        self.assertTrue(item.mayQuickEdit('providedFollowUp'))
+        self.changeUser('pmCreator1')
+        self.assertFalse(item.mayQuickEdit('neededFollowUp'))
+        self.assertTrue(item.mayQuickEdit('providedFollowUp'))
 
 
 def test_suite():

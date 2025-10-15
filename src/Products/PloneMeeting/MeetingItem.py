@@ -4937,7 +4937,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def addRecurringItemToMeeting(self, meeting):
         '''See doc in interfaces.py.'''
         item = self.getSelf()
-        wfTool = api.portal.get_tool('portal_workflow')
+        wf_tool = api.portal.get_tool('portal_workflow')
         tool = api.portal.get_tool('portal_plonemeeting')
         try:
             item.REQUEST.set('PUBLISHED', meeting)
@@ -4952,11 +4952,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 trs = cfg.getTransitionsForPresentingAnItem(
                     org_uid=item.getProposingGroup())
                 if "validate" in get_transitions(item):
-                    wfTool.doActionFor(item, "validate")
+                    wf_tool.doActionFor(item, "validate")
                     trs = ["present"]
                 for tr in trs:
                     if tr in get_transitions(item):
-                        wfTool.doActionFor(item, tr)
+                        wf_tool.doActionFor(item, tr)
             # the item must be at least presented to a meeting, either we raise
             if not item.hasMeeting():
                 raise WorkflowException
@@ -4971,7 +4971,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _bypass_meeting_closed_check_for(self, fieldName):
         """See docstring in interfaces.py"""
-        if fieldName in ['internalNotes', 'marginalNotes']:
+        if fieldName in [
+                'internalNotes', 'marginalNotes',
+                'neededFollowUp', 'providedFollowUp']:
             return True
 
     def _bypass_write_perm_check_for(self, fieldName):

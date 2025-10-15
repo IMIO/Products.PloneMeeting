@@ -9,14 +9,14 @@ Changelog
   translated `portal_type` as now we do not translate `portal_type` anymore
   but use the `portal_type's title`.
   [gbastien]
+- Manage item follow-up.
+  [gbastien]
 
 4.2.27rc1 (2025-10-13)
 ----------------------
 
 - Add 2026 holidays in profile.
   [aduchene]
-- Manage item follow-up.
-  [gbastien]
 - Invalidate dashboard collection counter when a label is (un)selected.
   This is done only when the added/removed global or personal label is used in
   an enabled dashboard collection query.
