@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.27rc2 (unreleased)
+4.2.27rc2 (2025-10-16)
 ----------------------
 
 - Fixed `MeetingItem.title_or_id` to return `portal_type's title` instead
