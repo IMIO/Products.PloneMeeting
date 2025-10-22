@@ -1206,6 +1206,10 @@ class testSearches(PloneMeetingTestCase):
     def test_pm_SearchUnreadItems(self):
         '''Test the 'items-with-negative-personal-labels' adapter.
            This should return a list of items for which current user did not checked the 'lu' label.'''
+        # disable every showNumberOfItems so no search is enabled by custom profile
+        cfg = self.meetingConfig
+        for collection in cfg.searches.searches_items.objectValues():
+            collection.showNumberOfItems = False
         cfg = self.meetingConfig
         self._enableField('labels')
         collection = cfg.searches.searches_items.searchunreaditems
