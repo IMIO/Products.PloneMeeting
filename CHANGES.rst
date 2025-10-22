@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.27 (unreleased)
+4.2.27 (2025-10-22)
 -------------------
 
 - Add 2026 holidays in profile.
