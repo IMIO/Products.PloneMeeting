@@ -225,6 +225,7 @@ class PMLabeling(Labeling):
            (len(config)-1 != len(added_or_removed) and config[0] == "1"):
             self.context.update_local_roles(avoid_reindex=True)
         # invalidate collections counter cache and portlet_todo
-        if set(active_label_ids).symmetric_difference(label_ids).intersection(self.get_searches_labels()):
+        if set(active_label_ids).symmetric_difference(label_ids). \
+                intersection(self.get_searches_labels()):
             invalidate_cachekey_volatile_for(
                 'Products.PloneMeeting.MeetingItem.modified', get_again=True)
