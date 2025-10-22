@@ -80,7 +80,6 @@ setDefaultRoles(ManageOwnOrganizationFields, ())
 setDefaultRoles(ManageItemCategoryFields, ())
 MEETING_REMOVE_MOG_WFA = 'meeting_remove_global_access'
 
-
 # Permissions
 DEFAULT_ADD_CONTENT_PERMISSION = "Add portal content"
 setDefaultRoles(DEFAULT_ADD_CONTENT_PERMISSION, ('Manager', 'Owner', 'Contributor'))
@@ -95,10 +94,6 @@ ADD_CONTENT_PERMISSIONS = {
 setDefaultRoles(AddItem, ('Manager', 'Editor', ))
 setDefaultRoles(AddMeeting, ('Manager', ))
 setDefaultRoles('PloneMeeting: Manage configuration', ('Manager', ))
-
-# follow up
-WriteFollowUp = "PloneMeeting: Write follow up"
-setDefaultRoles(WriteFollowUp, ("Manager", "MeetingManager", "MeetingFollowUpWriter"))
 
 product_globals = globals()
 
