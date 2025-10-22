@@ -11,6 +11,12 @@ Changelog
   translated `portal_type` as now we do not translate `portal_type` anymore
   but use the `portal_type's title`.
   [gbastien]
+- Manage item follow-up.
+  [gbastien]
+- Invalidate dashboard collection counter when a label is (un)selected.
+  This is done only when the added/removed global or personal label is used in
+  an enabled dashboard collection query.
+  [gbastien]
 
 4.2.26 (2025-10-07)
 -------------------

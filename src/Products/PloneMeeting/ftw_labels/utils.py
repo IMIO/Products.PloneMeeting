@@ -12,7 +12,7 @@ from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from zope.component import getAdapter
 
 
-def get_labels(obj, include_personal_labels=True):
+def get_labels(obj, include_personal_labels=True, label_ids=[]):
     """Return active labels for p_obj.
        p_include_personal_labels may be:
        - True: returns every labels, personal or not;
@@ -23,7 +23,8 @@ def get_labels(obj, include_personal_labels=True):
     labels = labeling.active_labels()
     for label in labels:
         if (include_personal_labels == "only" and not label['by_user']) or \
-           (include_personal_labels is False and label['by_user']):
+           (include_personal_labels is False and label['by_user']) or \
+           (label_ids and label['label_id'] not in label_ids):
             continue
         res[label['label_id']] = label['title']
     return res
