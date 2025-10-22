@@ -2,30 +2,21 @@ Changelog
 =========
 
 
-4.2.27rc3 (unreleased)
-----------------------
+4.2.27 (unreleased)
+-------------------
 
-- Nothing changed yet.
-
-
-4.2.27rc2 (2025-10-16)
-----------------------
-
+- Add 2026 holidays in profile.
+  [aduchene]
 - Fixed `MeetingItem.title_or_id` to return `portal_type's title` instead
   translated `portal_type` as now we do not translate `portal_type` anymore
   but use the `portal_type's title`.
   [gbastien]
 - Manage item follow-up.
   [gbastien]
-
-4.2.27rc1 (2025-10-13)
-----------------------
-
-- Add 2026 holidays in profile.
-  [aduchene]
 - Invalidate dashboard collection counter when a label is (un)selected.
   This is done only when the added/removed global or personal label is used in
   an enabled dashboard collection query.
+  [gbastien]
 
 4.2.26 (2025-10-07)
 -------------------
