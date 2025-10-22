@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from imio.helpers.content import safe_delattr
 from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.MeetingConfig import defValues
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
@@ -34,7 +35,9 @@ class Migrate_To_4216(Migrator):
             # for every cfg, it shares the same dict...
             labels_config = copy.deepcopy(defValues.labelsConfig)
             cfg.setLabelsConfig(labels_config)
-            if cfg.itemLabelsEditableByProposingGroupForever:
+            # be defensive with itemLabelsEditableByProposingGroupForever that
+            # is recent and could not exist in some MeetingConfigs
+            if getattr(cfg, 'itemLabelsEditableByProposingGroupForever', False):
                 # remove duplicates
                 suffixes = tuple(set(cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)))
                 edit_groups = [PROPOSINGGROUPPREFIX + suffix for suffix in suffixes]
@@ -45,13 +48,13 @@ class Migrate_To_4216(Migrator):
                 labels_config[0]["edit_access_on_cache"] = "0"
                 labels_config[0]["edit_groups"] = []
             cfg.setLabelsConfig(labels_config)
-            delattr(cfg, 'itemLabelsEditableByProposingGroupForever')
+            safe_delattr(cfg, 'itemLabelsEditableByProposingGroupForever')
             # update labels cache for items of this MeetingConfig
             if 'labels' in cfg.getUsedItemAttributes():
                 cfg.update_labels_access_cache(redirect=False)
         # reindex the "labels" portal_catalog index as we manage special
         # empty value when no global label selected
-        self.catalog.reindexIndex('labels', None)
+        self.reindexIndexes(idxs=['labels'], meta_types=['MeetingItem'])
         logger.info('Done.')
 
     def _updateFollowUp(self):
