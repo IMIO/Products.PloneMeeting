@@ -43,6 +43,7 @@ class Migrate_To_4216(Migrator):
                 labels_config[0]["edit_access_on"] = \
                     'python: cfg.isManager(cfg) or checkPermission("Modify portal content", context)'
                 labels_config[0]["edit_access_on_cache"] = "0"
+                labels_config[0]["edit_groups"] = []
             cfg.setLabelsConfig(labels_config)
             delattr(cfg, 'itemLabelsEditableByProposingGroupForever')
             # update labels cache for items of this MeetingConfig
@@ -53,16 +54,30 @@ class Migrate_To_4216(Migrator):
         self.catalog.reindexIndex('labels', None)
         logger.info('Done.')
 
+    def _updateFollowUp(self):
+        """Update config and init new fields related to follow-up."""
+        logger.info('Updating datagridfield "itemFieldsConfig" about followUp for every MeetingConfigs...')
+        # update new fields neededFollowUp and providedFollowUp on items
+        self.initNewHTMLFields(
+            query={'meta_type': ('MeetingItem')},
+            field_names=('neededFollowUp', 'providedFollowUp'))
+        # add searchitemswithneededfollowup and searchitemswithprovidedfollowup
+        self.addNewSearches()
+        logger.info('Done.')
+
     def run(self, extra_omitted=[], from_migration_to_4200=False):
+
         logger.info('Migrating to PloneMeeting 4216...')
         self._updateLabelsConfig()
+        self._updateFollowUp()
         logger.info('Migrating to PloneMeeting 4216... Done.')
 
 
 def migrate(context):
     '''This migration function will:
 
-       1) Update application regarding new field MeetingConfig.labelsConfig.
+       1) Update application regarding new field MeetingConfig.labelsConfig;
+       2) Update config and items regarding follow-up.
 
     '''
     migrator = Migrate_To_4216(context)

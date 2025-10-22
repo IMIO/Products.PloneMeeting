@@ -32,6 +32,7 @@ from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToObject
+from imio.helpers.security import fplog
 from imio.helpers.workflow import get_leading_transitions
 from natsort import humansorted
 from operator import itemgetter
@@ -2597,6 +2598,34 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    DataGridField(
+        name='itemFieldsConfig',
+        widget=DataGridField._properties['widget'](
+            description="ItemFieldsConfig",
+            description_msgid="item_fields_config_descr",
+            columns={
+                'name': SelectColumn(
+                    "Item fields config name",
+                    vocabulary_factory="Products.PloneMeeting.vocabularies.item_fields_config_vocabulary",
+                    col_description="item_fields_config_name_description"),
+                'view': Column(
+                    "Item fields config view TAL expression",
+                    col_description="item_fields_config_view_tal_expr_description"),
+                'edit': Column(
+                    "Item fields config edit TAL expression",
+                    col_description="item_fields_config_edit_tal_expr_description"),
+            },
+            label='Itemfieldsconfig',
+            label_msgid='PloneMeeting_label_itemFieldsConfig',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        allow_oddeven=True,
+        default=defValues.itemFieldsConfig,
+        columns=('name', 'view', 'edit'),
+        allow_empty_rows=False,
+        write_permission=WriteRiskyConfig,
+    ),
     LinesField(
         name='usingGroups',
         widget=MultiSelectionWidget(
@@ -3525,6 +3554,40 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         "and cfg.getCommittees()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
+                # Items with neededFollowUp
+                ('searchitemswithneededfollowup', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {u'i': u'labels',
+                         u'o': u'plone.app.querystring.operation.selection.is',
+                         u'v': [u'needed-follow-up']},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': True,
+                    'tal_condition': "python: 'neededFollowUp' in cfg.getUsedItemAttributes() and "
+                        "tool.get_orgs_for_user(omitted_suffixes=['observers', ])",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items with providedFollowUp
+                ('searchitemswithprovidedfollowup', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {u'i': u'labels',
+                         u'o': u'plone.app.querystring.operation.selection.is',
+                         u'v': [u'provided-follow-up']},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: 'providedFollowUp' in cfg.getUsedItemAttributes() and "
+                        "tool.get_orgs_for_user(omitted_suffixes=['observers', ])",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
                 # All not-yet-decided meetings
                 ('searchnotdecidedmeetings', {
                     'subFolderId': 'searches_meetings',
@@ -3880,6 +3943,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if res and hasattr(res[0], "__iter__"):
                 res = itertools.chain.from_iterable(res)
         if return_label_id_singleton and len(label_ids) == 1:
+            res = res and res[0] or res
+        return res
+
+    security.declarePublic('getItemFieldsConfig')
+
+    def getItemFieldsConfig(self, names=[], data=None, return_name_singleton=True, **kwargs):
+        '''Override the field 'itemFieldsConfig' accessor to be able to handle some paramters:
+           - data : return every values defined for a given datagrid column name.'''
+        res = self.getField('itemFieldsConfig').get(self, **kwargs)
+        if names:
+            res = [level for level in res
+                   if level['name'] in names]
+        if data:
+            res = [level[data] for level in res if level[data]]
+            # manage multivalued columns
+            if res and hasattr(res[0], "__iter__"):
+                res = itertools.chain.from_iterable(res)
+        if return_name_singleton and len(names) == 1:
             res = res and res[0] or res
         return res
 
@@ -6267,6 +6348,23 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             empty_expr_is_true=True)
         return res
 
+    security.declarePrivate('eval_tal_expr_for_field')
+
+    def eval_tal_expr_for_field(self, item, field_name, mode='view'):
+        """ """
+        tal_expr = self.getItemFieldsConfig(names=[field_name], data=mode)
+        extra_expr_ctx = _base_extra_expr_ctx(item)
+        extra_expr_ctx.update({'item': item})
+        empty_expr_is_true = True
+        if mode == 'edit':
+            empty_expr_is_true = False
+        return _evaluateExpression(
+            item,
+            expression=tal_expr,
+            roles_bypassing_expression=[],
+            extra_expr_ctx=extra_expr_ctx,
+            empty_expr_is_true=empty_expr_is_true)
+
     def getItemIconColorName(self):
         '''This will return the name of the icon used for MeetingItem portal_type.'''
         iconName = "MeetingItem.png"
@@ -7838,7 +7936,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('update_labels_access_cache')
 
-    def update_labels_access_cache(self, redirect=True):
+    def update_labels_access_cache(self, log=True, redirect=True):
         '''Update _labels_access_cache on every items.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         if not tool.isManager(realManagers=True):
@@ -7849,6 +7947,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         pghandler.init('Updating labels access cache...', len(brains))
         warnings = []
         i = 1
+        if log:
+            extras = 'number_of_elements={0}'.format(len(brains))
+            fplog('update_labels_access_cache', extras=extras)
         for brain in brains:
             try:
                 item = brain.getObject()

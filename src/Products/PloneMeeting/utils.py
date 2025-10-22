@@ -2372,9 +2372,9 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item, item_state, org_uid=None
     return apply_meetingmanagers_access, suffix_roles
 
 
-def is_proposing_group_editor(org_uid, cfg):
+def is_proposing_group_editor(org_uid, cfg, suffixes=[]):
     """ """
-    suffixes = cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
+    suffixes = suffixes or cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
     return cfg.aq_parent.user_is_in_org(org_uid=org_uid, suffixes=suffixes)
 
 

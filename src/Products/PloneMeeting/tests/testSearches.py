@@ -1209,18 +1209,30 @@ class testSearches(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self._enableField('labels')
         collection = cfg.searches.searches_items.searchunreaditems
+        collection_uid = collection.UID()
+        collection.showNumberOfItems = True
 
         # create item, not 'lu' by default
         self.changeUser('pmCreator1')
+        # check that counter is updated when a personal label is changed
+        json_collections_count = self.getMeetingFolder().restrictedTraverse("@@json_collections_count")
+        self.assertEqual(
+            json_collections_count(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % collection_uid)
         item = self.create('MeetingItem')
-        item.reindexObject(idxs=['labels'])
         # for now item is not 'lu'
         self.assertEqual(len(collection.results()), 1)
+        self.assertEqual(
+            json_collections_count(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 1, "uid": "%s"}]}' % collection_uid)
         # make item 'lu'
         labeling = ILabeling(item)
         labeling.pers_update(['lu'], True)
         item.reindexObject(idxs=['labels'])
         self.assertEqual(len(collection.results()), 0)
+        self.assertEqual(
+            json_collections_count(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % collection_uid)
 
     def test_pm_CompoundCriterionAdapterItemsWithNegativePreviousIndex(self):
         '''Test the 'items-with-negative-previous-index' adapter.
