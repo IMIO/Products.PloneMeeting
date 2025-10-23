@@ -7001,6 +7001,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         org = uuidToObject(org_uid, unrestricted=True)
         return org.get_item_advice_states(cfg=self)
 
+    def _adviceTypesForAdviser(self, meeting_advice_portal_type):
+        """Return the advice types (positive, negative, ...) for given p_meeting_advice_portal_type.
+           By default we will use every MeetingConfig.usedAdviceTypes but check
+           if something is defined in ToolPloneMeeting.advisersConfig."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        res = []
+        for org_uid, adviser_infos in tool.adapted().get_extra_adviser_infos().items():
+            if adviser_infos['portal_type'] == meeting_advice_portal_type:
+                res = adviser_infos['advice_types']
+                break
+        if not res:
+            res = self.getUsedAdviceTypes()
+        return res
+
     security.declarePublic('getItemWorkflow')
 
     def getItemWorkflow(self, theObject=False, type_name=None, **kwargs):

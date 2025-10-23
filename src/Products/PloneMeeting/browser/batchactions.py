@@ -12,12 +12,11 @@ from collective.z3cform.select2.widget.widget import SingleSelect2FieldWidget
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.annex.browser.views import ConcatenateAnnexesBatchActionForm
 from imio.annex.browser.views import DownloadAnnexesBatchActionForm
+from imio.helpers.content import get_vocab
 from plone import api
 from plone.app.textfield import RichText
-from plone.formwidget.masterselect import MasterSelectField
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
-from Products.CMFCore.permissions import View
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -28,7 +27,6 @@ from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
 from z3c.form.field import Fields
 from zope import schema
 from zope.i18n import translate
-from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
 
 
@@ -210,6 +208,7 @@ class AddAdviceBatchActionForm(BaseBatchActionForm):
 
     label = _CEBA("Add common advice for selected elements")
     button_with_icon = True
+    advice_portal_type = "meetingadvice"
 
     def __init__(self, context, request):
         super(AddAdviceBatchActionForm, self).__init__(
@@ -228,14 +227,17 @@ class AddAdviceBatchActionForm(BaseBatchActionForm):
         for brain in self.brains:
             item = brain.getObject()
             addable_advice_groups = item.getAdvicesGroupsInfosForUser()
-            # addable advices
-            res.append(addable_advice_groups[0])
-            # power adviser advices
-            res.append(addable_advice_groups[1])
+            # addable advices + power adviser advices
+            addable_advice_groups = addable_advice_groups[0] + addable_advice_groups[1]
+            res.append(addable_advice_groups)
         # keep intersection, so advices addable on every items
         if res:
             adviser_uids = list(set(res[0]).intersection(*res))
-        return SimpleVocabulary([])
+        return get_vocab(
+            self.context,
+            'Products.PloneMeeting.content.advice.advice_group_vocabulary',
+            advice_portal_type=self.advice_portal_type,
+            alterable_advice_org_uids=adviser_uids)
 
     def _advice_type_vocabulary(self):
         """ """

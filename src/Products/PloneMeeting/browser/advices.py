@@ -264,7 +264,7 @@ class AdvicesIconsInfos(BrowserView):
 
     def get_adviser_group_ids(self, advice_id):
         """Return list of Plone groups ids having a role in p_advice_id advice WF."""
-        advice_portal_type = self.context._advicePortalTypeForAdviser(advice_id)
+        advice_portal_type = self.tool._advicePortalTypeForAdviser(advice_id)
         suffixes = ["advisers"]
         # for performance reason, if portal_type is the basic "meetingadvice"
         # we only return the "_advisers" suffixed group

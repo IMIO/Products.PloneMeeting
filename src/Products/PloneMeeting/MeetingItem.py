@@ -3133,9 +3133,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def get_addable_advice_portal_types(self, advices_to_add):
         """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
         res = []
         for advice_to_add in advices_to_add:
-            advice_portal_type = self.adapted()._advicePortalTypeForAdviser(advice_to_add)
+            advice_portal_type = tool._advicePortalTypeForAdviser(advice_to_add)
             if advice_portal_type not in res:
                 res.append(advice_portal_type)
         return res
@@ -5903,28 +5904,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if itemState in cfg.getItemAdviceStatesForOrg(org_uid=user_org_uid):
                     toAdd.append(user_org_uid)
         return (toAdd, toEdit)
-
-    def _advicePortalTypeForAdviser(self, org_uid):
-        '''See doc in interfaces.py.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        adviser_infos = tool.adapted().get_extra_adviser_infos().get(org_uid, {})
-        advice_portal_type = adviser_infos.get('portal_type', None)
-        return advice_portal_type or 'meetingadvice'
-
-    def _adviceTypesForAdviser(self, meeting_advice_portal_type):
-        """Return the advice types (positive, negative, ...) for given p_meeting_advice_portal_type.
-           By default we will use every MeetingConfig.usedAdviceTypes but check
-           if something is defined in ToolPloneMeeting.advisersConfig."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        res = []
-        for org_uid, adviser_infos in tool.adapted().get_extra_adviser_infos().items():
-            if adviser_infos['portal_type'] == meeting_advice_portal_type:
-                res = adviser_infos['advice_types']
-                break
-        if not res:
-            cfg = tool.getMeetingConfig(self)
-            res = cfg.getUsedAdviceTypes()
-        return res
 
     def _adviceIsViewableForCurrentUser(self,
                                         cfg,

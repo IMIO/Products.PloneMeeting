@@ -5,8 +5,14 @@ Changelog
 4.2.28 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Added add advices batch action:
+  - Moved `MeetingItem._adviceTypesForAdviser` to
+    `MeetingConfig._adviceTypesForAdviser` and moved
+    `MeetingItem._adviceTypesForAdviser` to
+    `ToolPloneMeeting._adviceTypesForAdviser` so it does not require an item;
+  - an action is associated to one advice portal_type, added an action for
+    `meetingadvicefinances` portal_type as well;
+  [gbastien]
 
 4.2.27.1 (2025-10-23)
 ---------------------
