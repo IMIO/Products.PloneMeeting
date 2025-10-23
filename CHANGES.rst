@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.27.1 (unreleased)
+4.2.27.1 (2025-10-23)
 ---------------------
 
 - Fixed `ExternalView.show_section`, will not be available if
