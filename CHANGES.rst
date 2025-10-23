@@ -2,11 +2,12 @@ Changelog
 =========
 
 
-4.2.28 (unreleased)
--------------------
+4.2.27.1 (unreleased)
+---------------------
 
-- Nothing changed yet.
-
+- Fixed `ExternalView.show_section`, will not be available if
+  `VISION_AUTH_USERNAME` is an empty string neither.
+  [gbastien]
 
 4.2.27 (2025-10-22)
 -------------------
