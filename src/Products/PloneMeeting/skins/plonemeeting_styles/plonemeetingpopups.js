@@ -327,6 +327,7 @@ function initializeDashboard(){
     pmCommonOverlays();
     listTypeChange();
     actionsPanelTooltipster();
+    addAdvicesBatchAction();
 }
 
 function initializeAdvicePopup(instance) {
@@ -362,6 +363,37 @@ function overOverlays(){
               },
             },
     });
+}
+
+function addAdvicesBatchAction(){
+  $('form#add-advice-batch-action').prepOverlay({
+        api: true,
+        subtype: 'ajax',
+        closeselector: '[name="form.buttons.cancel"]',
+        config: {
+            onLoad : function (e) {
+                // initialize select2 widget
+                initializeSelect2Widgets(width='400px');
+                return true;
+                },
+            onBeforeLoad : function (e) {
+                // CKeditor instances need to be initialized
+                launchCKInstances();
+                return true;
+            },
+            onBeforeClose : function (e) {
+                return
+                // avoid closing overlay when click outside overlay
+                // or when it is closed by WSC
+                if (e.target.id == "exposeMask" ||
+                    e.target.classList.contains("wsc-icon") ||
+                    e.target.classList.contains("wsc-button")) {return false;}
+                // close every opened select2 widgets
+                $('.single-select2-widget').select2("close");
+                $('.multi-select2-widget').select2("close");
+            },
+        }
+  });
 }
 
 function editAnnex(){

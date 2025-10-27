@@ -2,6 +2,12 @@
 /* <dtml-with imioapps_properties> */
 /* <dtml-call "REQUEST.set('portal_url', portal_url())"> */
 
+div.select2-drop span.positive, div.select2-container span.positive {
+    padding-left: 1.4em;
+    background: transparent url('http://localhost:8081/mc30b/advice_standard_positive.png') no-repeat top left;
+    background-size: contain;
+}
+
 #content fieldset {
    line-height: 1em;
    margin: 0.5em 0;

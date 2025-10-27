@@ -28,7 +28,7 @@ from z3c.form.field import Fields
 from zope import schema
 from zope.i18n import translate
 from zope.schema.vocabulary import SimpleVocabulary
-
+from plone.app.textfield.widget import RichTextFieldWidget
 
 #
 #
@@ -209,12 +209,21 @@ class AddAdviceBatchActionForm(BaseBatchActionForm):
     label = _CEBA("Add common advice for selected elements")
     button_with_icon = True
     advice_portal_type = "meetingadvice"
+    overlay = None
 
     def __init__(self, context, request):
         super(AddAdviceBatchActionForm, self).__init__(
             context, request)
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(context)
+
+    @property
+    def description(self):
+        description = translate(super(AddAdviceBatchActionForm, self).description,
+                                context=self.request)
+        description += ""
+        description += "<p>Tralala</p>"
+        return description
 
     def available(self):
         """ """
@@ -226,11 +235,10 @@ class AddAdviceBatchActionForm(BaseBatchActionForm):
         res = []
         for brain in self.brains:
             item = brain.getObject()
-            addable_advice_groups = item.getAdvicesGroupsInfosForUser()
-            # addable advices + power adviser advices
-            addable_advice_groups = addable_advice_groups[0] + addable_advice_groups[1]
-            res.append(addable_advice_groups)
+            res.append(item.getAdvicesGroupsInfosForUser(
+                compute_to_edit=False, compute_power_advisers=False)[0])
         # keep intersection, so advices addable on every items
+        adviser_uids = []
         if res:
             adviser_uids = list(set(res[0]).intersection(*res))
         return get_vocab(
@@ -241,18 +249,10 @@ class AddAdviceBatchActionForm(BaseBatchActionForm):
 
     def _advice_type_vocabulary(self):
         """ """
-        res = []
-        for brain in self.brains:
-            item = brain.getObject()
-            addable_advice_groups = item.getAdvicesGroupsInfosForUser()
-            # addable advices
-            res.append(addable_advice_groups[0])
-            # power adviser advices
-            res.append(addable_advice_groups[1])
-        # keep intersection, so advices addable on every items
-        if res:
-            adviser_uids = list(set(res[0]).intersection(*res))
-        return SimpleVocabulary([])
+        return get_vocab(
+            self.context,
+            'Products.PloneMeeting.content.advice.advice_type_vocabulary',
+            advice_portal_type=self.advice_portal_type)
 
     def _update(self):
 
@@ -273,17 +273,18 @@ class AddAdviceBatchActionForm(BaseBatchActionForm):
             description=_(u'Advice comment'),
             allowed_mime_types=(u"text/html", ),
             required=False))
-        self.fields['advice_comment'].widgetFactory = PMRichTextFieldWidget
+        self.fields['advice_comment'].widgetFactory = RichTextFieldWidget
         self.fields += Fields(RichText(
             __name__='advice_observations',
             title=_(u'Advice observations'),
             description=_(u'Advice observations'),
             allowed_mime_types=(u"text/html", ),
             required=False))
-        self.fields['advice_observations'].widgetFactory = PMRichTextFieldWidget
+        self.fields['advice_observations'].widgetFactory = RichTextFieldWidget
 
     def _apply(self, **data):
         """ """
+        import ipdb; ipdb.set_trace()
         return
 
 
