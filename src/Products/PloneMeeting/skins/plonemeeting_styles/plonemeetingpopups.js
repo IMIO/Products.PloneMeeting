@@ -379,6 +379,7 @@ function addAdvicesBatchAction(){
             onBeforeLoad : function (e) {
                 // CKeditor instances need to be initialized
                 launchCKInstances();
+                submitFormHelper();
                 return true;
             },
             onBeforeClose : function (e) {
