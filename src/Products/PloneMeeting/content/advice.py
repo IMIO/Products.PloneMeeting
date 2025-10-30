@@ -3,6 +3,7 @@
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organization
+from collective.z3cform.select2.widget.widget import SingleSelect2FieldWidget
 from dexterity.localrolesfield.field import LocalRoleField
 from imio.helpers.content import get_vocab
 from imio.helpers.workflow import get_final_states
@@ -49,6 +50,8 @@ class IMeetingAdvice(IDXMeetingContent):
         vocabulary=u'Products.PloneMeeting.content.advice.advice_group_vocabulary',
         required=True,
     )
+
+    form.widget('advice_type', SingleSelect2FieldWidget)
     advice_type = schema.Choice(
         title=_(u'title_advice_type'),
         description=_(u"Choose an advice type."),

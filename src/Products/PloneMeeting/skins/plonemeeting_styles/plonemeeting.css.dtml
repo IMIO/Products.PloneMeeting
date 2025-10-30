@@ -2,62 +2,6 @@
 /* <dtml-with imioapps_properties> */
 /* <dtml-call "REQUEST.set('portal_url', portal_url())"> */
 
-div.select2-drop span.positive, div.select2-container span.positive {
-    padding-left: 1.4em;
-    background: transparent url('http://localhost:8081/mc30b/advice_standard_positive.png') no-repeat top left;
-    background-size: contain;
-}
-div.select2-drop span.negative, div.select2-container span.negative {
-    padding-left: 1.4em;
-    background: transparent url('http://localhost:8081/mc30b/advice_standard_negative.png') no-repeat top left;
-    background-size: contain;
-}
-div.select2-drop span.cautious, div.select2-container span.cautious {
-    padding-left: 1.4em;
-    background: transparent url('http://localhost:8081/mc30b/advice_standard_cautious.png') no-repeat top left;
-    background-size: contain;
-}
-
-div.select2-drop span.positive_with_comments, div.select2-container span.positive_with_comments {
-    padding-left: 1.4em;
-    background: transparent url('http://localhost:8081/mc30b/advice_standard_positive_with_comments.png') no-repeat top left;
-    background-size: contain;
-}
-
-div.select2-drop span.positive_with_remarks, div.select2-container span.positive_with_remarks {
-    padding-left: 1.4em;
-    background: transparent url('http://localhost:8081/mc30b/advice_standard_positive_with_remarks.png') no-repeat top left;
-    background-size: contain;
-}
-div.select2-drop span.positive_after_modification, div.select2-container span.positive_after_modification {
-    padding-left: 1.4em;
-    background: transparent url('http://localhost:8081/mc30b/advice_standard_positive_after_modification.png') no-repeat top left;
-    background-size: contain;
-}
-div.select2-drop span.negative_with_remarks, div.select2-container span.negative_with_remarks {
-    padding-left: 1.4em;
-    background: transparent url('http://localhost:8081/mc30b/advice_standard_negative_with_remarks.png') no-repeat top left;
-    background-size: contain;
-}
-
-div.select2-drop span.back_to_proposing_group, div.select2-container span.back_to_proposing_group {
-    padding-left: 1.4em;
-    background: transparent url('http://localhost:8081/mc30b/advice_standard_back_to_proposing_group.png') no-repeat top left;
-    background-size: contain;
-}
-
-div.select2-drop span.nil, div.select2-container span.nil {
-    padding-left: 1.4em;
-    background: transparent url('http://localhost:8081/mc30b/advice_standard_nil.png') no-repeat top left;
-    background-size: contain;
-}
-
-div.select2-drop span.read, div.select2-container span.read {
-    padding-left: 1.4em;
-    background: transparent url('http://localhost:8081/mc30b/advice_standard_read.png') no-repeat top left;
-    background-size: contain;
-}
-
 #content fieldset {
    line-height: 1em;
    margin: 0.5em 0;

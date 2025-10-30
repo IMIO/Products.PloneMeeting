@@ -27,8 +27,6 @@ from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
 from z3c.form.field import Fields
 from zope import schema
 from zope.i18n import translate
-from zope.schema.vocabulary import SimpleVocabulary
-from plone.app.textfield.widget import RichTextFieldWidget
 
 #
 #
@@ -255,32 +253,36 @@ class AddAdviceBatchActionForm(BaseBatchActionForm):
             advice_portal_type=self.advice_portal_type)
 
     def _update(self):
-
+        advice_groups = self._advice_group_vocabulary()
+        self.do_apply = len(advice_groups) > 0
         self.fields += Fields(schema.Choice(
             __name__='advice_group',
-            title=_(u'Advice group'),
-            vocabulary=self._advice_group_vocabulary()))
+            title=_(u'title_advice_group'),
+            description=(len(advice_groups) == 0 and
+                         _(u'No common or available advice group. Modify your selection.') or u''),
+            vocabulary=advice_groups,
+            required=len(advice_groups) > 0))
 
         self.fields += Fields(schema.Choice(
             __name__='advice_type',
-            title=_(u'Advice type'),
+            title=_(u'title_advice_type'),
             vocabulary=self._advice_type_vocabulary()))
         self.fields["advice_type"].widgetFactory = SingleSelect2FieldWidget
 
         self.fields += Fields(RichText(
             __name__='advice_comment',
-            title=_(u'Advice comment'),
-            description=_(u'Advice comment'),
+            title=_(u'title_advice_comment'),
+            description=_("Enter the official comment."),
             allowed_mime_types=(u"text/html", ),
             required=False))
-        self.fields['advice_comment'].widgetFactory = RichTextFieldWidget
+        self.fields['advice_comment'].widgetFactory = PMRichTextFieldWidget
         self.fields += Fields(RichText(
             __name__='advice_observations',
-            title=_(u'Advice observations'),
-            description=_(u'Advice observations'),
+            title=_(u'title_advice_observations'),
+            description=_("Enter optionnal observations if necessary."),
             allowed_mime_types=(u"text/html", ),
             required=False))
-        self.fields['advice_observations'].widgetFactory = RichTextFieldWidget
+        self.fields['advice_observations'].widgetFactory = PMRichTextFieldWidget
 
     def _apply(self, **data):
         """ """

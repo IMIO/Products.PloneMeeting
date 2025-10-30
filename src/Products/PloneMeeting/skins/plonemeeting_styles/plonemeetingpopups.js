@@ -16,6 +16,11 @@ function adviceAddEdit() {
                 this.advice_url = $("[rel='#" + rel_num + "']").attr('href');
                 return true;
             },
+            onLoad : function (e) {
+                // initialize select2 widget
+                initializeSelect2Widgets(width='300px');
+                return true;
+            },
             onBeforeClose : function (e) {
                 // avoid closing overlay when click outside overlay
                 // or when it is closed by WSC
@@ -77,7 +82,7 @@ function manageAttendees() {
                   // need to add listing to table class
                   $('table.datagridwidget-table-view').addClass('listing');
                   $('table tbody').each(setoddeven);
-                  submitFormHelper(this.form, onsuccess=onsuccessManageAttendees);
+                  submitFormHelper(onsuccess=onsuccessManageAttendees);
                   return true;
                 },
                 onBeforeClose : function (e) {
@@ -373,9 +378,9 @@ function addAdvicesBatchAction(){
         config: {
             onLoad : function (e) {
                 // initialize select2 widget
-                initializeSelect2Widgets(width='400px');
+                initializeSelect2Widgets(width='300px');
                 return true;
-                },
+            },
             onBeforeLoad : function (e) {
                 // CKeditor instances need to be initialized
                 launchCKInstances();
