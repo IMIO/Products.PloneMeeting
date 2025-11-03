@@ -5,13 +5,22 @@ Changelog
 4.2.28 (unreleased)
 -------------------
 
-- Added add advices batch action:
+- Added `Add advices` batch action:
+
   - Moved `MeetingItem._adviceTypesForAdviser` to
     `MeetingConfig._adviceTypesForAdviser` and moved
     `MeetingItem._adviceTypesForAdviser` to
     `ToolPloneMeeting._adviceTypesForAdviser` so it does not require an item;
-  - an action is associated to one advice portal_type, added an action for
-    `meetingadvicefinances` portal_type as well;
+  - the action is associated to one advice `portal_type`, added the action for
+    `meetingadvicefinances` portal_type.
+
+  [gbastien]
+
+4.2.27.2 (unreleased)
+---------------------
+
+- Take into acount environment variable `MUNICIPALITY_ID` to manage links
+  to external applications.
   [gbastien]
 
 4.2.27.1 (2025-10-23)
