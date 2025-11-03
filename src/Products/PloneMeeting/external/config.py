@@ -24,8 +24,8 @@ AUTH_CURL_COMMAND = "curl --location '%s' \
     VISION_CLIENT_SECRET,
     VISION_AUTH_USERNAME,
     VISION_AUTH_PASSWORD)
-MUNICIPALITY_ID = os.getenv('MUNICIPALITY_ID', '')
+VISION_MUNICIPALITY_ID = os.getenv('VISION_MUNICIPALITY_ID', '')
 
 # api configuration
 API_URL = 'https://ipa.imio.be/imio/vision/v1/municipalities/{0}/%s?delib_user=%s%s'.format(
-    MUNICIPALITY_ID)
+    VISION_MUNICIPALITY_ID)
