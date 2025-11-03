@@ -5,8 +5,9 @@ Changelog
 4.2.27.2 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Take into acount environment variable `MUNICIPALITY_ID` to manage links
+  to external applications.
+  [gbastien]
 
 4.2.27.1 (2025-10-23)
 ---------------------
