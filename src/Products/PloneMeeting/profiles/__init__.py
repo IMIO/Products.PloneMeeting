@@ -567,8 +567,8 @@ class MeetingConfigDescriptor(Descriptor):
         # items that must be late-presented to this meeting.
         self.freezeDeadlineDefault = '1.14:30'
         # by default, annex attribute 'confidential' is restricted to MeetingManagers
-        self.annexRestrictShownAndEditableAttributes = ('confidentiality_display',
-                                                        'confidentiality_edit')
+        self.annexRestrictShownAndEditableAttributes = (
+            'confidentiality_display', 'confidentiality_edit')
         # annex confidentiality, setting something in 3 attributes here
         # under will automatically enable confidentiality on relevant CategoryGroup
         self.itemAnnexConfidentialVisibleFor = ()
@@ -582,6 +582,16 @@ class MeetingConfigDescriptor(Descriptor):
         self.inheritedAdviceRemoveableByAdviser = False
         self.itemInternalNotesEditableBy = []
         self.meetingConfigsToCloneToEditFieldsTALExpr = ''
+        self.itemFieldsConfig = (
+            {'name': "neededFollowUp",
+             'view': "python: item.may_view_follow_up()",
+             'edit': "python: item.may_edit_follow_up('neededFollowUp')"},
+            {'name': "providedFollowUp",
+             'view': "python: item.may_view_follow_up()",
+             'edit': "python: item.may_edit_follow_up('providedFollowUp')"},
+        )
+        self.votesResultTALExpr = ''
+
         self.usingGroups = []
         # List of other meetingConfigs, item of this meetingConfig
         # will be clonable to
@@ -594,15 +604,15 @@ class MeetingConfigDescriptor(Descriptor):
 
         # Workflow- and security-related parameters ----------------------------
         self.itemWorkflow = 'meetingitem_workflow'
-        self.itemConditionsInterface = 'Products.PloneMeeting.interfaces.' \
-                                       'IMeetingItemWorkflowConditions'
-        self.itemActionsInterface = 'Products.PloneMeeting.interfaces.' \
-                                    'IMeetingItemWorkflowActions'
+        self.itemConditionsInterface = \
+            'Products.PloneMeeting.interfaces.IMeetingItemWorkflowConditions'
+        self.itemActionsInterface = \
+            'Products.PloneMeeting.interfaces.IMeetingItemWorkflowActions'
         self.meetingWorkflow = 'meeting_workflow'
-        self.meetingConditionsInterface = 'Products.PloneMeeting.interfaces.' \
-                                          'IMeetingWorkflowConditions'
-        self.meetingActionsInterface = 'Products.PloneMeeting.interfaces.' \
-                                       'IMeetingWorkflowActions'
+        self.meetingConditionsInterface = \
+            'Products.PloneMeeting.interfaces.IMeetingWorkflowConditions'
+        self.meetingActionsInterface = \
+            'Products.PloneMeeting.interfaces.IMeetingWorkflowActions'
         # Workflow adaptations are sets of changes that can be applied to
         # default PloneMeeting workflows.
         self.workflowAdaptations = []

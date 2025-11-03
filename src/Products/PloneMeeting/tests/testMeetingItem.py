@@ -66,6 +66,7 @@ from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.config import WriteBudgetInfos
+from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.indexes import previous_review_state
 from Products.PloneMeeting.indexes import sentToInfos
 from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -74,6 +75,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.tests.PloneMeetingTestCase import TestRequest
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_CORRECT_VALUE
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_WRONG_VALUE
+from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_field
 from Products.PloneMeeting.utils import getFieldVersion
@@ -5931,6 +5933,7 @@ class testMeetingItem(PloneMeetingTestCase):
             'takenOverBy', 'templateUsingGroups',
             'toDiscuss', 'committeeObservations', 'committeeTranscript',
             'votesObservations', 'votesResult',
+            'neededFollowUp', 'providedFollowUp',
             'otherMeetingConfigsClonableToEmergency',
             'internalNotes', 'externalIdentifier']
         NEUTRAL_FIELDS += self._extraNeutralFields()
@@ -9353,6 +9356,89 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(
             item.Title(withMeetingDate=True, withItemNumber=True, withItemReference=True),
             "3. [Ref. 20240327/3] My title héhé (27 march 2024 (15:30))")
+
+    def test_pm_FollowUp(self):
+        '''Test the follow-up that relies on:
+           - neededFollowUp and providedFollowUp item fields;
+           - "needed-follow-up"  and "provided-follow-up" labels;
+           - "searchitemswithneededfollowup" and "searchitemswithprovidedfollowup" dashboard searches.
+           Check also counter cache that is invalidated when labels changed.'''
+        cfg = self.meetingConfig
+        for collection in cfg.searches.searches_items.objectValues():
+            if collection.getId() == "searchitemswithneededfollowup":
+                continue
+            collection.showNumberOfItems = False
+        neededfollowup = cfg.searches.searches_items.searchitemswithneededfollowup
+        neededfollowup_uid = neededfollowup.UID()
+        providedfollowup = cfg.searches.searches_items.searchitemswithprovidedfollowup
+        self._setupFollowUp(cfg)
+
+        self.changeUser("pmCreator1")
+        # check that counter is correct when using global labels
+        view = self.getMeetingFolder().restrictedTraverse("@@json_collections_count")
+        self.assertEqual(
+            view(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % neededfollowup_uid)
+        item = self.create('MeetingItem', decision=self.decisionText)
+        self.assertEqual(len(neededfollowup.results()), 0)
+        self.assertEqual(len(providedfollowup.results()), 0)
+        # providedFollowUp is not editable when label "needed-follow-up" is not set
+        self.assertFalse(item.mayQuickEdit('providedFollowUp'))
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.request.form['activate_labels'] = ['needed-follow-up']
+        labelingview.update()
+        # was not added as only MeetingManager can add this label
+        self.assertFalse('needed-follow-up' in get_labels(item))
+        self.changeUser("pmManager")
+        view = self.getMeetingFolder().restrictedTraverse("@@json_collections_count")
+        self.assertEqual(
+            view(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % neededfollowup_uid)
+        labelingview = item.restrictedTraverse('@@labeling')
+        labelingview.update()
+        self.assertTrue('needed-follow-up' in get_labels(item))
+        self.assertEqual(
+            view(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 1, "uid": "%s"}]}' % neededfollowup_uid)
+        self.assertEqual(len(neededfollowup.results()), 1)
+        self.assertEqual(len(providedfollowup.results()), 0)
+        # provided-follow-up is available to MeetingManagerswhen field providedFollowUp is not empty
+        self.assertFalse(
+            'provided-follow-up' in
+            [label['label_id'] for label in labelingview.available_labels()[1]])
+        self.changeUser('pmCreator1')
+        self.assertTrue(fieldIsEmpty('providedFollowUp', item))
+        # but now that label needed-follow-up is set, field is editable
+        self.assertTrue(item.mayQuickEdit('providedFollowUp'))
+        item.setProvidedFollowUp(self.descriptionText)
+        self.changeUser('pmManager')
+        self.assertTrue(
+            'provided-follow-up' in
+            [label['label_id'] for label in labelingview.available_labels()[1]])
+        # add 'provided-follow-up', remove 'needed-follow-up'
+        self.request.form['activate_labels'] = ['provided-follow-up']
+        labelingview.update()
+        self.assertTrue('provided-follow-up' in get_labels(item))
+        self.assertEqual(
+            view(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % neededfollowup_uid)
+        self.assertEqual(len(neededfollowup.results()), 0)
+        self.assertEqual(len(providedfollowup.results()), 1)
+        # fields are still editable in a closed meeting
+        self.request.form['activate_labels'] = ['needed-follow-up']
+        labelingview.update()
+        self.assertTrue('needed-follow-up' in get_labels(item))
+        self._removeConfigObjectsFor(cfg)
+        meeting = self.create('Meeting')
+        self.presentItem(item)
+        self.closeMeeting(meeting)
+        self.assertEqual(item.query_state(), "accepted")
+        self.assertEqual(meeting.query_state(), "closed")
+        self.assertTrue(item.mayQuickEdit('neededFollowUp'))
+        self.assertTrue(item.mayQuickEdit('providedFollowUp'))
+        self.changeUser('pmCreator1')
+        self.assertFalse(item.mayQuickEdit('neededFollowUp'))
+        self.assertTrue(item.mayQuickEdit('providedFollowUp'))
 
 
 def test_suite():

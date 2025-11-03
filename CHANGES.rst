@@ -2,11 +2,35 @@ Changelog
 =========
 
 
-4.2.27 (unreleased)
+4.2.27.2 (unreleased)
+---------------------
+
+- Take into acount environment variable `MUNICIPALITY_ID` to manage links
+  to external applications.
+  [gbastien]
+
+4.2.27.1 (2025-10-23)
+---------------------
+
+- Fixed `ExternalView.show_section`, will not be available if
+  `VISION_AUTH_USERNAME` is an empty string neither.
+  [gbastien]
+
+4.2.27 (2025-10-22)
 -------------------
 
 - Add 2026 holidays in profile.
   [aduchene]
+- Fixed `MeetingItem.title_or_id` to return `portal_type's title` instead
+  translated `portal_type` as now we do not translate `portal_type` anymore
+  but use the `portal_type's title`.
+  [gbastien]
+- Manage item follow-up.
+  [gbastien]
+- Invalidate dashboard collection counter when a label is (un)selected.
+  This is done only when the added/removed global or personal label is used in
+  an enabled dashboard collection query.
+  [gbastien]
 
 4.2.26 (2025-10-07)
 -------------------

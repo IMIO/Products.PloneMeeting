@@ -139,6 +139,14 @@
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
 
+    <!-- fllow-up related fields are not integrated in the edit form and only editable thru view/quick edit
+    <tal:field define="fieldName python: 'neededFollowUp'">
+      <metal:f use-macro="context/@@pm-macros/editContentField"/>
+    </tal:field>
+    <tal:field define="fieldName python: 'providedFollowUp'">
+      <metal:f use-macro="context/@@pm-macros/editContentField"/>
+    </tal:field -->
+
     <metal:field use-macro="python:here.widget('templateUsingGroups', mode='edit')"/>
     <metal:field use-macro="python:here.widget('meetingTransitionInsertingMe', mode='edit')"/>
 

@@ -68,6 +68,7 @@ from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
 from Products.PloneMeeting.interfaces import IMeetingItem
+from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import get_context_with_request
 from Products.PloneMeeting.utils import get_datagridfield_column_value
@@ -3464,3 +3465,20 @@ class GroupsManagingItemVocabulary(SuffixedPloneGroupsVocabulary):
 
 
 GroupsManagingItemVocabularyFactory = GroupsManagingItemVocabulary()
+
+
+class ItemFieldsConfigVocabulary(object):
+    def __call__(self, context):
+        """ """
+        terms = []
+        item_attrs = context.listAttributes(MeetingItem.schema)
+        # for now, only followUp related fields are configurable
+        configurable_field_names = ['neededFollowUp', 'providedFollowUp']
+        for k, v in item_attrs.items():
+            if k in configurable_field_names:
+                terms.append(SimpleTerm(k, k, v))
+        return SimpleVocabulary(terms)
+
+
+ItemFieldsConfigVocabularyFactory = ItemFieldsConfigVocabulary()
+

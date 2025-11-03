@@ -2,6 +2,7 @@
 
 from collective.contact.plonegroup.utils import select_organization
 from copy import deepcopy
+from ftw.labels.interfaces import ILabelJar
 from imio.helpers.content import richtextval
 from plone import api
 from plone.app.testing import logout
@@ -10,6 +11,7 @@ from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
+from zope.component import getAdapter
 from zope.event import notify
 
 
@@ -603,3 +605,32 @@ class PloneMeetingTestingHelpers(object):
             labelsConfig[0]['edit_access_on'] = ""
             labelsConfig[0]['edit_access_on_cache'] = '1'
         cfg.setLabelsConfig(labelsConfig)
+
+    def _enable_ftw_labels(self, cfg, add_follow_up=False):
+        self._enableField('labels')
+        self.changeUser('pmCreator1')
+        labeljar = getAdapter(cfg, ILabelJar)
+        labeljar.add('Label1', 'green', False)
+        labeljar.add('Label2', 'red', False)
+        if add_follow_up:
+            labeljar.add('Needed follow-up', 'orange', False)
+            labeljar.add('Provided follow-up', 'green-light', False)
+        return labeljar
+
+    def _setupFollowUp(self, cfg):
+        """Configure followUp labels."""
+        self._enable_ftw_labels(cfg, add_follow_up=True)
+        self._enableField(['neededFollowUp', 'providedFollowUp'])
+        config = list(cfg.getLabelsConfig())
+        # needed-follow-up
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "needed-follow-up"
+        new_config['edit_groups'] = ["configgroup_meetingmanagers"]
+        config.append(new_config)
+        # provided-follow-up
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "provided-follow-up"
+        new_config['edit_access_on'] = "python: not utils.fieldIsEmpty('providedFollowUp', item)"
+        new_config['edit_access_on_cache'] = "0"
+        config.append(new_config)
+        cfg.setLabelsConfig(config)

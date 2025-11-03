@@ -706,6 +706,16 @@
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
+    <tal:comment replace="nothing">Needed follow up</tal:comment>
+    <tal:field define="fieldName python: 'neededFollowUp'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
+    <tal:comment replace="nothing">Provided follow up</tal:comment>
+    <tal:field define="fieldName python: 'providedFollowUp'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
     <tal:itemNavigation tal:condition="nocall:meeting">
       <tal:itemNavigation replace="structure python: context.restrictedTraverse('@@item-navigation-widget')()" />
     </tal:itemNavigation>
