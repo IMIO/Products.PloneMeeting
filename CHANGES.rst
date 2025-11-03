@@ -5,8 +5,8 @@ Changelog
 4.2.27.3 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Environment variable `MUNICIPALITY_ID` is actually `VISION_MUNICIPALITY_ID`.
+  [gbastien]
 
 4.2.27.2 (2025-11-03)
 ---------------------
