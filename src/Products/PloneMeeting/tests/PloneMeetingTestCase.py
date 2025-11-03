@@ -20,7 +20,6 @@ from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import object_values
-from imio.helpers.content import richtextval
 from imio.helpers.testing import testing_logger
 from imio.helpers.workflow import get_transitions
 from plone import api
@@ -43,6 +42,7 @@ from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
 from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
 from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
+from Products.PloneMeeting.utils import add_advice
 from Products.PloneMeeting.utils import cleanMemoize
 from z3c.form.testing import TestRequest as z3c_form_TestRequest
 from z3c.relationfield.relation import RelationValue
@@ -553,14 +553,13 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if not advice_hide_during_redaction:
             advice_hide_during_redaction = advice_portal_type in \
                 self.meetingConfig.getDefaultAdviceHiddenDuringRedaction()
-        advice = createContentInContainer(
+        return add_advice(
             item,
-            advice_portal_type,
-            **{'advice_group': advice_group,
-               'advice_type': advice_type,
-               'advice_hide_during_redaction': advice_hide_during_redaction,
-               'advice_comment': richtextval(advice_comment)})
-        return advice
+            advice_group,
+            advice_type,
+            advice_comment,
+            advice_hide_during_redaction,
+            advice_portal_type)
 
     def deleteAsManager(self, uid):
         """When we want to remove an item the current user does not have permission to,

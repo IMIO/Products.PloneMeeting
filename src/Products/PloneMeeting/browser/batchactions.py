@@ -15,16 +15,19 @@ from imio.annex.browser.views import DownloadAnnexesBatchActionForm
 from imio.helpers.content import get_vocab
 from plone import api
 from plone.app.textfield import RichText
+from plone.directives import form
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.ftw_labels.utils import filter_access_global_labels
+from Products.PloneMeeting.utils import add_advice
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import is_operational_user
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
 from z3c.form.field import Fields
+from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.i18n import translate
 
@@ -269,6 +272,17 @@ class AddAdviceBatchActionForm(BaseBatchActionForm):
             vocabulary=self._advice_type_vocabulary()))
         self.fields["advice_type"].widgetFactory = SingleSelect2FieldWidget
 
+        self.fields += Fields(schema.Bool(
+            title=_(u'title_advice_hide_during_redaction'),
+            description=_("If you do not want the advice to be shown immediately after redaction, you can check this "
+                          "box.  This will let you or other member of your group work on the advice before showing it.  "
+                          "Note that if you lose access to the advice (for example if the item state evolve), "
+                          "the advice will be considered 'Not given, was under edition'.  A manager will be able "
+                          "to publish it nevertheless."),
+            required=False,
+            default=False))
+        self.fields["advice_hide_during_redaction"].widgetFactory = RadioFieldWidget
+
         self.fields += Fields(RichText(
             __name__='advice_comment',
             title=_(u'title_advice_comment'),
@@ -286,7 +300,15 @@ class AddAdviceBatchActionForm(BaseBatchActionForm):
 
     def _apply(self, **data):
         """ """
-        import ipdb; ipdb.set_trace()
+        for brain in self.brains:
+            add_advice(
+                brain.getObject(),
+                advice_group=data['advice_group'],
+                advice_type=data['advice_type'],
+                advice_hide_during_redaction=data['advice_hide_during_redaction'],
+                advice_comment=data['advice_comment'],
+                advice_observations=data['advice_observations'],
+                advice_portal_type = self.advice_portal_type)
         return
 
 
