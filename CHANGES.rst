@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.27.3 (unreleased)
+4.2.27.3 (2025-11-03)
 ---------------------
 
 - Environment variable `MUNICIPALITY_ID` is actually `VISION_MUNICIPALITY_ID`.
