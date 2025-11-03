@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.27.2 (unreleased)
+4.2.27.2 (2025-11-03)
 ---------------------
 
 - Take into acount environment variable `MUNICIPALITY_ID` to manage links
