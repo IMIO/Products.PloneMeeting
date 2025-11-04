@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from AccessControl import Unauthorized
 from plone import api
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.external.utils import send_json_request
@@ -73,6 +74,8 @@ class LinkWithVisionForm(form.Form):
 
     def update(self):
         """ """
+        if not self.context.restrictedTraverse('@@load-external-infos').can_link():
+            raise Unauthorized
         super(LinkWithVisionForm, self).update()
         # after calling parent's update, self.actions are available
         self.actions.get('cancel').addClass('standalone')
@@ -87,6 +90,8 @@ class LinkWithVisionForm(form.Form):
 
     @button.buttonAndHandler(_('Apply'), name='apply')
     def handle_apply(self, action):
+        if not self.context.restrictedTraverse('@@load-external-infos').can_link():
+            raise Unauthorized
         data, errors = self.extractData()
         if errors:
             self.status = self.formErrorsMessage
