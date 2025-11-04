@@ -5,6 +5,7 @@ from natsort import humansorted
 from plone import api
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
+from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting.external.config import VISION_AUTH_USERNAME
 from Products.PloneMeeting.external.utils import send_json_request
@@ -31,7 +32,7 @@ class ExternalView(BrowserView):
                     (translate('Nothing to display.',
                                domain='PloneMeeting',
                                context=self.request),
-                     self.content.msg))
+                     safe_unicode(self.content.msg)))
         return isinstance(self.content, list) and True or self.content
 
     def can_link(self):
