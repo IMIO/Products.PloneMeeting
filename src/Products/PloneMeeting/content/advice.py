@@ -95,12 +95,10 @@ class IMeetingAdvice(IDXMeetingContent):
     )
 
 
-@form.default_value(field=IMeetingAdvice['advice_type'])
-def advice_typeDefaultValue(data):
+def _advice_type_default(advice_portal_type, context):
     res = ''
     tool = api.portal.get_tool('portal_plonemeeting')
     # check ToolPloneMeeting.advisersConfig
-    advice_portal_type = findMeetingAdvicePortalType(data.context)
     for org_uid, adviser_infos in tool.adapted().get_extra_adviser_infos().items():
         if adviser_infos['portal_type'] == advice_portal_type:
             # use get in case overrided get_extra_adviser_infos and
@@ -109,9 +107,15 @@ def advice_typeDefaultValue(data):
             res = adviser_infos.get('default_advice_type', '')
             break
     if not res:
-        cfg = tool.getMeetingConfig(data.context)
+        cfg = tool.getMeetingConfig(context)
         res = cfg and cfg.getDefaultAdviceType() or ''
     return res
+
+
+@form.default_value(field=IMeetingAdvice['advice_type'])
+def advice_type_default(data):
+    advice_portal_type = findMeetingAdvicePortalType(data.context)
+    return _advice_type_default(advice_portal_type, data.context)
 
 
 @form.default_value(field=IMeetingAdvice['advice_hide_during_redaction'])

@@ -15,6 +15,13 @@ Changelog
     `meetingadvicefinances` portal_type.
 
   [gbastien]
+- Fixed link to `iA.Vision`:
+
+  - Check again if can link in `LinkWithVisionForm.update` and
+    `LinkWithVisionForm.handle_apply`;
+  - Do not fail to display error message if it contains unicode characters.
+
+  [gbastien]
 
 4.2.27.3 (2025-11-03)
 ---------------------

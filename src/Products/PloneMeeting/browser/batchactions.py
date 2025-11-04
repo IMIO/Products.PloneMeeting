@@ -15,12 +15,12 @@ from imio.annex.browser.views import DownloadAnnexesBatchActionForm
 from imio.helpers.content import get_vocab
 from plone import api
 from plone.app.textfield import RichText
-from plone.directives import form
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.content.advice import _advice_type_default
 from Products.PloneMeeting.ftw_labels.utils import filter_access_global_labels
 from Products.PloneMeeting.utils import add_advice
 from Products.PloneMeeting.utils import displaying_available_items
@@ -30,6 +30,9 @@ from z3c.form.field import Fields
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.i18n import translate
+from zope.interface import provider
+from zope.schema._bootstrapinterfaces import IContextAwareDefaultFactory
+
 
 #
 #
@@ -204,6 +207,15 @@ class UpdateCommitteesBatchActionForm(PMBaseARUOBatchActionForm):
         return 'Products.PloneMeeting.vocabularies.item_selectable_committees_vocabulary'
 
 
+@provider(IContextAwareDefaultFactory)
+def advice_type_default(context):
+    """
+      Default value is the current item number.
+    """
+    return _advice_type_default(
+        context.REQUEST['PUBLISHED'].advice_portal_type, context)
+
+
 class AddAdviceBatchActionForm(BaseBatchActionForm):
     """ """
 
@@ -218,18 +230,12 @@ class AddAdviceBatchActionForm(BaseBatchActionForm):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(context)
 
-    @property
-    def description(self):
-        description = translate(super(AddAdviceBatchActionForm, self).description,
-                                context=self.request)
-        description += ""
-        description += "<p>Tralala</p>"
-        return description
-
     def available(self):
-        """ """
+        """Available if using advices and current user is an adviser."""
         # super() will check for self.available_permission
-        return super(AddAdviceBatchActionForm, self).available()
+        return super(AddAdviceBatchActionForm, self).available() and \
+            self.cfg.getUseAdvices() and \
+            self.tool.userIsAmong(['advisers'])
 
     def _advice_group_vocabulary(self):
         """ """
@@ -269,17 +275,19 @@ class AddAdviceBatchActionForm(BaseBatchActionForm):
         self.fields += Fields(schema.Choice(
             __name__='advice_type',
             title=_(u'title_advice_type'),
+            defaultFactory=advice_type_default,
             vocabulary=self._advice_type_vocabulary()))
         self.fields["advice_type"].widgetFactory = SingleSelect2FieldWidget
 
         self.fields += Fields(schema.Bool(
             __name__='advice_hide_during_redaction',
             title=_(u'title_advice_hide_during_redaction'),
-            description=_("If you do not want the advice to be shown immediately after redaction, you can check this "
-                          "box.  This will let you or other member of your group work on the advice before showing it.  "
-                          "Note that if you lose access to the advice (for example if the item state evolve), "
-                          "the advice will be considered 'Not given, was under edition'.  A manager will be able "
-                          "to publish it nevertheless."),
+            description=_(
+                "If you do not want the advice to be shown immediately after redaction, you can check this "
+                "box.  This will let you or other member of your group work on the advice before showing it.  "
+                "Note that if you lose access to the advice (for example if the item state evolve), "
+                "the advice will be considered 'Not given, was under edition'.  A manager will be able "
+                "to publish it nevertheless."),
             required=False,
             default=False))
         self.fields["advice_hide_during_redaction"].widgetFactory = RadioFieldWidget
@@ -309,7 +317,7 @@ class AddAdviceBatchActionForm(BaseBatchActionForm):
                 advice_hide_during_redaction=data['advice_hide_during_redaction'],
                 advice_comment=data['advice_comment'],
                 advice_observations=data['advice_observations'],
-                advice_portal_type = self.advice_portal_type)
+                advice_portal_type=self.advice_portal_type)
         return
 
 

@@ -2665,6 +2665,11 @@ label {
     word-break: break-word;
 }
 
+div#batch-actions input#add-advice-batch-action-but.batch-action-icon-but {
+    background-image: url('&dtml-portal_url;/meetingadvice.png');
+    background-size: 16px;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
