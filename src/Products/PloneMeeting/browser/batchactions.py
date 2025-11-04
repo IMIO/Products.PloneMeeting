@@ -273,6 +273,7 @@ class AddAdviceBatchActionForm(BaseBatchActionForm):
         self.fields["advice_type"].widgetFactory = SingleSelect2FieldWidget
 
         self.fields += Fields(schema.Bool(
+            __name__='advice_hide_during_redaction',
             title=_(u'title_advice_hide_during_redaction'),
             description=_("If you do not want the advice to be shown immediately after redaction, you can check this "
                           "box.  This will let you or other member of your group work on the advice before showing it.  "
