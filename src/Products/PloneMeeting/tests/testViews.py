@@ -3735,6 +3735,7 @@ class testViews(PloneMeetingTestCase):
         self.request['PUBLISHED'] = form
         self.request.form['form.widgets.advice_type'] = u'positive'
         self.request.form['form.widgets.advice_group'] = safe_unicode(self.vendors_uid)
+        self.request.form['form.widgets.advice_comment'] = u"My comment"
         form.update()
         self.assertEqual(len(form.brains), 2)
         self.assertEqual(len(form.widgets['advice_group'].terms), 1)
@@ -3743,8 +3744,10 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(
             form.widgets['advice_group'].terms.terms._terms[0].token, self.vendors_uid)
         form.handleApply(form, None)
-        # advice were added on items
+        # advice were added on items with correct type and advice_hide_during_redaction
         self.assertEqual(item1.adviceIndex[self.vendors_uid]['type'], 'positive')
+        self.assertEqual(item1.adviceIndex[self.vendors_uid]['comment'], u'My comment')
+        self.assertEqual(item1.getAdvices()[0].advice_comment.raw, u'My comment')
         self.assertEqual(item2.adviceIndex[self.vendors_uid]['type'], 'positive')
         # no more advice to give
         form = searches_items.restrictedTraverse('@@add-advice-batch-action')

@@ -22,7 +22,7 @@ from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.content.advice import _advice_type_default
 from Products.PloneMeeting.ftw_labels.utils import filter_access_global_labels
-from Products.PloneMeeting.utils import add_advice
+from Products.PloneMeeting.utils import _add_advice
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import is_operational_user
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
@@ -310,7 +310,7 @@ class AddAdviceBatchActionForm(BaseBatchActionForm):
     def _apply(self, **data):
         """ """
         for brain in self.brains:
-            add_advice(
+            _add_advice(
                 brain.getObject(),
                 advice_group=data['advice_group'],
                 advice_type=data['advice_type'],

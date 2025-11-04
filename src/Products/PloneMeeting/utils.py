@@ -2818,21 +2818,23 @@ def configure_advice_dx_localroles_for(portal_type, org_uids=[]):
         logger.warn(msg)
 
 
-def add_advice(item,
-               advice_group=None,
-               advice_type=None,
-               advice_comment=None,
-               advice_observations=None,
-               advice_hide_during_redaction=False,
-               advice_portal_type='meetingadvice'):
+def _add_advice(item,
+                advice_group,
+                advice_type,
+                advice_comment=None,
+                advice_observations=None,
+                advice_hide_during_redaction=False,
+                advice_portal_type='meetingadvice'):
+    """Create an advice in p_item.
+       p_advice_comment and p_advice_observations must be RichTextValue intances."""
     return createContentInContainer(
         item,
         advice_portal_type,
         **{'advice_group': advice_group,
            'advice_type': advice_type,
            'advice_hide_during_redaction': advice_hide_during_redaction,
-           'advice_comment': richtextval(advice_comment),
-           'advice_observations': richtextval(advice_observations), })
+           'advice_comment': advice_comment,
+           'advice_observations': advice_observations, })
 
 
 class AdvicesUpdatedEvent(ObjectEvent):
