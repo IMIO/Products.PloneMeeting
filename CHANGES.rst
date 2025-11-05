@@ -15,6 +15,10 @@ Changelog
     `meetingadvicefinances` portal_type.
 
   [gbastien]
+
+4.2.27.4 (2025-11-04)
+---------------------
+
 - Fixed link to `iA.Vision`:
 
   - Check again if can link in `LinkWithVisionForm.update` and
