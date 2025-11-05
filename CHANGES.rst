@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-4.2.28-rc1 (unreleased)
------------------------
+4.2.28rc1 (2025-11-05)
+----------------------
 
 - Added `Add advices` batch action:
 
