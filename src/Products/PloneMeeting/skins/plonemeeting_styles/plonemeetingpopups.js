@@ -303,6 +303,7 @@ jQuery(document).ready(function($) {
                        data_parameters=[],
                        options={position: 'bottom',
                                 trigger: 'click'});
+    addCompleteOrQuickMeetingAdvice();
     pmCommonOverlays();
 });
 
@@ -333,6 +334,7 @@ function initializeDashboard(){
     listTypeChange();
     actionsPanelTooltipster();
     addAdvicesBatchAction();
+    addCompleteOrQuickMeetingAdvice();
 }
 
 function initializeAdvicePopup(instance) {
@@ -508,6 +510,16 @@ function adviceChangeDelay() {
                        view_name='@@advice-available-delays',
                        data_parameters=['advice'],
                        options={functionReady_callback: pmCommonOverlays});
+}
+
+function addCompleteOrQuickMeetingAdvice() {
+    tooltipster_helper(selector='.tooltipster-advice-add-complete-quick',
+                       view_name='@@advice-add-complete-quick',
+                       data_parameters=[],
+                       options={zIndex: 50,
+                                minWidth: 350,
+                                functionReady_callback: adviceAddEdit,
+                                close_other_tips: true});
 }
 
 function positionAdvicePopup(instance, helper, position) {

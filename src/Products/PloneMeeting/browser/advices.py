@@ -5,6 +5,7 @@ from collective.contact.plonegroup.utils import get_plone_group_id
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_user_fullname
+from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.workflow import get_state_infos
 from imio.history.browser.views import EventPreviewView
@@ -23,6 +24,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.PloneMeeting.browser.advicechangedelay import _reinit_advice_delay
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.utils import _add_advice
 from Products.PloneMeeting.utils import get_event_field_data
 from Products.PloneMeeting.utils import is_proposing_group_editor
 from Products.PloneMeeting.utils import isPowerObserverForCfg
@@ -421,6 +423,39 @@ class ChangeAdviceAskedAgainView(BrowserView):
                                                force_resend_if_in_advice_review_states=True)
 
 
+class AdviceAddCompleteOrQuick(BrowserView):
+    """Display add complete/quick advice listing."""
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.portal_url = api.portal.get().absolute_url()
+
+    def __call__(self):
+        advice_group = self.request.get('add-advice-group')
+        advice_type = self.request.get('add-advice-type')
+        if advice_group and advice_type:
+            _add_advice(
+                self.context,
+                advice_group=advice_group,
+                advice_type=advice_type)
+            api.portal.show_message(
+                _("Advice was quick added."),
+                request=self.context.REQUEST,
+                type="info")
+        else:
+            # this include asked and not asked advices
+            self.advices_to_add = get_vocab(
+                self.context,
+                'Products.PloneMeeting.content.advice.advice_group_vocabulary',
+                advice_portal_type="meetingadvice")
+            self.advice_types = get_vocab(
+                self.context,
+                'Products.PloneMeeting.content.advice.advice_type_vocabulary',
+                advice_portal_type="meetingadvice")
+            return super(AdviceAddCompleteOrQuick, self).__call__()
+
+
 class AdviceConfidentialityView(BrowserView):
     """Display advice confidentiality infos."""
 
@@ -508,6 +543,15 @@ class AdviceView(DefaultView):
             raise Unauthorized
         _display_asked_again_warning(self.context, self.parent)
         return super(AdviceView, self).__call__()
+
+    def updateWidgets(self):
+        # need to change select2 widget klass when in display mode because JS tries to init and it fails
+        # leading to a JS error preventing loading of some elements like portlets async requests
+        super(AdviceView, self).updateWidgets()
+        if self.widgets['advice_type'].mode == "display":
+            self.widgets['advice_type'].klass = \
+                self.widgets['advice_type'].klass.replace(
+                'single-select2-widget', 'single-select2-widget-view')
 
 
 class AdviceEdit(DefaultEditForm):

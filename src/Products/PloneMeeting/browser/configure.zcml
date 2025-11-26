@@ -703,6 +703,15 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
+    <!-- the view that shows advice confidentiality infos -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="advice-add-complete-quick"
+        class=".advices.AdviceAddCompleteOrQuick"
+        template="templates/adviceaddcompletequick.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
     <!-- the view that shows advice given history -->
     <browser:page
         name="advice_given_history_view"

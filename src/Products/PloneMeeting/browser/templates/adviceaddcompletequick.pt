@@ -1,0 +1,37 @@
+<tal:defines i18n:domain="PloneMeeting"
+  tal:define="portal_url python: view.portal_url;">
+  <div id="content">
+    <p></p>
+    <div class="add-advice add-complete-advice">
+      <p class="add-complete-advice-title" i18n:translate="">Add complete advice</p>
+      <div>
+        <a class="link-overlay-pm-advice"
+           tal:attributes="href string:${context/absolute_url}/++add++meetingadvice">
+          <span class="fa fa-plus" />
+        </a>
+      </div>
+    </div>
+    <div class="add-advice add-quick-advice">
+      <p class="add-quick-advice-title" i18n:translate="">Add quick advice</p>
+      <tal:advices_to_add repeat="advice_to_add_term python: view.advices_to_add._terms">
+        <p class="add-quick-advice-group">
+          <img width="16px" tal:attributes="src string:${portal_url}/meetingadvice.png" />&nbsp;
+          <span tal:content="python: advice_to_add_term.token in context.adviceIndex and context.adviceIndex[advice_to_add_term.token]['name'] or advice_to_add_term.title">Adviser</span>
+        </p>
+        <div tal:repeat="advice_type_term python: view.advice_types"
+             class="add-quick-advice-type">
+          <a href="#"
+             tal:attributes="onclick string:event.preventDefault();;
+                             $('.tooltipstered').tooltipster('hide');;
+                             callViewAndReload(base_url='${context/absolute_url}',
+                                               view_name='@@advice-add-complete-quick',
+                                               params={'add-advice-group': '${advice_to_add_term/token}',
+                                                       'add-advice-type': '${advice_type_term/token}', }, );">
+            <img tal:attributes="src string:${portal_url}/advice_standard_${advice_type_term/token}.png" />
+            <span tal:content="advice_type_term/title">Advice type</span>
+          </a>
+        </div>
+      </tal:advices_to_add>
+    </div>
+  </div>
+</tal:defines>

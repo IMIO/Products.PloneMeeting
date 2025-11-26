@@ -2827,7 +2827,7 @@ def _add_advice(item,
                 advice_portal_type='meetingadvice'):
     """Create an advice in p_item.
        p_advice_comment and p_advice_observations must be RichTextValue intances."""
-    return createContentInContainer(
+    advice = createContentInContainer(
         item,
         advice_portal_type,
         **{'advice_group': advice_group,
@@ -2835,6 +2835,9 @@ def _add_advice(item,
            'advice_hide_during_redaction': advice_hide_during_redaction,
            'advice_comment': advice_comment,
            'advice_observations': advice_observations, })
+    # make sure we do not have a 302 status after add
+    advice.REQUEST.RESPONSE.setStatus(200)
+    return advice
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

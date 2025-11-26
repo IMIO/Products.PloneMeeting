@@ -43,8 +43,8 @@
               <tal:comment replace="nothing">Icon for adding an advice</tal:comment>
               <div tal:condition="python: advicesToAdd and not displayedAddIcon" class="add_advice_icon">
               <tal:loop tal:repeat="advice_portal_type python: context.get_addable_advice_portal_types(advicesToAdd)">
-                <a href="++add++meetingadvice"
-                   class="link-overlay-pm-advice"
+                <a class="link-overlay-pm-advice"
+                   tal:condition="python: advice_portal_type != 'meetingadvice'"
                    tal:define="global displayedAddIcon python: True"
                    tal:attributes="href string:${item_url}/++add++${advice_portal_type}">
                   <img i18n:attributes="title"
@@ -52,6 +52,14 @@
                        tal:attributes="src string:${view/portal_url}/new_${advice_portal_type}.png;
                                        title string:add_new_${advice_portal_type}" />
                 </a>
+                <img i18n:attributes="title"
+                     title="#"
+                     tal:attributes="src string:${view/portal_url}/new_meetingadvice.png;
+                                     title string:add_new_meetingadvice;
+                                     data-base_url string:${item_url}"
+                  class="tooltipster-advice-add-complete-quick"
+                  tal:condition="python: advice_portal_type == 'meetingadvice'"
+                  tal:define="global displayedAddIcon python: True" />
               </tal:loop>
               </div>
            </tal:adviceType>
