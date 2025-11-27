@@ -5,8 +5,9 @@ Changelog
 4.2.28rc2 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Fixed `searchitemswithneededfollowup` and `searchitemswithprovidedfollowup`
+  `DashboardCollections` that were not filtering on `MeetingItem portal_type`.
+  [gbastien]
 
 4.2.28rc1 (2025-11-05)
 ----------------------
