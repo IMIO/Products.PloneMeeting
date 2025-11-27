@@ -2673,7 +2673,7 @@ div#batch-actions input#add-advice-batch-action-but.batch-action-icon-but {
 
 div.add-advice {
     padding: 1em;
-    font-size: 120%;
+    font-size: 110%;
     text-align: center;
     margin-bottom: 1em;
     border-radius: 5px;
