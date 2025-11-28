@@ -8,6 +8,9 @@ Changelog
 - Fixed `searchitemswithneededfollowup` and `searchitemswithprovidedfollowup`
   `DashboardCollections` that were not filtering on `MeetingItem portal_type`.
   [gbastien]
+- Moved adaptable `MeetingItem._advicePortalTypeForAdviser` to
+  `ToolPloneMeeting` (no more adaptable).
+  [gbastien]
 
 4.2.28rc1 (2025-11-05)
 ----------------------
