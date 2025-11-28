@@ -16,7 +16,14 @@
       <tal:advices_to_add repeat="advice_to_add_term python: view.advices_to_add._terms">
         <p class="add-quick-advice-group">
           <img width="16px" tal:attributes="src string:${portal_url}/meetingadvice.png" />&nbsp;
-          <span tal:content="python: advice_to_add_term.token in context.adviceIndex and context.adviceIndex[advice_to_add_term.token]['name'] or advice_to_add_term.title">Adviser</span>
+          <span tal:content="python: view.advice_to_add_title(advice_to_add_term)">Adviser</span>
+          <span class="link-help">
+            <img width="16px"
+               tal:condition="python: advice_to_add_term.token not in context.adviceIndex"
+               title="Not asked advice"
+               i18n:attributes="title"
+               tal:attributes="src string:${portal_url}/advice_not_asked.png" />
+          </span>
         </p>
         <div tal:repeat="advice_type_term python: view.advice_types"
              class="add-quick-advice-type">

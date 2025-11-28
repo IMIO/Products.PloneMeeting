@@ -21,6 +21,7 @@ from plone.memoize import ram
 from plone.supermodel import model
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
+from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting.browser.advicechangedelay import _reinit_advice_delay
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -454,6 +455,19 @@ class AdviceAddCompleteOrQuick(BrowserView):
                 'Products.PloneMeeting.content.advice.advice_type_vocabulary',
                 advice_portal_type="meetingadvice")
             return super(AdviceAddCompleteOrQuick, self).__call__()
+
+    def advice_to_add_title(self, advice_to_add_term):
+        """ """
+        if advice_to_add_term.token in self.context.adviceIndex:
+            title = self.context.adviceIndex[advice_to_add_term.token]['name']
+            if self.context.adviceIndex[advice_to_add_term.token]['delay_label']:
+                title += u" - %s" % safe_unicode(
+                    self.context.adviceIndex[advice_to_add_term.token]['delay_label'])
+            if not self.context.adviceIndex[advice_to_add_term.token]['optional']:
+                title += u" [auto]"
+        else:
+            title = advice_to_add_term.title
+        return title
 
 
 class AdviceConfidentialityView(BrowserView):

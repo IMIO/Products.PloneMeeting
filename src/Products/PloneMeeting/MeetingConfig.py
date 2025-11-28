@@ -2057,6 +2057,19 @@ schema = Schema((
         schemata="advices",
         write_permission="PloneMeeting: Write risky config",
     ),
+    BooleanField(
+        name='enableAddQuickAdvice',
+        default=defValues.enableAddQuickAdvice,
+        widget=BooleanField._properties['widget'](
+            description="EnableAddQuickAdvice",
+            description_msgid="enable_add_quick_advice_descr",
+            label='Enableaddquickadvice',
+            label_msgid='PloneMeeting_label_enableAddQuickAdvice',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     DataGridField(
         name='customAdvisers',
         widget=DataGridField._properties['widget'](

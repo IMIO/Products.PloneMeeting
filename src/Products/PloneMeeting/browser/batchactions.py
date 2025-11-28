@@ -26,8 +26,8 @@ from Products.PloneMeeting.utils import _add_advice
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import is_operational_user
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
-from z3c.form.field import Fields
 from z3c.form.browser.radio import RadioFieldWidget
+from z3c.form.field import Fields
 from zope import schema
 from zope.i18n import translate
 from zope.interface import provider

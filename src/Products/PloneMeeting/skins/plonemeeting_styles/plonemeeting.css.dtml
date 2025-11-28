@@ -2675,8 +2675,7 @@ div.add-advice {
     padding: 1em;
     font-size: 110%;
     text-align: center;
-    margin-bottom: 1em;
-    border-radius: 5px;
+    margin-bottom: 0.5em;
 }
 
 p.add-complete-advice-title,
@@ -2696,7 +2695,7 @@ div.add-complete-advice a {
 }
 div.add-complete-advice,
 div.add-quick-advice {
-    background-color: &dtml-tableHeaderBackgroundColor;;
+    background-color: &dtml-evenRowBackgroundColor;;
 }
 
 p.add-quick-advice-group,

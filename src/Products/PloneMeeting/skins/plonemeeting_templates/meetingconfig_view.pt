@@ -1142,7 +1142,9 @@
           <td tal:define="field python:here.getField('inheritedAdviceRemoveableByAdviser')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
+          <td tal:define="field python:here.getField('enableAddQuickAdvice')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
         </tr>
         <tr valign="top">
           <td colspan="3">

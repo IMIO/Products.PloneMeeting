@@ -44,7 +44,7 @@
               <div tal:condition="python: advicesToAdd and not displayedAddIcon" class="add_advice_icon">
               <tal:loop tal:repeat="advice_portal_type python: context.get_addable_advice_portal_types(advicesToAdd)">
                 <a class="link-overlay-pm-advice"
-                   tal:condition="python: advice_portal_type != 'meetingadvice'"
+                   tal:condition="python: not cfg.getEnableAddQuickAdvice() or advice_portal_type != 'meetingadvice'"
                    tal:define="global displayedAddIcon python: True"
                    tal:attributes="href string:${item_url}/++add++${advice_portal_type}">
                   <img i18n:attributes="title"
@@ -58,7 +58,7 @@
                                      title string:add_new_meetingadvice;
                                      data-base_url string:${item_url}"
                   class="tooltipster-advice-add-complete-quick"
-                  tal:condition="python: advice_portal_type == 'meetingadvice'"
+                  tal:condition="python: view.cfg.getEnableAddQuickAdvice() and advice_portal_type == 'meetingadvice'"
                   tal:define="global displayedAddIcon python: True" />
               </tal:loop>
               </div>
@@ -73,11 +73,22 @@
         </div>
         <tal:comment replace="nothing">Icon for adding an advice for power advisers</tal:comment>
         <div tal:condition="python: advicesToAdd" class="add_advice_icon">
-          <a href="++add++meetingadvice" class="link-overlay-pm-advice" tal:attributes="href string:${item_url}/++add++meetingadvice">
+          <a href="++add++meetingadvice"
+             class="link-overlay-pm-advice"
+             tal:condition="python: not view.cfg.getEnableAddQuickAdvice()"
+             tal:attributes="href string:${item_url}/++add++meetingadvice">
             <img i18n:attributes="title"
                  title="add_new_meetingadvice"
                  tal:attributes="src string:${view/portal_url}/new_meetingadvice.png;" />
           </a>
+          <img i18n:attributes="title"
+               title="#"
+               tal:attributes="src string:${view/portal_url}/new_meetingadvice.png;
+                               title string:add_new_meetingadvice;
+                               data-base_url string:${item_url}"
+            class="tooltipster-advice-add-complete-quick"
+            tal:condition="python: view.cfg.getEnableAddQuickAdvice()"
+            tal:define="global displayedAddIcon python: True" />
         </div>
       </tal:noAdvicesByType>
 </tal:defines>
