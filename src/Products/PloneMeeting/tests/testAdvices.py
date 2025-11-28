@@ -4151,7 +4151,8 @@ class testAdvices(PloneMeetingTestCase):
         item = self.create('MeetingItem', **data)
         # not able to add advice
         advices_icons_content = "Not given yet"
-        add_advice_action = "++add++meetingadvice"
+        # present when quick advice enabled or not
+        add_advice_action = "http://nohost/plone/new_meetingadvice.png"
         advices_icons = item.restrictedTraverse('@@advices-icons')
         self.assertTrue(advices_icons_content in advices_icons())
         self.assertFalse(add_advice_action in advices_icons())
