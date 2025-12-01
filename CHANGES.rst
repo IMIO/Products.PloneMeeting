@@ -11,6 +11,8 @@ Changelog
 - Moved adaptable `MeetingItem._advicePortalTypeForAdviser` to
   `ToolPloneMeeting` (no more adaptable).
   [gbastien]
+- Added `Add quick/complete advice` action.
+  [gbastien]
 
 4.2.28rc1 (2025-11-05)
 ----------------------
