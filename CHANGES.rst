@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.28rc2 (unreleased)
+4.2.28rc2 (2025-12-01)
 ----------------------
 
 - Fixed `searchitemswithneededfollowup` and `searchitemswithprovidedfollowup`
