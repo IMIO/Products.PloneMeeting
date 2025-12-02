@@ -38,9 +38,9 @@ class Migrate_To_4216(Migrator):
             # be defensive with itemLabelsEditableByProposingGroupForever that
             # is recent and could not exist in some MeetingConfigs
             if getattr(cfg, 'itemLabelsEditableByProposingGroupForever', False):
-                # remove duplicates
+                edit_groups = ['configgroup_meetingmanagers']
                 suffixes = tuple(set(cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)))
-                edit_groups = [PROPOSINGGROUPPREFIX + suffix for suffix in suffixes]
+                edit_groups += [PROPOSINGGROUPPREFIX + suffix for suffix in suffixes]
                 labels_config[0]["edit_groups"] = edit_groups
             else:
                 labels_config[0]["edit_access_on"] = \
