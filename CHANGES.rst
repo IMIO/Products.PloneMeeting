@@ -5,8 +5,10 @@ Changelog
 4.2.27.5 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Fixed `Migrate_To_4216._updateLabelsConfig` by giving access to
+  `MeetingManagers` by default when old parameter
+  `MeetingConfig.itemLabelsEditableByProposingGroupForever` was `True`.
+  [gbastien]
 
 4.2.27.4 (2025-11-04)
 ---------------------

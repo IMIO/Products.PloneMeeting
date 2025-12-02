@@ -526,6 +526,7 @@ class MeetingConfigDescriptor(Descriptor):
             {'edit_access_on': '',
              'edit_access_on_cache': '1',
              'edit_groups': [
+                'configgroup_meetingmanagers',
                 'suffix_proposing_group_creators',
                 'suffix_proposing_group_prereviewers',
                 'suffix_proposing_group_reviewers'],
