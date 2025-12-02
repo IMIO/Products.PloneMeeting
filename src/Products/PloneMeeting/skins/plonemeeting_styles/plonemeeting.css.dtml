@@ -2677,10 +2677,9 @@ div.add-advice {
     text-align: center;
     margin-bottom: 0.5em;
 }
-
 p.add-complete-advice-title,
 p.add-quick-advice-title {
-    font-size: 110%;
+    font-size: 115%;
     font-weight: bold;
 }
 p.add-quick-advice-title {
@@ -2697,13 +2696,21 @@ div.add-complete-advice,
 div.add-quick-advice {
     background-color: &dtml-evenRowBackgroundColor;;
 }
-
-p.add-quick-advice-group,
+div.add-quick-advice-group,
 div.add-quick-advice-type {
     text-align: left;
 }
+div.add-quick-advice-group {
+    margin-bottom: 0.5em;
+}
+div.add-quick-advice-group div.advice_popup_infos {
+    vertical-align: bottom;
+}
+span.add-quick-advice-name {
+    font-weight: bold;
+}
 div.add-quick-advice-type {
-    padding-left: 2em;
+    padding-left: 1em;
     padding-bottom: 0.5em;
 }
 

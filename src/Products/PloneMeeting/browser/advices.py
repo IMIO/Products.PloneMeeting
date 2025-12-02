@@ -432,10 +432,28 @@ class AdviceAddCompleteOrQuick(BrowserView):
         self.request = request
         self.portal_url = api.portal.get().absolute_url()
 
-    def __call__(self):
-        advice_group = self.request.get('add-advice-group')
-        advice_type = self.request.get('add-advice-type')
-        if advice_group and advice_type:
+    def __call__(self, advice_group=None, advice_type=None):
+        # this include asked and not asked advices
+        self.advices_to_add = get_vocab(
+            self.context,
+            'Products.PloneMeeting.content.advice.advice_group_vocabulary',
+            advice_portal_type="meetingadvice")
+        self.advice_types = get_vocab(
+            self.context,
+            'Products.PloneMeeting.content.advice.advice_type_vocabulary',
+            advice_portal_type="meetingadvice")
+        # calling the view directly or trying to add wrong advice_group or
+        # wrong advice_type or passing only one value or wrong values
+        # will lead to Unauthorized
+        if not self.advices_to_add or \
+           (advice_group and not advice_type) or \
+           (not advice_group and advice_type) or \
+           (advice_group and advice_group not in self.advices_to_add) or \
+           (advice_type and advice_type not in self.advice_types):
+            raise Unauthorized
+
+        if advice_group in self.advices_to_add and \
+           advice_type in self.advice_types:
             _add_advice(
                 self.context,
                 advice_group=advice_group,
@@ -445,29 +463,28 @@ class AdviceAddCompleteOrQuick(BrowserView):
                 request=self.context.REQUEST,
                 type="info")
         else:
-            # this include asked and not asked advices
-            self.advices_to_add = get_vocab(
-                self.context,
-                'Products.PloneMeeting.content.advice.advice_group_vocabulary',
-                advice_portal_type="meetingadvice")
-            self.advice_types = get_vocab(
-                self.context,
-                'Products.PloneMeeting.content.advice.advice_type_vocabulary',
-                advice_portal_type="meetingadvice")
+            self.tool = api.portal.get_tool('portal_plonemeeting')
+            self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'])
             return super(AdviceAddCompleteOrQuick, self).__call__()
 
     def advice_to_add_title(self, advice_to_add_term):
         """ """
+        advice_name_pattern = '<span class="add-quick-advice-name">%s</span>'
         if advice_to_add_term.token in self.context.adviceIndex:
-            title = self.context.adviceIndex[advice_to_add_term.token]['name']
+            title = advice_name_pattern % self.context.adviceIndex[advice_to_add_term.token]['name']
             if self.context.adviceIndex[advice_to_add_term.token]['delay_label']:
                 title += u" - %s" % safe_unicode(
                     self.context.adviceIndex[advice_to_add_term.token]['delay_label'])
             if not self.context.adviceIndex[advice_to_add_term.token]['optional']:
                 title += u" [auto]"
         else:
-            title = advice_to_add_term.title
+            title = advice_name_pattern % advice_to_add_term.title
         return title
+
+    def delay_icon(self, advice_info):
+        """Makes it callable in the template."""
+        memberIsAdviserForGroup = advice_info['id'] in self.userAdviserOrgUids
+        return _delay_icon(memberIsAdviserForGroup, advice_info)
 
 
 class AdviceConfidentialityView(BrowserView):

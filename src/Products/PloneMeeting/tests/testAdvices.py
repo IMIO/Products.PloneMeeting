@@ -876,7 +876,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(len(brains), 1)
         self.assertEqual(brains[0].UID, itemUID)
         # if a delay-aware advice delay is exceeded, it is indexed with an ending '2'
-        item.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime(2012, 01, 01)
+        item.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime(2012, 1, 1)
         item.update_local_roles()
         self.assertEqual(
             sorted(indexAdvisers.callable(item)),
@@ -4425,6 +4425,41 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(item1.query_state(), 'presented')
         self.presentItem(item2)
         self.assertEqual(item2.query_state(), 'presented')
+
+    def test_pm_AdviceAddCompleteQuick(self):
+        """Test the @@advice-add-complete-quick view."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates([self._stateMappingFor('itemcreated'), ])
+        cfg.setItemAdviceEditStates([self._stateMappingFor('itemcreated'), ])
+        cfg.setItemAdviceViewStates([self._stateMappingFor('itemcreated'), ])
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
+        # no advice to give, will raise Unauthorized
+        view = item.restrictedTraverse('@@advice-add-complete-quick')
+        self.assertRaises(Unauthorized, view)
+        self.changeUser('pmReviewer2')
+        view = item.restrictedTraverse('@@advice-add-complete-quick')
+        self.assertTrue(self.vendors_uid in view())
+        # trying to quick add an advice for another group will raise Unauthorized
+        self.assertTrue("positive" in cfg.getUsedAdviceTypes())
+        # wrong advice_group
+        self.assertRaises(Unauthorized, view, advice_group=self.developers_uid, advice_type='positive')
+        self.assertRaises(Unauthorized, view, advice_group=self.developers_uid)
+        # wrong advice_type
+        self.assertFalse("read" in cfg.getUsedAdviceTypes())
+        self.assertRaises(Unauthorized, view, advice_group=self.vendors_uid, advice_type='read')
+        self.assertRaises(Unauthorized, view, advice_type='read')
+        # now add advice
+        self.assertIsNone(item.getAdviceObj(self.vendors_uid))
+        self.assertTrue(item.adviceIndex[self.vendors_uid]['advice_addable'])
+        self.assertFalse(item.adviceIndex[self.vendors_uid]['advice_editable'])
+        # will use same view but not render it
+        self.assertIsNone(view(advice_group=self.vendors_uid, advice_type='positive'))
+        # advice was added and adviceIndex updated
+        self.assertTrue(item.getAdviceObj(self.vendors_uid))
+        self.assertFalse(item.adviceIndex[self.vendors_uid]['advice_addable'])
+        self.assertTrue(item.adviceIndex[self.vendors_uid]['advice_editable'])
 
 
 def test_suite():
