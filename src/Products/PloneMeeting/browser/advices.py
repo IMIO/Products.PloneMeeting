@@ -462,6 +462,9 @@ class AdviceAddCompleteOrQuick(BrowserView):
                 _("Advice was quick added."),
                 request=self.context.REQUEST,
                 type="info")
+            # if on the item view, redirect to "/#advices"
+            if self.request.get('HTTP_REFERER', '').startswith(self.context.absolute_url()):
+                return self.context.absolute_url() + "/#advices"
         else:
             self.tool = api.portal.get_tool('portal_plonemeeting')
             self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'])
