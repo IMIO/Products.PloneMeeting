@@ -9,6 +9,10 @@ Changelog
   `MeetingManagers` by default when old parameter
   `MeetingConfig.itemLabelsEditableByProposingGroupForever` was `True`.
   [gbastien]
+- Completed `Migrate_To_4216` by calling `_removeBrokenAnnexes` and upgrade
+  other profiles, this will especially upgrade `collective.iconifiedcategory`
+  by adding the `to_approve/approve` new attributes on annexes.
+  [gbastien]
 
 4.2.27.4 (2025-11-04)
 ---------------------

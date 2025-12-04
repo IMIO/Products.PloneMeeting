@@ -71,6 +71,12 @@ class Migrate_To_4216(Migrator):
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4216...')
+        # remove broken annexes before upgrading collective.iconifiedcategory
+        self._removeBrokenAnnexes()
+        if not from_migration_to_4200:
+            # this will upgrade collective.iconifiedcategory especially
+            self.upgradeAll(omit=['Products.PloneMeeting:default',
+                                  self.profile_name.replace('profile-', '')])
         self._updateLabelsConfig()
         self._updateFollowUp()
         logger.info('Migrating to PloneMeeting 4216... Done.')
