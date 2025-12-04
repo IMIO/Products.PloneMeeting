@@ -28,26 +28,31 @@ class Migrate_To_4216(Migrator):
             # replace call to getEnableLabels in TAL expressions
             self.updateTALConditions(
                 "cfg.getEnableLabels()", "'labels' in cfg.getUsedItemAttributes()")
-            # migrate MeetingConfig.itemLabelsEditableByProposingGroupForever
-            # if True, let current config, if False, define "edit_access_on"
-            # to check for ModifyPortalContent on context or isManager
-            # fix labelsConfig as it is taken from MeetingConfigDescriptor
-            # for every cfg, it shares the same dict...
-            labels_config = copy.deepcopy(defValues.labelsConfig)
-            cfg.setLabelsConfig(labels_config)
-            # be defensive with itemLabelsEditableByProposingGroupForever that
-            # is recent and could not exist in some MeetingConfigs
-            if getattr(cfg, 'itemLabelsEditableByProposingGroupForever', False):
-                edit_groups = ['configgroup_meetingmanagers']
-                suffixes = tuple(set(cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)))
-                edit_groups += [PROPOSINGGROUPPREFIX + suffix for suffix in suffixes]
-                labels_config[0]["edit_groups"] = edit_groups
-            else:
-                labels_config[0]["edit_access_on"] = \
-                    'python: cfg.isManager(cfg) or checkPermission("Modify portal content", context)'
-                labels_config[0]["edit_access_on_cache"] = "0"
-                labels_config[0]["edit_groups"] = []
-            cfg.setLabelsConfig(labels_config)
+            # if labels_config was already set by another code, do not change it
+            # this let's initialize labelsConfig with custom values before migrating
+            # or we would have to migrate, change the labelsConfig, then update items
+            # labels cache which is doing items labels cache update 2 times
+            if cfg.getLabelsConfig() == defValues.labelsConfig:
+                # migrate MeetingConfig.itemLabelsEditableByProposingGroupForever
+                # if True, let current config, if False, define "edit_access_on"
+                # to check for ModifyPortalContent on context or isManager
+                # fix labelsConfig as it is taken from MeetingConfigDescriptor
+                # for every cfg, it shares the same dict...
+                labels_config = copy.deepcopy(defValues.labelsConfig)
+                cfg.setLabelsConfig(labels_config)
+                # be defensive with itemLabelsEditableByProposingGroupForever that
+                # is recent and could not exist in some MeetingConfigs
+                if getattr(cfg, 'itemLabelsEditableByProposingGroupForever', False):
+                    edit_groups = ['configgroup_meetingmanagers']
+                    suffixes = tuple(set(cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)))
+                    edit_groups += [PROPOSINGGROUPPREFIX + suffix for suffix in suffixes]
+                    labels_config[0]["edit_groups"] = edit_groups
+                else:
+                    labels_config[0]["edit_access_on"] = \
+                        'python: cfg.isManager(cfg) or checkPermission("Modify portal content", context)'
+                    labels_config[0]["edit_access_on_cache"] = "0"
+                    labels_config[0]["edit_groups"] = []
+                cfg.setLabelsConfig(labels_config)
             safe_delattr(cfg, 'itemLabelsEditableByProposingGroupForever')
             # update labels cache for items of this MeetingConfig
             if 'labels' in cfg.getUsedItemAttributes():

@@ -8,10 +8,17 @@ Changelog
 - Fixed `Migrate_To_4216._updateLabelsConfig` by giving access to
   `MeetingManagers` by default when old parameter
   `MeetingConfig.itemLabelsEditableByProposingGroupForever` was `True`.
+  Adapted it also so it is possible to define a custom
+  `MeetingConfig.labelsConfig` before migration and takes it into account
+  for items labels cache update.
   [gbastien]
 - Completed `Migrate_To_4216` by calling `_removeBrokenAnnexes` and upgrade
   other profiles, this will especially upgrade `collective.iconifiedcategory`
   by adding the `to_approve/approve` new attributes on annexes.
+  [gbastien]
+- Added `imio.helpers.content` annotation manipulation related functions to
+  `safe_utils` (`add_to_annotation`, `get_from_annotation`,
+  `pop_from_annotation` and `set_to_annotation`).
   [gbastien]
 
 4.2.27.4 (2025-11-04)

@@ -7,8 +7,12 @@ from DateTime import DateTime
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.content import add_to_annotation
+from imio.helpers.content import get_from_annotation
 from imio.helpers.content import get_user_fullname
 from imio.helpers.content import object_values
+from imio.helpers.content import pop_from_annotation
+from imio.helpers.content import set_to_annotation
 from imio.helpers.date import formatDate
 from imio.helpers.date import wordizeDate
 from imio.helpers.workflow import update_role_mappings_for
