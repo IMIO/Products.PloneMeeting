@@ -2625,6 +2625,7 @@ schema = Schema((
         default=defValues.meetingConfigsToCloneToEditFieldsTALExpr,
         default_content_type='text/plain',
         write_permission="PloneMeeting: Write risky config",
+    ),
     DataGridField(
         name='itemFieldsConfig',
         widget=DataGridField._properties['widget'](

@@ -3468,6 +3468,9 @@ GroupsManagingItemVocabularyFactory = GroupsManagingItemVocabulary()
 
 
 class ItemFieldsConfigVocabulary(object):
+
+    implements(IVocabularyFactory)
+
     def __call__(self, context):
         """ """
         terms = []
@@ -3481,4 +3484,3 @@ class ItemFieldsConfigVocabulary(object):
 
 
 ItemFieldsConfigVocabularyFactory = ItemFieldsConfigVocabulary()
-
