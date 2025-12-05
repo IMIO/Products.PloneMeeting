@@ -5,9 +5,6 @@ from imio.webspellchecker.config import set_disable_autosearch_in
 from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
-from Products.PloneMeeting.model.adaptations import WAITING_ADVICES_NEW_STATE_ID_PATTERN
-from Products.PloneMeeting.setuphandlers import _configureWebspellchecker
-from Products.PloneMeeting.setuphandlers import _installWebspellchecker
 
 
 class Migrate_To_4215(Migrator):
@@ -39,6 +36,7 @@ class Migrate_To_4215(Migrator):
            the waiting_advices state id, we were generating a __or__ complex
            state name, now we go back to any_validation_state_waiting_advices."""
         logger.info('Migrating items waiting advices state name...')
+        new_state_id_pattern = '{0}_waiting_advices'
         for cfg in self.tool.objectValues('MeetingConfig'):
             wfas = cfg.getWorkflowAdaptations()
             if 'waiting_advices_from_every_val_levels' in wfas or \
@@ -47,7 +45,7 @@ class Migrate_To_4215(Migrator):
                 # generate old state id
                 item_validation_states = cfg.getItemWFValidationLevels(
                     data='state', only_enabled=True)
-                state_id = WAITING_ADVICES_NEW_STATE_ID_PATTERN.format(
+                state_id = new_state_id_pattern.format(
                     '__or__'.join(item_validation_states))
                 self.updateWFStatesAndTransitions(
                     query={'getConfigId': cfg.getId(),
