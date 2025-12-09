@@ -48,9 +48,15 @@ class PMLabeling(Labeling):
             user_groups = set(get_plone_groups_for_user())
             default_view_config_already_checked = default_edit_config_already_checked = False
             extra_expr_ctx = None
+            view_expr_result_cache = {}
+            edit_expr_result_cache = {}
             for label in labels[0]+labels[1]:
                 # by_user labels are always editable
                 if not label['by_user']:
+                    # optimization if modes == ('view', ) and label not 'active'
+                    # this is the case when displayed in faceted dashboard
+                    if modes == ('view',) and not label['active']:
+                        continue
                     # manage _labels_cache, if not in cache, use the config for
                     # 'default_for_all_labels'
                     cached = cache.get(label['label_id'])
@@ -79,18 +85,24 @@ class PMLabeling(Labeling):
                             # "None" means needs to be computed on the fly
                             if cached['view_access'] is False:
                                 continue
-                            elif config['view_access_on_cache'] == '0' and \
-                                    config['view_access_on'].strip():
+                            view_access_on = config['view_access_on'].strip()
+                            if config['view_access_on_cache'] == '0' and view_access_on:
                                 # will be done only on first use
                                 if extra_expr_ctx is None:
                                     extra_expr_ctx = _base_extra_expr_ctx(
                                         self.context, {'item': self.context, })
-                                if not _evaluateExpression(
+                                # cache TAL expr result in case same TAL expr used for several configs
+                                if view_access_on in view_expr_result_cache:
+                                    if view_expr_result_cache[view_access_on] is False:
+                                        continue
+                                elif not _evaluateExpression(
                                         self.context,
-                                        expression=config['view_access_on'],
+                                        expression=view_access_on,
                                         extra_expr_ctx=extra_expr_ctx,
                                         raise_on_error=True):
+                                    view_expr_result_cache[view_access_on] = False
                                     continue
+                                view_expr_result_cache[view_access_on] = True
                             # mark view default config as working
                             if is_using_default_config:
                                 default_view_config_already_checked = True
@@ -116,18 +128,24 @@ class PMLabeling(Labeling):
                         # "None" means needs to be computed on the fly
                         if cached['edit_access'] is False:
                             continue
-                        elif config['edit_access_on_cache'] == '0' and \
-                                config['edit_access_on'].strip():
+                        edit_access_on = config['edit_access_on'].strip()
+                        if config['edit_access_on_cache'] == '0' and edit_access_on:
                             # will be done only on first use
                             if extra_expr_ctx is None:
                                 extra_expr_ctx = _base_extra_expr_ctx(
                                     self.context, {'item': self.context, })
-                            if not _evaluateExpression(
+                            # cache TAL expr result in case same TAL expr used for several configs
+                            if edit_access_on in edit_expr_result_cache:
+                                if edit_expr_result_cache[edit_access_on] is False:
+                                    continue
+                            elif not _evaluateExpression(
                                     self.context,
-                                    expression=config['edit_access_on'],
+                                    expression=edit_access_on,
                                     extra_expr_ctx=extra_expr_ctx,
                                     raise_on_error=True):
+                                edit_expr_result_cache[edit_access_on] = False
                                 continue
+                            edit_expr_result_cache[edit_access_on] = True
                         # mark edit default config as working
                         if is_using_default_config:
                             default_edit_config_already_checked = True

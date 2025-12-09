@@ -20,6 +20,13 @@ Changelog
   `safe_utils` (`add_to_annotation`, `get_from_annotation`,
   `pop_from_annotation` and `set_to_annotation`).
   [gbastien]
+- Optimized `PMLabeling.filter_manageable_labels` to avoid iterating every labels
+  when called from a faceted dashboard (just need to iterate active labels).
+  [gbastien]
+- Fixed `PMCategorizedObjectInfoAdapter._reader_groups` that was not
+  implemented to receive an `item` as parameter like it is the case for
+  `PMCategorizedObjectInfoAdapter._suffix_proposinggroup`.
+  [gbastien]
 
 4.2.27.4 (2025-11-04)
 ---------------------
