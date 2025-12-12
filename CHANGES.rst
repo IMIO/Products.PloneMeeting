@@ -27,6 +27,11 @@ Changelog
   implemented to receive an `item` as parameter like it is the case for
   `PMCategorizedObjectInfoAdapter._suffix_proposinggroup`.
   [gbastien]
+- Adapted `annex` and `annexDecision` portal_type XML definition as
+  `IScanFieldsHiddenToSignAndSigned` is deprecated because now `IScanFields`
+  does not include `to_sign/signed` fields anymore, so back to the default
+  `imio.annex` configuration.
+  [gbastien]
 
 4.2.27.4 (2025-11-04)
 ---------------------

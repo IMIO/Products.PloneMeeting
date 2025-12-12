@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from imio.helpers.content import safe_delattr
+from imio.helpers.setup import load_type_from_package
 from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.MeetingConfig import defValues
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
@@ -76,6 +77,10 @@ class Migrate_To_4216(Migrator):
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4216...')
+        # update types annex and annexDecision as IScanFieldsHiddenToSignAndSigned is replaced
+        # by default behavior IScanFields
+        load_type_from_package('annex', 'Products.PloneMeeting:default')
+        load_type_from_package('annexDecision', 'Products.PloneMeeting:default')
         # remove broken annexes before upgrading collective.iconifiedcategory
         self._removeBrokenAnnexes()
         if not from_migration_to_4200:
