@@ -1762,7 +1762,8 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         else:
             # advice
             visible_fors = self.cfg.getAdviceAnnexConfidentialVisibleFor()
-            groups = self._advice_visible_for_groups(visible_fors)
+            groups = self._advice_visible_for_groups(
+                visible_fors, item=self.parent.aq_parent)
         return groups
 
     def _item_visible_for_groups(self, visible_fors, item):
@@ -1780,12 +1781,12 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         res += self._suffix_profile_proposinggroup(visible_fors)
         return res
 
-    def _advice_visible_for_groups(self, visible_fors):
+    def _advice_visible_for_groups(self, visible_fors, item):
         """ """
         res = []
         res += self._configgroup_groups(visible_fors)
-        res += self._reader_groups(visible_fors)
-        res += self._suffix_proposinggroup(visible_fors, self.parent.aq_parent)
+        res += self._reader_groups(visible_fors, item)
+        res += self._suffix_proposinggroup(visible_fors, item)
         if 'adviser_group' in visible_fors:
             plone_group_id = get_plone_group_id(self.parent.advice_group, 'advisers')
             res.append(plone_group_id)
