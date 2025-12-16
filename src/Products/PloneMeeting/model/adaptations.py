@@ -603,6 +603,8 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         validation_returned_states = _getValidationReturnedStates(meetingConfig)
         if whichValidation == 'last':
             validation_returned_states = (validation_returned_states[-1],)
+        elif whichValidation == 'before_last':
+            validation_returned_states = (validation_returned_states[-2],)
         elif whichValidation is None:
             validation_returned_states = ()
         last_returned_state_id = 'returned_to_proposing_group'
@@ -812,6 +814,10 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         # same as the "return_to_proposing_group" here above but the reviewer must validate item
         elif wfAdaptation == 'return_to_proposing_group_with_last_validation':
             _apply_return_to_proposing_group(whichValidation='last')
+
+        # same as the "return_to_proposing_group_with_last_validation" here above but the before last reviewer must validate item
+        elif wfAdaptation == 'return_to_proposing_group_with_before_last_validation':
+            _apply_return_to_proposing_group(whichValidation='before_last')
 
         # same as the "return_to_proposing_group" here above but the item must be validate by all hierarchical level
         elif wfAdaptation == 'return_to_proposing_group_with_all_validations':
