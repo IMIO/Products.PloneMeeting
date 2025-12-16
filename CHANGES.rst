@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.27.5 (unreleased)
+4.2.27.5 (2025-12-16)
 ---------------------
 
 - Fixed `Migrate_To_4216._updateLabelsConfig` by giving access to
