@@ -17,8 +17,8 @@ Changelog
   by adding the `to_approve/approve` new attributes on annexes.
   [gbastien]
 - Added `imio.helpers.content` annotation manipulation related functions to
-  `safe_utils` (`add_to_annotation`, `get_from_annotation`,
-  `pop_from_annotation` and `set_to_annotation`).
+  `safe_utils` (`add_to_annotation`, `del_from_annotation`,
+  `get_from_annotation`, `pop_from_annotation` and `set_to_annotation`).
   [gbastien]
 - Optimized `PMLabeling.filter_manageable_labels` to avoid iterating every labels
   when called from a faceted dashboard (just need to iterate active labels).
@@ -572,7 +572,7 @@ Changelog
   so it can be executed separately than other `test_pm_WFA_waiting_advices_`
   tests.
   Completed `test_pm_ItemActionsPanelCachingProfiles` to check when reviewer
-  may also edit crated item (when using `extra_suffixes`), this way we may
+  may also edit created item (when using `extra_suffixes`), this way we may
   remove `_reviewers_may_edit_itemcreated` helper.
   [gbastien]
 - Fixed `test_pm_ItemMailNotificationLateItem` when called from subplugins.
