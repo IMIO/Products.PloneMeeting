@@ -3565,6 +3565,38 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(viewlet.available_labels[1], [])
         self.assertFalse(viewlet.can_edit)
 
+    def test_pm_LabelsConfigViewableByCopyGroups(self):
+        """Test labelsConfig so "label" is viewable by copy groups ("Vendors reviewers")."""
+        self._enableField(['copyGroups', 'labels'])
+        cfg = self.meetingConfig
+        cfg.setItemCopyGroupsStates(('itemcreated', ))
+        # editable and viewable only by proposingGroup
+        config = list(cfg.getLabelsConfig())
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
+        new_config['view_groups'] = [
+            'suffix_proposing_group_creators',
+            'reader_copy_groups']
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', copyGroups=[self.vendors_reviewers])
+        # creator can view/edit
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.assertEqual(
+            labelingview.available_labels(modes=['view'])[1][0]['label_id'],
+            'label')
+        self.assertEqual(
+            labelingview.available_labels(modes=['edit'])[1][0]['label_id'],
+            'label')
+        self.changeUser('pmReviewer2')
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.assertEqual(
+            labelingview.available_labels(modes=['view'])[1][0]['label_id'],
+            'label')
+        self.assertEqual(
+            labelingview.available_labels(modes=['edit'])[1], [])
+
     def test_pm_LabelsConfigUpdateLocalRoles(self):
         """Test labelsConfig when a configuration specify to update_local_roles.
            Here a copyGroup will be added when a label is selected."""

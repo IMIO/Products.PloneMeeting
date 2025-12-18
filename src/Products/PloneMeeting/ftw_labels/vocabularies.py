@@ -101,7 +101,7 @@ class FTWLabelsForFacetedFilterVocabulary(object):
         member_id = get_current_user_id(context.REQUEST)
 
         res = []
-        # ftw.labels will index "_" when no label selected
+        # EMPTY_STRING will be indexed when no global labels selected
         res.append(
             SimpleTerm(EMPTY_STRING,
                        EMPTY_STRING,
