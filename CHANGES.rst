@@ -5,8 +5,9 @@ Changelog
 4.2.27.6 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Removed CSS related to faceted table sticky header as it is managed and fixed
+  in `plonetheme.imioapps`.
+  [gbastien]
 
 4.2.27.5 (2025-12-16)
 ---------------------
