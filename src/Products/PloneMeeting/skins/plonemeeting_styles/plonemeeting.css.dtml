@@ -1270,15 +1270,6 @@ div.tooltipster-content a.item_listType_normal:visited {
     color: &dtml-discreetColor;;
 }
 
-/* faceted table header sticky */
-#content table.faceted-table-results {
-   position: relative;
-}
-table.faceted-table-results th {
-   position: sticky;
-   top: 45px;
-   z-index: 45;
-}
 /* make sure date picker is hover faceted sticky header */
 div#ui-datepicker-div {
    /* use !important because z-index is set as style on the <div> */

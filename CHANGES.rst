@@ -2,23 +2,12 @@ Changelog
 =========
 
 
-4.2.28rc4 (unreleased)
-----------------------
+4.2.28 (unreleased)
+-------------------
 
-- Nothing changed yet.
-
-
-4.2.28rc3 (2025-12-03)
-----------------------
-
-- Fixed `Migrate_To_4216._updateLabelsConfig` by giving access to
-  `MeetingManagers` by default when old parameter
-  `MeetingConfig.itemLabelsEditableByProposingGroupForever` was `True`.
+- Removed CSS related to faceted table sticky header as it is managed and fixed
+  in `plonetheme.imioapps`.
   [gbastien]
-
-4.2.28rc2 (2025-12-01)
-----------------------
-
 - Fixed `searchitemswithneededfollowup` and `searchitemswithprovidedfollowup`
   `DashboardCollections` that were not filtering on `MeetingItem portal_type`.
   [gbastien]
@@ -27,10 +16,6 @@ Changelog
   [gbastien]
 - Added `Add quick/complete advice` action.
   [gbastien]
-
-4.2.28rc1 (2025-11-05)
-----------------------
-
 - Added `Add advices` batch action:
 
   - Moved `MeetingItem._adviceTypesForAdviser` to
@@ -40,6 +25,37 @@ Changelog
   - the action is associated to one advice `portal_type`, added the action for
     `meetingadvicefinances` portal_type.
 
+  [gbastien]
+
+4.2.27.5 (2025-12-16)
+---------------------
+
+- Fixed `Migrate_To_4216._updateLabelsConfig` by giving access to
+  `MeetingManagers` by default when old parameter
+  `MeetingConfig.itemLabelsEditableByProposingGroupForever` was `True`.
+  Adapted it also so it is possible to define a custom
+  `MeetingConfig.labelsConfig` before migration and takes it into account
+  for items labels cache update.
+  [gbastien]
+- Completed `Migrate_To_4216` by calling `_removeBrokenAnnexes` and upgrade
+  other profiles, this will especially upgrade `collective.iconifiedcategory`
+  by adding the `to_approve/approve` new attributes on annexes.
+  [gbastien]
+- Added `imio.helpers.content` annotation manipulation related functions to
+  `safe_utils` (`add_to_annotation`, `del_from_annotation`,
+  `get_from_annotation`, `pop_from_annotation` and `set_to_annotation`).
+  [gbastien]
+- Optimized `PMLabeling.filter_manageable_labels` to avoid iterating every labels
+  when called from a faceted dashboard (just need to iterate active labels).
+  [gbastien]
+- Fixed `PMCategorizedObjectInfoAdapter._reader_groups` that was not
+  implemented to receive an `item` as parameter like it is the case for
+  `PMCategorizedObjectInfoAdapter._suffix_proposinggroup`.
+  [gbastien]
+- Adapted `annex` and `annexDecision` portal_type XML definition as
+  `IScanFieldsHiddenToSignAndSigned` is deprecated because now `IScanFields`
+  does not include `to_sign/signed` fields anymore, so back to the default
+  `imio.annex` configuration.
   [gbastien]
 
 4.2.27.4 (2025-11-04)
@@ -581,7 +597,7 @@ Changelog
   so it can be executed separately than other `test_pm_WFA_waiting_advices_`
   tests.
   Completed `test_pm_ItemActionsPanelCachingProfiles` to check when reviewer
-  may also edit crated item (when using `extra_suffixes`), this way we may
+  may also edit created item (when using `extra_suffixes`), this way we may
   remove `_reviewers_may_edit_itemcreated` helper.
   [gbastien]
 - Fixed `test_pm_ItemMailNotificationLateItem` when called from subplugins.
