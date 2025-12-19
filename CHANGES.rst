@@ -2,11 +2,29 @@ Changelog
 =========
 
 
-4.2.27.6 (unreleased)
----------------------
+4.2.28 (unreleased)
+-------------------
 
 - Removed CSS related to faceted table sticky header as it is managed and fixed
   in `plonetheme.imioapps`.
+  [gbastien]
+- Fixed `searchitemswithneededfollowup` and `searchitemswithprovidedfollowup`
+  `DashboardCollections` that were not filtering on `MeetingItem portal_type`.
+  [gbastien]
+- Moved adaptable `MeetingItem._advicePortalTypeForAdviser` to
+  `ToolPloneMeeting` (no more adaptable).
+  [gbastien]
+- Added `Add quick/complete advice` action.
+  [gbastien]
+- Added `Add advices` batch action:
+
+  - Moved `MeetingItem._adviceTypesForAdviser` to
+    `MeetingConfig._adviceTypesForAdviser` and moved
+    `MeetingItem._adviceTypesForAdviser` to
+    `ToolPloneMeeting._adviceTypesForAdviser` so it does not require an item;
+  - the action is associated to one advice `portal_type`, added the action for
+    `meetingadvicefinances` portal_type.
+
   [gbastien]
 
 4.2.27.5 (2025-12-16)

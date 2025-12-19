@@ -43,6 +43,7 @@ from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
 from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
 from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
+from Products.PloneMeeting.utils import _add_advice
 from Products.PloneMeeting.utils import cleanMemoize
 from z3c.form.testing import TestRequest as z3c_form_TestRequest
 from z3c.relationfield.relation import RelationValue
@@ -539,28 +540,26 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         )
         return annexType
 
-    def addAdvice(self,
-                  item,
-                  advice_group=None,
-                  advice_type=u"positive",
-                  advice_comment=u"My comment",
-                  advice_hide_during_redaction=False,
-                  advice_portal_type='meetingadvice'):
-        if not advice_group:
-            advice_group = self.vendors_uid
+    def add_advice(self,
+                   item,
+                   advice_group=None,
+                   advice_type=u"positive",
+                   advice_comment=u"My comment",
+                   advice_hide_during_redaction=False,
+                   advice_portal_type='meetingadvice'):
+        advice_group = advice_group or self.vendors_uid
         # manage MeetingConfig.defaultAdviceHiddenDuringRedaction
         # as it only works while added ttw
         if not advice_hide_during_redaction:
             advice_hide_during_redaction = advice_portal_type in \
                 self.meetingConfig.getDefaultAdviceHiddenDuringRedaction()
-        advice = createContentInContainer(
+        return _add_advice(
             item,
-            advice_portal_type,
-            **{'advice_group': advice_group,
-               'advice_type': advice_type,
-               'advice_hide_during_redaction': advice_hide_during_redaction,
-               'advice_comment': richtextval(advice_comment)})
-        return advice
+            advice_group,
+            advice_type,
+            advice_comment=richtextval(advice_comment),
+            advice_hide_during_redaction=advice_hide_during_redaction,
+            advice_portal_type=advice_portal_type)
 
     def deleteAsManager(self, uid):
         """When we want to remove an item the current user does not have permission to,

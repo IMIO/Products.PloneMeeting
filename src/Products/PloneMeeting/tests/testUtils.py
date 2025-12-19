@@ -100,7 +100,7 @@ class testUtils(PloneMeetingTestCase):
 
         # advice
         self.changeUser('pmReviewer2')
-        advice = self.addAdvice(item, advice_comment=u"")
+        advice = self.add_advice(item, advice_comment=u"")
         new_value = "<p>My advice comment.</p>"
         self.assertEqual(advice.advice_comment.raw, u"")
         self.assertFalse(self.catalog(SearchableText="my advice comment"))

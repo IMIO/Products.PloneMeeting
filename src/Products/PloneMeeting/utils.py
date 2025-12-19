@@ -61,6 +61,7 @@ from plone.app.uuid.utils import uuidToObject
 from plone.autoform.interfaces import WIDGETS_KEY
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
+from plone.dexterity.utils import createContentInContainer
 from plone.dexterity.utils import resolveDottedName
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.locking.events import unlockAfterModification
@@ -2815,6 +2816,28 @@ def configure_advice_dx_localroles_for(portal_type, org_uids=[]):
                                 force=True)
     if msg:
         logger.warn(msg)
+
+
+def _add_advice(item,
+                advice_group,
+                advice_type,
+                advice_comment=None,
+                advice_observations=None,
+                advice_hide_during_redaction=False,
+                advice_portal_type='meetingadvice'):
+    """Create an advice in p_item.
+       p_advice_comment and p_advice_observations must be RichTextValue intances."""
+    advice = createContentInContainer(
+        item,
+        advice_portal_type,
+        **{'advice_group': advice_group,
+           'advice_type': advice_type,
+           'advice_hide_during_redaction': advice_hide_during_redaction,
+           'advice_comment': advice_comment,
+           'advice_observations': advice_observations, })
+    # make sure we do not have a 302 status after add
+    advice.REQUEST.RESPONSE.setStatus(200)
+    return advice
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

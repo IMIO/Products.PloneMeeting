@@ -16,6 +16,11 @@ function adviceAddEdit() {
                 this.advice_url = $("[rel='#" + rel_num + "']").attr('href');
                 return true;
             },
+            onLoad : function (e) {
+                // initialize select2 widget
+                initializeSelect2Widgets(width='300px');
+                return true;
+            },
             onBeforeClose : function (e) {
                 // avoid closing overlay when click outside overlay
                 // or when it is closed by WSC
@@ -77,7 +82,7 @@ function manageAttendees() {
                   // need to add listing to table class
                   $('table.datagridwidget-table-view').addClass('listing');
                   $('table tbody').each(setoddeven);
-                  submitFormHelper(this.form, onsuccess=onsuccessManageAttendees);
+                  submitFormHelper(onsuccess=onsuccessManageAttendees);
                   return true;
                 },
                 onBeforeClose : function (e) {
@@ -298,6 +303,7 @@ jQuery(document).ready(function($) {
                        data_parameters=[],
                        options={position: 'bottom',
                                 trigger: 'click'});
+    addCompleteOrQuickMeetingAdvice();
     pmCommonOverlays();
 });
 
@@ -327,6 +333,8 @@ function initializeDashboard(){
     pmCommonOverlays();
     listTypeChange();
     actionsPanelTooltipster();
+    addAdvicesBatchAction();
+    addCompleteOrQuickMeetingAdvice();
 }
 
 function initializeAdvicePopup(instance) {
@@ -362,6 +370,38 @@ function overOverlays(){
               },
             },
     });
+}
+
+function addAdvicesBatchAction(){
+  $('form#add-advice-batch-action').prepOverlay({
+        api: true,
+        subtype: 'ajax',
+        closeselector: '[name="form.buttons.cancel"]',
+        config: {
+            onLoad : function (e) {
+                // initialize select2 widget
+                initializeSelect2Widgets(width='300px');
+                return true;
+            },
+            onBeforeLoad : function (e) {
+                // CKeditor instances need to be initialized
+                launchCKInstances();
+                submitFormHelper();
+                return true;
+            },
+            onBeforeClose : function (e) {
+                return
+                // avoid closing overlay when click outside overlay
+                // or when it is closed by WSC
+                if (e.target.id == "exposeMask" ||
+                    e.target.classList.contains("wsc-icon") ||
+                    e.target.classList.contains("wsc-button")) {return false;}
+                // close every opened select2 widgets
+                $('.single-select2-widget').select2("close");
+                $('.multi-select2-widget').select2("close");
+            },
+        }
+  });
 }
 
 function editAnnex(){
@@ -470,6 +510,16 @@ function adviceChangeDelay() {
                        view_name='@@advice-available-delays',
                        data_parameters=['advice'],
                        options={functionReady_callback: pmCommonOverlays});
+}
+
+function addCompleteOrQuickMeetingAdvice() {
+    tooltipster_helper(selector='.tooltipster-advice-add-complete-quick',
+                       view_name='@@advice-add-complete-quick',
+                       data_parameters=[],
+                       options={zIndex: 50,
+                                minWidth: 350,
+                                functionReady_callback: adviceAddEdit,
+                                close_other_tips: true});
 }
 
 function positionAdvicePopup(instance, helper, position) {

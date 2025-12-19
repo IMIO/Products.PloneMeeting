@@ -2057,6 +2057,19 @@ schema = Schema((
         schemata="advices",
         write_permission="PloneMeeting: Write risky config",
     ),
+    BooleanField(
+        name='enableAddQuickAdvice',
+        default=defValues.enableAddQuickAdvice,
+        widget=BooleanField._properties['widget'](
+            description="EnableAddQuickAdvice",
+            description_msgid="enable_add_quick_advice_descr",
+            label='Enableaddquickadvice',
+            label_msgid='PloneMeeting_label_enableAddQuickAdvice',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     DataGridField(
         name='customAdvisers',
         widget=DataGridField._properties['widget'](
@@ -3563,6 +3576,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         {u'i': u'labels',
                          u'o': u'plone.app.querystring.operation.selection.is',
                          u'v': [u'needed-follow-up']},
+                        {'i': 'portal_type',
+                         'o': 'plone.app.querystring.operation.selection.is',
+                         'v': [itemType, ]},
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
@@ -3580,6 +3596,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         {u'i': u'labels',
                          u'o': u'plone.app.querystring.operation.selection.is',
                          u'v': [u'provided-follow-up']},
+                        {'i': 'portal_type',
+                         'o': 'plone.app.querystring.operation.selection.is',
+                         'v': [itemType, ]},
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
@@ -7000,6 +7019,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            MeetingItem.getAdvicesGroupsInfosForUser especially.'''
         org = uuidToObject(org_uid, unrestricted=True)
         return org.get_item_advice_states(cfg=self)
+
+    def _adviceTypesForAdviser(self, meeting_advice_portal_type):
+        """Return the advice types (positive, negative, ...) for given p_meeting_advice_portal_type.
+           By default we will use every MeetingConfig.usedAdviceTypes but check
+           if something is defined in ToolPloneMeeting.advisersConfig."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        res = []
+        for org_uid, adviser_infos in tool.adapted().get_extra_adviser_infos().items():
+            if adviser_infos['portal_type'] == meeting_advice_portal_type:
+                res = adviser_infos['advice_types']
+                break
+        if not res:
+            res = self.getUsedAdviceTypes()
+        return res
 
     security.declarePublic('getItemWorkflow')
 

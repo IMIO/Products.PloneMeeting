@@ -2045,7 +2045,8 @@ div.tooltipster-content table.actionspanel-no-style-table td.noPadding {
     cursor: help;
 }
 
-#doc-generation-view img.tooltipster-available-mailing-lists {
+#doc-generation-view img.tooltipster-available-mailing-lists,
+img.tooltipster-advice-add-complete-quick {
     cursor: pointer;
 }
 
@@ -2654,6 +2655,54 @@ table caption {
 
 label {
     word-break: break-word;
+}
+
+div#batch-actions input#add-advice-batch-action-but.batch-action-icon-but {
+    background-image: url('&dtml-portal_url;/meetingadvice.png');
+    background-size: 16px;
+}
+
+div.add-advice {
+    padding: 1em;
+    font-size: 110%;
+    text-align: center;
+    margin-bottom: 0.5em;
+}
+p.add-complete-advice-title,
+p.add-quick-advice-title {
+    font-size: 115%;
+    font-weight: bold;
+}
+p.add-quick-advice-title {
+    padding-bottom: 0.5em;
+}
+div.add-complete-advice div {
+    width: 100%;
+}
+div.add-complete-advice a {
+    display: block;
+    font-size: 120%;
+}
+div.add-complete-advice,
+div.add-quick-advice {
+    background-color: &dtml-evenRowBackgroundColor;;
+}
+div.add-quick-advice-group,
+div.add-quick-advice-type {
+    text-align: left;
+}
+div.add-quick-advice-group {
+    margin-bottom: 0.5em;
+}
+div.add-quick-advice-group div.advice_popup_infos {
+    vertical-align: bottom;
+}
+span.add-quick-advice-name {
+    font-weight: bold;
+}
+div.add-quick-advice-type {
+    padding-left: 1em;
+    padding-bottom: 0.5em;
 }
 
 /* </dtml-with> */

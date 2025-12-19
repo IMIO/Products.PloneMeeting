@@ -580,6 +580,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.adviceConfidentialFor = ()
         self.hideNotViewableLinkedItemsTo = ()
         self.inheritedAdviceRemoveableByAdviser = False
+        self.enableAddQuickAdvice = True
         self.itemInternalNotesEditableBy = []
         self.itemFieldsConfig = (
             {'name': "neededFollowUp",

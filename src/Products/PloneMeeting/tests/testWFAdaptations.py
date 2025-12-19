@@ -2717,7 +2717,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         self.assertEqual(self.transitions(item),
                          [self._wait_advice_from_proposed_state_back_transition()])
-        self.addAdvice(item)
+        self.add_advice(item)
         self.do(item, self._wait_advice_from_proposed_state_back_transition())
         self.assertEqual(self.transitions(item), [])
         self.changeUser('pmReviewer1')
