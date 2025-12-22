@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.28 (unreleased)
+4.2.28 (2025-12-22)
 -------------------
 
 - Removed CSS related to faceted table sticky header as it is managed and fixed
