@@ -26,6 +26,8 @@ Changelog
     `meetingadvicefinances` portal_type.
 
   [gbastien]
+- Fixed CSS class `collapsible-inner-content` background color.
+  [gbastien]
 
 4.2.27.5 (2025-12-16)
 ---------------------

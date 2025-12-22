@@ -2200,7 +2200,7 @@ p#download_vcard {
 }
 .collapsible-inner-content {
     padding: 0.3em;
-    background-color: &dtml-evenRowBackgroundColor;;
+    background-color: &dtml-oddRowBackgroundColor;;
     border:1px solid &dtml-tableHeaderBackgroundColor;;
 }
 .collapsible-content.collapsed-on-load {
