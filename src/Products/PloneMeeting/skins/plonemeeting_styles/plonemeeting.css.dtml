@@ -2663,7 +2663,6 @@ div#batch-actions input#add-advice-batch-action-but.batch-action-icon-but {
 }
 
 div.add-advice {
-    padding: 1em;
     font-size: 110%;
     text-align: center;
     margin-bottom: 0.5em;
@@ -2680,12 +2679,18 @@ div.add-complete-advice div {
     width: 100%;
 }
 div.add-complete-advice a {
+    padding: 1em;
     display: block;
-    font-size: 120%;
+}
+div.add-complete-advice-icon {
+    font-size: 150%;
 }
 div.add-complete-advice,
 div.add-quick-advice {
     background-color: &dtml-evenRowBackgroundColor;;
+}
+div.add-quick-advice {
+    padding: 1em;
 }
 div.add-quick-advice-group,
 div.add-quick-advice-type {

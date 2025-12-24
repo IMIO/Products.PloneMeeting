@@ -3,13 +3,13 @@
   <div id="content">
     <p></p>
     <div class="add-advice add-complete-advice">
-      <p class="add-complete-advice-title" i18n:translate="">Add complete advice</p>
-      <div>
-        <a class="link-overlay-pm-advice"
-           tal:attributes="href string:${context/absolute_url}/++add++meetingadvice">
+      <a class="link-overlay-pm-advice"
+         tal:attributes="href string:${context/absolute_url}/++add++meetingadvice">
+        <p class="add-complete-advice-title" i18n:translate="">Add complete advice</p>
+        <div class="add-complete-advice-icon" >
           <span class="fa fa-plus" />
-        </a>
-      </div>
+        </div>
+      </a>
     </div>
     <div class="add-advice add-quick-advice">
       <p class="add-quick-advice-title" i18n:translate="">Add quick advice</p>

@@ -2,11 +2,11 @@ Changelog
 =========
 
 
-4.2.29 (unreleased)
+4.2.28.1 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Enlarge `Add complete advice` area in add complete/quick advice tooltipster.
+  [gbastien]
 
 4.2.28 (2025-12-22)
 -------------------
