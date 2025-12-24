@@ -3,7 +3,7 @@ Changelog
 
 
 4.2.28.1 (unreleased)
--------------------
+---------------------
 
 - Enlarge `Add complete advice` area in add complete/quick advice tooltipster.
   [gbastien]
