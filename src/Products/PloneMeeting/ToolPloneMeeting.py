@@ -1684,6 +1684,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return []
 
+    def _advicePortalTypeForAdviser(self, org_uid):
+        """Advices may use several 'meetingadvice' portal_types.  A portal_type is associated to
+           an adviser org_uid, this method will return the advice portal_type used by given p_org_uid."""
+        adviser_infos = self.adapted().get_extra_adviser_infos().get(org_uid, {})
+        advice_portal_type = adviser_infos.get('portal_type', None)
+        return advice_portal_type or 'meetingadvice'
+
     def getGroupedConfigs_cachekey(method, self, config_group=None, check_access=True, as_items=False):
         '''cachekey method for self.getGroupedConfigs.'''
         if api.user.is_anonymous():

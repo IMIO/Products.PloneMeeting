@@ -289,6 +289,11 @@
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItemDashboardBatchActionsMarker"
+        name="add-advice-batch-action"
+        class=".batchactions.AddAdviceBatchActionForm"
+        permission="zope2.View" />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItemDashboardBatchActionsMarker"
         name="update-committees-batch-action"
         class=".batchactions.UpdateCommitteesBatchActionForm"
         permission="zope2.View" />
@@ -695,6 +700,15 @@
         name="advice-confidentiality"
         class=".advices.AdviceConfidentialityView"
         template="templates/adviceconfidentiality.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
+    <!-- the view that shows advice confidentiality infos -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="advice-add-complete-quick"
+        class=".advices.AdviceAddCompleteOrQuick"
+        template="templates/adviceaddcompletequick.pt"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
@@ -1229,6 +1243,12 @@
           layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
           class="Products.PloneMeeting.browser.annexes.CategorizedAnnexesTable"
           permission="zope2.View" />
+        <!-- views -->
+        <browser:view
+          name="collective-iconifiedcategory.css"
+          layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+          permission="zope2.View"
+          class="Products.PloneMeeting.browser.overrides.PMCSSIconifiedCategory" />
     </configure>
 
     <!-- batchactions viewlet for categorized elements (annexes) -->

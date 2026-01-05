@@ -16,6 +16,8 @@ from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentG
 from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGeneratorLinksViewlet
 from collective.eeafaceted.dashboard.browser.views import RenderTermPortletView
 from collective.iconifiedcategory import safe_utils as collective_iconifiedcategory_safe_utils
+from collective.iconifiedcategory.browser.css import css_pattern
+from collective.iconifiedcategory.browser.css import IconifiedCategory
 from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
@@ -26,6 +28,7 @@ from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.cache import obj_modified
+from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidToObject
 from imio.helpers.security import check_zope_admin
 from imio.history.browser.views import IHContentHistoryView
@@ -1688,3 +1691,31 @@ class PMAjaxSave(AjaxSave):
             tranform=True,
             reindex=True,
             unlock=False)
+
+
+class PMCSSIconifiedCategory(IconifiedCategory):
+    """ """
+
+    def __call__(self, *args, **kwargs):
+        """Complete CSS with advice icon CSS."""
+        content = super(PMCSSIconifiedCategory, self).__call__(*args, **kwargs)
+        # find style used, either standard or hands
+        tool = api.portal.get_tool('portal_plonemeeting')
+        advice_style = "standard"
+        for cfg in tool.getActiveConfigs(check_using_groups=False):
+            if cfg.getUseAdvices() is True:
+                advice_style = cfg.getAdviceStyle()
+                break
+        new_content = []
+        portal_url = api.portal.get().absolute_url()
+        advice_types = [
+            term.token for term in get_vocab(
+                tool,
+                'ConfigAdviceTypes',
+                include_asked_again=True,
+                include_term_id=False)._terms]
+        for advice_type in advice_types:
+            url = u'{0}/advice_{1}_{2}.png'.format(
+                portal_url, advice_style, advice_type)
+            new_content.append(css_pattern.format(advice_type, url))
+        return content + ' '.join(new_content)

@@ -3,6 +3,7 @@
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organization
+from collective.z3cform.select2.widget.widget import SingleSelect2FieldWidget
 from dexterity.localrolesfield.field import LocalRoleField
 from imio.helpers.content import get_vocab
 from imio.helpers.workflow import get_final_states
@@ -49,6 +50,8 @@ class IMeetingAdvice(IDXMeetingContent):
         vocabulary=u'Products.PloneMeeting.content.advice.advice_group_vocabulary',
         required=True,
     )
+
+    form.widget('advice_type', SingleSelect2FieldWidget)
     advice_type = schema.Choice(
         title=_(u'title_advice_type'),
         description=_(u"Choose an advice type."),
@@ -92,12 +95,10 @@ class IMeetingAdvice(IDXMeetingContent):
     )
 
 
-@form.default_value(field=IMeetingAdvice['advice_type'])
-def advice_typeDefaultValue(data):
+def _advice_type_default(advice_portal_type, context):
     res = ''
     tool = api.portal.get_tool('portal_plonemeeting')
     # check ToolPloneMeeting.advisersConfig
-    advice_portal_type = findMeetingAdvicePortalType(data.context)
     for org_uid, adviser_infos in tool.adapted().get_extra_adviser_infos().items():
         if adviser_infos['portal_type'] == advice_portal_type:
             # use get in case overrided get_extra_adviser_infos and
@@ -106,9 +107,15 @@ def advice_typeDefaultValue(data):
             res = adviser_infos.get('default_advice_type', '')
             break
     if not res:
-        cfg = tool.getMeetingConfig(data.context)
+        cfg = tool.getMeetingConfig(context)
         res = cfg and cfg.getDefaultAdviceType() or ''
     return res
+
+
+@form.default_value(field=IMeetingAdvice['advice_type'])
+def advice_type_default(data):
+    advice_portal_type = findMeetingAdvicePortalType(data.context)
+    return _advice_type_default(advice_portal_type, data.context)
 
 
 @form.default_value(field=IMeetingAdvice['advice_hide_during_redaction'])
@@ -329,30 +336,31 @@ class MeetingAdviceSchemaPolicy(DexteritySchemaPolicy):
 class AdviceGroupVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call__(self, context):
-        """"""
+    def __call__(self, context, advice_portal_type=None, alterable_advice_org_uids=[]):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
         terms = []
         advicePortalTypeIds = getAdvicePortalTypeIds()
 
-        # take into account groups for wich user can add an advice
-        # while adding an advice, the context is his parent, aka a MeetingItem
-        alterable_advice_org_uids = []
-        if context.meta_type == 'MeetingItem':
-            alterable_advice_org_uids = context.getAdvicesGroupsInfosForUser(compute_to_edit=False)[0]
-        # take into account groups for which user can edit an advice
-        elif context.portal_type in advicePortalTypeIds:
-            alterable_advice_org_uids = context.getAdvicesGroupsInfosForUser(compute_to_add=False)[1]
-            # make sure advice_group selected on advice is in the vocabulary
-            if context.advice_group not in alterable_advice_org_uids:
-                alterable_advice_org_uids.append(context.advice_group)
+        if not alterable_advice_org_uids:
+            # take into account groups for which user can add an advice
+            # while adding an advice, the context is his parent, aka a MeetingItem
+            alterable_advice_org_uids = []
+            if context.meta_type == 'MeetingItem':
+                alterable_advice_org_uids = context.getAdvicesGroupsInfosForUser(compute_to_edit=False)[0]
+            # take into account groups for which user can edit an advice
+            elif context.portal_type in advicePortalTypeIds:
+                alterable_advice_org_uids = context.getAdvicesGroupsInfosForUser(compute_to_add=False)[1]
+                # make sure advice_group selected on advice is in the vocabulary
+                if context.advice_group not in alterable_advice_org_uids:
+                    alterable_advice_org_uids.append(context.advice_group)
 
         # manage case where we have several meetingadvice portal_types
         # depending on current portal_type, clean up selectable orgs
-        itemObj = context.meta_type == 'MeetingItem' and context or context.getParentNode()
-        current_portal_type = findMeetingAdvicePortalType(context)
+        current_portal_type = advice_portal_type or findMeetingAdvicePortalType(context)
         alterable_advice_org_uids = [
             org_uid for org_uid in alterable_advice_org_uids
-            if (itemObj.adapted()._advicePortalTypeForAdviser(org_uid) == current_portal_type or
+            if (tool._advicePortalTypeForAdviser(org_uid) == current_portal_type or
                 (context.portal_type in advicePortalTypeIds and org_uid == context.advice_group))]
 
         # create vocabulary
@@ -367,7 +375,7 @@ class AdviceGroupVocabulary(object):
 class AdviceTypeVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call__(self, context):
+    def __call__(self, context, advice_portal_type=None):
         """ """
         terms = []
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -376,9 +384,8 @@ class AdviceTypeVocabulary(object):
         # manage when portal_type accessed from the Dexterity types configuration
         if cfg:
             # get usedAdviceTypes depending on current meetingadvice portal_type
-            itemObj = context.meta_type == 'MeetingItem' and context or context.getParentNode()
-            usedAdviceTypes = itemObj._adviceTypesForAdviser(
-                findMeetingAdvicePortalType(context))
+            usedAdviceTypes = cfg._adviceTypesForAdviser(
+                advice_portal_type or findMeetingAdvicePortalType(context))
 
             # make sure if an adviceType was used for context and it is no more available, it
             # appears in the vocabulary and is so useable...

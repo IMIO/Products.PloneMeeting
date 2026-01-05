@@ -3565,6 +3565,38 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(viewlet.available_labels[1], [])
         self.assertFalse(viewlet.can_edit)
 
+    def test_pm_LabelsConfigViewableByCopyGroups(self):
+        """Test labelsConfig so "label" is viewable by copy groups ("Vendors reviewers")."""
+        self._enableField(['copyGroups', 'labels'])
+        cfg = self.meetingConfig
+        cfg.setItemCopyGroupsStates(('itemcreated', ))
+        # editable and viewable only by proposingGroup
+        config = list(cfg.getLabelsConfig())
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
+        new_config['view_groups'] = [
+            'suffix_proposing_group_creators',
+            'reader_copy_groups']
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', copyGroups=[self.vendors_reviewers])
+        # creator can view/edit
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.assertEqual(
+            labelingview.available_labels(modes=['view'])[1][0]['label_id'],
+            'label')
+        self.assertEqual(
+            labelingview.available_labels(modes=['edit'])[1][0]['label_id'],
+            'label')
+        self.changeUser('pmReviewer2')
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.assertEqual(
+            labelingview.available_labels(modes=['view'])[1][0]['label_id'],
+            'label')
+        self.assertEqual(
+            labelingview.available_labels(modes=['edit'])[1], [])
+
     def test_pm_LabelsConfigUpdateLocalRoles(self):
         """Test labelsConfig when a configuration specify to update_local_roles.
            Here a copyGroup will be added when a label is selected."""
@@ -3686,6 +3718,77 @@ class testViews(PloneMeetingTestCase):
         cfg.update_labels_access_cache()
         self.changeUser('pmCreator1')
         self.assertEqual(len(labelingview.available_labels(modes=['edit'])[1]), 3)
+
+    def test_pm_AddAdviceBatchActionForm(self):
+        """Test the @@add-advice-batch-action."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates(('itemcreated',))
+        cfg.setItemAdviceEditStates(('itemcreated',))
+        # create some items and ask advice
+        self.changeUser('pmCreator2')
+        item1 = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
+        item1_uid = item1.UID()
+        item2 = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, self.developers_uid))
+        item2_uid = item2.UID()
+        item3 = self.create('MeetingItem', optionalAdvisers=(self.developers_uid, ))
+        item3_uid = item3.UID()
+        self.request.form['form.widgets.uids'] = u','.join([item1_uid, item2_uid, item3_uid])
+        searches_items = self.getMeetingFolder().searches_items
+        # not available as not adviser
+        self.assertRaises(
+            Unauthorized,
+            searches_items.restrictedTraverse('@@add-advice-batch-action').update)
+        self.assertFalse(
+            searches_items.restrictedTraverse('@@add-advice-batch-action').available())
+        # available as developers adviser
+        self.changeUser('pmReviewer2')
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.restrictedTraverse('@@add-advice-batch-action')
+        self.request['PUBLISHED'] = form
+        self.assertTrue(form.available())
+        form.update()
+        self.assertEqual(len(form.brains), 3)
+        self.assertEqual(form.widgets['advice_type'].value, ['positive'])
+        # no common advice_group so no value
+        self.assertEqual(len(form.widgets['advice_group'].terms), 0)
+        # description explains to select common advisable items
+        self.assertEqual(
+            form.widgets['advice_group'].field.description,
+            u'No common or available advice group. Modify your selection.')
+        # not able to give advice for developers
+        self.request.form['form.widgets.uids'] = item3_uid
+        form = searches_items.restrictedTraverse('@@add-advice-batch-action')
+        self.request['PUBLISHED'] = form
+        form.update()
+        self.assertEqual(len(form.brains), 1)
+        # give advice on item1 and item2
+        self.request.form['form.widgets.uids'] = u','.join([item1_uid, item2_uid])
+        form = searches_items.restrictedTraverse('@@add-advice-batch-action')
+        self.request['PUBLISHED'] = form
+        self.request.form['form.widgets.advice_type'] = u'positive'
+        self.request.form['form.widgets.advice_group'] = safe_unicode(self.vendors_uid)
+        self.request.form['form.widgets.advice_comment'] = u"My comment"
+        form.update()
+        self.assertEqual(len(form.brains), 2)
+        self.assertEqual(len(form.widgets['advice_group'].terms), 1)
+        # no description
+        self.assertEqual(form.widgets['advice_group'].field.description, u'')
+        self.assertEqual(
+            form.widgets['advice_group'].terms.terms._terms[0].token, self.vendors_uid)
+        form.handleApply(form, None)
+        # advice were added on items with correct type and advice_hide_during_redaction
+        self.assertEqual(item1.adviceIndex[self.vendors_uid]['type'], 'positive')
+        self.assertEqual(item1.adviceIndex[self.vendors_uid]['comment'], u'My comment')
+        self.assertEqual(item1.getAdvices()[0].advice_comment.raw, u'My comment')
+        self.assertEqual(item2.adviceIndex[self.vendors_uid]['type'], 'positive')
+        # no more advice to give
+        form = searches_items.restrictedTraverse('@@add-advice-batch-action')
+        self.request['PUBLISHED'] = form
+        form.update()
+        self.assertEqual(len(form.widgets['advice_group'].terms), 0)
+        self.assertEqual(
+            form.widgets['advice_group'].field.description,
+            u'No common or available advice group. Modify your selection.')
 
 
 def test_suite():

@@ -1756,14 +1756,15 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         else:
             # advice
             visible_fors = self.cfg.getAdviceAnnexConfidentialVisibleFor()
-            groups = self._advice_visible_for_groups(visible_fors)
+            groups = self._advice_visible_for_groups(
+                visible_fors, item=self.parent.aq_parent)
         return groups
 
     def _item_visible_for_groups(self, visible_fors, item):
         """ """
         res = []
         res += self._configgroup_groups(visible_fors)
-        res += self._reader_groups(visible_fors)
+        res += self._reader_groups(visible_fors, item)
         res += self._suffix_proposinggroup(visible_fors, item)
         return res
 
@@ -1774,12 +1775,12 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         res += self._suffix_profile_proposinggroup(visible_fors)
         return res
 
-    def _advice_visible_for_groups(self, visible_fors):
+    def _advice_visible_for_groups(self, visible_fors, item):
         """ """
         res = []
         res += self._configgroup_groups(visible_fors)
-        res += self._reader_groups(visible_fors)
-        res += self._suffix_proposinggroup(visible_fors, self.parent.aq_parent)
+        res += self._reader_groups(visible_fors, item)
+        res += self._suffix_proposinggroup(visible_fors, item)
         if 'adviser_group' in visible_fors:
             plone_group_id = get_plone_group_id(self.parent.advice_group, 'advisers')
             res.append(plone_group_id)
@@ -1826,22 +1827,44 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
                 res.append(visible_for)
         return res
 
-    def _reader_groups(self, visible_fors):
+    def _reader_groups(self, visible_fors, item=None):
         """ """
         res = []
         for visible_for in visible_fors:
             if visible_for == '{0}advices'.format(READERPREFIX):
-                for org_uid in self.parent.adviceIndex:
+                # item advisers if item or every possible advisers
+                if item:
+                    org_uids = item.adviceIndex.keys()
+                else:
+                    # every possible advisers, so configured custom advisers and selectable advisers
+                    custom_advisers_org_uids = [row['org_uid'] for row in self.cfg.getCustomAdvisers()]
+                    selectable_advisers = self.cfg.getSelectableAdvisers()
+                    org_uids = set(custom_advisers_org_uids).union(selectable_advisers)
+                for org_uid in org_uids:
                     plone_group_id = get_plone_group_id(org_uid, 'advisers')
                     res.append(plone_group_id)
             elif visible_for == '{0}copy_groups'.format(READERPREFIX):
-                res = res + list(self.parent.getAllCopyGroups(auto_real_plone_group_ids=True))
+                # item copyGroups if item or every possible copy groups
+                if item:
+                    res = res + list(item.getAllCopyGroups(auto_real_plone_group_ids=True))
+                else:
+                    res += list(self.cfg.getSelectableCopyGroups())
             elif visible_for == '{0}restricted_copy_groups'.format(READERPREFIX):
-                res = res + list(self.parent.getAllRestrictedCopyGroups(auto_real_plone_group_ids=True))
+                # item restrictedCopyGroups if item or every possible restricted copy groups
+                if item:
+                    res = res + list(item.getAllRestrictedCopyGroups(auto_real_plone_group_ids=True))
+                else:
+                    res += list(self.cfg.getSelectableRestrictedCopyGroups())
             elif visible_for == '{0}groupsincharge'.format(READERPREFIX):
-                gics = self.parent.getGroupsInCharge(theObjects=False, includeAuto=True)
-                for gic in gics:
-                    plone_group_id = get_plone_group_id(gic, 'observers')
+                # item groupsInCharges if item or every possible groups in charge
+                if item:
+                    org_uids = item.getGroupsInCharge(theObjects=False, includeAuto=True)
+                else:
+                    org_uids = get_vocab_values(
+                        self.cfg,
+                        "Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
+                for org_uid in org_uids:
+                    plone_group_id = get_plone_group_id(org_uid, 'observers')
                     res.append(plone_group_id)
         return res
 
