@@ -5,8 +5,9 @@ Changelog
 4.2.28.2 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Fixed `PMCategorizedObjectInfoAdapter._reader_groups` to take into account
+  `reader_restricted_copy_groups` that was not implemented at all.
+  [gbastien]
 
 4.2.28.1 (2025-12-24)
 ---------------------
