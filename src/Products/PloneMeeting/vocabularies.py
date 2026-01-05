@@ -2105,7 +2105,7 @@ class AnnexRestrictShownAndEditableAttributesVocabulary(object):
 
     def __call__(self, context):
         res = []
-        annex_attributes = ['confidentiality', 'to_be_printed', 'signed', 'publishable']
+        annex_attributes = ['confidentiality', 'to_be_printed', 'signed', 'publishable', 'approved']
         for annex_attr in annex_attributes:
             for suffix in ('display', 'edit'):
                 term_id = '{0}_{1}'.format(annex_attr, suffix)
