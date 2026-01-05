@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.28.2 (unreleased)
+4.2.28.2 (2026-01-05)
 ---------------------
 
 - Fixed `PMCategorizedObjectInfoAdapter._reader_groups` to take into account
