@@ -4195,7 +4195,7 @@ class testAdvices(PloneMeetingTestCase):
 
     def test_pm_AdvicesInfosOnItemTemplate(self):
         """Test that the advices icons infos are correctly displayed in an
-           itemTemplate for which proposingGroup may be empty and adviceIndex
+           item_template for which proposingGroup may be empty and adviceIndex
            is partially computed."""
         cfg = self.meetingConfig
         cfg.setCustomAdvisers(
@@ -4206,9 +4206,9 @@ class testAdvices(PloneMeetingTestCase):
               'delay': '5',
               'delay_label': ''}, ])
         self.changeUser('templatemanager1')
-        itemTemplate = cfg.get_default_item_template()
-        self.assertEqual(itemTemplate.getProposingGroup(), '')
-        itemTemplate.setOptionalAdvisers(
+        item_template = cfg.get_default_item_template()
+        self.assertEqual(item_template.getProposingGroup(), '')
+        item_template.setOptionalAdvisers(
             (self.developers_uid,
              '{0}__rowid__unique_id_123'.format(self.vendors_uid)))
         item_template._update_after_edit()

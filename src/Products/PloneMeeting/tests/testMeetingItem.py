@@ -5044,6 +5044,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemActionsPanelCachingInvalidatedWhenItemModified(self):
         """Actions panel cache is invalidated when an item is modified."""
+        self._enableField('labels')
         item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
         # invalidated when item edited
         # an item can not be proposed if no selected category
