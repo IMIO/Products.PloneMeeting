@@ -1852,6 +1852,12 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
                     res = res + list(item.getAllCopyGroups(auto_real_plone_group_ids=True))
                 else:
                     res += list(self.cfg.getSelectableCopyGroups())
+            elif visible_for == '{0}restricted_copy_groups'.format(READERPREFIX):
+                # item restrictedCopyGroups if item or every possible restricted copy groups
+                if item:
+                    res = res + list(item.getAllRestrictedCopyGroups(auto_real_plone_group_ids=True))
+                else:
+                    res += list(self.cfg.getSelectableRestrictedCopyGroups())
             elif visible_for == '{0}groupsincharge'.format(READERPREFIX):
                 # item groupsInCharges if item or every possible groups in charge
                 if item:

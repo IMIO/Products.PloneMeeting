@@ -3566,21 +3566,30 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(viewlet.can_edit)
 
     def test_pm_LabelsConfigViewableByCopyGroups(self):
-        """Test labelsConfig so "label" is viewable by copy groups ("Vendors reviewers")."""
-        self._enableField(['copyGroups', 'labels'])
+        """Test labelsConfig so "label" is viewable by copy groups
+           ("Vendors reviewers") and restricted copy groups ("Vendors creators")."""
+        self._enableField(['copyGroups', 'restrictedCopyGroups', 'labels'])
         cfg = self.meetingConfig
         cfg.setItemCopyGroupsStates(('itemcreated', ))
+        cfg.setItemRestrictedCopyGroupsStates(('itemcreated', ))
+        cfg.setSelectableRestrictedCopyGroups((self.vendors_creators, ))
         # editable and viewable only by proposingGroup
         config = list(cfg.getLabelsConfig())
         new_config = deepcopy(config[0])
         new_config['label_id'] = "label"
         new_config['view_groups'] = [
             'suffix_proposing_group_creators',
-            'reader_copy_groups']
+            'reader_copy_groups',
+            'reader_restricted_copy_groups']
         config.append(new_config)
         cfg.setLabelsConfig(config)
+        # create item as MeetingManager to be able to use restrictedCopyGroups
+        self.changeUser('pmManager')
+        item = self.create(
+            'MeetingItem',
+            copyGroups=[self.vendors_reviewers],
+            restrictedCopyGroups=[self.vendors_creators])
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem', copyGroups=[self.vendors_reviewers])
         # creator can view/edit
         labelingview = item.restrictedTraverse('@@labeling')
         self.assertEqual(
@@ -3589,7 +3598,20 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(
             labelingview.available_labels(modes=['edit'])[1][0]['label_id'],
             'label')
+        # set label so we can check for "read"
+        self.request.form['activate_labels'] = ['label']
+        labelingview.update()
+        self.assertTrue('label' in get_labels(item))
+        # copyGroups can view
         self.changeUser('pmReviewer2')
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.assertEqual(
+            labelingview.available_labels(modes=['view'])[1][0]['label_id'],
+            'label')
+        self.assertEqual(
+            labelingview.available_labels(modes=['edit'])[1], [])
+        # restrictedCopyGroups can view
+        self.changeUser('pmCreator2')
         labelingview = item.restrictedTraverse('@@labeling')
         self.assertEqual(
             labelingview.available_labels(modes=['view'])[1][0]['label_id'],
