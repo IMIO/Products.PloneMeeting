@@ -8,6 +8,10 @@ Changelog
 - Fixed `PMCategorizedObjectInfoAdapter._reader_groups` to take into account
   `reader_restricted_copy_groups` that was not implemented at all.
   [gbastien]
+- Integrate new value `approved` from `collective.iconifiedcategory`.
+  [gbastien]
+- Set `MeetingConfig.enableAddQuickAdvice` to `False` by default.
+  [gbastien]
 
 4.2.28.1 (2025-12-24)
 ---------------------
@@ -60,7 +64,7 @@ Changelog
   `safe_utils` (`add_to_annotation`, `del_from_annotation`,
   `get_from_annotation`, `pop_from_annotation` and `set_to_annotation`).
   [gbastien]
-- Optimized `PMLabeling.filter_manageable_labels` to avoid iterating every labels
+- Optimized `PMLabeling.filter_manageable_labels` to not iterate every labels
   when called from a faceted dashboard (just need to iterate active labels).
   [gbastien]
 - Fixed `PMCategorizedObjectInfoAdapter._reader_groups` that was not
