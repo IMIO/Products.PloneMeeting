@@ -12,6 +12,7 @@ from Products.PloneMeeting import logger
 from Products.PloneMeeting.external.config import API_URL
 from Products.PloneMeeting.external.config import AUTH_CURL_COMMAND
 from Products.PloneMeeting.external.config import AUTH_INFOS_ATTR
+from Products.PloneMeeting.external.config import REFRESH_AUTH_CURL_COMMAND
 from zope.globalrequest import getRequest
 
 import json
@@ -26,21 +27,34 @@ except ImportError:
     from urllib.parse import urlparse
 
 
-def get_auth_token(expire_treshold=60):
+def get_auth_token(expire_treshold=60, log=True):
     """Get the auth token and store it on the portal.
        Get it again if expired or expires in less than
        given expire_treshold seconds."""
     portal = api.portal.get()
     auth_infos = getattr(portal, AUTH_INFOS_ATTR, {})
     if not auth_infos or auth_infos['expires_in'] < datetime.now():
-        logger.info('Getting authentication token')
-        start = datetime.now()
-        result = subprocess.check_output(
-            AUTH_CURL_COMMAND, shell=True)
-        logger.info(datetime.now() - start)
-        result = json.loads(result)
+        if log is True:
+            start = datetime.now()
+        result = None
+        if auth_infos.get('refresh_token', None):
+            if log is True:
+                logger.info('Getting authentication token from "refresh_token"')
+            result = subprocess.check_output(
+                REFRESH_AUTH_CURL_COMMAND.format(
+                    auth_infos['refresh_token']), shell=True)
+            result = json.loads(result)
+        if not result or result.get('error'):
+            if log is True:
+                logger.info('Getting new authentication token')
+            result = subprocess.check_output(
+                AUTH_CURL_COMMAND, shell=True)
+            result = json.loads(result)
+        if log is True:
+            logger.info(datetime.now() - start)
         if 'access_token' in result:
             auth_infos['access_token'] = result['access_token']
+            auth_infos['refresh_token'] = result.get('refresh_token', None)
             # store that expires_in is 60 seconds before real expires_in
             # so we may probably execute one last request
             auth_infos['expires_in'] = datetime.now() + \
