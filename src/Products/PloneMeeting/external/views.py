@@ -7,7 +7,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
-from Products.PloneMeeting.external.config import VISION_AUTH_USERNAME
+from Products.PloneMeeting.external.config import SSO_AUTH_USERNAME
 from Products.PloneMeeting.external.utils import send_json_request
 from Products.PloneMeeting.utils import is_proposing_group_editor
 from zope.i18n import translate
@@ -20,7 +20,7 @@ class ExternalView(BrowserView):
 
     def show_section(self):
         """Display the "External linked elements" on the item view?"""
-        return bool(VISION_AUTH_USERNAME)
+        return bool(SSO_AUTH_USERNAME)
 
     def available(self):
         """ """

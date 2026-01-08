@@ -5,8 +5,8 @@ Changelog
 4.2.28.3 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Use new `SSO/Vision` env var names for external link to `iA.Vision`.
+  [gbastien]
 
 4.2.28.2 (2026-01-05)
 ---------------------
