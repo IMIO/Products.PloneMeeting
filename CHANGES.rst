@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.28.5 (unreleased)
+4.2.28.5 (2026-01-08)
 ---------------------
 
 - Use `SSO/Vision` same var env names everywhere.
