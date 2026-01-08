@@ -24,7 +24,7 @@ AUTH_CURL_COMMAND = "curl --location '%s' \
     SSO_CLIENT_SECRET,
     SSO_AUTH_USERNAME,
     SSO_AUTH_PASSWORD)
-MUNICIPALITY_ID = SSO_AUTH_USERNAME.split('_')[1] if '_' in SSO_AUTH_USERNAME else ''
+MUNICIPALITY_ID = SSO_AUTH_USERNAME.split('_')[1] if (SSO_AUTH_USERNAME and '_' in SSO_AUTH_USERNAME) else ''
 
 # api configuration
 VISION_API_URL = os.getenv('VISION_API_URL')
