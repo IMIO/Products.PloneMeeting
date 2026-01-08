@@ -5,8 +5,8 @@ Changelog
 4.2.28.4 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Use `SSO/Vision` same var env names everywhere.
+  [gbastien]
 
 4.2.28.3 (2026-01-08)
 ---------------------
