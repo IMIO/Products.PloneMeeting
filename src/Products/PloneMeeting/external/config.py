@@ -7,10 +7,10 @@ AUTH_INFOS_ATTR = "keycloak_auth_infos"
 
 # keycloak auth token configuration
 SSO_APPS_URL = os.getenv('SSO_APPS_URL')
-SSO_APPS_CLIENT_ID = os.getenv('SSO_CLIENT_ID')
-SSO_APPS_CLIENT_SECRET = os.getenv('SSO_CLIENT_SECRET')
-SSO_APPS_USER_USERNAME = os.getenv('SSO_AUTH_USERNAME')
-SSO_APPS_USER_PASSWORD = os.getenv('SSO_AUTH_PASSWORD')
+SSO_APPS_CLIENT_ID = os.getenv('SSO_APPS_CLIENT_ID')
+SSO_APPS_CLIENT_SECRET = os.getenv('SSO_APPS_CLIENT_SECRET')
+SSO_APPS_USER_USERNAME = os.getenv('SSO_APPS_USER_USERNAME')
+SSO_APPS_USER_PASSWORD = os.getenv('SSO_APPS_USER_PASSWORD')
 AUTH_CURL_COMMAND = "curl --location '%s' \
 --header 'Content-Type: application/x-www-form-urlencoded' \
 --header 'Cookie: KEYCLOAK_LOCALE=fr' \
