@@ -6,17 +6,21 @@ from datetime import datetime
 from datetime import timedelta
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.security import fplog
+from persistent.mapping import PersistentMapping
 from plone import api
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import logger
-from Products.PloneMeeting.external.config import VISION_URL
-from Products.PloneMeeting.external.config import AUTH_CURL_COMMAND
 from Products.PloneMeeting.external.config import AUTH_INFOS_ATTR
+from Products.PloneMeeting.external.config import SSO_APPS_CLIENT_ID
+from Products.PloneMeeting.external.config import SSO_APPS_CLIENT_SECRET
+from Products.PloneMeeting.external.config import SSO_APPS_URL
+from Products.PloneMeeting.external.config import SSO_APPS_USER_PASSWORD
+from Products.PloneMeeting.external.config import SSO_APPS_USER_USERNAME
+from Products.PloneMeeting.external.config import VISION_URL
 from zope.globalrequest import getRequest
 
 import json
 import requests
-import subprocess
 import urllib
 
 
@@ -26,26 +30,71 @@ except ImportError:
     from urllib.parse import urlparse
 
 
-def get_auth_token(expire_treshold=60):
+def get_auth_token():
+    return _get_auth_token(
+        sso_url=SSO_APPS_URL,
+        sso_client_id=SSO_APPS_CLIENT_ID,
+        sso_client_secret=SSO_APPS_CLIENT_SECRET,
+        sso_user_username=SSO_APPS_USER_USERNAME,
+        sso_user_password=SSO_APPS_USER_PASSWORD)
+
+
+def _get_auth_token(
+    sso_url,
+    sso_client_id,
+    sso_client_secret,
+    sso_user_username,
+    sso_user_password,
+    expire_treshold=60,
+    headers={"Content-Type": "application/x-www-form-urlencoded",
+             "Cookie": "KEYCLOAK_LOCALE=fr"},
+    log=True):
     """Get the auth token and store it on the portal.
        Get it again if expired or expires in less than
        given expire_treshold seconds."""
     portal = api.portal.get()
-    auth_infos = getattr(portal, AUTH_INFOS_ATTR, {})
+    auth_infos = getattr(portal, AUTH_INFOS_ATTR, PersistentMapping())
     if not auth_infos or auth_infos['expires_in'] < datetime.now():
-        logger.info('Getting authentication token')
-        start = datetime.now()
-        result = subprocess.check_output(
-            AUTH_CURL_COMMAND, shell=True)
-        logger.info(datetime.now() - start)
-        result = json.loads(result)
-        if 'access_token' in result:
+        if log is True:
+            start = datetime.now()
+        # first try with "refresh_token" if available
+        result = None
+        data = {'client_id': sso_client_id,
+                'client_secret': sso_client_secret,
+                'username': sso_user_username,
+                'password': sso_user_password}
+        if auth_infos.get('refresh_token', None):
+            if log is True:
+                logger.info('Getting authentication token from "refresh_token"')
+            data['grant_type'] = "refresh_token"
+            data['refresh_token'] = auth_infos['refresh_token']
+            result = requests.post(
+                sso_url, data, headers=headers)
+        # may occur if very first request or "refresh_token" expired/invalid
+        # in this case we get new full authentication token
+        if not result or result.status_code != 200:
+            data['grant_type'] = "password"
+            data.pop('refresh_token', None)
+            if log is True:
+                logger.info('Getting new authentication token')
+            result = requests.post(
+                sso_url, data, headers=headers)
+        if log is True:
+            logger.info(datetime.now() - start)
+        if result.status_code == 200:
+            result = json.loads(result.content)
             auth_infos['access_token'] = result['access_token']
+            auth_infos['refresh_token'] = result.get('refresh_token', None)
             # store that expires_in is 60 seconds before real expires_in
             # so we may probably execute one last request
             auth_infos['expires_in'] = datetime.now() + \
                 timedelta(seconds=result['expires_in'] - expire_treshold)
             setattr(portal, AUTH_INFOS_ATTR, auth_infos)
+        elif log is True:
+            logger.info(
+                'Could not get authentication token: status={0}, content={1}'.format(
+                    result.status_code, result.content))
+
     # logger.info(auth_infos['access_token'])
     return auth_infos.get('access_token') or result
 
