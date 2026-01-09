@@ -40,5 +40,5 @@ MUNICIPALITY_ID = SSO_APPS_USER_USERNAME.split('_')[1] if \
 
 # api configuration
 VISION_API_URL = os.getenv('VISION_API_URL')
-VISION_URL = '{0}/municipalities/{1}/%s?delib_user=%s%s'.format(
+VISION_URL = '{0}municipalities/{1}/%s?delib_user=%s%s'.format(
     VISION_API_URL, MUNICIPALITY_ID)
