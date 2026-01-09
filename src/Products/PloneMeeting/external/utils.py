@@ -12,7 +12,11 @@ from Products.PloneMeeting import logger
 from Products.PloneMeeting.external.config import VISION_URL
 from Products.PloneMeeting.external.config import AUTH_CURL_COMMAND
 from Products.PloneMeeting.external.config import AUTH_INFOS_ATTR
-from Products.PloneMeeting.external.config import REFRESH_AUTH_CURL_COMMAND
+from Products.PloneMeeting.external.config import SSO_APPS_CLIENT_ID
+from Products.PloneMeeting.external.config import SSO_APPS_CLIENT_SECRET
+from Products.PloneMeeting.external.config import SSO_APPS_URL
+from Products.PloneMeeting.external.config import SSO_APPS_USER_USERNAME
+from Products.PloneMeeting.external.config import SSO_APPS_USER_PASSWORD
 from zope.globalrequest import getRequest
 
 import json
@@ -27,7 +31,25 @@ except ImportError:
     from urllib.parse import urlparse
 
 
-def get_auth_token(expire_treshold=60, log=True):
+def get_auth_token():
+    return _get_auth_token(
+        sso_url=SSO_APPS_URL,
+        sso_client_id=SSO_APPS_CLIENT_ID,
+        sso_client_secret=SSO_APPS_CLIENT_SECRET,
+        sso_user_username=SSO_APPS_USER_USERNAME,
+        sso_user_password=SSO_APPS_USER_PASSWORD)
+
+
+def _get_auth_token(
+    sso_url,
+    sso_client_id,
+    sso_client_secret,
+    sso_user_username,
+    sso_user_password,
+    expire_treshold=60,
+    headers={"Content-Type": "application/x-www-form-urlencoded",
+             "Cookie": "KEYCLOAK_LOCALE=fr"},
+    log=True):
     """Get the auth token and store it on the portal.
        Get it again if expired or expires in less than
        given expire_treshold seconds."""
@@ -37,14 +59,21 @@ def get_auth_token(expire_treshold=60, log=True):
         if log is True:
             start = datetime.now()
         result = None
+        data = {'client_id': sso_client_id,
+                'client_secret': sso_client_secret,
+                'username': sso_user_username,
+                'password': sso_user_password}
         if auth_infos.get('refresh_token', None):
             if log is True:
                 logger.info('Getting authentication token from "refresh_token"')
-            result = subprocess.check_output(
-                REFRESH_AUTH_CURL_COMMAND.format(
-                    auth_infos['refresh_token']), shell=True)
+            data['grant_type'] = "refresh_token"
+            data['refresh_token'] = auth_infos['refresh_token']
+            result = requests.post(
+                sso_url, headers=headers, json=data)
             result = json.loads(result)
         if not result or result.get('error'):
+            data['grant_type'] = "password"
+            data.pop('refresh_token', None)
             if log is True:
                 logger.info('Getting new authentication token')
             result = subprocess.check_output(
