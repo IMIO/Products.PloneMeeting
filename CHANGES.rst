@@ -9,6 +9,8 @@ Changelog
   from package `Products.PloneMeeting:default` after upgrade of
   `collective.dms.scanbehavior` so `add_permission` is correct.
   [gbastien]
+- Use `requests` to manage external link authentication token.
+  [gbastien]
 
 4.2.28.5 (2026-01-08)
 ---------------------
