@@ -2265,8 +2265,7 @@ class Meeting(Container):
 
     def _update_power_observers_local_roles(self):
         '''Give local roles to the groups defined in MeetingConfig.powerObservers.'''
-        extra_expr_ctx = _base_extra_expr_ctx(self)
-        extra_expr_ctx.update({'meeting': self, })
+        extra_expr_ctx = _base_extra_expr_ctx(self, {'meeting': self, })
         cfg = extra_expr_ctx['cfg']
         cfg_id = cfg.getId()
         meeting_state = self.query_state()

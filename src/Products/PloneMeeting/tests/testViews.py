@@ -9,6 +9,7 @@ from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.documentgenerator.interfaces import IGenerablePODTemplates
 from collective.eeafaceted.dashboard.interfaces import IDashboardGenerablePODTemplates
+from copy import deepcopy
 from datetime import datetime
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
@@ -39,6 +40,7 @@ from Products.PloneMeeting.etags import ConfigModified
 from Products.PloneMeeting.etags import ContextModified
 from Products.PloneMeeting.etags import LinkedMeetingModified
 from Products.PloneMeeting.etags import ToolModified
+from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import IMG_BASE64_DATA
@@ -1805,9 +1807,9 @@ class testViews(PloneMeetingTestCase):
     def test_pm_PMLabelsBatchActionForm(self):
         """Check labels change batch action."""
         cfg = self.meetingConfig
-        cfg.setEnableLabels(True)
+        self._setupLabelsEditableWhenItemEditable(cfg)
+        self._enableField(('copyGroups', ))
         cfg.setItemCopyGroupsStates(('itemcreated', ))
-        self._enableField('copyGroups')
 
         # create some items
         self.changeUser('pmCreator1')
@@ -1824,8 +1826,9 @@ class testViews(PloneMeetingTestCase):
         self.proposeItem(item1)
         self.assertTrue(form.available())
         self.assertFalse(form._can_change_labels())
-        # except when MeetingConfig.itemLabelsEditableByProposingGroupForever is True
-        cfg.setItemLabelsEditableByProposingGroupForever(True)
+        # except when MeetingConfig.labelsConfig is configured so proposingGroup may always edit
+        self._setupLabelsEditableWhenItemEditable(cfg, enable=False)
+        self.cleanMemoize()
         self.assertTrue(form.available())
         self.assertTrue(form._can_change_labels())
         # but not with an item of another group
@@ -1838,6 +1841,102 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(len(form.brains), 3)
         self.assertTrue(form.available())
         self.assertFalse(form._can_change_labels())
+
+    def test_pm_PMLabelsBatchActionOnlyEditableLabels(self):
+        """The labels batch action will only display editable labels."""
+        cfg = self.meetingConfig
+        self._enable_ftw_labels(cfg)
+        self._setupLabelsEditableWhenItemEditable(cfg, enable=False)
+        config = list(cfg.getLabelsConfig())
+        # make "label1" only editable by MeetingManagers
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label1"
+        new_config['edit_access_on'] = ""
+        new_config['edit_groups'] = ["configgroup_meetingmanagers"]
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+
+        # as creator, will not be able to use "label1"
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.request.form['form.widgets.uids'] = item.UID()
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.restrictedTraverse('@@labels-batch-action')
+        form.update()
+        self.assertEqual(len(form.brains), 1)
+        self.assertTrue(form.available())
+        self.assertTrue(form._can_change_labels())
+        self.assertFalse("label1" in form._vocabulary())
+        self.assertTrue("label2" in form._vocabulary())
+
+        # as MeetingManager, will be able to use "label1"
+        self.changeUser('pmManager')
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.restrictedTraverse('@@labels-batch-action')
+        form.update()
+        self.assertEqual(len(form.brains), 1)
+        self.assertTrue(form.available())
+        self.assertTrue(form._can_change_labels())
+        self.assertTrue("label1" in form._vocabulary())
+        self.assertTrue("label2" in form._vocabulary())
+
+    def test_pm_PMLabelsBatchActionDoesNotOverrideNotEditableLabels(self):
+        """The labels batch action when we have stored labels that are not editable
+           by current user will not be removed by the "overwrite" batch action that
+           removes every labels and set new labels."""
+        cfg = self.meetingConfig
+        self._enable_ftw_labels(cfg)
+        self._setupLabelsEditableWhenItemEditable(cfg, enable=False)
+        config = list(cfg.getLabelsConfig())
+        # make "label1" only editable by MeetingManagers
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label1"
+        new_config['edit_access_on'] = ""
+        new_config['edit_groups'] = ["configgroup_meetingmanagers"]
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+
+        # create an item as MeetingManager and set "label1"
+        # that is only editable by MeetingMangers
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        view = item.restrictedTraverse('@@labeling')
+        labeling = ILabeling(item)
+        self.assertEqual(labeling.storage, {})
+        self.request.form['activate_labels'] = ['label1']
+        view.update()
+        self.assertTrue('label1' in labeling.storage)
+
+        # use the "overwrite" action to set "label2",
+        # this will not remove not editable labels
+        self.changeUser('pmCreator1')
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.restrictedTraverse('@@labels-batch-action')
+        self.request.form['form.widgets.uids'] = unicode(item.UID())
+        self.request['form.widgets.action_choice'] = u'overwrite'
+        self.request['form.widgets.added_values'] = [u'label2']
+        self.request['form.widgets.removed_values'] = []
+        form.update()
+        self.assertEqual(len(form.brains), 1)
+        self.assertTrue(form.available())
+        self.assertTrue(form._can_change_labels())
+        self.assertFalse("label1" in form._vocabulary())
+        self.assertTrue("label2" in form._vocabulary())
+        form.handleApply(form, None)
+        # not editable "label1" was not removed
+        self.assertEqual(labeling.storage.keys(), ['label1', 'label2'])
+        # when editable, it is removed
+        self.changeUser('pmManager')
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.restrictedTraverse('@@labels-batch-action')
+        form.update()
+        self.assertEqual(len(form.brains), 1)
+        self.assertTrue(form.available())
+        self.assertTrue(form._can_change_labels())
+        self.assertTrue("label1" in form._vocabulary())
+        self.assertTrue("label2" in form._vocabulary())
+        form.handleApply(form, None)
+        self.assertEqual(labeling.storage.keys(), ['label2'])
 
     def test_pm_UpdateLocalRolesBatchActionForm(self):
         """This will call update_local_roles on selected elements."""
@@ -2229,7 +2328,7 @@ class testViews(PloneMeetingTestCase):
     def test_pm_ftw_labels_viewlet_available(self):
         """Only available on items if enabled in MeetingConfig."""
         cfg = self.meetingConfig
-        self.assertFalse(cfg.getEnableLabels())
+        self.assertFalse('labels' in cfg.getUsedItemAttributes())
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         viewlet = self._get_viewlet(
@@ -2243,25 +2342,22 @@ class testViews(PloneMeetingTestCase):
         labeljar.storage.clear()
         self.assertEqual(labeljar.list(), [])
         # enableLabels
-        cfg.setEnableLabels(True)
+        self._enableField('labels')
+        item.update_local_roles()
         # still not available as no labels defined
         self.assertFalse(viewlet.available)
         labeljar.add('Label', 'green', False)
+        self.cleanMemoize()
         self.assertTrue(viewlet.available)
-
-    def _enable_ftw_labels(self):
-        cfg = self.meetingConfig
-        cfg.setEnableLabels(True)
-        self.changeUser('pmCreator1')
-        labeljar = getAdapter(cfg, ILabelJar)
-        labeljar.add('Label1', 'green', False)
-        labeljar.add('Label2', 'red', False)
-        return labeljar
 
     def test_pm_ftw_labels_viewlet_can_edit(self):
         """can_edit when user has Modify portal content permission."""
+        cfg = self.meetingConfig
+        # remove recurring items in self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
         # enable viewlet
-        self._enable_ftw_labels()
+        self._enable_ftw_labels(cfg)
+        self._setupLabelsEditableWhenItemEditable(cfg)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', decision=self.decisionText)
         viewlet = self._get_viewlet(
@@ -2277,9 +2373,10 @@ class testViews(PloneMeetingTestCase):
         self.validateItem(item)
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         self.assertFalse(viewlet.can_edit)
-        # enable MeetingConfig.itemLabelsEditableByProposingGroupForever
-        self.meetingConfig.setItemLabelsEditableByProposingGroupForever(True)
+        # enable labels editable by proposingGroup
+        self._setupLabelsEditableWhenItemEditable(cfg, enable=False)
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.cleanMemoize()
         self.assertTrue(viewlet.can_edit)
 
         # MeetingManagers may edit labels even when item decided
@@ -2306,7 +2403,9 @@ class testViews(PloneMeetingTestCase):
            Indeed, a scenario where an item is labelled then ModifyPortalContent is lost
            because state changed, make sure if a browser screen was not updated, labeling
            update raises Unauthorized."""
-        self._enable_ftw_labels()
+        cfg = self.meetingConfig
+        self._enable_ftw_labels(cfg)
+        self._setupLabelsEditableWhenItemEditable(cfg)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         view = item.restrictedTraverse('@@labeling')
@@ -2721,11 +2820,14 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(tool_modified in browser.headers['etag'])
         self.assertTrue(context_modified in browser.headers['etag'])
 
-    def test_pm_FTWLabels(self):
-        """By default, labels are editable if item editable, except for MeetingManagers
-           that may edit labels forever.
-           Personal labels are editable by anybody able to see the item."""
+    def test_pm_FTWLabelsForEditors(self):
+        """By default, labels are editable forever by proposing group operationnal roles.
+           But we can configure it so it is only editable for users able to edit the item and
+           MeetingManagers always.
+           Personal labels are still editable by anybody able to see the item."""
+        self._enableField('labels')
         cfg = self.meetingConfig
+        self._setupLabelsEditableWhenItemEditable(cfg)
         # as label jar is updated by the import process
         # make sure we have a persistentmapping containing persistentmappings
         labeljar = getAdapter(cfg, ILabelJar)
@@ -2754,6 +2856,7 @@ class testViews(PloneMeetingTestCase):
         meeting = self.create('Meeting')
         self.presentItem(item)
         self.closeMeeting(meeting)
+
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         # labels still editable
         self.request.form['activate_labels'] = ['label']
@@ -3260,6 +3363,454 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(data["public_deliberation"], self.motivationText + self.decisionText)
         self.assertEqual(data["public_deliberation_decided"], self.motivationText + self.decisionText)
         return item, view, helper, data
+
+    def _setup_for_labels_config(self):
+        """ """
+        cfg = self.meetingConfig
+        self._setupLabelsEditableWhenItemEditable(cfg)
+        # give access to po and rpo when "itemcreated/proposed/validated"
+        self._setPowerObserverStates(
+            states=("itemcreated", self._stateMappingFor('proposed'), "validated", ))
+        self._setPowerObserverStates(
+            observer_type="restrictedpowerobservers",
+            states=("itemcreated", self._stateMappingFor('proposed'), "validated", ))
+
+    def test_pm_LabelsConfigEditableByMeetingManagersNotViewableByPowerObservers(self):
+        """Test labelsConfig so labels are editable by MeetingManagers only when
+           in state "validated viewable by everyone excepted powerobservers."""
+        cfg = self.meetingConfig
+        self._setup_for_labels_config()
+        config = list(cfg.getLabelsConfig())
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
+        new_config['edit_access_on'] = ""
+        new_config['edit_groups'] = ["configgroup_meetingmanagers"]
+        new_config['edit_states'] = ["validated"]
+        new_config['view_groups'] = ["configgroup_restrictedpowerobservers"]
+        new_config['view_groups_excluding'] = "1"
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        viewlet = self._get_viewlet(
+            context=item,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
+        self.assertTrue(viewlet.available)
+        # can not add label
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.changeUser('pmManager')
+        # not editable as item not "validated"
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.validateItem(item)
+        self.assertEqual(viewlet.available_labels[1][0]['label_id'], 'label')
+        self.assertEqual(viewlet.available_labels[1][0]['active'], False)
+        item_labeling = ILabeling(item)
+        item_labeling.storage['label'] = []
+        self.cleanMemoize()
+        self.assertEqual(viewlet.available_labels[1][0]['active'], True)
+        # not viewable by restrictedpowerobserver
+        self.changeUser('restrictedpowerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+        # viewable by powerobserver
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertEqual(viewlet.available_labels[1][0]['label_id'], 'label')
+        self.assertFalse(viewlet.can_edit)
+        self.changeUser('pmManager')
+        self.backToState(item, "itemcreated")
+
+    def test_pm_LabelsConfigEditableAndViewableByMeetingManagersOnly(self):
+        """Test labelsConfig so labels are editable and viewable only by MeetingManagers."""
+        cfg = self.meetingConfig
+        self._setup_for_labels_config()
+        # editable and viewable only by MeetingManagers
+        config = list(cfg.getLabelsConfig())
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
+        new_config['edit_access_on'] = ""
+        new_config['edit_groups'] = ["configgroup_meetingmanagers"]
+        new_config['edit_states'] = []
+        new_config['view_groups'] = ["configgroup_meetingmanagers"]
+        new_config['view_groups_excluding'] = "0"
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        viewlet = self._get_viewlet(
+            context=item,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
+        self.assertTrue(viewlet.available)
+        # creator can not view or edit
+        self.changeUser('pmCreator1')
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+        self.changeUser('pmManager')
+        self.assertEqual(viewlet.available_labels[1][0]['label_id'], 'label')
+        self.assertTrue(viewlet.can_edit)
+        # not viewable by restrictedpowerobserver
+        self.changeUser('restrictedpowerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+        # not viewable by powerobserver
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+
+    def test_pm_LabelsConfigEditableAndViewableByProposingGroupOnly(self):
+        """Test labelsConfig so labels are editable and viewable only by propodingGroup."""
+        cfg = self.meetingConfig
+        self._setup_for_labels_config()
+        # editable and viewable only by proposingGroup
+        config = list(cfg.getLabelsConfig())
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
+        new_config['edit_access_on'] = ""
+        new_config['edit_groups'] = [
+            "suffix_proposing_group_creators",
+            "suffix_proposing_group_reviewers"]
+        new_config['view_groups'] = [
+            "suffix_proposing_group_creators",
+            "suffix_proposing_group_reviewers"]
+        new_config['view_groups_excluding'] = "0"
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        # use vendors so pmManager is not creator for it
+        self.changeUser('pmCreator2')
+        item2 = self.create('MeetingItem')
+        viewlet = self._get_viewlet(
+            context=item2,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
+        # proposing group creator can view/edit
+        self.assertEqual(viewlet.available_labels[1][0]['label_id'], 'label')
+        self.assertTrue(viewlet.can_edit)
+        self.proposeItem(item2)
+        # proposing group reviewer can view/edit
+        self.changeUser('pmReviewer2')
+        self.assertEqual(viewlet.available_labels[1][0]['label_id'], 'label')
+        self.assertTrue(viewlet.can_edit)
+        # MeetingManager can not view/edit
+        self.validateItem(item2)
+        self.changeUser('pmManager')
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+        # not viewable by restrictedpowerobserver
+        self.changeUser('restrictedpowerobserver1')
+        self.assertTrue(self.hasPermission(View, item2))
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+        # not viewable by powerobserver
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item2))
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+
+    def test_pm_LabelsConfigEditableAndViewableByVendorsAdvisers(self):
+        """Test labelsConfig so labels are editable and viewable only by
+           "Vendors advisers"."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates(('itemcreated', 'validated'))
+        cfg.setItemAdviceEditStates(('itemcreated', 'validated'))
+        self._setup_for_labels_config()
+        # remove pmManager from vendors_advisers
+        self._removePrincipalFromGroups('pmManager', [self.vendors_advisers])
+        # editable and viewable only by proposingGroup
+        config = list(cfg.getLabelsConfig())
+        tal_expr = "python: '{0}' in utils.get_plone_groups_for_user()".format(
+            self.vendors_advisers)
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
+        new_config['edit_access_on'] = tal_expr
+        new_config['edit_groups'] = []
+        new_config['view_groups'] = []
+        new_config['view_groups_excluding'] = "0"
+        new_config['edit_access_on'] = tal_expr
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        # create with vendors and ask developers advice as pmManager is adviser for vendors
+        self.changeUser('pmCreator2')
+        item = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
+        viewlet = self._get_viewlet(
+            context=item,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
+        self.validateItem(item)
+        self.assertTrue(viewlet.available)
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+        # pmReviewer2 is adviser for vendors
+        self.changeUser('pmReviewer2')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertEqual(viewlet.available_labels[1][0]['label_id'], 'label')
+        self.assertTrue(viewlet.can_edit)
+        # MeetingManager can not view/edit
+        self.changeUser('pmManager')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+        # not viewable by restrictedpowerobserver
+        self.changeUser('restrictedpowerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+        # not viewable by powerobserver
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertEqual(viewlet.available_labels[1], [])
+        self.assertFalse(viewlet.can_edit)
+
+    def test_pm_LabelsConfigViewableByCopyGroups(self):
+        """Test labelsConfig so "label" is viewable by copy groups
+           ("Vendors reviewers") and restricted copy groups ("Vendors creators")."""
+        self._enableField(['copyGroups', 'restrictedCopyGroups', 'labels'])
+        cfg = self.meetingConfig
+        cfg.setItemCopyGroupsStates(('itemcreated', ))
+        cfg.setItemRestrictedCopyGroupsStates(('itemcreated', ))
+        cfg.setSelectableRestrictedCopyGroups((self.vendors_creators, ))
+        # editable and viewable only by proposingGroup
+        config = list(cfg.getLabelsConfig())
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
+        new_config['view_groups'] = [
+            'suffix_proposing_group_creators',
+            'reader_copy_groups',
+            'reader_restricted_copy_groups']
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        # create item as MeetingManager to be able to use restrictedCopyGroups
+        self.changeUser('pmManager')
+        item = self.create(
+            'MeetingItem',
+            copyGroups=[self.vendors_reviewers],
+            restrictedCopyGroups=[self.vendors_creators])
+        self.changeUser('pmCreator1')
+        # creator can view/edit
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.assertEqual(
+            labelingview.available_labels(modes=['view'])[1][0]['label_id'],
+            'label')
+        self.assertEqual(
+            labelingview.available_labels(modes=['edit'])[1][0]['label_id'],
+            'label')
+        # set label so we can check for "read"
+        self.request.form['activate_labels'] = ['label']
+        labelingview.update()
+        self.assertTrue('label' in get_labels(item))
+        # copyGroups can view
+        self.changeUser('pmReviewer2')
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.assertEqual(
+            labelingview.available_labels(modes=['view'])[1][0]['label_id'],
+            'label')
+        self.assertEqual(
+            labelingview.available_labels(modes=['edit'])[1], [])
+        # restrictedCopyGroups can view
+        self.changeUser('pmCreator2')
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.assertEqual(
+            labelingview.available_labels(modes=['view'])[1][0]['label_id'],
+            'label')
+        self.assertEqual(
+            labelingview.available_labels(modes=['edit'])[1], [])
+
+    def test_pm_LabelsConfigUpdateLocalRoles(self):
+        """Test labelsConfig when a configuration specify to update_local_roles.
+           Here a copyGroup will be added when a label is selected."""
+        cfg = self.meetingConfig
+        self._enableField(['copyGroups', 'labels'])
+        # vendors_reviewers will be set as copyGroup when label is selected
+        self.vendors.as_copy_group_on = \
+            "python: 'label' in utils.get_labels(item) and ['reviewers']"
+        # for now, do not update_local_roles
+        config = list(cfg.getLabelsConfig())
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.request.form['activate_labels'] = ['label']
+        labelingview.update()
+        # as update_local_roles is "0", copyGroup was not set
+        self.assertTrue('label' in get_labels(item))
+        self.assertEqual(item.getAllCopyGroups(), ())
+        # update config so it update_local_roles
+        config[1]['update_local_roles'] = "1"
+        cfg.setLabelsConfig(config)
+        # was not updated because updated when changed
+        labelingview.update()
+        self.assertEqual(item.getAllCopyGroups(), ())
+        # remove and add it again, this time local_roles are updated
+        self.request.form['activate_labels'] = []
+        labelingview.update()
+        self.assertEqual(get_labels(item), {})
+        self.request.form['activate_labels'] = ['label']
+        labelingview.update()
+        self.assertEqual(item.getAllCopyGroups(True), (self.vendors_reviewers, ))
+        # removing the label will also update local_roles
+        self.request.form['activate_labels'] = []
+        labelingview.update()
+        self.assertEqual(get_labels(item), {})
+        self.assertEqual(item.getAllCopyGroups(True), ())
+
+    def test_pm_LabelsConfigWithNotViewableNotEditableLabels(self):
+        """Test labelsConfig when editing an item containing labels where
+           some are not viewable and/or editable.
+           Warnings are displayed if trying to remove a label that is not editable."""
+        # this way we have 3 labels, label, label1 and label2
+        # label will be viewable and editable, we use the "*" config
+        # label1 is viewable but not editable
+        # label2 is not viewable and not editable
+        cfg = self.meetingConfig
+        self._enable_ftw_labels(cfg)
+        config = list(cfg.getLabelsConfig())
+        new_config1 = deepcopy(config[0])
+        new_config1['label_id'] = "label1"
+        new_config1['edit_access_on'] = "python: item.Title() != 'Label1 not editable'"
+        new_config1['edit_groups'] = []
+        new_config2 = deepcopy(config[0])
+        new_config2['label_id'] = "label2"
+        new_config2['edit_access_on'] = "python: item.Title() != 'Label2 not editable'"
+        new_config2['view_access_on'] = "python: False"
+        new_config2['edit_groups'] = []
+        config.append(new_config1)
+        config.append(new_config2)
+        cfg.setLabelsConfig(config)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        labelingview = item.restrictedTraverse('@@labeling')
+        # clear existing messages
+        IStatusMessage(self.request).show()
+        # edit without changing anything
+        self.request.form['activate_labels'] = ['label', 'label1']
+        labelingview.update()
+        self.assertEqual(IStatusMessage(self.request).show(), [])
+        self.assertEqual(sorted(get_labels(item)), ['label', 'label1'])
+        # edit, remove editable 'label'
+        self.request.form['activate_labels'] = ['label1']
+        labelingview.update()
+        self.assertEqual(IStatusMessage(self.request).show(), [])
+        self.assertEqual(sorted(get_labels(item)), ['label1'])
+        # make "label1" no more editable
+        # try to remove 'label1', warning and still there
+        item.setTitle('Label1 not editable')
+        item._update_after_edit()
+
+        self.request.form['activate_labels'] = []
+        labelingview.update()
+        # set response status to 200 so status message is removed
+        self.request.response.setStatus(200)
+        messages = IStatusMessage(self.request).show()
+        self.assertEqual(messages[0].message, u'You can not manage labels "Label1"!')
+        self.assertEqual(sorted(get_labels(item)), ['label1'])
+        # add label2 that is not viewable
+        # and save 'label1' only, 'label2' is still there
+        self.request.form['activate_labels'] = ['label1', 'label2']
+        labelingview.update()
+        self.assertEqual(sorted(get_labels(item)), ['label1', 'label2'])
+        # no message as keeping 'label1'
+        self.assertEqual(IStatusMessage(self.request).show(), [])
+        # make label2 not editable and save "label1"
+        # save 'label1' as 'label2' is not viewable
+        item.setTitle('Label2 not editable')
+        item._update_after_edit()
+        self.request.form['activate_labels'] = ['label1']
+        labelingview.update()
+        # no message as keeping 'label1', and no message about not viewable 'label2'
+        self.assertEqual(IStatusMessage(self.request).show(), [])
+        # but 'label2' was kept as it is not viewable
+        self.assertEqual(sorted(get_labels(item)), ['label1', 'label2'])
+        self.cleanMemoize()
+        # use global MeetingConfig.update_labels_access_cache to reflect
+        # configuration changes, make "label2" viewable
+        # for now we have "label" and "label1"
+        self.assertEqual(len(labelingview.available_labels(modes=['edit'])[1]), 2)
+        config = list(cfg.getLabelsConfig())
+        config[2]["edit_access_on"] = ""
+        cfg.setLabelsConfig(config)
+        self.assertRaises(Unauthorized, cfg.update_labels_access_cache)
+        self.changeUser('siteadmin')
+        cfg.update_labels_access_cache()
+        self.changeUser('pmCreator1')
+        self.assertEqual(len(labelingview.available_labels(modes=['edit'])[1]), 3)
+
+    def test_pm_AddAdviceBatchActionForm(self):
+        """Test the @@add-advice-batch-action."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates(('itemcreated',))
+        cfg.setItemAdviceEditStates(('itemcreated',))
+        # create some items and ask advice
+        self.changeUser('pmCreator2')
+        item1 = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
+        item1_uid = item1.UID()
+        item2 = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, self.developers_uid))
+        item2_uid = item2.UID()
+        item3 = self.create('MeetingItem', optionalAdvisers=(self.developers_uid, ))
+        item3_uid = item3.UID()
+        self.request.form['form.widgets.uids'] = u','.join([item1_uid, item2_uid, item3_uid])
+        searches_items = self.getMeetingFolder().searches_items
+        # not available as not adviser
+        self.assertRaises(
+            Unauthorized,
+            searches_items.restrictedTraverse('@@add-advice-batch-action').update)
+        self.assertFalse(
+            searches_items.restrictedTraverse('@@add-advice-batch-action').available())
+        # available as developers adviser
+        self.changeUser('pmReviewer2')
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.restrictedTraverse('@@add-advice-batch-action')
+        self.request['PUBLISHED'] = form
+        self.assertTrue(form.available())
+        form.update()
+        self.assertEqual(len(form.brains), 3)
+        self.assertEqual(form.widgets['advice_type'].value, ['positive'])
+        # no common advice_group so no value
+        self.assertEqual(len(form.widgets['advice_group'].terms), 0)
+        # description explains to select common advisable items
+        self.assertEqual(
+            form.widgets['advice_group'].field.description,
+            u'No common or available advice group. Modify your selection.')
+        # not able to give advice for developers
+        self.request.form['form.widgets.uids'] = item3_uid
+        form = searches_items.restrictedTraverse('@@add-advice-batch-action')
+        self.request['PUBLISHED'] = form
+        form.update()
+        self.assertEqual(len(form.brains), 1)
+        # give advice on item1 and item2
+        self.request.form['form.widgets.uids'] = u','.join([item1_uid, item2_uid])
+        form = searches_items.restrictedTraverse('@@add-advice-batch-action')
+        self.request['PUBLISHED'] = form
+        self.request.form['form.widgets.advice_type'] = u'positive'
+        self.request.form['form.widgets.advice_group'] = safe_unicode(self.vendors_uid)
+        self.request.form['form.widgets.advice_comment'] = u"My comment"
+        form.update()
+        self.assertEqual(len(form.brains), 2)
+        self.assertEqual(len(form.widgets['advice_group'].terms), 1)
+        # no description
+        self.assertEqual(form.widgets['advice_group'].field.description, u'')
+        self.assertEqual(
+            form.widgets['advice_group'].terms.terms._terms[0].token, self.vendors_uid)
+        form.handleApply(form, None)
+        # advice were added on items with correct type and advice_hide_during_redaction
+        self.assertEqual(item1.adviceIndex[self.vendors_uid]['type'], 'positive')
+        self.assertEqual(item1.adviceIndex[self.vendors_uid]['comment'], u'My comment')
+        self.assertEqual(item1.getAdvices()[0].advice_comment.raw, u'My comment')
+        self.assertEqual(item2.adviceIndex[self.vendors_uid]['type'], 'positive')
+        # no more advice to give
+        form = searches_items.restrictedTraverse('@@add-advice-batch-action')
+        self.request['PUBLISHED'] = form
+        form.update()
+        self.assertEqual(len(form.widgets['advice_group'].terms), 0)
+        self.assertEqual(
+            form.widgets['advice_group'].field.description,
+            u'No common or available advice group. Modify your selection.')
 
 
 def test_suite():

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.eeafaceted.batchactions import _ as _CEBA
 from collective.eeafaceted.batchactions.browser.viewlets import BatchActionsViewlet
 from collective.eeafaceted.batchactions.browser.views import BaseARUOBatchActionForm
@@ -9,20 +8,30 @@ from collective.eeafaceted.batchactions.browser.views import DeleteBatchActionFo
 from collective.eeafaceted.batchactions.browser.views import LabelsBatchActionForm
 from collective.eeafaceted.batchactions.browser.views import TransitionBatchActionForm
 from collective.eeafaceted.batchactions.utils import listify_uids
+from collective.z3cform.select2.widget.widget import SingleSelect2FieldWidget
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.annex.browser.views import ConcatenateAnnexesBatchActionForm
 from imio.annex.browser.views import DownloadAnnexesBatchActionForm
+from imio.helpers.content import get_vocab
 from plone import api
+from plone.app.textfield import RichText
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
-from Products.CMFCore.utils import _checkPermission
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.content.advice import _advice_type_default
+from Products.PloneMeeting.ftw_labels.utils import filter_access_global_labels
+from Products.PloneMeeting.utils import _add_advice
 from Products.PloneMeeting.utils import displaying_available_items
+from Products.PloneMeeting.utils import is_operational_user
+from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
+from z3c.form.browser.radio import RadioFieldWidget
 from z3c.form.field import Fields
 from zope import schema
 from zope.i18n import translate
+from zope.interface import provider
+from zope.schema._bootstrapinterfaces import IContextAwareDefaultFactory
 
 
 #
@@ -123,7 +132,7 @@ class PMBaseARUOBatchActionForm(BaseARUOBatchActionForm):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         return self.modified_attr_name in self.cfg.getUsedItemAttributes() and \
-            _is_operational_user(self.context)
+            is_operational_user(self.context)
 
     def _apply(self, **data):
         updated = super(PMBaseARUOBatchActionForm, self)._apply(**data)
@@ -198,6 +207,120 @@ class UpdateCommitteesBatchActionForm(PMBaseARUOBatchActionForm):
         return 'Products.PloneMeeting.vocabularies.item_selectable_committees_vocabulary'
 
 
+@provider(IContextAwareDefaultFactory)
+def advice_type_default(context):
+    """
+      Default value is the current item number.
+    """
+    return _advice_type_default(
+        context.REQUEST['PUBLISHED'].advice_portal_type, context)
+
+
+class AddAdviceBatchActionForm(BaseBatchActionForm):
+    """ """
+
+    label = _CEBA("Add common advice for selected elements")
+    button_with_icon = True
+    advice_portal_type = "meetingadvice"
+    overlay = None
+
+    def __init__(self, context, request):
+        super(AddAdviceBatchActionForm, self).__init__(
+            context, request)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(context)
+
+    def available(self):
+        """Available if using advices and current user is an adviser."""
+        # super() will check for self.available_permission
+        return super(AddAdviceBatchActionForm, self).available() and \
+            self.cfg.getUseAdvices() and \
+            self.tool.userIsAmong(['advisers'])
+
+    def _advice_group_vocabulary(self):
+        """ """
+        res = []
+        for brain in self.brains:
+            item = brain.getObject()
+            res.append(item.getAdvicesGroupsInfosForUser(
+                compute_to_edit=False, compute_power_advisers=False)[0])
+        # keep intersection, so advices addable on every items
+        adviser_uids = []
+        if res:
+            adviser_uids = list(set(res[0]).intersection(*res))
+        return get_vocab(
+            self.context,
+            'Products.PloneMeeting.content.advice.advice_group_vocabulary',
+            advice_portal_type=self.advice_portal_type,
+            alterable_advice_org_uids=adviser_uids)
+
+    def _advice_type_vocabulary(self):
+        """ """
+        return get_vocab(
+            self.context,
+            'Products.PloneMeeting.content.advice.advice_type_vocabulary',
+            advice_portal_type=self.advice_portal_type)
+
+    def _update(self):
+        advice_groups = self._advice_group_vocabulary()
+        self.do_apply = len(advice_groups) > 0
+        self.fields += Fields(schema.Choice(
+            __name__='advice_group',
+            title=_(u'title_advice_group'),
+            description=(len(advice_groups) == 0 and
+                         _(u'No common or available advice group. Modify your selection.') or u''),
+            vocabulary=advice_groups,
+            required=len(advice_groups) > 0))
+
+        self.fields += Fields(schema.Choice(
+            __name__='advice_type',
+            title=_(u'title_advice_type'),
+            defaultFactory=advice_type_default,
+            vocabulary=self._advice_type_vocabulary()))
+        self.fields["advice_type"].widgetFactory = SingleSelect2FieldWidget
+
+        self.fields += Fields(schema.Bool(
+            __name__='advice_hide_during_redaction',
+            title=_(u'title_advice_hide_during_redaction'),
+            description=_(
+                "If you do not want the advice to be shown immediately after redaction, you can check this "
+                "box.  This will let you or other member of your group work on the advice before showing it.  "
+                "Note that if you lose access to the advice (for example if the item state evolve), "
+                "the advice will be considered 'Not given, was under edition'.  A manager will be able "
+                "to publish it nevertheless."),
+            required=False,
+            default=False))
+        self.fields["advice_hide_during_redaction"].widgetFactory = RadioFieldWidget
+
+        self.fields += Fields(RichText(
+            __name__='advice_comment',
+            title=_(u'title_advice_comment'),
+            description=_("Enter the official comment."),
+            allowed_mime_types=(u"text/html", ),
+            required=False))
+        self.fields['advice_comment'].widgetFactory = PMRichTextFieldWidget
+        self.fields += Fields(RichText(
+            __name__='advice_observations',
+            title=_(u'title_advice_observations'),
+            description=_("Enter optionnal observations if necessary."),
+            allowed_mime_types=(u"text/html", ),
+            required=False))
+        self.fields['advice_observations'].widgetFactory = PMRichTextFieldWidget
+
+    def _apply(self, **data):
+        """ """
+        for brain in self.brains:
+            _add_advice(
+                brain.getObject(),
+                advice_group=data['advice_group'],
+                advice_type=data['advice_type'],
+                advice_hide_during_redaction=data['advice_hide_during_redaction'],
+                advice_comment=data['advice_comment'],
+                advice_observations=data['advice_observations'],
+                advice_portal_type=self.advice_portal_type)
+        return
+
+
 #
 #
 #  Overrides
@@ -269,7 +392,10 @@ class PMLabelsBatchActionForm(LabelsBatchActionForm):
         """Only available when labels are enabled."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        return cfg.getEnableLabels()
+        return 'labels' in cfg.getUsedItemAttributes()
+
+    def _filter_labels_vocabulary(self, jar):
+        return filter_access_global_labels(jar, mode='edit')
 
     def _can_change_labels(self):
         view = None
@@ -284,20 +410,6 @@ class PMLabelsBatchActionForm(LabelsBatchActionForm):
         return True
 
 
-def _is_operational_user(context):
-    """Is current user an operationnal user in the application for the given p_context."""
-    tool = api.portal.get_tool('portal_plonemeeting')
-    cfg = tool.getMeetingConfig(context)
-    class_name = context.__class__.__name__
-    return class_name != 'MeetingItem' and \
-        ((class_name == 'Meeting' and
-            _checkPermission(ModifyPortalContent, context)) or
-         (not class_name == 'Meeting' and
-         (tool.isManager(cfg) or
-          bool(tool.userIsAmong(
-               suffixes=get_all_suffixes(omitted_suffixes=['observers']), cfg=cfg)))))
-
-
 class PMTransitionBatchActionForm(TransitionBatchActionForm):
     """ """
 
@@ -305,9 +417,14 @@ class PMTransitionBatchActionForm(TransitionBatchActionForm):
         """Only available to users having operational roles in the application.
            This is essentially done to hide this to (restricted)powerobservers
            and to non MeetingManagers on the meeting_view."""
-        return _is_operational_user(self.context)
+        return is_operational_user(self.context)
 
 
+#
+#
+#  Viewlets
+#
+#
 class PMMeetingBatchActionsViewlet(BatchActionsViewlet):
     """ """
     def available(self):
@@ -317,11 +434,6 @@ class PMMeetingBatchActionsViewlet(BatchActionsViewlet):
         return True
 
 
-#
-#
-#  Viewlets
-#
-#
 class AnnexesBatchActionsViewlet(BatchActionsViewlet):
     """ """
 

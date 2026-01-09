@@ -175,6 +175,17 @@
                        onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
                        i18n:attributes="value"/>
               </form>
+              <form name="updateLabelsAccessCacheForm" action="update_labels_access_cache">
+                <p class="discreet" style="color: red;" i18n:translate="pm_update_labels_access_cache_warning">
+                    Warning: the action 'Update labels access cache' will update every items labels access, this needs to be done when labels are activated or when labels config changed.
+                </p>
+                <input class="apButton apButtonAction apButtonAction_update_labels_access_cache"
+                       type="submit"
+                       name="updateLabelsAccessCache"
+                       value="pm_update_labels_access_cache"
+                       onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                       i18n:attributes="value"/>
+              </form>
               <form name="updatePersonalLabelsForm" action="updatePersonalLabels">
                 <p class="discreet" style="color: red;" i18n:translate="pm_update_personal_labels_warning">
                     Warning: the action 'Initialize personal labels' will activate selected labels on every existing items that were last modified before given number of days for every users able to see these items.
@@ -340,9 +351,7 @@
           <td tal:define="field python:here.getField('computeItemReferenceForItemsOutOfMeeting')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('enableLabels')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
+          <td></td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('toDiscussSetOnItemInsert')">
@@ -1133,7 +1142,9 @@
           <td tal:define="field python:here.getField('inheritedAdviceRemoveableByAdviser')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
+          <td tal:define="field python:here.getField('enableAddQuickAdvice')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
         </tr>
         <tr valign="top">
           <td colspan="3">
@@ -1246,15 +1257,23 @@
           </td>
         </tr>
         <tr>
-          <td tal:define="field python:here.getField('itemLabelsEditableByProposingGroupForever')">
+          <td colspan="3" tal:define="field python:here.getField('labelsConfig')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+        </tr>
+        <tr>
+          <td colspan="3" tal:define="field python:here.getField('itemFieldsConfig')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+        <tr>
           <td tal:define="field python:here.getField('itemInternalNotesEditableBy')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('usingGroups')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td></td>
         </tr>
       </table>
     </tal:advices>

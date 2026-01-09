@@ -23,7 +23,6 @@ from collective.documentgenerator.interfaces import IGenerablePODTemplates
 from collective.eeafaceted.collectionwidget.content.dashboardcollection import IDashboardCollection
 from collective.eeafaceted.collectionwidget.vocabulary import CachedCollectionVocabulary
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
-from collective.eeafaceted.z3ctable.columns import EMPTY_STRING
 from collective.iconifiedcategory.config import get_sort_categorized_tab
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_icon_url
@@ -36,6 +35,7 @@ from collective.iconifiedcategory.vocabularies import CategoryVocabulary
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
+from imio.helpers import EMPTY_STRING
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import find
@@ -65,6 +65,7 @@ from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
 from Products.PloneMeeting.interfaces import IMeetingItem
+from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import get_context_with_request
 from Products.PloneMeeting.utils import get_datagridfield_column_value
@@ -2103,7 +2104,7 @@ class AnnexRestrictShownAndEditableAttributesVocabulary(object):
 
     def __call__(self, context):
         res = []
-        annex_attributes = ['confidentiality', 'to_be_printed', 'signed', 'publishable']
+        annex_attributes = ['confidentiality', 'to_be_printed', 'signed', 'publishable', 'approved']
         for annex_attr in annex_attributes:
             for suffix in ('display', 'edit'):
                 term_id = '{0}_{1}'.format(annex_attr, suffix)
@@ -2447,6 +2448,7 @@ class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
                 usage=None,
                 uids=missing_term_uids,
                 highlight_missing=True,
+                include_voting_group=True,
                 review_state=[])
             terms += missing_terms._terms
         return SimpleVocabulary(terms)
@@ -3490,3 +3492,23 @@ class ConfigHideHistoryTosVocabulary(object):
 
 
 ConfigHideHistoryTosVocabularyFactory = ConfigHideHistoryTosVocabulary()
+
+
+class ItemFieldsConfigVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        terms = []
+        item_attrs = context.listAttributes(MeetingItem.schema)
+        # for now, only followUp related fields are configurable
+        configurable_field_names = ['neededFollowUp', 'providedFollowUp']
+        for k, v in item_attrs.items():
+            if k in configurable_field_names:
+                terms.append(SimpleTerm(k, k, v))
+        return SimpleVocabulary(terms)
+
+
+ItemFieldsConfigVocabularyFactory = ItemFieldsConfigVocabulary()

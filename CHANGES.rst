@@ -2,7 +2,191 @@ Changelog
 =========
 
 
-4.2.24.2 (unreleased)
+4.2.28.6 (unreleased)
+---------------------
+
+- Fixed `Migrate_To_4216` upgrade steps order by re-applying `annex portal_type`
+  from package `Products.PloneMeeting:default` after upgrade of
+  `collective.dms.scanbehavior` so `add_permission` is correct.
+  [gbastien]
+- Use `requests` to manage external link authentication token.
+  [gbastien]
+
+4.2.28.5 (2026-01-08)
+---------------------
+
+- Use `SSO/Vision` same var env names everywhere.
+  [gbastien]
+
+4.2.28.4 (2026-01-08)
+---------------------
+
+- Use `SSO/Vision` same var env names everywhere.
+  [gbastien]
+
+4.2.28.3 (2026-01-08)
+---------------------
+
+- Use new `SSO/Vision` env var names for external link to `iA.Vision`.
+  [gbastien]
+
+4.2.28.2 (2026-01-05)
+---------------------
+
+- Fixed `PMCategorizedObjectInfoAdapter._reader_groups` to take into account
+  `reader_restricted_copy_groups` that was not implemented at all.
+  [gbastien]
+- Integrate new value `approved` from `collective.iconifiedcategory`.
+  [gbastien]
+- Set `MeetingConfig.enableAddQuickAdvice` to `False` by default.
+  [gbastien]
+
+4.2.28.1 (2025-12-24)
+---------------------
+
+- Enlarge `Add complete advice` area in add complete/quick advice tooltipster.
+  [gbastien]
+
+4.2.28 (2025-12-22)
+-------------------
+
+- Removed CSS related to faceted table sticky header as it is managed and fixed
+  in `plonetheme.imioapps`.
+  [gbastien]
+- Fixed `searchitemswithneededfollowup` and `searchitemswithprovidedfollowup`
+  `DashboardCollections` that were not filtering on `MeetingItem portal_type`.
+  [gbastien]
+- Moved adaptable `MeetingItem._advicePortalTypeForAdviser` to
+  `ToolPloneMeeting` (no more adaptable).
+  [gbastien]
+- Added `Add quick/complete advice` action.
+  [gbastien]
+- Added `Add advices` batch action:
+
+  - Moved `MeetingItem._adviceTypesForAdviser` to
+    `MeetingConfig._adviceTypesForAdviser` and moved
+    `MeetingItem._adviceTypesForAdviser` to
+    `ToolPloneMeeting._adviceTypesForAdviser` so it does not require an item;
+  - the action is associated to one advice `portal_type`, added the action for
+    `meetingadvicefinances` portal_type.
+
+  [gbastien]
+- Fixed CSS class `collapsible-inner-content` background color.
+  [gbastien]
+
+4.2.27.5 (2025-12-16)
+---------------------
+
+- Fixed `Migrate_To_4216._updateLabelsConfig` by giving access to
+  `MeetingManagers` by default when old parameter
+  `MeetingConfig.itemLabelsEditableByProposingGroupForever` was `True`.
+  Adapted it also so it is possible to define a custom
+  `MeetingConfig.labelsConfig` before migration and takes it into account
+  for items labels cache update.
+  [gbastien]
+- Completed `Migrate_To_4216` by calling `_removeBrokenAnnexes` and upgrade
+  other profiles, this will especially upgrade `collective.iconifiedcategory`
+  by adding the `to_approve/approve` new attributes on annexes.
+  [gbastien]
+- Added `imio.helpers.content` annotation manipulation related functions to
+  `safe_utils` (`add_to_annotation`, `del_from_annotation`,
+  `get_from_annotation`, `pop_from_annotation` and `set_to_annotation`).
+  [gbastien]
+- Optimized `PMLabeling.filter_manageable_labels` to not iterate every labels
+  when called from a faceted dashboard (just need to iterate active labels).
+  [gbastien]
+- Fixed `PMCategorizedObjectInfoAdapter._reader_groups` that was not
+  implemented to receive an `item` as parameter like it is the case for
+  `PMCategorizedObjectInfoAdapter._suffix_proposinggroup`.
+  [gbastien]
+- Adapted `annex` and `annexDecision` portal_type XML definition as
+  `IScanFieldsHiddenToSignAndSigned` is deprecated because now `IScanFields`
+  does not include `to_sign/signed` fields anymore, so back to the default
+  `imio.annex` configuration.
+  [gbastien]
+
+4.2.27.4 (2025-11-04)
+---------------------
+
+- Fixed link to `iA.Vision`:
+
+  - Check again if can link in `LinkWithVisionForm.update` and
+    `LinkWithVisionForm.handle_apply`;
+  - Do not fail to display error message if it contains unicode characters.
+
+  [gbastien]
+
+4.2.27.3 (2025-11-03)
+---------------------
+
+- Environment variable `MUNICIPALITY_ID` is actually `VISION_MUNICIPALITY_ID`.
+  [gbastien]
+
+4.2.27.2 (2025-11-03)
+---------------------
+
+- Take into acount environment variable `MUNICIPALITY_ID` to manage links
+  to external applications.
+  [gbastien]
+
+4.2.27.1 (2025-10-23)
+---------------------
+
+- Fixed `ExternalView.show_section`, will not be available if
+  `VISION_AUTH_USERNAME` is an empty string neither.
+  [gbastien]
+
+4.2.27 (2025-10-22)
+-------------------
+
+- Add 2026 holidays in profile.
+  [aduchene]
+- Fixed `MeetingItem.title_or_id` to return `portal_type's title` instead
+  translated `portal_type` as now we do not translate `portal_type` anymore
+  but use the `portal_type's title`.
+  [gbastien]
+- Manage item follow-up.
+  [gbastien]
+- Invalidate dashboard collection counter when a label is (un)selected.
+  This is done only when the added/removed global or personal label is used in
+  an enabled dashboard collection query.
+  [gbastien]
+
+4.2.26 (2025-10-07)
+-------------------
+
+- Fixed `MeetingItem._updateAdvices` to avoid error when comparing `Dicts`
+  `self.adviceIndex` and `old_adviceIndex` in case we have a `datetime.datetime`
+  and a `None`.
+  [gbastien]
+- Display elements from external source `iA.Vision`, added form to be able
+  to `link/unlink` elements from it as well.
+  [gbastien]
+
+4.2.25 (2025-09-26)
+-------------------
+
+- Completed parameter `disable_autosearch_in` of `imio.webspellchecker` to
+  include CSS class of input `go to item` on item view and `change item number`
+  on meeting view.
+  [gbastien]
+- Display `voting group` in `MeetingConfig.orderedContacts` so we can detect
+  easily for which held position it is configured.
+  [gbastien]
+- Added `MeetingConfig.labelsConfig` to be able to configure who can
+  view/edit labels.
+  [gbastien]
+- Added parameter `extra_ctx={}` to `utils._base_extra_expr_ctx` to be able
+  to pass extra context immediatelly without having to `dict.update` after.
+  [gbastien]
+
+4.2.24.3 (2025-09-04)
+---------------------
+
+- Use median space to separate optional letters in `abstenu·e·s` of print_votes.
+  [gbastien]
+
+4.2.24.2 (2025-08-28)
 ---------------------
 
 - Fixed `Migrate_To_4200._fixPODTemplatesInstructions` to manage
@@ -16,6 +200,14 @@ Changelog
   [gbastien]
 - Fixed `utils.sendMail`, return same result when `MeetingConfig.mailMode`
   is `test` or `enabled`.
+  [gbastien]
+- In `ItemDocumentGenerationHelperView.print_votes`, added possibility to
+  use special character `|` in label so it will generate several different
+  labels useable thru the `vote_label_pattern` parameter.
+  [gbastien]
+- Added parameter `is_voter=None` to `print_attendees` and
+  `print_attendees_by_type` so it is possible to get attendees that are
+  voters (`True`), non voters (`False`) or everybody (`None`).
   [gbastien]
 
 4.2.24.1 (2025-07-11)
@@ -452,7 +644,7 @@ Changelog
   so it can be executed separately than other `test_pm_WFA_waiting_advices_`
   tests.
   Completed `test_pm_ItemActionsPanelCachingProfiles` to check when reviewer
-  may also edit crated item (when using `extra_suffixes`), this way we may
+  may also edit created item (when using `extra_suffixes`), this way we may
   remove `_reviewers_may_edit_itemcreated` helper.
   [gbastien]
 - Fixed `test_pm_ItemMailNotificationLateItem` when called from subplugins.

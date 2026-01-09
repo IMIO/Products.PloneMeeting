@@ -466,6 +466,22 @@
         </div>
     </tal:defines>
 
+    <tal:comment replace="nothing">Externals linked elements</tal:comment>
+    <tal:external-infos condition="python: context.restrictedTraverse('@@load-external-infos').show_section()">
+        <div id="external-infos"
+             class="collapsible discreet not-auto-collapsible-activable"
+             tal:attributes="onclick python: 'toggleDetails(\'collapsible-external-infos\', toggle_parent_active=true, parent_tag=null, load_view=\'@@load-external-infos?external_user_id=%s\');;' % request.get('external_user_id', '');">
+          <span class="item_attribute_label" i18n:translate="external_linked_elements">
+              External linked elements
+          </span>
+        </div>
+        <div id="collapsible-external-infos" class="collapsible-content discreet">
+          <div class="collapsible-inner-content">
+             <img tal:attributes="src string:${portal_url}/spinner_small.gif" />
+          </div>
+        </div>
+    </tal:external-infos>
+
     <tal:comment replace="nothing">Description</tal:comment>
     <tal:field define="fieldName python: 'description'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
@@ -677,6 +693,16 @@
 
     <tal:comment replace="nothing">Internal notes</tal:comment>
     <tal:field define="fieldName python: 'internalNotes'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
+    <tal:comment replace="nothing">Needed follow up</tal:comment>
+    <tal:field define="fieldName python: 'neededFollowUp'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
+    <tal:comment replace="nothing">Provided follow up</tal:comment>
+    <tal:field define="fieldName python: 'providedFollowUp'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 

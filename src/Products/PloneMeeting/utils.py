@@ -61,6 +61,7 @@ from plone.app.uuid.utils import uuidToObject
 from plone.autoform.interfaces import WIDGETS_KEY
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
+from plone.dexterity.utils import createContentInContainer
 from plone.dexterity.utils import resolveDottedName
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.locking.events import unlockAfterModification
@@ -823,6 +824,20 @@ def getDateFromDelta(aDate, delta):
     return new_date
 
 
+def is_operational_user(obj):
+    """Is current user an operationnal user in the application for the given p_obj."""
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(obj)
+    class_name = obj.__class__.__name__
+    return ((class_name == 'Meeting' and
+            _checkPermission(ModifyPortalContent, obj)) or
+         (not class_name == 'Meeting' and
+         (tool.isManager(cfg) or
+          bool(tool.userIsAmong(
+               suffixes=get_all_suffixes(omitted_suffixes=['observers']), cfg=cfg)))))
+
+
+
 def is_transition_before_date(obj, transition, date):
     '''Returns True if this p_obj last p_transition was made before p_date.
        p_date is a python datetime.datetime.'''
@@ -1310,7 +1325,7 @@ def applyOnTransitionFieldTransform(obj, transitionId):
       Apply onTransitionFieldTransforms defined in the corresponding obj MeetingConfig.
     '''
     idxs = []
-    extra_expr_ctx = _base_extra_expr_ctx(obj)
+    extra_expr_ctx = _base_extra_expr_ctx(obj, {'item': obj, })
     cfg = extra_expr_ctx['cfg']
     for transform in cfg.getOnTransitionFieldTransforms():
         tal_expr = transform['tal_expression'].strip()
@@ -1319,7 +1334,6 @@ def applyOnTransitionFieldTransform(obj, transitionId):
            ('.' not in transform['field_name'] or
                 transform['field_name'].split('.')[0] == obj.getTagName()):
             try:
-                extra_expr_ctx.update({'item': obj, })
                 res = _evaluateExpression(
                     obj,
                     expression=tal_expr,
@@ -1352,7 +1366,7 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId, items=[]):
       check if we need to trigger an action on linked items
       defined in MeetingConfig.meetingExecuteActionOnLinkedItems.
     '''
-    extra_expr_ctx = _base_extra_expr_ctx(meeting)
+    extra_expr_ctx = _base_extra_expr_ctx(meeting, {'meeting': meeting, })
     cfg = extra_expr_ctx['cfg']
     wfTool = api.portal.get_tool('portal_workflow')
     wf_comment = _('wf_transition_triggered_by_application')
@@ -1374,7 +1388,7 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId, items=[]):
                     # do this as Manager to avoid permission problems, the configuration
                     # is supposed to be applied
                     with api.env.adopt_roles(['Manager']):
-                        extra_expr_ctx.update({'item': item, 'meeting': meeting})
+                        extra_expr_ctx.update({'item': item, })
                         _evaluateExpression(
                             item,
                             expression=action['tal_expression'].strip(),
@@ -1993,8 +2007,7 @@ def getAvailableMailingLists(obj, pod_template, include_recipients=False):
     if not mailing_lists:
         return res
     try:
-        extra_expr_ctx = _base_extra_expr_ctx(obj)
-        extra_expr_ctx.update({'obj': obj, })
+        extra_expr_ctx = _base_extra_expr_ctx(obj, {'obj': obj, })
         for line in mailing_lists.split('\n'):
             name, expression, userIds = line.split(';')
             if not expression or _evaluateExpression(
@@ -2027,8 +2040,7 @@ def extract_recipients(obj, values):
     # compile userIds in case we have a TAL expression
     recipients = []
     userIdsOrEmailAddresses = []
-    extra_expr_ctx = _base_extra_expr_ctx(obj)
-    extra_expr_ctx.update({'obj': obj, })
+    extra_expr_ctx = _base_extra_expr_ctx(obj, {'obj': obj, })
     for value in values.strip().split(','):
         # value may be a TAL expression returning a list of userIds or email addresses
         # or a group (of users)
@@ -2361,9 +2373,9 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item, item_state, org_uid=None
     return apply_meetingmanagers_access, suffix_roles
 
 
-def is_proposing_group_editor(org_uid, cfg):
+def is_proposing_group_editor(org_uid, cfg, suffixes=[]):
     """ """
-    suffixes = cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
+    suffixes = suffixes or cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
     return cfg.aq_parent.user_is_in_org(org_uid=org_uid, suffixes=suffixes)
 
 
@@ -2474,7 +2486,7 @@ def get_next_meeting(meeting_date, cfg, date_gap=0):
     return res
 
 
-def _base_extra_expr_ctx(obj):
+def _base_extra_expr_ctx(obj, extra_ctx={}):
     """ """
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(obj)
@@ -2496,6 +2508,7 @@ def _base_extra_expr_ctx(obj):
             'imio_history_utils': SecureModuleImporter['imio.history.safe_utils'],
             'utils': SecureModuleImporter['Products.PloneMeeting.safe_utils'],
             'pm_utils': SecureModuleImporter['Products.PloneMeeting.safe_utils'], }
+    data.update(extra_ctx)
     return data
 
 
@@ -2803,6 +2816,28 @@ def configure_advice_dx_localroles_for(portal_type, org_uids=[]):
                                 force=True)
     if msg:
         logger.warn(msg)
+
+
+def _add_advice(item,
+                advice_group,
+                advice_type,
+                advice_comment=None,
+                advice_observations=None,
+                advice_hide_during_redaction=False,
+                advice_portal_type='meetingadvice'):
+    """Create an advice in p_item.
+       p_advice_comment and p_advice_observations must be RichTextValue intances."""
+    advice = createContentInContainer(
+        item,
+        advice_portal_type,
+        **{'advice_group': advice_group,
+           'advice_type': advice_type,
+           'advice_hide_during_redaction': advice_hide_during_redaction,
+           'advice_comment': advice_comment,
+           'advice_observations': advice_observations, })
+    # make sure we do not have a 302 status after add
+    advice.REQUEST.RESPONSE.setStatus(200)
+    return advice
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

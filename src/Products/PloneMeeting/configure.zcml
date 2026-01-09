@@ -50,6 +50,7 @@
   <include package=".ckeditor" />
   <include package=".content" />
   <include package=".documentgenerator" />
+  <include package=".external" />
   <include package=".filters" />
   <include package=".ftw_labels" />
   <include package=".widgets" />
@@ -288,6 +289,12 @@
   <!-- available on MeetingItem to compute internalNotes releated local_roles -->
   <adapter
     for="Products.PloneMeeting.interfaces.IMeetingItem"
+    provides="collective.iconifiedcategory.interfaces.IIconifiedInfos"
+    factory=".adapters.PMCategorizedObjectInfoAdapter" />
+
+  <!-- available on MeetingConfig to compute labels access related groups -->
+  <adapter
+    for="Products.PloneMeeting.interfaces.IMeetingConfig"
     provides="collective.iconifiedcategory.interfaces.IIconifiedInfos"
     factory=".adapters.PMCategorizedObjectInfoAdapter" />
 

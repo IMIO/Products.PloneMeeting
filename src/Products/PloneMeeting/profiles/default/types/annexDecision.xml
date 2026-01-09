@@ -18,14 +18,12 @@
  <property name="default_view_fallback">False</property>
  <property name="add_permission">PloneMeeting.AddAnnexDecision</property>
  <property name="klass">imio.annex.content.annex.Annex</property>
-
  <property name="behaviors" purge="True">
   <element value="plone.app.dexterity.behaviors.filename.INameFromFileName"/>
   <element value="plone.app.lockingbehavior.behaviors.ILocking"/>
   <element value="collective.iconifiedcategory.behaviors.iconifiedcategorization.IIconifiedCategorization"/>
-  <element value="imio.annex.behaviors.IScanFieldsHiddenToSignAndSigned"/>
+  <element value="collective.dms.scanbehavior.behaviors.IScanFields"/>
  </property>
-
  <property name="schema"></property>
  <property name="model_source">
      &lt;model xmlns:security="http://namespaces.plone.org/supermodel/security" xmlns:marshal="http://namespaces.plone.org/supermodel/marshal" xmlns:form="http://namespaces.plone.org/supermodel/form" xmlns="http://namespaces.plone.org/supermodel/schema" xmlns:i18n="http://xml.zope.org/namespaces/i18n" i18n:domain="PloneMeeting"&gt;

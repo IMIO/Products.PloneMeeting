@@ -517,10 +517,28 @@ class MeetingConfigDescriptor(Descriptor):
         # What is the format of the item references ?
         # Default is Ref. MeetingDate/ItemNumberInMeeting
         self.itemReferenceFormat = "python: 'Ref. ' + (here.hasMeeting() and " \
-            "here.restrictedTraverse('@@pm_unrestricted_methods').getLinkedMeetingDate().strftime('%Y%m%d') or '') " \
-            "+ '/' + str(here.getItemNumber(relativeTo='meeting', for_display=True))"
+            "here.restrictedTraverse('@@pm_unrestricted_methods')." \
+            "getLinkedMeetingDate().strftime('%Y%m%d') or '') + '/' + " \
+            "str(here.getItemNumber(relativeTo='meeting', for_display=True))"
         self.computeItemReferenceForItemsOutOfMeeting = False
-        self.enableLabels = False
+        self.labelsConfig = (
+            {'edit_access_on': '',
+             'edit_access_on_cache': '1',
+             'edit_groups': [
+                'configgroup_meetingmanagers',
+                'suffix_proposing_group_creators',
+                'suffix_proposing_group_prereviewers',
+                'suffix_proposing_group_reviewers'],
+             'edit_groups_excluding': '0',
+             'edit_states': [],
+             'label_id': '*',
+             'update_local_roles': '0',
+             'view_access_on': '',
+             'view_access_on_cache': '1',
+             'view_groups': [],
+             'view_groups_excluding': '0',
+             'view_states': []},
+        )
         # labels are like :
         # {'read': {'color': 'blue', 'label_id': 'read', 'by_user': True, 'title': 'Read'},
         #  'urgent': {'color': 'red', 'label_id': 'urgent', 'by_user': False, 'title': 'Urgent'}}}
@@ -549,8 +567,8 @@ class MeetingConfigDescriptor(Descriptor):
         # items that must be late-presented to this meeting.
         self.freezeDeadlineDefault = '1.14:30'
         # by default, annex attribute 'confidential' is restricted to MeetingManagers
-        self.annexRestrictShownAndEditableAttributes = ('confidentiality_display',
-                                                        'confidentiality_edit')
+        self.annexRestrictShownAndEditableAttributes = (
+            'confidentiality_display', 'confidentiality_edit')
         # annex confidentiality, setting something in 3 attributes here
         # under will automatically enable confidentiality on relevant CategoryGroup
         self.itemAnnexConfidentialVisibleFor = ()
@@ -562,8 +580,18 @@ class MeetingConfigDescriptor(Descriptor):
         self.adviceConfidentialFor = ()
         self.hideNotViewableLinkedItemsTo = ()
         self.inheritedAdviceRemoveableByAdviser = False
-        self.itemLabelsEditableByProposingGroupForever = False
+        self.enableAddQuickAdvice = False
         self.itemInternalNotesEditableBy = []
+        self.itemFieldsConfig = (
+            {'name': "neededFollowUp",
+             'view': "python: item.may_view_follow_up()",
+             'edit': "python: item.may_edit_follow_up('neededFollowUp')"},
+            {'name': "providedFollowUp",
+             'view': "python: item.may_view_follow_up()",
+             'edit': "python: item.may_edit_follow_up('providedFollowUp')"},
+        )
+        self.votesResultTALExpr = ''
+
         self.usingGroups = []
         # List of other meetingConfigs, item of this meetingConfig
         # will be clonable to
@@ -576,15 +604,15 @@ class MeetingConfigDescriptor(Descriptor):
 
         # Workflow- and security-related parameters ----------------------------
         self.itemWorkflow = 'meetingitem_workflow'
-        self.itemConditionsInterface = 'Products.PloneMeeting.interfaces.' \
-                                       'IMeetingItemWorkflowConditions'
-        self.itemActionsInterface = 'Products.PloneMeeting.interfaces.' \
-                                    'IMeetingItemWorkflowActions'
+        self.itemConditionsInterface = \
+            'Products.PloneMeeting.interfaces.IMeetingItemWorkflowConditions'
+        self.itemActionsInterface = \
+            'Products.PloneMeeting.interfaces.IMeetingItemWorkflowActions'
         self.meetingWorkflow = 'meeting_workflow'
-        self.meetingConditionsInterface = 'Products.PloneMeeting.interfaces.' \
-                                          'IMeetingWorkflowConditions'
-        self.meetingActionsInterface = 'Products.PloneMeeting.interfaces.' \
-                                       'IMeetingWorkflowActions'
+        self.meetingConditionsInterface = \
+            'Products.PloneMeeting.interfaces.IMeetingWorkflowConditions'
+        self.meetingActionsInterface = \
+            'Products.PloneMeeting.interfaces.IMeetingWorkflowActions'
         # Workflow adaptations are sets of changes that can be applied to
         # default PloneMeeting workflows.
         self.workflowAdaptations = []
@@ -949,6 +977,19 @@ class PloneMeetingConfiguration(Descriptor):
             {'date': '2025/11/11', },
             {'date': '2025/11/15', },
             {'date': '2025/12/25', },
+
+            {'date': '2026/01/01', },  # 2026
+            {'date': '2026/04/06', },
+            {'date': '2026/05/01', },
+            {'date': '2026/05/14', },
+            {'date': '2026/05/25', },
+            {'date': '2026/07/21', },
+            {'date': '2026/08/15', },
+            {'date': '2026/09/27', },
+            {'date': '2026/11/01', },
+            {'date': '2026/11/11', },
+            {'date': '2026/11/15', },
+            {'date': '2026/12/25', },
         ]
         self.delayUnavailableEndDays = ()
         self.configGroups = ()

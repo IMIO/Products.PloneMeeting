@@ -86,6 +86,7 @@ from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import INSERTING_ON_ITEM_DECISION_FIRST_WORDS_NB
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
+from Products.PloneMeeting.config import ITEM_LABELS_ACCESS_CACHE_ATTR
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_COMMITTEE
@@ -107,6 +108,8 @@ from Products.PloneMeeting.config import WriteItemMeetingManagerFields
 from Products.PloneMeeting.config import WriteMarginalNotes
 from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.events import item_added_or_initialized
+from Products.PloneMeeting.ftw_labels.utils import compute_labels_access
+from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
@@ -135,6 +138,7 @@ from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import is_editing
+from Products.PloneMeeting.utils import is_proposing_group_editor
 from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import ItemDuplicatedEvent
 from Products.PloneMeeting.utils import ItemDuplicatedToOtherMCEvent
@@ -439,8 +443,8 @@ class MeetingItemWorkflowConditions(object):
            self.context.hasMeeting():
             meeting = self.context.getMeeting()
             if meeting.date < datetime.now():
-                if not self.context.fieldIsEmpty('decision') or not \
-                   self.context.fieldIsEmpty('motivation'):
+                if not fieldIsEmpty('decision', self.context) or \
+                   not fieldIsEmpty('motivation', self.context):
                     res = True
                 else:
                     itemNumber = self.context.getItemNumber(relativeTo='meeting',
@@ -883,6 +887,7 @@ class MeetingItemWorkflowActions(object):
             meetingExecuteActionOnLinkedItems(
                 meeting, transition.id, [self.context])
         self.context.send_powerobservers_mail_if_relevant('late_item_in_meeting')
+
     security.declarePrivate('doItemFreeze')
 
     def doItemFreeze(self, stateChange):
@@ -1521,7 +1526,7 @@ schema = Schema((
         default_output_type="text/x-html-safe",
         optional=True,
         # we use WriteMarginalNotes so MeetingManagers may edit votesResult
-        # when item is decided but as field in not in
+        # when item is decided but as field is not in
         # MeetingItem._bypass_meeting_closed_check_for it will not be quick editable
         # when the meeting is closed
         write_permission=WriteMarginalNotes,
@@ -1662,6 +1667,40 @@ schema = Schema((
         optional=True,
         read_permission=WriteInternalNotes,
         write_permission=WriteInternalNotes,
+    ),
+    TextField(
+        name="neededFollowUp",
+        allowable_content_types=("text/html",),
+        widget=RichWidget(
+            condition="python: here.adapted().show_field('neededFollowUp')",
+            label="Neededfollowup",
+            label_msgid="PloneMeeting_label_neededFollowUp",
+            description="NeededFollowUp",
+            description_msgid="needed_follow_up_descr",
+            i18n_domain="PloneMeeting",
+        ),
+        default_content_type="text/html",
+        default_output_type="text/x-html-safe",
+        searchable=True,
+        optional=True,
+        write_permission=View,
+    ),
+    TextField(
+        name="providedFollowUp",
+        allowable_content_types=("text/html",),
+        widget=RichWidget(
+            condition="python: here.adapted().show_field('providedFollowUp')",
+            label="Providedfollowup",
+            label_msgid="PloneMeeting_label_providedFollowUp",
+            description="ProvidedFollowUp",
+            description_msgid="provided_follow_up_descr",
+            i18n_domain="PloneMeeting",
+        ),
+        default_content_type="text/html",
+        default_output_type="text/x-html-safe",
+        searchable=True,
+        optional=True,
+        write_permission=View,
     ),
     TextField(
         name='marginalNotes',
@@ -2207,10 +2246,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            view to use it in the widget in edit mode.  This way, we can display
            more informations than just the title.'''
         if withTypeName:
-            return "{0} - {1}".format(translate(self.portal_type,
-                                                domain="plone",
-                                                context=self.REQUEST).encode('utf-8'),
-                                      self.Title(withMeetingDate=True))
+            portal_types = api.portal.get_tool('portal_types')
+            return "{0} - {1}".format(
+                portal_types[self.portal_type].title,
+                self.Title(withMeetingDate=True))
         return self.Title(withMeetingDate=True)
 
     def Title(self, withMeetingDate=False, withItemNumber=False, withItemReference=False, **kwargs):
@@ -2603,6 +2642,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         return cfg.getBudgetDefault()
+
+    security.declarePublic('showField')
+
+    def show_field(self, field_name):
+        '''See doc in interfaces.py.'''
+        item = self.getSelf()
+        if not item.isDefinedInTool() and \
+            item.attribute_is_used(field_name):
+            # evaluate TAL expression
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(item)
+            return cfg.eval_tal_expr_for_field(item, field_name)
 
     security.declarePublic('showObservations')
 
@@ -3079,6 +3130,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if _checkPermission(ModifyPortalContent, item):
             return True
         return False
+
+    def get_addable_advice_portal_types(self, advices_to_add):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        res = []
+        for advice_to_add in advices_to_add:
+            advice_portal_type = tool._advicePortalTypeForAdviser(advice_to_add)
+            if advice_portal_type not in res:
+                res.append(advice_portal_type)
+        return res
 
     security.declareProtected(ModifyPortalContent, 'setItemIsSigned')
 
@@ -4232,8 +4293,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = ''
         if not clear and self.adapted()._may_update_item_reference():
             meeting = self.getMeeting()
-            extra_expr_ctx = _base_extra_expr_ctx(self)
-            extra_expr_ctx.update({'item': self, 'meeting': meeting})
+            extra_expr_ctx = _base_extra_expr_ctx(
+                self, {'item': self, 'meeting': meeting})
             cfg = extra_expr_ctx['cfg']
             # default raise_on_error=False so if the expression
             # raise an error, we will get '' for reference and a message in the log
@@ -4886,7 +4947,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def addRecurringItemToMeeting(self, meeting):
         '''See doc in interfaces.py.'''
         item = self.getSelf()
-        wfTool = api.portal.get_tool('portal_workflow')
+        wf_tool = api.portal.get_tool('portal_workflow')
         tool = api.portal.get_tool('portal_plonemeeting')
         try:
             item.REQUEST.set('PUBLISHED', meeting)
@@ -4901,11 +4962,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 trs = cfg.getTransitionsForPresentingAnItem(
                     org_uid=item.getProposingGroup())
                 if "validate" in get_transitions(item):
-                    wfTool.doActionFor(item, "validate")
+                    wf_tool.doActionFor(item, "validate")
                     trs = ["present"]
                 for tr in trs:
                     if tr in get_transitions(item):
-                        wfTool.doActionFor(item, tr)
+                        wf_tool.doActionFor(item, tr)
             # the item must be at least presented to a meeting, either we raise
             if not item.hasMeeting():
                 raise WorkflowException
@@ -4920,8 +4981,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _bypass_meeting_closed_check_for(self, fieldName):
         """See docstring in interfaces.py"""
-        if fieldName in ['internalNotes', 'marginalNotes']:
+        if fieldName in [
+                'internalNotes', 'marginalNotes',
+                'neededFollowUp', 'providedFollowUp']:
             return True
+
+    def _bypass_write_perm_check_for(self, fieldName):
+        """See docstring in interfaces.py"""
+        if fieldName in ['neededFollowUp', 'providedFollowUp']:
+            item = self.getSelf()
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(item)
+            return cfg.eval_tal_expr_for_field(item, fieldName, mode='edit')
 
     def _bypass_quick_edit_notify_modified_for(self, fieldName):
         """See docstring in interfaces.py"""
@@ -4948,10 +5019,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # some fields are still editable even when meeting closed
         bypassMeetingClosedCheck = bypassMeetingClosedCheck or \
             self.adapted()._bypass_meeting_closed_check_for(fieldName)
+        bypassWritePermissionCheck = bypassWritePermissionCheck or \
+            self.adapted()._bypass_write_perm_check_for(fieldName)
+        # write_permission is "View" for custom management
+        # if bypassWritePermissionCheck is False, make sure write_permission
+        # is no more "View", set it to "Modify portal content"
+        write_perm = field.write_permission
+        if not bypassWritePermissionCheck and write_perm == "View":
+            write_perm = ModifyPortalContent
         res = checkMayQuickEdit(
             self,
             bypassWritePermissionCheck=bypassWritePermissionCheck,
-            permission=field.write_permission,
+            permission=write_perm,
             expression=self.Schema()[fieldName].widget.condition,
             onlyForManagers=onlyForManagers,
             bypassMeetingClosedCheck=bypassMeetingClosedCheck)
@@ -5626,7 +5705,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            evaluating the TAL expression on current MeetingConfig.customAdvisers and checking if
            corresponding group contains at least one adviser.
            The method returns a list of dict containing adviser infos.'''
-        extra_expr_ctx = _base_extra_expr_ctx(self)
+        extra_expr_ctx = _base_extra_expr_ctx(self, {'item': self, })
         cfg = extra_expr_ctx['cfg']
         res = []
         for customAdviser in cfg.getCustomAdvisers():
@@ -5645,7 +5724,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Check that the TAL expression on the group returns True
             eRes = False
             org = get_organization(customAdviser['org'])
-            extra_expr_ctx.update({'item': self, 'org': org, 'org_uid': customAdviser['org']})
+            extra_expr_ctx.update({'org': org, 'org_uid': customAdviser['org']})
             eRes = _evaluateExpression(
                 self,
                 expression=customAdviser['gives_auto_advice_on'],
@@ -5706,13 +5785,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         attr_name = 'autoRestrictedCopyGroups' if restricted else 'autoCopyGroups'
         setattr(self, attr_name, PersistentList())
         attr = getattr(self, attr_name)
-        extra_expr_ctx = _base_extra_expr_ctx(self)
+        extra_expr_ctx = _base_extra_expr_ctx(
+            self, {'item': self, 'isCreated': isCreated})
         cfg = extra_expr_ctx['cfg']
         for org_uid, expr in cfg.get_orgs_with_as_copy_group_on_expression(
                 restricted=restricted).items():
-            extra_expr_ctx.update({'item': self,
-                                   'isCreated': isCreated,
-                                   'org_uid': org_uid})
+            extra_expr_ctx.update({'org_uid': org_uid, })
             suffixes = _evaluateExpression(
                 self,
                 expression=expr,
@@ -5736,8 +5814,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _evalAdviceAvailableOn(self, available_on_expr, mayEdit=True):
         """ """
-        extra_expr_ctx = _base_extra_expr_ctx(self)
-        extra_expr_ctx.update({'item': self, 'mayEdit': mayEdit})
+        extra_expr_ctx = _base_extra_expr_ctx(self, {'item': self, 'mayEdit': mayEdit})
         res = _evaluateExpression(
             self,
             expression=available_on_expr,
@@ -5827,28 +5904,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if itemState in cfg.getItemAdviceStatesForOrg(org_uid=user_org_uid):
                     toAdd.append(user_org_uid)
         return (toAdd, toEdit)
-
-    def _advicePortalTypeForAdviser(self, org_uid):
-        '''See doc in interfaces.py.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        adviser_infos = tool.adapted().get_extra_adviser_infos().get(org_uid, {})
-        advice_portal_type = adviser_infos.get('portal_type', None)
-        return advice_portal_type or 'meetingadvice'
-
-    def _adviceTypesForAdviser(self, meeting_advice_portal_type):
-        """Return the advice types (positive, negative, ...) for given p_meeting_advice_portal_type.
-           By default we will use every MeetingConfig.usedAdviceTypes but check
-           if something is defined in ToolPloneMeeting.advisersConfig."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        res = []
-        for org_uid, adviser_infos in tool.adapted().get_extra_adviser_infos().items():
-            if adviser_infos['portal_type'] == meeting_advice_portal_type:
-                res = adviser_infos['advice_types']
-                break
-        if not res:
-            cfg = tool.getMeetingConfig(self)
-            res = cfg.getUsedAdviceTypes()
-        return res
 
     def _adviceIsViewableForCurrentUser(self,
                                         cfg,
@@ -6843,7 +6898,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         try:
             if self.adviceIndex != old_adviceIndex:
                 indexes += adapted.getAdviceRelatedIndexes()
-        except UnicodeDecodeError:
+        except Exception:
+            # comparing self.adviceIndex and old_adviceIndex may lead to some
+            # errors like UnicodeDecorError or date comparison error when we
+            # have a datetime.datetime and a None
             indexes += adapted.getAdviceRelatedIndexes()
         return indexes
 
@@ -7295,6 +7353,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # update group in charge local roles
         # we will give the current groupsInCharge _observers sub group access to this item
         self._updateGroupsInChargeLocalRoles(cfg, item_state)
+        # update viewable/editable labels access cache
+        self._update_labels_access_cache(cfg, item_state)
         # manage automatically given permissions
         _addManagedPermissions(self)
         # clean borg.localroles caching
@@ -7382,8 +7442,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _updatePowerObserversLocalRoles(self, cfg, item_state):
         '''Give local roles to the groups defined in MeetingConfig.powerObservers.'''
-        extra_expr_ctx = _base_extra_expr_ctx(self)
-        extra_expr_ctx.update({'item': self, })
+        extra_expr_ctx = _base_extra_expr_ctx(self, {'item': self, })
         cfg_id = cfg.getId()
         for po_infos in cfg.getPowerObservers():
             if item_state in po_infos['item_states'] and \
@@ -7412,9 +7471,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         adapter = getAdapter(self, IIconifiedInfos)
         adapter.parent = self
         group_ids = adapter._item_visible_for_groups(
-            adapter.cfg.getItemInternalNotesEditableBy())
+            adapter.cfg.getItemInternalNotesEditableBy(), item=self)
         for group_id in group_ids:
             self.manage_addLocalRoles(group_id, ('MeetingInternalNotesEditor',))
+
+    def _update_labels_access_cache(self, cfg, item_state):
+        ''' '''
+        if "labels" in cfg.getUsedItemAttributes():
+            setattr(self, ITEM_LABELS_ACCESS_CACHE_ATTR, PersistentMapping())
+            # as computing groups accessing the labels is the same as computing
+            # groups for access to confidential annexes, we use the code in the
+            # IIconifiedInfos adapter
+            adapter = getAdapter(self, IIconifiedInfos)
+            cache = getattr(self, ITEM_LABELS_ACCESS_CACHE_ATTR)
+            cache.update(
+                compute_labels_access(
+                    adapter, cfg, item=self, item_state=self.query_state()))
 
     def _updateCommitteeEditorsLocalRoles(self, cfg, item_state):
         '''Add local roles depending on MeetingConfig.committees.'''
@@ -7869,7 +7941,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             dest_field = newItem.getField(dest_field_name)
             # check that we will not empty a required field (case for "title" especially)
             # and also that if field optional, it is used in destination config
-            if (self.fieldIsEmpty(other_mc_field_name) and
+            if (fieldIsEmpty(other_mc_field_name, self) and
                 self.getField(dest_field_name).required) or \
                (getattr(dest_field, 'optional', False) and
                     not newItem.attribute_is_used(dest_field_name)):
@@ -8357,6 +8429,46 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return item_state in cfg.getPositiveDecidedStates()
         else:
             return item_state in cfg.getItemDecidedStates()
+
+    def may_view_follow_up(self,
+                           field_name='neededFollowUp',
+                           label_ids=('needed-follow-up', 'provided-follow-up'),
+                           suffixes=[]):
+        """Helper methods for default view access to followUp related fields."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        if tool.isManager(realManagers=True):
+            return True
+        is_manager = tool.isManager(cfg)
+        # same condition for any field
+        # must have relevant labels and MeetingManager or proposing group member
+        if (not fieldIsEmpty(field_name, self) or
+            get_labels(self, label_ids=label_ids)) and \
+           (is_manager or tool.user_is_in_org(
+                org_uid=self.getProposingGroup(), suffixes=suffixes)):
+            return True
+
+    def may_edit_follow_up(self,
+                           field_name='neededFollowUp',
+                           label_ids=('needed-follow-up', ),
+                           suffixes=[]):
+        """Helper methods for default edit access to followUp related fields."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        if tool.isManager(realManagers=True):
+            return True
+        is_manager = tool.isManager(cfg)
+        if field_name == 'neededFollowUp':
+            # must have relevant labels, only editable by MeetingManagers
+            if get_labels(self, label_ids=label_ids) and is_manager:
+                return True
+        elif field_name == 'providedFollowUp':
+            # must have relevant labels and be MeetingManager
+            # or proposing group editor
+            if get_labels(self, label_ids=label_ids) and \
+               (is_manager or is_proposing_group_editor(
+                    self.getProposingGroup(), cfg, suffixes=suffixes)):
+                return True
 
 
 registerType(MeetingItem, PROJECTNAME)

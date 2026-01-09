@@ -304,9 +304,6 @@ class IMeetingItemDocumentation:
         """May the advice delay be started for p_org_uid, so may the 'delay_started_on' information be set?"""
     def _sendAdviceToGiveToGroup(org_uid):
         """Send the 'your advice is asked on this item' mail notification to given p_org_uid?"""
-    def _advicePortalTypeForAdviser(org_uid):
-        """Advices may use several 'meetingadvice' portal_types.  A portal_type is associated to
-           an adviser org_uid, this method will return the advice portal_type used by given p_org_uid."""
     def _adviceDelayWillBeReinitialized(self, org_uid, adviceInfo, isTransitionReinitializingDelays):
         """Will advice delay be reinitialized for given p_ord_uid?
            By default delay is reinitialized if p_isTransitionReinitializingDelays,

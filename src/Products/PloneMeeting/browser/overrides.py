@@ -16,6 +16,8 @@ from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentG
 from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGeneratorLinksViewlet
 from collective.eeafaceted.dashboard.browser.views import RenderTermPortletView
 from collective.iconifiedcategory import safe_utils as collective_iconifiedcategory_safe_utils
+from collective.iconifiedcategory.browser.css import css_pattern
+from collective.iconifiedcategory.browser.css import IconifiedCategory
 from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
@@ -25,6 +27,7 @@ from imio.dashboard.interfaces import IContactsDashboard
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
+from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidToObject
 from imio.helpers.security import check_zope_admin
 from imio.history.browser.views import IHContentHistoryView
@@ -1103,11 +1106,12 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
 
     def get_base_generation_context(self, helper_view, pod_template):
         """ """
-        specific_context = _base_extra_expr_ctx(self.context)
-        specific_context['self'] = self.context
-        specific_context['adap'] = hasattr(self.context, 'adapted') and self.context.adapted() or None
-        specific_context['itemUids'] = {}
-        specific_context['podTemplate'] = pod_template
+        specific_context = _base_extra_expr_ctx(
+            self.context,
+            {'self': self.context,
+             'adap': hasattr(self.context, 'adapted') and self.context.adapted() or None,
+             'itemUids': {},
+             'podTemplate': pod_template})
         # managed by collective.talcondition but not present here
         specific_context['member'] = specific_context['user']
         return specific_context
@@ -1305,8 +1309,8 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         """Generates the stored annex title using the ConfigurablePODTemplate.store_as_annex_title_expr.
            If empty, we just return the ConfigurablePODTemplate title."""
         value = pod_template.store_as_annex_title_expr
-        extra_expr_ctx = _base_extra_expr_ctx(self.context)
-        extra_expr_ctx.update({'obj': self.context, 'pod_template': pod_template})
+        extra_expr_ctx = _base_extra_expr_ctx(
+            self.context, {'obj': self.context, 'pod_template': pod_template})
         evaluatedExpr = _evaluateExpression(
             self.context,
             expression=value and value.strip() or '',
@@ -1681,3 +1685,31 @@ class PMAjaxSave(AjaxSave):
             tranform=True,
             reindex=True,
             unlock=False)
+
+
+class PMCSSIconifiedCategory(IconifiedCategory):
+    """ """
+
+    def __call__(self, *args, **kwargs):
+        """Complete CSS with advice icon CSS."""
+        content = super(PMCSSIconifiedCategory, self).__call__(*args, **kwargs)
+        # find style used, either standard or hands
+        tool = api.portal.get_tool('portal_plonemeeting')
+        advice_style = "standard"
+        for cfg in tool.getActiveConfigs(check_using_groups=False):
+            if cfg.getUseAdvices() is True:
+                advice_style = cfg.getAdviceStyle()
+                break
+        new_content = []
+        portal_url = api.portal.get().absolute_url()
+        advice_types = [
+            term.token for term in get_vocab(
+                tool,
+                'ConfigAdviceTypes',
+                include_asked_again=True,
+                include_term_id=False)._terms]
+        for advice_type in advice_types:
+            url = u'{0}/advice_{1}_{2}.png'.format(
+                portal_url, advice_style, advice_type)
+            new_content.append(css_pattern.format(advice_type, url))
+        return content + ' '.join(new_content)

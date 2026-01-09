@@ -594,7 +594,7 @@ def _configureWebspellchecker(site):
     wsc_config.set_disallowed_portal_types(disallowed_portal_types)
     wsc_config.set_disable_autosearch_in(
         u'["#form-widgets-title", "#form-widgets-description", '
-        u'".select2-focusser", ".select2-input"]')
+        u'".select2-focusser", ".select2-input", ".goto_meeting", ".number"]')
 
 def _congfigureSafeHtml(site):
     '''Add some values to safe_html.'''

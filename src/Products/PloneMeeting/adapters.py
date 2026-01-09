@@ -7,12 +7,12 @@ from appy.gen import No
 from appy.shared.diff import HtmlDiff
 from collective.compoundcriterion.adapters import NegativePersonalLabelsAdapter
 from collective.compoundcriterion.adapters import NegativePreviousIndexValuesAdapter
+from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentgenerator.adapters import GenerablePODTemplatesAdapter
 from collective.eeafaceted.dashboard.adapters import DashboardGenerablePODTemplatesAdapter
 from collective.eeafaceted.dashboard.content.pod_template import IDashboardPODTemplate
-from collective.eeafaceted.z3ctable.columns import EMPTY_STRING
 from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
 from collective.iconifiedcategory.adapter import CategorizedObjectInfoAdapter
 from collective.iconifiedcategory.utils import get_categories
@@ -24,6 +24,7 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from eea.facetednavigation.widgets.storage import Criterion
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
 from imio.annex.adapters import AnnexPrettyLinkAdapter
+from imio.helpers import EMPTY_STRING
 from imio.helpers.adapters import MissingTerms
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
@@ -1754,22 +1755,23 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         parent_classname = self.parent.getTagName()
         if parent_classname == 'MeetingItem':
             visible_fors = self.cfg.getItemAnnexConfidentialVisibleFor()
-            groups = self._item_visible_for_groups(visible_fors)
+            groups = self._item_visible_for_groups(visible_fors, item=self.parent)
         elif parent_classname == 'Meeting':
             visible_fors = self.cfg.getMeetingAnnexConfidentialVisibleFor()
             groups = self._meeting_visible_for_groups(visible_fors)
         else:
             # advice
             visible_fors = self.cfg.getAdviceAnnexConfidentialVisibleFor()
-            groups = self._advice_visible_for_groups(visible_fors)
+            groups = self._advice_visible_for_groups(
+                visible_fors, item=self.parent.aq_parent)
         return groups
 
-    def _item_visible_for_groups(self, visible_fors):
+    def _item_visible_for_groups(self, visible_fors, item):
         """ """
         res = []
         res += self._configgroup_groups(visible_fors)
-        res += self._reader_groups(visible_fors)
-        res += self._suffix_proposinggroup(visible_fors, self.parent)
+        res += self._reader_groups(visible_fors, item)
+        res += self._suffix_proposinggroup(visible_fors, item)
         return res
 
     def _meeting_visible_for_groups(self, visible_fors):
@@ -1779,12 +1781,12 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         res += self._suffix_profile_proposinggroup(visible_fors)
         return res
 
-    def _advice_visible_for_groups(self, visible_fors):
+    def _advice_visible_for_groups(self, visible_fors, item):
         """ """
         res = []
         res += self._configgroup_groups(visible_fors)
-        res += self._reader_groups(visible_fors)
-        res += self._suffix_proposinggroup(visible_fors, self.parent.aq_parent)
+        res += self._reader_groups(visible_fors, item)
+        res += self._suffix_proposinggroup(visible_fors, item)
         if 'adviser_group' in visible_fors:
             plone_group_id = get_plone_group_id(self.parent.advice_group, 'advisers')
             res.append(plone_group_id)
@@ -1799,16 +1801,24 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
                 res.append('{0}_{1}'.format(self.cfg.getId(), suffix))
         return res
 
-    def _suffix_proposinggroup(self, visible_fors, item):
-        """ """
+    def _suffix_proposinggroup(self, visible_fors, item=None):
+        """Behavior of this method change when receiving an item or not:
+           - when p_item is not None, we will compute Plone groups of p_visible_fors
+           suffixes of groups managing the item;
+           - when p_item is None, we will consider every groups using the suffixes."""
         res = []
-        groups_managing_item_uids = item.adapted()._getAllGroupsManagingItem(
-            item.query_state())
+        # item, we take managing groups
+        if item:
+            org_uids = item.adapted()._getAllGroupsManagingItem(
+                item.query_state())
+        else:
+            # every enabled groups
+            org_uids = get_organizations(the_objects=False)
         for visible_for in visible_fors:
             if visible_for.startswith(PROPOSINGGROUPPREFIX):
                 suffix = visible_for.replace(PROPOSINGGROUPPREFIX, '')
-                for group_managing_item_uid in groups_managing_item_uids:
-                    plone_group_id = get_plone_group_id(group_managing_item_uid, suffix)
+                for org_uid in org_uids:
+                    plone_group_id = get_plone_group_id(org_uid, suffix)
                     res.append(plone_group_id)
         return res
 
@@ -1820,20 +1830,44 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
                 res.append(visible_for)
         return res
 
-    def _reader_groups(self, visible_fors):
+    def _reader_groups(self, visible_fors, item=None):
         """ """
         res = []
         for visible_for in visible_fors:
             if visible_for == '{0}advices'.format(READERPREFIX):
-                for org_uid in self.parent.adviceIndex:
+                # item advisers if item or every possible advisers
+                if item:
+                    org_uids = item.adviceIndex.keys()
+                else:
+                    # every possible advisers, so configured custom advisers and selectable advisers
+                    custom_advisers_org_uids = [row['org_uid'] for row in self.cfg.getCustomAdvisers()]
+                    selectable_advisers = self.cfg.getSelectableAdvisers()
+                    org_uids = set(custom_advisers_org_uids).union(selectable_advisers)
+                for org_uid in org_uids:
                     plone_group_id = get_plone_group_id(org_uid, 'advisers')
                     res.append(plone_group_id)
             elif visible_for == '{0}copy_groups'.format(READERPREFIX):
-                res = res + list(self.parent.getAllCopyGroups(auto_real_plone_group_ids=True))
+                # item copyGroups if item or every possible copy groups
+                if item:
+                    res = res + list(item.getAllCopyGroups(auto_real_plone_group_ids=True))
+                else:
+                    res += list(self.cfg.getSelectableCopyGroups())
+            elif visible_for == '{0}restricted_copy_groups'.format(READERPREFIX):
+                # item restrictedCopyGroups if item or every possible restricted copy groups
+                if item:
+                    res = res + list(item.getAllRestrictedCopyGroups(auto_real_plone_group_ids=True))
+                else:
+                    res += list(self.cfg.getSelectableRestrictedCopyGroups())
             elif visible_for == '{0}groupsincharge'.format(READERPREFIX):
-                groupsInCharge = self.parent.getGroupsInCharge(theObjects=False, includeAuto=True)
-                for groupInCharge in groupsInCharge:
-                    plone_group_id = get_plone_group_id(groupInCharge, 'observers')
+                # item groupsInCharges if item or every possible groups in charge
+                if item:
+                    org_uids = item.getGroupsInCharge(theObjects=False, includeAuto=True)
+                else:
+                    org_uids = get_vocab_values(
+                        self.cfg,
+                        "Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
+                for org_uid in org_uids:
+                    plone_group_id = get_plone_group_id(org_uid, 'observers')
                     res.append(plone_group_id)
         return res
 
