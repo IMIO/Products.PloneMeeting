@@ -5,8 +5,10 @@ Changelog
 4.2.28.6 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Fixed `Migrate_To_4216` upgrade steps order by re-applying `annex portal_type`
+  from package `Products.PloneMeeting:default` after upgrade of
+  `collective.dms.scanbehavior` so `add_permission` is correct.
+  [gbastien]
 
 4.2.28.5 (2026-01-08)
 ---------------------

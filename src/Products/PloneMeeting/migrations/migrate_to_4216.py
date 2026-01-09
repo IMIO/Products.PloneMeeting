@@ -77,16 +77,17 @@ class Migrate_To_4216(Migrator):
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4216...')
-        # update types annex and annexDecision as IScanFieldsHiddenToSignAndSigned is replaced
-        # by default behavior IScanFields
-        load_type_from_package('annex', 'Products.PloneMeeting:default')
-        load_type_from_package('annexDecision', 'Products.PloneMeeting:default')
         # remove broken annexes before upgrading collective.iconifiedcategory
         self._removeBrokenAnnexes()
         if not from_migration_to_4200:
             # this will upgrade collective.iconifiedcategory especially
             self.upgradeAll(omit=['Products.PloneMeeting:default',
                                   self.profile_name.replace('profile-', '')])
+        # update types annex and annexDecision as IScanFieldsHiddenToSignAndSigned
+        # is replaced by default behavior IScanFields but do it after other upgrades
+        # because we need to set another "add_permission" for "annex"
+        load_type_from_package('annex', 'Products.PloneMeeting:default')
+        load_type_from_package('annexDecision', 'Products.PloneMeeting:default')
         self._updateLabelsConfig()
         self._updateFollowUp()
         logger.info('Migrating to PloneMeeting 4216... Done.')
@@ -95,8 +96,9 @@ class Migrate_To_4216(Migrator):
 def migrate(context):
     '''This migration function will:
 
-       1) Update application regarding new field MeetingConfig.labelsConfig;
-       2) Update config and items regarding follow-up.
+       1) Remove broken annexes before upgrading collective.iconifiedcategory;
+       2) Update application regarding new field MeetingConfig.labelsConfig;
+       3) Update config and items regarding follow-up.
 
     '''
     migrator = Migrate_To_4216(context)
