@@ -9,7 +9,7 @@ from imio.helpers.security import fplog
 from plone import api
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import logger
-from Products.PloneMeeting.external.config import API_URL
+from Products.PloneMeeting.external.config import VISION_URL
 from Products.PloneMeeting.external.config import AUTH_CURL_COMMAND
 from Products.PloneMeeting.external.config import AUTH_INFOS_ATTR
 from Products.PloneMeeting.external.config import REFRESH_AUTH_CURL_COMMAND
@@ -70,6 +70,7 @@ def send_json_request(
         extra_headers={},
         method='GET',
         data={},
+        url_pattern=VISION_URL,
         return_as_raw=False,
         show_message=False):
     """Send a json request and returns decoded response."""
@@ -97,7 +98,7 @@ def send_json_request(
             raise Unauthorized
     else:
         user_id = get_current_user_id(request)
-    url = API_URL % (endpoint, user_id, extra_parameters or "")
+    url = url_pattern % (endpoint, user_id, extra_parameters or "")
     target = urlparse(url)
     url = target.geturl()
     # manage cache per request for 'GET'

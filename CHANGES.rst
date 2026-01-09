@@ -2,11 +2,31 @@ Changelog
 =========
 
 
-4.2.28.3 (unreleased)
+4.2.28.6 (unreleased)
 ---------------------
 
-- Nothing changed yet.
+- Fixed `Migrate_To_4216` upgrade steps order by re-applying `annex portal_type`
+  from package `Products.PloneMeeting:default` after upgrade of
+  `collective.dms.scanbehavior` so `add_permission` is correct.
+  [gbastien]
 
+4.2.28.5 (2026-01-08)
+---------------------
+
+- Use `SSO/Vision` same var env names everywhere.
+  [gbastien]
+
+4.2.28.4 (2026-01-08)
+---------------------
+
+- Use `SSO/Vision` same var env names everywhere.
+  [gbastien]
+
+4.2.28.3 (2026-01-08)
+---------------------
+
+- Use new `SSO/Vision` env var names for external link to `iA.Vision`.
+  [gbastien]
 
 4.2.28.2 (2026-01-05)
 ---------------------
