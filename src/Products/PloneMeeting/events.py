@@ -233,7 +233,7 @@ def onAdviceTransition(advice, event):
     item = advice.getParentNode()
     if advice.advice_hide_during_redaction is True:
         tool = api.portal.get_tool('portal_plonemeeting')
-        adviser_infos = tool.adapted().get_extra_adviser_infos().get(advice.advice_group, {})
+        adviser_infos = tool.get_extra_adviser_infos().get(advice.advice_group, {})
         # use get in case overrided get_extra_adviser_infos and
         # 'show_advice_on_final_wf_transition' not managed, will be removable
         # when every profiles use new behavior

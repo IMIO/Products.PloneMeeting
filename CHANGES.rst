@@ -11,6 +11,12 @@ Changelog
   [gbastien]
 - Use `requests` to manage external link authentication token.
   [gbastien]
+- `ToolPloneMeeting.get_extra_adviser_infos` is no more an adaptable method.
+  [gbastien]
+- Hide `Add advice` batch action if current user is an adviser but not able to
+  add an advice of portal_type `meetingadvice` as this action only manage this
+  `portal_type` of advice.
+  [gbastien]
 
 4.2.28.5 (2026-01-08)
 ---------------------

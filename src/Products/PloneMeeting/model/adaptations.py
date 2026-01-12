@@ -1156,7 +1156,7 @@ def _performAdviceWorkflowAdaptations(logger=logger):
     tool = api.portal.get_tool('portal_plonemeeting')
     # save patched wf_ids as several org uids may use same patched workflow
     patched_wf_ids = []
-    for org_uid, extra_adviser_infos in tool.adapted().get_extra_adviser_infos().items():
+    for org_uid, extra_adviser_infos in tool.get_extra_adviser_infos().items():
         portal_type = extra_adviser_infos['portal_type']
         base_wf = extra_adviser_infos['base_wf']
         if base_wf in patched_wf_ids:

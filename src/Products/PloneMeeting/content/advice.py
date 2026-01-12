@@ -99,7 +99,7 @@ def _advice_type_default(advice_portal_type, context):
     res = ''
     tool = api.portal.get_tool('portal_plonemeeting')
     # check ToolPloneMeeting.advisersConfig
-    for org_uid, adviser_infos in tool.adapted().get_extra_adviser_infos().items():
+    for org_uid, adviser_infos in tool.get_extra_adviser_infos().items():
         if adviser_infos['portal_type'] == advice_portal_type:
             # use get in case overrided get_extra_adviser_infos and
             # 'default_advice_type' not managed, will be removable
