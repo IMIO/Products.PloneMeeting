@@ -3811,6 +3811,27 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(
             form.widgets['advice_group'].field.description,
             u'No common or available advice group. Modify your selection.')
+        # action is only available if current user able to add advices using
+        # the default advice portal_type "meetingadvice"
+        # setup dummy tool.advisersConfig, make vendors advisers not using
+        # advice portal_type "meetingadvice" and so not able to use the action
+        self.tool.setAdvisersConfig(
+            ({'advice_types': [],
+             'base_wf': 'meetingadvice_workflow',
+             'default_advice_type': 'positive',
+             'org_uids': [self.vendors_uid],
+             'portal_type': 'dummymeetingadvice',
+             'show_advice_on_final_wf_transition': '1',
+             'wf_adaptations': []},))
+        self.changeUser('pmAdviser1')
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.restrictedTraverse('@@add-advice-batch-action')
+        self.assertTrue(form.available())
+        self.changeUser('pmReviewer2')
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.restrictedTraverse('@@add-advice-batch-action')
+        self.assertFalse(form.available())
+
 
 
 def test_suite():

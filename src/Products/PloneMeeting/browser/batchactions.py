@@ -231,11 +231,20 @@ class AddAdviceBatchActionForm(BaseBatchActionForm):
         self.cfg = self.tool.getMeetingConfig(context)
 
     def available(self):
-        """Available if using advices and current user is an adviser."""
+        """Available if using advices and current user is an adviser
+           able to add a self.advice_portal_type."""
         # super() will check for self.available_permission
-        return super(AddAdviceBatchActionForm, self).available() and \
-            self.cfg.getUseAdvices() and \
-            self.tool.userIsAmong(['advisers'])
+        res = super(AddAdviceBatchActionForm, self).available() and \
+            self.cfg.getUseAdvices()
+        if res:
+            # check if user can add a "meetingadvice" portal_type
+            # so it is not displayed to advisers able to add other
+            # advice_portal_types than "meetingadvice"
+            custom_adviser_org_uids = [
+                k for k, v in self.tool.get_extra_adviser_infos().items()
+                if v['portal_type'] != self.advice_portal_type]
+            adviser_org_uids = self.tool.get_orgs_for_user(suffixes=['advisers'])
+            return bool(set(adviser_org_uids).difference(custom_adviser_org_uids))
 
     def _advice_group_vocabulary(self):
         """ """
@@ -267,8 +276,9 @@ class AddAdviceBatchActionForm(BaseBatchActionForm):
         self.fields += Fields(schema.Choice(
             __name__='advice_group',
             title=_(u'title_advice_group'),
-            description=(len(advice_groups) == 0 and
-                         _(u'No common or available advice group. Modify your selection.') or u''),
+            description=(
+                len(advice_groups) == 0 and
+                _(u'No common or available advice group. Modify your selection.') or u''),
             vocabulary=advice_groups,
             required=len(advice_groups) > 0))
 
