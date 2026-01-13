@@ -4,7 +4,7 @@ from natsort import humansorted
 from operator import attrgetter
 from Products.PloneMeeting.external.forms import projects_default
 from Products.PloneMeeting.external.forms import tasks_default
-from Products.PloneMeeting.external.utils import send_json_request
+from Products.PloneMeeting.external.utils import send_vision_json_request
 from zope.i18n import translate
 from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
@@ -19,7 +19,7 @@ class BaseVisionVocabulary(object):
     def __call__(self, context, endpoint, selected_values=[]):
         """ """
         terms = []
-        for info in send_json_request(endpoint):
+        for info in send_vision_json_request(endpoint):
             # concatenate element's project, parent and name for term title
             res = []
             # store also non HTML raw value to be able to sort it correctly

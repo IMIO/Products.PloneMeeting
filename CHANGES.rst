@@ -5,8 +5,9 @@ Changelog
 4.2.28.7 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Adapted code to use `imio.helpers.ws.get_auth_token` and
+  `imio.helpers.ws.send_json_request`.
+  [gbastien]
 
 4.2.28.6 (2026-01-13)
 ---------------------
