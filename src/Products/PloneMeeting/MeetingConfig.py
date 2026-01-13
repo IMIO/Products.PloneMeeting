@@ -3049,6 +3049,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'presented_item_back_to_validation_state',
                      'return_to_proposing_group',
                      'return_to_proposing_group_with_last_validation',
+                     'return_to_proposing_group_with_before_last_validation',
                      'return_to_proposing_group_with_all_validations',
                      'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
                      'hide_decisions_when_under_writing',
