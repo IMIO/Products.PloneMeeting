@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.28.6 (unreleased)
+4.2.28.6 (2026-01-13)
 ---------------------
 
 - Fixed `Migrate_To_4216` upgrade steps order by re-applying `annex portal_type`
