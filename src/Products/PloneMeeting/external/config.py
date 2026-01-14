@@ -3,6 +3,7 @@ from imio.helpers import SSO_APPS_USER_USERNAME
 
 import os
 
+
 # AUTH_CURL_COMMAND = "curl --location '%s' \
 # --header 'Content-Type: application/x-www-form-urlencoded' \
 # --header 'Cookie: KEYCLOAK_LOCALE=fr' \
