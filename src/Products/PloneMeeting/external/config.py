@@ -32,7 +32,7 @@ MUNICIPALITY_ID = SSO_APPS_USER_USERNAME.split('_')[1] if \
 
 # api configuration
 # VISION_API_URL is like https://api.imio.be/imio/vision/v1/
-VISION_API_URL = os.getenv('VISION_API_URL')
+VISION_API_URL = os.getenv('VISION_API_URL', '')
 VISION_URL_PATTERN = os.path.join(
     VISION_API_URL,
     'municipalities',
