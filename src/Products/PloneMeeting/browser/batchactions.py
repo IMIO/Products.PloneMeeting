@@ -63,6 +63,22 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
             __name__='pod_template',
             title=_(u'POD template to annex'),
             vocabulary='Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary'))
+        self.fields += Fields(schema.Bool(
+            __name__='add_to_sign_session',
+            title=_(u'title_add_to_sign_session'),
+            description=_(
+                "This will add stored annexes to a e-signing session."),
+            required=False,
+            default=False))
+        self.fields["add_to_sign_session"].widgetFactory = RadioFieldWidget
+        self.fields += Fields(schema.Bool(
+            __name__='add_annexes_to_sign_session',
+            title=_(u'title_add_annexes_to_sign_session'),
+            description=_(
+                "This will add existing annexes marked \"To sign\" to a e-signing session."),
+            required=False,
+            default=False))
+        self.fields["add_annexes_to_sign_session"].widgetFactory = RadioFieldWidget
 
     def _apply(self, **data):
         """ """
