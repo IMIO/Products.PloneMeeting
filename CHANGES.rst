@@ -5,8 +5,8 @@ Changelog
 4.2.28.8 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Fixed external link to `iA.Vision`.
+  [gbastien]
 
 4.2.28.7 (2026-01-14)
 ---------------------
