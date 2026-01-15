@@ -2,7 +2,7 @@
 <tal:defines define="available python: view.available()"
              i18n:domain="PloneMeeting">
   <tal:available condition="python: available is True">
-    <tal:block define="content python: view.content;
+    <tal:block define="content python: view.result;
                        DateTime python:modules['DateTime'].DateTime;
                        toLocalizedTime nocall:context/@@plone/toLocalizedTime;
                        portal_url context/@@plone_portal_state/portal_url;
@@ -25,7 +25,7 @@
              <th class="th_header_vision_start_date" i18n:translate="vision_start_date">Start date</th>
           </thead>
           <tbody>
-            <tal:loop repeat="info content">
+            <tal:loop repeat="info result">
               <tr tal:define="elt info/target;
                               oddrow repeat/info/odd;
                               classOddEven python: oddrow and 'even' or 'odd';"

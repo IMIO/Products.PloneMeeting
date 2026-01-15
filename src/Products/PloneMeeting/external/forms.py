@@ -3,7 +3,7 @@
 from AccessControl import Unauthorized
 from plone import api
 from Products.PloneMeeting.config import PMMessageFactory as _
-from Products.PloneMeeting.external.utils import send_json_request
+from Products.PloneMeeting.external.utils import send_vision_json_request
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from z3c.form import button
@@ -18,7 +18,7 @@ from zope.schema.interfaces import IContextAwareDefaultFactory
 @provider(IContextAwareDefaultFactory)
 def projects_default(context):
     """ """
-    content = send_json_request(
+    content = send_vision_json_request(
         "delib-links", extra_parameters={"delib_uid": context.UID()})
     return [elt['target']['id'] for elt in content
             if elt['target']['type'] == "project"]
@@ -27,7 +27,7 @@ def projects_default(context):
 @provider(IContextAwareDefaultFactory)
 def tasks_default(context):
     """ """
-    content = send_json_request(
+    content = send_vision_json_request(
         "delib-links", extra_parameters={"delib_uid": context.UID()})
     return [elt['target']['id'] for elt in content
             if elt['target']['type'] == "task"]
@@ -114,7 +114,7 @@ class LinkWithVisionForm(form.Form):
     def _do_link_unlink(self, data):
         """ """
         # get linked items and link new elements and unlink no more selected ones
-        linked_content = send_json_request(
+        linked_content = send_vision_json_request(
             "delib-links", extra_parameters={"delib_uid": self.context.UID()})
         linked_projects = [elt['target']['id'] for elt in linked_content
                            if elt['target']['type'] == "project"]
@@ -127,7 +127,7 @@ class LinkWithVisionForm(form.Form):
                     "delib_uid": self.context.UID(),
                     "target": {"type": "project",
                                "object_id": project_id}}
-                res = send_json_request("delib-links", method='POST', data=project_data)
+                res = send_vision_json_request("delib-links", method='POST', data=project_data)
                 api.portal.show_message(
                     _('Element "${element}" has been linked.',
                       mapping={'element': res[0]['target']['name']}),
@@ -138,7 +138,7 @@ class LinkWithVisionForm(form.Form):
                     "delib_uid": self.context.UID(),
                     "target": {"type": "task",
                                "object_id": task_id}}
-                res = send_json_request("delib-links", method='POST', data=task_data)
+                res = send_vision_json_request("delib-links", method='POST', data=task_data)
                 api.portal.show_message(
                     _('Element "${element}" has been linked.',
                       mapping={'element': res[0]['target']['name']}),
@@ -149,7 +149,7 @@ class LinkWithVisionForm(form.Form):
                 linked_elt['target']['id'] not in data['projects']) or \
                (linked_elt['target']['type'] == "task" and
                     linked_elt['target']['id'] not in data['tasks']):
-                res = send_json_request("delib-links/%s" % linked_elt['id'], method='DELETE')
+                res = send_vision_json_request("delib-links/%s" % linked_elt['id'], method='DELETE')
                 api.portal.show_message(
                     _('Element "${element}" has been unlinked.',
                       mapping={'element': linked_elt['target']['name']}),
