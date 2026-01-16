@@ -12,6 +12,8 @@ from collective.z3cform.select2.widget.widget import SingleSelect2FieldWidget
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.annex.browser.views import ConcatenateAnnexesBatchActionForm
 from imio.annex.browser.views import DownloadAnnexesBatchActionForm
+from imio.esign.config import get_registry_enabled
+from imio.esign.utils import add_files_to_session
 from imio.helpers.content import get_vocab
 from plone import api
 from plone.app.textfield import RichText
@@ -63,22 +65,24 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
             __name__='pod_template',
             title=_(u'POD template to annex'),
             vocabulary='Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary'))
-        self.fields += Fields(schema.Bool(
-            __name__='add_to_sign_session',
-            title=_(u'title_add_to_sign_session'),
-            description=_(
-                "This will add stored annexes to a e-signing session."),
-            required=False,
-            default=False))
-        self.fields["add_to_sign_session"].widgetFactory = RadioFieldWidget
-        self.fields += Fields(schema.Bool(
-            __name__='add_annexes_to_sign_session',
-            title=_(u'title_add_annexes_to_sign_session'),
-            description=_(
-                "This will add existing annexes marked \"To sign\" to a e-signing session."),
-            required=False,
-            default=False))
-        self.fields["add_annexes_to_sign_session"].widgetFactory = RadioFieldWidget
+        # eSign
+        if get_registry_enabled():
+            self.fields += Fields(schema.Bool(
+                __name__='add_to_sign_session',
+                title=_(u'title_add_to_sign_session'),
+                description=_(
+                    "This will add stored annexes to a e-signing session."),
+                required=False,
+                default=True))
+            self.fields["add_to_sign_session"].widgetFactory = RadioFieldWidget
+            self.fields += Fields(schema.Bool(
+                __name__='add_annexes_to_sign_session',
+                title=_(u'title_add_annexes_to_sign_session'),
+                description=_(
+                    "This will add existing annexes marked \"To sign\" to a e-signing session."),
+                required=False,
+                default=True))
+            self.fields["add_annexes_to_sign_session"].widgetFactory = RadioFieldWidget
 
     def _apply(self, **data):
         """ """
@@ -95,6 +99,10 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                 return_portal_msg_code=True)
             if not res:
                 num_of_generated_templates += 1
+                # eSign
+                add_to_sign_session = data.get('add_to_sign_session', False)
+                if add_to_sign_session:
+                    pass
             else:
                 # log error
                 msg = translate(msgid=res, domain='PloneMeeting', context=self.request)
