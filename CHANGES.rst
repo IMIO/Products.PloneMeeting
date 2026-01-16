@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.28.8 (unreleased)
+4.2.28.8 (2026-01-16)
 ---------------------
 
 - Fixed external link to `iA.Vision`.
