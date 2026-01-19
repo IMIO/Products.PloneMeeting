@@ -882,6 +882,7 @@ class MeetingConfigDescriptor(Descriptor):
 
         # Doc parameters -------------------------------------------------------
         self.meetingItemTemplatesToStoreAsAnnex = []
+        self.itemESignSignersTALExpr = ''
 
         # content_category_groups parameters -----------------------------------
         self.category_group_activated_attrs = {}

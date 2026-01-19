@@ -5,6 +5,7 @@
 
 from appy.gen import No
 from appy.shared.diff import HtmlDiff
+from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.compoundcriterion.adapters import NegativePersonalLabelsAdapter
 from collective.compoundcriterion.adapters import NegativePreviousIndexValuesAdapter
 from collective.contact.plonegroup.utils import get_organizations
@@ -65,6 +66,7 @@ from Products.PloneMeeting.MeetingConfig import CONFIGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import READERPREFIX
 from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
+from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import findNewValue
@@ -2091,6 +2093,64 @@ class PMDashboardGenerablePODTemplatesAdapter(DashboardGenerablePODTemplatesAdap
         pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
 
         return pod_templates
+
+
+class ItemSignersAdapter(object):
+    """Adapter to get signers of a given item."""
+
+    def __init__(self, context):
+        self.context = context
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+
+    def get_signers(self):
+        """Return the list of signers for the item.
+           We use configuration field MeetingConfig.itemESignSignersTALExpr."""
+        extra_expr_ctx = _base_extra_expr_ctx(
+            self.context, {'item': self.context, })
+        # will return a dict of signers infos with
+        # key: 'signature_number'
+        # value: 'held_position', 'function', 'name' and 'userid'
+        signer_infos = _evaluateExpression(
+            self.context,
+            expression=self.cfg.getItemESignSignersTALExpr(),
+            roles_bypassing_expression=[],
+            extra_expr_ctx=extra_expr_ctx,
+            empty_expr_is_true=False,
+            raise_on_error=True)
+        # now we have to return a list of ordered signers
+        # with 'userid', 'email', 'fullname' and 'position' all as text
+        res = []
+        # can not have several same userid or email
+        userids = []
+        emails = []
+        for signer_info in sorted(signer_infos.items()):
+            # a held_position to get a userid if mandatory
+            if not signer_info["held_position"] or \
+               not signer_info["held_position"].get_person().userid:
+                continue
+            # can not have several same userid or email
+            if signer_info["userid"] in userids or \
+               api.user.get(signer_info["userid"]).email in emails:
+                continue
+            data = {
+                "held_position": signer_info["held_position"],
+                "name": signer_info["name"],
+                "function": signer_info["function"],
+            }
+            res.append(data)
+        return res
+
+    def get_files_uids(self):
+        """List of file uids.
+
+        :return: list of uid of files
+        """
+        # must get here already converted file in pdf format...
+        return []
+        # for sub_content in self.context.values():
+        #     if sub_content.portal_type in ("dmsommainfile", "dmsappendixfile"):
+        #         yield sub_content.UID()
 
 
 #########################

@@ -102,7 +102,8 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                 # eSign
                 add_to_sign_session = data.get('add_to_sign_session', False)
                 if add_to_sign_session:
-                    pass
+                    signatories = item.
+                    add_files_to_session(
             else:
                 # log error
                 msg = translate(msgid=res, domain='PloneMeeting', context=self.request)

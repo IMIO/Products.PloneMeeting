@@ -1397,8 +1397,8 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId, items=[]):
                             error_pattern=ITEM_EXECUTE_ACTION_ERROR)
 
 
-def computeCertifiedSignatures(signatures):
-
+def computeCertifiedSignatures(signatures, include_user_id=False):
+    ''' '''
     computedSignatures = {}
     now = datetime.now()
     validSignatureNumber = None
@@ -1456,6 +1456,9 @@ def computeCertifiedSignatures(signatures):
                 held_position.get_prefix_for_gender_and_number(include_value=True)
         else:
             computedSignatures[validSignatureNumber]['function'] = signature['function']
+        # userid
+        if include_user_id is True and signature['held_position']:
+            return signature['held_position'].get_person().userid
 
     return computedSignatures
 

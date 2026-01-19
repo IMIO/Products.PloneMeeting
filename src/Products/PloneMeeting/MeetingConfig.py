@@ -2946,6 +2946,20 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    StringField(
+        name='itemESignSignersTALExpr',
+        default=defValues.itemESignSignersTALExpr,
+        widget=StringField._properties['widget'](
+            description="ItemESignSignersTALExpr",
+            description_msgid="item_esign_signers_tal_expr_descr",
+            size=70,
+            label='Itemesignsignerstalexpr',
+            label_msgid='PloneMeeting_label_itemESignSignersTALExpr',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="doc",
+        write_permission="PloneMeeting: Write risky config",
+    ),
 
 ),
 )
@@ -7577,13 +7591,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getCertifiedSignatures')
 
-    def getCertifiedSignatures(self, computed=False, listify=False, **kwargs):
+    def getCertifiedSignatures(self, computed=False, listify=False, include_user_id=False, **kwargs):
         '''Overrides field 'certifiedSignatures' accessor to be able to pass
            the p_computed parameter that will return computed certified signatures,
            so signatures really available right now.'''
         signatures = self.getField('certifiedSignatures').get(self, **kwargs)
         if computed:
-            signatures = computeCertifiedSignatures(signatures)
+            signatures = computeCertifiedSignatures(signatures, include_user_id=include_user_id)
             if listify:
                 signatures = listifySignatures(signatures)
         return signatures
