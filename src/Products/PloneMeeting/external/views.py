@@ -36,7 +36,10 @@ class ExternalView(BrowserView):
         """ """
         if isinstance(self.result, requests.Response):
             # error
-            error = json.loads(self.result.content)
+            try:
+                error = json.loads(self.result.content)
+            except ValueError:
+                error = self.result.text
             self.result = No(
                 u"%s (%s)" %
                 (translate('Nothing to display.',

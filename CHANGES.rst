@@ -5,8 +5,9 @@ Changelog
 4.2.28.9 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- In `ExternalView.available`, be defensive when managing response error
+  in case response can not be decoded to `json`.
+  [gbastien]
 
 4.2.28.8 (2026-01-16)
 ---------------------
