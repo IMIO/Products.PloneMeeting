@@ -2,7 +2,7 @@
 <tal:defines define="available python: view.available()"
              i18n:domain="PloneMeeting">
   <tal:available condition="python: available is True">
-    <tal:block define="content python: view.result;
+    <tal:block define="result python: view.result;
                        DateTime python:modules['DateTime'].DateTime;
                        toLocalizedTime nocall:context/@@plone/toLocalizedTime;
                        portal_url context/@@plone_portal_state/portal_url;
@@ -14,7 +14,7 @@
         <dd tal:content="python: available[0]">Message</dd>
       </dl>
       </tal:showInfos>
-      <table class="listing" tal:condition="python: available is True and content">
+      <table class="listing" tal:condition="python: available is True and result">
           <thead>
              <th class="th_header_title_from_vision" i18n:translate="listingheader_title_from_vision">Title from iA.Vision</th>
              <th class="th_header_type" i18n:translate="type">Type</th>
@@ -25,7 +25,7 @@
              <th class="th_header_vision_start_date" i18n:translate="vision_start_date">Start date</th>
           </thead>
           <tbody>
-            <tal:loop repeat="info result">
+            <tal:loop repeat="info python: result">
               <tr tal:define="elt info/target;
                               oddrow repeat/info/odd;
                               classOddEven python: oddrow and 'even' or 'odd';"
@@ -49,7 +49,7 @@
             </tal:loop>
           </tbody>
       </table>
-      <p i18n:translate="" tal:condition="not:content">Nothing to display.</p>
+      <p i18n:translate="" tal:condition="python: not result">Nothing to display.</p>
     </tal:block>
     <a tal:attributes="href python:'@@item-link-vision-projects?external_user_id=%s' % request.get('external_user_id', '');"
        class="link-overlay-pm"

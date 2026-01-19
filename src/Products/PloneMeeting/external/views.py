@@ -36,14 +36,16 @@ class ExternalView(BrowserView):
         """ """
         if isinstance(self.result, requests.Response):
             # error
-            error = json.loads(self.result.content)
+            try:
+                error = json.loads(self.result.content)
+            except ValueError:
+                error = self.result.text
             self.result = No(
-                u"%s (%s - %s)" %
+                u"%s (%s)" %
                 (translate('Nothing to display.',
                            domain='PloneMeeting',
                            context=self.request),
-                 safe_unicode(error['error']),
-                 safe_unicode(error['error_description'])))
+                 safe_unicode(error)))
         return isinstance(self.result, list) and True or self.result
 
     def can_link(self):
