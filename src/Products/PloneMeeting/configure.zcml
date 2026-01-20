@@ -541,4 +541,10 @@
                    OFS.interfaces.IObjectWillBeRemovedEvent"
               handler="imio.actionspanel.events.onObjWillBeRemoved" />
 
+    <!-- imio.esign -->
+    <adapter
+        for="imio.annex.content.annex.IAnnex"
+        factory="Products.PloneMeeting.adapters.AnnexSignersAdapter"
+        provides="imio.esign.adapters.ISignable"/>
+
 </configure>

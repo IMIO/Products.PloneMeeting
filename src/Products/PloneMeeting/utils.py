@@ -1397,7 +1397,7 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId, items=[]):
                             error_pattern=ITEM_EXECUTE_ACTION_ERROR)
 
 
-def computeCertifiedSignatures(signatures, include_user_id=False):
+def computeCertifiedSignatures(signatures, signature_numbers=[]):
     ''' '''
     computedSignatures = {}
     now = datetime.now()
@@ -1410,6 +1410,9 @@ def computeCertifiedSignatures(signatures, include_user_id=False):
         else:
             signature_number = signature.get('signatureNumber')
             from_cfg = True
+        # bypass if we only want to keep some given p signature_numbers
+        if signature_numbers and signature_number and signature_number not in signature_numbers:
+            continue
 
         # first check if we still did not found a valid signature for this signatureNumber
         if signature_number == validSignatureNumber:
@@ -1456,10 +1459,12 @@ def computeCertifiedSignatures(signatures, include_user_id=False):
                 held_position.get_prefix_for_gender_and_number(include_value=True)
         else:
             computedSignatures[validSignatureNumber]['function'] = signature['function']
-        # userid
-        if include_user_id is True and signature['held_position']:
-            return signature['held_position'].get_person().userid
-
+        # shortname
+        if held_position:
+            computedSignatures[validSignatureNumber]['shortname'] = \
+            held_position.get_person_short_title(abbreviate_firstname=True)
+        else:
+            computedSignatures[validSignatureNumber]['shortname'] = '-'
     return computedSignatures
 
 

@@ -1250,7 +1250,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                 return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
         # proceed, add annex and redirect user to the annexes table view
-        self._store_pod_template_as_annex(
+        annex = self._store_pod_template_as_annex(
             pod_template,
             output_format,
             generated_template_data,
@@ -1263,6 +1263,8 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                             context=self.request)
             api.portal.show_message(msg, request=self.request)
             return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
+        else:
+            return annex
 
     def _get_filename(self):
         """Override to take into account store_as_annex_empty_file."""
@@ -1293,7 +1295,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         title = self._get_stored_annex_title(pod_template)
         id = normalize_id(title)
         id = INameChooser(self.context).chooseName(id, self.context)
-        api.content.create(
+        return api.content.create(
             container=self.context,
             type=annex_portal_type,
             id=id,

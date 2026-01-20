@@ -8,6 +8,7 @@ from appy.shared.diff import HtmlDiff
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.compoundcriterion.adapters import NegativePersonalLabelsAdapter
 from collective.compoundcriterion.adapters import NegativePreviousIndexValuesAdapter
+from collective.contact.core.content.held_position import HeldPosition
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
@@ -2095,8 +2096,8 @@ class PMDashboardGenerablePODTemplatesAdapter(DashboardGenerablePODTemplatesAdap
         return pod_templates
 
 
-class ItemSignersAdapter(object):
-    """Adapter to get signers of a given item."""
+class AnnexSignersAdapter(object):
+    """Adapter to get signers of a given annex."""
 
     def __init__(self, context):
         self.context = context
@@ -2117,26 +2118,37 @@ class ItemSignersAdapter(object):
             roles_bypassing_expression=[],
             extra_expr_ctx=extra_expr_ctx,
             empty_expr_is_true=False,
-            raise_on_error=True)
+            raise_on_error=True) or {}
         # now we have to return a list of ordered signers
         # with 'userid', 'email', 'fullname' and 'position' all as text
         res = []
         # can not have several same userid or email
         userids = []
         emails = []
-        for signer_info in sorted(signer_infos.items()):
-            # a held_position to get a userid if mandatory
-            if not signer_info["held_position"] or \
-               not signer_info["held_position"].get_person().userid:
-                continue
-            # can not have several same userid or email
-            if signer_info["userid"] in userids or \
-               api.user.get(signer_info["userid"]).email in emails:
-                continue
+        for signature_number, signer_info in sorted(signer_infos.items()):
+            # a held_position to get a userid is mandatory
+            userid = signer_info["held_position"].get_person().userid \
+                if isinstance(signer_info["held_position"], HeldPosition) else None
+            if userid is None:
+                raise ValueError("No userid")
+            # can not have several same userid
+            if userid in userids:
+                raise ValueError("Same userid for several signers")
+            user = api.user.get(userid)
+            if user is None:
+                raise ValueError("Given userid does not exist")
+            email = user.getProperty("email")
+            if not email:
+                raise ValueError("User does not have an email address")
+            # can not have several same email
+            if userid in userids or email in emails:
+                raise ValueError("Same e-mail for several signers")
             data = {
                 "held_position": signer_info["held_position"],
                 "name": signer_info["name"],
                 "function": signer_info["function"],
+                "userid": userid,
+                "email": email,
             }
             res.append(data)
         return res

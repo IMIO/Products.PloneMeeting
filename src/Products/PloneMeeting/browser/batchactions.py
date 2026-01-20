@@ -12,13 +12,14 @@ from collective.z3cform.select2.widget.widget import SingleSelect2FieldWidget
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.annex.browser.views import ConcatenateAnnexesBatchActionForm
 from imio.annex.browser.views import DownloadAnnexesBatchActionForm
+from imio.esign.adapters import ISignable
 from imio.esign.config import get_registry_enabled
-from imio.esign.utils import add_files_to_session
 from imio.helpers.content import get_vocab
 from plone import api
 from plone.app.textfield import RichText
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -93,17 +94,18 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
         for brain in self.brains:
             item = brain.getObject()
             generation_view = item.restrictedTraverse('@@document-generation')
+            # res is a string (error msg) or an annex
             res = generation_view(
                 template_uid=pod_template.UID(),
                 output_format=output_format,
                 return_portal_msg_code=True)
-            if not res:
+            # we received an annex, meaning it was created
+            if base_hasattr(res, 'portal_type'):
                 num_of_generated_templates += 1
                 # eSign
                 add_to_sign_session = data.get('add_to_sign_session', False)
                 if add_to_sign_session:
-                    signatories = item.
-                    add_files_to_session(
+                    signatories = ISignable(res).get_signers()
             else:
                 # log error
                 msg = translate(msgid=res, domain='PloneMeeting', context=self.request)

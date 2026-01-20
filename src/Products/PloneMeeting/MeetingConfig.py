@@ -7591,13 +7591,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getCertifiedSignatures')
 
-    def getCertifiedSignatures(self, computed=False, listify=False, include_user_id=False, **kwargs):
+    def getCertifiedSignatures(self, computed=False, listify=False, signature_numbers=[], **kwargs):
         '''Overrides field 'certifiedSignatures' accessor to be able to pass
            the p_computed parameter that will return computed certified signatures,
-           so signatures really available right now.'''
+           so signatures really available right now.
+           p_signature_numbers is a list of signature numbers as string (['1','2']).'''
         signatures = self.getField('certifiedSignatures').get(self, **kwargs)
         if computed:
-            signatures = computeCertifiedSignatures(signatures, include_user_id=include_user_id)
+            signatures = computeCertifiedSignatures(signatures, signature_numbers=signature_numbers)
             if listify:
                 signatures = listifySignatures(signatures)
         return signatures
