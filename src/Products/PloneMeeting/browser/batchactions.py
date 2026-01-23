@@ -19,7 +19,6 @@ from plone import api
 from plone.app.textfield import RichText
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
-from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -29,10 +28,15 @@ from Products.PloneMeeting.utils import _add_advice
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import is_operational_user
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
+from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
+from zope.contentprovider.provider import ContentProviderBase
 from z3c.form.browser.radio import RadioFieldWidget
+from z3c.form.contentprovider import ContentProviders
 from z3c.form.field import Fields
+from z3c.form.interfaces import IFieldsAndContentProvidersForm
 from zope import schema
 from zope.i18n import translate
+from zope.interface import implements
 from zope.interface import provider
 from zope.schema._bootstrapinterfaces import IContextAwareDefaultFactory
 
@@ -42,11 +46,44 @@ from zope.schema._bootstrapinterfaces import IContextAwareDefaultFactory
 #  New batch actions
 #
 #
+
+class DisplaySignersProvider(ContentProviderBase):
+    """
+      This ContentProvider will display signers that will
+      be used in stored pod templates.
+    """
+    template = \
+        ViewPageTemplateFile('templates/display_signers.pt')
+
+    def __init__(self, context, request, view):
+        super(DisplaySignersProvider, self).__init__(
+            context, request, view)
+        self.__parent__ = view
+
+    def render(self):
+        self.signers = self.__parent__.form.signers
+        self.raw_signers = self.__parent__.form.raw_signers
+        if self.__parent__.form.signers_error_msg is not None:
+            self.error = translate(
+                msgid='store_podtemplate_as_annex_signers_error',
+                mapping={'msg': self.__parent__.form.signers_error_msg},
+                domain='PloneMeeting',
+                context=self.request,
+                default="Not able to get signer, error is: \"${msg}\".")
+            api.portal.show_message(
+                self.error, request=self.request, type='warning')
+        return self.template()
+
+
 class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
 
     label = _CEBA("Store POD template as annex for selected elements")
     button_with_icon = True
     available_permission = ModifyPortalContent
+    implements(IFieldsAndContentProvidersForm)
+    contentProviders = ContentProviders()
+    contentProviders['signers'] = DisplaySignersProvider
+    contentProviders['signers'].position = 3
 
     def __init__(self, context, request):
         super(MeetingStoreItemsPodTemplateAsAnnexBatchActionForm, self).__init__(
@@ -62,12 +99,28 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
             return True
 
     def _update(self):
+        self.signers = []
+        self.raw_signers = {}
+        brains = self.brains
+        esign_enabled = get_registry_enabled()
+        self.signers_error_msg = None
+        if brains:
+            an_item = brains[0].getObject()
+            # raw signers
+            self.raw_signers = ISignable(an_item).get_raw_signers()
+            # eSign signers
+            if esign_enabled:
+                try:
+                    self.signers = ISignable(an_item).get_signers()
+                except ValueError, msg:
+                    self.signers_error_msg = msg
+
         self.fields += Fields(schema.Choice(
             __name__='pod_template',
             title=_(u'POD template to annex'),
             vocabulary='Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary'))
         # eSign
-        if get_registry_enabled():
+        if esign_enabled and not self.signers_error_msg:
             self.fields += Fields(schema.Bool(
                 __name__='add_to_sign_session',
                 title=_(u'title_add_to_sign_session'),
@@ -94,21 +147,23 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
         for brain in self.brains:
             item = brain.getObject()
             generation_view = item.restrictedTraverse('@@document-generation')
+            add_to_sign_session = data.get('add_to_sign_session', False)
             # res is a string (error msg) or an annex
             res = generation_view(
                 template_uid=pod_template.UID(),
                 output_format=output_format,
+                add_to_sign_session=add_to_sign_session,
                 return_portal_msg_code=True)
-            # we received an annex, meaning it was created
-            if base_hasattr(res, 'portal_type'):
+            if not res:
                 num_of_generated_templates += 1
-                # eSign
-                add_to_sign_session = data.get('add_to_sign_session', False)
-                if add_to_sign_session:
-                    signatories = ISignable(res).get_signers()
             else:
                 # log error
-                msg = translate(msgid=res, domain='PloneMeeting', context=self.request)
+                msgid, mapping = res
+                msg = translate(
+                    msgid=msgid,
+                    domain='PloneMeeting',
+                    mapping=mapping,
+                    context=self.request)
                 logger.info(u'Could not generate POD template {0} using output format {1} for item at {2} : {3}'.format(
                     template_id, output_format, '/'.join(item.getPhysicalPath()), msg))
                 api.portal.show_message(msg, request=self.request, type='error')

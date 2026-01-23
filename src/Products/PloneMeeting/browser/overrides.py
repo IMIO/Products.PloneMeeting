@@ -24,6 +24,7 @@ from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
 from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
+from imio.esign.adapters import ISignable
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
@@ -1152,10 +1153,13 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         # check if we need to store the generated document
         elif self.request.get('store_as_annex', '0') == '1':
             return_portal_msg_code = kwargs.get('return_portal_msg_code', False)
-            return self.storePodTemplateAsAnnex(generated_template,
-                                                pod_template,
-                                                output_format,
-                                                return_portal_msg_code=return_portal_msg_code)
+            add_to_sign_session = kwargs.get('add_to_sign_session', False)
+            return self.storePodTemplateAsAnnex(
+                generated_template,
+                pod_template,
+                output_format,
+                add_to_sign_session=add_to_sign_session,
+                return_portal_msg_code=return_portal_msg_code)
         else:
             return generated_template
 
@@ -1179,6 +1183,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                                 generated_template_data,
                                 pod_template,
                                 output_format,
+                                add_to_sign_session=False,
                                 return_portal_msg_code=False):
         '''Store given p_generated_template_data as annex using p_pod_template.store_as_annex annex_type uid.'''
         # first check if current member is able to store_as_annex
@@ -1202,7 +1207,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
            self._annexes_types_mapping()[annex_type_group.getId()]:
             msg_code = 'store_podtemplate_as_annex_wrong_annex_type_on_pod_template'
             if return_portal_msg_code:
-                return msg_code
+                return msg_code, {}
             else:
                 msg = translate(
                     msg_code,
@@ -1217,7 +1222,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             if getattr(annex, 'used_pod_template_id', None) == pod_template.getId():
                 msg_code = 'store_podtemplate_as_annex_can_not_store_several_times'
                 if return_portal_msg_code:
-                    return msg_code
+                    return msg_code, {}
                 else:
                     msg = translate(
                         msg_code,
@@ -1240,7 +1245,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         if annex_portal_type not in allowedContentTypeIds:
             msg_code = 'store_podtemplate_as_annex_can_not_add_annex'
             if return_portal_msg_code:
-                return msg_code
+                return msg_code, {}
             else:
                 msg = translate(
                     msg_code,
@@ -1248,6 +1253,25 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                     context=self.request)
                 plone_utils.addPortalMessage(msg, type='error')
                 return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
+
+        # add to eSign session if necessary
+        if add_to_sign_session:
+            try:
+                # get signatories using MeetingItem as context
+                signatories = ISignable(self.context).get_signers()
+            except ValueError, msg:
+                msg_code = 'store_podtemplate_as_annex_signers_error'
+                if return_portal_msg_code:
+                    return msg_code, {'msg': msg}
+                else:
+                    msg = translate(
+                        msg_code,
+                        mapping={'msg': msg},
+                        domain='PloneMeeting',
+                        context=self.request,
+                        default="Not able to get signer, error is: \"${msg}\".")
+                    plone_utils.addPortalMessage(msg, type='error')
+                    return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
         # proceed, add annex and redirect user to the annexes table view
         annex = self._store_pod_template_as_annex(
@@ -1263,8 +1287,6 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                             context=self.request)
             api.portal.show_message(msg, request=self.request)
             return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
-        else:
-            return annex
 
     def _get_filename(self):
         """Override to take into account store_as_annex_empty_file."""

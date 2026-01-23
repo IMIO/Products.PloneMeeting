@@ -8,7 +8,6 @@ from appy.shared.diff import HtmlDiff
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.compoundcriterion.adapters import NegativePersonalLabelsAdapter
 from collective.compoundcriterion.adapters import NegativePreviousIndexValuesAdapter
-from collective.contact.core.content.held_position import HeldPosition
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
@@ -2096,17 +2095,16 @@ class PMDashboardGenerablePODTemplatesAdapter(DashboardGenerablePODTemplatesAdap
         return pod_templates
 
 
-class AnnexSignersAdapter(object):
-    """Adapter to get signers of a given annex."""
+class ItemSignersAdapter(object):
+    """Adapter to get signers of a given item."""
 
     def __init__(self, context):
         self.context = context
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
-    def get_signers(self):
-        """Return the list of signers for the item.
-           We use configuration field MeetingConfig.itemESignSignersTALExpr."""
+    def get_raw_signers(self):
+        """ """
         extra_expr_ctx = _base_extra_expr_ctx(
             self.context, {'item': self.context, })
         # will return a dict of signers infos with
@@ -2119,30 +2117,62 @@ class AnnexSignersAdapter(object):
             extra_expr_ctx=extra_expr_ctx,
             empty_expr_is_true=False,
             raise_on_error=True) or {}
+        return signer_infos
+
+    def get_signers(self):
+        """Return the list of signers for the item.
+           We use configuration field MeetingConfig.itemESignSignersTALExpr."""
+        signer_infos = self.get_raw_signers()
         # now we have to return a list of ordered signers
         # with 'userid', 'email', 'fullname' and 'position' all as text
         res = []
         # can not have several same userid or email
-        userids = []
-        emails = []
+        userids = {}
+        emails = {}
         for signature_number, signer_info in sorted(signer_infos.items()):
+            userid = email = ''
             # a held_position to get a userid is mandatory
-            userid = signer_info["held_position"].get_person().userid \
-                if isinstance(signer_info["held_position"], HeldPosition) else None
+            if not signer_info["held_position"]:
+                raise ValueError(
+                    "No held position for signer number {0} ({1})!".format(
+                        signature_number,
+                        u" - ".join(
+                            (signer_info['name'], signer_info['function']))
+                        )
+                    )
+            person = signer_info["held_position"].get_person()
+            userid = person.userid
             if userid is None:
-                raise ValueError("No userid")
+                raise ValueError("No userid for person at {0}!".format(
+                    person.absolute_url()))
             # can not have several same userid
             if userid in userids:
-                raise ValueError("Same userid for several signers")
+                raise ValueError(
+                    "Same userid for several signers at {0} and {1}!".format(
+                    userids[userid].absolute_url(), person.absolute_url()))
             user = api.user.get(userid)
             if user is None:
-                raise ValueError("Given userid does not exist")
+                raise ValueError(
+                    "Could not find a user with userid \"{0}\" defined on "
+                    "person at {1}!".format(
+                        userid, person.absolute_url()
+                ))
             email = user.getProperty("email")
             if not email:
-                raise ValueError("User does not have an email address")
+                raise ValueError(
+                    "User \"{0}\"does not have an email address!".format(
+                        user.getId()))
+            email = email.strip()
             # can not have several same email
-            if userid in userids or email in emails:
-                raise ValueError("Same e-mail for several signers")
+            if email in emails:
+                raise ValueError("Same e-mail for several users at {0} and {1}!".format(
+                    emails[email].getId(), user.getId()))
+
+            # save infos to manage duplicates of userid and email
+            userids[userid] = person
+            emails[email] = user
+
+            # everything OK or raise_error=False, proceed
             data = {
                 "held_position": signer_info["held_position"],
                 "name": signer_info["name"],
@@ -2150,6 +2180,7 @@ class AnnexSignersAdapter(object):
                 "userid": userid,
                 "email": email,
             }
+
             res.append(data)
         return res
 
@@ -2163,6 +2194,12 @@ class AnnexSignersAdapter(object):
         # for sub_content in self.context.values():
         #     if sub_content.portal_type in ("dmsommainfile", "dmsappendixfile"):
         #         yield sub_content.UID()
+
+    def get_observers(self):
+        """
+        List of observers for that element.
+        """
+        return []
 
 
 #########################

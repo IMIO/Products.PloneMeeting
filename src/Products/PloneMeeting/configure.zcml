@@ -543,8 +543,8 @@
 
     <!-- imio.esign -->
     <adapter
-        for="imio.annex.content.annex.IAnnex"
-        factory="Products.PloneMeeting.adapters.AnnexSignersAdapter"
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        factory="Products.PloneMeeting.adapters.ItemSignersAdapter"
         provides="imio.esign.adapters.ISignable"/>
 
 </configure>

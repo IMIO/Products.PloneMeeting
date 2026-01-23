@@ -1,0 +1,21 @@
+<div class="display-signers" i18n:domain="PloneMeeting">
+  <h3>Signers that will be used in the generated document:</h3>
+  <table class="vertical listing">
+    <tr>
+      <th>Signature number</th>
+      <th>Signer name</th>
+      <th>Signer function</th>
+    </tr>
+    <tbody>
+      <tr tal:repeat="signer python: view.raw_signers.items()">
+        <td tal:content="python: signer[0]">Signature number</td>
+        <td tal:content="python: signer[1]['name']">Signer name</td>
+        <td tal:content="python: signer[1]['function']">Signer function</td>
+      </tr>
+    </tbody>
+  </table>
+  <h3>e-signature:</h3>
+  <div metal:use-macro="context/global_statusmessage/macros/portal_message">
+    Portal status message
+  </div>
+</div>
