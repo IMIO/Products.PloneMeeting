@@ -14,6 +14,7 @@ from ftw.labels.jar import LabelJar
 from ftw.labels.portlets.labeljar import Renderer as FTWLabelsRenderer
 from ftw.labels.viewlets.labeling import LabelingViewlet
 from plone import api
+from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from zope.annotation import IAnnotations
@@ -109,6 +110,8 @@ class PMLabeling(Labeling):
 
 class PMFTWLabelsLabelingViewlet(LabelingViewlet):
     """ """
+
+    index = ViewPageTemplateFile('labeling.pt')
 
     def __init__(self, context, request, view, manager=None):
         super(PMFTWLabelsLabelingViewlet, self).__init__(context, request, view, manager=None)

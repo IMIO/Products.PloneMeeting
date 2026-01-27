@@ -8,6 +8,10 @@ Changelog
 - In `ExternalView.available`, be defensive when managing response error
   in case response can not be decoded to `json`.
   [gbastien]
+- Override `PMFTWLabelsLabelingViewlet` template (`labeling.pt`) to not call
+  `can_edit` and `can_personal_edit` when viewlet is not `available`, this leaded
+  to an error rendering the viewlet when labels are not enabled.
+  [gbastien]
 
 4.2.28.8 (2026-01-16)
 ---------------------
