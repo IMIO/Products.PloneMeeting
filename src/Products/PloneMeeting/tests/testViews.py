@@ -2334,7 +2334,7 @@ class testViews(PloneMeetingTestCase):
         viewlet = self._get_viewlet(
             context=item, manager_name='plone.belowcontenttitle', viewlet_name='ftw.labels.labeling')
         self.assertFalse(viewlet.available)
-        self.failUnless(viewlet.render())
+        self.assertEqual(viewlet.render().strip(), u'')
 
         # get the labeljar, that is actually the MeetingConfig
         labeljar = getAdapter(item, ILabelJar)
