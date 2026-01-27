@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.28.9 (unreleased)
+4.2.28.9 (2026-01-27)
 ---------------------
 
 - In `ExternalView.available`, be defensive when managing response error
