@@ -7291,7 +7291,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if apply_meetingmanagers_access:
             mmanagers_item_states = ['validated'] + list(cfg.getItemDecidedStates())
             if item_state in mmanagers_item_states or self.hasMeeting():
-                mmanagers_group_id = "{0}_{1}".format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
+                mmanagers_group_id = "{0}_{1}".format(
+                    cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
                 # 'Reviewer' also on decided item, the WF guard will
                 # avoid correct if meeting closed, and give 'Contributor' to be
                 # able to add decision annexes
@@ -7393,7 +7394,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             grp_reader_localroles = [
                 grp_id for grp_id in self.__ac_local_roles__
                 if 'Reader' in self.__ac_local_roles__[grp_id]]
-            meetingmanager_group_id = get_plone_group_id(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
+            mmanagers_group_id = get_plone_group_id(
+                cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
             for obj in objs:
                 # clear local roles then recompute
                 # only Reader local roles are set, the Editor/Contributor
@@ -7401,7 +7403,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 _clear_local_roles(obj)
                 for grp_id in grp_reader_localroles:
                     obj.manage_addLocalRoles(grp_id, ['Reader'])
-                obj.manage_addLocalRoles(meetingmanager_group_id, ['MeetingManager'])
+                obj.manage_addLocalRoles(mmanagers_group_id, ['MeetingManager'])
 
     def _updateCopyGroupsLocalRoles(self, isCreated, cfg, item_state):
         '''Give the 'Reader' local role to the copy groups

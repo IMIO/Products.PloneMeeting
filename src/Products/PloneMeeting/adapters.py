@@ -58,6 +58,7 @@ from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.content.meeting import IMeeting
@@ -2180,7 +2181,6 @@ class ItemSignersAdapter(object):
                 "userid": userid,
                 "email": email,
             }
-
             res.append(data)
         return res
 
@@ -2195,11 +2195,16 @@ class ItemSignersAdapter(object):
         #     if sub_content.portal_type in ("dmsommainfile", "dmsappendixfile"):
         #         yield sub_content.UID()
 
-    def get_observers(self):
+    def get_watchers(self):
         """
-        List of observers for that element.
+        MeetingManagers are watchers.
         """
-        return []
+        mmanagers_group_id = "{0}_{1}".format(
+            self.cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
+        watcher_users = api.user.get_users(groupname=mmanagers_group_id)
+        watcher_emails = [
+            user.getProperty("email").strip() for user in watcher_users]
+        return list(set(watcher_emails))
 
 
 #########################

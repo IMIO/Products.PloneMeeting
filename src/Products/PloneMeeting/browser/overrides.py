@@ -25,6 +25,7 @@ from imio.actionspanel.browser.views import ActionsPanelView
 from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
 from imio.esign.adapters import ISignable
+from imio.esign.utils import add_files_to_session
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
@@ -53,6 +54,7 @@ from Products.CMFPlone.browser.ploneview import Plone
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import HAS_RESTAPI
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
@@ -1105,6 +1107,12 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
 
     MAILINGLIST_NO_RECIPIENTS = 'No recipients defined for this mailing list!'
 
+    def __init__(self, context, request):
+        """Hide the green bar on the faceted if not in the configuration."""
+        super(PMDocumentGenerationView, self).__init__(context, request)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+
     def get_base_generation_context(self, helper_view, pod_template):
         """ """
         specific_context = _base_extra_expr_ctx(
@@ -1169,13 +1177,11 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
            {'item_annexes': ['MeetingItemCfg1'],
             'item_decision_annexes': ['MeetingItemCfg1'],
             ...}."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
         mapping = {
-            'item_annexes': [cfg.getItemTypeName()],
-            'item_decision_annexes': [cfg.getItemTypeName()],
+            'item_annexes': [self.cfg.getItemTypeName()],
+            'item_decision_annexes': [self.cfg.getItemTypeName()],
             'advice_annexes': getAdvicePortalTypeIds(),
-            'meeting_annexes': [cfg.getMeetingTypeName()],
+            'meeting_annexes': [self.cfg.getMeetingTypeName()],
         }
         return mapping
 
@@ -1255,10 +1261,11 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                 return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
         # add to eSign session if necessary
+        # validate signers again, should be ok if we are here
         if add_to_sign_session:
             try:
                 # get signatories using MeetingItem as context
-                signatories = ISignable(self.context).get_signers()
+                signers = ISignable(self.context).get_signers()
             except ValueError, msg:
                 msg_code = 'store_podtemplate_as_annex_signers_error'
                 if return_portal_msg_code:
@@ -1280,6 +1287,21 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             generated_template_data,
             annex_type,
             annex_portal_type)
+
+        # add to eSign session if necessary
+        # now that signers and annex is correct, we can add it to session
+        if add_to_sign_session:
+            # signers must be passed as a list of data with userid, email, name, label
+            signers = [
+                (signer['userid'], signer['email'], signer['name'], signer['function'])
+                for signer in signers]
+            session_id, session = add_files_to_session(
+                signers,
+                [annex.UID()],
+                # seal = pod_template.get_context_variables().get('esign_seal', False),
+                title=_(u"[iA.Délib] %s - Session {sign_id}" % safe_unicode(
+                    self.cfg.Title(include_config_group=True))),
+                watchers=ISignable(self.context).get_watchers())
 
         if not return_portal_msg_code:
             msg = translate('stored_single_item_template_as_annex',

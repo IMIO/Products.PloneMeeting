@@ -3546,6 +3546,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'tal_condition': "python: 'labels' in cfg.getUsedItemAttributes()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
+                # Items in esign sessions
+                ('searchitemsinesignsessions', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'files-belonging-to-a-given-session'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: tool.isManager(cfg)",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
                 # Items of my committees
                 ('searchitemsofmycommittees', {
                     'subFolderId': 'searches_items',

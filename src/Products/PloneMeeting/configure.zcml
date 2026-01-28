@@ -50,6 +50,7 @@
   <include package=".ckeditor" />
   <include package=".content" />
   <include package=".documentgenerator" />
+  <include package=".esign" />
   <include package=".external" />
   <include package=".filters" />
   <include package=".ftw_labels" />
@@ -540,11 +541,5 @@
   <subscriber for="plone.dexterity.interfaces.IDexterityContent
                    OFS.interfaces.IObjectWillBeRemovedEvent"
               handler="imio.actionspanel.events.onObjWillBeRemoved" />
-
-    <!-- imio.esign -->
-    <adapter
-        for="Products.PloneMeeting.interfaces.IMeetingItem"
-        factory="Products.PloneMeeting.adapters.ItemSignersAdapter"
-        provides="imio.esign.adapters.ISignable"/>
 
 </configure>

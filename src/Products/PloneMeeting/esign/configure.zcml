@@ -1,0 +1,38 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    xmlns:plone="http://namespaces.plone.org/plone">
+
+    <adapter
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        factory="Products.PloneMeeting.esign.adapters.ItemSignersAdapter"
+        provides="imio.esign.adapters.ISignable"/>
+
+    <configure package="imio.esign">
+        <browser:page
+            name="esign-sessions-listing"
+            for="imio.esign.interfaces.IImioSessionsManagementContext"
+            class="Products.PloneMeeting.esign.views.PMSessionsListingView"
+            permission="zope2.Public"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
+
+        <browser:viewlet
+            for="eea.facetednavigation.subtypes.interfaces.IFacetedNavigable"
+            manager="collective.eeafaceted.z3ctable.interfaces.ITopAboveNavManager"
+            name="esign-faceted-session-info"
+            template="browser/templates/session_info.pt"
+            class="Products.PloneMeeting.esign.viewlets.PMFacetedSessionInfoViewlet"
+            permission="zope2.View"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
+
+        <browser:viewlet
+            for="Products.PloneMeeting.interfaces.IMeetingItem"
+            manager="plone.app.layout.viewlets.interfaces.IAboveContentBody"
+            view="plone.app.layout.globals.interfaces.IViewView"
+            name="esign-item-session-info"
+            template="browser/templates/session_info.pt"
+            class="imio.esign.browser.views.ItemSessionInfoViewlet"
+            permission="zope2.View" />
+    </configure>
+
+</configure>

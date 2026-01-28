@@ -2192,50 +2192,9 @@ p#download_vcard {
     vertical-align: baseline;
 }
 
-.collapsible-content {
-    /*max-height: 0;*/
-    /*overflow: hidden;*/
-    transition: max-height 0.2s ease-out;
-    margin-bottom: 0.5em;
-}
-.collapsible-inner-content {
-    padding: 0.3em;
-    background-color: &dtml-oddRowBackgroundColor;;
-    border:1px solid &dtml-tableHeaderBackgroundColor;;
-}
-.collapsible-content.collapsed-on-load {
-    max-height: inherit;
-}
-
-/* general and next sibling
-   when collapsible does not have the active class, it means it is closed */
-div.item-linkeditems div.collapsible:not([class*='active']) ~ div.collapsible-content,
-div.collapsible:not([class*='active']) + div.collapsible-content {
-   display: none;
-}
-
-.collapsible {
-    background-color: transparent;
-    cursor: pointer;
-    border: none;
-    text-align: left;
-    outline: none;
-}
-
-.active, .collapsible:hover {
-    background-color: transparent;
-}
-
-.collapsible:before {
-    font-family: "Font Awesome 5 Free";
-    content: "\f0fe";
-    color: grey;
-    font-weight: bold;
-}
-
-.active:before {
-    font-family: "Font Awesome 5 Free";
-    content: "\f146";
+/* make collapsibles in linked-items collapsible not display */
+div.item-linkeditems div.collapsible:not([class*='active']) ~ div.collapsible-content {
+    display: none;
 }
 
 /* hide actions menu when on folder_contents of contacts directory except 'Add' menu */

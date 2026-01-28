@@ -1,5 +1,5 @@
 <div class="display-signers" i18n:domain="PloneMeeting">
-  <h3>Signers that will be used in the generated document:</h3>
+  <label class="horizontal">Signers that will be used in the generated document:</label>
   <table class="vertical listing">
     <tr>
       <th>Signature number</th>
@@ -14,7 +14,7 @@
       </tr>
     </tbody>
   </table>
-  <h3>e-signature:</h3>
+  <label class="horizontal">e-signature:</label>
   <div metal:use-macro="context/global_statusmessage/macros/portal_message">
     Portal status message
   </div>
