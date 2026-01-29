@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from imio.esign.browser.views import SessionFilesView
 from imio.esign.browser.views import SessionsListingView
+from imio.esign.utils import get_session_info
+from imio.prettylink.interfaces import IPrettyLink
 from plone import api
 
 
@@ -13,6 +16,11 @@ class PMSessionsListingView(SessionsListingView):
         self.cfg = self.tool.getMeetingConfig(self.context)
 
     def get_dashboard_link(self, session):
+        # if a cfg could not be initialized, we get it from the session first element
+        if self.cfg is None:
+            session_info = get_session_info(session['id'])
+            self.cfg = self.tool.get(session_info['cfg_id'])
+        # compute url
         url = ""
         if self.cfg:
             pm_folder = self.tool.getPloneMeetingFolder(self.cfg.getId())
@@ -27,3 +35,11 @@ class PMSessionsListingView(SessionsListingView):
 
     def get_sessions_url(self):
         return api.portal.get()["sessions"].absolute_url()
+
+
+class PMSessionFilesView(SessionFilesView):
+
+    def get_file_link(self, ctx, obj):
+        return ctx.getPrettyLink(
+            contentValue=ctx.Title(withItemNumber=True, withMeetingDate=True)) + \
+            u" ➔ " + IPrettyLink(obj).getLink()

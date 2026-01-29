@@ -1,3 +1,3 @@
 <h1 class="documentFirstHeading">
- <span tal:content="structure context/getPrettyLink">Advice pretty title</span>
+ <span tal:content="structure python: context.getPrettyLink()">Advice pretty title</span>
 </h1>

@@ -882,7 +882,8 @@ class MeetingConfigDescriptor(Descriptor):
 
         # Doc parameters -------------------------------------------------------
         self.meetingItemTemplatesToStoreAsAnnex = []
-        self.itemESignSignersTALExpr = ''
+        self.itemESignSignersTALExpr = 'python: cfg.getCertifiedSignatures(True)'
+        self.itemESignDiscriminatorsTALExpr = 'python: [cfg.getId()]'
 
         # content_category_groups parameters -----------------------------------
         self.category_group_activated_attrs = {}

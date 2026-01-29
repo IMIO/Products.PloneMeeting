@@ -2669,6 +2669,13 @@ div.add-quick-advice-type {
     padding-bottom: 0.5em;
 }
 
+div.faceted-session-info {
+    display: block;
+    float: left;
+    width: 100%;
+    padding-bottom: 0.5em;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

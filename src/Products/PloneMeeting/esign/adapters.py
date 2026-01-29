@@ -117,3 +117,27 @@ class ItemSignersAdapter(object):
             user.getProperty("email").strip() for user in watcher_users]
         # manage duplicates
         return list(set(watcher_emails))
+
+    def get_discriminators(self, annex):
+        """
+        Discriminate based on MeetingConfig.itemESignDiscriminatorsTALExpr.
+        """
+        extra_expr_ctx = _base_extra_expr_ctx(
+            self.context,
+            {'item': self.context, 'annex': annex, })
+        # will return a list of strings
+        discriminators = _evaluateExpression(
+            self.context,
+            expression=self.cfg.getItemESignDiscriminatorsTALExpr(),
+            roles_bypassing_expression=[],
+            extra_expr_ctx=extra_expr_ctx,
+            empty_expr_is_true=False,
+            raise_on_error=True) or []
+        return u" - ".join(discriminators)
+
+    def get_create_session_custom_data(self):
+        """
+        Store cfg_id in dict so we can use it in various places
+        and we can have a per MeetingConfig behavior.
+        """
+        return {'cfg_id': self.cfg.getId()}

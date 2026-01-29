@@ -1295,13 +1295,20 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             signers = [
                 (signer['userid'], signer['email'], signer['name'], signer['function'])
                 for signer in signers]
+            files_uids = [annex.UID()]
+            title = _(u"[iA.Délib] %s - Session {sign_id}" % safe_unicode(
+                self.cfg.Title(include_config_group=True)))
+            discriminators = ISignable(self.context).get_discriminators(annex)
+            watchers = ISignable(self.context).get_watchers()
+            create_session_custom_data = {'cfg_id': self.cfg.getId()}
             session_id, session = add_files_to_session(
                 signers,
-                [annex.UID()],
+                files_uids,
                 # seal = pod_template.get_context_variables().get('esign_seal', False),
-                title=_(u"[iA.Délib] %s - Session {sign_id}" % safe_unicode(
-                    self.cfg.Title(include_config_group=True))),
-                watchers=ISignable(self.context).get_watchers())
+                title=title,
+                discriminators=discriminators,
+                watchers=watchers,
+                create_session_custom_data=create_session_custom_data)
 
         if not return_portal_msg_code:
             msg = translate('stored_single_item_template_as_annex',

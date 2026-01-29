@@ -16,6 +16,14 @@
             permission="zope2.Public"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
 
+        <browser:page
+                name="esign-session-files"
+                for="imio.esign.interfaces.IImioSessionsManagementContext"
+                class="Products.PloneMeeting.esign.views.PMSessionFilesView"
+                permission="zope2.View"
+                template="browser/templates/session_files.pt"
+                layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
+
         <browser:viewlet
             for="eea.facetednavigation.subtypes.interfaces.IFacetedNavigable"
             manager="collective.eeafaceted.z3ctable.interfaces.ITopAboveNavManager"
