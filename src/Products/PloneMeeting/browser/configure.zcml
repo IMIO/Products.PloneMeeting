@@ -1079,6 +1079,14 @@
         class=".itemexportpdf.ItemExportPDFForm"
         permission="zope2.View" />
 
+    <!-- Form that manage pod template store as annex -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        name="store-pod-temlate-as-annex-form"
+        class=".podtemplatestoreasannex.PodTemplateStoreAsAnnexFormWrapper"
+        permission="zope2.View" />
+
     <!-- Display the go_to_meeting imgSelectBox in the plonemeeting portlet -->
     <browser:page
         for="*"

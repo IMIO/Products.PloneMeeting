@@ -25,7 +25,7 @@ from z3c.form import form
 from z3c.form.interfaces import NO_VALUE
 from zExceptions import BadRequest
 from zope import schema
-from zope.component.hooks import getSite
+from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import Interface
 from zope.interface import provider
@@ -41,8 +41,7 @@ def person_uid_default():
       Get the value from the REQUEST as it is passed when calling the
       form : form?current_delay_row_id=new_value.
     """
-    request = getSite().REQUEST
-    return request.get('person_uid', u'')
+    return getRequest().get('person_uid', u'')
 
 
 @provider(IContextAwareDefaultFactory)
@@ -448,8 +447,7 @@ def signature_number_default():
       Get the value from the REQUEST as it is passed when editing
       already redefined item signatory.
     """
-    request = getSite().REQUEST
-    return request.get('signature_number', u'1')
+    return getRequest().get('signature_number', u'1')
 
 
 class IRedefineSignatory(IBaseAttendee):

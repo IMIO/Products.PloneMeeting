@@ -27,8 +27,8 @@ from z3c.form.interfaces import HIDDEN_MODE
 from z3c.form.interfaces import IFieldsAndContentProvidersForm
 from zope import schema
 from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
-from zope.component.hooks import getSite
 from zope.contentprovider.provider import ContentProviderBase
+from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
 from zope.interface import Interface
@@ -98,8 +98,7 @@ def vote_number_default():
       Get the value from the REQUEST as it is passed when calling the
       form : form?vote_number=0.
     """
-    request = getSite().REQUEST
-    return request.get('vote_number', 0)
+    return getRequest().get('vote_number', 0)
 
 
 @provider(IContextAwareDefaultFactory)
@@ -152,8 +151,7 @@ def label_default(context):
 @provider(IContextAwareDefaultFactory)
 def linked_to_previous_default(context):
     """ """
-    request = getSite().REQUEST
-    res = request.get('form.widgets.linked_to_previous', None)
+    res = getRequest().get('form.widgets.linked_to_previous', None)
     if res is None:
         item_votes = context.get_item_votes(vote_number=vote_number_default())
         res = item_votes['linked_to_previous']
