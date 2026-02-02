@@ -17,6 +17,7 @@ from imio.helpers.content import set_to_annotation
 from imio.helpers.date import formatDate
 from imio.helpers.date import wordizeDate
 from imio.helpers.workflow import update_role_mappings_for
+from imio.helpers.xhtml import removeCssClasses
 from imio.helpers.xhtml import unescape_html
 from imio.history.utils import getLastWFAction
 from Products.CPUtils.Extensions.utils import fileSize
