@@ -10,6 +10,7 @@ from plone import api
 class PMSessionsListingView(SessionsListingView):
 
     def __init__(self, context, request):
+        super(PMSessionsListingView, self).__init__(context, request)
         self.context = context
         self.request = request
         self.tool = api.portal.get_tool('portal_plonemeeting')
@@ -32,9 +33,6 @@ class PMSessionsListingView(SessionsListingView):
                     session_id=session["id"],
                 )
         return url
-
-    def get_sessions_url(self):
-        return api.portal.get()["sessions"].absolute_url()
 
 
 class PMSessionFilesView(SessionFilesView):

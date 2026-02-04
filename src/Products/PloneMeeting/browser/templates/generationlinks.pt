@@ -42,11 +42,10 @@
             </tal:mail>
             <tal:comment replace="nothing">XXX Added by PloneMeting : store generated document as annex.</tal:comment>
             <tal:store_as_annex condition="python: view.displayStoreAsAnnexSection()">
-              <tal:defines define="store_as_annex_uid link/store_as_annex_uid"
-                           condition="python: store_as_annex_uid and view.may_store_as_annex(link['template'])">
+              <tal:defines condition="python: link['store_as_annex_uid'] and view.may_store_as_annex(link['template'])">
                 <a href="#"
                    class="link-overlay-pm"
-                   tal:attributes="href string:@@store-pod-temlate-as-annex-form?template_uid=${store_as_annex_uid}&output_format=${link/output_format}">
+                   tal:attributes="href string:@@store-pod-temlate-as-annex-form?template_uid=${link/template_uid}&output_format=${link/output_format}">
                   <img tal:attributes="src string:${view/portal_url}/store_as_annex.png;
                                        title python: view.get_store_as_annex_title_msg(link['store_as_annex_title'], link['output_format_title'])" />
                 </a>

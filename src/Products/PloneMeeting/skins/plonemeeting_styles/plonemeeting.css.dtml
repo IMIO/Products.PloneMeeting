@@ -2676,6 +2676,15 @@ div.faceted-session-info {
     padding-bottom: 0.5em;
 }
 
+h3.parapheo {
+    padding-top: 1em;
+    display: flex;
+}
+h3.parapheo img {
+    padding-right: 0.25em;
+    margin-left: -3px;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

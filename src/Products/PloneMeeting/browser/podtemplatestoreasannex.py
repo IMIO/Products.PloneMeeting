@@ -3,19 +3,24 @@
 # GNU General Public License (GPL)
 #
 
-from AccessControl import Unauthorized
+from collective.eeafaceted.batchactions import _ as _CEBA
+from plone import api
 from plone.autoform.directives import widget
 from plone.z3cform.layout import wrap_form
-from Products.CMFPlone import PloneMessageFactory as PMF
+from Products.PloneMeeting.browser.batchactions import compute_signers
+from Products.PloneMeeting.browser.batchactions import DisplaySignersProvider
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form
 from z3c.form.browser.radio import RadioFieldWidget
+from z3c.form.contentprovider import ContentProviders
 from z3c.form.interfaces import HIDDEN_MODE
+from z3c.form.interfaces import IFieldsAndContentProvidersForm
 from zope import schema
 from zope.globalrequest import getRequest
+from zope.interface import implements
 from zope.interface import Interface
 
 
@@ -53,26 +58,31 @@ class IPodTemplateStoreAsAnnex(Interface):
     widget('add_to_sign_session', RadioFieldWidget)
     add_to_sign_session = schema.Bool(
         title=_(u'title_add_to_sign_session'),
-        description=_(
-            "This will add stored annexes to a e-signing session."),
+        description=_("descr_add_to_sign_session"),
         required=False,
         default=True)
 
 
 class PodTemplateStoreAsAnnexForm(form.Form):
     """ """
+    implements(IFieldsAndContentProvidersForm)
     schema = IPodTemplateStoreAsAnnex
     fields = field.Fields(IPodTemplateStoreAsAnnex)
-
     ignoreContext = True  # don't use context to get widget data
 
-    label = PMF(u"Store pod template as annex")
+    contentProviders = ContentProviders()
+    contentProviders['signers'] = DisplaySignersProvider
+    contentProviders['signers'].position = 2
+
+    label = _CEBA(u"Store POD template as annex")
     description = _('store_pod_template_as_annex_descr')
     _finished = False
 
     def __init__(self, context, request):
         self.context = context
         self.request = request
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(context)
 
     @button.buttonAndHandler(_('Apply'), name='apply_store_as_annex')
     def handleApply(self, action):
@@ -88,7 +98,14 @@ class PodTemplateStoreAsAnnexForm(form.Form):
         super(PodTemplateStoreAsAnnexForm, self).updateWidgets()
 
     def _do_store_as_annex(self, data):
-        import ipdb; ipdb.set_trace()
+        generation_view = self.context.restrictedTraverse('@@document-generation')
+        # res is a string (error msg) or an annex
+        self.request.set('store_as_annex', '1')
+        generation_view(
+            template_uid=data['template_uid'],
+            output_format=data['output_format'],
+            add_to_sign_session=data['add_to_sign_session'])
+        self.request.set('store_as_annex', '0')
         self._finished = True
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
@@ -99,6 +116,8 @@ class PodTemplateStoreAsAnnexForm(form.Form):
         super(PodTemplateStoreAsAnnexForm, self).update()
         # after calling parent's update, self.actions are available
         self.actions.get('cancel').addClass('standalone')
+        self.signers, self.raw_signers, self.signers_error_msg, self.esign_enabled = compute_signers(self.context)
+        self.show_esign = self.esign_enabled and not self.signers_error_msg
 
     def render(self):
         if self._finished:

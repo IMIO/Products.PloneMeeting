@@ -54,11 +54,11 @@ from Products.CMFPlone.browser.ploneview import Plone
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import HAS_RESTAPI
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
@@ -1317,9 +1317,9 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             api.portal.show_message(msg, request=self.request)
             return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
-    def _get_filename(self):
+    def _get_filename(self, store_as_annex=False):
         """Override to take into account store_as_annex_empty_file."""
-        if self.request.get('store_as_annex', '0') == '1' and \
+        if store_as_annex and \
            self.pod_template.store_as_annex_empty_file is True:
             return "empty_file.txt"
         else:
@@ -1333,7 +1333,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                                      annex_portal_type):
         """Private method that stores a p_generated_template as an annex of
            p_annex_portal_type using p_annex_type."""
-        filename = safe_unicode(self._get_filename())
+        filename = safe_unicode(self._get_filename(store_as_annex=True))
         annex_file = namedfile.NamedBlobFile(
             generated_template_data,
             filename=filename)

@@ -10,19 +10,20 @@
 
     <configure package="imio.esign">
         <browser:page
-            name="esign-sessions-listing"
-            for="imio.esign.interfaces.IImioSessionsManagementContext"
+            name="parapheo"
+            for="Products.CMFPlone.interfaces.IPloneSiteRoot"
             class="Products.PloneMeeting.esign.views.PMSessionsListingView"
+            template="browser/templates/sessions.pt"
             permission="zope2.Public"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
 
         <browser:page
-                name="esign-session-files"
-                for="imio.esign.interfaces.IImioSessionsManagementContext"
-                class="Products.PloneMeeting.esign.views.PMSessionFilesView"
-                permission="zope2.View"
-                template="browser/templates/session_files.pt"
-                layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
+            name="esign-session-files"
+            for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+            class="Products.PloneMeeting.esign.views.PMSessionFilesView"
+            permission="zope2.View"
+            template="browser/templates/session_files.pt"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
 
         <browser:viewlet
             for="eea.facetednavigation.subtypes.interfaces.IFacetedNavigable"

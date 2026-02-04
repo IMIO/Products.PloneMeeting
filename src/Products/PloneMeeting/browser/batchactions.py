@@ -17,6 +17,7 @@ from imio.esign.config import get_registry_enabled
 from imio.helpers.content import get_vocab
 from plone import api
 from plone.app.textfield import RichText
+from plone.directives import form
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting import logger
@@ -28,13 +29,13 @@ from Products.PloneMeeting.utils import _add_advice
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import is_operational_user
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
-from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
-from zope.contentprovider.provider import ContentProviderBase
 from z3c.form.browser.radio import RadioFieldWidget
 from z3c.form.contentprovider import ContentProviders
 from z3c.form.field import Fields
 from z3c.form.interfaces import IFieldsAndContentProvidersForm
 from zope import schema
+from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
+from zope.contentprovider.provider import ContentProviderBase
 from zope.i18n import translate
 from zope.interface import implements
 from zope.interface import provider
@@ -59,10 +60,17 @@ class DisplaySignersProvider(ContentProviderBase):
         super(DisplaySignersProvider, self).__init__(
             context, request, view)
         self.__parent__ = view
+        self.portal = api.portal.get()
+        self.portal_url = self.portal.absolute_url()
+
+    def show_manage_signatories(self):
+        """Show the "Configure signatories" link ?"""
+        return self.__parent__.cfg.isManager(self.__parent__.cfg)
 
     def render(self):
         self.signers = self.__parent__.form.signers
         self.raw_signers = self.__parent__.form.raw_signers
+        self.show_esign = self.__parent__.form.show_esign
         if self.__parent__.form.signers_error_msg is not None:
             self.error = translate(
                 msgid='store_podtemplate_as_annex_signers_error',
@@ -75,9 +83,26 @@ class DisplaySignersProvider(ContentProviderBase):
         return self.template()
 
 
+def compute_signers(item):
+    """ """
+    signers = []
+    raw_signers = {}
+    esign_enabled = get_registry_enabled()
+    signers_error_msg = None
+    # raw signers
+    raw_signers = ISignable(item).get_raw_signers()
+    # eSign signers
+    if esign_enabled:
+        try:
+            signers = ISignable(item).get_signers()
+        except ValueError as msg:
+            signers_error_msg = msg
+    return signers, raw_signers, signers_error_msg, esign_enabled
+
+
 class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
 
-    label = _CEBA("Store POD template as annex for selected elements")
+    label = _CEBA("Store POD template as annex")
     button_with_icon = True
     available_permission = ModifyPortalContent
     implements(IFieldsAndContentProvidersForm)
@@ -98,45 +123,51 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
            super(MeetingStoreItemsPodTemplateAsAnnexBatchActionForm, self).available():
             return True
 
+    @property
+    def description(self):
+        """ """
+        descr = super(MeetingStoreItemsPodTemplateAsAnnexBatchActionForm, self).description
+        descr = translate(descr, domain=descr.domain, context=self.request)
+        descr += translate(
+            'store_pod_template_as_annex_batch_action_descr',
+            domain="collective.eeafaceted.batchactions",
+            context=self.request)
+        return descr
+
     def _update(self):
         self.signers = []
         self.raw_signers = {}
         brains = self.brains
-        esign_enabled = get_registry_enabled()
+        self.esign_enabled = False
         self.signers_error_msg = None
-        if brains:
-            an_item = brains[0].getObject()
-            # raw signers
-            self.raw_signers = ISignable(an_item).get_raw_signers()
-            # eSign signers
-            if esign_enabled:
-                try:
-                    self.signers = ISignable(an_item).get_signers()
-                except ValueError, msg:
-                    self.signers_error_msg = msg
-
+        if self.brains:
+            item = brains[0].getObject()
+            self.signers, self.raw_signers, self.signers_error_msg, self.esign_enabled = compute_signers(item)
+        self.show_esign = self.esign_enabled and not self.signers_error_msg
         self.fields += Fields(schema.Choice(
             __name__='pod_template',
             title=_(u'POD template to annex'),
             vocabulary='Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary'))
-        # eSign
-        if esign_enabled and not self.signers_error_msg:
+        # eSign related fields
+        if self.show_esign:
             self.fields += Fields(schema.Bool(
                 __name__='add_to_sign_session',
                 title=_(u'title_add_to_sign_session'),
-                description=_(
-                    "This will add stored annexes to a e-signing session."),
+                description=_('descr_add_to_sign_session'),
                 required=False,
                 default=True))
             self.fields["add_to_sign_session"].widgetFactory = RadioFieldWidget
             self.fields += Fields(schema.Bool(
                 __name__='add_annexes_to_sign_session',
                 title=_(u'title_add_annexes_to_sign_session'),
-                description=_(
-                    "This will add existing annexes marked \"To sign\" to a e-signing session."),
+                description=_(u'descr_add_annexes_to_sign_session'),
                 required=False,
                 default=True))
             self.fields["add_annexes_to_sign_session"].widgetFactory = RadioFieldWidget
+            form.fieldset('extra',
+                label=u"Extra information",
+                fields=['add_to_sign_session', 'add_annexes_to_sign_session']
+            )
 
     def _apply(self, **data):
         """ """
@@ -148,7 +179,7 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
             item = brain.getObject()
             generation_view = item.restrictedTraverse('@@document-generation')
             add_to_sign_session = data.get('add_to_sign_session', False)
-            # res is a string (error msg) or an annex
+            # res is None or a string (error msg)
             res = generation_view(
                 template_uid=pod_template.UID(),
                 output_format=output_format,

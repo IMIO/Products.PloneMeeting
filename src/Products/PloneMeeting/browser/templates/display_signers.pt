@@ -1,10 +1,16 @@
 <div class="display-signers" i18n:domain="PloneMeeting">
-  <label class="horizontal">Signers that will be used in the generated document:</label>
+  <label class="horizontal" i18n:translate="">Signers that will be used in the generated document:</label>
+  <a class="display-signers-configure-signatories"
+     tal:condition="python: view.show_manage_signatories"
+     tal:attributes="href python: view.__parent__.form.cfg.absolute_url() + '?pageName=assembly_and_signatures'"
+     i18n:translate="display_signers_configure_signatories">
+    Not correct? Change signatories
+  </a>
   <table class="vertical listing">
     <tr>
-      <th>Signature number</th>
-      <th>Signer name</th>
-      <th>Signer function</th>
+      <th i18n:translate="">Signature number</th>
+      <th i18n:translate="">Certified signatures signatory name</th>
+      <th i18n:translate="">Certified signatures signatory function</th>
     </tr>
     <tbody>
       <tr tal:repeat="signer python: view.raw_signers.items()">
@@ -14,7 +20,10 @@
       </tr>
     </tbody>
   </table>
-  <label class="horizontal">e-signature:</label>
+  <h3 tal:condition="python: view.show_esign" class="parapheo">
+    <img width="24" height="24" tal:attributes="src python: view.portal_url + '/++resource++imio.esign/parapheo.svg'" />
+    <span i18n:translate="esign_label">e-Signature:</span>
+  </h3>
   <div metal:use-macro="context/global_statusmessage/macros/portal_message">
     Portal status message
   </div>
