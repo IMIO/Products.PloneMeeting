@@ -2676,6 +2676,7 @@ div.faceted-session-info {
     padding-bottom: 0.5em;
 }
 
+/* imio.esign */
 h3.parapheo {
     padding-top: 1em;
     display: flex;
@@ -2683,6 +2684,9 @@ h3.parapheo {
 h3.parapheo img {
     padding-right: 0.25em;
     margin-left: -3px;
+}
+div.faceted-session-info span {
+  font-weight: bold;
 }
 
 /* </dtml-with> */

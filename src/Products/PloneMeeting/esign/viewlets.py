@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from imio.esign.browser.views import FacetedSessionInfoViewlet
+from imio.esign.browser.views import ItemSessionInfoViewlet
 from plone import api
 from Products.PloneMeeting.esign.views import PMSessionsListingView
 
@@ -18,4 +19,17 @@ class PMFacetedSessionInfoViewlet(FacetedSessionInfoViewlet):
 
     @property
     def sessions_collection_uid(self):
-        return self.cfg.get('searches').get('searches_items').get('searchitemsinesignsessions').UID()
+        return self.cfg.get('searches').get('searches_items').get(
+            'searchitemsinesignsessions').UID() if self.cfg else None
+
+    def collapsible_css_default(self):
+        """Default CSS class to apply on the collapsible."""
+        return "collapsible discreet active"
+
+    def collapsible_content_css_default(self):
+        """Default CSS class to apply on the collapsible."""
+        return "collapsible-content discreet"
+
+
+class PMItemSessionInfoViewlet(ItemSessionInfoViewlet, PMFacetedSessionInfoViewlet):
+    """ """

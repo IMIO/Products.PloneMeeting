@@ -40,7 +40,7 @@
             view="plone.app.layout.globals.interfaces.IViewView"
             name="esign-item-session-info"
             template="browser/templates/session_info.pt"
-            class="imio.esign.browser.views.ItemSessionInfoViewlet"
+            class="Products.PloneMeeting.esign.viewlets.PMItemSessionInfoViewlet"
             permission="zope2.View" />
     </configure>
 
