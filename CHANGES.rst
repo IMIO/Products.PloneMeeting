@@ -2,11 +2,13 @@ Changelog
 =========
 
 
-4.2.28.10 (unreleased)
+4.2.29rc1 (unreleased)
 ----------------------
 
 - Added `imio.helpers.xhtml.removeCssClasses` to `safe_utils` so it is available
   in TAL expressions, Python scripts and POD templates.
+  [gbastien]
+- Integrate `imio.esign`.
   [gbastien]
 
 4.2.28.9 (2026-01-27)
