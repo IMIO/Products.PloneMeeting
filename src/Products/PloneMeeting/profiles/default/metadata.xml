@@ -18,6 +18,7 @@
     <dependency>profile-dexterity.localrolesfield:default</dependency>
     <dependency>profile-ftw.labels:default</dependency>
     <dependency>profile-imio.annex:default</dependency>
+    <dependency>profile-imio.esign:default</dependency>
     <dependency>profile-imio.helpers:default</dependency>
     <dependency>profile-imio.pm.ws:default</dependency>
     <dependency>profile-imio.webspellchecker:default</dependency>

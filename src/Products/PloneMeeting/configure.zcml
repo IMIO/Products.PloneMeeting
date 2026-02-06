@@ -32,6 +32,7 @@
   <include package="ftw.labels" />
   <include package="imio.pm.ws" />
   <include package="imio.dashboard" />
+  <include package="imio.esign" />
   <include package="imio.webspellchecker" />
   <include package="imio.zamqp.pm" />
   <include package="plone.app.caching" />
