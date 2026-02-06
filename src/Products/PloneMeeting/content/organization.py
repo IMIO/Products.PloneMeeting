@@ -266,7 +266,7 @@ class PMOrganization(Organization):
             res = cfg.getKeepAccessToItemWhenAdvice()
         return res
 
-    def get_certified_signatures(self, computed=False, cfg=None, group_in_charge=None, listify=True, **kwargs):
+    def get_certified_signatures(self, computed=False, cfg=None, group_in_charge=None, listify=True, signature_numbers=[], **kwargs):
         """Overrides field 'certified_signatures' accessor to be able to pass
            the p_computed parameter that will return computed certified signatures,
            so signatures really available right now.  If nothing is defined on the organization,
@@ -274,11 +274,14 @@ class PMOrganization(Organization):
            If p_from_group_in_charge is an organization, we get certifiedSignatures from it."""
         group_signatures = self.certified_signatures
         if computed:
-            computed_signatures = cfg.getCertifiedSignatures(computed=True)
+            computed_signatures = cfg.getCertifiedSignatures(
+                computed=True, signature_numbers=signature_numbers)
 
             # get certified signatures from first of the defined groupsInCharge
             if group_in_charge:
-                computed_signatures.update(computeCertifiedSignatures(group_in_charge.get_certified_signatures()))
+                computed_signatures.update(computeCertifiedSignatures(
+                    group_in_charge.get_certified_signatures(
+                        signature_numbers=signature_numbers)))
 
             # if we have certified signatures defined on this MeetingGroup
             # update MeetingConfig signatures regarding what is defined here

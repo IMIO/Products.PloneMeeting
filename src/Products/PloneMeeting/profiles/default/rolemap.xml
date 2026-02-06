@@ -44,5 +44,10 @@
                 acquire="True">
       <role name="Member"/>
     </permission>
+    <!-- give access to Parapheo to MeetingManagers -->
+    <permission name="imio.esign: Manage Sessions"
+                acquire="True">
+      <role name="MeetingManager"/>
+    </permission>
   </permissions>
 </rolemap>

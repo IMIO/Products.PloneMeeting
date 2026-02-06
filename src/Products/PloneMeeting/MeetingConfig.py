@@ -7628,7 +7628,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            p_signature_numbers is a list of signature numbers as string (['1','2']).'''
         signatures = self.getField('certifiedSignatures').get(self, **kwargs)
         if computed:
-            signatures = computeCertifiedSignatures(signatures, signature_numbers=signature_numbers)
+            signatures = computeCertifiedSignatures(
+                signatures, signature_numbers=signature_numbers)
             if listify:
                 signatures = listifySignatures(signatures)
         return signatures

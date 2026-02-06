@@ -4380,7 +4380,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getCertifiedSignatures(self,
                                forceUseCertifiedSignaturesOnMeetingConfig=False,
                                from_group_in_charge=False,
-                               listify=True):
+                               listify=True,
+                               signature_numbers=[]):
         '''Gets the certified signatures for this item.
            Either use signatures defined on the proposing MeetingGroup if exists,
            or use the meetingConfig certified signatures.
@@ -4389,7 +4390,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         if forceUseCertifiedSignaturesOnMeetingConfig:
-            return cfg.getCertifiedSignatures(computed=True, listify=listify)
+            return cfg.getCertifiedSignatures(
+                computed=True, listify=listify, signature_numbers=signature_numbers)
 
         selected_group_in_charge = None
         if from_group_in_charge:
