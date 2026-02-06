@@ -25,6 +25,20 @@
             template="browser/templates/session_files.pt"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
 
+        <browser:page
+            name="esign-session-delete"
+            for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+            class="Products.PloneMeeting.esign.views.PMSessionDeleteView"
+            permission="zope2.View"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
+
+        <browser:page
+            name="external-esign-session-create"
+            for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+            class="Products.PloneMeeting.esign.views.PMExternalSessionCreateView"
+            permission="zope2.View"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
+
         <browser:viewlet
             for="eea.facetednavigation.subtypes.interfaces.IFacetedNavigable"
             manager="collective.eeafaceted.z3ctable.interfaces.ITopAboveNavManager"

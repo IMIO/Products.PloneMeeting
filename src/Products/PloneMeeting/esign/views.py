@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 
+from imio.esign import manage_session_perm
+from imio.esign.browser.views import ExternalSessionCreateView
+from imio.esign.browser.views import SessionDeleteView
 from imio.esign.browser.views import SessionFilesView
 from imio.esign.browser.views import SessionsListingView
 from imio.esign.utils import get_session_info
 from imio.prettylink.interfaces import IPrettyLink
 from plone import api
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 
 
 class PMSessionsListingView(SessionsListingView):
@@ -34,6 +38,16 @@ class PMSessionsListingView(SessionsListingView):
                 )
         return url
 
+    def get_sessions(self):
+        """Filter sessions by MeetingConfig.
+           Only keep sessions user is MeetingManager for."""
+        sessions = super(PMSessionsListingView, self).get_sessions()
+        manager_user_groups = self.tool.get_filtered_plone_groups_for_user(suffixes=['meetingmanagers'])
+        manager_cfg_ids = [group.replace("_%s" % MEETINGMANAGERS_GROUP_SUFFIX, "")
+                           for group in manager_user_groups]
+        sessions = [session for session in sessions if session['cfg_id'] in manager_cfg_ids]
+        return sessions
+
 
 class PMSessionFilesView(SessionFilesView):
 
@@ -41,3 +55,31 @@ class PMSessionFilesView(SessionFilesView):
         return ctx.getPrettyLink(
             contentValue=ctx.Title(withItemNumber=True, withMeetingDate=True)) + \
             u" ➔ " + IPrettyLink(obj).getLink()
+
+
+class PMSessionDeleteView(SessionDeleteView):
+    """ """
+
+    def __init__(self, context, request):
+        super(PMSessionDeleteView, self).__init__(context, request)
+        self.context = context
+        self.request = request
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+
+    def may_delete_session(self):
+        """Check if the user may delete sessions, check on self.tool as MeetingManagers are MeetingManagers on the tool."""
+        return api.user.has_permission(manage_session_perm, obj=self.tool)
+
+
+class PMExternalSessionCreateView(ExternalSessionCreateView):
+    """ """
+
+    def __init__(self, context, request):
+        super(PMExternalSessionCreateView, self).__init__(context, request)
+        self.context = context
+        self.request = request
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+
+    def may_create_external_sessions(self):
+        """Check if the user may create external sessions"""
+        return api.user.has_permission(manage_session_perm, obj=self.tool)
