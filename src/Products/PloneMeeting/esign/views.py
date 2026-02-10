@@ -20,6 +20,9 @@ class PMSessionsListingView(SessionsListingView):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
+    def available(self):
+        return api.user.has_permission(manage_session_perm, obj=self.tool)
+
     def get_dashboard_link(self, session):
         # if a cfg could not be initialized, we get it from the session first element
         if self.cfg is None:
@@ -42,10 +45,11 @@ class PMSessionsListingView(SessionsListingView):
         """Filter sessions by MeetingConfig.
            Only keep sessions user is MeetingManager for."""
         sessions = super(PMSessionsListingView, self).get_sessions()
-        manager_user_groups = self.tool.get_filtered_plone_groups_for_user(suffixes=['meetingmanagers'])
-        manager_cfg_ids = [group.replace("_%s" % MEETINGMANAGERS_GROUP_SUFFIX, "")
-                           for group in manager_user_groups]
-        sessions = [session for session in sessions if session['cfg_id'] in manager_cfg_ids]
+        if not self.tool.isManager(realManagers=True):
+            manager_user_groups = self.tool.get_filtered_plone_groups_for_user(suffixes=['meetingmanagers'])
+            manager_cfg_ids = [group.replace("_%s" % MEETINGMANAGERS_GROUP_SUFFIX, "")
+                               for group in manager_user_groups]
+            sessions = [session for session in sessions if session['cfg_id'] in manager_cfg_ids]
         return sessions
 
 
