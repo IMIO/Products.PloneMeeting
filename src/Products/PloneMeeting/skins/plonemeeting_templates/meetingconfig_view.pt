@@ -1354,10 +1354,10 @@
           <td tal:define="field python:here.getField('meetingItemTemplatesToStoreAsAnnex')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('itemESignSignersTALExpr')">
+          <td tal:define="field python:here.getField('eSignSignersTALExpr')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('itemESignDiscriminatorsTALExpr')">
+          <td tal:define="field python:here.getField('eSignDiscriminatorsTALExpr')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>

@@ -9,8 +9,8 @@ from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 
 
-class ItemSignersAdapter(object):
-    """Adapter to get signers of a given item."""
+class PMSignersAdapter(object):
+    """Adapter to get signers of a given element (item, meeting or advice)."""
 
     def __init__(self, context):
         self.context = context
@@ -19,14 +19,17 @@ class ItemSignersAdapter(object):
 
     def get_raw_signers(self):
         """ """
+        # add "template_uid" to the context
+        template_uid = self.context.REQUEST.form.get('template_uid') or \
+            self.context.REQUEST.form.get('form.widgets.template_uid')
         extra_expr_ctx = _base_extra_expr_ctx(
-            self.context, {'item': self.context, })
+            self.context, {'template_uid': template_uid})
         # will return a dict of signers infos with
         # key: 'signature_number'
-        # value: 'held_position', 'function', 'name' and 'userid'
+        # value: 'held_position', 'function', 'name'
         signer_infos = _evaluateExpression(
             self.context,
-            expression=self.cfg.getItemESignSignersTALExpr(),
+            expression=self.cfg.getESignSignersTALExpr(),
             roles_bypassing_expression=[],
             extra_expr_ctx=extra_expr_ctx,
             empty_expr_is_true=False,
@@ -34,8 +37,8 @@ class ItemSignersAdapter(object):
         return signer_infos
 
     def get_signers(self):
-        """Return the list of signers for the item.
-           We use configuration field MeetingConfig.itemESignSignersTALExpr."""
+        """Return the list of signers for the element.
+           We use configuration field MeetingConfig.eSignSignersTALExpr."""
         signer_infos = self.get_raw_signers()
         # now we have to return a list of ordered signers
         # with 'userid', 'email', 'fullname' and 'position' all as text
@@ -120,15 +123,15 @@ class ItemSignersAdapter(object):
 
     def get_discriminators(self, annex):
         """
-        Discriminate based on MeetingConfig.itemESignDiscriminatorsTALExpr.
+        Discriminate based on MeetingConfig.eSignDiscriminatorsTALExpr.
         """
         extra_expr_ctx = _base_extra_expr_ctx(
             self.context,
-            {'item': self.context, 'annex': annex, })
+            {'obj': self.context, 'annex': annex, })
         # will return a list of strings
         discriminators = _evaluateExpression(
             self.context,
-            expression=self.cfg.getItemESignDiscriminatorsTALExpr(),
+            expression=self.cfg.getESignDiscriminatorsTALExpr(),
             roles_bypassing_expression=[],
             extra_expr_ctx=extra_expr_ctx,
             empty_expr_is_true=False,

@@ -951,7 +951,7 @@
 
     <!-- the view that display list of available mailing_lists on a POD template -->
     <browser:page
-        for="*"
+        for="Products.PloneMeeting.interfaces.IMeetingContent"
         name="available-mailing-lists"
         class=".views.PODTemplateMailingLists"
         template="templates/pod_template_mailing_lists.pt"
@@ -1081,7 +1081,7 @@
 
     <!-- Form that manage pod template store as annex -->
     <browser:page
-        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        for="Products.PloneMeeting.interfaces.IMeetingContent"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         name="store-pod-temlate-as-annex-form"
         class=".podtemplatestoreasannex.PodTemplateStoreAsAnnexFormWrapper"

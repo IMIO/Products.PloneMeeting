@@ -4,8 +4,8 @@
     xmlns:plone="http://namespaces.plone.org/plone">
 
     <adapter
-        for="Products.PloneMeeting.interfaces.IMeetingItem"
-        factory="Products.PloneMeeting.esign.adapters.ItemSignersAdapter"
+        for="Products.PloneMeeting.interfaces.IMeetingContent"
+        factory="Products.PloneMeeting.esign.adapters.PMSignersAdapter"
         provides="imio.esign.adapters.ISignable"/>
 
     <configure package="imio.esign">
