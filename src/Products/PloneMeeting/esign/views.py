@@ -8,6 +8,7 @@ from imio.esign.browser.views import SessionsListingView
 from imio.esign.utils import get_session_info
 from imio.prettylink.interfaces import IPrettyLink
 from plone import api
+from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 
 
@@ -21,7 +22,7 @@ class PMSessionsListingView(SessionsListingView):
         self.cfg = self.tool.getMeetingConfig(self.context)
 
     def available(self):
-        return api.user.has_permission(manage_session_perm, obj=self.tool)
+        return self.tool.isManager(realManagers=True) or bool(self._get_access_groups())
 
     def get_dashboard_link(self, session):
         # if a cfg could not be initialized, we get it from the session first element
@@ -41,14 +42,21 @@ class PMSessionsListingView(SessionsListingView):
                 )
         return url
 
+    def _get_access_groups(self):
+        """Return groups of the user giving access to sessions.
+           MeetingManagers and eSign watchers have access."""
+        return self.tool.get_filtered_plone_groups_for_user(
+            suffixes=[MEETINGMANAGERS_GROUP_SUFFIX, ESIGNWATCHERS_GROUP_SUFFIX])
+
     def get_sessions(self):
         """Filter sessions by MeetingConfig.
            Only keep sessions user is MeetingManager for."""
         sessions = super(PMSessionsListingView, self).get_sessions()
         if not self.tool.isManager(realManagers=True):
-            manager_user_groups = self.tool.get_filtered_plone_groups_for_user(suffixes=['meetingmanagers'])
-            manager_cfg_ids = [group.replace("_%s" % MEETINGMANAGERS_GROUP_SUFFIX, "")
-                               for group in manager_user_groups]
+            manager_user_groups = self._get_access_groups()
+            manager_cfg_ids = [
+                group.replace("_%s" % MEETINGMANAGERS_GROUP_SUFFIX, "").replace(ESIGNWATCHERS_GROUP_SUFFIX, "")
+                for group in manager_user_groups]
             sessions = [session for session in sessions if session['cfg_id'] in manager_cfg_ids]
         return sessions
 

@@ -13,6 +13,9 @@ class Migrate_To_4217(Migrator):
         self.reinstall(['profile-imio.esign:default'])
         # add searchitemsinesignsessions
         self.addNewSearches()
+        # create esignwatchers group per MeetingConfig
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            cfg._createOrUpdateAllPloneGroups()
         logger.info('Done.')
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):

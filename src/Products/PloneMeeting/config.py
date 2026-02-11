@@ -185,8 +185,10 @@ BUDGETIMPACTEDITORS_GROUP_SUFFIX = 'budgetimpacteditors'
 # in localroles of every meetingConfig user folders (mymeetings/meetingconfigfolder)
 # and on the corresponding MeetingConfig so these users are MeetingManager on the MeetingConfig too
 MEETINGMANAGERS_GROUP_SUFFIX = 'meetingmanagers'
-# This is the group created for each MeetingConfig where we store users able to manage item templates.
+# This is the group created for each MeetingConfig where we store users able to manage item templates
 ITEMTEMPLATESMANAGERS_GROUP_SUFFIX = 'itemtemplatesmanagers'
+# This is the group created for each MeetingConfig where we store users able to wath eSign sessions
+ESIGNWATCHERS_GROUP_SUFFIX = 'esignwatchers'
 
 # This is a mapping between usecases around the role Reader, so users that can see
 # By default, the same role is used for different usecases, so it will give the same view permission by the wf

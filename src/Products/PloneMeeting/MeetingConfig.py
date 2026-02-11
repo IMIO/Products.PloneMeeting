@@ -10,6 +10,7 @@ from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group
+from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.contact.plonegroup.utils import get_registry_functions
 from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
@@ -76,6 +77,7 @@ from Products.PloneMeeting.config import CLONE_TO_OTHER_MC_EMERGENCY_ACTION_SUFF
 from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
+from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
@@ -3108,6 +3110,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         """Informations used to create DashboardCollections in the searches."""
         itemType = self.getItemTypeName()
         meetingType = self.getMeetingTypeName()
+        cfgId = self.getId()
         infos = OrderedDict(
             [
                 # My items
@@ -3573,7 +3576,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: tool.isManager(cfg)",
+                    'tal_condition':
+                        "python: tool.isManager(cfg) or '%s' in utils.get_plone_groups_for_user()"
+                        % get_plone_group_id(cfgId, ESIGNWATCHERS_GROUP_SUFFIX),
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items of my committees
@@ -6845,6 +6850,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             self.itemtemplates.manage_addLocalRoles(groupId, ('Manager', ))
         return groupIds
 
+    security.declarePrivate('createEsignWatchersGroup')
+
+    def createEsignWatchersGroup(self, force_update_access=False, dry_run_return_group_ids=False):
+        '''Creates a Plone group that will be used to apply the 'MeetingManager'
+           local role on every plonemeeting folders of this MeetingConfig and on this MeetingConfig.'''
+        groupIds = []
+        groupId, wasCreated = self._createOrUpdatePloneGroup(
+            groupSuffix=ESIGNWATCHERS_GROUP_SUFFIX,
+            dry_run_return_group_ids=dry_run_return_group_ids)
+        groupIds.append(groupId)
+        return groupIds
+
     def _createOrUpdateAllPloneGroups(self, force_update_access=False, dry_run_return_group_ids=False):
         """Create or update every linked Plone groups.
            If p_force_update_access this will force update of access given to created group.
@@ -6857,6 +6874,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             dry_run_return_group_ids=dry_run_return_group_ids)
         # Create the corresponding group that will contain item templates Managers
         group_ids += self.createItemTemplateManagersGroup(
+            force_update_access=force_update_access,
+            dry_run_return_group_ids=dry_run_return_group_ids)
+        # Create the corresponding group that will contain eSign watchers
+        group_ids += self.createEsignWatchersGroup(
             force_update_access=force_update_access,
             dry_run_return_group_ids=dry_run_return_group_ids)
         # Create the corresponding group that will contain MeetingBudgetImpactEditors

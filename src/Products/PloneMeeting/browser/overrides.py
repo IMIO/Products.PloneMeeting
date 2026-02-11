@@ -322,12 +322,9 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
         return True
 
     def may_store_as_annex(self, pod_template):
-        """By default only (Meeting)Managers are able to store a generated document as annex."""
-        if not pod_template.store_as_annex:
-            return False
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        return tool.isManager(cfg)
+        """If the template is available with "store_as_annex", it can be done,
+           this way we manage who can store as annex using the PODTemplate TAL condition."""
+        return pod_template.store_as_annex
 
     def get_store_as_annex_title_msg(self, annex_type_title, output_format_title):
         """ """

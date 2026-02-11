@@ -5,7 +5,7 @@
 
 from collective.behavior.talcondition.utils import _evaluateExpression
 from plone import api
-from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 
 
@@ -113,9 +113,9 @@ class PMSignersAdapter(object):
         """
         MeetingManagers are watchers.
         """
-        mmanagers_group_id = "{0}_{1}".format(
-            self.cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
-        watcher_users = api.user.get_users(groupname=mmanagers_group_id)
+        groupname = "{0}_{1}".format(
+            self.cfg.getId(), ESIGNWATCHERS_GROUP_SUFFIX)
+        watcher_users = api.user.get_users(groupname=groupname)
         watcher_emails = [
             user.getProperty("email").strip() for user in watcher_users]
         # manage duplicates
