@@ -1442,27 +1442,27 @@ def computeCertifiedSignatures(signatures, signature_numbers=[]):
         computedSignatures[validSignatureNumber] = {}
         # manage held_position, if we have a held_position, we use it for 'name' and 'function'
         # although this can be overrided if something defined in 'name' or 'function' columns
-        held_position = None
+        hp = None
         # held_position
         if signature['held_position'] is not None and signature['held_position'] != '_none_':
-            held_position = uuidToObject(signature['held_position'])
-        computedSignatures[validSignatureNumber]['held_position'] = held_position
+            hp = uuidToObject(signature['held_position'])
+        computedSignatures[validSignatureNumber]['held_position'] = hp
         # name
-        if held_position and not signature['name']:
+        if hp and not signature['name']:
             computedSignatures[validSignatureNumber]['name'] = \
-                held_position.get_person_title(include_person_title=False)
+                hp.get_person_title(include_person_title=False)
         else:
             computedSignatures[validSignatureNumber]['name'] = signature['name']
         # function
-        if held_position and not signature['function']:
+        if hp and not signature['function']:
             computedSignatures[validSignatureNumber]['function'] = \
-                held_position.get_prefix_for_gender_and_number(include_value=True)
+                hp.get_prefix_for_gender_and_number(include_value=True)
         else:
             computedSignatures[validSignatureNumber]['function'] = signature['function']
         # shortname
-        if held_position:
+        if hp:
             computedSignatures[validSignatureNumber]['shortname'] = \
-            held_position.get_person_short_title(abbreviate_firstname=True)
+            hp.get_person_short_title(abbreviate_firstname=True)
         else:
             computedSignatures[validSignatureNumber]['shortname'] = '-'
     return computedSignatures

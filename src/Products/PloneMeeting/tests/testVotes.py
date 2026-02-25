@@ -1043,9 +1043,9 @@ class testVotes(PloneMeetingTestCase):
         """Just check that voting_group functionnality is working."""
         # create an organization outside own_org
         self.changeUser('siteadmin')
-        outside_org = api.content.create(
-            container=self.portal.contacts,
-            type='organization',
+        outside_org = self.create(
+            'organization',
+            folder=self.portal.contacts,
             id='org-outside-own-org',
             title='Organization outside own org')
         # define voting_group for some voters

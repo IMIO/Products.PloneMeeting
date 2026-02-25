@@ -2949,20 +2949,6 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
-        name='eSignSignersTALExpr',
-        default=defValues.eSignSignersTALExpr,
-        widget=StringField._properties['widget'](
-            description="ESignSignersTALExpr",
-            description_msgid="esign_signers_tal_expr_descr",
-            size=70,
-            label='Esignsignerstalexpr',
-            label_msgid='PloneMeeting_label_eSignSignersTALExpr',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="doc",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    StringField(
         name='eSignDiscriminatorsTALExpr',
         default=defValues.eSignDiscriminatorsTALExpr,
         widget=StringField._properties['widget'](

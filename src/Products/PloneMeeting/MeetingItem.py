@@ -4401,7 +4401,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # of function/signatures, so ['function1', 'name1', 'function2', 'name2']
         # this list is ordered by signature number defined on the organization/MeetingConfig
         return self.getProposingGroup(theObject=True).get_certified_signatures(
-            computed=True, cfg=cfg, group_in_charge=selected_group_in_charge, listify=listify)
+            computed=True,
+            cfg=cfg,
+            group_in_charge=selected_group_in_charge,
+            listify=listify,
+            signature_numbers=signature_numbers)
 
     def is_assembly_field_used(self, field_name):
         """Helper method that return True if an assembly field is used

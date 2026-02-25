@@ -2685,7 +2685,7 @@ h3.parapheo img {
     padding-right: 0.25em;
     margin-left: -3px;
 }
-div.faceted-session-info span {
+div#session-info span {
   font-weight: bold;
 }
 

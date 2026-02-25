@@ -1342,6 +1342,7 @@
           <td tal:define="field python:here.getField('displayVotingGroup')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td></td>
         </tr>
       </table>
     </tal:votes>
@@ -1352,9 +1353,6 @@
       <table width="100%" class="discreet">
         <tr valign="top">
           <td tal:define="field python:here.getField('meetingItemTemplatesToStoreAsAnnex')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('eSignSignersTALExpr')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('eSignDiscriminatorsTALExpr')">

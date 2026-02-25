@@ -15,6 +15,7 @@ from imio.annex.browser.views import DownloadAnnexesBatchActionForm
 from imio.esign.adapters import ISignable
 from imio.esign.config import get_registry_enabled
 from imio.helpers.content import get_vocab
+from imio.helpers.content import get_vocab_values
 from plone import api
 from plone.app.textfield import RichText
 from plone.directives import form
@@ -100,6 +101,26 @@ def compute_signers(item):
     return signers, raw_signers, signers_error_msg, esign_enabled
 
 
+
+@provider(IContextAwareDefaultFactory)
+def pod_template_default(context):
+    """
+      Default value is the first storable pod_template.
+    """
+    return get_vocab_values(
+        context,
+        'Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary')[0]
+
+
+def get_pod_template_infos(value, cfg):
+    """
+      Return POD template of p_cfg decoding value that is like "deliberation__output_format__odt".
+    """
+    template_id, output_format = value.split('__output_format__')
+    pod_template = getattr(cfg.podtemplates, template_id)
+    return pod_template, output_format
+
+
 class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
 
     label = _CEBA("Store POD template as annex")
@@ -147,7 +168,8 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
         self.fields += Fields(schema.Choice(
             __name__='pod_template',
             title=_(u'POD template to annex'),
-            vocabulary='Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary'))
+            vocabulary='Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary',
+            defaultFactory=pod_template_default))
         # eSign related fields
         if self.show_esign:
             self.fields += Fields(schema.Bool(
@@ -171,8 +193,7 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
 
     def _apply(self, **data):
         """ """
-        template_id, output_format = data['pod_template'].split('__output_format__')
-        pod_template = getattr(self.cfg.podtemplates, template_id)
+        pod_template, output_format = get_pod_template_infos(data['pod_template'], self.cfg)
         num_of_generated_templates = 0
         self.request.set('store_as_annex', '1')
         for brain in self.brains:
@@ -196,7 +217,7 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                     mapping=mapping,
                     context=self.request)
                 logger.info(u'Could not generate POD template {0} using output format {1} for item at {2} : {3}'.format(
-                    template_id, output_format, '/'.join(item.getPhysicalPath()), msg))
+                    pod_template.getId(), output_format, '/'.join(item.getPhysicalPath()), msg))
                 api.portal.show_message(msg, request=self.request, type='error')
 
         msg = translate('stored_item_template_as_annex',

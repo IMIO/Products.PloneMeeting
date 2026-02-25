@@ -4,7 +4,10 @@
 #
 
 from collective.behavior.talcondition.utils import _evaluateExpression
+from imio.helpers.content import uuidToObject
 from plone import api
+from Products.PloneMeeting.browser.batchactions import get_pod_template_infos
+from Products.PloneMeeting.browser.batchactions import pod_template_default
 from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 
@@ -17,19 +20,43 @@ class PMSignersAdapter(object):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
-    def get_raw_signers(self):
+    def _get_template_infos(self):
         """ """
-        # add "template_uid" to the context
+        template, template_uid = None, None
         template_uid = self.context.REQUEST.form.get('template_uid') or \
             self.context.REQUEST.form.get('form.widgets.template_uid')
-        extra_expr_ctx = _base_extra_expr_ctx(
-            self.context, {'template_uid': template_uid})
+        if template_uid is not None:
+            template = uuidToObject(template_uid)
+        else:
+            # try with pod_template
+            pod_template_value = self.context.REQUEST.form.get('pod_template') or \
+                self.context.REQUEST.form.get('form.widgets.pod_template') or \
+                pod_template_default(self.context)
+            if pod_template_value:
+                template, output_format = get_pod_template_infos(pod_template_value, self.cfg)
+                template_uid = template.UID()
+        return template, template_uid
+
+    def _get_base_extra_expr_ctx(self):
+        """Add "template_uid" to the context"""
+        template, template_uid = self._get_template_infos()
+        if not template or not template_uid:
+            raise Exception, "Could not get template_uid!"
+
+        return _base_extra_expr_ctx(
+            self.context,
+            {'template': template,
+             'template_uid': template_uid})
+
+    def get_raw_signers(self):
+        """ """
         # will return a dict of signers infos with
         # key: 'signature_number'
         # value: 'held_position', 'function', 'name'
+        extra_expr_ctx = self._get_base_extra_expr_ctx()
         signer_infos = _evaluateExpression(
             self.context,
-            expression=self.cfg.getESignSignersTALExpr(),
+            expression=extra_expr_ctx['template'].esign_signers_expr or '',
             roles_bypassing_expression=[],
             extra_expr_ctx=extra_expr_ctx,
             empty_expr_is_true=False,
@@ -51,7 +78,7 @@ class PMSignersAdapter(object):
             # a held_position to get a userid is mandatory
             if not signer_info["held_position"]:
                 raise ValueError(
-                    "No held position for signer number {0} ({1})!".format(
+                    u"No held position for signer number \"{0}\" ({1})!".format(
                         signature_number,
                         u" - ".join(
                             (signer_info['name'], signer_info['function']))))
@@ -63,7 +90,7 @@ class PMSignersAdapter(object):
             # can not have several same userid
             if userid in userids:
                 raise ValueError(
-                    "Same userid for several signers at {0} and {1}!".format(
+                    "Same userid for signers \"{0}\" and \"{1}\"!".format(
                     userids[userid].absolute_url(), person.absolute_url()))
             user = api.user.get(userid)
             if user is None:
@@ -75,12 +102,12 @@ class PMSignersAdapter(object):
             email = user.getProperty("email")
             if not email:
                 raise ValueError(
-                    "User \"{0}\"does not have an email address!".format(
+                    "User \"{0}\" does not have an email address!".format(
                         user.getId()))
             email = email.strip()
             # can not have several same email
             if email in emails:
-                raise ValueError("Same e-mail for several users at {0} and {1}!".format(
+                raise ValueError("Same email address for users \"{0}\" and \"{1}\"!".format(
                     emails[email].getId(), user.getId()))
 
             # save infos to manage duplicates of userid and email
@@ -125,9 +152,8 @@ class PMSignersAdapter(object):
         """
         Discriminate based on MeetingConfig.eSignDiscriminatorsTALExpr.
         """
-        extra_expr_ctx = _base_extra_expr_ctx(
-            self.context,
-            {'obj': self.context, 'annex': annex, })
+        extra_expr_ctx = self._get_base_extra_expr_ctx()
+        extra_expr_ctx.update({'obj': self.context, 'annex': annex, })
         # will return a list of strings
         discriminators = _evaluateExpression(
             self.context,

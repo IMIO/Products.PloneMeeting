@@ -30,6 +30,25 @@ class PMFacetedSessionInfoViewlet(FacetedSessionInfoViewlet):
         """Default CSS class to apply on the collapsible."""
         return "collapsible-content discreet"
 
+    def available(self):
+        """Can be displayed on MeetingItem, Meeting or MeetingAdvice."""
+        # if can see the collection, can see the viewlet
+        return True
+
 
 class PMItemSessionInfoViewlet(ItemSessionInfoViewlet, PMFacetedSessionInfoViewlet):
     """ """
+
+    def available(self):
+        """Can be displayed on:
+           - MeetingItem to proposingGroup and MeetingManagers;
+           - Meeting the MeetingManagers;
+           - MeetingAdvice to proposingGroup, advisers and MeetingManagers."""
+        isManager = self.tool.isManager(self.cfg)
+        if self.context.getTagName() == "MeetingItem":
+            return isManager or self.context.getProposingGroup() in self.tool.get_orgs_for_user()
+        elif self.context.getTagName() == "Meeting":
+            return isManager
+        elif self.context.getTagName() == "MeetingAdvice":
+            return isManager or self.context.advice_group in self.tool.get_orgs_for_user(suffixes=['advisers'])
+        return True

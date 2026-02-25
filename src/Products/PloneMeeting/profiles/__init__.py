@@ -286,6 +286,7 @@ class PodTemplateDescriptor(StyleTemplateDescriptor):
         self.store_as_annex = None
         self.store_as_annex_title_expr = u''
         self.store_as_annex_empty_file = False
+        self.esign_signers_expr = u''
         self.is_style = False
         self.merge_templates = []
         self.is_reusable = False
@@ -882,7 +883,6 @@ class MeetingConfigDescriptor(Descriptor):
 
         # Doc parameters -------------------------------------------------------
         self.meetingItemTemplatesToStoreAsAnnex = []
-        self.eSignSignersTALExpr = 'python: cfg.getCertifiedSignatures(True)'
         self.eSignDiscriminatorsTALExpr = 'python: [cfg.getId()]'
 
         # content_category_groups parameters -----------------------------------
