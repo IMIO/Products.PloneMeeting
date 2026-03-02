@@ -25,8 +25,11 @@ from Products.CPUtils.Extensions.utils import tobytes
 from Products.PloneMeeting.browser.meeting import get_default_attendees
 from Products.PloneMeeting.browser.meeting import get_default_signatories
 from Products.PloneMeeting.browser.meeting import get_default_voters
+from Products.PloneMeeting.browser.views import get_contact_infos
 from Products.PloneMeeting.browser.views import is_all_count
 from Products.PloneMeeting.browser.views import print_votes
+from Products.PloneMeeting.esign.utils import get_advice_esign_signatories
+from Products.PloneMeeting.esign.utils import get_esign_signatories
 from Products.PloneMeeting.esign.utils import get_item_esign_signatories
 from Products.PloneMeeting.esign.utils import get_meeting_esign_signatories
 from Products.PloneMeeting.ftw_labels.utils import get_labels

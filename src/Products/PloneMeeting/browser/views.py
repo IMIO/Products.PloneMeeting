@@ -722,50 +722,8 @@ class BaseDGHV(object):
         historyViewRendered = lxml.html.fromstring(historyView)
         return lxml.html.tostring(historyViewRendered.get_element_by_id('content-core'), method='xml')
 
-    def get_contact_infos(self, position_types=[], userid=None):
-        """Return informations for given userid, if not given, we take current element creator,
-           this is useful to manage signature on advice.
-           Given position_types will be used to get correct held_position related to signature.
-           We can receive several position_types and we return the first we get."""
-        infos = {'person': None,
-                 'person_title': None,
-                 'person_fullname': None,
-                 'held_position': None,
-                 'held_position_label': None,
-                 'label_prefix': None,
-                 'held_position_prefixed_label': None,
-                 'label_prefix_by': None,
-                 'held_position_prefixed_label_by': None,
-                 'label_prefix_to': None,
-                 'held_position_prefixed_label_to': None,
-                 }
-        person = get_person_from_userid(userid or self.context.Creator())
-        if person:
-            infos['person'] = person
-            infos['person_title'] = person.get_title()
-            infos['person_fullname'] = person.get_title(include_person_title=False)
-            if not position_types:
-                hp = person.get_held_position_by_type(position_type=None)
-            else:
-                for position_type in position_types:
-                    hp = person.get_held_position_by_type(position_type)
-                    if hp:
-                        break
-            if hp:
-                infos['held_position'] = hp
-                infos['held_position_label'] = hp.get_label()
-                infos['label_prefix'] = hp.get_prefix_for_gender_and_number(include_value=False)
-                infos['held_position_prefixed_label'] = \
-                    hp.get_prefix_for_gender_and_number(include_value=True)
-                infos['label_prefix_by'] = \
-                    hp.get_prefix_for_gender_and_number(include_value=False, use_by=True)
-                infos['held_position_prefixed_label_by'] = \
-                    hp.get_prefix_for_gender_and_number(include_value=True, use_by=True)
-                infos['label_prefix_to'] = \
-                    hp.get_prefix_for_gender_and_number(include_value=False, use_to=True)
-                infos['held_position_prefixed_label_to'] = \
-                    hp.get_prefix_for_gender_and_number(include_value=True, use_to=True)
-        return infos
+    def get_contact_infos(self, **kw):
+        return get_contact_infos(self.context, **kw)
 
     def print_advices_infos(self,
                             item,
@@ -1359,8 +1317,8 @@ class BaseDGHV(object):
             # - True means voters
             # - False means non voters
             if is_voter is not None and (
-                (is_voter is False and contact_uid in voters) or
-                (is_voter is True and contact_uid not in voters)):
+               (is_voter is False and contact_uid in voters) or
+               (is_voter is True and contact_uid not in voters)):
                 continue
             contact_attendee_type = contact_uid in item_non_attendees and 'item_non_attendee' or \
                 contact_uid in item_absents and 'item_absent' or \
@@ -1422,8 +1380,8 @@ class BaseDGHV(object):
         return res
 
     def sub_context(self, obj, sub_pod_template):
-        helperView = obj.restrictedTraverse('@@document-generation')
-        generation_helper_view = helperView._get_generation_context(self.getDGHV(obj), sub_pod_template)
+        helper_view = obj.restrictedTraverse('@@document-generation')
+        generation_helper_view = helper_view._get_generation_context(self.getDGHV(obj), sub_pod_template)
         return generation_helper_view
 
     def print_signatures_by_position(self, committee_id=None, **kwargs):
@@ -2070,6 +2028,60 @@ def print_votes(item,
                 rendered += main_pattern.format(separator.join(all))
 
     return (rendered or no_votes_marker) if render_as_html else vote_infos
+
+
+def _get_contact_from_position_type(obj, userid, position_types):
+    """ """
+    hp = None
+    person = get_person_from_userid(userid or obj.Creator())
+    if person:
+        if not position_types:
+            hp = person.get_held_position_by_type(position_type=None)
+        else:
+            for position_type in position_types:
+                hp = person.get_held_position_by_type(position_type)
+                if hp:
+                    break
+    return person, hp
+
+
+def get_contact_infos(obj, position_types=[], userid=None):
+    """Return informations for given userid, if not given, we take current element creator,
+       this is useful to manage signature on advice.
+       Given position_types will be used to get correct held_position related to signature.
+       We can receive several position_types and we return the first we get."""
+    infos = {'person': None,
+             'person_title': None,
+             'person_fullname': None,
+             'held_position': None,
+             'held_position_label': None,
+             'label_prefix': None,
+             'held_position_prefixed_label': None,
+             'label_prefix_by': None,
+             'held_position_prefixed_label_by': None,
+             'label_prefix_to': None,
+             'held_position_prefixed_label_to': None,
+             }
+    person, hp = _get_contact_from_position_type(obj, userid, position_types=position_types)
+    if person:
+        infos['person'] = person
+        infos['person_title'] = person.get_title()
+        infos['person_fullname'] = person.get_title(include_person_title=False)
+        if hp:
+            infos['held_position'] = hp
+            infos['held_position_label'] = hp.get_label()
+            infos['label_prefix'] = hp.get_prefix_for_gender_and_number(include_value=False)
+            infos['held_position_prefixed_label'] = \
+                hp.get_prefix_for_gender_and_number(include_value=True)
+            infos['label_prefix_by'] = \
+                hp.get_prefix_for_gender_and_number(include_value=False, use_by=True)
+            infos['held_position_prefixed_label_by'] = \
+                hp.get_prefix_for_gender_and_number(include_value=True, use_by=True)
+            infos['label_prefix_to'] = \
+                hp.get_prefix_for_gender_and_number(include_value=False, use_to=True)
+            infos['held_position_prefixed_label_to'] = \
+                hp.get_prefix_for_gender_and_number(include_value=True, use_to=True)
+    return infos
 
 
 class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
