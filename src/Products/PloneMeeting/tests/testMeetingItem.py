@@ -5759,10 +5759,14 @@ class testMeetingItem(PloneMeetingTestCase):
             item.getCertifiedSignatures(listify=False),
             {'1': {'function': 'Function1',
                    'held_position': held_pos1,
-                   'name': u'Person1FirstName Person1LastName'},
+                   'name': u'Person1FirstName Person1LastName',
+                   'shortname': u'P1 Person1LastName'},
              '2': {'function': u"L'Administratrice",
                    'held_position': held_pos2,
-                   'name': 'Name2'}})
+                   'name': 'Name2',
+                   'shortname': u'P2 Person2LastName'}
+             }
+        )
 
     def test_pm_ItemCreatedOnlyUsingTemplate(self):
         '''If MeetingConfig.itemCreatedOnlyUsingTemplate is True, a user can only

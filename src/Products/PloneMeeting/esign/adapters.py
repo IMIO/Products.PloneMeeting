@@ -116,9 +116,10 @@ class PMSignersAdapter(object):
 
             # everything OK or raise_error=False, proceed
             data = {
+                "signature_number": signature_number,
                 "held_position": signer_info["held_position"],
                 "name": signer_info["name"],
-                "function": signer_info["function"],
+                "function": signer_info["shortfunction"],
                 "userid": userid,
                 "email": email,
             }

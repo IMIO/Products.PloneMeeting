@@ -10,7 +10,7 @@
     </tr>
     <tbody>
       <tr tal:repeat="signer python: view.signers">
-        <td tal:content="repeat/signer/number">Signature number</td>
+        <td tal:content="python: signer['signature_number']">Signature number</td>
         <td tal:content="python: signer['name']">Signer name</td>
         <td tal:content="python: signer['function']">Signer function</td>
         <td tal:content="python: signer['userid']">Signer userid</td>

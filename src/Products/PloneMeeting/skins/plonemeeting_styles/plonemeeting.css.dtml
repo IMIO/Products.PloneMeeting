@@ -847,9 +847,10 @@ form#item-encode-votes-form input:checked + span {
     width: 3em;
 }
 
-/* make field ConfigurablePODTemplate.store_as_annex_title_expr large enough */
-#form-widgets-store_as_annex_title_expr.text-widget.textline-field {
-    width: 665px;
+/* make field TAL expression text fields large enough */
+#form-widgets-store_as_annex_title_expr.text-widget.textline-field,
+#form-widgets-esign_signers_expr.text-widget.textline-field {
+    width: 99%;
 }
 
 /* controls displayed on add and edit forms */

@@ -38,6 +38,7 @@ from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
+from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_INITIATOR_INDEX_PATTERN
 from Products.PloneMeeting.config import ITEM_MOVAL_PREVENTED
@@ -687,9 +688,10 @@ def onConfigWillBeRemoved(config, event):
             portal_types.manage_delObjects([pt])
     # Remove groups added by the MeetingConfig (budgetimpacteditors, powerobservers, ...)
     portal_groups = api.portal.get_tool('portal_groups')
-    group_suffixes = [MEETINGMANAGERS_GROUP_SUFFIX,
-                      BUDGETIMPACTEDITORS_GROUP_SUFFIX,
-                      ITEMTEMPLATESMANAGERS_GROUP_SUFFIX]
+    group_suffixes = [BUDGETIMPACTEDITORS_GROUP_SUFFIX,
+                      ESIGNWATCHERS_GROUP_SUFFIX,
+                      ITEMTEMPLATESMANAGERS_GROUP_SUFFIX,
+                      MEETINGMANAGERS_GROUP_SUFFIX]
     group_suffixes += [po_infos['row_id'] for po_infos in config.getPowerObservers()]
     for suffix in group_suffixes:
         portal_groups.removeGroup("{0}_{1}".format(config.getId(), suffix))

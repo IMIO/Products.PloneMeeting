@@ -1514,6 +1514,19 @@
                                tal:content="tal_condition">TAL condition</span>
                        </div>
                      </div>
+                    <tal:block condition="python: obj.portal_type == 'ConfigurablePODTemplate'">
+                      <div class="discreet"
+                           tal:define="esign_signers_expr python: obj.esign_signers_expr"
+                           tal:condition="esign_signers_expr">
+                         <label i18n:translate=""
+                                class="horizontal">esign signer TAL expr</label>
+                         <div>
+                           <span class="text-widget textline-field"
+                                 tal:content="esign_signers_expr">esign signer TAL expr</span>
+                         </div>
+                       </div>
+                    </tal:block>
+
                 </tal:baseInformations>
                 <tal:additionalInformations
                     condition="show_details"

@@ -1390,10 +1390,10 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         newCfg = self.create('MeetingConfig')
         newCfgId = newCfg.getId()
-        # this created 5 groups
+        # this created 6 groups
         created_groups = [groupId for groupId in self.portal.portal_groups.listGroupIds()
                           if groupId.startswith(newCfgId)]
-        self.assertEqual(len(created_groups), 5)
+        self.assertEqual(len(created_groups), 6)
         # remove the MeetingConfig, groups are removed as well
         self.tool.restrictedTraverse('@@delete_givenuid')(newCfg.UID())
         self.assertFalse(newCfgId in self.tool.objectIds())

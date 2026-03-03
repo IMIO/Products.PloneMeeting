@@ -25,6 +25,7 @@ from imio.actionspanel.browser.views import ActionsPanelView
 from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
 from imio.esign.adapters import ISignable
+from imio.esign.config import get_registry_seal_code
 from imio.esign.utils import add_files_to_session
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
@@ -1298,10 +1299,11 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             discriminators = ISignable(self.context).get_discriminators(annex)
             watchers = ISignable(self.context).get_watchers()
             create_session_custom_data = {'cfg_id': self.cfg.getId()}
+            seal = get_registry_seal_code() if pod_template.esign_include_seal else None
             session_id, session = add_files_to_session(
                 signers,
                 files_uids,
-                # seal = pod_template.get_context_variables().get('esign_seal', False),
+                seal = seal,
                 title=title,
                 discriminators=discriminators,
                 watchers=watchers,

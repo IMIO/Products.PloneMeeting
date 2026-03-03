@@ -39,6 +39,14 @@
               &lt;required&gt;False&lt;/required&gt;
             &lt;/field&gt;
 
+            &lt;field name=&quot;esign_include_seal&quot; type=&quot;zope.schema.Bool&quot;&gt;
+              &lt;title i18n:translate=""&gt;esign_include_seal&lt;/title&gt;
+              &lt;description i18n:translate=""&gt;esign_include_seal_descr&lt;/description&gt;
+              &lt;default&gt;False&lt;/default&gt;
+              &lt;required&gt;False&lt;/required&gt;
+              &lt;form:widget type="z3c.form.browser.radio.RadioFieldWidget"&gt;&lt;/form:widget&gt;
+            &lt;/field&gt;
+
           &lt;/schema&gt;
         &lt;/model&gt;
     </property>

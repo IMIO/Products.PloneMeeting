@@ -722,8 +722,8 @@ class BaseDGHV(object):
         historyViewRendered = lxml.html.fromstring(historyView)
         return lxml.html.tostring(historyViewRendered.get_element_by_id('content-core'), method='xml')
 
-    def get_contact_infos(self, **kw):
-        return get_contact_infos(self.context, **kw)
+    def get_contact_infos(self, position_types=[], userid=None):
+        return get_contact_infos(self.context, position_types=position_types, userid=userid)
 
     def print_advices_infos(self,
                             item,

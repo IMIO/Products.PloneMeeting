@@ -1459,12 +1459,14 @@ def computeCertifiedSignatures(signatures, signature_numbers=[]):
                 hp.get_prefix_for_gender_and_number(include_value=True)
         else:
             computedSignatures[validSignatureNumber]['function'] = signature['function']
-        # shortname
+        # shortname and shortfunction
         if hp:
             computedSignatures[validSignatureNumber]['shortname'] = \
-            hp.get_person_short_title(abbreviate_firstname=True)
+                hp.get_person_short_title(abbreviate_firstname=True)
+            computedSignatures[validSignatureNumber]['shortfunction'] = hp.get_label()
         else:
             computedSignatures[validSignatureNumber]['shortname'] = '-'
+            computedSignatures[validSignatureNumber]['shortfunction'] = '-'
     return computedSignatures
 
 
