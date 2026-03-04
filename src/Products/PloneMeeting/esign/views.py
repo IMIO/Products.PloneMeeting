@@ -64,9 +64,13 @@ class PMSessionsListingView(SessionsListingView):
 class PMSessionFilesView(SessionFilesView):
 
     def get_file_link(self, ctx, obj):
-        return ctx.getPrettyLink(
-            contentValue=ctx.Title(withItemNumber=True, withMeetingDate=True)) + \
-            u" ➔ " + IPrettyLink(obj).getLink()
+        if ctx.getTagName() == 'MeetingItem':
+            return ctx.getPrettyLink(
+                contentValue=ctx.Title(withItemNumber=True, withMeetingDate=True)) + \
+                u" ➔ " + IPrettyLink(obj).getLink()
+        elif ctx.getTagName() == 'Meeting':
+            return ctx.get_pretty_link(prefixed=True, short=False, showContentIcon=True) + \
+                u" ➔ " + IPrettyLink(obj).getLink()
 
 
 class PMSessionDeleteView(SessionDeleteView):

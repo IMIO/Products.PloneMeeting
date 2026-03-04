@@ -49,7 +49,7 @@
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
 
         <browser:viewlet
-            for="Products.PloneMeeting.interfaces.IMeetingItem"
+            for="Products.PloneMeeting.interfaces.IMeetingContent"
             manager="plone.app.layout.viewlets.interfaces.IAboveContentBody"
             view="plone.app.layout.globals.interfaces.IViewView"
             name="esign-item-session-info"

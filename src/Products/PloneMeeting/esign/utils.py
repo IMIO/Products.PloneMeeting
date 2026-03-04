@@ -15,7 +15,10 @@ def get_meeting_esign_signatories(obj, signature_numbers=['1', '2'], **kwargs):
     """Helper to get "meeting" signatories respecting the esign expected format."""
     # use meeting.get_signatories that keeps order
     signers = obj.get_signatories(the_objects=True)
-    return get_esign_signatories(signers.keys(), signature_numbers=signers.values())
+    # sort and keep given p_signature_numbers
+    sorted_signers = [signer[0] for signer in sorted(signers.items(), key=lambda x:int(x[1]))
+                      if not signature_numbers or signer[1] in signature_numbers]
+    return get_esign_signatories(sorted_signers, signature_numbers=signature_numbers)
 
 
 def get_advice_esign_signatories(obj, userid, signature_numbers=['1', '2'], position_types=[], **kwargs):
@@ -34,7 +37,11 @@ def get_esign_signatories(hps, signature_numbers=['1', '2']):
     res = {}
     signature_numbers = signature_numbers or [str(num) for num in range(1, len(hps) + 1)]
     for signature_number in signature_numbers:
-        hp = hps[signature_numbers.index(signature_number)]
+        # check in case we have less hps than asked signature_numbers
+        index = signature_numbers.index(signature_number)
+        if len(hps) <= index:
+            break
+        hp = hps[index]
         res[signature_number] = {}
         res[signature_number]['held_position'] = hp
         res[signature_number]['name'] = hp.get_person_title(include_person_title=False)
