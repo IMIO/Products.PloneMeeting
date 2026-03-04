@@ -8,6 +8,9 @@ Changelog
 - Added `imio.helpers.xhtml.removeCssClasses` to `safe_utils` so it is available
   in TAL expressions, Python scripts and POD templates.
   [gbastien]
+- Do not break if an error occurs in the rest request done in `iA.Vision` form
+  vocabularies, manage the error and display a warning in the form.
+  [gbastien]
 
 4.2.28.9 (2026-01-27)
 ---------------------
