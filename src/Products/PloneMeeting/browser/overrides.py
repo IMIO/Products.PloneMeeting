@@ -18,6 +18,7 @@ from collective.eeafaceted.dashboard.browser.views import RenderTermPortletView
 from collective.iconifiedcategory import safe_utils as collective_iconifiedcategory_safe_utils
 from collective.iconifiedcategory.browser.css import css_pattern
 from collective.iconifiedcategory.browser.css import IconifiedCategory
+from collective.iconifiedcategory.utils import get_categorized_elements
 from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
@@ -26,7 +27,6 @@ from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
 from imio.esign.adapters import ISignable
 from imio.esign.config import get_registry_seal_code
-from imio.esign.utils import add_files_to_session
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
@@ -59,8 +59,8 @@ from Products.PloneMeeting.config import HAS_RESTAPI
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.esign.utils import _add_annexes_to_sign_session
 from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
@@ -1147,6 +1147,10 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             # so it is applied on stored annex
             helper_view = self.get_generation_context_helper()
             helper_view.get_scan_id()
+        elif self.request.get('store_as_annex', '0') == '1' and \
+             kwargs.get('store_generated_document', True) is False:
+            # in case we do not store generated template, do not generate it
+            generated_template = ''
         else:
             generated_template = super(
                 PMDocumentGenerationView, self).generate_and_download_doc(
@@ -1160,11 +1164,15 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         elif self.request.get('store_as_annex', '0') == '1':
             return_portal_msg_code = kwargs.get('return_portal_msg_code', False)
             add_to_sign_session = kwargs.get('add_to_sign_session', False)
+            add_annexes_to_sign_session = kwargs.get('add_annexes_to_sign_session', False)
+            store_generated_document = kwargs.get('store_generated_document', True)
             return self.storePodTemplateAsAnnex(
                 generated_template,
                 pod_template,
                 output_format,
                 add_to_sign_session=add_to_sign_session,
+                add_annexes_to_sign_session=add_annexes_to_sign_session,
+                store_generated_document=store_generated_document,
                 return_portal_msg_code=return_portal_msg_code)
         else:
             return generated_template
@@ -1187,7 +1195,9 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                                 generated_template_data,
                                 pod_template,
                                 output_format,
+                                store_generated_document=True,
                                 add_to_sign_session=False,
+                                add_annexes_to_sign_session=False,
                                 return_portal_msg_code=False):
         '''Store given p_generated_template_data as annex using p_pod_template.store_as_annex annex_type uid.'''
         # first check if current member is able to store_as_annex
@@ -1220,50 +1230,12 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                 plone_utils.addPortalMessage(msg, type='error')
                 return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
-        # now check that an annex was not already stored using same pod_template
-        # indeed we may not store the same generated pod_template several times
-        for annex in get_annexes(self.context):
-            if getattr(annex, 'used_pod_template_id', None) == pod_template.getId():
-                msg_code = 'store_podtemplate_as_annex_can_not_store_several_times'
-                if return_portal_msg_code:
-                    return msg_code, {}
-                else:
-                    msg = translate(
-                        msg_code,
-                        domain='PloneMeeting',
-                        context=self.request)
-                    plone_utils.addPortalMessage(msg, type='warning')
-                    return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
-
-        # now add the annex using specified type
-        # check if we need to add an 'annex' or an 'annexDecision'
-        if annex_type_group.getId() == 'item_decision_annexes':
-            annex_portal_type = 'annexDecision'
-        else:
-            annex_portal_type = 'annex'
-
-        # check if user is able to add this portal_type locally
-        allowedContentTypeIds = [allowedContentType.getId() for allowedContentType
-                                 in self.context.allowedContentTypes()]
-
-        if annex_portal_type not in allowedContentTypeIds:
-            msg_code = 'store_podtemplate_as_annex_can_not_add_annex'
-            if return_portal_msg_code:
-                return msg_code, {}
-            else:
-                msg = translate(
-                    msg_code,
-                    domain='PloneMeeting',
-                    context=self.request)
-                plone_utils.addPortalMessage(msg, type='error')
-                return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
-
         # add to eSign session if necessary
         # validate signers again, should be ok if we are here
         if add_to_sign_session:
             try:
-                # get signatories using MeetingItem as context
-                signers = ISignable(self.context).get_signers()
+                # get signatories but pass pod_template as we have it
+                signers = ISignable(self.context).get_signers(pod_template=pod_template)
             except ValueError, msg:
                 msg_code = 'store_podtemplate_as_annex_signers_error'
                 if return_portal_msg_code:
@@ -1278,42 +1250,78 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                     plone_utils.addPortalMessage(msg, type='error')
                     return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
-        # proceed, add annex and redirect user to the annexes table view
-        annex = self._store_pod_template_as_annex(
-            pod_template,
-            output_format,
-            generated_template_data,
-            annex_type,
-            annex_portal_type)
+        # now check that an annex was not already stored using same pod_template
+        # indeed we may not store the same generated pod_template several times
+        if store_generated_document:
+            for annex in get_annexes(self.context):
+                if getattr(annex, 'used_pod_template_id', None) == pod_template.getId():
+                    msg_code = 'store_podtemplate_as_annex_can_not_store_several_times'
+                    if return_portal_msg_code:
+                        return msg_code, {}
+                    else:
+                        msg = translate(
+                            msg_code,
+                            domain='PloneMeeting',
+                            context=self.request)
+                        plone_utils.addPortalMessage(msg, type='warning')
+                        return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
-        # add to eSign session if necessary
-        # now that signers and annex is correct, we can add it to session
-        if add_to_sign_session:
-            # signers must be passed as a list of data with userid, email, name, label
-            signers = [
-                (signer['userid'], signer['email'], signer['name'], signer['function'])
-                for signer in signers]
-            files_uids = [annex.UID()]
-            title = _(u"[iA.Délib] %s - Session {sign_id}" % safe_unicode(
-                self.cfg.Title(include_config_group=True)))
-            discriminators = ISignable(self.context).get_discriminators(annex)
-            watchers = ISignable(self.context).get_watchers()
-            create_session_custom_data = {'cfg_id': self.cfg.getId()}
-            seal = get_registry_seal_code() if pod_template.esign_include_seal else None
-            session_id, session = add_files_to_session(
-                signers,
-                files_uids,
-                seal = seal,
-                title=title,
-                discriminators=discriminators,
-                watchers=watchers,
-                create_session_custom_data=create_session_custom_data)
+            # now add the annex using specified type
+            # check if we need to add an 'annex' or an 'annexDecision'
+            if annex_type_group.getId() == 'item_decision_annexes':
+                annex_portal_type = 'annexDecision'
+            else:
+                annex_portal_type = 'annex'
+
+            # check if user is able to add this portal_type locally
+            allowedContentTypeIds = [allowedContentType.getId() for allowedContentType
+                                     in self.context.allowedContentTypes()]
+
+            if annex_portal_type not in allowedContentTypeIds:
+                msg_code = 'store_podtemplate_as_annex_can_not_add_annex'
+                if return_portal_msg_code:
+                    return msg_code, {}
+                else:
+                    msg = translate(
+                        msg_code,
+                        domain='PloneMeeting',
+                        context=self.request)
+                    plone_utils.addPortalMessage(msg, type='error')
+                    return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
+
+            # proceed, add annex and redirect user to the annexes table view
+            annex = self._store_pod_template_as_annex(
+                pod_template,
+                output_format,
+                generated_template_data,
+                annex_type,
+                annex_portal_type)
+
+            # add to eSign session if necessary
+            # now that signers and annex is correct, we can add it to session
+            if add_to_sign_session:
+                seal = get_registry_seal_code() if pod_template.esign_include_seal else None
+                _add_annexes_to_sign_session(
+                    self.context, [annex], self.cfg, signers, seal=seal, show_msg=not return_portal_msg_code)
+
+        # add annexes to session if relevant
+        if add_annexes_to_sign_session:
+            # we will select annexes that are "to_sign" and include a scan_id if relevant
+            annexes_to_sign = get_categorized_elements(
+                self.context, result_type='objects', filters={'to_sign': True, 'signed': False})
+            # do not add freshly added generated document again
+            if store_generated_document and add_to_sign_session:
+                annexes_to_sign.remove(annex)
+            if annexes_to_sign:
+                _add_annexes_to_sign_session(
+                    self.context, annexes_to_sign, self.cfg, signers=signers, show_msg=not return_portal_msg_code)
 
         if not return_portal_msg_code:
-            msg = translate('stored_single_item_template_as_annex',
-                            domain="PloneMeeting",
-                            context=self.request)
-            api.portal.show_message(msg, request=self.request)
+            if store_generated_document:
+                msg = translate('stored_single_item_template_as_annex',
+                                domain="PloneMeeting",
+                                context=self.request)
+                api.portal.show_message(msg, request=self.request)
             return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
     def _get_filename(self, store_as_annex=False):

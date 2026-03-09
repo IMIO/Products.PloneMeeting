@@ -13,6 +13,7 @@ from collective.documentviewer.async import queueJob
 from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
+from imio.esign.utils import remove_files_from_session
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanVocabularyCacheFor
 from imio.helpers.cache import get_current_user_id
@@ -1119,6 +1120,9 @@ def onAnnexRemoved(annex, event):
     # remove does not use deferred reindex
     extra_idxs = parent.adapted().getIndexesRelatedTo('annex', check_deferred=False)
     notifyModifiedAndReindex(parent, extra_idxs=extra_idxs)
+
+    # remove it from any esign session
+    remove_files_from_session([annex.UID()])
 
 
 def onAnnexAttrChanged(annex, event):

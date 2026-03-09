@@ -55,10 +55,21 @@ class IPodTemplateStoreAsAnnex(Interface):
         defaultFactory=output_format_default,
         required=False)
 
-    widget('add_to_sign_session', RadioFieldWidget)
     add_to_sign_session = schema.Bool(
         title=_(u'title_add_to_sign_session'),
         description=_("descr_add_to_sign_session"),
+        required=False,
+        default=True)
+
+    add_annexes_to_sign_session = schema.Bool(
+        title=_(u'title_add_annexes_to_sign_session'),
+        description=_("descr_add_annexes_to_sign_session"),
+        required=False,
+        default=True)
+
+    store_generated_document = schema.Bool(
+        title=_(u'title_store_generated_document'),
+        description=_("descr_store_generated_document"),
         required=False,
         default=True)
 
@@ -68,6 +79,9 @@ class PodTemplateStoreAsAnnexForm(form.Form):
     implements(IFieldsAndContentProvidersForm)
     schema = IPodTemplateStoreAsAnnex
     fields = field.Fields(IPodTemplateStoreAsAnnex)
+    fields["add_to_sign_session"].widgetFactory = RadioFieldWidget
+    fields["add_annexes_to_sign_session"].widgetFactory = RadioFieldWidget
+    fields["store_generated_document"].widgetFactory = RadioFieldWidget
     ignoreContext = True  # don't use context to get widget data
 
     contentProviders = ContentProviders()
@@ -104,7 +118,9 @@ class PodTemplateStoreAsAnnexForm(form.Form):
         generation_view(
             template_uid=data['template_uid'],
             output_format=data['output_format'],
-            add_to_sign_session=data['add_to_sign_session'])
+            store_generated_document=data['store_generated_document'],
+            add_to_sign_session=data['add_to_sign_session'],
+            add_annexes_to_sign_session=data['add_annexes_to_sign_session'])
         self.request.set('store_as_annex', '0')
         self._finished = True
 
@@ -117,7 +133,15 @@ class PodTemplateStoreAsAnnexForm(form.Form):
         # after calling parent's update, self.actions are available
         self.actions.get('cancel').addClass('standalone')
         self.signers, self.raw_signers, self.signers_error_msg, self.esign_enabled = compute_signers(self.context)
-        self.show_esign = self.esign_enabled and not self.signers_error_msg
+        self.output_format = self.widgets['output_format'].value
+        self.show_esign = self.esign_enabled and not self.signers_error_msg and self.output_format == u'pdf'
+        # hide esign related fields if not available
+        if not self.show_esign:
+            self.widgets['add_to_sign_session'].mode = HIDDEN_MODE
+            self.widgets['add_to_sign_session'].value = ['false']
+            self.widgets['add_annexes_to_sign_session'].mode = HIDDEN_MODE
+            self.widgets['add_annexes_to_sign_session'].value = ['false']
+            self.widgets['store_generated_document'].mode = HIDDEN_MODE
 
     def render(self):
         if self._finished:

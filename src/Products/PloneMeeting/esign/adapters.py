@@ -37,23 +37,25 @@ class PMSignersAdapter(object):
                 template_uid = template.UID()
         return template, template_uid
 
-    def _get_base_extra_expr_ctx(self):
+    def _get_base_extra_expr_ctx(self, pod_template=None):
         """Add "template_uid" to the context"""
-        template, template_uid = self._get_template_infos()
-        if not template or not template_uid:
-            raise Exception, "Could not get template_uid!"
-
+        if pod_template is None:
+            template, template_uid = self._get_template_infos()
+            if not template or not template_uid:
+                raise Exception, "Could not get template_uid!"
+        else:
+            template, template_uid = pod_template, pod_template.UID()
         return _base_extra_expr_ctx(
             self.context,
             {'template': template,
              'template_uid': template_uid})
 
-    def get_raw_signers(self):
+    def get_raw_signers(self, pod_template=None):
         """ """
         # will return a dict of signers infos with
         # key: 'signature_number'
         # value: 'held_position', 'function', 'name'
-        extra_expr_ctx = self._get_base_extra_expr_ctx()
+        extra_expr_ctx = self._get_base_extra_expr_ctx(pod_template=pod_template)
         signer_infos = _evaluateExpression(
             self.context,
             expression=extra_expr_ctx['template'].esign_signers_expr or '',
@@ -63,10 +65,10 @@ class PMSignersAdapter(object):
             raise_on_error=True) or {}
         return signer_infos
 
-    def get_signers(self):
+    def get_signers(self, pod_template=None):
         """Return the list of signers for the element.
            We use configuration field MeetingConfig.eSignSignersTALExpr."""
-        signer_infos = self.get_raw_signers()
+        signer_infos = self.get_raw_signers(pod_template=pod_template)
         # now we have to return a list of ordered signers
         # with 'userid', 'email', 'fullname' and 'position' all as text
         res = []

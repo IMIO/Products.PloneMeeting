@@ -69,37 +69,47 @@ class DisplaySignersProvider(ContentProviderBase):
         return self.__parent__.cfg.isManager(self.__parent__.cfg)
 
     def render(self):
+        error_msg = None
         self.signers = self.__parent__.form.signers
         self.raw_signers = self.__parent__.form.raw_signers
         self.show_esign = self.__parent__.form.show_esign
+        self.output_format = self.__parent__.form.output_format
+        # only available when output_format is 'pdf'
         if self.__parent__.form.signers_error_msg is not None:
-            self.error = translate(
+            error_msg = translate(
                 msgid='store_podtemplate_as_annex_signers_error',
                 mapping={'msg': self.__parent__.form.signers_error_msg},
                 domain='PloneMeeting',
                 context=self.request,
                 default="Not able to get signer, error is: \"${msg}\".")
+        elif self.output_format != u'pdf':
+            error_msg = translate(
+                msgid='store_podtemplate_as_annex_output_format_error',
+                mapping={'outputformat': self.output_format},
+                domain='PloneMeeting',
+                context=self.request,
+                default="Only available when using output format PDF!")
+        if error_msg is not None:
             api.portal.show_message(
-                self.error, request=self.request, type='warning')
+                error_msg, request=self.request, type='warning')
         return self.template()
 
 
-def compute_signers(item):
+def compute_signers(obj):
     """ """
     signers = []
     raw_signers = {}
     esign_enabled = get_registry_enabled()
     signers_error_msg = None
     # raw signers
-    raw_signers = ISignable(item).get_raw_signers()
+    raw_signers = ISignable(obj).get_raw_signers()
     # eSign signers
     if esign_enabled:
         try:
-            signers = ISignable(item).get_signers()
+            signers = ISignable(obj).get_signers()
         except ValueError as msg:
             signers_error_msg = msg
     return signers, raw_signers, signers_error_msg, esign_enabled
-
 
 
 @provider(IContextAwareDefaultFactory)
@@ -116,6 +126,9 @@ def get_pod_template_infos(value, cfg):
     """
       Return POD template of p_cfg decoding value that is like "deliberation__output_format__odt".
     """
+    # value can be a list
+    if hasattr(value, '__iter__'):
+        value = value[0]
     template_id, output_format = value.split('__output_format__')
     pod_template = getattr(cfg.podtemplates, template_id)
     return pod_template, output_format
@@ -164,7 +177,9 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
         if self.brains:
             item = brains[0].getObject()
             self.signers, self.raw_signers, self.signers_error_msg, self.esign_enabled = compute_signers(item)
-        self.show_esign = self.esign_enabled and not self.signers_error_msg
+            pod_template, self.output_format = get_pod_template_infos(pod_template_default(self.context), self.cfg)
+
+        self.show_esign = self.esign_enabled and not self.signers_error_msg and self.output_format == u'pdf'
         self.fields += Fields(schema.Choice(
             __name__='pod_template',
             title=_(u'POD template to annex'),
@@ -179,6 +194,7 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                 required=False,
                 default=True))
             self.fields["add_to_sign_session"].widgetFactory = RadioFieldWidget
+
             self.fields += Fields(schema.Bool(
                 __name__='add_annexes_to_sign_session',
                 title=_(u'title_add_annexes_to_sign_session'),
@@ -186,9 +202,19 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                 required=False,
                 default=True))
             self.fields["add_annexes_to_sign_session"].widgetFactory = RadioFieldWidget
-            form.fieldset('extra',
+
+            self.fields += Fields(schema.Bool(
+                __name__='store_generated_document',
+                title=_(u'title_store_generated_document'),
+                description=_(u'descr_store_generated_document'),
+                required=False,
+                default=True))
+            self.fields["store_generated_document"].widgetFactory = RadioFieldWidget
+
+            form.fieldset(
+                'extra',
                 label=u"Extra information",
-                fields=['add_to_sign_session', 'add_annexes_to_sign_session']
+                fields=['add_to_sign_session', 'add_annexes_to_sign_session', 'store_generated_document']
             )
 
     def _apply(self, **data):
@@ -199,15 +225,20 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
         for brain in self.brains:
             item = brain.getObject()
             generation_view = item.restrictedTraverse('@@document-generation')
+            store_generated_document = data.get('store_generated_document', True)
             add_to_sign_session = data.get('add_to_sign_session', False)
+            add_annexes_to_sign_session = data.get('add_annexes_to_sign_session', False)
             # res is None or a string (error msg)
             res = generation_view(
                 template_uid=pod_template.UID(),
                 output_format=output_format,
+                store_generated_document=store_generated_document,
                 add_to_sign_session=add_to_sign_session,
+                add_annexes_to_sign_session=add_annexes_to_sign_session,
                 return_portal_msg_code=True)
             if not res:
-                num_of_generated_templates += 1
+                if store_generated_document:
+                    num_of_generated_templates += 1
             else:
                 # log error
                 msgid, mapping = res

@@ -18,7 +18,7 @@
       </tr>
     </tbody>
   </table>
-  <h3 tal:condition="python: view.show_esign" class="parapheo">
+  <h3 class="parapheo">
     <img width="24" height="24" tal:attributes="src python: view.portal_url + '/++resource++imio.esign/parapheo.svg'" />
     <span i18n:translate="esign_label">e-Signature:</span>
   </h3>
