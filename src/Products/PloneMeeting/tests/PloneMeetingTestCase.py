@@ -202,6 +202,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         # Set the default file and file type for adding annexes
         self.annexFile = u'FILE.txt'
         self.annexFilePDF = u'file_correct.pdf'
+        self.annexFileODT = u'../profiles/testing/templates/Item.odt'
         self.annexFileCorruptedPDF = u'file_errorDuringConversion.pdf'
         self.annexFileType = 'financial-analysis'
         self.annexFileTypeDecision = 'decision-annex'
@@ -340,7 +341,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 folder = cfg.classifiers
             else:
                 folder = cfg.categories
-        elif objectType == 'ConfigurablePODTemplate':
+        elif objectType in ['ConfigurablePODTemplate', 'StyleTemplate', 'DashboardPODTemplate']:
             folder = cfg.podtemplates
         else:
             contentType = '%s%s' % (objectType, shortName)

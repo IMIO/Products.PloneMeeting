@@ -36,4 +36,9 @@
           &lt;/schema&gt;
         &lt;/model&gt;
     </property>
+  <action title="Edit" action_id="edit" category="object" condition_expr="python: portal.portal_plonemeeting.is_zope_admin()"
+    description="" icon_expr="" link_target=""
+    url_expr="string:${object_url}/edit" visible="True">
+    <permission value="Modify portal content"/>
+  </action>
 </object>

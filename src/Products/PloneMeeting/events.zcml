@@ -243,4 +243,18 @@
   <subscriber for="Products.PluggableAuthService.interfaces.events.IPrincipalRemovedFromGroupEvent"
               handler=".events.onPrincipalRemovedFromGroup" />
 
+  <!-- collective.documentgenerator events -->
+  <subscriber for="collective.documentgenerator.content.pod_template.IPODTemplate
+                   zope.lifecycleevent.interfaces.IObjectCreatedEvent"
+              handler=".events.onPODTemplateCreated" />
+  <subscriber for="collective.documentgenerator.content.pod_template.IPODTemplate
+                   zope.lifecycleevent.interfaces.IObjectModifiedEvent"
+              handler=".events.onPODTemplateModified" />
+  <subscriber for="collective.documentgenerator.content.style_template.IStyleTemplate
+                   zope.lifecycleevent.interfaces.IObjectCreatedEvent"
+              handler=".events.onStyleTemplateCreated" />
+  <subscriber for="collective.documentgenerator.content.style_template.IStyleTemplate
+                   zope.lifecycleevent.interfaces.IObjectModifiedEvent"
+              handler=".events.onStyleTemplateModified" />
+
 </configure>
