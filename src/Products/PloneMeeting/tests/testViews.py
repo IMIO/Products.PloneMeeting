@@ -2352,6 +2352,35 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(viewlet.available)
         self.failUnless(viewlet.render())
 
+    def test_pm_ftw_labels_viewlet_available_item_template(self):
+        """Available on item templates to Managers and item templates managers."""
+        cfg = self.meetingConfig
+        self._enableField('labels')
+        # Manager
+        self.changeUser('siteadmin')
+        item_templates = cfg.getItemTemplates(filtered=True)
+        item_template = item_templates[0].getObject()
+        viewlet = self._get_viewlet(
+            context=item_template, manager_name='plone.belowcontenttitle', viewlet_name='ftw.labels.labeling')
+        self.assertTrue(viewlet.available)
+        self.failUnless(viewlet.render())
+        self.assertEqual(len(viewlet.available_labels[1]), 1)
+        # item templates manager can access every labels
+        self.changeUser('templatemanager1')
+        self.assertTrue(viewlet.available)
+        self.failUnless(viewlet.render())
+        self.assertEqual(len(viewlet.available_labels[1]), 1)
+        # a user that would access it would access no labels
+        self.changeUser('pmCreator1')
+        self.assertFalse(viewlet.available)
+        self.failUnless(viewlet.render())
+        self.assertEqual(viewlet.available_labels[1], [])
+        # MeetingManager
+        self.changeUser('pmManager')
+        self.assertFalse(viewlet.available)
+        self.failUnless(viewlet.render())
+        self.assertEqual(viewlet.available_labels[1], [])
+
     def test_pm_ftw_labels_viewlet_can_edit(self):
         """can_edit when user has Modify portal content permission."""
         cfg = self.meetingConfig

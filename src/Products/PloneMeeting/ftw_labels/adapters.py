@@ -15,6 +15,8 @@ from imio.helpers.cache import invalidate_cachekey_volatile_for
 from plone import api
 from plone.app.querystring.queryparser import parseFormquery
 from plone.memoize import ram
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import ITEM_LABELS_ACCESS_CACHE_ATTR
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -39,8 +41,14 @@ class PMLabeling(Labeling):
 
     def filter_manageable_labels(self, labels, modes=("view", "edit", )):
         """Give p_labels is like [[], []]."""
-        # do not filter for Managers
-        if not self.tool.isManager(realManagers=True):
+        # do not filter for Managers or for item in the configuration the current user is able to edit
+        if self.tool.isManager(realManagers=True) or (self.context.isDefinedInTool() and _checkPermission(ModifyPortalContent, self.context)):
+            return labels
+        if not hasattr(self.context, ITEM_LABELS_ACCESS_CACHE_ATTR):
+            return [[], []]
+
+        if not self.tool.isManager(realManagers=True) and \
+           not (self.context.isDefinedInTool() and _checkPermission(ModifyPortalContent, self.context)):
             # filter depending on self._labels_cache
             cache = getattr(self.context, ITEM_LABELS_ACCESS_CACHE_ATTR)
             personal_labels = []
