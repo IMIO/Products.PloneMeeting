@@ -83,6 +83,7 @@ class PMLabeling(Labeling):
                                 continue
                             # manage view_access, already computed, "False" or "True"
                             # "None" means needs to be computed on the fly
+                            # view_access will be False if not in relevant review_state
                             if cached['view_access'] is False:
                                 continue
                             view_access_on = config['view_access_on'].strip()
@@ -126,6 +127,7 @@ class PMLabeling(Labeling):
                             continue
                         # manage edit_access_on, already computed, "False" or "True"
                         # "None" means needs to be computed on the fly
+                        # edit_access will be False if not in relevant review_state
                         if cached['edit_access'] is False:
                             continue
                         edit_access_on = config['edit_access_on'].strip()
