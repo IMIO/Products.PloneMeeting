@@ -1745,6 +1745,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         else:
             return data
 
+    security.declarePublic('is_zope_admin')
+
     def is_zope_admin(self):
         '''Is current user a Zope admin?'''
         return check_zope_admin()
