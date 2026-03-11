@@ -244,6 +244,8 @@
               handler=".events.onPrincipalRemovedFromGroup" />
 
   <!-- collective.documentgenerator events -->
+  <!-- not necessary to cover IObjectCopiedEvent/IObjectClonedEvent events
+       as it will not let the user edit the template -->
   <subscriber for="collective.documentgenerator.content.pod_template.IPODTemplate
                    zope.lifecycleevent.interfaces.IObjectCreatedEvent"
               handler=".events.onPODTemplateCreated" />

@@ -1855,8 +1855,12 @@ class testMeetingConfig(PloneMeetingTestCase):
         # trying to add these portal_types anywhere we lead to Unauthorized
         self.changeUser('siteadmin')
         for portal_type in portal_types:
+            # check on portal where PODTemplate could be addable
             self.assertRaises(
                 Unauthorized, api.content.create, type=portal_type, title='template', container=self.portal)
+            # check in MeetingConfig where 'ConfigurablePODTemplate', 'StyleTemplate', 'DashboardPODTemplate' are addable
+            self.assertRaises(
+                Unauthorized, api.content.create, type=portal_type, title='template', container=cfg.podtemplates)
             templates = [template for template in cfg.podtemplates.objectValues()
                          if template.portal_type == portal_type]
             if templates:
@@ -1872,6 +1876,11 @@ class testMeetingConfig(PloneMeetingTestCase):
                 type=portal_type,
                 title='template',
                 container=self.portal,
+                odt_file=self._annex_file_content(annexFile=self.annexFileODT))
+            api.content.create(
+                type=portal_type,
+                title='template',
+                container=cfg.pod_templates,
                 odt_file=self._annex_file_content(annexFile=self.annexFileODT))
             templates = [template for template in cfg.podtemplates.objectValues()
                          if template.portal_type == portal_type]
