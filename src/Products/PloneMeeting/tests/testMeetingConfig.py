@@ -1852,44 +1852,48 @@ class testMeetingConfig(PloneMeetingTestCase):
         """Only a Zope admin can create or modify a PODTemplate of any kind."""
         cfg = self.meetingConfig
         portal_types = ['ConfigurablePODTemplate', 'StyleTemplate', 'DashboardPODTemplate', 'PODTemplate', 'MailingLoopTemplate', 'SubTemplate']
+        containers = [self.portal, cfg.podtemplates]
         # trying to add these portal_types anywhere we lead to Unauthorized
         self.changeUser('siteadmin')
         for portal_type in portal_types:
-            # check on portal where PODTemplate could be addable
-            self.assertRaises(
-                Unauthorized, api.content.create, type=portal_type, title='template', container=self.portal)
-            # check in MeetingConfig where 'ConfigurablePODTemplate', 'StyleTemplate', 'DashboardPODTemplate' are addable
-            self.assertRaises(
-                Unauthorized, api.content.create, type=portal_type, title='template', container=cfg.podtemplates)
-            templates = [template for template in cfg.podtemplates.objectValues()
-                         if template.portal_type == portal_type]
-            if templates:
-                self.assertRaises(Unauthorized, notify, (ObjectEditedEvent(templates[0])))
-            else:
-                pm_logger.info(
-                    "Could not find an element with portal_type {0} in "
-                    "podtemplates folder".format(portal_type))
+            # check in portal and in MeetingConfig
+            # on portal more types could be addable
+            for container in containers:
+                # create
+                allowed_type_ids = [allowed_type.getId() for allowed_type in container.allowedContentTypes()]
+                if portal_type in allowed_type_ids:
+                    self.assertRaises(
+                        Unauthorized, api.content.create, type=portal_type, title='template', container=container)
+                # modify
+                templates = [template for template in container.objectValues()
+                             if template.portal_type == portal_type]
+                if templates:
+                    self.assertRaises(Unauthorized, notify, (ObjectEditedEvent(templates[0])))
+                else:
+                    pm_logger.info(
+                        "Could not find an element with portal_type {0} in "
+                        "container at {1}".format(portal_type, container.absolute_url_path()))
         # OK as zope admin
         self.changeUser('admin')
         for portal_type in portal_types:
-            api.content.create(
-                type=portal_type,
-                title='template',
-                container=self.portal,
-                odt_file=self._annex_file_content(annexFile=self.annexFileODT))
-            api.content.create(
-                type=portal_type,
-                title='template',
-                container=cfg.pod_templates,
-                odt_file=self._annex_file_content(annexFile=self.annexFileODT))
-            templates = [template for template in cfg.podtemplates.objectValues()
-                         if template.portal_type == portal_type]
-            if templates:
-                notify(ObjectEditedEvent(templates[0]))
-            else:
-                pm_logger.info(
-                    "Could not find an element with portal_type {0} in "
-                    "podtemplates folder".format(portal_type))
+            for container in containers:
+                # create
+                allowed_type_ids = [allowed_type.getId() for allowed_type in container.allowedContentTypes()]
+                if portal_type in allowed_type_ids:
+                    api.content.create(
+                        type=portal_type,
+                        title='template',
+                        container=container,
+                        odt_file=self._annex_file_content(annexFile=self.annexFileODT))
+                # modify
+                templates = [template for template in container.objectValues()
+                             if template.portal_type == portal_type]
+                if templates:
+                    notify(ObjectEditedEvent(templates[0]))
+                else:
+                    pm_logger.info(
+                        "Could not find an element with portal_type {0} in "
+                        "container at {1}".format(portal_type, container.absolute_url_path()))
 
     def test_pm_UsedLabelCanNotBeRemoved(self):
         """A ftw.labels label that is used on an item can not be removed."""
