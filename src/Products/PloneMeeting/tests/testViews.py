@@ -2361,22 +2361,36 @@ class testViews(PloneMeetingTestCase):
         item_templates = cfg.getItemTemplates(filtered=True)
         item_template = item_templates[0].getObject()
         viewlet = self._get_viewlet(
-            context=item_template, manager_name='plone.belowcontenttitle', viewlet_name='ftw.labels.labeling')
+            context=item_template,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
         self.assertTrue(viewlet.available)
         self.failUnless(viewlet.render())
         self.assertEqual(len(viewlet.available_labels[1]), 1)
         # item templates manager can access every labels
         self.changeUser('templatemanager1')
+        viewlet = self._get_viewlet(
+            context=item_template,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
         self.assertTrue(viewlet.available)
         self.failUnless(viewlet.render())
         self.assertEqual(len(viewlet.available_labels[1]), 1)
         # a user that would access it would access no labels
         self.changeUser('pmCreator1')
+        viewlet = self._get_viewlet(
+            context=item_template,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
         self.assertFalse(viewlet.available)
         self.failUnless(viewlet.render())
         self.assertEqual(viewlet.available_labels[1], [])
         # MeetingManager
         self.changeUser('pmManager')
+        viewlet = self._get_viewlet(
+            context=item_template,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
         self.assertFalse(viewlet.available)
         self.failUnless(viewlet.render())
         self.assertEqual(viewlet.available_labels[1], [])
