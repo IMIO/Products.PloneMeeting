@@ -1745,12 +1745,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         else:
             return data
 
-    def show_add_config(self):
-        '''Show the add a MeetingConfig link?'''
-        res = True
-        if not check_zope_admin():
-            res = False
-        return res
+    security.declarePublic('is_zope_admin')
+
+    def is_zope_admin(self):
+        '''Is current user a Zope admin?'''
+        return check_zope_admin()
 
 
 registerType(ToolPloneMeeting, PROJECTNAME)

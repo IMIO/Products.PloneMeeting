@@ -202,6 +202,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         # Set the default file and file type for adding annexes
         self.annexFile = u'FILE.txt'
         self.annexFilePDF = u'file_correct.pdf'
+        self.annexFileODT = u'../profiles/testing/templates/Item.odt'
         self.annexFileCorruptedPDF = u'file_errorDuringConversion.pdf'
         self.annexFileType = 'financial-analysis'
         self.annexFileTypeDecision = 'decision-annex'
@@ -340,7 +341,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 folder = cfg.classifiers
             else:
                 folder = cfg.categories
-        elif objectType == 'ConfigurablePODTemplate':
+        elif objectType in ['ConfigurablePODTemplate', 'StyleTemplate', 'DashboardPODTemplate']:
             folder = cfg.podtemplates
         else:
             contentType = '%s%s' % (objectType, shortName)
@@ -426,8 +427,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     def _annex_file_content(self, annexFile=None):
         current_path = os.path.dirname(__file__)
         annexFile = annexFile or self.annexFile
-        f = open(os.path.join(current_path, annexFile), 'r')
-        annex_file = namedfile.NamedBlobFile(f.read(), filename=annexFile)
+        with open(os.path.join(current_path, annexFile), 'rb') as f:
+            annex_file = namedfile.NamedBlobFile(
+                f.read(),
+                filename=os.path.basename(annexFile))
         return annex_file
 
     def addAnnex(self,

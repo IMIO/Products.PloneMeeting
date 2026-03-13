@@ -17,6 +17,14 @@ Changelog
   [gbastien]
 - Integrate `imio.esign`.
   [gbastien]
+- Restrict creation/modification of any kind of POD templates to the Zope admin.
+  Renamed `ToolPloneMeeting.show_add_config` to `ToolPloneMeeting.is_zope_admin`.
+  [gbastien]
+- Highlight `Yes` value in red in `MeetingConfig.labelsConfig` datagrid field.
+  [gbastien]
+- Fixed `ftw.labels` viewlet error when rendered on an item template, now item
+  templates managers can select any labels on item templates and viewlet.
+  [gbastien]
 
 4.2.28.9 (2026-01-27)
 ---------------------

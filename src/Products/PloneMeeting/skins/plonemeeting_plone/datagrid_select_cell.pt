@@ -12,7 +12,7 @@
     <metal:view_cell_macro define-macro="view_cell"
       tal:define="vocab python: column_definition.getVocabulary(context)">
       <tal:comment replace="nothing">XXX adapted to render with "structure"</tal:comment>
-      <div tal:content="structure python:widget.getUserFriendlySelectionItem(here, cell_value, vocab)" />
+      <div tal:attributes="class string:value-${cell_value}" tal:content="structure python:widget.getUserFriendlySelectionItem(here, cell_value, vocab)" />
     </metal:view_cell_macro>
 
     <!-- EDIT -->

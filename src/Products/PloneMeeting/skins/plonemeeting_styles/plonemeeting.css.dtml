@@ -1885,6 +1885,11 @@ div.faceted-daterange-widget form div input {
    font-size: 100%;
 }
 
+/* Display "Yes" in red in MeetingConfig.labelsConfig datagrid field */
+div[id^="archetypes-fieldname-labelsConfig-"] div.value-1 {
+    color: red;
+}
+
 /* labels displayed on the item view */
 #content div#viewlet-below-content-title div#labeling-viewlet {
    float: left;

@@ -1369,7 +1369,7 @@
          <span i18n:translate="PodTemplates"></span>
          <a href="#"
             class="link-overlay-pm"
-            tal:condition="isRealManager"
+            tal:condition="python: tool.is_zope_admin()"
             tal:attributes="href string:${context/podtemplates/absolute_url}/folder_factories">
           <img src="#" tal:attributes="src string:$portal_url/new.png;" />
          </a>

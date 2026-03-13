@@ -1778,7 +1778,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         """When any element contained in a MeetingConfig is added/modified/removed,
            MeetingConfig.modified is updated so caching is invalidated."""
         cfg = self.meetingConfig
-        self.changeUser('siteadmin')
+        # only the Zope admin can manage PODTemplates of any kind
+        self.changeUser('admin')
         original_cfg_modified = cfg.modified()
 
         # edit a POD template
@@ -1795,11 +1796,19 @@ class testMeetingConfig(PloneMeetingTestCase):
         style_template_cfg_modified = cfg.modified()
         self.assertNotEqual(pod_template_cfg_modified, style_template_cfg_modified)
 
+        # edit a Dashboard POD template
+        dashboard_template = [dashboard_template for dashboard_template in cfg.podtemplates.objectValues()
+                              if dashboard_template.portal_type == 'DashboardPODTemplate'][0]
+        notify(ObjectModifiedEvent(dashboard_template))
+        dashboard_template_cfg_modified = cfg.modified()
+        self.assertNotEqual(style_template_cfg_modified, dashboard_template_cfg_modified)
+
         # edit a ContentCategory
+        self.changeUser('siteadmin')
         content_category = cfg.annexes_types.item_annexes.objectValues()[0]
         notify(ObjectModifiedEvent(content_category))
         content_category_cfg_modified = cfg.modified()
-        self.assertNotEqual(style_template_cfg_modified, content_category_cfg_modified)
+        self.assertNotEqual(dashboard_template_cfg_modified, content_category_cfg_modified)
 
         # edit a meetingcategory
         category = cfg.categories.objectValues()[0]
@@ -1827,6 +1836,8 @@ class testMeetingConfig(PloneMeetingTestCase):
 
         # test add and remove a POD template using pod_template_to_use
         # add
+        # only the Zope admin can manage PODTemplates of any kind
+        self.changeUser('admin')
         new_pod_template = self.create(
             'ConfigurablePODTemplate',
             pod_template_to_use=cfg.podtemplates.itemTemplate.UID())
@@ -1836,6 +1847,53 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.deleteAsManager(new_pod_template.UID())
         new_pod_template_removed_cfg_modified = cfg.modified()
         self.assertNotEqual(new_pod_template_cfg_modified, new_pod_template_removed_cfg_modified)
+
+    def test_pm_PODTemplateOnlyCreatedModifiedByZopeAdmin(self):
+        """Only a Zope admin can create or modify a PODTemplate of any kind."""
+        cfg = self.meetingConfig
+        portal_types = ['ConfigurablePODTemplate', 'StyleTemplate', 'DashboardPODTemplate', 'PODTemplate', 'MailingLoopTemplate', 'SubTemplate']
+        containers = [self.portal, cfg.podtemplates]
+        # trying to add these portal_types anywhere we lead to Unauthorized
+        self.changeUser('siteadmin')
+        for portal_type in portal_types:
+            # check in portal and in MeetingConfig
+            # on portal more types could be addable
+            for container in containers:
+                # create
+                allowed_type_ids = [allowed_type.getId() for allowed_type in container.allowedContentTypes()]
+                if portal_type in allowed_type_ids:
+                    self.assertRaises(
+                        Unauthorized, api.content.create, type=portal_type, title='template', container=container)
+                # modify
+                templates = [template for template in container.objectValues()
+                             if template.portal_type == portal_type]
+                if templates:
+                    self.assertRaises(Unauthorized, notify, (ObjectEditedEvent(templates[0])))
+                else:
+                    pm_logger.info(
+                        "Could not find an element with portal_type {0} in "
+                        "container at {1}".format(portal_type, container.absolute_url_path()))
+        # OK as zope admin
+        self.changeUser('admin')
+        for portal_type in portal_types:
+            for container in containers:
+                # create
+                allowed_type_ids = [allowed_type.getId() for allowed_type in container.allowedContentTypes()]
+                if portal_type in allowed_type_ids:
+                    api.content.create(
+                        type=portal_type,
+                        title='template',
+                        container=container,
+                        odt_file=self._annex_file_content(annexFile=self.annexFileODT))
+                # modify
+                templates = [template for template in container.objectValues()
+                             if template.portal_type == portal_type]
+                if templates:
+                    notify(ObjectEditedEvent(templates[0]))
+                else:
+                    pm_logger.info(
+                        "Could not find an element with portal_type {0} in "
+                        "container at {1}".format(portal_type, container.absolute_url_path()))
 
     def test_pm_UsedLabelCanNotBeRemoved(self):
         """A ftw.labels label that is used on an item can not be removed."""

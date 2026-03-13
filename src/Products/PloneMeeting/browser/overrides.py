@@ -1083,7 +1083,11 @@ class ConfigActionsPanelView(ActionsPanelView):
           We override mayEdit because for MeetingConfig,
           some users have 'Modify portal content' but no field to edit...
           In the case there is no field to edit, do not display the edit action.
+          We also hide the action to non Zope admin for PODTemplates of any kind.
         """
+        if self.context.portal_type in ['ConfigurablePODTemplate', 'StyleTemplate', 'DashboardPODTemplate'] and \
+           not check_zope_admin():
+            return False
         return _checkPermission(ModifyPortalContent, self.context) and \
             (not self.context.portal_type == 'MeetingConfig' or
              self.context.Schema().editableFields(self.context.Schema()))
