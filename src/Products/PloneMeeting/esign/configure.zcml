@@ -1,5 +1,6 @@
 <configure
     xmlns="http://namespaces.zope.org/zope"
+    xmlns:i18n="http://namespaces.zope.org/i18n"
     xmlns:browser="http://namespaces.zope.org/browser"
     xmlns:plone="http://namespaces.plone.org/plone">
 
@@ -37,6 +38,24 @@
             for="Products.CMFPlone.interfaces.IPloneSiteRoot"
             class="Products.PloneMeeting.esign.views.PMExternalSessionCreateView"
             permission="zope2.View"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
+
+        <browser:view
+            name="remove-from-esign-session"
+            for="Products.PloneMeeting.interfaces.IMeetingContent"
+            class="imio.esign.browser.actions.RemoveFromSessionView"
+            permission="cmf.ManagePortal"
+            i18n:domain="imio.esign"
+            allowed_attributes="available"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
+
+        <browser:view
+            name="remove-item-from-esign-session"
+            for="imio.annex.content.annex.IAnnex"
+            class="imio.esign.browser.actions.RemoveItemFromSessionView"
+            permission="cmf.ManagePortal"
+            i18n:domain="imio.esign"
+            allowed_attributes="available"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
 
         <browser:viewlet

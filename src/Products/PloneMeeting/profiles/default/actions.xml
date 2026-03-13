@@ -121,6 +121,25 @@
    <object name="faceted.search.enable" meta_type="CMF Action" remove="true">
    </object>
 
+   <!-- imio.esign, give remove actions to Managers -->
+   <object name="add_to_esign_session" meta_type="CMF Action" i18n:domain="imio.esign">
+     <property name="visible">False</property>
+     <property name="permissions">
+       <element value="Manage portal"/>
+     </property>
+   </object>
+
+   <object name="remove_from_esign_session" meta_type="CMF Action" i18n:domain="imio.esign">
+     <property name="permissions">
+       <element value="Manage portal"/>
+     </property>
+   </object>
+   <object name="remove_item_from_esign_session" meta_type="CMF Action" i18n:domain="imio.esign">
+     <property name="permissions">
+       <element value="Manage portal"/>
+     </property>
+   </object>
+
    <!-- Remove some object actions -->
    <object name="iconifiedcategory" meta_type="CMF Action" remove="true">
    </object>
