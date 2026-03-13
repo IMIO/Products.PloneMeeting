@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.28.10 (unreleased)
+4.2.28.10 (2026-03-13)
 ----------------------
 
 - Added `imio.helpers.xhtml.removeCssClasses` to `safe_utils` so it is available
