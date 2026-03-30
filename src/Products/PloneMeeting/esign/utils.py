@@ -12,6 +12,8 @@ from plone import api
 from plone.rfc822.interfaces import IPrimaryFieldInfo
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.views import get_contact_from_position_type
+from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import reindex_object
 from zope.i18n import translate
@@ -69,6 +71,14 @@ def get_esign_signatories(hps, signature_numbers=['1', '2']):
         res[signature_number]['function'] = hp.get_prefix_for_gender_and_number(include_value=True)
         res[signature_number]['shortfunction'] = hp.get_label()
     return res
+
+
+def esign_access_groups():
+    """Return groups of the user giving access to sessions.
+       MeetingManagers and eSign watchers have access."""
+    tool = api.portal.get_tool('portal_plonemeeting')
+    return tool.get_filtered_plone_groups_for_user(
+        suffixes=[MEETINGMANAGERS_GROUP_SUFFIX, ESIGNWATCHERS_GROUP_SUFFIX])
 
 
 def is_pdf(annex):

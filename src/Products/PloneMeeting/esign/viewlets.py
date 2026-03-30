@@ -3,6 +3,7 @@
 from imio.esign.browser.views import FacetedSessionInfoViewlet
 from imio.esign.browser.views import ItemSessionInfoViewlet
 from plone import api
+from Products.PloneMeeting.esign.utils import esign_access_groups
 from Products.PloneMeeting.esign.views import PMSessionsListingView
 
 
@@ -41,14 +42,15 @@ class PMItemSessionInfoViewlet(ItemSessionInfoViewlet, PMFacetedSessionInfoViewl
 
     def available(self):
         """Can be displayed on:
-           - MeetingItem to proposingGroup and MeetingManagers;
-           - Meeting the MeetingManagers;
-           - MeetingAdvice to proposingGroup, advisers and MeetingManagers."""
-        isManager = self.tool.isManager(self.cfg)
-        if self.context.getTagName() == "MeetingItem":
-            return isManager or self.context.getProposingGroup() in self.tool.get_orgs_for_user()
-        elif self.context.getTagName() == "Meeting":
-            return isManager
-        elif self.context.getTagName() == "MeetingAdvice":
-            return isManager or self.context.advice_group in self.tool.get_orgs_for_user(suffixes=['advisers'])
-        return True
+           - MeetingItem to proposingGroup and esign access groups;
+           - Meeting the esign access groups;
+           - MeetingAdvice to proposingGroup, advisers and esign_access_groups."""
+        if bool(esign_access_groups()):
+            return True
+        tag_name = self.context.getTagName()
+        if tag_name == "MeetingItem":
+            return self.context.getProposingGroup() in self.tool.get_orgs_for_user()
+        elif tag_name == "MeetingAdvice":
+            return self.context.advice_group in self.tool.get_orgs_for_user(suffixes=['advisers'])
+        else:
+            return False

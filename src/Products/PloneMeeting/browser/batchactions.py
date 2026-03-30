@@ -16,6 +16,7 @@ from imio.esign.adapters import ISignable
 from imio.esign.config import get_esign_registry_enabled
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
+from imio.helpers.content import uuidToObject
 from plone import api
 from plone.app.textfield import RichText
 from plone.directives import form
@@ -75,8 +76,10 @@ class DisplaySignersProvider(ContentProviderBase):
         self.show_esign = self.__parent__.form.show_esign
         self.output_format = self.__parent__.form.output_format
         self.pod_template = self.__parent__.form.pod_template
+        self.annex_type = self.__parent__.form.annex_type
         # only available when no error and
-        # esign expr defined and output_format is 'pdf'
+        # esign expr defined and output_format is 'pdf' and
+        # annex type used by stored generated document is correctly configured
         if self.__parent__.form.signers_error_msg is not None:
             error_msg = translate(
                 msgid='store_podtemplate_as_annex_signers_error',
@@ -91,6 +94,13 @@ class DisplaySignersProvider(ContentProviderBase):
                 domain='PloneMeeting',
                 context=self.request,
                 default="Only available when using output format PDF!")
+        elif self.annex_type.to_sign is False:
+            error_msg = translate(
+                msgid='store_podtemplate_as_annex_type_error',
+                mapping={'annex_type_url': self.annex_type.absolute_url()},
+                domain='PloneMeeting',
+                context=self.request,
+                default="Selected annex type must be \"to sign\" by default, check annex type at \"${annex_type_url}\"!")
         if error_msg is not None:
             api.portal.show_message(
                 error_msg, request=self.request, type='warning')
@@ -112,7 +122,7 @@ def compute_signers(obj, pod_template):
             signers = ISignable(obj).get_signers()
         except ValueError as msg:
             signers_error_msg = msg
-    return signers, raw_signers, signers_error_msg, esign_enabled
+    return signers, raw_signers, signers_error_msg, esign_enabled, uuidToObject(pod_template.store_as_annex)
 
 
 @provider(IContextAwareDefaultFactory)
@@ -180,9 +190,9 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
         if self.brains:
             item = brains[0].getObject()
             self.pod_template, self.output_format = get_pod_template_infos(pod_template_default(self.context), self.cfg)
-            self.signers, self.raw_signers, self.signers_error_msg, self.esign_enabled = compute_signers(item, self.pod_template)
+            self.signers, self.raw_signers, self.signers_error_msg, self.esign_enabled, self.annex_type = compute_signers(item, self.pod_template)
 
-        self.show_esign = self.esign_enabled and not self.signers_error_msg and self.output_format == u'pdf'
+        self.show_esign = self.esign_enabled and not self.signers_error_msg and self.output_format == u'pdf' and self.annex_type.to_sign
         self.fields += Fields(schema.Choice(
             __name__='pod_template',
             title=_(u'POD template to annex'),

@@ -149,11 +149,13 @@ class PodTemplateStoreAsAnnexForm(form.Form):
         # after calling parent's update, self.actions are available
         self.actions.get('cancel').addClass('standalone')
         self.pod_template = uuidToObject(self.widgets['template_uid'].value)
-        self.signers, self.raw_signers, self.signers_error_msg, self.esign_enabled = \
+        self.signers, self.raw_signers, self.signers_error_msg, self.esign_enabled, self.annex_type = \
             compute_signers(self.context, self.pod_template)
         self.output_format = self.widgets['output_format'].value
-        self.show_esign = self.esign_enabled and not self.signers_error_msg and \
-            self.output_format == u'pdf'
+        self.show_esign = self.esign_enabled and \
+            not self.signers_error_msg and \
+            self.output_format == u'pdf' and \
+            self.annex_type.to_sign
         # hide esign related fields if not available
         if not self.show_esign:
             self.widgets['add_to_sign_session'].mode = HIDDEN_MODE

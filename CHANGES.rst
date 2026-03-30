@@ -5,8 +5,15 @@ Changelog
 4.2.29rc8 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Fixed access to sessions and viewlet to esign watchers group.
+  [gbastien]
+- Avoid `UnicodeDecodeError` in `PMSignersAdapter.get_signers` when rendering
+  errors if certified signature custom function or name
+  contains special characters.
+  [gbastien]
+- Disable esign on store to annex if generated document
+  annex type is not to sign by default.
+  [gbastien]
 
 4.2.29rc7 (2026-03-27)
 ----------------------
