@@ -96,9 +96,10 @@ def _add_annexes_to_sign_session(obj, annexes, cfg, pod_template, signers, seal=
                 request=obj.REQUEST)
             continue
         already_in_draft_session = False
+        annex_uid = annex.UID()
         for session_id, session in get_sessions_for(context_uid).items():
             if session['state'] != "finalized" and \
-               get_file_info(session_id, annex.UID()):
+               get_file_info(session_id, annex_uid):
                 api.portal.show_message(
                     translate(
                         'annex_already_in_not_finalized_session_error',
