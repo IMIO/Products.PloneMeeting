@@ -182,4 +182,8 @@
   <utility component=".vocabularies.ItemExportPDFElementsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.item_export_pdf_elements_vocabulary" />
 
+  <!-- Vocabularies used in store-pod-temlate-as-annex-form -->
+  <utility component=".vocabularies.ContainedAnnexesToSignVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.contained_annexes_to_sign_vocabulary" />
+
 </configure>

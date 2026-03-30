@@ -4,6 +4,7 @@
 #
 
 from collective.eeafaceted.batchactions import _ as _CEBA
+from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidToObject
 from plone import api
 from plone.z3cform.layout import wrap_form
@@ -11,6 +12,7 @@ from Products.PloneMeeting.browser.batchactions import compute_signers
 from Products.PloneMeeting.browser.batchactions import DisplaySignersProvider
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
+from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form
@@ -22,6 +24,8 @@ from zope import schema
 from zope.globalrequest import getRequest
 from zope.interface import implements
 from zope.interface import Interface
+from zope.interface import provider
+from zope.schema._bootstrapinterfaces import IContextAwareDefaultFactory
 
 
 def template_uid_default():
@@ -38,6 +42,15 @@ def output_format_default():
       form : form?output_format=output_format.
     """
     return getRequest().get('output_format', u'')
+
+
+@provider(IContextAwareDefaultFactory)
+def annex_ids_default(context):
+    """Select every annexes by default."""
+    vocab = get_vocab(
+        context,
+        u"Products.PloneMeeting.vocabularies.contained_annexes_to_sign_vocabulary")
+    return vocab.by_token.keys()
 
 
 class IPodTemplateStoreAsAnnex(Interface):
@@ -61,11 +74,14 @@ class IPodTemplateStoreAsAnnex(Interface):
         required=False,
         default=True)
 
-    add_annexes_to_sign_session = schema.Bool(
-        title=_(u'title_add_annexes_to_sign_session'),
-        description=_("descr_add_annexes_to_sign_session"),
+    annex_ids = schema.List(
+        title=_(u"title_annex_ids_to_add_to_sign_session"),
+        description=_(u""),
         required=False,
-        default=True)
+        defaultFactory=annex_ids_default,
+        value_type=schema.Choice(
+            vocabulary=u"Products.PloneMeeting.vocabularies.contained_annexes_to_sign_vocabulary"),
+    )
 
     store_generated_document = schema.Bool(
         title=_(u'title_store_generated_document'),
@@ -80,7 +96,7 @@ class PodTemplateStoreAsAnnexForm(form.Form):
     schema = IPodTemplateStoreAsAnnex
     fields = field.Fields(IPodTemplateStoreAsAnnex)
     fields["add_to_sign_session"].widgetFactory = RadioFieldWidget
-    fields["add_annexes_to_sign_session"].widgetFactory = RadioFieldWidget
+    fields["annex_ids"].widgetFactory = PMCheckBoxFieldWidget
     fields["store_generated_document"].widgetFactory = RadioFieldWidget
     ignoreContext = True  # don't use context to get widget data
 
@@ -120,7 +136,7 @@ class PodTemplateStoreAsAnnexForm(form.Form):
             output_format=data['output_format'],
             store_generated_document=data['store_generated_document'],
             add_to_sign_session=data['add_to_sign_session'],
-            add_annexes_to_sign_session=data['add_annexes_to_sign_session'])
+            annex_ids_to_add_to_session=data['annex_ids'])
         self.request.set('store_as_annex', '0')
         self._finished = True
 
@@ -133,15 +149,18 @@ class PodTemplateStoreAsAnnexForm(form.Form):
         # after calling parent's update, self.actions are available
         self.actions.get('cancel').addClass('standalone')
         self.pod_template = uuidToObject(self.widgets['template_uid'].value)
-        self.signers, self.raw_signers, self.signers_error_msg, self.esign_enabled = compute_signers(self.context, self.pod_template)
+        self.signers, self.raw_signers, self.signers_error_msg, self.esign_enabled = \
+            compute_signers(self.context, self.pod_template)
         self.output_format = self.widgets['output_format'].value
-        self.show_esign = self.esign_enabled and not self.signers_error_msg and self.output_format == u'pdf'
+        self.show_esign = self.esign_enabled and not self.signers_error_msg and \
+            self.output_format == u'pdf'
         # hide esign related fields if not available
         if not self.show_esign:
             self.widgets['add_to_sign_session'].mode = HIDDEN_MODE
             self.widgets['add_to_sign_session'].value = ['false']
-            self.widgets['add_annexes_to_sign_session'].mode = HIDDEN_MODE
-            self.widgets['add_annexes_to_sign_session'].value = ['false']
+            self.widgets['annex_ids'].mode = HIDDEN_MODE
+            self.widgets['annex_ids'].terms = []
+            self.widgets['annex_ids'].value = []
             self.widgets['store_generated_document'].mode = HIDDEN_MODE
 
     def render(self):
@@ -149,5 +168,6 @@ class PodTemplateStoreAsAnnexForm(form.Form):
             IRedirect(self.request).redirect(self.context.absolute_url())
             return ""
         return super(PodTemplateStoreAsAnnexForm, self).render()
+
 
 PodTemplateStoreAsAnnexFormWrapper = wrap_form(PodTemplateStoreAsAnnexForm)
