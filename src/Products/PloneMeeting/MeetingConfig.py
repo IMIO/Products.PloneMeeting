@@ -3557,13 +3557,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     [
                         {'i': 'CompoundCriterion',
                          'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'files-belonging-to-a-given-session'},
+                         'v': 'items-belonging-to-a-given-session'},
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
                     'tal_condition':
-                        "python: tool.isManager(cfg) or '%s' in utils.get_plone_groups_for_user()"
+                        "python: utils.get_esign_registry_enabled() and "
+                        "(tool.isManager(cfg) or '%s' in utils.get_plone_groups_for_user())"
                         % get_plone_group_id(cfgId, ESIGNWATCHERS_GROUP_SUFFIX),
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -3683,6 +3684,25 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': False,
                     'showNumberOfItems': False,
                     'tal_condition': '',
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Meetings in esign sessions
+                ('searchmeetingsinesignsessions', {
+                    'subFolderId': 'searches_decisions',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'meetings-belonging-to-a-given-session'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition':
+                        "python: utils.get_esign_registry_enabled() and "
+                        "(tool.isManager(cfg) or '%s' in utils.get_plone_groups_for_user())"
+                        % get_plone_group_id(cfgId, ESIGNWATCHERS_GROUP_SUFFIX),
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # All meetings

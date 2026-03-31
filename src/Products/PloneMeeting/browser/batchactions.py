@@ -8,6 +8,7 @@ from collective.eeafaceted.batchactions.browser.views import DeleteBatchActionFo
 from collective.eeafaceted.batchactions.browser.views import LabelsBatchActionForm
 from collective.eeafaceted.batchactions.browser.views import TransitionBatchActionForm
 from collective.eeafaceted.batchactions.utils import listify_uids
+from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.z3cform.select2.widget.widget import SingleSelect2FieldWidget
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.annex.browser.views import ConcatenateAnnexesBatchActionForm
@@ -30,6 +31,7 @@ from Products.PloneMeeting.ftw_labels.utils import filter_access_global_labels
 from Products.PloneMeeting.utils import _add_advice
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import is_operational_user
+from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
 from z3c.form.contentprovider import ContentProviders
@@ -208,6 +210,14 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                 default=True))
             self.fields["add_to_sign_session"].widgetFactory = RadioFieldWidget
 
+            self.fields += Fields(schema.List(
+                __name__='annex_types',
+                title=_(u'title_annex_types_to_add_to_sign_session'),
+                value_type=schema.Choice(
+                    vocabulary="Products.PloneMeeting.vocabularies.icon_item_annex_types_vocabulary"),
+                required=True))
+            self.fields["annex_types"].widgetFactory = PMCheckBoxFieldWidget
+
             self.fields += Fields(schema.Bool(
                 __name__='add_annexes_to_sign_session',
                 title=_(u'title_add_annexes_to_sign_session'),
@@ -235,19 +245,20 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
         pod_template, output_format = get_pod_template_infos(data['pod_template'], self.cfg)
         num_of_generated_templates = 0
         self.request.set('store_as_annex', '1')
+        store_generated_document = data.get('store_generated_document', True)
+        add_to_sign_session = data.get('add_to_sign_session', False)
+        annex_types = data.get('annex_types', [])
         for brain in self.brains:
             item = brain.getObject()
             generation_view = item.restrictedTraverse('@@document-generation')
-            store_generated_document = data.get('store_generated_document', True)
-            add_to_sign_session = data.get('add_to_sign_session', False)
-            add_annexes_to_sign_session = data.get('add_annexes_to_sign_session', False)
+            annex_ids = get_categorized_elements(item, filters={'category_uid', annex_types})
             # res is None or a string (error msg)
             res = generation_view(
                 template_uid=pod_template.UID(),
                 output_format=output_format,
                 store_generated_document=store_generated_document,
                 add_to_sign_session=add_to_sign_session,
-                add_annexes_to_sign_session=add_annexes_to_sign_session,
+                annex_ids_to_add_to_session=annex_ids,
                 return_portal_msg_code=True)
             if not res:
                 if store_generated_document:

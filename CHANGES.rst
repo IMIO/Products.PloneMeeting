@@ -14,6 +14,13 @@ Changelog
 - Disable esign on store to annex if generated document
   annex type is not to sign by default.
   [gbastien]
+- Added search meetings in esign session.
+  [gbastien]
+- Added possibility to select annexes to add to esign session and
+  annex types to add to esign session when using the batch action.
+  [gbastien]
+- Added ETag `esignsession` to invalidate cache if an element is in a esign session that was updated.
+  [gbastien]
 
 4.2.29rc7 (2026-03-27)
 ----------------------

@@ -9,6 +9,16 @@
         factory="Products.PloneMeeting.esign.adapters.PMSignersAdapter"
         provides="imio.esign.adapters.ISignable"/>
 
+    <adapter for="*"
+      factory=".adapters.ItemsBelongingToAGivenSession"
+      provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+      name="items-belonging-to-a-given-session" />
+
+    <adapter for="*"
+      factory=".adapters.MeetingsBelongingToAGivenSession"
+      provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+      name="meetings-belonging-to-a-given-session" />
+
     <configure package="imio.esign">
         <browser:page
             name="parapheo"

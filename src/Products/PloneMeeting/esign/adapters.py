@@ -4,9 +4,11 @@
 #
 
 from collective.behavior.talcondition.utils import _evaluateExpression
+from imio.esign.adapters import FilesBelongingToAGivenSession
 from imio.helpers.content import uuidToObject
 from plone import api
 from Products.CMFPlone.utils import safe_unicode
+from Products.PloneMeeting.adapters import CompoundCriterionBaseAdapter
 from Products.PloneMeeting.browser.batchactions import get_pod_template_infos
 from Products.PloneMeeting.browser.batchactions import pod_template_default
 from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
@@ -45,7 +47,7 @@ class PMSignersAdapter(object):
         if pod_template is None:
             template, template_uid = self._get_template_infos()
             if not template or not template_uid:
-                raise Exception, "Could not get template_uid!"
+                raise Exception("Could not get template_uid!")
         else:
             template, template_uid = pod_template, pod_template.UID()
         return _base_extra_expr_ctx(
@@ -207,3 +209,27 @@ class PMSignersAdapter(object):
         and we can have a per MeetingConfig behavior.
         """
         return {'cfg_id': self.cfg.getId()}
+
+
+class ItemsBelongingToAGivenSession(CompoundCriterionBaseAdapter, FilesBelongingToAGivenSession):
+    """ """
+
+    @property
+    def query_session_files(self):
+        query = super(ItemsBelongingToAGivenSession, self).query_session_files
+        query['portal_type'] = {'query': self.cfg.getItemTypeName()}
+        return query
+
+    query = query_session_files
+
+
+class MeetingsBelongingToAGivenSession(CompoundCriterionBaseAdapter, FilesBelongingToAGivenSession):
+    """ """
+
+    @property
+    def query_session_files(self):
+        query = super(MeetingsBelongingToAGivenSession, self).query_session_files
+        query['portal_type'] = {'query': self.cfg.getMeetingTypeName()}
+        return query
+
+    query = query_session_files

@@ -20,8 +20,13 @@ class PMFacetedSessionInfoViewlet(FacetedSessionInfoViewlet):
 
     @property
     def sessions_collection_uid(self):
-        return self.cfg.get('searches').get('searches_items').get(
-            'searchitemsinesignsessions').UID() if self.cfg else None
+        url = self.request.getURL()
+        if 'searches_items' in url:
+            return self.cfg.get('searches').get('searches_items').get(
+                'searchitemsinesignsessions').UID() if self.cfg else None
+        elif 'searches_decisions' in url:
+            return self.cfg.get('searches').get('searches_decisions').get(
+                'searchmeetingsinesignsessions').UID() if self.cfg else None
 
     def collapsible_css_default(self):
         """Default CSS class to apply on the collapsible."""
@@ -45,7 +50,7 @@ class PMItemSessionInfoViewlet(ItemSessionInfoViewlet, PMFacetedSessionInfoViewl
            - MeetingItem to proposingGroup and esign access groups;
            - Meeting the esign access groups;
            - MeetingAdvice to proposingGroup, advisers and esign_access_groups."""
-        if bool(esign_access_groups()):
+        if bool(esign_access_groups()) or self.tool.isManager(realManagers=True):
             return True
         tag_name = self.context.getTagName()
         if tag_name == "MeetingItem":

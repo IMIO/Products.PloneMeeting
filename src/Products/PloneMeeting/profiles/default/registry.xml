@@ -184,6 +184,7 @@
         <element>toolmodified</element>
         <element>linkedmeetingmodified</element>
         <element>messagesviewlet</element>
+        <element>esignsession</element>
       </value>
   </record>
   <!-- plone.content.itemView -->
@@ -199,6 +200,7 @@
         <element>configmodified</element>
         <element>toolmodified</element>
         <element>messagesviewlet</element>
+        <element>esignsession</element>
       </value>
   </record>
 

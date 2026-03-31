@@ -7,6 +7,7 @@ from collective.eeafaceted.batchactions import _ as _CEBA
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidToObject
 from plone import api
+from plone.formwidget.masterselect import MasterSelectBoolField
 from plone.z3cform.layout import wrap_form
 from Products.PloneMeeting.browser.batchactions import compute_signers
 from Products.PloneMeeting.browser.batchactions import DisplaySignersProvider
@@ -68,15 +69,23 @@ class IPodTemplateStoreAsAnnex(Interface):
         defaultFactory=output_format_default,
         required=False)
 
-    add_to_sign_session = schema.Bool(
+    add_to_sign_session = MasterSelectBoolField(
         title=_(u'title_add_to_sign_session'),
         description=_("descr_add_to_sign_session"),
-        required=False,
+        required=True,
+        slave_fields=(
+            {'masterID': 'form-widgets-add_to_sign_session-0',
+             'slaveID': '#formfield-form-widgets-annex_ids',
+             'name': 'annex_ids',
+             'action': 'show',
+             'hide_values': 1,
+             },
+        ),
         default=True)
 
     annex_ids = schema.List(
         title=_(u"title_annex_ids_to_add_to_sign_session"),
-        description=_(u""),
+        description=_(u"descr_annex_ids_to_add_to_sign_session"),
         required=False,
         defaultFactory=annex_ids_default,
         value_type=schema.Choice(
@@ -95,7 +104,7 @@ class PodTemplateStoreAsAnnexForm(form.Form):
     implements(IFieldsAndContentProvidersForm)
     schema = IPodTemplateStoreAsAnnex
     fields = field.Fields(IPodTemplateStoreAsAnnex)
-    fields["add_to_sign_session"].widgetFactory = RadioFieldWidget
+    #fields["add_to_sign_session"].widgetFactory = RadioFieldWidget
     fields["annex_ids"].widgetFactory = PMCheckBoxFieldWidget
     fields["store_generated_document"].widgetFactory = RadioFieldWidget
     ignoreContext = True  # don't use context to get widget data

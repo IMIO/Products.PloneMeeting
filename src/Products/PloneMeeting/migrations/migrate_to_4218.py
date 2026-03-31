@@ -21,7 +21,14 @@ class Migrate_To_4218(Migrator):
         load_type_from_package('StyleTemplate', 'Products.PloneMeeting:default')
         # hide document-generation-link default viewlet
         self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'viewlets')
-        # add searchitemsinesignsessions
+        # add searchitemsinesignsessions/searchmeetingsinesignsessions, first remove it as it evolved
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            searches_items = cfg.searches.searches_items
+            if "searchitemsinesignsessions" in searches_items.objectIds():
+                searches_items.manage_delObjects(ids=['searchitemsinesignsessions'])
+            searches_decisions = cfg.searches.searches_decisions
+            if "searchmeetingsinesignsessions" in searches_decisions.objectIds():
+                searches_decisions.manage_delObjects(ids=['searchmeetingsinesignsessions'])
         self.addNewSearches()
         # re-apply actions.xml to manage add_to_session/remove_from_session actions
         self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'actions')

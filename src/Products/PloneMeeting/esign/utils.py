@@ -7,9 +7,9 @@ from imio.esign.adapters import ISignable
 from imio.esign.utils import add_files_to_session
 from imio.esign.utils import get_file_info
 from imio.esign.utils import get_sessions_for
+from imio.helpers.utils import is_pdf
 from imio.zamqp.pm.utils import next_scan_id_pm
 from plone import api
-from plone.rfc822.interfaces import IPrimaryFieldInfo
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.views import get_contact_from_position_type
 from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
@@ -79,13 +79,6 @@ def esign_access_groups():
     tool = api.portal.get_tool('portal_plonemeeting')
     return tool.get_filtered_plone_groups_for_user(
         suffixes=[MEETINGMANAGERS_GROUP_SUFFIX, ESIGNWATCHERS_GROUP_SUFFIX])
-
-
-def is_pdf(annex):
-    """ """
-    file_field_name = IPrimaryFieldInfo(annex).fieldname
-    file_obj = getattr(annex, file_field_name)
-    return file_obj.contentType == 'application/pdf'
 
 
 def _add_annexes_to_sign_session(obj, annexes, cfg, pod_template, signers, seal=None, check_is_pdf=True, show_msg=False):

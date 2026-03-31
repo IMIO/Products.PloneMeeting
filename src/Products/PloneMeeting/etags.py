@@ -3,6 +3,8 @@
 from collective.iconifiedcategory.utils import _modified as iconified_modified
 from collective.messagesviewlet.utils import get_messages_to_show
 from DateTime import DateTime
+from imio.esign.config import get_esign_registry_enabled
+from imio.esign.utils import get_sessions_for
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_plone_groups_for_user
 from plone import api
@@ -171,3 +173,25 @@ class MessagesViewlet(object):
         context = getContext(self.published)
         messages = get_messages_to_show(context)
         return 'msgviewlet_' + '_'.join([_modified(msg) for msg in messages])
+
+
+class EsignSession(object):
+    """The ``esignsession`` etag component, returning the last_modified
+       date of the session the element is belonging to.
+    """
+
+    implements(IETagValue)
+    adapts(Interface, Interface)
+
+    def __init__(self, published, request):
+        self.published = published
+        self.request = request
+
+    def __call__(self):
+        if get_esign_registry_enabled():
+            context = getContext(self.published)
+            sessions = get_sessions_for(context.UID())
+            if sessions:
+                return 'esignsession_' + str(float(DateTime(max(
+                    [session['last_updated'] for session in sessions.values()]))))
+        return 'esignsession_0'

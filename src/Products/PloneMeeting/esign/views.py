@@ -25,7 +25,7 @@ class PMSessionsListingView(SessionsListingView):
 
     def available(self):
         if super(PMSessionsListingView, self).available():
-            return self.tool.isManager(realManagers=True) or bool(esign_access_groups())
+            return bool(esign_access_groups()) or self.tool.isManager(realManagers=True)
 
     def get_dashboard_link(self, session):
         # if a cfg could not be initialized, we get it from the session first element
@@ -36,10 +36,16 @@ class PMSessionsListingView(SessionsListingView):
         url = ""
         if self.cfg:
             pm_folder = self.tool.getPloneMeetingFolder(self.cfg.getId())
-            collection_uid = self.cfg.get('searches').get('searches_items').get('searchitemsinesignsessions').UID()
-            url = "{pm_folder_url}/searches_items#c3=20&b_start=0&c1={collection_uid}" \
+            if 'searches_decisions' in self.request.getURL():
+                searches_folder_id = 'searches_decisions'
+                collection_uid = self.cfg.get('searches').get('searches_decisions').get('searchmeetingsinesignsessions').UID()
+            else:
+                searches_folder_id = 'searches_items'
+                collection_uid = self.cfg.get('searches').get('searches_items').get('searchitemsinesignsessions').UID()
+            url = "{pm_folder_url}/{searches_folder_id}#c3=20&b_start=0&c1={collection_uid}" \
                 "&esign_session_id={session_id}".format(
                     pm_folder_url=pm_folder.absolute_url(),
+                    searches_folder_id=searches_folder_id,
                     collection_uid=collection_uid,
                     session_id=session["id"],
                 )

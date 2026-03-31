@@ -1315,10 +1315,9 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                     show_msg=not return_portal_msg_code)
 
         # add annexes to session if relevant
-        if annex_ids_to_add_to_session:
+        if add_to_sign_session and annex_ids_to_add_to_session:
             # we will select annexes that are "to_sign" and include a scan_id if relevant
-            annexes_to_sign = get_categorized_elements(
-                self.context, result_type='objects', filters={'to_sign': True, 'signed': False})
+            annexes_to_sign = [self.context.get(annex_id) for annex_id in annex_ids_to_add_to_session]
             # do not add freshly added generated document again
             if store_generated_document and add_to_sign_session:
                 annexes_to_sign.remove(annex)

@@ -3212,6 +3212,15 @@ ItemExportPDFElementsVocabularyFactory = ItemExportPDFElementsVocabulary()
 class ContainedAnnexesToSignVocabulary(BaseContainedAnnexesVocabulary):
     """ """
 
+    def __call__(self, context, portal_type='annex', prefixed=False, filters={'to_sign': True, 'signed': False}):
+        annexes_terms = super(ContainedAnnexesToSignVocabulary, self).__call__(
+            context, portal_type=portal_type, prefixed=prefixed, filters=filters)
+        context.REQUEST['force_use_item_decision_annexes_group'] = True
+        decision_annexes_terms = super(ContainedAnnexesToSignVocabulary, self).__call__(
+            context, portal_type='annexDecision', prefixed=prefixed, filters=filters)
+        context.REQUEST['force_use_item_decision_annexes_group'] = False
+        return SimpleVocabulary(annexes_terms._terms + decision_annexes_terms._terms)
+
     def _check_disable_term(self, context, annex_info, categories_vocab, term):
         super(ContainedAnnexesToSignVocabulary, self)._check_disable_term(
             context, annex_info, categories_vocab, term)
@@ -3220,7 +3229,7 @@ class ContainedAnnexesToSignVocabulary(BaseContainedAnnexesVocabulary):
             annex_obj = getattr(context, annex_info['id'])
             if annex_obj.file.contentType != 'application/pdf':
                 term.disabled = True
-                term.title += translate(' [must_be_pdf]',
+                term.title += translate(' [PDF required]',
                                         domain='PloneMeeting',
                                         context=context.REQUEST)
             # check not already in a "draft" esign session
@@ -3230,7 +3239,7 @@ class ContainedAnnexesToSignVocabulary(BaseContainedAnnexesVocabulary):
                     if session['state'] != "finalized" and \
                     get_file_info(session_id, annex_info['UID']):
                         term.disabled = True
-                        term.title += translate(' [must_be_pdf]',
+                        term.title += translate(' [already_in_esign_session]',
                                                 domain='PloneMeeting',
                                                 context=context.REQUEST)
 

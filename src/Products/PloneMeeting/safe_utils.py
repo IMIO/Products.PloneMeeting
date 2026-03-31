@@ -4,6 +4,7 @@
 from collections import OrderedDict
 from datetime import datetime
 from DateTime import DateTime
+from imio.esign.config import get_esign_registry_enabled
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.cache import invalidate_cachekey_volatile_for

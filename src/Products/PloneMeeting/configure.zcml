@@ -475,6 +475,8 @@
            name="toolmodified" />
   <adapter factory=".etags.MessagesViewlet"
            name="messagesviewlet" />
+  <adapter factory=".etags.EsignSession"
+           name="esignsession" />
 
   <include package="z3c.unconfigure" file="meta.zcml" />
 
