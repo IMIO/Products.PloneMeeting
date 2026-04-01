@@ -193,5 +193,5 @@ class EsignSession(object):
             sessions = get_sessions_for(context.UID())
             if sessions:
                 return 'esignsession_' + str(float(DateTime(max(
-                    [session['last_updated'] for session in sessions.values()]))))
+                    [session['last_update'] for session in sessions.values()]))))
         return 'esignsession_0'

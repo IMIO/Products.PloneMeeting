@@ -4,7 +4,7 @@
 #
 
 from collective.eeafaceted.batchactions import _ as _CEBA
-from imio.helpers.content import get_vocab
+from imio.helpers.content import get_vocab_values
 from imio.helpers.content import uuidToObject
 from plone import api
 from plone.formwidget.masterselect import MasterSelectBoolField
@@ -17,7 +17,6 @@ from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form
-from z3c.form.browser.radio import RadioFieldWidget
 from z3c.form.contentprovider import ContentProviders
 from z3c.form.interfaces import HIDDEN_MODE
 from z3c.form.interfaces import IFieldsAndContentProvidersForm
@@ -48,10 +47,9 @@ def output_format_default():
 @provider(IContextAwareDefaultFactory)
 def annex_ids_default(context):
     """Select every annexes by default."""
-    vocab = get_vocab(
+    return get_vocab_values(
         context,
         u"Products.PloneMeeting.vocabularies.contained_annexes_to_sign_vocabulary")
-    return vocab.by_token.keys()
 
 
 class IPodTemplateStoreAsAnnex(Interface):
@@ -104,9 +102,7 @@ class PodTemplateStoreAsAnnexForm(form.Form):
     implements(IFieldsAndContentProvidersForm)
     schema = IPodTemplateStoreAsAnnex
     fields = field.Fields(IPodTemplateStoreAsAnnex)
-    #fields["add_to_sign_session"].widgetFactory = RadioFieldWidget
     fields["annex_ids"].widgetFactory = PMCheckBoxFieldWidget
-    fields["store_generated_document"].widgetFactory = RadioFieldWidget
     ignoreContext = True  # don't use context to get widget data
 
     contentProviders = ContentProviders()

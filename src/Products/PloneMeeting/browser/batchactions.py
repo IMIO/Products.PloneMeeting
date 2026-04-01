@@ -20,7 +20,7 @@ from imio.helpers.content import get_vocab_values
 from imio.helpers.content import uuidToObject
 from plone import api
 from plone.app.textfield import RichText
-from plone.directives import form
+from plone.formwidget.masterselect import MasterSelectBoolField
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting import logger
@@ -149,6 +149,14 @@ def get_pod_template_infos(value, cfg):
     return pod_template, output_format
 
 
+@provider(IContextAwareDefaultFactory)
+def annex_types_default(context):
+    """Select every annex types by default."""
+    return get_vocab_values(
+        context,
+        'Products.PloneMeeting.vocabularies.icon_item_annex_types_vocabulary')
+
+
 class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
 
     label = _CEBA("Store POD template as annex")
@@ -202,29 +210,30 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
             defaultFactory=pod_template_default))
         # eSign related fields
         if self.show_esign:
-            self.fields += Fields(schema.Bool(
+            self.fields += Fields(MasterSelectBoolField(
                 __name__='add_to_sign_session',
                 title=_(u'title_add_to_sign_session'),
                 description=_('descr_add_to_sign_session'),
                 required=False,
+                slave_fields=(
+                    {'masterID': 'form-widgets-add_to_sign_session-0',
+                     'slaveID': '#formfield-form-widgets-annex_types',
+                     'name': 'annex_ids',
+                     'action': 'show',
+                     'hide_values': 1,
+                     },
+                ),
                 default=True))
-            self.fields["add_to_sign_session"].widgetFactory = RadioFieldWidget
 
             self.fields += Fields(schema.List(
                 __name__='annex_types',
                 title=_(u'title_annex_types_to_add_to_sign_session'),
+                description=_('descr_annex_types_to_add_to_sign_session'),
                 value_type=schema.Choice(
-                    vocabulary="Products.PloneMeeting.vocabularies.icon_item_annex_types_vocabulary"),
+                    vocabulary='Products.PloneMeeting.vocabularies.icon_item_annex_types_vocabulary'),
+                defaultFactory=annex_types_default,
                 required=True))
             self.fields["annex_types"].widgetFactory = PMCheckBoxFieldWidget
-
-            self.fields += Fields(schema.Bool(
-                __name__='add_annexes_to_sign_session',
-                title=_(u'title_add_annexes_to_sign_session'),
-                description=_(u'descr_add_annexes_to_sign_session'),
-                required=False,
-                default=True))
-            self.fields["add_annexes_to_sign_session"].widgetFactory = RadioFieldWidget
 
             self.fields += Fields(schema.Bool(
                 __name__='store_generated_document',
@@ -232,13 +241,6 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                 description=_(u'descr_store_generated_document'),
                 required=False,
                 default=True))
-            self.fields["store_generated_document"].widgetFactory = RadioFieldWidget
-
-            form.fieldset(
-                'extra',
-                label=u"Extra information",
-                fields=['add_to_sign_session', 'add_annexes_to_sign_session', 'store_generated_document']
-            )
 
     def _apply(self, **data):
         """ """
@@ -251,7 +253,9 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
         for brain in self.brains:
             item = brain.getObject()
             generation_view = item.restrictedTraverse('@@document-generation')
-            annex_ids = get_categorized_elements(item, filters={'category_uid', annex_types})
+            annex_infos = get_categorized_elements(
+                item, filters={'category_uid': annex_types, 'to_sign': True, 'signed': False})
+            annex_ids = [annex_info['id'] for annex_info in annex_infos]
             # res is None or a string (error msg)
             res = generation_view(
                 template_uid=pod_template.UID(),

@@ -3212,7 +3212,7 @@ ItemExportPDFElementsVocabularyFactory = ItemExportPDFElementsVocabulary()
 class ContainedAnnexesToSignVocabulary(BaseContainedAnnexesVocabulary):
     """ """
 
-    def __call__(self, context, portal_type='annex', prefixed=False, filters={'to_sign': True, 'signed': False}):
+    def __call__(self, context, portal_type='annex', prefixed=True, filters={'to_sign': True, 'signed': False}):
         annexes_terms = super(ContainedAnnexesToSignVocabulary, self).__call__(
             context, portal_type=portal_type, prefixed=prefixed, filters=filters)
         context.REQUEST['force_use_item_decision_annexes_group'] = True

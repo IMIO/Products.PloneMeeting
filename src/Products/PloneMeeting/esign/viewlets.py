@@ -27,6 +27,8 @@ class PMFacetedSessionInfoViewlet(FacetedSessionInfoViewlet):
         elif 'searches_decisions' in url:
             return self.cfg.get('searches').get('searches_decisions').get(
                 'searchmeetingsinesignsessions').UID() if self.cfg else None
+        # important, do not return None
+        return ""
 
     def collapsible_css_default(self):
         """Default CSS class to apply on the collapsible."""
@@ -35,11 +37,6 @@ class PMFacetedSessionInfoViewlet(FacetedSessionInfoViewlet):
     def collapsible_content_css_default(self):
         """Default CSS class to apply on the collapsible."""
         return "collapsible-content discreet"
-
-    def available(self):
-        """Can be displayed on MeetingItem, Meeting or MeetingAdvice."""
-        # if can see the collection, can see the viewlet
-        return True
 
 
 class PMItemSessionInfoViewlet(ItemSessionInfoViewlet, PMFacetedSessionInfoViewlet):
@@ -56,6 +53,7 @@ class PMItemSessionInfoViewlet(ItemSessionInfoViewlet, PMFacetedSessionInfoViewl
         if tag_name == "MeetingItem":
             return self.context.getProposingGroup() in self.tool.get_orgs_for_user()
         elif tag_name == "MeetingAdvice":
-            return self.context.advice_group in self.tool.get_orgs_for_user(suffixes=['advisers'])
+            return self.context.getProposingGroup() in self.tool.get_orgs_for_user() or \
+                self.context.advice_group in self.tool.get_orgs_for_user(suffixes=['advisers'])
         else:
             return False

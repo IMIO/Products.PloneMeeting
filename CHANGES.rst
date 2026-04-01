@@ -19,7 +19,8 @@ Changelog
 - Added possibility to select annexes to add to esign session and
   annex types to add to esign session when using the batch action.
   [gbastien]
-- Added ETag `esignsession` to invalidate cache if an element is in a esign session that was updated.
+- Added ETag `esignsession` to invalidate cache if an element is
+  in a esign session that was updated.
   [gbastien]
 
 4.2.29rc7 (2026-03-27)

@@ -1294,7 +1294,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                     return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
             # proceed, add annex and redirect user to the annexes table view
-            annex = self._store_pod_template_as_annex(
+            stored_annex = self._store_pod_template_as_annex(
                 pod_template,
                 output_format,
                 generated_template_data,
@@ -1307,7 +1307,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                 seal = get_esign_registry_seal_code() if pod_template.esign_include_seal else None
                 _add_annexes_to_sign_session(
                     self.context,
-                    [annex],
+                    [stored_annex],
                     self.cfg,
                     pod_template,
                     signers,
@@ -1316,11 +1316,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
 
         # add annexes to session if relevant
         if add_to_sign_session and annex_ids_to_add_to_session:
-            # we will select annexes that are "to_sign" and include a scan_id if relevant
             annexes_to_sign = [self.context.get(annex_id) for annex_id in annex_ids_to_add_to_session]
-            # do not add freshly added generated document again
-            if store_generated_document and add_to_sign_session:
-                annexes_to_sign.remove(annex)
             if annexes_to_sign:
                 _add_annexes_to_sign_session(
                     self.context,
