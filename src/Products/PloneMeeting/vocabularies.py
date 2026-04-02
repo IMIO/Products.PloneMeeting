@@ -3426,6 +3426,25 @@ class ItemFieldsConfigVocabulary(object):
 ItemFieldsConfigVocabularyFactory = ItemFieldsConfigVocabulary()
 
 
+class ConfigCssTransformsActionsVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        terms = []
+        for v in ['remove', 'replace']:
+            term_title = translate('css_transform_action_' + v,
+                                   domain='PloneMeeting',
+                                   context=context.REQUEST)
+            terms.append(SimpleTerm(v, v, term_title))
+        return SimpleVocabulary(terms)
+
+
+ConfigCssTransformsActionsVocabularyFactory = ConfigCssTransformsActionsVocabulary()
+
+
 class EveryConfigsVocabulary(object):
     """ """
 

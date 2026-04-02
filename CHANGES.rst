@@ -12,6 +12,11 @@ Changelog
 - Added `ToolPloneMeeting.showExternalLinksSection` to be able to enable
   the `External links` collapsible on items on a per `MeetingConfig` basis.
   [gbastien]
+- Added new datagrid field `MeetingConfig.CssTransforms` in replacement for
+  fields `MeetingConfig.cssClassesToHide` and `MeetingConfig.hideCssClassesTo`,
+  new field manage `CSS removal` and `content replacement` based on a CSS class,
+  this will be used to anonymize content for selected power observers.
+  [gbastien]
 
 4.2.28.10 (2026-03-13)
 ----------------------

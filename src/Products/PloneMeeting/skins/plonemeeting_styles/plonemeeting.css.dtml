@@ -692,6 +692,9 @@ span.warningValue {
     background-color: #dfdfdf;
     padding: 0.1em !important;
 }
+.pm-anonymized {
+    background-color: black;
+}
 
 p.indent-firstline {text-indent: 40px;}
 .xSmallText {font-size: 70%;}
