@@ -24,7 +24,7 @@ class Migrate_To_4217_1(Migrator):
                     row['css_class'] = css_class
                     row['action'] = 'remove'
                     row['replace_new_content'] = ''
-                    row['replace_new_class'] = ''
+                    row['replace_new_css_class'] = ''
                     row['powerobservers'] = cfg.hideCssClassesTo
                     res.append(row)
             cfg.setCssTransforms(res)
