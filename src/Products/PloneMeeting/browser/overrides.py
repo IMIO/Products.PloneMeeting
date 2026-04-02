@@ -690,7 +690,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         # try to share cache among user "profiles"
         isRealManager = isManager = isEditorUser = advicesIndexModified = \
             userAbleToCorrectItemWaitingAdvices = isPowerObserverHiddenHistory = \
-            isCreator = pg_groups = None
+            isCreator = isReviewer = pg_groups = None
         # Manager
         isRealManager = self.tool.isManager(realManagers=True)
         # MeetingManager, necessary for MeetingConfig.itemActionsColumnConfig for example
@@ -720,6 +720,15 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                     userAbleToCorrectItemWaitingAdvices += \
                         self.tool.get_filtered_plone_groups_for_user(
                             org_uids=[group_managing_item_uid])
+            elif item_state == 'validated' and not isManager:
+                wfas = self.cfg.getWorkflowAdaptations()
+                if 'reviewers_take_back_validated_item' in wfas:
+                    last_val_state, last_level = self.context.wfConditions()._getLastValidationState(
+                        return_level=True)
+                    group_managing_item_uid = self.context.adapted()._getGroupManagingItem(
+                        item_state, theObject=False)
+                    isReviewer = self.tool.group_is_not_empty(
+                        group_managing_item_uid, last_level['suffix'], user_id=get_current_user_id())
             # make sure shortucut transitions are only displayed to relevant user
             proposing_group = self.context.getProposingGroup()
             if proposing_group and \
@@ -749,7 +758,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         # check also portal_url in case application is accessed thru different URI
         return (repr(self.context), repr(self.context.modified()), advicesIndexModified, repr(date),
                 sent_to,
-                isRealManager, isManager, isEditorUser, isCreator, pg_groups,
+                isRealManager, isManager, isEditorUser, isCreator, isReviewer, pg_groups,
                 userAbleToCorrectItemWaitingAdvices, isPowerObserverHiddenHistory,
                 meeting_review_state, useIcons, showTransitions, appendTypeNameToTransitionLabel,
                 showEdit, showOwnDelete, showOwnDeleteWithComments, showActions,

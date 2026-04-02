@@ -5,8 +5,10 @@ Changelog
 4.2.28.11 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Fixed `actions_panel` cache that was causing `reviewers` sometimes not seeing
+  the `backToProposed` action on a `validated` item when
+  `reviewers_take_back_validated_item` is used.
+  [gbastien]
 
 4.2.28.10 (2026-03-13)
 ----------------------

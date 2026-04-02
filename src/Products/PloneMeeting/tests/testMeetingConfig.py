@@ -2688,7 +2688,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertTrue(template.mayQuickEdit('notes'))
         # but it does not have access on a real item
         self._addPrincipalToGroup(
-            self.member.id, get_plone_group_id(self.developers_uid, 'creators'))
+            self.member.id, get_plone_group_id(self.developers_creators)
         item = self.create('MeetingItem')
         self.assertTrue(item.attribute_is_used('textCheckList'))
         self.assertFalse(item.showMeetingManagerReservedField('textCheckList'))

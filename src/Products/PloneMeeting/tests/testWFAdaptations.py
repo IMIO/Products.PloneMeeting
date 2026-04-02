@@ -8,7 +8,6 @@
 from collective.behavior.internalnumber.browser.settings import get_settings
 from collective.behavior.internalnumber.browser.settings import set_settings
 from collective.contact.plonegroup.utils import get_all_suffixes
-from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import select_org_for_function
 from copy import deepcopy
 from DateTime import DateTime
@@ -1331,8 +1330,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._setUpDefaultItemWFValidationLevels(cfg)
         self._enablePrevalidation(cfg)
         # configure 'pmReviewer1' as creator/prereviewer/reviewer
-        self._addPrincipalToGroup('pmReviewer1', get_plone_group_id(self.developers_uid, 'creators'))
-        self._addPrincipalToGroup('pmReviewer1', get_plone_group_id(self.developers_uid, 'prereviewers'))
+        self._addPrincipalToGroup('pmReviewer1', self.developers_creators)
+        self._addPrincipalToGroup('pmReviewer1', self.developers_prereviewers)
         # check while the wfAdaptation is not activated
         self._activate_wfas(())
         self._item_validation_shortcuts_inactive()
@@ -2572,7 +2571,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(self.transitions(item), [self._wait_advice_from_proposed_state_back_transition()])
         self.changeUser('pmCreator1')
         self.assertEqual(self.transitions(item), ['backTo_itemcreated_from_waiting_advices'])
-        self._addPrincipalToGroup('pmCreator1', get_plone_group_id(self.developers_uid, 'reviewers'))
+        self._addPrincipalToGroup('pmCreator1', self.developers_reviewers)
         self.assertEqual(
             self.transitions(item),
             ['backTo_itemcreated_from_waiting_advices',
@@ -3174,6 +3173,17 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.proposeItem(item)
         self.changeUser('pmReviewer1')
         self.do(item, 'validate')
+        # check that actions_panel is aware of this, access item as a creator
+        # action is not there, then access as a reviewer, action should be there
+        self._addPrincipalToGroup('pmReviewer1', self.developers_creators)
+        self.changeUser('pmCreator1')
+        actions_panel = item.restrictedTraverse('@@actions_panel')
+        validatedItemForCreator_rendered_actions_panel = actions_panel()
+        self.assertFalse("backTo" in validatedItemForCreator_rendered_actions_panel)
+        self.changeUser('pmReviewer1', clean_memoize=False)
+        actions_panel = item.restrictedTraverse('@@actions_panel')
+        validatedItemForReviewer_rendered_actions_panel = actions_panel()
+        self.assertTrue("backTo" in validatedItemForReviewer_rendered_actions_panel)
         # make test defensive if used by subproducts, we have a 'backXXX' transition
         self.assertTrue([tr for tr in self.transitions(item) if tr.startswith('back')])
         # but he will not be able to present it
