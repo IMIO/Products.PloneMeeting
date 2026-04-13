@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from imio.helpers.setup import load_type_from_package
 from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
@@ -36,13 +37,17 @@ class Migrate_To_4217_1(Migrator):
 
         logger.info('Migrating to PloneMeeting 4217.1...')
         self._configureCssTransforms()
+        # re-apply annexDecision as insert-barcode permission
+        # changed from ModifyPortalContent to View
+        load_type_from_package('annexDecision', 'Products.PloneMeeting:default')
         logger.info('Migrating to PloneMeeting 4217.1... Done.')
 
 
 def migrate(context):
     '''This migration function will:
 
-       1) Configure MeetingConfig.cssTransforms.
+       1) Configure MeetingConfig.cssTransforms;
+       2) Re-apply annexDecision portal_type to update "insert-barcode" permission.
     '''
     migrator = Migrate_To_4217_1(context)
     migrator.run()

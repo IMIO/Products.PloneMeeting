@@ -75,6 +75,6 @@
          link_target=""
          url_expr="string:${object/absolute_url}/@@insert-barcode"
          visible="True">
-  <permission value="Modify portal content"/>
+  <permission value="View"/>
  </action>
 </object>
