@@ -20,6 +20,8 @@ Changelog
 - Added possibilty to display a `description` when using the `PMCheckBoxWidget`
   by defining a `description` on the `vocabulary term`.
   [gbastien]
+- Added new batch action `Insert barcode` on annexes and decision annexes.
+  [gbastien]
 
 4.2.28.10 (2026-03-13)
 ----------------------
