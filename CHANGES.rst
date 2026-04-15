@@ -22,6 +22,11 @@ Changelog
   [gbastien]
 - Added new batch action `Insert barcode` on annexes and decision annexes.
   [gbastien]
+- Now that `IContentDeletable` adapter is used in `@@delete-batch-action` of
+  `collective.eeafaceted.batchactions`, this fixed the delete annexes batch
+  action that was failing when using WFA `only_creator_may_delete` and item was
+  no more in state `itemcreated`.
+  [gbastien]
 
 4.2.28.10 (2026-03-13)
 ----------------------

@@ -353,11 +353,6 @@ class PMDeleteBatchActionForm(DeleteBatchActionForm):
         return "delete" in self.cfg.getEnabledAnnexesBatchActions() and \
             super(PMDeleteBatchActionForm, self).available()
 
-    def _get_deletable_elements(self):
-        """Get deletable elements using IContentDeletable."""
-        return [obj for obj in self.objs
-                if IContentDeletable(obj).mayDelete()]
-
 
 class PMConcatenateAnnexesBatchActionForm(ConcatenateAnnexesBatchActionForm):
     """ """
