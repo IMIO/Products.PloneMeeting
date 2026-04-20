@@ -101,6 +101,11 @@
         <metal:f use-macro="context/@@pm-macros/otherMeetingConfigsClonable"/>
     </tal:clonableToOtherMCsWithExtraFields>
 
+    <!-- groupsInChargeNotes field is not integrated in the edit form and only editable thru view/quick edit
+    <tal:field define="fieldName python: 'groupsInChargeNotes'">
+      <metal:f use-macro="context/@@pm-macros/editContentField"/>
+    </tal:field-->
+
     <tal:field define="fieldName python: 'inAndOutMoves'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
