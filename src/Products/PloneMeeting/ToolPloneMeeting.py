@@ -791,17 +791,22 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                        using_groups=[]):
         """Check if user is member of one of the Plone groups linked
            to given p_org_id or p_org_uid.  Parameters are exclusive.
+           p_org_id or p_org_uid can be a single value or a list of values.
            Other parameters from p_user_id=None to p_the_objects=True
            are default values passed to get_orgs_for_user."""
         if not org_uid:
-            org_uid = org_id_to_uid(org_id)
-        return bool(org_uid in self.get_orgs_for_user(
+            if not hasattr(org_id, '__iter__'):
+                org_id = [org_id]
+                org_uid = [org_id_to_uid(_org_id) for _org_id in org_id]
+        if not hasattr(org_uid, '__iter__'):
+            org_uid = [org_uid]
+        return bool(set(org_uid).intersection(self.get_orgs_for_user(
             user_id=user_id,
             only_selected=only_selected,
             suffixes=suffixes,
             omitted_suffixes=omitted_suffixes,
             using_groups=using_groups,
-            the_objects=False))
+            the_objects=False)))
 
     security.declarePublic('getPloneMeetingFolder')
 

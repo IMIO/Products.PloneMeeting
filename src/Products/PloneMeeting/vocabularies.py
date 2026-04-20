@@ -3417,7 +3417,7 @@ class ItemFieldsConfigVocabulary(object):
         terms = []
         item_attrs = context.listAttributes(MeetingItem.schema)
         # for now, only followUp related fields are configurable
-        configurable_field_names = ['neededFollowUp', 'providedFollowUp']
+        configurable_field_names = ['groupsInChargeNotes', 'neededFollowUp', 'providedFollowUp']
         for k, v in item_attrs.items():
             if k in configurable_field_names:
                 terms.append(SimpleTerm(k, k, v))

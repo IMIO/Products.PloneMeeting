@@ -1572,6 +1572,23 @@ schema = Schema((
         vocabulary='listItemInitiators',
     ),
     TextField(
+        name='groupsInChargeNotes',
+        allowable_content_types=('text/html',),
+        widget=RichWidget(
+            condition="python: here.adapted().show_field('groupsInChargeNotes')",
+            description="GroupsInChargeNotes",
+            description_msgid="groups_in_charge_notes_descr",
+            label_msgid="PloneMeeting_label_groupsInChargeNotes",
+            label='Groupsinchargenotes',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        default_output_type="text/x-html-safe",
+        searchable=True,
+        optional=True,
+        write_permission=View,
+    ),
+    TextField(
         name='inAndOutMoves',
         allowable_content_types=('text/html',),
         widget=RichWidget(
